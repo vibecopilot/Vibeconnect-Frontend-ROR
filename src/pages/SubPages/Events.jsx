@@ -8,6 +8,8 @@ import { getEvents } from "../../api";
 import { BsEye } from "react-icons/bs";
 import Table from "../../components/table/Table";
 import { useSelector } from "react-redux";
+import Communication from "../Communication";
+import Navbar from "../../components/Navbar";
 
 const Events = () => {
   const [searchText, setSearchText] = useState("");
@@ -97,8 +99,10 @@ const Events = () => {
 
 
   return (
-    <div className=" ">
-     
+    <div className="flex ">
+    <Navbar/>
+    <div className="p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
+      <Communication/>
       <div className="flex justify-between gap-2 items-center my-2 sm:flex-row flex-col ">
         <input
           type="text"
@@ -109,7 +113,7 @@ const Events = () => {
         />
         <div className="flex gap-2">
           
-          {user === "pms_admin" && (
+          {/* {user === "pms_admin" && ( */}
             <Link
             style={{background: themeColor}}
               to={"/communication/create-event"}
@@ -118,10 +122,11 @@ const Events = () => {
               <IoAddCircleOutline size={20} />
               Add
             </Link>
-          )}
+          {/* )} */}
         </div>
       </div>
       <Table columns={column} data={filteredData} isPagination={true} />
+      </div>
     </div>
   );
 };

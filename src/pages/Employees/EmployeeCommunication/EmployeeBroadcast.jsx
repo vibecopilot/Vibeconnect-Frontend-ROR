@@ -7,6 +7,8 @@ import { getItemInLocalStorage } from "../../../utils/localStorage";
 import Table from "../../../components/table/Table";
 import { getBroadCast } from "../../../api";
 import { BsEye } from "react-icons/bs";
+import EmployeeCommunication from "./EmployeeCommunication";
+import Navbar from "../../../components/Navbar";
 const EmployeeBroadcast = () => {
   const [searchText, setSearchText] = useState("");
   const [user, setUser] = useState("");
@@ -84,7 +86,11 @@ const EmployeeBroadcast = () => {
 
   
   return (
-    <div className="my-10">
+    <div className="flex ">
+    <Navbar/>
+    <div className="p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
+     <EmployeeCommunication/>
+
       <div className="flex justify-between items-center sm:flex-row flex-col my-2">
         <input
           type="text"
@@ -108,6 +114,7 @@ const EmployeeBroadcast = () => {
         data={filteredData}
        
       />
+      </div>
     </div>
   );
 };

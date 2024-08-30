@@ -1,164 +1,220 @@
-import React from 'react'
-import Navbar from '../components/Navbar'
-import { Link } from 'react-router-dom'
-import { IoMdAdd } from 'react-icons/io'
-import Table from '../components/table/Table'
-import { BsEye } from 'react-icons/bs'
-import { MdOutlineEdit } from 'react-icons/md'
-
+import React, { useState, useEffect } from 'react';
+import Navbar from '../components/Navbar';
+import { Link } from 'react-router-dom';
+import { IoAddCircleOutline } from "react-icons/io5";
+import { BsEye } from 'react-icons/bs';
+import Table from '../components/table/Table';
+import { useSelector } from "react-redux";
+import { getOtherBills } from '../api';
+import { BiEdit } from 'react-icons/bi';
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { FaCreditCard, FaHourglassHalf, FaMoneyBill, FaMoneyBillAlt, FaMoneyBillWave, FaMoneyCheckAlt, FaRegFileAlt } from 'react-icons/fa';
 function Bills() {
-    const column = [
-        {
-          name: "view",
+  const themeColor = useSelector((state) => state.theme.color);
 
-          cell: (row) => (
-            <div className="flex items-center gap-4">
-              <Link to={`/admin/-other-bills-details/${row.id}`}>
-                <BsEye size={15} />
-              </Link>
-              {/* <Link to={`/admin/edit-design-insight/${row.id}`}>
-                <MdOutlineEdit size={15} />
-              </Link> */}
-            </div>
-          ),
-        },
-        { name: "Id", selector: (row) => row.Id, sortable: true },
-        { name: "Description", selector: (row) => row.Description, sortable: true },
-        { name: "Supplier", selector: (row) => row.Supplier, sortable: true },
-        { name: "Amount", selector: (row) => row.Amount, sortable: true },
-        { name: "Deduction", selector: (row) => row.Deduction, sortable: true },
-        { name: "TDS(%)", selector: (row) => row.TDS, sortable: true },
-        { name: "TDS Amount", selector: (row) => row.TDSAmount, sortable: true },
-        { name: "Retention(%)", selector: (row) => row.Retention, sortable: true },
-        { name: "RetentionAmount", selector: (row) => row.RetentionAmount, sortable: true },
-        { name: "Payable Amount", selector: (row) => row.PayableAmount, sortable: true },
-        { name: "Bill Date", selector: (row) => row.BillDate, sortable: true },
-        { name: "Invoice Number", selector: (row) => row.InvoiceNumber, sortable: true },
-        { name: "Payment Tenure In Days", selector: (row) => row.PaymentTenureInDays, sortable: true },
-        { name: "Last Approved By", selector: (row) => row.LastApprovedBy, sortable: true },
-        { name: "Amount Paid", selector: (row) => row.AmountPaid, sortable: true },
-        { name: "Balance Amount", selector: (row) => row.BalanceAmount, sortable: true },
-        { name: "Payment Status", selector: (row) => row.PaymentStatus, sortable: true },
-        { name: "Created On", selector: (row) => row.CreatedOn, sortable: true },
-        { name: "Created By", selector: (row) => row.CreatedBy, sortable: true },
-      ];
+  const [data, setData] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
+  const [error, setError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [dateRange, setDateRange] = useState([null, null]);
+  const [startDate, endDate] = dateRange;
+  const FormatedDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleString();
+  };
+ 
+  const column = [
+    {
+      name: "view",
+      cell: (row) => (
+        <div className="flex items-center gap-4">
+          <Link to={`/admin/-other-bills-details/${row.id}`}>
+            <BsEye size={15} />
+          </Link>
+          <Link to={`/admin/other-bills-edit/${row.id}`}>
+            <BiEdit size={15} />
+          </Link>
+        </div>
+      ),
+    },
+    { name: "Id", selector: (row) => row.id, sortable: true },
+    { name: "Description", selector: (row) => row.description, sortable: true },
+    { name: "Supplier", selector: (row) => row.vendor_name, sortable: true },
+    { name: "Last Approved By", selector: (row) => row.LastApprovedBy, sortable: true },
+    { name: "Total Amount", selector: (row) => row.total_amount, sortable: true },
+    { name: "Deduction", selector: (row) => row.Deduction, sortable: true },
+    { name: "TDS(%)", selector: (row) => row.tds_percentage, sortable: true },
+    {
+      name: "TDS Amount",
+      selector: (row) => ((row.total_amount - row.tax_amount * (row.tds_percentage / 100)).toFixed(2)),
+      sortable: true
+    },
+    
+        { name: "Retention(%)", selector: (row) => row.retention_percentage, sortable: true },
+    { name: "Retention Amount", selector: (row) =>  ((row.total_amount-row.tax_amount * (row.retention_percentage / 100)).toFixed(2)), sortable: true },
+    { name: "Payable Amount", selector: (row) => row.PayableAmount, sortable: true },
+    { name: "Bill Date", selector: (row) => row.bill_date, sortable: true },
+    { name: "Invoice Number", selector: (row) => row.invoice_number, sortable: true },
+    { name: "Payment Tenure(In Days)", selector: (row) => row.payment_tenure, sortable: true },
+    
+    { name: "Amount Paid", selector: (row) => row.AmountPaid, sortable: true },
+    { name: "Balance Amount", selector: (row) => row.BalanceAmount, sortable: true },
+    { name: "Payment Status", selector: (row) => row.PaymentStatus, sortable: true },
 
-      const data = [
-        {
-          id: 1,
-          Id: 2471,
-          Description: "This is demo bills",
-          Supplier : "Ghaffar Industries pvt.ltd.",
-          Amount : "150000.0",
-          Deduction : "1.0",
-          TDS : "2.0",
-          TDSAmount : " 2992.0",
-          Retention : "1.0",
-          RetentionAmount : "1496.0",
-          PayableAmount : "145511.0",
-          BillDate :  "28/05/24",
-          InvoiceNumber : "55466322",
-          PaymentTenureInDays : "",
-          LastApprovedBy : "",
-          AmountPaid	 : "0.0",
-          BalanceAmount : "147008.0",
-          PaymentStatus : "Unpaid",
-          CreatedOn : "29/ 05/2024",
-          CreatedBy : "Tech Support 1",
-          action: <BsEye />,
-          edit: <MdOutlineEdit />,
-        },
-        {
-            id: 2,
-            Id: 2470,
-            Description: "This is demo bills",
-            Supplier : "Ghaffar Industries pvt.ltd.",
-            Amount : "150000.0",
-            Deduction : "1.0",
-            TDS : "2.0",
-            TDSAmount : " 2992.0",
-            Retention : "1.0",
-            RetentionAmount : "1496.0",
-            PayableAmount : "145511.0",
-            BillDate :  "",
-            InvoiceNumber : "55466322",
-            PaymentTenureInDays : "",
-            LastApprovedBy : "",
-            AmountPaid	 : "0.0",
-            BalanceAmount : "147008.0",
-            PaymentStatus : "Unpaid",
-            CreatedOn : "29/ 05/2024",
-            CreatedBy : "Tech Support 1",
-            action: <BsEye />,
-            edit: <MdOutlineEdit />,
-        },
-        {
-            id: 3,
-            Id: 2469,
-            Description: "This is demo bills",
-            Supplier : "Ghaffar Industries pvt.ltd.",
-            Amount : "1400.0",
-            Deduction : "",
-            TDS : "2.0",
-            TDSAmount : " 20.0",
-            Retention : "",
-            RetentionAmount : "0.0",
-            PayableAmount : "1380.0",
-            BillDate :  "29/05/24",
-            InvoiceNumber : "55466322",
-            PaymentTenureInDays : "",
-            LastApprovedBy : "",
-            AmountPaid	 : "0.0",
-            BalanceAmount : "1380.0",
-            PaymentStatus : "Unpaid",
-            CreatedOn : "29/ 05/2024",
-            CreatedBy : "Tech Support 1",
-            action: <BsEye />,
-            edit: <MdOutlineEdit />,
-          },
-      ];
+    // { name: "Related to", selector: (row) => row.related_to, sortable: true },
+    
+    // { name: "Deduction Remarks", selector: (row) => row.deduction_remarks, sortable: true },
+    // { name: "Amount", selector: (row) => row.deduction_amount, sortable: true },
+    // { name: "Additional Expenses", selector: (row) => row.additional_expenses, sortable: true },
+    
+    // { name: "CGST Rate", selector: (row) => row.cgst_rate, sortable: true },
+    // { name: "CGST Amount", selector: (row) => row.cgst_amount, sortable: true },
+    // { name: "SGST Rate", selector: (row) => row.sgst_rate, sortable: true },
+    // { name: "SGST Amount", selector: (row) => row.sgst_amount, sortable: true },
+    // { name: "IGST Rate", selector: (row) => row.igst_rate, sortable: true },
+    // { name: "IGST Amount", selector: (row) => row.igst_amount, sortable: true },
+    // { name: "TCS Rate", selector: (row) => row.tcs_rate, sortable: true },
+    // { name: "TCS Amount", selector: (row) => row.tcs_amount, sortable: true },
+    // { name: "Tax Amount", selector: (row) => row.tax_amount, sortable: true },
+    // { name: "Total Amount", selector: (row) => row.total_amount, sortable: true },
+    
+    
+    // { name: "Payment Status", selector: (row) => row.Payment_Status, sortable: true },
+    { name: "Created On", selector: (row) => FormatedDate(row.created_at), sortable: true },
+    { name: "Created By", selector: (row) => row.Created_by, sortable: true },
+  ];
+
+  useEffect(() => {
+    const fetchBills = async () => {
+      try {
+        const response = await getOtherBills();
+        setData(response.data); // Assuming response.data contains the array of bills
+        setFilteredData(response.data);
+      } catch (error) {
+        setError('Failed to fetch bills');
+        console.error('Error fetching bills:', error);
+      }
+    };
+
+    fetchBills();
+  }, []);
+  const getTotalAmount = () => {
+    return data.reduce((acc, bill) => acc + bill.total_amount, 0);
+  };
+  useEffect(() => {
+    const handleFilter = () => {
+      const lowercasedQuery = searchQuery.toLowerCase();
+      const filtered = data.filter(row =>
+        Object.values(row).some(value =>
+          String(value).toLowerCase().includes(lowercasedQuery)
+        )
+      );
+      setFilteredData(filtered);
+    };
+
+    handleFilter();
+  }, [searchQuery, data]);
+  useEffect(() => {
+    if (startDate && endDate) {
+      const filtered = data.filter(row => {
+        const billDate = new Date(row.bill_date);
+        return billDate >= startDate && billDate <= endDate;
+      });
+      setFilteredData(filtered);
+    } else {
+      setFilteredData(data); // Show all data if no date range is selected
+    }
+  }, [startDate, endDate, data]);
   return (
     <section className='flex'>
-        <Navbar/>
-        <div className="p-4 w-full my-2 flex  overflow-hidden flex-col">
-            <div className="flex   justify-start w-fit md:gap-5 gap-2 sm:flex-row flex-col flex-shrink flex-wrap  ">
-                <div className="shadow-xl rounded-full border-4 border-gray-400 md:w-60  px-6 flex flex-col items-center">
-                    <p className="font-semibold text-lg">Total Bills</p>
-                    <p className="text-center font-semibold text-lg ">5</p>
-                </div>
-                <div className="shadow-xl rounded-full border-4 border-green-400  md:w-60  px-6 flex flex-col items-center">
-                    <p className="font-semibold text-lg">Total Amount</p>
-                    <p className="text-center font-semibold text-lg ">₹ 3,04,200</p>
-                </div>
-                <div className="shadow-xl rounded-full border-4 border-red-400 md:w-60   px-6 flex flex-col items-center">
-                    <p className="font-semibold text-lg">Total Paid Amount</p>
-                    <p className="text-center font-semibold text-lg ">₹ 100</p>
-                </div>
-                <div className="shadow-xl rounded-full border-4 border-orange-400 md:w-60   px-6 flex flex-col items-center">
-                    <p className="font-semibold text-lg">Total Pending Amount</p>
-                    <p className="text-center font-semibold text-lg ">₹ 2,98,056</p>
-                </div>
-            </div>
-            <div className="md:flex  sm:flex-row my-2 flex-col gap-2 justify-between">
-                <input
-                  type="text"
-                  placeholder="search"
-                  className="border-2 p-2 w-70 border-gray-300 rounded-lg mx-2"
-                />
+      <Navbar />
+      <div className="p-4 w-full my-2 flex overflow-hidden flex-col">
+      <div className="flex items-center gap-6 overflow-auto p-2 ">
+      <div className="bg-white min-w-44 shadow-custom-all-sides p-4 rounded-md flex flex-col items-center text-gray-500 text-sm w-fit font-medium">
+      <div className="flex gap-4">
+  <FaRegFileAlt  size={40} />
+  <div className="flex flex-col">
+    <span>Total Bills</span>
+    <span className="font-medium text-base text-center text-black">
+      {data.length}
+    </span>
+  </div>
+</div>
 
-                <Link to="/admin/add-other-bills" className=" font-semibold border-2 border-black px-4 p-1 flex gap-2 items-center rounded-md">
-                    <IoMdAdd /> Add
-                </Link>
-
-            </div>
-            <Table
-              columns={column}
-              data={data}
-              isPagination={true}
-            />
+          </div>
+          
+          <div className="bg-white min-w-44 shadow-custom-all-sides p-4 rounded-md flex flex-col items-center text-gray-500 text-sm w-fit font-medium">
+          <div className="flex gap-4">
+  <FaMoneyBillWave  size={40} />
+  <div className="flex flex-col">
+          Total Amount
+  <span className="font-medium text-base text-black">
+  ₹ {getTotalAmount().toLocaleString()}
+          </span>{" "}
+</div>
+</div>
+</div>
+<div className="bg-white min-w-44 shadow-custom-all-sides p-4 rounded-md flex flex-col items-center text-gray-500 text-sm w-fit font-medium">
+<div className="flex gap-4">
+  <FaCreditCard  size={40} />
+  <div className="flex flex-col">
+Total Paid Amount
+<span className="font-medium text-base text-black">
+₹123
+          </span>{" "}
+          </div>
+          </div></div>
+          <div className="bg-white min-w-44 shadow-custom-all-sides p-4 rounded-md flex flex-col items-center text-gray-500 text-sm w-fit font-medium">
+          <div className="flex gap-4">
+  <FaHourglassHalf  size={40} />
+  <div className="flex flex-col">
+         Total Pending Amount
+         <span className="font-medium text-base text-black">
+₹56231
+          </span>{" "}
+          </div>
         </div>
+        </div></div>
+        <div className='flex md:flex-row flex-col justify-between md:items-center my-2 gap-2'>
+          <input
+            type="text"
+            className='p-2 md:w-96 border-gray-300 rounded-md placeholder:text-sm outline-none border'
+            placeholder='Search'
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <div className='flex justify-end gap-2 z-20'>
+          {/* Single Date Range Picker Input */}
+          <DatePicker
+            selectsRange={true}
+            startDate={startDate}
+            endDate={endDate}
+            onChange={(update) => {
+              setDateRange(update);
+            }}
+            isClearable={true}
+            placeholderText="Search by Bill Date"
+            className="p-2 border-gray-300 rounded-md w-64 outline-none border"
+          />
+          <Link
+            to={"/admin/add-other-bills"}
+           className="px-4 py-2  font-medium text-white rounded-md flex gap-2 items-center justify-center"
+            style={{ background: themeColor }}
+          >
+            <IoAddCircleOutline />
+            Add
+          </Link>
+          </div>
+        </div>
+        <Table
+          columns={column}
+          data={filteredData}
+          isPagination={true}
+        />
+      </div>
     </section>
-  )
+  );
 }
 
-export default Bills
+export default Bills;

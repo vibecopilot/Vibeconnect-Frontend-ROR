@@ -656,6 +656,17 @@ import WorkspaceTimesheet from "./pages/Employees/EmployeeWorkSpace/WorkspaceTim
 import PayslipData from "./pages/Employees/EmployeeWorkSpace/PayslipData.jsx";
 import WorkspaceESIC from "./pages/Employees/EmployeeWorkSpace/WorkspaceESIC.jsx";
 import AddEsic from "./pages/Employees/EmployeeWorkSpace/AddEsic.jsx";
+import EditOtherBills from "./pages/SubPages/details/EditOtherBills.jsx";
+import Events from "./pages/SubPages/Events.jsx";
+import Broadcast from "./pages/SubPages/Broadcast.jsx";
+import Polls from "./pages/SubPages/Polls.jsx";
+import Forum from "./pages/SubPages/Forum.jsx";
+import Groups from "./pages/SubPages/Groups.jsx";
+import EmployeeEvents from "./pages/Employees/EmployeeCommunication/EmployeeEvents.jsx";
+import EmployeeBroadcast from "./pages/Employees/EmployeeCommunication/EmployeeBroadcast.jsx";
+import EmployeePolls from "./pages/Employees/EmployeeCommunication/EmployeePoll.jsx";
+import EmployeeForum from "./pages/Employees/EmployeeCommunication/EmployeeForum.jsx";
+import EmployeeGroup from "./pages/Employees/EmployeeCommunication/EmployeeGroup.jsx";
 // new admin hrms
 
 function App() {
@@ -1154,6 +1165,86 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/employee/communication/events"
+            element={
+              <ProtectedRoute>
+                <EmployeeEvents/>
+                </ProtectedRoute>
+            }
+          />
+           <Route
+            path="/employee/communication/broadcast"
+            element={
+              <ProtectedRoute>
+                <EmployeeBroadcast/>
+                </ProtectedRoute>
+            }
+          />
+           <Route
+            path="/employee/communication/polls"
+            element={
+              <ProtectedRoute>
+               <EmployeePolls/>
+                </ProtectedRoute>
+            }
+          />
+           <Route
+            path="/employee/communication/forum"
+            element={
+              <ProtectedRoute>
+              <EmployeeForum/>
+                </ProtectedRoute>
+            }
+          />
+           <Route
+            path="/employee/communication/groups"
+            element={
+              <ProtectedRoute>
+              <EmployeeGroup/>
+                </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/employee/communication/events"
+            element={
+              <ProtectedRoute>
+                <EmployeeEvents/>
+                </ProtectedRoute>
+            }
+          />
+           <Route
+            path="/employee/communication/broadcast"
+            element={
+              <ProtectedRoute>
+                <EmployeeBroadcast/>
+                </ProtectedRoute>
+            }
+          />
+           <Route
+            path="/employee/communication/polls"
+            element={
+              <ProtectedRoute>
+               <EmployeePolls/>
+                </ProtectedRoute>
+            }
+          />
+           <Route
+            path="/employee/communication/forum"
+            element={
+              <ProtectedRoute>
+              <EmployeeForum/>
+                </ProtectedRoute>
+            }
+          />
+           <Route
+            path="/employee/communication/groups"
+            element={
+              <ProtectedRoute>
+              <EmployeeGroup/>
+                </ProtectedRoute>
+            }
+          />
           {/* employee Communication create forum */}
           <Route
             path="/employee/employee-communication-create-forum"
@@ -1225,11 +1316,51 @@ function App() {
             }
           />
 
-          <Route
+          {/* <Route
             path="/communication"
             element={
               <ProtectedAdminRoutes>
                 <Communication />{" "}
+              </ProtectedAdminRoutes>
+            }
+          /> */}
+           <Route
+            path="/communication/events"
+            element={
+              <ProtectedAdminRoutes>
+                <Events/>
+              </ProtectedAdminRoutes>
+            }
+          />
+           <Route
+            path="/communication/broadcast"
+            element={
+              <ProtectedAdminRoutes>
+               <Broadcast/>
+              </ProtectedAdminRoutes>
+            }
+          />
+           <Route
+            path="/communication/polls"
+            element={
+              <ProtectedAdminRoutes>
+               <Polls/>
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/communication/forum"
+            element={
+              <ProtectedAdminRoutes>
+               <Forum/>
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/communication/groups"
+            element={
+              <ProtectedAdminRoutes>
+               <Groups/>
               </ProtectedAdminRoutes>
             }
           />
@@ -2851,6 +2982,14 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <OtherBillsDetails />
+              </ProtectedAdminRoutes>
+            }
+          />
+           <Route
+            path="/admin/other-bills-edit/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <EditOtherBills/>
               </ProtectedAdminRoutes>
             }
           />

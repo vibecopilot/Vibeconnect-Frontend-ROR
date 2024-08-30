@@ -7,6 +7,8 @@ import { getItemInLocalStorage } from "../../../utils/localStorage";
 import Table from "../../../components/table/Table";
 import { getEvents } from "../../../api";
 import { BsEye } from "react-icons/bs";
+import EmployeeCommunication from "./EmployeeCommunication";
+import Navbar from "../../../components/Navbar";
 
 const EmployeeEvents = () => {
   const [searchText, setSearchText] = useState("");
@@ -99,8 +101,11 @@ const EmployeeEvents = () => {
 
  
   return (
-    <div className="my-10 ">
-      
+    <div className="flex ">
+   <Navbar/>
+    <div className="p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
+     <EmployeeCommunication/>
+     
       <div className="flex justify-between gap-2 items-center my-2 sm:flex-row flex-col ">
         <input
           type="text"
@@ -117,6 +122,7 @@ const EmployeeEvents = () => {
        
 
       />
+      </div>
     </div>
   );
 };

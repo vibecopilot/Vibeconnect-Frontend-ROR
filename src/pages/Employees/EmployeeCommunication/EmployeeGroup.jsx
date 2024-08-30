@@ -5,9 +5,14 @@ import pic1 from "/profile1.jpg";
 import pic2 from "/profile2.jpg";
 import pic3 from "/profile3.jpg";
 import pic4 from "/profile4.jpg";
+import EmployeeCommunication from "./EmployeeCommunication";
+import Navbar from "../../../components/Navbar";
 function EmployeeGroup() {
   return (
-    <section>
+    <div className="flex ">
+    <Navbar/>
+    <div className="p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
+     <EmployeeCommunication/>
       <div className="flex justify-between md:flex-row flex-col my-5 gap-y-3">
         <input
           type="text"
@@ -136,7 +141,7 @@ function EmployeeGroup() {
           </div>
         </div>
       </div>
-    </section>
+    </div></div>
   )
 }
 export default EmployeeGroup

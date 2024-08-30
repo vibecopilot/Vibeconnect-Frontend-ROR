@@ -10,6 +10,8 @@ import { BsThreeDots } from "react-icons/bs";
 // import EscalationSetupModal from '../../containers/modals/IncidentSetupModal/EscalationSetupModal';
 import ForumCommentsModal from "../../containers/modals/ForumCommentModal";
 import { useSelector } from "react-redux";
+import Navbar from "../../components/Navbar";
+import Communication from "../Communication";
 
 function Forum() {
   const themeColor = useSelector((state)=> state.theme.color)
@@ -35,7 +37,10 @@ function Forum() {
     };
   }, []);
   return (
-    <section>
+    <section className="flex">
+      <Navbar/>
+      <div className="p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
+        <Communication/>
       <div className="flex justify-between md:flex-row flex-col my-3 gap-y-3">
         <input
           type="text"
@@ -235,6 +240,7 @@ function Forum() {
             {modal && <ForumCommentsModal onclose={() => showModal(false)} />}
           </div>
         </div>
+      </div>
       </div>
     </section>
   );

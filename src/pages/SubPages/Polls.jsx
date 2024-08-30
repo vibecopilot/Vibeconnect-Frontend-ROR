@@ -1,16 +1,48 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
+import Navbar from '../../components/Navbar';
+import Communication from '../Communication';
+import { getPolls } from '../../api';
+
 
 function Polls() {
   const themeColor = useSelector((state)=> state.theme.color)
+  const [pollsData, setPollsData] = useState([]);
+  
+ 
+  
+  useEffect(() => {
+    const fetchPolls = async () => {
+      try {
+        const response = await getPolls();
+        const poll = response.data.sort((a,b)=> {
+          return new Date(b.created_at) - new Date(a.created_at)
+        })
+        console.log("response from api",response)
+        
+        setPollsData(poll);
+       
+      } catch (err) {
+        console.error("Failed to fetch polls data:", err);
+      }
+    };
+  
+    fetchPolls(); // Call the API
+  }, []);
+  
+ 
+  
   return (
-    <div className='my-2'>
-      <div className="flex justify-between md:flex-row flex-col mb-4">
+    <div className='flex'>
+      <Navbar/>
+      <div className="p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
+        <Communication/>
+      <div className="flex justify-between md:flex-row flex-col my-4 ">
         <input
           type="text"
-          placeholder="search"
-          className="border-2 p-2 w-70 border-gray-300 rounded-lg mb-4 md:mb-0"
+          placeholder="Search"
+          className="border-2 p-2 w-96 border-gray-300 rounded-lg"
         />
         <Link
           to={`/admin/create-polls`}
@@ -20,38 +52,74 @@ function Polls() {
           Create Polls
         </Link>
       </div>
-      <div className='flex justify-center w-full p-2 mb-14'>
-        <div className="max-w-2xl w-full py-10">
-          <div className="bg-white shadow-custom-all-sides rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">How do you protect your business against cyber-crime?</h2>
-            <div className='flex justify-between my-3'>
-              <span className='text-gray-500 text-sm'>16/20 responded</span>
-              <span className='text-gray-500 text-sm'>Results not visible to participants</span>
+      <div className='md:grid grid-cols-2'>
+      {pollsData.length > 0 ? (
+        pollsData.map((poll) => {
+          // Calculate total votes for the current poll
+          const totalVotes = poll.poll_options.reduce((sum, option) => sum + option.votes, 0);
+
+          // Calculate remaining days (end_date - start_date)
+          const startDate = new Date(poll.start_date);
+          const endDate = new Date(poll.end_date);
+          const currentDate = new Date();
+          const timeDiff = endDate - currentDate; // Time difference in milliseconds
+          const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24)); // Convert to days
+
+          return (
+            <div className='flex w-full p-2 '>
+            <div className="max-w-2xl w-full ">
+              <div className="bg-white shadow-custom-all-sides rounded-lg p-6 h-full">
+            <div key={poll.id}>
+              <h2 className="text-xl font-semibold mb-4">{poll.title}</h2>
+              <div className='flex justify-between my-3'>
+                <span className='text-gray-500 text-sm'>1/20 responded</span>
+                <span className='text-gray-500 text-sm'>{poll.visibility}</span>
+              </div>
+
+              {/* Loop through poll options */}
+              <div className="space-y-4 border-t border-b border-gray-200 py-4">
+                {poll.poll_options.map((option) => (
+                  <div key={option.id} className="flex justify-between items-center p-2 bg-gray-50 rounded-md">
+                    <span>{option.content}</span>
+                    <span className="text-blue-600 font-semibold">{option.votes} votes</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Display total votes and days left */}
+              <div className="mt-6 text-gray-500 text-sm">
+                <p>{totalVotes} votes • {daysLeft > 0 ? `${daysLeft}d left` : 'Poll closed'}</p>
+              </div>
             </div>
-            <div className="space-y-4 border-t border-b border-gray-200 py-4">
-              <div className="flex justify-between items-center p-2 bg-gray-50 rounded-md">
-                <span>We have cybersecurity insurance coverage</span>
-                <span className="text-blue-600 font-semibold">25%</span>
-              </div>
-              <div className="flex justify-between items-center p-2 bg-gray-50 rounded-md">
-                <span>Our dedicated staff will protect us</span>
-                <span className="text-blue-600 font-semibold">15%</span>
-              </div>
-              <div className="flex justify-between items-center p-2 bg-gray-50 rounded-md">
-                <span>We give regular training for best practices</span>
-                <span className="text-blue-600 font-semibold">10%</span>
-              </div>
-              <div className="flex justify-between items-center p-2 bg-gray-50 rounded-md">
-                <span>Third-party vendor protection</span>
-                <span className="text-blue-600 font-semibold">55%</span>
-              </div>
-            </div>
-            <div className="mt-6 text-gray-500 text-sm">
-              <p>263 votes • 2d left</p>
-            </div>
-          </div>
-        </div>
-      </div>
+            </div></div></div>
+          );
+        })
+      ) : (
+        <p>No polls available</p>
+      )}
+   
+   </div>
+
+      
+ {/* <div>
+      <h1>Polls Data</h1>
+      <ul>
+        {pollsData.length > 0 ? (
+          pollsData.map((poll) => (
+            <li key={poll.id}>
+              <h2>{poll.title}</h2>
+              <p>{poll.description}</p>
+              <p>Start Date: {poll.start_date}</p>
+              <p>End Date: {poll.end_date}</p>
+             
+            </li>
+          ))
+        ) : (
+          <p>No polls available</p>
+        )}
+      </ul>
+    </div> */}
+    </div>
     </div>
   );
 }

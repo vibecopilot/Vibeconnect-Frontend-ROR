@@ -8,6 +8,8 @@ import { getBroadCast } from "../../api";
 import Table from "../../components/table/Table";
 import { useSelector } from "react-redux";
 import { BsEye } from "react-icons/bs";
+import Navbar from "../../components/Navbar";
+import Communication from "../Communication";
 
 const Broadcast = () => {
   const [searchText, setSearchText] = useState("");
@@ -83,7 +85,10 @@ const Broadcast = () => {
   };
 
   return (
-    <div className="">
+    <div className="flex">
+      <Navbar/>
+      <div className="p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
+        <Communication/>
       <div className="flex justify-between items-center sm:flex-row flex-col my-2">
         <input
           type="text"
@@ -104,6 +109,7 @@ const Broadcast = () => {
         )}
       </div>
       <Table columns={column} data={filteredData} />
+    </div>
     </div>
   );
 };

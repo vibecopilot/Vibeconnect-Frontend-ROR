@@ -6,10 +6,15 @@ import pic2 from "/profile2.jpg";
 import pic3 from "/profile3.jpg";
 import pic4 from "/profile4.jpg";
 import { useSelector } from "react-redux";
+import Navbar from "../../components/Navbar";
+import Communication from "../Communication";
 function Groups() {
   const themeColor = useSelector((state) => state.theme.color);
   return (
-    <section>
+    <section className="flex">
+      <Navbar/>
+      <div className="p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
+        <Communication/>
       <div className="flex justify-between md:flex-row flex-col my-2 gap-y-3">
         <input
           type="text"
@@ -231,6 +236,7 @@ function Groups() {
             </div>
           </div>
         </div>
+      </div>
       </div>
     </section>
   );

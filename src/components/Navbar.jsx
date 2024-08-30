@@ -1097,7 +1097,7 @@ const Navbar = () => {
 
                 {feat.includes("communication") && (
                   <NavLink
-                    to={"/communication"}
+                    to={"/communication/events"}
                     className={({ isActive }) =>
                       ` ${
                         isActive
@@ -1646,7 +1646,7 @@ const Navbar = () => {
                 )}
                  {feat.includes("communication") && (
                   <NavLink
-                    to={"/employee/employee-communication"}
+                    to={"/employee/communication/events"}
                     className={({ isActive }) =>
                       ` ${
                         isActive

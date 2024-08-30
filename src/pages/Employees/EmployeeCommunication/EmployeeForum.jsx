@@ -8,7 +8,8 @@ import { FaComment } from 'react-icons/fa';
 import { IoMdShareAlt } from 'react-icons/io';
 import { BsThreeDots } from "react-icons/bs";
 import ForumCommentsModal from '../../../containers/modals/ForumCommentModal';
-
+import EmployeeCommunication from "./EmployeeCommunication";
+import Navbar from "../../../components/Navbar";
 function EmployeeForum() {
   const [modal, showModal] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -32,7 +33,10 @@ function EmployeeForum() {
     };
   }, []);
   return (
-    <section>
+    <div className="flex ">
+    <Navbar/>
+    <div className="p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
+     <EmployeeCommunication/>
       <div className="flex justify-between md:flex-row flex-col my-5 gap-y-3">
         <input
           type="text"
@@ -143,7 +147,7 @@ function EmployeeForum() {
           </div>
         </div>
       </div>
-    </section>
+    </div></div>
   );
 }
 

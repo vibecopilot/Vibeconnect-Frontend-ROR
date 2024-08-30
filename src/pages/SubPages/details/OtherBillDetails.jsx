@@ -1,23 +1,60 @@
 import React from 'react'
 import Table from '../../../components/table/Table';
-
+import { useEffect, useState } from 'react';
 import { MdFeed } from 'react-icons/md';
 import { Link } from 'react-router-dom';
+import { getOtherBills, getOtherBillsDetails } from '../../../api';
+import { useParams } from 'react-router-dom';
+import { FaRegFileAlt } from 'react-icons/fa';
+import { BiEditAlt } from 'react-icons/bi';
 
+const domainPrefix = "https://admin.vibecopilot.ai";
+const isImage = (filePath) => {
+  const imageExtensions = ["jpg", "jpeg", "png", "gif", "bmp", "svg"];
+  const extension = filePath.split(".").pop().split("?")[0].toLowerCase();
+  return imageExtensions.includes(extension);
+};
+
+const getFileName = (filePath) => {
+  return filePath.split("/").pop().split("?")[0];
+};
 const OtherBillsDetails = () => {
+  const { id } = useParams();
+  const [billDetails, setBillDetails] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
+  useEffect(() => {
+    const fetchBillDetails = async () => {
+      try {
+        const response = await getOtherBillsDetails(id);
+        const billData = response.data;
+        const billData1 = Array.isArray(response.data) ? response.data : [response.data];
+
+        setBillDetails(billData); 
+        setFilteredData(billData1); 
+      } catch (err) {
+        console.log(err);
+      }
+    };
+
+    fetchBillDetails();
+  }, [id]);
+
+  
+  
+ 
   const column = [
-    { name: "Total Amount", selector: (row) => row.TotalAmount, sortable: true },
-    { name: "Total Bill Amount", selector: (row) => row.TotalBillAmount, sortable: true },
-    { name: "Total Tax Amount", selector: (row) => row.TotalTaxAmount, sortable: true },
-    { name: "Additional Expenses", selector: (row) => row.AdditionalExpenses, sortable: true },
-    { name: "CGST Rate", selector: (row) => row.CGSTRate, sortable: true },
-    { name: "CGST Amount", selector: (row) => row.CGSTAmount, sortable: true },
-    { name: "SGST Rate", selector: (row) => row.SGSTRate, sortable: true },
-    { name: "SGST Amount", selector: (row) => row.SGSTAmount, sortable: true },
-    { name: "IGST Rate", selector: (row) => row.IGSTRate, sortable: true },
-    { name: "IGST Amount", selector: (row) => row.IGSTAmount, sortable: true },
-    { name: "TCS Rate", selector: (row) => row.TCSRate, sortable: true },
-    { name: "TCS Amount", selector: (row) => row.TCSAmount, sortable: true },
+   
+    { name: "Additional Expenses", selector: (row) => row.additional_expenses, sortable: true },
+    { name: "CGST Rate", selector: (row) => row.cgst_rate, sortable: true },
+    { name: "CGST Amount", selector: (row) => row.cgst_amount, sortable: true },
+    { name: "SGST Rate", selector: (row) => row.sgst_rate, sortable: true },
+    { name: "SGST Amount", selector: (row) => row.sgst_amount, sortable: true },
+    { name: "IGST Rate", selector: (row) => row.igst_rate, sortable: true },
+    { name: "IGST Amount", selector: (row) => row.igst_amount, sortable: true },
+    { name: "TCS Rate", selector: (row) => row.tcs_rate, sortable: true },
+    { name: "TCS Amount", selector: (row) => row.tcs_amount, sortable: true },
+    { name: "Tax Amount", selector: (row) => row.tax_amount, sortable: true },
+    { name: "Total Amount", selector: (row) => row.total_amount, sortable: true },
   ];
   const data = [
     {
@@ -120,6 +157,13 @@ const OtherBillsDetails = () => {
           <h2 className="text-xl font-semibold mx-5 ">
             PMS BILL DETAIL
           </h2>
+          <Link
+              to={`/admin/other-bills-edit/${id}`}
+              className="flex gap-2 items-center border-2 mr-2 border-black px-4 p-1 rounded-full hover:bg-black transition-all duration-300 hover:text-white"
+            >
+              <BiEditAlt/>
+              Edit Details
+            </Link>
         </div>
         <div className='flex gap-3 my-3 mx-5 flex-wrap'>
           <p>L1 Approval:</p>
@@ -128,6 +172,7 @@ const OtherBillsDetails = () => {
           </button>
         </div>
         <div className='flex gap-2 justify-end mb-5 mr-4'>
+        
           <button className="font-semibold border-2 border-black px-4 p-1 flex gap-2 items-center rounded-md">
             Payment
           </button>
@@ -178,7 +223,7 @@ const OtherBillsDetails = () => {
             </div>
             <div className="grid grid-cols-2">
               <p>Bill Date  :</p>
-              <p className="text-sm font-normal">28-05-24</p>
+              <p className="text-sm font-normal">{billDetails.bill_date}</p>
             </div>
             <div className="grid grid-cols-2 items-center">
               <p>ID :</p>
@@ -186,7 +231,7 @@ const OtherBillsDetails = () => {
             </div>
             <div className="grid grid-cols-2 items-center">
               <p>Total Amount :</p>
-              <p className="text-sm font-normal">259999</p>
+              <p className="text-sm font-normal">{billDetails.total_amount}</p>
             </div>
             <div className="grid grid-cols-2 items-center">
               <p>Supplier Name :</p>
@@ -198,44 +243,44 @@ const OtherBillsDetails = () => {
             </div>
             <div className="grid grid-cols-2 items-center">
               <p>Invoice Number :</p>
-              <p className="text-sm font-normal">55466322</p>
+              <p className="text-sm font-normal">{billDetails.invoice_number}</p>
             </div>
             <div className="grid grid-cols-2 items-center">
               <p>Deduction Remarks :</p>
-              <p className="text-sm font-normal">0.0</p>
+              <p className="text-sm font-normal">{billDetails.deduction_remarks}</p>
             </div>
             <div className="grid grid-cols-2 items-center">
               <p>Related To :</p>
-              <p className="text-sm font-normal">Bill customer testing</p>
+              <p className="text-sm font-normal">{billDetails.related_to}</p>
             </div>
             <div className="grid grid-cols-2 items-center">
               <p>TDS(%) :</p>
-              <p className="text-sm font-normal"> 2.0</p>
+              <p className="text-sm font-normal"> {billDetails.tds_percentage}</p>
             </div>
             <div className="grid grid-cols-2 items-center">
               <p>Payment Tenure :</p>
-              <p className="text-sm font-normal"></p>
+              <p className="text-sm font-normal">{billDetails.payment_tenure}</p>
             </div>
             <div className="grid grid-cols-2 items-center">
               <p>TDS Amount :</p>
               <p className="text-sm font-normal">
-              2992.0</p>
+              456</p>
             </div>
             <div className="grid grid-cols-2 items-center">
-              <p>Tatal Bill Amount :</p>
-              <p className="text-sm font-normal">0.0</p>
+              <p>Total Bill Amount :</p>
+              <p className="text-sm font-normal">{billDetails.total_amount}</p>
             </div>
             <div className="grid grid-cols-2 items-center">
               <p>Retention(%) :</p>
-              <p className="text-sm font-normal">1.0</p>
+              <p className="text-sm font-normal">{billDetails.retention_percentage}</p>
             </div>
             <div className="grid grid-cols-2 items-center">
               <p>Total Taxes Amount :</p>
-              <p className="text-sm font-normal">400.0</p>
+              <p className="text-sm font-normal">{billDetails.tax_amount}</p>
             </div>
             <div className="grid grid-cols-2 items-center">
               <p>Retention Amount :</p>
-              <p className="text-sm font-normal">1496.0</p>
+              <p className="text-sm font-normal">89</p>
             </div>
             <div className="grid grid-cols-2 items-center">
               <p>Payable Amount :</p>
@@ -246,14 +291,41 @@ const OtherBillsDetails = () => {
             <div>
               <Table
                 columns={column}
-                data={data}
+                data={filteredData}
                 isPagination={true}
               />
             </div>
           </div>
           <div className='border-t py-5 border-black'>
             <p className="text-md font-semibold my-2">Attachments</p>
-            <p className="text-sm font-normal">No attachments</p>
+            <div className="flex gap-4 flex-wrap my-4 items-center text-center">
+        {billDetails.other_bills_attachments && billDetails.other_bills_attachments.length > 0 ? (
+          billDetails.other_bills_attachments.map((doc, index) => (
+            <div key={doc.id} className="">
+              {isImage(domainPrefix + doc.document) ? (
+                <img
+                  src={domainPrefix + doc.document}
+                  alt={`Attachment ${index + 1}`}
+                  className="w-40 h-28 object-cover rounded-md cursor-pointer"
+                  onClick={() => window.open(domainPrefix + doc.document, "_blank")}
+                />
+              ) : (
+                <a
+                  href={domainPrefix + doc.document}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-blue-400 transition-all duration-300 text-center flex flex-col items-center"
+                >
+                  <FaRegFileAlt size={50} />
+                  {getFileName(doc.document)}
+                </a>
+              )}
+            </div>
+          ))
+        ) : (
+          <p className="text-center w-full">No Attachments</p>
+        )}
+      </div>
           </div>
           <div className='border-t py-5 border-black'>
             <h2 className="text-lg font-semibold  ">
