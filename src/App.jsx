@@ -597,7 +597,7 @@ import EmployeePatrollingDetails from "./pages/Employees/EmployeeSubPages/Employ
 import EmployeePatrolling from "./pages/Employees/EmployeePatrolling.jsx";
 import EmployeeGoodsInOut from "./pages/Employees/EmployeeGoodsInOut.jsx";
 import EmployeeStaffDetails from "./pages/Employees/EmployeeSubPages/EmployeeStaffDetails.jsx";
-import EmployeeGVehicle from "./pages/Employees/EmployeeGVehicle.jsx"
+import EmployeeGVehicle from "./pages/Employees/EmployeeGVehicle.jsx";
 import Schedule from "./pages/SubPages/Schedule.jsx";
 import EmployeeCourseCertificate from "./pages/Employees/EmployeeSkillGrow/EmployeeCourseCertificate.jsx";
 import EmployeeCourseCertificateDetails from "./pages/Employees/EmployeeSkillGrow/EmployeeCourseCertificateDetails.jsx";
@@ -667,6 +667,7 @@ import EmployeeBroadcast from "./pages/Employees/EmployeeCommunication/EmployeeB
 import EmployeePolls from "./pages/Employees/EmployeeCommunication/EmployeePoll.jsx";
 import EmployeeForum from "./pages/Employees/EmployeeCommunication/EmployeeForum.jsx";
 import EmployeeGroup from "./pages/Employees/EmployeeCommunication/EmployeeGroup.jsx";
+import WorkspaceFeeds from "./pages/Employees/EmployeeWorkSpace/WorkspaceFeeds.jsx";
 // new admin hrms
 
 function App() {
@@ -1169,80 +1170,80 @@ function App() {
             path="/employee/communication/events"
             element={
               <ProtectedRoute>
-                <EmployeeEvents/>
-                </ProtectedRoute>
+                <EmployeeEvents />
+              </ProtectedRoute>
             }
           />
-           <Route
+          <Route
             path="/employee/communication/broadcast"
             element={
               <ProtectedRoute>
-                <EmployeeBroadcast/>
-                </ProtectedRoute>
+                <EmployeeBroadcast />
+              </ProtectedRoute>
             }
           />
-           <Route
+          <Route
             path="/employee/communication/polls"
             element={
               <ProtectedRoute>
-               <EmployeePolls/>
-                </ProtectedRoute>
+                <EmployeePolls />
+              </ProtectedRoute>
             }
           />
-           <Route
+          <Route
             path="/employee/communication/forum"
             element={
               <ProtectedRoute>
-              <EmployeeForum/>
-                </ProtectedRoute>
+                <EmployeeForum />
+              </ProtectedRoute>
             }
           />
-           <Route
+          <Route
             path="/employee/communication/groups"
             element={
               <ProtectedRoute>
-              <EmployeeGroup/>
-                </ProtectedRoute>
+                <EmployeeGroup />
+              </ProtectedRoute>
             }
           />
           <Route
             path="/employee/communication/events"
             element={
               <ProtectedRoute>
-                <EmployeeEvents/>
-                </ProtectedRoute>
+                <EmployeeEvents />
+              </ProtectedRoute>
             }
           />
-           <Route
+          <Route
             path="/employee/communication/broadcast"
             element={
               <ProtectedRoute>
-                <EmployeeBroadcast/>
-                </ProtectedRoute>
+                <EmployeeBroadcast />
+              </ProtectedRoute>
             }
           />
-           <Route
+          <Route
             path="/employee/communication/polls"
             element={
               <ProtectedRoute>
-               <EmployeePolls/>
-                </ProtectedRoute>
+                <EmployeePolls />
+              </ProtectedRoute>
             }
           />
-           <Route
+          <Route
             path="/employee/communication/forum"
             element={
               <ProtectedRoute>
-              <EmployeeForum/>
-                </ProtectedRoute>
+                <EmployeeForum />
+              </ProtectedRoute>
             }
           />
-           <Route
+          <Route
             path="/employee/communication/groups"
             element={
               <ProtectedRoute>
-              <EmployeeGroup/>
-                </ProtectedRoute>
+                <EmployeeGroup />
+              </ProtectedRoute>
             }
           />
           {/* employee Communication create forum */}
@@ -1324,27 +1325,27 @@ function App() {
               </ProtectedAdminRoutes>
             }
           /> */}
-           <Route
+          <Route
             path="/communication/events"
             element={
               <ProtectedAdminRoutes>
-                <Events/>
+                <Events />
               </ProtectedAdminRoutes>
             }
           />
-           <Route
+          <Route
             path="/communication/broadcast"
             element={
               <ProtectedAdminRoutes>
-               <Broadcast/>
+                <Broadcast />
               </ProtectedAdminRoutes>
             }
           />
-           <Route
+          <Route
             path="/communication/polls"
             element={
               <ProtectedAdminRoutes>
-               <Polls/>
+                <Polls />
               </ProtectedAdminRoutes>
             }
           />
@@ -1352,7 +1353,7 @@ function App() {
             path="/communication/forum"
             element={
               <ProtectedAdminRoutes>
-               <Forum/>
+                <Forum />
               </ProtectedAdminRoutes>
             }
           />
@@ -1360,7 +1361,7 @@ function App() {
             path="/communication/groups"
             element={
               <ProtectedAdminRoutes>
-               <Groups/>
+                <Groups />
               </ProtectedAdminRoutes>
             }
           />
@@ -1967,7 +1968,7 @@ function App() {
             }
           />
           <Route
-            path="/employee/doc-appointment-details/:id"
+            path="/doc-appointment-details/:id"
             element={
               <ProtectedRoute>
                 <EmployeeDocDetails />
@@ -2000,19 +2001,19 @@ function App() {
           />
           {/* admin doc appointment */}
           <Route
-            path="/admin/doctor-appointments"
+            path="/doctor-appointments"
             element={
-              <ProtectedAdminRoutes>
+              <ProtectedRoute>
                 <DoctorAppointment />
-              </ProtectedAdminRoutes>
+              </ProtectedRoute>
             }
           />
           <Route
-            path="/admin/book-doc-appointment"
+            path="/doctor-appointments/book-doc-appointment"
             element={
-              <ProtectedAdminRoutes>
+              <ProtectedRoute>
                 <BookDocAppointment />
-              </ProtectedAdminRoutes>
+              </ProtectedRoute>
             }
           />
           {/* admin fitness */}
@@ -2742,17 +2743,20 @@ function App() {
           />
 
           {/* employee passes */}
-          <Route path="/employee/passes" element={<Navigate to="/employee/passes/visitors" replace />}  />
+          <Route
+            path="/employee/passes"
+            element={<Navigate to="/employee/passes/visitors" replace />}
+          />
           <Route
             path="/employee/passes/visitors"
             element={
               <ProtectedRoute>
-                <EmployeeVisitor/>
+                <EmployeeVisitor />
               </ProtectedRoute>
             }
           />
           <Route
-          path="/employee/add-new-visitor"
+            path="/employee/add-new-visitor"
             element={
               <ProtectedRoute>
                 <EmployeeAddVisitor />
@@ -2791,19 +2795,19 @@ function App() {
               </ProtectedRoute>
             }
           />
-           <Route
+          <Route
             path="/employee/passes/visitors/visitor-details/:id"
             element={
               <ProtectedRoute>
-                <EmployeeVisitorDetails/>
+                <EmployeeVisitorDetails />
               </ProtectedRoute>
             }
           />
-           <Route
+          <Route
             path="/employee/passes/visitors/edit-visitor/:id"
             element={
               <ProtectedRoute>
-                <EmployeeVisitorEdit/>
+                <EmployeeVisitorEdit />
               </ProtectedRoute>
             }
           />
@@ -2811,39 +2815,39 @@ function App() {
             path="/employee/passes/registered-vehicles"
             element={
               <ProtectedRoute>
-                <EmployeeRVehicles/>
+                <EmployeeRVehicles />
               </ProtectedRoute>
             }
           />
-           <Route
+          <Route
             path="/employee/rvehicles-details/:id"
             element={
               <ProtectedRoute>
-                <EmployeeRVehiclesDetails/>
+                <EmployeeRVehiclesDetails />
               </ProtectedRoute>
             }
           />
-           <Route
+          <Route
             path="/employee/rvehicles-edit/:id"
             element={
               <ProtectedRoute>
-                <EmployeeRVehiclesEdit/>
+                <EmployeeRVehiclesEdit />
               </ProtectedRoute>
             }
           />
-           <Route
+          <Route
             path="/employee/passes/guest-vehicles"
             element={
               <ProtectedRoute>
-                <EmployeeGVehicle/>
+                <EmployeeGVehicle />
               </ProtectedRoute>
             }
           />
-           <Route
+          <Route
             path="/employee/passes/gvehicles-details/:id"
             element={
               <ProtectedRoute>
-              <EmployeeGVehiclesDetails/>
+                <EmployeeGVehiclesDetails />
               </ProtectedRoute>
             }
           />
@@ -2851,7 +2855,7 @@ function App() {
             path="/employee/passes/staff"
             element={
               <ProtectedRoute>
-              <EmployeeStaff/>
+                <EmployeeStaff />
               </ProtectedRoute>
             }
           />
@@ -2859,24 +2863,23 @@ function App() {
             path="/employee/passes/staff-edit/:id"
             element={
               <ProtectedRoute>
-              <EmployeeEditStaff/>
+                <EmployeeEditStaff />
               </ProtectedRoute>
             }
           />
-           <Route
+          <Route
             path="/employee/passes/staff-details/:id"
             element={
               <ProtectedRoute>
-              <EmployeeStaffDetails
-              />
+                <EmployeeStaffDetails />
               </ProtectedRoute>
             }
           />
-           <Route
+          <Route
             path="/employee/passes/materials"
             element={
               <ProtectedRoute>
-              <EmployeeMaterials/>
+                <EmployeeMaterials />
               </ProtectedRoute>
             }
           />
@@ -2884,31 +2887,31 @@ function App() {
             path="/employee/passes/material-details/:id"
             element={
               <ProtectedRoute>
-              <EmployeeMaterialDetails/>
+                <EmployeeMaterialDetails />
               </ProtectedRoute>
             }
           />
-           <Route
+          <Route
             path="/employee/passes/patrolling-details/:id"
             element={
               <ProtectedRoute>
-              <EmployeePatrollingDetails/>
+                <EmployeePatrollingDetails />
               </ProtectedRoute>
             }
           />
-           <Route
+          <Route
             path="/employee/passes/patrolling"
             element={
               <ProtectedRoute>
-              <EmployeePatrolling/>
+                <EmployeePatrolling />
               </ProtectedRoute>
             }
           />
-           <Route
+          <Route
             path="/employee/passes/goods-in-out"
             element={
               <ProtectedRoute>
-              <EmployeeGoodsInOut/>
+                <EmployeeGoodsInOut />
               </ProtectedRoute>
             }
           />
@@ -2953,7 +2956,7 @@ function App() {
             path="/calendar/employeeSchedule"
             element={
               // <ProtectedAdminRoutes>
-                <Schedule />
+              <Schedule />
               // </ProtectedAdminRoutes>
             }
           />
@@ -2985,11 +2988,11 @@ function App() {
               </ProtectedAdminRoutes>
             }
           />
-           <Route
+          <Route
             path="/admin/other-bills-edit/:id"
             element={
               <ProtectedAdminRoutes>
-                <EditOtherBills/>
+                <EditOtherBills />
               </ProtectedAdminRoutes>
             }
           />
@@ -3575,7 +3578,12 @@ function App() {
           />
 
           {/* booking & Req */}
-          <Route path="/employee/booking-request" element={<Navigate to="/employee/booking-request/hotel-request" replace />}  />
+          <Route
+            path="/employee/booking-request"
+            element={
+              <Navigate to="/employee/booking-request/hotel-request" replace />
+            }
+          />
           <Route
             path="/employee/booking-request/hotel-request"
             element={
@@ -5973,12 +5981,15 @@ function App() {
           {/* newest admin hrms */}
 
           {/* skill grow employee*/}
-          <Route path="/employee/certificate" element={<Navigate to="/employee/certificate/course" replace />}  />
+          <Route
+            path="/employee/certificate"
+            element={<Navigate to="/employee/certificate/course" replace />}
+          />
           <Route
             path="/employee/certificate/course"
             element={
               <ProtectedRoute>
-                <EmployeeCourseCertificate/>
+                <EmployeeCourseCertificate />
               </ProtectedRoute>
             }
           />
@@ -5986,7 +5997,7 @@ function App() {
             path="/employee/certificate/coursedetails"
             element={
               <ProtectedRoute>
-                <EmployeeCourseCertificateDetails/>
+                <EmployeeCourseCertificateDetails />
               </ProtectedRoute>
             }
           />
@@ -5994,7 +6005,7 @@ function App() {
             path="/employee/certificate/project"
             element={
               <ProtectedRoute>
-                <EmployeeProjectCertificate/>
+                <EmployeeProjectCertificate />
               </ProtectedRoute>
             }
           />
@@ -6002,7 +6013,7 @@ function App() {
             path="/employee/certificate/rr-certificate"
             element={
               <ProtectedRoute>
-                <EmployeeRRCertificate/>
+                <EmployeeRRCertificate />
               </ProtectedRoute>
             }
           />
@@ -6010,7 +6021,7 @@ function App() {
             path="/employee/certificate/course-request-approval"
             element={
               <ProtectedRoute>
-                <EmployeeCourseRequestApproval/>
+                <EmployeeCourseRequestApproval />
               </ProtectedRoute>
             }
           />
@@ -6018,7 +6029,7 @@ function App() {
             path="/employee/certificate/course-details"
             element={
               <ProtectedRoute>
-                <EmployeeCourseDetails/>
+                <EmployeeCourseDetails />
               </ProtectedRoute>
             }
           />
@@ -6026,16 +6037,24 @@ function App() {
             path="/employee/certificate/project-request-approval"
             element={
               <ProtectedRoute>
-                <EmployeeProjectRequestApproval/>
+                <EmployeeProjectRequestApproval />
               </ProtectedRoute>
             }
           />
-          <Route path="/employee/certificate/project-request-approval" element={<Navigate to="/employee/certificate/project-request-approval/request" replace />}  />
+          <Route
+            path="/employee/certificate/project-request-approval"
+            element={
+              <Navigate
+                to="/employee/certificate/project-request-approval/request"
+                replace
+              />
+            }
+          />
           <Route
             path="/employee/certificate/project-request-approval/request"
             element={
               <ProtectedRoute>
-                <EmployeeRequested/>
+                <EmployeeRequested />
               </ProtectedRoute>
             }
           />
@@ -6043,7 +6062,7 @@ function App() {
             path="/employee/certificate/project-request-approval/create-request"
             element={
               <ProtectedRoute>
-                <CreateEmployeeRequest/>
+                <CreateEmployeeRequest />
               </ProtectedRoute>
             }
           />
@@ -6051,7 +6070,7 @@ function App() {
             path="/employee/certificate/project-request-approval/edit-request/:id"
             element={
               <ProtectedRoute>
-                <EditEmployeeRequest/>
+                <EditEmployeeRequest />
               </ProtectedRoute>
             }
           />
@@ -6059,7 +6078,7 @@ function App() {
             path="/employee/certificate/project-request-approval/view-request/:id"
             element={
               <ProtectedRoute>
-                <ViewEmployeeRequest/>
+                <ViewEmployeeRequest />
               </ProtectedRoute>
             }
           />
@@ -6067,7 +6086,7 @@ function App() {
             path="/employee/certificate/project-request-approval/approved"
             element={
               <ProtectedRoute>
-                <EmployeeApproved/>
+                <EmployeeApproved />
               </ProtectedRoute>
             }
           />
@@ -6075,7 +6094,7 @@ function App() {
             path="/employee/certificate/project-view"
             element={
               <ProtectedRoute>
-                <EmployeeProjectView/>
+                <EmployeeProjectView />
               </ProtectedRoute>
             }
           />
@@ -6083,7 +6102,7 @@ function App() {
             path="/employee/certificate/project-request-approval/rejected"
             element={
               <ProtectedRoute>
-                <EmployeeRejected/>
+                <EmployeeRejected />
               </ProtectedRoute>
             }
           />
@@ -6091,7 +6110,7 @@ function App() {
             path="/employee/certificate/project-tracking"
             element={
               <ProtectedRoute>
-                <EmployeeProjectTracking/>
+                <EmployeeProjectTracking />
               </ProtectedRoute>
             }
           />
@@ -6099,7 +6118,7 @@ function App() {
             path="/employee/certificate/project-repository"
             element={
               <ProtectedRoute>
-                <EmployeeProjectRepository/>
+                <EmployeeProjectRepository />
               </ProtectedRoute>
             }
           />
@@ -6107,7 +6126,7 @@ function App() {
             path="/employee/certificate/project-repository-details"
             element={
               <ProtectedRoute>
-                <EmployeeProjectRepositoryDetails/>
+                <EmployeeProjectRepositoryDetails />
               </ProtectedRoute>
             }
           />
@@ -6115,7 +6134,7 @@ function App() {
             path="/employee/certificate/knowledge-base"
             element={
               <ProtectedRoute>
-                <EmployeeKnowledgeBase/>
+                <EmployeeKnowledgeBase />
               </ProtectedRoute>
             }
           />
@@ -6123,7 +6142,7 @@ function App() {
             path="/employee/certificate/project-task-view"
             element={
               <ProtectedRoute>
-                <EmployeeProjectTaskView/>
+                <EmployeeProjectTaskView />
               </ProtectedRoute>
             }
           />
@@ -6131,7 +6150,7 @@ function App() {
             path="/employee/certificate/project-task-completed"
             element={
               <ProtectedRoute>
-                <EmployeeProjectTaskCompleted/>
+                <EmployeeProjectTaskCompleted />
               </ProtectedRoute>
             }
           />
@@ -6139,7 +6158,7 @@ function App() {
             path="/employee/certificate/project-reject-details"
             element={
               <ProtectedRoute>
-                <EmployeeProjectRejectDetails/>
+                <EmployeeProjectRejectDetails />
               </ProtectedRoute>
             }
           />
@@ -6147,7 +6166,7 @@ function App() {
             path="/employee/certificate/course-details-free"
             element={
               <ProtectedRoute>
-                <FreeCoursesDetails/>
+                <FreeCoursesDetails />
               </ProtectedRoute>
             }
           />
@@ -6156,17 +6175,20 @@ function App() {
             path="/employee/dashboard"
             element={
               <ProtectedRoute>
-                <EmployeeDashboard/>
+                <EmployeeDashboard />
               </ProtectedRoute>
             }
           />
           {/* Admin Skill Grow */}
-          <Route path="/admin/skill-grow" element={<Navigate to="/admin/skill-grow/course" replace />}  />
+          <Route
+            path="/admin/skill-grow"
+            element={<Navigate to="/admin/skill-grow/course" replace />}
+          />
           <Route
             path="/admin/skill-grow/header"
             element={
               <ProtectedAdminRoutes>
-                <SkillGrowHeaderComponent/>
+                <SkillGrowHeaderComponent />
               </ProtectedAdminRoutes>
             }
           />
@@ -6190,7 +6212,7 @@ function App() {
             path="/admin/skill-grow/employee-profile"
             element={
               <ProtectedAdminRoutes>
-                <SkillGrowEmployeeProfile/>
+                <SkillGrowEmployeeProfile />
               </ProtectedAdminRoutes>
             }
           />
@@ -6198,7 +6220,7 @@ function App() {
             path="/admin/skill-grow/instructor"
             element={
               <ProtectedAdminRoutes>
-                <Instructor/>
+                <Instructor />
               </ProtectedAdminRoutes>
             }
           />
@@ -6206,7 +6228,7 @@ function App() {
             path="/admin/skill-grow/dashboard"
             element={
               <ProtectedAdminRoutes>
-                <SkillGrowDashboard/>
+                <SkillGrowDashboard />
               </ProtectedAdminRoutes>
             }
           />
@@ -6214,7 +6236,7 @@ function App() {
             path="/admin/skill-grow/create-course"
             element={
               <ProtectedAdminRoutes>
-                <CreateCourse/>
+                <CreateCourse />
               </ProtectedAdminRoutes>
             }
           />
@@ -6222,7 +6244,7 @@ function App() {
             path="/admin/skill-grow/edit-course"
             element={
               <ProtectedAdminRoutes>
-                <EditCourse/>
+                <EditCourse />
               </ProtectedAdminRoutes>
             }
           />
@@ -6230,7 +6252,7 @@ function App() {
             path="/admin/skill-grow/employee-profile-details"
             element={
               <ProtectedAdminRoutes>
-                <SkillGrowEmployeeProfileDetails/>
+                <SkillGrowEmployeeProfileDetails />
               </ProtectedAdminRoutes>
             }
           />
@@ -6238,7 +6260,7 @@ function App() {
             path="/admin/skill-grow/project-details"
             element={
               <ProtectedAdminRoutes>
-                <SkillGrowProjectDetails/>
+                <SkillGrowProjectDetails />
               </ProtectedAdminRoutes>
             }
           />
@@ -6246,7 +6268,7 @@ function App() {
             path="/admin/skill-grow/course-details"
             element={
               <ProtectedAdminRoutes>
-                <CourseDetails/>
+                <CourseDetails />
               </ProtectedAdminRoutes>
             }
           />
@@ -6254,7 +6276,7 @@ function App() {
             path="/admin/skill-grow/instructor-details"
             element={
               <ProtectedAdminRoutes>
-                <InstructorDetails/>
+                <InstructorDetails />
               </ProtectedAdminRoutes>
             }
           />
@@ -6262,7 +6284,7 @@ function App() {
             path="/admin/skill-grow/create-course-details"
             element={
               <ProtectedAdminRoutes>
-                <CreateCourseDetails/>
+                <CreateCourseDetails />
               </ProtectedAdminRoutes>
             }
           />
@@ -6270,7 +6292,7 @@ function App() {
             path="/admin/skill-grow/course-description"
             element={
               <ProtectedAdminRoutes>
-                <CourseDescription/>
+                <CourseDescription />
               </ProtectedAdminRoutes>
             }
           />
@@ -6278,7 +6300,7 @@ function App() {
             path="/admin/skill-grow/course-curriculum"
             element={
               <ProtectedAdminRoutes>
-                <CourseCurriculum/>
+                <CourseCurriculum />
               </ProtectedAdminRoutes>
             }
           />
@@ -6286,7 +6308,7 @@ function App() {
             path="/admin/skill-grow/create-faqs"
             element={
               <ProtectedAdminRoutes>
-                <CreateFAQs/>
+                <CreateFAQs />
               </ProtectedAdminRoutes>
             }
           />
@@ -6294,7 +6316,7 @@ function App() {
             path="/admin/skill-grow/edit-course-details"
             element={
               <ProtectedAdminRoutes>
-                <EditCourseDetails/>
+                <EditCourseDetails />
               </ProtectedAdminRoutes>
             }
           />
@@ -6302,7 +6324,7 @@ function App() {
             path="/admin/skill-grow/edit-course-description"
             element={
               <ProtectedAdminRoutes>
-                <EditCourseDescription/>
+                <EditCourseDescription />
               </ProtectedAdminRoutes>
             }
           />
@@ -6310,7 +6332,7 @@ function App() {
             path="/admin/skill-grow/edit-curriculum"
             element={
               <ProtectedAdminRoutes>
-                <EditCurriculum/>
+                <EditCurriculum />
               </ProtectedAdminRoutes>
             }
           />
@@ -6318,7 +6340,7 @@ function App() {
             path="/admin/skill-grow/edit-faqs"
             element={
               <ProtectedAdminRoutes>
-                <EditFAQs/>
+                <EditFAQs />
               </ProtectedAdminRoutes>
             }
           />
@@ -6326,11 +6348,11 @@ function App() {
             path="/admin/passes/add-goods-in-out"
             element={
               <ProtectedAdminRoutes>
-                <AddGoods/>
+                <AddGoods />
               </ProtectedAdminRoutes>
             }
           />
-           <Route
+          <Route
             path="/setup/visitor-setup"
             element={
               <ProtectedAdminRoutes>
@@ -6338,11 +6360,20 @@ function App() {
               </ProtectedAdminRoutes>
             }
           />
-           <Route
+          <Route
             path="/employee-portal"
-            element={<Navigate to="/employee-portal/attendance" replace />}
+            element={<Navigate to="/employee-portal/employee-feeds" replace />}
           />
-           <Route
+
+          <Route
+            path="/employee-portal/employee-feeds"
+            element={
+              <ProtectedRoute>
+                <WorkspaceFeeds />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/employee-portal/attendance"
             element={
               <ProtectedRoute>
@@ -6350,7 +6381,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-           <Route
+          <Route
             path="/employee-portal/survey"
             element={
               <ProtectedRoute>
@@ -6358,7 +6389,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-           <Route
+          <Route
             path="/employee-portal/docs"
             element={
               <ProtectedRoute>
@@ -6366,7 +6397,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-           <Route
+          <Route
             path="/employee-portal/leave"
             element={
               <ProtectedRoute>
@@ -6374,7 +6405,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-           <Route
+          <Route
             path="/employee-portal/roster"
             element={
               <ProtectedRoute>
@@ -6382,7 +6413,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-           <Route
+          <Route
             path="/employee-portal/payslip"
             element={
               <ProtectedRoute>
@@ -6390,7 +6421,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-           <Route
+          <Route
             path="/employee-portal/timesheet"
             element={
               <ProtectedRoute>
@@ -6398,7 +6429,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-           <Route
+          <Route
             path="/employee-portal/payslip-details"
             element={
               <ProtectedRoute>
@@ -6406,7 +6437,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-           <Route
+          <Route
             path="/employee-portal/esic"
             element={
               <ProtectedRoute>
@@ -6414,7 +6445,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-           <Route
+          <Route
             path="/employee-portal/add-family-esic"
             element={
               <ProtectedRoute>
@@ -6422,7 +6453,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
         </Routes>
         <Footer />
       </Router>

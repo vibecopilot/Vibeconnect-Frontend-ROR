@@ -4,25 +4,19 @@ import EmployeePortal from "../../../components/navbars/EmployeePortal";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Table from "../../../components/table/Table";
+import { useSelector } from "react-redux";
+import { BiPlus } from "react-icons/bi";
+import { Link } from "react-router-dom";
+import { BsEye } from "react-icons/bs";
+import AddRegularizationReq from "./AddRegularizationReq";
 
 const MyWorkSpace = () => {
   const [dateRange, setDateRange] = useState([null, null]);
   const [startDate, endDate] = dateRange;
+  const [addRegularization, setAddRegularization] = useState(false)
 
   const column = [
-    // {
-    //   name: "Action",
-    //   cell: (row) => (
-    //     <div className="flex items-center gap-4">
-    //       <Link to={`/assets/asset-details/${row.id}`}>
-    //         <BsEye size={15} />
-    //       </Link>
-    //       <Link to={`/assets/edit-asset/${row.id}`}>
-    //         <BiEdit size={15} />
-    //       </Link>
-    //     </div>
-    //   ),
-    // },
+  
     {
       name: "Date",
       selector: (row) => row.date,
@@ -77,6 +71,20 @@ const MyWorkSpace = () => {
       selector: (row) => row.shift_time,
       sortable: true,
       minWidth: "12rem",
+    },
+
+    {
+      name: "Action",
+      cell: (row) => (
+        <div className="flex items-center gap-4">
+          <Link to={``} title="View Details">
+            <BsEye size={15} />
+          </Link>
+          <button to={``} className="border p-1 px-2 rounded border-gray-300" title="Add Regularization" onClick={()=>setAddRegularization(true)}>
+            <BiPlus size={15} />
+          </button>
+        </div>
+      ),
     },
   ];
 
@@ -140,6 +148,7 @@ const MyWorkSpace = () => {
   const absentCount = filteredData.filter(
     (item) => item.status === "Absent"
   ).length;
+  const themeColor = useSelector((state)=> state.theme.color)
   return (
     <section className="flex">
       <Navbar />
@@ -160,7 +169,7 @@ const MyWorkSpace = () => {
               <p className="">{absentCount}</p>
             </div>
           </div>
-          <DatePicker
+          {/* <DatePicker
             selectsRange={true}
             startDate={startDate}
             endDate={endDate}
@@ -170,10 +179,15 @@ const MyWorkSpace = () => {
             isClearable={true}
             placeholderText="Search by Date range"
             className="p-2 border-gray-300 rounded-md w-64 outline-none border"
-          />
+          /> */}
+          <div className="flex gap-2 items-center">
+            <input type="date" name="" id="" className="border border-gray-300 px-2 p-1 rounded-md" />
+            <button className=" p-2 text-white rounded-md font-medium" style={{background: themeColor}}>Download</button>
+          </div>
         </div>
         <Table columns={column} data={filteredData} />
       </div>
+      {addRegularization && <AddRegularizationReq onclose={()=>setAddRegularization(false)} />}
     </section>
   );
 };

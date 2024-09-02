@@ -1128,7 +1128,7 @@ const Navbar = () => {
 
                 {feat.includes("doctors") && (
                   <NavLink
-                    to={"/admin/doctor-appointments"}
+                    to={"/doctor-appointments"}
                     className={({ isActive }) =>
                       ` ${
                         isActive
@@ -1707,7 +1707,7 @@ const Navbar = () => {
                 )}
                   {feat.includes("doctors") && (
                   <NavLink
-                    to={"/employee/doc-appointment"}
+                  to={"/doctor-appointments"}
                     className={({ isActive }) =>
                       ` ${
                         isActive

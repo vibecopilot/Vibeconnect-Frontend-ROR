@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import Navbar from "../../components/Navbar";
+import { useSelector } from "react-redux";
 
 
 const BookDocAppointment = () => {
@@ -55,7 +56,7 @@ console.log(formData)
       ),
     }));
   };
-
+const themeColor = useSelector((state)=> state.theme.color)
   return (
     <section className="min-h-screen p-4 sm:p-0 flex flex-col md:flex-row">
       <div className="fixed hidden sm:block left-0 top-0 h-full md:static md:h-auto md:flex-shrink-0">
@@ -63,7 +64,7 @@ console.log(formData)
       </div>
       <div className="flex justify-center my-5 overflow-x-auto w-full sm:w-full">
         <div className="border border-gray-300 rounded-lg w-full mx-5 px-8 flex flex-col gap-5">
-          <h2 className="text-center md:text-xl font-bold my-2 p-2 bg-black rounded-full text-white">
+          <h2 className="text-center md:text-xl font-bold my-2 p-2 rounded-full text-white" style={{background: themeColor}}>
             Book Doctor Appointment
           </h2>
 

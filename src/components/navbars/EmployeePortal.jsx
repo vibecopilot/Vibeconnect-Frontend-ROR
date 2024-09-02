@@ -8,16 +8,16 @@ const EmployeePortal = () => {
   return (
     <div className="flex lg:flex-row flex-col gap-2 relative items-center justify-center w-full">
       <div className="sm:flex grid grid-cols-2  text-sm md:text-base sm:flex-row gap-5 font-medium p-2 lg:rounded-full rounded-md opacity-90 bg-gray-200 ">
-        {/* <NavLink
-          to={"/employee-portal/Onboarding"}
+        <NavLink
+          to={"/employee-portal/employee-feeds"}
           className={({ isActive }) =>
             `  md:rounded-full px-4 cursor-pointer text-center transition-all duration-300 ease-linear ${
               isActive && "bg-white text-blue-500 shadow-custom-all-sides"
             }`
           }
         >
-          Onboarding
-        </NavLink> */}
+          Feeds
+        </NavLink>
          <NavLink
           to={"/employee-portal/attendance"}
           className={({ isActive }) =>

@@ -2810,3 +2810,19 @@ export const getBoardSection = async (userId, boardId) => {
     throw error;
   }
 };
+export const getDocAppointmentList = async (userId) => {
+  try {
+    const response = await vibeAuth.get(
+      `/api/employee/get-appointment-list/?user_id=${userId}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting appointment list :", error);
+    throw error;
+  }
+};

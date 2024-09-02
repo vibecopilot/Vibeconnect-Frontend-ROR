@@ -75,7 +75,7 @@ const PPM = () => {
     },
     {
       name: "Checklist",
-      selector: (row) => row.checklist.name,
+      selector: (row) => row.checklist?.name,
       sortable: true,
     },
     {

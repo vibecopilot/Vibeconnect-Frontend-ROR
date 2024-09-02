@@ -28,7 +28,7 @@ const UserDetailsList = () => {
   return (
     <div className="flex">
         <AdminHRMS/>
-      <div className="w-72 h-full bg-white border rounded-xl p-4 mt-9">
+      <div className="w-64 ml-1 h-full bg-white border rounded-xl p-4 mt-9">
         <ul className="space-y-4">
           <li className="font-bold text-lg">Details List</li>
           <li>
@@ -212,7 +212,7 @@ const UserDetailsList = () => {
               >
                 Employee Permission
               </h2>
-              <div className="ml-12">
+              <div className="">
                 {dropdownOpen1 ? (
                   <FiChevronUp size={20} />
                 ) : (
@@ -228,7 +228,7 @@ const UserDetailsList = () => {
               </h2>
             </div>
             {dropdownOpen1 && (
-              <ul className="pl-8 space-y-2 mt-2">
+              <ul className="pl-2 space-y-2 mt-2">
                 <li>
                   <NavLink
                     to="/admin/employee-fields/permission"
