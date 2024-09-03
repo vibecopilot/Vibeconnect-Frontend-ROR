@@ -188,7 +188,7 @@ const Navbar = () => {
                 className={({ isActive }) =>
                   ` ${
                     isActive
-                      ? `text-black bg-white flex p-2  gap-3.5 rounded-md group items-center  font-medium `
+                      ? `text-black bg-white flex p-2  gap-3.5 rounded-md group items-center  font-medium text-sm`
                       : ` group flex items-center  gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md text-sm`
                   }`
                 }

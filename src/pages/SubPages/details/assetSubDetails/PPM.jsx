@@ -50,7 +50,7 @@ const PPM = () => {
     if (startDate && endDate) {
       console.log(data);
       return data.filter((item) => {
-        console.log(item.start_time)
+        console.log(item.start_time);
         const itemDate = new Date(item.start_time).setHours(0, 0, 0, 0);
         const start = startDate.setHours(0, 0, 0, 0);
         const end = endDate.setHours(23, 59, 59, 999);
@@ -94,19 +94,19 @@ const PPM = () => {
       sortable: true,
     },
   ];
-  const [searchText, setSearchText] = useState("")
-const handleSearch = (e)=>{
-  const searchValue = e.target.value
-  setSearchText(searchValue)
-  if (searchText.trim() === "") {
-    setFilteredPPMData(ppmData)
-  }else{
-    const filteredResult = ppmData.filter((item)=>(
-      item.assigned_name.toLowerCase().includes(searchValue.toLowerCase())
-    ))
-    setFilteredPPMData(filteredResult)
-  }
-}
+  const [searchText, setSearchText] = useState("");
+  const handleSearch = (e) => {
+    const searchValue = e.target.value;
+    setSearchText(searchValue);
+    if (searchText.trim() === "") {
+      setFilteredPPMData(ppmData);
+    } else {
+      const filteredResult = ppmData.filter((item) =>
+        item.assigned_name.toLowerCase().includes(searchValue.toLowerCase())
+      );
+      setFilteredPPMData(filteredResult);
+    }
+  };
   return (
     <div className="flex justify-center items-center my-10 md:p-0 p-2">
       <div className="w-full my-2">
@@ -168,19 +168,25 @@ const handleSearch = (e)=>{
             {ppmDetails.map((task, index) => (
               <div key={task.id}>
                 <div className="my-4 flex flex-col bg-gray-50 shadow-custom-all-sides p-2 rounded-md gap-2">
-                  <div className="grid grid-cols-3">
-                    <div className="flex gap-4 items-center">
+                  <div className="grid grid-cols-12">
+                    <div className="col-span-11 items-center">
                       <p className="font-medium">Question :</p>
-                      <p>{task.question_name}</p>
+                      <p className="w-full">{task.question_name}</p>
                     </div>
-                    <p className="text-center">{task.user_name}</p>
-                    <p className="text-right">
-                      {dateTimeFormat(task.created_at)}
-                    </p>
                   </div>
                   <div className="flex gap-4 items-center bg-green-100 p-2 rounded-md">
                     <p className="font-medium">Answer :</p>
                     <p>{task.value}</p>
+                  </div>
+                  <p><span className="font-medium">Comment : </span>  <span className="text-violet-500 font-medium">{task.comment? task.comment: "No Comment"} </span></p>
+                  <div className="flex justify-between">
+                    <p className="">
+                      <span className="font-medium text-gray-500"> Performed by :</span>{" "}
+                      <span className="font-medium text-gray-500"> {task.user_name} </span>
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {dateTimeFormat(task.created_at)}
+                    </p>
                   </div>
                 </div>
               </div>

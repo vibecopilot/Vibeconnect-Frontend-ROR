@@ -76,46 +76,44 @@ export const postOtherBills = async (data) =>
       token: token,
     },
   });
-  export const getOtherBills = async () =>
-    axiosInstance.get("/other_bills.json", {
-      params: {
-        token: token,
-      },
-    });
-    export const getOtherBillsDetails = async (id) =>
-      axiosInstance.get(`/other_bills/${id}.json`, {
-        params: {
-          token: token,
-        },
-      });
-      export const editOtherBillsDetails = async (id, data) =>
-        axiosInstance.put(`/other_bills/${id}.json`, data, {
-          params: {
-            token: token,
-          },
-        });
+export const getOtherBills = async () =>
+  axiosInstance.get("/other_bills.json", {
+    params: {
+      token: token,
+    },
+  });
+export const getOtherBillsDetails = async (id) =>
+  axiosInstance.get(`/other_bills/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const editOtherBillsDetails = async (id, data) =>
+  axiosInstance.put(`/other_bills/${id}.json`, data, {
+    params: {
+      token: token,
+    },
+  });
 //polls
 export const postPolls = async (data) =>
   axiosInstance.post("/polls.json", data, {
-   
     params: {
       token: "775d6ae27272741669a65456ea10cc56cd4cce2bb99287b6",
     },
   });
-  export const postPollVote = async (id,data) =>
-    axiosInstance.post(`/polls/${id}/poll_votes.json`, data, {
-     
-      params: {
-        token: "775d6ae27272741669a65456ea10cc56cd4cce2bb99287b6",
-      },
-    });
-  export const getPolls = async () =>
-    axiosInstance.get("/polls.json", {
-      params: {
-        token: "775d6ae27272741669a65456ea10cc56cd4cce2bb99287b6",
-      },
-    });
-  
+export const postPollVote = async (id, data) =>
+  axiosInstance.post(`/polls/${id}/poll_votes.json`, data, {
+    params: {
+      token: "775d6ae27272741669a65456ea10cc56cd4cce2bb99287b6",
+    },
+  });
+export const getPolls = async () =>
+  axiosInstance.get("/polls.json", {
+    params: {
+      token: "775d6ae27272741669a65456ea10cc56cd4cce2bb99287b6",
+    },
+  });
+
 // vendor
 export const getVendors = async () =>
   axiosInstance.get("/vendors.json", {
@@ -695,14 +693,11 @@ export const getAssetPPMActivityDetails = async (assetId) =>
     }
   );
 export const getAssetPPMs = async (assetId) =>
-  axiosInstance.get(
-    `/site_assets/${assetId}/asset_ppm_show.json`,
-    {
-      params: {
-        token: token,
-      },
-    }
-  );
+  axiosInstance.get(`/site_assets/${assetId}/asset_ppm_show.json`, {
+    params: {
+      token: token,
+    },
+  });
 export const getPPMDetails = async (assetId, activityId) =>
   axiosInstance.get(
     `/submissions.json?q[asset_id_eq]=${assetId}&q[activity_id_eq]=${activityId}`,
@@ -2823,6 +2818,132 @@ export const getDocAppointmentList = async (userId) => {
     return response.data;
   } catch (error) {
     console.error("Error getting appointment list :", error);
+    throw error;
+  }
+};
+export const getDocCancelCheck = async (userId, consultId) => {
+  try {
+    const response = await vibeAuth.get(
+      `/api/employee/check-cancel/?user_id=${userId}&consultation_id=${consultId}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting cancellation :", error);
+    throw error;
+  }
+};
+export const postDocCancellation = async (data) => {
+  try {
+    const response = await vibeAuth.post(
+      `/api/doctor/cancel-consultation/`,
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting cancellation :", error);
+    throw error;
+  }
+};
+export const getConsultationDetails = async (userId) => {
+  try {
+    const response = await vibeAuth.get(
+      `/api/employee/get-consultation-details/?user_id=${userId}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting cancellation :", error);
+    throw error;
+  }
+};
+export const getOrganizations = async (userId, orgId) => {
+  try {
+    const response = await vibeAuth.get(
+      `/api/organization/get-organization-branch/?user_id=${userId}&org_id=${orgId}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting organization :", error);
+    throw error;
+  }
+};
+export const getDoctors = async (
+  userId,
+  date,
+  orgId,
+  meetingMode,
+  branchId
+) => {
+  try {
+    const response = await vibeAuth.get(
+      `/api/employee/get-doctors/?user_id=${userId}&date=${date}&organization_id=${orgId}&meeting_mode=${meetingMode}&branch_id=${branchId}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting doctors :", error);
+    throw error;
+  }
+};
+export const getTimeSlot = async (
+  userId,
+  date,
+  orgId,
+  meetingMode,
+  doctorId,
+
+) => {
+  try {
+    const response = await vibeAuth.get(
+      `/api/doctor/get-slots/?user_id=${userId}&date=${date}&organization_id=${orgId}&meeting_mode=${meetingMode}&doctor_id=${doctorId}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting doctors :", error);
+    throw error;
+  }
+};
+export const postDocAppointment = async (data) => {
+  try {
+    const response = await vibeAuth.post(
+      `/api/employee/book-doctor-consultation/`,data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting appointment :", error);
     throw error;
   }
 };

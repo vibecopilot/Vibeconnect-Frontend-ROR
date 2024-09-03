@@ -8,13 +8,15 @@ import { TiTick } from "react-icons/ti";
 import { IoClose } from "react-icons/io5";
 import Table from "../components/table/Table";
 import { useSelector } from "react-redux";
-import { getDocAppointmentList } from "../api";
+import { getDocAppointmentList, getDocCancelCheck, postDocCancellation } from "../api";
 import { getItemInLocalStorage } from "../utils/localStorage";
+import toast from "react-hot-toast";
 
 const DoctorAppointment = () => {
   const themeColor = useSelector((state) => state.theme.color);
   const [page, setPage] = useState("upcoming");
-  const [cancelModal,setCancelModal] = useState(false)
+  const [cancelModal, setCancelModal] = useState(false);
+  const [cancelId, setCancelId] = useState(null);
   const columns = [
     {
       name: "Patient Name",
@@ -64,6 +66,7 @@ const DoctorAppointment = () => {
           <button
             className="text-red-400 font-medium hover:bg-red-400 hover:text-white transition-all duration-200 p-1 rounded-full"
             title="Cancel"
+            onClick={()=>CancelAppointmentModal(row.id)}
           >
             <IoClose size={20} />
           </button>
@@ -71,6 +74,35 @@ const DoctorAppointment = () => {
       ),
     },
   ];
+  const checkCancel = async (cancelId) => {
+    console.log(cancelId);
+    try {
+      const response = await getDocCancelCheck(user_id, cancelId);
+      if (response.success === true) {
+        console.log(response.data);
+        setCancelModal(true);
+      } else {
+        console.log("Something went wrong");
+        if (response.status === 121) {
+          toast.error(
+            "Unfortunately, you have exceeded the allowed limit for canceling appointments.",
+            { position: "top-center", autoClose: 2000 }
+          );
+        } else {
+          toast.error("Please try again.", {
+            position: "top-center",
+            autoClose: 2000,
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+  const CancelAppointmentModal = (id) => {
+    setCancelId(id);
+    checkCancel(cancelId);
+  };
   const cancelledColumns = [
     {
       name: "Patient Name",
@@ -156,6 +188,62 @@ const DoctorAppointment = () => {
     fetchConsultationLists();
   }, []);
 
+
+  const [cancellationReason, setCancellationReason] = useState("");
+
+  const Cancel_Consultation = async() => {
+
+    if (!cancellationReason) {
+      toast.error("Please fill the Reason.");
+      return;
+    }
+    // setLoading(true);
+
+
+    //   setLoading(true);
+    const formData = new FormData();
+    formData.append("user_id", user_id);
+    formData.append("consultation_id", cancelId);
+    formData.append("cancellation_reason", cancellationReason);
+    formData.append("unfreeze", "true");
+
+    //   setIsCreatingTask(true);
+    await postDocCancellation(formData)
+      .then((response) => {
+        if (response.success) {
+          // setLoading(false);
+          console.log("success");
+          fetchConsultationLists();
+          setCancelModal(false)
+setCancellationReason("")
+          // window.location.reload();
+        } else {
+          console.log(response.status);
+          console.log(typeof response.status);
+          if (response.status === 121) {
+            toast.error(
+              " Unfortunately, you have exceeded the allowed limit for canceling appointments.",
+              { position: "top-center", autoClose: 2000 }
+            );
+          } else {
+            toast.error("Please try again.", {
+              position: "top-center",
+              autoClose: 2000,
+            });
+          }
+
+          // setLoading(false);
+          console.log("unsuccess");
+        }
+      })
+      .catch((error) => {
+        //   setLoading(false);
+        //alert('Please check your internet and try again!');
+      })
+      .finally(() => {
+        //   setLoading(false);
+      });
+  };
   return (
     <section className="flex">
       <Navbar />
@@ -204,7 +292,7 @@ const DoctorAppointment = () => {
           <Table responsive columns={columns} data={appointmentUpcoming} />
         )}
         {page === "completed" && (
-          <Table responsive columns={columns} data={appointmentUpcoming} />
+          <Table responsive columns={columns} data={appointmentDetails.completed} />
         )}
         {page === "cancelled" && (
           <Table
@@ -214,71 +302,73 @@ const DoctorAppointment = () => {
           />
         )}
       </div>
-   
-    {cancelModal &&  <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-30 backdrop-blur-sm z-20">
-        <div className="bg-white overflow-auto max-h-[70%] w-[30rem] p-4 px-8 flex flex-col rounded-md gap-5">
-          <div className="col-md-12">
-            <div
-              class=""
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                color: "white",
-              }}
-            >
-              <h2 className="text-xl font-medium text-black my-2">
-                Cancel Consultation
-              </h2>
-              {/* <img onClick={closeModal} class=" col-md-1 " src={ClosePopUp} alt="" /> */}
-              {/* <span className="btn_clo close" onClick={closeModal}>
+
+      {cancelModal && (
+        <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-30 backdrop-blur-sm z-20">
+          <div style={{background: themeColor}} className="bg-white overflow-auto max-h-[70%] w-[30rem] p-4 px-8 flex flex-col rounded-md gap-5">
+            <div className="col-md-12">
+              <div
+                className=""
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  color: "white",
+                }}
+              >
+                <h2 className="text-xl font-medium text-white my-2">
+                  Cancel Consultation
+                </h2>
+                {/* <img onClick={closeModal} class=" col-md-1 " src={ClosePopUp} alt="" /> */}
+                {/* <span className="btn_clo close" onClick={closeModal}>
               &times;
             </span> */}
-            </div>
+              </div>
 
-            <div className="flex flex-col gap-2 ">
-              <span className="font-medium">
-                Reason for Cancelling Consultation
-              </span>
+              <div className="flex flex-col gap-2 ">
+                <span className="font-medium text-white">
+                  Reason for Cancelling Consultation
+                </span>
 
-              <textarea
-                className="border border-gray-400 rounded-md p-2"
-                spellCheck={true}
-                rows={6}
-                // value={cancellationReason}
-                // onChange={(e) => setCancellationReason(e.target.value)}
-              ></textarea>
-            </div>
-            {/* <button
+                <textarea
+                  className="border border-gray-400 rounded-md p-2"
+                  spellCheck={true}
+                  rows={6}
+                  placeholder="Enter reason"
+                  value={cancellationReason}
+                  onChange={(e) => setCancellationReason(e.target.value)}
+                ></textarea>
+              </div>
+              {/* <button
             className="pr-3 pl-3 p-1 mr-2 ml-2"
             // onClick={() => Reschedule(single.id, cancellationReason)}
           >
             <span style={{ color: "white" }}>Reschedule</span>
           </button> */}
 
-            <div
-              className="mt-2 gap-2"
-              style={{
-                display: "flex",
-                justifyContent: "flex-end",
-              }}
-            >
-              <button
-                className="bg-green-400 text-white  p-1 px-2 rounded-md"
-                // onClick={() => Cancel_Consultation()}
+              <div
+                className="mt-2 gap-2"
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                }}
               >
-                <span>Done</span>
-              </button>
-              <button
-                className="bg-red-400 text-white p-1 px-2 rounded-md"
-                // onClick={closeModal}
-              >
-                <span>Cancel</span>
-              </button>
+                <button
+                  className="bg-green-400 text-white  p-1 px-2 rounded-md"
+                  onClick={() => Cancel_Consultation()}
+                >
+                  <span>Done</span>
+                </button>
+                <button
+                  className="bg-red-400 text-white p-1 px-2 rounded-md"
+                  onClick={()=>setCancelModal(false)}
+                >
+                  <span>Cancel</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>}
-    
+      )}
     </section>
   );
 };

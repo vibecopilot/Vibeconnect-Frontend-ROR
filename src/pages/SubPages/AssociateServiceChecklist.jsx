@@ -122,7 +122,7 @@ const AssociateServiceChecklist = () => {
               placeholder="Select Services"
             />
           </div>
-          <div className="flex flex-col ">
+          <div className="flex flex-col z-20">
             {/* <label className="font-medium my-2">Assign To</label> */}
             {/* <select
               value={formData.assigned_to}
