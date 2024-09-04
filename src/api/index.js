@@ -2913,8 +2913,7 @@ export const getTimeSlot = async (
   date,
   orgId,
   meetingMode,
-  doctorId,
-
+  doctorId
 ) => {
   try {
     const response = await vibeAuth.get(
@@ -2934,7 +2933,8 @@ export const getTimeSlot = async (
 export const postDocAppointment = async (data) => {
   try {
     const response = await vibeAuth.post(
-      `/api/employee/book-doctor-consultation/`,data,
+      `/api/employee/book-doctor-consultation/`,
+      data,
       {
         headers: {
           "Content-Type": "multipart/form-data/",

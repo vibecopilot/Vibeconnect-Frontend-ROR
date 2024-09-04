@@ -8,9 +8,15 @@ import { TiTick } from "react-icons/ti";
 import { IoClose } from "react-icons/io5";
 import Table from "../components/table/Table";
 import { useSelector } from "react-redux";
-import { getDocAppointmentList, getDocCancelCheck, postDocCancellation } from "../api";
+import {
+  getDocAppointmentList,
+  getDocCancelCheck,
+  postDocCancellation,
+} from "../api";
 import { getItemInLocalStorage } from "../utils/localStorage";
 import toast from "react-hot-toast";
+import { FaVideo } from "react-icons/fa";
+import { FaPrescriptionBottleMedical } from "react-icons/fa6";
 
 const DoctorAppointment = () => {
   const themeColor = useSelector((state) => state.theme.color);
@@ -59,14 +65,29 @@ const DoctorAppointment = () => {
     {
       name: "Action",
       cell: (row) => (
-        <div className="flex items-center gap-4">
-          <Link to={`/doc-appointment-details/${row.id}`}>
-            <BsEye title="View details" size={15} />
-          </Link>
+        <div className="flex items-center justify-center gap-2">
+          {row.confirmed == "1" ? (
+            <button
+              className="hover:bg-green-400 hover:text-white rounded-full p-1 text-green-400 transition-all duration-200"
+              onClick={() => {
+                if (checkExpiry(row.appointment_date, row.doctor_slot.slots)) {
+                } else {
+                  window.open(row.meeting_url, "_blank");
+                }
+              }}
+            >
+              <FaVideo size={16} />
+            </button>
+          ) : (
+            <> </>
+          )}
+          {/* <Link to={`/doc-appointment-details/${row.id}`}>
+            <BsEye title="View details" size={18} />
+          </Link> */}
           <button
             className="text-red-400 font-medium hover:bg-red-400 hover:text-white transition-all duration-200 p-1 rounded-full"
             title="Cancel"
-            onClick={()=>CancelAppointmentModal(row.id)}
+            onClick={() => CancelAppointmentModal(row.id)}
           >
             <IoClose size={20} />
           </button>
@@ -74,6 +95,109 @@ const DoctorAppointment = () => {
       ),
     },
   ];
+  const completedColumns = [
+    {
+      name: "Patient Name",
+      selector: (row) => row.consultation_for.full_name,
+      sortable: true,
+    },
+    {
+      name: "Doctor",
+      selector: (row) =>
+        ` ${row.doctor_id.firstname} ${row.doctor_id.lastname}`,
+      sortable: true,
+    },
+
+    {
+      name: "Appointment Date",
+      selector: (row) => row.appointment_date,
+      sortable: true,
+    },
+    {
+      name: "Appointment Time",
+      selector: (row) => row.doctor_slot.slots,
+      sortable: true,
+    },
+    {
+      name: "Reason",
+      selector: (row) => row.reason_for_consultation,
+      sortable: true,
+    },
+
+    // {
+    //   name: "Report",
+    //   cell: (row) => (
+    //     <div className="flex items-center justify-center gap-2">
+    //       <button
+    //         className="text-red-400 font-medium hover:bg-red-400 hover:text-white transition-all duration-200 p-1 rounded-full"
+    //         title="Cancel"
+    //         onClick={() => CancelAppointmentModal(row.id)}
+    //       >
+    //         <IoClose size={20} />
+    //       </button>
+    //     </div>
+    //   ),
+    // },
+    {
+      name: "Prescription",
+      cell: (row) => (
+        <div className="flex items-center justify-center gap-2">
+          <a
+            target="_blank"
+            href={"https://vibecopilot.ai/api/media" + row.prescription_url}
+            style={{ color: "black" }}
+          >
+            <FaPrescriptionBottleMedical size={20} />
+          </a>
+        </div>
+      ),
+    },
+  ];
+  function checkExpiry(from_date, time_range) {
+    const [year, month, day] = from_date.split("-").map(Number);
+    const startTime = time_range.split(" ")[0];
+    const [hours, minutes] = startTime.split(":").map(Number);
+    let fromDate = new Date(year, month - 1, day, hours, minutes);
+    fromDate.setMinutes(fromDate.getMinutes());
+    const now = new Date().toLocaleString("en-US", {
+      timeZone: "Asia/Kolkata",
+    });
+    const currentDate = new Date(now);
+    // currentDate.setMinutes(currentDate.getMinutes() + 330);
+    const acceptableStartTime = new Date(fromDate);
+    acceptableStartTime.setMinutes(acceptableStartTime.getMinutes() - 5);
+
+    // Calculate the end time of the acceptable range (10 minutes after)
+    const acceptableEndTime = new Date(fromDate);
+    console.log("end fromDate date----", acceptableEndTime);
+    acceptableEndTime.setMinutes(acceptableEndTime.getMinutes() + 10);
+    console.log("plus 10 fromDate date----", acceptableEndTime);
+
+    // Check if the current time is within the acceptable range
+    // const isWithinTimeRange = currentDate >= acceptableStartTime;
+    const isWithinTimeRange = currentDate >= acceptableStartTime;
+
+    // console.log
+    const isWithinTimeRange1 = currentDate <= acceptableEndTime;
+
+    // Compare the dates
+    if (!isWithinTimeRange) {
+      toast.error(
+        "The consultation hasn't started yet. Please join when the session begins.",
+        { position: "top-center", autoClose: 2000 }
+      );
+      return true;
+    } else if (!isWithinTimeRange1) {
+      toast.error(
+        "The consultation has ended. Please schedule a new appointment.",
+        { position: "top-center", autoClose: 2000 }
+      );
+
+      return true;
+    } else {
+      return false;
+    }
+  }
   const checkCancel = async (cancelId) => {
     console.log(cancelId);
     try {
@@ -115,7 +239,6 @@ const DoctorAppointment = () => {
         ` ${row.doctor_id.firstname} ${row.doctor_id.lastname}`,
       sortable: true,
     },
-
     {
       name: "Appointment Date",
       selector: (row) => row.appointment_date,
@@ -135,33 +258,6 @@ const DoctorAppointment = () => {
       name: "Cancellation Reason",
       selector: (row) => row.cancellation_reason,
       sortable: true,
-    },
-
-    // {
-    //   name: "Approval",
-    //   selector: (row) => (row.status === "Upcoming" &&
-    //   <div className="flex justify-center gap-2">
-    //       <button className="text-green-400 font-medium hover:bg-green-400 hover:text-white transition-all duration-200 p-1 rounded-full"><TiTick size={20} /></button>
-    //
-    //   </div>
-    // ),
-    //   sortable: true,
-    // },
-    {
-      name: "Action",
-      cell: (row) => (
-        <div className="flex items-center gap-4">
-          <Link to={`/doc-appointment-details/${row.id}`}>
-            <BsEye title="View details" size={15} />
-          </Link>
-          {/* <button
-            className="text-red-400 font-medium hover:bg-red-400 hover:text-white transition-all duration-200 p-1 rounded-full"
-            title="Cancel"
-          >
-            <IoClose size={20} />
-          </button> */}
-        </div>
-      ),
     },
   ];
 
@@ -188,17 +284,14 @@ const DoctorAppointment = () => {
     fetchConsultationLists();
   }, []);
 
-
   const [cancellationReason, setCancellationReason] = useState("");
 
-  const Cancel_Consultation = async() => {
-
+  const Cancel_Consultation = async () => {
     if (!cancellationReason) {
       toast.error("Please fill the Reason.");
       return;
     }
     // setLoading(true);
-
 
     //   setLoading(true);
     const formData = new FormData();
@@ -214,8 +307,8 @@ const DoctorAppointment = () => {
           // setLoading(false);
           console.log("success");
           fetchConsultationLists();
-          setCancelModal(false)
-setCancellationReason("")
+          setCancelModal(false);
+          setCancellationReason("");
           // window.location.reload();
         } else {
           console.log(response.status);
@@ -243,6 +336,14 @@ setCancellationReason("")
       .finally(() => {
         //   setLoading(false);
       });
+  };
+  const Reschedule = () => {
+    console.log("rescheduleId------------------------------");
+    console.log(cancelId);
+
+    navigate("/doctor-appointments/book-doc-appointment", {
+      state: { cancelId, cancellationReason },
+    });
   };
   return (
     <section className="flex">
@@ -292,7 +393,11 @@ setCancellationReason("")
           <Table responsive columns={columns} data={appointmentUpcoming} />
         )}
         {page === "completed" && (
-          <Table responsive columns={columns} data={appointmentDetails.completed} />
+          <Table
+            responsive
+            columns={completedColumns}
+            data={appointmentDetails.completed}
+          />
         )}
         {page === "cancelled" && (
           <Table
@@ -305,7 +410,10 @@ setCancellationReason("")
 
       {cancelModal && (
         <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-30 backdrop-blur-sm z-20">
-          <div style={{background: themeColor}} className="bg-white overflow-auto max-h-[70%] w-[30rem] p-4 px-8 flex flex-col rounded-md gap-5">
+          <div
+            style={{ background: themeColor }}
+            className="bg-white overflow-auto max-h-[70%] w-[30rem] p-4 px-8 flex flex-col rounded-md gap-5"
+          >
             <div className="col-md-12">
               <div
                 className=""
@@ -360,7 +468,7 @@ setCancellationReason("")
                 </button>
                 <button
                   className="bg-red-400 text-white p-1 px-2 rounded-md"
-                  onClick={()=>setCancelModal(false)}
+                  onClick={() => setCancelModal(false)}
                 >
                   <span>Cancel</span>
                 </button>

@@ -477,7 +477,6 @@ const BookDocAppointment = () => {
           selectedFile.name.toLowerCase().endsWith(".pdf")
         )
       ) {
-        // alert('Please select a valid PDF file.');
         toast.error("Please select a valid PDF file.", {
           position: "top-center",
           autoClose: 2000,
@@ -485,8 +484,6 @@ const BookDocAppointment = () => {
         return;
       }
     }
-
-   
 
     if (relativeConsultation == null) {
       confirmBooking();
@@ -496,7 +493,7 @@ const BookDocAppointment = () => {
       // Already has a consultation
     }
   };
-const navigate = useNavigate()
+  const navigate = useNavigate();
   const confirmBooking = async () => {
     try {
       //   alert("confirmBooking");
@@ -551,7 +548,7 @@ const navigate = useNavigate()
       if (jsonDataBooking.success) {
         console.log(selectedFile);
         console.log(DoctorDetail);
-       navigate("/doctor-appointments")
+        navigate("/doctor-appointments");
       }
     } catch (error) {
       console.error("Error:", error);
@@ -601,7 +598,7 @@ const navigate = useNavigate()
       // alert(response);
       if (response.success === true) {
         console.log(selectedFile);
-        navigate("/doctor-appointments")
+        navigate("/doctor-appointments");
       }
     } catch (error) {
       console.error("Error:", error);
@@ -615,7 +612,7 @@ const navigate = useNavigate()
       </div>
 
       <div className="flex justify-center my-5 overflow-x-auto w-full sm:w-full">
-        <div className=" bg-white rounded-lg w-full  mx-5 mb-5 px-2 flex flex-col gap-5">
+        <div className=" bg-white rounded-lg w-full  md:mx-5 mb-5 px-2 flex flex-col gap-5">
           <h2
             className="text-center md:text-xl font-bold my-2 p-2 rounded-md text-white"
             style={{ background: themeColor }}
@@ -827,6 +824,7 @@ const navigate = useNavigate()
                 onChange={onChangeMobileNoValue}
                 maxLength="10"
                 className="border-b border-gray-400 p-2 outline-none"
+                placeholder="Enter mobile no."
               />
             </div>
             <div className="grid gap-2  items-center w-full">
@@ -911,72 +909,73 @@ const navigate = useNavigate()
             {doctorDetails === null ? (
               <div className="col-md-12"></div>
             ) : (
-              <div className="flex flex-col gap-2">
+              <div className="col-span-3">
                 <div className="">
                   {/* <ToastContainer limit={1}/> */}
                   <label style={{ fontSize: 16 }} className="font-medium">
                     Select Doctors:
                   </label>
                 </div>
-
-                {doctorDetails.length > 0 ? (
-                  doctorDetails.map((doctor) => (
-                    <div
-                      onClick={() => funSelectedDoctor(doctor)}
-                      // className="selected-doc3 col-md-5"
-                      className={`flex border cursor-pointer border-gray-200 rounded-md ${
-                        selectedDoctorDetail === doctor.user_id
-                          ? " border-green-500 border-2"
-                          : ""
-                      }`}
-                      key={doctor.user_id}
-                    >
-                      <div className="row" style={{ display: "contents" }}>
-                        {doctor.profile_picture ? (
-                          <div className="mr-4">
-                            <img
-                              style={{
-                                height: "90px",
-                                width: "90px",
-                                borderRadius: "14px",
-                                padding: "8px",
-                              }}
-                              src={Media + "/" + doctor.profile_picture}
-                              alt=""
-                            />
+                <div className="flex items-center gap-2">
+                  {doctorDetails.length > 0 ? (
+                    doctorDetails.map((doctor) => (
+                      <div
+                        onClick={() => funSelectedDoctor(doctor)}
+                        // className="selected-doc3 col-md-5"
+                        className={`flex border cursor-pointer w-80 border-gray-200 rounded-md ${
+                          selectedDoctorDetail === doctor.user_id
+                            ? " border-green-500 border-2"
+                            : ""
+                        }`}
+                        key={doctor.user_id}
+                      >
+                        <div className="flex">
+                          {doctor.profile_picture ? (
+                            <div className="mr-4">
+                              <img
+                                style={{
+                                  height: "90px",
+                                  width: "90px",
+                                  borderRadius: "14px",
+                                  padding: "8px",
+                                }}
+                                src={Media + "/" + doctor.profile_picture}
+                                alt=""
+                              />
+                            </div>
+                          ) : (
+                            <div className="mr-4">
+                              <img
+                                style={{ height: "90px" }}
+                                src={docImg}
+                                alt=""
+                              />
+                            </div>
+                          )}
+                          <div className="mt-1">
+                            <h3 className="dr-name2">
+                              <b>
+                                {doctor.firstname} {doctor.lastname}
+                              </b>
+                            </h3>
+                            <span style={{ fontSize: "14px" }}>
+                              Qualifications:{" "}
+                            </span>
+                            <span style={{ fontSize: "14px" }}>
+                              {doctor.speciality}
+                            </span>
+                            <br />
+                            <span className="font-medium">
+                              {doctor.year_of_experience} Years Experience
+                            </span>
                           </div>
-                        ) : (
-                          <div className="mr-4">
-                            <img
-                              style={{ height: "90px" }}
-                              src={docImg}
-                              alt=""
-                            />
-                          </div>
-                        )}
-                        <div className="mt-1">
-                          <h3 className="dr-name2">
-                            <b>
-                              {doctor.firstname} {doctor.lastname}
-                            </b>
-                          </h3>
-                          <span style={{ fontSize: "14px" }}>
-                            Qualifications:{" "}
-                          </span>
-                          <span style={{ fontSize: "14px" }}>
-                            {doctor.speciality}
-                          </span>
-                          <br />
-                          <span className="font-medium">
-                            {doctor.year_of_experience} Years Experience
-                          </span>
                         </div>
                       </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="col-md-12 mt-3">No doctors available.</div>
-                )}
+                    ))
+                  ) : (
+                    <div className="col-md-12 mt-3">No doctors available.</div>
+                  )}
+                </div>
               </div>
             )}
           </div>
