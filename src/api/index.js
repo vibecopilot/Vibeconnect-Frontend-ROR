@@ -1,5 +1,6 @@
 import { getItemInLocalStorage } from "../utils/localStorage";
 import axiosInstance from "./axiosInstance";
+import HrmsAuth from "./HrmsAuth";
 import vibeAuth from "./vibeAuth";
 export const API_URL = "https://vibecopilot.ai";
 export const vibeMedia = "https://vibecopilot.ai/api/media/";
@@ -2944,6 +2945,446 @@ export const postDocAppointment = async (data) => {
     return response.data;
   } catch (error) {
     console.error("Error posting appointment :", error);
+    throw error;
+  }
+};
+// HRMS
+export const getAllHrmsOrganisation = async () => {
+  try {
+    const response = await HrmsAuth.get(`/organization/`, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error getting HRMS organisation :", error);
+    throw error;
+  }
+};
+export const getMyOrganization = async (orgHrId) => {
+  try {
+    const response = await HrmsAuth.get(`/organization/${orgHrId}/`, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error getting My organisation :", error);
+    throw error;
+  }
+};
+export const editMyOrganization = async (orgHrId, data) => {
+  try {
+    const response = await HrmsAuth.put(`/organization/${orgHrId}/`, data, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error editing My organisation :", error);
+    throw error;
+  }
+};
+export const getAllOrganizationAddress = async () => {
+  try {
+    const response = await HrmsAuth.get(`/organization/address/`, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error editing My organisation :", error);
+    throw error;
+  }
+};
+// my organization
+export const getMyOrganizationAddress = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/organization/address/?organization_id=${orgId}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting My organization :", error);
+    throw error;
+  }
+};
+export const getOrganizationAddress = async (addressId) => {
+  try {
+    const response = await HrmsAuth.get(`/organization/address/${addressId}/`, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error editing My organisation :", error);
+    throw error;
+  }
+};
+export const editOrganizationAddress = async (addressId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/organization/address/${addressId}/`,
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error editing Address :", error);
+    throw error;
+  }
+};
+export const getAllOrganizationGeoSettings = async () => {
+  try {
+    const response = await HrmsAuth.get(
+      `/organization/geographical-settings/`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error editing Geo settings :", error);
+    throw error;
+  }
+};
+// location
+export const getMyOrganizationLocations = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/organization/location/?organization_id=${orgId}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting Locations :", error);
+    throw error;
+  }
+};
+
+export const getOrganizationLocation = async (locationId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/organization/location/${locationId}/`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting Location :", error);
+    throw error;
+  }
+};
+export const editOrganizationLocation = async (locationId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/organization/location/${locationId}/`,
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error editing Location :", error);
+    throw error;
+  }
+};
+export const getMyOrgDepartments = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/organization/department/?organization_id=${orgId}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting department :", error);
+    throw error;
+  }
+};
+
+export const getMyHRMSEmployees = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(`/employee/?organization_id=${orgId}`, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error getting employee :", error);
+    throw error;
+  }
+};
+export const addHrmsOrganizationDepartment = async (data) => {
+  try {
+    const response = await HrmsAuth.post(`/organization/department/`, data, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error getting employee :", error);
+    throw error;
+  }
+};
+
+export const getHrmsDepartmentDetails = async (deptId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/organization/department/${deptId}/`,
+
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting employee :", error);
+    throw error;
+  }
+};
+export const editHrmsOrganizationDepartment = async (deptId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/organization/department/${deptId}/`,
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting employee :", error);
+    throw error;
+  }
+};
+export const postCompanyHoliday = async (data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/organization/company-holidays/`,
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting company holiday :", error);
+    throw error;
+  }
+};
+export const getMyBankAccounts = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/organization/bank-accounts/?organization_id=${orgId}`,
+
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting bank account :", error);
+    throw error;
+  }
+};
+export const postMyBankAccounts = async (data) => {
+  try {
+    const response = await HrmsAuth.post(`/organization/bank-accounts/`, data, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error posting bank account :", error);
+    throw error;
+  }
+};
+export const getMyBankDetails = async (bankId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/organization/bank-accounts/${bankId}/`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting bank account :", error);
+    throw error;
+  }
+};
+export const deleteMyBankDetails = async (bankId) => {
+  try {
+    const response = await HrmsAuth.delete(
+      `/organization/bank-accounts/${bankId}/`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting bank account :", error);
+    throw error;
+  }
+};
+export const editMyBankAccount = async (bankId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/organization/bank-accounts/${bankId}/`,
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating bank account :", error);
+    throw error;
+  }
+};
+export const getManageAdmin = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/organization/user-setting/administrator-setting/?organization_id=${orgId}`,
+
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting Admins:", error);
+    throw error;
+  }
+};
+export const deleteManageAdmin = async (adminId) => {
+  try {
+    const response = await HrmsAuth.delete(
+      `/organization/user-setting/administrator-setting/${adminId}/`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting Admins:", error);
+    throw error;
+  }
+};
+export const getEmployeePermission = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/employee_permission/?organization_id=${orgId}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting permission:", error);
+    throw error;
+  }
+};
+export const editEmployeePermission = async (permissionId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/employee_permission/${permissionId}/`,
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating permission:", error);
+    throw error;
+  }
+};
+export const getNewsEmployeePermission = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `employee-NewsFeed-permission/?organization_id=${orgId}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting permission:", error);
+    throw error;
+  }
+};
+export const editNewsEmployeePermission = async (newsId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/employee-NewsFeed-permission/${newsId}/`,
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating permission:", error);
     throw error;
   }
 };

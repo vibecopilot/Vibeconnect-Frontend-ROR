@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { FaDownload } from "react-icons/fa";
 import { GrHelpBook } from "react-icons/gr";
+import { PiPlus } from "react-icons/pi";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 
@@ -16,7 +17,7 @@ const HRMSHelpCenter = ({ help, showModal }) => {
   };
   return (
     <div className="my-4 mx-2 w-fit">
-      <div className="flex flex-col shadow-custom-all-sides bg-gray-50 rounded-md text-wrap  gap-4 my-2 py-2 pl-5 pr-2 w-[18rem]">
+      <div className="flex flex-col  bg-gray-50 rounded-md text-wrap  gap-4 my-2 py-2 pl-5 pr-2 w-[18rem]">
         <div className="flex  gap-4 font-medium">
           <GrHelpBook size={20} />
           <h2>Help Center</h2>
@@ -311,13 +312,13 @@ const HRMSHelpCenter = ({ help, showModal }) => {
                 </li>
                 <li>
                   <ul style={listItemStyle}>
-                    <li>
+                    <li className="flex">
                       Organization---{">"}Bank Account---{">"}Click on {"    "}
-                      <a href="add-bank-account" className="text-blue-400">
-                        <Link  to={"/admin/add-bank-account"} className=" text-white py-1 px-4 rounded-lg"
-                        style={{ background: themeColor }}>Add Fields</Link>
+                      <div  className="text-blue-400">
+                        <button   className=" text-white py-1 px-4 rounded-lg flex items-center gap-2"
+                        style={{ background: themeColor }}><PiPlus/> Bank</button>
                      
-                      </a>
+                      </div>
                     </li>
                   </ul>
                 </li>

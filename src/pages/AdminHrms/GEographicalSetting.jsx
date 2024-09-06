@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import OrganisationSetting from './OrganisationSetting';
+import { getAllOrganizationGeoSettings } from '../../api';
 
 const GeographicalSetting = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -15,10 +16,22 @@ const GeographicalSetting = () => {
   const dateFormats = ['MM/DD/YYYY', 'DD/MM/YYYY', 'YYYY/MM/DD'];
   const currencies = ['USD', 'GBP', 'CAD', 'AUD'];
 
+  useEffect(()=>{
+    const fetchAllGeoSettings = async ()=>{
+      try {
+        const res = await getAllOrganizationGeoSettings()
+        console.log(res)
+      } catch (error) {
+        console.log(error)
+      }
+    }
+    fetchAllGeoSettings()
+  },[])
+
   return (
     <div className='flex gap-10 ml-20'>
         <OrganisationSetting/>
-    <div className="w-2/3 mt-2  p-6 bg-white rounded-lg shadow-md">
+    <div className="w-2/3 mt-2  py-6 bg-white rounded-lg ">
       {/* <h2 className="text-xl font-bold mb-4">Geographical Settings</h2> */}
       <div className='flex justify-between'>
      <h2 className="text-2xl font-bold mb-6">Geographical Settings</h2>

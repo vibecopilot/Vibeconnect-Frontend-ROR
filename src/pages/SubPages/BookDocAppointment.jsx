@@ -21,64 +21,13 @@ const BookDocAppointment = () => {
     : null;
   const user_id = getItemInLocalStorage("VIBEUSERID");
   const orgId = getItemInLocalStorage("VIBEORGID");
-  const [behalf, setbehalf] = useState("self");
   const [relationShipValue, setRelationShipValue] = useState("Self");
   const currentDate = new Date();
   const year = currentDate.getFullYear();
   const month = String(currentDate.getMonth() + 1).padStart(2, "0");
   const day = String(currentDate.getDate()).padStart(2, "0");
   const todayDate = `${year}-${month}-${day}`;
-  const [formData, setFormData] = useState({
-    patientName: "",
-    relationship: "",
-    age: "",
-    gender: "",
-    bloodGroup: "",
-    maritalStatus: "",
-    preference: "",
-    location: "",
-    doctor: "",
-    reportType: "",
-    reason: "",
-    selectedFiles: [],
-  });
-  console.log(formData);
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      [name]: value,
-    }));
-  };
 
-  const handleFileChange = (event) => {
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      filesToAdd: Array.from(event.target.files),
-    }));
-  };
-
-  const addFiles = () => {
-    const filesWithReport = formData.filesToAdd.map((file) => ({
-      file,
-      report: formData.reportType,
-    }));
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      selectedFiles: [...prevFormData.selectedFiles, ...filesWithReport],
-      filesToAdd: [],
-      reportType: "",
-    }));
-  };
-
-  const removeFile = (indexToRemove) => {
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      selectedFiles: prevFormData.selectedFiles.filter(
-        (_, index) => index !== indexToRemove
-      ),
-    }));
-  };
   const themeColor = useSelector((state) => state.theme.color);
 
   const onChangeRelationShipValue = (event) => {

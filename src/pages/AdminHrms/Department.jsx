@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Table from "../../components/table/Table";
 import { BiEdit } from "react-icons/bi";
@@ -7,12 +7,21 @@ import OrganisationSetting from "./OrganisationSetting";
 import HRMSHelpCenter from "./HRMSHelpCenter";
 import { GrHelpBook } from "react-icons/gr";
 import { useSelector } from "react-redux";
-
+import {
+  addHrmsOrganizationDepartment,
+  getMyHRMSEmployees,
+  getMyOrgDepartments,
+  getHrmsDepartmentDetails,
+} from "../../api";
+import Select from "react-select";
+import { getItemInLocalStorage } from "../../utils/localStorage";
+import toast from "react-hot-toast";
 const Department = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalOpen1, setIsModalOpen1] = useState(false);
-
+  const [editSelectedOption, setEditSelectedOption] = useState([]);
   const [departmentName, setDepartmentName] = useState("");
+  const [editDepartmentName, setEditDepartmentName] = useState("");
   const [headOfDepartment, setHeadOfDepartment] = useState("");
   const themeColor = useSelector((state) => state.theme.color);
 
@@ -25,12 +34,12 @@ const Department = () => {
   const columns = [
     {
       name: "Name",
-      selector: (row) => row.Location,
+      selector: (row) => row.name,
       sortable: true,
     },
     {
       name: "Head Of Department",
-      selector: (row) => row.City,
+      selector: (row) => row.head_of_department,
       sortable: true,
     },
     {
@@ -38,35 +47,99 @@ const Department = () => {
 
       cell: (row) => (
         <div className="flex items-center gap-4">
-          <button 
-       onClick={() => setIsModalOpen1(true)}
-          >
+          <button onClick={() => handleEditModal(row.id)}>
             <BiEdit size={15} />
           </button>
         </div>
       ),
     },
   ];
+  const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
+  const [employees, setEmployees] = useState([]);
+  useEffect(() => {
+    const fetchAllEmployees = async () => {
+      try {
+        const res = await getMyHRMSEmployees(hrmsOrgId);
+       
+        const employeesList = res.map((emp) => ({
+          value: emp.id,
+          label: `${emp.first_name} ${emp.last_name}`,
+        }));
 
-  const data = [
-    {
-      Name: "person 1",
-      Location: "HR",
-      City: "John Doe",
-      State: "Maharashtra",
-      Country: "India",
-    },
-  ];
-
-  const employees = ["John Doe", "Jane Smith", "Alice Johnson", "Bob Brown"]; // Example employee list
+        setEmployees(employeesList);
+        console.log(res);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchAllEmployees();
+  }, []);
 
   const handleAddDepartment = () => {
-    // Handle adding department logic here
-    console.log("Department Name:", departmentName);
-    console.log("Head of Department:", headOfDepartment);
-    setIsModalOpen(false); // Close the modal after adding department
+   
+    setIsModalOpen(false);
   };
+  const [departments, setDepartments] = useState([]);
+  const fetchMyDepartments = async () => {
+    try {
+      const departmentRes = await getMyOrgDepartments(hrmsOrgId);
 
+      setDepartments(departmentRes);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(() => {
+    fetchMyDepartments();
+  }, []);
+  const [selectedUserOption, setSelectedUserOption] = useState([]);
+  const handleUserChangeSelect = (selectedUserOption) => {
+    setSelectedUserOption(selectedUserOption);
+  };
+  const handleAddDept = async () => {
+    if (!departmentName) {
+      toast.error("Department name is required");
+      return;
+    }
+    if (!selectedUserOption || selectedUserOption.length === 0) {
+      toast.error("Please select a Head of Department");
+      return;
+    }
+
+    const postData = new FormData();
+    postData.append("name", departmentName);
+
+    const deptHeadId = selectedUserOption.value;
+    postData.append("head_of_department", deptHeadId);
+
+    postData.append("organization", hrmsOrgId);
+
+    try {
+      const postRes = await addHrmsOrganizationDepartment(postData);
+      toast.success("Department added successfully");
+      fetchMyDepartments()
+      setIsModalOpen(false);
+    } catch (error) {
+      toast.error("An error occurred while adding the department");
+      console.log(error);
+    }
+  };
+  const [deptId, setDeptId] = useState("");
+  const handleEditModal = async (id) => {
+    setIsModalOpen1(true);
+    setDeptId(id);
+    try {
+      const response = await getHrmsDepartmentDetails(id);
+      setEditDepartmentName(response.name);
+      const selectedHead = response.map((unit) => ({
+        value: unit.id,
+        label: unit.name,
+      }));
+      setEditSelectedOption(selectedHead);
+    } catch (error) {
+      console.log(error);
+    }
+  };
   return (
     <section className="flex ml-20">
       <OrganisationSetting />
@@ -79,79 +152,88 @@ const Department = () => {
           />
           <button
             onClick={() => setIsModalOpen(true)}
-            className="border-2 font-semibold hover:bg-black hover:text-white duration-150 transition-all border-black p-2 rounded-md text-black cursor-pointer text-center flex items-center gap-2 justify-center"
+            style={{ background: themeColor }}
+            className="border-2 font-semibold hover:bg-black hover:text-white duration-150 transition-all  p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
           >
             <PiPlusCircle size={20} />
             Add Department
           </button>
         </div>
-        <Table columns={columns} data={data} isPagination={true} />
+        <Table columns={columns} data={departments} isPagination={true} />
       </div>
       <div className="my-4 mx-2 w-fit">
-      <div className="flex flex-col shadow-custom-all-sides bg-gray-50 rounded-md text-wrap  gap-4 my-2 py-2 pl-5 pr-2 w-[18rem]">
-        <div className="flex  gap-4 font-medium">
-        <GrHelpBook size={20} />
-        <h2>Help Center</h2>
-        </div>
-     
-      <div>
-              <p className="font-medium"> Department Settings Guidelines</p>
-              <ul style={listItemStyle} className="flex flex-col gap-2">
-                <li>
-                  <ul style={listItemStyle}>
-                    <li>
-                      You can create departments such as a Sales, Marketing, HR,
-                      Finance, Operations, etc. By adding departments, you will
-                      be able to map the employees under specific departments
-                      from the employee profile{" "}--{">"}{" "}employment{" "}---{">"}{" "}Job
-                      Information{" "}---{">"}{" "}Position. This can further be mapped to head
-                      of departments for direct reporting and workflow
-                      approvals.
-                    </li>
-                  </ul>
-                </li>
-                <li>
-                  <ul style={listItemStyle}>
-                    <li>
-                      An analytic view is displayed on the dashboard that gives
-                      information on the no. Of employees mapped under specific
-                      departments. Departments can also be used in filters
-                      across modules.
-                    </li>
-                  </ul>
-                </li>
-                <li>
-                  <ul style={listItemStyle}>
-                    <li>How do I create departments?</li>
-                  </ul>
-                </li>
-                <li>
-                  <ul style={listItemStyle}>
-                    <li>
-                      Click on{" "}
-                     
-                      <button  onClick={() => setIsModalOpen(true)} className="  text-white py-1 px-4 rounded-lg"
-              style={{ background: themeColor }}>
-                        Add Department</button>
-                      ---{">"} Enter department name and select the head of the
-                      department from the employee list.
-                    </li>
-                  </ul>
-                </li>
+        <div className="flex flex-col  bg-gray-50 rounded-md text-wrap  gap-4 my-2 py-2 pl-5 pr-2 w-[18rem]">
+          <div className="flex  gap-4 font-medium">
+            <GrHelpBook size={20} />
+            <h2>Help Center</h2>
+          </div>
 
-                <li>
-                  You can edit and disable the departments. But you cannot
-                  delete the departments that contains mapped employees.
-                </li>
-              </ul>
-            </div></div></div>
+          <div>
+            <p className="font-medium"> Department Settings Guidelines</p>
+            <ul style={listItemStyle} className="flex flex-col gap-2">
+              <li>
+                <ul style={listItemStyle}>
+                  <li>
+                    You can create departments such as a Sales, Marketing, HR,
+                    Finance, Operations, etc. By adding departments, you will be
+                    able to map the employees under specific departments from
+                    the employee profile --{">"} employment ---{">"} Job
+                    Information ---{">"} Position. This can further be mapped to
+                    head of departments for direct reporting and workflow
+                    approvals.
+                  </li>
+                </ul>
+              </li>
+              <li>
+                <ul style={listItemStyle}>
+                  <li>
+                    An analytic view is displayed on the dashboard that gives
+                    information on the no. Of employees mapped under specific
+                    departments. Departments can also be used in filters across
+                    modules.
+                  </li>
+                </ul>
+              </li>
+              <li>
+                <ul style={listItemStyle}>
+                  <li>How do I create departments?</li>
+                </ul>
+              </li>
+              <li>
+                <ul style={listItemStyle}>
+                  <li>
+                    Click on{" "}
+                    <button
+                      onClick={() => setIsModalOpen(true)}
+                      className="  text-white py-1 px-4 rounded-lg"
+                      style={{ background: themeColor }}
+                    >
+                      Add Department
+                    </button>
+                    ---{">"} Enter department name and select the head of the
+                    department from the employee list.
+                  </li>
+                </ul>
+              </li>
+
+              <li>
+                You can edit and disable the departments. But you cannot delete
+                the departments that contains mapped employees.
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex z-10 justify-center items-center">
           <div className="bg-white p-5 rounded-md shadow-md w-1/3">
             <h2 className="text-xl font-semibold mb-4">Add Department</h2>
             <div className="mb-4">
-              <label htmlFor="departmentName" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="departmentName"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Department Name
               </label>
               <input
@@ -164,20 +246,19 @@ const Department = () => {
               />
             </div>
             <div className="mb-4">
-              <label htmlFor="headOfDepartment" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="headOfDepartment"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Head of Department
               </label>
-              <select
-                id="headOfDepartment"
-                value={headOfDepartment}
-                onChange={(e) => setHeadOfDepartment(e.target.value)}
-                className="mt-1 block w-full border border-gray-400 p-2 rounded-md"
-              >
-                <option value="" disabled>Select Head of Department</option>
-                {employees.map((employee, index) => (
-                  <option key={index} value={employee}>{employee}</option>
-                ))}
-              </select>
+
+              <Select
+                options={employees}
+                noOptionsMessage={() => "No Employee Available"}
+                onChange={handleUserChangeSelect}
+                placeholder="Select Department Head"
+              />
             </div>
             <div className="flex justify-end">
               <button
@@ -187,7 +268,7 @@ const Department = () => {
                 Cancel
               </button>
               <button
-                onClick={handleAddDepartment}
+                onClick={handleAddDept}
                 className="bg-blue-500 text-white p-2 rounded-md"
               >
                 Add
@@ -196,38 +277,40 @@ const Department = () => {
           </div>
         </div>
       )}
-        {isModalOpen1 && (
+      {isModalOpen1 && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex z-10 justify-center items-center">
           <div className="bg-white p-5 rounded-md shadow-md w-1/3">
             <h2 className="text-xl font-semibold mb-4">Edit Department</h2>
             <div className="mb-4">
-              <label htmlFor="departmentName" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="departmentName"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Department Name
               </label>
               <input
                 type="text"
                 id="departmentName"
-                value={departmentName}
-                onChange={(e) => setDepartmentName(e.target.value)}
+                value={editDepartmentName}
+                onChange={(e) => setEditDepartmentName(e.target.value)}
                 className="mt-1 block w-full border border-gray-400 p-2 rounded-md"
                 placeholder="Enter Department Name"
               />
             </div>
             <div className="mb-4">
-              <label htmlFor="headOfDepartment" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="headOfDepartment"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Head of Department
               </label>
-              <select
-                id="headOfDepartment"
-                value={headOfDepartment}
-                onChange={(e) => setHeadOfDepartment(e.target.value)}
-                className="mt-1 block w-full border border-gray-400 p-2 rounded-md"
-              >
-                <option value="" disabled>Select Head of Department</option>
-                {employees.map((employee, index) => (
-                  <option key={index} value={employee}>{employee}</option>
-                ))}
-              </select>
+              <Select
+                closeMenuOnSelect={false}
+                options={employees}
+                noOptionsMessage={() => "No Employee Available"}
+                onChange={handleUserChangeSelect}
+                placeholder="Select Department Head"
+              />
             </div>
             <div className="flex justify-end">
               <button

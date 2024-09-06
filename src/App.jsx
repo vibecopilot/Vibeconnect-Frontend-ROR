@@ -684,26 +684,16 @@ function App() {
       //   user_id: user_id,
       // };
       const user_id = getItemInLocalStorage("VIBEUSERID");
-      console.log(user_id);
+    
       const data = await getVibeBackground(user_id);
 
       if (data.success) {
-        console.log("sucess");
-
-        console.log(data.data);
+       
         const selectedImageSrc = API_URL + data.data.image;
 
         const selectedImageIndex = data.data.index;
 
-        // Now, you can use selectedImageSrc and selectedImageIndex as needed
-        console.log("Received response:", data);
-
-        // For example, update state or perform any other actions
-        // setSelectedImage(selectedImageSrc);
-        // setSelectedIndex(selectedImageIndex);
-        // console.log("Received selectedImageSrc:", selectedImageSrc);
-        // console.log("Received selectedImageIndex:", selectedImageIndex);
-        // console.log(selectedImage);
+        
         dispatch(setBackground(selectedImageSrc));
       } else {
         console.log("Something went wrong");

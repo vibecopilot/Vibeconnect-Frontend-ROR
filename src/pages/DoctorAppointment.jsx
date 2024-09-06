@@ -9,9 +9,11 @@ import { IoClose } from "react-icons/io5";
 import Table from "../components/table/Table";
 import { useSelector } from "react-redux";
 import {
+  API_URL,
   getDocAppointmentList,
   getDocCancelCheck,
   postDocCancellation,
+  vibeMedia,
 } from "../api";
 import { getItemInLocalStorage } from "../utils/localStorage";
 import toast from "react-hot-toast";
@@ -23,6 +25,14 @@ const DoctorAppointment = () => {
   const [page, setPage] = useState("upcoming");
   const [cancelModal, setCancelModal] = useState(false);
   const [cancelId, setCancelId] = useState(null);
+  const [selectedRecords, setSelectedRecords] = useState([]);
+  const [showReportList, setShowReportList] = useState(false);
+  const [selectedReport, setSelectedReport] = useState(null);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const handleDownload = (filename) => {
+    const downloadLink = vibeMedia + filename;
+    window.open(downloadLink, "_blank");
+  };
   const columns = [
     {
       name: "Patient Name",
@@ -127,14 +137,56 @@ const DoctorAppointment = () => {
     // {
     //   name: "Report",
     //   cell: (row) => (
-    //     <div className="flex items-center justify-center gap-2">
+    //     <div className="relative inline-block text-left">
     //       <button
-    //         className="text-red-400 font-medium hover:bg-red-400 hover:text-white transition-all duration-200 p-1 rounded-full"
-    //         title="Cancel"
-    //         onClick={() => CancelAppointmentModal(row.id)}
+    //         type="button"
+    //         className="p-1 pl-3 pr-3 bg-gray-200 rounded-md"
+    //         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
     //       >
-    //         <IoClose size={20} />
+    //         Download PDFs
     //       </button>
+
+    //       {isDropdownOpen && (
+    //         <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+    //           <div className="py-1">
+    //             {selectedRecords.length === 0 &&
+    //               row.consultation_reports.map((report, reportIndex) => (
+    //                 <button
+    //                   key={reportIndex}
+    //                   className="block px-4 py-2 text-sm text-gray-700 w-full text-left hover:bg-gray-100"
+    //                   onClick={() => {
+    //                     handleDownload(report.reports);
+    //                     setSelectedReport(report.reports);
+    //                     setIsDropdownOpen(false);
+    //                   }}
+    //                 >
+    //                   {report.reports.split("_").slice(2).join("_")}
+    //                   <i className="fas fa-download ml-3"></i>
+    //                 </button>
+    //               ))}
+
+    //             {selectedRecords.length > 0 &&
+    //               single.consultation_reports
+    //                 .filter((report) =>
+    //                   selectedRecords.includes(report.report_type)
+    //                 )
+    //                 .map((report, reportIndex) => (
+    //                   <button
+    //                     key={reportIndex}
+    //                     className="block px-4 py-2 text-sm text-gray-700 w-full text-left hover:bg-gray-100"
+    //                     onClick={() => {
+    //                       handleDownload(report.reports);
+    //                       setSelectedReport(report.reports);
+    //                       setIsDropdownOpen(false);
+    //                     }}
+    //                   >
+    //                     {report.reports.split("_").slice(2).join("_")}
+    //                     <i className="fas fa-download ml-3"></i>
+    //                   </button>
+    //                 ))}
+    //           </div>
+    //         </div>
+    //       )}
     //     </div>
     //   ),
     // },
@@ -172,12 +224,7 @@ const DoctorAppointment = () => {
     console.log("end fromDate date----", acceptableEndTime);
     acceptableEndTime.setMinutes(acceptableEndTime.getMinutes() + 10);
     console.log("plus 10 fromDate date----", acceptableEndTime);
-
-    // Check if the current time is within the acceptable range
-    // const isWithinTimeRange = currentDate >= acceptableStartTime;
     const isWithinTimeRange = currentDate >= acceptableStartTime;
-
-    // console.log
     const isWithinTimeRange1 = currentDate <= acceptableEndTime;
 
     // Compare the dates

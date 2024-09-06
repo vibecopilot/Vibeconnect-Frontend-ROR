@@ -10,7 +10,7 @@ const OrganisationSetting = () => {
   const [open, setOpen] = useState(true); // Assuming open state is managed elsewhere or can be derived
 
   useEffect(() => {
-    // Use effect to check if dropdown should be open based on current path
+   
     const currentPath = window.location.pathname;
     setDropdownOpen(
       currentPath === '/admin/company-profile/basic-information' ||
@@ -18,7 +18,7 @@ const OrganisationSetting = () => {
     );
   }, []);
   useEffect(() => {
-    // Use effect to check if dropdown should be open based on current path
+    
     const currentPath = window.location.pathname;
     setDropdownOpen1(
       currentPath === '/admin/employee-fields/personal-details' ||
@@ -41,7 +41,7 @@ const OrganisationSetting = () => {
   return (
     <div className="flex">
         <AdminHRMS/>
-      <div className="w-72 h-full bg-white shadow-lg p-4 mt-9">
+      <div className="w-72 h-full bg-white border-r p-4 mt-9">
         
         <ul className="space-y-4">
           <li className="font-bold text-lg">Details List</li>
