@@ -6,6 +6,7 @@ export const API_URL = "https://vibecopilot.ai";
 export const vibeMedia = "https://vibecopilot.ai/api/media/";
 const token = getItemInLocalStorage("TOKEN");
 export const domainPrefix = "https://admin.vibecopilot.ai";
+// export const domainPrefix = "http://13.215.74.38";
 export const login = async (data) => axiosInstance.post("/login.json", data);
 
 export const getLogin = async () => axiosInstance.get("/login.json");
@@ -3385,6 +3386,90 @@ export const editNewsEmployeePermission = async (newsId, data) => {
     return response.data;
   } catch (error) {
     console.error("Error updating permission:", error);
+    throw error;
+  }
+};
+export const getOnBoardingGeneralSetting = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/organization/onboarding-settings/?organization_id=${orgId}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting onboarding general settings:", error);
+    throw error;
+  }
+};
+export const editOnBoardingGeneralSetting = async (settingId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/organization/onboarding-settings/${settingId}/`,
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting onboarding general settings:", error);
+    throw error;
+  }
+};
+export const getCommunicationTemplate = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/organization/communication-template/?organization_id=${orgId}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting communication template:", error);
+    throw error;
+  }
+};
+export const postCommunicationTemplate = async (data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/organization/communication-template/`,
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error adding communication template:", error);
+    throw error;
+  }
+};
+// Employee
+export const postEmployeeOnBoarding = async (data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/employee/`,
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error adding employee onboarding:", error);
     throw error;
   }
 };

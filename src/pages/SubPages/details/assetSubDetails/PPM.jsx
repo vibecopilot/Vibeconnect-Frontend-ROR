@@ -1,11 +1,16 @@
 import React, { useEffect, useState } from "react";
-import { getAssetPPMActivityDetails, getAssetPPMs } from "../../../../api";
+import {
+  domainPrefix,
+  getAssetPPMActivityDetails,
+  getAssetPPMs,
+} from "../../../../api";
 import { Link, useParams } from "react-router-dom";
 import Table from "../../../../components/table/Table";
 import { BsEye } from "react-icons/bs";
 import { dateTimeFormat } from "../../../../utils/dateUtils";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { FaRegFileAlt } from "react-icons/fa";
 
 const PPM = () => {
   const { id } = useParams();
@@ -107,6 +112,15 @@ const PPM = () => {
       setFilteredPPMData(filteredResult);
     }
   };
+
+  const isImage = (filePath) => {
+    const imageExtensions = ["jpg", "jpeg", "png", "gif", "bmp", "svg"];
+    const extension = filePath.split(".").pop().split("?")[0].toLowerCase();
+    return imageExtensions.includes(extension);
+  };
+  const getFileName = (filePath) => {
+    return filePath.split("/").pop().split("?")[0];
+  };
   return (
     <div className="flex justify-center items-center my-10 md:p-0 p-2">
       <div className="w-full my-2">
@@ -178,11 +192,67 @@ const PPM = () => {
                     <p className="font-medium">Answer :</p>
                     <p>{task.value}</p>
                   </div>
-                  <p><span className="font-medium">Comment : </span>  <span className="text-violet-500 font-medium">{task.comment? task.comment: "No Comment"} </span></p>
+                  <p>
+                    <span className="font-medium">Comment : </span>{" "}
+                    <span className="text-violet-500 font-medium">
+                      {task.comment ? task.comment : "No Comment"}{" "}
+                    </span>
+                  </p>
+                  <span className="font-medium text-gray-500">
+                    {" "}
+                    Attachments :
+                  </span>{" "}
+                  <div className="flex  gap-4 flex-wrap my-4 items-center  text-center">
+                    {task.question_attachments?.map((other) => (
+                      // <p>{other.document}</p>
+                      <img
+                        src={domainPrefix + other.document}
+                        alt={`Attachment ${index + 1}`}
+                        className="w-40 h-28 object-cover rounded-md"
+                        onClick={() =>
+                          window.open(domainPrefix + other.document, "_blank")
+                        }
+                      />
+                    ))}
+                    {/* {task.question_attachments && task.question_attachments > 0 ? (
+                  task.question_attachments.map((other, index) => (
+                    <div key={other.id} className="">
+                      {isImage(domainPrefix + other.document) ? (
+                        <img
+                          src={domainPrefix + other.document}
+                          alt={`Attachment ${index + 1}`}
+                          className="w-40 h-28 object-cover rounded-md"
+                          onClick={() =>
+                            window.open(domainPrefix + other.document, "_blank")
+                          }
+                        />
+                      ) : (
+                        <a
+                          href={domainPrefix + other.document}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="attachment-link hover:text-blue-400 transition-all duration-300  text-center flex flex-col items-center  "
+                        >
+                          <FaRegFileAlt size={50} />
+                          {getFileName(other.document)}
+                        </a>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-center w-full">No Attachments</p>
+                )} */}
+                  </div>
                   <div className="flex justify-between">
                     <p className="">
-                      <span className="font-medium text-gray-500"> Performed by :</span>{" "}
-                      <span className="font-medium text-gray-500"> {task.user_name} </span>
+                      <span className="font-medium text-gray-500">
+                        {" "}
+                        Performed by :
+                      </span>{" "}
+                      <span className="font-medium text-gray-500">
+                        {" "}
+                        {task.user_name}{" "}
+                      </span>
                     </p>
                     <p className="text-sm text-gray-500">
                       {dateTimeFormat(task.created_at)}

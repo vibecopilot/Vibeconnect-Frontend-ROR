@@ -21,7 +21,7 @@ const AddEmployeeDetailsList = () => {
   return (
     <div className="flex">
         <AdminHRMS/>
-      <div className="w-72 h-full bg-white shadow-lg p-4 mt-9">
+      <div className="w-56 h-full bg-white  p-4 mt-9 border-r">
         <ul className="space-y-4">
           <li className="font-bold text-lg">Steps</li>
           <li>
@@ -219,7 +219,7 @@ const AddEmployeeDetailsList = () => {
               </h2>
             </NavLink>
           </li>
-          <li>
+          {/* <li>
             <NavLink
               to="/admin/add-employee/Policies"
               className={({ isActive }) =>
@@ -278,7 +278,7 @@ const AddEmployeeDetailsList = () => {
                 Invite
               </h2>
             </NavLink>
-          </li>
+          </li> */}
 
 
 

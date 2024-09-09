@@ -423,7 +423,7 @@ const AdminHRMS = () => {
         </div>
       </div>
       {isOrgOpen && (
-        <div className="">
+        <div className="flex flex-col gap-2">
           {/* <NavLink
             to="/admin/company-profile/basic-information"
             className={({ isActive }) =>
@@ -562,7 +562,7 @@ const AdminHRMS = () => {
               HR Workflow Setting
             </h2>
           </NavLink>
-          <NavLink
+          {/* <NavLink
             to="/admin/hrms/investment-setting"
             className={({ isActive }) =>
               `${
@@ -589,7 +589,7 @@ const AdminHRMS = () => {
             >
               Investment Setting
             </h2>
-          </NavLink>
+          </NavLink> */}
         </div>
       )}
     </div>
@@ -625,7 +625,7 @@ const AdminHRMS = () => {
                 <div>
                 <div
                   onClick={toggleEmpMenu}
-                  className="cursor-pointer flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md"
+                  className="cursor-pointer flex items-center text-sm gap-3.5 font-medium p-2  rounded-md"
                 >
                   <div>
                     {React.createElement(IoPeopleOutline, { size: "20" })}

@@ -33,11 +33,6 @@ const ManageAdmin = () => {
       selector: (row) => row.name,
       sortable: true,
     },
-    // {
-    //   name: "Leave Label",
-    //   selector: (row) => row.Label,
-    //   sortable: true,
-    // },
     {
       name: "Email",
       selector: (row) => row.email,
@@ -54,13 +49,13 @@ const ManageAdmin = () => {
       cell: (row) => (
         <div className="flex items-center gap-4">
           <button
-            //   to={`/admin/edit-templates/${row.id}`}
+            //to={`/admin/edit-templates/${row.id}`}
             onClick={() => setShowModal1(true)}
           >
             <BiEdit size={15} />
           </button>
           <button
-            //   to={`/admin/edit-templates/${row.id}`}
+            //to={`/admin/edit-templates/${row.id}`}
             onClick={() => handleDeleteAdmin(row.id)}
           >
             <FaTrash size={15} />

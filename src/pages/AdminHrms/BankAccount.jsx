@@ -105,7 +105,7 @@ const BankAccount = () => {
     const postData = new FormData();
     postData.append("bank_name", formData.bankName);
     postData.append("account_number", formData.accountNo);
-    postData.append("holder_name", "ABC");
+    // postData.append("holder_name", "ABC");
     postData.append("ifsc_code", formData.ifsc);
     postData.append("organization", hrmsOrgId);
 
@@ -153,7 +153,7 @@ const BankAccount = () => {
     const postData = new FormData();
     postData.append("bank_name", formData.bankName);
     postData.append("account_number", formData.accountNo);
-    postData.append("holder_name", "ABC");
+    // postData.append("holder_name", "ABC");
     postData.append("ifsc_code", formData.ifsc);
     postData.append("organization", hrmsOrgId);
 

@@ -6,7 +6,7 @@ import { FaQrcode, FaRegFileAlt } from "react-icons/fa";
 import AssetQrCode from "./AssetQrCode";
 import DataTable from "react-data-table-component";
 import { Link, useParams } from "react-router-dom";
-import { getAssetparamsDetails, postAssetparams } from "../../../../api";
+import { domainPrefix, getAssetparamsDetails, postAssetparams } from "../../../../api";
 import toast from "react-hot-toast";
 import Table from "../../../../components/table/Table";
 import { SendDateFormat } from "../../../../utils/dateUtils";
@@ -177,7 +177,7 @@ const Assetinfo = ({ assetData }) => {
     }
   };
 
-  const domainPrefix = "https://admin.vibecopilot.ai";
+  // const domainPrefix = "https://admin.vibecopilot.ai";
 
   return (
     <section>
