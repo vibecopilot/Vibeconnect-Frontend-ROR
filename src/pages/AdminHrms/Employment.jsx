@@ -1,174 +1,166 @@
-import React, { useState } from "react";
-import AdminHRMS from './AdminHrms';
+import React, { useEffect, useState } from "react";
+import AdminHRMS from "./AdminHrms";
 import { FaTrash } from "react-icons/fa";
 import AddEmployeeDetailsList from "./AddEmployeeDetailsList";
 import { GrHelpBook } from "react-icons/gr";
+import {
+  getMyHRMSEmployees,
+  getMyOrganizationLocations,
+  getMyOrgDepartments,
+} from "../../api";
+import { getItemInLocalStorage } from "../../utils/localStorage";
+import { useSelector } from "react-redux";
 
 const Employment = () => {
+  const [locations, setLocations] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [employees, setEmployees] = useState([]);
   const listItemStyle = {
     listStyleType: "disc",
     color: "black",
     fontSize: "14px",
     fontWeight: 500,
   };
-  const [showOtherInput, setShowOtherInput] = useState(false);
 
-  const handleDegreeChange = (event) => {
-    setShowOtherInput(event.target.value === 'Other');
-  };
-  const [fields, setFields] = useState([{ branchName: '', bankAccount: '' }]);
-
-  const handleAddFields = () => {
-    setFields([...fields, { branchName: '', bankAccount: '' }]);
-  };
-
-  const handleRemoveFields = (index) => {
-    const newFields = fields.filter((_, i) => i !== index);
-    setFields(newFields);
-  };
-
-  const handleInputChange = (index, event) => {
-    const newFields = fields.map((field, i) => {
-      if (i === index) {
-        return { ...field, [event.target.name]: event.target.value };
+  const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const locationRes = await getMyOrganizationLocations(hrmsOrgId);
+        setLocations(locationRes);
+      } catch (error) {
+        console.log(error);
       }
-      return field;
-    });
-    setFields(newFields);
-  };
-
+    };
+    const fetchDepartments = async () => {
+      try {
+        const departmentRes = await getMyOrgDepartments(hrmsOrgId);
+        setDepartments(departmentRes);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    const fetchEmployees = async () => {
+      try {
+        const employeeRes = await getMyHRMSEmployees(hrmsOrgId);
+        setEmployees(employeeRes);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchLocations();
+    fetchDepartments();
+    fetchEmployees();
+  }, []);
+const themeColor = useSelector((state)=> state.theme.color)
   return (
-    <div className='flex ml-20'>
-        <AddEmployeeDetailsList/>
-    <div className= "w-full p-6 bg-white rounded-lg shadow-md">
-      
-     
-     
-    
+    <div className="flex  w-full">
+      {/* <AddEmployeeDetailsList /> */}
+      <div className="w-full p-6 bg-white rounded-lg ">
+        <h2 className="border-b text-center text-xl border-black mb-6 font-bold mt-2">
+          Employment Information
+        </h2>
+        <div className="grid md:grid-cols-3 gap-2 mt-5">
+          <div className="grid gap-2 items-center w-full">
+            <label htmlFor="companyName" className="font-semibold">
+              Employee Code:
+            </label>
+            <input
+              type="text"
+              id="companyName"
+              className="border border-gray-400 p-2 rounded-md"
+              placeholder="Enter Employee code"
+            />
+          </div>
 
-     
-
-       
-
-      
-<h2 className="border-b text-center text-xl border-black mb-6 font-bold mt-2">
-              Employment Information
-          </h2>
-          <div className="grid md:grid-cols-3 gap-5 mt-5">
-
-        <div className="grid gap-2 items-center w-full">
-          <label htmlFor="companyName" className="font-semibold">
-            Company Name:
-          </label>
-          <input
-            type="text"
-            id="companyName"
-            className="border border-gray-400 p-2 rounded-md"
-            placeholder="Enter Company Name"
-          />
+          <div className="grid gap-2 items-center w-full">
+            <label htmlFor="jobTitle" className="font-semibold">
+              Joining Date:
+            </label>
+            <input
+              type="date"
+              id="jobTitle"
+              className="border border-gray-400 p-2 rounded-md"
+              placeholder="Enter Job Title"
+            />
+          </div>
+          <div className="grid gap-2 items-center w-full">
+            <label htmlFor="jobTitle" className="font-semibold">
+              Employment Type:
+            </label>
+            <select className="border border-gray-400 p-2 rounded-md">
+              <option value="">Select Employment Type</option>
+              <option value="fullTime">Full Time</option>
+              <option value="partTime">Part Time</option>
+            </select>
+          </div>
+          <div className="grid gap-2 items-center w-full">
+            <label htmlFor="jobTitle" className="font-semibold">
+              Probation Due Date:
+            </label>
+            <input
+              type="date"
+              name=""
+              id=""
+              className="border border-gray-400 p-2 rounded-md"
+            />
+          </div>
+          <div className="grid gap-2 items-center w-full">
+            <label htmlFor="jobTitle" className="font-semibold">
+              Branch Location:
+            </label>
+            <select className="border border-gray-400 p-2 rounded-md">
+              <option value="">Select Branch Location</option>
+              {locations?.map((location) => (
+                <option value={location.id} key={location.id}>
+                  {location.city}, {location.state}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="grid gap-2 items-center w-full">
+            <label htmlFor="jobTitle" className="font-semibold">
+              Department:
+            </label>
+            <select className="border border-gray-400 p-2 rounded-md">
+              <option value="">Select Department</option>
+              {departments?.map((department) => (
+                <option value={department.id} key={department.id}>
+                  {department.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="grid gap-2 items-center w-full">
+            <label htmlFor="designation" className="font-semibold">
+              Designation:
+            </label>
+            <input
+              type="text"
+              id="designation"
+              className="border border-gray-400 p-2 rounded-md"
+              placeholder="Enter Designation"
+            />
+          </div>
+          <div className="grid gap-2 items-center w-full">
+            <label htmlFor="designation" className="font-semibold">
+              Reporting Supervisor:
+            </label>
+            <select className="border border-gray-400 p-2 rounded-md">
+              <option value="">Select Supervisor</option>
+              {employees.map((employee)=>(
+                <option value={employee.id} key={employee.id}>{employee.first_name} {employee.last_name}</option>
+              ))}
+            </select>
+          </div>
         </div>
-
-        <div className="grid gap-2 items-center w-full">
-          <label htmlFor="jobTitle" className="font-semibold">
-            Job Title:
-          </label>
-          <input
-            type="text"
-            id="jobTitle"
-            className="border border-gray-400 p-2 rounded-md"
-            placeholder="Enter Job Title"
-          />
+        <div className="flex justify-end">
+          <button className="border rounded-md text-white p-1 px-4" style={{background: themeColor}}>Next</button>
         </div>
-
-        <div className="grid gap-2 items-center w-full">
-          <label htmlFor="employmentStartDate" className="font-semibold">
-            Employment Start Date:
-          </label>
-          <input
-            type="date"
-            id="employmentStartDate"
-            className="border border-gray-400 p-2 rounded-md"
-          />
-        </div>
-
-        <div className="grid gap-2 items-center w-full">
-          <label htmlFor="employmentEndDate" className="font-semibold">
-            Employment End Date:
-          </label>
-          <input
-            type="date"
-            id="employmentEndDate"
-            className="border border-gray-400 p-2 rounded-md"
-          />
-        </div>
-
-        <div className="grid gap-2 items-center w-full">
-          <label htmlFor="responsibilities" className="font-semibold">
-            Responsibilities:
-          </label>
-          <textarea
-            id="responsibilities"
-            className="border border-gray-400 p-2 rounded-md"
-            placeholder="Enter Responsibilities"
-          ></textarea>
-        </div>
-
-        <div className="grid gap-2 items-center w-full">
-          <label htmlFor="reasonForLeaving" className="font-semibold">
-            Reason for Leaving:
-          </label>
-          <input
-            type="text"
-            id="reasonForLeaving"
-            className="border border-gray-400 p-2 rounded-md"
-            placeholder="Enter Reason for Leaving"
-          />
-        </div>
-        
       </div>
      
     </div>
-    
-    <div className='my-4 mx-2 w-fit'>
-      <div className="flex flex-col  shadow-custom-all-sides bg-gray-50 rounded-md text-wrap  gap-4 my-2 py-2 pl-5 pr-2 w-[18rem]">
-        <div className="flex  gap-4 font-medium">
-        <GrHelpBook size={20} />
-          <h2>Tool Tips</h2></div>
-    <div className=' '>
-              {/* <p className="font-medium">Help Center</p> */}
-              <ul style={listItemStyle} className="flex flex-col gap-2">
-                <li>
-                  <ul style={listItemStyle}>
-                    <li>
-                    Add  employment  details such as company name,employment start and end date.         </li>
-                  </ul>
-                </li>
-                {/* <li>
-                  <ul style={listItemStyle}>
-                    <li>
-                    Add Family Information such as Father's Name, Senior Citizen applicable, Disability Level etc              </li>
-                  </ul>
-                </li> */}
-                {/* <li>
-                  <ul style={listItemStyle}>
-                    <li>
-                    Add employee's Payment Information                   </li>
-                  </ul>
-                </li> */}
-
-                <li>
-                  <p>
-                    {/* <a href="#" className="text-blue-400">
-                      Click Here{" "}
-                    </a> */}
-Any custom fields added in Organisation {">"} Organisation Settings {">"} Employee Fields {">"} Employment Details will be reflected on the page               </p>
-                </li>
-               
-               
-              </ul>
-            </div></div></div>
-    </div>
   );
-}
+};
 
-export default Employment
+export default Employment;

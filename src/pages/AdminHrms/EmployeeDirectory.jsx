@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { BiEdit } from "react-icons/bi";
 import { FaTrash } from "react-icons/fa";
 import AdminHRMS from "./AdminHrms";
@@ -8,62 +8,64 @@ import { PiPlusCircle } from "react-icons/pi";
 import { useSelector } from "react-redux";
 import FileInputBox from "../../containers/Inputs/FileInputBox";
 import InviteEmployeeModal from "./InviteEmployeeModal";
+import { getAllHrmsOrganisation, getMyHRMSEmployees } from "../../api";
+import { getItemInLocalStorage } from "../../utils/localStorage";
 
-const employeesData = [
-  {
-    id: 1,
-    name: "Ajay Baniya",
-    code: "BPC13",
-    doj: "12-12-2022",
-    role: "Digital Marketer",
-    department: "Marketing",
-    status: "Active",
-    phone: "+91-9004753837",
-    email: "ajaybaniya0001@gmail.com",
-    location: "Mumbai",
-  },
-  {
-    id: 2,
-    name: "Aniket Parkar",
-    code: "BPC3",
-    doj: "02-09-2019",
-    role: "Business & Operations",
-    department: "Operations",
-    status: "Active",
-    phone: "+91-9004753838",
-    email: "aniketparkar@gmail.com",
-    location: "Mumbai",
-  },
-  {
-    id: 3,
-    name: "Akhil Parkar",
-    code: "BPC3",
-    doj: "02-09-2019",
-    role: "Business & Operations",
-    department: "Operations",
-    status: "Active",
-    phone: "+91-9004753838",
-    email: "aniketparkar@gmail.com",
-    location: "Mumbai",
-  },
-  {
-    id: 3,
-    name: "Mittu Panda",
-    code: "BPC3",
-    doj: "02-09-2019",
-    role: "Business & Operations",
-    department: "Operations",
-    status: "Active",
-    phone: "+91-9004753838",
-    email: "aniketparkar@gmail.com",
-    location: "Mumbai",
-  },
-  // Add more employee data here...
-];
+// const employeesData = [
+//   {
+//     id: 1,
+//     name: "Ajay Baniya",
+//     code: "BPC13",
+//     doj: "12-12-2022",
+//     role: "Digital Marketer",
+//     department: "Marketing",
+//     status: "Active",
+//     phone: "+91-9004753837",
+//     email: "ajaybaniya0001@gmail.com",
+//     location: "Mumbai",
+//   },
+//   {
+//     id: 2,
+//     name: "Aniket Parkar",
+//     code: "BPC3",
+//     doj: "02-09-2019",
+//     role: "Business & Operations",
+//     department: "Operations",
+//     status: "Active",
+//     phone: "+91-9004753838",
+//     email: "aniketparkar@gmail.com",
+//     location: "Mumbai",
+//   },
+//   {
+//     id: 3,
+//     name: "Akhil Parkar",
+//     code: "BPC3",
+//     doj: "02-09-2019",
+//     role: "Business & Operations",
+//     department: "Operations",
+//     status: "Active",
+//     phone: "+91-9004753838",
+//     email: "aniketparkar@gmail.com",
+//     location: "Mumbai",
+//   },
+//   {
+//     id: 3,
+//     name: "Mittu Panda",
+//     code: "BPC3",
+//     doj: "02-09-2019",
+//     role: "Business & Operations",
+//     department: "Operations",
+//     status: "Active",
+//     phone: "+91-9004753838",
+//     email: "aniketparkar@gmail.com",
+//     location: "Mumbai",
+//   },
+//   // Add more employee data here...
+// ];
 
 function EmployeeDirectory() {
   const themeColor = useSelector((state) => state.theme.color);
-
+  const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalOpen1, setIsModalOpen1] = useState(false);
   const [isModalOpen2, setIsModalOpen2] = useState(false);
@@ -76,12 +78,24 @@ function EmployeeDirectory() {
   const [isModalOpen9, setIsModalOpen9] = useState(false);
   const [isModalOpen10, setIsModalOpen10] = useState(false);
   const [isModalOpen11, setIsModalOpen11] = useState(false);
-
-  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [employeesData, setEmployeesData] = useState([]);
+  const [selectedEmployee, setSelectedEmployee] = useState({});
   const [selectedLetter, setSelectedLetter] = useState(null);
+  console.log(selectedEmployee);
+  useEffect(() => {
+    const fetchAllEmployees = async () => {
+      try {
+        const res = await getMyHRMSEmployees(hrmsOrgId);
+        setEmployeesData(res);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchAllEmployees();
+  }, []);
 
   const groupedEmployees = employeesData.reduce((acc, employee) => {
-    const firstLetter = employee.name[0].toUpperCase();
+    const firstLetter = employee.first_name[0].toUpperCase();
     if (!acc[firstLetter]) acc[firstLetter] = [];
     acc[firstLetter].push(employee);
     return acc;
@@ -92,6 +106,7 @@ function EmployeeDirectory() {
   const toggleDropdown = () => {
     setIsOpen(!isOpen);
   };
+
   const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
   const handleLetterClick = (letter) => {
@@ -103,14 +118,20 @@ function EmployeeDirectory() {
     ? groupedEmployees[selectedLetter] || []
     : employeesData;
 
+  function getRandomColor() {
+    const colors = [
+      "#8B0000",
+      "#FF4500",
+      "#2E8B57",
+      "#4682B4",
+      "#6A5ACD",
+      "#D2691E",
+    ];
+    // Add more colors if needed
+    return colors[Math.floor(Math.random() * colors.length)];
+  }
 
-    function getRandomColor() {
-      const colors = ['#8B0000', '#FF4500', '#2E8B57', '#4682B4', '#6A5ACD', '#D2691E'];
-      // Add more colors if needed
-      return colors[Math.floor(Math.random() * colors.length)];
-    }
-
-    const randomColor = getRandomColor();
+  const randomColor = getRandomColor();
   return (
     <div className=" w-full">
       <AdminHRMS />
@@ -907,14 +928,19 @@ function EmployeeDirectory() {
                           onClick={() => setSelectedEmployee(employee)}
                         >
                           <div className="flex items-center">
-                            <div className="bg-gray-300 rounded-full text-white h-12 w-12 flex items-center font-medium justify-center mr-4"  style={{ backgroundColor: randomColor }}>
-                              {employee.name
+                            <div
+                              className="bg-gray-300 rounded-full text-white h-12 w-12 flex items-center font-medium justify-center mr-4"
+                              style={{ backgroundColor: randomColor }}
+                            >
+                              {employee.first_name
                                 .split(" ")
                                 .map((n) => n[0])
                                 .join("")}
                             </div>
                             <div>
-                              <h2 className=" font-bold">{employee.name}</h2>
+                              <h2 className=" font-bold">
+                                {employee.first_name}
+                              </h2>
                               <p className="text-sm font-medium">
                                 DOJ: 12-12-2022
                               </p>
@@ -948,7 +974,8 @@ function EmployeeDirectory() {
                 <button
                   key={letter}
                   onClick={() => handleLetterClick(letter)}
-                  className=" py-1 text-sm hover:bg-orange-200"
+                  className=" p-1 text-sm "
+                  title={letter}
                 >
                   {letter}
                 </button>
@@ -964,8 +991,8 @@ function EmployeeDirectory() {
                 <p>Role: {selectedEmployee.role}</p>
                 <p>Status: {selectedEmployee.status}</p>
                 <p>Location: {selectedEmployee.location}</p>
-                <p>Phone: {selectedEmployee.phone}</p>
-                <p>Email: {selectedEmployee.email}</p>
+                <p>Phone: {selectedEmployee.mobile}</p>
+                <p>Email: {selectedEmployee.email_id}</p>
                 <button
                   type="submit"
                   className="bg-black w-full mb-4 text-white mt-2 hover:bg-gray-700 font-semibold py-2 px-4 rounded"

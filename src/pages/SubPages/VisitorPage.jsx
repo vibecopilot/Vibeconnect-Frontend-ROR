@@ -222,7 +222,7 @@ const VisitorPage = () => {
     {
       name: "Host",
       selector: (row) =>
-        `${row.created_by_name.firstname} ${row.created_by_name.lastname}`,
+        `${row?.created_by_name?.firstname} ${row?.created_by_name?.lastname}`,
       sortable: true,
     },
   ];

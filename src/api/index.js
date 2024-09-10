@@ -3177,6 +3177,23 @@ export const getHrmsDepartmentDetails = async (deptId) => {
     throw error;
   }
 };
+export const deleteHrmsDepartment = async (deptId) => {
+  try {
+    const response = await HrmsAuth.delete(
+      `/organization/department/${deptId}/`,
+
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting employee :", error);
+    throw error;
+  }
+};
 export const editHrmsOrganizationDepartment = async (deptId, data) => {
   try {
     const response = await HrmsAuth.put(
@@ -3470,6 +3487,40 @@ export const postEmployeeOnBoarding = async (data) => {
     return response.data;
   } catch (error) {
     console.error("Error adding employee onboarding:", error);
+    throw error;
+  }
+};
+export const postEmployeeFamily = async (data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/employee/family-information/`,
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error adding employee family:", error);
+    throw error;
+  }
+};
+export const postEmployeeAddress = async (data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/employee/address-information/`,
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error adding employee family:", error);
     throw error;
   }
 };

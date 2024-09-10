@@ -12,10 +12,13 @@ import {
   getMyHRMSEmployees,
   getMyOrgDepartments,
   getHrmsDepartmentDetails,
+  editHrmsOrganizationDepartment,
+  deleteHrmsDepartment,
 } from "../../api";
 import Select from "react-select";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import toast from "react-hot-toast";
+import { FaTrash } from "react-icons/fa";
 const Department = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalOpen1, setIsModalOpen1] = useState(false);
@@ -39,7 +42,7 @@ const Department = () => {
     },
     {
       name: "Head Of Department",
-      selector: (row) => row.head_of_department,
+      selector: (row) => `${row.first_name} ${row.last_name}`,
       sortable: true,
     },
     {
@@ -47,20 +50,36 @@ const Department = () => {
 
       cell: (row) => (
         <div className="flex items-center gap-4">
-          <button onClick={() => handleEditModal(row.id)}>
+          {/* <button onClick={() => handleEditModal(row.id)}>
             <BiEdit size={15} />
+          </button> */}
+          <button
+            onClick={() => handleDeleteDepartment(row.id)}
+            className="text-red-400"
+          >
+            <FaTrash size={15} />
           </button>
         </div>
       ),
     },
   ];
+
+  const handleDeleteDepartment = async (id) => {
+    try {
+      const delRes = await deleteHrmsDepartment(id);
+      toast.success("Department deleted successfully");
+      fetchMyDepartments();
+    } catch (error) {
+      console.log(error);
+    }
+  };
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
   const [employees, setEmployees] = useState([]);
   useEffect(() => {
     const fetchAllEmployees = async () => {
       try {
         const res = await getMyHRMSEmployees(hrmsOrgId);
-       
+
         const employeesList = res.map((emp) => ({
           value: emp.id,
           label: `${emp.first_name} ${emp.last_name}`,
@@ -75,10 +94,6 @@ const Department = () => {
     fetchAllEmployees();
   }, []);
 
-  const handleAddDepartment = () => {
-   
-    setIsModalOpen(false);
-  };
   const [departments, setDepartments] = useState([]);
   const fetchMyDepartments = async () => {
     try {
@@ -95,6 +110,9 @@ const Department = () => {
   const [selectedUserOption, setSelectedUserOption] = useState([]);
   const handleUserChangeSelect = (selectedUserOption) => {
     setSelectedUserOption(selectedUserOption);
+  };
+  const handleEditUserChangeSelect = (selectedUserOption) => {
+    setEditSelectedOption(selectedUserOption);
   };
   const handleAddDept = async () => {
     if (!departmentName) {
@@ -117,7 +135,7 @@ const Department = () => {
     try {
       const postRes = await addHrmsOrganizationDepartment(postData);
       toast.success("Department added successfully");
-      fetchMyDepartments()
+      fetchMyDepartments();
       setIsModalOpen(false);
     } catch (error) {
       toast.error("An error occurred while adding the department");
@@ -131,11 +149,24 @@ const Department = () => {
     try {
       const response = await getHrmsDepartmentDetails(id);
       setEditDepartmentName(response.name);
-      const selectedHead = response.map((unit) => ({
-        value: unit.id,
-        label: unit.name,
-      }));
-      setEditSelectedOption(selectedHead);
+      // const selectedHead = response.map((unit) => ({
+      //   value: unit.id,
+      //   label: unit.first_name,
+      // }));
+      setEditSelectedOption(response.head_of_department);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const UpdateDepartment = async () => {
+    const editData = new FormData();
+    editData.append("name", editDepartmentName);
+    editData.append("head_of_department", editSelectedOption);
+    editData.append("organization", hrmsOrgId);
+
+    try {
+      const res = await editHrmsOrganizationDepartment(deptId, editData);
     } catch (error) {
       console.log(error);
     }
@@ -305,10 +336,11 @@ const Department = () => {
                 Head of Department
               </label>
               <Select
+                value={editSelectedOption}
                 closeMenuOnSelect={false}
                 options={employees}
                 noOptionsMessage={() => "No Employee Available"}
-                onChange={handleUserChangeSelect}
+                onChange={handleEditUserChangeSelect}
                 placeholder="Select Department Head"
               />
             </div>
@@ -320,7 +352,7 @@ const Department = () => {
                 Close
               </button>
               <button
-                onClick={handleAddDepartment}
+                onClick={UpdateDepartment}
                 className="bg-blue-500 text-white p-2 rounded-md"
               >
                 Update

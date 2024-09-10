@@ -19,7 +19,7 @@ const AddCommunicationTemplate = () => {
     subject: "",
     from: "",
     to: "",
-    subject: "",
+   
     cc: "",
     content: "",
     attachmentUrl: "",
