@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import AdminHRMS from "./AdminHrms";
-import { FaTrash } from "react-icons/fa";
+import { FaArrowRight, FaTrash } from "react-icons/fa";
 import AddEmployeeDetailsList from "./AddEmployeeDetailsList";
 import { GrHelpBook } from "react-icons/gr";
 import {
@@ -11,15 +11,23 @@ import {
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import { useSelector } from "react-redux";
 
-const Employment = () => {
+const Employment = ({ setSteps, empId }) => {
   const [locations, setLocations] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [employees, setEmployees] = useState([]);
-  const listItemStyle = {
-    listStyleType: "disc",
-    color: "black",
-    fontSize: "14px",
-    fontWeight: 500,
+  const [formData, setFormData] = useState({
+    employeeCode: "",
+    joinDate: "",
+    employmentType: "",
+    probationDuseDate: "",
+    branch: "",
+    department: "",
+    designation: "",
+    supervisor: "",
+  });
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
@@ -52,7 +60,14 @@ const Employment = () => {
     fetchDepartments();
     fetchEmployees();
   }, []);
-const themeColor = useSelector((state)=> state.theme.color)
+  const themeColor = useSelector((state) => state.theme.color);
+  const [disableNext, setDisableNext] = useState(true);
+  const [disableSave, setDisableSave] = useState(false);
+
+  const handleAddEmployment = async () => {
+    const postData = new FormData();
+  };
+
   return (
     <div className="flex  w-full">
       {/* <AddEmployeeDetailsList /> */}
@@ -70,6 +85,9 @@ const themeColor = useSelector((state)=> state.theme.color)
               id="companyName"
               className="border border-gray-400 p-2 rounded-md"
               placeholder="Enter Employee code"
+              value={formData.employeeCode}
+              onChange={handleChange}
+              name="employeeCode"
             />
           </div>
 
@@ -82,13 +100,21 @@ const themeColor = useSelector((state)=> state.theme.color)
               id="jobTitle"
               className="border border-gray-400 p-2 rounded-md"
               placeholder="Enter Job Title"
+              value={formData.joinDate}
+              onChange={handleChange}
+              name="joinDate"
             />
           </div>
           <div className="grid gap-2 items-center w-full">
             <label htmlFor="jobTitle" className="font-semibold">
               Employment Type:
             </label>
-            <select className="border border-gray-400 p-2 rounded-md">
+            <select
+              className="border border-gray-400 p-2 rounded-md"
+              value={formData.employmentType}
+              onChange={handleChange}
+              name="employmentType"
+            >
               <option value="">Select Employment Type</option>
               <option value="fullTime">Full Time</option>
               <option value="partTime">Part Time</option>
@@ -100,16 +126,22 @@ const themeColor = useSelector((state)=> state.theme.color)
             </label>
             <input
               type="date"
-              name=""
+              name="probationDuseDate"
               id=""
               className="border border-gray-400 p-2 rounded-md"
+              value={formData.probationDuseDate}
             />
           </div>
           <div className="grid gap-2 items-center w-full">
             <label htmlFor="jobTitle" className="font-semibold">
               Branch Location:
             </label>
-            <select className="border border-gray-400 p-2 rounded-md">
+            <select
+              className="border border-gray-400 p-2 rounded-md"
+              value={formData.branch}
+              onChange={handleChange}
+              name="branch"
+            >
               <option value="">Select Branch Location</option>
               {locations?.map((location) => (
                 <option value={location.id} key={location.id}>
@@ -122,7 +154,12 @@ const themeColor = useSelector((state)=> state.theme.color)
             <label htmlFor="jobTitle" className="font-semibold">
               Department:
             </label>
-            <select className="border border-gray-400 p-2 rounded-md">
+            <select
+              className="border border-gray-400 p-2 rounded-md"
+              value={formData.department}
+              onChange={handleChange}
+              name="department"
+            >
               <option value="">Select Department</option>
               {departments?.map((department) => (
                 <option value={department.id} key={department.id}>
@@ -140,25 +177,56 @@ const themeColor = useSelector((state)=> state.theme.color)
               id="designation"
               className="border border-gray-400 p-2 rounded-md"
               placeholder="Enter Designation"
+              onChange={handleChange}
+              value={formData.designation}
+              name="designation"
             />
           </div>
           <div className="grid gap-2 items-center w-full">
             <label htmlFor="designation" className="font-semibold">
               Reporting Supervisor:
             </label>
-            <select className="border border-gray-400 p-2 rounded-md">
+            <select
+              className="border border-gray-400 p-2 rounded-md"
+              value={formData.supervisor}
+              onChange={handleChange}
+              name="supervisor"
+            >
               <option value="">Select Supervisor</option>
-              {employees.map((employee)=>(
-                <option value={employee.id} key={employee.id}>{employee.first_name} {employee.last_name}</option>
+              {employees.map((employee) => (
+                <option value={employee.id} key={employee.id}>
+                  {employee.first_name} {employee.last_name}
+                </option>
               ))}
             </select>
           </div>
         </div>
-        <div className="flex justify-end">
-          <button className="border rounded-md text-white p-1 px-4" style={{background: themeColor}}>Next</button>
+        <div className="flex gap-5 justify-end items-center my-4">
+          <button
+            type="submit"
+            // style={{ background: themeColor }}
+            // onClick={handleAddEmployee}
+            onClick={() => setDisableNext(false)}
+            className={`px-4 py-2  text-white font-medium rounded-md flex items-center gap-2 ${
+              disableSave ? "bg-gray-400 cursor-not-allowed" : "bg-green-400"
+            }`}
+            disabled={disableSave}
+          >
+            Save
+          </button>
+          <button
+            type="submit"
+            // onClick={()=> setSteps("employment")}
+            onClick={() => setSteps("salary")}
+            className={`px-4 py-2  text-white font-medium  rounded-md flex items-center gap-2 ${
+              disableNext ? "bg-gray-400 cursor-not-allowed" : "bg-green-400"
+            }`}
+            disabled={disableNext}
+          >
+            Next <FaArrowRight />
+          </button>
         </div>
       </div>
-     
     </div>
   );
 };

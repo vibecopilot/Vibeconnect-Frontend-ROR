@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { BiEdit } from "react-icons/bi";
-import { FaTrash } from "react-icons/fa";
+import { FaChevronDown, FaTrash } from "react-icons/fa";
 import AdminHRMS from "./AdminHrms";
 import { Link } from "react-router-dom";
 import { PiPlusCircle } from "react-icons/pi";
@@ -8,7 +8,11 @@ import { PiPlusCircle } from "react-icons/pi";
 import { useSelector } from "react-redux";
 import FileInputBox from "../../containers/Inputs/FileInputBox";
 import InviteEmployeeModal from "./InviteEmployeeModal";
-import { getAllHrmsOrganisation, getMyHRMSEmployees } from "../../api";
+import {
+  deleteHRMSEmployee,
+  getAllHrmsOrganisation,
+  getMyHRMSEmployees,
+} from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 
 // const employeesData = [
@@ -132,6 +136,19 @@ function EmployeeDirectory() {
   }
 
   const randomColor = getRandomColor();
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [employeeId, setEmployeeId] = useState("");
+  const handleDeleteModal = (empId) => {
+    setIsDeleteModalOpen(true);
+    setEmployeeId(empId);
+  };
+  const handleDeleteEmployee = async () => {
+    try {
+      await deleteHRMSEmployee(employeeId);
+    } catch (error) {
+      console.log(error);
+    }
+  };
   return (
     <div className=" w-full">
       <AdminHRMS />
@@ -153,31 +170,13 @@ function EmployeeDirectory() {
                 className="border p-2 text-black rounded w-1/3"
               />
               <div className="flex gap-3">
-                {/* <button
-            type="submit"
-            className="bg-black text-white hover:bg-gray-700 font-semibold py-2 px-4 rounded"
-          >
-            Actions
-          </button> */}
                 <div className="relative inline-block text-left">
                   <button
                     onClick={toggleDropdown}
-                    className="inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500"
+                    className=" justify-center w-full flex items-center gap-2 rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500"
                   >
                     Actions
-                    <svg
-                      className="-mr-1 ml-2 h-5 w-5"
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                      aria-hidden="true"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M10 3a1 1 0 01.707 1.707L6.414 9.586a1 1 0 01-1.414 0L.293 5.707A1 1 0 011.707 4.293L6 8.586 9.293 5.293A1 1 0 0110 3z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
+                    <FaChevronDown />
                   </button>
 
                   {isOpen && (
@@ -660,9 +659,7 @@ function EmployeeDirectory() {
                       <p className="font-bold">
                         Step 1: Download employee information global format
                       </p>
-                      {/* <p>Includes all your Employees with their available details.
-
-</p> */}
+                      {/* <p>Includes all your Employees with their available details.</p> */}
 
                       <button
                         style={{ background: themeColor }}
@@ -802,7 +799,6 @@ function EmployeeDirectory() {
                     </div>
                   </div>
                 )}
-
                 <button
                   onClick={() => setIsModalOpen(true)}
                   className="bg-black text-white hover:bg-gray-700 font-semibold py-2 px-4 rounded"
@@ -919,12 +915,14 @@ function EmployeeDirectory() {
               <div key={letter} id={letter} className="w-full">
                 {selectedLetter === null || selectedLetter === letter ? (
                   <>
-                    <h2 className="text-2xl font-semibold mb-4">{letter}</h2>
+                    <h2 className="text-xl rounded-xl font-semibold mb-4">
+                      {letter}
+                    </h2>
                     <div className="flex flex-wrap">
                       {groupedEmployees[letter]?.map((employee) => (
                         <div
                           key={employee.id}
-                          className="bg-white w-64  p-2 m-2 rounded-lg border cursor-pointer"
+                          className="bg-white w-64 p-2 m-2 rounded-lg border cursor-pointer"
                           onClick={() => setSelectedEmployee(employee)}
                         >
                           <div className="flex items-center">
@@ -950,11 +948,15 @@ function EmployeeDirectory() {
                                 {employee.status}
                               </p>
                               {/* <Link><BiEdit size={15}/></Link> */}
-                              <div className="flex items-center  gap-2 mt-2">
-                                <Link to={`/hrms/employee-directory-Personal`}>
-                                  <BiEdit />
+                              <div className="flex items-center  gap-4 mt-2">
+                                <Link
+                                  to={`/hrms/employee-directory-Personal/${employee.id}`}
+                                >
+                                  <BiEdit size={18} />
                                 </Link>{" "}
-                                <button>
+                                <button
+                                  onClick={() => handleDeleteModal(employee.id)}
+                                >
                                   <FaTrash size={15} className="text-red-400" />
                                 </button>
                               </div>
@@ -982,39 +984,77 @@ function EmployeeDirectory() {
               ))}
             </div>
           </div>
-          <div className="w-96 p-4 bg-gray-100">
-            <h1 className="text-2xl font-bold mb-4">Employee Details</h1>
+          <div className="w-96 p-4 bg-gray-50">
+            <h1 className="text-2xl font-semibold mb-4">Employee Details</h1>
             {selectedEmployee ? (
-              <div>
-                <h2 className="text-2xl font-bold">{selectedEmployee.name}</h2>
-                <p>Department: {selectedEmployee.department}</p>
-                <p>Role: {selectedEmployee.role}</p>
-                <p>Status: {selectedEmployee.status}</p>
-                <p>Location: {selectedEmployee.location}</p>
-                <p>Phone: {selectedEmployee.mobile}</p>
-                <p>Email: {selectedEmployee.email_id}</p>
-                <button
+              <div className="flex flex-col justify-between h-96">
+                <div className="flex flex-col gap-2">
+                  <h2 className="text-xl text-center font-medium mb-2 border-b border-dashed border-gray-300">
+                    {selectedEmployee.first_name} {selectedEmployee.last_name}
+                  </h2>
+                  <p className="grid grid-cols-2">
+                    {" "}
+                    <span className="font-medium text-sm">
+                      Department :
+                    </span>{" "}
+                    <span className="font-medium text-sm">
+                      {selectedEmployee.department}
+                    </span>
+                  </p>
+                  <p className="grid grid-cols-2">
+                    <span className="font-medium text-sm">Role :</span>{" "}
+                    <span className="font-medium text-sm">
+                      {selectedEmployee.role}
+                    </span>
+                  </p>
+                  <p className="grid grid-cols-2">
+                    <span className="font-medium text-sm">Status :</span>{" "}
+                    <span className="font-medium text-sm">
+                      {selectedEmployee.status}
+                    </span>
+                  </p>
+                  <p className="grid grid-cols-2">
+                    <span className="font-medium text-sm">Location :</span>{" "}
+                    <span className="font-medium text-sm">
+                      {selectedEmployee.location}
+                    </span>
+                  </p>
+                  <p className="grid grid-cols-2">
+                    <span className="font-medium text-sm">Phone : </span>{" "}
+                    <span className="font-medium text-sm">
+                      {selectedEmployee.mobile}
+                    </span>
+                  </p>
+                  <p className="grid grid-cols-2">
+                    <span className="font-medium text-sm">Email :</span>{" "}
+                    <span className="font-medium text-sm">
+                      {selectedEmployee.email_id}
+                    </span>
+                  </p>
+                </div>
+                {/* <button
                   type="submit"
                   className="bg-black w-full mb-4 text-white mt-2 hover:bg-gray-700 font-semibold py-2 px-4 rounded"
                 >
                   View Profile
-                </button>
+                </button> */}
                 <div className="flex gap-3">
                   <button
                     type="submit"
-                    className="bg-black text-white hover:bg-gray-700 font-semibold py-2 px-4 rounded"
+                    style={{ background: themeColor }}
+                    className="bg-black text-white hover:bg-gray-700 py-2 px-4 rounded-full"
                   >
                     Separate
                   </button>
                   <button
                     type="submit"
-                    className="bg-black text-white hover:bg-gray-700 font-semibold py-2 px-4 rounded"
+                    className="bg-yellow-500 text-white hover:bg-gray-700  py-2 px-4 rounded-full"
                   >
                     Hold
                   </button>
                   <button
                     type="submit"
-                    className="bg-black text-white hover:bg-gray-700 font-semibold py-2 px-4 rounded"
+                    className="bg-red-500 text-sm font-medium text-white hover:bg-gray-700  py-2 px-4 rounded-full"
                   >
                     Deactivate
                   </button>
@@ -1026,6 +1066,29 @@ function EmployeeDirectory() {
           </div>
         </div>
       </div>
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-30 backdrop-blur-sm z-20">
+          <div className="bg-white overflow-auto max-h-[70%]  md:w-auto w-96 p-4 px-8 flex flex-col rounded-md gap-5">
+            <h2 className="font-medium border-b border-gray-400">
+              Do you really want to delete this Employee?
+            </h2>
+            <div className="flex items-center justify-end gap-2">
+              <button
+                className="bg-green-400 text-white rounded-full p-1 px-4 font-medium"
+                onClick={handleDeleteEmployee}
+              >
+                Confirm
+              </button>
+              <button
+                className="bg-red-400 text-white rounded-full p-1 px-4 font-medium"
+                onClick={() => setIsDeleteModalOpen(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

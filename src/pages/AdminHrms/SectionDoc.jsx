@@ -2,13 +2,14 @@ import React, { useState, useRef } from "react";
 import EmployeeSections from './EmployeeSections'
 import EditEmployeeDirectory from "./EditEmployeeDirectory";
 import Table from "../../components/table/Table";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { BsEye } from "react-icons/bs";
 import { BiEdit } from "react-icons/bi";
 import { FaDownload } from "react-icons/fa";
 import Collapsible from "react-collapsible";
 import CustomTrigger from "../../containers/CustomTrigger";
 const SectionDoc = () => {
+  const { id } = useParams();
     const [isOpen, setIsOpen] = useState(false);
   const column = [
     {
@@ -52,7 +53,7 @@ const SectionDoc = () => {
        
         <div className='flex'>
             <div className=''>
-                <EmployeeSections/>
+                <EmployeeSections empId={id}/>
             </div>
             <div className="w-full">
             <Collapsible

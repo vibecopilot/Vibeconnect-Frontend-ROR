@@ -3146,6 +3146,19 @@ export const getMyHRMSEmployees = async (orgId) => {
     throw error;
   }
 };
+export const deleteHRMSEmployee = async (empId) => {
+  try {
+    const response = await HrmsAuth.delete(`/employee/${empId}/`, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error delete employee :", error);
+    throw error;
+  }
+};
 export const addHrmsOrganizationDepartment = async (data) => {
   try {
     const response = await HrmsAuth.post(`/organization/department/`, data, {
@@ -3324,6 +3337,23 @@ export const getManageAdmin = async (orgId) => {
     throw error;
   }
 };
+export const postManageAdmin = async (data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/organization/user-setting/administrator-setting/`,
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting Admins:", error);
+    throw error;
+  }
+};
 export const deleteManageAdmin = async (adminId) => {
   try {
     const response = await HrmsAuth.delete(
@@ -3475,15 +3505,11 @@ export const postCommunicationTemplate = async (data) => {
 // Employee
 export const postEmployeeOnBoarding = async (data) => {
   try {
-    const response = await HrmsAuth.post(
-      `/employee/`,
-      data,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data/",
-        },
-      }
-    );
+    const response = await HrmsAuth.post(`/employee/`, data, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
     return response.data;
   } catch (error) {
     console.error("Error adding employee onboarding:", error);
@@ -3520,7 +3546,145 @@ export const postEmployeeAddress = async (data) => {
     );
     return response.data;
   } catch (error) {
-    console.error("Error adding employee family:", error);
+    console.error("Error adding employee address:", error);
+    throw error;
+  }
+};
+export const getPaymentModeList = async () => {
+  try {
+    const response = await HrmsAuth.get(`/employee/payment-mode/`, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error getting employee mode list:", error);
+    throw error;
+  }
+};
+
+export const postEmployeePaymentInfo = async (data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/employee/payment-information/`,
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error adding employee payment Info:", error);
+    throw error;
+  }
+};
+export const postEmployeeStatutoryInfo = async (data) => {
+  try {
+    const response = await HrmsAuth.post(`/employee/Statutory/`, data, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error adding employee payment Info:", error);
+    throw error;
+  }
+};
+export const getEmployeeDetails = async (empId) => {
+  try {
+    const response = await HrmsAuth.get(`/employee/${empId}/`, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error getting employee Details:", error);
+    throw error;
+  }
+};
+
+export const editEmployeeDetails = async (empId, data) => {
+  try {
+    const response = await HrmsAuth.put(`/employee/${empId}/`, data, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error updating employee Details:", error);
+    throw error;
+  }
+};
+
+export const getEmployeeFamilyDetails = async (empId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/employee/family-information/?employee_id=${empId}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting family Details:", error);
+    throw error;
+  }
+};
+export const editEmployeeFamilyDetails = async (familyId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/employee/family-information/${familyId}/`,
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating family Details:", error);
+    throw error;
+  }
+};
+export const getEmployeeAddressDetails = async (empId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/employee/address-information/?employee_id=${empId}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting address Details:", error);
+    throw error;
+  }
+};
+export const editEmployeeAddressDetails = async (addressId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/employee/address-information/${addressId}/`,
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating address Details:", error);
     throw error;
   }
 };

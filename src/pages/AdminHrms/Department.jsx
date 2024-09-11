@@ -50,15 +50,15 @@ const Department = () => {
 
       cell: (row) => (
         <div className="flex items-center gap-4">
-          {/* <button onClick={() => handleEditModal(row.id)}>
+          <button onClick={() => handleEditModal(row.id)}>
             <BiEdit size={15} />
-          </button> */}
-          <button
+          </button>
+          {/* <button
             onClick={() => handleDeleteDepartment(row.id)}
             className="text-red-400"
           >
             <FaTrash size={15} />
-          </button>
+          </button> */}
         </div>
       ),
     },
@@ -137,23 +137,44 @@ const Department = () => {
       toast.success("Department added successfully");
       fetchMyDepartments();
       setIsModalOpen(false);
+      setDepartmentName("")
     } catch (error) {
       toast.error("An error occurred while adding the department");
       console.log(error);
     }
   };
   const [deptId, setDeptId] = useState("");
+  // const handleEditModal = async (id) => {
+  //   setIsModalOpen1(true);
+  //   setDeptId(id);
+  //   try {
+  //     const response = await getHrmsDepartmentDetails(id);
+  //     setEditDepartmentName(response.name);
+  //     // const selectedHead = response.map((unit) => ({
+  //     //   value: unit.id,
+  //     //   label: unit.first_name,
+  //     // }));
+  //     setEditSelectedOption(response.head_of_department);
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // };
   const handleEditModal = async (id) => {
     setIsModalOpen1(true);
     setDeptId(id);
     try {
       const response = await getHrmsDepartmentDetails(id);
+      
+    
       setEditDepartmentName(response.name);
-      // const selectedHead = response.map((unit) => ({
-      //   value: unit.id,
-      //   label: unit.first_name,
-      // }));
-      setEditSelectedOption(response.head_of_department);
+  
+      
+      const selectedHead = employees.find(
+        (employee) => employee.value === response.head_of_department
+      );
+  
+
+      setEditSelectedOption(selectedHead || null); 
     } catch (error) {
       console.log(error);
     }
@@ -162,11 +183,14 @@ const Department = () => {
   const UpdateDepartment = async () => {
     const editData = new FormData();
     editData.append("name", editDepartmentName);
-    editData.append("head_of_department", editSelectedOption);
+    editData.append("head_of_department", editSelectedOption.value);
     editData.append("organization", hrmsOrgId);
 
     try {
       const res = await editHrmsOrganizationDepartment(deptId, editData);
+      setIsModalOpen1(false)
+      toast.success("Department updated successfully")
+      fetchMyDepartments()
     } catch (error) {
       console.log(error);
     }
@@ -336,13 +360,13 @@ const Department = () => {
                 Head of Department
               </label>
               <Select
-                value={editSelectedOption}
-                closeMenuOnSelect={false}
-                options={employees}
-                noOptionsMessage={() => "No Employee Available"}
-                onChange={handleEditUserChangeSelect}
-                placeholder="Select Department Head"
-              />
+  value={editSelectedOption}
+  closeMenuOnSelect={false}
+  options={employees}
+  noOptionsMessage={() => "No Employee Available"}
+  onChange={handleEditUserChangeSelect}
+  placeholder="Select Department Head"
+/>
             </div>
             <div className="flex justify-end">
               <button

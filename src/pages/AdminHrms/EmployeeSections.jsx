@@ -4,7 +4,7 @@ import { ImFileText2 } from "react-icons/im";
 import { FiChevronDown, FiChevronUp } from "react-icons/fi"; // Import the necessary icons
 import AdminHRMS from "./AdminHrms";
 
-const EmployeeSections = () => {
+const EmployeeSections = ({empId}) => {
   const [open, setOpen] = useState(true);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
@@ -17,43 +17,14 @@ const EmployeeSections = () => {
   const toggleDropdown1 = () => {
     setDropdownOpen1(!dropdownOpen1);
   };
-
+console.log(empId)
   return (
     <div className="flex ">
-        <AdminHRMS/>
-      <div className="w-72 h-full bg-white shadow-lg p-4 mt-9">
+      <AdminHRMS />
+      <div className="w-48 h-full bg-white border-r p-4 mt-9">
         <ul className="space-y-4">
           <li className="font-bold text-lg">Sections</li>
           <li>
-            {/* <div
-              onClick={toggleDropdown}
-              className="cursor-pointer group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-200 rounded-md"
-            > */}
-              {/* <div>
-                {React.createElement(ImFileText2, { size: "20" })}
-              </div> */}
-              {/* <h2
-                className={`whitespace-pre duration-300 ${
-                  !open && "opacity-0 translate-x-28 overflow-hidden"
-                }`}
-              >
-                Company Profile
-              </h2>
-              <div className="ml-16">
-                {dropdownOpen ? (
-                  <FiChevronUp size={20} />
-                ) : (
-                  <FiChevronDown size={20} />
-                )}
-              </div>
-              <h2
-                className={`${
-                  open && "hidden"
-                } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
-              >
-                Company Profile
-              </h2> */}
-            {/* </div> */}
             {dropdownOpen && (
               <ul className="pl-8 space-y-2 mt-2">
                 <li>
@@ -101,7 +72,7 @@ const EmployeeSections = () => {
           </li>
           <li>
             <NavLink
-              to="/hrms/employee-directory-Personal"
+              to={`/hrms/employee-directory-Personal/${empId}`}
               className={({ isActive }) =>
                 `${
                   isActive
@@ -110,9 +81,7 @@ const EmployeeSections = () => {
                 }`
               }
             >
-              <div>
-                {React.createElement(ImFileText2, { size: "20" })}
-              </div>
+              <div>{React.createElement(ImFileText2, { size: "20" })}</div>
               <h2
                 className={`whitespace-pre duration-300 ${
                   !open && "opacity-0 translate-x-28 overflow-hidden"
@@ -125,13 +94,13 @@ const EmployeeSections = () => {
                   open && "hidden"
                 } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
               >
-               Personal
+                Personal
               </h2>
             </NavLink>
           </li>
           <li>
             <NavLink
-              to="/admin/employee-directory-Employment"
+              to={`/admin/employee-directory-Employment/${empId}`}
               className={({ isActive }) =>
                 `${
                   isActive
@@ -140,9 +109,7 @@ const EmployeeSections = () => {
                 }`
               }
             >
-              <div>
-                {React.createElement(ImFileText2, { size: "20" })}
-              </div>
+              <div>{React.createElement(ImFileText2, { size: "20" })}</div>
               <h2
                 className={`whitespace-pre duration-300 ${
                   !open && "opacity-0 translate-x-28 overflow-hidden"
@@ -155,13 +122,13 @@ const EmployeeSections = () => {
                   open && "hidden"
                 } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
               >
-               Employment
+                Employment
               </h2>
             </NavLink>
           </li>
           <li>
             <NavLink
-              to="/admin/employee-directory-Statutory"
+              to={`/admin/employee-directory-Statutory/${empId}`}
               className={({ isActive }) =>
                 `${
                   isActive
@@ -170,9 +137,7 @@ const EmployeeSections = () => {
                 }`
               }
             >
-              <div>
-                {React.createElement(ImFileText2, { size: "20" })}
-              </div>
+              <div>{React.createElement(ImFileText2, { size: "20" })}</div>
               <h2
                 className={`whitespace-pre duration-300 ${
                   !open && "opacity-0 translate-x-28 overflow-hidden"
@@ -185,13 +150,13 @@ const EmployeeSections = () => {
                   open && "hidden"
                 } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
               >
-               Statutory
+                Statutory
               </h2>
             </NavLink>
           </li>
           <li>
             <NavLink
-              to="/admin/employee-directory/"
+              to={`/admin/employee-directory/Salary/${empId}`}
               className={({ isActive }) =>
                 `${
                   isActive
@@ -200,9 +165,7 @@ const EmployeeSections = () => {
                 }`
               }
             >
-              <div>
-                {React.createElement(ImFileText2, { size: "20" })}
-              </div>
+              <div>{React.createElement(ImFileText2, { size: "20" })}</div>
               <h2
                 className={`whitespace-pre duration-300 ${
                   !open && "opacity-0 translate-x-28 overflow-hidden"
@@ -215,13 +178,13 @@ const EmployeeSections = () => {
                   open && "hidden"
                 } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
               >
-               Salary
+                Salary
               </h2>
             </NavLink>
           </li>
           <li>
             <NavLink
-              to="/admin/employee-directory-Tax"
+              to={`/admin/employee-directory-Tax/${empId}`}
               className={({ isActive }) =>
                 `${
                   isActive
@@ -230,9 +193,7 @@ const EmployeeSections = () => {
                 }`
               }
             >
-              <div>
-                {React.createElement(ImFileText2, { size: "20" })}
-              </div>
+              <div>{React.createElement(ImFileText2, { size: "20" })}</div>
               <h2
                 className={`whitespace-pre duration-300 ${
                   !open && "opacity-0 translate-x-28 overflow-hidden"
@@ -245,13 +206,13 @@ const EmployeeSections = () => {
                   open && "hidden"
                 } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
               >
-               Tax
+                Tax
               </h2>
             </NavLink>
           </li>
           <li>
             <NavLink
-              to="/admin/employee-directory-Documents"
+              to={`/admin/employee-directory-Documents/${empId}`}
               className={({ isActive }) =>
                 `${
                   isActive
@@ -260,9 +221,7 @@ const EmployeeSections = () => {
                 }`
               }
             >
-              <div>
-                {React.createElement(ImFileText2, { size: "20" })}
-              </div>
+              <div>{React.createElement(ImFileText2, { size: "20" })}</div>
               <h2
                 className={`whitespace-pre duration-300 ${
                   !open && "opacity-0 translate-x-28 overflow-hidden"
@@ -275,13 +234,13 @@ const EmployeeSections = () => {
                   open && "hidden"
                 } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
               >
-               Documents
+                Documents
               </h2>
             </NavLink>
           </li>
-          <li>
+          {/* <li>
             <NavLink
-              to="/admin/OtherDetails"
+              to={`/admin/OtherDetails/${empId}`}
               className={({ isActive }) =>
                 `${
                   isActive
@@ -290,9 +249,7 @@ const EmployeeSections = () => {
                 }`
               }
             >
-              <div>
-                {React.createElement(ImFileText2, { size: "20" })}
-              </div>
+              <div>{React.createElement(ImFileText2, { size: "20" })}</div>
               <h2
                 className={`whitespace-pre duration-300 ${
                   !open && "opacity-0 translate-x-28 overflow-hidden"
@@ -305,13 +262,13 @@ const EmployeeSections = () => {
                   open && "hidden"
                 } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
               >
-               Other Details
+                Other Details
               </h2>
             </NavLink>
-          </li>
+          </li> */}
           <li>
             <NavLink
-              to="/admin/employee-directory-LoansAdvances"
+              to={`/admin/employee-directory-LoansAdvances/${empId}`}
               className={({ isActive }) =>
                 `${
                   isActive
@@ -320,9 +277,7 @@ const EmployeeSections = () => {
                 }`
               }
             >
-              <div>
-                {React.createElement(ImFileText2, { size: "20" })}
-              </div>
+              <div>{React.createElement(ImFileText2, { size: "20" })}</div>
               <h2
                 className={`whitespace-pre duration-300 ${
                   !open && "opacity-0 translate-x-28 overflow-hidden"
@@ -335,13 +290,13 @@ const EmployeeSections = () => {
                   open && "hidden"
                 } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
               >
-              Loans & Advances
+                Loans & Advances
               </h2>
             </NavLink>
           </li>
           <li>
             <NavLink
-              to="/admin/employee-directory-Transaction"
+              to={`/admin/employee-directory-Transaction/${empId}`}
               className={({ isActive }) =>
                 `${
                   isActive
@@ -350,9 +305,7 @@ const EmployeeSections = () => {
                 }`
               }
             >
-              <div>
-                {React.createElement(ImFileText2, { size: "20" })}
-              </div>
+              <div>{React.createElement(ImFileText2, { size: "20" })}</div>
               <h2
                 className={`whitespace-pre duration-300 ${
                   !open && "opacity-0 translate-x-28 overflow-hidden"
@@ -365,13 +318,13 @@ const EmployeeSections = () => {
                   open && "hidden"
                 } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
               >
-              Transaction
+                Transaction
               </h2>
             </NavLink>
           </li>
           <li>
             <NavLink
-              to="/admin/employee-directory-Change-logs"
+              to={`/admin/employee-directory-Change-logs/${empId}`}
               className={({ isActive }) =>
                 `${
                   isActive
@@ -380,9 +333,7 @@ const EmployeeSections = () => {
                 }`
               }
             >
-              <div>
-                {React.createElement(ImFileText2, { size: "20" })}
-              </div>
+              <div>{React.createElement(ImFileText2, { size: "20" })}</div>
               <h2
                 className={`whitespace-pre duration-300 ${
                   !open && "opacity-0 translate-x-28 overflow-hidden"
@@ -395,71 +346,12 @@ const EmployeeSections = () => {
                   open && "hidden"
                 } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
               >
-              Change logs
+                Change logs
               </h2>
             </NavLink>
           </li>
 
-
-
           <li>
-            {/* <NavLink
-              to="/employee-fields"
-              className={({ isActive }) =>
-                `${
-                  isActive
-                    ? "text-white bg-blue-500 flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
-                    : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-100 rounded-md"
-                }`
-              }
-            >
-              <div>
-                {React.createElement(ImFileText2, { size: "20" })}
-              </div>
-              <h2
-                className={`whitespace-pre duration-300 ${
-                  !open && "opacity-0 translate-x-28 overflow-hidden"
-                }`}
-              >
-                Employee Fields
-              </h2>
-              <h2
-                className={`${
-                  open && "hidden"
-                } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
-              >
-                Employee Fields
-              </h2>
-            </NavLink> */}
-             {/* <div
-              onClick={toggleDropdown1}
-              className="cursor-pointer group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-200 rounded-md"
-            >
-              <div>
-                {React.createElement(ImFileText2, { size: "20" })}
-              </div>
-              <h2
-                className={`whitespace-pre duration-300 ${
-                  !open && "opacity-0 translate-x-28 overflow-hidden"
-                }`}
-              >
-                Employee Permission
-              </h2>
-              <div className="ml-12">
-                {dropdownOpen1 ? (
-                  <FiChevronUp size={20} />
-                ) : (
-                  <FiChevronDown size={20} />
-                )}
-              </div>
-              <h2
-                className={`${
-                  open && "hidden"
-                } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
-              >
-                Employee Permission
-              </h2>
-            </div> */}
             {dropdownOpen1 && (
               <ul className="pl-8 space-y-2 mt-2">
                 <li>
@@ -478,7 +370,7 @@ const EmployeeSections = () => {
                         !open && "opacity-0 translate-x-28 overflow-hidden"
                       }`}
                     >
-                      Permission 
+                      Permission
                     </h2>
                   </NavLink>
                 </li>
@@ -498,21 +390,17 @@ const EmployeeSections = () => {
                         !open && "opacity-0 translate-x-28 overflow-hidden"
                       }`}
                     >
-                    Employee News Feed Permission
+                      Employee News Feed Permission
                     </h2>
                   </NavLink>
                 </li>
-
               </ul>
             )}
           </li>
-
-
         </ul>
       </div>
-
     </div>
   );
 };
 
-export default EmployeeSections
+export default EmployeeSections;

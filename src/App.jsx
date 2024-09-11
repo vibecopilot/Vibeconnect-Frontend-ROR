@@ -684,16 +684,14 @@ function App() {
       //   user_id: user_id,
       // };
       const user_id = getItemInLocalStorage("VIBEUSERID");
-    
+
       const data = await getVibeBackground(user_id);
 
       if (data.success) {
-       
         const selectedImageSrc = API_URL + data.data.image;
 
         const selectedImageIndex = data.data.index;
 
-        
         dispatch(setBackground(selectedImageSrc));
       } else {
         console.log("Something went wrong");
@@ -5634,7 +5632,7 @@ function App() {
             }
           />
           <Route
-            path="/hrms/employee-directory-Personal"
+            path="/hrms/employee-directory-Personal/:id"
             element={
               <ProtectedAdminRoutes>
                 <SectionsPersonal />
@@ -5642,7 +5640,7 @@ function App() {
             }
           />
           <Route
-            path="/admin/employee-directory-Employment"
+            path="/admin/employee-directory-Employment/:id"
             element={
               <ProtectedAdminRoutes>
                 <SectionsEmployment />
@@ -5650,21 +5648,21 @@ function App() {
             }
           />
           <Route
-            path="/admin/employee-directory-Statutory"
+            path="/admin/employee-directory-Statutory/:id"
             element={
               <ProtectedAdminRoutes>
                 <SectionStatutory />
               </ProtectedAdminRoutes>
             }
           />
-          <Route
-            path="/admin/employee-directory/"
-            element={<Navigate to="/admin/employee-directory/Salary" />}
+          {/* <Route
+            path="/admin/employee-directory/:id"
+            element={<Navigate to="/admin/employee-directory/Salary/:id" />}
             replace
-          />
+          /> */}
 
           <Route
-            path="/admin/employee-directory/Salary"
+            path="/admin/employee-directory/Salary/:id"
             element={
               <ProtectedAdminRoutes>
                 <SectionSalary />
@@ -5680,7 +5678,7 @@ function App() {
             }
           />
           <Route
-            path="/admin/employee-directory-Tax"
+            path="/admin/employee-directory-Tax/:id"
             element={
               <ProtectedAdminRoutes>
                 <SectionTax />
@@ -5688,7 +5686,7 @@ function App() {
             }
           />
           <Route
-            path="/admin/employee-directory-Documents"
+            path="/admin/employee-directory-Documents/:id"
             element={
               <ProtectedAdminRoutes>
                 <SectionDoc />
@@ -5696,7 +5694,7 @@ function App() {
             }
           />
           <Route
-            path="/admin/employee-directory-LoansAdvances"
+            path="/admin/employee-directory-LoansAdvances/:id"
             element={
               <ProtectedAdminRoutes>
                 <SectionLoans />
@@ -5704,7 +5702,7 @@ function App() {
             }
           />
           <Route
-            path="/admin/employee-directory-Transaction"
+            path="/admin/employee-directory-Transaction/:id"
             element={
               <ProtectedAdminRoutes>
                 <SectionTransaction />
@@ -5712,7 +5710,7 @@ function App() {
             }
           />
           <Route
-            path="/admin/employee-directory-Change-logs"
+            path="/admin/employee-directory-Change-logs/:id"
             element={
               <ProtectedAdminRoutes>
                 <SectionLog />

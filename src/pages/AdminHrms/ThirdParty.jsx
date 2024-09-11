@@ -100,15 +100,15 @@ const ThirdParty = () => {
   const [isOpen1, setIsOpen1] = useState(false);
   const [isOpen2, setIsOpen2] = useState(false);
   const handleInputChange = (e) => {
-    let value = e.target.value.replace(/\D/g, ""); // Remove non-digit characters
+    let value = e.target.value.replace(/\D/g, ""); 
     if (value.length > 12) {
-      value = value.slice(0, 12); // Limit to 12 digits
+      value = value.slice(0, 12); 
     }
     let formattedValue =
       value
         .match(/.{1,4}/g)
         ?.join("-")
-        .slice(0, 14) || ""; // Group digits into 4s and join with hyphens
+        .slice(0, 14) || ""; 
     setAadhar(formattedValue);
   };
   const [currentForm, setCurrentForm] = useState("userDetails");

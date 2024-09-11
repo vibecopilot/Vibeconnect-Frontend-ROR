@@ -9,17 +9,19 @@ import {
   deleteManageAdmin,
   getManageAdmin,
   getMyHRMSEmployees,
+  postManageAdmin,
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import Select from "react-select";
+import toast from "react-hot-toast";
 const ManageAdmin = () => {
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
   const [showModal, setShowModal] = useState(false);
   const [showModal1, setShowModal1] = useState(false);
   const [employees, setEmployees] = useState([]);
   const [selectedUserOption, setSelectedUserOption] = useState([]);
-  const handleUserChangeSelect = (selectedUserOption) => {
-    setSelectedUserOption(selectedUserOption);
+  const handleUserChangeSelect = (selectedOption) => {
+    setSelectedUserOption(selectedOption);
   };
   const listItemStyle = {
     listStyleType: "disc",
@@ -30,12 +32,12 @@ const ManageAdmin = () => {
   const columns = [
     {
       name: "Name",
-      selector: (row) => row.name,
+      selector: (row) => `${row.name?.first_name} ${row.name?.last_name}`,
       sortable: true,
     },
     {
       name: "Email",
-      selector: (row) => row.email,
+      selector: (row) => row.name.email_id,
       sortable: true,
     },
     {
@@ -103,6 +105,32 @@ const ManageAdmin = () => {
     fetchAllAdmin();
     fetchAllEmployees();
   }, []);
+  const [access, setAccess] = useState("");
+
+  const handleAddAdminAccess = async () => {
+    const postData = new FormData();
+    postData.append("organization", hrmsOrgId);
+    postData.append("access", access);
+    console.log(selectedUserOption);
+    if (selectedUserOption && selectedUserOption.value) {
+      postData.append("name", selectedUserOption.value);
+    } else {
+      console.error("No user selected.");
+    }
+    try {
+      const res = await postManageAdmin(postData);
+      setShowModal(false);
+      fetchAllAdmin();
+      toast.success("Admin access right added successfully")
+    } catch (error) {
+      console.log(error);
+      toast.error("Something went wrong, Please try again ")
+    }
+  };
+
+  const handleEditModal = async(id)=>{
+    
+  }
 
   return (
     <section className="flex gap-1 ml-20">
@@ -129,34 +157,39 @@ const ManageAdmin = () => {
                 Add Manage Administrator
               </h1>
               <div className="mb-4">
-                <label className="block text-gray-700 mt-2">
-                  Select Employee:
+                <label className="block text-gray-700 my-2 font-medium ">
+                  Select Admin:
                 </label>
                 <Select
                   options={employees}
                   noOptionsMessage={() => "No Admin Available"}
                   onChange={handleUserChangeSelect}
-                  placeholder="Select Employee"
+                  placeholder="Select Admin"
                 />
-                <label className="block text-gray-700 mt-2">
+                <label className="block text-gray-700 mt-2 font-medium">
                   Type of access:
                 </label>
                 <select
                   name="type"
                   className="border border-gray-300 mt-2 p-2 rounded w-full"
+                  value={access}
+                  onChange={(e) => setAccess(e.target.value)}
                 >
-                  <option value="text">Full Access</option>
-                  <option value="number">Restricted Access</option>
+                  <option value="Full Access">Full Access</option>
+                  <option value="Restricted Access">Restricted Access</option>
                 </select>
               </div>
-              <div className="flex justify-center gap-2">
+              <div className="flex justify-end gap-2 mt-4">
                 <button
-                  className="mt-4 ml-2 bg-blue-500 text-white py-2 px-4 rounded-md"
+                  className=" bg-red-500 text-white py-2 px-4 rounded-md"
                   onClick={() => setShowModal(false)}
                 >
                   Close
                 </button>
-                <button className="mt-4 ml-2 bg-blue-500 text-white py-2 px-4 rounded-md">
+                <button
+                  className=" bg-blue-500 text-white py-2 px-4 rounded-md"
+                  onClick={handleAddAdminAccess}
+                >
                   Submit
                 </button>
               </div>
@@ -170,7 +203,7 @@ const ManageAdmin = () => {
                 Edit Manage Administrator
               </h1>
               <div className="mb-4">
-                <label className="block text-gray-700 mt-2">
+                <label className="block text-gray-700 my-2 font-medium">
                   Select Employee:
                 </label>
                 <Select
@@ -179,7 +212,7 @@ const ManageAdmin = () => {
                   onChange={handleUserChangeSelect}
                   placeholder="Select Employee"
                 />
-                <label className="block text-gray-700 mt-2">
+                <label className="block text-gray-700 mt-2 font-medium">
                   Type of access:
                 </label>
                 <select
@@ -190,17 +223,21 @@ const ManageAdmin = () => {
                   <option value="number">Restricted Access</option>
                 </select>
               </div>
-              <div className="flex justify-center gap-2">
+              <div className="flex justify-end gap-2 mt-4">
                 <button
-                  className="mt-4 ml-2 bg-blue-500 text-white py-2 px-4 rounded-md"
+                  className=" bg-red-500 text-white py-2 px-4 rounded-md"
                   onClick={() => setShowModal1(false)}
                 >
                   Close
                 </button>
-                <button className="mt-4 ml-2 bg-blue-500 text-white py-2 px-4 rounded-md">
+                <button
+                  className=" bg-blue-500 text-white py-2 px-4 rounded-md"
+                  onClick={handleAddAdminAccess}
+                >
                   Submit
                 </button>
               </div>
+              
             </div>
           </div>
         )}
