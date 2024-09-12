@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { getServicesRoutineList } from '../../api';
+import { getServicesRoutineList, getSoftServiceStatus } from '../../api';
 import Table from '../../components/table/Table';
 import { Link } from 'react-router-dom';
 import { BiEdit } from 'react-icons/bi';
@@ -9,11 +9,14 @@ import * as XLSX from "xlsx";
 import { BsEye } from 'react-icons/bs';
 import { DNA } from 'react-loader-spinner';
 import { useSelector } from 'react-redux';
+
 const ServicesTask = () => {
+  const [selectedStatus, setSelectedStatus] = useState("all");
     const [routines, setRoutines]= useState([])
     const [filter, setFilter] = useState(false);
     const [searchRoutineText, setSearchRoutineCheck] = useState("")
     const [filteredRoutineData, setFilteredRoutineData] = useState([]);
+    const [RoutineData, setRoutineData] = useState([]);
     const dateFormat = (dateString) => {
       const date = new Date(dateString);
       return date.toLocaleDateString("en-GB", {
@@ -26,6 +29,7 @@ const ServicesTask = () => {
         // hour12: true,
       });
     };
+   
     const routineColumn = [
         {
           name: "Action",
@@ -82,6 +86,7 @@ const ServicesTask = () => {
             const filteredServiceTask = ServiceRoutineResponse.data.activities.filter(asset => asset.soft_service_name);
             console.log(filteredServiceTask)
             setFilteredRoutineData(filteredServiceTask);
+            setRoutineData(filteredServiceTask)
             setRoutines(filteredServiceTask)
           };
           fetchServiceRoutine();
@@ -89,6 +94,20 @@ const ServicesTask = () => {
           console.log(error);
         }
       }, []);
+      const handleStatusChange = async (status) => {
+        setSelectedStatus(status);
+        if(status==="all"){
+          setFilteredRoutineData(RoutineData)
+        }else{
+        try {
+          const respdata = await getSoftServiceStatus(status);
+          const filteredServiceTask = respdata.data.activities.filter(asset => asset.soft_service_name);
+          setFilteredRoutineData(filteredServiceTask);
+        } catch (error) {
+          console.error("Error fetching data:", error);
+        }
+      }
+      };
       const handleRoutineSearch = (event) => {
         const searchValue = event.target.value;
         setSearchRoutineCheck(searchValue);
@@ -159,14 +178,75 @@ const ServicesTask = () => {
           </button>
         </div>
       )}
-      <div className="flex flex-wrap justify-between items-center my-2 ">
-        <input
+      <div className="flex sm:flex-row flex-col justify-between gap-2 my-5">
+       <div className="md:flex justify-between grid grid-cols-2 items-center  gap-2 border border-gray-300 rounded-md px-3 p-2 w-auto">
+            <div className="flex items-center gap-2">
+              <input
+                type="radio"
+                id="all"
+                name="status"
+                checked={selectedStatus === "all"}
+                onChange={() => handleStatusChange("all")}
+              />
+              <label htmlFor="all" className="text-sm">
+                All
+              </label>
+            </div>
+           
+            <div className="flex items-center gap-2">
+              <input
+                type="radio"
+                id="pending"
+                name="status"
+                checked={selectedStatus === "pending"}
+                onChange={() => handleStatusChange("pending")}
+              />
+              <label htmlFor="pending" className="text-sm">
+                Pending
+              </label>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="radio"
+                id="completed"
+                name="status"
+                checked={selectedStatus === "complete"}
+                onChange={() => handleStatusChange("complete")}
+              />
+              <label htmlFor="completed" className="text-sm">
+                Completed
+              </label>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="radio"
+                id="completed"
+                name="status"
+                checked={selectedStatus === "overdue"}
+                onChange={() => handleStatusChange("overdue")}
+              />
+              <label htmlFor="overdue" className="text-sm">
+                Overdue
+              </label>
+            </div>
+          </div>
+          <div className="flex lg:flex-row flex-col gap-2">
+            <input
+              type="text"
+             placeholder="Search By name"
+              className="border border-gray-400 md:w-96 placeholder:text-xs rounded-lg p-2"
+              value={searchRoutineText}
+          onChange={handleRoutineSearch}
+            /></div>
+          </div>
+      <div className="flex flex-wrap justify-between items-center  ">
+        {/* <input
           type="text"
           placeholder="Search By name"
           className="border-2 p-2 w-96 border-gray-300 rounded-lg "
           value={searchRoutineText}
           onChange={handleRoutineSearch}
-        />
+        /> */}
         <div className="flex flex-wrap gap-2">
         
           {/* <button
@@ -184,7 +264,7 @@ style={{background: themeColor}}
     Download QR Code
   </button> */}
         </div>
-      </div>
+      </div> 
       {routines.length !== 0 ?(
         <Table columns={routineColumn} data={filteredRoutineData} />
 

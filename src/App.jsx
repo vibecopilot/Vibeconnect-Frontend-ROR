@@ -668,6 +668,8 @@ import EmployeePolls from "./pages/Employees/EmployeeCommunication/EmployeePoll.
 import EmployeeForum from "./pages/Employees/EmployeeCommunication/EmployeeForum.jsx";
 import EmployeeGroup from "./pages/Employees/EmployeeCommunication/EmployeeGroup.jsx";
 import WorkspaceFeeds from "./pages/Employees/EmployeeWorkSpace/WorkspaceFeeds.jsx";
+import SoftServiceScheduleDetails from "./pages/SubPages/details/SoftServiceScheduleDetails.jsx";
+import SoftServiceWidgets from "./pages/SubPages/SoftServiceWidgets.jsx";
 // new admin hrms
 
 function App() {
@@ -952,6 +954,14 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <AssetRoutineDetails />
+              </ProtectedAdminRoutes>
+            }
+          />
+           <Route
+            path="/soft-service/schedule-task-details/:sId/:activityId"
+            element={
+              <ProtectedAdminRoutes>
+               <SoftServiceScheduleDetails/>
               </ProtectedAdminRoutes>
             }
           />
@@ -1581,6 +1591,14 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <ServicePage />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/services/overview"
+            element={
+              <ProtectedAdminRoutes>
+                <SoftServiceWidgets/>
               </ProtectedAdminRoutes>
             }
           />

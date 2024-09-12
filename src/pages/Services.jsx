@@ -4,6 +4,7 @@ import { IoAddCircleOutline, IoFilterOutline } from "react-icons/io5";
 import { BsEye, BsFilterLeft } from "react-icons/bs";
 import { Link, NavLink } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import { MdOutlineWidgets } from "react-icons/md";
 
 // import { serviceColumns } from "../utils/assetColumns";
 import { BiEdit, BiFilter, BiFilterAlt } from "react-icons/bi";
@@ -167,7 +168,10 @@ const Services = () => {
         </NavLink>
        
       </div>
+      <Link to={"/services/overview"} className="lg:absolute right-0 mx-8 shadow-custom-all-sides p-1 rounded-full cursor-pointer  hover:text-blue-500 transition-all duration-300 bg-gray-200 "><MdOutlineWidgets size={30} /></Link>
+
       </div>
+      
     </section>
   );
 };

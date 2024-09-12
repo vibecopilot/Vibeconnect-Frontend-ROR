@@ -649,6 +649,15 @@ export const getAssociationList = async (checklistId) =>
       },
     }
   );
+  export const deleteAssociationList = async (checklistId,assignedto,serviceId) =>
+    axiosInstance.get(
+      `/delete_user_activity.json?checklist_id=${checklistId}&assigned_to=${assignedto}&asset_id=&soft_service_id=${serviceId}`,
+      {
+        params: {
+          token: token,
+        },
+      }
+    );
 
 export const getChecklistDetails = async (id) =>
   axiosInstance.get(`/checklists/${id}.json`, {
@@ -684,6 +693,15 @@ export const getRoutineTaskDetails = async (assetId, activityId) =>
       },
     }
   );
+  export const getScheduleDetails = async (sId, activityId) =>
+    axiosInstance.get(
+      `/submissions.json?q[soft_service_id_eq]=${sId}&q[activity_id_eq]=${activityId}`,
+      {
+        params: {
+          token: token,
+        },
+      }
+    );
 
 export const getAssetPPMActivityDetails = async (assetId) =>
   axiosInstance.get(
@@ -700,6 +718,27 @@ export const getAssetPPMs = async (assetId) =>
       token: token,
     },
   });
+  export const getSoftserviceActivityDetails = async (id) =>
+    axiosInstance.get(
+      `/submissions.json?q[soft_service_id_eq]=${id}&q[checklist_ctype_eq]=soft_service`,
+      {
+        params: {
+          token: token,
+        },
+      }
+    );
+  export const getSoftServiceSchedule = async (sid) =>
+    axiosInstance.get(`/soft_services/${sid}/softservices_log_show.json`, {
+      params: {
+        token: "775d6ae27272741669a65456ea10cc56cd4cce2bb99287b6",
+      },
+    });
+    export const getSoftServiceStatus = async (data) =>
+      axiosInstance.get(`/activities.json?q[soft_service_id_null]=0&q[status_eq]=${data}`, {
+        params: {
+          token: "775d6ae27272741669a65456ea10cc56cd4cce2bb99287b6",
+        },
+      });
 export const getPPMDetails = async (assetId, activityId) =>
   axiosInstance.get(
     `/submissions.json?q[asset_id_eq]=${assetId}&q[activity_id_eq]=${activityId}`,
@@ -709,6 +748,13 @@ export const getPPMDetails = async (assetId, activityId) =>
       },
     }
   );
+  //booking & request
+  export const postFlightTicketRequest = async (data) =>
+    axiosInstance.post(`/flight_requests.json`, data, {
+      params: {
+        token: token,
+      },
+    });
 // ppm details
 export const getAssetReadingDetails = async (assetId) =>
   axiosInstance.get(
