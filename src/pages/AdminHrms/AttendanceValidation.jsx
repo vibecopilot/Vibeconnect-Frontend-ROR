@@ -116,43 +116,57 @@ const AttendanceValidation = () => {
           </div>
         </div>
       )}
-       <div className='my-4 mx-2 w-fit'>
-      <div className="flex flex-col  shadow-custom-all-sides bg-gray-50 rounded-md text-wrap  gap-4 my-2 py-2 pl-5 pr-2 w-[18rem]">
-        <div className="flex  gap-4 font-medium">
-        <GrHelpBook size={20} />
-          <h2>Help Center</h2></div>
-    <div className=' '>
-              {/* <p className="font-medium">Help Center</p> */}
-              <ul style={listItemStyle} className="flex flex-col gap-2">
-                <li>
-                  <ul style={listItemStyle}>
-                    <li>
-                    The system automatically performs daily checks for the current date, noting instances such as Present, Absent, Half-days, Late Arrivals, Early Departures, Leaves etc based on check-in/check-out times.        </li>
-                  </ul>
-                </li>
-                <li>
-                  <ul style={listItemStyle}>
-                    <li>
-                    In case there are updates to Attendance Policy, Shift/Roster, Biometric Sync, etc., that apply retrospectively, administrators must manually validate attendance for previous dates to ensure these changes are correctly reflected.            </li>
-                  </ul>
-                </li>
-                <li>
-                  <ul style={listItemStyle}>
-                    <li>
-                    Administrators can validate attendance for a maximum period of 30 days at once.               </li>
-                  </ul>
-                </li>
+      <div className="my-4 mx-2 w-fit">
+        <div className="flex flex-col bg-gray-50 rounded-md text-wrap  gap-4 my-2 py-2 pl-5 pr-2 w-[18rem]">
+          <div className="flex  gap-4 font-medium">
+            <GrHelpBook size={20} />
+            <h2>Help Center</h2>
+          </div>
+          <div className=" ">
+            {/* <p className="font-medium">Help Center</p> */}
+            <ul style={listItemStyle} className="flex flex-col gap-2">
+              <li>
+                <ul style={listItemStyle}>
+                  <li>
+                    The system automatically performs daily checks for the
+                    current date, noting instances such as Present, Absent,
+                    Half-days, Late Arrivals, Early Departures, Leaves etc based
+                    on check-in/check-out times.{" "}
+                  </li>
+                </ul>
+              </li>
+              <li>
+                <ul style={listItemStyle}>
+                  <li>
+                    In case there are updates to Attendance Policy,
+                    Shift/Roster, Biometric Sync, etc., that apply
+                    retrospectively, administrators must manually validate
+                    attendance for previous dates to ensure these changes are
+                    correctly reflected.{" "}
+                  </li>
+                </ul>
+              </li>
+              <li>
+                <ul style={listItemStyle}>
+                  <li>
+                    Administrators can validate attendance for a maximum period
+                    of 30 days at once.{" "}
+                  </li>
+                </ul>
+              </li>
 
-                <li>
-                  <p>
-                    
-      For additional information, please Click Here   <a href="#" className="text-blue-400">
-                      Click Here{" "}
-                    </a>       </p>
-                </li>
-               
-              </ul>
-            </div></div></div>
+              <li>
+                <p>
+                  For additional information, please Click Here{" "}
+                  <a href="#" className="text-blue-400">
+                    Click Here{" "}
+                  </a>{" "}
+                </p>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
     </section>
   );
 };

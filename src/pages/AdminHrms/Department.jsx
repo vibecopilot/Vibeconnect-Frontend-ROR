@@ -93,12 +93,12 @@ const Department = () => {
     };
     fetchAllEmployees();
   }, []);
-
+  const [filteredDepartments, setFilteredDepartments] = useState([]);
   const [departments, setDepartments] = useState([]);
   const fetchMyDepartments = async () => {
     try {
       const departmentRes = await getMyOrgDepartments(hrmsOrgId);
-
+      setFilteredDepartments(departmentRes);
       setDepartments(departmentRes);
     } catch (error) {
       console.log(error);
@@ -107,6 +107,20 @@ const Department = () => {
   useEffect(() => {
     fetchMyDepartments();
   }, []);
+  const [searchText, setSearchText] = useState("");
+  const handleSearch = (e) => {
+    const searchValue = e.target.value;
+    setSearchText(searchValue);
+    if (searchValue.trim() === "") {
+      setFilteredDepartments(departments);
+    } else {
+      const filteredResult = departments.filter((department) =>
+        department.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+     `${department.first_name} ${department.last_name}`.toLowerCase().includes(searchValue.toLowerCase())
+      );
+      setFilteredDepartments(filteredResult)
+    }
+  };
   const [selectedUserOption, setSelectedUserOption] = useState([]);
   const handleUserChangeSelect = (selectedUserOption) => {
     setSelectedUserOption(selectedUserOption);
@@ -137,44 +151,23 @@ const Department = () => {
       toast.success("Department added successfully");
       fetchMyDepartments();
       setIsModalOpen(false);
-      setDepartmentName("")
+      setDepartmentName("");
     } catch (error) {
       toast.error("An error occurred while adding the department");
       console.log(error);
     }
   };
   const [deptId, setDeptId] = useState("");
-  // const handleEditModal = async (id) => {
-  //   setIsModalOpen1(true);
-  //   setDeptId(id);
-  //   try {
-  //     const response = await getHrmsDepartmentDetails(id);
-  //     setEditDepartmentName(response.name);
-  //     // const selectedHead = response.map((unit) => ({
-  //     //   value: unit.id,
-  //     //   label: unit.first_name,
-  //     // }));
-  //     setEditSelectedOption(response.head_of_department);
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  // };
   const handleEditModal = async (id) => {
     setIsModalOpen1(true);
     setDeptId(id);
     try {
       const response = await getHrmsDepartmentDetails(id);
-      
-    
       setEditDepartmentName(response.name);
-  
-      
       const selectedHead = employees.find(
         (employee) => employee.value === response.head_of_department
       );
-  
-
-      setEditSelectedOption(selectedHead || null); 
+      setEditSelectedOption(selectedHead || null);
     } catch (error) {
       console.log(error);
     }
@@ -188,9 +181,9 @@ const Department = () => {
 
     try {
       const res = await editHrmsOrganizationDepartment(deptId, editData);
-      setIsModalOpen1(false)
-      toast.success("Department updated successfully")
-      fetchMyDepartments()
+      setIsModalOpen1(false);
+      toast.success("Department updated successfully");
+      fetchMyDepartments();
     } catch (error) {
       console.log(error);
     }
@@ -199,22 +192,24 @@ const Department = () => {
     <section className="flex ml-20">
       <OrganisationSetting />
       <div className="w-full flex m-3 flex-col overflow-hidden">
-        <div className="flex justify-end gap-2 my-5">
+        <div className="flex justify-between gap-2 my-5">
           <input
             type="text"
             placeholder="Search by name"
-            className="border border-gray-400 w-96 placeholder:text-sm rounded-lg p-2"
+            className="border border-gray-400 w-full placeholder:text-sm rounded-lg p-2"
+            value={searchText}
+            onChange={handleSearch}
           />
           <button
             onClick={() => setIsModalOpen(true)}
             style={{ background: themeColor }}
-            className="border-2 font-semibold hover:bg-black hover:text-white duration-150 transition-all  p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
+            className="border-2 font-medium hover:bg-black hover:text-white duration-150 transition-all  p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
           >
             <PiPlusCircle size={20} />
-            Add Department
+            Add 
           </button>
         </div>
-        <Table columns={columns} data={departments} isPagination={true} />
+        <Table columns={columns} data={filteredDepartments} isPagination={true} />
       </div>
       <div className="my-4 mx-2 w-fit">
         <div className="flex flex-col  bg-gray-50 rounded-md text-wrap  gap-4 my-2 py-2 pl-5 pr-2 w-[18rem]">
@@ -360,13 +355,12 @@ const Department = () => {
                 Head of Department
               </label>
               <Select
-  value={editSelectedOption}
-  closeMenuOnSelect={false}
-  options={employees}
-  noOptionsMessage={() => "No Employee Available"}
-  onChange={handleEditUserChangeSelect}
-  placeholder="Select Department Head"
-/>
+                value={editSelectedOption}
+                options={employees}
+                noOptionsMessage={() => "No Employee Available"}
+                onChange={handleEditUserChangeSelect}
+                placeholder="Select Department Head"
+              />
             </div>
             <div className="flex justify-end">
               <button

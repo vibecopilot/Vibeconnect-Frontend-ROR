@@ -668,6 +668,7 @@ import EmployeePolls from "./pages/Employees/EmployeeCommunication/EmployeePoll.
 import EmployeeForum from "./pages/Employees/EmployeeCommunication/EmployeeForum.jsx";
 import EmployeeGroup from "./pages/Employees/EmployeeCommunication/EmployeeGroup.jsx";
 import WorkspaceFeeds from "./pages/Employees/EmployeeWorkSpace/WorkspaceFeeds.jsx";
+import AttendanceRec from "./pages/AdminHrms/AttendanceRec.jsx";
 // new admin hrms
 
 function App() {
@@ -4692,7 +4693,8 @@ function App() {
             path="/admin/hrms/attendance-records"
             element={
               <ProtectedAdminRoutes>
-                <AttendanceRecords />
+                {/* <AttendanceRecords /> */}
+                <AttendanceRec/>
               </ProtectedAdminRoutes>
             }
           />

@@ -92,7 +92,7 @@ const Holiday = () => {
       <HRMSHelpCenter help={"holiday"} />
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center z-10 bg-black bg-opacity-50">
-          <div className="bg-white p-6 rounded-md w-[40rem]">
+          <div className="bg-white p-6 rounded-md w-[50rem]">
             <h2 className="text-xl font-bold mb-4">Add Holiday</h2>
             <HolidayModal onSave={handleSave} onClose={closeModal} />
           </div>
@@ -100,7 +100,7 @@ const Holiday = () => {
       )}
       {isModalOpen1 && (
         <div className="fixed inset-0 flex items-center justify-center z-10 bg-black bg-opacity-50">
-          <div className="bg-white p-6 rounded-md w-auto ">
+          <div className="bg-white p-6 rounded-md w-full ">
             <h2 className="text-xl font-bold mb-4">Edit Holiday</h2>
             <HolidayModal
               onSave={handleSave}
