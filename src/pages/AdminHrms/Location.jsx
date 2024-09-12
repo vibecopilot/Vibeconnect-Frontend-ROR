@@ -11,7 +11,6 @@ import OrganisationSetting from "./OrganisationSetting";
 import HRMSHelpCenter from "./HRMSHelpCenter";
 import {
   editOrganizationLocation,
- 
   getMyOrganizationLocations,
   getOrganizationLocation,
 } from "../../api";
@@ -65,15 +64,31 @@ const Location = () => {
   ];
 
   const [locations, setLocations] = useState([]);
+  const [filteredLocations, setFilteredLocations] = useState([]);
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
   const fetchMyOrgLocation = async () => {
     try {
       const myLocationRes = await getMyOrganizationLocations(hrmsOrgId);
-     
+      setFilteredLocations(myLocationRes);
       setLocations(myLocationRes);
     } catch (error) {
       console.log(error);
     }
+  };
+
+  const [searchText, setSearchText] = useState("");
+  const handleSearch = (e) => {
+    const searchValue = e.target.value;
+    setSearchText(searchValue);
+    if (searchValue.trim() === "") {
+      setFilteredLocations(locations);
+    }else{
+      const filteredResult = locations.filter((location)=>
+        location.location.toLowerCase().includes(searchValue.toLowerCase())
+      )
+      setFilteredLocations(filteredResult)
+    }
+   
   };
   useEffect(() => {
     fetchMyOrgLocation();
@@ -95,13 +110,12 @@ const Location = () => {
       console.log(error);
     }
   };
- 
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSaveEdit = async () => {
-    
     if (!formData.city) {
       toast.error("City is required");
       return;
@@ -118,17 +132,17 @@ const Location = () => {
       toast.error("State is required");
       return;
     }
-  
+
     const postData = new FormData();
     postData.append("city", formData.city);
     postData.append("country", formData.country);
     postData.append("location", formData.location);
     postData.append("organization", hrmsOrgId);
     postData.append("state", formData.state);
-  
+
     try {
       const res = await editOrganizationLocation(id, postData);
-      fetchMyOrgLocation()
+      fetchMyOrgLocation();
       toast.success("Location updated successfully");
       setModalIsOpen(false);
     } catch (error) {
@@ -143,13 +157,13 @@ const Location = () => {
         <div className=" flex w-full my-2">
           <input
             type="text"
-            placeholder="Search by name "
+            placeholder="Search by location "
             className="border border-gray-400 w-full placeholder:text-sm rounded-md p-2"
-            //   value={searchText}
-            //   onChange={handleSearch}
+              value={searchText}
+              onChange={handleSearch}
           />
         </div>
-        <Table columns={columns} data={locations} isPagination={true} />
+        <Table columns={columns} data={filteredLocations} isPagination={true} />
       </div>
       <HRMSHelpCenter help={"location"} />
       {modalIsOpen && (

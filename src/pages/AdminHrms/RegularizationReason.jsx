@@ -22,9 +22,11 @@ const RegularizationReason = () => {
       name: "view",
       cell: (row) => (
         <div className="flex items-center gap-4">
-          <button onClick={() => {
-    setShowModal1(true);
-  }}>
+          <button
+            onClick={() => {
+              setShowModal1(true);
+            }}
+          >
             <BiEdit size={15} />
           </button>
         </div>
@@ -89,49 +91,65 @@ const RegularizationReason = () => {
         </div>
         <Table columns={columns} data={data} isPagination={true} />
       </div>
-       <div className='my-4 mx-2 w-fit'>
-      <div className="flex flex-col shadow-custom-all-sides bg-gray-50 rounded-md text-wrap  gap-4 my-2 py-2 pl-5 pr-2 w-[18rem]">
-      <div className="flex  gap-4 font-medium">
-        <GrHelpBook size={20} />
-          <h2>Help Center</h2></div>
-    <div className=''>
-            
-              <ul style={listItemStyle} className="flex flex-col gap-2">
-                <li>
-                  <ul style={listItemStyle}>
-                    <li>
-                    Attendance settings allows you to configure attendance policies in the form of templates based on different departments, profiles, locations, etc.  </li>                </ul>
-                </li>
-                <li>
-                  <ul style={listItemStyle}>
-                    <li>
-                    Within the attendance templates you can choose the mode of capturing the attendance like web check-in, biometrics, timesheet, mobile application.                </li>
-                  </ul>
-                </li>
-               
+      <div className="my-4 mx-2 w-fit">
+        <div className="flex flex-col bg-gray-50 rounded-md text-wrap  gap-4 my-2 py-2 pl-5 pr-2 w-[18rem]">
+          <div className="flex  gap-4 font-medium">
+            <GrHelpBook size={20} />
+            <h2>Help Center</h2>
+          </div>
+          <div className="">
+            <ul style={listItemStyle} className="flex flex-col gap-2">
+              <li>
+                <ul style={listItemStyle}>
+                  <li>
+                    Attendance settings allows you to configure attendance
+                    policies in the form of templates based on different
+                    departments, profiles, locations, etc.{" "}
+                  </li>{" "}
+                </ul>
+              </li>
+              <li>
+                <ul style={listItemStyle}>
+                  <li>
+                    Within the attendance templates you can choose the mode of
+                    capturing the attendance like web check-in, biometrics,
+                    timesheet, mobile application.{" "}
+                  </li>
+                </ul>
+              </li>
 
-                <li>
-                  <p>
-                  
-                    You can automate the attendance process by automatically capturing late marks, half-days, overtime and leave deductions based on the template settings. You can also configure attendance regularization limit and reason.
-                  </p>
-                </li>
-                <li>
-                  <p>
-                  
-                  In the web check-in you can restrict capturing attendance through static IP. Similarly, in mobile applications you can restrict capturing attendance through geo-fencing.           </p>
-                </li>
-                <li>
-                  <p>
-                    
-                    Attendance module is integrated with leave and payroll module and hence will sync data from the attendance module and derive data like LOP calculations for running payroll.                  </p>
-                </li>
-              </ul>
-            </div></div></div>
-            {showModal1 && (
+              <li>
+                <p>
+                  You can automate the attendance process by automatically
+                  capturing late marks, half-days, overtime and leave deductions
+                  based on the template settings. You can also configure
+                  attendance regularization limit and reason.
+                </p>
+              </li>
+              <li>
+                <p>
+                  In the web check-in you can restrict capturing attendance
+                  through static IP. Similarly, in mobile applications you can
+                  restrict capturing attendance through geo-fencing.{" "}
+                </p>
+              </li>
+              <li>
+                <p>
+                  Attendance module is integrated with leave and payroll module
+                  and hence will sync data from the attendance module and derive
+                  data like LOP calculations for running payroll.{" "}
+                </p>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      {showModal1 && (
         <div className="fixed inset-0 z-10 bg-gray-600 bg-opacity-50 flex justify-center items-center">
           <div className="bg-white p-6 rounded-lg shadow-lg w-1/2">
-            <h2 className="text-lg font-bold mb-4">Edit Regularization Reason</h2>
+            <h2 className="text-lg font-bold mb-4">
+              Edit Regularization Reason
+            </h2>
             <label className="block mb-2">
               Label *
               <input
@@ -166,7 +184,8 @@ const RegularizationReason = () => {
               </div>
             )}
             <label className="block mb-2">
-              Within how many days can the employee apply for regularization from the date of occurrence?
+              Within how many days can the employee apply for regularization
+              from the date of occurrence?
               <input
                 type="number"
                 className="border border-gray-400 w-full rounded-lg p-2 mt-1"
@@ -189,9 +208,7 @@ const RegularizationReason = () => {
               >
                 Cancel
               </button>
-              <button
-                className="border-2 font-semibold hover:bg-blue-700 hover:text-white duration-150 transition-all border-blue-700 p-2 rounded-md text-blue-700 cursor-pointer"
-              >
+              <button className="border-2 font-semibold hover:bg-blue-700 hover:text-white duration-150 transition-all border-blue-700 p-2 rounded-md text-blue-700 cursor-pointer">
                 Save
               </button>
             </div>
@@ -201,7 +218,9 @@ const RegularizationReason = () => {
       {showModal && (
         <div className="fixed inset-0 z-10 bg-gray-600 bg-opacity-50 flex justify-center items-center">
           <div className="bg-white p-6 rounded-lg shadow-lg w-1/2">
-            <h2 className="text-lg font-bold mb-4">Add Regularization Reason</h2>
+            <h2 className="text-lg font-bold mb-4">
+              Add Regularization Reason
+            </h2>
             <label className="block mb-2">
               Label *
               <input
@@ -236,7 +255,8 @@ const RegularizationReason = () => {
               </div>
             )}
             <label className="block mb-2">
-              Within how many days can the employee apply for regularization from the date of occurrence?
+              Within how many days can the employee apply for regularization
+              from the date of occurrence?
               <input
                 type="number"
                 className="border border-gray-400 w-full rounded-lg p-2 mt-1"
@@ -257,21 +277,15 @@ const RegularizationReason = () => {
               >
                 Cancel
               </button>
-              <button
-                className="border-2 font-semibold hover:bg-blue-700 hover:text-white duration-150 transition-all border-blue-700 p-2 rounded-md text-blue-700 cursor-pointer"
-              >
+              <button className="border-2 font-semibold hover:bg-blue-700 hover:text-white duration-150 transition-all border-blue-700 p-2 rounded-md text-blue-700 cursor-pointer">
                 Save
               </button>
             </div>
           </div>
         </div>
       )}
-      
     </section>
   );
 };
 
 export default RegularizationReason;
-
-
- 

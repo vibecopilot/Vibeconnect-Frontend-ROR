@@ -16,7 +16,7 @@ const EditCommunicationTemplate = () => {
     subject: "",
     from: "",
     to: "",
-    subject: "",
+   
     cc: "",
     content: "",
     attachmentUrl: "",

@@ -1,143 +1,172 @@
 import React, { useState } from "react";
-import dayjs from "dayjs";
-import ToggleSwitch from "../../Buttons/ToggleSwitch";
 import AdminHRMS from "./AdminHrms";
-import { FaArrowLeft, FaArrowRight, FaRedo, FaTimes } from "react-icons/fa";
-import EmployeeDetailView from "./EmployeeDetailView";
 import { useSelector } from "react-redux";
+import { FaChevronLeft, FaChevronRight, FaRedo } from "react-icons/fa";
+import ToggleSwitch from "../../Buttons/ToggleSwitch";
+import EmployeeDetailView from "./EmployeeDetailView";
 
-// Example data
+// Sample data for employees and their attendance
 const employees = [
-  { name: "Aniket Parkar", code: "AP" },
-  { name: "Prathamesh Palav", code: "PP" },
-  { name: "Sami Saudagar", code: "SS" },
-  { name: "Ajay Baniya", code: "AB" },
-  { name: "Sujal Bhavkar", code: "SB" },
-  { name: "Ritik Solanki", code: "RS" },
-  { name: "Dhiraj Pogaiy", code: "DP" },
-  { name: "Prathamesh Raut", code: "PR" },
-  { name: "Praveen Nair", code: "PN" },
-  { name: "Mahek Nair", code: "MN" },
+  {
+    id: 1,
+    name: "Vinayak Kapdoskar",
+    avatar: "path_to_avatar_image",
+    attendance: ["ABSENT", "ABSENT", "ABSENT", "ABSENT", "ABSENT", "", ""],
+  },
+  {
+    id: 2,
+    name: "Salome Kulangara",
+    avatar: "path_to_avatar_image",
+    attendance: ["ABSENT", "ABSENT", "ABSENT", "ABSENT", "ABSENT", "", ""],
+  },
+  {
+    id: 3,
+    name: "Ankit Nima",
+    avatar: "path_to_avatar_image",
+    attendance: ["ABSENT", "ABSENT", "ABSENT", "ABSENT", "ABSENT", "", ""],
+  },
+  {
+    id: 4,
+    name: "Raj Nima",
+    avatar: "path_to_avatar_image",
+    attendance: ["ABSENT", "ABSENT", "ABSENT", "ABSENT", "ABSENT", "", ""],
+  },
+  {
+    id: 5,
+    name: "Viraj Nima",
+    avatar: "path_to_avatar_image",
+    attendance: ["ABSENT", "ABSENT", "ABSENT", "ABSENT", "ABSENT", "", ""],
+  },
+  {
+    id: 6,
+    name: "sachin Nima",
+    avatar: "path_to_avatar_image",
+    attendance: ["ABSENT", "ABSENT", "ABSENT", "ABSENT", "ABSENT", "", ""],
+  },
+  {
+    id: 7,
+    name: "virat Nima",
+    avatar: "path_to_avatar_image",
+    attendance: ["ABSENT", "ABSENT", "ABSENT", "ABSENT", "ABSENT", "", ""],
+  },
+  {
+    id: 8,
+    name: "Ankit Nima",
+    avatar: "path_to_avatar_image",
+    attendance: ["ABSENT", "ABSENT", "ABSENT", "ABSENT", "ABSENT", "", ""],
+  },
+  {
+    id: 9,
+    name: "vikas Nima",
+    avatar: "path_to_avatar_image",
+    attendance: ["ABSENT", "ABSENT", "ABSENT", "ABSENT", "ABSENT", "", ""],
+  },
+  {
+    id: 10,
+    name: "rahul Nima",
+    avatar: "path_to_avatar_image",
+    attendance: ["ABSENT", "ABSENT", "ABSENT", "ABSENT", "ABSENT", "", ""],
+  },
+  {
+    id: 11,
+    name: "harsh Nima",
+    avatar: "path_to_avatar_image",
+    attendance: ["ABSENT", "ABSENT", "ABSENT", "ABSENT", "ABSENT", "", ""],
+  },
+  {
+    id: 12,
+    name: "niraj Nima",
+    avatar: "path_to_avatar_image",
+    attendance: ["ABSENT", "ABSENT", "ABSENT", "ABSENT", "ABSENT", "", ""],
+  },
+  {
+    id: 13,
+    name: "vardha Nima",
+    avatar: "path_to_avatar_image",
+    attendance: ["ABSENT", "ABSENT", "ABSENT", "ABSENT", "ABSENT", "", ""],
+  },
+  {
+    id: 14,
+    name: "varun Nima",
+    avatar: "path_to_avatar_image",
+    attendance: ["ABSENT", "ABSENT", "ABSENT", "ABSENT", "ABSENT", "", ""],
+  },
+  {
+    id: 15,
+    name: "Ravi Nima",
+    avatar: "path_to_avatar_image",
+    attendance: ["ABSENT", "ABSENT", "ABSENT", "ABSENT", "ABSENT", "", ""],
+  },
+  // Add more employees...
 ];
 
-const rosterData = [
-  {
-    employee: "Aniket Parkar",
-    schedule: [
-      "09:00 AM - 06:00 PM",
-      "09:00 AM - 06:00 PM",
-      "Absent",
-      "09:00 AM - 06:00 PM",
-      "09:00 AM - 06:00 PM",
-      "09:00 AM - 06:00 PM",
-      "09:00 AM - 06:00 PM",
-    ],
-    code: "AP",
-  },
-  {
-    employee: "Prathamesh Palav",
-    schedule: [
-      "09:00 AM - 06:00 PM",
-      "09:00 AM - 06:00 PM",
-      "09:00 AM - 06:00 PM",
-      "Absent",
-      "09:00 AM - 06:00 PM",
-      "09:00 AM - 06:00 PM",
-      "09:00 AM - 06:00 PM",
-    ],
-    code: "PP",
-  },
-  {
-    employee: "Sami Saudagar",
-    schedule: [
-      "09:00 AM - 06:00 PM",
-      "09:00 AM - 06:00 PM",
-      "Weekly Off",
-      "Absent",
-      "09:00 AM - 06:00 PM",
-      "Absent",
-      "09:00 AM - 06:00 PM",
-    ],
-    code: "SS",
-  },
-  {
-    employee: "Ajay Baniya",
-    schedule: [
-      "09:00 AM - 06:00 PM",
-      "09:00 AM - 06:00 PM",
-      "Absent",
-      "09:00 AM - 06:00 PM",
-      "09:00 AM - 06:00 PM",
-      "09:00 AM - 06:00 PM",
-      "09:00 AM - 06:00 PM",
-    ],
-    code: "AB",
-  },
-  // Add more employee schedules here
-];
-const splitTime = (time) => {
-  if (time.includes(" - ")) {
-    return time.split(" - ");
+// Function to get formatted date range (7 days)
+const getDateRange = (startDate) => {
+  const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  let dateRange = [];
+  for (let i = 0; i < 7; i++) {
+    const currentDate = new Date(startDate);
+    currentDate.setDate(startDate.getDate() + i);
+    dateRange.push(
+      `${daysOfWeek[currentDate.getDay()]} ${currentDate
+        .getDate()
+        .toString()
+        .padStart(2, "0")} ${currentDate
+        .toLocaleString("default", { month: "short" })
+        .toUpperCase()}`
+    );
   }
-  return [time];
+  return dateRange;
 };
-const AttendanceRecords = () => {
-  const [uploadFormat, setUploadFormat] = useState("Vibe Connect");
-  const [selectedYear, setSelectedYear] = useState("");
-  const themeColor = useSelector((state) => state.theme.color);
 
-  const [selectedMonth, setSelectedMonth] = useState("");
-  const [selectedDateFormat, setSelectedDateFormat] = useState("DD/MM/YYYY");
-  const [file, setFile] = useState(null);
-
-  const handleFileChange = (event) => {
-    setFile(event.target.files[0]);
-  };
-
-  const handleUpload = () => {
-    // Logic to handle file upload
-    console.log("File uploaded:", file);
-  };
-  const [selectedEmployee, setSelectedEmployee] = useState(null);
-
-  const handleEmployeeClick = (employee) => {
-    setSelectedEmployee(employee);
-  };
-
-  const closeDetail = () => {
-    setSelectedEmployee(null);
-  };
-  const [startDate, setStartDate] = useState(dayjs("2024-07-06"));
+const AttendanceRec = () => {
+  const [startDate, setStartDate] = useState(new Date());
+  const [currentPage, setCurrentPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalOpen1, setIsModalOpen1] = useState(false);
   const [isModalOpen2, setIsModalOpen2] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [selectedRecord1, setSelectedRecord1] = useState(false);
-  const handleselectedRecord1 = () => {
-    setSelectedRecord1(!selectedRecord1);
-  };
-  const handleNextWeek = () => {
-    setStartDate(startDate.add(1, "week"));
-  };
+  const employeesPerPage = 10;
 
   const handlePrevWeek = () => {
-    setStartDate(startDate.subtract(1, "week"));
+    setStartDate((prevDate) => {
+      const newDate = new Date(prevDate);
+      newDate.setDate(prevDate.getDate() - 7); // Go back 7 days
+      return newDate;
+    });
   };
 
-  const renderDates = () => {
-    const dates = [];
-    for (let i = 0; i < 7; i++) {
-      dates.push(startDate.add(i, "day"));
+  const handleNextWeek = () => {
+    setStartDate((prevDate) => {
+      const newDate = new Date(prevDate);
+      newDate.setDate(prevDate.getDate() + 7); // Go forward 7 days
+      return newDate;
+    });
+  };
+
+  const days = getDateRange(startDate);
+  const themeColor = useSelector((state) => state.theme.color);
+
+  // Pagination logic
+  const indexOfLastEmployee = currentPage * employeesPerPage;
+  const indexOfFirstEmployee = indexOfLastEmployee - employeesPerPage;
+  const currentEmployees = employees.slice(
+    indexOfFirstEmployee,
+    indexOfLastEmployee
+  );
+
+  const handleNextPage = () => {
+    if (indexOfLastEmployee < employees.length) {
+      setCurrentPage(currentPage + 1);
     }
-    return dates;
   };
 
-  const dates = renderDates();
-
-  const handleModalToggle = () => {
-    setIsModalOpen(!isModalOpen);
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
   };
-
   const handleRecordClick = (employee, schedule, code) => {
     setSelectedRecord({ employee, schedule, code });
   };
@@ -146,51 +175,40 @@ const AttendanceRecords = () => {
     <div className="flex">
       <AdminHRMS />
 
-      <div className="ml-20  bg-gray-100 p-2 w-full">
+      <div className="ml-20 bg-gray-100 p-2 w-full mb-5">
         {/* Header */}
         <div>
           <header
             style={{ background: themeColor }}
             className="bg-blue-500 text-white p-4 flex justify-between rounded-md items-center"
           >
-            <h1 className="text-2xl font-bold">Attendance Record</h1>
+            <h1 className="text-2xl font-semibold">Attendance Record</h1>
             <div className="flex items-center space-x-4">
               <input
                 className="border p-1 w-64 px-4 text-black border-gray-500 rounded-md"
                 value="2024-07"
                 type="month"
               />
-
-              <select
-                className="border p-2 text-black w-48 rounded"
-                name=""
-                id=""
-              >
+              <select className="border p-2 text-black w-48 rounded">
                 <option value="">Action</option>
                 <option value="">Bulk Regularization</option>
                 <option value="">Bulk Delete</option>
               </select>
-              <button
-                onClick={() => setIsModalOpen1(true)}
-                className="bg-white p-2 text-black rounded"
-              >
+              <button className="bg-white p-2 text-black rounded">
                 Upload Records
               </button>
               <button
                 style={{ background: themeColor }}
                 className="bg-black p-2 rounded"
-                onClick={handleModalToggle}
               >
                 Filter
               </button>
               <button
                 style={{ background: themeColor }}
-                className="bg-black p-2 rounded "
-                onClick={() => setIsModalOpen2(true)}
+                className="bg-black p-2 rounded"
               >
                 <FaRedo />
               </button>
-
               <label className="text-white" htmlFor="">
                 Multiselect
               </label>
@@ -198,22 +216,23 @@ const AttendanceRecords = () => {
             </div>
           </header>
         </div>
-        {/* Main Content */}
-        <div className="flex gap-5 mt-2 ">
+
+        {/* Legend */}
+        <div className="flex gap-5 mt-2">
           <div className="flex gap-2">
-            <div class="w-4 h-4 bg-green-500 mt-1 rounded-full"></div>
+            <div className="w-4 h-4 bg-green-500 mt-1 rounded-full"></div>
             <p> Present</p>
           </div>
           <div className="flex gap-2">
-            <div class="w-4 h-4 bg-red-500 mt-1 rounded-full"></div>
+            <div className="w-4 h-4 bg-red-500 mt-1 rounded-full"></div>
             <p> Absent</p>
           </div>
           <div className="flex gap-2">
-            <div class="w-4 h-4 bg-orange-500 mt-1 rounded-full"></div>
+            <div className="w-4 h-4 bg-orange-500 mt-1 rounded-full"></div>
             <p>Weekly Off/Holiday</p>
           </div>
           <div className="flex gap-2">
-            <div class="w-4 h-4 bg-blue-500 mt-1 rounded-full"></div>
+            <div className="w-4 h-4 bg-blue-500 mt-1 rounded-full"></div>
             <p>Half Day</p>
           </div>
           <div className="flex gap-2">
@@ -233,109 +252,109 @@ const AttendanceRecords = () => {
             <p> Late</p>
           </div>
         </div>
-        <div className="flex  mt-6">
-          <div className="w-1/4 bg-white p-4 rounded shadow-md mr-2">
-            <p className="font-bold mb-5">Employee List</p>
-            <input
-              type="text"
-              placeholder="Search Employee Name/Code"
-              className="w-64 p-2 border mb-4 rounded"
-            />
-            
-              {employees.map((employee, index) => (
-                <li key={index} className="p-2 flex items-center border-b">
-                  <span className="bg-gray-200 p-2 rounded-full mr-2">
-                    {employee.code}
-                  </span>
-                  <button onClick={() => handleEmployeeClick(employee)}>
-                    {employee.name}
-                  </button>
-                </li>
-              ))}
-            
 
-            {selectedEmployee && (
-              <EmployeeDetailView
-                employee={selectedEmployee}
-                closeDetail={closeDetail}
+        {/* Attendance Table */}
+        <div className="flex w-full items-center mt-6">
+          <div className="flex justify-between gap-1 overflow-x-auto w-full">
+            {/* Employee List */}
+            <div className="w-72 h-full p-4 flex flex-col gap-4 bg-white rounded-xl">
+              <input
+                type="text"
+                name=""
+                id=""
+                className="border-b border-gray-500 p-1 outline-none"
+                placeholder="Search employee"
               />
-            )}
-          </div>
-          <div className="w-3/4 bg-white p-4 rounded shadow-md">
-            <div className="flex justify-between mb-4">
-              <button
-                className="bg-gray-300 p-2 rounded"
-                onClick={handlePrevWeek}
-              >
-                <FaArrowLeft />
-              </button>
-              <button
-                className="bg-gray-300 p-2 rounded"
-                onClick={handleNextWeek}
-              >
-                <FaArrowRight />
-              </button>
-            </div>
-            <div className="flex gap-2">
-              <table className="table-auto w-full">
-                <thead
-                  style={{ background: themeColor }}
-                  className="text-white"
+              {currentEmployees.map((employee) => (
+                <div
+                  className="flex items-center justify-between"
+                  key={employee.id}
                 >
-                  <tr>
-                    {dates.map((date) => (
-                      <th key={date} className="px-4 py-2">
-                        {date.format("ddd DD MMM")}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {rosterData.map((employee, index) => (
-                    <tr key={index}>
-                      {employee.schedule.map((time, idx) => {
-                        const [startTime, endTime] = splitTime(time);
-                        let baseClass =
-                          "border text-center  font-medium cursor-pointer";
-                        let conditionClass = "";
+                  <span className="text-gray-700 font-medium border-b w-full">
+                    {employee.name}
+                  </span>
+                </div>
+              ))}
+            </div>
 
-                        if (time === "Weekly Off") {
-                          conditionClass = "bg-orange-200  hover:bg-orange-400";
-                        } else if (time === "09:00 AM - 06:00 PM") {
-                          conditionClass = "bg-white-400 hover:bg-green-600";
-                        } else if (time === "Absent") {
-                          conditionClass = "text-red-400 hover:bg-red-600 ";
-                        }
+            <div className="flex flex-col w-full">
+              <div className="flex items-center justify-between mb-2">
+                <button
+                  onClick={handlePrevWeek}
+                  className="p-2 text-gray-500 hover:text-gray-700"
+                >
+                  <FaChevronLeft />
+                </button>
 
-                        return (
-                          <td
-                            key={idx}
-                            className={`${baseClass} ${conditionClass}`}
-                            onClick={() =>
-                              handleRecordClick(
-                                employee.employee,
-                                time,
-                                employee.code
-                              )
-                            }
-                          >
-                            <div className="flex flex-col">
-                              <span>{startTime}</span>
-                              {endTime && <span>{endTime}</span>}
-                            </div>
-                          </td>
-                        );
-                      })}
-                    </tr>
+                <div className="grid grid-cols-7 gap-2 flex-grow">
+                  {days.map((day, index) => (
+                    <div
+                      className="text-center font-semibold text-gray-600 py-2"
+                      key={index}
+                    >
+                      {day}
+                    </div>
                   ))}
-                </tbody>
-              </table>
+                </div>
+
+                <button
+                  onClick={handleNextWeek}
+                  className="p-2 text-gray-500 hover:text-gray-700"
+                >
+                  <FaChevronRight />
+                </button>
+              </div>
+
+              {/* Attendance Rows */}
+              {currentEmployees.map((employee) => (
+                <div
+                  className="grid grid-cols-7 gap-y-2 mb-[1px] gap-2"
+                  key={employee.id}
+                >
+                  {employee.attendance.map((status, index) => (
+                    <div
+                      key={index}
+                      className={`text-center py-2 border rounded ${
+                        status === "ABSENT"
+                          ? "border-red-500 text-red-500"
+                          : status === "NS"
+                          ? "bg-gray-200 text-gray-500"
+                          : "border-green-500 text-green-500"
+                      }`}
+                    >
+                      {status || ""}
+                    </div>
+                  ))}
+                </div>
+              ))}
             </div>
           </div>
-
         </div>
-
-        {/* Modal */}
+        {/* Pagination Controls */}
+        <div className="flex justify-end gap-2 mt-4">
+          <button
+            className={`p-2  text-white rounded ${
+              currentPage === 1
+                ? "bg-gray-400 cursor-not-allowed"
+                : " bg-blue-500"
+            }`}
+            onClick={handlePrevPage}
+            disabled={currentPage === 1}
+          >
+            Previous
+          </button>
+          <button
+            className={`p-2  text-white rounded ${
+              indexOfLastEmployee >= employees.length
+                ? "bg-gray-400 cursor-not-allowed"
+                : " bg-blue-500"
+            }`}
+            onClick={handleNextPage}
+            disabled={indexOfLastEmployee >= employees.length}
+          >
+            Next
+          </button>
+        </div>
         {isModalOpen && (
           <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center">
             <div className="bg-white p-6 rounded shadow-lg w-1/3">
@@ -548,8 +567,6 @@ const AttendanceRecords = () => {
           </div>
         </div>
       )}
-
-      {/* Detail Panel */}
       {selectedRecord && !selectedRecord1 && (
         <div className="fixed right-0 top-0 bg-white shadow-lg p-6 w-1/3 h-full overflow-auto">
           <h2 className="text-2xl font-bold mb-4">Selected Employee Details</h2>
@@ -674,4 +691,4 @@ const AttendanceRecords = () => {
   );
 };
 
-export default AttendanceRecords;
+export default AttendanceRec;
