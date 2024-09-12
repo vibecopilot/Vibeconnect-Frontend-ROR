@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import Navbar from "../../components/Navbar";
-import { getAssignedTo, getAssociationList, getSoftServices, postServiceAssociation } from "../../api";
+import { deleteAssociationList, getAssignedTo, getAssociationList, getSoftServices, postServiceAssociation } from "../../api";
 import Select from "react-select";
 import Table from "../../components/table/Table";
 import { useParams } from "react-router-dom";
 import toast from "react-hot-toast";
+import { FaTrash } from "react-icons/fa";
+
 const AssociateServiceChecklist = () => {
   const [services, setServices] = useState([]);
   const [selectedOption, setSelectedOption] = useState([]);
@@ -15,20 +17,36 @@ const AssociateServiceChecklist = () => {
   const [formData, setFormData] = useState({
     assigned_to: [],
   });
-
+  const { id } = useParams();
   const column = [
-    {
-      name: "Service Name",
-      selector: (row) => row.service_name,
-      sortable: true,
+  {
+    name: "Service Name",
+    selector: (row) => row.service_name,
+    sortable: true,
+  },
+  {
+    name: "Assigned To",
+    selector: (row) => row.user_name,
+    sortable: true,
+  },
+  {
+    name: "Action",
+    cell: (row) => {
+      return (
+        <FaTrash
+          size={15}
+          className="cursor-pointer"
+          onClick={() =>
+            handleDeleteAssociation(row.service_name, row.user_name) 
+          }
+        />
+      );
     },
-    {
-      name: "Assigned To",
-      selector: (row) => row.user_name,
-      sortable: true,
-    },
-  ];
+  },
+];
 
+  
+  
   useEffect(() => {
     const fetchServicesList = async () => {
       // getting all the services
@@ -38,6 +56,7 @@ const AssociateServiceChecklist = () => {
         value: service.id,
         label: service.name,
       }));
+      console.log("Service list",serviceList)
       setServices(serviceList);
     };
     const fetchAssignedTo = async () => {
@@ -47,12 +66,12 @@ const AssociateServiceChecklist = () => {
         value: u.id,
         label:`${ u.firstname} ${u.lastname}`,
       }));
-      console.log(user)
+      console.log("user list",user)
       setAssignedTo(user);
     };
     const fetchAssociationList = async() =>{
       const assoResp = await getAssociationList(id)
-      console.log(assoResp.data.associated_with)
+      console.log("getdata",assoResp.data.associated_with)
       setAssociation(assoResp.data.associated_with)
     }
 
@@ -74,7 +93,7 @@ const AssociateServiceChecklist = () => {
     setSelectedUserOption(selectedUserOption);
   };
 
-  const { id } = useParams();
+ 
   const handleAddAssociate = async () => {
     const payload = {
       soft_service_ids: selectedOption.map((option) => option.value),
@@ -98,7 +117,38 @@ const AssociateServiceChecklist = () => {
       toast.dismiss()
     }
   };
-
+  const handleDeleteAssociation = async (service_name, user_name) => {
+    try {
+     
+      const service = services.find(service => service.label === service_name);
+      
+     
+      const user = assignedTo.find(user => user.label === user_name);
+  
+      
+      if (!service || !user) {
+        throw new Error("Invalid service or user");
+      }
+  
+      const service_id = service.value; 
+      const assigned_to = user.value;   
+  
+     
+      toast.loading("Deleting Association...");
+      const deleteresp = await deleteAssociationList(id, assigned_to, service_id);
+      console.log("delete resp", deleteresp);
+      toast.dismiss();
+  
+      setAdded(true); 
+      toast.success("Association Deleted");
+    } catch (error) {
+      console.error("Error deleting association:", error);
+      toast.dismiss();
+      toast.error("Failed to delete association");
+    }
+  };
+  
+  
   return (
     <section className="flex ">
       <div className="hidden md:block">

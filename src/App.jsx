@@ -669,6 +669,8 @@ import EmployeeForum from "./pages/Employees/EmployeeCommunication/EmployeeForum
 import EmployeeGroup from "./pages/Employees/EmployeeCommunication/EmployeeGroup.jsx";
 import WorkspaceFeeds from "./pages/Employees/EmployeeWorkSpace/WorkspaceFeeds.jsx";
 import AttendanceRec from "./pages/AdminHrms/AttendanceRec.jsx";
+import SoftServiceScheduleDetails from "./pages/SubPages/details/SoftServiceScheduleDetails.jsx";
+import SoftServiceWidgets from "./pages/SubPages/SoftServiceWidgets.jsx";
 // new admin hrms
 
 function App() {
@@ -1580,6 +1582,14 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <ServicePage />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/services/overview"
+            element={
+              <ProtectedAdminRoutes>
+                <SoftServiceWidgets/>
               </ProtectedAdminRoutes>
             }
           />
