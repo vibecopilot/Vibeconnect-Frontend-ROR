@@ -762,7 +762,7 @@ export const postFlightTicketRequest = async (data) =>
       token: token,
     },
   });
-// ppm details
+// ppm details/
 export const getAssetReadingDetails = async (assetId) =>
   axiosInstance.get(
     `/submissions.json?q[asset_id_eq]=${assetId}&q[asset_param_id_null]=0`,
