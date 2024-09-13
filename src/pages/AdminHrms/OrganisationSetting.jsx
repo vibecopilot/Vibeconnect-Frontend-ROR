@@ -41,7 +41,7 @@ const OrganisationSetting = () => {
   return (
     <div className="flex">
         <AdminHRMS/>
-      <div className="w-72 h-full bg-white border-r p-4 mt-9">
+      <div className="w-72 h-full bg-white border-r p-2 mt-9">
         
         <ul className="space-y-4">
           <li className="font-bold text-lg">Details List</li>

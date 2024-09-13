@@ -111,7 +111,7 @@ const AddEmployee = () => {
   const [disableNext, setDisableNext] = useState(true);
   const [disableSave, setDisableSave] = useState(false);
   const handleAddEmployee = async () => {
-    // Perform validation for each field
+    
     if (!formData.firstName.trim()) {
       toast.error("First Name is required!");
       return;
@@ -238,7 +238,7 @@ const AddEmployee = () => {
               className={`flex items-center gap-2 p-2 w-full  rounded-md ${
                 steps === "employment"
                   ? " text-white bg-blue-500 font-medium cursor-pointer"
-                  : "text-white bg-gray-500 font-medium cursor-not-allowed"
+                  : "text-white bg-gray-400 font-medium cursor-not-allowed"
               }`}
               onClick={() => setSteps("employment")}
               disabled={steps !== "employment"}
@@ -251,7 +251,7 @@ const AddEmployee = () => {
               className={`flex items-center gap-2 p-2  w-full rounded-md ${
                 steps === "salary"
                   ? " text-white bg-blue-500 font-medium cursor-pointer"
-                  : "text-white bg-gray-500 font-medium cursor-not-allowed"
+                  : "text-white bg-gray-400 font-medium cursor-not-allowed"
               }`}
               onClick={() => setSteps("salary")}
               disabled={steps !== "salary"}
@@ -264,7 +264,7 @@ const AddEmployee = () => {
               className={`flex items-center gap-2 p-2  w-full rounded-md ${
                 steps === "statutory"
                   ? " text-white bg-blue-500 font-medium cursor-pointer"
-                  : "text-white bg-gray-500 font-medium cursor-not-allowed"
+                  : "text-white bg-gray-400 font-medium cursor-not-allowed"
               }`}
               disabled={steps !== "statutory"}
               onClick={() => setSteps("statutory")}
@@ -282,7 +282,7 @@ const AddEmployee = () => {
             Employee Basic Information
           </h2>
           <div>
-            <div className="grid md:grid-cols-3 gap-2 gap-y-4 mt-5">
+            <div className="grid xl:grid-cols-3 gap-2 gap-y-4 mt-5">
               <div className="grid gap-2 items-center w-full">
                 <label className="block text-sm font-medium text-gray-700">
                   First Name<span className="text-red-400">*</span>
@@ -488,7 +488,7 @@ const AddEmployee = () => {
             <h2 className="border-b text-center text-xl border-black  mb-6 font-bold mt-2">
               Family Information
             </h2>
-            <div className="grid md:grid-cols-3 gap-2 mt-5">
+            <div className="grid xl:grid-cols-3 gap-2 mt-5">
               <div className="grid gap-2 items-center w-full">
                 <label className="block text-sm font-medium text-gray-700">
                   Father's Name
@@ -535,7 +535,7 @@ const AddEmployee = () => {
             <h2 className="border-b text-center text-xl  border-black mb-6 font-bold mt-2">
               Address Information
             </h2>
-            <div className="grid md:grid-cols-3 gap-2 mt-5">
+            <div className="grid xl:grid-cols-3 gap-2 mt-5">
               <div className="grid gap-2 items-center w-full">
                 <label className="block text-sm font-medium text-gray-700">
                   Address Line 1

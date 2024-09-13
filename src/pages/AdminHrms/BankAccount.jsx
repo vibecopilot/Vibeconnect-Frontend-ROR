@@ -24,6 +24,7 @@ const BankAccount = () => {
   const [showModal, setShowModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [bankAccounts, setBankAccounts] = useState([]);
+  const [filteredAccounts, setFilteredAccounts] = useState([]);
   const [formData, setFormData] = useState({
     bankName: "",
     accountNo: "",
@@ -55,21 +56,20 @@ const BankAccount = () => {
             <BiEdit size={15} />
           </button>
           <button onClick={() => handleDeleteBank(row.id)}>
-          <FaTrash size={15} />
+            <FaTrash size={15} />
           </button>
-         
         </div>
       ),
     },
   ];
-  const handleDeleteBank = async (bankId)=>{
+  const handleDeleteBank = async (bankId) => {
     try {
-      await deleteMyBankDetails(bankId)
-      fetchMyBankAccounts()
+      await deleteMyBankDetails(bankId);
+      fetchMyBankAccounts();
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
-  }
+  };
 
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
   const fetchMyBankAccounts = async () => {
@@ -83,6 +83,20 @@ const BankAccount = () => {
   useEffect(() => {
     fetchMyBankAccounts();
   }, []);
+  const [searchText, setSearchText] = useState("");
+  const handleSearch = (e) => {
+    const searchValue = e.target.value;
+    setSearchText(searchValue);
+    if (searchValue.trim() === "") {
+      setFilteredAccounts(bankAccounts);
+    } else {
+      const filteredResult = bankAccounts.filter((accounts) =>
+        accounts.bank_name.toLowerCase().includes(searchValue.toLowerCase()) ||
+      accounts.account_number.toLowerCase().includes(searchValue.toLowerCase())
+      );
+      setFilteredAccounts(filteredResult);
+    }
+  };
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -119,10 +133,10 @@ const BankAccount = () => {
       console.log(error);
     }
   };
-  const [id, setId] = useState("")
+  const [id, setId] = useState("");
   const handleEditModal = async (bankId) => {
     setShowModal(true);
-    setId(bankId)
+    setId(bankId);
     try {
       const bankDetails = await getMyBankDetails(bankId);
       setFormData({
@@ -167,23 +181,23 @@ const BankAccount = () => {
       console.log(error);
     }
   };
-const themeColor = useSelector((state)=> state.theme.color)
+  const themeColor = useSelector((state) => state.theme.color);
   return (
     <section className="flex ml-20">
       <OrganisationSetting />
-      <div className=" w-full flex m-3 flex-col overflow-hidden">
-        <div className=" flex justify-end gap-2 my-5">
+      <div className=" w-full flex m-2 flex-col overflow-hidden">
+        <div className=" flex justify-between gap-2 my-5">
           <input
             type="text"
             placeholder="Search by name "
-            className="border border-gray-400 w-96 placeholder:text-sm rounded-lg p-2"
-            //   value={searchText}
-            //   onChange={handleSearch}
+            className="border border-gray-400 w-full placeholder:text-sm rounded-lg p-2"
+            value={searchText}
+            onChange={handleSearch}
           />
           <button
             onClick={() => setShowAddModal(true)}
-            style={{background: themeColor}}
-            className="border-2 font-semibold  hover:text-white duration-150 transition-all  p-2 rounded-md text-white cursor-pointer text-center flex items-center  gap-2 justify-center"
+            style={{ background: themeColor }}
+            className="border-2 font-semibold  hover:text-white duration-150 transition-all  p-2 rounded-lg text-white cursor-pointer text-center flex items-center  gap-2 justify-center"
           >
             <PiPlusCircle size={20} />
             Add
@@ -312,7 +326,7 @@ const themeColor = useSelector((state)=> state.theme.color)
                   Save
                 </button>
                 <button
-                  className="mt-4 ml-2 bg-blue-500 text-white py-2 px-4 rounded-md"
+                  className="mt-4 ml-2 bg-red-500 text-white py-2 px-4 rounded-md"
                   onClick={() => setShowModal(false)}
                 >
                   Close
@@ -321,7 +335,7 @@ const themeColor = useSelector((state)=> state.theme.color)
             </div>
           </div>
         )}
-        <Table columns={columns} data={bankAccounts} isPagination={true} />
+        <Table columns={columns} data={filteredAccounts} isPagination={true} />
       </div>
       <HRMSHelpCenter help={"bank"} />
     </section>
