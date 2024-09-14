@@ -76,6 +76,7 @@ const BankAccount = () => {
     try {
       const bankRes = await getMyBankAccounts(hrmsOrgId);
       setBankAccounts(bankRes);
+      setFilteredAccounts(bankRes)
     } catch (error) {
       console.log(error);
     }

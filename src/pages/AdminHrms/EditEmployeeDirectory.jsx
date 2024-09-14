@@ -70,13 +70,13 @@ const EditEmployeeDirectory = () => {
             </div>
             <div className="w-full">
               <div className="flex justify-end gap-2">
-                <select
+                {/* <select
                   name=""
                   id=""
                   className="border p-2 border-black rounded-md"
                 >
                   <option value="">Search Employee</option>
-                </select>
+                </select> */}
                 <div className="relative inline-block text-left">
                   <button
                     onClick={toggleDropdown}

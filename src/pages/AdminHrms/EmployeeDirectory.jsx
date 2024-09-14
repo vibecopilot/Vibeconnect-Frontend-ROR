@@ -131,11 +131,23 @@ function EmployeeDirectory() {
       "#6A5ACD",
       "#D2691E",
     ];
-    // Add more colors if needed
     return colors[Math.floor(Math.random() * colors.length)];
   }
 
   const randomColor = getRandomColor();
+  const colors = [
+    // "#8B0000",
+      "#FF4500",
+      "#2E8B57",
+      "#4682B4",
+      "#6A5ACD",
+      "#D2691E",
+  ];
+
+  function getColorForEmployee(index) {
+    return colors[index % colors.length]; 
+  }
+
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [employeeId, setEmployeeId] = useState("");
   const handleDeleteModal = (empId) => {
@@ -919,7 +931,7 @@ function EmployeeDirectory() {
                       {letter}
                     </h2>
                     <div className="flex flex-wrap">
-                      {groupedEmployees[letter]?.map((employee) => (
+                      {groupedEmployees[letter]?.map((employee, index) => (
                         <div
                           key={employee.id}
                           className="bg-white w-64 p-2 m-2 rounded-lg border cursor-pointer"
@@ -928,7 +940,8 @@ function EmployeeDirectory() {
                           <div className="flex items-center">
                             <div
                               className="bg-gray-300 rounded-full text-white h-12 w-12 flex items-center font-medium justify-center mr-4"
-                              style={{ backgroundColor: randomColor }}
+                              style={{ backgroundColor: getColorForEmployee(index) }}
+                              // style={{ backgroundColor: randomColor }}
                             >
                               {employee.first_name
                                 .split(" ")

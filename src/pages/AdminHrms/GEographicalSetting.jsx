@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from "react";
 import OrganisationSetting from "./OrganisationSetting";
-import { getAllOrganizationGeoSettings } from "../../api";
-import Select from "react-select"
+import {
+  getAllOrganizationGeoSettings,
+  getCountriesList,
+  getCountryData,
+} from "../../api";
+import Select from "react-select";
 const GeographicalSetting = () => {
   const [isEditing, setIsEditing] = useState(false);
 
@@ -11,12 +15,6 @@ const GeographicalSetting = () => {
   const [timezone, setTimezone] = useState("");
   const [dateFormat, setDateFormat] = useState("");
   const [currency, setCurrency] = useState("");
-
-  // Dummy data for selects
-
-  const timezones = ["UTC-12", "UTC-8", "UTC+0", "UTC+5"];
-  const dateFormats = ["MM/DD/YYYY", "DD/MM/YYYY", "YYYY/MM/DD"];
-  const currencies = ["USD", "GBP", "CAD", "AUD"];
 
   const fetchAllGeoSettings = async () => {
     try {
@@ -28,11 +26,10 @@ const GeographicalSetting = () => {
   };
   const fetchCountries = async () => {
     try {
-      const response = await fetch("https://restcountries.com/v3.1/all");
-      const data = await response.json();
-      const options = data.map((country) => ({
-        value: country.cca2,
-        label: country.name.common,
+      const countries = await getCountriesList();
+      const options = countries.map((country) => ({
+        value: country.id,
+        label: country.country,
       }));
 
       setCountryOptions(options);
@@ -44,8 +41,26 @@ const GeographicalSetting = () => {
     fetchAllGeoSettings();
     fetchCountries();
   }, []);
-  const handleSelectChange = (selectedOption) => {
+  const handleSelectChange = async (selectedOption) => {
     setSelectedCountry(selectedOption);
+
+    try {
+      const countryInfo = await fetchCountryInfo(selectedOption.value);
+    } catch (error) {
+      console.error("Error fetching country information:", error);
+    }
+  };
+
+  const fetchCountryInfo = async (countryId) => {
+    try {
+      const response =  await getCountryData(countryId);
+      console.log(response);
+      setTimezone(response.time_zone)
+      setDateFormat(response.date_format)
+      setCurrency(response.default_currency)
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (
@@ -69,26 +84,15 @@ const GeographicalSetting = () => {
           >
             Country of Origin
           </label>
-          {/* <Select
-        id="country"
-        value={selectedCountry}
-        onChange={handleSelectChange}
-        options={countryOptions}
-        placeholder="Select a country"
-        noOptionsMessage={() => "No countries available"}
-      /> */}
-      <select
-            id="timezone"
-            className={`w-full px-3 py-2 border border-gray-300 rounded-md ${
-              !isEditing ? "bg-gray-200" : ""
-            }`}
-           
-            disabled={!isEditing}
-          >
-            <option value="">Select Country</option>
-            <option value="IN">India</option>
-           
-          </select>
+          <Select
+            id="country"
+            value={selectedCountry}
+            onChange={handleSelectChange}
+            options={countryOptions}
+            placeholder="Select a country"
+            noOptionsMessage={() => "No countries available"}
+            isDisabled={!isEditing}
+          />
         </div>
         <div className="mb-4">
           <label
@@ -97,22 +101,14 @@ const GeographicalSetting = () => {
           >
             Timezone
           </label>
-          <select
+          <input
             id="timezone"
-            className={`w-full px-3 py-2 border border-gray-300 rounded-md ${
-              !isEditing ? "bg-gray-200" : ""
-            }`}
+            className={`w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-200
+              `}
             value={timezone}
-            onChange={(e) => setTimezone(e.target.value)}
-            disabled={!isEditing}
-          >
-            <option value="">Select a timezone</option>
-            {timezones.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
+            // onChange={(e) => setTimezone(e.target.value)}
+            disabled
+          />
         </div>
         <div className="mb-4">
           <label
@@ -121,22 +117,13 @@ const GeographicalSetting = () => {
           >
             Date Format
           </label>
-          <select
+          <input
             id="dateFormat"
-            className={`w-full px-3 py-2 border border-gray-300 rounded-md ${
-              !isEditing ? "bg-gray-200" : ""
-            }`}
+            className={`w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-200
+              `}
+            disabled
             value={dateFormat}
-            onChange={(e) => setDateFormat(e.target.value)}
-            disabled={!isEditing}
-          >
-            <option value="">Select a date format</option>
-            {dateFormats.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
+          />
         </div>
         <div className="mb-4">
           <label
@@ -145,22 +132,14 @@ const GeographicalSetting = () => {
           >
             Default Currency
           </label>
-          <select
+          <input
             id="currency"
-            className={`w-full px-3 py-2 border border-gray-300 rounded-md ${
-              !isEditing ? "bg-gray-200" : ""
-            }`}
+            className={`w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-200
+            `}
             value={currency}
-            onChange={(e) => setCurrency(e.target.value)}
-            disabled={!isEditing}
-          >
-            <option value="">Select a currency</option>
-            {currencies.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
+            // onChange={(e) => setCurrency(e.target.value)}
+            disabled
+          />
         </div>
       </div>
     </div>

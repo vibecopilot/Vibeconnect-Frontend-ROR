@@ -7,6 +7,7 @@ import {
   getMyHRMSEmployees,
   getMyOrganizationLocations,
   getMyOrgDepartments,
+  postEmployeeEmploymentInfo,
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import { useSelector } from "react-redux";
@@ -19,7 +20,7 @@ const Employment = ({ setSteps, empId }) => {
     employeeCode: "",
     joinDate: "",
     employmentType: "",
-    probationDuseDate: "",
+    probationDueDate: "",
     branch: "",
     department: "",
     designation: "",
@@ -66,16 +67,32 @@ const Employment = ({ setSteps, empId }) => {
 
   const handleAddEmployment = async () => {
     const postData = new FormData();
+    postData.append("joining_date", formData.joinDate)
+    postData.append("probation_due_date", formData.probationDueDate)
+    postData.append("employee_code", formData.employeeCode)
+    postData.append("employment_type", formData.employmentType)
+    postData.append("branch_location", formData.branch)
+    postData.append("department", formData.department)
+    postData.append("reporting_supervisor", formData.supervisor)
+    postData.append("employee", empId)
+try {
+  const res = await postEmployeeEmploymentInfo(postData)
+  console.log(res)
+  setDisableNext(false)
+  setDisableSave(true)
+} catch (error) {
+  console.log(error)
+}
   };
 
   return (
     <div className="flex  w-full">
       {/* <AddEmployeeDetailsList /> */}
-      <div className="w-full p-6 bg-white rounded-lg ">
+      <div className="w-full p-2 bg-white rounded-lg ">
         <h2 className="border-b text-center text-xl border-black mb-6 font-bold mt-2">
           Employment Information
         </h2>
-        <div className="grid md:grid-cols-3 gap-2 mt-5">
+        <div className="grid md:grid-cols-2 gap-2 mt-5">
           <div className="grid gap-2 items-center w-full">
             <label htmlFor="companyName" className="font-semibold">
               Employee Code:
@@ -126,10 +143,11 @@ const Employment = ({ setSteps, empId }) => {
             </label>
             <input
               type="date"
-              name="probationDuseDate"
+              name="probationDueDate"
               id=""
               className="border border-gray-400 p-2 rounded-md"
-              value={formData.probationDuseDate}
+              value={formData.probationDueDate}
+              onChange={handleChange}
             />
           </div>
           <div className="grid gap-2 items-center w-full">
@@ -145,7 +163,7 @@ const Employment = ({ setSteps, empId }) => {
               <option value="">Select Branch Location</option>
               {locations?.map((location) => (
                 <option value={location.id} key={location.id}>
-                  {location.city}, {location.state}
+                {location.location}, {location.city}, {location.state}
                 </option>
               ))}
             </select>
@@ -205,8 +223,8 @@ const Employment = ({ setSteps, empId }) => {
           <button
             type="submit"
             // style={{ background: themeColor }}
-            // onClick={handleAddEmployee}
-            onClick={() => setDisableNext(false)}
+            onClick={handleAddEmployment}
+            // onClick={() => setDisableNext(false)}
             className={`px-4 py-2  text-white font-medium rounded-md flex items-center gap-2 ${
               disableSave ? "bg-gray-400 cursor-not-allowed" : "bg-green-400"
             }`}

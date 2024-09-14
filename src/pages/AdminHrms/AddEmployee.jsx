@@ -111,7 +111,6 @@ const AddEmployee = () => {
   const [disableNext, setDisableNext] = useState(true);
   const [disableSave, setDisableSave] = useState(false);
   const handleAddEmployee = async () => {
-    
     if (!formData.firstName.trim()) {
       toast.error("First Name is required!");
       return;
@@ -225,7 +224,7 @@ const AddEmployee = () => {
               className={`flex items-center gap-2 p-2 w-full  rounded-md ${
                 steps === "basic"
                   ? " text-white bg-blue-500 font-medium cursor-pointer"
-                  : "text-white bg-gray-500 font-medium cursor-not-allowed"
+                  : "text-white bg-gray-400 font-medium cursor-not-allowed"
               }`}
               disabled={steps !== "basic"}
               onClick={() => setSteps("basic")}
@@ -661,7 +660,7 @@ const AddEmployee = () => {
                       ))}
                   </select>
                 </div>
-                {formData.paymentMode === "4" && (
+                {formData.paymentMode === "3" && (
                   <>
                     <div className="flex flex-col gap-2">
                       <label className="block text-sm font-medium text-gray-700">
