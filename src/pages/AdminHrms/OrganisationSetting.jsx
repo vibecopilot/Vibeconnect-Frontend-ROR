@@ -269,7 +269,7 @@ const OrganisationSetting = () => {
                 Employee Fields
               </h2>
             </NavLink> */}
-             <div
+             {/* <div
               onClick={toggleDropdown1}
               className="cursor-pointer group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-200 rounded-md"
             >
@@ -281,12 +281,12 @@ const OrganisationSetting = () => {
                   !open1 && "opacity-0 translate-x-28 overflow-hidden"
                 }`}
               >
-                Employee Fields
-              </h2>
+                Employee Fields */}
+              {/* </h2>
               <div className="ml-16">
                 {dropdownOpen1 ? (
-                  <FiChevronUp size={20} />
-                ) : (
+                  <FiChevronUp size={20} /> */}
+                {/* ) : (
                   <FiChevronDown size={20} />
                 )}
               </div>
@@ -294,10 +294,10 @@ const OrganisationSetting = () => {
                 className={`${
                   open1 && "hidden"
                 } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
-              >
-                Employee Fields
-              </h2>
-            </div>
+              > */}
+                {/* Employee Fields */}
+              {/* </h2>
+            </div> */}
             {dropdownOpen1 && (
               <ul className="pl-8 space-y-2 mt-2">
                 <li>

@@ -9,12 +9,16 @@ import image from "/profile.png";
 import {
   BsBroadcast,
   BsBuilding,
+  BsCheckCircle,
   BsFileRuled,
   BsMailboxFlag,
+  BsMoon,
   BsPass,
   BsPersonCircle,
   BsPersonWorkspace,
+  BsSun,
   BsTicketPerforated,
+  BsXCircle,
 } from "react-icons/bs";
 import {
   MdFastfood,
@@ -82,6 +86,8 @@ const Navbar = () => {
   const handleMouseLeave = () => {
     setOpen(false);
   };
+  const presentStatus = true;
+  const currentTime = new Date().getHours();
 
   useEffect(() => {
     const userType = getItemInLocalStorage("USERTYPE");
@@ -106,7 +112,7 @@ const Navbar = () => {
     localStorage.removeItem("VIBEUSERID");
     localStorage.removeItem("VIBEORGID");
     localStorage.removeItem("FEATURES");
-    persistor.purge(['board']).then(() => {
+    persistor.purge(["board"]).then(() => {
       navigate("/login");
       window.location.reload();
     });
@@ -136,7 +142,7 @@ const Navbar = () => {
         style={{
           background: themeColor,
         }}
-        className={`p-[8px]  max-h-screen ${
+        className={`p-[8px] max-h-screen ${
           open ? "w-full md:w-60" : "w-20"
         } duration-500 text-gray-100 px-4 shadow-2xl overflow-y-auto h-screen custom-scrollbar left-0`}
         onMouseEnter={handleMouseEnter}
@@ -157,13 +163,11 @@ const Navbar = () => {
           
         </Link> */}
               <NavLink
-                // to={`/admin/profile`}
                 className={({ isActive }) =>
-                  ` ${
+                  `${
                     isActive
-                      ? `flex p-2  gap-3.5 rounded-md group items-center  font-medium text-sm`
-                      : // ? `text-black bg-white flex p-2  gap-3.5 rounded-md group items-center  font-medium ${fontSize}`
-                        ` group flex items-center  gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md text-sm`
+                      ? `flex p-2 gap-3.5 rounded-md group items-center font-medium text-sm`
+                      : `group flex items-center gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md text-sm`
                   }`
                 }
               >
@@ -175,14 +179,32 @@ const Navbar = () => {
                 >
                   {firstName} {lastName}
                 </h2>
+
+                <div className="flex gap-3 items-center bg-white p-1 rounded-full px-2">
+                  {presentStatus ? (
+                  
+                    <p className="font-bold text-green-500 " title="Present">P</p>
+                  ) : (
+                   
+                    <p className="font-bold text-red-500 " title="Absent">A</p>
+                  )}
+
+                  {currentTime >= 6 && currentTime < 18 ? (
+                    <BsSun className="text-yellow-500" size={18} title="Day" />
+                  ) : (
+                    <BsMoon className="text-gray-500" size={18} title="Night" />
+                  )}
+                </div>
+
                 <h2
                   className={`${
                     open && "hidden"
-                  } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
+                  } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
                 >
                   {firstName} {lastName}
                 </h2>
               </NavLink>
+
               <NavLink
                 to={"/dashboard"}
                 className={({ isActive }) =>
@@ -211,35 +233,37 @@ const Navbar = () => {
                   Dashboard
                 </h2>
               </NavLink>
-              { feat.includes("face_recognition") && <NavLink
-              to={"/reports"}
-                // to={"https://reports.lockated.com/FM/index.html?token=74805184912721105b2b2c64a3dd62d50a16931e6f08edab&pms_site_id=1010,2628,2630,2631,2632,2642,2643,2644,2645,2662,2663,2664,2665,2666,2667,2668,2714,2718,2719,2748,2770,2773,2793,2794,2803,2808,2814,2822&site_name=Multiple%20Sites%20Selected&society_id=3632,3712,3716,3719,3720,3734,null,3735,3736,3732,null,3729,3730,3728,null,null,3727,3747,3726,null,3766,null,3779,3780,3784,3786,3785,null"}
-                className={({ isActive }) =>
-                  ` ${
-                    isActive
-                      ? `text-black bg-white flex p-2  gap-3.5 rounded-md group items-center  font-medium `
-                      : ` group flex items-center  gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md text-sm`
-                  }`
-                }
-              >
-                <div>
-                  {React.createElement(MdOutlineDashboard, { size: "20" })}
-                </div>
-                <h2
-                  className={`whitespace-pre duration-300 ${
-                    !open && "opacity-0 translate-x-28 overflow-hidden"
-                  }`}
+              {feat.includes("face_recognition") && (
+                <NavLink
+                  to={"/reports"}
+                  // to={"https://reports.lockated.com/FM/index.html?token=74805184912721105b2b2c64a3dd62d50a16931e6f08edab&pms_site_id=1010,2628,2630,2631,2632,2642,2643,2644,2645,2662,2663,2664,2665,2666,2667,2668,2714,2718,2719,2748,2770,2773,2793,2794,2803,2808,2814,2822&site_name=Multiple%20Sites%20Selected&society_id=3632,3712,3716,3719,3720,3734,null,3735,3736,3732,null,3729,3730,3728,null,null,3727,3747,3726,null,3766,null,3779,3780,3784,3786,3785,null"}
+                  className={({ isActive }) =>
+                    ` ${
+                      isActive
+                        ? `text-black bg-white flex p-2  gap-3.5 rounded-md group items-center  font-medium `
+                        : ` group flex items-center  gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md text-sm`
+                    }`
+                  }
                 >
-                  Dashboard(Beta)
-                </h2>
-                <h2
-                  className={`${
-                    open && "hidden"
-                  } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
-                >
-                  Dashboard(Beta)
-                </h2>
-              </NavLink>}
+                  <div>
+                    {React.createElement(MdOutlineDashboard, { size: "20" })}
+                  </div>
+                  <h2
+                    className={`whitespace-pre duration-300 ${
+                      !open && "opacity-0 translate-x-28 overflow-hidden"
+                    }`}
+                  >
+                    Dashboard(Beta)
+                  </h2>
+                  <h2
+                    className={`${
+                      open && "hidden"
+                    } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
+                  >
+                    Dashboard(Beta)
+                  </h2>
+                </NavLink>
+              )}
 
               <>
                 {feat.includes("project_task") && (
@@ -572,7 +596,7 @@ const Navbar = () => {
                     </h2>
                   </NavLink>
                 )}
-                 {feat.includes("gatepass") && (
+                {feat.includes("gatepass") && (
                   <NavLink
                     to={"/admin/passes"}
                     className={({ isActive }) =>
@@ -601,7 +625,7 @@ const Navbar = () => {
                     </h2>
                   </NavLink>
                 )}
-                 {feat.includes("contacts") && (
+                {feat.includes("contacts") && (
                   <NavLink
                     to={"/business"}
                     className={({ isActive }) =>
@@ -814,7 +838,7 @@ const Navbar = () => {
                     </h2>
                   </NavLink>
                 )}
-               
+
                 {feat.includes("permits") && (
                   <NavLink
                     to={"/admin/permit"}
@@ -906,7 +930,6 @@ const Navbar = () => {
                     </h2>
                   </NavLink>
                 )}
-                
 
                 {feat.includes("fnb") && (
                   <NavLink
@@ -1002,7 +1025,7 @@ const Navbar = () => {
                     </h2>
                   </NavLink>
                 )}
-               
+
                 {feat.includes("business_cards") && (
                   <NavLink
                     to={"/admin/business-card"}
@@ -1411,7 +1434,6 @@ const Navbar = () => {
           {/* user */}
           {user !== "pms_admin" && (
             <>
-            
               {/* {siteId === 25 ? */}
               <NavLink
                 // to={`/profile`}
@@ -1424,10 +1446,7 @@ const Navbar = () => {
                   }`
                 }
               >
-                <div>
-                  {React.createElement(BsPersonCircle , { size: "25" })}
-                 
-                </div>
+                <div>{React.createElement(BsPersonCircle, { size: "25" })}</div>
                 <h2
                   className={`whitespace-pre duration-300 ${
                     !open && "opacity-0 translate-x-28 overflow-hidden"
@@ -1443,7 +1462,8 @@ const Navbar = () => {
                   {firstName} {lastName}
                 </h2>
               </NavLink>
-             {siteId === 10 && <NavLink
+              {siteId === 10 && (
+                <NavLink
                   to={"/employee/dashboard"}
                   className={({ isActive }) =>
                     ` ${
@@ -1453,7 +1473,9 @@ const Navbar = () => {
                     }`
                   }
                 >
-                  <div>{React.createElement(MdOutlineDashboard, { size: "20" })}</div>
+                  <div>
+                    {React.createElement(MdOutlineDashboard, { size: "20" })}
+                  </div>
                   <h2
                     className={`whitespace-pre duration-300 ${
                       !open && "opacity-0 translate-x-28 overflow-hidden"
@@ -1468,126 +1490,127 @@ const Navbar = () => {
                   >
                     Dashboard
                   </h2>
-                </NavLink>}
+                </NavLink>
+              )}
 
-                {feat.includes("project_task") && (
-                  <NavLink
-                    to={"/Task-management"}
-                    className={({ isActive }) =>
-                      ` ${
-                        isActive
-                          ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
-                          : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
-                      }`
-                    }
+              {feat.includes("project_task") && (
+                <NavLink
+                  to={"/Task-management"}
+                  className={({ isActive }) =>
+                    ` ${
+                      isActive
+                        ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
+                        : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
+                    }`
+                  }
+                >
+                  <div>{React.createElement(FaTasks, { size: "20" })}</div>
+                  <h2
+                    className={`whitespace-pre duration-300 ${
+                      !open && "opacity-0 translate-x-28 overflow-hidden"
+                    }`}
                   >
-                    <div>{React.createElement(FaTasks, { size: "20" })}</div>
-                    <h2
-                      className={`whitespace-pre duration-300 ${
-                        !open && "opacity-0 translate-x-28 overflow-hidden"
-                      }`}
-                    >
-                      Task Management
-                    </h2>
-                    <h2
-                      className={`${
-                        open && "hidden"
-                      } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
-                    >
-                      Task management
-                    </h2>
-                  </NavLink>
-                )}
-                 {feat.includes("project_task") && (
-                  <NavLink
-                    to={"/project-management"}
-                    className={({ isActive }) =>
-                      ` ${
-                        isActive
-                          ? `text-black bg-white flex p-2  gap-3.5 rounded-md group items-center  font-medium text-sm`
-                          : ` group flex items-center  gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md text-sm`
-                      }`
-                    }
+                    Task Management
+                  </h2>
+                  <h2
+                    className={`${
+                      open && "hidden"
+                    } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
                   >
-                    <div>
-                      {React.createElement(MdManageAccounts, { size: "20" })}
-                    </div>
-                    <h2
-                      className={`whitespace-pre duration-300 ${
-                        !open && "opacity-0 translate-x-28 overflow-hidden"
-                      }`}
-                    >
-                      Project Management
-                    </h2>
-                    <h2
-                      className={`${
-                        open && "hidden"
-                      } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
-                    >
-                      Project management
-                    </h2>
-                  </NavLink>
-                )}
-                 {feat.includes("calendar") && (
-                  <NavLink
-                    to={"/calendar"}
-                    className={({ isActive }) =>
-                      ` ${
-                        isActive
-                          ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
-                          : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
-                      }`
-                    }
+                    Task management
+                  </h2>
+                </NavLink>
+              )}
+              {feat.includes("project_task") && (
+                <NavLink
+                  to={"/project-management"}
+                  className={({ isActive }) =>
+                    ` ${
+                      isActive
+                        ? `text-black bg-white flex p-2  gap-3.5 rounded-md group items-center  font-medium text-sm`
+                        : ` group flex items-center  gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md text-sm`
+                    }`
+                  }
+                >
+                  <div>
+                    {React.createElement(MdManageAccounts, { size: "20" })}
+                  </div>
+                  <h2
+                    className={`whitespace-pre duration-300 ${
+                      !open && "opacity-0 translate-x-28 overflow-hidden"
+                    }`}
                   >
-                    <div>
-                      {React.createElement(FaCalendarCheck, { size: "20" })}
-                    </div>
-                    <h2
-                      className={`whitespace-pre duration-300 ${
-                        !open && "opacity-0 translate-x-28 overflow-hidden"
-                      }`}
-                    >
-                      Calendar
-                    </h2>
-                    <h2
-                      className={`${
-                        open && "hidden"
-                      } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
-                    >
-                      Calendar
-                    </h2>
-                  </NavLink>
-                )}
-                 {feat.includes("calendar") && (
-                  <NavLink
-                    to={"/employee-portal"}
-                    className={({ isActive }) =>
-                      ` ${
-                        isActive
-                          ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
-                          : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
-                      }`
-                    }
+                    Project Management
+                  </h2>
+                  <h2
+                    className={`${
+                      open && "hidden"
+                    } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
                   >
-                    <div>
-                      {React.createElement(BsPersonWorkspace , { size: "20" })}
-                    </div>
-                    <h2
-                      className={`whitespace-pre duration-300 ${
-                        !open && "opacity-0 translate-x-28 overflow-hidden"
-                      }`}
-                    >
-                      MyWorkplace
-                    </h2>
-                    <h2
-                      className={`${
-                        open && "hidden"
-                      } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
-                    >
-                      Calendar
-                    </h2>
-                  </NavLink>
-                )}
+                    Project management
+                  </h2>
+                </NavLink>
+              )}
+              {feat.includes("calendar") && (
+                <NavLink
+                  to={"/calendar"}
+                  className={({ isActive }) =>
+                    ` ${
+                      isActive
+                        ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
+                        : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
+                    }`
+                  }
+                >
+                  <div>
+                    {React.createElement(FaCalendarCheck, { size: "20" })}
+                  </div>
+                  <h2
+                    className={`whitespace-pre duration-300 ${
+                      !open && "opacity-0 translate-x-28 overflow-hidden"
+                    }`}
+                  >
+                    Calendar
+                  </h2>
+                  <h2
+                    className={`${
+                      open && "hidden"
+                    } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
+                  >
+                    Calendar
+                  </h2>
+                </NavLink>
+              )}
+              {feat.includes("calendar") && (
+                <NavLink
+                  to={"/employee-portal"}
+                  className={({ isActive }) =>
+                    ` ${
+                      isActive
+                        ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
+                        : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
+                    }`
+                  }
+                >
+                  <div>
+                    {React.createElement(BsPersonWorkspace, { size: "20" })}
+                  </div>
+                  <h2
+                    className={`whitespace-pre duration-300 ${
+                      !open && "opacity-0 translate-x-28 overflow-hidden"
+                    }`}
+                  >
+                    MyWorkplace
+                  </h2>
+                  <h2
+                    className={`${
+                      open && "hidden"
+                    } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
+                  >
+                    Calendar
+                  </h2>
+                </NavLink>
+              )}
               {feat.includes("tickets") && (
                 <NavLink
                   to={"/mytickets"}
@@ -1617,345 +1640,340 @@ const Navbar = () => {
                 </NavLink>
               )}
               {feat.includes("communication") && (
-                  <NavLink
-                    to={"/employee/certificate"}
-                    className={({ isActive }) =>
-                      ` ${
-                        isActive
-                          ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
-                          : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
-                      }`
-                    }
+                <NavLink
+                  to={"/employee/certificate"}
+                  className={({ isActive }) =>
+                    ` ${
+                      isActive
+                        ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
+                        : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
+                    }`
+                  }
+                >
+                  <div>
+                    {React.createElement(GrCertificate, { size: "20" })}
+                  </div>
+                  <h2
+                    className={`whitespace-pre duration-300 ${
+                      !open && "opacity-0 translate-x-28 overflow-hidden"
+                    }`}
                   >
-                    <div>{React.createElement(GrCertificate, { size: "20" })}</div>
-                    <h2
-                      className={`whitespace-pre duration-300 ${
-                        !open && "opacity-0 translate-x-28 overflow-hidden"
-                      }`}
-                    >
-                      Skill Grow
-                    </h2>
-                    <h2
-                      className={`${
-                        open && "hidden"
-                      } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
-                    >
-                     Skill Grow
-                    </h2>
-                  </NavLink>
-                )}
-                 {feat.includes("communication") && (
-                  <NavLink
-                    to={"/employee/communication/events"}
-                    className={({ isActive }) =>
-                      ` ${
-                        isActive
-                          ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
-                          : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
-                      }`
-                    }
+                    Skill Grow
+                  </h2>
+                  <h2
+                    className={`${
+                      open && "hidden"
+                    } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
                   >
-                    <div>
-                      {React.createElement(BsBroadcast, { size: "20" })}
-                    </div>
-                    <h2
-                      className={`whitespace-pre duration-300 ${
-                        !open && "opacity-0 translate-x-28 overflow-hidden"
-                      }`}
-                    >
-                      Communication
-                    </h2>
-                    <h2
-                      className={`${
-                        open && "hidden"
-                      } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
-                    >
-                      Communication
-                    </h2>
-                  </NavLink>
-                )}
+                    Skill Grow
+                  </h2>
+                </NavLink>
+              )}
+              {feat.includes("communication") && (
+                <NavLink
+                  to={"/employee/communication/events"}
+                  className={({ isActive }) =>
+                    ` ${
+                      isActive
+                        ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
+                        : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
+                    }`
+                  }
+                >
+                  <div>{React.createElement(BsBroadcast, { size: "20" })}</div>
+                  <h2
+                    className={`whitespace-pre duration-300 ${
+                      !open && "opacity-0 translate-x-28 overflow-hidden"
+                    }`}
+                  >
+                    Communication
+                  </h2>
+                  <h2
+                    className={`${
+                      open && "hidden"
+                    } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
+                  >
+                    Communication
+                  </h2>
+                </NavLink>
+              )}
               {feat.includes("gatepass") && (
-                  <NavLink
+                <NavLink
                   to={"/employee/passes"}
-                    className={({ isActive }) =>
-                      ` ${
-                        isActive
-                          ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
-                          : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
-                      }`
-                    }
-                  >
-                    <div>
-                    {React.createElement(BsPass, { size: "20" })}
-                    </div>
+                  className={({ isActive }) =>
+                    ` ${
+                      isActive
+                        ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
+                        : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
+                    }`
+                  }
+                >
+                  <div>{React.createElement(BsPass, { size: "20" })}</div>
 
-                    <h2
-                      className={`whitespace-pre duration-300 ${
-                        !open && "opacity-0 translate-x-28 overflow-hidden"
-                      }`}
-                    >
-                      Passes
-                    </h2>
-                    <h2
-                      className={`${
-                        open && "hidden"
-                      } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
-                    >
-                      Passes
-                    </h2>
-                  </NavLink>
-                )}
-                  {feat.includes("doctors") && (
-                  <NavLink
+                  <h2
+                    className={`whitespace-pre duration-300 ${
+                      !open && "opacity-0 translate-x-28 overflow-hidden"
+                    }`}
+                  >
+                    Passes
+                  </h2>
+                  <h2
+                    className={`${
+                      open && "hidden"
+                    } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
+                  >
+                    Passes
+                  </h2>
+                </NavLink>
+              )}
+              {feat.includes("doctors") && (
+                <NavLink
                   to={"/doctor-appointments"}
-                    className={({ isActive }) =>
-                      ` ${
-                        isActive
-                          ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
-                          : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
-                      }`
-                    }
+                  className={({ isActive }) =>
+                    ` ${
+                      isActive
+                        ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
+                        : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
+                    }`
+                  }
+                >
+                  <div>
+                    {React.createElement(FaBriefcaseMedical, { size: "20" })}
+                  </div>
+                  <h2
+                    className={`whitespace-pre duration-300 ${
+                      !open && "opacity-0 translate-x-28 overflow-hidden"
+                    }`}
                   >
-                    <div>
-                      {React.createElement(FaBriefcaseMedical, { size: "20" })}
-                    </div>
-                    <h2
-                      className={`whitespace-pre duration-300 ${
-                        !open && "opacity-0 translate-x-28 overflow-hidden"
-                      }`}
-                    >
-                      Doctor Appointment
-                    </h2>
-                    <h2
-                      className={`${
-                        open && "hidden"
-                      } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
-                    >
-                      Doctor Appointment
-                    </h2>
-                  </NavLink>
-                )}
-                {feat.includes("permits") && (
-                  <NavLink
-                    to={"/documents"}
-                    className={({ isActive }) =>
-                      ` ${
-                        isActive
-                          ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
-                          : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
-                      }`
-                    }
+                    Doctor Appointment
+                  </h2>
+                  <h2
+                    className={`${
+                      open && "hidden"
+                    } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
                   >
-                    <div>
-                      {React.createElement(IoDocumentTextOutline, {
-                        size: "20",
-                      })}
-                    </div>
-                    <h2
-                      className={`whitespace-pre duration-300 ${
-                        !open && "opacity-0 translate-x-28 overflow-hidden"
-                      }`}
-                    >
-                      Document Pro
-                    </h2>
-                    <h2
-                      className={`${
-                        open && "hidden"
-                      } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
-                    >
-                      Document Pro
-                    </h2>
-                  </NavLink>
-                )}
-                {feat.includes("space") && (
-                  <NavLink
-                    to={"/employees/booking"}
-                    className={({ isActive }) =>
-                      ` ${
-                        isActive
-                          ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
-                          : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
-                      }`
-                    }
+                    Doctor Appointment
+                  </h2>
+                </NavLink>
+              )}
+              {feat.includes("permits") && (
+                <NavLink
+                  to={"/documents"}
+                  className={({ isActive }) =>
+                    ` ${
+                      isActive
+                        ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
+                        : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
+                    }`
+                  }
+                >
+                  <div>
+                    {React.createElement(IoDocumentTextOutline, {
+                      size: "20",
+                    })}
+                  </div>
+                  <h2
+                    className={`whitespace-pre duration-300 ${
+                      !open && "opacity-0 translate-x-28 overflow-hidden"
+                    }`}
                   >
-                    <div>
-                      {React.createElement(AiOutlineFieldTime, { size: "20" })}
-                    </div>
+                    Document Pro
+                  </h2>
+                  <h2
+                    className={`${
+                      open && "hidden"
+                    } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
+                  >
+                    Document Pro
+                  </h2>
+                </NavLink>
+              )}
+              {feat.includes("space") && (
+                <NavLink
+                  to={"/employees/booking"}
+                  className={({ isActive }) =>
+                    ` ${
+                      isActive
+                        ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
+                        : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
+                    }`
+                  }
+                >
+                  <div>
+                    {React.createElement(AiOutlineFieldTime, { size: "20" })}
+                  </div>
 
-                    <h2
-                      className={`whitespace-pre duration-300 ${
-                        !open && "opacity-0 translate-x-28 overflow-hidden"
-                      }`}
-                    >
-                     Workspace Bookings
-                    </h2>
-                    <h2
-                      className={`${
-                        open && "hidden"
-                      } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
-                    >
-                      Bookings
-                    </h2>
-                  </NavLink>
-                )}
-               {feat.includes("business_cards") && (
-                  <NavLink
-                    to={"/birthday"}
-                    className={({ isActive }) =>
-                      ` ${
-                        isActive
-                          ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
-                          : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
-                      }`
-                    }
+                  <h2
+                    className={`whitespace-pre duration-300 ${
+                      !open && "opacity-0 translate-x-28 overflow-hidden"
+                    }`}
                   >
-                    <div>
-                      {React.createElement(FaBirthdayCake, { size: "20" })}
-                    </div>
-
-                    <h2
-                      className={`whitespace-pre duration-300 ${
-                        !open && "opacity-0 translate-x-28 overflow-hidden"
-                      }`}
-                    >
-                      Birthday
-                    </h2>
-                    <h2
-                      className={`${
-                        open && "hidden"
-                      } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
-                    >
-                      Birthday
-                    </h2>
-                  </NavLink>
-                )}
-                 {feat.includes("business_cards") && (
-                  <NavLink
-                    to={"/employees/businesscard"}
-                    className={({ isActive }) =>
-                      ` ${
-                        isActive
-                          ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
-                          : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
-                      }`
-                    }
+                    Workspace Bookings
+                  </h2>
+                  <h2
+                    className={`${
+                      open && "hidden"
+                    } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
                   >
-                    <div>
-                      {React.createElement(TiBusinessCard, { size: "20" })}
-                    </div>
+                    Bookings
+                  </h2>
+                </NavLink>
+              )}
+              {feat.includes("business_cards") && (
+                <NavLink
+                  to={"/birthday"}
+                  className={({ isActive }) =>
+                    ` ${
+                      isActive
+                        ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
+                        : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
+                    }`
+                  }
+                >
+                  <div>
+                    {React.createElement(FaBirthdayCake, { size: "20" })}
+                  </div>
 
-                    <h2
-                      className={`whitespace-pre duration-300 ${
-                        !open && "opacity-0 translate-x-28 overflow-hidden"
-                      }`}
-                    >
-                      Business Card
-                    </h2>
-                    <h2
-                      className={`${
-                        open && "hidden"
-                      } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
-                    >
-                      Business Card
-                    </h2>
-                  </NavLink>
-                )}
-                {feat.includes("meeting") && (
-                  <NavLink
-                    to={"/meetings"}
-                    className={({ isActive }) =>
-                      ` ${
-                        isActive
-                          ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
-                          : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
-                      }`
-                    }
+                  <h2
+                    className={`whitespace-pre duration-300 ${
+                      !open && "opacity-0 translate-x-28 overflow-hidden"
+                    }`}
                   >
-                    <div>
-                      {React.createElement(IoIosPeople, { size: "20" })}
-                    </div>
-
-                    <h2
-                      className={`whitespace-pre duration-300 ${
-                        !open && "opacity-0 translate-x-28 overflow-hidden"
-                      }`}
-                    >
-                      Meeting
-                    </h2>
-                    <h2
-                      className={`${
-                        open && "hidden"
-                      } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
-                    >
-                      Meeting
-                    </h2>
-                  </NavLink>
-                )}
-                
-                
-                {feat.includes("bookings") && (
-                  <NavLink
-                    to={"/employee/booking-request"}
-                    className={({ isActive }) =>
-                      ` ${
-                        isActive
-                          ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
-                          : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
-                      }`
-                    }
+                    Birthday
+                  </h2>
+                  <h2
+                    className={`${
+                      open && "hidden"
+                    } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
                   >
-                    <div>
-                      {React.createElement(FaCalendarAlt, { size: "20" })}
-                    </div>
-                    <h2
-                      className={`whitespace-pre duration-300 ${
-                        !open && "opacity-0 translate-x-28 overflow-hidden"
-                      }`}
-                    >
-                      Booking & Request
-                    </h2>
-                    <h2
-                      className={`${
-                        open && "hidden"
-                      } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
-                    >
-                      Booking & Request
-                    </h2>
-                  </NavLink>
-                )}
+                    Birthday
+                  </h2>
+                </NavLink>
+              )}
+              {feat.includes("business_cards") && (
+                <NavLink
+                  to={"/employees/businesscard"}
+                  className={({ isActive }) =>
+                    ` ${
+                      isActive
+                        ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
+                        : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
+                    }`
+                  }
+                >
+                  <div>
+                    {React.createElement(TiBusinessCard, { size: "20" })}
+                  </div>
 
-                {feat.includes("parking") && (
-                  <NavLink
-                    to={"/employees/parking"}
-                    className={({ isActive }) =>
-                      ` ${
-                        isActive
-                          ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
-                          : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
-                      }`
-                    }
+                  <h2
+                    className={`whitespace-pre duration-300 ${
+                      !open && "opacity-0 translate-x-28 overflow-hidden"
+                    }`}
                   >
-                    <div>
-                      {React.createElement(LuParkingSquare, { size: "20" })}
-                    </div>
+                    Business Card
+                  </h2>
+                  <h2
+                    className={`${
+                      open && "hidden"
+                    } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
+                  >
+                    Business Card
+                  </h2>
+                </NavLink>
+              )}
+              {feat.includes("meeting") && (
+                <NavLink
+                  to={"/meetings"}
+                  className={({ isActive }) =>
+                    ` ${
+                      isActive
+                        ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
+                        : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
+                    }`
+                  }
+                >
+                  <div>{React.createElement(IoIosPeople, { size: "20" })}</div>
 
-                    <h2
-                      className={`whitespace-pre duration-300 ${
-                        !open && "opacity-0 translate-x-28 overflow-hidden"
-                      }`}
-                    >
-                      Parking
-                    </h2>
-                    <h2
-                      className={`${
-                        open && "hidden"
-                      } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
-                    >
-                      Parking
-                    </h2>
-                  </NavLink>
-                )}
-               
+                  <h2
+                    className={`whitespace-pre duration-300 ${
+                      !open && "opacity-0 translate-x-28 overflow-hidden"
+                    }`}
+                  >
+                    Meeting
+                  </h2>
+                  <h2
+                    className={`${
+                      open && "hidden"
+                    } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
+                  >
+                    Meeting
+                  </h2>
+                </NavLink>
+              )}
+
+              {feat.includes("bookings") && (
+                <NavLink
+                  to={"/employee/booking-request"}
+                  className={({ isActive }) =>
+                    ` ${
+                      isActive
+                        ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
+                        : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
+                    }`
+                  }
+                >
+                  <div>
+                    {React.createElement(FaCalendarAlt, { size: "20" })}
+                  </div>
+                  <h2
+                    className={`whitespace-pre duration-300 ${
+                      !open && "opacity-0 translate-x-28 overflow-hidden"
+                    }`}
+                  >
+                    Booking & Request
+                  </h2>
+                  <h2
+                    className={`${
+                      open && "hidden"
+                    } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
+                  >
+                    Booking & Request
+                  </h2>
+                </NavLink>
+              )}
+
+              {feat.includes("parking") && (
+                <NavLink
+                  to={"/employees/parking"}
+                  className={({ isActive }) =>
+                    ` ${
+                      isActive
+                        ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
+                        : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
+                    }`
+                  }
+                >
+                  <div>
+                    {React.createElement(LuParkingSquare, { size: "20" })}
+                  </div>
+
+                  <h2
+                    className={`whitespace-pre duration-300 ${
+                      !open && "opacity-0 translate-x-28 overflow-hidden"
+                    }`}
+                  >
+                    Parking
+                  </h2>
+                  <h2
+                    className={`${
+                      open && "hidden"
+                    } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
+                  >
+                    Parking
+                  </h2>
+                </NavLink>
+              )}
+
               {/* : */}
               <>
                 {feat.includes("face_recognition") && (
@@ -1988,7 +2006,7 @@ const Navbar = () => {
                     </h2>
                   </NavLink>
                 )}
-                 {feat.includes("meeting") && (
+                {feat.includes("meeting") && (
                   <NavLink
                     to={"/integration"}
                     className={({ isActive }) =>
@@ -2079,7 +2097,7 @@ const Navbar = () => {
                     </h2>
                   </NavLink>
                 )}
-               
+
                 {feat.includes("bills") && (
                   <NavLink
                     to={"/employee/bill-pay"}
@@ -2170,7 +2188,6 @@ const Navbar = () => {
                   </NavLink>
                 )}
 
-              
                 {feat.includes("field_sense") && (
                   <NavLink
                     to={"/employee/field-sense-meeting"}
@@ -2289,8 +2306,6 @@ const Navbar = () => {
                     </h2>
                   </NavLink>
                 )}
-                
-                
 
                 {feat.includes("fnb") && (
                   <NavLink

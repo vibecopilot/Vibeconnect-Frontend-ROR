@@ -3102,10 +3102,10 @@ export const editOrganizationAddress = async (addressId, data) => {
     throw error;
   }
 };
-export const getAllOrganizationGeoSettings = async () => {
+export const getAllOrganizationGeoSettings = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
-      `/organization/geographical-settings/`,
+      `/organization/geographical-settings/?organization_id=${orgId}`,
       {
         headers: {
           "Content-Type": "multipart/form-data/",
@@ -3751,6 +3751,51 @@ export const editEmployeeAddressDetails = async (addressId, data) => {
     return response.data;
   } catch (error) {
     console.error("Error updating address Details:", error);
+    throw error;
+  }
+};
+export const postEmployeeEmploymentInfo = async (data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/employment-information/`,
+      data,
+
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting Employment details:", error);
+    throw error;
+  }
+};
+export const getCountriesList = async () => {
+  try {
+    const response = await HrmsAuth.get(`/organization/country-name-list/`, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error getting Countries list:", error);
+    throw error;
+  }
+};
+
+export const getCountryData = async (countryId) => {
+  try {
+    const response = await HrmsAuth.get(`/organization/country-name/?id=${countryId}`, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error getting Country data:", error);
     throw error;
   }
 };

@@ -21,7 +21,7 @@ console.log(empId)
   return (
     <div className="flex ">
       <AdminHRMS />
-      <div className="w-48 h-full bg-white border-r p-4 mt-9">
+      <div className="w-48 h-full bg-white border-r p-4 ">
         <ul className="space-y-4">
           <li className="font-bold text-lg">Sections</li>
           <li>

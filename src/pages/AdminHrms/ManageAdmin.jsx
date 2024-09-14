@@ -175,6 +175,7 @@ const ManageAdmin = () => {
                   value={access}
                   onChange={(e) => setAccess(e.target.value)}
                 >
+                  <option value="">Select Access</option>
                   <option value="Full Access">Full Access</option>
                   <option value="Restricted Access">Restricted Access</option>
                 </select>
@@ -219,8 +220,8 @@ const ManageAdmin = () => {
                   name="type"
                   className="border border-gray-300 mt-2 p-2 rounded w-full"
                 >
-                  <option value="text">Full Access</option>
-                  <option value="number">Restricted Access</option>
+                  <option value="Full Access">Full Access</option>
+                  <option value="Restricted Access">Restricted Access</option>
                 </select>
               </div>
               <div className="flex justify-end gap-2 mt-4">

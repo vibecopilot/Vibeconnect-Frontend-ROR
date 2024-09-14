@@ -181,6 +181,13 @@ const Location = () => {
       fetchMyOrgLocation();
       toast.success("Location added successfully");
       setAddModalIsOpen(false);
+      setFormData({
+        ...formData,
+        city: "",
+        country: "",
+        location: "",
+        state: "",
+      });
     } catch (error) {
       toast.error("An error occurred while adding the location");
       console.log(error);
@@ -291,6 +298,7 @@ const Location = () => {
                   value={formData.location}
                   onChange={handleChange}
                   name="location"
+                  placeholder="Enter Location"
                 />
               </div>
               <div className="grid gap-1">
@@ -301,6 +309,7 @@ const Location = () => {
                   value={formData.city}
                   onChange={handleChange}
                   name="city"
+                  placeholder="Enter City"
                 />
               </div>
               <div className="grid gap-1">
@@ -311,6 +320,7 @@ const Location = () => {
                   value={formData.state}
                   onChange={handleChange}
                   name="state"
+                  placeholder="Enter State"
                 />
               </div>
               <div className="grid gap-1">
@@ -321,6 +331,7 @@ const Location = () => {
                   value={formData.country}
                   onChange={handleChange}
                   name="country"
+                  placeholder="Enter Country"
                 />
               </div>
             </div>
