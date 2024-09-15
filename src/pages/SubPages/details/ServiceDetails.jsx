@@ -310,7 +310,7 @@ const ServiceDetails = () => {
                     Attachments :
                   </span>{" "}
                   <div className="flex  gap-4 flex-wrap my-4 items-center  text-center">
-                    {task.submission_attachments?.map((other) => (
+                    {task.question_attachments?.map((other) => (
                       // <p>{other.document}</p>
                       <img
                         src={domainPrefix + other.document}
