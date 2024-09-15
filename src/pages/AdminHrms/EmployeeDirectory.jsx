@@ -162,7 +162,7 @@ function EmployeeDirectory() {
     }
   };
   return (
-    <div className=" w-full">
+    <div className="w-full">
       <AdminHRMS />
       <div className="flex flex-col ">
         <div className="">
@@ -983,7 +983,7 @@ function EmployeeDirectory() {
               </div>
             ))}
           </div>
-          <div className="w-10 bg-white text-black p-4">
+          <div className="w-10 bg-white text-black p-4 ">
             <div className="flex flex-col">
               {alphabet.map((letter) => (
                 <button

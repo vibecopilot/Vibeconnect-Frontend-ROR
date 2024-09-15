@@ -1,11 +1,15 @@
 import React, { useEffect, useState } from "react";
 import OrganisationSetting from "./OrganisationSetting";
 import {
+  editOrganizationGeoSettings,
   getAllOrganizationGeoSettings,
   getCountriesList,
   getCountryData,
+  getOrganizationGeoMasterData,
 } from "../../api";
 import Select from "react-select";
+import { getItemInLocalStorage } from "../../utils/localStorage";
+import toast from "react-hot-toast";
 const GeographicalSetting = () => {
   const [isEditing, setIsEditing] = useState(false);
 
@@ -15,18 +19,33 @@ const GeographicalSetting = () => {
   const [timezone, setTimezone] = useState("");
   const [dateFormat, setDateFormat] = useState("");
   const [currency, setCurrency] = useState("");
-
+  const [geoId, setGeoId] = useState("");
   const fetchAllGeoSettings = async () => {
     try {
-      const res = await getAllOrganizationGeoSettings();
-      console.log(res);
+      const res = await getAllOrganizationGeoSettings(hrmsOrgId);
+      console.log(res[0]);
+      fetchGeoMasterData(res[0].geographical_master_data);
+      setGeoId(res[0].id);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const fetchGeoMasterData = async (geoId) => {
+    try {
+      const res = await getOrganizationGeoMasterData(geoId);
+      setTimezone(res.time_zone);
+      setDateFormat(res.date_format);
+      setDateFormat(res.date_format);
+      setCurrency(res.default_currency);
+      setSelectedCountry(res.id);
+      setCountry(res.country);
     } catch (error) {
       console.log(error);
     }
   };
   const fetchCountries = async () => {
     try {
-      const countries = await getCountriesList();
+      const countries = await getCountriesList(hrmsOrgId);
       const options = countries.map((country) => ({
         value: country.id,
         label: country.country,
@@ -53,11 +72,25 @@ const GeographicalSetting = () => {
 
   const fetchCountryInfo = async (countryId) => {
     try {
-      const response =  await getCountryData(countryId);
+      const response = await getCountryData(countryId);
       console.log(response);
-      setTimezone(response.time_zone)
-      setDateFormat(response.date_format)
-      setCurrency(response.default_currency)
+      setTimezone(response.time_zone);
+      setDateFormat(response.date_format);
+      setCurrency(response.default_currency);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
+  const handleEditGeoSetting = async () => {
+    const editData = new FormData();
+    editData.append("geographical_master_data", selectedCountry.value);
+    editData.append("organization", hrmsOrgId);
+    try {
+      const res = await editOrganizationGeoSettings(geoId, editData);
+      fetchAllGeoSettings();
+      toast.success("Geographical setting updated successfully");
+      setIsEditing(false);
     } catch (error) {
       console.log(error);
     }
@@ -70,12 +103,21 @@ const GeographicalSetting = () => {
         {/* <h2 className="text-xl font-bold mb-4">Geographical Settings</h2> */}
         <div className="flex justify-between">
           <h2 className="text-2xl font-bold mb-6">Geographical Settings</h2>
-          <button
-            onClick={() => setIsEditing(!isEditing)}
-            className="mb-4 px-4 py-2 bg-blue-500 text-white rounded-md"
-          >
-            {isEditing ? "Save" : "Edit"}
-          </button>
+          {!isEditing ? (
+            <button
+              onClick={() => setIsEditing(!isEditing)}
+              className="mb-4 px-4 py-2 bg-blue-500 text-white rounded-md"
+            >
+              Edit
+            </button>
+          ) : (
+            <button
+              onClick={handleEditGeoSetting}
+              className="mb-4 px-4 py-2 bg-green-500 text-white rounded-md"
+            >
+              Save
+            </button>
+          )}
         </div>
         <div className="mb-4">
           <label
@@ -84,15 +126,26 @@ const GeographicalSetting = () => {
           >
             Country of Origin
           </label>
-          <Select
-            id="country"
-            value={selectedCountry}
-            onChange={handleSelectChange}
-            options={countryOptions}
-            placeholder="Select a country"
-            noOptionsMessage={() => "No countries available"}
-            isDisabled={!isEditing}
-          />
+          {isEditing ? (
+            <Select
+              id="country"
+              value={selectedCountry}
+              onChange={handleSelectChange}
+              options={countryOptions}
+              placeholder="Select a country"
+              noOptionsMessage={() => "No countries available"}
+              isDisabled={!isEditing}
+            />
+          ) : (
+            <input
+              id="timezone"
+              className={`w-full px-3 py-2 border border-gray-50 rounded-md bg-gray-200
+            `}
+              value={country}
+              // onChange={(e) => setTimezone(e.target.value)}
+              disabled
+            />
+          )}
         </div>
         <div className="mb-4">
           <label
@@ -103,7 +156,7 @@ const GeographicalSetting = () => {
           </label>
           <input
             id="timezone"
-            className={`w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-200
+            className={`w-full px-3 py-2 border border-gray-50 rounded-md bg-gray-200
               `}
             value={timezone}
             // onChange={(e) => setTimezone(e.target.value)}
@@ -119,7 +172,7 @@ const GeographicalSetting = () => {
           </label>
           <input
             id="dateFormat"
-            className={`w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-200
+            className={`w-full px-3 py-2 border border-gray-50 rounded-md bg-gray-200
               `}
             disabled
             value={dateFormat}
@@ -134,7 +187,7 @@ const GeographicalSetting = () => {
           </label>
           <input
             id="currency"
-            className={`w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-200
+            className={`w-full px-3 py-2 border border-gray-50 rounded-md bg-gray-200
             `}
             value={currency}
             // onChange={(e) => setCurrency(e.target.value)}

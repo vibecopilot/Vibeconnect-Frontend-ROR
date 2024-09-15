@@ -238,7 +238,7 @@ const CompanyDocuments = () => {
               <div className="max-h-96 overflow-scroll p-1">
                 <div className="mb-4 grid grid-cols-2 gap-4 ">
                   <div>
-                    <label className="block text-gray-700 font-medium">
+                    <label className="block text-gray-700 font-medium text-sm">
                       Name :
                     </label>
                     <input
@@ -249,7 +249,7 @@ const CompanyDocuments = () => {
                     />
                   </div>
                   <div className="">
-                    <label className="block text-gray-700 font-medium">
+                    <label className="block text-gray-700 font-medium text-sm">
                       Employee Permission:
                     </label>
                     <select className="border border-gray-300 p-2  rounded w-full">
@@ -263,7 +263,7 @@ const CompanyDocuments = () => {
                       Applies To <span className="text-red-500">*</span>
                     </label>
                     <select
-                      className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+                      className=" block w-full p-2 border border-gray-300 rounded-md"
                       value={appliesTo}
                       onChange={(e) => setAppliesTo(e.target.value)}
                       required

@@ -192,7 +192,7 @@ const Department = () => {
     <section className="flex ml-20">
       <OrganisationSetting />
       <div className="w-full flex m-3 flex-col overflow-hidden">
-        <div className="flex justify-between gap-2 my-5">
+        <div className="flex justify-between gap-2 my-2 mt-5">
           <input
             type="text"
             placeholder="Search by name"

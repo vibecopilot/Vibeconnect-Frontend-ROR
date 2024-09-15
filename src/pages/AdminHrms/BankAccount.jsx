@@ -187,7 +187,7 @@ const BankAccount = () => {
     <section className="flex ml-20">
       <OrganisationSetting />
       <div className=" w-full flex m-2 flex-col overflow-hidden">
-        <div className=" flex justify-between gap-2 my-5">
+        <div className=" flex justify-between gap-2 mt-5 mb-2">
           <input
             type="text"
             placeholder="Search by name "
