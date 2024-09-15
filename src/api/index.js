@@ -3118,6 +3118,39 @@ export const getAllOrganizationGeoSettings = async (orgId) => {
     throw error;
   }
 };
+export const getOrganizationGeoMasterData = async (geoId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/organization/geographical-master-data/${geoId}/`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting Geo master data :", error);
+    throw error;
+  }
+};
+export const editOrganizationGeoSettings = async (geoId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/organization/geographical-settings/${geoId}/`,
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error editing Geo settings :", error);
+    throw error;
+  }
+};
 // location
 export const getMyOrganizationLocations = async (orgId) => {
   try {
@@ -3400,6 +3433,39 @@ export const getManageAdmin = async (orgId) => {
     return response.data;
   } catch (error) {
     console.error("Error getting Admins:", error);
+    throw error;
+  }
+};
+export const getManageAdminDetails = async (adminId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/organization/user-setting/administrator-setting/${adminId}/`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting Admin detail:", error);
+    throw error;
+  }
+};
+export const editManageAdminDetails = async (adminId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/organization/user-setting/administrator-setting/${adminId}/`,
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error edit Admin detail:", error);
     throw error;
   }
 };
@@ -3772,13 +3838,16 @@ export const postEmployeeEmploymentInfo = async (data) => {
     throw error;
   }
 };
-export const getCountriesList = async () => {
+export const getCountriesList = async (orgId) => {
   try {
-    const response = await HrmsAuth.get(`/organization/country-name-list/`, {
-      headers: {
-        "Content-Type": "multipart/form-data/",
-      },
-    });
+    const response = await HrmsAuth.get(
+      `/organization/country-name-list/?organization_id=${orgId}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
     return response.data;
   } catch (error) {
     console.error("Error getting Countries list:", error);
@@ -3788,15 +3857,17 @@ export const getCountriesList = async () => {
 
 export const getCountryData = async (countryId) => {
   try {
-    const response = await HrmsAuth.get(`/organization/country-name/?id=${countryId}`, {
-      headers: {
-        "Content-Type": "multipart/form-data/",
-      },
-    });
+    const response = await HrmsAuth.get(
+      `/organization/country-name/?id=${countryId}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
     return response.data;
   } catch (error) {
     console.error("Error getting Country data:", error);
     throw error;
   }
 };
-// api
