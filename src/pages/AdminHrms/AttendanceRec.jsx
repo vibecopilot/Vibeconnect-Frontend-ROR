@@ -1,112 +1,28 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import AdminHRMS from "./AdminHrms";
 import { useSelector } from "react-redux";
-import { FaChevronLeft, FaChevronRight, FaRedo } from "react-icons/fa";
+import {
+  FaAngleLeft,
+  FaAngleRight,
+  FaChevronLeft,
+  FaChevronRight,
+  FaRedo,
+} from "react-icons/fa";
 import ToggleSwitch from "../../Buttons/ToggleSwitch";
 import EmployeeDetailView from "./EmployeeDetailView";
+import { getAttendanceRecord } from "../../api";
+import { getItemInLocalStorage } from "../../utils/localStorage";
 
-// Sample data for employees and their attendance
-const employees = [
-  {
-    id: 1,
-    name: "Vinayak Kapdoskar",
-    avatar: "path_to_avatar_image",
-    attendance: ["ABSENT", "ABSENT", "ABSENT", "ABSENT", "ABSENT", "", ""],
-  },
-  {
-    id: 2,
-    name: "Salome Kulangara",
-    avatar: "path_to_avatar_image",
-    attendance: ["ABSENT", "ABSENT", "ABSENT", "ABSENT", "ABSENT", "", ""],
-  },
-  {
-    id: 3,
-    name: "Ankit Nima",
-    avatar: "path_to_avatar_image",
-    attendance: ["ABSENT", "ABSENT", "ABSENT", "ABSENT", "ABSENT", "", ""],
-  },
-  {
-    id: 4,
-    name: "Raj Nima",
-    avatar: "path_to_avatar_image",
-    attendance: ["ABSENT", "ABSENT", "ABSENT", "ABSENT", "ABSENT", "", ""],
-  },
-  {
-    id: 5,
-    name: "Viraj Nima",
-    avatar: "path_to_avatar_image",
-    attendance: ["ABSENT", "ABSENT", "ABSENT", "ABSENT", "ABSENT", "", ""],
-  },
-  {
-    id: 6,
-    name: "sachin Nima",
-    avatar: "path_to_avatar_image",
-    attendance: ["ABSENT", "ABSENT", "ABSENT", "ABSENT", "ABSENT", "", ""],
-  },
-  {
-    id: 7,
-    name: "virat Nima",
-    avatar: "path_to_avatar_image",
-    attendance: ["ABSENT", "ABSENT", "ABSENT", "ABSENT", "ABSENT", "", ""],
-  },
-  {
-    id: 8,
-    name: "Ankit Nima",
-    avatar: "path_to_avatar_image",
-    attendance: ["ABSENT", "ABSENT", "ABSENT", "ABSENT", "ABSENT", "", ""],
-  },
-  {
-    id: 9,
-    name: "vikas Nima",
-    avatar: "path_to_avatar_image",
-    attendance: ["ABSENT", "ABSENT", "ABSENT", "ABSENT", "ABSENT", "", ""],
-  },
-  {
-    id: 10,
-    name: "rahul Nima",
-    avatar: "path_to_avatar_image",
-    attendance: ["ABSENT", "ABSENT", "ABSENT", "ABSENT", "ABSENT", "", ""],
-  },
-  {
-    id: 11,
-    name: "harsh Nima",
-    avatar: "path_to_avatar_image",
-    attendance: ["ABSENT", "ABSENT", "ABSENT", "ABSENT", "ABSENT", "", ""],
-  },
-  {
-    id: 12,
-    name: "niraj Nima",
-    avatar: "path_to_avatar_image",
-    attendance: ["ABSENT", "ABSENT", "ABSENT", "ABSENT", "ABSENT", "", ""],
-  },
-  {
-    id: 13,
-    name: "vardha Nima",
-    avatar: "path_to_avatar_image",
-    attendance: ["ABSENT", "ABSENT", "ABSENT", "ABSENT", "ABSENT", "", ""],
-  },
-  {
-    id: 14,
-    name: "varun Nima",
-    avatar: "path_to_avatar_image",
-    attendance: ["ABSENT", "ABSENT", "ABSENT", "ABSENT", "ABSENT", "", ""],
-  },
-  {
-    id: 15,
-    name: "Ravi Nima",
-    avatar: "path_to_avatar_image",
-    attendance: ["ABSENT", "ABSENT", "ABSENT", "ABSENT", "ABSENT", "", ""],
-  },
-  // Add more employees...
-];
-
-// Function to get formatted date range (7 days)
 const getDateRange = (startDate) => {
   const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   let dateRange = [];
+
+  // Ensure startDate is a valid Date object
+  let initialDate = new Date(startDate); // Use the passed startDate directly
+
   for (let i = 0; i < 7; i++) {
-    const currentDate = new Date(startDate);
-    currentDate.setDate(startDate.getDate() + i);
+    const currentDate = new Date(initialDate); // Avoid mutating the original date
+    currentDate.setDate(initialDate.getDate() + i); // Increment date by i days
     dateRange.push(
       `${daysOfWeek[currentDate.getDay()]} ${currentDate
         .getDate()
@@ -116,6 +32,7 @@ const getDateRange = (startDate) => {
         .toUpperCase()}`
     );
   }
+
   return dateRange;
 };
 
@@ -151,10 +68,10 @@ const AttendanceRec = () => {
   // Pagination logic
   const indexOfLastEmployee = currentPage * employeesPerPage;
   const indexOfFirstEmployee = indexOfLastEmployee - employeesPerPage;
-  const currentEmployees = employees.slice(
-    indexOfFirstEmployee,
-    indexOfLastEmployee
-  );
+  // const currentEmployees = employees.slice(
+  //   indexOfFirstEmployee,
+  //   indexOfLastEmployee
+  // );
 
   const handleNextPage = () => {
     if (indexOfLastEmployee < employees.length) {
@@ -170,6 +87,71 @@ const AttendanceRec = () => {
   const handleRecordClick = (employee, schedule, code) => {
     setSelectedRecord({ employee, schedule, code });
   };
+  const [filteredEmployees, setFilteredEmployees] = useState([]);
+  const [employees, setEmployees] = useState([]);
+  const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
+  const fetchEmployeeAttendance = async () => {
+    const res = await getAttendanceRecord(hrmsOrgId);
+    const data = res.results;
+    setEmployees(data);
+    setFilteredEmployees(data)
+  };
+
+  useEffect(() => {
+    fetchEmployeeAttendance();
+  }, []);
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  const getNextSevenDays = (start) => {
+    const dates = [];
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(start);
+      date.setDate(start.getDate() + i);
+      dates.push(date);
+    }
+    return dates;
+  };
+
+  const nextSevenDays = getNextSevenDays(startDate);
+
+  const getAttendanceStatus = (employee, date) => {
+    const today = new Date();
+    const record = employee.attendance_records.find(
+      (record) => new Date(record.date).toDateString() === date.toDateString()
+    );
+    const isPastDate = date < today;
+    if (isPastDate) {
+      return record ? (record.is_present ? "Present" : "Absent") : "Absent";
+    }
+    return "";
+  };
+
+  const changeWeek = (direction) => {
+    const newDate = new Date(startDate);
+    newDate.setDate(newDate.getDate() + (direction === "next" ? 7 : -7));
+    setStartDate(newDate);
+  };
+
+  const [searchText, setSearchText] = useState("")
+  const handleSearch = (e)=>{
+    const searchValue = e.target.value
+    setSearchText(searchValue)
+    if (searchValue.trim()=== "") {
+      setFilteredEmployees(employees)
+    } else {
+      const filteredResult = employees.filter((employee)=> `${employee.first_name} ${employee.last_name}`.toLowerCase().includes(searchValue.toLowerCase()))
+    setFilteredEmployees(filteredResult)
+    }
+  }
+  const today = new Date();
+  const currentMonth = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}`;
 
   return (
     <div className="flex">
@@ -186,8 +168,9 @@ const AttendanceRec = () => {
             <div className="flex items-center space-x-4">
               <input
                 className="border p-1 w-64 px-4 text-black border-gray-500 rounded-md"
-                value="2024-07"
+                value={currentMonth}
                 type="month"
+                onChange={(e) => console.log(e.target.value)} // Optional: handle value change
               />
               <select className="border p-2 text-black w-48 rounded">
                 <option value="">Action</option>
@@ -253,107 +236,74 @@ const AttendanceRec = () => {
           </div>
         </div>
 
-        {/* Attendance Table */}
-        <div className="flex w-full items-center mt-6">
-          <div className="flex justify-between gap-1 overflow-x-auto w-full">
-            {/* Employee List */}
-            <div className="w-72 h-full p-4 flex flex-col gap-4 bg-white rounded-xl">
-              <input
-                type="text"
-                name=""
-                id=""
-                className="border-b border-gray-500 p-1 outline-none"
-                placeholder="Search employee"
-              />
-              {currentEmployees.map((employee) => (
-                <div
-                  className="flex items-center justify-between"
-                  key={employee.id}
-                >
-                  <span className="text-gray-700 font-medium border-b w-full">
-                    {employee.name}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            <div className="flex flex-col w-full">
-              <div className="flex items-center justify-between mb-2">
-                <button
-                  onClick={handlePrevWeek}
-                  className="p-2 text-gray-500 hover:text-gray-700"
-                >
-                  <FaChevronLeft />
-                </button>
-
-                <div className="grid grid-cols-7 gap-2 flex-grow">
-                  {days.map((day, index) => (
-                    <div
-                      className="text-center font-semibold text-gray-600 py-2"
-                      key={index}
-                    >
-                      {day}
-                    </div>
-                  ))}
-                </div>
-
-                <button
-                  onClick={handleNextWeek}
-                  className="p-2 text-gray-500 hover:text-gray-700"
-                >
-                  <FaChevronRight />
-                </button>
-              </div>
-
-              {/* Attendance Rows */}
-              {currentEmployees.map((employee) => (
-                <div
-                  className="grid grid-cols-7 gap-y-2 mb-[1px] gap-2"
-                  key={employee.id}
-                >
-                  {employee.attendance.map((status, index) => (
-                    <div
-                      key={index}
-                      className={`text-center py-2 border rounded ${
-                        status === "ABSENT"
-                          ? "border-red-500 text-red-500"
-                          : status === "NS"
-                          ? "bg-gray-200 text-gray-500"
-                          : "border-green-500 text-green-500"
-                      }`}
-                    >
-                      {status || ""}
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </div>
+        <div className="flex justify-between items-center my-4 gap-4">
+          <input
+            type="search"
+            value={searchText}
+            onChange={handleSearch}
+            id=""
+            className="border border-gray-400 w-96 p-2 rounded-md"
+            placeholder="Search by employee name"
+          />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => changeWeek("prev")}
+              className=" font-bold  p-2 rounded border-2 text-black border-black"
+            >
+              <FaAngleLeft />
+            </button>
+            <span className="text-sm font-medium">
+              {formatDate(nextSevenDays[0].toISOString())} -{" "}
+              {formatDate(nextSevenDays[6].toISOString())}
+            </span>
+            <button
+              onClick={() => changeWeek("next")}
+              className=" font-bold  p-2 rounded border-2 text-black border-black"
+            >
+              <FaAngleRight size={20} />
+            </button>
           </div>
         </div>
-        {/* Pagination Controls */}
-        <div className="flex justify-end gap-2 mt-4">
-          <button
-            className={`p-2  text-white rounded ${
-              currentPage === 1
-                ? "bg-gray-400 cursor-not-allowed"
-                : " bg-blue-500"
-            }`}
-            onClick={handlePrevPage}
-            disabled={currentPage === 1}
-          >
-            Previous
-          </button>
-          <button
-            className={`p-2  text-white rounded ${
-              indexOfLastEmployee >= employees.length
-                ? "bg-gray-400 cursor-not-allowed"
-                : " bg-blue-500"
-            }`}
-            onClick={handleNextPage}
-            disabled={indexOfLastEmployee >= employees.length}
-          >
-            Next
-          </button>
+
+        <div className="overflow-x-auto">
+          <table className="w-full bg-white shadow-sm border-collapse">
+            <thead>
+              <tr className="bg-gray-200">
+                <th className="p-2 text-left ">Employee Name</th>
+
+                {nextSevenDays.map((date, index) => (
+                  <th key={index} className="p-2  border-none text-center font-mono">
+                    {formatDate(date.toISOString())}
+                  </th>
+                ))}
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredEmployees.map((employee) => (
+                <tr key={employee.id} className="hover:bg-gray-50">
+                  <td className="p-2 font-medium border-b">
+                    {employee.first_name} {employee.last_name}
+                  </td>
+                  {nextSevenDays.map((date, index) => (
+                    <td key={index} className="p-2 text-center border-b">
+                      <span
+                        className={
+                          getAttendanceStatus(employee, date) === "Present"
+                            ? "text-green-600 border-2 rounded-full border-green-600 p-1 px-3"
+                            : getAttendanceStatus(employee, date) === "Absent"
+                            ? "text-red-600 border-2 rounded-full border-red-600 p-1 px-3"
+                            : ""
+                        }
+                      >
+                        {getAttendanceStatus(employee, date)}
+                      </span>
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
         {isModalOpen && (
           <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center">

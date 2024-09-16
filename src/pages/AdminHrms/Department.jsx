@@ -114,11 +114,14 @@ const Department = () => {
     if (searchValue.trim() === "") {
       setFilteredDepartments(departments);
     } else {
-      const filteredResult = departments.filter((department) =>
-        department.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-     `${department.first_name} ${department.last_name}`.toLowerCase().includes(searchValue.toLowerCase())
+      const filteredResult = departments.filter(
+        (department) =>
+          department.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+          `${department.first_name} ${department.last_name}`
+            .toLowerCase()
+            .includes(searchValue.toLowerCase())
       );
-      setFilteredDepartments(filteredResult)
+      setFilteredDepartments(filteredResult);
     }
   };
   const [selectedUserOption, setSelectedUserOption] = useState([]);
@@ -206,10 +209,14 @@ const Department = () => {
             className="border-2 font-medium hover:bg-black hover:text-white duration-150 transition-all  p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
           >
             <PiPlusCircle size={20} />
-            Add 
+            Add
           </button>
         </div>
-        <Table columns={columns} data={filteredDepartments} isPagination={true} />
+        <Table
+          columns={columns}
+          data={filteredDepartments}
+          isPagination={true}
+        />
       </div>
       <div className="my-4 mx-2 w-fit">
         <div className="flex flex-col  bg-gray-50 rounded-md text-wrap  gap-4 my-2 py-2 pl-5 pr-2 w-[18rem]">

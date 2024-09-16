@@ -3871,3 +3871,67 @@ export const getCountryData = async (countryId) => {
     throw error;
   }
 };
+export const getEmployeeRegularizationReq = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/attendance/regularization/requests/?organization_id=${orgId}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting regularization data:", error);
+    throw error;
+  }
+};
+export const postRegularizationApproval = async (approvalId, data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/attendance/regularization/requests/status/${approvalId}/`,data,
+      // {
+      //   headers: {
+      //     "Content-Type": "multipart/form-data/",
+      //   },
+      // }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting regularization approval:", error);
+    throw error;
+  }
+};
+export const getRegularizationDetails = async (reqId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/attendance/regularization/requests/${reqId}/`,
+      // {
+      //   headers: {
+      //     "Content-Type": "multipart/form-data/",
+      //   },
+      // }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting regularization details:", error);
+    throw error;
+  }
+};
+export const getAttendanceRecord = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/employees/attendance-bulk?organization_id=${orgId}`,
+      // {
+      //   headers: {
+      //     "Content-Type": "multipart/form-data/",
+      //   },
+      // }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting attendance records:", error);
+    throw error;
+  }
+};

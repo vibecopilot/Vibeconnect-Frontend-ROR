@@ -48,6 +48,7 @@ const SectionSalary = () => {
     },
   ];
   const { id } = useParams();
+
   return (
     <div className="flex flex-col ml-20">
       <EditEmployeeDirectory />
