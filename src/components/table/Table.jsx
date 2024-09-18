@@ -63,7 +63,7 @@ const Table = ({
   apiEndpoint,
   customStyles,
   onChangePage,
-  selectableRows
+  selectableRow 
 }) => {
   const themeColor = useSelector((state) => state.theme.color);
 
@@ -146,7 +146,7 @@ const Table = ({
         // paginationServer
         fixedHeader
         selectableRowsHighlight
-        selectableRows={selectableRows}
+        selectableRows={selectableRow}
         highlightOnHover
         onChangePage={onChangePage}
       />

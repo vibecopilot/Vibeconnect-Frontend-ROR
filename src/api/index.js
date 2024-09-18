@@ -3935,3 +3935,67 @@ export const getAttendanceRecord = async (orgId) => {
     throw error;
   }
 };
+export const postLeaveCategory = async (data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/leave-categories/`,data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting leave category:", error);
+    throw error;
+  }
+};
+export const getLeaveCategory = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/leave-categories/?organization_id=${orgId}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting leave categories:", error);
+    throw error;
+  }
+};
+export const getLeaveSetting = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/leave-settings/?organization_id=${orgId}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting leave settings:", error);
+    throw error;
+  }
+};
+export const editLeaveSetting = async (settingId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/leave-settings/${settingId}`,data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating leave settings:", error);
+    throw error;
+  }
+};

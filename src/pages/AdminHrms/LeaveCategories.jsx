@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { PiPlusCircle } from "react-icons/pi";
 import { Link } from "react-router-dom";
 import { BsEye } from "react-icons/bs";
@@ -6,9 +6,12 @@ import Table from "../../components/table/Table";
 import AdminHRMS from "./AdminHrms";
 import LeaveSetting from "./LeaveSetting";
 import { BiEdit } from "react-icons/bi";
+import { getLeaveCategory } from "../../api";
+import { GrHelpBook } from "react-icons/gr";
+import { getItemInLocalStorage } from "../../utils/localStorage";
 
 const LeaveCategories = () => {
-  const [filteredData, setFilteredData] = useState([]);
+
   const columns = [
     {
       name: "view",
@@ -21,107 +24,72 @@ const LeaveCategories = () => {
         </div>
       ),
     },
-    {
-      name: "Employee Name",
-      selector: (row) => row.Name,
-      sortable: true,
-    },
+   
     {
       name: "Leave Label",
-      selector: (row) => row.Label,
+      selector: (row) => row.label,
       sortable: true,
     },
     {
       name: "Leave Type",
-      selector: (row) => row.Type,
+      selector: (row) => row.type_of_leave,
       sortable: true,
     },
     {
       name: "Frequency Of Accrual",
-      selector: (row) => row.Frequency,
+      selector: (row) => row.accrual_period,
       sortable: true,
     },
-    // {
-    //     name: "Leave Days",
-    //     selector: (row) => row.Leave_Days,
-    //     sortable: true,
-    //   },
-    //   {
-    //     name: "Comment",
-    //     selector: (row) => row.Comment,
-    //     sortable: true,
-    //   },
-    {
-      name: "Status",
-      selector: (row) => row.status,
-      sortable: true,
-    },
-    // {
-    //   name: "Action",
-    //   selector: (row) =>
-    //     row.status !== "Expired" && (
-    //       <button className="text-red-500">Cancel</button>
-    //     ),
-    //   sortable: true,
-    // },
+   
+    
   ];
 
-  const data = [
-    {
-      Name: "person 1",
-      Category: "hj",
-      End_Date: "09:30 AM",
-      actual: "11:30 AM",
-      Start_Date:"23/10/2024",
-      Leave_Days:"abc",
-      status: "Upcoming",
-    },
+ const [filteredLeavesCat, setFilteredLeavesCat] = useState([])
+ const [leavesCat, setLeavesCat] = useState([])
+ const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
+ useEffect(()=>{
+  const fetchLeaveCategory = async()=>{
+    try {
+      const res = await getLeaveCategory(hrmsOrgId)
+      setFilteredLeavesCat(res)
+      setLeavesCat(res)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+  fetchLeaveCategory()
+ },[])
+ const [searchText, setSearchText] = useState("")
+ const handleSearch =(e)=>{
+  const searchValue = e.target.value
+  setSearchText(searchValue)
+  if (searchValue.trim()=== "") {
+    setFilteredLeavesCat(leavesCat)
+  } else {
+    const filteredResult = leavesCat.filter((leave)=> leave.label.toLowerCase().includes(searchValue.toLowerCase()))
+  setFilteredLeavesCat(filteredResult)
+  }
+ }
 
-  ];
-//   const customStyle = {
-//     headRow: {
-//       style: {
-//         backgroundColor: "black",
-//         color: "white",
+ const listItemStyle = {
+  listStyleType: "disc",
+  color: "black",
+  fontSize: "14px",
+  fontWeight: 500,
+};
 
-//         fontSize: "10px",
-//       },
-//     },
-//     headCells: {
-//       style: {
-//         textTransform: "upperCase",
-//       },
-//     },
-//   };
   return (
-    <section className="flex ml-20">
+    <section className="flex justify-between ml-20 gap-2">
      <LeaveSetting/>
-      <div className=" w-full flex m-3 flex-col overflow-hidden">
-        {/* <div className="flex  justify-start gap-4 my-5  ">
-          <div className="shadow-xl rounded-full border-4 border-gray-400 w-52  px-6 flex flex-col items-center">
-            <p className="font-semibold ">Total Alloted Slots</p>
-            <p className="text-center font-semibold ">0</p>
-          </div>
-          <div className="shadow-xl rounded-full border-4 border-green-400 w-52  px-6 flex flex-col items-center">
-            <p className="font-semibold">Four Wheelers</p>
-            <p className="text-center font-semibold  ">0</p>
-          </div>
-          <div className="shadow-xl rounded-full border-4 border-red-400 w-52  px-6 flex flex-col items-center">
-            <p className="font-semibold">2 Wheelers</p>
-            <p className="text-center font-semibold ">0</p>
-          </div>
-          <div className="shadow-xl rounded-full border-4 border-orange-400 w-52  px-6 flex flex-col items-center">
-            <p className="font-semibold">Vacant Slot</p>
-            <p className="text-center font-semibold ">0</p>
-          </div>
-        </div> */}
+      <div className="w-[50rem] flex mx-2 flex-col overflow-hidden">
+        
         <div className=" flex justify-between my-5">
           <input
             type="text"
-            placeholder="Search by name "
+            placeholder="Search by label "
             className="border border-gray-400 w-96 placeholder:text-sm rounded-lg p-2"
-            //   value={searchText}
-            //   onChange={handleSearch}
+              value={searchText}
+              onChange={handleSearch}
           />
           <Link
             to={"/admin/leave-categories"}
@@ -131,8 +99,73 @@ const LeaveCategories = () => {
             Add
           </Link>
         </div>
-        <Table columns={columns} data={data} isPagination={true} />
+        <Table columns={columns} data={filteredLeavesCat} isPagination={true} />
       </div>
+      <div className="flex flex-col mt-4 mr-2  bg-gray-50 rounded-md text-wrap  gap-4 my-2 py-2 pl-5 pr-2 w-[18rem]">
+        <div className="flex  gap-4 font-medium">
+          <GrHelpBook size={20} />
+          <h2>Help Center</h2>
+        </div>
+        <div className=" ">
+          <p className="font-medium">Leave Setting Guidelines:</p>
+          <ul style={listItemStyle} className="flex flex-col gap-2">
+            <li>
+              <ul style={listItemStyle}>
+                <li>
+                  Leaves consist of different categories like Privilege leave,
+                  casual leave, maternity leave, etc.{" "}
+                </li>
+              </ul>
+            </li>
+            <li>
+              <ul style={listItemStyle}>
+                <li>
+                  Leave settings allows you to configure and assign leave policy
+                  for different category of leaves based on department, profile,
+                  locations, etc.{" "}
+                </li>
+              </ul>
+            </li>
+            <li>
+              <ul style={listItemStyle}>
+                <li>
+                  Within the leave category you can set custom leave policies
+                  like accrual frequency period, leave encashment, recovery
+                  policies, sandwich leave, etc.{" "}
+                </li>
+              </ul>
+            </li>
+
+            <li>
+              <p>
+                {/* <a href="#" className="text-blue-400">
+                      Click Here{" "}
+                    </a> */}
+                Within the template settings you can set approval hierarchy and
+                accrual policy for new joinees, etc.{" "}
+              </p>
+            </li>
+            <li>
+              <p>
+                {/* <a href="#" className="text-blue-400">
+                      Click Here{" "}
+                    </a> */}
+                Leave module is integrated with the attendance module. Hence the
+                leave data will be synced to attendance.{" "}
+              </p>
+            </li>
+            <li>
+              <p>
+                <a href="leave-link" className="text-blue-400">
+                  Click Here{" "}
+                </a>
+                for detailed information.{" "}
+              </p>
+            </li>
+          </ul>
+        </div>
+      </div>
+
     </section>
   );
 };

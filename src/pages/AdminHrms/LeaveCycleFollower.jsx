@@ -69,8 +69,8 @@ const LeavecycleFollower = () => {
 
   return (
     <section className="flex">
-      <div className="w-full flex m-3 flex-col overflow-hidden">
-        <div className="flex justify-between my-5">
+      <div className="w-full flex mx-3 flex-col overflow-hidden">
+        <div className="flex justify-between my-2">
           <input
             type="text"
             placeholder="Search by name"

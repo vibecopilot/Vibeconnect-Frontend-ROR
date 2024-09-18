@@ -6,8 +6,8 @@ import Table from "../../components/table/Table";
 import { BiEdit } from "react-icons/bi";
 import { BsEye } from "react-icons/bs";
 const LeaveBalance = () => {
-  const [employeeName, setEmployeeName] = useState('');
-  const [leaveCycle, setLeaveCycle] = useState('Jan 2024 - Dec 2024');
+  const [employeeName, setEmployeeName] = useState("");
+  const [leaveCycle, setLeaveCycle] = useState("Jan 2024 - Dec 2024");
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -68,9 +68,7 @@ const LeaveBalance = () => {
       name: "Action",
       cell: (row) => (
         <div className="flex items-center gap-4">
-           <Link 
-          to={`/admin/hrms-leavebalance-details/${row.id}`}
-          >
+          <Link to={`/admin/hrms-leavebalance-details/${row.id}`}>
             <BsEye size={15} />
           </Link>
           {/* <button
@@ -120,52 +118,60 @@ const LeaveBalance = () => {
     },
   ];
   return (
-    <div className='flex ml-20'>
-        <AdminHRMS/>
-    <div className="container mx-auto p-4">
-
-      <h1 className="text-2xl font-bold mb-4">Leave Management</h1>
-      <form onSubmit={handleSubmit} className="grid grid-cols-3 gap-4">
-  <div className="col-span-1">
-    <label htmlFor="employeeName" className="block text-sm font-medium text-gray-700">
-      Employee Name
-    </label>
-    <select
-      id="employeeName"
-      value={employeeName}
-      onChange={(e) => setEmployeeName(e.target.value)}
-      className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-      placeholder="Enter employee name"
-    >
-      {/* Options should be provided here */}
-      <option value="">Mittu Panda</option>
-      <option value="">Akhil Nayak</option>
-    </select>
-  </div>
-  <div className="col-span-1">
-    <label htmlFor="leaveCycle" className="block text-sm font-medium text-gray-700">
-      Leave Cycle
-    </label>
-    <input
-      type="text"
-      id="leaveCycle"
-      value={leaveCycle}
-      onChange={(e) => setLeaveCycle(e.target.value)}
-      className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-      placeholder="Enter leave cycle"
-    />
-  </div>
-  <div className="col-span-1 flex items-end">
-    <button type="submit" className="bg-blue-500 text-white py-2 px-4 rounded-md">
-      Submit
-    </button>
-  </div>
-
-</form>
-<div className="mt-2">
-<Table columns={columns} data={data} isPagination={true} />
-</div>
-    </div></div>
+    <div className="flex ml-20">
+      <AdminHRMS />
+      <div className="w-full flex mx-3 flex-col overflow-hidden">
+        <h1 className="text-2xl font-bold mb-4">Leave Management</h1>
+        <form onSubmit={handleSubmit} className="grid grid-cols-3 gap-4">
+          <div className="col-span-1">
+            <label
+              htmlFor="employeeName"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Employee Name
+            </label>
+            <select
+              id="employeeName"
+              value={employeeName}
+              onChange={(e) => setEmployeeName(e.target.value)}
+              className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+              placeholder="Enter employee name"
+            >
+              {/* Options should be provided here */}
+              <option value="">Mittu Panda</option>
+              <option value="">Akhil Nayak</option>
+            </select>
+          </div>
+          <div className="col-span-1">
+            <label
+              htmlFor="leaveCycle"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Leave Cycle
+            </label>
+            <input
+              type="text"
+              id="leaveCycle"
+              value={leaveCycle}
+              onChange={(e) => setLeaveCycle(e.target.value)}
+              className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+              placeholder="Enter leave cycle"
+            />
+          </div>
+          <div className="col-span-1 flex items-end">
+            <button
+              type="submit"
+              className="bg-blue-500 text-white py-2 px-4 rounded-md"
+            >
+              Submit
+            </button>
+          </div>
+        </form>
+        <div className="mt-2">
+          <Table columns={columns} data={data} isPagination={true} />
+        </div>
+      </div>
+    </div>
   );
 };
 

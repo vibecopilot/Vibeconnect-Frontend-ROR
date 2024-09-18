@@ -227,7 +227,7 @@ onChange={handleSearch}
             </div>
           )}
         </div>
-        <Table columns={columns} data={filteredRequests} selectableRows={true} isPagination={true} />
+        <Table columns={columns} data={filteredRequests} selectableRow={true} isPagination={true} />
       </div>
 
       {showModal && (

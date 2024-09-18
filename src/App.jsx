@@ -4060,7 +4060,7 @@ function App() {
             }
           />
           <Route
-            path="admin/leave-categories"
+            path="/admin/leave-categories"
             element={
               <ProtectedAdminRoutes>
                 <AddLeaveCategory />

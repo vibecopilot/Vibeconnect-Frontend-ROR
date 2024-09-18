@@ -12,6 +12,7 @@ import ToggleSwitch from "../../Buttons/ToggleSwitch";
 import EmployeeDetailView from "./EmployeeDetailView";
 import { getAttendanceRecord } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
+import { Link } from "react-router-dom";
 
 const getDateRange = (startDate) => {
   const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -37,6 +38,7 @@ const getDateRange = (startDate) => {
 };
 
 const AttendanceRec = () => {
+  const [selectedMonth, setSelectedMonth] = useState(new Date());
   const [startDate, setStartDate] = useState(new Date());
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -45,22 +47,6 @@ const AttendanceRec = () => {
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [selectedRecord1, setSelectedRecord1] = useState(false);
   const employeesPerPage = 10;
-
-  const handlePrevWeek = () => {
-    setStartDate((prevDate) => {
-      const newDate = new Date(prevDate);
-      newDate.setDate(prevDate.getDate() - 7); // Go back 7 days
-      return newDate;
-    });
-  };
-
-  const handleNextWeek = () => {
-    setStartDate((prevDate) => {
-      const newDate = new Date(prevDate);
-      newDate.setDate(prevDate.getDate() + 7); // Go forward 7 days
-      return newDate;
-    });
-  };
 
   const days = getDateRange(startDate);
   const themeColor = useSelector((state) => state.theme.color);
@@ -94,7 +80,7 @@ const AttendanceRec = () => {
     const res = await getAttendanceRecord(hrmsOrgId);
     const data = res.results;
     setEmployees(data);
-    setFilteredEmployees(data)
+    setFilteredEmployees(data);
   };
 
   useEffect(() => {
@@ -139,19 +125,40 @@ const AttendanceRec = () => {
     setStartDate(newDate);
   };
 
-  const [searchText, setSearchText] = useState("")
-  const handleSearch = (e)=>{
-    const searchValue = e.target.value
-    setSearchText(searchValue)
-    if (searchValue.trim()=== "") {
-      setFilteredEmployees(employees)
+  const [searchText, setSearchText] = useState("");
+  const handleSearch = (e) => {
+    const searchValue = e.target.value;
+    setSearchText(searchValue);
+    if (searchValue.trim() === "") {
+      setFilteredEmployees(employees);
     } else {
-      const filteredResult = employees.filter((employee)=> `${employee.first_name} ${employee.last_name}`.toLowerCase().includes(searchValue.toLowerCase()))
-    setFilteredEmployees(filteredResult)
+      const filteredResult = employees.filter((employee) =>
+        `${employee.first_name} ${employee.last_name}`
+          .toLowerCase()
+          .includes(searchValue.toLowerCase())
+      );
+      setFilteredEmployees(filteredResult);
     }
-  }
+  };
   const today = new Date();
-  const currentMonth = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}`;
+  const currentMonth = `${today.getFullYear()}-${(today.getMonth() + 1)
+    .toString()
+    .padStart(2, "0")}`;
+
+  const handleMonthChange = (e) => {
+    const selectedMonthString = e.target.value; // Format: "YYYY-MM"
+    const [year, month] = selectedMonthString.split("-");
+
+    // Create a new date from the selected month (start from 1st of the month)
+    const newStartDate = new Date(year, month - 1, 1);
+
+    setSelectedMonth(newStartDate);
+    setStartDate(newStartDate); // Update the start date to the first of the selected month
+  };
+  const dateRange = getDateRange(startDate);
+  useEffect(() => {
+    console.log("Weekly Date Range:", dateRange);
+  }, [startDate]);
 
   return (
     <div className="flex">
@@ -167,10 +174,15 @@ const AttendanceRec = () => {
             <h1 className="text-2xl font-semibold">Attendance Record</h1>
             <div className="flex items-center space-x-4">
               <input
+                id="monthSelect"
                 className="border p-1 w-64 px-4 text-black border-gray-500 rounded-md"
-                value={currentMonth}
+                value={`${selectedMonth.getFullYear()}-${(
+                  selectedMonth.getMonth() + 1
+                )
+                  .toString()
+                  .padStart(2, "0")}`} // Format to YYYY-MM
                 type="month"
-                onChange={(e) => console.log(e.target.value)} // Optional: handle value change
+                onChange={handleMonthChange}
               />
               <select className="border p-2 text-black w-48 rounded">
                 <option value="">Action</option>
@@ -237,6 +249,12 @@ const AttendanceRec = () => {
         </div>
 
         <div className="flex justify-between items-center my-4 gap-4">
+          <div>
+            <Link className="font-medium" to={"/admin/hrms/dashboard"}>Home</Link> {"/ "}
+            <Link className="font-medium" to={""}>Attendance</Link> {"/ "}
+            <Link className="font-medium" to={""}>Attendance Record</Link> {"/ "}
+          </div>
+          <div className="flex items-center gap-2">
           <input
             type="search"
             value={searchText}
@@ -245,7 +263,6 @@ const AttendanceRec = () => {
             className="border border-gray-400 w-96 p-2 rounded-md"
             placeholder="Search by employee name"
           />
-          <div className="flex items-center gap-2">
             <button
               onClick={() => changeWeek("prev")}
               className=" font-bold  p-2 rounded border-2 text-black border-black"
@@ -272,7 +289,10 @@ const AttendanceRec = () => {
                 <th className="p-2 text-left ">Employee Name</th>
 
                 {nextSevenDays.map((date, index) => (
-                  <th key={index} className="p-2  border-none text-center font-mono">
+                  <th
+                    key={index}
+                    className="p-2  border-none text-center font-mono"
+                  >
                     {formatDate(date.toISOString())}
                   </th>
                 ))}
@@ -282,7 +302,10 @@ const AttendanceRec = () => {
             <tbody>
               {filteredEmployees.map((employee) => (
                 <tr key={employee.id} className="hover:bg-gray-50">
-                  <td className="p-2 font-medium border-b">
+                  <td className="p-2 font-medium border-b flex items-center gap-2">
+                    <div className=" text-white py-3 rounded-full h-12 w-12 text-center border border-gray-700" style={{background:themeColor}}>
+                  {employee.first_name.charAt(0).toUpperCase()}{employee.last_name.charAt(0).toUpperCase()}
+                    </div>
                     {employee.first_name} {employee.last_name}
                   </td>
                   {nextSevenDays.map((date, index) => (

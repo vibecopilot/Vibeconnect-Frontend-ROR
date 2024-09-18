@@ -1,7 +1,10 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import AdminHRMS from "./AdminHrms";
 import LeaveSetting from "./LeaveSetting";
 import { GrHelpBook } from "react-icons/gr";
+import { editLeaveSetting, getLeaveSetting } from "../../api";
+import { getItemInLocalStorage } from "../../utils/localStorage";
+import toast from "react-hot-toast";
 
 const GeneralSettings = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -11,6 +14,53 @@ const GeneralSettings = () => {
     fontSize: "14px",
     fontWeight: 500,
   };
+  const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
+  const [formData, setFormData] = useState({
+    month: "",
+    canAdminsApproveLeave: false,
+    canSupervisorsAddLeaveAdjustment: false,
+    runDailyLeaveAccruals: false,
+    id: ""
+  });
+  useEffect(() => {
+    const fetchLeaveSetting = async () => {
+      try {
+        const res = await getLeaveSetting(hrmsOrgId);
+        setFormData({
+          ...formData,
+          month: res[0].leave_cycle_start_month,
+          canAdminsApproveLeave: res[0].admin_approval_access,
+          canSupervisorsAddLeaveAdjustment: res[0].supervisors_can_adjust,
+          runDailyLeaveAccruals: res[0].daily_leave_accrual,
+          id:res[0].id
+        });
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchLeaveSetting();
+  }, []);
+  const handleChange = () => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleEditSetting = async()=>{
+    const editData = new FormData()
+    editData.append("leave_cycle_start_month", formData.month)
+    editData.append("admin_approval_access", formData.admin_approval_access)
+    editData.append("supervisors_can_adjust", formData.canSupervisorsAddLeaveAdjustment)
+    editData.append("daily_leave_accrual", formData.runDailyLeaveAccruals)
+    editData.append("organization", hrmsOrgId)
+    try {
+      const res = await editLeaveSetting(formData.id, editData)
+      toast.success("Leave setting updated successfully")
+      setIsEditing(false)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+
   return (
     <section className="flex gap-10 ml-20">
       <LeaveSetting />
@@ -18,12 +68,18 @@ const GeneralSettings = () => {
         <div className="p-6 bg-white  rounded-md ">
           <div className="flex justify-between">
             <h1 className="text-2xl font-bold mb-4">Leave Settings</h1>
-            <button
+           {!isEditing ? <button
               onClick={() => setIsEditing(!isEditing)}
               className="mb-4 px-4 py-2 bg-blue-500 text-white rounded-md"
             >
-              {isEditing ? "Save" : "Edit"}
-            </button>
+              Edit
+            </button>:
+            <button
+              onClick={handleEditSetting}
+              className="mb-4 px-4 py-2 bg-green-500 text-white rounded-md"
+            >
+       Save
+            </button>}
           </div>
           <div className="space-y-4">
             <div>
@@ -34,12 +90,23 @@ const GeneralSettings = () => {
                 className={`w-full px-3 py-2 border border-gray-300 rounded-md ${
                   !isEditing ? "bg-gray-200" : ""
                 }`}
-                readOnly={!isEditing}
+                disabled={!isEditing}
+                value={formData.month}
+                onChange={handleChange}
+                name="month"
               >
-                <option>January</option>
-                <option>February</option>
-                <option>March</option>
-                {/* Add other months */}
+                <option value="January">January</option>
+                <option value="February">February</option>
+                <option value="March">March</option>
+                <option value="April">April</option>
+                <option value="May">May</option>
+                <option value="June">June</option>
+                <option value="July">July</option>
+                <option value="August">August</option>
+                <option value="September">September</option>
+                <option value="October">October</option>
+                <option value="November">November</option>
+                <option value="December">December</option>
               </select>
             </div>
             <div>
@@ -51,20 +118,27 @@ const GeneralSettings = () => {
                 <label>
                   <input
                     type="radio"
-                    name="dailyAccruals"
-                    value="yes"
+                    name="canAdminsApproveLeave"
+                    checked={formData.canAdminsApproveLeave === true}
+                    onChange={() =>
+                      setFormData({ ...formData, canAdminsApproveLeave: true })
+                    }
                     disabled={!isEditing}
                   />{" "}
-                  &nbsp; Yes
+                  Yes
                 </label>
                 <label>
                   <input
                     type="radio"
-                    name="dailyAccruals"
+                    name="canAdminsApproveLeave"
                     value="no"
                     disabled={!isEditing}
+                    checked={formData.canAdminsApproveLeave === false}
+                    onChange={() =>
+                      setFormData({ ...formData, canAdminsApproveLeave: false })
+                    }
                   />{" "}
-                  &nbsp; No
+                  No
                 </label>
               </div>
             </div>
@@ -76,20 +150,34 @@ const GeneralSettings = () => {
                 <label>
                   <input
                     type="radio"
-                    name="dailyAccruals"
-                    value="yes"
+                    name="canSupervisorsAddLeaveAdjustment"
+                    checked={formData.canSupervisorsAddLeaveAdjustment === true}
+                    onChange={() =>
+                      setFormData({
+                        ...formData,
+                        canSupervisorsAddLeaveAdjustment: true,
+                      })
+                    }
                     disabled={!isEditing}
                   />{" "}
-                  &nbsp; Yes
+                  Yes
                 </label>
                 <label>
                   <input
                     type="radio"
-                    name="dailyAccruals"
-                    value="no"
+                    name="canSupervisorsAddLeaveAdjustment"
+                    checked={
+                      formData.canSupervisorsAddLeaveAdjustment === false
+                    }
+                    onChange={() =>
+                      setFormData({
+                        ...formData,
+                        canSupervisorsAddLeaveAdjustment: false,
+                      })
+                    }
                     disabled={!isEditing}
                   />{" "}
-                  &nbsp; No
+                  No
                 </label>
               </div>
             </div>
@@ -101,20 +189,26 @@ const GeneralSettings = () => {
                 <label>
                   <input
                     type="radio"
-                    name="dailyAccruals"
-                    value="yes"
+                    name="runDailyLeaveAccruals"
+                    checked={formData.runDailyLeaveAccruals === true}
+                    onChange={() =>
+                      setFormData({ ...formData, runDailyLeaveAccruals: true })
+                    }
                     disabled={!isEditing}
                   />{" "}
-                  &nbsp; Yes
+                  Yes
                 </label>
                 <label>
                   <input
                     type="radio"
-                    name="dailyAccruals"
-                    value="no"
+                    name="runDailyLeaveAccruals"
+                    checked={formData.runDailyLeaveAccruals === false}
+                    onChange={() =>
+                      setFormData({ ...formData, runDailyLeaveAccruals: false })
+                    }
                     disabled={!isEditing}
                   />{" "}
-                  &nbsp; No
+                  No
                 </label>
               </div>
             </div>
