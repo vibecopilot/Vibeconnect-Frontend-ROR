@@ -88,7 +88,7 @@ const EditEmployeeDirectory = () => {
                 </div>{" "}
               </div>
               {isOpen && (
-                <div className="origin-top-right absolute right-8 mt-1 w-36 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
+                <div className="origin-top-right absolute right-2 mt-1 w-36 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
                   <div
                     className="py-1"
                     role="menu"

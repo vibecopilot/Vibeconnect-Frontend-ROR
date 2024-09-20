@@ -61,7 +61,10 @@ const AttendanceAudit = () => {
   });
 
   const allOptions = [{ value: "selectAll", label: "Select All" }, ...options];
-  const LateEarly = [{ value: "Late Mark Applicable", label: "Late Mark Applicable" },{ value: "Early Mark Applicable", label: "Early Mark Applicable"}]
+  const LateEarly = [
+    { value: "Late Mark Applicable", label: "Late Mark Applicable" },
+    { value: "Early Mark Applicable", label: "Early Mark Applicable" },
+  ];
   const columns = [
     { name: "Name", selector: (row) => row.Location, sortable: true },
     { name: "Date", selector: (row) => row.Label, sortable: true },
@@ -136,7 +139,7 @@ const AttendanceAudit = () => {
               />
             </div>
             <div className="mb-2">
-              <label className="block mb-1 font-medium text-sm">
+              <label className="block font-medium text-sm">
                 Date Range
               </label>
               <DatePicker
@@ -308,7 +311,7 @@ const AttendanceAudit = () => {
                 </div>
               )}
             </div>
-           
+
             <div className="mb-2">
               <label className="block mb-1 text-sm font-medium">
                 Late and Early Mark Status

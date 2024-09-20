@@ -6,25 +6,14 @@ import Table from "../../components/table/Table";
 import AdminHRMS from "./AdminHrms";
 import LeaveSetting from "./LeaveSetting";
 import { BiEdit } from "react-icons/bi";
-import { getLeaveCategory } from "../../api";
+import { deleteLeaveCategory, getLeaveCategory } from "../../api";
 import { GrHelpBook } from "react-icons/gr";
 import { getItemInLocalStorage } from "../../utils/localStorage";
+import { FaTrash } from "react-icons/fa";
+import toast from "react-hot-toast";
 
 const LeaveCategories = () => {
-
   const columns = [
-    {
-      name: "view",
-
-      cell: (row) => (
-        <div className="flex items-center gap-4">
-          <Link to={`/admin/leave-categories/${row.id}`}>
-            <BiEdit size={15} />
-          </Link>
-        </div>
-      ),
-    },
-   
     {
       name: "Leave Label",
       selector: (row) => row.label,
@@ -40,60 +29,82 @@ const LeaveCategories = () => {
       selector: (row) => row.accrual_period,
       sortable: true,
     },
-   
-    
+    {
+      name: "Action",
+
+      cell: (row) => (
+        <div className="flex items-center gap-4">
+          <Link to={`/admin/leave-categories/${row.id}`}>
+            <BiEdit size={15} />
+          </Link>
+          <button onClick={() => handleDeleteLeaveCategory(row.id)}>
+            <FaTrash />
+          </button>
+        </div>
+      ),
+    },
   ];
-
- const [filteredLeavesCat, setFilteredLeavesCat] = useState([])
- const [leavesCat, setLeavesCat] = useState([])
- const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
- useEffect(()=>{
-  const fetchLeaveCategory = async()=>{
+  const handleDeleteLeaveCategory = async (catId) => {
     try {
-      const res = await getLeaveCategory(hrmsOrgId)
-      setFilteredLeavesCat(res)
-      setLeavesCat(res)
+      await deleteLeaveCategory(catId);
+      toast.success("Leave category deleted successfully");
+      fetchLeaveCategory();
     } catch (error) {
-      console.log(error)
+      console.log(object);
     }
-  }
-  fetchLeaveCategory()
- },[])
- const [searchText, setSearchText] = useState("")
- const handleSearch =(e)=>{
-  const searchValue = e.target.value
-  setSearchText(searchValue)
-  if (searchValue.trim()=== "") {
-    setFilteredLeavesCat(leavesCat)
-  } else {
-    const filteredResult = leavesCat.filter((leave)=> leave.label.toLowerCase().includes(searchValue.toLowerCase()))
-  setFilteredLeavesCat(filteredResult)
-  }
- }
+  };
 
- const listItemStyle = {
-  listStyleType: "disc",
-  color: "black",
-  fontSize: "14px",
-  fontWeight: 500,
-};
+  const [filteredLeavesCat, setFilteredLeavesCat] = useState([]);
+  const [leavesCat, setLeavesCat] = useState([]);
+  const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
+  const fetchLeaveCategory = async () => {
+    try {
+      const res = await getLeaveCategory(hrmsOrgId);
+      setFilteredLeavesCat(res);
+      setLeavesCat(res);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(() => {
+    fetchLeaveCategory();
+  }, []);
+  const [searchText, setSearchText] = useState("");
+  const handleSearch = (e) => {
+    const searchValue = e.target.value;
+    setSearchText(searchValue);
+    if (searchValue.trim() === "") {
+      setFilteredLeavesCat(leavesCat);
+    } else {
+      const filteredResult = leavesCat.filter((leave) =>
+        leave.label.toLowerCase().includes(searchValue.toLowerCase())
+      );
+      setFilteredLeavesCat(filteredResult);
+    }
+  };
+
+  const listItemStyle = {
+    listStyleType: "disc",
+    color: "black",
+    fontSize: "14px",
+    fontWeight: 500,
+  };
 
   return (
     <section className="flex justify-between ml-20 gap-2">
-     <LeaveSetting/>
+      <LeaveSetting />
       <div className="w-[50rem] flex mx-2 flex-col overflow-hidden">
-        
-        <div className=" flex justify-between my-5">
+        <div className=" flex justify-between gap-2 my-2">
           <input
             type="text"
             placeholder="Search by label "
-            className="border border-gray-400 w-96 placeholder:text-sm rounded-lg p-2"
-              value={searchText}
-              onChange={handleSearch}
+            className="border border-gray-400 w-full placeholder:text-sm rounded-lg p-2"
+            value={searchText}
+            onChange={handleSearch}
           />
           <Link
             to={"/admin/leave-categories"}
-            className="border-2 font-semibold hover:bg-black hover:text-white duration-150 transition-all border-black p-2 rounded-md text-black cursor-pointer text-center flex items-center  gap-2 justify-center"
+            className="border-2 font-semibold hover:bg-black hover:text-white duration-150 transition-all border-black p-1 rounded-md text-black cursor-pointer text-center flex items-center  gap-2 justify-center"
           >
             <PiPlusCircle size={20} />
             Add
@@ -165,7 +176,6 @@ const LeaveCategories = () => {
           </ul>
         </div>
       </div>
-
     </section>
   );
 };

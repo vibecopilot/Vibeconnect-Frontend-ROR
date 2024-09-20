@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import AdminHRMS from "./AdminHrms";
 import { postLeaveCategory } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
+import { useNavigate, useNavigation } from "react-router-dom";
 
 function AddLeaveCategory() {
   const [formData, setFormData] = useState({
@@ -42,13 +43,16 @@ function AddLeaveCategory() {
     maxDaysFromOccurrence: "",
     consecutiveWithWeeklyOff: false,
     consecutiveWithHoliday: false,
+    fixedCutoffDay: 15,
+    resignationCutoffDay:15
   });
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
+  const navigate = useNavigate()
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
-  const handleSubmit = async() => {
+  const handleSubmit = async () => {
     const postData = new FormData();
     postData.append("type_of_leave", formData.leaveType);
     postData.append("label", formData.customLabel);
@@ -111,13 +115,19 @@ function AddLeaveCategory() {
       formData.displayClosingBalance
     );
     postData.append(
-      "organization",
-      hrmsOrgId
+      "fixed_cutoff_day",
+      formData.fixedCutoffDay
     );
+    postData.append(
+      "resignation_cutoff_day",
+      formData.resignationCutoffDay
+    );
+    postData.append("organization", hrmsOrgId);
     try {
-      const res = await postLeaveCategory(postData)
+      const res = await postLeaveCategory(postData);
+      navigate("/leave-categories")
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
   };
 
@@ -128,7 +138,9 @@ function AddLeaveCategory() {
         <h2 className="text-2xl mb-4">Add Leave Category</h2>
         <div className="grid gap-4 lg:grid-cols-3 ml-5">
           <div className="flex flex-col gap-2  justify-between">
-            <label className="font-medium">Type of Leave</label>
+            <label className="font-medium">
+              Type of Leave <span className="text-red-500">*</span>
+            </label>
             <select
               name="leaveType"
               value={formData.leaveType}
@@ -145,7 +157,9 @@ function AddLeaveCategory() {
             </select>
           </div>
           <div className="flex flex-col gap-2 justify-between">
-            <label className="font-medium">Label for this leave</label>
+            <label className="font-medium">
+              Label for this leave <span className="text-red-500">*</span>
+            </label>
             <input
               type="text"
               name="customLabel"
@@ -156,7 +170,9 @@ function AddLeaveCategory() {
             />
           </div>
           <div className="flex flex-col gap-2 justify-between">
-            <label className="font-medium">Abbreviation Label</label>
+            <label className="font-medium">
+              Abbreviation Label <span className="text-red-500">*</span>
+            </label>
             <input
               type="text"
               name="abbreviationLabel"
@@ -167,7 +183,9 @@ function AddLeaveCategory() {
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label className="font-medium">Leave Accrual Period</label>
+            <label className="font-medium">
+              Leave Accrual Period <span className="text-red-500">*</span>
+            </label>
             <select
               name="accrualPeriod"
               value={formData.accrualPeriod}
@@ -219,6 +237,7 @@ function AddLeaveCategory() {
               onChange={handleChange}
               className="border p-2 rounded-md border-gray-400"
             >
+              <option value="">Select</option>
               <option value="No Carryover">No Carryover</option>
               <option value="Carryover Cap">Carryover Cap</option>
               <option value="No Limit">No Limit</option>
@@ -327,16 +346,16 @@ function AddLeaveCategory() {
               className="border p-2 rounded-md border-gray-400"
             >
               <option value="">Select</option>
-              <option value="Fixed cut-off day of the month">
+              <option value="Fixed cut-off">
                 Fixed cut-off day of the month
               </option>
-              <option value="Pro-ration by joining date in the calendar month">
+              <option value="Pro-ration ">
                 Pro-ration by joining date in the calendar month
               </option>
             </select>
           </div>
 
-          {formData.prorationMethod === "Fixed cut-off day of the month" && (
+          {formData.prorationMethod === "Fixed cut-off" && (
             <div className="flex flex-col gap-2">
               <label className="font-medium">
                 What day of the month will the employee have to join on to get
@@ -344,14 +363,16 @@ function AddLeaveCategory() {
               </label>
               <input
                 type="text"
-                name=""
+                name="fixedCutoffDay"
                 id=""
+                value={formData.fixedCutoffDay}
+                onChange={handleChange}
                 className="border p-2 rounded-md border-gray-400"
                 placeholder="day of the month"
               />
             </div>
           )}
-          {formData.prorationMethod === "Fixed cut-off day of the month" && (
+          {formData.prorationMethod === "Fixed cut-off" && (
             <div className="flex flex-col gap-2">
               <label className="font-medium">
                 What day of the month will the employee have to resign on to get
@@ -359,7 +380,9 @@ function AddLeaveCategory() {
               </label>
               <input
                 type="text"
-                name=""
+                name="resignationCutoffDay"
+                value={formData.resignationCutoffDay}
+                onChange={handleChange}
                 id=""
                 className="border p-2 rounded-md border-gray-400"
                 placeholder="day of the month"
@@ -745,6 +768,7 @@ function AddLeaveCategory() {
               value={formData.minApplicationDaysBefore}
               onChange={handleChange}
               className="border p-2 rounded-md border-gray-400"
+              placeholder="Enter days"
             />
           </div>
           <div className="flex flex-col gap-2  justify-between">
@@ -758,6 +782,7 @@ function AddLeaveCategory() {
               value={formData.maxDaysFromOccurrence}
               onChange={handleChange}
               className="border p-2 rounded-md border-gray-400"
+              placeholder="Enter days"
             />
           </div>
           <div className="flex flex-col gap-2 justify-between">
@@ -770,6 +795,7 @@ function AddLeaveCategory() {
               value={formData.minConsecutiveDays}
               onChange={handleChange}
               className="border p-2 rounded-md border-gray-400"
+              placeholder="Enter days"
             />
           </div>
           <div className="flex flex-col justify-between gap-2">
@@ -782,6 +808,7 @@ function AddLeaveCategory() {
               value={formData.maxConsecutiveDays}
               onChange={handleChange}
               className="border p-2 rounded-md border-gray-400"
+              placeholder="Enter days"
             />
           </div>
           <div className="flex flex-col gap-2">
@@ -795,7 +822,9 @@ function AddLeaveCategory() {
                   name="consecutiveWithWeeklyOff"
                   value="Yes"
                   checked={formData.consecutiveWithWeeklyOff === true}
-                  onChange={()=>setFormData({...formData, consecutiveWithWeeklyOff: true})}
+                  onChange={() =>
+                    setFormData({ ...formData, consecutiveWithWeeklyOff: true })
+                  }
                   className="mr-1"
                 />
                 Yes
@@ -806,7 +835,12 @@ function AddLeaveCategory() {
                   name="consecutiveWithWeeklyOff"
                   value="Yes"
                   checked={formData.consecutiveWithWeeklyOff === false}
-                  onChange={()=>setFormData({...formData, consecutiveWithWeeklyOff: false})}
+                  onChange={() =>
+                    setFormData({
+                      ...formData,
+                      consecutiveWithWeeklyOff: false,
+                    })
+                  }
                   className="mr-1"
                 />
                 No
@@ -824,7 +858,9 @@ function AddLeaveCategory() {
                   name="consecutiveWithHoliday"
                   value="Yes"
                   checked={formData.consecutiveWithHoliday === true}
-                  onChange={()=>setFormData({...formData, consecutiveWithHoliday: true})}
+                  onChange={() =>
+                    setFormData({ ...formData, consecutiveWithHoliday: true })
+                  }
                   className="mr-1"
                 />
                 Yes
@@ -835,7 +871,9 @@ function AddLeaveCategory() {
                   name="consecutiveWithHoliday"
                   value="Yes"
                   checked={formData.consecutiveWithHoliday === false}
-                  onChange={()=>setFormData({...formData, consecutiveWithHoliday: false})}
+                  onChange={() =>
+                    setFormData({ ...formData, consecutiveWithHoliday: false })
+                  }
                   className="mr-1"
                 />
                 No
@@ -853,7 +891,9 @@ function AddLeaveCategory() {
                   name="documentRequired"
                   value="Yes"
                   checked={formData.documentRequired === true}
-                  onChange={()=>setFormData({...formData, documentRequired: true})}
+                  onChange={() =>
+                    setFormData({ ...formData, documentRequired: true })
+                  }
                   className="mr-1"
                 />
                 Yes
@@ -864,7 +904,9 @@ function AddLeaveCategory() {
                   name="documentRequired"
                   value="No"
                   checked={formData.documentRequired === false}
-                  onChange={()=>setFormData({...formData, documentRequired: false})}
+                  onChange={() =>
+                    setFormData({ ...formData, documentRequired: false })
+                  }
                   className="mr-1"
                 />
                 No
@@ -882,7 +924,9 @@ function AddLeaveCategory() {
                   name="dateRestriction"
                   value="Yes"
                   checked={formData.dateRestriction === true}
-                  onChange={()=> setFormData({...formData, dateRestriction: true})}
+                  onChange={() =>
+                    setFormData({ ...formData, dateRestriction: true })
+                  }
                   className="mr-1"
                 />
                 Yes
@@ -893,7 +937,9 @@ function AddLeaveCategory() {
                   name="dateRestriction"
                   value="No"
                   checked={formData.dateRestriction === false}
-                  onChange={()=> setFormData({...formData, dateRestriction: false})}
+                  onChange={() =>
+                    setFormData({ ...formData, dateRestriction: false })
+                  }
                   className="mr-1"
                 />
                 No
@@ -911,7 +957,9 @@ function AddLeaveCategory() {
                   name="displayClosingBalance"
                   value="Yes"
                   checked={formData.displayClosingBalance === true}
-                  onChange={()=>setFormData({...formData, displayClosingBalance: true})}
+                  onChange={() =>
+                    setFormData({ ...formData, displayClosingBalance: true })
+                  }
                   className="mr-1"
                 />
                 Yes
@@ -922,7 +970,9 @@ function AddLeaveCategory() {
                   name="displayClosingBalance"
                   value="Yes"
                   checked={formData.displayClosingBalance === false}
-                  onChange={()=>setFormData({...formData, displayClosingBalance: false})}
+                  onChange={() =>
+                    setFormData({ ...formData, displayClosingBalance: false })
+                  }
                   className="mr-1"
                 />
                 No
@@ -931,7 +981,11 @@ function AddLeaveCategory() {
           </div>
         </div>
         <div className="flex justify-end">
-          <button type="submit" className="bg-blue-500 text-white p-2 rounded" onClick={handleSubmit}>
+          <button
+            type="submit"
+            className="bg-blue-500 text-white p-2 rounded"
+            onClick={handleSubmit}
+          >
             Submit
           </button>
         </div>

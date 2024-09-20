@@ -13,6 +13,7 @@ import {
   getEmployeeAddressDetails,
   getEmployeeDetails,
   getEmployeeFamilyDetails,
+  getEmployeePaymentInfo,
 } from "../../api";
 import { useParams } from "react-router-dom";
 import { getItemInLocalStorage } from "../../utils/localStorage";
@@ -36,6 +37,8 @@ const SectionsPersonal = () => {
     // Handle form submission
     closeModal();
   };
+
+
 
   const column = [
     {
@@ -165,10 +168,23 @@ const SectionsPersonal = () => {
       console.log(error);
     }
   };
+
+  const fetchEmployeePaymentInfo = async()=>{
+    try {
+      const res = await getEmployeePaymentInfo(id)
+      console.log(res)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+
+
   useEffect(() => {
     fetchEmployeeDetails();
     fetchEmployeeFamilyDetails();
     fetchEmployeeAddressDetails();
+    fetchEmployeePaymentInfo()
   }, []);
 
   // const handleChange = (e) => {
@@ -251,23 +267,26 @@ const SectionsPersonal = () => {
     setAddressData({ ...addressData, [e.target.name]: e.target.value });
   };
 
-  const handleEditAddress = async()=>{
-    const postAddress = new FormData()
-    postAddress.append("address_line_1", addressData.address1)
-    postAddress.append("address_line_2", addressData.address2)
-    postAddress.append("country", addressData.country)
-    postAddress.append("state_province", addressData.state)
-    postAddress.append("city", addressData.city)
-    postAddress.append("zip_code", addressData.code)
-    postAddress.append("employee", id)
+  const handleEditAddress = async () => {
+    const postAddress = new FormData();
+    postAddress.append("address_line_1", addressData.address1);
+    postAddress.append("address_line_2", addressData.address2);
+    postAddress.append("country", addressData.country);
+    postAddress.append("state_province", addressData.state);
+    postAddress.append("city", addressData.city);
+    postAddress.append("zip_code", addressData.code);
+    postAddress.append("employee", id);
     try {
-      const res = await editEmployeeAddressDetails(addressData.addressId, postAddress)
+      const res = await editEmployeeAddressDetails(
+        addressData.addressId,
+        postAddress
+      );
       toast.success("Address details updated successfully");
     } catch (error) {
-      console.log(error)
+      console.log(error);
       toast.error("Something went wrong please try again");
     }
-  }
+  };
 
   const paymentOptions = [
     { value: "salary", label: "Salary" },
@@ -286,9 +305,7 @@ const SectionsPersonal = () => {
           <Collapsible
             trigger={
               <CustomTrigger isOpen={isOpen}>
-                <h2 className="text-xl font-semibold">
-                  Basic Information
-                </h2>
+                <h2 className="text-xl font-semibold">Basic Information</h2>
               </CustomTrigger>
             }
             onOpen={() => setIsOpen(true)}
@@ -480,9 +497,7 @@ const SectionsPersonal = () => {
           <Collapsible
             trigger={
               <CustomTrigger isOpen={isOpen}>
-                <h2 className="text-xl font-semibold">
-                  Family Information
-                </h2>
+                <h2 className="text-xl font-semibold">Family Information</h2>
               </CustomTrigger>
             }
             onOpen={() => setIsOpen(true)}
@@ -572,9 +587,7 @@ const SectionsPersonal = () => {
           <Collapsible
             trigger={
               <CustomTrigger isOpen={isOpen}>
-                <h2 className="text-xl font-semibold">
-                  Address Information
-                </h2>
+                <h2 className="text-xl font-semibold">Address Information</h2>
               </CustomTrigger>
             }
             onOpen={() => setIsOpen(true)}
@@ -713,9 +726,7 @@ const SectionsPersonal = () => {
           <Collapsible
             trigger={
               <CustomTrigger isOpen={isOpen}>
-                <h2 className="text-xl font-semibold">
-                  Payment Information
-                </h2>
+                <h2 className="text-xl font-semibold">Payment Information</h2>
               </CustomTrigger>
             }
             onOpen={() => setIsOpen(true)}
@@ -730,23 +741,22 @@ const SectionsPersonal = () => {
               <div className="max-h-screen bg-white p-8 w-96 rounded-lg shadow-lg overflow-y-auto">
                 <form onSubmit={handleSubmit}>
                   <h2 className="text-2xl font-bold mb-4">Edit Payment Type</h2>
-                <div className="flex flex-col gap-2">
-              <label
-                htmlFor=""
-                className="block text-sm font-medium text-gray-700"
-              >
-                Payment Type
-              </label>
-              <Select
-                id="paymentType"
-                options={paymentOptions}
-                isMulti // Enables multiple selection
-                value={selectedOptions}
-                onChange={handleSelectChange}
-                placeholder="Select payment type(s)"
-               
-              />
-            </div> 
+                  <div className="flex flex-col gap-2">
+                    <label
+                      htmlFor=""
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Payment Type
+                    </label>
+                    <Select
+                      id="paymentType"
+                      options={paymentOptions}
+                      isMulti // Enables multiple selection
+                      value={selectedOptions}
+                      onChange={handleSelectChange}
+                      placeholder="Select payment type(s)"
+                    />
+                  </div>
                   <div className="mt-2">
                     <label className="block text-sm font-medium text-gray-700">
                       Payment Mode *

@@ -67,22 +67,23 @@ const Employment = ({ setSteps, empId }) => {
 
   const handleAddEmployment = async () => {
     const postData = new FormData();
-    postData.append("joining_date", formData.joinDate)
-    postData.append("probation_due_date", formData.probationDueDate)
-    postData.append("employee_code", formData.employeeCode)
-    postData.append("employment_type", formData.employmentType)
-    postData.append("branch_location", formData.branch)
-    postData.append("department", formData.department)
-    postData.append("reporting_supervisor", formData.supervisor)
-    postData.append("employee", empId)
-try {
-  const res = await postEmployeeEmploymentInfo(postData)
-  console.log(res)
-  setDisableNext(false)
-  setDisableSave(true)
-} catch (error) {
-  console.log(error)
-}
+    postData.append("joining_date", formData.joinDate);
+    postData.append("probation_due_date", formData.probationDueDate);
+    postData.append("employee_code", formData.employeeCode);
+    postData.append("employment_type", formData.employmentType);
+    postData.append("branch_location", formData.branch);
+    postData.append("department", formData.department);
+    postData.append("reporting_supervisor", formData.supervisor);
+    postData.append("designation", formData.designation);
+    postData.append("employee", empId);
+    try {
+      const res = await postEmployeeEmploymentInfo(postData);
+      console.log(res);
+      setDisableNext(false);
+      setDisableSave(true);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (
@@ -163,7 +164,7 @@ try {
               <option value="">Select Branch Location</option>
               {locations?.map((location) => (
                 <option value={location.id} key={location.id}>
-                {location.location}, {location.city}, {location.state}
+                  {location.location}, {location.city}, {location.state}
                 </option>
               ))}
             </select>

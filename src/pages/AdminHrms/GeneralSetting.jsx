@@ -40,14 +40,14 @@ const GeneralSettings = () => {
     };
     fetchLeaveSetting();
   }, []);
-  const handleChange = () => {
+  const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleEditSetting = async()=>{
     const editData = new FormData()
     editData.append("leave_cycle_start_month", formData.month)
-    editData.append("admin_approval_access", formData.admin_approval_access)
+    editData.append("admin_approval_access", formData.canAdminsApproveLeave)
     editData.append("supervisors_can_adjust", formData.canSupervisorsAddLeaveAdjustment)
     editData.append("daily_leave_accrual", formData.runDailyLeaveAccruals)
     editData.append("organization", hrmsOrgId)
