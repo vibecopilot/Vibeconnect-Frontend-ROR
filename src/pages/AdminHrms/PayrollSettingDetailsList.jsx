@@ -34,26 +34,26 @@ const PayrollSettingDetailsList = () => {
   return (
     <div className="flex">
         <AdminHRMS/>
-      <div className="w-72 h-full bg-white shadow-lg p-4 mt-9">
+      <div className="w-64 h-full bg-white border-r p-4 mt-9">
         
         <ul className="space-y-4">
           <li className="font-bold text-lg">Details List</li>
           <li>
             <div
               onClick={toggleDropdown}
-              className="cursor-pointer group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-200 rounded-md"
+              className="cursor-pointer group flex justify-between items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-200 rounded-md"
             >
-              <div>
-                {React.createElement(ImFileText2, { size: "20" })}
-              </div>
+              {/* <div>
+              </div> */}
               <h2
-                className={`whitespace-pre duration-300 ${
+                className={`whitespace-pre duration-300 flex gap-4 items-center ${
                   !open && "opacity-0 translate-x-28 overflow-hidden"
                 }`}
-              >
+                >
+                {React.createElement(ImFileText2, { size: "20" })}
                 General Setting
               </h2>
-              <div className="ml-16">
+              <div className="">
                 {dropdownOpen ? (
                   <FiChevronUp size={20} />
                 ) : (
@@ -69,7 +69,7 @@ const PayrollSettingDetailsList = () => {
               </h2>
             </div>
             {dropdownOpen && (
-              <ul className="pl-8 space-y-2 mt-2">
+              <ul className="pl-2 ml-2 space-y-2 mt-2">
                 <li>
                   <NavLink
                     to="/admin/hrms/payroll-setting"

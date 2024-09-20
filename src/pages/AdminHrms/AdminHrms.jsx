@@ -1281,7 +1281,7 @@ const AdminHRMS = () => {
                   </h2>
                 </NavLink>
                 <NavLink
-                  to="/expense-setting/expense-category"
+                  to="/expense-setting"
                   className={({ isActive }) =>
                     `${
                       isActive
