@@ -671,6 +671,14 @@ import WorkspaceFeeds from "./pages/Employees/EmployeeWorkSpace/WorkspaceFeeds.j
 import AttendanceRec from "./pages/AdminHrms/AttendanceRec.jsx";
 import SoftServiceScheduleDetails from "./pages/SubPages/details/SoftServiceScheduleDetails.jsx";
 import SoftServiceWidgets from "./pages/SubPages/SoftServiceWidgets.jsx";
+import ExpensesReports from "./pages/AdminHrms/Expenses/ExpensesReports.jsx";
+import AdvanceReports from "./pages/AdminHrms/Expenses/AdvanceReports.jsx";
+import ProcessHistory from "./pages/AdminHrms/Expenses/ProcessHistory.jsx";
+import AdvanceHistory from "./pages/AdminHrms/Expenses/AdvanceHistory.jsx";
+import ExpenseSetting from "./pages/AdminHrms/Expenses/ExpenseSetting.jsx";
+import ExpenseTemplates from "./pages/AdminHrms/Expenses/ExpenseTemplates.jsx";
+import ExpenseTemplateAssignment from "./pages/AdminHrms/Expenses/ExpenseTemplateAssignment.jsx";
+import ExpenseGeneralSetting from "./pages/AdminHrms/Expenses/ExpenseGeneralSetting.jsx";
 // new admin hrms
 
 function App() {
@@ -5136,6 +5144,88 @@ function App() {
             }
           />
 
+          {/* hrms expenses */}
+          <Route
+            path="/expenses"
+            element={<Navigate to="/expenses/expense-report" />}
+            replace
+          />
+          <Route
+            path="/expenses/expense-report"
+            element={
+              <ProtectedAdminRoutes>
+                <ExpensesReports />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/expenses/advance-report"
+            element={
+              <ProtectedAdminRoutes>
+                <AdvanceReports />
+              </ProtectedAdminRoutes>
+            }
+          />
+           <Route
+            path="/process-history"
+            element={<Navigate to="/process-history/expense-process-history" />}
+            replace
+          />
+          <Route
+            path="/process-history/expense-process-history"
+            element={
+              <ProtectedAdminRoutes>
+                <ProcessHistory />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/process-history/advance-expense-process-history"
+            element={
+              <ProtectedAdminRoutes>
+                <AdvanceHistory />
+              </ProtectedAdminRoutes>
+            }
+          />
+           <Route
+            path="/expense-setting"
+            element={<Navigate to="/expense-setting/expense-category" />}
+            replace
+          />
+          <Route
+            path="/expense-setting/expense-category"
+            element={
+              <ProtectedAdminRoutes>
+                <ExpenseSetting />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/expense-setting/expense-templates"
+            element={
+              <ProtectedAdminRoutes>
+                <ExpenseTemplates />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/expense-setting/expense-template-assignment"
+            element={
+              <ProtectedAdminRoutes>
+                <ExpenseTemplateAssignment />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/expense-setting/general"
+            element={
+              <ProtectedAdminRoutes>
+                <ExpenseGeneralSetting />
+              </ProtectedAdminRoutes>
+            }
+          />
+
+
           {/*personal financial */}
           <Route
             path="/personal-finance"
@@ -6288,6 +6378,8 @@ function App() {
               </ProtectedAdminRoutes>
             }
           />
+
+
           <Route
             path="/admin/skill-grow/course-description"
             element={
