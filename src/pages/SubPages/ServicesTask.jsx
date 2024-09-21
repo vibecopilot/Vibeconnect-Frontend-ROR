@@ -9,6 +9,7 @@ import * as XLSX from "xlsx";
 import { BsEye } from 'react-icons/bs';
 import { DNA } from 'react-loader-spinner';
 import { useSelector } from 'react-redux';
+import { Pagination } from "antd";
 
 const ServicesTask = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
@@ -17,6 +18,9 @@ const ServicesTask = () => {
     const [searchRoutineText, setSearchRoutineCheck] = useState("")
     const [filteredRoutineData, setFilteredRoutineData] = useState([]);
     const [RoutineData, setRoutineData] = useState([]);
+    const [pageNo, setPageNo] = useState(1);
+    const [total, setTotal] = useState(0);
+    const [perPage, setPerPage] = useState(10)
     const dateFormat = (dateString) => {
       const date = new Date(dateString);
       return date.toLocaleDateString("en-GB", {
@@ -82,10 +86,12 @@ const ServicesTask = () => {
       useEffect(() => {
         try {
           const fetchServiceRoutine = async () => {
-            const ServiceRoutineResponse = await getServicesRoutineList();
+            const ServiceRoutineResponse = await getServicesRoutineList(pageNo, perPage);
             const filteredServiceTask = ServiceRoutineResponse.data.activities.filter(asset => asset.soft_service_name);
-            console.log(filteredServiceTask)
+            console.log("task data",filteredServiceTask)
+            console.log("task data resp",ServiceRoutineResponse)
             setFilteredRoutineData(filteredServiceTask);
+            setTotal(ServiceRoutineResponse.data.total_count);
             setRoutineData(filteredServiceTask)
             setRoutines(filteredServiceTask)
           };
@@ -93,7 +99,11 @@ const ServicesTask = () => {
         } catch (error) {
           console.log(error);
         }
-      }, []);
+      }, [pageNo, perPage]);
+      const handlePageChange = (page, pageSize) => {
+        setPageNo(page);
+        setPerPage(pageSize)
+      };
       const handleStatusChange = async (status) => {
         setSelectedStatus(status);
         if(status==="all"){
@@ -266,8 +276,23 @@ style={{background: themeColor}}
         </div>
       </div> 
       {routines.length !== 0 ?(
-        <Table columns={routineColumn} data={filteredRoutineData} />
-
+        <>
+        <Table selectableRows columns={routineColumn} data={filteredRoutineData}  fixedHeader
+        pagination={false}/>
+<div className="bg-white mb-10 p-2 flex justify-end">
+              <Pagination
+                current={pageNo}
+                total={total}
+                pageSize={perPage}
+                onChange={handlePageChange}
+                responsive
+                showSizeChanger
+                onShowSizeChange={handlePageChange}
+                
+               
+              />
+            </div>
+            </>
       ):(
         <div className="flex justify-center items-center h-full">
         <DNA

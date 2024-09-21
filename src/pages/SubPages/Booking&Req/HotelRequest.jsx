@@ -1,34 +1,49 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { PiPlusCircle } from "react-icons/pi";
 import { Link } from "react-router-dom";
 import { NavLink } from "react-router-dom";
 import { TiTick } from "react-icons/ti";
-import { IoClose } from "react-icons/io5";
+import { IoAddCircleOutline, IoClose } from "react-icons/io5";
 import Table from "../../../components/table/Table";
 import { useSelector } from "react-redux";
 import { BsEye } from "react-icons/bs";
 import { BiEdit } from "react-icons/bi";
 
 import Navbar from "../../../components/Navbar";
+import BookingRequestNav from "./BookingRequestnav";
+import { getHotelRequest } from "../../../api";
 
 const HotelRequest = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
+  const [HotelrequestsData, setHotelrequestsData] = useState([]);
   const themeColor = useSelector((state) => state.theme.color);
-  const CustomNavLink = ({ to, children }) => {
-    return (
-      <NavLink
-        to={to}
-        className={({ isActive }) =>
-          `p-1 rounded-full px-4 cursor-pointer text-center transition-all duration-300 ease-linear ${
-            isActive ? 'bg-white text-blue-500 shadow-custom-all-sides' : 'hover:text-blue-400'
-          }`
-        }
-      >
-        {children}
-      </NavLink>
-    );
+  const dateFormat = (dateString) => {
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-indexed
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
   };
-
+  
+  
+  useEffect(() => {
+    const fetchFlightRequest = async () => {
+      try {
+        const response = await getHotelRequest();
+        const hotelreqresp = response.data.sort((a,b)=> {
+          return new Date(b.created_at) - new Date(a.created_at)
+        })
+        console.log("response from api",hotelreqresp)
+        
+        setHotelrequestsData(hotelreqresp);
+       
+      } catch (err) {
+        console.error("Failed to fetch hotel request data:", err);
+      }
+    };
+  
+    fetchFlightRequest(); // Call the API
+  }, []);
   const columns = [
     {
       name: "Action",
@@ -45,47 +60,47 @@ const HotelRequest = () => {
     },
     {
       name: "Employee ID",
-      selector: (row) => row.Id,
+      selector: (row) => row.employee_id,
       sortable: true,
     },
     {
       name: "Employee Name",
-      selector: (row) => row.name,
+      selector: (row) => row.employee_name,
       sortable: true,
     },
     {
       name: "Destination",
-      selector: (row) => row.Destination,
+      selector: (row) => row.destination,
       sortable: true,
     },
     {
       name: "Check-in Date",
-      selector: (row) => row.Checkin,
+      selector: (row) =>dateFormat(row.check_in_date),
       sortable: true,
     },
     {
       name: "Check-out Date",
-      selector: (row) => row.Checkout,
+      selector: (row) => dateFormat(row.check_out_date),
       sortable: true,
     },
     {
       name: "Hotel Preferences",
-      selector: (row) => row.Hotel_Preferences,
+      selector: (row) => row.hotel_preferences,
       sortable: true,
     },
     {
       name: "Booking Confirmation Number",
-      selector: (row) => row.Booking_Number,
+      selector: (row) => row.booking_confirmation_number,
       sortable: true,
     },
     {
       name: "Booking Confirmation Email",
-      selector: (row) => row.booking_email,
+      selector: (row) => row.booking_certification_email,
       sortable: true,
     },
     {
       name: "Number of Rooms",
-      selector: (row) => row.noofrooms,
+      selector: (row) => row.number_of_rooms,
       sortable: true,
     },
     {
@@ -95,39 +110,35 @@ const HotelRequest = () => {
     },
     {
       name: "Special Requests",
-      selector: (row) => row.Special_Requests,
+      selector: (row) => row.special_requests,
       sortable: true,
     },
     {
       name: "Manager Approval ",
-      selector: (row) => row.Manager_Approval,
+      selector: (row) => row.manager_approval ? "Approved" : "Not Approved",
       sortable: true,
     },
     {
       name: "Booking Status ",
-      selector: (row) => row.status,
+      selector: (row) => row.booking_status,
       sortable: true,
     },
-    {
-      name: "Cancellation",
-      selector: (row) => (row.status === "Upcoming" && <button className="text-red-400 font-medium">Cancel</button>),
-      sortable: true,
-    },
-    {
-      name: "Approval",
-      selector: (row) =>
-        row.status === "Upcoming" && (
-          <div className="flex justify-center gap-2">
-            <button className="text-green-400 font-medium hover:bg-green-400 hover:text-white transition-all duration-200 p-1 rounded-full">
-              <TiTick size={20} />
-            </button>
-            <button className="text-red-400 font-medium hover:bg-red-400 hover:text-white transition-all duration-200 p-1 rounded-full">
-              <IoClose size={20} />
-            </button>
-          </div>
-        ),
-      sortable: true,
-    },
+   
+    // {
+    //   name: "Approval",
+    //   selector: (row) =>
+    //     row.status === "Upcoming" && (
+    //       <div className="flex justify-center gap-2">
+    //         <button className="text-green-400 font-medium hover:bg-green-400 hover:text-white transition-all duration-200 p-1 rounded-full">
+    //           <TiTick size={20} />
+    //         </button>
+    //         <button className="text-red-400 font-medium hover:bg-red-400 hover:text-white transition-all duration-200 p-1 rounded-full">
+    //           <IoClose size={20} />
+    //         </button>
+    //       </div>
+    //     ),
+    //   sortable: true,
+    // },
   ];
 
   // Custom style for table headers
@@ -169,17 +180,8 @@ const HotelRequest = () => {
   return (
     <section className="flex">
       <Navbar />
-      <div className="w-full flex mx-3 flex-col overflow-hidden">
-        {/* Navigation Bar */}
-        <div className="flex justify-center my-2">
-          <div className="sm:flex grid grid-cols-2 sm:flex-row gap-5 font-medium p-2 sm:rounded-full rounded-md opacity-90 bg-gray-200">
-            <CustomNavLink to="/admin/booking-request/hotel-request">Hotel Request</CustomNavLink>
-            <CustomNavLink to="/admin/booking-request/flight-ticket-request">Flight Ticket Request</CustomNavLink>
-            <CustomNavLink to="/admin/booking-request/cab-bus-request">Cab/Bus Request</CustomNavLink>
-            <CustomNavLink to="/admin/booking-request/transportation-request">Transportation Request</CustomNavLink>
-            <CustomNavLink to="/admin/booking-request/traveling-allowance-request"> Traveling Allowance Request</CustomNavLink>
-          </div>
-        </div>
+      <div className="p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
+       <BookingRequestNav/>
 
         {/* Filters and Add Button */}
         <div className="flex md:flex-row flex-col gap-5 justify-between mt-10 my-2">
@@ -236,10 +238,10 @@ const HotelRequest = () => {
           <span className="flex gap-4">
             <Link
               to={"/admin/add-hotel-request"}
-              className="border-2 font-semibold hover:bg-black hover:text-white transition-all border-black p-2 rounded-md text-black cursor-pointer text-center flex items-center gap-2 justify-center"
-              style={{ height: "1cm" }}
+              style={{ background: themeColor }}
+              className="px-4 py-2  font-medium text-white rounded-md flex gap-2 items-center justify-center"  
             >
-              <PiPlusCircle size={20} />
+              <IoAddCircleOutline size={20} />
               Add
             </Link>
           </span>
@@ -249,7 +251,7 @@ const HotelRequest = () => {
         <Table
           responsive
           columns={columns}
-          data={data}
+          data={HotelrequestsData}
         //   customStyles={customStyle}
           pagination
           fixedHeader

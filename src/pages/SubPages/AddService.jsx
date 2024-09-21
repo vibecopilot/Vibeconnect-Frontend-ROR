@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import { getFloors, getUnits, postSoftServices } from "../../api";
+import { getGenericGroup, getGenericSubGroup } from "../../api";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
@@ -12,6 +13,9 @@ const AddService = () => {
   const [units, setUnits] = useState([]);
   const siteId = getItemInLocalStorage("SITEID");
   const userId = getItemInLocalStorage("UserId");
+  const [groups, setGroups] = useState([]);
+  const [subgroups, setSubGroups] = useState([]);
+ 
   const [formData, setFormData] = useState({
     site_id: siteId,
     building_id: "",
@@ -19,14 +23,42 @@ const AddService = () => {
     unit_id: "",
     user_id: userId,
     name: "",
+    generic_info_id:"",
+    generic_sub_info_id:"",
     // wing_id: "",
     // area_id: "",
     attachments: [],
   });
   console.log(formData);
   const buildings = getItemInLocalStorage("Building");
-
+  useEffect(() => {
+    const fetchChecklistGroup = async () => {
+      try {
+        const ChecklistGroupsResp = await getGenericGroup();
+       
+        console.log("Checklist Group",ChecklistGroupsResp);
+        setGroups(ChecklistGroupsResp.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchChecklistGroup();
+  }, []);
+  
   const handleChange = async (e) => {
+    const fetchSubGroup = async (groupId) => {
+      try {
+        const subCatResp = await getGenericSubGroup(groupId);
+        setSubGroups(
+          subCatResp.data.map((subCat) => ({
+            name: subCat.name,
+            id: subCat.id,
+          }))
+        );
+      } catch (error) {
+        console.log(error);
+      }
+    };
     async function fetchFloor(floorID) {
       try {
         const build = await getFloors(floorID);
@@ -70,6 +102,16 @@ const AddService = () => {
         ...formData,
         floor_id: UnitID,
       });
+    }else if (
+      e.target.type === "select-one" &&
+      e.target.name === "generic_info_id"
+    ) {
+      const GroupID = Number(e.target.value);
+      await fetchSubGroup(GroupID);
+      setFormData({
+        ...formData,
+        generic_info_id: GroupID,
+      });
     } else {
       setFormData({
         ...formData,
@@ -103,6 +145,8 @@ const AddService = () => {
       dataToSend.append("soft_service[name]", formData.name);
       dataToSend.append("soft_service[building_id]", formData.building_id);
       dataToSend.append("soft_service[floor_id]", formData.floor_id);
+      dataToSend.append("soft_service[generic_info_id]", formData.generic_info_id);
+      dataToSend.append("soft_service[generic_sub_info_id]", formData.generic_sub_info_id);
       selectedOption.forEach(option => {
         dataToSend.append("soft_service[unit_id][]", option.value);
       });
@@ -206,6 +250,35 @@ const AddService = () => {
               placeholder="Select Units"
             />
             </div>
+            <div className="flex flex-col">
+                  <label htmlFor="" className="font-semibold">Service Groups:</label>
+                  <select name="generic_info_id" id="" 
+                  value={formData.generic_info_id}
+                  onChange={handleChange}
+                  className="border p-1 px-4 border-gray-500 rounded-md"
+                  >
+                    <option value="">Select Group</option>
+                    {groups.map((group) => (
+                  <option value={group.id} key={group.id}>
+                    {group.name}
+                  </option>
+                ))}
+                  </select>
+                </div>
+                <div className="flex flex-col">
+                  <label htmlFor="" className="font-semibold">Service SubGroups:</label>
+                  <select name="generic_sub_info_id" id="" 
+                 value={formData.generic_sub_info_id}
+                  onChange={handleChange}
+                  className="border p-1 px-4 border-gray-500 rounded-md">
+                    <option value="">Select SubGroup</option>
+                    {subgroups.map((subgroup) => (
+                  <option value={subgroup.id} key={subgroup.id}>
+                    {subgroup.name}
+                  </option>
+                ))}
+                  </select>
+                </div>
           </div>
           <div>
 <p className="font-medium border-b ">Cron setting</p>

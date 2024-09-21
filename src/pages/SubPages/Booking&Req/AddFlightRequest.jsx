@@ -1,13 +1,66 @@
-import React from 'react';
-// import BackButton from "../../../Buttons/BackButton";
+import React, { useState } from "react";
+import { postFlightTicketRequest } from '../../../api';
+import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 
-const AddFlightRequest = () => (
-  <div className="w-full mt-1 mx-2 ">
+const AddFlightRequest = () => {
+  const themeColor = useSelector((state) => state.theme.color);
+
+  const [formData, setFormData] = useState({
+        employee_name: "",
+        employee_id: "",
+        departure_city: "",
+        arrival_city: "",
+        departure_date: "",
+        return_date: "",
+        preferred_airlines: "",
+        flight_class: "",
+        passenger_name: "",
+        passport_information: "",
+        ticket_confirmation_number: "",
+        booking_status: "",
+        manager_approval: false,
+        booking_confirmation_email: ""
+  });
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+  const navigate = useNavigate()
+  const handleFlightRequest = async() => {
+    const sendData = new FormData();
+    sendData.append("flight_request[employee_id]", formData.employee_id);
+    sendData.append("flight_request[employee_name]", formData.employee_name);
+    sendData.append("flight_request[departure_city]", formData.departure_city);
+    sendData.append("flight_request[arrival_city]", formData.arrival_city);
+    sendData.append("flight_request[departure_date]", formData.departure_date);
+    sendData.append("flight_request[return_date]", formData.return_date);
+    sendData.append("flight_request[preferred_airlines]", formData.preferred_airlines);
+    sendData.append("flight_request[flight_class]", formData.flight_class);
+    sendData.append("flight_request[passenger_name]", formData.passenger_name);
+    sendData.append("flight_request[passport_information]", formData.passport_information);
+    sendData.append("flight_request[ticket_confirmation_number]", formData.ticket_confirmation_number);
+    sendData.append("flight_request[booking_status]", formData.booking_status);
+    sendData.append("flight_request[manager_approval]", formData.manager_approval);
+    sendData.append("flight_request[booking_confirmation_email]", formData.booking_confirmation_email);
+    
+    
+    try {
+        const FlightreqResp = await postFlightTicketRequest(sendData)
+        toast.success("Flight Request Added")
+        navigate("/admin/booking-request/flight-ticket-request")
+        console.log("Flight request Response",FlightreqResp)
+    } catch (error) {
+        console.log(error)
+    }
+  };
+  return (
+  <div className="w-full  ">
           {/* <BackButton to={"/employee/flight-request"} /> */}
 
     <div className="flex justify-center items-center my-5 w-full p-4">
-    <form className="border border-gray-300 rounded-lg p-4 w-full mx-4 max-h-screen overflow-y-auto">
-      <h2 className="text-center md:text-xl font-bold p-2 bg-black rounded-full text-white">
+    <div className="border border-gray-300 rounded-lg p-4 w-full mx-4 max-h-screen ">
+      <h2 className="text-center md:text-xl font-bold p-2 bg-black rounded-full text-white" style={{ background: themeColor }}>
         Flight Request
       </h2>
   <div className="grid md:grid-cols-3 gap-5 mt-5">
@@ -17,9 +70,12 @@ const AddFlightRequest = () => (
       </label>
       <input
         type="number"
+        name="employee_id"
+        value={formData.employee_id}
+        onChange={handleChange}
         id="employeeId"
-        className="border border-gray-400 p-2 rounded-md"
-        placeholder="Enter Employee ID"
+        className="border p-1 px-4 border-gray-500 rounded-md"
+                placeholder="Enter Employee ID"
       />
     </div>
 
@@ -29,8 +85,11 @@ const AddFlightRequest = () => (
       </label>
       <input
         type="text"
+        name="employee_name"
+        value={formData.employee_name}
+        onChange={handleChange}
         id="employeeName"
-        className="border border-gray-400 p-2 rounded-md"
+        className="border p-1 px-4 border-gray-500 rounded-md"
         placeholder="Enter Employee Name"
       />
     </div>
@@ -41,8 +100,11 @@ const AddFlightRequest = () => (
       </label>
       <input
         type="text"
+        name="departure_city"
+        value={formData.departure_city}
+        onChange={handleChange}
         id="destination"
-        className="border border-gray-400 p-2 rounded-md"
+        className="border p-1 px-4 border-gray-500 rounded-md"
         placeholder="Enter Destination"
       />
     </div>
@@ -52,9 +114,13 @@ const AddFlightRequest = () => (
       Arrival City:
       </label>
       <input
-        type="date"
+        type="text"
+        name="arrival_city"
+        value={formData.arrival_city}
+        onChange={handleChange}
         id="checkInDate"
-        className="border border-gray-400 p-2 rounded-md"
+        className="border p-1 px-4 border-gray-500 rounded-md"
+        placeholder="Enter Arrival"
       />
     </div>
 
@@ -64,8 +130,11 @@ const AddFlightRequest = () => (
       </label>
       <input
         type="date"
+        name="departure_date"
+        value={formData.departure_date}
+        onChange={handleChange}
         id="departureDate"
-        className="border border-gray-400 p-2 rounded-md"
+        className="border p-1 px-4 border-gray-500 rounded-md"
       />
     </div>
 
@@ -75,8 +144,11 @@ const AddFlightRequest = () => (
       </label>
       <input
         type="date"
+         name="return_date"
+        value={formData.return_date}
+        onChange={handleChange}
         id="returnDate"
-        className="border border-gray-400 p-2 rounded-md"
+        className="border p-1 px-4 border-gray-500 rounded-md"
       />
     </div>
 
@@ -86,8 +158,11 @@ const AddFlightRequest = () => (
       </label>
       <input
         type="text"
+        name="preferred_airlines"
+        value={formData.preferred_airlines}
+        onChange={handleChange}
         id="preferredAirlines"
-        className="border border-gray-400 p-2 rounded-md"
+        className="border p-1 px-4 border-gray-500 rounded-md"
         placeholder="Enter Preferred Airline(s)"
       />
     </div>
@@ -96,10 +171,15 @@ const AddFlightRequest = () => (
       <label htmlFor="class" className="font-semibold">
         Class:
       </label>
-      <select id="class" className="border border-gray-400 p-2 rounded-md">
-        <option value="economy">Economy</option>
-        <option value="business">Business</option>
-        <option value="first">First</option>
+      <select id="class" 
+      name="flight_class"
+      value={formData.flight_class}
+      onChange={handleChange}
+      className="border p-1 px-4 border-gray-500 rounded-md">
+        <option value="">Select Class</option>
+        <option value="Economy">Economy</option>
+        <option value="Business">Business</option>
+        <option value="First">First</option>
       </select>
     </div>
 
@@ -109,22 +189,16 @@ const AddFlightRequest = () => (
       </label>
       <input
         type="text"
+         name="passenger_name"
+        value={formData.passenger_name}
+        onChange={handleChange}
         id="passengerNames"
-        className="border border-gray-400 p-2 rounded-md"
+        className="border p-1 px-4 border-gray-500 rounded-md"
         placeholder="Enter Passenger Name(s)"
       />
     </div>
 
-    <div className="grid gap-2 items-center w-full">
-      <label htmlFor="passportInformation" className="font-semibold">
-        Passport Information:
-      </label>
-      <textarea
-        id="passportInformation"
-        className="border border-gray-400 p-2 rounded-md"
-        placeholder="Enter Passport Information"
-      ></textarea>
-    </div>
+   
 
     <div className="grid gap-2 items-center w-full">
       <label htmlFor="ticketConfirmationNumber" className="font-semibold">
@@ -132,8 +206,11 @@ const AddFlightRequest = () => (
       </label>
       <input
         type="text"
+         name="ticket_confirmation_number"
+        value={formData.ticket_confirmation_number}
+        onChange={handleChange}
         id="ticketConfirmationNumber"
-        className="border border-gray-400 p-2 rounded-md"
+        className="border p-1 px-4 border-gray-500 rounded-md"
         placeholder="Enter Ticket Confirmation Number"
       />
     </div>
@@ -142,7 +219,12 @@ const AddFlightRequest = () => (
       <label htmlFor="bookingStatus" className="font-semibold">
         Booking Status:
       </label>
-      <select id="bookingStatus" className="border border-gray-400 p-2 rounded-md">
+      <select id="bookingStatus" 
+      name="booking_status"
+      value={formData.booking_status}
+      onChange={handleChange}
+      className="border p-1 px-4 border-gray-500 rounded-md">
+        <option value="">Select Booking Status</option>
         <option value="pending">Pending</option>
         <option value="confirmed">Confirmed</option>
         <option value="cancelled">Cancelled</option>
@@ -154,9 +236,13 @@ const AddFlightRequest = () => (
       <label htmlFor="managerApproval" className="font-semibold">
         Manager Approval :
       </label>
-      <select id="managerApproval" className="border border-gray-400 p-2 rounded-md">
-        <option value="yes">Yes</option>
-        <option value="no">No</option>
+      <select id="managerApproval" 
+       name="manager_approval"
+       value={formData.manager_approval}
+       onChange={handleChange}
+       className="border p-1 px-4 border-gray-500 rounded-md">
+        <option value="true">Yes</option>
+        <option value="false">No</option>
       </select>
     </div>
 
@@ -166,22 +252,41 @@ const AddFlightRequest = () => (
       </label>
       <input
         type="email"
+        name="booking_confirmation_email"
         id="bookingConfirmationEmail"
-        className="border border-gray-400 p-2 rounded-md"
+        value={formData.booking_confirmation_email}
+        onChange={handleChange}
+       className="border p-1 px-4 border-gray-500 rounded-md"
         placeholder="Enter Booking Confirmation Email"
       />
     </div>
   </div>
+  <div className="grid gap-2 items-center w-full my-4">
+      <label htmlFor="passportInformation" className="font-semibold">
+        Passport Information:
+      </label>
+      <textarea
+       name="passport_information"
+        id="passportInformation"
+        value={formData.passport_information}
+        onChange={handleChange}
+        cols="25"
+              rows="3"
+        className="border p-1 px-4 border-gray-500 rounded-md"
+        placeholder="Enter Passport Information"
+      ></textarea>
+    </div>
   <div className="flex gap-5 justify-center items-center my-4">
           <button
-            type="submit"
+           onClick={handleFlightRequest}
             className="bg-black text-white hover:bg-gray-700 font-semibold py-2 px-4 rounded"
           >
             Submit
           </button>
         </div>
-  </form>
+  </div>
   </div></div>
-);
+  );
+}
 
 export default AddFlightRequest;

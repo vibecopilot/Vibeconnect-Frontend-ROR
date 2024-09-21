@@ -649,15 +649,7 @@ export const getAssociationList = async (checklistId) =>
       },
     }
   );
-  export const deleteAssociationList = async (checklistId,assignedto,serviceId) =>
-    axiosInstance.get(
-      `/delete_user_activity.json?checklist_id=${checklistId}&assigned_to=${assignedto}&asset_id=&soft_service_id=${serviceId}`,
-      {
-        params: {
-          token: token,
-        },
-      }
-    );
+  
 
 export const getChecklistDetails = async (id) =>
   axiosInstance.get(`/checklists/${id}.json`, {
@@ -718,27 +710,9 @@ export const getAssetPPMs = async (assetId) =>
       token: token,
     },
   });
-  export const getSoftserviceActivityDetails = async (id) =>
-    axiosInstance.get(
-      `/submissions.json?q[soft_service_id_eq]=${id}&q[checklist_ctype_eq]=soft_service`,
-      {
-        params: {
-          token: token,
-        },
-      }
-    );
-  export const getSoftServiceSchedule = async (sid) =>
-    axiosInstance.get(`/soft_services/${sid}/softservices_log_show.json`, {
-      params: {
-        token: "775d6ae27272741669a65456ea10cc56cd4cce2bb99287b6",
-      },
-    });
-    export const getSoftServiceStatus = async (data) =>
-      axiosInstance.get(`/activities.json?q[soft_service_id_null]=0&q[status_eq]=${data}`, {
-        params: {
-          token: "775d6ae27272741669a65456ea10cc56cd4cce2bb99287b6",
-        },
-      });
+  
+ 
+   
 export const getPPMDetails = async (assetId, activityId) =>
   axiosInstance.get(
     `/submissions.json?q[asset_id_eq]=${assetId}&q[activity_id_eq]=${activityId}`,
@@ -748,13 +722,166 @@ export const getPPMDetails = async (assetId, activityId) =>
       },
     }
   );
-  //booking & request
+
+  //Field sense
+  export const postFieldSenseMeetingManagement = async (data) =>
+    axiosInstance.post(`/field_sense_meeting_managements.json`, data, {
+      params: {
+        token: token,
+      },
+    });
+    export const getFieldSenseMeetingManagement = async () =>
+      axiosInstance.get("/field_sense_meeting_managements.json", {
+        params: {
+          token: token,
+        },
+      });
+      export const getFieldSenseMeetingManagementDetails = async (id) =>
+        axiosInstance.get(`/field_sense_meeting_managements/${id}.json`, {
+          params: {
+            token: token,
+          },
+        });
+      export const postFieldSenseLeadManagement = async (data) =>
+        axiosInstance.post(`/field_sense_leads_managements.json`, data, {
+          params: {
+            token: token,
+          },
+        });
+        export const getFieldSenseLeadManagement = async () =>
+          axiosInstance.get("/field_sense_leads_managements.json", {
+            params: {
+              token: token,
+            },
+          });
+          export const getFieldSenseLeadManagementDetails = async (id) =>
+            axiosInstance.get(`/field_sense_leads_managements/${id}.json`, {
+              params: {
+                token: token,
+              },
+            });
+//Booking & Request
+export const getHotelRequest = async () =>
+  axiosInstance.get("/hotels.json", {
+    params: {
+      token: token,
+    },
+  });
+export const postHotelRequest = async (data) =>
+  axiosInstance.post(`/hotels.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+  export const getHotelRequestDetails = async (id) =>
+    axiosInstance.get(`/hotels/${id}.json`, {
+      params: {
+        token: token,
+      },
+    });
+  export const UpdateHotelRequest = async (data, id) =>
+    axiosInstance.put(`/hotels/${id}.json`, data, {
+      params: {
+        token: token,
+      },
+    });
+    export const UpdateFlightRequest = async (data, id) =>
+      axiosInstance.put(`/flight_requests/${id}.json`, data, {
+        params: {
+          token: token,
+        },
+      });
+      export const getFlightRequestDetails = async (id) =>
+        axiosInstance.get(`/flight_requests/${id}.json`, {
+          params: {
+            token: token,
+          },
+        });
   export const postFlightTicketRequest = async (data) =>
     axiosInstance.post(`/flight_requests.json`, data, {
       params: {
         token: token,
       },
     });
+
+    export const getFlightTicketRequest = async () =>
+      axiosInstance.get("/flight_requests.json", {
+        params: {
+          token: token,
+        },
+      });
+      export const UpdateCabRequest = async (data, id) =>
+        axiosInstance.put(`/cab_and_bus_requests/${id}.json`, data, {
+          params: {
+            token: token,
+          },
+        });
+        export const getCabRequestDetails = async (id) =>
+          axiosInstance.get(`/cab_and_bus_requests/${id}.json`, {
+            params: {
+              token: token,
+            },
+          });
+      export const getcabRequest = async () =>
+        axiosInstance.get("/cab_and_bus_requests.json", {
+          params: {
+            token: token,
+          },
+        });
+      export const postCabRequest = async (data) =>
+        axiosInstance.post(`/cab_and_bus_requests.json`, data, {
+          params: {
+            token: token,
+          },
+        });
+        export const UpdatetransportRequest = async (data, id) =>
+          axiosInstance.put(`/transport_requests/${id}.json`, data, {
+            params: {
+              token: token,
+            },
+          });
+          export const gettransportRequestDetails = async (id) =>
+            axiosInstance.get(`/transport_requests/${id}.json`, {
+              params: {
+                token: token,
+              },
+            });
+        export const gettransportRequest = async () =>
+          axiosInstance.get("/transport_requests.json", {
+            params: {
+              token: token,
+            },
+          });
+        export const postTransportRequest = async (data) =>
+          axiosInstance.post(`/transport_requests.json`, data, {
+            params: {
+              token: token,
+            },
+          });
+          export const getTravellingAllowanceRequest = async () =>
+            axiosInstance.get("/transportation_allowance_requests.json", {
+              params: {
+                token: token,
+              },
+            });
+          export const postTravellingAllowanceRequest = async (data) =>
+            axiosInstance.post(`/transportation_allowance_requests.json`, data, {
+              params: {
+                token: token,
+              },
+            });
+            export const UpdatetravellingallowanceRequest = async (data, id) =>
+              axiosInstance.put(`/transportation_allowance_requests/${id}.json`, data, {
+                params: {
+                  token: token,
+                },
+              });
+              export const getTravellingAllowanceRequestDetails = async (id) =>
+                axiosInstance.get(`/transportation_allowance_requests/${id}.json`, {
+                  params: {
+                    token: token,
+                  },
+                });
 // ppm details
 export const getAssetReadingDetails = async (assetId) =>
   axiosInstance.get(
@@ -966,6 +1093,7 @@ export const getBroadcastDetails = async (id) =>
     },
   });
 
+
 //services
 export const getServicesTaskDetails = async (serviceId, activityId) =>
   axiosInstance.get(
@@ -995,6 +1123,36 @@ export const getSoftServicesDetails = async (id) =>
       token: token,
     },
   });
+  export const getSoftServiceSchedule = async (sid) =>
+    axiosInstance.get(`/soft_services/${sid}/softservices_log_show.json`, {
+      params: {
+        token: token,
+      },
+    });
+  export const getSoftserviceActivityDetails = async (id) =>
+      axiosInstance.get(
+        `/soft_services/${id}/softservices_log_show.json?`,
+        {
+          params: {
+            token: token,
+          },
+        }
+      );
+  export const deleteAssociationList = async (checklistId,assignedto,serviceId) =>
+        axiosInstance.get(
+          `/delete_user_activity.json?checklist_id=${checklistId}&assigned_to=${assignedto}&asset_id=&soft_service_id=${serviceId}`,
+          {
+            params: {
+              token: token,
+            },
+          }
+        );
+  export const getSoftServiceStatus = async (data) =>
+          axiosInstance.get(`/activities.json?q[soft_service_id_null]=0&q[status_eq]=${data}`, {
+            params: {
+              token: "775d6ae27272741669a65456ea10cc56cd4cce2bb99287b6",
+            },
+          });
 export const postServiceAssociation = async (data) =>
   axiosInstance.post(`/activities.json`, data, {
     params: {
@@ -1020,6 +1178,18 @@ export const postChecklist = async (data) =>
       token: token,
     },
   });
+  export const getGenericGroup = async () =>
+    axiosInstance.get(`/generic_infos.json?q[info_type_eq]=soft_services`, {
+      params: {
+        token: token,
+      },
+    });
+    export const getGenericSubGroup = async (groupid) =>
+      axiosInstance.get(`/generic_sub_infos.json?q[generic_info_id_eq]=${groupid}`, {
+        params: {
+          token: token,
+        },
+      });
 export const editChecklist = async (data, id) =>
   axiosInstance.put(`/checklists/${id}.json`, data, {
     params: {
@@ -1047,8 +1217,8 @@ export const getServicesPPMDetails = async (id) =>
   });
 
 //
-export const getServicesRoutineList = async () =>
-  axiosInstance.get(`/activities.json?q[soft_service_id_null]=0`, {
+export const getServicesRoutineList = async (page,perpage) =>
+  axiosInstance.get(`/activities.json?q[soft_service_id_null]=0&per_page=${perpage}&page=${page}`, {
     params: {
       token: token,
     },

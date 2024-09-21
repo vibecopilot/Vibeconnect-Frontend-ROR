@@ -670,6 +670,7 @@ import EmployeeGroup from "./pages/Employees/EmployeeCommunication/EmployeeGroup
 import WorkspaceFeeds from "./pages/Employees/EmployeeWorkSpace/WorkspaceFeeds.jsx";
 import SoftServiceScheduleDetails from "./pages/SubPages/details/SoftServiceScheduleDetails.jsx";
 import SoftServiceWidgets from "./pages/SubPages/SoftServiceWidgets.jsx";
+import FieldSenseLeadManagementDetails from "./pages/SubPages/details/FieldSenseLeadManagementDetails.jsx";
 // new admin hrms
 
 function App() {
@@ -5046,6 +5047,14 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <FieldSenseMeetingDetails />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/field-sense-lead-details/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <FieldSenseLeadManagementDetails/>
               </ProtectedAdminRoutes>
             }
           />
