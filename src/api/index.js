@@ -4167,3 +4167,176 @@ export const editEmployeeEmploymentDetails = async (employmentId, data) => {
     throw error;
   }
 };
+// payroll
+export const getPayrollGeneralSetting = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/payroll/general-settings/?organization_id=${orgId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting payroll general setting:", error);
+    throw error;
+  }
+};
+export const editPayrollGeneralSetting = async (payrollId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/payroll/general-settings/${payrollId}/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating payroll general setting:", error);
+    throw error;
+  }
+};
+export const getPayrollGratuity = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/payroll/gratuity-settings/?organization_id=${orgId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting payroll gratuity:", error);
+    throw error;
+  }
+};
+export const editPayrollGratuity = async (gratuityId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/payroll/gratuity-settings/${gratuityId}/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating payroll gratuity:", error);
+    throw error;
+  }
+};
+export const getFixedAllowance = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/payroll/allowance/?organization_id=${orgId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating payroll gratuity:", error);
+    throw error;
+  }
+};
+export const postFixedAllowance = async (data) => {
+  try {
+    const response = await HrmsAuth.post(`/payroll/allowance/`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error updating payroll gratuity:", error);
+    throw error;
+  }
+};
+export const deleteFixedAllowance = async (FAid) => {
+  try {
+    const response = await HrmsAuth.delete(`/payroll/allowance/${FAid}/`);
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting Fixed Allowance:", error);
+    throw error;
+  }
+};
+export const getFixedAllowanceDetails = async (FAid) => {
+  try {
+    const response = await HrmsAuth.get(`/payroll/allowance/${FAid}/`);
+    return response.data;
+  } catch (error) {
+    console.error("Error getting Fixed Allowance:", error);
+    throw error;
+  }
+};
+export const editFixedAllowanceDetails = async (FAid, data) => {
+  try {
+    const response = await HrmsAuth.put(`/payroll/allowance/${FAid}/`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error updating Fixed Allowance:", error);
+    throw error;
+  }
+};
+export const getFixedDeductions = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/payroll/deduction/?organization_id=${orgId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting Fixed deduction:", error);
+    throw error;
+  }
+};
+export const postFixedDeductions = async (data) => {
+  try {
+    const response = await HrmsAuth.post(`/payroll/deduction/`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error posting Fixed deduction:", error);
+    throw error;
+  }
+};
+export const deleteFixedDeductions = async (deductionId) => {
+  try {
+    const response = await HrmsAuth.delete(
+      `/payroll/deduction/${deductionId}/`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting Fixed deduction:", error);
+    throw error;
+  }
+};
+export const getFixedDeductionDetails = async (deductionId) => {
+  try {
+    const response = await HrmsAuth.get(`/payroll/deduction/${deductionId}/`);
+    return response.data;
+  } catch (error) {
+    console.error("Error getting Fixed deduction:", error);
+    throw error;
+  }
+};
+export const editFixedDeductionDetails = async (deductionId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/payroll/deduction/${deductionId}/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting Fixed deduction:", error);
+    throw error;
+  }
+};
+export const postVariableAllowance = async (data) => {
+  try {
+    const response = await HrmsAuth.post(`/payroll/variable-allowance/`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error posting variable allowance:", error);
+    throw error;
+  }
+};
+export const getVariableAllowance = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(`/payroll/variable-allowance/?organization_id=${orgId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error getting variable allowance:", error);
+    throw error;
+  }
+};
+export const deleteVariableAllowance = async (variableId) => {
+  try {
+    const response = await HrmsAuth.delete(`/payroll/variable-allowance/${variableId}/`);
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting variable allowance:", error);
+    throw error;
+  }
+};

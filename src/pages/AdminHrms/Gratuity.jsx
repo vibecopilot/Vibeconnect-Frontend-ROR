@@ -1,31 +1,99 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import PayrollSettingDetailsList from "./PayrollSettingDetailsList";
 import { GrHelpBook } from "react-icons/gr";
+import { editPayrollGratuity, getPayrollGratuity } from "../../api";
+import { getItemInLocalStorage } from "../../utils/localStorage";
+import { FaCheck } from "react-icons/fa";
+import { MdClose } from "react-icons/md";
+import { BiEdit } from "react-icons/bi";
+import toast from "react-hot-toast";
 
 const Gratuity = () => {
-  const [LIN, setLIN] = useState("");
-  const [isESIC, setIsESIC] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-
+  const [formData, setFormData] = useState({
+    eligibleForGratuity: false,
+    eligibilityPeriod: "",
+    gratuityPercentage: "",
+    componentsForCalculation: "",
+    id:""
+  });
   const listItemStyle = {
     listStyleType: "disc",
     color: "black",
     fontSize: "14px",
     fontWeight: 500,
   };
+  const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
+  const fetchGratuity = async () => {
+    try {
+      const response = await getPayrollGratuity(hrmsOrgId);
+      const res = response[0];
+      setFormData({
+        ...formData,
+        eligibleForGratuity: res.company_eligible_for_gratuity,
+        eligibilityPeriod: res.eligibility_period,
+        componentsForCalculation: res.components_for_calculation,
+        gratuityPercentage: res.gratuity_percentage,
+        id: res.id
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(() => {
+    fetchGratuity();
+  }, []);
+  const handleChange = (e)=>{
+    setFormData({...formData, [e.target.name]: e.target.value })
+  }
+
+  const handleEditGratuity = async()=>{
+    const editData = new FormData()
+    editData.append("company_eligible_for_gratuity", formData.eligibleForGratuity)
+    editData.append("eligibility_period", formData.eligibilityPeriod)
+    editData.append("gratuity_percentage", formData.gratuityPercentage)
+    editData.append("components_for_calculation", formData.componentsForCalculation)
+    editData.append("organization", hrmsOrgId)
+    try {
+      const res = await editPayrollGratuity(formData.id, editData)
+      toast.success("Payroll gratuity setting updated successfully")
+      fetchGratuity()
+      setIsEditing(false)
+    } catch (error) {
+      console.log(error)
+      toast.error("Something went wrong")
+    }
+  }
+
   return (
     <div className="flex justify-between gap-4 ml-20">
       <PayrollSettingDetailsList />
-
       <div className="w-2/3 p-8 bg-white rounded-lg">
         <div className="flex justify-between">
           <h2 className="text-2xl font-bold mb-6">Gratuity</h2>
-          <button
-            onClick={() => setIsEditing(!isEditing)}
-            className="mb-4 px-4 py-2 bg-blue-500 text-white rounded-md"
-          >
-            {isEditing ? "Save" : "Edit"}
-          </button>
+          {isEditing ? (
+            <div className="flex gap-2 justify-center my-2">
+              <button
+                className="border-2 border-green-400 text-green-400 rounded-full p-1 px-4 flex items-center gap-2"
+                onClick={handleEditGratuity}
+              >
+                <FaCheck /> Save
+              </button>
+              <button
+                className="border-2 border-red-400 text-red-400 rounded-full p-1 px-4 flex items-center gap-2"
+                onClick={() => setIsEditing(false)}
+              >
+                <MdClose /> Cancel
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setIsEditing(!isEditing)}
+              className="mb-4 px-4 py-2 bg-blue-500 text-white rounded-md flex gap-2 items-center"
+            >
+              <BiEdit /> Edit
+            </button>
+          )}
         </div>
         <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-2">
@@ -36,8 +104,8 @@ const Gratuity = () => {
               <input
                 type="radio"
                 name="esic"
-                checked={isESIC}
-                onChange={() => setIsESIC(true)}
+                checked={formData.eligibleForGratuity === true}
+                onChange={() => setFormData({...formData, eligibleForGratuity: true})}
                 className="mr-2"
                 disabled={!isEditing}
               />{" "}
@@ -45,20 +113,24 @@ const Gratuity = () => {
               <input
                 type="radio"
                 name="esic"
-                checked={!isESIC}
-                onChange={() => setIsESIC(false)}
+                checked={formData.eligibleForGratuity === false}
+                onChange={() => setFormData({...formData, eligibleForGratuity: false})}
                 className="ml-4 mr-2"
                 disabled={!isEditing}
               />{" "}
               No
             </div>
           </div>
+         {formData.eligibleForGratuity && <>
+         
           <div className="flex flex-col gap-2">
             <label htmlFor="" className="font-medium">
               When is an active employee eligible for gratuity?
             </label>
             <select
-              name=""
+            value={formData.eligibilityPeriod}
+              name="eligibilityPeriod"
+              onChange={handleChange}
               id=""
               className="border border-gray-400 p-2 rounded-md w-full"
               disabled={!isEditing}
@@ -75,8 +147,10 @@ const Gratuity = () => {
               Enter Percentage for Gratuity
             </label>
             <input
-              type="text"
-              name=""
+              type="number"
+              value={formData.gratuityPercentage || ""}
+              name="gratuityPercentage"
+              onChange={handleChange}
               id=""
               className="border border-gray-400 p-2 rounded-md w-full"
               placeholder="%"
@@ -88,14 +162,17 @@ const Gratuity = () => {
               Select Components on which Gratuity is calculated
             </label>
             <select
-              name=""
+              name="componentsForCalculation"
+              onChange={handleChange}
               id=""
+              value={formData.componentsForCalculation}
               className="border border-gray-400 p-2 rounded-md w-full"
               disabled={!isEditing}
             >
               <option value="">Select</option>
             </select>
           </div>
+          </>}
         </div>
         {/* <button className="w-full p-2 bg-blue-500 text-white font-semibold rounded">Submit</button> */}
       </div>

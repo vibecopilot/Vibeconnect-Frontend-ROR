@@ -1,12 +1,21 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { PiPlusCircle } from "react-icons/pi";
 import Table from "../../components/table/Table";
 import PayrollSettingDetailsList from "./PayrollSettingDetailsList";
 import { GrHelpBook } from "react-icons/gr";
 import { useSelector } from "react-redux";
 import { MdClose } from "react-icons/md";
-import { FaCheck } from "react-icons/fa";
+import { FaCheck, FaTrash } from "react-icons/fa";
 import Select from "react-select";
+import {
+  deleteFixedAllowance,
+  getFixedAllowance,
+  postFixedAllowance,
+} from "../../api";
+import { getItemInLocalStorage } from "../../utils/localStorage";
+import toast from "react-hot-toast";
+import { BiEdit } from "react-icons/bi";
+import EditFixedAllowanceModal from "./Modals/EditFixedAllowanceModal";
 const FixedAllowance = () => {
   const listItemStyle = {
     listStyleType: "disc",
@@ -15,18 +24,21 @@ const FixedAllowance = () => {
     fontWeight: 500,
   };
   const [modalIsOpen, setModalIsOpen] = useState(false);
-  const [allowanceType, setAllowanceType] = useState("");
-  const [customLabel, setCustomLabel] = useState("");
-  const [attendanceEffect, setAttendanceEffect] = useState(false);
-  const [affectPF, setAffectPF] = useState(false);
-  const [affectESIC, setAffectESIC] = useState(false);
-  const [affectLWF, setAffectLWF] = useState(false);
-  const [affectPT, setAffectPT] = useState(false);
-  const [affectIT, setAffectIT] = useState(false);
-  const [taxRegimes, setTaxRegimes] = useState("");
+  const [isEditModal, setIsEditModal] = useState(false);
+
   const [selectedOption, setSelectedOption] = useState(null);
   const [formData, setFormData] = useState({
     isExemption: false,
+    allowanceType: "",
+    customLabel: "",
+    attendanceEffect: false,
+    affectPF: false,
+    affectESIC: false,
+    affectLWF: false,
+    affectPT: false,
+    affectIT: false,
+    exemptionLimit: "",
+    taxRegimes: "",
   });
 
   const options = [
@@ -37,18 +49,24 @@ const FixedAllowance = () => {
     setSelectedOption(option);
     console.log("Selected regime:", option);
   };
+  const [fixedAllowances, setFixedAllowances] = useState([]);
+  const [filteredFixedAllowances, setFilteredFixedAllowances] = useState([]);
   const columns = [
-    { name: "Custom Label", selector: (row) => row.label, sortable: true },
+    {
+      name: "Custom Label",
+      selector: (row) => row.custom_label,
+      sortable: true,
+    },
     {
       name: "PF",
       selector: (row) => {
-        return row.pf ? (
+        return row.affect_provident_fund ? (
           <div>
-            <FaCheck className="text-green-400" />
+            <FaCheck className="text-green-400" size={18} />
           </div>
         ) : (
           <div>
-            <MdClose className="text-red-400" />
+            <MdClose className="text-red-400" size={18} />
           </div>
         );
       },
@@ -57,13 +75,13 @@ const FixedAllowance = () => {
     {
       name: "ESIC",
       selector: (row) => {
-        return row.esic ? (
+        return row.affect_esic ? (
           <div>
-            <FaCheck className="text-green-400" />
+            <FaCheck className="text-green-400" size={18} />
           </div>
         ) : (
           <div>
-            <MdClose className="text-red-400 font-medium" size={20} />
+            <MdClose className="text-red-400 font-medium" size={18} />
           </div>
         );
       },
@@ -72,13 +90,13 @@ const FixedAllowance = () => {
     {
       name: "LWF",
       selector: (row) => {
-        return row.lwf ? (
+        return row.affect_lwf ? (
           <div>
-            <FaCheck className="text-green-400" />
+            <FaCheck className="text-green-400" size={18} />
           </div>
         ) : (
           <div>
-            <MdClose className="text-red-400 font-medium" size={20} />
+            <MdClose className="text-red-400 font-medium" size={18} />
           </div>
         );
       },
@@ -87,13 +105,13 @@ const FixedAllowance = () => {
     {
       name: "PT",
       selector: (row) => {
-        return row.pt ? (
+        return row.affect_professional_tax ? (
           <div>
-            <FaCheck className="text-green-400" />
+            <FaCheck className="text-green-400" size={18} />
           </div>
         ) : (
           <div>
-            <MdClose className="text-red-400 font-medium" size={20} />
+            <MdClose className="text-red-400 font-medium" size={18} />
           </div>
         );
       },
@@ -102,13 +120,13 @@ const FixedAllowance = () => {
     {
       name: "IT",
       selector: (row) => {
-        return row.it ? (
+        return row.affect_income_tax ? (
           <div>
-            <FaCheck className="text-green-400" />
+            <FaCheck className="text-green-400" size={18} />
           </div>
         ) : (
           <div>
-            <MdClose className="text-red-400 font-medium" size={20} />
+            <MdClose className="text-red-400 font-medium" size={18} />
           </div>
         );
       },
@@ -121,30 +139,106 @@ const FixedAllowance = () => {
     },
     {
       name: "Action",
-      cell: (row) => <div className="flex items-center gap-4"></div>,
+      cell: (row) => (
+        <div className="flex items-center gap-4">
+          <button
+            className="text-blue-400"
+            onClick={() => handleEditModal(row.id)}
+          >
+            <BiEdit size={18} />{" "}
+          </button>
+          <button
+            className="text-red-400"
+            onClick={() => handleDeleteFixedAllowance(row.id)}
+          >
+            <FaTrash size={18} />
+          </button>
+        </div>
+      ),
     },
   ];
+  const [EditId, setEditId] = useState("");
+  const handleEditModal = (id) => {
+   
+    setIsEditModal(true);
+    setEditId(id);
+  };
 
-  const data = [
-    {
-      label: "Basic",
-      pf: true,
-      ESIC: true,
-      lwf: false,
-      pt: true,
-      it: false,
-    },
-  ];
+  const handleDeleteFixedAllowance = async (FAId) => {
+    try {
+      await deleteFixedAllowance(FAId);
+      fetchFixedAllowance();
+      toast.success("Fixed Allowance deleted successfully");
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const openModal = () => setModalIsOpen(true);
   const closeModal = () => setModalIsOpen(false);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Handle form submission
-    closeModal();
+  const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
+  const fetchFixedAllowance = async () => {
+    try {
+      const res = await getFixedAllowance(hrmsOrgId);
+      setFilteredFixedAllowances(res);
+      setFixedAllowances(res);
+    } catch (error) {
+      console.log(error);
+    }
   };
+  useEffect(() => {
+    fetchFixedAllowance();
+  }, []);
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+  useEffect(() => {
+    if (formData.allowanceType) {
+      setFormData((prevData) => ({
+        ...prevData,
+        customLabel: formData.allowanceType,
+      }));
+    }
+  }, [formData.allowanceType]);
+
   const themeColor = useSelector((state) => state.theme.color);
+
+  const handleAddFixedAllowance = async () => {
+    console.log("jght");
+    const { allowanceType, customLabel } = formData;
+
+    if (!allowanceType) {
+      toast.error("Please select an allowance type.");
+      return;
+    }
+
+    if (!customLabel) {
+      toast.error("Please enter a custom label.");
+      return;
+    }
+    const postData = new FormData();
+    postData.append("allowance_type", formData.allowanceType);
+    postData.append("custom_label", formData.customLabel);
+    postData.append("affect_attendance", formData.attendanceEffect);
+    postData.append("affect_provident_fund", formData.affectPF);
+    postData.append("affect_esic", formData.affectESIC);
+    postData.append("affect_lwf", formData.affectLWF);
+    postData.append("affect_professional_tax", formData.affectPT);
+    postData.append("affect_income_tax", formData.affectIT);
+    postData.append("tax_regime", formData.taxRegimes);
+    postData.append("organization", hrmsOrgId);
+
+    try {
+      const res = await postFixedAllowance(postData);
+      setModalIsOpen(false);
+      toast.success("Fixed Allowance added successfully");
+      fetchFixedAllowance();
+    } catch (error) {
+      console.log(error);
+      toast.error("Something went wrong");
+    }
+  };
   return (
     <section className="flex ml-20">
       <PayrollSettingDetailsList />
@@ -164,57 +258,79 @@ const FixedAllowance = () => {
             Add
           </button>
         </div>
-        <Table columns={columns} data={data} isPagination={true} />
+        <Table
+          columns={columns}
+          data={filteredFixedAllowances}
+          isPagination={true}
+        />
       </div>
 
       {modalIsOpen && (
         <div className="fixed inset-0 z-50 flex items-center overflow-y-auto justify-center bg-black bg-opacity-50">
-          <div class="max-h-[100%] bg-white p-8 w-2/3 rounded-lg shadow-lg ">
+          <div className="max-h-[100%] bg-white p-8 w-2/3 rounded-lg shadow-lg ">
             <h2 className="text-2xl font-bold border-b mb-2">
               Add New Allowance
             </h2>
-            <form onSubmit={handleSubmit}>
-              <div className="grid md:grid-cols-2 gap-5 my-5 max-h-96 overflow-y-auto">
+            <div>
+              <div className="grid md:grid-cols-2 gap-5 my-5 max-h-96 overflow-y-auto p-1">
                 <div className="grid gap-2 items-center w-full">
-                  <label className="block mb-2 font-semibold">
-                    Select Allowance Type
+                  <label className="block mb-1 font-semibold">
+                    Select Allowance Type{" "}
+                    <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="text"
-                    value={allowanceType}
-                    onChange={(e) => setAllowanceType(e.target.value)}
+                  <select
                     className="w-full p-2 border border-gray-300 rounded"
-                  />
+                    value={formData.allowanceType}
+                    onChange={handleChange}
+                    name="allowanceType"
+                  >
+                    <option value="">Select an Allowance</option>
+                    <option value="DA">DA</option>
+                    <option value="Conveyance">Conveyance</option>
+                    <option value="LTA">LTA</option>
+                    <option value="Medical">Medical</option>
+                    <option value="Hostel">Hostel</option>
+                    <option value="Education">Education</option>
+                    <option value="Statutory Bonus">Statutory Bonus</option>
+                    <option value="Other">Other</option>
+                  </select>
                 </div>
                 <div className="grid gap-2 items-center w-full">
-                  <label className="block mb-2 font-semibold">
-                    Custom Label
+                  <label className="block mb-1 font-semibold">
+                    Custom Label<span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
-                    value={customLabel}
-                    onChange={(e) => setCustomLabel(e.target.value)}
+                    value={formData.customLabel}
+                    name="customLabel"
+                    onChange={handleChange}
                     className="w-full p-2 border border-gray-300 rounded"
+                    placeholder="Custom Label"
                   />
                 </div>
                 <div className="grid gap-2 items-center w-full">
                   <label className="block font-semibold">
                     Do you want attendance to affect the eligibility?
+                    <span className="text-red-500">*</span>
                   </label>
                   <div className="flex items-center">
                     <input
                       type="radio"
                       name="attendanceEffect"
-                      checked={attendanceEffect}
-                      onChange={() => setAttendanceEffect(true)}
+                      checked={formData.attendanceEffect === true}
+                      onChange={() =>
+                        setFormData({ ...formData, attendanceEffect: true })
+                      }
                       className="mr-2"
                     />
                     Yes
                     <input
                       type="radio"
                       name="attendanceEffect"
-                      checked={!attendanceEffect}
-                      onChange={() => setAttendanceEffect(false)}
+                      checked={formData.attendanceEffect === false}
+                      onChange={() =>
+                        setFormData({ ...formData, attendanceEffect: false })
+                      }
                       className="ml-4 mr-2"
                     />
                     No
@@ -228,16 +344,20 @@ const FixedAllowance = () => {
                     <input
                       type="radio"
                       name="affectPF"
-                      checked={affectPF}
-                      onChange={() => setAffectPF(true)}
+                      checked={formData.affectPF === true}
+                      onChange={() =>
+                        setFormData({ ...formData, affectPF: true })
+                      }
                       className="mr-2"
                     />
                     Yes
                     <input
                       type="radio"
                       name="affectPF"
-                      checked={!affectPF}
-                      onChange={() => setAffectPF(false)}
+                      checked={formData.affectPF === false}
+                      onChange={() =>
+                        setFormData({ ...formData, affectPF: false })
+                      }
                       className="ml-4 mr-2"
                     />
                     No
@@ -251,16 +371,20 @@ const FixedAllowance = () => {
                     <input
                       type="radio"
                       name="affectESIC"
-                      checked={affectESIC}
-                      onChange={() => setAffectESIC(true)}
+                      checked={formData.affectESIC === true}
+                      onChange={() =>
+                        setFormData({ ...formData, affectESIC: true })
+                      }
                       className="mr-2"
                     />
                     Yes
                     <input
                       type="radio"
                       name="affectESIC"
-                      checked={!affectESIC}
-                      onChange={() => setAffectESIC(false)}
+                      checked={formData.affectESIC === false}
+                      onChange={() =>
+                        setFormData({ ...formData, affectESIC: false })
+                      }
                       className="ml-4 mr-2"
                     />
                     No
@@ -274,16 +398,20 @@ const FixedAllowance = () => {
                     <input
                       type="radio"
                       name="affectLWF"
-                      checked={affectLWF}
-                      onChange={() => setAffectLWF(true)}
+                      checked={formData.affectLWF === true}
+                      onChange={() =>
+                        setFormData({ ...formData, affectLWF: true })
+                      }
                       className="mr-2"
                     />
                     Yes
                     <input
                       type="radio"
                       name="affectLWF"
-                      checked={!affectLWF}
-                      onChange={() => setAffectLWF(false)}
+                      checked={formData.affectLWF === false}
+                      onChange={() =>
+                        setFormData({ ...formData, affectLWF: false })
+                      }
                       className="ml-4 mr-2"
                     />
                     No
@@ -297,16 +425,20 @@ const FixedAllowance = () => {
                     <input
                       type="radio"
                       name="affectPT"
-                      checked={affectPT}
-                      onChange={() => setAffectPT(true)}
+                      checked={formData.affectPT === true}
+                      onChange={() =>
+                        setFormData({ ...formData, affectPT: true })
+                      }
                       className="mr-2"
                     />
                     Yes
                     <input
                       type="radio"
                       name="affectPT"
-                      checked={!affectPT}
-                      onChange={() => setAffectPT(false)}
+                      checked={formData.affectPT === false}
+                      onChange={() =>
+                        setFormData({ ...formData, affectPT: false })
+                      }
                       className="ml-4 mr-2"
                     />
                     No
@@ -320,16 +452,20 @@ const FixedAllowance = () => {
                     <input
                       type="radio"
                       name="affectIT"
-                      checked={affectIT}
-                      onChange={() => setAffectIT(true)}
+                      checked={formData.affectIT === true}
+                      onChange={() =>
+                        setFormData({ ...formData, affectIT: true })
+                      }
                       className="mr-2"
                     />
                     Yes
                     <input
                       type="radio"
                       name="affectIT"
-                      checked={!affectIT}
-                      onChange={() => setAffectIT(false)}
+                      checked={formData.affectIT === false}
+                      onChange={() =>
+                        setFormData({ ...formData, affectIT: false })
+                      }
                       className="ml-4 mr-2"
                     />
                     No
@@ -342,7 +478,6 @@ const FixedAllowance = () => {
                   <div className="flex items-center">
                     <input
                       type="radio"
-                      name="affectIT"
                       checked={formData.isExemption === true}
                       onChange={() =>
                         setFormData({ ...formData, isExemption: true })
@@ -352,7 +487,6 @@ const FixedAllowance = () => {
                     Yes
                     <input
                       type="radio"
-                      name="affectIT"
                       checked={formData.isExemption === false}
                       onChange={() =>
                         setFormData({ ...formData, isExemption: false })
@@ -391,7 +525,18 @@ const FixedAllowance = () => {
                   <label className="block mb-2 font-semibold">
                     For which Tax Regimes will the Income Tax be calculated?
                   </label>
-                  <Select
+                  <select
+                    name="taxRegimes"
+                    value={formData.taxRegimes}
+                    onChange={handleChange}
+                    id=""
+                    className="border rounded-md border-gray-400 p-2"
+                  >
+                    <option value="">Select tax regime</option>
+                    <option value="Old Regime">Old Regime</option>
+                    <option value="New Regime">New Regime</option>
+                  </select>
+                  {/* <Select
                     value={selectedOption}
                     onChange={handleChangeTaxRegime}
                     options={options}
@@ -400,7 +545,7 @@ const FixedAllowance = () => {
                     isClearable
                     isMulti
                     menuPlacement="top"
-                  />
+                  /> */}
                 </div>
               </div>
               <div className="flex mt-2 justify-end gap-2 p-1 border-t">
@@ -412,15 +557,23 @@ const FixedAllowance = () => {
                   <MdClose /> Cancel
                 </button>
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={handleAddFixedAllowance}
                   className="border-2 font-semibold hover:bg-green-400 hover:text-green-500 hover:bg-opacity-30 flex items-center gap-2  duration-150 transition-all border-green-400 rounded-full p-1 px-3 text-green-400"
                 >
                   <FaCheck /> Save
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
+      )}
+      {isEditModal && (
+        <EditFixedAllowanceModal
+          EditId={EditId}
+          closeModal={()=>setIsEditModal(false)}
+          fetchFixedAllowance={fetchFixedAllowance}
+        />
       )}
       <div className="my-4 mx-2 w-fit">
         <div className="flex flex-col mt-4 mr-2  bg-gray-50 rounded-md text-wrap  gap-4 my-2 py-2 pl-5 pr-2 w-[18rem]">

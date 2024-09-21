@@ -21,30 +21,33 @@ const VariableDeduction = () => {
   const [affectPT, setAffectPT] = useState(false);
   const [affectIT, setAffectIT] = useState(false);
   const [taxRegimes, setTaxRegimes] = useState("");
-  const [deductionLabel, setDeductionLabel] = useState('');
+  const [deductionLabel, setDeductionLabel] = useState("");
   const [showInCTC, setShowInCTC] = useState(false); // Boolean: true or false
-  const [frequency, setFrequency] = useState('Monthly'); // Default to Monthly
-  const [effectivePeriod, setEffectivePeriod] = useState('');
+  const [frequency, setFrequency] = useState("Monthly"); // Default to Monthly
+  const [effectivePeriod, setEffectivePeriod] = useState("");
   const [hasEndingPeriod, setHasEndingPeriod] = useState(false); // Boolean: true or false
-  const [amountEntryMethod, setAmountEntryMethod] = useState('Manually'); // Default to Manually
-  const [applicableTo, setApplicableTo] = useState('All'); // Default to All Employees
+  const [amountEntryMethod, setAmountEntryMethod] = useState("Manually"); // Default to Manually
+  const [applicableTo, setApplicableTo] = useState("All"); // Default to All Employees
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
   const columns = [
-    { name: "view", cell: (row) => <div className="flex items-center gap-4"></div> },
     { name: "Deduction Name", selector: (row) => row.Location, sortable: true },
     { name: "Frequency", selector: (row) => row.Name, sortable: true },
     { name: "Applies To", selector: (row) => row.City, sortable: true },
-    // { name: "LWF", selector: (row) => row.State, sortable: true },
-    // { name: "PT", selector: (row) => row.Country, sortable: true },
-    // { name: "IT", selector: (row) => row.Leave_Days, sortable: true },
-    // { name: "Applies To", selector: (row) => row.Comment, sortable: true },
+    {
+      name: "Action",
+      cell: (row) => <div className="flex items-center gap-4"></div>,
+    },
   ];
 
   const data = [
-    { Name: " Monthly Starting from January-2017", Location: "Advance", City: "Employees", },
+    {
+      Name: " Monthly Starting from January-2017",
+      Location: "Advance",
+      City: "Employees",
+    },
   ];
 
   const openModal = () => setModalIsOpen(true);
@@ -79,9 +82,11 @@ const VariableDeduction = () => {
 
       {modalIsOpen && (
         <div className="fixed inset-0 z-50 flex items-center overflow-y-auto justify-center bg-gray-500 bg-opacity-50">
-         <div class="max-h-screen h-80vh bg-white p-8 w-96 rounded-lg shadow-lg overflow-y-auto">
-            <h2 className="text-2xl font-bold mb-4">Add New Variable Deduction</h2>
-            <form onSubmit={handleSubmit}>
+          <div class="max-h-screen h-80vh bg-white p-8 w-96 rounded-lg shadow-lg overflow-y-auto">
+            <h2 className="text-2xl font-bold mb-4">
+              Add New Variable Deduction
+            </h2>
+            <form onSubmit={handleSubmit} className="grid-grid-cols-2 gap-2">
               {/* <div className="mb-4">
                 <label className="block mb-2 font-semibold">Select Allowance Type</label>
                 <input
@@ -236,113 +241,140 @@ const VariableDeduction = () => {
                 />
               </div> */}
               <div className="mb-4">
-          <label htmlFor="deductionLabel" className="block text-gray-700 text-sm font-bold mb-2">
-            Label of Variable Deduction
-          </label>
-          <input
-            type="text"
-            id="deductionLabel"
-            value={deductionLabel}
-            onChange={(e) => setDeductionLabel(e.target.value)}
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            placeholder="Enter deduction label"
-            required
-          />
-        </div>
-        <div className="mb-4">
-          <label htmlFor="showInCTC" className="block text-gray-700 text-sm font-bold mb-2">
-            Does this deduction show up in CTC structure?
-          </label>
-          <select
-            id="showInCTC"
-            value={showInCTC}
-            onChange={(e) => setShowInCTC(e.target.value === 'true')}
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            required
-          >
-            <option value="true">Yes</option>
-            <option value="false">No</option>
-          </select>
-        </div>
-        <div className="mb-4">
-          <label htmlFor="frequency" className="block text-gray-700 text-sm font-bold mb-2">
-            How frequently does employee pay this deduction?
-          </label>
-          <select
-            id="frequency"
-            value={frequency}
-            onChange={(e) => setFrequency(e.target.value)}
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            required
-          >
-            <option value="Monthly">Monthly</option>
-            <option value="Quarterly">Quarterly</option>
-            <option value="Annually">Annually</option>
-            {/* Add other options as needed */}
-          </select>
-        </div>
-        <div className="mb-4">
-          <label htmlFor="effectivePeriod" className="block text-gray-700 text-sm font-bold mb-2">
-            From what period is this deduction effective?
-          </label>
-          <input
-            type="text"
-            id="effectivePeriod"
-            value={effectivePeriod}
-            onChange={(e) => setEffectivePeriod(e.target.value)}
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            placeholder="Enter effective period"
-            required
-          />
-        </div>
-        <div className="mb-4">
-          <label htmlFor="hasEndingPeriod" className="block text-gray-700 text-sm font-bold mb-2">
-            Does this deduction have an ending period?
-          </label>
-          <select
-            id="hasEndingPeriod"
-            value={hasEndingPeriod}
-            onChange={(e) => setHasEndingPeriod(e.target.value === 'true')}
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            required
-          >
-            <option value="false">No, It is Continual</option>
-            <option value="true">Yes, It has an End Period</option>
-          </select>
-        </div>
-        <div className="mb-4">
-          <label htmlFor="amountEntryMethod" className="block text-gray-700 text-sm font-bold mb-2">
-            How would you like to enter the amount for this deduction?
-          </label>
-          <select
-            id="amountEntryMethod"
-            value={amountEntryMethod}
-            onChange={(e) => setAmountEntryMethod(e.target.value)}
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            required
-          >
-            <option value="Manually">Manually, at the time of running payroll</option>
-            <option value="Automatically">Automatically, based on system rules</option>
-            {/* Add other options as needed */}
-          </select>
-        </div>
-        <div className="mb-4">
-          <label htmlFor="applicableTo" className="block text-gray-700 text-sm font-bold mb-2">
-            Which employees does this deduction apply to?
-          </label>
-          <select
-            id="applicableTo"
-            value={applicableTo}
-            onChange={(e) => setApplicableTo(e.target.value)}
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            required
-          >
-            <option value="All">All the Employees</option>
-            <option value="Some">Some Employees</option>
-            <option value="Specific">Specific Employees</option>
-            {/* Add other options as needed */}
-          </select>
-        </div>
+                <label
+                  htmlFor="deductionLabel"
+                  className="block text-gray-700 text-sm font-bold mb-2"
+                >
+                  Label of Variable Deduction
+                </label>
+                <input
+                  type="text"
+                  id="deductionLabel"
+                  value={deductionLabel}
+                  onChange={(e) => setDeductionLabel(e.target.value)}
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  placeholder="Enter deduction label"
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <label
+                  htmlFor="showInCTC"
+                  className="block text-gray-700 text-sm font-bold mb-2"
+                >
+                  Does this deduction show up in CTC structure?
+                </label>
+                <select
+                  id="showInCTC"
+                  value={showInCTC}
+                  onChange={(e) => setShowInCTC(e.target.value === "true")}
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  required
+                >
+                  <option value="true">Yes</option>
+                  <option value="false">No</option>
+                </select>
+              </div>
+              <div className="mb-4">
+                <label
+                  htmlFor="frequency"
+                  className="block text-gray-700 text-sm font-bold mb-2"
+                >
+                  How frequently does employee pay this deduction?
+                </label>
+                <select
+                  id="frequency"
+                  value={frequency}
+                  onChange={(e) => setFrequency(e.target.value)}
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  required
+                >
+                  <option value="Monthly">Monthly</option>
+                  <option value="Quarterly">Quarterly</option>
+                  <option value="Annually">Annually</option>
+                  {/* Add other options as needed */}
+                </select>
+              </div>
+              <div className="mb-4">
+                <label
+                  htmlFor="effectivePeriod"
+                  className="block text-gray-700 text-sm font-bold mb-2"
+                >
+                  From what period is this deduction effective?
+                </label>
+                <input
+                  type="text"
+                  id="effectivePeriod"
+                  value={effectivePeriod}
+                  onChange={(e) => setEffectivePeriod(e.target.value)}
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  placeholder="Enter effective period"
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <label
+                  htmlFor="hasEndingPeriod"
+                  className="block text-gray-700 text-sm font-bold mb-2"
+                >
+                  Does this deduction have an ending period?
+                </label>
+                <select
+                  id="hasEndingPeriod"
+                  value={hasEndingPeriod}
+                  onChange={(e) =>
+                    setHasEndingPeriod(e.target.value === "true")
+                  }
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  required
+                >
+                  <option value="false">No, It is Continual</option>
+                  <option value="true">Yes, It has an End Period</option>
+                </select>
+              </div>
+              <div className="mb-4">
+                <label
+                  htmlFor="amountEntryMethod"
+                  className="block text-gray-700 text-sm font-bold mb-2"
+                >
+                  How would you like to enter the amount for this deduction?
+                </label>
+                <select
+                  id="amountEntryMethod"
+                  value={amountEntryMethod}
+                  onChange={(e) => setAmountEntryMethod(e.target.value)}
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  required
+                >
+                  <option value="Manually">
+                    Manually, at the time of running payroll
+                  </option>
+                  <option value="Automatically">
+                    Automatically, based on system rules
+                  </option>
+                  {/* Add other options as needed */}
+                </select>
+              </div>
+              <div className="mb-4">
+                <label
+                  htmlFor="applicableTo"
+                  className="block text-gray-700 text-sm font-bold mb-2"
+                >
+                  Which employees does this deduction apply to?
+                </label>
+                <select
+                  id="applicableTo"
+                  value={applicableTo}
+                  onChange={(e) => setApplicableTo(e.target.value)}
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  required
+                >
+                  <option value="All">All the Employees</option>
+                  <option value="Some">Some Employees</option>
+                  <option value="Specific">Specific Employees</option>
+                  {/* Add other options as needed */}
+                </select>
+              </div>
               <div className="flex justify-end">
                 <button
                   type="button"
@@ -362,48 +394,54 @@ const VariableDeduction = () => {
           </div>
         </div>
       )}
-      <div className='my-4 mx-2 w-fit'>
-       <div className="flex flex-col mt-4 mr-2 shadow-custom-all-sides bg-gray-50 rounded-md text-wrap  gap-4 my-2 py-2 pl-5 pr-2 w-[18rem]">
-        <div className="flex  gap-4 font-medium">
-        <GrHelpBook size={20} />
-          <h2>Help Center</h2></div>
-    <div className=' '>
-              {/* <p className="font-medium">Help Center</p> */}
-              <ul style={listItemStyle} className="flex flex-col gap-2">
-                <li>
-                  <ul style={listItemStyle}>
-                    <li>
-                    You can create any kind of the deduction, these deduction generally not fixed and value also vary.       </li>
-                  </ul>
-                </li>
-                <li>
-                  <ul style={listItemStyle}>
-                    <li>
-                    Some of deductions like Advance Recovery, Penalty, and Other Recovery etc.           </li>
-                  </ul>
-                </li>
-                <li>
-                  <ul style={listItemStyle}>
-                    <li>
-                    These can also be mapped to the employee CTC.          </li>
-                  </ul>
-                </li>
+      <div className="my-4 mx-2 w-fit">
+        <div className="flex flex-col mt-4 mr-2 shadow-custom-all-sides bg-gray-50 rounded-md text-wrap  gap-4 my-2 py-2 pl-5 pr-2 w-[18rem]">
+          <div className="flex  gap-4 font-medium">
+            <GrHelpBook size={20} />
+            <h2>Help Center</h2>
+          </div>
+          <div className=" ">
+            {/* <p className="font-medium">Help Center</p> */}
+            <ul style={listItemStyle} className="flex flex-col gap-2">
+              <li>
+                <ul style={listItemStyle}>
+                  <li>
+                    You can create any kind of the deduction, these deduction
+                    generally not fixed and value also vary.{" "}
+                  </li>
+                </ul>
+              </li>
+              <li>
+                <ul style={listItemStyle}>
+                  <li>
+                    Some of deductions like Advance Recovery, Penalty, and Other
+                    Recovery etc.{" "}
+                  </li>
+                </ul>
+              </li>
+              <li>
+                <ul style={listItemStyle}>
+                  <li>These can also be mapped to the employee CTC. </li>
+                </ul>
+              </li>
 
-                {/* <li>
+              {/* <li>
                   <p>
                     <a href="#" className="text-blue-400">
                       Click Here{" "}
                     </a>
 You can deductions too can be mapped to the employee CTC details and CTC calculator             </p>
                 </li> */}
-                <li>
-                  <p>
-                    {/* <a href="#" className="text-blue-400">
+              <li>
+                <p>
+                  {/* <a href="#" className="text-blue-400">
                       Click Here{" "}
                     </a> */}
-You can change allowances setting anytime but once payroll is processed won’t be deleted.       </p>
-                </li>
-                {/* <li>
+                  You can change allowances setting anytime but once payroll is
+                  processed won’t be deleted.{" "}
+                </p>
+              </li>
+              {/* <li>
                   <p>
                     <a href="#" className="text-blue-400">
                       Click Here{" "}
@@ -417,10 +455,12 @@ These allowance can be with or without linked with attendance or Payable days   
                     </a>
 You can change allowances setting anytime but once payroll is processed won’t be deleted.        </p>
                 </li> */}
-              </ul>
-            </div></div></div>
+            </ul>
+          </div>
+        </div>
+      </div>
     </section>
   );
 };
 
-export default VariableDeduction
+export default VariableDeduction;
