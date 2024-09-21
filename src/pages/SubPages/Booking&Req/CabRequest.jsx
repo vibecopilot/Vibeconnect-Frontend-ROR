@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from 'react';
 import { PiPlusCircle } from "react-icons/pi";
 import { Link } from "react-router-dom";
 import { NavLink } from "react-router-dom";
@@ -8,10 +8,49 @@ import { BsEye } from "react-icons/bs";
 import Navbar from "../../../components/Navbar";
 import { BiEdit } from "react-icons/bi";
 import { TiTick } from "react-icons/ti";
-import { IoClose } from "react-icons/io5";
+import { IoAddCircleOutline, IoClose } from "react-icons/io5";
+import { getcabRequest } from '../../../api';
+import BookingRequestNav from './BookingRequestnav';
+
 const CabRequest = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
+  const [CabrequestsData, setCabrequestsData] = useState([]);
   const themeColor = useSelector((state) => state.theme.color);
+  useEffect(() => {
+    const fetchCabRequest = async () => {
+      try {
+        const response = await getcabRequest();
+        const cabreqresp = response.data
+          .map((request) => {
+            let date = "";
+            let time = "";
+  
+            if (request.date_and_time) {
+              const dateTime = new Date(request.date_and_time);
+              date = dateTime.toISOString().split('T')[0]; // Extract the date
+              time = dateTime.toTimeString().split(' ')[0]; // Extract the time
+            }
+  
+            return {
+              ...request,
+              date,
+              time,
+            };
+          })
+          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  
+        console.log("response from api", cabreqresp);
+  
+        setCabrequestsData(cabreqresp);
+      } catch (err) {
+        console.error("Failed to fetch Cab request data:", err);
+      }
+    };
+  
+    fetchCabRequest(); // Call the API
+  }, []);
+  
+  
 
   const CustomNavLink = ({ to, children }) => {
     return (
@@ -46,22 +85,22 @@ const CabRequest = () => {
     },
     {
       name: "Employee ID",
-      selector: (row) => row.Id,
+      selector: (row) => row.employee_id,
       sortable: true,
     },
     {
       name: "Employee Name",
-      selector: (row) => row.name,
+      selector: (row) => row.employee_name,
       sortable: true,
     },
     {
       name: "Pickup Location",
-      selector: (row) => row.Pickup_Location,
+      selector: (row) => row.pickup_location,
       sortable: true,
     },
     {
       name: "Drop-off Location",
-      selector: (row) => row.Dropoff_location,
+      selector: (row) => row.drop_off_location,
       sortable: true,
     },
     {
@@ -76,136 +115,70 @@ const CabRequest = () => {
     },
     {
       name: "Number of Passengers",
-      selector: (row) => row.noofpassenger,
+      selector: (row) => row.number_of_passengers,
       sortable: true,
     },
     {
       name: "Driver Information",
-      selector: (row) => row.driver,
+      selector: (row) => row.driver_contact_information,
       sortable: true,
     },
     {
       name: "Transportation Type",
-      selector: (row) => row.type,
+      selector: (row) => row.transportation_type,
       sortable: true,
     },
-    {
-      name: "Class",
-      selector: (row) => row.Class,
-      sortable: true,
-    },
+   
     {
       name: "Special Requirements",
-      selector: (row) => row.req,
+      selector: (row) => row.special_requirements,
       sortable: true,
     },
     {
       name: "Vehicle Details",
-      selector: (row) => row.Passport_Information,
+      selector: (row) => row.vehicle_details,
       sortable: true,
     },
     {
       name: "Manager Approval",
-      selector: (row) => row.Manager_Approval,
+      selector: (row) => row.manager_approval ? "Approved" : "Not Approved",
       sortable: true,
     },
     {
       name: "Booking Status",
-      selector: (row) => row.status,
+      selector: (row) => row.booking_status,
       sortable: true,
     },
     {
       name: "Confirmation Email",
-      selector: (row) => row.email,
+      selector: (row) => row.booking_confirmation_email,
       sortable: true,
     },
-    {
-      name: "Cancellation",
-      selector: (row) =>
-        row.status === "Upcoming" && (
-          <button className="text-red-400 font-medium">Cancel</button>
-        ),
-      sortable: true,
-    },
-    {
-      name: "Approval",
-      selector: (row) =>
-        row.status === "Upcoming" && (
-          <div className="flex justify-center gap-2">
-            <button className="text-green-400 font-medium hover:bg-green-400 hover:text-white transition-all duration-200 p-1 rounded-full">
-              <TiTick size={20} />
-            </button>
-            <button className="text-red-400 font-medium hover:bg-red-400 hover:text-white transition-all duration-200 p-1 rounded-full">
-              <IoClose size={20} />
-            </button>
-          </div>
-        ),
-      sortable: true,
-    },
+   
+    // {
+    //   name: "Approval",
+    //   selector: (row) =>
+       
+    //       <div className="flex justify-center gap-2">
+    //         <button className="text-green-400 font-medium hover:bg-green-400 hover:text-white transition-all duration-200 p-1 rounded-full">
+    //           <TiTick size={20} />
+    //         </button>
+    //         <button className="text-red-400 font-medium hover:bg-red-400 hover:text-white transition-all duration-200 p-1 rounded-full">
+    //           <IoClose size={20} />
+    //         </button>
+    //       </div>,
+       
+    //   sortable: true,
+    // },
   ];
 
-  // Custom style for the table
-  const customStyle = {
-    headRow: {
-      style: {
-        backgroundColor: themeColor,
-        color: "white",
-        fontSize: "10px",
-      },
-    },
-    headCells: {
-      style: {
-        textTransform: "uppercase",
-      },
-    },
-  };
-
-  const data = [
-    {
-      id: 1,
-      Id: "55",
-      name: "Mi",
-      Pickup_Location: "Mumbai",
-      Dropoff_location: "abc",
-      date: "15/02/2024",
-      time: "7:00pm",
-      noofpassenger: "4",
-      driver: "abc",
-      type: "Cab",
-      Ticket_number: "89",
-      booking_email: "jkl",
-      Class: "Economy",
-      Passenger_Name: "abc",
-      Passport_Information: "ab",
-      Manager_Approval: "Upcoming",
-      status: "pending",
-    },
-    // Add more data entries as needed
-  ];
+  
 
   return (
     <section className="flex">
       <Navbar />
-      <div className="w-full flex mx-3 flex-col overflow-hidden">
-        <div className="flex justify-center w-full my-2">
-          <div className="sm:flex grid grid-cols-2 sm:flex-row gap-5 font-medium p-2 sm:rounded-full rounded-md opacity-90 bg-gray-200">
-            <CustomNavLink to="/admin/booking-request/hotel-request">
-              Hotel Request
-            </CustomNavLink>
-            <CustomNavLink to="/admin/booking-request/flight-ticket-request">
-              Flight Ticket Request
-            </CustomNavLink>
-            <CustomNavLink to="/admin/booking-request/cab-bus-request">
-              Cab/Bus Request
-            </CustomNavLink>
-            <CustomNavLink to="/admin/booking-request/transportation-request">
-              Transportation Request
-            </CustomNavLink>
-            <CustomNavLink to="/admin/booking-request/traveling-allowance-request">
-              Traveling Allowance Request
-            </CustomNavLink>
-          </div>
-        </div>
+      <div className="p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
+       <BookingRequestNav/>
 
       <div className="w-full flex mx-3 flex-col overflow-hidden">
         <div className="flex md:flex-row flex-col gap-5 justify-between mt-10 my-2">
@@ -262,10 +235,10 @@ const CabRequest = () => {
           <span className="mr-4">
             <Link
               to="/admin/add-cab-request"
-              className="border-2 font-semibold hover:bg-black hover:text-white transition-all border-black p-2 rounded-md text-black cursor-pointer text-center flex items-center gap-2 justify-center"
-              style={{ height: "1cm" }}
+              style={{ background: themeColor }}
+              className="px-4 py-2  font-medium text-white rounded-md flex gap-2 items-center justify-center"  
             >
-              <PiPlusCircle size={20} />
+              <IoAddCircleOutline size={20} />
               Add
             </Link>
           </span>
@@ -274,8 +247,8 @@ const CabRequest = () => {
           <Table
             responsive
             columns={columns}
-            data={data}
-            // customStyles={customStyle}
+            data={CabrequestsData}
+           
             pagination
             fixedHeader
             selectableRowsHighlight

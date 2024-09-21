@@ -1,9 +1,68 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useSelector } from "react-redux";
+import { postHotelRequest } from '../../../api';
+import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
+import { getItemInLocalStorage } from "../../../utils/localStorage";
 
-const AddHotelRequest = () => (
+const AddHotelRequest = () => {
+  const siteId = getItemInLocalStorage("SITEID");
+  const [formData, setFormData] = useState({
+   
+    employee_id: "",
+    employee_name: "",
+    destination: "",
+    hotel_name: "",
+    location: "",
+    number_of_rooms: "",
+    room_type: "",
+    special_requests: "",
+    hotel_preferences: "",
+    check_in_date: "",
+    check_out_date: "",
+    booking_confirmation_number: "",
+    booking_certification_email: "",
+    booking_status: "",
+    manager_approval: false,
+    is_available: false,
+    site_id: ""
+});
+const handleChange = (e) => {
+  setFormData({ ...formData, [e.target.name]: e.target.value });
+};
+const navigate = useNavigate()
+const handleHotelRequest = async() => {
+  const sendData = new FormData();
+  sendData.append("hotel[employee_id]", formData.employee_id);
+  sendData.append("hotel[employee_name]", formData.employee_name);
+  sendData.append("hotel[destination]", formData.destination);
+  sendData.append("hotel[number_of_rooms]", formData.number_of_rooms);
+  sendData.append("hotel[room_type]", formData.room_type);
+  sendData.append("hotel[special_requests]", formData.special_requests);
+  sendData.append("hotel[hotel_preferences]", formData.hotel_preferences);
+  sendData.append("hotel[check_in_date]", formData.check_in_date);
+  sendData.append("hotel[check_out_date]", formData.check_out_date);
+  sendData.append("hotel[booking_confirmation_number]", formData.booking_confirmation_number);
+  sendData.append("hotel[booking_certification_email]", formData.booking_certification_email);
+  sendData.append("hotel[booking_status]", formData.booking_status);
+  sendData.append("hotel[manager_approval]", formData.manager_approval);
+  sendData.append("hotel[site_id]", siteId);
+  
+  
+  try {
+      const HotelreqResp = await postHotelRequest(sendData)
+      toast.success("Hotel Request Added")
+      navigate("/admin/booking-request/hotel-request")
+      console.log("Hotel request Response",HotelreqResp)
+  } catch (error) {
+      console.log(error)
+  }
+};
+  const themeColor = useSelector((state) => state.theme.color);
+  return(
     <div className="flex justify-center items-center my-5 w-full p-4">
-    <form className="border border-gray-300 rounded-lg p-4 w-full mx-4 max-h-screen overflow-y-auto">
-      <h2 className="text-center md:text-xl font-bold p-2 bg-black rounded-full text-white">
+    <div className="border border-gray-300 rounded-lg p-4 w-full mx-4  ">
+      <h2 className="text-center md:text-xl font-bold p-2  rounded-full text-white" style={{ background: themeColor }}>
         Hotel Request
       </h2>
   <div className="grid md:grid-cols-3 gap-5 mt-5">
@@ -14,7 +73,10 @@ const AddHotelRequest = () => (
       <input
         type="number"
         id="employeeId"
-        className="border border-gray-400 p-2 rounded-md"
+        name="employee_id"
+        value={formData.employee_id}
+        onChange={handleChange}
+        className="border p-1 px-4 border-gray-500 rounded-md"
         placeholder="Enter Employee ID"
       />
     </div>
@@ -26,7 +88,10 @@ const AddHotelRequest = () => (
       <input
         type="text"
         id="employeeName"
-        className="border border-gray-400 p-2 rounded-md"
+        name="employee_name"
+        value={formData.employee_name}
+        onChange={handleChange}
+        className="border p-1 px-4 border-gray-500 rounded-md"
         placeholder="Enter Employee Name"
       />
     </div>
@@ -38,7 +103,10 @@ const AddHotelRequest = () => (
       <input
         type="text"
         id="destination"
-        className="border border-gray-400 p-2 rounded-md"
+        name="destination"
+        value={formData.destination}
+        onChange={handleChange}
+        className="border p-1 px-4 border-gray-500 rounded-md"
         placeholder="Enter Destination"
       />
     </div>
@@ -50,7 +118,10 @@ const AddHotelRequest = () => (
       <input
         type="date"
         id="checkInDate"
-        className="border border-gray-400 p-2 rounded-md"
+        name="check_in_date"
+        value={formData.check_in_date}
+        onChange={handleChange}
+        className="border p-1 px-4 border-gray-500 rounded-md"
       />
     </div>
 
@@ -61,7 +132,10 @@ const AddHotelRequest = () => (
       <input
         type="date"
         id="checkOutDate"
-        className="border border-gray-400 p-2 rounded-md"
+        name="check_out_date"
+        value={formData.check_out_date}
+        onChange={handleChange}
+        className="border p-1 px-4 border-gray-500 rounded-md"
       />
     </div>
 
@@ -72,7 +146,10 @@ const AddHotelRequest = () => (
       <input
         type="number"
         id="numberOfRooms"
-        className="border border-gray-400 p-2 rounded-md"
+        name="number_of_rooms"
+        value={formData.number_of_rooms}
+        onChange={handleChange}
+        className="border p-1 px-4 border-gray-500 rounded-md"
         placeholder="Enter Number of Rooms"
       />
     </div>
@@ -81,34 +158,21 @@ const AddHotelRequest = () => (
       <label htmlFor="roomType" className="font-semibold">
         Room Type:
       </label>
-      <select id="roomType" className="border border-gray-400 p-2 rounded-md">
+      <select id="roomType" className="border p-1 px-4 border-gray-500 rounded-md"
+      name="room_type"
+      value={formData.room_type}
+      onChange={handleChange}
+      >
+        <option value="">Select Room Type</option>
         <option value="single">Single</option>
         <option value="double">Double</option>
         <option value="suite">Suite</option>
       </select>
     </div>
 
-    <div className="grid gap-2 items-center w-full">
-      <label htmlFor="specialRequests" className="font-semibold">
-        Special Requests:
-      </label>
-      <textarea
-        id="specialRequests"
-        className="border border-gray-400 p-2 rounded-md"
-        placeholder="Enter Special Requests"
-      ></textarea>
-    </div>
+   
 
-    <div className="grid gap-2 items-center w-full">
-      <label htmlFor="hotelPreferences" className="font-semibold">
-        Hotel Preferences:
-      </label>
-      <textarea
-        id="hotelPreferences"
-        className="border border-gray-400 p-2 rounded-md"
-        placeholder="Enter Hotel Preferences"
-      ></textarea>
-    </div>
+   
 
     <div className="grid gap-2 items-center w-full">
       <label htmlFor="bookingConfirmationNumber" className="font-semibold">
@@ -117,7 +181,10 @@ const AddHotelRequest = () => (
       <input
         type="text"
         id="bookingConfirmationNumber"
-        className="border border-gray-400 p-2 rounded-md"
+        name="booking_confirmation_number"
+      value={formData.booking_confirmation_number}
+      onChange={handleChange}
+       className="border p-1 px-4 border-gray-500 rounded-md"
         placeholder="Enter Booking Confirmation Number"
       />
     </div>
@@ -126,7 +193,11 @@ const AddHotelRequest = () => (
       <label htmlFor="bookingStatus" className="font-semibold">
         Booking Status:
       </label>
-      <select id="bookingStatus" className="border border-gray-400 p-2 rounded-md">
+      <select id="bookingStatus" className="border p-1 px-4 border-gray-500 rounded-md"
+      name="booking_status"
+      value={formData.booking_status}
+      onChange={handleChange}>
+        <option value="">Select Booking Status</option>
         <option value="pending">Pending</option>
         <option value="confirmed">Confirmed</option>
         <option value="cancelled">Cancelled</option>
@@ -139,9 +210,13 @@ const AddHotelRequest = () => (
       <label htmlFor="managerApproval" className="font-semibold">
         Manager Approval :
       </label>
-      <select id="managerApproval" className="border border-gray-400 p-2 rounded-md">
-        <option value="yes">Yes</option>
-        <option value="no">No</option>
+      <select id="managerApproval" className="border p-1 px-4 border-gray-500 rounded-md"
+      name="manager_approval"
+      value={formData.manager_approval}
+      onChange={handleChange}>
+      
+        <option value="true">Yes</option>
+        <option value="false">No</option>
       </select>
     </div>
 
@@ -152,22 +227,56 @@ const AddHotelRequest = () => (
       <input
         type="email"
         id="bookingConfirmationEmail"
-        className="border border-gray-400 p-2 rounded-md"
+        name="booking_certification_email"
+      value={formData.booking_certification_email}
+      onChange={handleChange}
+       className="border p-1 px-4 border-gray-500 rounded-md"
         placeholder="Enter Booking Confirmation Email"
       />
     </div>
 
   </div>
+  <div className="grid gap-2 items-center w-full my-4">
+      <label htmlFor="specialRequests" className="font-semibold">
+        Special Requests:
+      </label>
+      <textarea
+        id="specialRequests"
+        className="border p-1 px-4 border-gray-500 rounded-md"
+        name="special_requests"
+      value={formData.special_requests}
+      onChange={handleChange}
+        placeholder="Enter Special Requests"
+         cols="25"
+              rows="3"
+      ></textarea>
+    </div>
+    <div className="grid gap-2 items-center w-full my-4">
+      <label htmlFor="hotelPreferences" className="font-semibold">
+        Hotel Preferences:
+      </label>
+      <textarea
+        id="hotelPreferences"
+       className="border p-1 px-4 border-gray-500 rounded-md"
+       name="hotel_preferences"
+      value={formData.hotel_preferences}
+      onChange={handleChange}
+        placeholder="Enter Hotel Preferences"
+         cols="25"
+              rows="3"
+      ></textarea>
+    </div>
   <div className="flex gap-5 justify-center items-center my-4">
           <button
-            type="submit"
+           onClick={handleHotelRequest}
             className="bg-black text-white hover:bg-gray-700 font-semibold py-2 px-4 rounded"
           >
             Submit
           </button>
         </div>
-  </form>
+  </div>
   </div>
 );
+}
 
 export default AddHotelRequest;

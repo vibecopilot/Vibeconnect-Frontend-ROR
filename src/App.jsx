@@ -679,6 +679,7 @@ import ExpenseSetting from "./pages/AdminHrms/Expenses/ExpenseSetting.jsx";
 import ExpenseTemplates from "./pages/AdminHrms/Expenses/ExpenseTemplates.jsx";
 import ExpenseTemplateAssignment from "./pages/AdminHrms/Expenses/ExpenseTemplateAssignment.jsx";
 import ExpenseGeneralSetting from "./pages/AdminHrms/Expenses/ExpenseGeneralSetting.jsx";
+import FieldSenseLeadManagementDetails from "./pages/SubPages/details/FieldSenseLeadManagementDetails.jsx";
 // new admin hrms
 
 function App() {
@@ -5046,6 +5047,14 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <FieldSenseMeetingDetails />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/field-sense-lead-details/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <FieldSenseLeadManagementDetails/>
               </ProtectedAdminRoutes>
             }
           />

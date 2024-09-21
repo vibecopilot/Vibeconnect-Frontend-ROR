@@ -9,7 +9,31 @@ const AddScheduleAudit = () => {
   const [isOnTask, setIsOnTask] = useState(false);
   const [isOnWeight, setIsOnWeight] = useState(false);
   const [sections, setSections] = useState([]);
-
+  const [formData, setFormData] = useState({
+    audit_for: "",
+    activity_name: "",
+    description: "",
+    allow_observations: true,
+    checklist_type: "",
+    asset_name: "",
+    service_name: "",
+    vendor_name: "",
+    training_name: "",
+    assign_to: "",
+    scan_type: "",
+    plan_duration: "",
+    priority: "",
+    email_trigger_rule: "",
+    supervisors: "",
+    category: "",
+    look_overdue_task: "",
+    frequency: "",
+    start_from: "",
+    end_at: "",
+    select_supplier: "",
+    created_by_id: "",
+    audit_tasks:  []
+  });
     const handleAddSectionClick = () => {
         setSections([...sections, { id: sections.length + 1 }]); // Adding a new section with a unique ID
     };

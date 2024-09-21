@@ -10,8 +10,10 @@ import { dateTimeFormat } from "../../../utils/dateUtils";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { BsEye } from "react-icons/bs";
+import { HiArrowLeft, HiArrowRight } from 'react-icons/hi';
 
 const ServiceDetails = () => {
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [serviceFor, setserviceFor] = useState("schedule");
 
   const themeColor = useSelector((state) => state.theme.color);
@@ -23,7 +25,7 @@ const ServiceDetails = () => {
   const [filteredScheduleData, setFilteredScheduleData] = useState([]);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
-  useEffect(() => {
+ 
     const fetchScheduleData = async () => {
       try {
         const scheduleRes = await getSoftServiceSchedule(id);
@@ -36,14 +38,55 @@ const ServiceDetails = () => {
     };
 
     const fetchLogsDetails = async () => {
-      const logsDetailsResp = await getSoftserviceActivityDetails(id);
-      console.log("logs data",logsDetailsResp);
-      setlogsDetails(logsDetailsResp.data);
+      try {
+        const logsDetailsResp = await getSoftserviceActivityDetails(id); // Assuming this fetches all logs
+        const filteredData = logsDetailsResp.data.activities.filter((activity) => {
+          const activityDate = formatDate(activity.start_time); // Extract date from start_time
+         
+          return activityDate === selectedDate && activity.status === 'complete'; // Match with the selected date and 'complete' status
+        });
+       
+        console.log("logs data",filteredData)
+        setlogsDetails(filteredData); // Set filtered data
+      } catch (error) {
+        console.error('Error fetching logs details:', error);
+      }
     };
+    
+    useEffect(() => {
+      fetchScheduleData();
+      fetchLogsDetails(); // Fetch logs based on the current id and date
+    }, [id]);
+     // Fetch data when the selected date changes
+  useEffect(() => {
+    fetchLogsDetails(); // Fetch data based on the selected date and status 'complete'
+  }, [selectedDate]);
 
-    fetchScheduleData();
-    fetchLogsDetails();
-  }, [id]);
+  // Handle date input change
+  const handleDateChange = (e) => {
+    setSelectedDate(e.target.value);
+  };
+
+  // Decrease date by 1 day
+  const handlePrevDate = () => {
+    const prevDate = new Date(selectedDate);
+    prevDate.setDate(prevDate.getDate() - 1); // Decrease by 1 day
+    setSelectedDate(prevDate.toISOString().split('T')[0]); // Update selectedDate
+  };
+
+  // Increase date by 1 day
+  const handleNextDate = () => {
+    const nextDate = new Date(selectedDate);
+    nextDate.setDate(nextDate.getDate() + 1); // Increase by 1 day
+    setSelectedDate(nextDate.toISOString().split('T')[0]); // Update selectedDate
+  };
+
+  // Function to format the date from start_time
+  // Function to format the date from start_time
+const formatDate = (isoString) => {
+  return isoString.split('T')[0]; // Extract YYYY-MM-DD part directly from ISO string
+};
+
   const [searchText, setSearchText] = useState("");
   const handleSearch = (e) => {
     const searchValue = e.target.value;
@@ -285,6 +328,30 @@ const ServiceDetails = () => {
           </div>
         )}
          {serviceFor === "logs" && (
+<<<<<<< HEAD
+          <div>
+           
+      {/* Buttons for Prev Date and Next Date */}
+      <div className="flex gap-4 justify-end my-2">
+        <button onClick={handlePrevDate} className="bg-gray-200 px-2 rounded-md py-2"><HiArrowLeft/></button>
+        <input
+        type="date"
+        value={selectedDate}
+        onChange={handleDateChange}
+        className="p-1 border-gray-300 rounded-md w-64  outline-none border"
+      />
+
+        <button onClick={handleNextDate}  className="bg-gray-200 px-2 rounded-md py-2"><HiArrowRight/></button>
+      </div>
+           
+          <div>
+          {logsDetails.map((task, index) => (
+            <div key={task.id} className="my-4 flex flex-col bg-gray-50 shadow-custom-all-sides p-4 rounded-md gap-2">
+              <div className="grid grid-cols-12">
+                <div className="col-span-11 items-center">
+                  <p className="font-medium">Checklist Name :</p>
+                  <p className="w-full">{task.checklist?.name || 'No Checklist Name'}</p>
+=======
           <div className="">
             {logsDetails.map((task, index) => (
               <div key={task.id}>
@@ -365,10 +432,61 @@ const ServiceDetails = () => {
                       {dateTimeFormat(task.created_at)}
                     </p>
                   </div>
+>>>>>>> server
                 </div>
               </div>
-            ))}
-          </div>
+    
+              {task.activity_log?.submissions?.length > 0 ? (
+                task.activity_log.submissions.map((submission, subIndex) => (
+                  <div key={submission.id} className="my-2">
+                    <div className="flex gap-4 items-center bg-green-100 p-2 rounded-md">
+                      <p className="font-medium">Question :</p>
+                      <p>{submission.question?.name || 'No Question'}</p>
+                    </div>
+    
+                    <div className="flex gap-4 items-center bg-blue-100 p-2 rounded-md">
+                      <p className="font-medium">Answer :</p>
+                      <p>{submission.value || 'No Answer'}</p>
+                    </div>
+    
+                    <span className="font-medium text-gray-500">Attachments :</span>
+                    <div className="flex gap-4 flex-wrap my-4 items-center text-center">
+                      {submission.question_attachments?.map((attachment, i) => (
+                        <img
+                          key={i}
+                          src={domainPrefix + attachment.document}
+                          alt={`Attachment ${i + 1}`}
+                          className="w-40 h-28 object-cover rounded-md"
+                          onClick={() => window.open(domainPrefix + attachment.document, "_blank")}
+                        />
+                      )) || <p>No Attachments</p>}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-500">No submissions available</p>
+              )}
+    
+              <p>
+                <span className="font-medium">Comment : </span>
+                <span className="text-violet-500 font-medium">
+                  {task.comment ? task.comment : "No Comment"}{" "}
+                </span>
+              </p>
+    
+              <div className="flex justify-between">
+                <p>
+                  <span className="font-medium text-gray-500">Performed by:</span>
+                  <span className="font-medium text-gray-500">{task.assigned_name || 'Unknown'}</span>
+                </p>
+                <p className="text-sm text-gray-500">
+                  {dateTimeFormat(task.start_time)}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+        </div>
         )}
         </div>
       </div>

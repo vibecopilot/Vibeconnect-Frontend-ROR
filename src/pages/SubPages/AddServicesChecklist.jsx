@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { BiPlus } from "react-icons/bi";
 import { IoClose } from "react-icons/io5";
 import { getItemInLocalStorage } from "../../utils/localStorage";
@@ -20,10 +20,10 @@ const AddServicesChecklist = () => {
   const [frequency, setFrequency] = useState("");
   const [startDate, setStartDate] = useState(formattedDate);
   const [endDate, setEndDate] = useState(formattedDate);
+  const [prioritylevel, setPrioritylevel] = useState("");
   const [addNewQuestion, setAddNewQuestion] = useState([
     { name: "", type: "", options: ["", "", "", ""] },
   ]);
-
   const handleAddQuestionFields = () => {
     setAddNewQuestion([
       ...addNewQuestion,
@@ -58,6 +58,7 @@ const AddServicesChecklist = () => {
         name: name,
         start_date: startDate,
         end_date: endDate,
+        priority_level: prioritylevel,
         user_id: userId,
         ctype: "soft_service",
       },
@@ -72,7 +73,7 @@ const AddServicesChecklist = () => {
       })),
     };
     console.log(data);
-    if(startDate>= endDate){
+    if (startDate >= endDate) {
       return toast.error("Start date must be before End date ")
     }
 
@@ -131,7 +132,7 @@ const AddServicesChecklist = () => {
                     onChange={(e) => setFrequency(e.target.value)}
                   >
                     <option value="">Select Frequency</option>
-                    
+
                     <option value="hourly">Hourly</option>
                     <option value="daily">Daily</option>
                     <option value="weekly">Weekly</option>
@@ -153,7 +154,7 @@ const AddServicesChecklist = () => {
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
                     min={today}
-                    
+
                   />
                 </div>
                 <div className="flex flex-col">
@@ -169,6 +170,20 @@ const AddServicesChecklist = () => {
                     onChange={(e) => setEndDate(e.target.value)}
                     min={today}
                   />
+                </div>
+                <div className="flex flex-col">
+                  <label htmlFor="prioritylevel" className="font-semibold">Priority Level</label>
+                  <select
+                    name="prioritylevel"
+                    id="prioritylevel"
+                    value={prioritylevel}
+                    onChange={(e) => setPrioritylevel(e.target.value)}
+                    className="border p-1 px-4 border-gray-500 rounded-md">
+                    <option value="">Select Priority level</option>
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                  </select>
                 </div>
               </div>
               <div>
@@ -257,7 +272,7 @@ const AddServicesChecklist = () => {
                           </div>
                         )}
                       </div>
-                      
+
                       <div className="flex justify-end gap-2">
                         <button
                           className="p-1 border-2 border-red-500 text-white hover:bg-white hover:text-red-500 bg-red-500 px-4 transition-all duration-300 rounded-md "

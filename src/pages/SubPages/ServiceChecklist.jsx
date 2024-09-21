@@ -9,6 +9,7 @@ import { IoAddCircleOutline } from "react-icons/io5";
 import * as XLSX from "xlsx";
 import { DNA } from "react-loader-spinner";
 import { useSelector } from "react-redux";
+import { BsEye } from "react-icons/bs";
 const ServiceChecklist = () => {
   const [searchChecklistText, setSearchChecklistCheck] = useState("");
   const [filteredChecklistData, setFilteredChecklistData] = useState([]);
@@ -23,7 +24,7 @@ const ServiceChecklist = () => {
                 <BsEye size={15} />
               </Link> */}
           <Link to={`/services/edit-service-checklist/${row.id}`}>
-            <BiEdit size={15} />
+            <BsEye size={15} />
           </Link>
         </div>
       ),
@@ -42,6 +43,11 @@ const ServiceChecklist = () => {
     {
       name: "End Date",
       selector: (row) => row.end_date,
+      sortable: true,
+    },
+    {
+      name: "Priority level",
+      selector: (row) => row.priority_level,
       sortable: true,
     },
     {

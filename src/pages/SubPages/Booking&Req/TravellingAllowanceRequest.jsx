@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState ,useEffect} from "react";
 import { PiPlusCircle } from "react-icons/pi";
 import { Link } from "react-router-dom";
 import Table from "../../../components/table/Table";
@@ -8,25 +8,34 @@ import { NavLink } from 'react-router-dom';
 import Navbar from "../../../components/Navbar";
 import { BiEdit } from "react-icons/bi";
 import { TiTick } from "react-icons/ti";
-import { IoClose } from "react-icons/io5";
+import { IoAddCircleOutline, IoClose } from "react-icons/io5";
+import { getTravellingAllowanceRequest } from "../../../api";
+import BookingRequestNav from "./BookingRequestnav";
+
 const TravellingAllowanceRequest = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
+  const [TravelAllowancerequestsData, setTravelAllowancerequestsData] = useState([]);
   const themeColor = useSelector((state) => state.theme.color);
+  useEffect(() => {
+    const fetchTravelAllowanceRequest = async () => {
+      try {
+        const response = await getTravellingAllowanceRequest();
+        const travelallowancereqresp = response.data.sort((a,b)=> {
+          return new Date(b.created_at) - new Date(a.created_at)
+        })
+        console.log("response from api",travelallowancereqresp)
+        
+        setTravelAllowancerequestsData(travelallowancereqresp);
+       
+      } catch (err) {
+        console.error("Failed to fetch travel allowance request data:", err);
+      }
+    };
+  
+    fetchTravelAllowanceRequest(); // Call the API
+  }, []);
 
-  const CustomNavLink = ({ to, children }) => {
-    return (
-      <NavLink
-        to={to}
-        className={({ isActive }) =>
-          `p-1 rounded-full px-4 cursor-pointer text-center transition-all duration-300 ease-linear ${
-            isActive ? 'bg-white text-blue-500 shadow-custom-all-sides' : 'hover:text-blue-400'
-          }`
-        }
-      >
-        {children}
-      </NavLink>
-    );
-  };
+ 
 
   const columns = [
     {
@@ -44,73 +53,69 @@ const TravellingAllowanceRequest = () => {
     },
     {
       name: "Employee ID",
-      selector: (row) => row.Id,
+      selector: (row) => row.employee_id,
       sortable: true,
     },
     {
       name: "Employee Name",
-      selector: (row) => row.name,
+      selector: (row) => row.employee_name,
       sortable: true,
     },
     {
       name: "Expense Category",
-      selector: (row) => row.Expense_Category,
+      selector: (row) => row.expense_category,
       sortable: true,
     },
     {
       name: "Date of Expense",
-      selector: (row) => row.date,
+      selector: (row) => row.date_of_expense,
       sortable: true,
     },
     {
       name: "Description of Expense",
-      selector: (row) => row.expense,
+      selector: (row) => row.description_of_expense,
       sortable: true,
     },
     {
       name: "Amount Spent",
-      selector: (row) => row.spent,
+      selector: (row) => row.amount_spent,
       sortable: true,
     },
-    {
-      name: "Supporting Documents",
-      selector: (row) => row.document,
-      sortable: true,
-    },
+    // {
+    //   name: "Supporting Documents",
+    //   selector: (row) => row.document,
+    //   sortable: true,
+    // },
     {
       name: "Reimbursement Amount",
-      selector: (row) => row.amount,
+      selector: (row) => row.reimbursement_amount,
       sortable: true,
     },
     {
       name: "Reimbursement Method",
-      selector: (row) => row.method,
+      selector: (row) => row.reimbursement_method,
       sortable: true,
     },
     {
       name: "Manager Approval",
-      selector: (row) => row.Manager_Approval,
+      selector: (row) => row.manager_approval ? "Approved" : "Not Approved",
       sortable: true,
     },
     {
       name: "Booking Status",
-      selector: (row) => row.status,
+      selector: (row) => row.approval_status,
       sortable: true,
     },
     {
       name: "Reimbursement Confirmation Email",
-      selector: (row) => row.email,
+      selector: (row) => row.reimbursement_confirmation_email,
       sortable: true,
     },
-    {
-      name: "Cancellation",
-      selector: (row) => (row.status === "Upcoming" && <button className="text-red-400 font-medium">Cancel</button>),
-      sortable: true,
-    },
+   
     {
         name: "Approval",
         selector: (row) =>
-          row.status === "Upcoming" && (
+          (
             <div className="flex justify-center gap-2">
               <button className="text-green-400 font-medium hover:bg-green-400 hover:text-white transition-all duration-200 p-1 rounded-full">
                 <TiTick size={20} />
@@ -124,42 +129,8 @@ const TravellingAllowanceRequest = () => {
       },
   ];
 
-  // Custom table styles
-  const customStyle = {
-    headRow: {
-      style: {
-        backgroundColor: themeColor,
-        color: "white",
-        fontSize: "10px",
-      },
-    },
-    headCells: {
-      style: {
-        textTransform: "uppercase",
-      },
-    },
-  };
-
-  // Dummy data for demonstration
-  const data = [
-    {
-      id: 1,
-      Id: "55",
-      name: "Mi",
-      Expense_Category: "Meals",
-      Arrival_City: "abc",
-      Departure: "",
-      date: "15/02/2024",
-      time: "5:00pm",
-      expense: "ghj",
-      spent: "jkl",
-      amount: "567",
-      document: "abc",
-      method: "ab",
-      Manager_Approval: "Upcoming",
-      status: "Upcoming",
-    },
-  ];
+ 
+ 
 
   // Function to handle status change (e.g., all, upcoming, completed, cancelled)
   const handleStatusChange = (status) => {
@@ -170,17 +141,8 @@ const TravellingAllowanceRequest = () => {
   return (
     <section className="flex">
       <Navbar />
-      <div className="w-full flex mx-3 flex-col overflow-hidden">
-        {/* Navigation links */}
-        <div className="flex justify-center w-full my-2">
-          <div className="sm:flex grid grid-cols-2 sm:flex-row gap-5 font-medium p-2 sm:rounded-full rounded-md opacity-90 bg-gray-200">
-            <CustomNavLink to="/admin/booking-request/hotel-request">Hotel Request</CustomNavLink>
-            <CustomNavLink to="/admin/booking-request/flight-ticket-request">Flight Ticket Request</CustomNavLink>
-            <CustomNavLink to="/admin/booking-request/cab-bus-request">Cab/Bus Request</CustomNavLink>
-            <CustomNavLink to="/admin/booking-request/transportation-request">Transportation Request</CustomNavLink>
-            <CustomNavLink to="/admin/booking-request/traveling-allowance-request"> Traveling Allowance Request</CustomNavLink>
-          </div>
-        </div>
+      <div className="p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
+       <BookingRequestNav/>
         {/* Filter and Add section */}
         <div className="w-full flex md:flex-row flex-col gap-5 justify-between mt-10 my-2">
           <div className="sm:flex grid grid-cols-2 items-center justify-center gap-4 border border-gray-300 rounded-md px-3 p-2 w-auto">
@@ -237,10 +199,10 @@ const TravellingAllowanceRequest = () => {
           <span className="flex gap-4">
             <Link
               to={"/admin/add-travelallowance-request"}
-              className="border-2 font-semibold hover:bg-black hover:text-white transition-all border-black p-2 rounded-md text-black cursor-pointer text-center flex items-center gap-2 justify-center"
-              style={{ height: '1cm' }}
+              style={{ background: themeColor }}
+              className="px-4 py-2  font-medium text-white rounded-md flex gap-2 items-center justify-center"  
             >
-              <PiPlusCircle size={20} />
+              <IoAddCircleOutline size={20} />
               Add
             </Link>
             {/* Additional buttons can be added here */}
@@ -251,7 +213,7 @@ const TravellingAllowanceRequest = () => {
           <Table
             responsive
             columns={columns}
-            data={data}
+            data={TravelAllowancerequestsData}
             // customStyles={customStyle}
             pagination
             fixedHeader
