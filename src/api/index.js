@@ -649,7 +649,7 @@ export const getAssociationList = async (checklistId) =>
       },
     }
   );
-  
+
 
 export const getChecklistDetails = async (id) =>
   axiosInstance.get(`/checklists/${id}.json`, {
@@ -685,15 +685,15 @@ export const getRoutineTaskDetails = async (assetId, activityId) =>
       },
     }
   );
-  export const getScheduleDetails = async (sId, activityId) =>
-    axiosInstance.get(
-      `/submissions.json?q[soft_service_id_eq]=${sId}&q[activity_id_eq]=${activityId}`,
-      {
-        params: {
-          token: token,
-        },
-      }
-    );
+export const getScheduleDetails = async (sId, activityId) =>
+  axiosInstance.get(
+    `/submissions.json?q[soft_service_id_eq]=${sId}&q[activity_id_eq]=${activityId}`,
+    {
+      params: {
+        token: token,
+      },
+    }
+  );
 
 export const getAssetPPMActivityDetails = async (assetId) =>
   axiosInstance.get(
@@ -710,6 +710,26 @@ export const getAssetPPMs = async (assetId) =>
       token: token,
     },
   });
+
+
+export const getSoftServiceStatus = async (data) =>
+  axiosInstance.get(
+    `/activities.json?q[soft_service_id_null]=0&q[status_eq]=${data}`,
+    {
+      params: {
+        token: token,
+      },
+    }
+  );
+
+//booking & request
+export const postFlightTicketRequest = async (data) =>
+  axiosInstance.post(`/flight_requests.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+// ppm details/
   
  
    
@@ -797,12 +817,7 @@ export const postHotelRequest = async (data) =>
             token: token,
           },
         });
-  export const postFlightTicketRequest = async (data) =>
-    axiosInstance.post(`/flight_requests.json`, data, {
-      params: {
-        token: token,
-      },
-    });
+  
 
     export const getFlightTicketRequest = async () =>
       axiosInstance.get("/flight_requests.json", {
@@ -1147,12 +1162,7 @@ export const getSoftServicesDetails = async (id) =>
             },
           }
         );
-  export const getSoftServiceStatus = async (data) =>
-          axiosInstance.get(`/activities.json?q[soft_service_id_null]=0&q[status_eq]=${data}`, {
-            params: {
-              token: "775d6ae27272741669a65456ea10cc56cd4cce2bb99287b6",
-            },
-          });
+ 
 export const postServiceAssociation = async (data) =>
   axiosInstance.post(`/activities.json`, data, {
     params: {
@@ -3265,10 +3275,43 @@ export const editOrganizationAddress = async (addressId, data) => {
     throw error;
   }
 };
-export const getAllOrganizationGeoSettings = async () => {
+export const getAllOrganizationGeoSettings = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
-      `/organization/geographical-settings/`,
+      `/organization/geographical-settings/?organization_id=${orgId}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error editing Geo settings :", error);
+    throw error;
+  }
+};
+export const getOrganizationGeoMasterData = async (geoId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/organization/geographical-master-data/${geoId}/`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting Geo master data :", error);
+    throw error;
+  }
+};
+export const editOrganizationGeoSettings = async (geoId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/organization/geographical-settings/${geoId}/`,
+      data,
       {
         headers: {
           "Content-Type": "multipart/form-data/",
@@ -3295,6 +3338,19 @@ export const getMyOrganizationLocations = async (orgId) => {
     return response.data;
   } catch (error) {
     console.error("Error getting Locations :", error);
+    throw error;
+  }
+};
+export const postMyOrganizationLocations = async (data) => {
+  try {
+    const response = await HrmsAuth.post(`/organization/location/`, data, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error post Locations :", error);
     throw error;
   }
 };
@@ -3359,6 +3415,19 @@ export const getMyHRMSEmployees = async (orgId) => {
     return response.data;
   } catch (error) {
     console.error("Error getting employee :", error);
+    throw error;
+  }
+};
+export const deleteHRMSEmployee = async (empId) => {
+  try {
+    const response = await HrmsAuth.delete(`/employee/${empId}/`, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error delete employee :", error);
     throw error;
   }
 };
@@ -3540,6 +3609,56 @@ export const getManageAdmin = async (orgId) => {
     throw error;
   }
 };
+export const getManageAdminDetails = async (adminId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/organization/user-setting/administrator-setting/${adminId}/`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting Admin detail:", error);
+    throw error;
+  }
+};
+export const editManageAdminDetails = async (adminId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/organization/user-setting/administrator-setting/${adminId}/`,
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error edit Admin detail:", error);
+    throw error;
+  }
+};
+export const postManageAdmin = async (data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/organization/user-setting/administrator-setting/`,
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting Admins:", error);
+    throw error;
+  }
+};
 export const deleteManageAdmin = async (adminId) => {
   try {
     const response = await HrmsAuth.delete(
@@ -3691,15 +3810,11 @@ export const postCommunicationTemplate = async (data) => {
 // Employee
 export const postEmployeeOnBoarding = async (data) => {
   try {
-    const response = await HrmsAuth.post(
-      `/employee/`,
-      data,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data/",
-        },
-      }
-    );
+    const response = await HrmsAuth.post(`/employee/`, data, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
     return response.data;
   } catch (error) {
     console.error("Error adding employee onboarding:", error);
@@ -3736,7 +3851,665 @@ export const postEmployeeAddress = async (data) => {
     );
     return response.data;
   } catch (error) {
-    console.error("Error adding employee family:", error);
+    console.error("Error adding employee address:", error);
+    throw error;
+  }
+};
+export const getPaymentModeList = async () => {
+  try {
+    const response = await HrmsAuth.get(`/employee/payment-mode/`, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error getting employee mode list:", error);
+    throw error;
+  }
+};
+
+export const postEmployeePaymentInfo = async (data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/employee/payment-information/`,
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error adding employee payment Info:", error);
+    throw error;
+  }
+};
+export const getEmployeePaymentInfo = async (empId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/employee/payment-information/?employee_id=${empId}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting employee payment Info:", error);
+    throw error;
+  }
+};
+export const postEmployeeStatutoryInfo = async (data) => {
+  try {
+    const response = await HrmsAuth.post(`/employee/Statutory/`, data, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error adding employee payment Info:", error);
+    throw error;
+  }
+};
+export const getEmployeeDetails = async (empId) => {
+  try {
+    const response = await HrmsAuth.get(`/employee/${empId}/`, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error getting employee Details:", error);
+    throw error;
+  }
+};
+
+export const editEmployeeDetails = async (empId, data) => {
+  try {
+    const response = await HrmsAuth.put(`/employee/${empId}/`, data, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error updating employee Details:", error);
+    throw error;
+  }
+};
+
+export const getEmployeeFamilyDetails = async (empId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/employee/family-information/?employee_id=${empId}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting family Details:", error);
+    throw error;
+  }
+};
+export const editEmployeeFamilyDetails = async (familyId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/employee/family-information/${familyId}/`,
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating family Details:", error);
+    throw error;
+  }
+};
+export const getEmployeeAddressDetails = async (empId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/employee/address-information/?employee_id=${empId}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting address Details:", error);
+    throw error;
+  }
+};
+export const editEmployeeAddressDetails = async (addressId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/employee/address-information/${addressId}/`,
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating address Details:", error);
+    throw error;
+  }
+};
+export const postEmployeeEmploymentInfo = async (data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/employment-information/`,
+      data,
+
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting Employment details:", error);
+    throw error;
+  }
+};
+export const getCountriesList = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/organization/country-name-list/?organization_id=${orgId}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting Countries list:", error);
+    throw error;
+  }
+};
+
+export const getCountryData = async (countryId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/organization/country-name/?id=${countryId}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting Country data:", error);
+    throw error;
+  }
+};
+export const getEmployeeRegularizationReq = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/attendance/regularization/requests/?organization_id=${orgId}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting regularization data:", error);
+    throw error;
+  }
+};
+export const postRegularizationApproval = async (approvalId, data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/attendance/regularization/requests/status/${approvalId}/`,
+      data
+      // {
+      //   headers: {
+      //     "Content-Type": "multipart/form-data/",
+      //   },
+      // }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting regularization approval:", error);
+    throw error;
+  }
+};
+export const getRegularizationDetails = async (reqId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/attendance/regularization/requests/${reqId}/`
+      // {
+      //   headers: {
+      //     "Content-Type": "multipart/form-data/",
+      //   },
+      // }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting regularization details:", error);
+    throw error;
+  }
+};
+export const getAttendanceRecord = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/employees/attendance-bulk?organization_id=${orgId}`
+      // {
+      //   headers: {
+      //     "Content-Type": "multipart/form-data/",
+      //   },
+      // }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting attendance records:", error);
+    throw error;
+  }
+};
+export const postLeaveCategory = async (data) => {
+  try {
+    const response = await HrmsAuth.post(`/leave-categories/`, data, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error posting leave category:", error);
+    throw error;
+  }
+};
+export const getLeaveCategory = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/leave-categories/?organization_id=${orgId}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting leave categories:", error);
+    throw error;
+  }
+};
+export const getLeaveSetting = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/leave-settings/?organization_id=${orgId}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting leave settings:", error);
+    throw error;
+  }
+};
+export const editLeaveSetting = async (settingId, data) => {
+  try {
+    const response = await HrmsAuth.put(`/leave-settings/${settingId}/`, data, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error updating leave settings:", error);
+    throw error;
+  }
+};
+export const getLeaveCategoryDetails = async (categoryId) => {
+  try {
+    const response = await HrmsAuth.get(`/leave-categories/${categoryId}/`, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error getting leave category:", error);
+    throw error;
+  }
+};
+export const editLeaveCategoryDetails = async (categoryId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/leave-categories/${categoryId}/`,
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating leave category:", error);
+    throw error;
+  }
+};
+export const deleteLeaveCategory = async (deleteId) => {
+  try {
+    const response = await HrmsAuth.delete(`/leave-categories/${deleteId}/`, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting leave category:", error);
+    throw error;
+  }
+};
+
+export const getLeaveApplications = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/employee/leave-request/?organization_id=${orgId}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting leave applications:", error);
+    throw error;
+  }
+};
+export const postSingleLeaveApplication = async (data) => {
+  try {
+    const response = await HrmsAuth.post(`/employee/leave-request/`, data, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error posting leave applications:", error);
+    throw error;
+  }
+};
+export const getLeaveApplicationDetails = async (applicationId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/employee/leave-request/${applicationId}/`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting leave applications:", error);
+    throw error;
+  }
+};
+export const editLeaveApplicationDetails = async (applicationId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/employee/leave-request/${applicationId}/`,
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting leave applications:", error);
+    throw error;
+  }
+};
+export const deleteLeaveApplication = async (applicationId) => {
+  try {
+    const response = await HrmsAuth.delete(
+      `/employee/leave-request/${applicationId}/`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting leave applications:", error);
+    throw error;
+  }
+};
+export const postLeaveApplicationApproval = async (applicationId, data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/leave/requests/status/${applicationId}/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting leave approval:", error);
+    throw error;
+  }
+};
+export const getEmployeeEmploymentDetails = async (empId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/employment-information/?employee_id=${empId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting employment details:", error);
+    throw error;
+  }
+};
+export const editEmployeeEmploymentDetails = async (employmentId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/employment-information/${employmentId}/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting employment details:", error);
+    throw error;
+  }
+};
+// payroll
+export const getPayrollGeneralSetting = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/payroll/general-settings/?organization_id=${orgId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting payroll general setting:", error);
+    throw error;
+  }
+};
+export const editPayrollGeneralSetting = async (payrollId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/payroll/general-settings/${payrollId}/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating payroll general setting:", error);
+    throw error;
+  }
+};
+export const getPayrollGratuity = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/payroll/gratuity-settings/?organization_id=${orgId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting payroll gratuity:", error);
+    throw error;
+  }
+};
+export const editPayrollGratuity = async (gratuityId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/payroll/gratuity-settings/${gratuityId}/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating payroll gratuity:", error);
+    throw error;
+  }
+};
+export const getFixedAllowance = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/payroll/allowance/?organization_id=${orgId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating payroll gratuity:", error);
+    throw error;
+  }
+};
+export const postFixedAllowance = async (data) => {
+  try {
+    const response = await HrmsAuth.post(`/payroll/allowance/`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error updating payroll gratuity:", error);
+    throw error;
+  }
+};
+export const deleteFixedAllowance = async (FAid) => {
+  try {
+    const response = await HrmsAuth.delete(`/payroll/allowance/${FAid}/`);
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting Fixed Allowance:", error);
+    throw error;
+  }
+};
+export const getFixedAllowanceDetails = async (FAid) => {
+  try {
+    const response = await HrmsAuth.get(`/payroll/allowance/${FAid}/`);
+    return response.data;
+  } catch (error) {
+    console.error("Error getting Fixed Allowance:", error);
+    throw error;
+  }
+};
+export const editFixedAllowanceDetails = async (FAid, data) => {
+  try {
+    const response = await HrmsAuth.put(`/payroll/allowance/${FAid}/`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error updating Fixed Allowance:", error);
+    throw error;
+  }
+};
+export const getFixedDeductions = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/payroll/deduction/?organization_id=${orgId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting Fixed deduction:", error);
+    throw error;
+  }
+};
+export const postFixedDeductions = async (data) => {
+  try {
+    const response = await HrmsAuth.post(`/payroll/deduction/`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error posting Fixed deduction:", error);
+    throw error;
+  }
+};
+export const deleteFixedDeductions = async (deductionId) => {
+  try {
+    const response = await HrmsAuth.delete(
+      `/payroll/deduction/${deductionId}/`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting Fixed deduction:", error);
+    throw error;
+  }
+};
+export const getFixedDeductionDetails = async (deductionId) => {
+  try {
+    const response = await HrmsAuth.get(`/payroll/deduction/${deductionId}/`);
+    return response.data;
+  } catch (error) {
+    console.error("Error getting Fixed deduction:", error);
+    throw error;
+  }
+};
+export const editFixedDeductionDetails = async (deductionId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/payroll/deduction/${deductionId}/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting Fixed deduction:", error);
+    throw error;
+  }
+};
+export const postVariableAllowance = async (data) => {
+  try {
+    const response = await HrmsAuth.post(`/payroll/variable-allowance/`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error posting variable allowance:", error);
+    throw error;
+  }
+};
+export const getVariableAllowance = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(`/payroll/variable-allowance/?organization_id=${orgId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error getting variable allowance:", error);
+    throw error;
+  }
+};
+export const deleteVariableAllowance = async (variableId) => {
+  try {
+    const response = await HrmsAuth.delete(`/payroll/variable-allowance/${variableId}/`);
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting variable allowance:", error);
     throw error;
   }
 };

@@ -59,7 +59,6 @@ const PPM = () => {
         const itemDate = new Date(item.start_time).setHours(0, 0, 0, 0);
         const start = startDate.setHours(0, 0, 0, 0);
         const end = endDate.setHours(23, 59, 59, 999);
-        // Check if the itemDate falls within the start and end date range
         return itemDate >= start && itemDate <= end;
       });
     }

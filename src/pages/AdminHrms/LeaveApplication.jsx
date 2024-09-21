@@ -7,13 +7,9 @@ const LeaveApplication = () => {
   const [page, setPage] = useState("Pending");
   return (
     <div className="flex ml-20">
-       <AdminHRMS/>
-    <div className=" w-full my-2 flex  overflow-hidden flex-col">
-
-
-
+      <AdminHRMS />
+      <div className=" w-full my-2 flex  overflow-hidden flex-col">
         <div className=" flex gap-2 p-2 pb-0 border-b-2 border-gray-200 w-full">
-
           <h2
             className={`p-1 ${
               page === "Pending" &&
@@ -32,18 +28,14 @@ const LeaveApplication = () => {
           >
             Completed
           </h2>
-
-
         </div>
         {page === "Pending" && (
-          <div className="mr-2">
-            <LeavePendingApp/>
+          <div >
+            <LeavePendingApp />
           </div>
         )}
-        {page === "Completed" && <LeaveCompleted/>}
+        {page === "Completed" && <LeaveCompleted />}
       </div>
-      
-
     </div>
   );
 };

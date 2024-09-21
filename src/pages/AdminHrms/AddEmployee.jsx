@@ -1,21 +1,25 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import AdminHRMS from "./AdminHrms";
-import { FaTrash } from "react-icons/fa";
+import { FaArrowRight, FaTrash } from "react-icons/fa";
 import AddEmployeeDetailsList from "./AddEmployeeDetailsList";
 import { GrHelpBook } from "react-icons/gr";
 import Select from "react-select";
 import { useSelector } from "react-redux";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import {
+  getPaymentModeList,
   postEmployeeAddress,
   postEmployeeFamily,
   postEmployeeOnBoarding,
+  postEmployeePaymentInfo,
 } from "../../api";
 import toast from "react-hot-toast";
 import { ImFileText2 } from "react-icons/im";
 import Employment from "./Employment";
 import OnboardingSalary from "./Salary";
 import Statutory from "./Statutory";
+import { MdOutlineWork } from "react-icons/md";
+import { FcMoneyTransfer } from "react-icons/fc";
 
 const paymentOptions = [
   { value: "salary", label: "Salary" },
@@ -33,9 +37,9 @@ const AddEmployee = () => {
     fontWeight: 500,
   };
   const themeColor = useSelector((state) => state.theme.color);
- 
+
   const [empId, setEmpId] = useState("");
- 
+
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -63,13 +67,50 @@ const AddEmployee = () => {
     accountNumber: "",
     ifsc: "",
   });
-
+  console.log(formData);
+  const [rawAadhar, setRawAadhar] = useState("");
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    if (name === "aadhar") {
+      const rawValue = value.replace(/\D/g, "");
+
+      const formattedValue =
+        rawValue
+          .match(/.{1,4}/g)
+          ?.join("-")
+          .slice(0, 14) || "";
+
+      setFormData({ ...formData, aadhar: formattedValue });
+
+      // For sending to API, store unformatted value
+      // (You might want to store rawValue in another state or use it directly when sending API requests)
+      setRawAadhar(rawValue);
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
   };
 
+  // const handleChange = (e) => {
+  //   const { name, value } = e.target;
+
+  //   const upperCaseValue = value.toUpperCase();
+
+  //   const panRegex = /^[A-Z]{0,5}[0-9]{0,4}[A-Z]{0,1}$/;
+
+  //   if (name === "pan") {
+  //     if (panRegex.test(upperCaseValue)) {
+  //       setFormData({ ...formData, [name]: upperCaseValue });
+  //     } else {
+  //       console.log("Invalid PAN format");
+  //     }
+  //   } else {
+  //     setFormData({ ...formData, [name]: upperCaseValue });
+  //   }
+  // };
+
+  const [disableNext, setDisableNext] = useState(true);
+  const [disableSave, setDisableSave] = useState(false);
   const handleAddEmployee = async () => {
-    // Perform validation for each field
     if (!formData.firstName.trim()) {
       toast.error("First Name is required!");
       return;
@@ -107,15 +148,14 @@ const AddEmployee = () => {
     postData.append("date_of_birth", formData.dob);
     postData.append("blood_group", formData.bloodGroup);
     postData.append("pan", formData.pan);
-    postData.append("aadhar_number", formData.aadhar);
+    postData.append("aadhar_number", rawAadhar);
     postData.append("marital_status", formData.maritalStatus);
     postData.append("emergency_contact_name", formData.emergencyContactName);
     postData.append("emergency_contact_no", formData.emergencyContactNumber);
     postData.append("organization", hrmsOrgId);
-
     try {
       const empRes = await postEmployeeOnBoarding(postData);
-      setEmpId(empRes.id)
+      setEmpId(empRes.id);
       const postFamily = new FormData();
       postFamily.append("employee", empRes.id);
       postFamily.append("father_name", formData.fatherName);
@@ -139,12 +179,37 @@ const AddEmployee = () => {
       } catch (error) {
         console.log(error);
       }
-      setSteps("employment");
+      const postPayment = new FormData();
+      postPayment.append("payment_mode", formData.paymentMode);
+      postPayment.append("employee", empRes.id);
+      // Backend team working on more fields
+      try {
+        const paymentRes = await postEmployeePaymentInfo(postPayment);
+      } catch (error) {
+        console.log(error);
+      }
+      setDisableNext(false);
+      setDisableSave(true);
+      toast.success("Basic Info saved Successfully");
     } catch (error) {
       console.log(error);
       toast.error("Failed to add employee. Please try again.");
     }
   };
+
+  const [paymentModeList, setPaymentModeList] = useState([]);
+  useEffect(() => {
+    const fetchPaymentModeList = async () => {
+      try {
+        const res = await getPaymentModeList();
+        setPaymentModeList(res);
+        console.log(res);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchPaymentModeList();
+  }, []);
 
   return (
     <div className="flex ml-20 justify-between">
@@ -152,101 +217,60 @@ const AddEmployee = () => {
       <div className="flex">
         <AdminHRMS />
         <div className="w-56 h-full bg-white  p-4 mt-9 border-r">
-          <ul className="space-y-4">
+          <ul className="space-y-2">
             <li className="font-bold text-lg">Steps</li>
 
-            <li
-              className={`flex items-center gap-2 p-1 cursor-pointer ${
-                steps === "basic" && " text-white rounded-md bg-blue-500"
+            <button
+              className={`flex items-center gap-2 p-2 w-full  rounded-md ${
+                steps === "basic"
+                  ? " text-white bg-blue-500 font-medium cursor-pointer"
+                  : "text-white bg-gray-400 font-medium cursor-not-allowed"
               }`}
+              disabled={steps !== "basic"}
               onClick={() => setSteps("basic")}
             >
               <div>{React.createElement(ImFileText2, { size: "20" })}</div>
-              <h2
-                className={`whitespace-pre duration-300 w-full  ${
-                  steps === "basic" &&
-                  " text-white rounded-md bg-blue-500 font-medium"
-                }`}
-              >
-                Basics
-              </h2>
-              <h2
-                className={`${
-                  open && "hidden"
-                } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
-              >
-                Basics
-              </h2>
-            </li>
-            <li
-              className={`flex items-center gap-2 p-1 cursor-pointer ${
-                steps === "employment" &&
-                " text-white rounded-md bg-blue-500 font-medium"
+              Basics
+            </button>
+            <div className="border-b border-gray-400 w-full" />
+            <button
+              className={`flex items-center gap-2 p-2 w-full  rounded-md ${
+                steps === "employment"
+                  ? " text-white bg-blue-500 font-medium cursor-pointer"
+                  : "text-white bg-gray-400 font-medium cursor-not-allowed"
               }`}
               onClick={() => setSteps("employment")}
+              disabled={steps !== "employment"}
             >
-              <div>{React.createElement(ImFileText2, { size: "20" })}</div>
-              <h2
-                className={`whitespace-pre duration-300 ${
-                  !open && "opacity-0 translate-x-28 overflow-hidden"
-                }`}
-              >
-                Employment
-              </h2>
-              <h2
-                className={`${
-                  open && "hidden"
-                } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
-              >
-                Employment
-              </h2>
-            </li>
-            <li
-              className={`flex items-center gap-2 p-1 cursor-pointer ${
-                steps === "salary" &&
-                " text-white rounded-md bg-blue-500 font-medium"
+              <div>{React.createElement(MdOutlineWork, { size: "20" })}</div>
+              Employment
+            </button>
+            <div className="border-b border-gray-400 w-full" />
+            <button
+              className={`flex items-center gap-2 p-2  w-full rounded-md ${
+                steps === "salary"
+                  ? " text-white bg-blue-500 font-medium cursor-pointer"
+                  : "text-white bg-gray-400 font-medium cursor-not-allowed"
               }`}
+              onClick={() => setSteps("salary")}
+              disabled={steps !== "salary"}
             >
-              <div>{React.createElement(ImFileText2, { size: "20" })}</div>
-              <h2
-                className={`whitespace-pre duration-300 ${
-                  !open && "opacity-0 translate-x-28 overflow-hidden"
-                }`}
-                onClick={() => setSteps("salary")}
-              >
-                Salary
-              </h2>
-              <h2
-                className={`${
-                  open && "hidden"
-                } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
-              >
-                Salary
-              </h2>
-            </li>
-            <li
-              className={`flex items-center gap-2 p-1 cursor-pointer ${
-                steps === "statutory" &&
-                " text-white rounded-md bg-blue-500 font-medium"
+              <div>{React.createElement(FcMoneyTransfer, { size: "20" })}</div>
+              Salary
+            </button>
+            <div className="border-b border-gray-400 w-full" />
+            <button
+              className={`flex items-center gap-2 p-2  w-full rounded-md ${
+                steps === "statutory"
+                  ? " text-white bg-blue-500 font-medium cursor-pointer"
+                  : "text-white bg-gray-400 font-medium cursor-not-allowed"
               }`}
+              disabled={steps !== "statutory"}
               onClick={() => setSteps("statutory")}
             >
               <div>{React.createElement(ImFileText2, { size: "20" })}</div>
-              <h2
-                className={`whitespace-pre duration-300 ${
-                  !open && "opacity-0 translate-x-28 overflow-hidden"
-                }`}
-              >
-                Statutory
-              </h2>
-              <h2
-                className={`${
-                  open && "hidden"
-                } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
-              >
-                Statutory
-              </h2>
-            </li>
+              Statutory
+            </button>
           </ul>
         </div>
       </div>
@@ -257,7 +281,7 @@ const AddEmployee = () => {
             Employee Basic Information
           </h2>
           <div>
-            <div className="grid md:grid-cols-3 gap-2 gap-y-4 mt-5">
+            <div className="grid xl:grid-cols-3 gap-2 gap-y-4 mt-5">
               <div className="grid gap-2 items-center w-full">
                 <label className="block text-sm font-medium text-gray-700">
                   First Name<span className="text-red-400">*</span>
@@ -311,6 +335,17 @@ const AddEmployee = () => {
                   value={formData.mobile}
                   onChange={handleChange}
                   name="mobile"
+                  pattern="[0-9]*"
+                  onKeyDown={(e) => {
+                    if (
+                      !/[0-9]/.test(e.key) &&
+                      e.key !== "Backspace" &&
+                      e.key !== "ArrowLeft" &&
+                      e.key !== "ArrowRight"
+                    ) {
+                      e.preventDefault();
+                    }
+                  }}
                 />
               </div>
               <div className="grid gap-2 items-center w-full">
@@ -325,8 +360,8 @@ const AddEmployee = () => {
                   name="gender"
                 >
                   <option value="">Select Gender</option>
-                  <option value="M">Male</option>
-                  <option value="F">Female</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
                 </select>
               </div>
               <div className="grid gap-2 items-center w-full">
@@ -386,10 +421,12 @@ const AddEmployee = () => {
                 <input
                   type="text"
                   className="border border-gray-400 p-2 rounded-md"
-                  placeholder="Aadhar Number"
+                  // placeholder="Aadhar Number"
                   value={formData.aadhar}
                   name="aadhar"
                   onChange={handleChange}
+                  maxLength={14}
+                  placeholder="xxxx-xxxx-xxxx"
                 />
               </div>
               <div className="grid gap-2 items-center w-full">
@@ -405,6 +442,8 @@ const AddEmployee = () => {
                   <option value="">Select Marital Status</option>
                   <option value="Single">Single</option>
                   <option value="Married">Married</option>
+                  <option value="Widow">Widow</option>
+                  <option value="Divorced">Divorced</option>
                 </select>
               </div>
               <div className="grid gap-2 items-center w-full">
@@ -431,13 +470,24 @@ const AddEmployee = () => {
                   value={formData.emergencyContactNumber}
                   onChange={handleChange}
                   name="emergencyContactNumber"
+                  pattern="[0-9]*"
+                  onKeyDown={(e) => {
+                    if (
+                      !/[0-9]/.test(e.key) &&
+                      e.key !== "Backspace" &&
+                      e.key !== "ArrowLeft" &&
+                      e.key !== "ArrowRight"
+                    ) {
+                      e.preventDefault();
+                    }
+                  }}
                 />
               </div>
             </div>
             <h2 className="border-b text-center text-xl border-black  mb-6 font-bold mt-2">
               Family Information
             </h2>
-            <div className="grid md:grid-cols-3 gap-2 mt-5">
+            <div className="grid xl:grid-cols-3 gap-2 mt-5">
               <div className="grid gap-2 items-center w-full">
                 <label className="block text-sm font-medium text-gray-700">
                   Father's Name
@@ -484,7 +534,7 @@ const AddEmployee = () => {
             <h2 className="border-b text-center text-xl  border-black mb-6 font-bold mt-2">
               Address Information
             </h2>
-            <div className="grid md:grid-cols-3 gap-2 mt-5">
+            <div className="grid xl:grid-cols-3 gap-2 mt-5">
               <div className="grid gap-2 items-center w-full">
                 <label className="block text-sm font-medium text-gray-700">
                   Address Line 1
@@ -515,15 +565,15 @@ const AddEmployee = () => {
               </div>
               <div className="grid gap-2 items-center w-full">
                 <label className="block text-sm font-medium text-gray-700">
-                  Country
+                  City
                 </label>
                 <input
                   type="text"
                   className="border border-gray-400 p-2 rounded-md"
-                  placeholder="Country"
+                  placeholder="City"
+                  value={formData.city}
                   onChange={handleChange}
-                  value={formData.country}
-                  name="country"
+                  name="city"
                 />
               </div>
               <div className="grid gap-2 items-center w-full">
@@ -539,19 +589,7 @@ const AddEmployee = () => {
                   name="state"
                 />
               </div>
-              <div className="grid gap-2 items-center w-full">
-                <label className="block text-sm font-medium text-gray-700">
-                  City
-                </label>
-                <input
-                  type="text"
-                  className="border border-gray-400 p-2 rounded-md"
-                  placeholder="City"
-                  value={formData.city}
-                  onChange={handleChange}
-                  name="city"
-                />
-              </div>
+
               <div className="grid gap-2 items-center w-full">
                 <label className="block text-sm font-medium text-gray-700">
                   Zip / Pin Code
@@ -563,6 +601,19 @@ const AddEmployee = () => {
                   value={formData.code}
                   onChange={handleChange}
                   name="code"
+                />
+              </div>
+              <div className="grid gap-2 items-center w-full">
+                <label className="block text-sm font-medium text-gray-700">
+                  Country
+                </label>
+                <input
+                  type="text"
+                  className="border border-gray-400 p-2 rounded-md"
+                  placeholder="Country"
+                  onChange={handleChange}
+                  value={formData.country}
+                  name="country"
                 />
               </div>
             </div>
@@ -601,12 +652,15 @@ const AddEmployee = () => {
                     name="paymentMode"
                   >
                     <option value="">Select payment Mode</option>
-                    <option value="cash">Cash</option>
-                    <option value="cheque">Cheque</option>
-                    <option value="bankTransfer">Bank Transfer</option>
+                    {paymentModeList &&
+                      paymentModeList.map((payment) => (
+                        <option value={payment.id} key={payment.id}>
+                          {payment.mode_name}
+                        </option>
+                      ))}
                   </select>
                 </div>
-                {formData.paymentMode === "bankTransfer" && (
+                {formData.paymentMode === "3" && (
                   <>
                     <div className="flex flex-col gap-2">
                       <label className="block text-sm font-medium text-gray-700">
@@ -660,19 +714,38 @@ const AddEmployee = () => {
             <div className="flex gap-5 justify-end items-center my-4">
               <button
                 type="submit"
-                style={{ background: themeColor }}
+                // style={{ background: themeColor }}
                 onClick={handleAddEmployee}
-                className="px-4 py-2  text-white rounded-md"
+                className={`px-4 py-2  text-white font-medium rounded-md flex items-center gap-2 ${
+                  disableSave
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-green-400"
+                }`}
+                disabled={disableSave}
               >
-                Next
+                Save
+              </button>
+              <button
+                type="submit"
+                onClick={() => setSteps("employment")}
+                className={`px-4 py-2  text-white font-medium  rounded-md flex items-center gap-2 ${
+                  disableNext
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-green-400"
+                }`}
+                disabled={disableNext}
+              >
+                Next <FaArrowRight />
               </button>
             </div>
           </div>
         </div>
       )}
-      {steps === "employment" && <Employment />}
+      {steps === "employment" && (
+        <Employment setSteps={setSteps} empId={empId} />
+      )}
       {steps === "salary" && <OnboardingSalary />}
-      {steps === "statutory" && <Statutory />}
+      {steps === "statutory" && <Statutory empId={empId} />}
 
       <div className="my-4 mx-2 w-fit">
         <div className="flex flex-col  bg-gray-50 rounded-md text-wrap  gap-4 my-2 py-2 pl-5 pr-2 w-[18rem]">

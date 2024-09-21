@@ -7,13 +7,9 @@ const Rollover = () => {
   const [page, setPage] = useState("Leave cycle followers");
   return (
     <div className="flex ml-20">
-       <AdminHRMS/>
-    <div className=" w-full my-2 flex  overflow-hidden flex-col">
-
-
-
+      <AdminHRMS />
+      <div className=" w-full my-2 flex  overflow-hidden flex-col">
         <div className=" flex gap-2 p-2 pb-0 border-b-2 border-gray-200 w-full">
-
           <h2
             className={`p-1 ${
               page === "Leave cycle followers" &&
@@ -21,7 +17,7 @@ const Rollover = () => {
             } rounded-t-md px-4 cursor-pointer text-center transition-all duration-300 ease-linear`}
             onClick={() => setPage("Leave cycle followers")}
           >
-            Leave cycle followers
+            Leave cycle Rollovers
           </h2>
           <h2
             className={`p-1 ${
@@ -41,22 +37,16 @@ const Rollover = () => {
           >
             Intra Rollover
           </h2>
-
-
         </div>
         {page === "Leave cycle followers" && (
           <div>
-            <LeavecycleFollower/>
+            <LeavecycleFollower />
           </div>
         )}
-        {page === "work Anniversary Rollover" && <LeavecycleFollower/>}
-        {page === "Intra Rollover" && <LeavecycleFollower/>}
+        {page === "work Anniversary Rollover" && <LeavecycleFollower />}
+        {page === "Intra Rollover" && <LeavecycleFollower />}
       </div>
-      <div>
-
-
-      </div>
-
+      <div></div>
     </div>
   );
 };

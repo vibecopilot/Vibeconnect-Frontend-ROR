@@ -1,48 +1,206 @@
-import React from "react";
-
+import React, { useEffect, useState } from "react";
+import Select from "react-select"
+import { getItemInLocalStorage } from "../../utils/localStorage";
+import { getMyHRMSEmployees } from "../../api";
 const LeaveBalanceDetails = () => {
   const monthlyBalances = [
-    { month: "Jan - 2024", opening: 22.0, accrued: 0, taken: 0, adjusted: 0, lapsed: 0, encashed: 0, ending: 22.0 },
-    { month: "Feb - 2024", opening: 22.0, accrued: 0, taken: 0, adjusted: 0, lapsed: 0, encashed: 0, ending: 22.0 },
-    { month: "Mar - 2024", opening: 22.0, accrued: 0, taken: 0, adjusted: 0, lapsed: 0, encashed: 0, ending: 22.0 },
-    { month: "Apr - 2024", opening: 22.0, accrued: 0, taken: 0, adjusted: -17.0, lapsed: 0, encashed: 0, ending: 5.0 },
-    { month: "May - 2024", opening: 5.0, accrued: 0, taken: 0, adjusted: 0, lapsed: 0, encashed: 0, ending: 5.0 },
-    { month: "Jun - 2024", opening: 5.0, accrued: 0, taken: 0, adjusted: 0, lapsed: 0, encashed: 0, ending: 5.0 },
-    { month: "Jul - 2024", opening: 5.0, accrued: 0, taken: 0, adjusted: 0, lapsed: 0, encashed: 0, ending: 5.0 },
-    { month: "Aug - 2024", opening: 5.0, accrued: 0, taken: 0, adjusted: 0, lapsed: 0, encashed: 0, ending: 5.0 },
-    { month: "Sep - 2024", opening: 5.0, accrued: 0, taken: 0, adjusted: 0, lapsed: 0, encashed: 0, ending: 5.0 },
-    { month: "Oct - 2024", opening: 5.0, accrued: 0, taken: 0, adjusted: 0, lapsed: 0, encashed: 0, ending: 5.0 },
-    { month: "Nov - 2024", opening: 5.0, accrued: 0, taken: 0, adjusted: 0, lapsed: 0, encashed: 0, ending: 5.0 },
-    { month: "Dec - 2024", opening: 5.0, accrued: 0, taken: 0, adjusted: 0, lapsed: 0, encashed: 0, ending: 5.0 },
+    {
+      month: "Jan - 2024",
+      opening: 22.0,
+      accrued: 0,
+      taken: 0,
+      adjusted: 0,
+      lapsed: 0,
+      encashed: 0,
+      ending: 22.0,
+    },
+    {
+      month: "Feb - 2024",
+      opening: 22.0,
+      accrued: 0,
+      taken: 0,
+      adjusted: 0,
+      lapsed: 0,
+      encashed: 0,
+      ending: 22.0,
+    },
+    {
+      month: "Mar - 2024",
+      opening: 22.0,
+      accrued: 0,
+      taken: 0,
+      adjusted: 0,
+      lapsed: 0,
+      encashed: 0,
+      ending: 22.0,
+    },
+    {
+      month: "Apr - 2024",
+      opening: 22.0,
+      accrued: 0,
+      taken: 0,
+      adjusted: -17.0,
+      lapsed: 0,
+      encashed: 0,
+      ending: 5.0,
+    },
+    {
+      month: "May - 2024",
+      opening: 5.0,
+      accrued: 0,
+      taken: 0,
+      adjusted: 0,
+      lapsed: 0,
+      encashed: 0,
+      ending: 5.0,
+    },
+    {
+      month: "Jun - 2024",
+      opening: 5.0,
+      accrued: 0,
+      taken: 0,
+      adjusted: 0,
+      lapsed: 0,
+      encashed: 0,
+      ending: 5.0,
+    },
+    {
+      month: "Jul - 2024",
+      opening: 5.0,
+      accrued: 0,
+      taken: 0,
+      adjusted: 0,
+      lapsed: 0,
+      encashed: 0,
+      ending: 5.0,
+    },
+    {
+      month: "Aug - 2024",
+      opening: 5.0,
+      accrued: 0,
+      taken: 0,
+      adjusted: 0,
+      lapsed: 0,
+      encashed: 0,
+      ending: 5.0,
+    },
+    {
+      month: "Sep - 2024",
+      opening: 5.0,
+      accrued: 0,
+      taken: 0,
+      adjusted: 0,
+      lapsed: 0,
+      encashed: 0,
+      ending: 5.0,
+    },
+    {
+      month: "Oct - 2024",
+      opening: 5.0,
+      accrued: 0,
+      taken: 0,
+      adjusted: 0,
+      lapsed: 0,
+      encashed: 0,
+      ending: 5.0,
+    },
+    {
+      month: "Nov - 2024",
+      opening: 5.0,
+      accrued: 0,
+      taken: 0,
+      adjusted: 0,
+      lapsed: 0,
+      encashed: 0,
+      ending: 5.0,
+    },
+    {
+      month: "Dec - 2024",
+      opening: 5.0,
+      accrued: 0,
+      taken: 0,
+      adjusted: 0,
+      lapsed: 0,
+      encashed: 0,
+      ending: 5.0,
+    },
   ];
 
   const transactions = [
-    { date: "01-01-2024", details: "Opening Balance", change: 22.0, ending: 22.0 },
-    { date: "30-04-2024", details: "Leave Adjusted by Admin\nComment :- OK", change: -17.0, ending: 5.0 },
+    {
+      date: "01-01-2024",
+      details: "Opening Balance",
+      change: 22.0,
+      ending: 22.0,
+    },
+    {
+      date: "30-04-2024",
+      details: "Leave Adjusted by Admin\nComment :- OK",
+      change: -17.0,
+      ending: 5.0,
+    },
   ];
 
+  const [selectedUserOption, setSelectedUserOption] = useState([]);
+  const handleUserChangeSelect = (selectedUserOption) => {
+    setSelectedUserOption(selectedUserOption);
+  };
+
+  const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
+  const [employees, setEmployees] = useState([]);
+  useEffect(() => {
+    const fetchAllEmployees = async () => {
+      try {
+        const res = await getMyHRMSEmployees(hrmsOrgId);
+
+        const employeesList = res.map((emp) => ({
+          value: emp.id,
+          label: `${emp.first_name} ${emp.last_name}`,
+        }));
+
+        setEmployees(employeesList);
+        console.log(res);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchAllEmployees();
+  }, []);
+
   return (
-    <div className="p-8">
+    <div className="p-4">
       <div className="mb-8 ">
-        <h2 className="text-2xl font-bold mb-4">LeaveBalanceDetails</h2>
-        <div className="mb-4 flex gap-6">
-          <p className="text-xl font-semibold">Employee:</p>
-          <p className="text-xl font-semibold">ABC</p>
-          <div className="flex gap-6">
-          <p className="text-xl font-semibold">Leave Cycle:</p>
-          <p className="text-xl font-semibold">Jan 2024 - Dec 2024</p>
+        <h2 className="text-2xl font-semibold mb-4">Leave Balance Details</h2>
+        <div className=" grid grid-cols-4 items-end  gap-5">
+          <div className="flex flex-col gap-2">
+
+          <label className="text-xl font-semibold">Employee:</label>
+          <Select
+                options={employees}
+                noOptionsMessage={() => "No Employee Available"}
+                onChange={handleUserChangeSelect}
+                placeholder="Select Employee"
+                />
+                </div>
+          <div className="flex flex-col gap-2">
+            <p className="text-xl font-semibold">Leave Cycle:</p>
+           <select className="border border-gray-300 rounded-md p-2">
+            <option value="">Jan 24 - Dec 24 </option>
+           </select>
           </div>
-          <div className="flex gap-6">
-          <p className="text-xl font-semibold">Category:</p>
-          <p className="text-xl font-semibold">Paid Leave</p>
+          <div className="flex flex-col gap-2 ">
+            <p className="text-xl font-semibold">Category:</p>
+            <select name="" id="" className="border border-gray-300 rounded-md p-2">
+              <option value="">Paid Leave</option>
+              <option value="">LWP</option>
+            </select>
           </div>
-          <div className=" flex gap-3">
-         <button className="bg-blue-500 text-white py-2 px-4 rounded-md">Apply</button>
+          <div className=" flex items-end gap-3">
+            <button className="bg-blue-500 text-white py-2 px-4 rounded-md">
+              Apply
+            </button>
+          </div>
         </div>
-        </div>
-
-
-
       </div>
 
       <div className="mb-8">
@@ -95,7 +253,9 @@ const LeaveBalanceDetails = () => {
               {transactions.map((transaction, index) => (
                 <tr key={index} className="border-t">
                   <td className="border px-4 py-2">{transaction.date}</td>
-                  <td className="border px-4 py-2 whitespace-pre-line">{transaction.details}</td>
+                  <td className="border px-4 py-2 whitespace-pre-line">
+                    {transaction.details}
+                  </td>
                   <td className="border px-4 py-2">{transaction.change}</td>
                   <td className="border px-4 py-2">{transaction.ending}</td>
                 </tr>

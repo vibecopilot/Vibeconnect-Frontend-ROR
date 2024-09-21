@@ -49,10 +49,7 @@ const ThirdParty = () => {
     },
     {
       name: "Approval",
-      selector: (row) => <div className="text-red-400">
-
-        {row.approval}
-      </div>,
+      selector: (row) => <div className="text-red-400">{row.approval}</div>,
       sortable: true,
     },
     {
@@ -100,15 +97,15 @@ const ThirdParty = () => {
   const [isOpen1, setIsOpen1] = useState(false);
   const [isOpen2, setIsOpen2] = useState(false);
   const handleInputChange = (e) => {
-    let value = e.target.value.replace(/\D/g, ""); // Remove non-digit characters
+    let value = e.target.value.replace(/\D/g, "");
     if (value.length > 12) {
-      value = value.slice(0, 12); // Limit to 12 digits
+      value = value.slice(0, 12);
     }
     let formattedValue =
       value
         .match(/.{1,4}/g)
         ?.join("-")
-        .slice(0, 14) || ""; // Group digits into 4s and join with hyphens
+        .slice(0, 14) || "";
     setAadhar(formattedValue);
   };
   const [currentForm, setCurrentForm] = useState("userDetails");
@@ -284,6 +281,12 @@ const ThirdParty = () => {
                       ></textarea>
                     </div>
                     <div className="flex justify-end">
+                      <button
+                        className="mt-2 ml-2 bg-red-500 text-white py-2 px-4 rounded-md"
+                        onClick={() => setShowModal(false)}
+                      >
+                        Close
+                      </button>
                       <button
                         className="mt-2 ml-2 bg-blue-500 text-white py-2 px-4 rounded-md"
                         onClick={handleNext}
@@ -963,27 +966,25 @@ const ThirdParty = () => {
                         </div>
                       )}
                     </div>
-                    <div className="flex justify-end">
-                      <div>
-                        <button
-                          className="mt-2 bg-gray-500 text-white py-2 px-4 rounded-md"
-                          onClick={handleBack}
-                        >
-                          Back
-                        </button>
-                        <button
-                          className="mt-2 ml-2 bg-blue-500 text-white py-2 px-4 rounded-md"
-                          onClick={() => setShowModal(false)}
-                        >
-                          Submit
-                        </button>
-                        <button
-                          className="mt-2 ml-2 bg-red-500 text-white py-2 px-4 rounded-md"
-                          onClick={() => setShowModal(false)}
-                        >
-                          Close
-                        </button>
-                      </div>
+                    <div className="flex justify-end gap-2">
+                      <button
+                        className="mt-2 bg-red-500 text-white py-2 px-4 rounded-md"
+                        onClick={() => setShowModal(false)}
+                      >
+                        Close
+                      </button>
+                      <button
+                        className="mt-2 bg-gray-500 text-white py-2 px-4 rounded-md"
+                        onClick={handleBack}
+                      >
+                        Back
+                      </button>
+                      <button
+                        className="mt-2 bg-blue-500 text-white py-2 px-4 rounded-md"
+                        onClick={() => setShowModal(false)}
+                      >
+                        Submit
+                      </button>
                     </div>
                   </div>
                 )}
@@ -1145,7 +1146,6 @@ const ThirdParty = () => {
                     <div className=" w-full mt-2 p-2   rounded-md">
                       {/* <h2 className="text-2xl font-bold mb-6">Salary</h2> */}
                       <h2 className="text-2xl font-bold mb-6">Add New CTC</h2>
-
                       <div className=" w-full my-2 flex  overflow-hidden flex-col">
                         <div className="flex w-full">
                           <div className=" flex gap-2 p-2 pb-0 border-b-2 border-gray-200 w-full">
@@ -1543,22 +1543,12 @@ const ThirdParty = () => {
                       )}
                       {page === "CTC Components" && (
                         <div>
-                          <div className="flex justify-between items-center  px-10">
+                          <div className="flex justify-between items-center px-10">
                             <h2 className=" font-semibold">Components</h2>
                             <p className=" font-semibold ">Monthly</p>
                             <p className=" font-semibold ">Yearly</p>
                           </div>
-                          {/* <div className="flex justify-between items-center ml-10">
-                            <h2 className="text-lg font-semibold">
-                              Components
-                            </h2>
-                            <p className="text-lg font-semibold ">
-                              &nbsp;&nbsp;&nbsp;&nbsp;Monthly
-                            </p>
-                            <p className="text-lg font-semibold mr-24">
-                            Yearly
-                            </p>
-                          </div> */}
+                         
                           <div className="flex flex-col gap-2 p-1">
                             <div className="p-6 bg-white shadow-custom-all-sides rounded-md">
                               <div className="flex justify-between items-center">
@@ -1864,66 +1854,56 @@ const ThirdParty = () => {
                         <p className="block text-gray-700 font-medium">
                           Full Name :
                         </p>
-                        <p className="block text-gray-700 font-medium">
-                          ABC 
-                        </p>
-                       
+                        <p className="block text-gray-700 font-medium">ABC</p>
                       </div>
                       <div className="grid grid-cols-2">
                         <p className="block text-gray-700 font-medium">
                           Email :
                         </p>
                         <p className="block text-gray-700 font-medium">
-                          ABC@example.com 
+                          ABC@example.com
                         </p>
-                       
                       </div>
                       <div className="grid grid-cols-2">
                         <p className="block text-gray-700 font-medium">
                           Mobile No. :
                         </p>
                         <p className="block text-gray-700 font-medium">
-                          09930337986 
+                          09930337986
                         </p>
-                       
                       </div>
                       <div className="grid grid-cols-2">
                         <p className="block text-gray-700 font-medium">
                           gender :
                         </p>
-                        <p className="block text-gray-700 font-medium">
-                          Male 
-                        </p>
-                       
+                        <p className="block text-gray-700 font-medium">Male</p>
                       </div>
-                     
-                    
-                    
                     </div>
                     <div>
                       <label className="block text-gray-700 font-medium">
                         Permanent Address :
                       </label>
                       <p className="border border-gray-300 bg-gray-100 p-2 mt-2 rounded w-full text-sm">
-                      314, SAMRUDDHI BUSINESS PARK BEHIND EVERSHINE MALL, New Link Rd, Chincholi Bunder, Malad West, Mumbai, Maharashtra 400064
+                        314, SAMRUDDHI BUSINESS PARK BEHIND EVERSHINE MALL, New
+                        Link Rd, Chincholi Bunder, Malad West, Mumbai,
+                        Maharashtra 400064
                       </p>
-                     
                     </div>
                     <div>
                       <label className="block text-gray-700 font-medium">
                         Temporary Address :
                       </label>
                       <p className="border border-gray-300 bg-gray-100 p-2 mt-2 rounded w-full text-sm">
-                      314, SAMRUDDHI BUSINESS PARK BEHIND EVERSHINE MALL, New Link Rd, Chincholi Bunder, Malad West, Mumbai, Maharashtra 400064
+                        314, SAMRUDDHI BUSINESS PARK BEHIND EVERSHINE MALL, New
+                        Link Rd, Chincholi Bunder, Malad West, Mumbai,
+                        Maharashtra 400064
                       </p>
-                     
                     </div>
-                  
+
                     <div className="flex justify-end gap-2">
-                  
                       <button
                         className="mt-2 ml-2 bg-red-500 text-white py-2 px-4 rounded-md"
-                        onClick={()=> setShowDetailsModal(false)}
+                        onClick={() => setShowDetailsModal(false)}
                       >
                         Close
                       </button>
@@ -2041,7 +2021,7 @@ const ThirdParty = () => {
                               //   onChange={handleCtcTemplateChange}
                               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                             >
-                              <option value="" >
+                              <option value="">
                                 Select CTC Amount frequency
                               </option>
                               <option value="template1">Monthly</option>
@@ -2073,7 +2053,6 @@ const ThirdParty = () => {
                           </div>
 
                           <div className="flex justify-center gap-2">
-                           
                             <button className="bg-black text-white mb-2 hover:bg-gray-700 font-semibold py-2 px-4 rounded">
                               Save
                             </button>

@@ -328,6 +328,7 @@ const formatDate = (isoString) => {
           </div>
         )}
          {serviceFor === "logs" && (
+<<<<<<< HEAD
           <div>
            
       {/* Buttons for Prev Date and Next Date */}
@@ -350,6 +351,88 @@ const formatDate = (isoString) => {
                 <div className="col-span-11 items-center">
                   <p className="font-medium">Checklist Name :</p>
                   <p className="w-full">{task.checklist?.name || 'No Checklist Name'}</p>
+=======
+          <div className="">
+            {logsDetails.map((task, index) => (
+              <div key={task.id}>
+                <div className="my-4 flex flex-col bg-gray-50 shadow-custom-all-sides p-2 rounded-md gap-2">
+                  <div className="grid grid-cols-12">
+                    <div className="col-span-11 items-center">
+                      <p className="font-medium">Question :</p>
+                      <p className="w-full">{task.question_name}</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-4 items-center bg-green-100 p-2 rounded-md">
+                    <p className="font-medium">Answer :</p>
+                    <p>{task.value}</p>
+                  </div>
+                  <p>
+                    <span className="font-medium">Comment : </span>{" "}
+                    <span className="text-violet-500 font-medium">
+                      {task.comment ? task.comment : "No Comment"}{" "}
+                    </span>
+                  </p>
+                  <span className="font-medium text-gray-500">
+                    {" "}
+                    Attachments :
+                  </span>{" "}
+                  <div className="flex  gap-4 flex-wrap my-4 items-center  text-center">
+                    {task.question_attachments?.map((other) => (
+                      // <p>{other.document}</p>
+                      <img
+                        src={domainPrefix + other.document}
+                        alt={`Attachment ${index + 1}`}
+                        className="w-40 h-28 object-cover rounded-md"
+                        onClick={() =>
+                          window.open(domainPrefix + other.document, "_blank")
+                        }
+                      />
+                    ))}
+                    {/* {task.question_attachments && task.question_attachments > 0 ? (
+                  task.question_attachments.map((other, index) => (
+                    <div key={other.id} className="">
+                      {isImage(domainPrefix + other.document) ? (
+                        <img
+                          src={domainPrefix + other.document}
+                          alt={`Attachment ${index + 1}`}
+                          className="w-40 h-28 object-cover rounded-md"
+                          onClick={() =>
+                            window.open(domainPrefix + other.document, "_blank")
+                          }
+                        />
+                      ) : (
+                        <a
+                          href={domainPrefix + other.document}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="attachment-link hover:text-blue-400 transition-all duration-300  text-center flex flex-col items-center  "
+                        >
+                          <FaRegFileAlt size={50} />
+                          {getFileName(other.document)}
+                        </a>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-center w-full">No Attachments</p>
+                )} */}
+                  </div>
+                  <div className="flex justify-between">
+                    <p className="">
+                      <span className="font-medium text-gray-500">
+                        {" "}
+                        Performed by :
+                      </span>{" "}
+                      <span className="font-medium text-gray-500">
+                        {" "}
+                        {task.user_name}{" "}
+                      </span>
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {dateTimeFormat(task.created_at)}
+                    </p>
+                  </div>
+>>>>>>> server
                 </div>
               </div>
     

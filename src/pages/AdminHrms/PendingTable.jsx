@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Table from "../../components/table/Table";
 import { BiEdit } from "react-icons/bi";
 import { TiTick } from "react-icons/ti";
@@ -6,6 +6,9 @@ import { IoClose } from "react-icons/io5";
 import Collapsible from "react-collapsible";
 import CustomTrigger from "../../containers/CustomTrigger";
 import { FaTrash } from "react-icons/fa";
+import { getEmployeeRegularizationReq, postRegularizationApproval } from "../../api";
+import { getItemInLocalStorage } from "../../utils/localStorage";
+import toast from "react-hot-toast";
 const PendingTable = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -22,7 +25,7 @@ const PendingTable = () => {
     regularizationRequestStatus: "",
     startDate: "",
     endDate: "",
-    employeeDepartment: ""
+    employeeDepartment: "",
   });
   const handleApproveMultiple = () => {
     // Logic to approve multiple requests
@@ -57,30 +60,23 @@ const PendingTable = () => {
 
   const columns = [
     {
-      name: <input type="checkbox"/>,
-      selector: (row) => row.check,
-      sortable: true,
-    },
-   
-   
-    {
       name: "Employee Name",
-      selector: (row) => row.Name,
+      selector: (row) => `${row.first_name} ${row.last_name}`,
       sortable: true,
     },
     {
       name: "Date",
-      selector: (row) => row.Date,
+      selector: (row) => row.date,
       sortable: true,
     },
     {
       name: "Requested Timings",
-      selector: (row) => row.time,
+      selector: (row) => row.requested_timing,
       sortable: true,
     },
     {
       name: "Actual Timings",
-      selector: (row) => row.atime,
+      selector: (row) => row.actual_timing,
       sortable: true,
     },
     {
@@ -90,7 +86,7 @@ const PendingTable = () => {
     },
     {
       name: "Comment",
-      selector: (row) => row.Comment,
+      selector: (row) => row.comment,
       sortable: true,
     },
     {
@@ -98,27 +94,27 @@ const PendingTable = () => {
       selector: (row) => row.status,
       sortable: true,
     },
-    {
-      name: "Action",
-      cell: (row) => (
-        <div className="flex items-center gap-4">
-          <button onClick={() => handleEditClick(row)}>
-            <BiEdit size={15} />
-          </button>
-          <button onClick={() => setShowModalDelete(true)}>
-            <FaTrash size={15} />
-          </button>
-        </div>
-      ),
-    },
+    // {
+    //   name: "Action",
+    //   cell: (row) => (
+    //     <div className="flex items-center gap-4">
+    //       <button onClick={() => handleEditClick(row)}>
+    //         <BiEdit size={15} />
+    //       </button>
+    //       <button onClick={() => setShowModalDelete(true)}>
+    //         <FaTrash size={15} />
+    //       </button>
+    //     </div>
+    //   ),
+    // },
     {
       name: "Approval",
       selector: (row) => (
         <div className="flex justify-center gap-2">
-          <button className="text-green-400 font-medium hover:bg-green-400 hover:text-white transition-all duration-200 p-1 rounded-full">
+          <button className="text-green-400 font-medium hover:bg-green-400 hover:text-white transition-all duration-200 p-1 rounded-full" onClick={()=>handleReqApproval(row.id, "approved")}>
             <TiTick size={20} />
           </button>
-          <button className="text-red-400 font-medium hover:bg-red-400 hover:text-white transition-all duration-200 p-1 rounded-full">
+          <button className="text-red-400 font-medium hover:bg-red-400 hover:text-white transition-all duration-200 p-1 rounded-full" onClick={()=>handleReqApproval(row.id, "rejected")}>
             <IoClose size={20} />
           </button>
         </div>
@@ -127,33 +123,73 @@ const PendingTable = () => {
     },
   ];
 
-  const data = [
-    {
-      check:<input type="checkbox"/>,
-      Name: "Mittu Panda",
-      Date: "1/2/2023",
-      time: "3:00pm",
-      atime: "3:00pm",
-      reason: "Miss punch",
-      Comment: "miss punch in",
-      status: "pending",
-    },
-  ];
+  const [requests, setRequests] = useState([]);
+  const [filteredRequests, setFilteredRequests] = useState([]);
+  const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
+  const fetchRegularizationReq = async () => {
+    try {
+      const res = await getEmployeeRegularizationReq(hrmsOrgId);
+      const pendingReq = res.filter((req)=> req.status === "pending")
+      setFilteredRequests(pendingReq);
+      setRequests(pendingReq);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(() => {
+    fetchRegularizationReq();
+  }, []);
+
+  const handleReqApproval = async (approvalId,approvalStatus) => {
+    const postStatus = new FormData();
+    postStatus.append("status", approvalStatus);
+    try {
+      await postRegularizationApproval(approvalId, postStatus)
+      toast.success(`Regularization request ${approvalStatus}`)
+      fetchRegularizationReq()
+    } catch (error) {
+      console.log(error)
+    }
+  };
+
+  const [searchText, setSearchText] = useState("")
+  const handleSearch = (e)=>{
+    const searchValue = e.target.value
+    setSearchText(searchValue)
+    if (searchValue.trim()=== "") {
+      setFilteredRequests(requests)
+    } else {
+      const filteredResult = requests.filter((employee)=> `${employee.first_name} ${employee.last_name}`.toLowerCase().includes(searchValue.toLowerCase()))
+      setFilteredRequests(filteredResult)
+    }
+  }
 
   return (
     <section className="flex">
-      <div className="w-full flex m-3 flex-col overflow-hidden">
-     
-        <div className="flex justify-end gap-2 my-5">
+      <div className="w-full flex mx-2 flex-col overflow-hidden">
+        <div className="flex justify-between gap-2 my-2">
           <input
             type="text"
-            placeholder="Search by Employee name"
+            placeholder="Search by employee name"
             className="border border-gray-400 w-96 placeholder:text-sm rounded-lg p-2"
+value={searchText}
+onChange={handleSearch}
           />
-          <button className="px-4 py-2 bg-blue-600 text-white rounded-md" onClick={() => setShowFilterModal(true)}>
+          <div className="flex gap-2">
+
+          <button
+            className="px-4 py-2 bg-blue-600 text-white rounded-md"
+            onClick={() => setShowFilterModal(true)}
+            >
             Filter
           </button>
-          <button  onClick={() => setShowActionsDropdown(!showActionsDropdown)} className="px-4 py-2 bg-blue-600 text-white rounded-md">Actions</button>
+          <button
+            onClick={() => setShowActionsDropdown(!showActionsDropdown)}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md"
+            >
+            Actions
+          </button>
+            </div>
           {showActionsDropdown && (
             <div className="absolute top-35 right-2 mt-10 w-72 bg-white border border-gray-300 rounded-md shadow-lg z-10">
               <button
@@ -170,7 +206,9 @@ const PendingTable = () => {
               </button>
               <button
                 className="w-full px-4 py-2 text-left hover:bg-gray-100"
-                onClick={() => setshowApproveFilterModal(!showApproveFilterModal)}
+                onClick={() =>
+                  setshowApproveFilterModal(!showApproveFilterModal)
+                }
               >
                 Approve multiple requests by filters
               </button>
@@ -189,33 +227,69 @@ const PendingTable = () => {
             </div>
           )}
         </div>
-        <Table columns={columns} data={data} isPagination={true} />
+        <Table columns={columns} data={filteredRequests} selectableRow={true} isPagination={true} />
       </div>
 
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div className="bg-white p-4 rounded-lg w-96">
-            <h2 className="text-lg font-bold mb-4">Edit Regularization Request</h2>
+            <h2 className="text-lg font-bold mb-4">
+              Edit Regularization Request
+            </h2>
             <div className="grid md:grid-cols-1 gap-5 mt-5">
               <div className="grid gap-2 items-center w-full">
-                <label htmlFor="regularizationReason">Regularization Reason</label>
-                <input type="text" name="regularizationReason" value={modalData.regularizationReason} onChange={handleChange} className="border border-gray-400 p-2 rounded-md"/>
+                <label htmlFor="regularizationReason">
+                  Regularization Reason
+                </label>
+                <input
+                  type="text"
+                  name="regularizationReason"
+                  value={modalData.regularizationReason}
+                  onChange={handleChange}
+                  className="border border-gray-400 p-2 rounded-md"
+                />
               </div>
               <div className="grid gap-2 items-center w-full">
-                <label htmlFor="regularizationRequestStatus">Regularization Request Status</label>
-                <input type="text" name="regularizationRequestStatus" value={modalData.regularizationRequestStatus} onChange={handleChange} className="border border-gray-400 p-2 rounded-md"/>
+                <label htmlFor="regularizationRequestStatus">
+                  Regularization Request Status
+                </label>
+                <input
+                  type="text"
+                  name="regularizationRequestStatus"
+                  value={modalData.regularizationRequestStatus}
+                  onChange={handleChange}
+                  className="border border-gray-400 p-2 rounded-md"
+                />
               </div>
               <div className="grid gap-2 items-center w-full">
                 <label htmlFor="startDate">Start Date</label>
-                <input type="date" name="startDate" value={modalData.startDate} onChange={handleChange} className="border border-gray-400 p-2 rounded-md"/>
+                <input
+                  type="date"
+                  name="startDate"
+                  value={modalData.startDate}
+                  onChange={handleChange}
+                  className="border border-gray-400 p-2 rounded-md"
+                />
               </div>
               <div className="grid gap-2 items-center w-full">
                 <label htmlFor="endDate">End Date</label>
-                <input type="date" name="endDate" value={modalData.endDate} onChange={handleChange} className="border border-gray-400 p-2 rounded-md"/>
+                <input
+                  type="date"
+                  name="endDate"
+                  value={modalData.endDate}
+                  onChange={handleChange}
+                  className="border border-gray-400 p-2 rounded-md"
+                />
               </div>
               <div className="grid gap-2 items-center w-full">
                 <label htmlFor="employeeDepartment">Employee Department</label>
-                <input type="text" name="employeeDepartment" value={modalData.employeeDepartment} onChange={handleChange} className="border border-gray-400 p-2 rounded-md"/>
+                <input
+                  type="text"
+                  name="employeeDepartment"
+                  value={modalData.employeeDepartment}
+                  onChange={handleChange}
+                  className="border border-gray-400 p-2 rounded-md"
+                />
               </div>
             </div>
             <button
@@ -228,7 +302,7 @@ const PendingTable = () => {
         </div>
       )}
 
-  {showModalDelete && (
+      {showModalDelete && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div className="bg-white p-4 rounded-lg w-96">
             <h2 className="text-lg font-bold mb-4">Are you sure?</h2>
@@ -238,7 +312,6 @@ const PendingTable = () => {
                 <label htmlFor="regularizationReason">Approver's comment</label>
                 <textarea type="text" name="regularizationReason" value={modalData.regularizationReason} onChange={handleChange} className="border border-gray-400 p-2 rounded-md"/>
               </div> */}
-             
             </div>
             <button
               className="mt-4 bg-blue-500 text-white py-2 px-4 rounded-lg"
@@ -263,9 +336,14 @@ const PendingTable = () => {
             <div className="grid md:grid-cols-1 gap-5 mt-5">
               <div className="grid gap-2 items-center w-full">
                 <label htmlFor="regularizationReason">Approver's comment</label>
-                <textarea type="text" name="regularizationReason" value={modalData.regularizationReason} onChange={handleChange} className="border border-gray-400 p-2 rounded-md"/>
+                <textarea
+                  type="text"
+                  name="regularizationReason"
+                  value={modalData.regularizationReason}
+                  onChange={handleChange}
+                  className="border border-gray-400 p-2 rounded-md"
+                />
               </div>
-             
             </div>
             <button
               className="mt-4 bg-blue-500 text-white py-2 px-4 rounded-lg"
@@ -277,7 +355,7 @@ const PendingTable = () => {
         </div>
       )}
 
-{showRejectModal && (
+      {showRejectModal && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div className="bg-white p-4 rounded-lg w-96">
             <h2 className="text-lg font-bold mb-4">Are you sure?</h2>
@@ -285,9 +363,14 @@ const PendingTable = () => {
             <div className="grid md:grid-cols-1 gap-5 mt-5">
               <div className="grid gap-2 items-center w-full">
                 <label htmlFor="regularizationReason">Approver's comment</label>
-                <textarea type="text" name="regularizationReason" value={modalData.regularizationReason} onChange={handleChange} className="border border-gray-400 p-2 rounded-md"/>
+                <textarea
+                  type="text"
+                  name="regularizationReason"
+                  value={modalData.regularizationReason}
+                  onChange={handleChange}
+                  className="border border-gray-400 p-2 rounded-md"
+                />
               </div>
-             
             </div>
             <button
               className="mt-4 bg-blue-500 text-white py-2 px-4 rounded-lg"
@@ -306,23 +389,53 @@ const PendingTable = () => {
             <div className="grid md:grid-cols-2 gap-5 mt-5">
               <div className="grid gap-2 items-center w-full">
                 <label htmlFor="filterReason">Regularization Reason</label>
-                <select  name="filterReason" value={modalData.regularizationReason} onChange={handleChange} className="border border-gray-400 p-2 rounded-md"/>
+                <select
+                  name="filterReason"
+                  value={modalData.regularizationReason}
+                  onChange={handleChange}
+                  className="border border-gray-400 p-2 rounded-md"
+                />
               </div>
               <div className="grid gap-2 items-center w-full">
-                <label htmlFor="filterStatus">Regularization Request Status</label>
-                <select  name="filterStatus" value={modalData.regularizationRequestStatus} onChange={handleChange} className="border border-gray-400 p-2 rounded-md"/>
+                <label htmlFor="filterStatus">
+                  Regularization Request Status
+                </label>
+                <select
+                  name="filterStatus"
+                  value={modalData.regularizationRequestStatus}
+                  onChange={handleChange}
+                  className="border border-gray-400 p-2 rounded-md"
+                />
               </div>
               <div className="grid gap-2 items-center w-full">
                 <label htmlFor="filterStartDate">Start Date</label>
-                <input type="date" name="filterStartDate" value={modalData.startDate} onChange={handleChange} className="border border-gray-400 p-2 rounded-md"/>
+                <input
+                  type="date"
+                  name="filterStartDate"
+                  value={modalData.startDate}
+                  onChange={handleChange}
+                  className="border border-gray-400 p-2 rounded-md"
+                />
               </div>
               <div className="grid gap-2 items-center w-full">
                 <label htmlFor="filterEndDate">End Date</label>
-                <input type="date" name="filterEndDate" value={modalData.endDate} onChange={handleChange} className="border border-gray-400 p-2 rounded-md"/>
+                <input
+                  type="date"
+                  name="filterEndDate"
+                  value={modalData.endDate}
+                  onChange={handleChange}
+                  className="border border-gray-400 p-2 rounded-md"
+                />
               </div>
               <div className="grid gap-2 items-center w-full">
                 <label htmlFor="filterDepartment">Employee Department</label>
-                <select type="text" name="filterDepartment" value={modalData.employeeDepartment} onChange={handleChange} className="border border-gray-400 p-2 rounded-md"/>
+                <select
+                  type="text"
+                  name="filterDepartment"
+                  value={modalData.employeeDepartment}
+                  onChange={handleChange}
+                  className="border border-gray-400 p-2 rounded-md"
+                />
               </div>
             </div>
             <button
@@ -331,57 +444,85 @@ const PendingTable = () => {
             >
               Close
             </button>
-            &nbsp;<button
+            &nbsp;
+            <button
               className="mt-4 bg-blue-500 text-white py-2 px-4 rounded-lg"
               onClick={() => setShowFilterModal(false)}
             >
-              Apply 
+              Apply
             </button>
           </div>
         </div>
       )}
 
-{showBulkModal && (
+      {showBulkModal && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div className="bg-white p-4 rounded-lg w-1/3">
-            <h2 className="text-lg font-bold mb-4">Bulk Upload Regularization</h2>
-           
-            
-           
+            <h2 className="text-lg font-bold mb-4">
+              Bulk Upload Regularization
+            </h2>
             <Collapsible
-            readOnly
-            trigger={
-              <CustomTrigger isOpen={isOpen}>Instructions:</CustomTrigger>
-            }
-            onOpen={() => setIsOpen(true)}
-            onClose={() => setIsOpen(false)}
-            className="bg-gray-100 my-4 p-2 rounded-md font-bold "
-          >
-            <div className="grid grid-cols-1 bg-gray-300 p-2 rounded-md gap-1">
-            <p>1. Download bulk regularization format from download section</p>
-            <p>2. Enter employee email as per records, Name & Emp Code Date & date in DD-MM-YYYY Format</p>
-            <p>3. Select Requested Check In and Check Out Column</p>
-            <p>4. Right click and select the format cells button</p>
-            <p>5. Choose the "Text" format</p>
-            <p>6. Enter the check-in / check-out times in AM/PM format: E.g. 8:05 AM or 12:30 PM</p>
-            </div>
-          </Collapsible>
+              readOnly
+              trigger={
+                <CustomTrigger isOpen={isOpen}>Instructions:</CustomTrigger>
+              }
+              onOpen={() => setIsOpen(true)}
+              onClose={() => setIsOpen(false)}
+              className="bg-gray-100 my-4 p-2 rounded-md font-bold "
+            >
+              <div className="grid grid-cols-1 bg-gray-300 p-2 rounded-md gap-1">
+                <p>
+                  1. Download bulk regularization format from download section
+                </p>
+                <p>
+                  2. Enter employee email as per records, Name & Emp Code Date &
+                  date in DD-MM-YYYY Format
+                </p>
+                <p>3. Select Requested Check In and Check Out Column</p>
+                <p>4. Right click and select the format cells button</p>
+                <p>5. Choose the "Text" format</p>
+                <p>
+                  6. Enter the check-in / check-out times in AM/PM format: E.g.
+                  8:05 AM or 12:30 PM
+                </p>
+              </div>
+            </Collapsible>
             <div className="grid md:grid-cols-1 gap-5 mt-5">
               <div className="grid gap-2 items-center w-full">
-                <label htmlFor="filterReason">Step 1: Download Bulk Regularization Format</label>
-                     <button  className="bg-blue-500 w-48 text-white p-2 rounded-md">Download</button>       
-                            </div>
+                <label htmlFor="filterReason">
+                  Step 1: Download Bulk Regularization Format
+                </label>
+                <button className="bg-blue-500 w-48 text-white p-2 rounded-md">
+                  Download
+                </button>
+              </div>
               {/* <div className="grid gap-2 items-center w-full">
                 <label htmlFor="filterStatus">Regularization Request Status</label>
                 <select  name="filterStatus" value={modalData.regularizationRequestStatus} onChange={handleChange} className="border border-gray-400 p-2 rounded-md"/>
               </div> */}
               <div className="grid gap-2 items-center w-full">
-                <label htmlFor="filterStartDate">Step 2: Make necessary changes in upload format as per instructions and Upload *</label>
-                <input type="file" name="filterStartDate" value={modalData.startDate} onChange={handleChange} className="border border-gray-400 p-2 rounded-md"/>
+                <label htmlFor="filterStartDate">
+                  Step 2: Make necessary changes in upload format as per
+                  instructions and Upload *
+                </label>
+                <input
+                  type="file"
+                  name="filterStartDate"
+                  value={modalData.startDate}
+                  onChange={handleChange}
+                  className="border border-gray-400 p-2 rounded-md"
+                />
               </div>
               <div className="grid gap-2 items-center w-full">
-                <label htmlFor="filterEndDate">Step 3: Select Regularizataion Status Applicable *</label>
-                <select  name="filterEndDate" value={modalData.endDate} onChange={handleChange} className="border border-gray-400 p-2 rounded-md"/>
+                <label htmlFor="filterEndDate">
+                  Step 3: Select Regularizataion Status Applicable *
+                </label>
+                <select
+                  name="filterEndDate"
+                  value={modalData.endDate}
+                  onChange={handleChange}
+                  className="border border-gray-400 p-2 rounded-md"
+                />
               </div>
               {/* <div className="grid gap-2 items-center w-full">
                 <label htmlFor="filterDepartment">Employee Department</label>
@@ -394,41 +535,75 @@ const PendingTable = () => {
             >
               Close
             </button>
-            &nbsp;<button
+            &nbsp;
+            <button
               className="mt-4 bg-blue-500 text-white py-2 px-4 rounded-lg"
               onClick={() => setshowBulkModal(false)}
             >
-              Apply 
+              Apply
             </button>
           </div>
         </div>
       )}
 
-
-{showApproveFilterModal && (
+      {showApproveFilterModal && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div className="bg-white p-4 rounded-lg w-1/3">
-            <h2 className="text-lg font-bold mb-4">Bulk Approve Regularizataion Requests by Filters</h2>
+            <h2 className="text-lg font-bold mb-4">
+              Bulk Approve Regularizataion Requests by Filters
+            </h2>
             <div className="grid md:grid-cols-2 gap-5 mt-5">
               <div className="grid gap-2 items-center w-full">
                 <label htmlFor="filterReason">Regularization Reason</label>
-                <select type="text" name="filterReason" value={modalData.regularizationReason} onChange={handleChange} className="border border-gray-400 p-2 rounded-md"/>
+                <select
+                  type="text"
+                  name="filterReason"
+                  value={modalData.regularizationReason}
+                  onChange={handleChange}
+                  className="border border-gray-400 p-2 rounded-md"
+                />
               </div>
               <div className="grid gap-2 items-center w-full">
-                <label htmlFor="filterStatus">Regularization Request Status</label>
-                <select type="text" name="filterStatus" value={modalData.regularizationRequestStatus} onChange={handleChange} className="border border-gray-400 p-2 rounded-md"/>
+                <label htmlFor="filterStatus">
+                  Regularization Request Status
+                </label>
+                <select
+                  type="text"
+                  name="filterStatus"
+                  value={modalData.regularizationRequestStatus}
+                  onChange={handleChange}
+                  className="border border-gray-400 p-2 rounded-md"
+                />
               </div>
               <div className="grid gap-2 items-center w-full">
                 <label htmlFor="filterStartDate">Start Date</label>
-                <input type="date" name="filterStartDate" value={modalData.startDate} onChange={handleChange} className="border border-gray-400 p-2 rounded-md"/>
+                <input
+                  type="date"
+                  name="filterStartDate"
+                  value={modalData.startDate}
+                  onChange={handleChange}
+                  className="border border-gray-400 p-2 rounded-md"
+                />
               </div>
               <div className="grid gap-2 items-center w-full">
                 <label htmlFor="filterEndDate">End Date</label>
-                <input type="date" name="filterEndDate" value={modalData.endDate} onChange={handleChange} className="border border-gray-400 p-2 rounded-md"/>
+                <input
+                  type="date"
+                  name="filterEndDate"
+                  value={modalData.endDate}
+                  onChange={handleChange}
+                  className="border border-gray-400 p-2 rounded-md"
+                />
               </div>
               <div className="grid gap-2 items-center w-full">
                 <label htmlFor="filterDepartment">Employee Department</label>
-                <select type="text" name="filterDepartment" value={modalData.employeeDepartment} onChange={handleChange} className="border border-gray-400 p-2 rounded-md"/>
+                <select
+                  type="text"
+                  name="filterDepartment"
+                  value={modalData.employeeDepartment}
+                  onChange={handleChange}
+                  className="border border-gray-400 p-2 rounded-md"
+                />
               </div>
             </div>
             <button
@@ -437,11 +612,12 @@ const PendingTable = () => {
             >
               Close
             </button>
-            &nbsp;<button
+            &nbsp;
+            <button
               className="mt-4 bg-blue-500 text-white py-2 px-4 rounded-lg"
               onClick={() => setshowApproveFilterModal(false)}
             >
-              Apply 
+              Apply
             </button>
           </div>
         </div>
@@ -449,27 +625,61 @@ const PendingTable = () => {
       {showRejectFilterModal && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div className="bg-white p-4 rounded-lg w-1/3">
-            <h2 className="text-lg font-bold mb-4">Bulk Reject Regularizataion Requests by Filters</h2>
+            <h2 className="text-lg font-bold mb-4">
+              Bulk Reject Regularizataion Requests by Filters
+            </h2>
             <div className="grid md:grid-cols-2 gap-5 mt-5">
               <div className="grid gap-2 items-center w-full">
                 <label htmlFor="filterReason">Regularization Reason</label>
-                <select type="text" name="filterReason" value={modalData.regularizationReason} onChange={handleChange} className="border border-gray-400 p-2 rounded-md"/>
+                <select
+                  type="text"
+                  name="filterReason"
+                  value={modalData.regularizationReason}
+                  onChange={handleChange}
+                  className="border border-gray-400 p-2 rounded-md"
+                />
               </div>
               <div className="grid gap-2 items-center w-full">
-                <label htmlFor="filterStatus">Regularization Request Status</label>
-                <select type="text" name="filterStatus" value={modalData.regularizationRequestStatus} onChange={handleChange} className="border border-gray-400 p-2 rounded-md"/>
+                <label htmlFor="filterStatus">
+                  Regularization Request Status
+                </label>
+                <select
+                  type="text"
+                  name="filterStatus"
+                  value={modalData.regularizationRequestStatus}
+                  onChange={handleChange}
+                  className="border border-gray-400 p-2 rounded-md"
+                />
               </div>
               <div className="grid gap-2 items-center w-full">
                 <label htmlFor="filterStartDate">Start Date</label>
-                <input type="date" name="filterStartDate" value={modalData.startDate} onChange={handleChange} className="border border-gray-400 p-2 rounded-md"/>
+                <input
+                  type="date"
+                  name="filterStartDate"
+                  value={modalData.startDate}
+                  onChange={handleChange}
+                  className="border border-gray-400 p-2 rounded-md"
+                />
               </div>
               <div className="grid gap-2 items-center w-full">
                 <label htmlFor="filterEndDate">End Date</label>
-                <input type="date" name="filterEndDate" value={modalData.endDate} onChange={handleChange} className="border border-gray-400 p-2 rounded-md"/>
+                <input
+                  type="date"
+                  name="filterEndDate"
+                  value={modalData.endDate}
+                  onChange={handleChange}
+                  className="border border-gray-400 p-2 rounded-md"
+                />
               </div>
               <div className="grid gap-2 items-center w-full">
                 <label htmlFor="filterDepartment">Employee Department</label>
-                <select type="text" name="filterDepartment" value={modalData.employeeDepartment} onChange={handleChange} className="border border-gray-400 p-2 rounded-md"/>
+                <select
+                  type="text"
+                  name="filterDepartment"
+                  value={modalData.employeeDepartment}
+                  onChange={handleChange}
+                  className="border border-gray-400 p-2 rounded-md"
+                />
               </div>
             </div>
             <button
@@ -478,11 +688,12 @@ const PendingTable = () => {
             >
               Close
             </button>
-            &nbsp;<button
+            &nbsp;
+            <button
               className="mt-4 bg-blue-500 text-white py-2 px-4 rounded-lg"
               onClick={() => setshowRejectFilterModal(false)}
             >
-              Apply 
+              Apply
             </button>
           </div>
         </div>
@@ -492,4 +703,3 @@ const PendingTable = () => {
 };
 
 export default PendingTable;
-

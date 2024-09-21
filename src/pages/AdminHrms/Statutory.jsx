@@ -1,6 +1,8 @@
 import React, { useState } from "react";
+import { useSelector } from "react-redux";
 
-const Statutory = () => {
+const Statutory = ({ empId }) => {
+  const themeColor = useSelector((state)=> state.theme.color)
   const [formData, setFormData] = useState({
     pf: false,
     esic: false,
@@ -15,13 +17,32 @@ const Statutory = () => {
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
+
+  const handleAddStatutory = async () => {
+    const postData = new FormData();
+    postData.append("pf_applicable", formData.pf);
+    postData.append("esic_applicable", formData.esic);
+    postData.append("pt_applicable", formData.pt);
+    postData.append("lwf_applicable", formData.lwf);
+    postData.append("it_applicable", formData.IT);
+    postData.append("gratuity_applicable", formData.gratuity);
+    postData.append("nps_applicable", formData.nps);
+    postData.append("tax_regime", formData.taxRegime);
+    postData.append("decimal_rates_allowed", formData.decimalPoint);
+    postData.append("employee", empId);
+    try {
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <div className="flex w-full">
       <div className="w-full p-6 bg-white rounded-lg ">
         <h2 className="border-b text-center text-xl border-black mb-6 font-bold mt-2">
           Statutory
         </h2>
-        <form>
+        <div>
           <div className="grid grid-cols-2 gap-4">
             <div className="mb-4">
               <label className="block text-gray-700 mb-2 font-medium">
@@ -30,24 +51,20 @@ const Statutory = () => {
               <div className="flex items-center">
                 <input
                   type="radio"
-                
                   name="pf"
                   className="mr-2"
                   checked={formData.pf === true}
                   onChange={() => setFormData({ ...formData, pf: true })}
                 />
-                <label  className="mr-4">
-                  Yes
-                </label>
+                <label className="mr-4">Yes</label>
                 <input
                   type="radio"
-                 
                   name="pf"
                   className="mr-2"
                   checked={formData.pf === false}
                   onChange={() => setFormData({ ...formData, pf: false })}
                 />
-                <label >No</label>
+                <label>No</label>
               </div>
             </div>
             <div className="mb-4">
@@ -57,24 +74,20 @@ const Statutory = () => {
               <div className="flex items-center">
                 <input
                   type="radio"
-                
                   name="ESIC"
                   className="mr-2"
                   checked={formData.esic === true}
                   onChange={() => setFormData({ ...formData, esic: true })}
                 />
-                <label  className="mr-4">
-                  Yes
-                </label>
+                <label className="mr-4">Yes</label>
                 <input
                   type="radio"
-                 
                   name="ESIC"
                   className="mr-2"
                   checked={formData.esic === false}
                   onChange={() => setFormData({ ...formData, esic: false })}
                 />
-                <label >No</label>
+                <label>No</label>
               </div>
             </div>
             <div className="mb-4">
@@ -84,24 +97,20 @@ const Statutory = () => {
               <div className="flex items-center">
                 <input
                   type="radio"
-                
                   name="PT"
                   className="mr-2"
                   checked={formData.pt === true}
                   onChange={() => setFormData({ ...formData, pt: true })}
                 />
-                <label  className="mr-4">
-                  Yes
-                </label>
+                <label className="mr-4">Yes</label>
                 <input
                   type="radio"
-                 
                   name="PT"
                   className="mr-2"
                   checked={formData.pt === false}
                   onChange={() => setFormData({ ...formData, pt: false })}
                 />
-                <label >No</label>
+                <label>No</label>
               </div>
             </div>
             <div className="mb-4">
@@ -111,24 +120,20 @@ const Statutory = () => {
               <div className="flex items-center">
                 <input
                   type="radio"
-                
                   name="LWF"
                   className="mr-2"
                   checked={formData.lwf === true}
                   onChange={() => setFormData({ ...formData, lwf: true })}
                 />
-                <label  className="mr-4">
-                  Yes
-                </label>
+                <label className="mr-4">Yes</label>
                 <input
                   type="radio"
-                 
                   name="LWF"
                   className="mr-2"
                   checked={formData.lwf === false}
                   onChange={() => setFormData({ ...formData, lwf: false })}
                 />
-                <label >No</label>
+                <label>No</label>
               </div>
             </div>
             <div className="mb-4">
@@ -138,24 +143,20 @@ const Statutory = () => {
               <div className="flex items-center">
                 <input
                   type="radio"
-                
                   name="IT"
                   className="mr-2"
                   checked={formData.IT === true}
                   onChange={() => setFormData({ ...formData, IT: true })}
                 />
-                <label  className="mr-4">
-                  Yes
-                </label>
+                <label className="mr-4">Yes</label>
                 <input
                   type="radio"
-                 
                   name="IT"
                   className="mr-2"
                   checked={formData.IT === false}
                   onChange={() => setFormData({ ...formData, IT: false })}
                 />
-                <label >No</label>
+                <label>No</label>
               </div>
             </div>
             <div className="mb-4">
@@ -165,24 +166,20 @@ const Statutory = () => {
               <div className="flex items-center">
                 <input
                   type="radio"
-                
                   name="Gratuity"
                   className="mr-2"
                   checked={formData.gratuity === true}
                   onChange={() => setFormData({ ...formData, gratuity: true })}
                 />
-                <label  className="mr-4">
-                  Yes
-                </label>
+                <label className="mr-4">Yes</label>
                 <input
                   type="radio"
-                 
                   name="Gratuity"
                   className="mr-2"
                   checked={formData.gratuity === false}
                   onChange={() => setFormData({ ...formData, gratuity: false })}
                 />
-                <label >No</label>
+                <label>No</label>
               </div>
             </div>
             <div className="mb-4">
@@ -192,24 +189,20 @@ const Statutory = () => {
               <div className="flex items-center">
                 <input
                   type="radio"
-                
                   name="NPS"
                   className="mr-2"
                   checked={formData.nps === true}
                   onChange={() => setFormData({ ...formData, nps: true })}
                 />
-                <label  className="mr-4">
-                  Yes
-                </label>
+                <label className="mr-4">Yes</label>
                 <input
                   type="radio"
-                 
                   name="NPS"
                   className="mr-2"
                   checked={formData.nps === false}
                   onChange={() => setFormData({ ...formData, nps: false })}
                 />
-                <label >No</label>
+                <label>No</label>
               </div>
             </div>
 
@@ -252,7 +245,7 @@ const Statutory = () => {
           </div>
 
           <div className="mb-4">
-            <label className="block text-gray-700 mb-2">
+            <label className="block text-gray-700 mb-2 font-medium">
               Decimal Rates Allowed
             </label>
             <div className="flex items-center">
@@ -282,7 +275,10 @@ const Statutory = () => {
               <label htmlFor="Decimal Rates Allowed-no">No</label>
             </div>
           </div>
-        </form>
+          <div className="flex justify-end">
+            <button className="p-2 rounded-md text-white font-medium" style={{background: themeColor}}>Finish onboarding</button>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -2,7 +2,7 @@ import React, { useState, useRef } from "react";
 import EmployeeSections from './EmployeeSections'
 import EditEmployeeDirectory from "./EditEmployeeDirectory";
 import Table from "../../components/table/Table";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { BsEye } from "react-icons/bs";
 import { BiEdit } from "react-icons/bi";
 import { FaDownload } from "react-icons/fa";
@@ -10,6 +10,7 @@ import Collapsible from "react-collapsible";
 import CustomTrigger from "../../containers/CustomTrigger";
 const SectionLoans = () => {
     const [isOpen, setIsOpen] = useState(false);
+    const { id } = useParams();
   const column = [
     // {
     //   name: "view",
@@ -52,7 +53,7 @@ const SectionLoans = () => {
        
         <div className='flex'>
             <div className=''>
-                <EmployeeSections/>
+                <EmployeeSections empId={id}/>
             </div>
             
             {/* <div className=" w-full mt-10 p-5 border border-gray-300 shadow-lg rounded-md">

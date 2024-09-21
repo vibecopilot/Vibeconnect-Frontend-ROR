@@ -9,7 +9,7 @@ const LeaveSetting = () => {
   return (
     <div className="flex">
       <AdminHRMS />
-      <div className="w-60 h-full bg-white shadow-custom-all-sides ml-2 rounded-md p-4 mt-9">
+      <div className="w-60 h-full bg-white border-r ml-2 p-4 mt-9">
         <ul className="space-y-4">
           <li className="font-bold text-lg">Details List</li>
           <li>

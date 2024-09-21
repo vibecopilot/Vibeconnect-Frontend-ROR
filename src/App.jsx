@@ -668,8 +668,17 @@ import EmployeePolls from "./pages/Employees/EmployeeCommunication/EmployeePoll.
 import EmployeeForum from "./pages/Employees/EmployeeCommunication/EmployeeForum.jsx";
 import EmployeeGroup from "./pages/Employees/EmployeeCommunication/EmployeeGroup.jsx";
 import WorkspaceFeeds from "./pages/Employees/EmployeeWorkSpace/WorkspaceFeeds.jsx";
+import AttendanceRec from "./pages/AdminHrms/AttendanceRec.jsx";
 import SoftServiceScheduleDetails from "./pages/SubPages/details/SoftServiceScheduleDetails.jsx";
 import SoftServiceWidgets from "./pages/SubPages/SoftServiceWidgets.jsx";
+import ExpensesReports from "./pages/AdminHrms/Expenses/ExpensesReports.jsx";
+import AdvanceReports from "./pages/AdminHrms/Expenses/AdvanceReports.jsx";
+import ProcessHistory from "./pages/AdminHrms/Expenses/ProcessHistory.jsx";
+import AdvanceHistory from "./pages/AdminHrms/Expenses/AdvanceHistory.jsx";
+import ExpenseSetting from "./pages/AdminHrms/Expenses/ExpenseSetting.jsx";
+import ExpenseTemplates from "./pages/AdminHrms/Expenses/ExpenseTemplates.jsx";
+import ExpenseTemplateAssignment from "./pages/AdminHrms/Expenses/ExpenseTemplateAssignment.jsx";
+import ExpenseGeneralSetting from "./pages/AdminHrms/Expenses/ExpenseGeneralSetting.jsx";
 import FieldSenseLeadManagementDetails from "./pages/SubPages/details/FieldSenseLeadManagementDetails.jsx";
 // new admin hrms
 
@@ -687,16 +696,14 @@ function App() {
       //   user_id: user_id,
       // };
       const user_id = getItemInLocalStorage("VIBEUSERID");
-    
+
       const data = await getVibeBackground(user_id);
 
       if (data.success) {
-       
         const selectedImageSrc = API_URL + data.data.image;
 
         const selectedImageIndex = data.data.index;
 
-        
         dispatch(setBackground(selectedImageSrc));
       } else {
         console.log("Something went wrong");
@@ -955,14 +962,6 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <AssetRoutineDetails />
-              </ProtectedAdminRoutes>
-            }
-          />
-           <Route
-            path="/soft-service/schedule-task-details/:sId/:activityId"
-            element={
-              <ProtectedAdminRoutes>
-               <SoftServiceScheduleDetails/>
               </ProtectedAdminRoutes>
             }
           />
@@ -4070,7 +4069,7 @@ function App() {
             }
           />
           <Route
-            path="admin/leave-categories"
+            path="/admin/leave-categories"
             element={
               <ProtectedAdminRoutes>
                 <AddLeaveCategory />
@@ -4713,7 +4712,8 @@ function App() {
             path="/admin/hrms/attendance-records"
             element={
               <ProtectedAdminRoutes>
-                <AttendanceRecords />
+                {/* <AttendanceRecords /> */}
+                <AttendanceRec/>
               </ProtectedAdminRoutes>
             }
           />
@@ -5152,6 +5152,88 @@ function App() {
               </ProtectedAdminRoutes>
             }
           />
+
+          {/* hrms expenses */}
+          <Route
+            path="/expenses"
+            element={<Navigate to="/expenses/expense-report" />}
+            replace
+          />
+          <Route
+            path="/expenses/expense-report"
+            element={
+              <ProtectedAdminRoutes>
+                <ExpensesReports />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/expenses/advance-report"
+            element={
+              <ProtectedAdminRoutes>
+                <AdvanceReports />
+              </ProtectedAdminRoutes>
+            }
+          />
+           <Route
+            path="/process-history"
+            element={<Navigate to="/process-history/expense-process-history" />}
+            replace
+          />
+          <Route
+            path="/process-history/expense-process-history"
+            element={
+              <ProtectedAdminRoutes>
+                <ProcessHistory />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/process-history/advance-expense-process-history"
+            element={
+              <ProtectedAdminRoutes>
+                <AdvanceHistory />
+              </ProtectedAdminRoutes>
+            }
+          />
+           <Route
+            path="/expense-setting"
+            element={<Navigate to="/expense-setting/expense-category" />}
+            replace
+          />
+          <Route
+            path="/expense-setting/expense-category"
+            element={
+              <ProtectedAdminRoutes>
+                <ExpenseSetting />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/expense-setting/expense-templates"
+            element={
+              <ProtectedAdminRoutes>
+                <ExpenseTemplates />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/expense-setting/expense-template-assignment"
+            element={
+              <ProtectedAdminRoutes>
+                <ExpenseTemplateAssignment />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/expense-setting/general"
+            element={
+              <ProtectedAdminRoutes>
+                <ExpenseGeneralSetting />
+              </ProtectedAdminRoutes>
+            }
+          />
+
 
           {/*personal financial */}
           <Route
@@ -5661,7 +5743,7 @@ function App() {
             }
           />
           <Route
-            path="/hrms/employee-directory-Personal"
+            path="/hrms/employee-directory-Personal/:id"
             element={
               <ProtectedAdminRoutes>
                 <SectionsPersonal />
@@ -5669,7 +5751,7 @@ function App() {
             }
           />
           <Route
-            path="/admin/employee-directory-Employment"
+            path="/admin/employee-directory-Employment/:id"
             element={
               <ProtectedAdminRoutes>
                 <SectionsEmployment />
@@ -5677,21 +5759,21 @@ function App() {
             }
           />
           <Route
-            path="/admin/employee-directory-Statutory"
+            path="/admin/employee-directory-Statutory/:id"
             element={
               <ProtectedAdminRoutes>
                 <SectionStatutory />
               </ProtectedAdminRoutes>
             }
           />
-          <Route
-            path="/admin/employee-directory/"
-            element={<Navigate to="/admin/employee-directory/Salary" />}
+          {/* <Route
+            path="/admin/employee-directory/:id"
+            element={<Navigate to="/admin/employee-directory/Salary/:id" />}
             replace
-          />
+          /> */}
 
           <Route
-            path="/admin/employee-directory/Salary"
+            path="/admin/employee-directory/Salary/:id"
             element={
               <ProtectedAdminRoutes>
                 <SectionSalary />
@@ -5707,7 +5789,7 @@ function App() {
             }
           />
           <Route
-            path="/admin/employee-directory-Tax"
+            path="/admin/employee-directory-Tax/:id"
             element={
               <ProtectedAdminRoutes>
                 <SectionTax />
@@ -5715,7 +5797,7 @@ function App() {
             }
           />
           <Route
-            path="/admin/employee-directory-Documents"
+            path="/admin/employee-directory-Documents/:id"
             element={
               <ProtectedAdminRoutes>
                 <SectionDoc />
@@ -5723,7 +5805,7 @@ function App() {
             }
           />
           <Route
-            path="/admin/employee-directory-LoansAdvances"
+            path="/admin/employee-directory-LoansAdvances/:id"
             element={
               <ProtectedAdminRoutes>
                 <SectionLoans />
@@ -5731,7 +5813,7 @@ function App() {
             }
           />
           <Route
-            path="/admin/employee-directory-Transaction"
+            path="/admin/employee-directory-Transaction/:id"
             element={
               <ProtectedAdminRoutes>
                 <SectionTransaction />
@@ -5739,7 +5821,7 @@ function App() {
             }
           />
           <Route
-            path="/admin/employee-directory-Change-logs"
+            path="/admin/employee-directory-Change-logs/:id"
             element={
               <ProtectedAdminRoutes>
                 <SectionLog />
@@ -6305,6 +6387,8 @@ function App() {
               </ProtectedAdminRoutes>
             }
           />
+
+
           <Route
             path="/admin/skill-grow/course-description"
             element={
