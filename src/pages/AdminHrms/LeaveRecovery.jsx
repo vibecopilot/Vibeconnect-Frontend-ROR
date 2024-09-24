@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import PayrollSettingDetailsList from "./PayrollSettingDetailsList";
 const options = [
   { value: "basic", label: "Basic" },
@@ -8,11 +8,24 @@ const options = [
   { value: "monthly-retainer-fee", label: "Monthly Retainer Fee" },
 ];
 import { GrHelpBook } from "react-icons/gr";
+import {
+  editLeaveEncashment,
+  getLeaveEncashment,
+  getVariableAllowance,
+} from "../../api";
+import { getItemInLocalStorage } from "../../utils/localStorage";
+import { FaCheck } from "react-icons/fa";
+import { MdClose } from "react-icons/md";
+import { BiEdit } from "react-icons/bi";
 
 const LeaveRecovery = () => {
-  const [LIN, setLIN] = useState("");
-  const [isESIC, setIsESIC] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    payoutMonth: "",
+    EncashmentDenominator: "",
+    recoveryDenominator: "",
+    id: "",
+  });
 
   const listItemStyle = {
     listStyleType: "disc",
@@ -21,14 +34,24 @@ const LeaveRecovery = () => {
     fontWeight: 500,
   };
   const [selectedOptions, setSelectedOptions] = useState([]);
+  const [selectedRecoveryOptions, setSelectedRecoveryOptions] = useState([]);
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
   const [isDropdownVisible1, setIsDropdownVisible1] = useState(false);
 
-  const handleSelect = (option) => {
+  const handleEncashmentSelect = (option) => {
     if (selectedOptions.includes(option)) {
       setSelectedOptions(selectedOptions.filter((item) => item !== option));
     } else {
       setSelectedOptions([...selectedOptions, option]);
+    }
+  };
+  const handleRecoverySelect = (option) => {
+    if (selectedRecoveryOptions.includes(option)) {
+      setSelectedRecoveryOptions(
+        selectedRecoveryOptions.filter((item) => item !== option)
+      );
+    } else {
+      setSelectedRecoveryOptions([...selectedRecoveryOptions, option]);
     }
   };
   const toggleDropdown = () => {
@@ -37,41 +60,125 @@ const LeaveRecovery = () => {
   const toggleDropdown1 = () => {
     setIsDropdownVisible1(!isDropdownVisible1);
   };
-  const handleSelectAll = () => {
-    if (selectedOptions.length === options.length) {
+  const handleSelectLeaveEncashment = () => {
+    if (selectedOptions.length === variableAllowances.length) {
       setSelectedOptions([]);
     } else {
-      setSelectedOptions(options.map((option) => option.value));
+      setSelectedOptions(variableAllowances.map((option) => option.value));
     }
   };
+  const handleSelectLeaveRecovery = () => {
+    if (selectedRecoveryOptions.length === variableAllowances.length) {
+      setSelectedRecoveryOptions([]);
+    } else {
+      setSelectedRecoveryOptions(
+        variableAllowances.map((option) => option.value)
+      );
+    }
+  };
+  const [variableAllowances, setVariableAllowances] = useState([]);
+  console.log("selected :", selectedOptions);
+  console.log("Leave :", selectedRecoveryOptions);
+  const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
+  const fetchLeaveEncashment = async () => {
+    try {
+      const res = await getLeaveEncashment(hrmsOrgId);
+      const data = res[0];
+      setFormData({
+        ...formData,
+        EncashmentDenominator: data.encashment_denominator,
+        payoutMonth: data.payout_month,
+        recoveryDenominator: data.recovery_denominator,
+        id: data.id,
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const fetchVariableAllowances = async () => {
+    try {
+      const res = await getVariableAllowance(hrmsOrgId);
+      const options = res.map((option) => ({
+        value: option.id,
+        label: option.head_name,
+      }));
+      setVariableAllowances(options);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(() => {
+    fetchLeaveEncashment();
+    fetchVariableAllowances();
+  }, []);
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleEditLeaveEncashment = async () => {
+    const editData = new FormData();
+    editData.append("encashment_denominator", formData.EncashmentDenominator);
+    editData.append("payout_month", formData.payoutMonth);
+    editData.append("recovery_denominator", formData.recoveryDenominator);
+    try {
+      const res = await editLeaveEncashment(formData.id, editData);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <div className="flex justify-between gap-4 ml-20">
       <PayrollSettingDetailsList />
-
-      <div className="w-2/3 p-8 bg-white rounded-lg">
+      <div className="w-2/3 py-8  bg-white rounded-lg">
         <div className="flex justify-between">
           <h2 className="text-2xl font-bold mb-6">
             Leave Encashment & Recovery
           </h2>{" "}
-          <button
-            onClick={() => setIsEditing(!isEditing)}
-            className="mb-4 px-4 py-2 bg-blue-500 text-white rounded-md"
-          >
-            {isEditing ? "Save" : "Edit"}
-          </button>
+          <div className="flex justify-end">
+            {isEditing ? (
+              <div className="flex gap-2 justify-center my-2">
+                <button
+                  className="border-2 border-green-400 text-green-400 rounded-full p-1 px-4 flex items-center gap-2"
+                  onClick={handleEditLeaveEncashment}
+                >
+                  <FaCheck /> Save
+                </button>
+                <button
+                  className="border-2 border-red-400 text-red-400 rounded-full p-1 px-4 flex items-center gap-2"
+                  onClick={() => setIsEditing(false)}
+                >
+                  <MdClose /> Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setIsEditing(!isEditing)}
+                className="mb-4 px-4 py-2 bg-blue-500 text-white rounded-md flex gap-2 items-center"
+              >
+                <BiEdit /> Edit
+              </button>
+            )}
+          </div>
         </div>
-        <label htmlFor="">
+        <label htmlFor="" className="font-medium">
           How would you like to calculate Leave Encashment?
         </label>
 
-        <div className="mb-4 w-64 relative">
+        <div className="mb-4  relative">
           <button
-            className="p-2 border rounded w-full text-left bg-gray-200 hover:bg-gray-300"
+            // className="p-2 border rounded w-full text-left  hover:bg-gray-100"
+            className={`w-full px-3 py-2 border border-gray-300 rounded-md ${
+              !isEditing ? "bg-gray-200" : ""
+            }`}
             onClick={toggleDropdown}
+            disabled={!isEditing}
           >
-            Click Here to Select Component
+            {selectedOptions.length === 0
+              ? "Click Here to Select Component"
+              : `${selectedOptions.length} Selected`}
           </button>
-          {isDropdownVisible && (
+          {isDropdownVisible && isEditing && (
             <div className="absolute z-10 w-full border rounded shadow p-2 mt-2 bg-white">
               <div className="mb-2">
                 <button
@@ -80,19 +187,19 @@ const LeaveRecovery = () => {
                       ? "bg-blue-500 text-white"
                       : ""
                   }`}
-                  onClick={handleSelectAll}
+                  onClick={handleSelectLeaveEncashment}
                 >
                   Select all
                 </button>
               </div>
-              {options.map((option) => (
+              {variableAllowances.map((option) => (
                 <div key={option.value} className="mb-2">
                   <label className="inline-flex items-center">
                     <input
                       type="checkbox"
                       className="form-checkbox h-5 w-5"
                       checked={selectedOptions.includes(option.value)}
-                      onChange={() => handleSelect(option.value)}
+                      onChange={() => handleEncashmentSelect(option.value)}
                     />
                     <span className="ml-2">{option.label}</span>
                   </label>
@@ -102,30 +209,37 @@ const LeaveRecovery = () => {
           )}
         </div>
         <div className="mb-4">
-          <label className="block text-gray-700">
-            What is the denominator for calculating the Encashment? *
+          <label className="block text-gray-700 font-medium">
+            What is the denominator for calculating the Encashment?{" "}
+            <span className="text-red-500">*</span>
           </label>
           <select
             className={`w-full px-3 py-2 border border-gray-300 rounded-md ${
               !isEditing ? "bg-gray-200" : ""
             }`}
-            readOnly={!isEditing}
+            disabled={!isEditing}
+            value={formData.EncashmentDenominator}
+            name="EncashmentDenominator"
+            onChange={handleChange}
           >
-            <option value="">30</option>
+            <option value="">Select denominator</option>
+            <option value="30">30</option>
+            <option value="26">26</option>
           </select>
         </div>
         <div className="mb-4">
-          <label className="block text-gray-700">
+          <label className="block text-gray-700 font-medium">
             In which month do you wish to pay out rollover leave encashment for
-            employees? *
+            employees? <span className="text-red-500">*</span>
           </label>
           <select
-            //   value={payoutMonth}
-            //   onChange={handlePayoutMonthChange}
+            value={formData.payoutMonth}
+            onChange={handleChange}
+            name="payoutMonth"
             className={`w-full px-3 py-2 border border-gray-300 rounded-md ${
               !isEditing ? "bg-gray-200" : ""
             }`}
-            readOnly={!isEditing}
+            disabled={!isEditing}
           >
             <option value="January">January</option>
             <option value="February">February</option>
@@ -141,41 +255,46 @@ const LeaveRecovery = () => {
             <option value="December">December</option>
           </select>
         </div>
-        <div className="mb-4 flex flex-col">
-          <label htmlFor="">
+        <div className=" flex flex-col">
+          <label htmlFor="" className="font-medium">
             {" "}
             How would you like to calculate Leave Recovery?
           </label>
           <button
-            className="p-2 border rounded w-64 text-left bg-gray-200 hover:bg-gray-300"
+            className={`w-full px-3 py-2 border border-gray-300 rounded-md ${
+              !isEditing ? "bg-gray-200" : ""
+            }`}
             onClick={toggleDropdown1}
+            disabled={!isEditing}
           >
-            Click Here to Select Component
+            {selectedRecoveryOptions.length === 0
+              ? "Click Here to Select Component"
+              : `${selectedRecoveryOptions.length} Selected`}
           </button>
         </div>
-        <div className="mb-4 w-64 relative">
-          {isDropdownVisible1 && (
-            <div className="absolute z-10 w-full border rounded shadow p-2 mt-2 bg-white">
+        <div className="mb-4  relative">
+          {isDropdownVisible1 && isEditing && (
+            <div className="absolute z-10 w-full border rounded shadow p-2  bg-white">
               <div className="mb-2">
                 <button
                   className={`p-2 w-full text-left ${
-                    selectedOptions.length === options.length
+                    selectedRecoveryOptions.length === options.length
                       ? "bg-blue-500 text-white"
                       : ""
                   }`}
-                  onClick={handleSelectAll}
+                  onClick={handleSelectLeaveRecovery}
                 >
                   Select all
                 </button>
               </div>
-              {options.map((option) => (
+              {variableAllowances.map((option) => (
                 <div key={option.value} className="mb-2">
                   <label className="inline-flex items-center">
                     <input
                       type="checkbox"
                       className="form-checkbox h-5 w-5"
-                      checked={selectedOptions.includes(option.value)}
-                      onChange={() => handleSelect(option.value)}
+                      checked={selectedRecoveryOptions.includes(option.value)}
+                      onChange={() => handleRecoverySelect(option.value)}
                     />
                     <span className="ml-2">{option.label}</span>
                   </label>
@@ -185,18 +304,23 @@ const LeaveRecovery = () => {
           )}
         </div>
         <div className="mb-4">
-          <label className="block text-gray-700">
-            What is the denominator for calculating the Leave Recovery? *
+          <label className="block text-gray-700 font-medium">
+            What is the denominator for calculating the Leave Recovery?{" "}
+            <span className="text-red-500">*</span>
           </label>
-          <input
-            type="number"
-            //   value={recoveryDenominator}
-            //   onChange={handleRecoveryDenominatorChange}
+          <select
             className={`w-full px-3 py-2 border border-gray-300 rounded-md ${
               !isEditing ? "bg-gray-200" : ""
             }`}
-            readOnly={!isEditing}
-          />
+            disabled={!isEditing}
+            value={formData.recoveryDenominator}
+            name="recoveryDenominator"
+            onChange={handleChange}
+          >
+            <option value="">Select denominator</option>
+            <option value="30">30</option>
+            <option value="26">26</option>
+          </select>
         </div>
       </div>
       <div className="my-4 mx-2 w-fit">

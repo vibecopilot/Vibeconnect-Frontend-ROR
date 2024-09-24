@@ -20,7 +20,7 @@ const GeneralSettings = () => {
     canAdminsApproveLeave: false,
     canSupervisorsAddLeaveAdjustment: false,
     runDailyLeaveAccruals: false,
-    id: ""
+    id: "",
   });
   useEffect(() => {
     const fetchLeaveSetting = async () => {
@@ -32,7 +32,7 @@ const GeneralSettings = () => {
           canAdminsApproveLeave: res[0].admin_approval_access,
           canSupervisorsAddLeaveAdjustment: res[0].supervisors_can_adjust,
           runDailyLeaveAccruals: res[0].daily_leave_accrual,
-          id:res[0].id
+          id: res[0].id,
         });
       } catch (error) {
         console.log(error);
@@ -44,22 +44,24 @@ const GeneralSettings = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleEditSetting = async()=>{
-    const editData = new FormData()
-    editData.append("leave_cycle_start_month", formData.month)
-    editData.append("admin_approval_access", formData.canAdminsApproveLeave)
-    editData.append("supervisors_can_adjust", formData.canSupervisorsAddLeaveAdjustment)
-    editData.append("daily_leave_accrual", formData.runDailyLeaveAccruals)
-    editData.append("organization", hrmsOrgId)
+  const handleEditSetting = async () => {
+    const editData = new FormData();
+    editData.append("leave_cycle_start_month", formData.month);
+    editData.append("admin_approval_access", formData.canAdminsApproveLeave);
+    editData.append(
+      "supervisors_can_adjust",
+      formData.canSupervisorsAddLeaveAdjustment
+    );
+    editData.append("daily_leave_accrual", formData.runDailyLeaveAccruals);
+    editData.append("organization", hrmsOrgId);
     try {
-      const res = await editLeaveSetting(formData.id, editData)
-      toast.success("Leave setting updated successfully")
-      setIsEditing(false)
+      const res = await editLeaveSetting(formData.id, editData);
+      toast.success("Leave setting updated successfully");
+      setIsEditing(false);
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
-  }
-
+  };
 
   return (
     <section className="flex gap-10 ml-20">
@@ -68,18 +70,21 @@ const GeneralSettings = () => {
         <div className="p-6 bg-white  rounded-md ">
           <div className="flex justify-between">
             <h1 className="text-2xl font-bold mb-4">Leave Settings</h1>
-           {!isEditing ? <button
-              onClick={() => setIsEditing(!isEditing)}
-              className="mb-4 px-4 py-2 bg-blue-500 text-white rounded-md"
-            >
-              Edit
-            </button>:
-            <button
-              onClick={handleEditSetting}
-              className="mb-4 px-4 py-2 bg-green-500 text-white rounded-md"
-            >
-       Save
-            </button>}
+            {!isEditing ? (
+              <button
+                onClick={() => setIsEditing(!isEditing)}
+                className="mb-4 px-4 py-2 bg-blue-500 text-white rounded-md"
+              >
+                Edit
+              </button>
+            ) : (
+              <button
+                onClick={handleEditSetting}
+                className="mb-4 px-4 py-2 bg-green-500 text-white rounded-md"
+              >
+                Save
+              </button>
+            )}
           </div>
           <div className="space-y-4">
             <div>

@@ -1,3 +1,4 @@
+import { data } from "autoprefixer";
 import { getItemInLocalStorage } from "../utils/localStorage";
 import axiosInstance from "./axiosInstance";
 import HrmsAuth from "./HrmsAuth";
@@ -650,7 +651,6 @@ export const getAssociationList = async (checklistId) =>
     }
   );
 
-
 export const getChecklistDetails = async (id) =>
   axiosInstance.get(`/checklists/${id}.json`, {
     params: {
@@ -711,7 +711,6 @@ export const getAssetPPMs = async (assetId) =>
     },
   });
 
-
 export const getSoftServiceStatus = async (data) =>
   axiosInstance.get(
     `/activities.json?q[soft_service_id_null]=0&q[status_eq]=${data}`,
@@ -730,9 +729,7 @@ export const postFlightTicketRequest = async (data) =>
     },
   });
 // ppm details/
-  
- 
-   
+
 export const getPPMDetails = async (assetId, activityId) =>
   axiosInstance.get(
     `/submissions.json?q[asset_id_eq]=${assetId}&q[activity_id_eq]=${activityId}`,
@@ -743,43 +740,43 @@ export const getPPMDetails = async (assetId, activityId) =>
     }
   );
 
-  //Field sense
-  export const postFieldSenseMeetingManagement = async (data) =>
-    axiosInstance.post(`/field_sense_meeting_managements.json`, data, {
-      params: {
-        token: token,
-      },
-    });
-    export const getFieldSenseMeetingManagement = async () =>
-      axiosInstance.get("/field_sense_meeting_managements.json", {
-        params: {
-          token: token,
-        },
-      });
-      export const getFieldSenseMeetingManagementDetails = async (id) =>
-        axiosInstance.get(`/field_sense_meeting_managements/${id}.json`, {
-          params: {
-            token: token,
-          },
-        });
-      export const postFieldSenseLeadManagement = async (data) =>
-        axiosInstance.post(`/field_sense_leads_managements.json`, data, {
-          params: {
-            token: token,
-          },
-        });
-        export const getFieldSenseLeadManagement = async () =>
-          axiosInstance.get("/field_sense_leads_managements.json", {
-            params: {
-              token: token,
-            },
-          });
-          export const getFieldSenseLeadManagementDetails = async (id) =>
-            axiosInstance.get(`/field_sense_leads_managements/${id}.json`, {
-              params: {
-                token: token,
-              },
-            });
+//Field sense
+export const postFieldSenseMeetingManagement = async (data) =>
+  axiosInstance.post(`/field_sense_meeting_managements.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const getFieldSenseMeetingManagement = async () =>
+  axiosInstance.get("/field_sense_meeting_managements.json", {
+    params: {
+      token: token,
+    },
+  });
+export const getFieldSenseMeetingManagementDetails = async (id) =>
+  axiosInstance.get(`/field_sense_meeting_managements/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const postFieldSenseLeadManagement = async (data) =>
+  axiosInstance.post(`/field_sense_leads_managements.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const getFieldSenseLeadManagement = async () =>
+  axiosInstance.get("/field_sense_leads_managements.json", {
+    params: {
+      token: token,
+    },
+  });
+export const getFieldSenseLeadManagementDetails = async (id) =>
+  axiosInstance.get(`/field_sense_leads_managements/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
 //Booking & Request
 export const getHotelRequest = async () =>
   axiosInstance.get("/hotels.json", {
@@ -793,110 +790,109 @@ export const postHotelRequest = async (data) =>
       token: token,
     },
   });
-  export const getHotelRequestDetails = async (id) =>
-    axiosInstance.get(`/hotels/${id}.json`, {
-      params: {
-        token: token,
-      },
-    });
-  export const UpdateHotelRequest = async (data, id) =>
-    axiosInstance.put(`/hotels/${id}.json`, data, {
-      params: {
-        token: token,
-      },
-    });
-    export const UpdateFlightRequest = async (data, id) =>
-      axiosInstance.put(`/flight_requests/${id}.json`, data, {
-        params: {
-          token: token,
-        },
-      });
-      export const getFlightRequestDetails = async (id) =>
-        axiosInstance.get(`/flight_requests/${id}.json`, {
-          params: {
-            token: token,
-          },
-        });
-  
+export const getHotelRequestDetails = async (id) =>
+  axiosInstance.get(`/hotels/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const UpdateHotelRequest = async (data, id) =>
+  axiosInstance.put(`/hotels/${id}.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const UpdateFlightRequest = async (data, id) =>
+  axiosInstance.put(`/flight_requests/${id}.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const getFlightRequestDetails = async (id) =>
+  axiosInstance.get(`/flight_requests/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
 
-    export const getFlightTicketRequest = async () =>
-      axiosInstance.get("/flight_requests.json", {
-        params: {
-          token: token,
-        },
-      });
-      export const UpdateCabRequest = async (data, id) =>
-        axiosInstance.put(`/cab_and_bus_requests/${id}.json`, data, {
-          params: {
-            token: token,
-          },
-        });
-        export const getCabRequestDetails = async (id) =>
-          axiosInstance.get(`/cab_and_bus_requests/${id}.json`, {
-            params: {
-              token: token,
-            },
-          });
-      export const getcabRequest = async () =>
-        axiosInstance.get("/cab_and_bus_requests.json", {
-          params: {
-            token: token,
-          },
-        });
-      export const postCabRequest = async (data) =>
-        axiosInstance.post(`/cab_and_bus_requests.json`, data, {
-          params: {
-            token: token,
-          },
-        });
-        export const UpdatetransportRequest = async (data, id) =>
-          axiosInstance.put(`/transport_requests/${id}.json`, data, {
-            params: {
-              token: token,
-            },
-          });
-          export const gettransportRequestDetails = async (id) =>
-            axiosInstance.get(`/transport_requests/${id}.json`, {
-              params: {
-                token: token,
-              },
-            });
-        export const gettransportRequest = async () =>
-          axiosInstance.get("/transport_requests.json", {
-            params: {
-              token: token,
-            },
-          });
-        export const postTransportRequest = async (data) =>
-          axiosInstance.post(`/transport_requests.json`, data, {
-            params: {
-              token: token,
-            },
-          });
-          export const getTravellingAllowanceRequest = async () =>
-            axiosInstance.get("/transportation_allowance_requests.json", {
-              params: {
-                token: token,
-              },
-            });
-          export const postTravellingAllowanceRequest = async (data) =>
-            axiosInstance.post(`/transportation_allowance_requests.json`, data, {
-              params: {
-                token: token,
-              },
-            });
-            export const UpdatetravellingallowanceRequest = async (data, id) =>
-              axiosInstance.put(`/transportation_allowance_requests/${id}.json`, data, {
-                params: {
-                  token: token,
-                },
-              });
-              export const getTravellingAllowanceRequestDetails = async (id) =>
-                axiosInstance.get(`/transportation_allowance_requests/${id}.json`, {
-                  params: {
-                    token: token,
-                  },
-                });
+export const getFlightTicketRequest = async () =>
+  axiosInstance.get("/flight_requests.json", {
+    params: {
+      token: token,
+    },
+  });
+export const UpdateCabRequest = async (data, id) =>
+  axiosInstance.put(`/cab_and_bus_requests/${id}.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const getCabRequestDetails = async (id) =>
+  axiosInstance.get(`/cab_and_bus_requests/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const getcabRequest = async () =>
+  axiosInstance.get("/cab_and_bus_requests.json", {
+    params: {
+      token: token,
+    },
+  });
+export const postCabRequest = async (data) =>
+  axiosInstance.post(`/cab_and_bus_requests.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const UpdatetransportRequest = async (data, id) =>
+  axiosInstance.put(`/transport_requests/${id}.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const gettransportRequestDetails = async (id) =>
+  axiosInstance.get(`/transport_requests/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const gettransportRequest = async () =>
+  axiosInstance.get("/transport_requests.json", {
+    params: {
+      token: token,
+    },
+  });
+export const postTransportRequest = async (data) =>
+  axiosInstance.post(`/transport_requests.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const getTravellingAllowanceRequest = async () =>
+  axiosInstance.get("/transportation_allowance_requests.json", {
+    params: {
+      token: token,
+    },
+  });
+export const postTravellingAllowanceRequest = async (data) =>
+  axiosInstance.post(`/transportation_allowance_requests.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const UpdatetravellingallowanceRequest = async (data, id) =>
+  axiosInstance.put(`/transportation_allowance_requests/${id}.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const getTravellingAllowanceRequestDetails = async (id) =>
+  axiosInstance.get(`/transportation_allowance_requests/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
 // ppm details
 export const getAssetReadingDetails = async (assetId) =>
   axiosInstance.get(
@@ -1108,7 +1104,6 @@ export const getBroadcastDetails = async (id) =>
     },
   });
 
-
 //services
 export const getServicesTaskDetails = async (serviceId, activityId) =>
   axiosInstance.get(
@@ -1138,31 +1133,32 @@ export const getSoftServicesDetails = async (id) =>
       token: token,
     },
   });
-  export const getSoftServiceSchedule = async (sid) =>
-    axiosInstance.get(`/soft_services/${sid}/softservices_log_show.json`, {
+export const getSoftServiceSchedule = async (sid) =>
+  axiosInstance.get(`/soft_services/${sid}/softservices_log_show.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const getSoftserviceActivityDetails = async (id) =>
+  axiosInstance.get(`/soft_services/${id}/softservices_log_show.json?`, {
+    params: {
+      token: token,
+    },
+  });
+export const deleteAssociationList = async (
+  checklistId,
+  assignedto,
+  serviceId
+) =>
+  axiosInstance.get(
+    `/delete_user_activity.json?checklist_id=${checklistId}&assigned_to=${assignedto}&asset_id=&soft_service_id=${serviceId}`,
+    {
       params: {
         token: token,
       },
-    });
-  export const getSoftserviceActivityDetails = async (id) =>
-      axiosInstance.get(
-        `/soft_services/${id}/softservices_log_show.json?`,
-        {
-          params: {
-            token: token,
-          },
-        }
-      );
-  export const deleteAssociationList = async (checklistId,assignedto,serviceId) =>
-        axiosInstance.get(
-          `/delete_user_activity.json?checklist_id=${checklistId}&assigned_to=${assignedto}&asset_id=&soft_service_id=${serviceId}`,
-          {
-            params: {
-              token: token,
-            },
-          }
-        );
- 
+    }
+  );
+
 export const postServiceAssociation = async (data) =>
   axiosInstance.post(`/activities.json`, data, {
     params: {
@@ -1188,18 +1184,21 @@ export const postChecklist = async (data) =>
       token: token,
     },
   });
-  export const getGenericGroup = async () =>
-    axiosInstance.get(`/generic_infos.json?q[info_type_eq]=soft_services`, {
+export const getGenericGroup = async () =>
+  axiosInstance.get(`/generic_infos.json?q[info_type_eq]=soft_services`, {
+    params: {
+      token: token,
+    },
+  });
+export const getGenericSubGroup = async (groupid) =>
+  axiosInstance.get(
+    `/generic_sub_infos.json?q[generic_info_id_eq]=${groupid}`,
+    {
       params: {
         token: token,
       },
-    });
-    export const getGenericSubGroup = async (groupid) =>
-      axiosInstance.get(`/generic_sub_infos.json?q[generic_info_id_eq]=${groupid}`, {
-        params: {
-          token: token,
-        },
-      });
+    }
+  );
 export const editChecklist = async (data, id) =>
   axiosInstance.put(`/checklists/${id}.json`, data, {
     params: {
@@ -1227,12 +1226,15 @@ export const getServicesPPMDetails = async (id) =>
   });
 
 //
-export const getServicesRoutineList = async (page,perpage) =>
-  axiosInstance.get(`/activities.json?q[soft_service_id_null]=0&per_page=${perpage}&page=${page}`, {
-    params: {
-      token: token,
-    },
-  });
+export const getServicesRoutineList = async (page, perpage) =>
+  axiosInstance.get(
+    `/activities.json?q[soft_service_id_null]=0&per_page=${perpage}&page=${page}`,
+    {
+      params: {
+        token: token,
+      },
+    }
+  );
 export const postServicePR = async (data) =>
   axiosInstance.post(`/service_orders.json`, data, {
     params: {
@@ -4497,7 +4499,9 @@ export const postVariableAllowance = async (data) => {
 };
 export const getVariableAllowance = async (orgId) => {
   try {
-    const response = await HrmsAuth.get(`/payroll/variable-allowance/?organization_id=${orgId}`);
+    const response = await HrmsAuth.get(
+      `/payroll/variable-allowance/?organization_id=${orgId}`
+    );
     return response.data;
   } catch (error) {
     console.error("Error getting variable allowance:", error);
@@ -4506,10 +4510,199 @@ export const getVariableAllowance = async (orgId) => {
 };
 export const deleteVariableAllowance = async (variableId) => {
   try {
-    const response = await HrmsAuth.delete(`/payroll/variable-allowance/${variableId}/`);
+    const response = await HrmsAuth.delete(
+      `/payroll/variable-allowance/${variableId}/`
+    );
     return response.data;
   } catch (error) {
     console.error("Error deleting variable allowance:", error);
+    throw error;
+  }
+};
+export const postVariableDeduction = async (data) => {
+  try {
+    const response = await HrmsAuth.post(`/payroll/variable-deduction/`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error posting variable deduction:", error);
+    throw error;
+  }
+};
+export const getVariableDeduction = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/payroll/variable-deduction/?organization_id=${orgId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting variable deduction:", error);
+    throw error;
+  }
+};
+export const getOtherBenefits = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/payroll/benefit/?organization_id=${orgId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting other benefit:", error);
+    throw error;
+  }
+};
+export const postOtherBenefits = async (data) => {
+  try {
+    const response = await HrmsAuth.post(`/payroll/benefit/`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error getting other benefit:", error);
+    throw error;
+  }
+};
+export const deleteOtherBenefits = async (benefitId) => {
+  try {
+    const response = await HrmsAuth.delete(`/payroll/benefit/${benefitId}/`);
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting other benefit:", error);
+    throw error;
+  }
+};
+export const getOtherBenefitDetails = async (benefitId) => {
+  try {
+    const response = await HrmsAuth.get(`/payroll/benefit/${benefitId}/`);
+    return response.data;
+  } catch (error) {
+    console.error("Error getting other benefit:", error);
+    throw error;
+  }
+};
+export const editOtherBenefitDetails = async (benefitId, data) => {
+  try {
+    const response = await HrmsAuth.put(`/payroll/benefit/${benefitId}/`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error updating other benefit:", error);
+    throw error;
+  }
+};
+export const getPayrollLoanCategory = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/payroll/loan-category/?organization_id=${orgId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting loan category:", error);
+    throw error;
+  }
+};
+export const deletePayrollLoanCategory = async (CatId) => {
+  try {
+    const response = await HrmsAuth.delete(`/payroll/loan-category/${CatId}/`);
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting loan category:", error);
+    throw error;
+  }
+};
+export const postPayrollLoanCategory = async (data) => {
+  try {
+    const response = await HrmsAuth.post(`/payroll/loan-category/`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error posting loan category:", error);
+    throw error;
+  }
+};
+export const getPayrollPaySetting = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/payroll/payslip-settings/?organization_id=${orgId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting payslip setting:", error);
+    throw error;
+  }
+};
+export const editPayrollPaySetting = async (paySlipId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/payroll/payslip-settings/${paySlipId}/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating payslip setting:", error);
+    throw error;
+  }
+};
+export const getLeaveEncashment = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/payroll/leave-encashment-recovery/?organization_id=${orgId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting leave encashment setting:", error);
+    throw error;
+  }
+};
+export const editLeaveEncashment = async (enCashId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/payroll/leave-encashment-recovery/${enCashId}/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating encashment setting:", error);
+    throw error;
+  }
+};
+export const getNoticePeriodRecovery = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/payroll/notice-period-recovery/?organization_id=${orgId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting leave recovery:", error);
+    throw error;
+  }
+};
+export const editNoticePeriodRecovery = async (noticeId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/payroll/notice-period-recovery/${noticeId}/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting leave recovery:", error);
+    throw error;
+  }
+};
+export const getInvestmentSetting = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/organization/investment-settings/?organization_id=${orgId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting investment setting:", error);
+    throw error;
+  }
+};
+export const editInvestmentSetting = async (invId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/organization/investment-settings/${invId}/`,data,
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error editing investment setting:", error);
     throw error;
   }
 };
