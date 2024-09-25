@@ -16,7 +16,7 @@ function RoasterShiftDetails({ employee, date, schedule, onClose }) {
       weekday: "short",
     });
   };
-  console.log(date.date)
+ 
 
   return (
     <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center">
@@ -41,7 +41,7 @@ function RoasterShiftDetails({ employee, date, schedule, onClose }) {
 
           <div className="mb-4 flex justify-between w-full">
             <h3 className="font-semibold">Current Shift</h3>
-            <p>{formatDate(date.date)}</p>
+            <p>{formatDate(date?.date)}</p>
             {/* <p className="text-orange-500 font-semibold">{schedule}</p> */}
             {/* <p>{employee.date}</p> */}
           </div>
