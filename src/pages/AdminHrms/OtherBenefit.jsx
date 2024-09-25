@@ -3,7 +3,11 @@ import { PiPlusCircle } from "react-icons/pi";
 import Table from "../../components/table/Table";
 import PayrollSettingDetailsList from "./PayrollSettingDetailsList";
 import { GrHelpBook } from "react-icons/gr";
-import { deleteOtherBenefits, getOtherBenefits, postOtherBenefits } from "../../api";
+import {
+  deleteOtherBenefits,
+  getOtherBenefits,
+  postOtherBenefits,
+} from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import toast from "react-hot-toast";
 import { BiEdit } from "react-icons/bi";
@@ -56,33 +60,42 @@ const OtherBenefit = () => {
     },
     {
       name: "Action",
-      cell: (row) => <div className="flex items-center gap-4">
-        <button className="text-blue-400" onClick={()=> handleEditModal(row.id)}><BiEdit/></button>
-        <button className="text-red-400" onClick={()=> handleDeleteBenefits(row.id)}><FaTrash/></button>
-      </div>,
+      cell: (row) => (
+        <div className="flex items-center gap-4">
+          <button
+            className="text-blue-400"
+            onClick={() => handleEditModal(row.id)}
+          >
+            <BiEdit />
+          </button>
+          <button
+            className="text-red-400"
+            onClick={() => handleDeleteBenefits(row.id)}
+          >
+            <FaTrash />
+          </button>
+        </div>
+      ),
     },
   ];
-const [editId, setEditId] = useState("")
-  const handleEditModal = (id)=>{
-    setEditId(id)
-    setEditModal(true)
+  const [editId, setEditId] = useState("");
+  const handleEditModal = (id) => {
+    setEditId(id);
+    setEditModal(true);
+  };
 
-  }
-
-  const handleDeleteBenefits = async(id)=>{
+  const handleDeleteBenefits = async (id) => {
     try {
-    await deleteOtherBenefits(id)
-    toast.success("Benefit deleted successfully")
-    fetchOtherBenefits()
+      await deleteOtherBenefits(id);
+      toast.success("Benefit deleted successfully");
+      fetchOtherBenefits();
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
-  }
+  };
 
   const openModal = () => setModalIsOpen(true);
   const closeModal = () => setModalIsOpen(false);
-
-  
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -100,19 +113,19 @@ const [editId, setEditId] = useState("")
       console.log(error);
     }
   };
-  const handleChange = (e)=>{
-    setFormData({...formData, [e.target.name]: e.target.value})
-  }
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   return (
     <section className="flex ml-20">
       <PayrollSettingDetailsList />
       <div className="w-2/3 flex m-3 flex-col overflow-hidden">
-        <div className="flex justify-between my-5">
+        <div className="flex justify-between gap-2 my-2">
           <input
             type="text"
             placeholder="Search by name"
-            className="border border-gray-400 w-96 placeholder:text-sm rounded-lg p-2"
+            className="border border-gray-400 w-full placeholder:text-sm rounded-md p-2"
           />
           <button
             onClick={openModal}
@@ -129,7 +142,7 @@ const [editId, setEditId] = useState("")
         <div className="fixed inset-0 z-50 flex items-center overflow-y-auto justify-center bg-gray-500 bg-opacity-50">
           <div class="max-h-screen h-80vh bg-white p-4 w-96 rounded-lg shadow-lg overflow-y-auto">
             <h2 className="text-2xl font-bold mb-4">Add New Allowance</h2>
-            <form >
+            <form>
               <div className="mb-4">
                 <label
                   htmlFor="deductionLabel"
@@ -139,7 +152,7 @@ const [editId, setEditId] = useState("")
                 </label>
                 <input
                   type="text"
-                 name="label"
+                  name="label"
                   value={formData.label}
                   onChange={handleChange}
                   className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
@@ -160,7 +173,9 @@ const [editId, setEditId] = useState("")
                     type="radio"
                     name="inReport"
                     checked={formData.inReport === true}
-                    onChange={() => setFormData({...formData, inReport: true})}
+                    onChange={() =>
+                      setFormData({ ...formData, inReport: true })
+                    }
                     className="mr-2"
                   />
                   Yes
@@ -168,7 +183,9 @@ const [editId, setEditId] = useState("")
                     type="radio"
                     name="inReport"
                     checked={formData.inReport === false}
-                    onChange={() => setFormData({...formData, inReport: false})}
+                    onChange={() =>
+                      setFormData({ ...formData, inReport: false })
+                    }
                     className="ml-4 mr-2"
                   />
                   No
@@ -186,7 +203,9 @@ const [editId, setEditId] = useState("")
                     type="radio"
                     name="attendanceEffect"
                     checked={formData.affectAttendance === true}
-                    onChange={() => setFormData({...formData, affectAttendance: true})}
+                    onChange={() =>
+                      setFormData({ ...formData, affectAttendance: true })
+                    }
                     className="mr-2"
                   />
                   Yes
@@ -194,7 +213,9 @@ const [editId, setEditId] = useState("")
                     type="radio"
                     name="attendanceEffect"
                     checked={formData.affectAttendance === false}
-                    onChange={() => setFormData({...formData, affectAttendance: false})}
+                    onChange={() =>
+                      setFormData({ ...formData, affectAttendance: false })
+                    }
                     className="ml-4 mr-2"
                   />
                   No
@@ -222,7 +243,11 @@ const [editId, setEditId] = useState("")
         </div>
       )}
       {editModal && (
-       <EditOtherBenefitModal editId={editId} fetchOtherBenefits={fetchOtherBenefits} onClose={()=>setEditModal(false)} />
+        <EditOtherBenefitModal
+          editId={editId}
+          fetchOtherBenefits={fetchOtherBenefits}
+          onClose={() => setEditModal(false)}
+        />
       )}
       <div className="my-4 mx-2 w-fit">
         <div className="flex flex-col mt-4 mr-2  bg-gray-50 rounded-md text-wrap  gap-4 my-2 py-2 pl-5 pr-2 w-[18rem]">

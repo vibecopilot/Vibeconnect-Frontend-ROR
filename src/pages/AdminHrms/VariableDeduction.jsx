@@ -14,22 +14,10 @@ const VariableDeduction = () => {
     fontWeight: 500,
   };
   const [modalIsOpen, setModalIsOpen] = useState(false);
-  const [allowanceType, setAllowanceType] = useState("");
-  const [customLabel, setCustomLabel] = useState("");
-  const [attendanceEffect, setAttendanceEffect] = useState(false);
-  const [affectPF, setAffectPF] = useState(false);
-  const [affectESIC, setAffectESIC] = useState(false);
-  const [affectLWF, setAffectLWF] = useState(false);
-  const [affectPT, setAffectPT] = useState(false);
-  const [affectIT, setAffectIT] = useState(false);
-  const [taxRegimes, setTaxRegimes] = useState("");
   const [deductionLabel, setDeductionLabel] = useState("");
-  const [showInCTC, setShowInCTC] = useState(false); // Boolean: true or false
-  const [frequency, setFrequency] = useState("Monthly"); // Default to Monthly
+  const [frequency, setFrequency] = useState("Monthly");
   const [effectivePeriod, setEffectivePeriod] = useState("");
-  const [hasEndingPeriod, setHasEndingPeriod] = useState(false); // Boolean: true or false
-  const [amountEntryMethod, setAmountEntryMethod] = useState("Manually"); // Default to Manually
-  const [applicableTo, setApplicableTo] = useState("All"); // Default to All Employees
+  const [applicableTo, setApplicableTo] = useState("All");
   const [formData, setFormData] = useState({
     showCTC: false,
     hasEndingPeriod: "",
@@ -55,75 +43,80 @@ const VariableDeduction = () => {
   }, []);
 
   const columns = [
-    { name: "Deduction Name", selector: (row) => row.head_name, sortable: true },
-    { name: "Frequency", selector: (row) => row.payment_frequency, sortable: true },
-    { name: "Applies To", selector: (row) => row.applicable_to, sortable: true },
+    {
+      name: "Deduction Name",
+      selector: (row) => row.head_name,
+      sortable: true,
+    },
+    {
+      name: "Frequency",
+      selector: (row) => row.payment_frequency,
+      sortable: true,
+    },
+    {
+      name: "Applies To",
+      selector: (row) => row.applicable_to,
+      sortable: true,
+    },
     {
       name: "Action",
       cell: (row) => <div className="flex items-center gap-4"></div>,
     },
   ];
 
-  const data = [
-    {
-      Name: " Monthly Starting from January-2017",
-      Location: "Advance",
-      City: "Employees",
-    },
-  ];
-const [filteredDeductions, setFilteredDeductions] = useState([])
-const [Deductions, setDeductions] = useState([])
+  const [filteredDeductions, setFilteredDeductions] = useState([]);
+  const [Deductions, setDeductions] = useState([]);
   const openModal = () => setModalIsOpen(true);
   const closeModal = () => setModalIsOpen(false);
-  const fetchVariableDeduction = async()=>{
-try {
-  const res = await getVariableDeduction(hrmsOrgId)
-setFilteredDeductions(res)
-setDeductions(res)
-} catch (error) {
-  console.log(error)
-}
-  }
-  useEffect(()=>{
-    fetchVariableDeduction()
-  },[])
+  const fetchVariableDeduction = async () => {
+    try {
+      const res = await getVariableDeduction(hrmsOrgId);
+      setFilteredDeductions(res);
+      setDeductions(res);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(() => {
+    fetchVariableDeduction();
+  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Handle div submission
+    
     closeModal();
   };
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
-  const handleAddVariableDeduction = async()=>{
-const postData = new FormData()
-postData.append("head_name", formData.headName)
-postData.append("in_ctc_structure", formData.showCTC)
-postData.append("auto_process_in_payroll", formData.autoProcess)
-postData.append("payment_frequency", formData.paymentFrequency)
-postData.append("effective_period_start", formData.effectivePeriodStart)
-postData.append("has_end_period", formData.hasEndingPeriod)
-postData.append("manual_entry", formData.manualEntry)
-postData.append("applicable_to", formData.applicableTo)
-postData.append("organization", hrmsOrgId)
-try {
-  const res = await postVariableDeduction(postData)
-} catch (error) {
-  console.log(error)
-}
-  }
+  const handleAddVariableDeduction = async () => {
+    const postData = new FormData();
+    postData.append("head_name", formData.headName);
+    postData.append("in_ctc_structure", formData.showCTC);
+    postData.append("auto_process_in_payroll", formData.autoProcess);
+    postData.append("payment_frequency", formData.paymentFrequency);
+    postData.append("effective_period_start", formData.effectivePeriodStart);
+    postData.append("has_end_period", formData.hasEndingPeriod);
+    postData.append("manual_entry", formData.manualEntry);
+    postData.append("applicable_to", formData.applicableTo);
+    postData.append("organization", hrmsOrgId);
+    try {
+      const res = await postVariableDeduction(postData);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <section className="flex ml-20">
       <PayrollSettingDetailsList />
       <div className="w-2/3 flex m-3 flex-col overflow-hidden">
-        <div className="flex justify-between my-5">
+        <div className="flex justify-between my-2 gap-2">
           <input
             type="text"
             placeholder="Search by name"
-            className="border border-gray-400 w-96 placeholder:text-sm rounded-lg p-2"
+            className="border border-gray-400 placeholder:text-sm rounded-md w-full p-2"
           />
           <button
             onClick={openModal}
@@ -133,7 +126,11 @@ try {
             Add
           </button>
         </div>
-        <Table columns={columns} data={filteredDeductions} isPagination={true} />
+        <Table
+          columns={columns}
+          data={filteredDeductions}
+          isPagination={true}
+        />
       </div>
 
       {modalIsOpen && (
@@ -270,12 +267,8 @@ try {
                     onChange={handleChange}
                     name="hasEndingPeriod"
                   >
-                    <option value="No">
-                      No. It is Continual
-                    </option>
-                    <option value="Yes">
-                      Yes. It has an End Period
-                    </option>
+                    <option value="No">No. It is Continual</option>
+                    <option value="Yes">Yes. It has an End Period</option>
                   </select>
                 </div>
                 {formData.hasEndingPeriod === "Yes" && (

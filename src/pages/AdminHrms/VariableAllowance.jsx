@@ -141,24 +141,24 @@ const VariableAllowance = () => {
       ),
     },
   ];
-  const [editId, setEditId] = useState("")
-const handleEditModal = (id)=>{
-  setIsEditModal(true)
-setEditId(id)
-}
+  const [editId, setEditId] = useState("");
+  const handleEditModal = (id) => {
+    setIsEditModal(true);
+    setEditId(id);
+  };
   const openModal = () => setModalIsOpen(true);
   const closeModal = () => setModalIsOpen(false);
 
-const handleDeleteFixedAllowance = async(VAid)=>{
-  try {
-    await deleteVariableAllowance(VAid) 
-    toast.success("Variable Allowance delete successfully")
-    fetchVariableAllowance()
-  } catch (error) {
-    console.log(error)
-    toast.error("Something went wrong")
-  }
-}
+  const handleDeleteFixedAllowance = async (VAid) => {
+    try {
+      await deleteVariableAllowance(VAid);
+      toast.success("Variable Allowance delete successfully");
+      fetchVariableAllowance();
+    } catch (error) {
+      console.log(error);
+      toast.error("Something went wrong");
+    }
+  };
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -362,16 +362,31 @@ const handleDeleteFixedAllowance = async(VAid)=>{
       console.log(error);
     }
   };
+  const [searchText, setSearchText] = useState("");
+  const handleSearch = (e) => {
+    const searchValue = e.target.value;
+    setSearchText(searchValue);
+    if (searchValue.trim() === "") {
+      setFilteredVariableAllowances(VariableAllowance);
+    } else {
+      const filteredResults = VariableAllowance.filter((item) =>
+        item.head_name.toLowerCase().includes(searchValue.toLowerCase())
+      );
+      setFilteredVariableAllowances(filteredResults);
+    }
+  };
 
   return (
     <section className="flex ml-20">
       <PayrollSettingDetailsList />
       <div className="w-2/3 flex m-3 flex-col overflow-hidden">
-        <div className="flex justify-between my-5">
+        <div className="flex justify-between gap-2 my-2">
           <input
             type="text"
             placeholder="Search by name"
-            className="border border-gray-400 w-96 placeholder:text-sm rounded-lg p-2"
+            className="border border-gray-400 w-full placeholder:text-sm rounded-md p-2"
+            value={searchText}
+            onChange={handleSearch}
           />
           <button
             onClick={openModal}
@@ -889,9 +904,7 @@ const handleDeleteFixedAllowance = async(VAid)=>{
           </div>
         </div>
       )}
-      {isEditModal && (
-       <EditVariableAllowanceModal />
-      )}
+      {isEditModal && <EditVariableAllowanceModal />}
       <div className="my-4 mx-2 w-fit">
         <div className="flex flex-col mt-4 mr-1 bg-gray-50 rounded-md text-wrap  gap-4 my-2 py-2 pl-5 pr-2 w-[18rem]">
           <div className="flex  gap-4 font-medium">

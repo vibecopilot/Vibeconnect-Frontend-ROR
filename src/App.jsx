@@ -680,6 +680,8 @@ import ExpenseTemplates from "./pages/AdminHrms/Expenses/ExpenseTemplates.jsx";
 import ExpenseTemplateAssignment from "./pages/AdminHrms/Expenses/ExpenseTemplateAssignment.jsx";
 import ExpenseGeneralSetting from "./pages/AdminHrms/Expenses/ExpenseGeneralSetting.jsx";
 import FieldSenseLeadManagementDetails from "./pages/SubPages/details/FieldSenseLeadManagementDetails.jsx";
+import Flexibenefits from "./pages/AdminHrms/FlexiBenefits/Flexibenefits.jsx";
+import EmployeeBalance from "./pages/AdminHrms/FlexiBenefits/EmployeeBalance.jsx";
 // new admin hrms
 
 function App() {
@@ -1598,7 +1600,7 @@ function App() {
             path="/services/overview"
             element={
               <ProtectedAdminRoutes>
-                <SoftServiceWidgets/>
+                <SoftServiceWidgets />
               </ProtectedAdminRoutes>
             }
           />
@@ -4713,7 +4715,7 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 {/* <AttendanceRecords /> */}
-                <AttendanceRec/>
+                <AttendanceRec />
               </ProtectedAdminRoutes>
             }
           />
@@ -5054,7 +5056,7 @@ function App() {
             path="/admin/field-sense-lead-details/:id"
             element={
               <ProtectedAdminRoutes>
-                <FieldSenseLeadManagementDetails/>
+                <FieldSenseLeadManagementDetails />
               </ProtectedAdminRoutes>
             }
           />
@@ -5175,7 +5177,7 @@ function App() {
               </ProtectedAdminRoutes>
             }
           />
-           <Route
+          <Route
             path="/process-history"
             element={<Navigate to="/process-history/expense-process-history" />}
             replace
@@ -5196,7 +5198,7 @@ function App() {
               </ProtectedAdminRoutes>
             }
           />
-           <Route
+          <Route
             path="/expense-setting"
             element={<Navigate to="/expense-setting/expense-category" />}
             replace
@@ -5233,7 +5235,6 @@ function App() {
               </ProtectedAdminRoutes>
             }
           />
-
 
           {/*personal financial */}
           <Route
@@ -5867,6 +5868,23 @@ function App() {
             }
           />
           <Route
+            path="/admin/flexi-benefits"
+            element={
+              <ProtectedAdminRoutes>
+                <Flexibenefits />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/employee-flexi-benefit-balance"
+            element={
+              <ProtectedAdminRoutes>
+                <EmployeeBalance />
+              </ProtectedAdminRoutes>
+            }
+          />
+
+          <Route
             path="/admin/tax-edit"
             element={
               <ProtectedAdminRoutes>
@@ -6387,7 +6405,6 @@ function App() {
               </ProtectedAdminRoutes>
             }
           />
-
 
           <Route
             path="/admin/skill-grow/course-description"

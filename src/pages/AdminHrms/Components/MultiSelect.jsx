@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { FaCaretDown, FaCaretUp, FaSortDown } from "react-icons/fa";
 
 const MultiSelect = ({
   title,
@@ -15,6 +16,19 @@ const MultiSelect = ({
   };
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
   //   const [selectedOptions, setSelectedOptions] = useState([]);
+  const dropdownRef = useRef(null);
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownVisible(false); // Close dropdown
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [dropdownRef]);
 
   const handleSelectAll = () => {
     if (selectedOptions.length === options.length) {
@@ -38,11 +52,11 @@ const MultiSelect = ({
     }
   };
   return (
-    <div className="mb-4">
+    <div className="mb-4" ref={dropdownRef}>
       <label className="block font-semibold">{title}</label>
       <div className="mb-4  relative">
         <button
-          className={`w-full px-3 py-2 border border-gray-300 rounded-md ${
+          className={`w-full px-3 py-2 border flex items-center gap-2 justify-center border-gray-300 rounded-md ${
             disabled && "bg-gray-100"
           } `}
           onClick={toggleDropdown}
@@ -50,7 +64,8 @@ const MultiSelect = ({
         >
           {selectedOptions.length === 0
             ? "Click Here to Select Component"
-            : `${selectedOptions.length} Selected`}
+            : `${selectedOptions.length} Selected`}{" "}
+          {!isDropdownVisible ? <FaCaretDown /> : <FaCaretUp />}
         </button>
         {isDropdownVisible && (
           <div className="absolute z-10 w-full border rounded shadow p-2 mt-2 bg-white">
@@ -65,22 +80,29 @@ const MultiSelect = ({
             />
             <div className="mb-2">
               <button
-                className={`p-2 w-full text-left ${
+                className={`p-2 w-full text-left flex items-center gap-2 ${
                   selectedOptions.length === options.length
                     ? "bg-blue-500 text-white"
                     : ""
                 }`}
                 onClick={handleSelectAll}
               >
+                <input
+                  type="checkbox"
+                  className="form-checkbox h-4 w-4"
+                  checked={selectedOptions.length === options.length}
+                  // onChange={() => handleSelect(option.value)}
+                  onChange={handleSelectAll}
+                />
                 Select all
               </button>
             </div>
             {options.map((option) => (
               <div key={option.value} className="mb-2">
-                <label className="inline-flex items-center hover:bg-blue-500 w-full p-1 hover:text-white">
+                <label className="inline-flex items-center hover:bg-blue-500 w-full p-1 hover:text-white border-b">
                   <input
                     type="checkbox"
-                    className="form-checkbox h-5 w-5"
+                    className="form-checkbox h-4 w-4"
                     checked={selectedOptions.includes(option.value)}
                     onChange={() => handleSelect(option.value)}
                   />

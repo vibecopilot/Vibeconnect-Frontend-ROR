@@ -1,6 +1,7 @@
 import React from "react";
 import AdminHRMS from "./AdminHrms";
 import { Link } from "react-router-dom";
+import Node from "./Components/Node";
 
 function OrganizationTree() {
   return (
@@ -77,6 +78,31 @@ const OrgTreeSettings = () => {
             + Add Head of Company
           </a>
         </div> */}
+         <div className="flex flex-col items-center">
+      {/* Top Node */}
+      <Node
+        name="Vinayak Kapdoskar"
+        position="MD"
+        imageUrl="https://via.placeholder.com/50"
+      >
+        {/* Child Nodes */}
+        <Node
+          name="Ankit Nima"
+          position="Marketing Head"
+          initials="AN"
+        />
+        <Node
+          name="Salome Kulangara"
+          position="President of India"
+          initials="SK"
+        />
+        <Node
+          name="Shivani Saran"
+          position="Manager HR & Admin"
+          initials="SS"
+        />
+      </Node>
+    </div>
      
     </div>
   );

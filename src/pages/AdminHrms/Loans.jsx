@@ -72,13 +72,12 @@ const Loans = () => {
     <section className="flex ml-20">
       <PayrollSettingDetailsList />
       <div className="w-2/3 flex m-3 flex-col overflow-hidden">
-        <div className="flex justify-between my-5">
+        <div className="flex justify-between my-2 gap-2">
           <input
             type="text"
             placeholder="Search by name"
-            className="border border-gray-400 w-96 placeholder:text-sm rounded-lg p-2"
+            className="border border-gray-400 w-full placeholder:text-sm rounded-md p-2"
           />
-
           <Link
             to={"/admin/add-loan"}
             className="border-2 font-semibold hover:bg-black hover:text-white duration-150 transition-all border-black p-2 rounded-md text-black cursor-pointer text-center flex items-center  gap-2 justify-center"

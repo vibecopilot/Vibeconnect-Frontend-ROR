@@ -31,7 +31,7 @@ const InvestmentSetting = () => {
     try {
       const res = await getInvestmentSetting(hrmsOrgId);
       const data = res[0];
-      console.log(res)
+      console.log(res);
       setFormData({
         ...formData,
         employeeAccessLevel: data.employee_access,
@@ -114,7 +114,7 @@ const InvestmentSetting = () => {
       toast.error("Something went wrong");
     }
   };
-  console.log(formData)
+  console.log(formData);
 
   return (
     <div className="flex gap-4 ml-20">
@@ -218,8 +218,8 @@ const InvestmentSetting = () => {
               </label>
               <input
                 type="number"
-                className={`w-full px-3 py-2 border border-gray-300 rounded-md ${
-                  !isEditing ? "bg-gray-200" : ""
+                className={`w-full px-3 py-2 border border-gray-100 rounded-md ${
+                  !isEditing ? "bg-gray-100 text-gray-400" : ""
                 }`}
                 readOnly={!isEditing}
                 value={formData.investmentDeclarationDayLimit}

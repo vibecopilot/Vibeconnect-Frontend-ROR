@@ -4,7 +4,12 @@ import { HiCheck } from "react-icons/hi";
 import { FaBuilding } from "react-icons/fa";
 import { useNavigate, NavLink, useLocation } from "react-router-dom";
 import { getItemInLocalStorage } from "../../utils/localStorage";
-import { MdOutlineDashboard, MdExpandMore, MdExpandLess, MdOutlineSettings } from "react-icons/md";
+import {
+  MdOutlineDashboard,
+  MdExpandMore,
+  MdExpandLess,
+  MdOutlineSettings,
+} from "react-icons/md";
 import { AiOutlineFieldTime } from "react-icons/ai";
 import { useSelector } from "react-redux";
 import { PiSignOutBold } from "react-icons/pi";
@@ -411,7 +416,6 @@ const AdminHRMS = () => {
               </div>
               {isOrgOpen && (
                 <div className="flex flex-col gap-2">
-                  
                   <NavLink
                     to="/admin/company-profile/basic-information"
                     className={() =>
@@ -553,7 +557,6 @@ const AdminHRMS = () => {
                 </div>
               )}
             </div>
-            
 
             <div>
               <div
@@ -800,11 +803,9 @@ const AdminHRMS = () => {
                       Generated Letter
                     </h2>
                   </NavLink>
-                 
                 </div>
               )}
             </div>
-           
 
             <div>
               <div
@@ -1058,7 +1059,7 @@ const AdminHRMS = () => {
                 className="cursor-pointer flex items-center text-sm gap-3.5 font-medium p-2 "
               >
                 <div>
-                  {React.createElement(FaMoneyBillWheat  , { size: "20" })}
+                  {React.createElement(FaMoneyBillWheat, { size: "20" })}
                   {/* <p>Organization</p> */}
                 </div>
                 <h2
@@ -1076,13 +1077,12 @@ const AdminHRMS = () => {
               </div>
               {isFlexiOpen && (
                 <div className="flex flex-col gap-2">
-                  
                   <NavLink
-                    to="/admin/company-profile/basic-information"
-                    className={() =>
+                    to="/admin/flexi-benefits"
+                    className={({ isActive }) =>
                       `${
-                        isActiveLink(location, routes)
-                          ? "text-black bg-white flex p-2 pl-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                        isActive
+                          ? "text-black bg-white flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
                           : "group flex items-center text-sm gap-3.5 font-medium p-2 "
                       }`
                     }
@@ -1095,7 +1095,7 @@ const AdminHRMS = () => {
                         !open && "opacity-0 translate-x-28 overflow-hidden"
                       }`}
                     >
-                     Flexi Benefits
+                      Flexi Benefits
                     </h2>
                     <h2
                       className={`${
@@ -1106,10 +1106,10 @@ const AdminHRMS = () => {
                     </h2>
                   </NavLink>
                   <NavLink
-                    to="/admin/manage-admin"
-                    className={() =>
+                    to="/admin/employee-flexi-benefit-balance"
+                    className={({ isActive }) =>
                       `${
-                        isActiveLink(location, routes1)
+                        isActive
                           ? "text-black bg-white flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
                           : "group flex items-center text-sm gap-3.5 font-medium p-2 "
                       }`
@@ -1128,14 +1128,14 @@ const AdminHRMS = () => {
                         open && "hidden"
                       } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-200 group-hover:w-fit`}
                     >
-                     Employee Balances
+                      Employee Balances
                     </h2>
                   </NavLink>
                   <NavLink
-                    to="/admin/hrms/document-letter"
-                    className={() =>
+                    to="/admin/flexi-benefit-payslip"
+                    className={({ isActive }) =>
                       `${
-                        isActiveLink(location, routes2)
+                        isActive
                           ? "text-black bg-white flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
                           : "group flex items-center text-sm gap-3.5 font-medium p-2 "
                       }`
@@ -1160,10 +1160,10 @@ const AdminHRMS = () => {
                     </h2>
                   </NavLink>
                   <NavLink
-                    to="/admin/onboarding-setting"
-                    className={() =>
+                    to="/admin/flexi-settings"
+                    className={({ isActive }) =>
                       `${
-                        isActiveLink(location, routes3)
+                        isActive
                           ? "text-black bg-white flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
                           : "group flex items-center text-sm gap-3.5 font-medium p-2 "
                       }`
@@ -1177,17 +1177,16 @@ const AdminHRMS = () => {
                         !open && "opacity-0 translate-x-28 overflow-hidden"
                       }`}
                     >
-                       Settings
+                      Settings
                     </h2>
                     <h2
                       className={`${
                         open && "hidden"
                       } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
                     >
-                       Settings
+                      Settings
                     </h2>
                   </NavLink>
-                
                 </div>
               )}
             </div>
@@ -1298,7 +1297,7 @@ const AdminHRMS = () => {
                   }
                 >
                   <div>
-                    {React.createElement(BiSolidReport , { size: "20" })}
+                    {React.createElement(BiSolidReport, { size: "20" })}
                   </div>
                   <h2
                     className={`whitespace-pre duration-300 ${
@@ -1351,7 +1350,9 @@ const AdminHRMS = () => {
                     }`
                   }
                 >
-                  <div>{React.createElement(MdOutlineSettings, { size: "20" })}</div>
+                  <div>
+                    {React.createElement(MdOutlineSettings, { size: "20" })}
+                  </div>
                   <h2
                     className={`whitespace-pre duration-300 ${
                       !open && "opacity-0 translate-x-28 overflow-hidden"

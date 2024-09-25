@@ -1,21 +1,31 @@
 import React, { useEffect, useState } from "react";
 import PayrollSettingDetailsList from "./PayrollSettingDetailsList";
 import { GrHelpBook } from "react-icons/gr";
-import { editPayrollGratuity, getPayrollGratuity } from "../../api";
+import {
+  editPayrollGratuity,
+  getPayrollGratuity,
+  getVariableAllowance,
+} from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import { FaCheck } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 import { BiEdit } from "react-icons/bi";
 import toast from "react-hot-toast";
+import MultiSelect from "./Components/MultiSelect";
 
 const Gratuity = () => {
   const [isEditing, setIsEditing] = useState(false);
+  const [selectedOptions, setSelectedOptions] = useState([]);
+  const [variableAllowances, setVariableAllowances] = useState([]);
+  const [filteredVariableAllowances, setFilteredVariableAllowances] = useState(
+    []
+  );
   const [formData, setFormData] = useState({
     eligibleForGratuity: false,
     eligibilityPeriod: "",
     gratuityPercentage: "",
     componentsForCalculation: "",
-    id:""
+    id: "",
   });
   const listItemStyle = {
     listStyleType: "disc",
@@ -34,7 +44,7 @@ const Gratuity = () => {
         eligibilityPeriod: res.eligibility_period,
         componentsForCalculation: res.components_for_calculation,
         gratuityPercentage: res.gratuity_percentage,
-        id: res.id
+        id: res.id,
       });
     } catch (error) {
       console.log(error);
@@ -42,28 +52,55 @@ const Gratuity = () => {
   };
   useEffect(() => {
     fetchGratuity();
+    fetchVariableAllowances();
   }, []);
-  const handleChange = (e)=>{
-    setFormData({...formData, [e.target.name]: e.target.value })
-  }
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
-  const handleEditGratuity = async()=>{
-    const editData = new FormData()
-    editData.append("company_eligible_for_gratuity", formData.eligibleForGratuity)
-    editData.append("eligibility_period", formData.eligibilityPeriod)
-    editData.append("gratuity_percentage", formData.gratuityPercentage)
-    editData.append("components_for_calculation", formData.componentsForCalculation)
-    editData.append("organization", hrmsOrgId)
+  const handleEditGratuity = async () => {
+    const editData = new FormData();
+    editData.append(
+      "company_eligible_for_gratuity",
+      formData.eligibleForGratuity
+    );
+    editData.append("eligibility_period", formData.eligibilityPeriod);
+    editData.append("gratuity_percentage", formData.gratuityPercentage);
+    editData.append(
+      "components_for_calculation",
+      formData.componentsForCalculation
+    );
+    editData.append("organization", hrmsOrgId);
     try {
-      const res = await editPayrollGratuity(formData.id, editData)
-      toast.success("Payroll gratuity setting updated successfully")
-      fetchGratuity()
-      setIsEditing(false)
+      const res = await editPayrollGratuity(formData.id, editData);
+      toast.success("Payroll gratuity setting updated successfully");
+      fetchGratuity();
+      setIsEditing(false);
     } catch (error) {
-      console.log(error)
-      toast.error("Something went wrong")
+      console.log(error);
+      toast.error("Something went wrong");
     }
-  }
+  };
+  const handleSelect = (option) => {
+    if (selectedOptions.includes(option)) {
+      setSelectedOptions(selectedOptions.filter((item) => item !== option));
+    } else {
+      setSelectedOptions([...selectedOptions, option]);
+    }
+  };
+  const fetchVariableAllowances = async () => {
+    try {
+      const res = await getVariableAllowance(hrmsOrgId);
+      const options = res.map((option) => ({
+        value: option.id,
+        label: option.head_name,
+      }));
+      setVariableAllowances(options);
+      setFilteredVariableAllowances(options);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <div className="flex justify-between gap-4 ml-20">
@@ -105,7 +142,9 @@ const Gratuity = () => {
                 type="radio"
                 name="esic"
                 checked={formData.eligibleForGratuity === true}
-                onChange={() => setFormData({...formData, eligibleForGratuity: true})}
+                onChange={() =>
+                  setFormData({ ...formData, eligibleForGratuity: true })
+                }
                 className="mr-2"
                 disabled={!isEditing}
               />{" "}
@@ -114,65 +153,66 @@ const Gratuity = () => {
                 type="radio"
                 name="esic"
                 checked={formData.eligibleForGratuity === false}
-                onChange={() => setFormData({...formData, eligibleForGratuity: false})}
+                onChange={() =>
+                  setFormData({ ...formData, eligibleForGratuity: false })
+                }
                 className="ml-4 mr-2"
                 disabled={!isEditing}
               />{" "}
               No
             </div>
           </div>
-         {formData.eligibleForGratuity && <>
-         
-          <div className="flex flex-col gap-2">
-            <label htmlFor="" className="font-medium">
-              When is an active employee eligible for gratuity?
-            </label>
-            <select
-            value={formData.eligibilityPeriod}
-              name="eligibilityPeriod"
-              onChange={handleChange}
-              id=""
-              className="border border-gray-400 p-2 rounded-md w-full"
-              disabled={!isEditing}
-            >
-              <option value="">Select gratuity eligibility</option>
-              <option value="4 years 240 days">
-                After completing 4 years 240 days
-              </option>
-              <option value="5 years">After completing 5 years</option>
-            </select>
-          </div>
-          <div className="flex flex-col gap-2">
-            <label htmlFor="" className="font-medium">
-              Enter Percentage for Gratuity
-            </label>
-            <input
-              type="number"
-              value={formData.gratuityPercentage || ""}
-              name="gratuityPercentage"
-              onChange={handleChange}
-              id=""
-              className="border border-gray-400 p-2 rounded-md w-full"
-              placeholder="%"
-              readOnly={!isEditing}
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <label htmlFor="" className="font-medium">
-              Select Components on which Gratuity is calculated
-            </label>
-            <select
-              name="componentsForCalculation"
-              onChange={handleChange}
-              id=""
-              value={formData.componentsForCalculation}
-              className="border border-gray-400 p-2 rounded-md w-full"
-              disabled={!isEditing}
-            >
-              <option value="">Select</option>
-            </select>
-          </div>
-          </>}
+          {formData.eligibleForGratuity && (
+            <>
+              <div className="flex flex-col gap-2">
+                <label htmlFor="" className="font-medium">
+                  When is an active employee eligible for gratuity?
+                </label>
+                <select
+                  value={formData.eligibilityPeriod}
+                  name="eligibilityPeriod"
+                  onChange={handleChange}
+                  id=""
+                  className="border border-gray-400 p-2 rounded-md w-full"
+                  disabled={!isEditing}
+                >
+                  <option value="">Select gratuity eligibility</option>
+                  <option value="4 years 240 days">
+                    After completing 4 years 240 days
+                  </option>
+                  <option value="5 years">After completing 5 years</option>
+                </select>
+              </div>
+              <div className="flex flex-col gap-2">
+                <label htmlFor="" className="font-medium">
+                  Enter Percentage for Gratuity
+                </label>
+                <input
+                  type="number"
+                  value={formData.gratuityPercentage || ""}
+                  name="gratuityPercentage"
+                  onChange={handleChange}
+                  id=""
+                  className="border border-gray-400 p-2 rounded-md w-full"
+                  placeholder="%"
+                  readOnly={!isEditing}
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                
+                <MultiSelect
+                  options={variableAllowances}
+                  title={"Select Components on which Gratuity is calculated"}
+                  handleSelect={handleSelect}
+                  selectedOptions={selectedOptions}
+                  setSelectedOptions={setSelectedOptions}
+                  disabled={!isEditing}
+                  setOptions={setVariableAllowances}
+                  searchOptions={filteredVariableAllowances}
+                />
+              </div>
+            </>
+          )}
         </div>
         {/* <button className="w-full p-2 bg-blue-500 text-white font-semibold rounded">Submit</button> */}
       </div>

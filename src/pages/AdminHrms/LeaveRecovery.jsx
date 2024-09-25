@@ -10,6 +10,7 @@ const options = [
 import { GrHelpBook } from "react-icons/gr";
 import {
   editLeaveEncashment,
+  getFixedAllowance,
   getLeaveEncashment,
   getVariableAllowance,
 } from "../../api";
@@ -17,6 +18,8 @@ import { getItemInLocalStorage } from "../../utils/localStorage";
 import { FaCheck } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 import { BiEdit } from "react-icons/bi";
+import toast from "react-hot-toast";
+import MultiSelect from "./Components/MultiSelect";
 
 const LeaveRecovery = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -35,10 +38,74 @@ const LeaveRecovery = () => {
   };
   const [selectedOptions, setSelectedOptions] = useState([]);
   const [selectedRecoveryOptions, setSelectedRecoveryOptions] = useState([]);
-  const [isDropdownVisible, setIsDropdownVisible] = useState(false);
-  const [isDropdownVisible1, setIsDropdownVisible1] = useState(false);
 
-  const handleEncashmentSelect = (option) => {
+  const [fixedAllowances, setFixedAllowances] = useState([]);
+  const [filteredFixedAllowances, setFilteredFixedAllowances] = useState([]);
+  const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
+  const fetchLeaveEncashment = async () => {
+    try {
+      const res = await getLeaveEncashment(hrmsOrgId);
+      const data = res[0];
+      setFormData({
+        ...formData,
+        EncashmentDenominator: data.encashment_denominator,
+        payoutMonth: data.payout_month,
+        recoveryDenominator: data.recovery_denominator,
+        id: data.id,
+      });
+      setSelectedOptions(data.encashment_calculation_method);
+      setSelectedRecoveryOptions(data.recovery_calculation_method);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const fetchFixedAllowances = async () => {
+    try {
+      const res = await getFixedAllowance(hrmsOrgId);
+      const options = res.map((option) => ({
+        value: option.id,
+        label: option.custom_label,
+      }));
+      setFixedAllowances(options);
+      setFilteredFixedAllowances(options);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(() => {
+    fetchLeaveEncashment();
+    fetchFixedAllowances();
+  }, []);
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+ 
+  const handleEditLeaveEncashment = async () => {
+    const editData = new FormData();
+    editData.append("encashment_denominator", formData.EncashmentDenominator);
+    editData.append("payout_month", formData.payoutMonth);
+    editData.append("recovery_denominator", formData.recoveryDenominator);
+    editData.append("organization", hrmsOrgId);
+    const encashmentMethod = selectedOptions.map((item) => item);
+    encashmentMethod.forEach((method) => {
+      editData.append("encashment_calculation_method", method);
+    });
+    const recoveryMethod = selectedRecoveryOptions.map((item) => item);
+    recoveryMethod.forEach((method) => {
+      editData.append("recovery_calculation_method", method);
+    });
+    try {
+      const res = await editLeaveEncashment(formData.id, editData);
+      toast.success("Leave encashment & recovery updated successfully");
+      fetchLeaveEncashment();
+      setIsEditing(false);
+    } catch (error) {
+      console.log(error);
+      toast.error("Something went wrong");
+    }
+  };
+
+  const handleSelect = (option) => {
     if (selectedOptions.includes(option)) {
       setSelectedOptions(selectedOptions.filter((item) => item !== option));
     } else {
@@ -52,78 +119,6 @@ const LeaveRecovery = () => {
       );
     } else {
       setSelectedRecoveryOptions([...selectedRecoveryOptions, option]);
-    }
-  };
-  const toggleDropdown = () => {
-    setIsDropdownVisible(!isDropdownVisible);
-  };
-  const toggleDropdown1 = () => {
-    setIsDropdownVisible1(!isDropdownVisible1);
-  };
-  const handleSelectLeaveEncashment = () => {
-    if (selectedOptions.length === variableAllowances.length) {
-      setSelectedOptions([]);
-    } else {
-      setSelectedOptions(variableAllowances.map((option) => option.value));
-    }
-  };
-  const handleSelectLeaveRecovery = () => {
-    if (selectedRecoveryOptions.length === variableAllowances.length) {
-      setSelectedRecoveryOptions([]);
-    } else {
-      setSelectedRecoveryOptions(
-        variableAllowances.map((option) => option.value)
-      );
-    }
-  };
-  const [variableAllowances, setVariableAllowances] = useState([]);
-  console.log("selected :", selectedOptions);
-  console.log("Leave :", selectedRecoveryOptions);
-  const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
-  const fetchLeaveEncashment = async () => {
-    try {
-      const res = await getLeaveEncashment(hrmsOrgId);
-      const data = res[0];
-      setFormData({
-        ...formData,
-        EncashmentDenominator: data.encashment_denominator,
-        payoutMonth: data.payout_month,
-        recoveryDenominator: data.recovery_denominator,
-        id: data.id,
-      });
-    } catch (error) {
-      console.log(error);
-    }
-  };
-  const fetchVariableAllowances = async () => {
-    try {
-      const res = await getVariableAllowance(hrmsOrgId);
-      const options = res.map((option) => ({
-        value: option.id,
-        label: option.head_name,
-      }));
-      setVariableAllowances(options);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-  useEffect(() => {
-    fetchLeaveEncashment();
-    fetchVariableAllowances();
-  }, []);
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleEditLeaveEncashment = async () => {
-    const editData = new FormData();
-    editData.append("encashment_denominator", formData.EncashmentDenominator);
-    editData.append("payout_month", formData.payoutMonth);
-    editData.append("recovery_denominator", formData.recoveryDenominator);
-    try {
-      const res = await editLeaveEncashment(formData.id, editData);
-    } catch (error) {
-      console.log(error);
     }
   };
 
@@ -161,53 +156,17 @@ const LeaveRecovery = () => {
             )}
           </div>
         </div>
-        <label htmlFor="" className="font-medium">
-          How would you like to calculate Leave Encashment?
-        </label>
-
-        <div className="mb-4  relative">
-          <button
-            // className="p-2 border rounded w-full text-left  hover:bg-gray-100"
-            className={`w-full px-3 py-2 border border-gray-300 rounded-md ${
-              !isEditing ? "bg-gray-200" : ""
-            }`}
-            onClick={toggleDropdown}
-            disabled={!isEditing}
-          >
-            {selectedOptions.length === 0
-              ? "Click Here to Select Component"
-              : `${selectedOptions.length} Selected`}
-          </button>
-          {isDropdownVisible && isEditing && (
-            <div className="absolute z-10 w-full border rounded shadow p-2 mt-2 bg-white">
-              <div className="mb-2">
-                <button
-                  className={`p-2 w-full text-left ${
-                    selectedOptions.length === options.length
-                      ? "bg-blue-500 text-white"
-                      : ""
-                  }`}
-                  onClick={handleSelectLeaveEncashment}
-                >
-                  Select all
-                </button>
-              </div>
-              {variableAllowances.map((option) => (
-                <div key={option.value} className="mb-2">
-                  <label className="inline-flex items-center">
-                    <input
-                      type="checkbox"
-                      className="form-checkbox h-5 w-5"
-                      checked={selectedOptions.includes(option.value)}
-                      onChange={() => handleEncashmentSelect(option.value)}
-                    />
-                    <span className="ml-2">{option.label}</span>
-                  </label>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        <MultiSelect
+          options={fixedAllowances}
+          title={"How would you like to calculate Leave Encashment?"}
+          handleSelect={handleSelect}
+          // handleSelectAll={handleSelectAll}
+          selectedOptions={selectedOptions}
+          setSelectedOptions={setSelectedOptions}
+          disabled={!isEditing}
+          setOptions={setFixedAllowances}
+          searchOptions={filteredFixedAllowances}
+        />
         <div className="mb-4">
           <label className="block text-gray-700 font-medium">
             What is the denominator for calculating the Encashment?{" "}
@@ -255,54 +214,17 @@ const LeaveRecovery = () => {
             <option value="December">December</option>
           </select>
         </div>
-        <div className=" flex flex-col">
-          <label htmlFor="" className="font-medium">
-            {" "}
-            How would you like to calculate Leave Recovery?
-          </label>
-          <button
-            className={`w-full px-3 py-2 border border-gray-300 rounded-md ${
-              !isEditing ? "bg-gray-200" : ""
-            }`}
-            onClick={toggleDropdown1}
-            disabled={!isEditing}
-          >
-            {selectedRecoveryOptions.length === 0
-              ? "Click Here to Select Component"
-              : `${selectedRecoveryOptions.length} Selected`}
-          </button>
-        </div>
-        <div className="mb-4  relative">
-          {isDropdownVisible1 && isEditing && (
-            <div className="absolute z-10 w-full border rounded shadow p-2  bg-white">
-              <div className="mb-2">
-                <button
-                  className={`p-2 w-full text-left ${
-                    selectedRecoveryOptions.length === options.length
-                      ? "bg-blue-500 text-white"
-                      : ""
-                  }`}
-                  onClick={handleSelectLeaveRecovery}
-                >
-                  Select all
-                </button>
-              </div>
-              {variableAllowances.map((option) => (
-                <div key={option.value} className="mb-2">
-                  <label className="inline-flex items-center">
-                    <input
-                      type="checkbox"
-                      className="form-checkbox h-5 w-5"
-                      checked={selectedRecoveryOptions.includes(option.value)}
-                      onChange={() => handleRecoverySelect(option.value)}
-                    />
-                    <span className="ml-2">{option.label}</span>
-                  </label>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        <MultiSelect
+          options={fixedAllowances}
+          title={"How would you like to calculate Leave Encashment?"}
+          handleSelect={handleRecoverySelect}
+          // handleSelectAll={handleSelectAll}
+          selectedOptions={selectedRecoveryOptions}
+          setSelectedOptions={setSelectedRecoveryOptions}
+          disabled={!isEditing}
+          setOptions={setFixedAllowances}
+          searchOptions={filteredFixedAllowances}
+        />
         <div className="mb-4">
           <label className="block text-gray-700 font-medium">
             What is the denominator for calculating the Leave Recovery?{" "}

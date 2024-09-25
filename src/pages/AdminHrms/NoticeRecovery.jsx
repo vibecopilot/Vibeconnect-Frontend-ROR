@@ -6,6 +6,7 @@ import { MdClose } from "react-icons/md";
 import { BiEdit } from "react-icons/bi";
 import {
   editNoticePeriodRecovery,
+  getFixedAllowance,
   getNoticePeriodRecovery,
   getVariableAllowance,
 } from "../../api";
@@ -14,11 +15,9 @@ import MultiSelect from "./Components/MultiSelect";
 import toast from "react-hot-toast";
 
 const NoticeRecovery = () => {
-  const [isLWF, setIsLWF] = useState(false);
   const [selectedOptions, setSelectedOptions] = useState([]);
-  const [isDropdownVisible, setIsDropdownVisible] = useState(false);
-  const [variableAllowances, setVariableAllowances] = useState([]);
-  const [filteredVariableAllowances, setFilteredVariableAllowances] = useState(
+  const [fixedAllowance, setFixedAllowances] = useState([]);
+  const [filteredFixedAllowances, setFilteredFixedAllowances] = useState(
     []
   );
   const [formData, setFormData] = useState({
@@ -34,17 +33,7 @@ const NoticeRecovery = () => {
       setSelectedOptions([...selectedOptions, option]);
     }
   };
-  const toggleDropdown = () => {
-    setIsDropdownVisible(!isDropdownVisible);
-  };
 
-  // const handleSelectAll = () => {
-  //   if (selectedOptions.length === variableAllowances.length) {
-  //     setSelectedOptions([]);
-  //   } else {
-  //     setSelectedOptions(variableAllowances.map((option) => option.value));
-  //   }
-  // };
   const listItemStyle = {
     listStyleType: "disc",
     color: "black",
@@ -68,19 +57,20 @@ const NoticeRecovery = () => {
         recoveryDenominator: data.recovery_denominator,
         id: data.id,
       });
+      setSelectedOptions(data.calculation_method)
     } catch (error) {
       console.log(error);
     }
   };
-  const fetchVariableAllowances = async () => {
+  const fetchFixedAllowances = async () => {
     try {
-      const res = await getVariableAllowance(hrmsOrgId);
+      const res = await getFixedAllowance(hrmsOrgId);
       const options = res.map((option) => ({
         value: option.id,
-        label: option.head_name,
+        label: option.custom_label,
       }));
-      setVariableAllowances(options);
-      setFilteredVariableAllowances(options);
+      setFixedAllowances(options);
+      setFilteredFixedAllowances(options);
     } catch (error) {
       console.log(error);
     }
@@ -88,7 +78,7 @@ const NoticeRecovery = () => {
 
   useEffect(() => {
     fetchNoticeRecovery();
-    fetchVariableAllowances();
+    fetchFixedAllowances();
   }, []);
 
   const handleEditNoticeRecovery = async () => {
@@ -96,10 +86,15 @@ const NoticeRecovery = () => {
     editData.append("recovery_denominator", formData.recoveryDenominator);
     editData.append("is_applicable", formData.recoveryApplicable);
     editData.append("organization", hrmsOrgId);
+    const recCalculationMethod = selectedOptions.map(item => item)
+    recCalculationMethod.map((method)=>{
+      editData.append("calculation_method", method)
+    })
     try {
       const res = await editNoticePeriodRecovery(formData.id, editData);
       toast.success("Notice period setting updated successfully");
       fetchNoticeRecovery();
+      setIsEditing(false)
     } catch (error) {
       console.log(error);
       toast.error("Something went wrong");
@@ -174,7 +169,7 @@ const NoticeRecovery = () => {
           <>
             <div className="mb-4">
               <MultiSelect
-                options={variableAllowances}
+                options={fixedAllowance}
                 title={
                   "How would you like to calculate Notice Period Recovery?"
                 }
@@ -183,8 +178,8 @@ const NoticeRecovery = () => {
                 selectedOptions={selectedOptions}
                 setSelectedOptions={setSelectedOptions}
                 disabled={!isEditing}
-                setOptions={setVariableAllowances}
-                searchOptions={filteredVariableAllowances}
+                setOptions={setFixedAllowances}
+                searchOptions={filteredFixedAllowances}
               />
             </div>
             <div className="mb-4">
