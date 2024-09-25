@@ -4698,11 +4698,77 @@ export const getInvestmentSetting = async (orgId) => {
 export const editInvestmentSetting = async (invId, data) => {
   try {
     const response = await HrmsAuth.put(
-      `/organization/investment-settings/${invId}/`,data,
+      `/organization/investment-settings/${invId}/`,
+      data
     );
     return response.data;
   } catch (error) {
     console.error("Error editing investment setting:", error);
+    throw error;
+  }
+};
+export const getRosterShift = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/roster/shift-master-data/?organization_id=${orgId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting roster shift:", error);
+    throw error;
+  }
+};
+export const deleteRosterShift = async (shiftId) => {
+  try {
+    const response = await HrmsAuth.delete(
+      `/roster/shift-master-data/${shiftId}/`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting roster shift:", error);
+    throw error;
+  }
+};
+export const postRosterShift = async (data) => {
+  try {
+    const response = await HrmsAuth.post(`/roster/shift-master-data/`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error post roster shift:", error);
+    throw error;
+  }
+};
+export const getRosterShiftDetails = async (shiftId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/roster/shift-master-data/${shiftId}/`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting roster shift:", error);
+    throw error;
+  }
+};
+export const editRosterShiftDetails = async (shiftId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/roster/shift-master-data/${shiftId}/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating roster shift:", error);
+    throw error;
+  }
+};
+export const getRosterRecords = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/roster-shift-list/?organization_id=${orgId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting roster records:", error);
     throw error;
   }
 };
