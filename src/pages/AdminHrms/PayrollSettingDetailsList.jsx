@@ -1,4 +1,4 @@
-import React, { useState,useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import { ImFileText2 } from "react-icons/im";
 import { FiChevronDown, FiChevronUp } from "react-icons/fi"; // Import the necessary icons
@@ -21,21 +21,20 @@ const PayrollSettingDetailsList = () => {
     // Use effect to check if dropdown should be open based on current path
     const currentPath = window.location.pathname;
     setDropdownOpen(
-      currentPath === '/admin/hrms/payroll-setting' ||
-      currentPath === '/admin/NPS' ||
-      currentPath === '/admin/Gratuity' ||
-      currentPath === '/admin/Leave-Recovery' ||
-      currentPath === '/admin/Notice-Recovery' ||
-      currentPath === '/admin/Minimum-Wage' ||
-      currentPath === '/admin/PF'||
-      currentPath === '/admin/daily-wage'
+      currentPath === "/admin/hrms/payroll-setting" ||
+        currentPath === "/admin/NPS" ||
+        currentPath === "/admin/Gratuity" ||
+        currentPath === "/admin/Leave-Recovery" ||
+        currentPath === "/admin/Notice-Recovery" ||
+        currentPath === "/admin/Minimum-Wage" ||
+        currentPath === "/admin/PF" ||
+        currentPath === "/admin/daily-wage"
     );
   }, []);
   return (
     <div className="flex">
-        <AdminHRMS/>
+      <AdminHRMS />
       <div className="w-64 h-full bg-white border-r p-4 mt-9">
-        
         <ul className="space-y-4">
           <li className="font-bold text-lg">Details List</li>
           <li>
@@ -49,7 +48,7 @@ const PayrollSettingDetailsList = () => {
                 className={`whitespace-pre duration-300 flex gap-4 items-center ${
                   !open && "opacity-0 translate-x-28 overflow-hidden"
                 }`}
-                >
+              >
                 {React.createElement(ImFileText2, { size: "20" })}
                 General Setting
               </h2>
@@ -209,8 +208,8 @@ const PayrollSettingDetailsList = () => {
                       PF Setting
                     </h2>
                   </NavLink>
-                  </li>
-                  <li>
+                </li>
+                <li>
                   <NavLink
                     to="/admin/daily-wage"
                     className={({ isActive }) =>
@@ -244,9 +243,7 @@ const PayrollSettingDetailsList = () => {
                 }`
               }
             >
-              <div>
-                {React.createElement(ImFileText2, { size: "20" })}
-              </div>
+              <div>{React.createElement(ImFileText2, { size: "20" })}</div>
               <h2
                 className={`whitespace-pre duration-300 ${
                   !open && "opacity-0 translate-x-28 overflow-hidden"
@@ -274,9 +271,7 @@ const PayrollSettingDetailsList = () => {
                 }`
               }
             >
-              <div>
-                {React.createElement(ImFileText2, { size: "20" })}
-              </div>
+              <div>{React.createElement(ImFileText2, { size: "20" })}</div>
               <h2
                 className={`whitespace-pre duration-300 ${
                   !open && "opacity-0 translate-x-28 overflow-hidden"
@@ -294,35 +289,33 @@ const PayrollSettingDetailsList = () => {
             </NavLink>
           </li>
           <li>
-          <NavLink
-            to="/admin/fixed-deduction"
-            className={({ isActive }) =>
-              `${
-                isActive
-                  ? "text-white bg-blue-500 flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
-                  : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-100 rounded-md"
-              }`
-            }
-          >
-            <div>
-              {React.createElement(ImFileText2, { size: "20" })}
-            </div>
-            <h2
-              className={`whitespace-pre duration-300 ${
-                !open && "opacity-0 translate-x-28 overflow-hidden"
-              }`}
+            <NavLink
+              to="/admin/fixed-deduction"
+              className={({ isActive }) =>
+                `${
+                  isActive
+                    ? "text-white bg-blue-500 flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                    : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-100 rounded-md"
+                }`
+              }
             >
-              Fixed Deduction
-            </h2>
-            <h2
-              className={`${
-                open && "hidden"
-              } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
-            >
-              Fixed Deduction
-            </h2>
-          </NavLink>
-        </li>
+              <div>{React.createElement(ImFileText2, { size: "20" })}</div>
+              <h2
+                className={`whitespace-pre duration-300 ${
+                  !open && "opacity-0 translate-x-28 overflow-hidden"
+                }`}
+              >
+                Fixed Deduction
+              </h2>
+              <h2
+                className={`${
+                  open && "hidden"
+                } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+              >
+                Fixed Deduction
+              </h2>
+            </NavLink>
+          </li>
           <li>
             <NavLink
               to="/admin/variable-allowance"
@@ -334,9 +327,7 @@ const PayrollSettingDetailsList = () => {
                 }`
               }
             >
-              <div>
-                {React.createElement(ImFileText2, { size: "20" })}
-              </div>
+              <div>{React.createElement(ImFileText2, { size: "20" })}</div>
               <h2
                 className={`whitespace-pre duration-300 ${
                   !open && "opacity-0 translate-x-28 overflow-hidden"
@@ -353,36 +344,34 @@ const PayrollSettingDetailsList = () => {
               </h2>
             </NavLink>
           </li>
-           <li>
-           <NavLink
-             to="/admin/variable-deduction"
-             className={({ isActive }) =>
-               `${
-                 isActive
-                   ? "text-white bg-blue-500 flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
-                   : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-100 rounded-md"
-               }`
-             }
-           >
-             <div>
-               {React.createElement(ImFileText2, { size: "20" })}
-             </div>
-             <h2
-               className={`whitespace-pre duration-300 ${
-                 !open && "opacity-0 translate-x-28 overflow-hidden"
-               }`}
-             >
-               Variable Deduction
-             </h2>
-             <h2
-               className={`${
-                 open && "hidden"
-               } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
-             >
-               Variable Deduction
-             </h2>
-           </NavLink>
-         </li>
+          <li>
+            <NavLink
+              to="/admin/variable-deduction"
+              className={({ isActive }) =>
+                `${
+                  isActive
+                    ? "text-white bg-blue-500 flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                    : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-100 rounded-md"
+                }`
+              }
+            >
+              <div>{React.createElement(ImFileText2, { size: "20" })}</div>
+              <h2
+                className={`whitespace-pre duration-300 ${
+                  !open && "opacity-0 translate-x-28 overflow-hidden"
+                }`}
+              >
+                Variable Deduction
+              </h2>
+              <h2
+                className={`${
+                  open && "hidden"
+                } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+              >
+                Variable Deduction
+              </h2>
+            </NavLink>
+          </li>
           <li>
             <NavLink
               to="/admin/other-benefit"
@@ -394,9 +383,7 @@ const PayrollSettingDetailsList = () => {
                 }`
               }
             >
-              <div>
-                {React.createElement(ImFileText2, { size: "20" })}
-              </div>
+              <div>{React.createElement(ImFileText2, { size: "20" })}</div>
               <h2
                 className={`whitespace-pre duration-300 ${
                   !open && "opacity-0 translate-x-28 overflow-hidden"
@@ -442,7 +429,7 @@ const PayrollSettingDetailsList = () => {
                 Employee Fields
               </h2>
             </NavLink> */}
-             {/* <div
+            {/* <div
               onClick={toggleDropdown1}
               className="cursor-pointer group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-200 rounded-md"
             >
@@ -529,7 +516,7 @@ const PayrollSettingDetailsList = () => {
                         !open && "opacity-0 translate-x-28 overflow-hidden"
                       }`}
                     >
-                     Documents
+                      Documents
                     </h2>
                   </NavLink>
                 </li>
@@ -547,9 +534,7 @@ const PayrollSettingDetailsList = () => {
                 }`
               }
             >
-              <div>
-                {React.createElement(ImFileText2, { size: "20" })}
-              </div>
+              <div>{React.createElement(ImFileText2, { size: "20" })}</div>
               <h2
                 className={`whitespace-pre duration-300 ${
                   !open && "opacity-0 translate-x-28 overflow-hidden"
@@ -577,9 +562,7 @@ const PayrollSettingDetailsList = () => {
                 }`
               }
             >
-              <div>
-                {React.createElement(ImFileText2, { size: "20" })}
-              </div>
+              <div>{React.createElement(ImFileText2, { size: "20" })}</div>
               <h2
                 className={`whitespace-pre duration-300 ${
                   !open && "opacity-0 translate-x-28 overflow-hidden"
@@ -597,35 +580,61 @@ const PayrollSettingDetailsList = () => {
             </NavLink>
           </li>
           <li>
-          <NavLink
-            to="/admin/payslip-setting"
-            className={({ isActive }) =>
-              `${
-                isActive
-                  ? "text-white bg-blue-500 flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
-                  : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-100 rounded-md"
-              }`
-            }
-          >
-            <div>
-              {React.createElement(ImFileText2, { size: "20" })}
-            </div>
-            <h2
-              className={`whitespace-pre duration-300 ${
-                !open && "opacity-0 translate-x-28 overflow-hidden"
-              }`}
+            <NavLink
+              to="/admin/payslip-setting"
+              className={({ isActive }) =>
+                `${
+                  isActive
+                    ? "text-white bg-blue-500 flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                    : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-100 rounded-md"
+                }`
+              }
             >
-              Payslip Setting
-            </h2>
-            <h2
-              className={`${
-                open && "hidden"
-              } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+              <div>{React.createElement(ImFileText2, { size: "20" })}</div>
+              <h2
+                className={`whitespace-pre duration-300 ${
+                  !open && "opacity-0 translate-x-28 overflow-hidden"
+                }`}
+              >
+                Payslip Setting
+              </h2>
+              <h2
+                className={`${
+                  open && "hidden"
+                } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+              >
+                Payslip Setting
+              </h2>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
+              to="/admin/hrms/investment-setting"
+              className={({ isActive }) =>
+                `${
+                  isActive
+                    ? "text-white bg-blue-500 flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                    : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-100 rounded-md"
+                }`
+              }
             >
-              Payslip Setting
-            </h2>
-          </NavLink>
-        </li>
+              <div>{React.createElement(ImFileText2, { size: "20" })}</div>
+              <h2
+                className={`whitespace-pre duration-300 ${
+                  !open && "opacity-0 translate-x-28 overflow-hidden"
+                }`}
+              >
+                Investment Setting
+              </h2>
+              <h2
+                className={`${
+                  open && "hidden"
+                } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+              >
+                Investment Setting
+              </h2>
+            </NavLink>
+          </li>
         </ul>
       </div>
       {/* <div className="flex-grow p-6 bg-gray-100">

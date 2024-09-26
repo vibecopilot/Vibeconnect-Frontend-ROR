@@ -250,19 +250,28 @@ const AttendanceRec = () => {
 
         <div className="flex justify-between items-center my-4 gap-4">
           <div>
-            <Link className="font-medium" to={"/admin/hrms/dashboard"}>Home</Link> {"/ "}
-            <Link className="font-medium" to={""}>Attendance</Link> {"/ "}
-            <Link className="font-medium" to={""}>Attendance Record</Link> {"/ "}
+            <Link className="font-medium" to={"/admin/hrms/dashboard"}>
+              Home
+            </Link>{" "}
+            {"/ "}
+            <Link className="font-medium" to={""}>
+              Attendance
+            </Link>{" "}
+            {"/ "}
+            <Link className="font-medium" to={""}>
+              Attendance Record
+            </Link>{" "}
+            {"/ "}
           </div>
           <div className="flex items-center gap-2">
-          <input
-            type="search"
-            value={searchText}
-            onChange={handleSearch}
-            id=""
-            className="border border-gray-400 w-96 p-2 rounded-md"
-            placeholder="Search by employee name"
-          />
+            <input
+              type="search"
+              value={searchText}
+              onChange={handleSearch}
+              id=""
+              className="border border-gray-400 w-96 p-2 rounded-md"
+              placeholder="Search by employee name"
+            />
             <button
               onClick={() => changeWeek("prev")}
               className=" font-bold  p-2 rounded border-2 text-black border-black"
@@ -281,13 +290,11 @@ const AttendanceRec = () => {
             </button>
           </div>
         </div>
-
         <div className="overflow-x-auto">
           <table className="w-full bg-white shadow-sm border-collapse">
             <thead>
               <tr className="bg-gray-200">
                 <th className="p-2 text-left ">Employee Name</th>
-
                 {nextSevenDays.map((date, index) => (
                   <th
                     key={index}
@@ -296,15 +303,19 @@ const AttendanceRec = () => {
                     {formatDate(date.toISOString())}
                   </th>
                 ))}
-                <th></th>
+                {/* <th></th> */}
               </tr>
             </thead>
             <tbody>
               {filteredEmployees.map((employee) => (
                 <tr key={employee.id} className="hover:bg-gray-50">
                   <td className="p-2 font-medium border-b flex items-center gap-2">
-                    <div className=" text-white py-3 rounded-full h-12 w-12 text-center border border-gray-700" style={{background:themeColor}}>
-                  {employee.first_name.charAt(0).toUpperCase()}{employee.last_name.charAt(0).toUpperCase()}
+                    <div
+                      className=" text-white p-2 flex items-center justify-center rounded-full h-10 w-10 text-xs text-center border border-gray-700"
+                      style={{ background: themeColor }}
+                    >
+                      {employee.first_name.charAt(0).toUpperCase()}
+                      {employee.last_name.charAt(0).toUpperCase()}
                     </div>
                     {employee.first_name} {employee.last_name}
                   </td>

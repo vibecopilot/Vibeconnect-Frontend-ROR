@@ -241,19 +241,16 @@ const AttendanceRecords = () => {
               placeholder="Search Employee Name/Code"
               className="w-64 p-2 border mb-4 rounded"
             />
-            
-              {employees.map((employee, index) => (
-                <li key={index} className="p-2 flex items-center border-b">
-                  <span className="bg-gray-200 p-2 rounded-full mr-2">
-                    {employee.code}
-                  </span>
-                  <button onClick={() => handleEmployeeClick(employee)}>
-                    {employee.name}
-                  </button>
-                </li>
-              ))}
-            
-
+            {employees.map((employee, index) => (
+              <li key={index} className="p-2 flex items-center border-b">
+                <span className="bg-gray-200 p-2 rounded-full mr-2">
+                  {employee.code}
+                </span>
+                <button onClick={() => handleEmployeeClick(employee)}>
+                  {employee.name}
+                </button>
+              </li>
+            ))}
             {selectedEmployee && (
               <EmployeeDetailView
                 employee={selectedEmployee}
@@ -332,7 +329,6 @@ const AttendanceRecords = () => {
               </table>
             </div>
           </div>
-
         </div>
 
         {/* Modal */}

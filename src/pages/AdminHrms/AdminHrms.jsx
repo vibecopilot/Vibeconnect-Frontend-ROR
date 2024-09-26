@@ -4,7 +4,12 @@ import { HiCheck } from "react-icons/hi";
 import { FaBuilding } from "react-icons/fa";
 import { useNavigate, NavLink, useLocation } from "react-router-dom";
 import { getItemInLocalStorage } from "../../utils/localStorage";
-import { MdOutlineDashboard, MdExpandMore, MdExpandLess, MdOutlineSettings } from "react-icons/md";
+import {
+  MdOutlineDashboard,
+  MdExpandMore,
+  MdExpandLess,
+  MdOutlineSettings,
+} from "react-icons/md";
 import { AiOutlineFieldTime } from "react-icons/ai";
 import { useSelector } from "react-redux";
 import { PiSignOutBold } from "react-icons/pi";
@@ -25,12 +30,13 @@ import {
 } from "react-icons/fa";
 import { ImFileText2 } from "react-icons/im";
 import { RiSettings3Line } from "react-icons/ri";
-import { FaMoneyBills } from "react-icons/fa6";
+import { FaMoneyBills, FaMoneyBillWheat } from "react-icons/fa6";
 import { BiSolidReport } from "react-icons/bi";
 const AdminHRMS = () => {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState("");
   const [isOrgOpen, setIsOrgOpen] = useState(false);
+  const [isFlexiOpen, setIsFlexiOpen] = useState(false);
   const [isEmpOpen, setIsEmpOpen] = useState(false);
   const [isAttOpen, setIsAttOpen] = useState(false);
   const [isLeaveOpen, setIsLeaveOpen] = useState(false);
@@ -66,6 +72,9 @@ const AdminHRMS = () => {
   };
   const toggleOrgMenu = () => {
     setIsOrgOpen(!isOrgOpen);
+  };
+  const toggleFlexiMenu = () => {
+    setIsFlexiOpen(!isFlexiOpen);
   };
   const toggleEmpMenu = () => {
     setIsEmpOpen(!isEmpOpen);
@@ -407,7 +416,6 @@ const AdminHRMS = () => {
               </div>
               {isOrgOpen && (
                 <div className="flex flex-col gap-2">
-                  
                   <NavLink
                     to="/admin/company-profile/basic-information"
                     className={() =>
@@ -549,34 +557,6 @@ const AdminHRMS = () => {
                 </div>
               )}
             </div>
-            {/* <NavLink
-                to="/hrms/dashboard"
-                className={({ isActive }) =>
-                  `${
-                    isActive
-                      ? "text-black bg-white flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
-                      : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md"
-                  }`
-                }
-              >
-                <div>
-                  {React.createElement(FaUser, { size: "20" })}
-                </div>
-                <h2
-                  className={`whitespace-pre duration-300 ${
-                    !open && "opacity-0 translate-x-28 overflow-hidden"
-                  }`}
-                >
-                  Employees
-                </h2>
-                <h2
-                  className={`${
-                    open && "hidden"
-                  } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
-                >
-                  Employees
-                </h2>
-              </NavLink> */}
 
             <div>
               <div
@@ -823,65 +803,9 @@ const AdminHRMS = () => {
                       Generated Letter
                     </h2>
                   </NavLink>
-                  {/* <NavLink
-                      to="/hrms/calendar"
-                      className={({ isActive }) =>
-                        `${
-                          isActive
-                            ? "text-black bg-white flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
-                            : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md"
-                        }`
-                      }
-                    >
-                      <div>
-                        {React.createElement(FaRegCalendarAlt, { size: "20" })}
-                      </div>
-                      <h2
-                        className={`whitespace-pre duration-300 ${
-                          !open && "opacity-0 translate-x-28 overflow-hidden"
-                        }`}
-                      >
-                        Calendar
-                      </h2>
-                      <h2
-                        className={`${
-                          open && "hidden"
-                        } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
-                      >
-                        Calendar
-                      </h2>
-                    </NavLink> */}
                 </div>
               )}
             </div>
-            {/* <NavLink
-                to="/hrms/attendance"
-                className={({ isActive }) =>
-                  `${
-                    isActive
-                      ? "text-black bg-white flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
-                      : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md"
-                  }`
-                }
-              >
-                <div>
-                  {React.createElement(FaCalendarCheck, { size: "20" })}
-                </div>
-                <h2
-                  className={`whitespace-pre duration-300 ${
-                    !open && "opacity-0 translate-x-28 overflow-hidden"
-                  }`}
-                >
-                  Attendance
-                </h2>
-                <h2
-                  className={`${
-                    open && "hidden"
-                  } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
-                >
-                  Attendance
-                </h2>
-              </NavLink> */}
 
             <div>
               <div
@@ -1129,7 +1053,143 @@ const AdminHRMS = () => {
                 </div>
               )}
             </div>
-
+            <div>
+              <div
+                onClick={toggleFlexiMenu}
+                className="cursor-pointer flex items-center text-sm gap-3.5 font-medium p-2 "
+              >
+                <div>
+                  {React.createElement(FaMoneyBillWheat, { size: "20" })}
+                  {/* <p>Organization</p> */}
+                </div>
+                <h2
+                  className={`whitespace-pre duration-300 ${
+                    !open && "opacity-0 translate-x-28 overflow-hidden"
+                  }`}
+                >
+                  Flexi Benefits
+                </h2>
+                <div className="ml-auto">
+                  {isFlexiOpen
+                    ? React.createElement(MdExpandLess, { size: "20" })
+                    : React.createElement(MdExpandMore, { size: "20" })}
+                </div>
+              </div>
+              {isFlexiOpen && (
+                <div className="flex flex-col gap-2">
+                  <NavLink
+                    to="/admin/flexi-benefits"
+                    className={({ isActive }) =>
+                      `${
+                        isActive
+                          ? "text-black bg-white flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                          : "group flex items-center text-sm gap-3.5 font-medium p-2 "
+                      }`
+                    }
+                  >
+                    <div>
+                      {React.createElement(IoSettingsOutline, { size: "20" })}
+                    </div>
+                    <h2
+                      className={`whitespace-pre duration-100 ${
+                        !open && "opacity-0 translate-x-28 overflow-hidden"
+                      }`}
+                    >
+                      Flexi Benefits
+                    </h2>
+                    <h2
+                      className={`${
+                        open && "hidden"
+                      } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-100 group-hover:w-fit`}
+                    >
+                      Flexi Benefits
+                    </h2>
+                  </NavLink>
+                  <NavLink
+                    to="/admin/employee-flexi-benefit-balance"
+                    className={({ isActive }) =>
+                      `${
+                        isActive
+                          ? "text-black bg-white flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                          : "group flex items-center text-sm gap-3.5 font-medium p-2 "
+                      }`
+                    }
+                  >
+                    <div>{React.createElement(FaUserCog, { size: "20" })}</div>
+                    <h2
+                      className={`whitespace-pre  duration-200 ${
+                        !open && "opacity-0 translate-x-28 overflow-hidden"
+                      }`}
+                    >
+                      Employee Balances
+                    </h2>
+                    <h2
+                      className={`${
+                        open && "hidden"
+                      } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-200 group-hover:w-fit`}
+                    >
+                      Employee Balances
+                    </h2>
+                  </NavLink>
+                  <NavLink
+                    to="/admin/flexi-benefit-payslip"
+                    className={({ isActive }) =>
+                      `${
+                        isActive
+                          ? "text-black bg-white flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                          : "group flex items-center text-sm gap-3.5 font-medium p-2 "
+                      }`
+                    }
+                  >
+                    <div>
+                      {React.createElement(ImFileText2, { size: "20" })}
+                    </div>
+                    <h2
+                      className={`whitespace-pre duration-300 ${
+                        !open && "opacity-0 translate-x-28 overflow-hidden"
+                      }`}
+                    >
+                      Flexi Benefit payslips
+                    </h2>
+                    <h2
+                      className={`${
+                        open && "hidden"
+                      } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+                    >
+                      Flexi Benefit payslips
+                    </h2>
+                  </NavLink>
+                  <NavLink
+                    to="/admin/flexi-settings"
+                    className={({ isActive }) =>
+                      `${
+                        isActive
+                          ? "text-black bg-white flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                          : "group flex items-center text-sm gap-3.5 font-medium p-2 "
+                      }`
+                    }
+                  >
+                    <div>
+                      {React.createElement(RiSettings3Line, { size: "20" })}
+                    </div>
+                    <h2
+                      className={`whitespace-pre duration-300 ${
+                        !open && "opacity-0 translate-x-28 overflow-hidden"
+                      }`}
+                    >
+                      Settings
+                    </h2>
+                    <h2
+                      className={`${
+                        open && "hidden"
+                      } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+                    >
+                      Settings
+                    </h2>
+                  </NavLink>
+                </div>
+              )}
+            </div>
             <div
               onClick={toggleRosterMenu}
               className="cursor-pointer flex items-center text-sm gap-3 font-medium p-2 "
@@ -1237,7 +1297,7 @@ const AdminHRMS = () => {
                   }
                 >
                   <div>
-                    {React.createElement(BiSolidReport , { size: "20" })}
+                    {React.createElement(BiSolidReport, { size: "20" })}
                   </div>
                   <h2
                     className={`whitespace-pre duration-300 ${
@@ -1290,7 +1350,9 @@ const AdminHRMS = () => {
                     }`
                   }
                 >
-                  <div>{React.createElement(MdOutlineSettings, { size: "20" })}</div>
+                  <div>
+                    {React.createElement(MdOutlineSettings, { size: "20" })}
+                  </div>
                   <h2
                     className={`whitespace-pre duration-300 ${
                       !open && "opacity-0 translate-x-28 overflow-hidden"

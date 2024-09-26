@@ -12,9 +12,11 @@ import "react-datepicker/dist/react-datepicker.css";
 import { BsEye } from "react-icons/bs";
 import { HiArrowLeft, HiArrowRight } from 'react-icons/hi';
 
+
 const ServiceDetails = () => {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [serviceFor, setserviceFor] = useState("schedule");
+
 
   const themeColor = useSelector((state) => state.theme.color);
   const [details, setDetails] = useState([]);
@@ -37,6 +39,7 @@ const ServiceDetails = () => {
       }
     };
 
+
     const fetchLogsDetails = async () => {
       try {
         const logsDetailsResp = await getSoftserviceActivityDetails(id); // Assuming this fetches all logs
@@ -52,7 +55,7 @@ const ServiceDetails = () => {
         console.error('Error fetching logs details:', error);
       }
     };
-    
+   
     useEffect(() => {
       fetchScheduleData();
       fetchLogsDetails(); // Fetch logs based on the current id and date
@@ -62,10 +65,12 @@ const ServiceDetails = () => {
     fetchLogsDetails(); // Fetch data based on the selected date and status 'complete'
   }, [selectedDate]);
 
+
   // Handle date input change
   const handleDateChange = (e) => {
     setSelectedDate(e.target.value);
   };
+
 
   // Decrease date by 1 day
   const handlePrevDate = () => {
@@ -74,6 +79,7 @@ const ServiceDetails = () => {
     setSelectedDate(prevDate.toISOString().split('T')[0]); // Update selectedDate
   };
 
+
   // Increase date by 1 day
   const handleNextDate = () => {
     const nextDate = new Date(selectedDate);
@@ -81,11 +87,13 @@ const ServiceDetails = () => {
     setSelectedDate(nextDate.toISOString().split('T')[0]); // Update selectedDate
   };
 
+
   // Function to format the date from start_time
   // Function to format the date from start_time
 const formatDate = (isoString) => {
   return isoString.split('T')[0]; // Extract YYYY-MM-DD part directly from ISO string
 };
+
 
   const [searchText, setSearchText] = useState("");
   const handleSearch = (e) => {
@@ -224,6 +232,7 @@ const formatDate = (isoString) => {
               ))}</div>
             </div>
 
+
             {/* <p>Wing:</p>
             <p>Area:</p> */}
             {/* <p>Created By:</p> */}
@@ -340,6 +349,7 @@ const formatDate = (isoString) => {
         className="p-1 border-gray-300 rounded-md w-64  outline-none border"
       />
 
+
         <button onClick={handleNextDate}  className="bg-gray-200 px-2 rounded-md py-2"><HiArrowRight/></button>
       </div>
            
@@ -425,4 +435,8 @@ const formatDate = (isoString) => {
   );
 };
 
+
 export default ServiceDetails;
+
+
+
