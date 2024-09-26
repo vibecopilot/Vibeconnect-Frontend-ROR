@@ -4772,3 +4772,14 @@ export const getRosterRecords = async (orgId) => {
     throw error;
   }
 };
+export const editRosterRecord = async (shiftId) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/roster/roster-shift/${shiftId}/`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting roster records:", error);
+    throw error;
+  }
+};

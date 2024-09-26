@@ -9,114 +9,7 @@ import RoasterShiftDetails from "./Components/RoasterShiftDetails";
 import { getRosterRecords } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 
-const employees = [
-  {
-    id: "AP",
-    name: "Aniket Parkar",
-    avatar: "/placeholder.svg?height=40&width=40",
-    schedules: {
-      "2024-09-22": "08:45 AM\n06:05 PM",
-      "2024-09-23": "08:45 AM\n06:05 PM",
-      "2024-09-24": "08:45 AM\n06:05 PM",
-      "2024-09-25": "08:45 AM\n06:05 PM",
-      "2024-09-26": "08:45 AM\n06:05 PM",
-      "2024-09-27": "08:45 AM\n06:05 PM",
-      "2024-09-28": "07:45 AM\n05:05 PM",
-    },
-  },
-  {
-    id: "PP",
-    name: "Prathamesh Palav",
-    schedules: {
-      "2024-09-22": "01:45 PM\n11:05 PM",
-      "2024-09-23": "01:45 PM\n11:05 PM",
-      "2024-09-24": "01:45 PM\n11:05 PM",
-      "2024-09-25": "01:45 PM\n11:05 PM",
-      "2024-09-26": "01:45 PM\n11:05 PM",
-      "2024-09-27": "01:45 PM\n11:05 PM",
-      "2024-09-28": "07:45 AM\n05:05 PM",
-    },
-  },
-  {
-    id: "SS",
-    name: "Sami Saudagar",
-    schedules: {
-      "2024-09-22": "07:45 AM\n05:05 PM",
-      "2024-09-23": "07:45 AM\n05:05 PM",
-      "2024-09-24": "07:45 AM\n05:05 PM",
-      "2024-09-25": "07:45 AM\n05:05 PM",
-      "2024-09-26": "07:45 AM\n05:05 PM",
-      "2024-09-27": "07:45 AM\n05:05 PM",
-      "2024-09-28": "07:45 AM\n05:05 PM",
-    },
-  },
-  {
-    id: "AB",
-    name: "Ajay Baniya",
-    schedules: {
-      "2024-09-22": null,
-      "2024-09-23": null,
-      "2024-09-24": null,
-      "2024-09-25": null,
-      "2024-09-26": null,
-      "2024-09-27": null,
-      "2024-09-28": null,
-    },
-  },
-  {
-    id: "SB",
-    name: "Sujal Bhavkar",
-    schedules: {
-      "2024-09-22": "03:45 PM\n08:05 PM",
-      "2024-09-23": "03:45 PM\n08:05 PM",
-      "2024-09-24": "03:45 PM\n08:05 PM",
-      "2024-09-25": "03:45 PM\n08:05 PM",
-      "2024-09-26": "03:45 PM\n08:05 PM",
-      "2024-09-27": "03:45 PM\n08:05 PM",
-      "2024-09-28": "03:45 PM\n08:05 PM",
-    },
-  },
-  {
-    id: "RS",
-    name: "Ritik Solanki",
-    avatar: "/placeholder.svg?height=40&width=40",
-    schedules: {
-      "2024-09-22": "05:45 AM\n03:05 PM",
-      "2024-09-23": "05:45 AM\n03:05 PM",
-      "2024-09-24": "05:45 AM\n03:05 PM",
-      "2024-09-25": "05:45 AM\n03:05 PM",
-      "2024-09-26": "05:45 AM\n03:05 PM",
-      "2024-09-27": "05:45 AM\n03:05 PM",
-      "2024-09-28": "07:45 AM\n05:05 PM",
-    },
-  },
-  {
-    id: "DP",
-    name: "Dhiraj Poojary",
-    schedules: {
-      "2024-09-22": "05:45 AM\n03:05 PM",
-      "2024-09-23": "05:45 AM\n03:05 PM",
-      "2024-09-24": "05:45 AM\n03:05 PM",
-      "2024-09-25": "05:45 AM\n03:05 PM",
-      "2024-09-26": "05:45 AM\n03:05 PM",
-      "2024-09-27": "05:45 AM\n03:05 PM",
-      "2024-09-28": "07:45 AM\n05:05 PM",
-    },
-  },
-  {
-    id: "PR",
-    name: "Prathamesh Raut",
-    schedules: {
-      "2024-09-22": "01:45 PM\n11:05 PM",
-      "2024-09-23": "01:45 PM\n11:05 PM",
-      "2024-09-24": "01:45 PM\n11:05 PM",
-      "2024-09-25": "01:45 PM\n11:05 PM",
-      "2024-09-26": "01:45 PM\n11:05 PM",
-      "2024-09-27": "01:45 PM\n11:05 PM",
-      "2024-09-28": "07:45 AM\n05:05 PM",
-    },
-  },
-];
+
 
 const Roster = () => {
   const themeColor = useSelector((state) => state.theme.color);
@@ -347,6 +240,7 @@ const Roster = () => {
                           {shift ? (
                             <div
                               onClick={() => handleShiftClick(employee, shift)}
+                              // title={isWeekend? "":""}
                               className={`rounded-md p-1 cursor-pointer transition duration-200 ${
                                 isWeekend
                                   ? "bg-orange-100 text-orange-800 hover:bg-orange-200"
@@ -360,6 +254,7 @@ const Roster = () => {
                             </div>
                           ) : (
                             <div
+                            title="No Shift Assigned"
                               onClick={() => handleShiftClick(employee, shift)}
                               className="bg-gray-100 cursor-pointer text-gray-500 rounded-md p-1 hover:bg-gray-200 transition duration-200"
                             >
