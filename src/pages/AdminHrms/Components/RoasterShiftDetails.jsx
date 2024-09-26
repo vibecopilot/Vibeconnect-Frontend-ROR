@@ -1,17 +1,33 @@
 import { useEffect, useState } from "react";
-import { getRosterShift } from "../../../api";
+import {
+  deleteRosterRecord,
+  editRosterRecord,
+  editRosterShiftDetails,
+  getRosterRecordDetails,
+  getRosterShift,
+  postRosterRecord,
+} from "../../../api";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
 import { useSelector } from "react-redux";
+import toast from "react-hot-toast";
+import { MdClose, MdDeleteForever } from "react-icons/md";
+import { FaCheck } from "react-icons/fa";
 
-function RoasterShiftDetails({ employee, date, schedule, onClose }) {
+function RoasterShiftDetails({
+  employee,
+  date,
+  schedule,
+  onClose,
+  recordId,
+  fetchRosterRecords,
+}) {
   const [shiftType, setShiftType] = useState("Full Day Weekly Off");
-  const [selectedShift, setSelectedShift] = useState(
-    "8.45 A.M. TO 6.05 P.M. (08:45 AM - 06:05 PM)"
-  );
   const [branchLocation, setBranchLocation] = useState("");
+  const [employeeData, setEmployeeData] = useState([]);
   const [repeat, setRepeat] = useState(false);
   const [formData, setFormData] = useState({
     endOn: "Never",
+    selectedShift: "",
   });
 
   const formatDate = (date) => {
@@ -25,6 +41,16 @@ function RoasterShiftDetails({ employee, date, schedule, onClose }) {
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
   const [shifts, setShifts] = useState([]);
   useEffect(() => {
+    const fetchRosterRecordDetails = async () => {
+      try {
+        const res = await getRosterRecordDetails(date.id);
+        setEmployeeData(res);
+        setFormData({ ...formData, selectedShift: res.shift });
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
     const fetchRosterShifts = async () => {
       try {
         const res = await getRosterShift(hrmsOrgId);
@@ -34,9 +60,45 @@ function RoasterShiftDetails({ employee, date, schedule, onClose }) {
       }
     };
     fetchRosterShifts();
+    fetchRosterRecordDetails();
   }, []);
   const themeColor = useSelector((state) => state.theme.color);
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+  console.log(employee);
+  const handleEditRosterShift = async () => {
+    const editData = new FormData();
+    editData.append(
+      "date",
+      date?.date ? date?.date : new Date(schedule).toISOString().slice(0, 10)
+    );
+    editData.append("shift", formData.selectedShift);
+    editData.append("employee", employee.id);
+    try {
+      if (date?.date) {
+        const res = await editRosterRecord(date.id, editData);
+      } else {
+        const res = await postRosterRecord(editData);
+      }
+      fetchRosterRecords();
+      toast.success("Roster record updated successfully");
+      onClose();
+    } catch (error) {
+      console.log(error);
+      toast.error("Something went wrong");
+    }
+  };
 
+  const handleDeleteRosterRecord = async () => {
+    try {
+      await deleteRosterRecord(date.id);
+      fetchRosterRecords();
+      onClose();
+    } catch (error) {
+      console.log(error);
+    }
+  };
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center">
       <div className="bg-white p-6 rounded-xl shadow-lg w-1/3">
@@ -66,7 +128,9 @@ function RoasterShiftDetails({ employee, date, schedule, onClose }) {
           <div className="mb-4 flex justify-between items-center w-full border-2 p-1 rounded-md border-blue-500">
             <div className="flex flex-col gap-2">
               <h3 className="font-semibold">Current Shift</h3>
-              <p className="font-medium text-xs">{formatDate(date?.date)}</p>
+              <p className="font-medium text-xs">
+                {date?.date ? formatDate(date?.date) : formatDate(schedule)}
+              </p>
             </div>
             <p className="text-blue-500 font-semibold">
               {date?.shift_start_time} - {date?.shift_end_time}
@@ -81,9 +145,8 @@ function RoasterShiftDetails({ employee, date, schedule, onClose }) {
               value={shiftType}
               onChange={(e) => setShiftType(e.target.value)}
             >
-              <option selected="selected" value="full_working_day">
-                Full Working Day
-              </option>
+              <option value="">Select Type</option>
+              <option value="full_working_day">Full Working Day</option>
               <option value="full_day_weekly_off">Full Day Weekly Off</option>
               <option value="half_day_weekly_off">Half Day Weekly Off</option>
             </select>
@@ -93,11 +156,13 @@ function RoasterShiftDetails({ employee, date, schedule, onClose }) {
             <label className="block mb-2 font-medium">Select Shift</label>
             <select
               className="w-full p-2 border rounded"
-              value={selectedShift}
-              onChange={(e) => setSelectedShift(e.target.value)}
+              value={formData.selectedShift}
+              onChange={handleChange}
+              name="selectedShift"
             >
+              <option value="">Select Shift</option>
               {shifts.map((shift) => (
-                <option value={shift.id} id={shift.id}>
+                <option value={shift.id} key={shift.id}>
                   {shift.name}
                 </option>
               ))}
@@ -182,18 +247,25 @@ function RoasterShiftDetails({ employee, date, schedule, onClose }) {
             </div>
           )}
         </div>
-        <div className="flex justify-between px-4 p-1 border-t">
-          <button className="px-4 py-2 bg-red-500 text-white rounded">
-            Delete
-          </button>
-          <button className="px-4 py-2 bg-gray-200 rounded" onClick={onClose}>
-            Cancel
+        <div className="flex justify-around items-center px-4 p-1 border-t">
+          <button
+            className="px-4 py-2 border-2 border-red-500 text-red-500 rounded-full flex items-center gap-2"
+            onClick={() => handleDeleteRosterRecord()}
+          >
+            <MdDeleteForever size={20} /> Delete
           </button>
           <button
-            style={{ background: themeColor }}
-            className="px-4 py-2  text-white rounded"
+            className="px-4 py-2 border-2 border-gray-500 text-gray-500  rounded-full flex items-center gap-2"
+            onClick={onClose}
           >
-            Save
+            <MdClose size={20} /> Cancel
+          </button>
+          <button
+            // style={{ background: themeColor }}
+            className="px-4 py-2 border border-green-500 text-green-500  rounded-full flex items-center gap-2"
+            onClick={handleEditRosterShift}
+          >
+            <FaCheck /> Save
           </button>
         </div>
       </div>

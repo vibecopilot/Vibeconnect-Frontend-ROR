@@ -8,17 +8,14 @@ import { BiChevronLeft, BiChevronRight } from "react-icons/bi";
 import RoasterShiftDetails from "./Components/RoasterShiftDetails";
 import { getRosterRecords } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
-
-
+import { formatShiftTime } from "../../utils/dateUtils";
 
 const Roster = () => {
   const themeColor = useSelector((state) => state.theme.color);
-
   const [isOpen, setIsOpen] = useState(false);
   const [year, setYear] = useState("");
   const [month, setMonth] = useState("");
   const [downloadLiteVersion, setDownloadLiteVersion] = useState("No");
-
   const [startDate, setStartDate] = useState(new Date());
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [employees, setEmployees] = useState([]);
@@ -29,7 +26,6 @@ const Roster = () => {
     try {
       const res = await getRosterRecords(hrmsOrgId);
       setEmployees(res.results);
-      console.log(res.results);
     } catch (error) {
       console.log(error);
     }
@@ -39,9 +35,10 @@ const Roster = () => {
   }, []);
 
   const handleShiftClick = (employee, date, schedule) => {
+    console.log(schedule)
     setSelectedShift({ employee, date, schedule });
   };
-  console.log(selectedShift);
+
   const toggleModal = () => {
     setIsOpen(!isOpen);
   };
@@ -104,7 +101,7 @@ const Roster = () => {
   return (
     <div className="flex ">
       <AdminHRMS />
-      <div className="ml-20  bg-gray-100 p-2 w-full">
+      <div className="ml-20  bg-gray-100 p-2 w-full px-6">
         <header
           style={{ background: themeColor }}
           className="bg-blue-500 p-4 text-white rounded-md flex justify-between items-center"
@@ -132,19 +129,19 @@ const Roster = () => {
 
         <div className="flex gap-5 mt-2 ">
           <div className="flex gap-2">
-            <div class="w-4 h-4 bg-green-500 mt-1 rounded-full"></div>
+            <div className="w-4 h-4 bg-green-500 mt-1 rounded-full"></div>
             <p> Full Working Day</p>
           </div>
           <div className="flex gap-2">
-            <div class="w-4 h-4 bg-orange-500 mt-1 rounded-full"></div>
+            <div className="w-4 h-4 bg-orange-500 mt-1 rounded-full"></div>
             <p>Weekly Off/Holiday</p>
           </div>
           <div className="flex gap-2">
-            <div class="w-4 h-4 bg-blue-500 mt-1 rounded-full"></div>
+            <div className="w-4 h-4 bg-blue-500 mt-1 rounded-full"></div>
             <p>Half Day</p>
           </div>
           <div className="flex gap-2">
-            <div class="w-4 h-4 bg-gray-500 mt-1 rounded-full"></div>
+            <div className="w-4 h-4 bg-gray-500 mt-1 rounded-full"></div>
             <p>Not Assigned</p>
           </div>
         </div>
@@ -239,7 +236,7 @@ const Roster = () => {
                         <td key={index} className="border-none p-2 text-center">
                           {shift ? (
                             <div
-                              onClick={() => handleShiftClick(employee, shift)}
+                              onClick={() => handleShiftClick(employee, shift, date)}
                               // title={isWeekend? "":""}
                               className={`rounded-md p-1 cursor-pointer transition duration-200 ${
                                 isWeekend
@@ -248,14 +245,15 @@ const Roster = () => {
                               }`}
                             >
                               <div>
-                                {shift.shift_start_time} -{" "}
-                                {shift.shift_end_time}
+                                {/* {shift.shift_start_time} -{" "}
+                                {shift.shift_end_time} */}
+                                 {formatShiftTime(shift.shift_start_time, shift.shift_end_time)}
                               </div>
                             </div>
                           ) : (
                             <div
-                            title="No Shift Assigned"
-                              onClick={() => handleShiftClick(employee, shift)}
+                              title="No Shift Assigned"
+                              onClick={() => handleShiftClick(employee, shift, date)}
                               className="bg-gray-100 cursor-pointer text-gray-500 rounded-md p-1 hover:bg-gray-200 transition duration-200"
                             >
                               NOT ASSIGNED
@@ -386,6 +384,7 @@ const Roster = () => {
           date={selectedShift.date}
           schedule={selectedShift.schedule}
           onClose={() => setSelectedShift(null)}
+          fetchRosterRecords={fetchRosterRecords}
         />
       )}
     </div>

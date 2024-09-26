@@ -1,15 +1,18 @@
 import React, { useState } from "react";
 import { PiPlusCircle } from "react-icons/pi";
-import { Link } from "react-router-dom";
 import Table from "../../components/table/Table";
 import AttendanceDetailsList from "./AttendanceDetailsList";
 import { GrHelpBook } from "react-icons/gr";
 import { BiEdit } from "react-icons/bi";
+import { MdClose } from "react-icons/md";
+import { FaCheck } from "react-icons/fa";
+import AddRegularizationReason from "./Modals/AddRegularizationReason";
+import { useSelector } from "react-redux";
 
 const RegularizationReason = () => {
   const [showModal, setShowModal] = useState(false);
+  const themeColor = useSelector((state) => state.theme.color);
   const [showModal1, setShowModal1] = useState(false);
-
   const [frequencyRestriction, setFrequencyRestriction] = useState(false);
   const listItemStyle = {
     listStyleType: "disc",
@@ -67,26 +70,23 @@ const RegularizationReason = () => {
     setShowModal(false);
   };
 
-  const handleFrequencyChange = (e) => {
-    setFrequencyRestriction(e.target.checked);
-  };
-
   return (
     <section className="flex ml-20">
       <AttendanceDetailsList />
       <div className="w-2/3 flex m-3 flex-col overflow-hidden">
-        <div className="flex justify-between my-5">
+        <div className="flex justify-between my-2 gap-2">
           <input
             type="text"
             placeholder="Search by name"
-            className="border border-gray-400 w-96 placeholder:text-sm rounded-lg p-2"
+            className="border border-gray-400 w-full placeholder:text-sm rounded-lg p-2"
           />
           <button
             onClick={handleAddClick}
-            className="border-2 font-semibold hover:bg-black hover:text-white duration-150 transition-all border-black p-2 rounded-md text-black cursor-pointer text-center flex items-center gap-2 justify-center"
+            style={{ background: themeColor }}
+            className="border-2 font-semibold hover:bg-black hover:text-white duration-150 transition-all  p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
           >
             <PiPlusCircle size={20} />
-            Add Reason
+            Add
           </button>
         </div>
         <Table columns={columns} data={data} isPagination={true} />
@@ -150,6 +150,7 @@ const RegularizationReason = () => {
             <h2 className="text-lg font-bold mb-4">
               Edit Regularization Reason
             </h2>
+
             <label className="block mb-2">
               Label *
               <input
@@ -216,73 +217,7 @@ const RegularizationReason = () => {
         </div>
       )}
       {showModal && (
-        <div className="fixed inset-0 z-10 bg-gray-600 bg-opacity-50 flex justify-center items-center">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-1/2">
-            <h2 className="text-lg font-bold mb-4">
-              Add Regularization Reason
-            </h2>
-            <label className="block mb-2">
-              Label *
-              <input
-                type="text"
-                className="border border-gray-400 w-full rounded-lg p-2 mt-1"
-              />
-            </label>
-            <label className="block mb-2">
-              Frequency Restriction *
-              <input
-                type="checkbox"
-                className="ml-2"
-                onChange={handleFrequencyChange}
-              />
-            </label>
-            {frequencyRestriction && (
-              <div className="mb-2">
-                <label className="block">
-                  An Employee Can Apply Maximum
-                  <input
-                    type="number"
-                    className="border border-gray-400 w-full rounded-lg p-2 mt-1"
-                  />
-                </label>
-                <label className="block mt-2">
-                  To
-                  <select className="border border-gray-400 w-full rounded-lg p-2 mt-1">
-                    <option>Week</option>
-                    <option>Month</option>
-                  </select>
-                </label>
-              </div>
-            )}
-            <label className="block mb-2">
-              Within how many days can the employee apply for regularization
-              from the date of occurrence?
-              <input
-                type="number"
-                className="border border-gray-400 w-full rounded-lg p-2 mt-1"
-              />
-            </label>
-            <label className="block mb-2">
-              Which Employees Does this Reason Apply to? *
-              <select className="border border-gray-400 w-full rounded-lg p-2 mt-1">
-                <option>All Employees</option>
-                <option>Some Employees</option>
-                <option>Specific Employees</option>
-              </select>
-            </label>
-            <div className="flex justify-end mt-4">
-              <button
-                onClick={handleModalClose}
-                className="border-2 font-semibold hover:bg-gray-700 hover:text-white duration-150 transition-all border-gray-700 p-2 rounded-md text-gray-700 cursor-pointer mr-2"
-              >
-                Cancel
-              </button>
-              <button className="border-2 font-semibold hover:bg-blue-700 hover:text-white duration-150 transition-all border-blue-700 p-2 rounded-md text-blue-700 cursor-pointer">
-                Save
-              </button>
-            </div>
-          </div>
-        </div>
+        <AddRegularizationReason handleModalClose={handleModalClose} />
       )}
     </section>
   );

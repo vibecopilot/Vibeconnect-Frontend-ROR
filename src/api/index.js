@@ -4772,14 +4772,42 @@ export const getRosterRecords = async (orgId) => {
     throw error;
   }
 };
-export const editRosterRecord = async (shiftId) => {
+export const getRosterRecordDetails = async (shiftId) => {
   try {
-    const response = await HrmsAuth.put(
-      `/roster/roster-shift/${shiftId}/`
-    );
+    const response = await HrmsAuth.get(`/roster/roster-shift/${shiftId}/`);
     return response.data;
   } catch (error) {
     console.error("Error getting roster records:", error);
+    throw error;
+  }
+};
+export const editRosterRecord = async (shiftId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/roster/roster-shift/${shiftId}/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating roster records:", error);
+    throw error;
+  }
+};
+export const deleteRosterRecord = async (shiftId) => {
+  try {
+    const response = await HrmsAuth.delete(`/roster/roster-shift/${shiftId}/`);
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting roster records:", error);
+    throw error;
+  }
+};
+export const postRosterRecord = async (data) => {
+  try {
+    const response = await HrmsAuth.post(`/roster/roster-shift/`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error posting roster records:", error);
     throw error;
   }
 };

@@ -2,24 +2,20 @@ import React, { useState } from "react";
 import ToggleSwitch from "../../Buttons/ToggleSwitch";
 import AttendanceDetailsList from "./AttendanceDetailsList";
 import { GrHelpBook } from "react-icons/gr";
+import { FaCheck } from "react-icons/fa";
+import { MdClose } from "react-icons/md";
+import { BiEdit } from "react-icons/bi";
 
 const AttendanceGeneralSetting = () => {
-  const [regularizationReason, setRegularizationReason] = useState(false);
-  const [rosterApplicable, setRosterApplicable] = useState(false);
-  const [showApproveRejectButton, setShowApproveRejectButton] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    selectRegularizationReason: false,
+    isRegReasonMandatory: false,
+    submitRegFutureDate: false,
+    rosterApplicable: false,
+    showApproveRejectBtn: false,
+  });
 
-  const handleRegularizationChange = (event) => {
-    setRegularizationReason(event.target.checked);
-  };
-
-  const handleRosterChange = (event) => {
-    setRosterApplicable(event.target.checked);
-  };
-
-  const handleApproveRejectChange = (event) => {
-    setShowApproveRejectButton(event.target.checked);
-  };
   const listItemStyle = {
     listStyleType: "disc",
     color: "black",
@@ -27,36 +23,147 @@ const AttendanceGeneralSetting = () => {
     fontWeight: 500,
   };
   return (
-    <div className="flex  gap-5 ml-20">
+    <div className="flex gap-5 ml-20">
       <AttendanceDetailsList />
-      <div className="w-full">
-        <div className="mt-5 ">
-          <h1 className="font-semibold">General Setting</h1>
+      <div className="w-full mt-4">
+        <div className="mt-2 ">
+          <div className="flex justify-between items-center">
+            <h1 className="font-semibold text-xl">General Setting</h1>
+            <div className="flex justify-end">
+              {isEditing ? (
+                <div className="flex gap-2 justify-center my-2">
+                  <button
+                    className="border-2 border-green-400 text-green-400 rounded-full p-1 px-4 flex items-center gap-2"
+                    // onClick={editPayslipSetting}
+                  >
+                    <FaCheck /> Save
+                  </button>
+                  <button
+                    className="border-2 border-red-400 text-red-400 rounded-full p-1 px-4 flex items-center gap-2"
+                    onClick={() => setIsEditing(false)}
+                  >
+                    <MdClose /> Cancel
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setIsEditing(!isEditing)}
+                  className="mb-4 px-4 py-2 bg-blue-500 text-white rounded-md flex gap-2 items-center"
+                >
+                  <BiEdit /> Edit
+                </button>
+              )}
+            </div>
+          </div>
           <br />
           <label className="font-medium">
-            Can Employees select Regularization Reason? &nbsp;
+            Can Employees select Regularization Reason?{" "}
+            <span className="text-red-500">*</span> &nbsp;
             <div className="flex gap-3">
               <label>
-                <input type="radio" name="choice" value="yes" /> &nbsp;Yes
+                <input
+                  type="radio"
+                  name="selectRegularizationReason"
+                  checked={formData.selectRegularizationReason === true}
+                  onChange={() =>
+                    setFormData({
+                      ...formData,
+                      selectRegularizationReason: true,
+                    })
+                  }
+                  disabled={!isEditing}
+                />{" "}
+                &nbsp;Yes
               </label>
               <br />
               <label>
-                <input type="radio" name="choice" value="no" /> &nbsp;No
+                <input
+                  type="radio"
+                  name="selectRegularizationReason"
+                  checked={formData.selectRegularizationReason === false}
+                  onChange={() =>
+                    setFormData({
+                      ...formData,
+                      selectRegularizationReason: false,
+                    })
+                  } 
+                  disabled={!isEditing}
+                />{" "}
+                &nbsp;No
               </label>
             </div>
           </label>
         </div>
+        {formData.selectRegularizationReason && (
+          <div className="mt-5 ">
+            <label className="font-medium">
+              Is Regularization Reason Mandatory?{" "}
+              <span className="text-red-500">*</span> &nbsp;
+              <div className="flex gap-3">
+                <label>
+                  <input
+                    type="radio"
+                    name="isRegReasonMandatory"
+                    checked={formData.isRegReasonMandatory === true}
+                    onChange={() =>
+                      setFormData({
+                        ...formData,
+                        isRegReasonMandatory: true,
+                      })
+                    }
+                    disabled={!isEditing}
+                  />{" "}
+                  &nbsp;Yes
+                </label>
+                <br />
+                <label>
+                  <input
+                    type="radio"
+                    name="isRegReasonMandatory"
+                    checked={formData.isRegReasonMandatory === false}
+                    onChange={() =>
+                      setFormData({
+                        ...formData,
+                        isRegReasonMandatory: false,
+                      })
+                    }
+                    disabled={!isEditing}
+                  />{" "}
+                  &nbsp;No
+                </label>
+              </div>
+            </label>
+          </div>
+        )}
         <div className="mt-4">
           <label className="font-medium">
             Allow employees to submit regularization request for a future date
             &nbsp;
             <div className="flex gap-3">
               <label>
-                <input type="radio" name="choice" value="yes" /> &nbsp;Yes
+                <input
+                  type="radio"
+                  name="submitRegFutureDate"
+                  checked={formData.submitRegFutureDate === true}
+                  onChange={() =>
+                    setFormData({ ...formData, submitRegFutureDate: true })
+                  }
+                  disabled={!isEditing}
+                />{" "}
+                &nbsp;Yes
               </label>
               <br />
               <label>
-                <input type="radio" name="choice" value="no" /> &nbsp;No
+                <input
+                  type="radio"
+                  name="submitRegFutureDate"
+                  checked={formData.submitRegFutureDate === false}
+                  onChange={() =>
+                    setFormData({ ...formData, submitRegFutureDate: false })
+                  }
+                  disabled={!isEditing}
+                />{" "}
+                &nbsp;No
               </label>
             </div>
           </label>
@@ -66,11 +173,29 @@ const AttendanceGeneralSetting = () => {
             Is Roster Applicable?
             <div className="flex gap-3">
               <label>
-                <input type="radio" name="choice" value="yes" /> &nbsp;Yes
+                <input
+                  type="radio"
+                  name="rosterApplicable"
+                  checked={formData.rosterApplicable === true}
+                  onChange={() =>
+                    setFormData({ ...formData, rosterApplicable: true })
+                  }
+                  disabled={!isEditing}
+                />{" "}
+                &nbsp;Yes
               </label>
               <br />
               <label>
-                <input type="radio" name="choice" value="no" /> &nbsp;No
+                <input
+                  type="radio"
+                  name="rosterApplicable"
+                  checked={formData.rosterApplicable === false}
+                  onChange={() =>
+                    setFormData({ ...formData, rosterApplicable: false })
+                  }
+                  disabled={!isEditing}
+                />{" "}
+                &nbsp;No
               </label>
             </div>
           </label>
@@ -81,12 +206,29 @@ const AttendanceGeneralSetting = () => {
             notification for the approver?
             <div className="flex gap-3">
               <label>
-                <input type="radio" name="choice" value="yes" />
+                <input
+                  type="radio"
+                  name="showApproveRejectBtn"
+                  checked={formData.showApproveRejectBtn === true}
+                  onChange={() =>
+                    setFormData({ ...formData, showApproveRejectBtn: true })
+                  }
+                  disabled={!isEditing}
+                />
                 &nbsp; Yes
               </label>
               <br />
               <label>
-                <input type="radio" name="choice" value="no" /> &nbsp;No
+                <input
+                  type="radio"
+                  name="showApproveRejectBtn"
+                  checked={formData.showApproveRejectBtn === false}
+                  onChange={() =>
+                    setFormData({ ...formData, showApproveRejectBtn: false })
+                  }
+                  disabled={!isEditing}
+                />{" "}
+                &nbsp;No
               </label>
             </div>
           </label>

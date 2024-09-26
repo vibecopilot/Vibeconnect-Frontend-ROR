@@ -92,3 +92,17 @@ export const formatTime = (dateTimeString) => {
   hours = hours % 12 || 12;
   return `${hours}:${minutes} ${ampm}`;
 };
+
+
+
+export const convertTo12HourFormat = (time) => {
+  const [hour, minute] = time.split(':');
+  const hourInt = parseInt(hour, 10);
+  const period = hourInt >= 12 ? 'PM' : 'AM';
+  const formattedHour = hourInt % 12 || 12; 
+  return `${formattedHour}:${minute} ${period}`;
+};
+
+export const formatShiftTime = (shiftStartTime, shiftEndTime) => {
+  return `${convertTo12HourFormat(shiftStartTime)} - ${convertTo12HourFormat(shiftEndTime)}`;
+};
