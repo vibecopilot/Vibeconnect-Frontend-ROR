@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getSoftServices,getServicesRoutineList,getServicesChecklist } from "../../api";
+import { getSoftServices,getServicesChecklist, getServicesTaskList } from "../../api";
 import Navbar from "../../components/Navbar";
 import Table from "../../components/table/Table";
 import { Link } from "react-router-dom";
@@ -32,7 +32,7 @@ useEffect(() => {
     useEffect(() => {
       const fetchServiceRoutine = async () => {
         try {
-          const ServiceRoutineResponse = await getServicesRoutineList();
+          const ServiceRoutineResponse = await getServicesTaskList();
           const activities = ServiceRoutineResponse.data.activities;
     
           // Filter activities based on the status
@@ -46,7 +46,8 @@ useEffect(() => {
     
           const filteredServiceTask = activities.filter(asset => asset.soft_service_name);
           setFilteredRoutineData(filteredServiceTask);
-    
+          console.log("task dashboard",ServiceRoutineResponse)
+          
         } catch (error) {
           console.log(error);
         }

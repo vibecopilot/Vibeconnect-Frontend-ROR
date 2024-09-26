@@ -11,37 +11,71 @@ import { dateTimeFormat } from "../../../../utils/dateUtils";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { FaRegFileAlt } from "react-icons/fa";
+import { HiArrowLeft, HiArrowRight } from 'react-icons/hi';
 
 const PPM = () => {
   const { id } = useParams();
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+
   const [ppmDetails, setPPMDetails] = useState([]);
   const [ppmFor, setPPMFor] = useState("schedule");
   const [ppmData, setPPMData] = useState([]);
   const [filteredPPMData, setFilteredPPMData] = useState([]);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
+  const fetchPPMData = async () => {
+    try {
+      const ppmRes = await getAssetPPMs(id);
+      setFilteredPPMData(ppmRes.data.activities);
+      setPPMData(ppmRes.data.activities);
+      console.log(ppmRes.data.activities);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
+  const fetchPPMDetails = async () => {
+    const PPMDetailsResp = await getAssetPPMActivityDetails(id);
+    const filteredData = PPMDetailsResp.data.filter((activity) => {
+      const activityDate = formatDate(activity.created_at); // Extract date from start_time
+     
+      return activityDate === selectedDate ; // Match with the selected date and 'complete' status
+    });
+    console.log(PPMDetailsResp);
+    setPPMDetails(filteredData);
+  };
   useEffect(() => {
-    const fetchPPMData = async () => {
-      try {
-        const ppmRes = await getAssetPPMs(id);
-        setFilteredPPMData(ppmRes.data.activities);
-        setPPMData(ppmRes.data.activities);
-        console.log(ppmRes.data.activities);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
-    const fetchPPMDetails = async () => {
-      const PPMDetailsResp = await getAssetPPMActivityDetails(id);
-      console.log(PPMDetailsResp);
-      setPPMDetails(PPMDetailsResp.data);
-    };
-
+    
     fetchPPMData();
     fetchPPMDetails();
   }, [id]);
+  useEffect(() => {
+    
+    fetchPPMDetails();
+  }, [selectedDate]);
+
+  const handleDateChange = (e) => {
+    setSelectedDate(e.target.value);
+  };
+ // Decrease date by 1 day
+ const handlePrevDate = () => {
+  const prevDate = new Date(selectedDate);
+  prevDate.setDate(prevDate.getDate() - 1); // Decrease by 1 day
+  setSelectedDate(prevDate.toISOString().split('T')[0]); // Update selectedDate
+};
+
+// Increase date by 1 day
+const handleNextDate = () => {
+  const nextDate = new Date(selectedDate);
+  nextDate.setDate(nextDate.getDate() + 1); // Increase by 1 day
+  setSelectedDate(nextDate.toISOString().split('T')[0]); // Update selectedDate
+};
+
+// Function to format the date from start_time
+// Function to format the date from start_time
+const formatDate = (isoString) => {
+return isoString.split('T')[0]; // Extract YYYY-MM-DD part directly from ISO string
+};
 
   const dateFormat = (dateString) => {
     const date = new Date(dateString);
@@ -178,6 +212,17 @@ const PPM = () => {
 
         {ppmFor === "logs" && (
           <div className="">
+            <div className="flex gap-4 justify-end my-2">
+        <button onClick={handlePrevDate} className="bg-gray-200 px-2 rounded-md py-2"><HiArrowLeft/></button>
+        <input
+        type="date"
+        value={selectedDate}
+        onChange={handleDateChange}
+        className="p-1 border-gray-300 rounded-md w-64  outline-none border"
+      />
+
+        <button onClick={handleNextDate}  className="bg-gray-200 px-2 rounded-md py-2"><HiArrowRight/></button>
+      </div>
             {ppmDetails.map((task, index) => (
               <div key={task.id}>
                 <div className="my-4 flex flex-col bg-gray-50 shadow-custom-all-sides p-2 rounded-md gap-2">

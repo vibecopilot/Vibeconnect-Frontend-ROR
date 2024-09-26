@@ -100,6 +100,7 @@ const ServicesTask = () => {
           console.log(error);
         }
       }, [pageNo, perPage]);
+         
       const handlePageChange = (page, pageSize) => {
         setPageNo(page);
         setPerPage(pageSize)

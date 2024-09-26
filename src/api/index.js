@@ -1233,6 +1233,12 @@ export const getServicesRoutineList = async (page,perpage) =>
       token: token,
     },
   });
+  export const getServicesTaskList = async () =>
+    axiosInstance.get(`/activities.json?q[soft_service_id_null]=0`, {
+      params: {
+        token: token,
+      },
+    });
 export const postServicePR = async (data) =>
   axiosInstance.post(`/service_orders.json`, data, {
     params: {
