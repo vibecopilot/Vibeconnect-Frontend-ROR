@@ -97,7 +97,7 @@ const Roster = () => {
       (record) => record.date === date.toISOString().split("T")[0]
     );
   };
-
+console.log(currentMonth)
   return (
     <div className="flex ">
       <AdminHRMS />

@@ -1,10 +1,13 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import ToggleSwitch from "../../Buttons/ToggleSwitch";
 import AttendanceDetailsList from "./AttendanceDetailsList";
 import { GrHelpBook } from "react-icons/gr";
 import { FaCheck } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 import { BiEdit } from "react-icons/bi";
+import { editAttendanceGeneralSetting, getAttendanceGeneralSetting } from "../../api";
+import { getItemInLocalStorage } from "../../utils/localStorage";
+import toast from "react-hot-toast";
 
 const AttendanceGeneralSetting = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -14,6 +17,7 @@ const AttendanceGeneralSetting = () => {
     submitRegFutureDate: false,
     rosterApplicable: false,
     showApproveRejectBtn: false,
+    id: ""
   });
 
   const listItemStyle = {
@@ -22,6 +26,47 @@ const AttendanceGeneralSetting = () => {
     fontSize: "14px",
     fontWeight: 500,
   };
+  const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
+  const fetchGeneralSetting = async () => {
+    try {
+      const res = await getAttendanceGeneralSetting(hrmsOrgId);
+      const data = res[0];
+      setFormData({
+        ...formData,
+        isRegReasonMandatory: data.is_reason_mandatory,
+        rosterApplicable: data.is_roster_applicable,
+      selectRegularizationReason: data.can_select_regularization_reason,
+      showApproveRejectBtn: data.show_approve_reject_in_email,
+      submitRegFutureDate: data.allow_future_submission,
+      id:data.id
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(() => {
+    fetchGeneralSetting();
+  }, []);
+
+const handleEditGeneralSetting = async()=>{
+  const editData = new FormData()
+  editData.append("is_reason_mandatory", formData.isRegReasonMandatory)
+  editData.append("is_roster_applicable", formData.rosterApplicable)
+  editData.append("can_select_regularization_reason", formData.selectRegularizationReason)
+  editData.append("show_approve_reject_in_email", formData.showApproveRejectBtn)
+  editData.append("allow_future_submission", formData.submitRegFutureDate)
+  editData.append("organization", hrmsOrgId)
+  try {
+    const res = await editAttendanceGeneralSetting(formData.id, editData)
+    fetchGeneralSetting()
+    toast.success("General setting updated successfully")
+    setIsEditing(false)
+  } catch (error) {
+    console.log(error)
+    toast.error("Something went wrong")
+  }
+}
+
   return (
     <div className="flex gap-5 ml-20">
       <AttendanceDetailsList />
@@ -34,7 +79,7 @@ const AttendanceGeneralSetting = () => {
                 <div className="flex gap-2 justify-center my-2">
                   <button
                     className="border-2 border-green-400 text-green-400 rounded-full p-1 px-4 flex items-center gap-2"
-                    // onClick={editPayslipSetting}
+                    onClick={handleEditGeneralSetting}
                   >
                     <FaCheck /> Save
                   </button>
@@ -81,12 +126,19 @@ const AttendanceGeneralSetting = () => {
                   type="radio"
                   name="selectRegularizationReason"
                   checked={formData.selectRegularizationReason === false}
+                  // onChange={() =>
+                  //   setFormData({
+                  //     ...formData,
+                  //     selectRegularizationReason: false,
+                  //   })
+                  // }
                   onChange={() =>
                     setFormData({
                       ...formData,
                       selectRegularizationReason: false,
+                      isRegReasonMandatory: false, 
                     })
-                  } 
+                  }
                   disabled={!isEditing}
                 />{" "}
                 &nbsp;No
@@ -262,19 +314,11 @@ const AttendanceGeneralSetting = () => {
                   </li>
                 </ul>
               </li>
-              {/* <li>
-                  <ul style={listItemStyle}>
-                    <li>
-                   Based on configuration Gratuity will be calculated automatically for eligible employee at the time of F&F, you can view and pay the calculated value in Settlement and Recovery step while running payroll.
-                    </li>
-                  </ul>
-                </li> */}
+             
 
               <li>
                 <p>
-                  {/* <a href="#" className="text-blue-400">
-                      Click Here{" "}
-                    </a> */}
+                  
                   You can automate the attendance process by automatically
                   capturing late marks, half-days, overtime and leave deductions
                   based on the template settings. You can also configure

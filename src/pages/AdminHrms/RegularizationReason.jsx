@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { PiPlusCircle } from "react-icons/pi";
 import Table from "../../components/table/Table";
 import AttendanceDetailsList from "./AttendanceDetailsList";
@@ -8,12 +8,14 @@ import { MdClose } from "react-icons/md";
 import { FaCheck } from "react-icons/fa";
 import AddRegularizationReason from "./Modals/AddRegularizationReason";
 import { useSelector } from "react-redux";
+import EditRegularizationReason from "./Modals/EditRegularizationReason";
+import { getAttendanceRegularization } from "../../api";
+import { getItemInLocalStorage } from "../../utils/localStorage";
 
 const RegularizationReason = () => {
   const [showModal, setShowModal] = useState(false);
   const themeColor = useSelector((state) => state.theme.color);
   const [showModal1, setShowModal1] = useState(false);
-  const [frequencyRestriction, setFrequencyRestriction] = useState(false);
   const listItemStyle = {
     listStyleType: "disc",
     color: "black",
@@ -22,27 +24,13 @@ const RegularizationReason = () => {
   };
   const columns = [
     {
-      name: "view",
-      cell: (row) => (
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => {
-              setShowModal1(true);
-            }}
-          >
-            <BiEdit size={15} />
-          </button>
-        </div>
-      ),
-    },
-    {
       name: "Reason",
-      selector: (row) => row.Location,
+      selector: (row) => row.label,
       sortable: true,
     },
     {
       name: "Visible To",
-      selector: (row) => row.Label,
+      selector: (row) => row.specific_employees.length,
       sortable: true,
     },
     {
@@ -50,17 +38,26 @@ const RegularizationReason = () => {
       selector: (row) => row.status,
       sortable: true,
     },
-  ];
-
-  const data = [
     {
-      Name: "person 1",
-      Location: "Miss Punch",
-      Label: "All",
-      status: "Active",
-      Country: "India",
+      name: "Action",
+      cell: (row) => (
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => {
+              handleEditModal(row.id);
+            }}
+          >
+            <BiEdit size={15} />
+          </button>
+        </div>
+      ),
     },
   ];
+  const [regReasonId, setRegReasonId] = useState("");
+  const handleEditModal = async (id) => {
+    setRegReasonId(id);
+    setShowModal1(true);
+  };
 
   const handleAddClick = () => {
     setShowModal(true);
@@ -69,6 +66,19 @@ const RegularizationReason = () => {
   const handleModalClose = () => {
     setShowModal(false);
   };
+  const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
+  const [regReasons, setRegReasons] = useState([]);
+  const fetchRegularizationReasons = async () => {
+    try {
+      const res = await getAttendanceRegularization(hrmsOrgId);
+      setRegReasons(res);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(() => {
+    fetchRegularizationReasons();
+  }, []);
 
   return (
     <section className="flex ml-20">
@@ -89,7 +99,7 @@ const RegularizationReason = () => {
             Add
           </button>
         </div>
-        <Table columns={columns} data={data} isPagination={true} />
+        <Table columns={columns} data={regReasons} isPagination={true} />
       </div>
       <div className="my-4 mx-2 w-fit">
         <div className="flex flex-col bg-gray-50 rounded-md text-wrap  gap-4 my-2 py-2 pl-5 pr-2 w-[18rem]">
@@ -145,79 +155,17 @@ const RegularizationReason = () => {
         </div>
       </div>
       {showModal1 && (
-        <div className="fixed inset-0 z-10 bg-gray-600 bg-opacity-50 flex justify-center items-center">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-1/2">
-            <h2 className="text-lg font-bold mb-4">
-              Edit Regularization Reason
-            </h2>
-
-            <label className="block mb-2">
-              Label *
-              <input
-                type="text"
-                className="border border-gray-400 w-full rounded-lg p-2 mt-1"
-              />
-            </label>
-            <label className="block mb-2">
-              Frequency Restriction *
-              <input
-                type="checkbox"
-                className="ml-2"
-                onChange={handleFrequencyChange}
-              />
-            </label>
-            {frequencyRestriction && (
-              <div className="mb-2">
-                <label className="block">
-                  An Employee Can Apply Maximum
-                  <input
-                    type="number"
-                    className="border border-gray-400 w-full rounded-lg p-2 mt-1"
-                  />
-                </label>
-                <label className="block mt-2">
-                  To
-                  <select className="border border-gray-400 w-full rounded-lg p-2 mt-1">
-                    <option>Week</option>
-                    <option>Month</option>
-                  </select>
-                </label>
-              </div>
-            )}
-            <label className="block mb-2">
-              Within how many days can the employee apply for regularization
-              from the date of occurrence?
-              <input
-                type="number"
-                className="border border-gray-400 w-full rounded-lg p-2 mt-1"
-              />
-            </label>
-            <label className="block mb-2">
-              Which Employees Does this Reason Apply to? *
-              <select className="border border-gray-400 w-full rounded-lg p-2 mt-1">
-                <option>All Employees</option>
-                <option>Some Employees</option>
-                <option>Specific Employees</option>
-              </select>
-            </label>
-            <div className="flex justify-end mt-4">
-              <button
-                onClick={() => {
-                  setShowModal1(false);
-                }}
-                className="border-2 font-semibold hover:bg-gray-700 hover:text-white duration-150 transition-all border-gray-700 p-2 rounded-md text-gray-700 cursor-pointer mr-2"
-              >
-                Cancel
-              </button>
-              <button className="border-2 font-semibold hover:bg-blue-700 hover:text-white duration-150 transition-all border-blue-700 p-2 rounded-md text-blue-700 cursor-pointer">
-                Save
-              </button>
-            </div>
-          </div>
-        </div>
+        <EditRegularizationReason
+          handleModalClose={() => setShowModal1(false)}
+          regReasonId={regReasonId}
+        fetchRegularizationReasons={fetchRegularizationReasons}
+        />
       )}
       {showModal && (
-        <AddRegularizationReason handleModalClose={handleModalClose} />
+        <AddRegularizationReason
+          handleModalClose={handleModalClose}
+          fetchRegularizationReasons={fetchRegularizationReasons}
+        />
       )}
     </section>
   );

@@ -59,14 +59,17 @@ function RoasterShiftDetails({
         console.log(error);
       }
     };
+    if (date?.id) {
+      
+      fetchRosterRecordDetails();
+    }
     fetchRosterShifts();
-    fetchRosterRecordDetails();
   }, []);
   const themeColor = useSelector((state) => state.theme.color);
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
-  console.log(employee);
+
   const handleEditRosterShift = async () => {
     const editData = new FormData();
     editData.append(

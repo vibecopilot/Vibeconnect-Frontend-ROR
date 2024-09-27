@@ -4811,3 +4811,63 @@ export const postRosterRecord = async (data) => {
     throw error;
   }
 };
+
+// attendance settings
+//
+export const getAttendanceGeneralSetting = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/attendance/attendance-general-settings/?organization_id=${orgId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting attendance general setting:", error);
+    throw error;
+  }
+};
+export const editAttendanceGeneralSetting = async (settingId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/attendance/attendance-general-settings/${settingId}/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating attendance general setting:", error);
+    throw error;
+  }
+};
+export const getAttendanceRegularization = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/attendance/attendance-regularization-settings/?organization_id=${orgId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting attendance regularization:", error);
+    throw error;
+  }
+};
+export const postAttendanceRegularization = async (data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/attendance/attendance-regularization-settings/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting attendance regularization:", error);
+    throw error;
+  }
+};
+export const getAttendanceRegularizationDetails = async (regReasonId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/attendance/attendance-regularization-settings/${regReasonId}/`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting attendance regularization:", error);
+    throw error;
+  }
+};

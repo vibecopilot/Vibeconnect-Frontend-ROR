@@ -3,25 +3,17 @@ import { FaCheck, FaTrash } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 import Select from "react-select";
 import {
+  getAttendanceRegularizationDetails,
   getMyHRMSEmployees,
   getMyOrganizationLocations,
   getMyOrgDepartments,
-  postAttendanceRegularization,
 } from "../../../api";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
-import toast from "react-hot-toast";
-const AddRegularizationReason = ({
+const EditRegularizationReason = ({
   handleModalClose,
   fetchRegularizationReasons,
+  regReasonId,
 }) => {
-  const [appliesTo, setAppliesTo] = useState("All Employees");
-  const [employees, setEmployees] = useState([]);
-  const [locations, setLocations] = useState([]);
-  const [departments, setDepartments] = useState([]);
-  const [selectedUserOption, setSelectedUserOption] = useState([]);
-  const [dropdowns, setDropdowns] = useState([
-    { id: 1, select1: "", select2: "", selectedEmployees: [], daysInput: "" },
-  ]);
   const [formData, setFormData] = useState({
     label: "",
     frequencyRestriction: false,
@@ -29,11 +21,18 @@ const AddRegularizationReason = ({
     maxApplications: "",
     attendanceCycle: "",
   });
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
 
-  //
+  const [appliesTo, setAppliesTo] = useState("All Employees");
+  const [employees, setEmployees] = useState([]);
+  const [locations, setLocations] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [selectedUserOption, setSelectedUserOption] = useState([]);
+  // const handleUserChangeSelect = (selectedOption) => {
+  //   setSelectedUserOption(selectedOption);
+  // };
+  const [dropdowns, setDropdowns] = useState([
+    { id: 1, select1: "", select2: "", selectedEmployees: [], daysInput: "" },
+  ]);
 
   useEffect(() => {
     const fetchAllEmployees = async () => {
@@ -171,6 +170,36 @@ const AddRegularizationReason = ({
     }
   };
 
+  useEffect(() => {
+    const fetchRegReasonDetails = async () => {
+      try {
+        const res = await getAttendanceRegularizationDetails(regReasonId);
+        setFormData({
+          ...formData,
+          label: res.label,
+          frequencyRestriction: res.frequency_restriction,
+          applicationWindowDays: res.application_window_days,
+          attendanceCycle: res.attendance_cycle,
+          maxApplications: res.max_applications,
+        });
+        setAppliesTo(res.applicable_to);
+        const selectedUnits = res.specific_employees.map(unit => ({
+          value: unit.id,
+          label: unit.name,
+        }));
+        
+        // setSelectedUserOption(res.specific_employees);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchRegReasonDetails()
+  }, []);
+console.log(selectedUserOption)
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
   const handleAddRegularizationReason = async () => {
     const postData = new FormData();
     postData.append("label", formData.label);
@@ -186,7 +215,7 @@ const AddRegularizationReason = ({
       postData.append("specific_employees", employees);
     });
     try {
-      const res = await postAttendanceRegularization(postData);
+      // const res = await postAttendanceRegularization(postData);
       toast.success("Regularization reason added successfully");
       handleModalClose();
       fetchRegularizationReasons();
@@ -194,7 +223,6 @@ const AddRegularizationReason = ({
       console.log(error);
     }
   };
-
   return (
     <div className="fixed inset-0 z-10 bg-gray-600 bg-opacity-50 flex justify-center items-center">
       <div className="bg-white p-6 rounded-xl shadow-lg w-2/4">
@@ -284,6 +312,7 @@ const AddRegularizationReason = ({
                   noOptionsMessage={() => "No Employee Available"}
                   onChange={handleUserChangeSelect}
                   placeholder="Select Employees"
+                  value={selectedUserOption}
                 />
               </div>
             )}
@@ -385,4 +414,4 @@ const AddRegularizationReason = ({
   );
 };
 
-export default AddRegularizationReason;
+export default EditRegularizationReason;
