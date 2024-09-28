@@ -8,6 +8,7 @@ import TemplateGeneralSetting from "./AttendanceTemplate/TemplateGeneralSetting"
 import AttendanceRegularization from "./AttendanceTemplate/AttendanceRegularization";
 import LateEarlyCheckouts from "./AttendanceTemplate/LateEarlyCheckouts";
 import OTSettings from "./AttendanceTemplate/OTSettings";
+import { GrHelpBook } from "react-icons/gr";
 
 const AttAddTemplate = () => {
   const initialSteps = [
@@ -51,6 +52,13 @@ const AttAddTemplate = () => {
     }
   };
 
+  const listItemStyle = {
+    listStyleType: "disc",
+    color: "black",
+    fontSize: "14px",
+    fontWeight: 500,
+  };
+
   return (
     <div className="flex ml-20">
       <AdminHRMS />
@@ -85,8 +93,8 @@ const AttAddTemplate = () => {
               </div>
               <div className="ml-4">
                 <p
-                  className={`font-medium ${
-                    step.completed ? "text-gray-500" : "text-gray-400"
+                  className={`font-medium text-sm ${
+                    step.completed ? "text-blue-500" : "text-black"
                   }`}
                 >
                   {step.id}. {step.title}
@@ -98,7 +106,7 @@ const AttAddTemplate = () => {
       </div>
 
       {/* Conditionally render step components */}
-      <div className="flex-grow p-6">
+      <div className="flex-grow py-6 px-2">
         {currentStep === 0 && (
           <TemplateGeneralSetting
             handleNextStep={handleNextStep}
@@ -123,6 +131,59 @@ const AttAddTemplate = () => {
         {currentStep === 3 && (
           <OTSettings handleCancel={handleCancel} handleBack={handleBack} />
         )}
+      </div>
+      <div className="my-4 mx-2 w-fit">
+        <div className="flex flex-col bg-gray-50 rounded-md text-wrap  gap-4 my-2 py-2 pl-5 pr-2 w-[18rem]">
+          <div className="flex  gap-4 font-medium">
+            <GrHelpBook size={20} />
+            <h2>Help Center</h2>
+          </div>
+          <div className="">
+            <ul style={listItemStyle} className="flex flex-col gap-2">
+              <li>
+                <ul style={listItemStyle}>
+                  <li>
+                    Attendance settings allows you to configure attendance
+                    policies in the form of templates based on different
+                    departments, profiles, locations, etc.{" "}
+                  </li>{" "}
+                </ul>
+              </li>
+              <li>
+                <ul style={listItemStyle}>
+                  <li>
+                    Within the attendance templates you can choose the mode of
+                    capturing the attendance like web check-in, biometrics,
+                    timesheet, mobile application.{" "}
+                  </li>
+                </ul>
+              </li>
+
+              <li>
+                <p>
+                  You can automate the attendance process by automatically
+                  capturing late marks, half-days, overtime and leave deductions
+                  based on the template settings. You can also configure
+                  attendance regularization limit and reason.
+                </p>
+              </li>
+              <li>
+                <p>
+                  In the web check-in you can restrict capturing attendance
+                  through static IP. Similarly, in mobile applications you can
+                  restrict capturing attendance through geo-fencing.{" "}
+                </p>
+              </li>
+              <li>
+                <p>
+                  Attendance module is integrated with leave and payroll module
+                  and hence will sync data from the attendance module and derive
+                  data like LOP calculations for running payroll.{" "}
+                </p>
+              </li>
+            </ul>
+          </div>
+        </div>
       </div>
     </div>
   );

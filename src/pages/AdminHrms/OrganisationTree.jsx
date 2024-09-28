@@ -80,12 +80,12 @@ const OrgTreeSettings = () => {
         </div> */}
          <div className="flex flex-col items-center">
       {/* Top Node */}
-      <Node
+      {/* <Node
         name="Vinayak Kapdoskar"
         position="MD"
         imageUrl="https://via.placeholder.com/50"
       >
-        {/* Child Nodes */}
+        
         <Node
           name="Ankit Nima"
           position="Marketing Head"
@@ -101,7 +101,7 @@ const OrgTreeSettings = () => {
           position="Manager HR & Admin"
           initials="SS"
         />
-      </Node>
+      </Node> */}
     </div>
      
     </div>

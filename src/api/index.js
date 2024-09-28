@@ -4871,3 +4871,25 @@ export const getAttendanceRegularizationDetails = async (regReasonId) => {
     throw error;
   }
 };
+export const deleteAttendanceRegularizationDetails = async (regReasonId) => {
+  try {
+    const response = await HrmsAuth.delete(
+      `/attendance/attendance-regularization-settings/${regReasonId}/`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting attendance regularization:", error);
+    throw error;
+  }
+};
+export const editAttendanceRegularizationDetails = async (regReasonId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/attendance/attendance-regularization-settings/${regReasonId}/`, data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating attendance regularization:", error);
+    throw error;
+  }
+};

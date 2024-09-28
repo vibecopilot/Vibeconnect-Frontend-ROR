@@ -80,7 +80,7 @@ const MultiSelect = ({
             />
             <div className="mb-2">
               <button
-                className={`p-2 w-full text-left flex items-center gap-2 ${
+                className={`p-1 border-b mt-1 w-full text-left flex items-center gap-2 ${
                   selectedOptions.length === options.length
                     ? "bg-blue-500 text-white"
                     : ""

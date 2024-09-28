@@ -3,12 +3,14 @@ import { FaCheck, FaTrash } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 import Select from "react-select";
 import {
+  editAttendanceRegularizationDetails,
   getAttendanceRegularizationDetails,
   getMyHRMSEmployees,
   getMyOrganizationLocations,
   getMyOrgDepartments,
 } from "../../../api";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
+import toast from "react-hot-toast";
 const EditRegularizationReason = ({
   handleModalClose,
   fetchRegularizationReasons,
@@ -183,44 +185,54 @@ const EditRegularizationReason = ({
           maxApplications: res.max_applications,
         });
         setAppliesTo(res.applicable_to);
-        const selectedUnits = res.specific_employees.map(unit => ({
-          value: unit.id,
-          label: unit.name,
+        const selectedEmployees = res.specific_employees.map((emp) => ({
+          value: emp.id,
+          label: emp.full_name,
         }));
-        
-        // setSelectedUserOption(res.specific_employees);
+
+        setSelectedUserOption(selectedEmployees);
       } catch (error) {
         console.log(error);
       }
     };
-    fetchRegReasonDetails()
+    fetchRegReasonDetails();
   }, []);
-console.log(selectedUserOption)
+  console.log(selectedUserOption);
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleAddRegularizationReason = async () => {
-    const postData = new FormData();
-    postData.append("label", formData.label);
-    postData.append("frequency_restriction", formData.frequencyRestriction);
-    postData.append("max_applications", formData.maxApplications);
-    postData.append("attendance_cycle", formData.attendanceCycle);
-    postData.append("application_window_days", formData.applicationWindowDays);
-    postData.append("applicable_to", appliesTo);
-    postData.append("status", "Active");
-    postData.append("organization", hrmsOrgId);
+  const handleEditRegularizationReason = async () => {
+    if (!formData.label) {
+      toast.error("Label is required");
+      return;
+    }
+
+    
+    const editData = new FormData();
+    editData.append("label", formData.label);
+    editData.append("frequency_restriction", formData.frequencyRestriction);
+    editData.append("max_applications", formData.maxApplications || "");
+    editData.append("attendance_cycle", formData.attendanceCycle ||"");
+    editData.append("application_window_days", formData.applicationWindowDays);
+    editData.append("applicable_to", appliesTo);
+    // editData.append("status", "Active");
+    editData.append("organization", hrmsOrgId);
     const specificEmployees = selectedUserOption.map((option) => option.value);
     specificEmployees.forEach((employees) => {
-      postData.append("specific_employees", employees);
+      editData.append("specific_employees_ids", employees);
     });
     try {
-      // const res = await postAttendanceRegularization(postData);
-      toast.success("Regularization reason added successfully");
+      const res = await editAttendanceRegularizationDetails(
+        regReasonId,
+        editData
+      );
+      toast.success("Regularization reason updated successfully");
       handleModalClose();
       fetchRegularizationReasons();
     } catch (error) {
       console.log(error);
+      toast.error("Something went wrong");
     }
   };
   return (
@@ -403,7 +415,7 @@ console.log(selectedUserOption)
             <MdClose /> Cancel
           </button>
           <button
-            onClick={handleAddRegularizationReason}
+            onClick={handleEditRegularizationReason}
             className="border-2 font-semibold hover:bg-blue-700 flex items-center gap-2 hover:text-white duration-150 transition-all border-blue-700 p-1 rounded-full px-4 text-blue-700 cursor-pointer"
           >
             <FaCheck /> Save

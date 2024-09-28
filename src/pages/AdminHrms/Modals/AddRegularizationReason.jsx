@@ -183,7 +183,7 @@ const AddRegularizationReason = ({
     postData.append("organization", hrmsOrgId);
     const specificEmployees = selectedUserOption.map((option) => option.value);
     specificEmployees.forEach((employees) => {
-      postData.append("specific_employees", employees);
+      postData.append("specific_employees_ids", employees);
     });
     try {
       const res = await postAttendanceRegularization(postData);

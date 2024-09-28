@@ -5,12 +5,20 @@ import AttendanceDetailsList from "./AttendanceDetailsList";
 import { GrHelpBook } from "react-icons/gr";
 import { BiEdit } from "react-icons/bi";
 import { MdClose } from "react-icons/md";
-import { FaCheck } from "react-icons/fa";
+import { FaCheck, FaTrash } from "react-icons/fa";
 import AddRegularizationReason from "./Modals/AddRegularizationReason";
 import { useSelector } from "react-redux";
 import EditRegularizationReason from "./Modals/EditRegularizationReason";
-import { getAttendanceRegularization } from "../../api";
+import {
+  deleteAttendanceRegularizationDetails,
+  editAttendanceRegularizationDetails,
+  getAttendanceRegularization,
+  getAttendanceRegularizationDetails,
+} from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
+import { AiOutlineStop } from "react-icons/ai";
+import toast from "react-hot-toast";
+import { RiRestartFill } from "react-icons/ri";
 
 const RegularizationReason = () => {
   const [showModal, setShowModal] = useState(false);
@@ -49,10 +57,43 @@ const RegularizationReason = () => {
           >
             <BiEdit size={15} />
           </button>
+          {row.status === "Active" ? (
+            <button
+              className="font-medium text-red-400 bg-white border p-[2px] rounded-full"
+              onClick={() => {
+                handleDisableRegularization(row.id, "Inactive");
+              }}
+            >
+              <AiOutlineStop title="Disable Reason" size={18} />
+            </button>
+          ) : (
+            <button
+              className="font-medium text-white bg-green-400 border p-[2px] rounded-full"
+              onClick={() => {
+                handleDisableRegularization(row.id, "Active");
+              }}
+            >
+              <RiRestartFill title="Enable Reason" size={18} />
+            </button>
+          )}
+          <button onClick={() => handleDeleteReason(row.id)} className="text-red-400">
+            <FaTrash size={15}  />
+          </button>
         </div>
       ),
     },
   ];
+
+  const handleDeleteReason = async (reasonId) => {
+    try {
+      await deleteAttendanceRegularizationDetails(reasonId);
+      toast.success("Reason deleted successfully");
+      fetchRegularizationReasons();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const [regReasonId, setRegReasonId] = useState("");
   const handleEditModal = async (id) => {
     setRegReasonId(id);
@@ -68,10 +109,12 @@ const RegularizationReason = () => {
   };
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
   const [regReasons, setRegReasons] = useState([]);
+  const [filteredRegReasons, setFilteredRegReasons] = useState([]);
   const fetchRegularizationReasons = async () => {
     try {
       const res = await getAttendanceRegularization(hrmsOrgId);
       setRegReasons(res);
+      setFilteredRegReasons(res);
     } catch (error) {
       console.log(error);
     }
@@ -79,6 +122,46 @@ const RegularizationReason = () => {
   useEffect(() => {
     fetchRegularizationReasons();
   }, []);
+
+  const handleDisableRegularization = async (regId, reasonStatus) => {
+    let regLabel = "";
+    try {
+      const regRes = await getAttendanceRegularizationDetails(regId);
+      regLabel = regRes.label;
+    } catch (error) {
+      console.log(error);
+    }
+    const editData = new FormData();
+    editData.append("label", regLabel);
+    editData.append("status", reasonStatus);
+    editData.append("organization", hrmsOrgId);
+    try {
+      const res = await editAttendanceRegularizationDetails(regId, editData);
+      toast.success("Reason status updated successfully");
+
+      fetchRegularizationReasons();
+    } catch (error) {
+      console.log(error);
+      toast.error("Something went wrong");
+    }
+  };
+
+  const [searchText, setSearchText] = useState("");
+  const handleSearch = (e) => {
+    const searchValue = e.target.value;
+
+    setSearchText(searchValue);
+    if (searchValue.trim() === "") {
+      setFilteredRegReasons(regReasons);
+    } else {
+      const filteredResult = regReasons.filter(
+        (reason) =>
+          reason.label &&
+          reason.label.toLowerCase().includes(searchValue.toLowerCase())
+      );
+      setFilteredRegReasons(filteredResult);
+    }
+  };
 
   return (
     <section className="flex ml-20">
@@ -88,6 +171,8 @@ const RegularizationReason = () => {
           <input
             type="text"
             placeholder="Search by name"
+            value={searchText}
+            onChange={handleSearch}
             className="border border-gray-400 w-full placeholder:text-sm rounded-lg p-2"
           />
           <button
@@ -99,7 +184,11 @@ const RegularizationReason = () => {
             Add
           </button>
         </div>
-        <Table columns={columns} data={regReasons} isPagination={true} />
+        <Table
+          columns={columns}
+          data={filteredRegReasons}
+          isPagination={true}
+        />
       </div>
       <div className="my-4 mx-2 w-fit">
         <div className="flex flex-col bg-gray-50 rounded-md text-wrap  gap-4 my-2 py-2 pl-5 pr-2 w-[18rem]">
@@ -158,7 +247,7 @@ const RegularizationReason = () => {
         <EditRegularizationReason
           handleModalClose={() => setShowModal1(false)}
           regReasonId={regReasonId}
-        fetchRegularizationReasons={fetchRegularizationReasons}
+          fetchRegularizationReasons={fetchRegularizationReasons}
         />
       )}
       {showModal && (
