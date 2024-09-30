@@ -4882,14 +4882,60 @@ export const deleteAttendanceRegularizationDetails = async (regReasonId) => {
     throw error;
   }
 };
-export const editAttendanceRegularizationDetails = async (regReasonId, data) => {
+export const editAttendanceRegularizationDetails = async (
+  regReasonId,
+  data
+) => {
   try {
     const response = await HrmsAuth.put(
-      `/attendance/attendance-regularization-settings/${regReasonId}/`, data
+      `/attendance/attendance-regularization-settings/${regReasonId}/`,
+      data
     );
     return response.data;
   } catch (error) {
     console.error("Error updating attendance regularization:", error);
+    throw error;
+  }
+};
+export const getCTCTemplate = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/payroll/ctc-template/?organization_id=${orgId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting CTC template:", error);
+    throw error;
+  }
+};
+export const postCTCTemplate = async (data) => {
+  try {
+    const response = await HrmsAuth.post(`/payroll/ctc-template/`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error posting CTC template:", error);
+    throw error;
+  }
+};
+
+export const editCTCTemplate = async (tempId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/payroll/ctc-template/${tempId}/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating CTC template:", error);
+    throw error;
+  }
+};
+export const deleteCTCTemplate = async (tempId) => {
+  try {
+    const response = await HrmsAuth.delete(`/payroll/ctc-template/${tempId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting CTC template:", error);
     throw error;
   }
 };

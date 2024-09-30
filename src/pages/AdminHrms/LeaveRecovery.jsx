@@ -79,7 +79,7 @@ const LeaveRecovery = () => {
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
- 
+
   const handleEditLeaveEncashment = async () => {
     const editData = new FormData();
     editData.append("encashment_denominator", formData.EncashmentDenominator);

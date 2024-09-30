@@ -1160,7 +1160,7 @@ const AdminHRMS = () => {
                     </h2>
                   </NavLink>
                   <NavLink
-                    to="/admin/flexi-settings"
+                    to="/flexi-benefit/settings"
                     className={({ isActive }) =>
                       `${
                         isActive
