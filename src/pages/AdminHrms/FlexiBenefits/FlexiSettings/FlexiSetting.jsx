@@ -96,7 +96,6 @@ const FlexiSetting = () => {
               </h2>
             </NavLink>
           </li>
-         
         </ul>
       </div>
     </div>

@@ -508,39 +508,7 @@ const Navbar = () => {
                     </h2>
                   </NavLink>
                 )}
-                {feat.includes("integration") && (
-                  <NavLink
-                    to={"/integration"}
-                    className={({ isActive }) =>
-                      ` ${
-                        isActive
-                          ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
-                          : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
-                      }`
-                    }
-                  >
-                    <div>
-                      {React.createElement(MdOutlineSocialDistance, {
-                        size: "20",
-                      })}
-                    </div>
-
-                    <h2
-                      className={`whitespace-pre duration-300 ${
-                        !open && "opacity-0 translate-x-28 overflow-hidden"
-                      }`}
-                    >
-                      Integration
-                    </h2>
-                    <h2
-                      className={`${
-                        open && "hidden"
-                      } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
-                    >
-                      Integration
-                    </h2>
-                  </NavLink>
-                )}
+                
                 {feat.includes("space") && (
                   <NavLink
                     to={"/bookings"}
@@ -1121,6 +1089,39 @@ const Navbar = () => {
                     </h2>
                   </NavLink>
                 )}
+                {feat.includes("integration") && (
+                  <NavLink
+                    to={"/integration"}
+                    className={({ isActive }) =>
+                      ` ${
+                        isActive
+                          ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
+                          : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
+                      }`
+                    }
+                  >
+                    <div>
+                      {React.createElement(MdOutlineSocialDistance, {
+                        size: "20",
+                      })}
+                    </div>
+
+                    <h2
+                      className={`whitespace-pre duration-300 ${
+                        !open && "opacity-0 translate-x-28 overflow-hidden"
+                      }`}
+                    >
+                      Integration
+                    </h2>
+                    <h2
+                      className={`${
+                        open && "hidden"
+                      } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
+                    >
+                      Integration
+                    </h2>
+                  </NavLink>
+                )}
 
                 {feat.includes("purchase_order") && (
                   <NavLink
@@ -1643,6 +1644,36 @@ const Navbar = () => {
                   </h2>
                 </NavLink>
               )}
+              {feat.includes("hrms") && (
+                <NavLink
+                  to={"/employee-portal"}
+                  className={({ isActive }) =>
+                    ` ${
+                      isActive
+                        ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
+                        : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
+                    }`
+                  }
+                >
+                  <div>
+                    {React.createElement(BsPersonWorkspace, { size: "20" })}
+                  </div>
+                  <h2
+                    className={`whitespace-pre duration-300 ${
+                      !open && "opacity-0 translate-x-28 overflow-hidden"
+                    }`}
+                  >
+                    MyWorkplace
+                  </h2>
+                  <h2
+                    className={`${
+                      open && "hidden"
+                    } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
+                  >
+                    Calendar
+                  </h2>
+                </NavLink>
+              )}
               {feat.includes("face_recognition") && (
                 <NavLink
                   to={"/employee-attendance"}
@@ -1728,39 +1759,7 @@ const Navbar = () => {
                   </h2>
                 </NavLink>
               )}
-              {feat.includes("integration") && (
-                <NavLink
-                  to={"/integration"}
-                  className={({ isActive }) =>
-                    ` ${
-                      isActive
-                        ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
-                        : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
-                    }`
-                  }
-                >
-                  <div>
-                    {React.createElement(MdOutlineSocialDistance, {
-                      size: "20",
-                    })}
-                  </div>
-
-                  <h2
-                    className={`whitespace-pre duration-300 ${
-                      !open && "opacity-0 translate-x-28 overflow-hidden"
-                    }`}
-                  >
-                    Integration
-                  </h2>
-                  <h2
-                    className={`${
-                      open && "hidden"
-                    } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
-                  >
-                    Integration
-                  </h2>
-                </NavLink>
-              )}
+            
               {feat.includes("space") && (
                 <NavLink
                   to={"/employees/booking"}
@@ -1946,36 +1945,7 @@ const Navbar = () => {
                 </NavLink>
               )}
 
-              {feat.includes("hrms") && (
-                <NavLink
-                  to={"/employee-portal"}
-                  className={({ isActive }) =>
-                    ` ${
-                      isActive
-                        ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
-                        : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
-                    }`
-                  }
-                >
-                  <div>
-                    {React.createElement(BsPersonWorkspace, { size: "20" })}
-                  </div>
-                  <h2
-                    className={`whitespace-pre duration-300 ${
-                      !open && "opacity-0 translate-x-28 overflow-hidden"
-                    }`}
-                  >
-                    MyWorkplace
-                  </h2>
-                  <h2
-                    className={`${
-                      open && "hidden"
-                    } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
-                  >
-                    Calendar
-                  </h2>
-                </NavLink>
-              )}
+              
 
               {feat.includes("gatepass") && (
                 <NavLink
@@ -2037,7 +2007,7 @@ const Navbar = () => {
                   </h2>
                 </NavLink>
               )}
-              {feat.includes("fnb") && (
+              {feat.includes("pantry") && (
                 <NavLink
                   to={"/employees/pantry"}
                   className={({ isActive }) =>
@@ -2277,6 +2247,39 @@ const Navbar = () => {
                     </h2>
                   </NavLink>
                 )}
+                  {feat.includes("integration") && (
+                <NavLink
+                  to={"/integration"}
+                  className={({ isActive }) =>
+                    ` ${
+                      isActive
+                        ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
+                        : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
+                    }`
+                  }
+                >
+                  <div>
+                    {React.createElement(MdOutlineSocialDistance, {
+                      size: "20",
+                    })}
+                  </div>
+
+                  <h2
+                    className={`whitespace-pre duration-300 ${
+                      !open && "opacity-0 translate-x-28 overflow-hidden"
+                    }`}
+                  >
+                    Integration
+                  </h2>
+                  <h2
+                    className={`${
+                      open && "hidden"
+                    } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
+                  >
+                    Integration
+                  </h2>
+                </NavLink>
+              )}
 
                 {feat.includes("fitness") && (
                   <NavLink

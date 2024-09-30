@@ -11,10 +11,11 @@ const FlexiGeneralSettings = () => {
     fontWeight: 500,
   };
   const [formData, setFormData] = useState({
-   initialBalanceDate:"",
-   separatePayslip:"",
-   previousUploads:"",
-   
+    initialBalanceDate: "",
+    separatePayslip: false,
+    previousUploads: false,
+    supervisorManualAdjustment: false,
+    freezeSubmission: false,
     id: "",
   });
   const handleChange = (e) => {
@@ -52,12 +53,14 @@ const FlexiGeneralSettings = () => {
               </label>
               <input
                 type="date"
-                name=""
+                name="initialBalanceDate"
                 id=""
                 className={`w-full px-3 py-1 border border-gray-300 rounded-md ${
                   !isEditing ? "bg-gray-200" : ""
                 }`}
                 disabled={!isEditing}
+                value={formData.initialBalanceDate}
+                onChange={handleChange}
               />
             </div>
             <div>
@@ -71,6 +74,10 @@ const FlexiGeneralSettings = () => {
                     type="radio"
                     name="canAdminsApproveLeave"
                     disabled={!isEditing}
+                    checked={formData.separatePayslip === true}
+                    onChange={() =>
+                      setFormData({ ...formData, separatePayslip: true })
+                    }
                   />{" "}
                   Yes
                 </label>
@@ -80,6 +87,10 @@ const FlexiGeneralSettings = () => {
                     name="canAdminsApproveLeave"
                     value="no"
                     disabled={!isEditing}
+                    checked={formData.separatePayslip === false}
+                    onChange={() =>
+                      setFormData({ ...formData, separatePayslip: false })
+                    }
                   />{" "}
                   No
                 </label>
@@ -96,6 +107,13 @@ const FlexiGeneralSettings = () => {
                     type="radio"
                     name="canSupervisorsAddLeaveAdjustment"
                     disabled={!isEditing}
+                    checked={formData.previousUploads === true}
+                    onChange={() =>
+                      setFormData({
+                        ...formData,
+                        previousUploads: true,
+                      })
+                    }
                   />{" "}
                   Yes
                 </label>
@@ -104,6 +122,13 @@ const FlexiGeneralSettings = () => {
                     type="radio"
                     name="canSupervisorsAddLeaveAdjustment"
                     disabled={!isEditing}
+                    checked={formData.previousUploads === false}
+                    onChange={() =>
+                      setFormData({
+                        ...formData,
+                        previousUploads: false,
+                      })
+                    }
                   />{" "}
                   No
                 </label>
@@ -111,7 +136,7 @@ const FlexiGeneralSettings = () => {
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">
-                Can supervisors add manual adjustment of eligiblity balance for
+                Can supervisors add manual adjustment of eligibility balance for
                 their subordinates? <span className="text-red-500">*</span>
               </label>
               <div className="space-x-4">
@@ -120,6 +145,10 @@ const FlexiGeneralSettings = () => {
                     type="radio"
                     name="runDailyLeaveAccruals"
                     disabled={!isEditing}
+                    checked={formData.supervisorManualAdjustment === true}
+                    onChange={() =>
+                      setFormData({ ...formData, supervisorManualAdjustment : true })
+                    }
                   />{" "}
                   Yes
                 </label>
@@ -128,6 +157,10 @@ const FlexiGeneralSettings = () => {
                     type="radio"
                     name="runDailyLeaveAccruals"
                     disabled={!isEditing}
+                    checked={formData.supervisorManualAdjustment === false}
+                    onChange={() =>
+                      setFormData({ ...formData, supervisorManualAdjustment : false })
+                    }
                   />{" "}
                   No
                 </label>
@@ -144,6 +177,10 @@ const FlexiGeneralSettings = () => {
                     type="radio"
                     name="runDailyLeaveAccruals"
                     disabled={!isEditing}
+                    checked={formData.freezeSubmission === true}
+                    onChange={() =>
+                      setFormData({ ...formData, freezeSubmission : true })
+                    }
                   />{" "}
                   Yes
                 </label>
@@ -152,6 +189,10 @@ const FlexiGeneralSettings = () => {
                     type="radio"
                     name="runDailyLeaveAccruals"
                     disabled={!isEditing}
+                    checked={formData.freezeSubmission === false}
+                    onChange={() =>
+                      setFormData({ ...formData, freezeSubmission : true })
+                    }
                   />{" "}
                   No
                 </label>

@@ -6480,7 +6480,7 @@ function App() {
           />
           <Route
             path="/employee-portal"
-            element={<Navigate to="/employee-portal/employee-feeds" replace />}
+            element={<Navigate to="/employee-portal/attendance" replace />}
           />
 
           <Route
