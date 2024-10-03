@@ -1,16 +1,25 @@
 import React, { useEffect, useState } from "react";
 import { BiEdit } from "react-icons/bi";
-import { FaCheck, FaRegClone, FaTrash } from "react-icons/fa";
+import {
+  FaCheck,
+  FaComments,
+  FaFileAlt,
+  FaRegClone,
+  FaTrash,
+  FaUsers,
+} from "react-icons/fa";
 import { PiPlus } from "react-icons/pi";
 import Table from "../../../components/table/Table";
 import { MdClose } from "react-icons/md";
 import { dateTimeFormat } from "../../../utils/dateUtils";
 import { useSelector } from "react-redux";
+import EvaluationTEmplateForm from "./EvaluationTEmplateForm";
 
 const EvaluationTemplate = () => {
   const [page, setPage] = useState("table");
   const themeColor = useSelector((state) => state.theme.color);
   const [filteredTemplate, setFilteredTemplate] = useState([]);
+
   const columns = [
     {
       name: "Category Name",
@@ -71,7 +80,7 @@ const EvaluationTemplate = () => {
                 placeholder="Search by category name"
               />
               <button
-                onClick={() => setShowAddModal(true)}
+                onClick={() => setPage("add")}
                 style={{ background: themeColor }}
                 className="p-2 text-white rounded-md flex items-center gap-2 px-2"
               >
@@ -83,6 +92,7 @@ const EvaluationTemplate = () => {
             </div>
           </>
         )}
+        {page === "add" && <EvaluationTEmplateForm />}
       </div>
     </div>
   );
