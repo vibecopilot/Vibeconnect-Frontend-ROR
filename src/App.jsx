@@ -683,6 +683,8 @@ import FieldSenseLeadManagementDetails from "./pages/SubPages/details/FieldSense
 import Flexibenefits from "./pages/AdminHrms/FlexiBenefits/Flexibenefits.jsx";
 import EmployeeBalance from "./pages/AdminHrms/FlexiBenefits/EmployeeBalance.jsx";
 import FlexiGeneralSettings from "./pages/AdminHrms/FlexiBenefits/FlexiSettings/FlexiGeneralSettings.jsx";
+import FlexiCategory from "./pages/AdminHrms/FlexiBenefits/FlexiSettings/FlexiCategory.jsx";
+import PerformanceSettings from "./pages/AdminHrms/Performance/PerformanceSettings.jsx";
 // new admin hrms
 
 function App() {
@@ -5641,6 +5643,7 @@ function App() {
               </ProtectedAdminRoutes>
             }
           />
+          {/* flexi settings */}
           <Route
             path="/flexi-benefit/settings"
             element={<Navigate to="/flexi-benefit/settings/general-settings" />}
@@ -5651,6 +5654,22 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <FlexiGeneralSettings />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/flexi-benefit/settings/benefit-categories"
+            element={
+              <ProtectedAdminRoutes>
+                <FlexiCategory />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/performance-setting"
+            element={
+              <ProtectedAdminRoutes>
+                <PerformanceSettings />
               </ProtectedAdminRoutes>
             }
           />

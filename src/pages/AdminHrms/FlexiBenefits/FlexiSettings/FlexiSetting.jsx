@@ -42,7 +42,7 @@ const FlexiSetting = () => {
           </li>
           <li>
             <NavLink
-              to="/leave-categories"
+              to="/flexi-benefit/settings/benefit-categories"
               className={({ isActive }) =>
                 `${
                   isActive
