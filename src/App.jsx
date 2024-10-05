@@ -685,6 +685,7 @@ import EmployeeBalance from "./pages/AdminHrms/FlexiBenefits/EmployeeBalance.jsx
 import FlexiGeneralSettings from "./pages/AdminHrms/FlexiBenefits/FlexiSettings/FlexiGeneralSettings.jsx";
 import FlexiCategory from "./pages/AdminHrms/FlexiBenefits/FlexiSettings/FlexiCategory.jsx";
 import PerformanceSettings from "./pages/AdminHrms/Performance/PerformanceSettings.jsx";
+import MilestoneTypeSettings from "./pages/AdminHrms/MilestoneTypeSettings.jsx";
 // new admin hrms
 
 function App() {
@@ -6108,6 +6109,14 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <EditLetterTemplate />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/milestone-type-setting"
+            element={
+              <ProtectedAdminRoutes>
+                <MilestoneTypeSettings />
               </ProtectedAdminRoutes>
             }
           />

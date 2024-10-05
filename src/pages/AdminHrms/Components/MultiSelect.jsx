@@ -10,6 +10,7 @@ const MultiSelect = ({
   disabled,
   setOptions,
   searchOptions,
+  compTitle= "Click Here to Select Component",
 }) => {
   const toggleDropdown = () => {
     setIsDropdownVisible(!isDropdownVisible);
@@ -52,9 +53,9 @@ const MultiSelect = ({
     }
   };
   return (
-    <div className="mb-4" ref={dropdownRef}>
+    <div className="mb-2" ref={dropdownRef}>
       <label className="block font-semibold">{title}</label>
-      <div className="mb-4  relative">
+      <div className="mb-2  relative">
         <button
           className={`w-full px-3 py-2 border flex items-center gap-2 justify-center border-gray-300 rounded-md ${
             disabled && "bg-gray-100"
@@ -63,12 +64,12 @@ const MultiSelect = ({
           disabled={disabled}
         >
           {selectedOptions.length === 0
-            ? "Click Here to Select Component"
+            ? compTitle
             : `${selectedOptions.length} Selected`}{" "}
           {!isDropdownVisible ? <FaCaretDown /> : <FaCaretUp />}
         </button>
         {isDropdownVisible && (
-          <div className="absolute z-10 w-full border rounded shadow p-2 mt-2 bg-white">
+          <div className="absolute z-10 w-full border rounded shadow p-2 mt-2 bg-white max-h-60 overflow-y-auto">
             <input
               type="text"
               name=""

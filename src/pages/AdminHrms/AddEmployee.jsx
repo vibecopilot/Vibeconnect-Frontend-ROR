@@ -253,7 +253,7 @@ const AddEmployee = () => {
                   : "text-white bg-gray-400 font-medium cursor-not-allowed"
               }`}
               onClick={() => setSteps("salary")}
-              disabled={steps !== "salary"}
+              // disabled={steps !== "salary"}
             >
               <div>{React.createElement(FcMoneyTransfer, { size: "20" })}</div>
               Salary
@@ -744,7 +744,7 @@ const AddEmployee = () => {
       {steps === "employment" && (
         <Employment setSteps={setSteps} empId={empId} />
       )}
-      {steps === "salary" && <OnboardingSalary />}
+      {steps === "salary" && <OnboardingSalary empId={empId} />}
       {steps === "statutory" && <Statutory empId={empId} />}
 
       <div className="my-4 mx-2 w-fit">

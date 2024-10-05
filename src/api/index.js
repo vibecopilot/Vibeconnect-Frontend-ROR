@@ -5124,3 +5124,154 @@ export const editPerformanceCompetencyDetails = async (compId, data) => {
     throw error;
   }
 };
+export const getMilestoneType = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/organization/milestone-types/?organization_id=${orgId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting milestone type:", error);
+    throw error;
+  }
+};
+export const postMilestoneType = async (data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/organization/milestone-types/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting milestone type:", error);
+    throw error;
+  }
+};
+export const deleteMilestoneType = async (typeId) => {
+  try {
+    const response = await HrmsAuth.delete(
+      `/organization/milestone-types/${typeId}/`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting milestone type:", error);
+    throw error;
+  }
+};
+export const getMilestoneTypeDetails = async (typeId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/organization/milestone-types/${typeId}/`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting milestone type details:", error);
+    throw error;
+  }
+};
+export const editMilestoneTypeDetails = async (typeId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/organization/milestone-types/${typeId}/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting milestone type details:", error);
+    throw error;
+  }
+};
+
+export const postCalendarMilestone = async (data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/organization/calendar-milestones/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting milestone :", error);
+    throw error;
+  }
+};
+export const getCalendarMilestone = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/organization/calendar-milestones/?organization_id=${orgId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting milestone :", error);
+    throw error;
+  }
+};
+export const getCalendarMilestoneDetails = async (eventId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/organization/calendar-milestones/${eventId}/`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting milestone :", error);
+    throw error;
+  }
+};
+export const editCalendarMilestoneDetails = async (eventId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/organization/calendar-milestones/${eventId}/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating milestone :", error);
+    throw error;
+  }
+};
+export const deleteCalendarMilestone = async (eventId) => {
+  try {
+    const response = await HrmsAuth.delete(
+      `/organization/calendar-milestones/${eventId}/`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error delete milestone :", error);
+    throw error;
+  }
+};
+export const postHeadOfCompany = async (data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/organization/head-of-company/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting head of company :", error);
+    throw error;
+  }
+};
+export const postSalaryGeneralInfo = async (data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/employee/salary/general-info/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting general info :", error);
+    throw error;
+  }
+};
+export const postTaxStatutory = async (data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/employee/salary/tax-statutory/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting tax statutory :", error);
+    throw error;
+  }
+};

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useSelector } from "react-redux";
 
 const Statutory = ({ empId }) => {
-  const themeColor = useSelector((state)=> state.theme.color)
+  const themeColor = useSelector((state) => state.theme.color);
   const [formData, setFormData] = useState({
     pf: false,
     esic: false,
@@ -276,7 +276,12 @@ const Statutory = ({ empId }) => {
             </div>
           </div>
           <div className="flex justify-end">
-            <button className="p-2 rounded-md text-white font-medium" style={{background: themeColor}}>Finish onboarding</button>
+            <button
+              className="p-2 rounded-md text-white font-medium"
+              style={{ background: themeColor }}
+            >
+              Finish onboarding
+            </button>
           </div>
         </div>
       </div>

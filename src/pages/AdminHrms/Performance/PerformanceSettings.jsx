@@ -7,6 +7,7 @@ import { MdAutoGraph } from "react-icons/md";
 import { FaChevronRight } from "react-icons/fa";
 import GoalCompetency from "./GoalCompetency";
 import EvaluationTemplate from "./EvaluationTemplate";
+import PerformanceCycle from "./PerformanceCycle";
 
 const PerformanceSettings = () => {
   const stepsData = [
@@ -70,7 +71,8 @@ const PerformanceSettings = () => {
       <div className="w-full p-1">
         {activePage === 0 && <GoalCompetency />}
         {activePage === 1 && <EvaluationTemplate />}
-        </div>
+        {activePage === 2 && <PerformanceCycle />}
+      </div>
     </div>
   );
 };
