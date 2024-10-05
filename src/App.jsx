@@ -571,8 +571,8 @@ import Resignation from "./pages/AdminHrms/Resignation.jsx";
 import EditAttendanceProcess from "./pages/AdminHrms/EditAttendanceProcess.jsx";
 import LoanAppAdd from "./pages/AdminHrms/LoanAppAdd.jsx";
 import CTCGeneralSetting from "./pages/AdminHrms/CTCGeneralSetting.jsx";
-import ComponentCTCTemplate from "./pages/AdminHrms/ComponentCTCTemplate.jsx";
-import Restrictions from "./pages/AdminHrms/Restrictions.jsx";
+
+
 import PayslipDetailsPage from "./pages/AdminHrms/PayslipDetailsPage.jsx";
 import PayslipDetails1 from "./pages/AdminHrms/PayslipDetails1.jsx";
 import PayslipDetails3 from "./pages/AdminHrms/PayslipDetails3.jsx";
@@ -682,6 +682,10 @@ import ExpenseGeneralSetting from "./pages/AdminHrms/Expenses/ExpenseGeneralSett
 import FieldSenseLeadManagementDetails from "./pages/SubPages/details/FieldSenseLeadManagementDetails.jsx";
 import Flexibenefits from "./pages/AdminHrms/FlexiBenefits/Flexibenefits.jsx";
 import EmployeeBalance from "./pages/AdminHrms/FlexiBenefits/EmployeeBalance.jsx";
+import FlexiGeneralSettings from "./pages/AdminHrms/FlexiBenefits/FlexiSettings/FlexiGeneralSettings.jsx";
+import FlexiCategory from "./pages/AdminHrms/FlexiBenefits/FlexiSettings/FlexiCategory.jsx";
+import PerformanceSettings from "./pages/AdminHrms/Performance/PerformanceSettings.jsx";
+import MilestoneTypeSettings from "./pages/AdminHrms/MilestoneTypeSettings.jsx";
 // new admin hrms
 
 function App() {
@@ -5648,6 +5652,36 @@ function App() {
               </ProtectedAdminRoutes>
             }
           />
+          {/* flexi settings */}
+          <Route
+            path="/flexi-benefit/settings"
+            element={<Navigate to="/flexi-benefit/settings/general-settings" />}
+            replace
+          />
+          <Route
+            path="/flexi-benefit/settings/general-settings"
+            element={
+              <ProtectedAdminRoutes>
+                <FlexiGeneralSettings />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/flexi-benefit/settings/benefit-categories"
+            element={
+              <ProtectedAdminRoutes>
+                <FlexiCategory />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/performance-setting"
+            element={
+              <ProtectedAdminRoutes>
+                <PerformanceSettings />
+              </ProtectedAdminRoutes>
+            }
+          />
           {/* New HRMS changes */}
           <Route
             path="/admin/employee-fields/other-details"
@@ -6020,22 +6054,8 @@ function App() {
               </ProtectedAdminRoutes>
             }
           />
-          <Route
-            path="/admin/hrms/ctc/ctc-template/Component"
-            element={
-              <ProtectedAdminRoutes>
-                <ComponentCTCTemplate />
-              </ProtectedAdminRoutes>
-            }
-          />
-          <Route
-            path="/admin/hrms/ctc/ctc-template/Restrictions"
-            element={
-              <ProtectedAdminRoutes>
-                <Restrictions />
-              </ProtectedAdminRoutes>
-            }
-          />
+         
+          
           <Route
             path="/admin/details-payslip/:id"
             element={
@@ -6097,6 +6117,14 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <EditLetterTemplate />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/milestone-type-setting"
+            element={
+              <ProtectedAdminRoutes>
+                <MilestoneTypeSettings />
               </ProtectedAdminRoutes>
             }
           />
@@ -6488,7 +6516,7 @@ function App() {
           />
           <Route
             path="/employee-portal"
-            element={<Navigate to="/employee-portal/employee-feeds" replace />}
+            element={<Navigate to="/employee-portal/attendance" replace />}
           />
 
           <Route

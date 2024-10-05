@@ -4781,14 +4781,506 @@ export const getRosterRecords = async (orgId) => {
     throw error;
   }
 };
-export const editRosterRecord = async (shiftId) => {
+export const getRosterRecordDetails = async (shiftId) => {
   try {
-    const response = await HrmsAuth.put(
-      `/roster/roster-shift/${shiftId}/`
-    );
+    const response = await HrmsAuth.get(`/roster/roster-shift/${shiftId}/`);
     return response.data;
   } catch (error) {
     console.error("Error getting roster records:", error);
+    throw error;
+  }
+};
+export const editRosterRecord = async (shiftId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/roster/roster-shift/${shiftId}/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating roster records:", error);
+    throw error;
+  }
+};
+export const deleteRosterRecord = async (shiftId) => {
+  try {
+    const response = await HrmsAuth.delete(`/roster/roster-shift/${shiftId}/`);
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting roster records:", error);
+    throw error;
+  }
+};
+export const postRosterRecord = async (data) => {
+  try {
+    const response = await HrmsAuth.post(`/roster/roster-shift/`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error posting roster records:", error);
+    throw error;
+  }
+};
+
+// attendance settings
+//
+export const getAttendanceGeneralSetting = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/attendance/attendance-general-settings/?organization_id=${orgId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting attendance general setting:", error);
+    throw error;
+  }
+};
+export const editAttendanceGeneralSetting = async (settingId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/attendance/attendance-general-settings/${settingId}/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating attendance general setting:", error);
+    throw error;
+  }
+};
+export const getAttendanceRegularization = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/attendance/attendance-regularization-settings/?organization_id=${orgId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting attendance regularization:", error);
+    throw error;
+  }
+};
+export const postAttendanceRegularization = async (data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/attendance/attendance-regularization-settings/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting attendance regularization:", error);
+    throw error;
+  }
+};
+export const getAttendanceRegularizationDetails = async (regReasonId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/attendance/attendance-regularization-settings/${regReasonId}/`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting attendance regularization:", error);
+    throw error;
+  }
+};
+export const deleteAttendanceRegularizationDetails = async (regReasonId) => {
+  try {
+    const response = await HrmsAuth.delete(
+      `/attendance/attendance-regularization-settings/${regReasonId}/`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting attendance regularization:", error);
+    throw error;
+  }
+};
+export const editAttendanceRegularizationDetails = async (
+  regReasonId,
+  data
+) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/attendance/attendance-regularization-settings/${regReasonId}/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating attendance regularization:", error);
+    throw error;
+  }
+};
+export const getCTCTemplate = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/payroll/ctc-template/?organization_id=${orgId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting CTC template:", error);
+    throw error;
+  }
+};
+export const postCTCTemplate = async (data) => {
+  try {
+    const response = await HrmsAuth.post(`/payroll/ctc-template/`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error posting CTC template:", error);
+    throw error;
+  }
+};
+
+export const editCTCTemplate = async (tempId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/payroll/ctc-template/${tempId}/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating CTC template:", error);
+    throw error;
+  }
+};
+export const deleteCTCTemplate = async (tempId) => {
+  try {
+    const response = await HrmsAuth.delete(`/payroll/ctc-template/${tempId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting CTC template:", error);
+    throw error;
+  }
+};
+export const getFlexiGeneralSettings = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/flexi-benefit/setting/?organization_id=${orgId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting Flexi general setting:", error);
+    throw error;
+  }
+};
+export const editFlexiGeneralSettings = async (genId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/flexi-benefit/setting/${genId}`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating Flexi general setting:", error);
+    throw error;
+  }
+};
+export const getFlexiBenefitCategory = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/flexi-benefit/categories/?organization_id=${orgId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting Flexi benefit category:", error);
+    throw error;
+  }
+};
+export const postFlexiBenefitCategory = async (data) => {
+  try {
+    const response = await HrmsAuth.post(`/flexi-benefit/categories/`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error posting Flexi benefit category:", error);
+    throw error;
+  }
+};
+export const getFlexiBenefitCategoryDetails = async (flexiId) => {
+  try {
+    const response = await HrmsAuth.get(`/flexi-benefit/categories/${flexiId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error getting Flexi benefit category:", error);
+    throw error;
+  }
+};
+export const editFlexiBenefitCategoryDetails = async (flexiId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/flexi-benefit/categories/${flexiId}`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating Flexi benefit category:", error);
+    throw error;
+  }
+};
+export const deleteFlexiBenefitCategory = async (flexiId) => {
+  try {
+    const response = await HrmsAuth.delete(
+      `/flexi-benefit/categories/${flexiId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting Flexi benefit category:", error);
+    throw error;
+  }
+};
+export const getPerformanceGoal = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/performance/setting-goal/?organization_id=${orgId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting performance goal:", error);
+    throw error;
+  }
+};
+export const postPerformanceGoal = async (data) => {
+  try {
+    const response = await HrmsAuth.post(`/performance/setting-goal/`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error posting performance goal:", error);
+    throw error;
+  }
+};
+export const deletePerformanceGoal = async (goalId) => {
+  try {
+    const response = await HrmsAuth.delete(
+      `/performance/setting-goal/${goalId}/`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting performance goal:", error);
+    throw error;
+  }
+};
+export const getPerformanceGoalDetails = async (goalId) => {
+  try {
+    const response = await HrmsAuth.get(`/performance/setting-goal/${goalId}/`);
+    return response.data;
+  } catch (error) {
+    console.error("Error getting performance goal:", error);
+    throw error;
+  }
+};
+export const editPerformanceGoalDetails = async (goalId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/performance/setting-goal/${goalId}/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating performance goal:", error);
+    throw error;
+  }
+};
+
+export const getPerformanceCompetency = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/performance/setting-competency/?organization_id=${orgId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting performance competency:", error);
+    throw error;
+  }
+};
+export const postPerformanceCompetency = async (data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/performance/setting-competency/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting performance competency:", error);
+    throw error;
+  }
+};
+export const deletePerformanceCompetency = async (compId) => {
+  try {
+    const response = await HrmsAuth.delete(
+      `/performance/setting-competency/${compId}/`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting performance competency:", error);
+    throw error;
+  }
+};
+export const getPerformanceCompetencyDetails = async (compId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/performance/setting-competency/${compId}/`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting performance competency:", error);
+    throw error;
+  }
+};
+export const editPerformanceCompetencyDetails = async (compId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/performance/setting-competency/${compId}/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating performance competency:", error);
+    throw error;
+  }
+};
+export const getMilestoneType = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/organization/milestone-types/?organization_id=${orgId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting milestone type:", error);
+    throw error;
+  }
+};
+export const postMilestoneType = async (data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/organization/milestone-types/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting milestone type:", error);
+    throw error;
+  }
+};
+export const deleteMilestoneType = async (typeId) => {
+  try {
+    const response = await HrmsAuth.delete(
+      `/organization/milestone-types/${typeId}/`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting milestone type:", error);
+    throw error;
+  }
+};
+export const getMilestoneTypeDetails = async (typeId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/organization/milestone-types/${typeId}/`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting milestone type details:", error);
+    throw error;
+  }
+};
+export const editMilestoneTypeDetails = async (typeId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/organization/milestone-types/${typeId}/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting milestone type details:", error);
+    throw error;
+  }
+};
+
+export const postCalendarMilestone = async (data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/organization/calendar-milestones/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting milestone :", error);
+    throw error;
+  }
+};
+export const getCalendarMilestone = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/organization/calendar-milestones/?organization_id=${orgId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting milestone :", error);
+    throw error;
+  }
+};
+export const getCalendarMilestoneDetails = async (eventId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/organization/calendar-milestones/${eventId}/`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting milestone :", error);
+    throw error;
+  }
+};
+export const editCalendarMilestoneDetails = async (eventId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/organization/calendar-milestones/${eventId}/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating milestone :", error);
+    throw error;
+  }
+};
+export const deleteCalendarMilestone = async (eventId) => {
+  try {
+    const response = await HrmsAuth.delete(
+      `/organization/calendar-milestones/${eventId}/`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error delete milestone :", error);
+    throw error;
+  }
+};
+export const postHeadOfCompany = async (data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/organization/head-of-company/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting head of company :", error);
+    throw error;
+  }
+};
+export const postSalaryGeneralInfo = async (data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/employee/salary/general-info/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting general info :", error);
+    throw error;
+  }
+};
+export const postTaxStatutory = async (data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/employee/salary/tax-statutory/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting tax statutory :", error);
     throw error;
   }
 };

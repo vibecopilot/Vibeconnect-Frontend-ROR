@@ -32,11 +32,13 @@ import { ImFileText2 } from "react-icons/im";
 import { RiSettings3Line } from "react-icons/ri";
 import { FaMoneyBills, FaMoneyBillWheat } from "react-icons/fa6";
 import { BiSolidReport } from "react-icons/bi";
+import { GrDocumentPerformance } from "react-icons/gr";
 const AdminHRMS = () => {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState("");
   const [isOrgOpen, setIsOrgOpen] = useState(false);
   const [isFlexiOpen, setIsFlexiOpen] = useState(false);
+  const [isPerformanceOpen, setIsPerformanceOpen] = useState(false);
   const [isEmpOpen, setIsEmpOpen] = useState(false);
   const [isAttOpen, setIsAttOpen] = useState(false);
   const [isLeaveOpen, setIsLeaveOpen] = useState(false);
@@ -75,6 +77,9 @@ const AdminHRMS = () => {
   };
   const toggleFlexiMenu = () => {
     setIsFlexiOpen(!isFlexiOpen);
+  };
+  const togglePerformanceMenu = () => {
+    setIsPerformanceOpen(!isPerformanceOpen);
   };
   const toggleEmpMenu = () => {
     setIsEmpOpen(!isEmpOpen);
@@ -1160,7 +1165,92 @@ const AdminHRMS = () => {
                     </h2>
                   </NavLink>
                   <NavLink
-                    to="/admin/flexi-settings"
+                    to="/flexi-benefit/settings"
+                    className={({ isActive }) =>
+                      `${
+                        isActive
+                          ? "text-black bg-white flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                          : "group flex items-center text-sm gap-3.5 font-medium p-2 "
+                      }`
+                    }
+                  >
+                    <div>
+                      {React.createElement(RiSettings3Line, { size: "20" })}
+                    </div>
+                    <h2
+                      className={`whitespace-pre duration-300 ${
+                        !open && "opacity-0 translate-x-28 overflow-hidden"
+                      }`}
+                    >
+                      Settings
+                    </h2>
+                    <h2
+                      className={`${
+                        open && "hidden"
+                      } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+                    >
+                      Settings
+                    </h2>
+                  </NavLink>
+                </div>
+              )}
+            </div>
+            <div>
+              <div
+                onClick={togglePerformanceMenu}
+                className="cursor-pointer flex items-center text-sm gap-3.5 font-medium p-2 "
+              >
+                <div>
+                  {React.createElement(GrDocumentPerformance  , { size: "20" })}
+                  {/* <p>Organization</p> */}
+                </div>
+                <h2
+                  className={`whitespace-pre duration-300 ${
+                    !open && "opacity-0 translate-x-28 overflow-hidden"
+                  }`}
+                >
+                  Performance
+                </h2>
+                <div className="ml-auto">
+                  {isPerformanceOpen
+                    ? React.createElement(MdExpandLess, { size: "20" })
+                    : React.createElement(MdExpandMore, { size: "20" })}
+                </div>
+              </div>
+              {isPerformanceOpen && (
+                <div className="flex flex-col gap-2 mt-1">
+                  <NavLink
+                    // to="/admin/flexi-benefits"
+                    to={"#"}
+                    className={({ isActive }) =>
+                      `${
+                        isActive
+                          ? "text-black bg-white flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                          : "group flex items-center text-sm gap-3.5 font-medium p-2 "
+                      }`
+                    }
+                  >
+                    <div>
+                      {React.createElement(MdOutlineDashboard , { size: "20" })}
+                    </div>
+                    <h2
+                      className={`whitespace-pre duration-100 ${
+                        !open && "opacity-0 translate-x-28 overflow-hidden"
+                      }`}
+                    >
+                     Performance Dashboard
+                    </h2>
+                    <h2
+                      className={`${
+                        open && "hidden"
+                      } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-100 group-hover:w-fit`}
+                    >
+                     Performance Dashboard
+                    </h2>
+                  </NavLink>
+                  
+                  <NavLink
+                    to="/performance-setting"
                     className={({ isActive }) =>
                       `${
                         isActive
@@ -1203,7 +1293,7 @@ const AdminHRMS = () => {
                 Roster
               </h2>
               <div className="ml-auto">
-                {isEmpOpen
+                {isRosterOpen
                   ? React.createElement(MdExpandLess, { size: "20" })
                   : React.createElement(MdExpandMore, { size: "20" })}
               </div>

@@ -16,6 +16,7 @@ import { useSelector } from "react-redux";
 import { BiRightArrowAlt } from "react-icons/bi";
 import ReactSwitch from "react-switch";
 import { getItemInLocalStorage } from "../../utils/localStorage";
+import { useNavigate } from "react-router-dom";
 
 const CreateMeeting = () => {
   const [meetingTitle, setMeetingTitle] = useState("");
@@ -291,8 +292,11 @@ const CreateMeeting = () => {
     TeamCreateMeeting();
   };
 
+  const navigate = useNavigate()
+
   const handleSaveMeeting = async () => {
     const idList = selectedOption.map((email) => parseInt(email.value));
+    const emailList = selectedOption.map((email) => email.label);
 
     if (!meetingTitle) {
       //alert('Please fill in all the fields before creating the task.');
@@ -324,6 +328,9 @@ const CreateMeeting = () => {
     console.log(otheremails);
     const id = idList.join(",");
     formData.append("participent_ids", id);
+const internalEmails = emailList.join(",")
+// console.log(internalEmails)
+    formData.append("email", internalEmails);
     formData.append("to__date", selectedToDate);
     const mainWeek = selectedWeekdays.join(",");
     formData.append("included_weekdays", mainWeek);
@@ -334,6 +341,7 @@ const CreateMeeting = () => {
       const meetingResp = await CreateVibeMeeting(formData);
       toast.dismiss();
       toast.success("Meeting Created Successfully");
+      navigate("/meetings")
       // setPopupDate(null);
       if (meetingResp.success) {
         setMeetingTitle("");

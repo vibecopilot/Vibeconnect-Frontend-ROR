@@ -1,4 +1,4 @@
-import React, { useState,useEffect  } from "react";
+import React, { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import { ImFileText2 } from "react-icons/im";
 import { FiChevronDown, FiChevronUp } from "react-icons/fi"; // Import the necessary icons
@@ -21,14 +21,14 @@ const AttendanceDetailsList = () => {
     // Use effect to check if dropdown should be open based on current path
     const currentPath = window.location.pathname;
     setDropdownOpen(
-      currentPath === '/admin/hrms/setting' ||
-      currentPath === '/admin/attendance/Regularization-Reason' 
+      currentPath === "/admin/hrms/setting" ||
+        currentPath === "/admin/attendance/Regularization-Reason"
     );
   }, []);
   return (
     <div className="flex">
-        <AdminHRMS/>
-      <div className="w-72 h-full bg-white border-r p-4 mt-9">
+      <AdminHRMS />
+      <div className="w-64 h-full bg-white border-r p-4 mt-9">
         <ul className="space-y-4">
           <li className="font-bold text-lg">Details List</li>
           <li>
@@ -36,9 +36,7 @@ const AttendanceDetailsList = () => {
               onClick={toggleDropdown}
               className="cursor-pointer group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-200 rounded-md"
             >
-              <div>
-                {React.createElement(ImFileText2, { size: "20" })}
-              </div>
+              <div>{React.createElement(ImFileText2, { size: "20" })}</div>
               <h2
                 className={`whitespace-pre duration-300 ${
                   !open && "opacity-0 translate-x-28 overflow-hidden"
@@ -46,7 +44,7 @@ const AttendanceDetailsList = () => {
               >
                 General Settings
               </h2>
-              <div className="ml-16">
+              <div className="ml-10">
                 {dropdownOpen ? (
                   <FiChevronUp size={20} />
                 ) : (
@@ -58,7 +56,7 @@ const AttendanceDetailsList = () => {
                   open && "hidden"
                 } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
               >
-               General Settings
+                General Settings
               </h2>
             </div>
             {dropdownOpen && (
@@ -99,7 +97,7 @@ const AttendanceDetailsList = () => {
                         !open && "opacity-0 translate-x-28 overflow-hidden"
                       }`}
                     >
-                     Regularization Reason
+                      Regularization Reason
                     </h2>
                   </NavLink>
                 </li>
@@ -117,22 +115,20 @@ const AttendanceDetailsList = () => {
                 }`
               }
             >
-              <div>
-                {React.createElement(ImFileText2, { size: "20" })}
-              </div>
+              <div>{React.createElement(ImFileText2, { size: "20" })}</div>
               <h2
                 className={`whitespace-pre duration-300 ${
                   !open && "opacity-0 translate-x-28 overflow-hidden"
                 }`}
               >
-               Templates
+                Templates
               </h2>
               <h2
                 className={`${
                   open && "hidden"
                 } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
               >
-               Templates
+                Templates
               </h2>
             </NavLink>
           </li>
@@ -147,9 +143,7 @@ const AttendanceDetailsList = () => {
                 }`
               }
             >
-              <div>
-                {React.createElement(ImFileText2, { size: "20" })}
-              </div>
+              <div>{React.createElement(ImFileText2, { size: "20" })}</div>
               <h2
                 className={`whitespace-pre duration-300 ${
                   !open && "opacity-0 translate-x-28 overflow-hidden"
@@ -166,14 +160,8 @@ const AttendanceDetailsList = () => {
               </h2>
             </NavLink>
           </li>
-
-
-
-
-
         </ul>
       </div>
-
     </div>
   );
 };
