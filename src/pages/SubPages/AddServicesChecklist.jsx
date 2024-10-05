@@ -21,13 +21,16 @@ const AddServicesChecklist = () => {
   const [startDate, setStartDate] = useState(formattedDate);
   const [endDate, setEndDate] = useState(formattedDate);
   const [prioritylevel, setPrioritylevel] = useState("");
+  const [graceperiodvalue, setGraceperiodvalue] = useState("");
+  const [graceperiodunit, setGraceperiodunit] = useState("");
   const [addNewQuestion, setAddNewQuestion] = useState([
-    { name: "", type: "", options: ["", "", "", ""] },
+    { name: "", type: "", options: ["", "", "", ""], value_types: ["", "", "", ""] },
   ]);
+  
   const handleAddQuestionFields = () => {
     setAddNewQuestion([
       ...addNewQuestion,
-      { name: "", type: "", options: ["", "", "", ""] },
+      { name: "", type: "", options: ["", "", "", ""] ,value_types: ["", "", "", ""]},
     ]);
   };
 
@@ -38,15 +41,20 @@ const AddServicesChecklist = () => {
   };
 
   const navigate = useNavigate();
-  const handleQuestionChange = (index, field, value) => {
+  const handleQuestionChange = (index, field, value, optionIndex = null) => {
     const newQuestions = [...addNewQuestion];
+  
     if (field === "name" || field === "type") {
       newQuestions[index][field] = value;
-    } else {
-      newQuestions[index].options[field] = value;
+    } else if (field === "option") {
+      newQuestions[index].options[optionIndex] = value;
+    } else if (field === "value_type") {
+      newQuestions[index].value_types[optionIndex] = value;
     }
+  
     setAddNewQuestion(newQuestions);
   };
+  
   const siteId = getItemInLocalStorage("SITEID");
   const userId = getItemInLocalStorage("UserId");
   const handleSubmit = async (event) => {
@@ -59,6 +67,8 @@ const AddServicesChecklist = () => {
         start_date: startDate,
         end_date: endDate,
         priority_level: prioritylevel,
+        grace_period_value: graceperiodvalue,
+        grace_period_unit: graceperiodunit,
         user_id: userId,
         ctype: "soft_service",
       },
@@ -67,9 +77,13 @@ const AddServicesChecklist = () => {
         name: q.name,
         type: q.type,
         option1: q.options[0],
-        option2: q.options[1],
-        option3: q.options[2],
-        option4: q.options[3],
+      value_type1: q.value_types[0],
+      option2: q.options[1],
+      value_type2: q.value_types[1],
+      option3: q.options[2],
+      value_type3: q.value_types[2],
+      option4: q.options[3],
+      value_type4: q.value_types[3],
       })),
     };
     console.log(data);
@@ -185,6 +199,29 @@ const AddServicesChecklist = () => {
                     <option value="Low">Low</option>
                   </select>
                 </div>
+                <div className="flex flex-col">
+                  <label htmlFor="grace_period_value" className="font-semibold">Grace Period Value</label>
+                  <input
+                    name="grace_period_value"
+                    id="grace_period_value"
+                    type="text"
+                    value={graceperiodvalue}
+                    onChange={(e) => setGraceperiodvalue(e.target.value)}
+                    className="border p-1 px-4 border-gray-500 rounded-md"
+                    placeholder="Enter Grace Period Value"
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label htmlFor="grace_period_unit" className="font-semibold">Grace Period Unit</label>
+                  <input
+                     name="grace_period_unit"
+                     id="grace_period_unit"
+                     type="text"
+                     value={graceperiodunit}
+                     onChange={(e) => setGraceperiodunit(e.target.value)}
+                    className="border p-1 px-4 border-gray-500 rounded-md"
+                    placeholder="Enter Grace Period Unit" />
+                </div>
               </div>
               <div>
                 {addNewQuestion.map((data, i) => (
@@ -224,53 +261,99 @@ const AddServicesChecklist = () => {
                           <option value="description">Description box</option>
                         </select>
                         {data.type === "multiple" && (
-                          <div className="grid grid-cols-4 gap-4 my-2">
-                            <input
-                              type="text"
-                              name={`option1_${i}`}
-                              id={`option1_${i}`}
-                              className="border p-1 px-4 border-gray-500 rounded-md"
-                              placeholder="option 1"
-                              value={data.options[0]}
-                              onChange={(e) =>
-                                handleQuestionChange(i, 0, e.target.value)
-                              }
-                            />
-                            <input
-                              type="text"
-                              name={`option2_${i}`}
-                              id={`option2_${i}`}
-                              className="border p-1 px-4 border-gray-500 rounded-md"
-                              placeholder="option 2"
-                              value={data.options[1]}
-                              onChange={(e) =>
-                                handleQuestionChange(i, 1, e.target.value)
-                              }
-                            />
-                            <input
-                              type="text"
-                              name={`option3_${i}`}
-                              id={`option3_${i}`}
-                              className="border p-1 px-4 border-gray-500 rounded-md"
-                              placeholder="option 3"
-                              value={data.options[2]}
-                              onChange={(e) =>
-                                handleQuestionChange(i, 2, e.target.value)
-                              }
-                            />
-                            <input
-                              type="text"
-                              name={`option4_${i}`}
-                              id={`option4_${i}`}
-                              className="border p-1 px-4 border-gray-500 rounded-md"
-                              placeholder="option 4"
-                              value={data.options[3]}
-                              onChange={(e) =>
-                                handleQuestionChange(i, 3, e.target.value)
-                              }
-                            />
-                          </div>
-                        )}
+  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 my-2">
+    <div className="flex flex-col sm:flex-row gap-2">
+      <input
+        type="text"
+        name={`option1_${i}`}
+        id={`option1_${i}`}
+        className="border p-1 px-4 border-gray-500 rounded-md"
+        placeholder="option 1"
+        value={data.options[0]}
+        onChange={(e) => handleQuestionChange(i, "option", e.target.value, 0)}
+      />
+      <select
+        name={`value_type1_${i}`}
+        id={`value_type1_${i}`}
+        className={`border p-1 border-gray-500 rounded-md ${data.value_types[0] === 'P' ? 'bg-green-400' : data.value_types[0] === 'N' ? 'bg-red-400' : ''}`}
+        value={data.value_types[0]}
+        onChange={(e) => handleQuestionChange(i, "value_type", e.target.value, 0)}
+      >
+        <option value="">Select</option>
+        <option value="P">P</option>
+        <option value="N">N</option>
+      </select>
+    </div>
+    <div className="flex flex-col sm:flex-row gap-2">
+      <input
+        type="text"
+        name={`option2_${i}`}
+        id={`option2_${i}`}
+        className="border p-1 px-4 border-gray-500 rounded-md"
+        placeholder="option 2"
+        value={data.options[1]}
+        onChange={(e) => handleQuestionChange(i, "option", e.target.value, 1)}
+      />
+      <select
+        name={`value_type2_${i}`}
+        id={`value_type2_${i}`}
+        className={`border p-1 border-gray-500 rounded-md ${data.value_types[1] === 'P' ? 'bg-green-400' : data.value_types[1] === 'N' ? 'bg-red-400' : ''}`}
+        value={data.value_types[1]}
+        onChange={(e) => handleQuestionChange(i, "value_type", e.target.value, 1)}
+      >
+        <option value="">Select</option>
+        <option value="P" >P</option>
+        <option value="N" >N</option>
+      </select>
+    </div>
+    
+    <div className="flex flex-col sm:flex-row gap-2">
+      <input
+        type="text"
+        name={`option3_${i}`}
+        id={`option3_${i}`}
+        className="border p-1 px-4 border-gray-500 rounded-md"
+        placeholder="option 3"
+        value={data.options[2]}
+        onChange={(e) => handleQuestionChange(i, "option", e.target.value, 2)}
+      />
+      <select
+        name={`value_type3_${i}`}
+        id={`value_type3_${i}`}
+        className={`border p-1 border-gray-500 rounded-md ${data.value_types[2] === 'P' ? 'bg-green-400' : data.value_types[2] === 'N' ? 'bg-red-400' : ''}`}
+        value={data.value_types[2]}
+        onChange={(e) => handleQuestionChange(i, "value_type", e.target.value, 2)}
+      >
+        <option value="">Select</option>
+        <option value="P">P</option>
+        <option value="N">N</option>
+      </select>
+    </div>
+    <div className="flex flex-col sm:flex-row gap-2">
+      <input
+        type="text"
+        name={`option4_${i}`}
+        id={`option4_${i}`}
+        className="border p-1 px-4 border-gray-500 rounded-md"
+        placeholder="option 4"
+        value={data.options[3]}
+        onChange={(e) => handleQuestionChange(i, "option", e.target.value, 3)}
+      />
+      <select
+        name={`value_type4_${i}`}
+        id={`value_type4_${i}`}
+        className={`border p-1 border-gray-500 rounded-md ${data.value_types[3] === 'P' ? 'bg-green-400' : data.value_types[3] === 'N' ? 'bg-red-400' : ''}`}
+        value={data.value_types[3]}
+        onChange={(e) => handleQuestionChange(i, "value_type", e.target.value, 3)}
+      >
+        <option value="">Select</option>
+        <option value="P">P</option>
+        <option value="N">N</option>
+      </select>
+    </div>
+  </div>
+)}
+
                       </div>
 
                       <div className="flex justify-end gap-2">

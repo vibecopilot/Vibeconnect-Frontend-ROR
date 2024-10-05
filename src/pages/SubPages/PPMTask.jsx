@@ -16,7 +16,8 @@ const PPMTask = () => {
   const [tasks, setTasks] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [filteredData, setFilteredData] = useState([]);
-
+  const [selectedStatus, setSelectedStatus] = useState("all");
+  
   useEffect(() => {
     const fetchPPMTask = async () => {
       try {
@@ -147,6 +148,25 @@ const PPMTask = () => {
       setFilteredData(filteredResults);
     }
   };
+  useEffect(() => {
+    filterData(); // Filter data whenever tasks, searchText, or selectedStatus change
+  }, [tasks, searchText, selectedStatus]);
+  const filterData = () => {
+    let filteredResults = tasks;
+
+
+    // Apply status filter if it's not "all"
+    if (selectedStatus !== "all") {
+      filteredResults = filteredResults.filter(
+        (item) => item.status.toLowerCase() === selectedStatus
+      );
+    }
+
+    setFilteredData(filteredResults);
+  };
+  const handleStatusChange = (status) => {
+    setSelectedStatus(status);
+  };
 
   return (
     <section
@@ -159,6 +179,59 @@ const PPMTask = () => {
       <div className="p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
         <AssetNav />
         <div className="flex md:flex-row flex-col justify-between items-center my-2 gap-2  ">
+        <div className="md:flex justify-between grid grid-cols-2 items-center  gap-2 border border-gray-300 rounded-md px-3 p-2 w-auto">
+            <div className="flex items-center gap-2">
+              <input
+                type="radio"
+                id="all"
+                name="status"
+                checked={selectedStatus === "all"}
+                onChange={() => handleStatusChange("all")}
+              />
+              <label htmlFor="all" className="text-sm">
+                All
+              </label>
+            </div>
+           
+          
+            <div className="flex items-center gap-2">
+              <input
+                type="radio"
+                id="pending"
+                name="status"
+                checked={selectedStatus === "pending"}
+                onChange={() => handleStatusChange("pending")}
+              />
+              <label htmlFor="pending" className="text-sm">
+                Pending
+              </label>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="radio"
+                id="completed"
+                name="status"
+                checked={selectedStatus === "complete"}
+                onChange={() => handleStatusChange("complete")}
+              />
+              <label htmlFor="completed" className="text-sm">
+                Completed
+              </label>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="radio"
+                id="overdue"
+                name="status"
+                checked={selectedStatus === "overdue"}
+                onChange={() => handleStatusChange("overdue")}
+              />
+              <label htmlFor="completed" className="text-sm">
+                Overdue
+              </label>
+            </div>
+          </div>
+          <div  className="flex lg:flex-row flex-col gap-2">
           <input
             type="text"
             placeholder="Search By Asset name or Checklist name"
@@ -166,29 +239,8 @@ const PPMTask = () => {
             value={searchText}
             onChange={handleSearch}
           />
-          <div className="md:flex grid grid-cols-2 sm:flex-row my-2 flex-col gap-2">
-            {/* <Link
-            to={"/admin/add-checklist"}
-            className="bg-black  text-sm rounded-lg flex justify-center font-semibold items-center gap-2 text-white py-2 px-4 border-2 border-black hover:bg-white hover:text-black transition-all duration-300 "
-          >
-            <IoAddCircleOutline size={20} />
-            Add
-          </Link>
-
-          <button
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-            // onClick={exportToExcel}
-          >
-            Export
-          </button> */}
-            {/* <button
-    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-    onClick={handleDownloadQRCode}
-    disabled={selectedRows.length === 0}
-  >
-    Download QR Code
-  </button> */}
           </div>
+         
         </div>
         <Table
           columns={RoutineColumns}

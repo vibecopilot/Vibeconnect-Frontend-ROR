@@ -25,6 +25,8 @@ const AddService = () => {
     name: "",
     generic_info_id:"",
     generic_sub_info_id:"",
+    latitude:"",
+    longitude:"",
     // wing_id: "",
     // area_id: "",
     attachments: [],
@@ -147,6 +149,8 @@ const AddService = () => {
       dataToSend.append("soft_service[floor_id]", formData.floor_id);
       dataToSend.append("soft_service[generic_info_id]", formData.generic_info_id);
       dataToSend.append("soft_service[generic_sub_info_id]", formData.generic_sub_info_id);
+      dataToSend.append("soft_service[latitude]", formData.latitude);
+      dataToSend.append("soft_service[longitude]", formData.longitude);
       selectedOption.forEach(option => {
         dataToSend.append("soft_service[unit_id][]", option.value);
       });
@@ -279,6 +283,32 @@ const AddService = () => {
                 ))}
                   </select>
                 </div>
+                <div className="flex flex-col ">
+              <label htmlFor="" className="font-semibold">
+                Latitude:
+              </label>
+              <input
+                type="number"
+                name="latitude"
+                value={formData.latitude}
+                onChange={handleChange}
+                placeholder="Enter Latitude"
+                className="border p-1 px-4 border-gray-500 rounded-md placeholder:text-sm"
+              />
+            </div>
+            <div className="flex flex-col ">
+              <label htmlFor="" className="font-semibold">
+                Longitude:
+              </label>
+              <input
+                type="number"
+                name="longitude"
+                value={formData.longitude}
+                onChange={handleChange}
+                placeholder="Enter Longitude"
+                className="border p-1 px-4 border-gray-500 rounded-md placeholder:text-sm"
+              />
+            </div>
           </div>
           <div>
 <p className="font-medium border-b ">Cron setting</p>

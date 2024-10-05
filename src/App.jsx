@@ -1641,6 +1641,14 @@ function App() {
               </ProtectedAdminRoutes>
             }
           />
+           <Route
+            path="/soft-service/schedule-task-details/:sId/:activityId"
+            element={
+              <ProtectedAdminRoutes>
+              <SoftServiceScheduleDetails/>
+              </ProtectedAdminRoutes>
+            }
+          />
           <Route
             path="/services/edit-service/:id"
             element={
