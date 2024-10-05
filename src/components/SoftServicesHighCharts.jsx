@@ -402,7 +402,7 @@ const SoftServiceHighCharts = () => {
         </div> */}
        
       </div>
-      <div className="bg-white shadow-custom-all-sides rounded-md my-2 mr-2">
+      {/* <div className="bg-white shadow-custom-all-sides rounded-md my-2 mr-2">
           {categoryData ? <HighchartsReact
             highcharts={Highcharts}
             options={generateColumnChartOptions("Soft Services by Building", categoryData)}
@@ -420,7 +420,7 @@ const SoftServiceHighCharts = () => {
               />
             </div>
           )}
-        </div>
+        </div> */}
       <div className="bg-white shadow-custom-all-sides rounded-md my-2 mr-2">
 
 {floorTickets ? <HighchartsReact
