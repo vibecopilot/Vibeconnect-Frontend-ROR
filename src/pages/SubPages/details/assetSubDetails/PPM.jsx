@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {
   domainPrefix,
-  getAssetPPMActivityDetails,
+  
   getAssetPPMs,
 } from "../../../../api";
 import { Link, useParams } from "react-router-dom";
@@ -35,14 +35,18 @@ const PPM = () => {
   };
 
   const fetchPPMDetails = async () => {
-    const PPMDetailsResp = await getAssetPPMActivityDetails(id);
-    const filteredData = PPMDetailsResp.data.filter((activity) => {
-      const activityDate = formatDate(activity.created_at); // Extract date from start_time
+    const PPMDetailsResp = await getAssetPPMs(id);
+    const filteredData = PPMDetailsResp.data.activities.filter((activity) => {
+      const activityDate = formatDate(activity.start_time); // Extract date from start_time
      
-      return activityDate === selectedDate ; // Match with the selected date and 'complete' status
+      console.log("show date",activityDate)
+          return activityDate === selectedDate && activity.status !== 'pending' &&
+          activity.status !== 'overdue';  // Match with the selected date and 'complete' status
     });
-    console.log(PPMDetailsResp);
-    setPPMDetails(filteredData);
+   
+    console.log("logs data",filteredData)
+    setPPMDetails(filteredData); // Set filtered data
+    
   };
   useEffect(() => {
     
@@ -223,88 +227,76 @@ return isoString.split('T')[0]; // Extract YYYY-MM-DD part directly from ISO str
 
         <button onClick={handleNextDate}  className="bg-gray-200 px-2 rounded-md py-2"><HiArrowRight/></button>
       </div>
-            {ppmDetails.map((task, index) => (
-              <div key={task.id}>
-                <div className="my-4 flex flex-col bg-gray-50 shadow-custom-all-sides p-2 rounded-md gap-2">
-                  <div className="grid grid-cols-12">
-                    <div className="col-span-11 items-center">
-                      <p className="font-medium">Question :</p>
-                      <p className="w-full">{task.question_name}</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-4 items-center bg-green-100 p-2 rounded-md">
-                    <p className="font-medium">Answer :</p>
-                    <p>{task.value}</p>
-                  </div>
-                  <p>
-                    <span className="font-medium">Comment : </span>{" "}
-                    <span className="text-violet-500 font-medium">
-                      {task.comment ? task.comment : "No Comment"}{" "}
-                    </span>
-                  </p>
-                  <span className="font-medium text-gray-500">
-                    {" "}
-                    Attachments :
-                  </span>{" "}
-                  <div className="flex  gap-4 flex-wrap my-4 items-center  text-center">
-                    {task.question_attachments?.map((other) => (
-                      // <p>{other.document}</p>
+      <div>
+  {ppmDetails.map((task, index) => {
+    // Check if there are any submissions
+    const hasSubmissions = task.activity_log?.submissions?.length > 0;
+
+    // Only render the entire block if there are submissions
+    return (
+      hasSubmissions && (
+        <div key={task.id} className="my-4 flex flex-col bg-gray-50 shadow-custom-all-sides p-4 rounded-md gap-2">
+          <div className="grid grid-cols-12">
+            <div className="col-span-11 items-center">
+              <p className="font-medium">Checklist Name :</p>
+              <p className="w-full">{task.checklist?.name || 'No Checklist Name'}</p>
+            </div>
+          </div>
+
+          {task.activity_log.submissions.map((submission, subIndex) => (
+            submission && (
+              <div key={submission.id} className="my-2">
+                <div className="flex gap-4 items-center bg-green-100 mb-2 p-2 rounded-md">
+                  <p className="font-medium">Question {subIndex+1}:</p>
+                  <p>{submission.question?.name || 'No Question'}</p>
+                </div>
+
+                <div className="flex gap-4 items-center bg-blue-100 mb-2 p-2 rounded-md">
+                  <p className="font-medium">Answer :</p>
+                  <p>{submission.value || 'No Answer'}</p>
+                </div>
+
+                <span className="font-medium text-gray-500">Attachments :</span>
+                <div className="flex gap-4 flex-wrap my-4 items-center text-center">
+                  {submission.question_attachments?.length > 0 ? (
+                    submission.question_attachments.map((attachment, i) => (
                       <img
-                        src={domainPrefix + other.document}
-                        alt={`Attachment ${index + 1}`}
+                        key={i}
+                        src={domainPrefix + attachment.document}
+                        alt={`Attachment ${i + 1}`}
                         className="w-40 h-28 object-cover rounded-md"
-                        onClick={() =>
-                          window.open(domainPrefix + other.document, "_blank")
-                        }
+                        onClick={() => window.open(domainPrefix + attachment.document, "_blank")}
                       />
-                    ))}
-                    {/* {task.question_attachments && task.question_attachments > 0 ? (
-                  task.question_attachments.map((other, index) => (
-                    <div key={other.id} className="">
-                      {isImage(domainPrefix + other.document) ? (
-                        <img
-                          src={domainPrefix + other.document}
-                          alt={`Attachment ${index + 1}`}
-                          className="w-40 h-28 object-cover rounded-md"
-                          onClick={() =>
-                            window.open(domainPrefix + other.document, "_blank")
-                          }
-                        />
-                      ) : (
-                        <a
-                          href={domainPrefix + other.document}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="attachment-link hover:text-blue-400 transition-all duration-300  text-center flex flex-col items-center  "
-                        >
-                          <FaRegFileAlt size={50} />
-                          {getFileName(other.document)}
-                        </a>
-                      )}
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-center w-full">No Attachments</p>
-                )} */}
-                  </div>
-                  <div className="flex justify-between">
-                    <p className="">
-                      <span className="font-medium text-gray-500">
-                        {" "}
-                        Performed by :
-                      </span>{" "}
-                      <span className="font-medium text-gray-500">
-                        {" "}
-                        {task.user_name}{" "}
-                      </span>
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {dateTimeFormat(task.created_at)}
-                    </p>
-                  </div>
+                    ))
+                  ) : (
+                    <p>No Attachments</p>
+                  )}
+                </div>
+
+                <div className="flex justify-between">
+                  <p>
+                    <span className="font-medium text-gray-500">Performed by:</span>
+                    <span className="font-medium text-gray-500">{task.assigned_name || 'Unknown'}</span>
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    {dateTimeFormat(submission.updated_at) || "No timestamp available"}
+                  </p>
                 </div>
               </div>
-            ))}
+            )
+          ))}
+
+          <p>
+            <span className="font-medium">Comment : </span>
+            <span className="text-violet-500 font-medium">
+              {task.comment ? task.comment : "No Comment"}{" "}
+            </span>
+          </p>
+        </div>
+      )
+    );
+  })}
+</div>
           </div>
         )}
       </div>

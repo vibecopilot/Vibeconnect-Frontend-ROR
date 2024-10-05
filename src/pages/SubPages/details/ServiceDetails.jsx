@@ -27,7 +27,14 @@ const ServiceDetails = () => {
   const [filteredScheduleData, setFilteredScheduleData] = useState([]);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
- 
+  useEffect(() => {
+    const fetchServiceDetails = async () => {
+      const ServiceDetailsResponse = await getSoftServicesDetails(id);
+      setDetails(ServiceDetailsResponse.data);
+      console.log(ServiceDetailsResponse);
+    };
+    fetchServiceDetails();
+  }, []);
     const fetchScheduleData = async () => {
       try {
         const scheduleRes = await getSoftServiceSchedule(id);
@@ -45,8 +52,9 @@ const ServiceDetails = () => {
         const logsDetailsResp = await getSoftserviceActivityDetails(id); // Assuming this fetches all logs
         const filteredData = logsDetailsResp.data.activities.filter((activity) => {
           const activityDate = formatDate(activity.start_time); // Extract date from start_time
-         
-          return activityDate === selectedDate && activity.status === 'complete'; // Match with the selected date and 'complete' status
+         console.log("show date",activityDate)
+          return activityDate === selectedDate && activity.status !== 'pending' &&
+          activity.status !== 'overdue'; // Match with the selected date and 'complete' status
         });
        
         console.log("logs data",filteredData)
@@ -108,14 +116,7 @@ const formatDate = (isoString) => {
       setFilteredScheduleData(filteredResult);
     }
   };
-  useEffect(() => {
-    const fetchServiceDetails = async () => {
-      const ServiceDetailsResponse = await getSoftServicesDetails(id);
-      setDetails(ServiceDetailsResponse.data);
-      console.log(ServiceDetailsResponse);
-    };
-    fetchServiceDetails();
-  }, []);
+ 
   const FormatedDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleString();
@@ -373,7 +374,7 @@ const formatDate = (isoString) => {
             submission && (
               <div key={submission.id} className="my-2">
                 <div className="flex gap-4 items-center bg-green-100 mb-2 p-2 rounded-md">
-                  <p className="font-medium">Question :</p>
+                  <p className="font-medium">Question {subIndex+1}:</p>
                   <p>{submission.question?.name || 'No Question'}</p>
                 </div>
 

@@ -695,15 +695,15 @@ export const getScheduleDetails = async (sId, activityId) =>
     }
   );
 
-export const getAssetPPMActivityDetails = async (assetId) =>
-  axiosInstance.get(
-    `/submissions.json?q[asset_id_eq]=${assetId}&q[checklist_ctype_eq]=ppm`,
-    {
-      params: {
-        token: token,
-      },
-    }
-  );
+// export const getAssetPPMActivityDetails = async (assetId) =>
+//   axiosInstance.get(
+//     `/submissions.json?q[asset_id_eq]=${assetId}&q[checklist_ctype_eq]=ppm`,
+//     {
+//       params: {
+//         token: token,
+//       },
+//     }
+//   );
 export const getAssetPPMs = async (assetId) =>
   axiosInstance.get(`/site_assets/${assetId}/asset_ppm_show.json`, {
     params: {
@@ -1103,7 +1103,13 @@ export const getBroadcastDetails = async (id) =>
       token: token,
     },
   });
-
+//Permit
+export const postNewPermit = async (data) =>
+  axiosInstance.post("/permits.json", data, {
+    params: {
+      token: token,
+    },
+  });
 //services
 export const getServicesTaskDetails = async (serviceId, activityId) =>
   axiosInstance.get(
@@ -1233,7 +1239,7 @@ export const getServicesRoutineList = async (page,perpage) =>
     },
   });
   export const getServicesTaskList = async () =>
-    axiosInstance.get(`/activities.json?q[soft_service_id_null]=0`, {
+    axiosInstance.get(`/soft_services/soft_services_dashboard.json?`, {
       params: {
         token: token,
       },

@@ -91,7 +91,7 @@ const ServicesTask = () => {
             console.log("task data",filteredServiceTask)
             console.log("task data resp",ServiceRoutineResponse)
             setFilteredRoutineData(filteredServiceTask);
-            setTotal(ServiceRoutineResponse.data.total_count);
+            setTotal(ServiceRoutineResponse.data.total_pages);
             setRoutineData(filteredServiceTask)
             setRoutines(filteredServiceTask)
           };

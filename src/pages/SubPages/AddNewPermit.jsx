@@ -1,20 +1,22 @@
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import FileInputBox from "../../containers/Inputs/FileInputBox";
-import { getFloors, getUnits,getVendors } from "../../api";
+import { getFloors, getUnits,getVendors, postNewPermit } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 
 const AddNewPermit = () => {
   const buildings = getItemInLocalStorage("Building");
+  const userId = getItemInLocalStorage("UserId");
+
   const [vendors, setVendors] = useState([]);
   const [floors, setFloors] = useState([]);
   const [units, setUnits] = useState([]);
   const themeColor = useSelector((state) => state.theme.color);
   const [showEntityList, setShowEntityList] = useState(false);
   const [activities, setActivities] = useState([
-    { id: 1, activity: "", subActivity: "", hazardCategory: "", risks: "" },
+    { activity: "", sub_activity: "", category_of_hazards: "", risks: "" },
   ]);
-  const [nextId, setNextId] = useState(2);
+ 
   useEffect(() => {
     const fetchVendors = async () => {
       const vendorResp = await getVendors();
@@ -47,6 +49,47 @@ const AddNewPermit = () => {
     created_by_id: "",
     permit_activities: []
   });
+  const handleNewPermit = async() => {
+    const sendData = new FormData();
+    sendData.append("permit[name]", formData.name);
+    sendData.append("permit[contact_number]", formData.contact_number);
+    // sendData.append("permit[site_id]", formData.site_id);
+    // sendData.append("permit[unit_id]", formData.unit_id);
+    sendData.append("permit[permit_for]", formData.permit_for);
+    sendData.append("permit[building_id]", formData.building_id);
+    sendData.append("permit[floor_id]", formData.floor_id);
+    // sendData.append("permit[room_id]", formData.room_id);
+    sendData.append("permit[client_specific]", formData.client_specific);
+    sendData.append("permit[entity]", formData.entity);
+    sendData.append("permit[copy_to_string]", formData.copy_to_string);
+    sendData.append("permit[permit_type]", formData.permit_type);
+    sendData.append("permit[vendor_id]", formData.vendor_id);
+    // sendData.append("permit[issue_date_and_time]", formData.issue_date_and_time);
+    sendData.append("permit[expiry_date_and_time]", formData.expiry_date_and_time);
+    sendData.append("permit[comment]", formData.comment);
+    // sendData.append("permit[permit_status]", formData.permit_status);
+    // sendData.append("permit[extention_status]", formData.extention_status);
+    sendData.append("permit[created_by_id]", userId);
+    
+    activities.forEach((activity) => {
+      sendData.append(`permit[permit_activities][][activity]`, activity.activity);
+      sendData.append(`permit[permit_activities][][sub_activity]`, activity.sub_activity);
+      sendData.append(`permit[permit_activities][][category_of_hazards]`, activity.category_of_hazards);
+      sendData.append(`permit[permit_activities][][risks]`, activity.risks);
+    });
+
+    // formData.permit_attachments.forEach((file) => {
+    //     sendData.append("attachfiles[]", file)
+    // });
+    try {
+        const billResp = await postNewPermit(sendData)
+        toast.success("Permit Added Successfully")
+        navigate("/admin/permit")
+        console.log("Permit response",billResp)
+    } catch (error) {
+        console.log(error)
+    }
+  };
   const handleChange = async (e) => {
     async function fetchFloor(floorID) {
       console.log(floorID)
@@ -108,22 +151,31 @@ const AddNewPermit = () => {
     setActivities([
       ...activities,
       {
-        id: nextId,
+        
         activity: "",
         subActivity: "",
         hazardCategory: "",
         risks: "",
       },
     ]);
-    setNextId(nextId + 1);
+    
   };
 
-  const handleDeleteActivity = (id) => {
-    setActivities(activities.filter((activity) => activity.id !== id));
+  const handleDeleteActivity = (index) => {
+    const removeActivities = [...activities];
+    removeActivities.splice(index, 1);
+    setActivities(removeActivities);
   };
 
   const handleRadioChange = (event) => {
-    setShowEntityList(event.target.value === "client");
+    const value = event.target.value;
+    setShowEntityList(value === "client");
+    
+    // Update formData with the selected value
+    setFormData((prevData) => ({
+      ...prevData,
+      client_specific: value,
+    }));
   };
 
   return (
@@ -364,8 +416,9 @@ const AddNewPermit = () => {
                       className="mr-2 leading-tight"
                       type="radio"
                       id="internal"
-                      name="type"
+                      name="client_specific"
                       value="internal"
+                      checked={formData.client_specific === "internal"}
                       onChange={handleRadioChange}
                     />
                     <label
@@ -378,8 +431,9 @@ const AddNewPermit = () => {
                       className="mr-2 leading-tight"
                       type="radio"
                       id="client"
-                      name="type"
+                      name="client_specific"
                       value="client"
+                      checked={formData.client_specific === "client"}
                       onChange={handleRadioChange}
                     />
                     <label className="text-gray-700 font-bold" htmlFor="client">
@@ -403,7 +457,10 @@ const AddNewPermit = () => {
                       name="entity"
                       
                     >
-                      <option>Select Entity</option>
+                      <option value="">Select Entity</option>
+                      <option value="RISING ASSOSIATES">RISING ASSOSIATES</option>
+                      <option value="ABS Professional Services">ABS Professional Services</option>
+                      <option value="Apex Fund Services LLP">Apex Fund Services LLP</option>
                     </select>
                   </div>
                 )}
@@ -440,8 +497,10 @@ const AddNewPermit = () => {
                 <input
                   type="radio"
                   id="cold-work"
-                  name="permit-type"
+                  name="permit_type"
                   value="Cold Work"
+                  checked={formData.permit_type === "Cold Work"}
+        onChange={(e) => setFormData({ ...formData, permit_type: e.target.value })}
                 />
                 <label
                   className="text-gray-700 font-bold ml-2"
@@ -454,8 +513,10 @@ const AddNewPermit = () => {
                 <input
                   type="radio"
                   id="confined-space-work"
-                  name="permit-type"
+                  name="permit_type"
                   value="Confined Space Work"
+                  checked={formData.permit_type === "Confined Space Work"}
+        onChange={(e) => setFormData({ ...formData, permit_type: e.target.value })}
                 />
                 <label
                   className="text-gray-700 font-bold ml-2"
@@ -470,6 +531,8 @@ const AddNewPermit = () => {
                   id="electrical-work"
                   name="permit-type"
                   value="Electrical Work"
+                  checked={formData.permit_type === "Electrical Work"}
+        onChange={(e) => setFormData({ ...formData, permit_type: e.target.value })}
                 />
                 <label
                   className="text-gray-700 font-bold ml-2"
@@ -482,8 +545,10 @@ const AddNewPermit = () => {
                 <input
                   type="radio"
                   id="excavation-work"
-                  name="permit-type"
+                  name="permit_type"
                   value="Excavation Work"
+                  checked={formData.permit_type === "Excavation Work"}
+        onChange={(e) => setFormData({ ...formData, permit_type: e.target.value })}
                 />
                 <label
                   className="text-gray-700 font-bold ml-2"
@@ -498,8 +563,10 @@ const AddNewPermit = () => {
                 <input
                   type="radio"
                   id="height-work"
-                  name="permit-type"
+                  name="permit_type"
                   value="Height Work"
+                  checked={formData.permit_type === "Height Work"}
+        onChange={(e) => setFormData({ ...formData, permit_type: e.target.value })}
                 />
                 <label
                   className="text-gray-700 font-bold ml-2"
@@ -512,8 +579,10 @@ const AddNewPermit = () => {
                 <input
                   type="radio"
                   id="hot-work"
-                  name="permit-type"
+                  name="permit_type"
                   value="Hot Work"
+                  checked={formData.permit_type === "Hot Work"}
+        onChange={(e) => setFormData({ ...formData, permit_type: e.target.value })}
                 />
                 <label
                   className="text-gray-700 font-bold ml-2"
@@ -526,8 +595,10 @@ const AddNewPermit = () => {
                 <input
                   type="radio"
                   id="radiology-work"
-                  name="permit-type"
+                  name="permit_type"
                   value="Radiology Work"
+                  checked={formData.permit_type === "Radiology Work"}
+        onChange={(e) => setFormData({ ...formData, permit_type: e.target.value })}
                 />
                 <label
                   className="text-gray-700 font-bold ml-2"
@@ -540,8 +611,10 @@ const AddNewPermit = () => {
                 <input
                   type="radio"
                   id="loading-unloading-work"
-                  name="permit-type"
+                  name="permit_type"
                   value="Loading, Unloading Hazardous Material Work"
+                  checked={formData.permit_type === "Loading, Unloading Hazardous Material Work"}
+        onChange={(e) => setFormData({ ...formData, permit_type: e.target.value })}
                 />
                 <label
                   className="text-gray-700 font-bold ml-2"
@@ -590,8 +663,8 @@ const AddNewPermit = () => {
                         id={`sub-activity-${index}`}
                         type="text"
                         placeholder="Select Sub Activity"
-                        name="subActivity"
-                        value={activity.subActivity}
+                        name="sub_activity"
+                        value={activity.sub_activity}
                         onChange={(e) => handleInputChange(index, e)}
                       />
                     </div>
@@ -609,8 +682,8 @@ const AddNewPermit = () => {
                         id={`hazard-category-${index}`}
                         type="text"
                         placeholder="Select Category of Hazards"
-                        name="hazardCategory"
-                        value={activity.hazardCategory}
+                        name="category_of_hazards"
+                        value={activity.category_of_hazards}
                         onChange={(e) => handleInputChange(index, e)}
                       />
                     </div>
@@ -635,7 +708,7 @@ const AddNewPermit = () => {
                   <button
                     className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
                     type="button"
-                    onClick={() => handleDeleteActivity(activity.id)}
+                    onClick={() => handleDeleteActivity(index)}
                   >
                     Delete
                   </button>
@@ -679,22 +752,23 @@ const AddNewPermit = () => {
                  
                 </div>
                 <div className="col-span-1">
-                  <label
-                    className="block text-gray-700 font-bold mb-2"
-                    htmlFor="expiryDateTime"
-                  >
-                    Expiry Date&Time*
-                  </label>
-                  <input
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    id="expiryDateTime"
-                    value={formData.expiry_date_and_time}
-                    onChange={handleChange}
-                    name="expiry_date_and_time"
-                    type="text"
-                    placeholder="dd-mm-yyyy --:--"
-                  />
-                </div>
+  <label
+    className="block text-gray-700 font-bold mb-2"
+    htmlFor="expiryDateTime"
+  >
+    Expiry Date&Time*
+  </label>
+  <input
+    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+    id="expiryDateTime"
+    value={formData.expiry_date_and_time}
+    onChange={handleChange}
+    name="expiry_date_and_time"
+    type="datetime-local"
+    placeholder="dd-mm-yyyy --:--"
+  />
+</div>
+
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div className="col-span-2">
@@ -727,7 +801,7 @@ const AddNewPermit = () => {
           <div className="sm:flex justify-center grid gap-2 my-5 ">
             <button
               className="bg-black text-white p-2 px-4 rounded-md font-medium"
-              //   onClick={handleSubmit}
+                onClick={handleNewPermit}
             >
               Submit
             </button>

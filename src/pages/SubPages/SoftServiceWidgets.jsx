@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getSoftServices,getServicesChecklist, getServicesTaskList } from "../../api";
+import { getSoftServices,getServicesChecklist, getServicesTaskList } from "../../api"; 
 import Navbar from "../../components/Navbar";
 import Table from "../../components/table/Table";
 import { Link } from "react-router-dom";
@@ -10,7 +10,7 @@ import { DNA } from "react-loader-spinner";
 
 const SoftServiceWidgets = () => {
     const [filteredData, setFilteredData] = useState([]);
-    const [filteredRoutineData, setFilteredRoutineData] = useState([]);
+    const [filteredRoutineData, setFilteredRoutineData] = useState("");
     const [filteredChecklistData, setFilteredChecklistData] = useState([]);
     const [pendingCount, setPendingCount] = useState(0); 
 const [completeCount, setCompleteCount] = useState(0);
@@ -33,21 +33,8 @@ useEffect(() => {
       const fetchServiceRoutine = async () => {
         try {
           const ServiceRoutineResponse = await getServicesTaskList();
-          const activities = ServiceRoutineResponse.data.activities;
-    
-          // Filter activities based on the status
-          const pendingCount = activities.filter(asset => asset.status === "pending").length;
-          const completeCount = activities.filter(asset => asset.status === "complete").length;
-          const overdueCount = activities.filter(asset => asset.status === "overdue").length;
-    
-          setPendingCount(pendingCount);
-          setCompleteCount(completeCount);
-          setOverdueCount(overdueCount);
-    
-          const filteredServiceTask = activities.filter(asset => asset.soft_service_name);
-          setFilteredRoutineData(filteredServiceTask);
-          console.log("task dashboard",ServiceRoutineResponse)
-          
+         console.log("soft services dashboard",ServiceRoutineResponse)
+         setFilteredRoutineData(ServiceRoutineResponse.data)
         } catch (error) {
           console.log(error);
         }
@@ -139,7 +126,7 @@ useEffect(() => {
         >
           Total services
           <span className="font-medium text-base text-black">
-           {filteredData.length}
+          {filteredRoutineData.total_services}
           </span>
         </p>
         {/* <p
@@ -159,7 +146,7 @@ useEffect(() => {
         >
           Checklist
           <span className="font-medium text-base text-black">
-            {filteredChecklistData.length}
+          {filteredRoutineData.checklist}
           </span>
         </p>
         <p
@@ -169,20 +156,20 @@ useEffect(() => {
           >
             Tasks
             <span className="font-medium text-base text-black">
-              {filteredRoutineData.length}
+            {filteredRoutineData.tasks}
             </span>
           </p>
         <p className="bg-white min-w-44 shadow-custom-all-sides p-4 rounded-md flex flex-col border-4 items-center cursor-pointer border-yellow-400 text-yellow-500 text-sm w-fit font-medium">
         Tasks Pending
-            <span className="font-medium text-base text-black">{pendingCount}</span>
+            <span className="font-medium text-base text-black">  {filteredRoutineData.by_status?.pending || 0}</span>
           </p>
           <p className="bg-white min-w-44 shadow-custom-all-sides p-4 rounded-md flex flex-col border-4 items-center cursor-pointer border-cyan-400 text-cyan-500 text-sm w-fit font-medium">
           Tasks Completed
-            <span className="font-medium text-base text-black">{completeCount}</span>
+            <span className="font-medium text-base text-black">{filteredRoutineData.by_status?.complete || 0}</span>
           </p>
           <p className="bg-white min-w-44 shadow-custom-all-sides p-4 rounded-md flex flex-col border-4 items-center cursor-pointer border-orange-500 text-orange-500 text-sm w-fit font-medium">
           Tasks Overdue
-            <span className="font-medium text-base text-black">{overdueCount}</span>
+            <span className="font-medium text-base text-black">{filteredRoutineData.by_status?.overdue || 0}</span>
           </p>
       </div>
       {filteredData.length !== 0 ? (

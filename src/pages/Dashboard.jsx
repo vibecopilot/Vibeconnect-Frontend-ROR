@@ -9,6 +9,7 @@ import wave from "/wave.png";
 import HighchartsComponent from "../components/HighCharts";
 import TicketDashboard from "./SubPages/TicketDashboard";
 import CommunicationDashboard from "./SubPages/CommunicationDashboard";
+import SoftServiceHighCharts from "../components/SoftServicesHighCharts";
 const Dashboard = () => {
   const themeColor = useSelector((state) => state.theme.color);
   const vibeUserId = getItemInLocalStorage("VIBEUSERID");
@@ -84,8 +85,13 @@ const [feat, setFeat] = useState("")
        
           <TicketDashboard/>
         </div>
-        <div className="w-full flex mx-3 flex-col p-2 mb-10 ">
+        <div className="w-full flex mx-3 flex-col p-2  ">
           <HighchartsComponent />
+        </div>
+        
+        <div className="w-full flex mx-3 flex-col p-2  ">
+        <h2 className="border-b-2 border-black font-medium mb-10">Soft Services</h2>
+         <SoftServiceHighCharts/>
         </div>
         {feat.includes("communication") && (
         <div className="w-full flex mx-3 flex-col p-2 mb-10 ">
