@@ -14,6 +14,7 @@ import {
   getMyHRMSEmployees,
   getMyOrganizationLocations,
   getMyOrgDepartments,
+  postEmployeeEmploymentInfo,
 } from "../../api";
 import toast from "react-hot-toast";
 const SectionsEmployment = () => {
@@ -191,16 +192,27 @@ const SectionsEmployment = () => {
     postData.append("designation", formData.designation);
     postData.append("employee", id);
     try {
-      const res = await editEmployeeEmploymentDetails(formData.id, postData);
-      console.log(res);
-      // setDisableNext(false);
-      toast.success("Employment details updated successfully");
-      setIsEditing(false);
+      if (formData.id) {
+        const res = await editEmployeeEmploymentDetails(formData.id, postData);
+        console.log(res);
+        // setDisableNext(false);
+        toast.success("Employment details updated successfully");
+        setIsEditing(false);
+        fetchEmploymentDetails();
+      } else {
+        const res = await postEmployeeEmploymentInfo(postData);
+        console.log(res);
+        // setDisableNext(false);
+        toast.success("Employment details updated successfully");
+        setIsEditing(false);
+        fetchEmploymentDetails();
+      }
     } catch (error) {
       console.log(error);
     }
   };
 
+  
   return (
     <div className="flex flex-col ml-20">
       <EditEmployeeDirectory />
@@ -317,6 +329,7 @@ const SectionsEmployment = () => {
                     !isEditing ? "bg-gray-200" : ""
                   }`}
                   value={formData.probationDueDate}
+                  onChange={handleChange}
                   readOnly={!isEditing}
                 />
               </div>

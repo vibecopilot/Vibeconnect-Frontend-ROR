@@ -94,7 +94,7 @@ const AdminHRMS = () => {
     setIspayOpen(!ispayOpen);
   };
   const location = useLocation();
-
+  
   const organizationPaths = [
     "/admin/company-profile/basic-information",
     "/admin/company-profile/address-information",
@@ -531,34 +531,6 @@ const AdminHRMS = () => {
                       HR Workflow Setting
                     </h2>
                   </NavLink>
-                  {/* <NavLink
-            to="/admin/hrms/investment-setting"
-            className={({ isActive }) =>
-              `${
-                isActive
-                  ? "text-black bg-white flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
-                  : "group flex items-center text-sm gap-3.5 font-medium p-2 "
-              }`
-            }
-          >
-            <div>
-              {React.createElement(IoCashOutline, { size: "20" })}
-            </div>
-            <h2
-              className={`whitespace-pre duration-300 ${
-                !open && "opacity-0 translate-x-28 overflow-hidden"
-              }`}
-            >
-              Investment Setting
-            </h2>
-            <h2
-              className={`${
-                open && "hidden"
-              } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
-            >
-              Investment Setting
-            </h2>
-          </NavLink> */}
                 </div>
               )}
             </div>
@@ -585,7 +557,7 @@ const AdminHRMS = () => {
                 </div>
               </div>
               {isEmpOpen && (
-                <div className="">
+                <div className="flex flex-col gap-2 mt-1">
                   <NavLink
                     to="/admin/hrms/employee-directory"
                     className={({ isActive }) =>

@@ -81,7 +81,6 @@ const MeetingDetails = () => {
     formData.append("meet_id", id);
     formData.append("user_id", user_id);
     try {
-      console.log("trigger");
       toast.loading("Generating Summary Please wait...");
       const summaryResp = await generateVibeMeetingSummary(formData);
       console.log(summaryResp);
@@ -135,8 +134,8 @@ const MeetingDetails = () => {
   }
   const onOpenTask = (task) => {
     setcompleted_task(filterAndSplitString(task));
-console.log(task)
-    
+    console.log(task);
+
     setIsTaskOpen(true);
   };
   const onCloseTask = () => {
@@ -170,11 +169,10 @@ console.log(task)
                         Summary
                       </button>
 
-                      <button className="border-2 border-black p-1 px-4 hover:bg-black hover:text-white transition-all ease-in-out duration-300 rounded-md font-medium"  onClick={() =>
-                                  onOpenTask(
-                                    summary.meet_tasks
-                                  )
-                                }>
+                      <button
+                        className="border-2 border-black p-1 px-4 hover:bg-black hover:text-white transition-all ease-in-out duration-300 rounded-md font-medium"
+                        onClick={() => onOpenTask(summary.meet_tasks)}
+                      >
                         Task
                       </button>
 

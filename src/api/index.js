@@ -1232,18 +1232,21 @@ export const getServicesPPMDetails = async (id) =>
   });
 
 //
-export const getServicesRoutineList = async (page,perpage) =>
-  axiosInstance.get(`/activities.json?q[soft_service_id_null]=0&per_page=${perpage}&page=${page}`, {
+export const getServicesRoutineList = async (page, perpage) =>
+  axiosInstance.get(
+    `/activities.json?q[soft_service_id_null]=0&per_page=${perpage}&page=${page}`,
+    {
+      params: {
+        token: token,
+      },
+    }
+  );
+export const getServicesTaskList = async () =>
+  axiosInstance.get(`/soft_services/soft_services_dashboard.json?`, {
     params: {
       token: token,
     },
   });
-  export const getServicesTaskList = async () =>
-    axiosInstance.get(`/soft_services/soft_services_dashboard.json?`, {
-      params: {
-        token: token,
-      },
-    });
 export const postServicePR = async (data) =>
   axiosInstance.post(`/service_orders.json`, data, {
     params: {
@@ -3922,7 +3925,33 @@ export const postEmployeeStatutoryInfo = async (data) => {
     });
     return response.data;
   } catch (error) {
-    console.error("Error adding employee payment Info:", error);
+    console.error("Error adding employee statutory details:", error);
+    throw error;
+  }
+};
+export const editEmployeeStatutoryInfo = async (statId,data) => {
+  try {
+    const response = await HrmsAuth.put(`/employee/Statutory/${statId}/`, data, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error adding employee statutory details:", error);
+    throw error;
+  }
+};
+export const getEmployeeStatutoryInfoDetails = async (empId) => {
+  try {
+    const response = await HrmsAuth.get(`/employee/Statutory/?employee_id=${empId}`, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error getting employee Statutory:", error);
     throw error;
   }
 };
@@ -5272,6 +5301,7 @@ export const postSalaryGeneralInfo = async (data) => {
     throw error;
   }
 };
+
 export const postTaxStatutory = async (data) => {
   try {
     const response = await HrmsAuth.post(
@@ -5281,6 +5311,61 @@ export const postTaxStatutory = async (data) => {
     return response.data;
   } catch (error) {
     console.error("Error posting tax statutory :", error);
+    throw error;
+  }
+};
+
+export const getEmployeeSalaryDetails = async (empId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/employee/salary/general-info/?employee_id=${empId}`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting employee salary :", error);
+    throw error;
+  }
+};
+export const getDataChangeRequest = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/employee/submit-change-request/?organization_id=${orgId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting data change request :", error);
+    throw error;
+  }
+};
+export const deleteDataChangeRequest = async (requestId) => {
+  try {
+    const response = await HrmsAuth.delete(
+      `/employee/submit-change-request/${requestId}/`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting data change request :", error);
+    throw error;
+  }
+};
+export const getDataChangeRequestDetails = async (requestId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/employee/submit-change-request/${requestId}/`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting data change request :", error);
+    throw error;
+  }
+};
+export const getUserDetails = async (empId) => {
+  try {
+    const response = await HrmsAuth.get(`/user-details/${empId}/`);
+    return response.data;
+  } catch (error) {
+    console.error("Error getting user details :", error);
     throw error;
   }
 };

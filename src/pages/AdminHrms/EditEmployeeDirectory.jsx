@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
 import AdminHRMS from "./AdminHrms";
-import image from "/profile.png";
-import EmployeeSections from "./EmployeeSections";
 import { FaChevronDown } from "react-icons/fa";
 import { getEmployeeDetails } from "../../api";
 import { useParams } from "react-router-dom";
+import { useSelector } from "react-redux";
 
 const EditEmployeeDirectory = () => {
+  const themeColor = useSelector((state) => state.theme.color);
   const { id } = useParams();
   const inputRef = useRef(null);
   const [imageFile, setImageFile] = useState(null);
@@ -40,13 +40,13 @@ const EditEmployeeDirectory = () => {
       <AdminHRMS />
 
       <div className=" w-full  p-4 ">
-        <h1 className="text-2xl font-semibold mb-4">Employee Directory</h1>
+        {/* <h1 className="text-2xl font-semibold mb-4">Employee Directory</h1> */}
 
         <div className="bg-white border-gray-400 border-b border-dashed p-2">
-          <div className="flex gap-10">
+          <div className="flex shadow-custom-all-sides p-2 px-4 rounded-xl ">
             <div
               onClick={handleImageClick}
-              className="cursor-pointer w-64  my-4"
+              className="cursor-pointer w-64 my-4"
             >
               {imageFile ? (
                 <img
@@ -55,11 +55,15 @@ const EditEmployeeDirectory = () => {
                   className="border-4 border-gray-300 rounded-full w-40 h-40 object-cover"
                 />
               ) : (
-                <img
-                  src={image}
-                  alt="Default"
-                  className="border-4 border-gray-300 rounded-full w-40 h-40 object-cover"
-                />
+                <div
+                  style={{ background: themeColor }}
+                  className="flex items-center justify-center rounded-full w-40 h-40 "
+                >
+                  <span className="text-4xl font-semibold text-white">
+                    {empDetails?.first_name?.charAt(0).toUpperCase() || ""}
+                    {empDetails?.last_name?.charAt(0).toUpperCase() || ""}
+                  </span>
+                </div>
               )}
               <input
                 type="file"
@@ -69,18 +73,14 @@ const EditEmployeeDirectory = () => {
               />
             </div>
             <div className="w-full">
-              <div className="flex justify-end gap-2">
-                {/* <select
-                  name=""
-                  id=""
-                  className="border p-2 border-black rounded-md"
-                >
-                  <option value="">Search Employee</option>
-                </select> */}
-                <div className="relative inline-block text-left">
+              <div className="flex justify-between items-center gap-2">
+                <h1 className="text-xl font-semibold mb-4 border-b pb-2 w-full">
+                  {empDetails?.first_name} {empDetails?.last_name}
+                </h1>
+                <div className="relative inline-block text-left mb-2">
                   <button
                     onClick={toggleDropdown}
-                    className="flex items-end gap-2 justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500"
+                    className="flex items-end gap-2 justify-center w-full rounded-md border border-gray-300 px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 "
                   >
                     Actions
                     <FaChevronDown />
@@ -122,10 +122,7 @@ const EditEmployeeDirectory = () => {
                 </div>
               )}
 
-              <h1 className="text-xl font-semibold mb-4">
-                {empDetails?.first_name} {empDetails?.last_name}
-              </h1>
-              <div className="grid grid-cols-2 gap-4 p-2 items-center">
+              <div className="grid grid-cols-2 gap-4 p-2 px-5 items-center border rounded-xl">
                 <div className="grid grid-cols-2 items-center">
                   <p className="font-medium">Joined on :</p>
                   <p className="text-sm font-medium">12-12-2022</p>

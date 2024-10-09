@@ -14,16 +14,15 @@ const TaxDetailsList = () => {
       <AdminHRMS />
       <div className="w-64 h-full bg-white shadow-custom-all-sides ml-2 rounded-md p-4 mt-9">
         <div className="mb-2">
-      <Link 
-             to={"/hrms/employee-directory-Personal"}
-             style={{ background: themeColor }}
-              className="bg-black mr-1 h-10 mt-1  w-24 text-white py-1 px-4 rounded-md"
-             
-            >
-              Back to Profile
-            </Link></div>
+          <Link
+            to={"/hrms/employee-directory-Personal"}
+            style={{ background: themeColor }}
+            className="bg-black mr-1 h-10 mt-1  w-24 text-white py-1 px-4 rounded-md"
+          >
+            Back to Profile
+          </Link>
+        </div>
         <ul className="space-y-4">
-
           <li className="font-bold text-lg">Sections</li>
           <li>
             <NavLink
@@ -36,9 +35,7 @@ const TaxDetailsList = () => {
                 }`
               }
             >
-              <div>
-                {React.createElement(ImFileText2, { size: "20" })}
-              </div>
+              <div>{React.createElement(ImFileText2, { size: "20" })}</div>
               <h2
                 className={`whitespace-pre duration-300 ${
                   !open && "opacity-0 translate-x-28 overflow-hidden"
@@ -51,7 +48,7 @@ const TaxDetailsList = () => {
                   open && "hidden"
                 } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
               >
-                 80C Deductions
+                80C Deductions
               </h2>
             </NavLink>
           </li>
@@ -66,9 +63,7 @@ const TaxDetailsList = () => {
                 }`
               }
             >
-              <div>
-                {React.createElement(ImFileText2, { size: "20" })}
-              </div>
+              <div>{React.createElement(ImFileText2, { size: "20" })}</div>
               <h2
                 className={`whitespace-pre duration-300 ${
                   !open && "opacity-0 translate-x-28 overflow-hidden"
@@ -96,9 +91,7 @@ const TaxDetailsList = () => {
                 }`
               }
             >
-              <div>
-                {React.createElement(ImFileText2, { size: "20" })}
-              </div>
+              <div>{React.createElement(ImFileText2, { size: "20" })}</div>
               <h2
                 className={`whitespace-pre duration-300 ${
                   !open && "opacity-0 translate-x-28 overflow-hidden"
@@ -126,9 +119,7 @@ const TaxDetailsList = () => {
                 }`
               }
             >
-              <div>
-                {React.createElement(ImFileText2, { size: "20" })}
-              </div>
+              <div>{React.createElement(ImFileText2, { size: "20" })}</div>
               <h2
                 className={`whitespace-pre duration-300 ${
                   !open && "opacity-0 translate-x-28 overflow-hidden"
@@ -156,9 +147,7 @@ const TaxDetailsList = () => {
                 }`
               }
             >
-              <div>
-                {React.createElement(ImFileText2, { size: "20" })}
-              </div>
+              <div>{React.createElement(ImFileText2, { size: "20" })}</div>
               <h2
                 className={`whitespace-pre duration-300 ${
                   !open && "opacity-0 translate-x-28 overflow-hidden"
@@ -171,7 +160,7 @@ const TaxDetailsList = () => {
                   open && "hidden"
                 } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
               >
-                 Other Income Info
+                Other Income Info
               </h2>
             </NavLink>
           </li>
@@ -186,9 +175,7 @@ const TaxDetailsList = () => {
                 }`
               }
             >
-              <div>
-                {React.createElement(ImFileText2, { size: "20" })}
-              </div>
+              <div>{React.createElement(ImFileText2, { size: "20" })}</div>
               <h2
                 className={`whitespace-pre duration-300 ${
                   !open && "opacity-0 translate-x-28 overflow-hidden"
@@ -201,7 +188,7 @@ const TaxDetailsList = () => {
                   open && "hidden"
                 } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
               >
-                 Housing Loan Info
+                Housing Loan Info
               </h2>
             </NavLink>
           </li>

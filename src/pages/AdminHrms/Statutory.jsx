@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
+import { postEmployeeStatutoryInfo } from "../../api";
+import { useNavigate } from "react-router-dom";
 
 const Statutory = ({ empId }) => {
   const themeColor = useSelector((state) => state.theme.color);
@@ -17,7 +19,7 @@ const Statutory = ({ empId }) => {
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
-
+  const navigate = useNavigate();
   const handleAddStatutory = async () => {
     const postData = new FormData();
     postData.append("pf_applicable", formData.pf);
@@ -31,6 +33,8 @@ const Statutory = ({ empId }) => {
     postData.append("decimal_rates_allowed", formData.decimalPoint);
     postData.append("employee", empId);
     try {
+      await postEmployeeStatutoryInfo(postData);
+      navigate("/admin/hrms/employee-directory");
     } catch (error) {
       console.log(error);
     }
@@ -277,6 +281,7 @@ const Statutory = ({ empId }) => {
           </div>
           <div className="flex justify-end">
             <button
+              onClick={handleAddStatutory}
               className="p-2 rounded-md text-white font-medium"
               style={{ background: themeColor }}
             >

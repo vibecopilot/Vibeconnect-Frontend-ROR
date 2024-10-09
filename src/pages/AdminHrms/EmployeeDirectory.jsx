@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { BiEdit } from "react-icons/bi";
-import { FaChevronDown, FaTrash } from "react-icons/fa";
+import { FaChevronDown, FaTrash, FaUserEdit } from "react-icons/fa";
 import AdminHRMS from "./AdminHrms";
 import { Link } from "react-router-dom";
 import { PiPlusCircle } from "react-icons/pi";
@@ -10,62 +10,10 @@ import FileInputBox from "../../containers/Inputs/FileInputBox";
 import InviteEmployeeModal from "./InviteEmployeeModal";
 import {
   deleteHRMSEmployee,
-  getAllHrmsOrganisation,
   getMyHRMSEmployees,
+  getUserDetails,
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
-
-// const employeesData = [
-//   {
-//     id: 1,
-//     name: "Ajay Baniya",
-//     code: "BPC13",
-//     doj: "12-12-2022",
-//     role: "Digital Marketer",
-//     department: "Marketing",
-//     status: "Active",
-//     phone: "+91-9004753837",
-//     email: "ajaybaniya0001@gmail.com",
-//     location: "Mumbai",
-//   },
-//   {
-//     id: 2,
-//     name: "Aniket Parkar",
-//     code: "BPC3",
-//     doj: "02-09-2019",
-//     role: "Business & Operations",
-//     department: "Operations",
-//     status: "Active",
-//     phone: "+91-9004753838",
-//     email: "aniketparkar@gmail.com",
-//     location: "Mumbai",
-//   },
-//   {
-//     id: 3,
-//     name: "Akhil Parkar",
-//     code: "BPC3",
-//     doj: "02-09-2019",
-//     role: "Business & Operations",
-//     department: "Operations",
-//     status: "Active",
-//     phone: "+91-9004753838",
-//     email: "aniketparkar@gmail.com",
-//     location: "Mumbai",
-//   },
-//   {
-//     id: 3,
-//     name: "Mittu Panda",
-//     code: "BPC3",
-//     doj: "02-09-2019",
-//     role: "Business & Operations",
-//     department: "Operations",
-//     status: "Active",
-//     phone: "+91-9004753838",
-//     email: "aniketparkar@gmail.com",
-//     location: "Mumbai",
-//   },
-//   // Add more employee data here...
-// ];
 
 function EmployeeDirectory() {
   const themeColor = useSelector((state) => state.theme.color);
@@ -110,12 +58,28 @@ function EmployeeDirectory() {
   const toggleDropdown = () => {
     setIsOpen(!isOpen);
   };
+  const dropdownRef = useRef(null);
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
 
-  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [dropdownRef]);
+
+  const alphabet = `ABCDEFGHIJKLMNOPQRSTUVWXYZ`.split("");
+  // const alphabet = ["All", ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split("")];
 
   const handleLetterClick = (letter) => {
     setSelectedLetter(letter);
-    setSelectedEmployee(null); // Deselect employee if a new letter is selected
+    console.log(letter);
+    setSelectedEmployee(null);
   };
 
   const filteredEmployees = selectedLetter
@@ -137,19 +101,20 @@ function EmployeeDirectory() {
   const randomColor = getRandomColor();
   const colors = [
     // "#8B0000",
-      "#FF4500",
-      "#2E8B57",
-      "#4682B4",
-      "#6A5ACD",
-      "#D2691E",
+    "#FF4500",
+    "#2E8B57",
+    "#4682B4",
+    "#6A5ACD",
+    "#D2691E",
   ];
 
   function getColorForEmployee(index) {
-    return colors[index % colors.length]; 
+    return colors[index % colors.length];
   }
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [employeeId, setEmployeeId] = useState("");
+
   const handleDeleteModal = (empId) => {
     setIsDeleteModalOpen(true);
     setEmployeeId(empId);
@@ -161,6 +126,17 @@ function EmployeeDirectory() {
       console.log(error);
     }
   };
+
+  const showEmployeeDetails = async (empId) => {
+    setEmployeeId(empId);
+    try {
+      const res = await getUserDetails(empId);
+      setSelectedEmployee(res);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <div className="w-full">
       <AdminHRMS />
@@ -174,7 +150,6 @@ function EmployeeDirectory() {
             <p className="pl-5">
               Employee personal details are noted under this section.
             </p>
-
             <div className="flex justify-end  gap-2 mb-1">
               <input
                 type="text"
@@ -192,14 +167,17 @@ function EmployeeDirectory() {
                   </button>
 
                   {isOpen && (
-                    <div className="origin-top-right absolute right-0 mt-2 w-72 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
+                    <div
+                      ref={dropdownRef}
+                      className="origin-top-right absolute right-0 mt-2 w-72 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5"
+                    >
                       <div
                         className="py-1"
                         role="menu"
                         aria-orientation="vertical"
                         aria-labelledby="options-menu"
                       >
-                        <a
+                        <p
                           href="#"
                           className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           role="menuitem"
@@ -207,9 +185,8 @@ function EmployeeDirectory() {
                           <button onClick={() => setIsModalOpen1(true)}>
                             Upload Investments
                           </button>
-                        </a>
-                        <a
-                          href="#"
+                        </p>
+                        <p
                           className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           role="menuitem"
                         >
@@ -217,9 +194,8 @@ function EmployeeDirectory() {
                           <button onClick={() => setIsModalOpen2(true)}>
                             Upload Statutory Settings
                           </button>
-                        </a>
-                        <a
-                          href="#"
+                        </p>
+                        <p
                           className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           role="menuitem"
                         >
@@ -227,9 +203,8 @@ function EmployeeDirectory() {
                           <button onClick={() => setIsModalOpen3(true)}>
                             Upload Documents
                           </button>
-                        </a>
-                        <a
-                          href="#"
+                        </p>
+                        <p
                           className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           role="menuitem"
                         >
@@ -237,8 +212,8 @@ function EmployeeDirectory() {
                           <button onClick={() => setIsModalOpen4(true)}>
                             Bulk Update Employee Data
                           </button>
-                        </a>
-                        <a
+                        </p>
+                        <p
                           href="#"
                           className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           role="menuitem"
@@ -247,16 +222,15 @@ function EmployeeDirectory() {
                           <button onClick={() => setIsModalOpen5(true)}>
                             Bulk Add New Employees
                           </button>
-                        </a>
-                        <a
-                          href="#"
+                        </p>
+                        <p
                           className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           role="menuitem"
                         >
                           <button onClick={() => setIsModalOpen5(true)}>
                             Bulk Add New Self Onboard Employees
                           </button>
-                        </a>
+                        </p>
                         <a
                           href="#"
                           className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -819,7 +793,7 @@ function EmployeeDirectory() {
                 </button>
                 <Link
                   to={"/admin/add-employee/basics"}
-                  className="border-2 font-semibold hover:bg-black hover:text-white duration-150 transition-all border-white p-2 rounded-md text-white cursor-pointer text-center flex items-center  gap-2 justify-center"
+                  className="border-2 font-semibold hover:bg-black hover:text-white duration-150 transition-all border-white p-2 rounded-md text-white cursor-pointer text-center flex items-center  gap-2 justify-center mr-1"
                 >
                   <PiPlusCircle size={20} />
                   Add Employee
@@ -921,8 +895,8 @@ function EmployeeDirectory() {
             </div>
           </div>
         )}
-        <div className="flex justify-between h-screen">
-          <div className="w-full p-4 flex flex-wrap overflow-y-auto mt-2 ml-20">
+        <div className="flex  h-screen ">
+          <div className=" p-4 flex flex-wrap overflow-y-auto mt-2 ml-20 w-full ">
             {alphabet.map((letter) => (
               <div key={letter} id={letter} className="w-full">
                 {selectedLetter === null || selectedLetter === letter ? (
@@ -934,14 +908,23 @@ function EmployeeDirectory() {
                       {groupedEmployees[letter]?.map((employee, index) => (
                         <div
                           key={employee.id}
-                          className="bg-white w-64 p-2 m-2 rounded-lg border cursor-pointer"
-                          onClick={() => setSelectedEmployee(employee)}
+                          className={`${
+                            employeeId === employee.id
+                              ? "bg-gray-100"
+                              : "bg-white"
+                          }  w-64 p-2 m-2 rounded-lg border cursor-pointer`}
+                          // className="bg-white w-64 p-2 m-2 rounded-lg border cursor-pointer"
+                          // onClick={() => setEmployeeId(employee.id)}
+                          onClick={() => {
+                            showEmployeeDetails(employee.id);
+                          }}
                         >
                           <div className="flex items-center">
                             <div
                               className="bg-gray-300 rounded-full text-white h-12 w-12 flex items-center font-medium justify-center mr-4"
-                              style={{ backgroundColor: getColorForEmployee(index) }}
-                              // style={{ backgroundColor: randomColor }}
+                              style={{
+                                backgroundColor: getColorForEmployee(index),
+                              }}
                             >
                               {employee.first_name
                                 .split(" ")
@@ -960,7 +943,7 @@ function EmployeeDirectory() {
                               <p className="text-green-500">
                                 {employee.status}
                               </p>
-                              {/* <Link><BiEdit size={15}/></Link> */}
+
                               <div className="flex items-center  gap-4 mt-2">
                                 <Link
                                   to={`/hrms/employee-directory-Personal/${employee.id}`}
@@ -983,7 +966,7 @@ function EmployeeDirectory() {
               </div>
             ))}
           </div>
-          <div className="w-10 bg-white text-black p-4 ">
+          <div className="w-10 bg-white text-black p-4 max-h-fit overflow-y-auto hide-scrollbar">
             <div className="flex flex-col">
               {alphabet.map((letter) => (
                 <button
@@ -997,80 +980,68 @@ function EmployeeDirectory() {
               ))}
             </div>
           </div>
-          <div className="w-96 p-4 bg-gray-50">
+          <div className="w-[30rem] max-h-[30rem] p-4 bg-gray-100 m-1 rounded-xl">
             <h1 className="text-2xl font-semibold mb-4">Employee Details</h1>
             {selectedEmployee ? (
-              <div className="flex flex-col justify-between h-96">
+              <div className="flex flex-col gap-10 h-96">
                 <div className="flex flex-col gap-2">
                   <h2 className="text-xl text-center font-medium mb-2 border-b border-dashed border-gray-300">
-                    {selectedEmployee.first_name} {selectedEmployee.last_name}
+                    {selectedEmployee?.employee?.first_name}{" "}
+                    {selectedEmployee?.employee?.last_name}
+                    {/* {selectedEmployee.first_name} {selectedEmployee.last_name} */}
                   </h2>
+
                   <p className="grid grid-cols-2">
-                    {" "}
                     <span className="font-medium text-sm">
-                      Department :
+                      Branch Location :
                     </span>{" "}
                     <span className="font-medium text-sm">
-                      {selectedEmployee.department}
-                    </span>
-                  </p>
-                  <p className="grid grid-cols-2">
-                    <span className="font-medium text-sm">Role :</span>{" "}
-                    <span className="font-medium text-sm">
-                      {selectedEmployee.role}
-                    </span>
-                  </p>
-                  <p className="grid grid-cols-2">
-                    <span className="font-medium text-sm">Status :</span>{" "}
-                    <span className="font-medium text-sm">
-                      {selectedEmployee.status}
-                    </span>
-                  </p>
-                  <p className="grid grid-cols-2">
-                    <span className="font-medium text-sm">Location :</span>{" "}
-                    <span className="font-medium text-sm">
-                      {selectedEmployee.location}
+                      
+                        <p>{selectedEmployee?.employment_info?.branch_location}</p>
+                      
                     </span>
                   </p>
                   <p className="grid grid-cols-2">
                     <span className="font-medium text-sm">Phone : </span>{" "}
                     <span className="font-medium text-sm">
-                      {selectedEmployee.mobile}
+                      {selectedEmployee?.employee?.mobile}
                     </span>
                   </p>
                   <p className="grid grid-cols-2">
                     <span className="font-medium text-sm">Email :</span>{" "}
-                    <span className="font-medium text-sm">
-                      {selectedEmployee.email_id}
+                    <span className="font-medium text-sm w-[10rem] break-words">
+                      {selectedEmployee?.employee?.email_id}
                     </span>
                   </p>
                 </div>
-                {/* <button
-                  type="submit"
-                  className="bg-black w-full mb-4 text-white mt-2 hover:bg-gray-700 font-semibold py-2 px-4 rounded"
-                >
-                  View Profile
-                </button> */}
-                <div className="flex gap-3">
-                  <button
-                    type="submit"
-                    style={{ background: themeColor }}
-                    className="bg-black text-white hover:bg-gray-700 py-2 px-4 rounded-full"
+                <div className="flex flex-col gap-4">
+                  <Link
+                    to={`/hrms/employee-directory-Personal/${selectedEmployee?.employee?.id}`}
+                    className="border-2 rounded-full w-full  text-green-400 border-green-400 mt-2 hover:bg-green-50 fov font-semibold py-1 px-4 flex items-center gap-2 justify-center"
                   >
-                    Separate
-                  </button>
-                  <button
-                    type="submit"
-                    className="bg-yellow-500 text-white hover:bg-gray-700  py-2 px-4 rounded-full"
-                  >
-                    Hold
-                  </button>
-                  <button
-                    type="submit"
-                    className="bg-red-500 text-sm font-medium text-white hover:bg-gray-700  py-2 px-4 rounded-full"
-                  >
-                    Deactivate
-                  </button>
+                    <FaUserEdit /> View Profile
+                  </Link>
+                  <div className="flex justify-center gap-3">
+                    <button
+                      type="submit"
+                      style={{ background: themeColor }}
+                      className="bg-black text-white hover:bg-gray-700 py-2 px-4 rounded-full"
+                    >
+                      Separate
+                    </button>
+                    <button
+                      type="submit"
+                      className="bg-yellow-500 text-white hover:bg-gray-700  py-2 px-5 rounded-full"
+                    >
+                      Hold
+                    </button>
+                    <button
+                      type="submit"
+                      className="bg-red-500 text-sm font-medium text-white hover:bg-gray-700  py-2 px-4 rounded-full"
+                    >
+                      Deactivate
+                    </button>
+                  </div>
                 </div>
               </div>
             ) : (

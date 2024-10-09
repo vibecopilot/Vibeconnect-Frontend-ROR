@@ -22,10 +22,12 @@ const OnboardingSalary = ({ empId }) => {
     effectiveDateDiffer: false,
     actualEffectiveDate: "",
     autoSalaryRevisionArrear: false,
-    CTCFrequency: "",
-    howEnteringAmount: "",
+    CTCFrequency: "monthly",
+    howEnteringAmount: "As_CTC",
     monthlyCTCAmount: "",
     monthlyGrossAmount: "",
+    annuallyCTCAmount: "",
+    annuallyGrossAmount: "",
     ctcTemplate: "",
   });
 
@@ -82,8 +84,11 @@ const OnboardingSalary = ({ empId }) => {
     postData.append("monthly_ctc_amount", formData.monthlyCTCAmount);
     postData.append("ctc_frequency", formData.CTCFrequency);
     postData.append("employee_id", empId);
+    // postData.append("employee_id", 2);
     postData.append("ctc_amount", formData.monthlyCTCAmount);
+    postData.append("annually_ctc_amount", formData.annuallyCTCAmount);
     postData.append("monthly_gross_amount", formData.monthlyGrossAmount);
+    postData.append("annually_gross_amount", formData.annuallyGrossAmount);
     postData.append("how_entering_amount", formData.howEnteringAmount);
     try {
       await postSalaryGeneralInfo(postData);
@@ -125,7 +130,31 @@ const OnboardingSalary = ({ empId }) => {
       console.log(error);
     }
   };
-  console.log(taxData)
+  useEffect(() => {
+    if (
+      formData.howEnteringAmount !== "As_CTC" ||
+      (formData.CTCFrequency !== "monthly" &&
+        formData.CTCFrequency !== "Annually")
+    ) {
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+        monthlyCTCAmount: "",
+        annuallyCTCAmount: "",
+      }));
+    }
+
+    if (
+      formData.howEnteringAmount !== "As Gross Salary" ||
+      (formData.CTCFrequency !== "monthly" &&
+        formData.CTCFrequency !== "Annually")
+    ) {
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+        monthlyGrossAmount: "",
+        annuallyGrossAmount: "",
+      }));
+    }
+  }, [formData.howEnteringAmount, formData.CTCFrequency]);
 
   return (
     <div className="flex w-full">
@@ -134,10 +163,8 @@ const OnboardingSalary = ({ empId }) => {
         <h2 className="border-b text-center text-xl border-black mb-6 font-bold mt-2">
           Salary
         </h2>
-        <div className=" w-full mt-10 p-5 border border-gray-300 rounded-md">
-          {/* <h2 className="text-2xl font-bold mb-6">Salary</h2> */}
-          <h2 className="text-2xl font-bold mb-6">Add New CTC</h2>
-
+        <div className="w-full mt-10 p-5 border border-gray-300 rounded-md">
+          <h2 className="text-2xl font-semibold mb-4">Add New CTC</h2>
           <div className=" w-full my-2 flex  overflow-hidden flex-col">
             <div className="flex w-full">
               <div className=" flex gap-2 p-2 pb-0 border-b-2 border-gray-200 w-full">
@@ -250,7 +277,7 @@ const OnboardingSalary = ({ empId }) => {
                   value={formData.CTCFrequency}
                   onChange={handleChange}
                   name="CTCFrequency"
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  className="shadow  border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                 >
                   <option value="">Select CTC Amount frequency</option>
                   <option value="monthly">Monthly</option>
@@ -270,7 +297,7 @@ const OnboardingSalary = ({ empId }) => {
                   value={formData.ctcTemplate}
                   onChange={handleChange}
                   name="ctcTemplate"
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  className="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                 >
                   <option value="" disabled>
                     Select Template
@@ -293,50 +320,136 @@ const OnboardingSalary = ({ empId }) => {
                   value={formData.howEnteringAmount}
                   onChange={handleChange}
                   name="howEnteringAmount"
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  className="shadow  border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                 >
                   <option value="As_CTC">As CTC</option>
                   <option value="As Gross Salary">As Gross Salary</option>
                 </select>
               </div>
-              {formData.howEnteringAmount === "As_CTC" && (
-                <div className="mb-4">
-                  <label
-                    className="block text-gray-700 text-sm font-bold mb-2"
-                    htmlFor="ctcTemplate"
-                  >
-                    Enter Monthly CTC Amount
-                  </label>
-                  <input
-                    type="text"
-                    name="monthlyCTCAmount"
-                    id=""
-                    value={formData.monthlyCTCAmount}
-                    onChange={handleChange}
-                    placeholder="Enter Monthly CTC Amount"
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  />
-                </div>
-              )}
-              {formData.howEnteringAmount === "As Gross Salary" && (
-                <div className="mb-4">
-                  <label
-                    className="block text-gray-700 text-sm font-bold mb-2"
-                    htmlFor="ctcTemplate"
-                  >
-                    Enter Monthly Gross Amount
-                  </label>
-                  <input
-                    type="text"
-                    name="monthlyGrossAmount"
-                    id=""
-                    value={formData.monthlyGrossAmount}
-                    onChange={handleChange}
-                    placeholder="Enter Monthly Gross Amount"
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  />
-                </div>
-              )}
+              {formData.howEnteringAmount === "As_CTC" &&
+                formData.CTCFrequency === "monthly" && (
+                  <div className="mb-4">
+                    <label
+                      className="block text-gray-700 text-sm font-bold mb-2"
+                      htmlFor="ctcTemplate"
+                    >
+                      Enter Monthly CTC Amount
+                    </label>
+                    <input
+                      type="text"
+                      name="monthlyCTCAmount"
+                      id=""
+                      value={formData.monthlyCTCAmount}
+                      onChange={handleChange}
+                      placeholder="Enter Monthly CTC Amount"
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      pattern="[0-9]*"
+                      onKeyDown={(e) => {
+                        if (
+                          !/[0-9]/.test(e.key) &&
+                          e.key !== "Backspace" &&
+                          e.key !== "ArrowLeft" &&
+                          e.key !== "ArrowRight"
+                        ) {
+                          e.preventDefault();
+                        }
+                      }}
+                    />
+                  </div>
+                )}
+              {formData.howEnteringAmount === "As Gross Salary" &&
+                formData.CTCFrequency === "monthly" && (
+                  <div className="mb-4">
+                    <label
+                      className="block text-gray-700 text-sm font-bold mb-2"
+                      htmlFor="ctcTemplate"
+                    >
+                      Enter Monthly Gross Amount
+                    </label>
+                    <input
+                      type="text"
+                      name="monthlyGrossAmount"
+                      id=""
+                      value={formData.monthlyGrossAmount}
+                      onChange={handleChange}
+                      placeholder="Enter Monthly Gross Amount"
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      pattern="[0-9]*"
+                      onKeyDown={(e) => {
+                        if (
+                          !/[0-9]/.test(e.key) &&
+                          e.key !== "Backspace" &&
+                          e.key !== "ArrowLeft" &&
+                          e.key !== "ArrowRight"
+                        ) {
+                          e.preventDefault();
+                        }
+                      }}
+                    />
+                  </div>
+                )}
+              {formData.howEnteringAmount === "As_CTC" &&
+                formData.CTCFrequency === "Annually" && (
+                  <div className="mb-4">
+                    <label
+                      className="block text-gray-700 text-sm font-bold mb-2"
+                      htmlFor="ctcTemplate"
+                    >
+                      Enter Annually CTC Amount
+                    </label>
+                    <input
+                      type="text"
+                      name="annuallyCTCAmount"
+                      id=""
+                      value={formData.annuallyCTCAmount}
+                      onChange={handleChange}
+                      placeholder="Enter Annually CTC Amount"
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      pattern="[0-9]*"
+                      onKeyDown={(e) => {
+                        if (
+                          !/[0-9]/.test(e.key) &&
+                          e.key !== "Backspace" &&
+                          e.key !== "ArrowLeft" &&
+                          e.key !== "ArrowRight"
+                        ) {
+                          e.preventDefault();
+                        }
+                      }}
+                    />
+                  </div>
+                )}
+              {formData.howEnteringAmount === "As Gross Salary" &&
+                formData.CTCFrequency === "Annually" && (
+                  <div className="mb-4">
+                    <label
+                      className="block text-gray-700 text-sm font-bold mb-2"
+                      htmlFor="ctcTemplate"
+                    >
+                      Enter Annually Gross Amount
+                    </label>
+                    <input
+                      type="text"
+                      name="annuallyGrossAmount"
+                      id=""
+                      value={formData.annuallyGrossAmount}
+                      onChange={handleChange}
+                      placeholder="Enter Annually Gross Amount"
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      pattern="[0-9]*"
+                      onKeyDown={(e) => {
+                        if (
+                          !/[0-9]/.test(e.key) &&
+                          e.key !== "Backspace" &&
+                          e.key !== "ArrowLeft" &&
+                          e.key !== "ArrowRight"
+                        ) {
+                          e.preventDefault();
+                        }
+                      }}
+                    />
+                  </div>
+                )}
               <div className="flex justify-center gap-2">
                 <button
                   style={{ background: themeColor }}
@@ -352,7 +465,7 @@ const OnboardingSalary = ({ empId }) => {
             <div>
               <div className="mb-4">
                 <label className="block text-gray-700 font-medium">
-                  PF Deduction
+                  PF Deduction <span className="text-red-500">*</span>
                 </label>
                 <div className="mt-2">
                   <label className="inline-flex items-center">
@@ -383,7 +496,8 @@ const OnboardingSalary = ({ empId }) => {
               </div>
               <div className="mb-4">
                 <label className="block text-gray-700 font-medium">
-                  Provident Pension Deduction
+                  Provident Pension Deduction{" "}
+                  <span className="text-red-500">*</span>
                 </label>
                 <div className="mt-2">
                   <label className="inline-flex items-center">
@@ -414,7 +528,8 @@ const OnboardingSalary = ({ empId }) => {
               </div>
               <div className="mb-4">
                 <label className="block text-gray-700 font-medium">
-                  Employee’s PF contribution capped at the PF Ceiling?
+                  Employee’s PF contribution capped at the PF Ceiling?{" "}
+                  <span className="text-red-500">*</span>
                 </label>
                 <div className="mt-2">
                   <label className="inline-flex items-center">
@@ -455,7 +570,8 @@ const OnboardingSalary = ({ empId }) => {
               </div>
               <div className="mb-4">
                 <label className="block text-gray-700 font-medium">
-                  Employer’s PF contribution capped at the PF Ceiling?
+                  Employer’s PF contribution capped at the PF Ceiling?{" "}
+                  <span className="text-red-500">*</span>
                 </label>
                 <div className="mt-2">
                   <label className="inline-flex items-center">
@@ -496,7 +612,7 @@ const OnboardingSalary = ({ empId }) => {
               </div>
               <div className="mb-4">
                 <label className="block text-gray-700 font-medium">
-                  Provident Fund Wage Amount
+                  Provident Fund Wage <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="number"
@@ -509,13 +625,14 @@ const OnboardingSalary = ({ empId }) => {
               </div>
               <div className="mb-4">
                 <label className="block text-gray-700 font-medium">
-                  PF Template
+                  PF Template <span className="text-red-500">*</span>
                 </label>
                 <select
                   name=""
                   id=""
                   onChange={handleChangeTax}
                   value={taxData.pfTemplate}
+                  className="border border-gray-300 mt-1 rounded-md p-2 w-full"
                 >
                   <option value="">Select PF Template</option>
                   <option value="temp1">Temp 1</option>
@@ -524,7 +641,7 @@ const OnboardingSalary = ({ empId }) => {
               </div>
               <div className="mb-4">
                 <label className="block text-gray-700 font-medium">
-                  ESIC Deduction
+                  ESIC Deduction <span className="text-red-500">*</span>
                 </label>
                 <div className="mt-2">
                   <label className="inline-flex items-center">
@@ -555,7 +672,7 @@ const OnboardingSalary = ({ empId }) => {
               </div>
               <div className="mb-4">
                 <label className="block text-gray-700 font-medium">
-                  PT Deduction
+                  PT Deduction <span className="text-red-500">*</span>
                 </label>
                 <div className="mt-2">
                   <label className="inline-flex items-center">
@@ -586,7 +703,7 @@ const OnboardingSalary = ({ empId }) => {
               </div>
               <div className="mb-4">
                 <label className="block text-gray-700 font-medium">
-                  LWF Deduction
+                  LWF Deduction <span className="text-red-500">*</span>
                 </label>
                 <div className="mt-2">
                   <label className="inline-flex items-center">
@@ -617,7 +734,7 @@ const OnboardingSalary = ({ empId }) => {
               </div>
               <div className="mb-4">
                 <label className="block text-gray-700 font-medium">
-                  Income Tax Deduction
+                  Income Tax Deduction <span className="text-red-500">*</span>
                 </label>
                 <div className="mt-2">
                   <label className="inline-flex items-center">
@@ -679,7 +796,7 @@ const OnboardingSalary = ({ empId }) => {
               </div>
               <div className="mb-4">
                 <label className="block text-gray-700 font-medium">
-                  NPS Deduction
+                  NPS Deduction <span className="text-red-500">*</span>
                 </label>
                 <div className="mt-2">
                   <label className="inline-flex items-center">
@@ -709,7 +826,10 @@ const OnboardingSalary = ({ empId }) => {
                 </div>
               </div>
               <div className=" flex justify-center gap-2">
-                <button className=" text-white mb-2 hover:bg-gray-700 font-medium py-2 px-4 rounded-md border-2 bg-gray-400" onClick={()=> setPage("General Info")}>
+                <button
+                  className=" text-gray-500 mb-2  font-medium py-2 px-4 rounded-md border-2 border-gray-500"
+                  onClick={() => setPage("General Info")}
+                >
                   Back
                 </button>
                 <button
