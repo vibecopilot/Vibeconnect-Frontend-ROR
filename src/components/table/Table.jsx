@@ -63,40 +63,12 @@ const Table = ({
   apiEndpoint,
   customStyles,
   onChangePage,
-  selectableRow 
+  selectableRow,
+  onSelectedRows 
 }) => {
   const themeColor = useSelector((state) => state.theme.color);
 
-  // const [data, setData] = useState([]);
-  // const [currentPage, setCurrentPage] = useState(1);
-  // const [totalRows, setTotalRows] = useState(0);
-  // const [perPage] = useState(15); // Number of rows per page as specified in the endpoint
-
-  // const fetchData = async (page) => {
-  //   try {
-  //     console.log("object");
-  //     // const response = await axios.get(apiEndpoint, {
-  //     //   params: { page, per_page: perPage },
-  //     // });
-
-  //     const response = await getAdminPerPageComplaints(perPage);
-  //     console.log("fetched");
-  //     setData(response.data);
-  //     setTotalRows(response.data.total);
-  //   } catch (error) {
-  //     console.error("Error fetching data", error);
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   fetchData();
-  // }, [currentPage]);
-
-  // console.log(data);
-  // const handlePageChange = (page) => {
-  //   setCurrentPage(page);
-  // };
-
+  
   const customStyle = {
     headRow: {
       style: {
@@ -134,6 +106,13 @@ const Table = ({
     },
   };
 
+  const handleSelectedRowsChange = ({ selectedRows }) => {
+    // Call the parent's callback with the selected rows
+    if (onSelectedRows) {
+      onSelectedRows(selectedRows);
+    }
+  };
+
   return (
     <div className="rounded">
       <DataTable
@@ -149,6 +128,7 @@ const Table = ({
         selectableRows={selectableRow}
         highlightOnHover
         onChangePage={onChangePage}
+        onSelectedRowsChange={handleSelectedRowsChange}
       />
     </div>
   );

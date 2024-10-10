@@ -4296,6 +4296,24 @@ export const postSingleLeaveApplication = async (data) => {
     throw error;
   }
 };
+export const postMultipleLeaveApplication = async (data) => {
+  try {
+    const response = await HrmsAuth.post(`/leave-requests/bulk/`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error posting leave applications:", error);
+    throw error;
+  }
+};
+export const approveRejectMultipleRequest = async (data) => {
+  try {
+    const response = await HrmsAuth.post(`/leave-requests/approve-pending/`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error post request action:", error);
+    throw error;
+  }
+};
 export const getLeaveApplicationDetails = async (applicationId) => {
   try {
     const response = await HrmsAuth.get(

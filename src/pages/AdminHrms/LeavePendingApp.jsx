@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { BiEdit } from "react-icons/bi";
 import { TiTick } from "react-icons/ti";
 import { IoClose } from "react-icons/io5";
@@ -7,6 +7,7 @@ import AdminHRMS from "./AdminHrms";
 import { useSelector } from "react-redux";
 import { MdKeyboardArrowDown } from "react-icons/md";
 import {
+  approveRejectMultipleRequest,
   getLeaveApplications,
   getLeaveCategory,
   getMyHRMSEmployees,
@@ -42,7 +43,6 @@ const LeavePendingApp = () => {
     if (!start_Date || !end_Date) {
       return "";
     }
-
     const startDate = new Date(start_Date);
     const endDate = new Date(end_Date);
 
@@ -137,7 +137,7 @@ const LeavePendingApp = () => {
     reason: "",
   });
   const [applications, setApplications] = useState([]);
-  const [filteredApplication, setFilteredApplication] = useState([])
+  const [filteredApplication, setFilteredApplication] = useState([]);
   const fetchLeaveApplications = async () => {
     try {
       const res = await getLeaveApplications(hrmsOrgId);
@@ -145,7 +145,7 @@ const LeavePendingApp = () => {
         (application) => application.status === "pending"
       );
       setApplications(filteredApplications);
-      setFilteredApplication(filteredApplications)
+      setFilteredApplication(filteredApplications);
     } catch (error) {
       console.log(error);
     }
@@ -159,17 +159,80 @@ const LeavePendingApp = () => {
     setEditModal(true);
   };
 
-const [searchText, setSearchText] = useState("")
-const handleSearch = (e)=>{
-  const searchValue = e.target.value
-  setSearchText(searchValue)
-  if (searchValue.trim() === "") {
-    setFilteredApplication(applications) 
-  } else {
-    const filteredResult = applications.filter((application)=> `${application.first_name} ${application.last_name}`.toLowerCase().includes(searchValue.toLowerCase()))
-    setFilteredApplication(filteredResult)
-  }
-}
+  const [searchText, setSearchText] = useState("");
+  const handleSearch = (e) => {
+    const searchValue = e.target.value;
+    setSearchText(searchValue);
+    if (searchValue.trim() === "") {
+      setFilteredApplication(applications);
+    } else {
+      const filteredResult = applications.filter((application) =>
+        `${application.first_name} ${application.last_name}`
+          .toLowerCase()
+          .includes(searchValue.toLowerCase())
+      );
+      setFilteredApplication(filteredResult);
+    }
+  };
+
+  const [selectedRows, setSelectedRows] = useState([]);
+
+  const handleSelectedRows = (rows) => {
+    const selectedId = rows.map((row) => row.id);
+    setSelectedRows(selectedId);
+  };
+
+  const handleApproveMultipleApplications = async () => {
+    if (selectedRows.length === 0) {
+      toast.error("No leave request selected. Please select at least one.");
+      return;
+    }
+    const approveData = {
+      leave_request_ids: selectedRows,
+      action: "approve",
+    };
+    setSelectedRows([]);
+    try {
+      await approveRejectMultipleRequest(approveData);
+      fetchLeaveApplications();
+      setIsModalOpen3(false);
+      toast.success("Select leave Approved");
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const handleRejectMultipleApplications = async () => {
+    if (selectedRows.length === 0) {
+      toast.error("No leave request selected. Please select at least one.");
+      return;
+    }
+    const approveData = {
+      leave_request_ids: selectedRows,
+      action: "reject",
+    };
+    setSelectedRows([]);
+    try {
+      await approveRejectMultipleRequest(approveData);
+      fetchLeaveApplications();
+      setIsModalOpen5(false);
+      toast.success("Select leave Rejected");
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const dropdownRef = useRef(null);
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [setIsOpen]);
 
   return (
     <section className="flex">
@@ -197,13 +260,13 @@ const handleSearch = (e)=>{
               onChange={handleSearch}
               className="border border-gray-400 w-96 placeholder:text-sm rounded-md p-2"
             />
-            <button
+            {/* <button
               onClick={() => setIsModalOpen(true)}
               style={{ background: themeColor }}
               className="bg-black text-white hover:bg-gray-700 font-semibold py-2 px-4 rounded"
             >
               Filter
-            </button>
+            </button> */}
             <div className="relative inline-block text-left">
               <button
                 onClick={toggleDropdown}
@@ -215,18 +278,26 @@ const handleSearch = (e)=>{
             </div>
           </div>
         </div>
-        <Table columns={columns} data={filteredApplication} isPagination={true} />
+        <Table
+          columns={columns}
+          data={filteredApplication}
+          isPagination={true}
+          selectableRow={true}
+          onSelectedRows={handleSelectedRows}
+        />
       </div>
       {isOpen && (
-        <div className="origin-top-right z-30 absolute right-0 mt-14 w-72 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
+        <div
+          ref={dropdownRef}
+          className="origin-top-right z-30 absolute right-0 mt-14 w-72 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5"
+        >
           <div
             className="py-1"
             role="menu"
             aria-orientation="vertical"
             aria-labelledby="options-menu"
           >
-            <a
-              href="#"
+            <p
               className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
               role="menuitem"
             >
@@ -238,9 +309,8 @@ const handleSearch = (e)=>{
               >
                 Add Single Leave Applications
               </button>
-            </a>
-            <a
-              href="#"
+            </p>
+            <p
               className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
               role="menuitem"
             >
@@ -252,9 +322,8 @@ const handleSearch = (e)=>{
               >
                 Add Multiple Leave Applications
               </button>
-            </a>
-            <a
-              href="#"
+            </p>
+            <p
               className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
               role="menuitem"
             >
@@ -267,13 +336,12 @@ const handleSearch = (e)=>{
               >
                 Approve multiple requests
               </button>
-            </a>
-            <a
-              href="#"
+            </p>
+            {/* <p
               className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
               role="menuitem"
             >
-              {/* Bulk Update Employee Data */}
+            
               <button
                 onClick={() => {
                   setIsModalOpen4(true);
@@ -282,9 +350,8 @@ const handleSearch = (e)=>{
               >
                 Bulk Approve by filters{" "}
               </button>
-            </a>
-            <a
-              href="#"
+            </p> */}
+            <p
               className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
               role="menuitem"
             >
@@ -295,11 +362,10 @@ const handleSearch = (e)=>{
                   setIsOpen(false);
                 }}
               >
-                Approve multiple requests
+                Reject multiple requests
               </button>
-            </a>
-            <a
-              href="#"
+            </p>
+            {/* <p
               className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
               role="menuitem"
             >
@@ -311,9 +377,8 @@ const handleSearch = (e)=>{
               >
                 Bulk Reject by filters
               </button>
-            </a>
-            <a
-              href="#"
+            </p> */}
+            {/* <p
               className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
               role="menuitem"
             >
@@ -325,9 +390,8 @@ const handleSearch = (e)=>{
               >
                 Bulk Approve Cancel Leave
               </button>
-            </a>
-            <a
-              href="#"
+            </p> */}
+            {/* <p
               className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
               role="menuitem"
             >
@@ -339,7 +403,7 @@ const handleSearch = (e)=>{
               >
                 Bulk Reject Cancel Leave
               </button>
-            </a>
+            </p> */}
           </div>
         </div>
       )}
@@ -431,7 +495,7 @@ const handleSearch = (e)=>{
                   className="mt-1 block w-full border border-gray-400 p-2 rounded-md"
                 >
                   <option value="" disabled>
-                    Imcomplete
+                    Incomplete
                   </option>
                   <option value="" disabled>
                     Active
@@ -485,21 +549,24 @@ const handleSearch = (e)=>{
         />
       )}
       {multiAppModal && (
-        <MultipleLeaveApplication setMultiAppModal={setMultiAppModal} />
+        <MultipleLeaveApplication
+          setMultiAppModal={setMultiAppModal}
+          fetchLeaveApplications={fetchLeaveApplications}
+        />
       )}
       {isModalOpen3 && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex z-10 justify-center items-center">
-          <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+          <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4 rounded-xl">
             <div className="">
               <div className="mt-3  sm:mt-0 sm:ml-1 ">
                 <h3
-                  className="text-lg leading-6 font-medium text-gray-900 mb-4"
+                  className="text-lg leading-6 border-b text-center font-medium text-gray-900 mb-4"
                   id="modal-headline"
                 >
                   Are you sure?
                 </h3>
 
-                <p>
+                <p className="font-medium mb-2">
                   Are you sure you would like to Approve the selected leave
                   requests?
                 </p>
@@ -513,22 +580,22 @@ const handleSearch = (e)=>{
                   <textarea
                     id="reason"
                     name="reason"
-                    rows="3"
-                    className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
+                    rows="4"
+                    className="p-2 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
                     // placeholder="Enter your reason for leave"
                   ></textarea>
                 </div>
               </div>
-              <div className="mt-2 flex justify-end">
+              <div className="mt-2 flex justify-end gap-4">
                 <button
                   onClick={() => setIsModalOpen3(false)}
-                  className="bg-gray-300 text-gray-700 p-2 rounded-md mr-2"
+                  className="border-red-400 border-2 text-red-400 p-1 px-4 rounded-full"
                 >
                   Cancel
                 </button>
                 <button
-                  // onClick={handleAddDepartment}
-                  className="bg-blue-500 text-white p-2 rounded-md"
+                  onClick={handleApproveMultipleApplications}
+                  className="bg-green-500 text-white p-1 px-4 rounded-full"
                 >
                   Confirm
                 </button>
@@ -669,18 +736,18 @@ const handleSearch = (e)=>{
       )}
       {isModalOpen5 && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex z-10 justify-center items-center">
-          <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+          <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4 rounded-xl">
             <div className="">
               <div className="mt-3  sm:mt-0 sm:ml-1 ">
                 <h3
-                  className="text-lg leading-6 font-medium text-gray-900 mb-4"
+                  className="text-lg leading-6 border-b text-center font-medium text-gray-900 mb-4"
                   id="modal-headline"
                 >
                   Are you sure?
                 </h3>
 
-                <p>
-                  Are you sure you would like to reject the selected leave
+                <p className="font-medium mb-2">
+                  Are you sure you would like to Reject the selected leave
                   requests?
                 </p>
                 <div className="mb-4">
@@ -693,22 +760,22 @@ const handleSearch = (e)=>{
                   <textarea
                     id="reason"
                     name="reason"
-                    rows="3"
-                    className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
+                    rows="4"
+                    className="p-2 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
                     // placeholder="Enter your reason for leave"
                   ></textarea>
                 </div>
               </div>
-              <div className="mt-2 flex justify-end">
+              <div className="mt-2 flex justify-end gap-4">
                 <button
-                  onClick={() => setIsModalOpen5(false)}
-                  className="bg-gray-300 text-gray-700 p-2 rounded-md mr-2"
+                  onClick={() => setIsModalOpen3(false)}
+                  className="border-red-400 border-2 text-red-400 p-1 px-4 rounded-full"
                 >
                   Cancel
                 </button>
                 <button
-                  // onClick={handleAddDepartment}
-                  className="bg-blue-500 text-white p-2 rounded-md"
+                  onClick={handleRejectMultipleApplications}
+                  className="bg-green-500 text-white p-1 px-4 rounded-full"
                 >
                   Confirm
                 </button>

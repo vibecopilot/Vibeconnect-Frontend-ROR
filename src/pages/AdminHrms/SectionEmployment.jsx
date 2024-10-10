@@ -212,7 +212,6 @@ const SectionsEmployment = () => {
     }
   };
 
-  
   return (
     <div className="flex flex-col ml-20">
       <EditEmployeeDirectory />
@@ -220,7 +219,8 @@ const SectionsEmployment = () => {
         <div className="">
           <EmployeeSections empId={id} />
         </div>
-        <div className="p-2 bg-white max-w-[60rem]">
+        <div className="w-full p-2 bg-white rounded-lg ">
+        {/* <div className="p-2 bg-white max-w-[60rem]"> */}
           <Collapsible
             readOnly
             trigger={
@@ -430,7 +430,7 @@ const SectionsEmployment = () => {
             <div className="flex justify-end ">
               <button
                 onClick={openModal}
-                className="bg-black text-white mb-2 hover:bg-gray-700 font-semibold py-1 px-4 rounded"
+                className="bg-black text-white mb-2 hover:bg-gray-700 font-medium py-2 px-4 rounded"
               >
                 Update Employment Status
               </button>
@@ -462,27 +462,27 @@ const SectionsEmployment = () => {
           </Collapsible>
           {modalIsOpen && (
             <div className="fixed inset-0 z-50 flex items-center overflow-y-auto justify-center bg-gray-500 bg-opacity-50">
-              <div class="max-h-screen  bg-white p-8 w-96 rounded-lg shadow-lg overflow-y-auto">
+              <div class="max-h-screen  bg-white p-4 w-96 rounded-lg shadow-lg overflow-y-auto">
                 <form>
-                  <h2 className="text-2xl font-bold mb-4">
+                  <h2 className="text-xl font-medium mb-4">
                     Update Employment Status
                   </h2>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Please select Employment Status you wish to update{" "}
+                      Please select Employment Status you wish to update <span className="text-red-500">*</span>
                     </label>
-                    <select className="mt-1 p-2  border rounded-md">
+                    <select className="mt-1 p-2  border rounded-md w-full">
                       <option value="cash">Probation</option>
                       <option value="cash">Confirmed</option>
                     </select>
                   </div>
                   <div className="mt-2">
                     <label className="block text-sm font-medium text-gray-700">
-                      What is the employee's confirmation due date?{" "}
+                      What is the employee's confirmation due date? <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="date"
-                      className="mt-1 p-2  border rounded-md"
+                      className="mt-1 p-2 w-full border rounded-md"
                     />
                   </div>
                   <div className="mt-2">
@@ -490,22 +490,22 @@ const SectionsEmployment = () => {
                       Please enter comments, if any{" "}
                     </label>
                     <textarea
-                      type="date"
-                      className="mt-1 p-2  border rounded-md"
+                      
+                      className="mt-1 p-2 w-full border rounded-md"
                     />
                   </div>
 
-                  <div className="flex mt-2 justify-end">
+                  <div className="flex mt-2 justify-end gap-2">
                     <button
                       type="button"
                       onClick={closeModal}
-                      className="border-2 font-semibold hover:bg-black hover:text-white duration-150 transition-all border-black p-2 rounded-md text-black mr-4"
+                      className="border-2 border-red-400 text-red-400 font-semibold p-1 px-4 rounded-full "
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      className="bg-blue-500 text-white font-semibold p-2 rounded-md"
+                      className="bg-green-400 text-white font-semibold p-1 px-6 rounded-full"
                     >
                       Save
                     </button>
@@ -576,7 +576,7 @@ const SectionsEmployment = () => {
 
           {modalIsOpen1 && (
             <div className="fixed inset-0 z-50 flex items-center overflow-y-auto justify-center bg-gray-500 bg-opacity-50">
-              <div class="max-h-screen  bg-white p-8 w-96 rounded-lg shadow-lg overflow-y-auto">
+              <div class="max-h-screen bg-white p-8 w-96 rounded-lg shadow-lg overflow-y-auto">
                 <form>
                   <h2 className="text-2xl font-bold mb-4">Job Information</h2>
                   <div>

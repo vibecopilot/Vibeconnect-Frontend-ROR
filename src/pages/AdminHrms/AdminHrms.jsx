@@ -94,7 +94,7 @@ const AdminHRMS = () => {
     setIspayOpen(!ispayOpen);
   };
   const location = useLocation();
-  
+
   const organizationPaths = [
     "/admin/company-profile/basic-information",
     "/admin/company-profile/address-information",
@@ -804,7 +804,7 @@ const AdminHRMS = () => {
                 </div>
               </div>
               {isAttOpen && (
-                <div className="">
+                <div className="flex flex-col gap-2 mt-1">
                   <NavLink
                     to="/admin/hrms/attendance-records"
                     className={({ isActive }) =>
@@ -1173,7 +1173,7 @@ const AdminHRMS = () => {
                 className="cursor-pointer flex items-center text-sm gap-3.5 font-medium p-2 "
               >
                 <div>
-                  {React.createElement(GrDocumentPerformance  , { size: "20" })}
+                  {React.createElement(GrDocumentPerformance, { size: "20" })}
                   {/* <p>Organization</p> */}
                 </div>
                 <h2
@@ -1203,24 +1203,24 @@ const AdminHRMS = () => {
                     }
                   >
                     <div>
-                      {React.createElement(MdOutlineDashboard , { size: "20" })}
+                      {React.createElement(MdOutlineDashboard, { size: "20" })}
                     </div>
                     <h2
                       className={`whitespace-pre duration-100 ${
                         !open && "opacity-0 translate-x-28 overflow-hidden"
                       }`}
                     >
-                     Performance Dashboard
+                      Performance Dashboard
                     </h2>
                     <h2
                       className={`${
                         open && "hidden"
                       } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-100 group-hover:w-fit`}
                     >
-                     Performance Dashboard
+                      Performance Dashboard
                     </h2>
                   </NavLink>
-                  
+
                   <NavLink
                     to="/performance-setting"
                     className={({ isActive }) =>
@@ -1347,7 +1347,7 @@ const AdminHRMS = () => {
               </div>
             </div>
             {isExpenseOpen && (
-              <div className="flex flex-col gap-2 ml-2">
+              <div className="flex flex-col gap-2 ">
                 <NavLink
                   to="/expenses"
                   className={({ isActive }) =>
@@ -1455,7 +1455,7 @@ const AdminHRMS = () => {
                 </div>
               </div>
               {isLeaveOpen && (
-                <div className="">
+                <div className="flex flex-col gap-2 mt-1">
                   <NavLink
                     to="/admin/hrms/leave-application"
                     className={({ isActive }) =>

@@ -62,6 +62,7 @@ const SingleLeaveApplication = ({ setSingleAppModal, fetchLeaveApplications }) =
     postData.append("half_day_selection", formData.halfDayDate);
     postData.append("reason", formData.reason);
     postData.append("employee", selectedUserOption.value);
+    postData.append("status", "approved");
     try {
       const res = await postSingleLeaveApplication(postData);
       setSingleAppModal(false)
@@ -71,6 +72,14 @@ const SingleLeaveApplication = ({ setSingleAppModal, fetchLeaveApplications }) =
       console.log(error);
       toast.error("Something went wrong")
     }
+  };
+  const getTodayDate = () => {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+    const dd = String(today.getDate()).padStart(2, '0');
+
+    return `${yyyy}-${mm}-${dd}`;
   };
 
   return (
@@ -157,6 +166,7 @@ const SingleLeaveApplication = ({ setSingleAppModal, fetchLeaveApplications }) =
                       onChange={handleChange}
                       id=""
                       className="border p-1 rounded-md w-full"
+                      min={getTodayDate()}
                     />{" "}
                     -
                     <input
@@ -166,6 +176,7 @@ const SingleLeaveApplication = ({ setSingleAppModal, fetchLeaveApplications }) =
                       onChange={handleChange}
                       id=""
                       className="border p-1 rounded-md w-full"
+                      min={getTodayDate()}
                     />
                   </div>
                 </div>
@@ -183,7 +194,8 @@ const SingleLeaveApplication = ({ setSingleAppModal, fetchLeaveApplications }) =
                         onChange={() =>
                           setFormData({ ...formData, halfDay: true })
                         }
-                        className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300"
+                        className="focus:ring-indigo-500 h-4 w-full text-indigo-600 border-gray-300"
+                       
                       />
                       <label
                         htmlFor="halfDayYes"
@@ -216,7 +228,7 @@ const SingleLeaveApplication = ({ setSingleAppModal, fetchLeaveApplications }) =
                   <div className="my-2">
                     <label
                       htmlFor="halfDaySelect"
-                      className="block text-sm font-medium text-gray-700 mb-1"
+                      className="block text-sm font-medium text-gray-700 mb-2"
                     >
                       Select Half Days
                     </label>
@@ -226,7 +238,8 @@ const SingleLeaveApplication = ({ setSingleAppModal, fetchLeaveApplications }) =
                       value={formData.halfDayDate}
                       onChange={handleChange}
                       id=""
-                      className="border p-1 rounded-md"
+                      className="border p-1 w-full rounded-md"
+                      min={getTodayDate()}
                     />
                   </div>
                 )}
