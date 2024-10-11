@@ -38,10 +38,8 @@ const EditEmployeeDirectory = () => {
   return (
     <div className="flex">
       <AdminHRMS />
-
       <div className=" w-full  p-4 ">
         {/* <h1 className="text-2xl font-semibold mb-4">Employee Directory</h1> */}
-
         <div className="bg-white border-gray-400 border-b border-dashed p-2">
           <div className="flex shadow-custom-all-sides p-2 px-4 rounded-xl ">
             <div

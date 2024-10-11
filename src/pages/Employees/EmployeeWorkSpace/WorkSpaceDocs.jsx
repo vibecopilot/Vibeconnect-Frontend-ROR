@@ -19,7 +19,6 @@ import res from "/res.jpg";
 import { AddCircleOutline } from "react-ionicons";
 
 const documentList = [
-    
   {
     name: "Adhaar Card",
     icon: <FaIdCard />,
@@ -96,13 +95,13 @@ const WorkSpaceDocs = () => {
     doc.addImage(currentItem.imageUrl, "PNG", 10, 30, 180, 0);
     doc.save(`${currentItem.name}.pdf`);
   };
-  const [addLetter, setAddLetter] = useState(false)
-  const openLetter = ()=>{
-    setAddLetter(true)
-  }
-  const closeLetter = ()=>{
-    setAddLetter(false)
-  }
+  const [addLetter, setAddLetter] = useState(false);
+  const openLetter = () => {
+    setAddLetter(true);
+  };
+  const closeLetter = () => {
+    setAddLetter(false);
+  };
 
   return (
     <section className="flex">
@@ -214,19 +213,30 @@ const WorkSpaceDocs = () => {
               Add Document
             </h2>
             <div className="flex flex-col gap-2 ">
-
-          
-            <div className="flex flex-col ">
-                <label htmlFor="" className="font-medium">Document name</label>
-                <input type="text" className="border border-gray-400 p-1 rounded-md" placeholder="Document name" />
-            </div>
-            <div className="border-2 border-dashed p-2 mt-2">
+              <div className="flex flex-col ">
+                <label htmlFor="" className="font-medium">
+                  Document name
+                </label>
+                <input
+                  type="text"
+                  className="border border-gray-400 p-1 rounded-md"
+                  placeholder="Document name"
+                />
+              </div>
+              <div className="border-2 border-dashed p-2 mt-2">
                 <input type="file" name="" id="" />
-            </div>
-            <div className="flex justify-end w-full gap-2">
-                <button className="bg-blue-400 text-white p-1 px-2 w-full rounded-md">Save</button>
-                <button className="bg-red-400 text-white p-1 px-2 w-full rounded-md" onClick={closeDocs}>Close</button>
-            </div>
+              </div>
+              <div className="flex justify-end w-full gap-2">
+                <button className="bg-blue-400 text-white p-1 px-2 w-full rounded-md">
+                  Save
+                </button>
+                <button
+                  className="bg-red-400 text-white p-1 px-2 w-full rounded-md"
+                  onClick={closeDocs}
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         </Modal>
@@ -243,19 +253,30 @@ const WorkSpaceDocs = () => {
               Add Letter
             </h2>
             <div className="flex flex-col gap-2 mt-2">
-
-          
-            <div className="flex flex-col ">
-                <label htmlFor="" className="font-medium">Letter name</label>
-                <input type="text" className="border border-gray-400 p-1 rounded-md" placeholder="Document name" />
-            </div>
-            <div className="border-2 border-dashed p-2 mt-2">
+              <div className="flex flex-col ">
+                <label htmlFor="" className="font-medium">
+                  Letter name
+                </label>
+                <input
+                  type="text"
+                  className="border border-gray-400 p-1 rounded-md"
+                  placeholder="Document name"
+                />
+              </div>
+              <div className="border-2 border-dashed p-2 mt-2">
                 <input type="file" name="" id="" />
-            </div>
-            <div className="flex justify-end w-full gap-2">
-                <button className="bg-blue-400 text-white p-1 px-2 w-full rounded-md">Save</button>
-                <button className="bg-red-400 text-white p-1 px-2 w-full rounded-md" onClick={closeLetter}>Close</button>
-            </div>
+              </div>
+              <div className="flex justify-end w-full gap-2">
+                <button className="bg-blue-400 text-white p-1 px-2 w-full rounded-md">
+                  Save
+                </button>
+                <button
+                  className="bg-red-400 text-white p-1 px-2 w-full rounded-md"
+                  onClick={closeLetter}
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         </Modal>

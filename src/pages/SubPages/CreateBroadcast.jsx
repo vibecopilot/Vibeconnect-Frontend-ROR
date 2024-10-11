@@ -83,7 +83,7 @@ const CreateBroadcast = () => {
 
       const response = await postBroadCast(formDataSend);
       toast.success("Broadcast Created Successfully");
-      navigate("/communication");
+      navigate("/communication/broadcast");
       console.log("Response:", response.data);
       toast.dismiss();
     } catch (error) {

@@ -9,7 +9,11 @@ import Collapsible from "react-collapsible";
 import CustomTrigger from "../../containers/CustomTrigger";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import {
+  deleteCompanyAsset,
+  deleteEmployeeAsset,
   editEmployeeEmploymentDetails,
+  getCompanyAsset,
+  getEmployeeAsset,
   getEmployeeEmploymentDetails,
   getMyHRMSEmployees,
   getMyOrganizationLocations,
@@ -17,15 +21,26 @@ import {
   postEmployeeEmploymentInfo,
 } from "../../api";
 import toast from "react-hot-toast";
+import { PiPlus } from "react-icons/pi";
+import AddEmployeeAsset from "./Modals/AddEmployeeAsset";
+import EditEmployeeAsset from "./Modals/EditEmployeeAsset";
+import { FaTrash } from "react-icons/fa";
+import Accordion from "./Components/Accordion";
+import AddCompanyAsset from "./Modals/AddCompanyAsset";
+import EditCompanyAsset from "./Modals/EditCompanyAsset";
+
 const SectionsEmployment = () => {
   const { id } = useParams();
   const [isOpen, setIsOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const toggleEdit = () => setIsEditing(!isEditing);
 
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [modalIsOpen1, setModalIsOpen1] = useState(false);
   const [modalIsOpen2, setModalIsOpen2] = useState(false);
+  const [assetModal, setAssetModal] = useState(false);
+  const [assetEditModal, setAssetEditModal] = useState(false);
+  const [companyAssetModal, setCompanyAssetModal] = useState(false);
+  const [companyAssetEditModal, setCompanyAssetEditModal] = useState(false);
   const openModal = () => setModalIsOpen(true);
   const closeModal = () => setModalIsOpen(false);
   const openModal1 = () => setModalIsOpen1(true);
@@ -135,6 +150,96 @@ const SectionsEmployment = () => {
       sortable: true,
     },
   ];
+  const assetColumn = [
+    {
+      name: "Which brand laptop",
+      selector: (row) => row.laptop_brand,
+      sortable: true,
+    },
+
+    {
+      name: "Retrieve email ID",
+      selector: (row) => row.email_id,
+      sortable: true,
+    },
+    {
+      name: "Action",
+
+      cell: (row) => (
+        <div className="flex items-center gap-4">
+          <button onClick={() => handleEditAssetModal(row.id)}>
+            <BiEdit size={15} />
+          </button>
+          <button
+            onClick={() => handleDeleteEmployeeAsset(row.id)}
+            className="text-red-400"
+          >
+            <FaTrash size={15} />
+          </button>
+        </div>
+      ),
+    },
+  ];
+  const companyAssetColumn = [
+    {
+      name: "Which Company Laptop and Model Number",
+      selector: (row) => row.asset_name,
+      sortable: true,
+    },
+
+    {
+      name: "Mobile Phone",
+      selector: (row) => row.model_number,
+      sortable: true,
+    },
+    {
+      name: "Action",
+
+      cell: (row) => (
+        <div className="flex items-center gap-4">
+          <button onClick={() => handleEditComAssetModal(row.id)}>
+            <BiEdit size={15} />
+          </button>
+          <button
+            onClick={() => handleDeleteCompanyAsset(row.id)}
+            className="text-red-400"
+          >
+            <FaTrash size={15} />
+          </button>
+        </div>
+      ),
+    },
+  ];
+
+  const handleDeleteCompanyAsset = async (id) => {
+    try {
+      await deleteCompanyAsset(id);
+      fetchCompanyAssets();
+      toast.success("Company's asset deleted successfully");
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const handleDeleteEmployeeAsset = async (id) => {
+    try {
+      await deleteEmployeeAsset(id);
+      fetchEmployeeAssets();
+      toast.success("Employee's asset deleted successfully");
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const [comAssetId, setComAssetId] = useState("");
+  const handleEditComAssetModal = (id) => {
+    setComAssetId(id);
+    setCompanyAssetEditModal(true);
+  };
+  const [empAssetID, setEmpAssetID] = useState("");
+  const handleEditAssetModal = (id) => {
+    setEmpAssetID(id);
+    setAssetEditModal(true);
+  };
 
   const data = [
     {
@@ -156,6 +261,9 @@ const SectionsEmployment = () => {
     },
   ];
 
+  const [empAssets, setEmpAssets] = useState([]);
+  const [comAssets, setComAssets] = useState([]);
+
   const fetchEmploymentDetails = async () => {
     try {
       const response = await getEmployeeEmploymentDetails(id);
@@ -176,8 +284,27 @@ const SectionsEmployment = () => {
       console.log(error);
     }
   };
+  const fetchEmployeeAssets = async () => {
+    try {
+      const res = await getEmployeeAsset(id);
+
+      setEmpAssets(res);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const fetchCompanyAssets = async () => {
+    try {
+      const res = await getCompanyAsset(id);
+      setComAssets(res);
+    } catch (error) {
+      console.log(error);
+    }
+  };
   useEffect(() => {
     fetchEmploymentDetails();
+    fetchEmployeeAssets();
+    fetchCompanyAssets();
   }, []);
 
   const handleEditEmployment = async () => {
@@ -219,247 +346,274 @@ const SectionsEmployment = () => {
         <div className="">
           <EmployeeSections empId={id} />
         </div>
-        <div className="w-full p-2 bg-white rounded-lg ">
-        {/* <div className="p-2 bg-white max-w-[60rem]"> */}
-          <Collapsible
-            readOnly
-            trigger={
-              <CustomTrigger isOpen={isOpen}>
-                <h2 className="text-xl font-semibold ">Employment</h2>
-              </CustomTrigger>
+        <div className="w-full p-2 bg-white rounded-lg mb-10">
+          <Accordion
+            title={"Employment"}
+            content={
+              <>
+                <div className="flex justify-end gap-2 ">
+                  {isEditing ? (
+                    <>
+                      <button
+                        type="button"
+                        className="border-2 rounded-full p-1 transition-all duration-150 hover:bg-opacity-30 border-green-400  px-4 text-green-400 mb-2 hover:bg-green-300 font-semibold  "
+                        onClick={handleEditEmployment}
+                      >
+                        Save
+                      </button>
+                      <button
+                        type="button"
+                        className="border-2 rounded-full p-1 border-red-400  px-4 text-red-400 mb-2 hover:bg-opacity-30 hover:bg-red-300 font-semibold  "
+                        onClick={() => setIsEditing(false)}
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      className="bg-black text-white mb-2 hover:bg-gray-700 font-semibold py-2 px-4 rounded"
+                      onClick={() => setIsEditing(true)}
+                    >
+                      Edit
+                    </button>
+                  )}
+                </div>
+                <h3 className="text-xl font-bold mb-2">
+                  General Employment Details
+                </h3>
+                <div className="grid md:grid-cols-2 gap-2 mt-5">
+                  <div className="grid gap-2 items-center ">
+                    <label htmlFor="companyName" className="font-semibold">
+                      Employee Code:
+                    </label>
+                    <input
+                      type="text"
+                      id="companyName"
+                      className={`mt-1 p-2  border rounded-md ${
+                        !isEditing ? "bg-gray-200" : ""
+                      }`}
+                      placeholder="Enter Employee code"
+                      value={formData.employeeCode}
+                      onChange={handleChange}
+                      name="employeeCode"
+                      readOnly={!isEditing}
+                    />
+                  </div>
+
+                  <div className="grid gap-2 items-center ">
+                    <label htmlFor="jobTitle" className="font-semibold">
+                      Joining Date:
+                    </label>
+                    <input
+                      type="date"
+                      id="jobTitle"
+                      className={`mt-1 p-2  border rounded-md ${
+                        !isEditing ? "bg-gray-200" : ""
+                      }`}
+                      placeholder="Enter Job Title"
+                      value={formData.joinDate}
+                      onChange={handleChange}
+                      name="joinDate"
+                      readOnly={!isEditing}
+                    />
+                  </div>
+                  <div className="grid gap-2 items-center">
+                    <label htmlFor="jobTitle" className="font-semibold">
+                      Employment Type:
+                    </label>
+                    <select
+                      className={`mt-1 p-2  border rounded-md ${
+                        !isEditing ? "bg-gray-200" : ""
+                      }`}
+                      value={formData.employmentType}
+                      onChange={handleChange}
+                      name="employmentType"
+                      disabled={!isEditing}
+                    >
+                      <option value="">Select Employment Type</option>
+                      <option value="fullTime">Full Time</option>
+                      <option value="partTime">Part Time</option>
+                    </select>
+                  </div>
+                  <div className="grid gap-2 items-center ">
+                    <label htmlFor="jobTitle" className="font-semibold">
+                      Probation Due Date:
+                    </label>
+                    <input
+                      type="date"
+                      name="probationDueDate"
+                      id=""
+                      className={`mt-1 p-2  border rounded-md ${
+                        !isEditing ? "bg-gray-200" : ""
+                      }`}
+                      value={formData.probationDueDate}
+                      onChange={handleChange}
+                      readOnly={!isEditing}
+                    />
+                  </div>
+                  <div className="grid gap-2 items-center ">
+                    <label htmlFor="jobTitle" className="font-semibold">
+                      Branch Location:
+                    </label>
+                    <select
+                      className={`mt-1 p-2  border rounded-md ${
+                        !isEditing ? "bg-gray-200" : ""
+                      }`}
+                      value={formData.branch}
+                      onChange={handleChange}
+                      name="branch"
+                      disabled={!isEditing}
+                    >
+                      <option value="">Select Branch Location</option>
+                      {locations?.map((location) => (
+                        <option value={location.id} key={location.id}>
+                          {location.location}, {location.city}, {location.state}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="grid gap-2 items-center ">
+                    <label htmlFor="jobTitle" className="font-semibold">
+                      Department:
+                    </label>
+                    <select
+                      className={`mt-1 p-2  border rounded-md ${
+                        !isEditing ? "bg-gray-200" : ""
+                      }`}
+                      value={formData.department}
+                      onChange={handleChange}
+                      name="department"
+                      disabled={!isEditing}
+                    >
+                      <option value="">Select Department</option>
+                      {departments?.map((department) => (
+                        <option value={department.id} key={department.id}>
+                          {department.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="grid gap-2 items-center ">
+                    <label htmlFor="designation" className="font-semibold">
+                      Designation:
+                    </label>
+                    <input
+                      type="text"
+                      id="designation"
+                      className={`mt-1 p-2  border rounded-md ${
+                        !isEditing ? "bg-gray-200" : ""
+                      }`}
+                      placeholder="Enter Designation"
+                      onChange={handleChange}
+                      value={formData.designation}
+                      name="designation"
+                      readOnly={!isEditing}
+                    />
+                  </div>
+                  <div className="grid gap-2 items-center ">
+                    <label htmlFor="designation" className="font-semibold">
+                      Reporting Supervisor:
+                    </label>
+                    <select
+                      className={`mt-1 p-2  border rounded-md ${
+                        !isEditing ? "bg-gray-200" : ""
+                      }`}
+                      value={formData.supervisor}
+                      onChange={handleChange}
+                      name="supervisor"
+                      disabled={!isEditing}
+                    >
+                      <option value="">Select Supervisor</option>
+                      {employees.map((employee) => (
+                        <option value={employee.id} key={employee.id}>
+                          {employee.first_name} {employee.last_name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </>
             }
-            onOpen={() => setIsOpen(true)}
-            onClose={() => setIsOpen(false)}
-            className="bg-gray-100 my-4 p-2 rounded-md font-bold "
-          >
-            <div className="flex justify-end gap-2 ">
-              {isEditing ? (
-                <>
+          />
+
+          <Accordion
+            title={"Employment Status"}
+            content={
+              <>
+                <div className="flex justify-end ">
                   <button
-                    type="button"
-                    className="border-2 rounded-full p-1 transition-all duration-150 hover:bg-opacity-30 border-green-400  px-4 text-green-400 mb-2 hover:bg-green-300 font-semibold  "
-                    onClick={handleEditEmployment}
+                    onClick={openModal}
+                    className="bg-black text-white mb-2 hover:bg-gray-700 font-medium py-2 px-4 rounded"
                   >
-                    Save
+                    Update Employment Status
                   </button>
+                </div>
+
+                <Table columns={column} data={data} isPagination={true} />
+              </>
+            }
+          />
+
+          <Accordion
+            title={"Job Information"}
+            content={
+              <>
+                <div className="flex justify-end ">
                   <button
-                    type="button"
-                    className="border-2 rounded-full p-1 border-red-400  px-4 text-red-400 mb-2 hover:bg-opacity-30 hover:bg-red-300 font-semibold  "
-                    onClick={() => setIsEditing(false)}
+                    onClick={openModal1}
+                    className="bg-black text-white mb-2 hover:bg-gray-700 font-semibold py-1 px-4 rounded"
                   >
-                    Cancel
+                    Update Position
                   </button>
-                </>
-              ) : (
-                <button
-                  type="button"
-                  className="bg-black text-white mb-2 hover:bg-gray-700 font-semibold py-2 px-4 rounded"
-                  onClick={() => setIsEditing(true)}
-                >
-                  Edit
-                </button>
-              )}
-            </div>
-            <h3 className="text-xl font-bold mb-2">
-              General Employment Details
-            </h3>
-            <div className="grid md:grid-cols-2 gap-2 mt-5">
-              <div className="grid gap-2 items-center ">
-                <label htmlFor="companyName" className="font-semibold">
-                  Employee Code:
-                </label>
-                <input
-                  type="text"
-                  id="companyName"
-                  className={`mt-1 p-2  border rounded-md ${
-                    !isEditing ? "bg-gray-200" : ""
-                  }`}
-                  placeholder="Enter Employee code"
-                  value={formData.employeeCode}
-                  onChange={handleChange}
-                  name="employeeCode"
-                  readOnly={!isEditing}
-                />
-              </div>
+                </div>
 
-              <div className="grid gap-2 items-center ">
-                <label htmlFor="jobTitle" className="font-semibold">
-                  Joining Date:
-                </label>
-                <input
-                  type="date"
-                  id="jobTitle"
-                  className={`mt-1 p-2  border rounded-md ${
-                    !isEditing ? "bg-gray-200" : ""
-                  }`}
-                  placeholder="Enter Job Title"
-                  value={formData.joinDate}
-                  onChange={handleChange}
-                  name="joinDate"
-                  readOnly={!isEditing}
-                />
-              </div>
-              <div className="grid gap-2 items-center">
-                <label htmlFor="jobTitle" className="font-semibold">
-                  Employment Type:
-                </label>
-                <select
-                  className={`mt-1 p-2  border rounded-md ${
-                    !isEditing ? "bg-gray-200" : ""
-                  }`}
-                  value={formData.employmentType}
-                  onChange={handleChange}
-                  name="employmentType"
-                  disabled={!isEditing}
-                >
-                  <option value="">Select Employment Type</option>
-                  <option value="fullTime">Full Time</option>
-                  <option value="partTime">Part Time</option>
-                </select>
-              </div>
-              <div className="grid gap-2 items-center ">
-                <label htmlFor="jobTitle" className="font-semibold">
-                  Probation Due Date:
-                </label>
-                <input
-                  type="date"
-                  name="probationDueDate"
-                  id=""
-                  className={`mt-1 p-2  border rounded-md ${
-                    !isEditing ? "bg-gray-200" : ""
-                  }`}
-                  value={formData.probationDueDate}
-                  onChange={handleChange}
-                  readOnly={!isEditing}
-                />
-              </div>
-              <div className="grid gap-2 items-center ">
-                <label htmlFor="jobTitle" className="font-semibold">
-                  Branch Location:
-                </label>
-                <select
-                  className={`mt-1 p-2  border rounded-md ${
-                    !isEditing ? "bg-gray-200" : ""
-                  }`}
-                  value={formData.branch}
-                  onChange={handleChange}
-                  name="branch"
-                  disabled={!isEditing}
-                >
-                  <option value="">Select Branch Location</option>
-                  {locations?.map((location) => (
-                    <option value={location.id} key={location.id}>
-                      {location.location}, {location.city}, {location.state}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="grid gap-2 items-center ">
-                <label htmlFor="jobTitle" className="font-semibold">
-                  Department:
-                </label>
-                <select
-                  className={`mt-1 p-2  border rounded-md ${
-                    !isEditing ? "bg-gray-200" : ""
-                  }`}
-                  value={formData.department}
-                  onChange={handleChange}
-                  name="department"
-                  disabled={!isEditing}
-                >
-                  <option value="">Select Department</option>
-                  {departments?.map((department) => (
-                    <option value={department.id} key={department.id}>
-                      {department.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="grid gap-2 items-center ">
-                <label htmlFor="designation" className="font-semibold">
-                  Designation:
-                </label>
-                <input
-                  type="text"
-                  id="designation"
-                  className={`mt-1 p-2  border rounded-md ${
-                    !isEditing ? "bg-gray-200" : ""
-                  }`}
-                  placeholder="Enter Designation"
-                  onChange={handleChange}
-                  value={formData.designation}
-                  name="designation"
-                  readOnly={!isEditing}
-                />
-              </div>
-              <div className="grid gap-2 items-center ">
-                <label htmlFor="designation" className="font-semibold">
-                  Reporting Supervisor:
-                </label>
-                <select
-                  className={`mt-1 p-2  border rounded-md ${
-                    !isEditing ? "bg-gray-200" : ""
-                  }`}
-                  value={formData.supervisor}
-                  onChange={handleChange}
-                  name="supervisor"
-                  disabled={!isEditing}
-                >
-                  <option value="">Select Supervisor</option>
-                  {employees.map((employee) => (
-                    <option value={employee.id} key={employee.id}>
-                      {employee.first_name} {employee.last_name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </Collapsible>
-
-          <Collapsible
-            readOnly
-            trigger={
-              <CustomTrigger isOpen={isOpen}>
-                <h2 className="text-xl font-semibold ">Employment Status</h2>
-              </CustomTrigger>
+                <Table columns={column1} data={data1} isPagination={true} />
+              </>
             }
-            onOpen={() => setIsOpen(true)}
-            onClose={() => setIsOpen(false)}
-            className="bg-gray-100 my-4 p-2 rounded-md font-bold "
-          >
-            <div className="flex justify-end ">
-              <button
-                onClick={openModal}
-                className="bg-black text-white mb-2 hover:bg-gray-700 font-medium py-2 px-4 rounded"
-              >
-                Update Employment Status
-              </button>
-            </div>
+          />
 
-            <Table columns={column} data={data} isPagination={true} />
-          </Collapsible>
-          <Collapsible
-            readOnly
-            trigger={
-              <CustomTrigger isOpen={isOpen}>
-                <h2 className="text-xl font-semibold">Job Information</h2>
-              </CustomTrigger>
+          <Accordion
+            title={"Assets"}
+            content={
+              <>
+                <div className="flex justify-end ">
+                  <button
+                    onClick={() => setAssetModal(true)}
+                    className="bg-blue-500 text-white mb-2  font-semibold py-1 px-4 rounded-full flex items-center gap-2"
+                  >
+                    <PiPlus /> Add Row
+                  </button>
+                </div>
+                <Table
+                  columns={assetColumn}
+                  data={empAssets}
+                  isPagination={true}
+                />
+              </>
             }
-            onOpen={() => setIsOpen(true)}
-            onClose={() => setIsOpen(false)}
-            className="bg-gray-100 my-4 p-2 rounded-md font-bold "
-          >
-            <div className="flex justify-end ">
-              <button
-                onClick={openModal1}
-                className="bg-black text-white mb-2 hover:bg-gray-700 font-semibold py-1 px-4 rounded"
-              >
-                Update Position
-              </button>
-            </div>
+          />
+          <Accordion
+            title={"Company Assets"}
+            content={
+              <>
+                <div className="flex justify-end ">
+                  <button
+                    onClick={() => setCompanyAssetModal(true)}
+                    className="bg-blue-500 text-white mb-2 font-semibold py-1 px-4 rounded-full flex items-center gap-2"
+                  >
+                    <PiPlus /> Add Row
+                  </button>
+                </div>
+                <Table
+                  columns={companyAssetColumn}
+                  data={comAssets}
+                  isPagination={true}
+                />
+              </>
+            }
+          />
 
-            <Table columns={column1} data={data1} isPagination={true} />
-          </Collapsible>
           {modalIsOpen && (
             <div className="fixed inset-0 z-50 flex items-center overflow-y-auto justify-center bg-gray-500 bg-opacity-50">
               <div class="max-h-screen  bg-white p-4 w-96 rounded-lg shadow-lg overflow-y-auto">
@@ -469,7 +623,8 @@ const SectionsEmployment = () => {
                   </h2>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Please select Employment Status you wish to update <span className="text-red-500">*</span>
+                      Please select Employment Status you wish to update{" "}
+                      <span className="text-red-500">*</span>
                     </label>
                     <select className="mt-1 p-2  border rounded-md w-full">
                       <option value="cash">Probation</option>
@@ -478,7 +633,8 @@ const SectionsEmployment = () => {
                   </div>
                   <div className="mt-2">
                     <label className="block text-sm font-medium text-gray-700">
-                      What is the employee's confirmation due date? <span className="text-red-500">*</span>
+                      What is the employee's confirmation due date?{" "}
+                      <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="date"
@@ -489,10 +645,7 @@ const SectionsEmployment = () => {
                     <label className="block text-sm font-medium text-gray-700">
                       Please enter comments, if any{" "}
                     </label>
-                    <textarea
-                      
-                      className="mt-1 p-2 w-full border rounded-md"
-                    />
+                    <textarea className="mt-1 p-2 w-full border rounded-md" />
                   </div>
 
                   <div className="flex mt-2 justify-end gap-2">
@@ -648,6 +801,33 @@ const SectionsEmployment = () => {
                 </form>
               </div>
             </div>
+          )}
+
+          {assetModal && (
+            <AddEmployeeAsset
+              setAssetModal={setAssetModal}
+              fetchEmployeeAssets={fetchEmployeeAssets}
+            />
+          )}
+          {companyAssetModal && (
+            <AddCompanyAsset
+              setCompanyAssetModal={setCompanyAssetModal}
+              fetchCompanyAssets={fetchCompanyAssets}
+            />
+          )}
+          {companyAssetEditModal && (
+            <EditCompanyAsset
+              fetchCompanyAssets={fetchCompanyAssets}
+              setCompanyAssetEditModal={setCompanyAssetEditModal}
+              comAssetId={comAssetId}
+            />
+          )}
+          {assetEditModal && (
+            <EditEmployeeAsset
+              setAssetEditModal={setAssetEditModal}
+              fetchEmployeeAssets={fetchEmployeeAssets}
+              empAssetID={empAssetID}
+            />
           )}
         </div>
       </div>

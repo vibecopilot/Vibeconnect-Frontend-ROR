@@ -3929,13 +3929,17 @@ export const postEmployeeStatutoryInfo = async (data) => {
     throw error;
   }
 };
-export const editEmployeeStatutoryInfo = async (statId,data) => {
+export const editEmployeeStatutoryInfo = async (statId, data) => {
   try {
-    const response = await HrmsAuth.put(`/employee/Statutory/${statId}/`, data, {
-      headers: {
-        "Content-Type": "multipart/form-data/",
-      },
-    });
+    const response = await HrmsAuth.put(
+      `/employee/Statutory/${statId}/`,
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
     return response.data;
   } catch (error) {
     console.error("Error adding employee statutory details:", error);
@@ -3944,11 +3948,14 @@ export const editEmployeeStatutoryInfo = async (statId,data) => {
 };
 export const getEmployeeStatutoryInfoDetails = async (empId) => {
   try {
-    const response = await HrmsAuth.get(`/employee/Statutory/?employee_id=${empId}`, {
-      headers: {
-        "Content-Type": "multipart/form-data/",
-      },
-    });
+    const response = await HrmsAuth.get(
+      `/employee/Statutory/?employee_id=${empId}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
     return response.data;
   } catch (error) {
     console.error("Error getting employee Statutory:", error);
@@ -4307,7 +4314,10 @@ export const postMultipleLeaveApplication = async (data) => {
 };
 export const approveRejectMultipleRequest = async (data) => {
   try {
-    const response = await HrmsAuth.post(`/leave-requests/approve-pending/`, data);
+    const response = await HrmsAuth.post(
+      `/leave-requests/approve-pending/`,
+      data
+    );
     return response.data;
   } catch (error) {
     console.error("Error post request action:", error);
@@ -5384,6 +5394,110 @@ export const getUserDetails = async (empId) => {
     return response.data;
   } catch (error) {
     console.error("Error getting user details :", error);
+    throw error;
+  }
+};
+export const getEmployeeAsset = async (empId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/employee/assets/?employee_id=${empId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting employee asset :", error);
+    throw error;
+  }
+};
+export const getEmployeeAssetDetails = async (empAssetId) => {
+  try {
+    const response = await HrmsAuth.get(`/employee/assets/${empAssetId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error getting employee asset details :", error);
+    throw error;
+  }
+};
+export const deleteEmployeeAsset = async (empAssetId) => {
+  try {
+    const response = await HrmsAuth.delete(`/employee/assets/${empAssetId}/`);
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting employee asset details :", error);
+    throw error;
+  }
+};
+export const editEmployeeAssetDetails = async (empAssetId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/employee/assets/${empAssetId}/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating employee asset details :", error);
+    throw error;
+  }
+};
+export const postEmployeeAsset = async (data) => {
+  try {
+    const response = await HrmsAuth.post(`/employee/assets/`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error posting employee asset :", error);
+    throw error;
+  }
+};
+export const getCompanyAsset = async (empId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/employee/company-asset/?employee_id=${empId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting company asset :", error);
+    throw error;
+  }
+};
+export const getCompanyAssetDetails = async (comAssetId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/employee/company-asset/${comAssetId}/`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting company asset :", error);
+    throw error;
+  }
+};
+export const editCompanyAssetDetails = async (comAssetId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/employee/company-asset/${comAssetId}/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating company asset :", error);
+    throw error;
+  }
+};
+export const deleteCompanyAsset = async (comAssetId) => {
+  try {
+    const response = await HrmsAuth.delete(
+      `/employee/company-asset/${comAssetId}/`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting company asset :", error);
+    throw error;
+  }
+};
+export const postCompanyAsset = async (data) => {
+  try {
+    const response = await HrmsAuth.post(`/employee/company-asset/`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error posting company asset :", error);
     throw error;
   }
 };

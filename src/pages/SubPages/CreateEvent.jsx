@@ -67,12 +67,12 @@ const CreateEvent = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const handleCreateEvent = async () => {
-    if(formData.event_name === "" || formData.start_date_time === ""){
-      return toast.error("All fields are Required")
-     }
+    if (formData.event_name === "" || formData.start_date_time === "") {
+      return toast.error("All fields are Required");
+    }
     try {
       toast.loading("Creating Event Please Wait!");
       const formDataSend = new FormData();
@@ -103,7 +103,7 @@ const CreateEvent = () => {
       toast.success("Event Created Successfully");
       console.log("Response:", response.data);
       toast.dismiss();
-      navigate("/communication")
+      navigate("/communication/events");
     } catch (error) {
       console.log(error);
       toast.dismiss();
@@ -114,7 +114,7 @@ const CreateEvent = () => {
     const selectedIds = selectedOptions
       ? selectedOptions.map((option) => option.value)
       : [];
-      const userIdsString = selectedIds.join(',');
+    const userIdsString = selectedIds.join(",");
 
     setFormData({ ...formData, user_ids: userIdsString });
   };
@@ -144,12 +144,12 @@ const CreateEvent = () => {
     }
   };
 
-  const handleFileChange =(files, fieldName)=>{
-setFormData({
-  ...formData, 
-  [fieldName]: files
-})
-  }
+  const handleFileChange = (files, fieldName) => {
+    setFormData({
+      ...formData,
+      [fieldName]: files,
+    });
+  };
 
   return (
     <section className="flex">
@@ -264,7 +264,10 @@ setFormData({
               multiple
               onChange={handleFileAttachment}
             /> */}
-            <FileInputBox fieldName={"event_image"} handleChange={(files)=> handleFileChange(files, "event_image" )}  />
+            <FileInputBox
+              fieldName={"event_image"}
+              handleChange={(files) => handleFileChange(files, "event_image")}
+            />
             <div className="">
               <h2 className="border-b t border-black my-5 text-lg font-semibold">
                 Share With

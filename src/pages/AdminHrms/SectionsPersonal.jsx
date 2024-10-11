@@ -18,6 +18,7 @@ import {
 import { useParams } from "react-router-dom";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import toast from "react-hot-toast";
+import Accordion from "./Components/Accordion";
 
 const SectionsPersonal = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -38,19 +39,7 @@ const SectionsPersonal = () => {
     closeModal();
   };
 
-
-
   const column = [
-    {
-      name: "view",
-      cell: (row) => (
-        <div className="flex items-center gap-4">
-          <button onClick={openModal}>
-            <BiEdit size={15} />
-          </button>
-        </div>
-      ),
-    },
     {
       name: "Payment Type",
       selector: (row) => row.Payment_Type,
@@ -64,6 +53,16 @@ const SectionsPersonal = () => {
       sortable: true,
     },
     { name: "Bank IFSC Code", selector: (row) => row.ifsc, sortable: true },
+    {
+      name: "Action",
+      cell: (row) => (
+        <div className="flex items-center gap-4">
+          <button onClick={openModal}>
+            <BiEdit size={15} />
+          </button>
+        </div>
+      ),
+    },
   ];
 
   const data = [
@@ -169,22 +168,20 @@ const SectionsPersonal = () => {
     }
   };
 
-  const fetchEmployeePaymentInfo = async()=>{
+  const fetchEmployeePaymentInfo = async () => {
     try {
-      const res = await getEmployeePaymentInfo(id)
-      console.log(res)
+      const res = await getEmployeePaymentInfo(id);
+      console.log(res);
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
-  }
-
-
+  };
 
   useEffect(() => {
     fetchEmployeeDetails();
     fetchEmployeeFamilyDetails();
     fetchEmployeeAddressDetails();
-    fetchEmployeePaymentInfo()
+    fetchEmployeePaymentInfo();
   }, []);
 
   // const handleChange = (e) => {
@@ -302,439 +299,423 @@ const SectionsPersonal = () => {
           <EmployeeSections empId={id} />
         </div>
         <div className="w-full p-2 bg-white rounded-lg ">
-          <Collapsible
-            trigger={
-              <CustomTrigger isOpen={isOpen}>
-                <h2 className="text-xl font-semibold">Basic Information</h2>
-              </CustomTrigger>
+          <Accordion
+            title={"Basic Information"}
+            content={
+              <>
+                <div className="flex justify-end gap-2">
+                  {isEditing ? (
+                    <>
+                      <button
+                        type="button"
+                        className="border-2 rounded-full p-1 transition-all duration-150 hover:bg-opacity-30 border-green-400  px-4 text-green-400 mb-2 hover:bg-green-300 font-semibold  "
+                        onClick={handleEditEmployeeBasicInfo}
+                      >
+                        Save
+                      </button>
+                      <button
+                        type="button"
+                        className="border-2 rounded-full p-1 border-red-400  px-4 text-red-400 mb-2 hover:bg-opacity-30 hover:bg-red-300 font-semibold  "
+                        onClick={() => setIsEditing(false)}
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      className="bg-black text-white mb-2 hover:bg-gray-700 font-semibold py-2 px-4 rounded"
+                      onClick={() => setIsEditing(true)}
+                    >
+                      Edit
+                    </button>
+                  )}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      First Name *
+                    </label>
+                    <input
+                      type="text"
+                      className={`mt-1 p-2 w-full border rounded-md ${
+                        !isEditing ? "bg-gray-200" : ""
+                      }`}
+                      placeholder="First Name"
+                      value={formData.firstName}
+                      required
+                      readOnly={!isEditing}
+                      onChange={handleChange}
+                      name="firstName"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Last Name *
+                    </label>
+                    <input
+                      type="text"
+                      className={`mt-1 p-2 w-full border rounded-md ${
+                        !isEditing ? "bg-gray-200" : ""
+                      }`}
+                      value={formData.lastName}
+                      placeholder="Last Name"
+                      required
+                      readOnly={!isEditing}
+                      name="lastName"
+                      onChange={handleChange}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Email ID *
+                    </label>
+                    <input
+                      type="email"
+                      className={`mt-1 p-2 w-full border rounded-md ${
+                        !isEditing ? "bg-gray-200" : ""
+                      }`}
+                      placeholder="Email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      required
+                      readOnly={!isEditing}
+                      name="email"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Mobile
+                    </label>
+                    <input
+                      type="tel"
+                      className={`mt-1 p-2 w-full border rounded-md ${
+                        !isEditing ? "bg-gray-200" : ""
+                      }`}
+                      placeholder="Mobile Number"
+                      value={formData.mobile}
+                      onChange={handleChange}
+                      readOnly={!isEditing}
+                      name="mobile"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Gender *
+                    </label>
+                    <select
+                      className={`mt-1 p-2 w-full border rounded-md ${
+                        !isEditing ? "bg-gray-200" : ""
+                      }`}
+                      required
+                      disabled={!isEditing}
+                      value={formData.gender}
+                      onChange={handleChange}
+                      name="gender"
+                    >
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Date of Birth *
+                    </label>
+                    <input
+                      type="date"
+                      className={`mt-1 p-2 w-full border rounded-md ${
+                        !isEditing ? "bg-gray-200" : ""
+                      }`}
+                      required
+                      readOnly={!isEditing}
+                      value={formData.dob}
+                      onChange={handleChange}
+                      name="dob"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      PAN
+                    </label>
+                    <input
+                      type="text"
+                      className={`mt-1 p-2 w-full border rounded-md ${
+                        !isEditing ? "bg-gray-200" : ""
+                      }`}
+                      placeholder="PAN NUMBER"
+                      readOnly={!isEditing}
+                      value={formData.pan}
+                      onChange={handleChange}
+                      name="pan"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Aadhar No
+                    </label>
+                    <input
+                      type="text"
+                      className={`mt-1 p-2 w-full border rounded-md ${
+                        !isEditing ? "bg-gray-200" : ""
+                      }`}
+                      placeholder="Aadhar Number"
+                      readOnly={!isEditing}
+                      value={formData.aadhar}
+                      onChange={handleChange}
+                      name="aadhar"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Marital Status
+                    </label>
+                    <select
+                      className={`mt-1 p-2 w-full border rounded-md ${
+                        !isEditing ? "bg-gray-200" : ""
+                      }`}
+                      disabled={!isEditing}
+                      onChange={handleChange}
+                      value={formData.maritalStatus}
+                      name="maritalStatus"
+                    >
+                      <option value="single">Single</option>
+                      <option value="married">Married</option>
+                    </select>
+                  </div>
+                </div>
+              </>
             }
-            onOpen={() => setIsOpen(true)}
-            onClose={() => setIsOpen(false)}
-            className="bg-gray-100 my-4 p-2 rounded-md font-bold"
-          >
-            <div className="flex justify-end gap-2">
-              {isEditing ? (
-                <>
-                  <button
-                    type="button"
-                    className="border-2 rounded-full p-1 transition-all duration-150 hover:bg-opacity-30 border-green-400  px-4 text-green-400 mb-2 hover:bg-green-300 font-semibold  "
-                    onClick={handleEditEmployeeBasicInfo}
-                  >
-                    Save
-                  </button>
-                  <button
-                    type="button"
-                    className="border-2 rounded-full p-1 border-red-400  px-4 text-red-400 mb-2 hover:bg-opacity-30 hover:bg-red-300 font-semibold  "
-                    onClick={() => setIsEditing(false)}
-                  >
-                    Cancel
-                  </button>
-                </>
-              ) : (
-                <button
-                  type="button"
-                  className="bg-black text-white mb-2 hover:bg-gray-700 font-semibold py-2 px-4 rounded"
-                  onClick={() => setIsEditing(true)}
-                >
-                  Edit
-                </button>
-              )}
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  First Name *
-                </label>
-                <input
-                  type="text"
-                  className={`mt-1 p-2 w-full border rounded-md ${
-                    !isEditing ? "bg-gray-200" : ""
-                  }`}
-                  placeholder="First Name"
-                  value={formData.firstName}
-                  required
-                  readOnly={!isEditing}
-                  onChange={handleChange}
-                  name="firstName"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Last Name *
-                </label>
-                <input
-                  type="text"
-                  className={`mt-1 p-2 w-full border rounded-md ${
-                    !isEditing ? "bg-gray-200" : ""
-                  }`}
-                  value={formData.lastName}
-                  placeholder="Last Name"
-                  required
-                  readOnly={!isEditing}
-                  name="lastName"
-                  onChange={handleChange}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Email ID *
-                </label>
-                <input
-                  type="email"
-                  className={`mt-1 p-2 w-full border rounded-md ${
-                    !isEditing ? "bg-gray-200" : ""
-                  }`}
-                  placeholder="Email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                  readOnly={!isEditing}
-                  name="email"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Mobile
-                </label>
-                <input
-                  type="tel"
-                  className={`mt-1 p-2 w-full border rounded-md ${
-                    !isEditing ? "bg-gray-200" : ""
-                  }`}
-                  placeholder="Mobile Number"
-                  value={formData.mobile}
-                  onChange={handleChange}
-                  readOnly={!isEditing}
-                  name="mobile"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Gender *
-                </label>
-                <select
-                  className={`mt-1 p-2 w-full border rounded-md ${
-                    !isEditing ? "bg-gray-200" : ""
-                  }`}
-                  required
-                  disabled={!isEditing}
-                  value={formData.gender}
-                  onChange={handleChange}
-                  name="gender"
-                >
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Date of Birth *
-                </label>
-                <input
-                  type="date"
-                  className={`mt-1 p-2 w-full border rounded-md ${
-                    !isEditing ? "bg-gray-200" : ""
-                  }`}
-                  required
-                  readOnly={!isEditing}
-                  value={formData.dob}
-                  onChange={handleChange}
-                  name="dob"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  PAN
-                </label>
-                <input
-                  type="text"
-                  className={`mt-1 p-2 w-full border rounded-md ${
-                    !isEditing ? "bg-gray-200" : ""
-                  }`}
-                  placeholder="PAN NUMBER"
-                  readOnly={!isEditing}
-                  value={formData.pan}
-                  onChange={handleChange}
-                  name="pan"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Aadhar No
-                </label>
-                <input
-                  type="text"
-                  className={`mt-1 p-2 w-full border rounded-md ${
-                    !isEditing ? "bg-gray-200" : ""
-                  }`}
-                  placeholder="Aadhar Number"
-                  readOnly={!isEditing}
-                  value={formData.aadhar}
-                  onChange={handleChange}
-                  name="aadhar"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Marital Status
-                </label>
-                <select
-                  className={`mt-1 p-2 w-full border rounded-md ${
-                    !isEditing ? "bg-gray-200" : ""
-                  }`}
-                  disabled={!isEditing}
-                  onChange={handleChange}
-                  value={formData.maritalStatus}
-                  name="maritalStatus"
-                >
-                  <option value="single">Single</option>
-                  <option value="married">Married</option>
-                </select>
-              </div>
-            </div>
-          </Collapsible>
+          />
 
-          <Collapsible
-            trigger={
-              <CustomTrigger isOpen={isOpen}>
-                <h2 className="text-xl font-semibold">Family Information</h2>
-              </CustomTrigger>
+          <Accordion
+            title={"Family Information"}
+            content={
+              <>
+                <div className="flex justify-end gap-2">
+                  {isFamEditing ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={handleEditFamily}
+                        className="border-2 rounded-full p-1 transition-all duration-150 hover:bg-opacity-30 border-green-400  px-4 text-green-400 mb-2 hover:bg-green-300 font-semibold  "
+                      >
+                        Save
+                      </button>
+                      <button
+                        type="button"
+                        className="border-2 rounded-full p-1 border-red-400  px-4 text-red-400 mb-2 hover:bg-opacity-30 hover:bg-red-300 font-semibold  "
+                        onClick={() => setIsFamEditing(false)}
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      className="bg-black text-white mb-2 hover:bg-gray-700 font-semibold py-2 px-4 rounded"
+                      onClick={() => setIsFamEditing(true)}
+                    >
+                      Edit
+                    </button>
+                  )}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Father's Name
+                    </label>
+                    <input
+                      type="text"
+                      value={familyData.fatherName}
+                      onChange={handleFamChange}
+                      name="fatherName"
+                      className={`mt-1 p-2 w-full border rounded-md ${
+                        !isFamEditing ? "bg-gray-200" : ""
+                      }`}
+                      placeholder="Father's Name"
+                      readOnly={!isFamEditing}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Mother's Name
+                    </label>
+                    <input
+                      type="text"
+                      className={`mt-1 p-2 w-full border rounded-md ${
+                        !isFamEditing ? "bg-gray-200" : ""
+                      }`}
+                      placeholder="Mother's Name"
+                      value={familyData.motherName}
+                      onChange={handleFamChange}
+                      name="motherName"
+                      readOnly={!isFamEditing}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Spouse's Name
+                    </label>
+                    <input
+                      type="text"
+                      name="spouseName"
+                      value={familyData.spouseName}
+                      onChange={handleFamChange}
+                      className={`mt-1 p-2 w-full border rounded-md ${
+                        !isFamEditing ? "bg-gray-200" : ""
+                      }`}
+                      placeholder="Spouse's Name"
+                      readOnly={!isFamEditing}
+                    />
+                  </div>
+                </div>
+              </>
             }
-            onOpen={() => setIsOpen(true)}
-            onClose={() => setIsOpen(false)}
-            className="bg-gray-100 my-4 p-2 rounded-md font-bold"
-          >
-            <div className="flex justify-end gap-2">
-              {isFamEditing ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={handleEditFamily}
-                    className="border-2 rounded-full p-1 transition-all duration-150 hover:bg-opacity-30 border-green-400  px-4 text-green-400 mb-2 hover:bg-green-300 font-semibold  "
-                  >
-                    Save
-                  </button>
-                  <button
-                    type="button"
-                    className="border-2 rounded-full p-1 border-red-400  px-4 text-red-400 mb-2 hover:bg-opacity-30 hover:bg-red-300 font-semibold  "
-                    onClick={() => setIsFamEditing(false)}
-                  >
-                    Cancel
-                  </button>
-                </>
-              ) : (
-                <button
-                  type="button"
-                  className="bg-black text-white mb-2 hover:bg-gray-700 font-semibold py-2 px-4 rounded"
-                  onClick={() => setIsFamEditing(true)}
-                >
-                  Edit
-                </button>
-              )}
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Father's Name
-                </label>
-                <input
-                  type="text"
-                  value={familyData.fatherName}
-                  onChange={handleFamChange}
-                  name="fatherName"
-                  className={`mt-1 p-2 w-full border rounded-md ${
-                    !isFamEditing ? "bg-gray-200" : ""
-                  }`}
-                  placeholder="Father's Name"
-                  readOnly={!isFamEditing}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Mother's Name
-                </label>
-                <input
-                  type="text"
-                  className={`mt-1 p-2 w-full border rounded-md ${
-                    !isFamEditing ? "bg-gray-200" : ""
-                  }`}
-                  placeholder="Mother's Name"
-                  value={familyData.motherName}
-                  onChange={handleFamChange}
-                  name="motherName"
-                  readOnly={!isFamEditing}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Spouse's Name
-                </label>
-                <input
-                  type="text"
-                  name="spouseName"
-                  value={familyData.spouseName}
-                  onChange={handleFamChange}
-                  className={`mt-1 p-2 w-full border rounded-md ${
-                    !isFamEditing ? "bg-gray-200" : ""
-                  }`}
-                  placeholder="Spouse's Name"
-                  readOnly={!isFamEditing}
-                />
-              </div>
-            </div>
-          </Collapsible>
+          />
 
-          <Collapsible
-            trigger={
-              <CustomTrigger isOpen={isOpen}>
-                <h2 className="text-xl font-semibold">Address Information</h2>
-              </CustomTrigger>
+          <Accordion
+            title={"Address Information"}
+            content={
+              <>
+                <div className="flex justify-end gap-2">
+                  {isAddressEditing ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={handleEditAddress}
+                        className="border-2 rounded-full p-1 transition-all duration-150 hover:bg-opacity-30 border-green-400  px-4 text-green-400 mb-2 hover:bg-green-300 font-semibold  "
+                      >
+                        Save
+                      </button>
+                      <button
+                        type="button"
+                        className="border-2 rounded-full p-1 border-red-400  px-4 text-red-400 mb-2 hover:bg-opacity-30 hover:bg-red-300 font-semibold  "
+                        onClick={() => setIsAddressEditing(false)}
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      className="bg-black text-white mb-2 hover:bg-gray-700 font-semibold py-2 px-4 rounded"
+                      onClick={() => setIsAddressEditing(true)}
+                    >
+                      Edit
+                    </button>
+                  )}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Address Line 1
+                    </label>
+                    <input
+                      type="text"
+                      value={addressData.address1}
+                      onChange={handleAddressChange}
+                      name="address1"
+                      className={`mt-1 p-2 w-full border rounded-md ${
+                        !isAddressEditing ? "bg-gray-200" : ""
+                      }`}
+                      placeholder="Address Line 1"
+                      maxLength="150"
+                      readOnly={!isAddressEditing}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Address Line 2
+                    </label>
+                    <input
+                      type="text"
+                      value={addressData.address2}
+                      name="address2"
+                      onChange={handleAddressChange}
+                      className={`mt-1 p-2 w-full border rounded-md ${
+                        !isAddressEditing ? "bg-gray-200" : ""
+                      }`}
+                      placeholder="Address Line 2"
+                      maxLength="150"
+                      readOnly={!isAddressEditing}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      City
+                    </label>
+                    <input
+                      type="text"
+                      value={addressData.city}
+                      name="city"
+                      className={`mt-1 p-2 w-full border rounded-md ${
+                        !isAddressEditing ? "bg-gray-200" : ""
+                      }`}
+                      placeholder="City"
+                      readOnly={!isAddressEditing}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      State/Province
+                    </label>
+                    <input
+                      type="text"
+                      value={addressData.state}
+                      onChange={handleAddressChange}
+                      name="state"
+                      className={`mt-1 p-2 w-full border rounded-md ${
+                        !isAddressEditing ? "bg-gray-200" : ""
+                      }`}
+                      placeholder="State/Province"
+                      readOnly={!isAddressEditing}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Zip / Pin Code
+                    </label>
+                    <input
+                      type="text"
+                      value={addressData.code}
+                      name="code"
+                      onChange={handleAddressChange}
+                      className={`mt-1 p-2 w-full border rounded-md ${
+                        !isAddressEditing ? "bg-gray-200" : ""
+                      }`}
+                      placeholder="Zip / Pin Code"
+                      readOnly={!isAddressEditing}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Country
+                    </label>
+                    <input
+                      type="text"
+                      value={addressData.country}
+                      onChange={handleAddressChange}
+                      name="country"
+                      className={`mt-1 p-2 w-full border rounded-md ${
+                        !isAddressEditing ? "bg-gray-200" : ""
+                      }`}
+                      placeholder="Country"
+                      readOnly={!isAddressEditing}
+                    />
+                  </div>
+                </div>
+              </>
             }
-            onOpen={() => setIsOpen(true)}
-            onClose={() => setIsOpen(false)}
-            className="bg-gray-100 my-4 p-2 rounded-md font-bold"
-          >
-            <div className="flex justify-end gap-2">
-              {isAddressEditing ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={handleEditAddress}
-                    className="border-2 rounded-full p-1 transition-all duration-150 hover:bg-opacity-30 border-green-400  px-4 text-green-400 mb-2 hover:bg-green-300 font-semibold  "
-                  >
-                    Save
-                  </button>
-                  <button
-                    type="button"
-                    className="border-2 rounded-full p-1 border-red-400  px-4 text-red-400 mb-2 hover:bg-opacity-30 hover:bg-red-300 font-semibold  "
-                    onClick={() => setIsAddressEditing(false)}
-                  >
-                    Cancel
-                  </button>
-                </>
-              ) : (
-                <button
-                  type="button"
-                  className="bg-black text-white mb-2 hover:bg-gray-700 font-semibold py-2 px-4 rounded"
-                  onClick={() => setIsAddressEditing(true)}
-                >
-                  Edit
-                </button>
-              )}
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Address Line 1
-                </label>
-                <input
-                  type="text"
-                  value={addressData.address1}
-                  onChange={handleAddressChange}
-                  name="address1"
-                  className={`mt-1 p-2 w-full border rounded-md ${
-                    !isAddressEditing ? "bg-gray-200" : ""
-                  }`}
-                  placeholder="Address Line 1"
-                  maxLength="150"
-                  readOnly={!isAddressEditing}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Address Line 2
-                </label>
-                <input
-                  type="text"
-                  value={addressData.address2}
-                  name="address2"
-                  onChange={handleAddressChange}
-                  className={`mt-1 p-2 w-full border rounded-md ${
-                    !isAddressEditing ? "bg-gray-200" : ""
-                  }`}
-                  placeholder="Address Line 2"
-                  maxLength="150"
-                  readOnly={!isAddressEditing}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  City
-                </label>
-                <input
-                  type="text"
-                  value={addressData.city}
-                  name="city"
-                  className={`mt-1 p-2 w-full border rounded-md ${
-                    !isAddressEditing ? "bg-gray-200" : ""
-                  }`}
-                  placeholder="City"
-                  readOnly={!isAddressEditing}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  State/Province
-                </label>
-                <input
-                  type="text"
-                  value={addressData.state}
-                  onChange={handleAddressChange}
-                  name="state"
-                  className={`mt-1 p-2 w-full border rounded-md ${
-                    !isAddressEditing ? "bg-gray-200" : ""
-                  }`}
-                  placeholder="State/Province"
-                  readOnly={!isAddressEditing}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Zip / Pin Code
-                </label>
-                <input
-                  type="text"
-                  value={addressData.code}
-                  name="code"
-                  onChange={handleAddressChange}
-                  className={`mt-1 p-2 w-full border rounded-md ${
-                    !isAddressEditing ? "bg-gray-200" : ""
-                  }`}
-                  placeholder="Zip / Pin Code"
-                  readOnly={!isAddressEditing}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Country
-                </label>
-                <input
-                  type="text"
-                  value={addressData.country}
-                  onChange={handleAddressChange}
-                  name="country"
-                  className={`mt-1 p-2 w-full border rounded-md ${
-                    !isAddressEditing ? "bg-gray-200" : ""
-                  }`}
-                  placeholder="Country"
-                  readOnly={!isAddressEditing}
-                />
-              </div>
-            </div>
-          </Collapsible>
+          />
 
-          <Collapsible
-            trigger={
-              <CustomTrigger isOpen={isOpen}>
-                <h2 className="text-xl font-semibold">Payment Information</h2>
-              </CustomTrigger>
+          <Accordion
+            title={"Payment Information"}
+            content={
+              <>
+                <Table columns={column} data={data} isPagination={true} />
+              </>
             }
-            onOpen={() => setIsOpen(true)}
-            onClose={() => setIsOpen(false)}
-            className="bg-gray-100 my-4 p-2 rounded-md font-bold"
-          >
-            <Table columns={column} data={data} isPagination={true} />
-          </Collapsible>
+          />
 
           {modalIsOpen && (
             <div className="fixed inset-0 z-50 flex items-center overflow-y-auto justify-center bg-gray-500 bg-opacity-50">

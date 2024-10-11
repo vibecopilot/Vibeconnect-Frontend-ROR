@@ -83,6 +83,9 @@ const GeographicalSetting = () => {
   };
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
   const handleEditGeoSetting = async () => {
+    if (!selectedCountry.value) {
+      return toast.error("Please select country of origin")
+    }
     const editData = new FormData();
     editData.append("geographical_master_data", selectedCountry.value);
     editData.append("organization", hrmsOrgId);
