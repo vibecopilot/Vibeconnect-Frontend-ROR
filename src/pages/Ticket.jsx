@@ -17,6 +17,7 @@ import * as XLSX from "xlsx";
 import { useSelector } from "react-redux";
 import Table from "../components/table/Table";
 import { MdKeyboardArrowLeft, MdKeyboardArrowRight } from "react-icons/md";
+import { DNA } from "react-loader-spinner";
 const Ticket = () => {
   const [filteredData, setFilteredData] = useState([]);
   const [searchText, setSearchText] = useState("");
@@ -24,12 +25,11 @@ const Ticket = () => {
   const [ticketTypeCounts, setTicketTypeCounts] = useState({});
   const [ticketStatusCounts, setTicketStatusCounts] = useState({});
   const allTicketTypes = ["Complaint", "Request", "Suggestion"];
-  const [filterSearch, setFilter] = useState([])
+  const [filterSearch, setFilter] = useState([]);
   const [complaints, setComplaints] = useState([]);
   const perPage = 10;
   const [totalRows, setTotalRows] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
- 
 
   const getTimeAgo = (timestamp) => {
     const createdTime = moment(timestamp);
@@ -46,7 +46,7 @@ const Ticket = () => {
 
   const dateFormat = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleString(); 
+    return date.toLocaleString();
   };
 
   const columns = [
@@ -87,12 +87,12 @@ const Ticket = () => {
       sortable: true,
     },
     { name: "Title", selector: (row) => row.heading, sortable: true },
-    {
-      name: "Description",
-      selector: (row) => row.text,
-      sortable: true,
-      // maxWidth: "500px",
-    },
+    // {
+    //   name: "Description",
+    //   selector: (row) => row.text,
+    //   sortable: true,
+    //   // maxWidth: "500px",
+    // },
     { name: "Status", selector: (row) => row.issue_status, sortable: true },
     { name: "Created By", selector: (row) => row.created_by, sortable: true },
     {
@@ -127,8 +127,8 @@ const Ticket = () => {
     },
     cells: {
       style: {
-        fontWeight: "bold",
-        fontSize: "10px",
+        // fontWeight: "bold",
+        fontSize: "14px",
       },
     },
   };
@@ -138,12 +138,12 @@ const Ticket = () => {
       try {
         const response = await getAdminPerPageComplaints(page, perPage);
         console.log("Resp", response);
-       
-        const complaints = response?.data?.complaints || []; 
+
+        const complaints = response?.data?.complaints || [];
         setFilteredData(complaints);
         setComplaints(complaints);
         setTotalRows(complaints.length);
-       
+
         setTotalRows(complaints.length);
 
         const statusCounts = complaints.reduce((acc, curr) => {
@@ -179,17 +179,17 @@ const Ticket = () => {
       }
     };
 
-    const filterSearchStatus = async()=>{
+    const filterSearchStatus = async () => {
       try {
-        const searchAllTickets = await getAdminComplaints()
-     const searchResp = searchAllTickets?.data?.complaints
-     setFilter(searchResp)
-     console.log(searchResp)
+        const searchAllTickets = await getAdminComplaints();
+        const searchResp = searchAllTickets?.data?.complaints;
+        setFilter(searchResp);
+        console.log(searchResp);
       } catch (error) {
-        console.log(error)
+        console.log(error);
       }
-    }
-    filterSearchStatus()
+    };
+    filterSearchStatus();
     fetchTicketInfo();
   }, []);
 
@@ -202,12 +202,11 @@ const Ticket = () => {
     setCurrentPage((prevPage) => Math.max(prevPage - 1, 1)); // Ensure currentPage does not go below 1
   };
 
-
   const handlePerRowsChange = async (newPerPage, page) => {
     setCurrentPage(page);
   };
 
-  const handleSearch = async(e) => {
+  const handleSearch = async (e) => {
     const searchValue = e.target.value;
     setSearchText(searchValue);
 
@@ -215,7 +214,6 @@ const Ticket = () => {
       // If search input is empty, reset to show all data
       setFilteredData(complaints);
     } else {
-     
       const filteredResults = filterSearch.filter(
         (item) =>
           ((selectedStatus === "all" ||
@@ -287,10 +285,14 @@ const Ticket = () => {
     const Alltickets = await getAllTickets();
     const mappedData = Alltickets.map((ticket) => {
       // Format complaint logs as a single string
-      const complaintLogs = ticket.complaint_logs.map((log) => {
-        return `Log By: ${log.log_by}, Status: ${log.log_status}, Date: ${dateFormat(log.created_at)}`;
-      }).join(' | ');
-  
+      const complaintLogs = ticket.complaint_logs
+        .map((log) => {
+          return `Log By: ${log.log_by}, Status: ${
+            log.log_status
+          }, Date: ${dateFormat(log.created_at)}`;
+        })
+        .join(" | ");
+
       return {
         "Site Name": ticket.site_name,
         "Ticket No.": ticket.ticket_number,
@@ -339,7 +341,7 @@ const Ticket = () => {
     }
     return color;
   };
-  
+
   return (
     <section className="flex">
       <Navbar />
@@ -366,13 +368,9 @@ const Ticket = () => {
               <span className="font-medium text-base text-black">{value}</span>
             </div>
           ))}
-         
-          
-
-          
         </div>
 
-        <div className="flex sm:flex-row flex-col justify-between gap-2 my-5">
+        <div className="flex sm:flex-row flex-col w-full  gap-2 my-5">
           <div className="md:flex justify-between grid grid-cols-2 items-center  gap-2 border border-gray-300 rounded-md px-3 p-2 w-auto">
             <div className="flex items-center gap-2">
               <input
@@ -435,41 +433,49 @@ const Ticket = () => {
               </label>
             </div>
           </div>
-          
-          <div className="flex lg:flex-row flex-col gap-2">
+
+          <div className="flex lg:flex-row flex-col w-full gap-2">
             <input
               type="text"
               placeholder="Search by Title, Ticket number, Category, Ticket type, Priority or Unit "
-              className="border border-gray-400 md:w-96 placeholder:text-xs rounded-lg p-2"
+              className="border border-gray-400 md:w-full placeholder:text-xs rounded-lg p-2"
               value={searchText}
               onChange={handleSearch}
             />
-           
-          <Link
-            to={"/tickets/create-ticket"}
-            style={{background: themeColor}}
-            className=" font-semibold  text-white duration-300 transition-all  p-2 rounded-md  cursor-pointer text-center flex items-center gap-2 justify-center"
-            // onClick={() => setShowCountry(!showCountry)}
+
+            <Link
+              to={"/tickets/create-ticket"}
+              style={{ background: themeColor }}
+              className=" font-semibold  text-white duration-300 transition-all  p-2 rounded-md  cursor-pointer text-center flex items-center gap-2 justify-center"
+              // onClick={() => setShowCountry(!showCountry)}
             >
-            <PiPlusCircle size={20} />
-            Add
-          </Link>
-          
-          <button
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-            onClick={exportAllToExcel}
-            style={{background: themeColor}}
+              <PiPlusCircle size={20} />
+              Add
+            </Link>
+
+            <button
+              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+              onClick={exportAllToExcel}
+              style={{ background: themeColor }}
             >
-            Export 
-          </button>
-            </div>
+              Export
+            </button>
+          </div>
         </div>
 
         {complaints.length === 0 ? (
-          <p className="text-center">Loading...</p>
+          <div className="flex justify-center items-center h-full">
+            <DNA
+              visible={true}
+              height="120"
+              width="120"
+              ariaLabel="dna-loading"
+              wrapperStyle={{}}
+              wrapperClass="dna-wrapper"
+            />
+          </div>
         ) : (
           <>
-           
             <DataTable
               responsive
               // selectableRows
@@ -480,10 +486,7 @@ const Ticket = () => {
               fixedHeaderScrollHeight="500px"
               selectableRowsHighlight
               highlightOnHover
-             
             />
-
-          
           </>
         )}
         {/* </div> */}
@@ -496,8 +499,6 @@ const Ticket = () => {
           >
             <MdKeyboardArrowLeft size={30} />
           </button>
-
-         
 
           <button
             onClick={handleNext}

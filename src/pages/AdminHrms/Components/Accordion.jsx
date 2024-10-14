@@ -20,7 +20,7 @@ const Accordion = ({ title, icon: Icon, content }) => {
         className="flex items-center justify-between w-full pt-4 py-2 text-left text-gray-600 hover:text-gray-800 focus:outline-none"
       >
         <div className="flex items-center">
-          {Icon && <Icon className="w-5 h-5 mr-3 text-blue-500" />}
+          {Icon && <Icon className="w-6 h-6 mr-3 text-blue-500" />}
           <span className="text-lg font-medium">{title}</span>
         </div>
         {isExpanded ? (

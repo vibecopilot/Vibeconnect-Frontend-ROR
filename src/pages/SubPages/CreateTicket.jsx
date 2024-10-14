@@ -237,28 +237,16 @@ const CreateTicket = () => {
 if(!formData.building_name || !formData.floor_name){
   return toast.error("Please Select Building & Floor!")
 }
+if(!formData.category_type_id){
+  return toast.error("Please select category")
+}
+if(!formData.heading){
+  return toast.error("Please provide title")
+}
 
     try {
       toast.loading("Please wait generating ticket!");
-      // const fileData = new FormData();
-
-      // // Append non-file fields
-      // Object.keys(formData).forEach((key) => {
-      //   if (key !== "documents") {
-      //     fileData.append(key, formData[key]);
-      //   }
-      // });
-
-      // // Append files individually
-      // formData.documents.forEach((file, index) => {
-      //   fileData.append(`documents[${index}]`, file);
-      // });
-
-      // // Log FormData content for debugging
-      // for (let [key, value] of fileData.entries()) {
-      //   console.log(`${key}:`, value);
-      // }
-      // console.log(fileData)
+     
       const response = await postComplaintsDetails(formData);
       // const response = await postComplaintsDetails(formData);
       console.log("Complaint submitted successfully:", response);
@@ -326,7 +314,7 @@ if(!formData.building_name || !formData.floor_name){
   const themeColor = useSelector((state) => state.theme.color);
   return (
     <section className="min-h-screen p-4 sm:p-0 flex flex-col md:flex-row">
-      <div className="fixed hidden sm:block left-0 top-0 h-full md:static md:h-auto md:flex-shrink-0">
+      <div className="fixed hidden md:block left-0 top-0 h-full md:static md:h-auto md:flex-shrink-0">
         <Navbar />
       </div>
       <div className="flex justify-center items-center overflow-x-auto w-full  sm:w-full">
@@ -342,12 +330,12 @@ if(!formData.building_name || !formData.floor_name){
           </h2>
 
           {/* Related To :*/}
-          <div className="grid grid-cols-2  gap-4 ">
+          <div className="grid md:grid-cols-2  gap-4 ">
             {/* <div className="flex flex-col gap-3 md:flex-row justify-between items-center"> */}
             {siteID === 25 && (
               <div className="grid grid-cols-2  items-center w-full">
                 <label htmlFor="" className="font-semibold">
-                  Related To :
+                  Related To 
                 </label>
                 <select
                   id="issueType"
@@ -368,7 +356,7 @@ if(!formData.building_name || !formData.floor_name){
 
             <div className="grid grid-cols-2  items-center w-full">
               <label htmlFor="" className="font-semibold ">
-                Type of :
+                Type of 
               </label>
               <select
                 id="complaintType"
@@ -391,7 +379,7 @@ if(!formData.building_name || !formData.floor_name){
               {/* <div className="flex sm:flex-row flex-col gap-3 sm:gap-0 justify-between items-center"> */}
               <div className="grid grid-cols-2  items-center w-full">
                 <label htmlFor="" className="font-semibold ">
-                  Tower Name :
+                  Tower Name <span className="text-red-500">*</span>
                 </label>
                 <select
                   id="builiding_name"
@@ -411,7 +399,7 @@ if(!formData.building_name || !formData.floor_name){
               {/* Floor Name */}
               <div className="grid grid-cols-2 items-center w-full">
                 <label htmlFor="" className="font-semibold">
-                  Floor Name :
+                  Floor Name <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={formData.floor_name}
@@ -437,7 +425,7 @@ if(!formData.building_name || !formData.floor_name){
             {/* <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-0 justify-between "> */}
             <div className="grid grid-cols-2 items-center w-full">
               <label htmlFor="" className="font-semibold ">
-                Unit Name :
+                Unit Name 
               </label>
 
               <select
@@ -457,7 +445,7 @@ if(!formData.building_name || !formData.floor_name){
             </div>
             <div className="grid grid-cols-2  items-center w-full">
               <label htmlFor="" className="font-semibold ">
-                Priority :
+                Priority 
               </label>
               <select
                 value={formData.priority}
@@ -479,7 +467,7 @@ if(!formData.building_name || !formData.floor_name){
             {/* <div className="flex sm:grid sm:grid-cols-2 flex-col sm:flex-row items-center justify-between gap-3 sm:gap-0"> */}
             <div className="grid grid-cols-2  items-center w-full">
               <label htmlFor="" className="font-semibold ">
-                Category :
+                Category <span className="text-red-500">*</span>
               </label>
               <select
                 id="two"
@@ -503,7 +491,7 @@ if(!formData.building_name || !formData.floor_name){
 
             <div className="grid grid-cols-2  items-center w-full">
               <label htmlFor="" className="font-semibold ">
-                Sub Category :
+                Sub Category 
               </label>
               <select
                 id="five"
@@ -522,7 +510,7 @@ if(!formData.building_name || !formData.floor_name){
             </div>
               <div className="grid grid-cols-2 ">
                 <label htmlFor="" className=" font-semibold ">
-                  Assigned To :
+                  Assigned To 
                 </label>
                 <select
                   value={formData.assigned_to || ""}
@@ -551,7 +539,7 @@ if(!formData.building_name || !formData.floor_name){
                 htmlFor=""
                 className="font-semibold my-2 flex justify-start"
               >
-                Title :
+                Title <span className="text-red-500">*</span>
               </label>
               <textarea
                 name="heading"
@@ -570,7 +558,7 @@ if(!formData.building_name || !formData.floor_name){
           {/* <div className="flex sm:block sm:flex-row items-center justify-center"> */}
           <div className="flex flex-col justify-around ">
             <label htmlFor="" className="font-semibold">
-              Description :
+              Description 
             </label>
             <textarea
               name="text"

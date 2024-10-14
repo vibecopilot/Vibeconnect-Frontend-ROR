@@ -1,7 +1,13 @@
 import React, { useEffect, useState } from "react";
 import OrganisationSetting from "./OrganisationSetting";
 import HRMSHelpCenter from "./HRMSHelpCenter";
-import { editOrganizationAddress, getAllOrganizationAddress, getMyOrganizationAddress, getOrganizationAddress } from "../../api";
+import {
+  editOrganizationAddress,
+  getAllOrganizationAddress,
+  getMyOrganizationAddress,
+  getOrganizationAddress,
+  postOrganizationAddress,
+} from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import toast from "react-hot-toast";
 
@@ -31,13 +37,12 @@ const AddressInformation = () => {
   };
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
   useEffect(() => {
-
     const fetchOrgAddress = async () => {
       try {
         const addressRes = await getMyOrganizationAddress(hrmsOrgId);
         if (addressRes.length > 0) {
-          const address = addressRes[0]; 
-        setAddressId(address.id)
+          const address = addressRes[0];
+          setAddressId(address.id);
           setFormData({
             ...formData,
             addressLine1: address.address_line_1,
@@ -47,11 +52,9 @@ const AddressInformation = () => {
             stateProvince: address.state_or_province,
             zipCode: address.zip_code,
           });
-        
+
           console.log(address);
-        } else {
-          console.log("No address found");
-        }
+        } 
       } catch (error) {
         console.log(error);
       }
@@ -82,7 +85,7 @@ const AddressInformation = () => {
       toast.error("Zip Code is required");
       return;
     }
-  setIsEditing(false)
+    setIsEditing(false);
     const postData = new FormData();
     postData.append("address_line_1", formData.addressLine1);
     postData.append("address_line_2", formData.addressLine2);
@@ -91,11 +94,15 @@ const AddressInformation = () => {
     postData.append("state_or_province", formData.stateProvince);
     postData.append("zip_code", formData.zipCode);
     postData.append("organization", hrmsOrgId);
-  
+
     try {
-      const res = await editOrganizationAddress(addressId, postData);
-      toast.success("Address updated successfully");
-      console.log(res);
+      if (addressId) {
+        await editOrganizationAddress(addressId, postData);
+        toast.success("Address updated successfully");
+      } else {
+        await postOrganizationAddress(postData);
+        toast.success("Address added successfully");
+      }
     } catch (error) {
       toast.error("An error occurred while updating the address");
       console.log(error);

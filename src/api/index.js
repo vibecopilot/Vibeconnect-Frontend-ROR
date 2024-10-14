@@ -5,6 +5,7 @@ import HrmsAuth from "./HrmsAuth";
 import vibeAuth from "./vibeAuth";
 export const API_URL = "https://vibecopilot.ai";
 export const vibeMedia = "https://vibecopilot.ai/api/media/";
+export const hrmsDomain = "http://13.126.205.205";
 const token = getItemInLocalStorage("TOKEN");
 export const domainPrefix = "https://admin.vibecopilot.ai";
 // export const domainPrefix = "http://13.215.74.38";
@@ -3289,6 +3290,19 @@ export const editOrganizationAddress = async (addressId, data) => {
     throw error;
   }
 };
+export const postOrganizationAddress = async (data) => {
+  try {
+    const response = await HrmsAuth.post(`/organization/address/`, data, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error posting Address :", error);
+    throw error;
+  }
+};
 export const getAllOrganizationGeoSettings = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
@@ -5498,6 +5512,31 @@ export const postCompanyAsset = async (data) => {
     return response.data;
   } catch (error) {
     console.error("Error posting company asset :", error);
+    throw error;
+  }
+};
+export const getEmployeeDocs = async (empId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/employee/document/?employee_id=${empId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting employee document :", error);
+    throw error;
+  }
+};
+
+export const postEmployeeDocs = async (data) => {
+  try {
+    const response = await HrmsAuth.post(`/employee/document/`, data, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error posting employee docs :", error);
     throw error;
   }
 };

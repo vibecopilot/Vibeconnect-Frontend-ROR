@@ -19,6 +19,10 @@ import { useParams } from "react-router-dom";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import toast from "react-hot-toast";
 import Accordion from "./Components/Accordion";
+import { RiContactsBook2Line } from "react-icons/ri";
+import { MdFamilyRestroom, MdOutlinePayment } from "react-icons/md";
+import { IoHomeOutline } from "react-icons/io5";
+import { FaHome } from "react-icons/fa";
 
 const SectionsPersonal = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -300,6 +304,7 @@ const SectionsPersonal = () => {
         </div>
         <div className="w-full p-2 bg-white rounded-lg ">
           <Accordion
+            icon={RiContactsBook2Line}
             title={"Basic Information"}
             content={
               <>
@@ -488,6 +493,7 @@ const SectionsPersonal = () => {
           />
 
           <Accordion
+            icon={MdFamilyRestroom}
             title={"Family Information"}
             content={
               <>
@@ -574,6 +580,7 @@ const SectionsPersonal = () => {
           />
 
           <Accordion
+            icon={FaHome}
             title={"Address Information"}
             content={
               <>
@@ -709,6 +716,7 @@ const SectionsPersonal = () => {
           />
 
           <Accordion
+            icon={MdOutlinePayment}
             title={"Payment Information"}
             content={
               <>

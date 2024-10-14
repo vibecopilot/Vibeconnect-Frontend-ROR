@@ -1,4 +1,4 @@
-import {React,useEffect,useState} from "react";
+import { React, useEffect, useState } from "react";
 import Table from "../../components/table/Table";
 import ReportDetailsList from "./ReportDetailsList";
 
@@ -12,20 +12,23 @@ const OnBoarding = () => {
   const closeModal = () => setIsModalOpen(false);
 
   const handleGenerateReport = () => {
-    console.log("Generating report with parameters:", startDate, endDate, employeeType);
-    closeModal(); // Close modal after generating report (adjust as needed)
+    console.log(
+      "Generating report with parameters:",
+      startDate,
+      endDate,
+      employeeType
+    );
+    closeModal();
   };
 
   const handleCancel = () => {
-    closeModal(); // Close modal without generating report
-    // Reset form values if needed
+    closeModal();
     setStartDate("");
     setEndDate("");
     setEmployeeType("all");
   };
 
   const columns1 = [
-   
     {
       name: "Sr. No",
       selector: (row) => row.Location,
@@ -68,7 +71,7 @@ const OnBoarding = () => {
 
   return (
     <section className="flex gap-3 ml-20">
-      <ReportDetailsList/>
+      <ReportDetailsList />
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-500 bg-opacity-50">
           <div className="bg-white p-8 w-96 rounded-lg shadow-lg">
@@ -78,10 +81,15 @@ const OnBoarding = () => {
             >
               &times;
             </span>
-            <h2 className="text-lg font-bold mb-4">Generate Offboarding Task Report</h2>
+            <h2 className="text-lg font-bold mb-4">
+              Generate Offboarding Task Report
+            </h2>
             <form onSubmit={handleGenerateReport}>
               <div className="mb-4">
-                <label htmlFor="startDate" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="startDate"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Select Start Date *
                 </label>
                 <input
@@ -95,7 +103,10 @@ const OnBoarding = () => {
                 />
               </div>
               <div className="mb-4">
-                <label htmlFor="endDate" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="endDate"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Select End Date *
                 </label>
                 <input
@@ -167,9 +178,7 @@ const OnBoarding = () => {
       )}
 
       <div className="w-full flex m-3 flex-col overflow-hidden">
-        <div className="flex justify-between my-5">
-      
-        </div>
+        <div className="flex justify-between my-5"></div>
 
         <Table columns={columns1} data={data} isPagination={true} />
       </div>

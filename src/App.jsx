@@ -571,8 +571,6 @@ import Resignation from "./pages/AdminHrms/Resignation.jsx";
 import EditAttendanceProcess from "./pages/AdminHrms/EditAttendanceProcess.jsx";
 import LoanAppAdd from "./pages/AdminHrms/LoanAppAdd.jsx";
 import CTCGeneralSetting from "./pages/AdminHrms/CTCGeneralSetting.jsx";
-
-
 import PayslipDetailsPage from "./pages/AdminHrms/PayslipDetailsPage.jsx";
 import PayslipDetails1 from "./pages/AdminHrms/PayslipDetails1.jsx";
 import PayslipDetails3 from "./pages/AdminHrms/PayslipDetails3.jsx";
@@ -1641,11 +1639,11 @@ function App() {
               </ProtectedAdminRoutes>
             }
           />
-           <Route
+          <Route
             path="/soft-service/schedule-task-details/:sId/:activityId"
             element={
               <ProtectedAdminRoutes>
-              <SoftServiceScheduleDetails/>
+                <SoftServiceScheduleDetails />
               </ProtectedAdminRoutes>
             }
           />
@@ -6054,8 +6052,7 @@ function App() {
               </ProtectedAdminRoutes>
             }
           />
-         
-          
+
           <Route
             path="/admin/details-payslip/:id"
             element={

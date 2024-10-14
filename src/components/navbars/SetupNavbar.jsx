@@ -19,7 +19,7 @@ const SetupNavbar = () => {
   }, []);
   return (
     <div className="flex mt-1 w-full">
-    <div className='w-full mx-4'>
+    <div className='w-full mx-4'>  
       {/* <ul className="p-4 bg-black rounded-xl mx-2 md:flex grid grid-cols-2 items-center text-white text-sm text-center justify-center overflow-x-auto  gap-2 "> */}
       <ul
       style={{background: themeColor}}
@@ -49,7 +49,7 @@ const SetupNavbar = () => {
         {/* <Link to={"/setup/insights/"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">Insights</Link> */}
         {/* <Link to={"/setup/permit-setup"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">Permit</Link> */}
         {/* <Link to={"/setup/parking-setup"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">Parking</Link> */}
-        {/* <Link to={"/admin/setup-incidents"}className="hover:bg-white hover:text-black  p-2 rounded-lg ">Incidents Setup</Link> */}
+        {feat.includes("incidents") &&(<Link to={"/admin/setup-incidents"}className="hover:bg-white hover:text-black  p-2 rounded-lg ">Incidents Setup</Link>)}
         {feat.includes("communication") && ( <Link to={"/admin/communication-access-control"}className="hover:bg-white hover:text-black  p-2 rounded-lg ">Communication Setup Control</Link>)}
         {feat.includes("vendors") && ( <Link to={"/setup/supplier-setup"}className="hover:bg-white hover:text-black  p-2 rounded-lg ">Supplier</Link>)}
         {feat.includes("gatepass") && ( <Link to={"/setup/visitor-setup"}className="hover:bg-white hover:text-black  p-2 rounded-lg ">Visitor</Link>)}

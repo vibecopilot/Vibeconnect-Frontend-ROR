@@ -18,21 +18,21 @@ const Business = () => {
   const [filteredData, setFilteredData] = useState([]);
   const [searchText, setSearchText] = useState([]);
   const [statusChanged, setStatusChanges] = useState(false);
-const [logo, setLogo] = useState("")
+  const [logo, setLogo] = useState("");
+  const fetchContactBook = async () => {
+    try {
+      const contactRes = await getContactBook();
+      const sortedData = contactRes.data.sort((a, b) => {
+        return new Date(b.created_at) - new Date(a.created_at);
+      });
+      setContacts(sortedData);
+      setFilteredData(sortedData);
+      console.log(sortedData.map((contact) => contact.logo));
+    } catch (error) {
+      console.log(error);
+    }
+  };
   useEffect(() => {
-    const fetchContactBook = async () => {
-      try {
-        const contactRes = await getContactBook();
-        const sortedData = contactRes.data.sort((a, b) => {
-          return new Date(b.created_at) - new Date(a.created_at);
-        });
-        setContacts(sortedData);
-        setFilteredData(sortedData);
-        console.log(sortedData.map((contact)=> contact.logo))
-      } catch (error) {
-        console.log(error);
-      }
-    };
     fetchContactBook();
   }, []);
 
@@ -55,8 +55,12 @@ const [logo, setLogo] = useState("")
         contact.id === id ? { ...contact, status: newStatus } : contact
       )
     );
-    await handleStatus(id, newStatus);
-    window.location.reload()
+    try {
+      await handleStatus(id, newStatus);
+      fetchContactBook();
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const column = [
@@ -71,9 +75,19 @@ const [logo, setLogo] = useState("")
     },
 
     {
-      name: 'Logo',
-      selector: row => row.logo,
-      cell: row => row.logo.length > 0 ? <img src={domainPrefix+row.logo[0].document} alt="logo" width={40} className="rounded-full" /> : 'No logo',
+      name: "Logo",
+      selector: (row) => row.logo,
+      cell: (row) =>
+        row.logo.length > 0 ? (
+          <img
+            src={domainPrefix + row.logo[0].document}
+            alt="logo"
+            width={40}
+            className="rounded-full"
+          />
+        ) : (
+          "No logo"
+        ),
     },
     {
       name: "Company Name",
@@ -141,7 +155,7 @@ const [logo, setLogo] = useState("")
   return (
     <section className="flex">
       <Navbar />
-      <div className="w-full flex mx-3 flex-col overflow-hidden">
+      <div className="w-full flex mx-3 flex-col overflow-hidden mb-5">
         <div className="flex justify-between items-center">
           <input
             type="text"

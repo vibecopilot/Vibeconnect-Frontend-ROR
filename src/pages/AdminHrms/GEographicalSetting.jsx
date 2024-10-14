@@ -23,9 +23,11 @@ const GeographicalSetting = () => {
   const fetchAllGeoSettings = async () => {
     try {
       const res = await getAllOrganizationGeoSettings(hrmsOrgId);
-      console.log(res[0]);
-      fetchGeoMasterData(res[0].geographical_master_data);
-      setGeoId(res[0].id);
+
+      if (res.length > 0) {
+        fetchGeoMasterData(res[0].geographical_master_data);
+        setGeoId(res[0].id);
+      }
     } catch (error) {
       console.log(error);
     }
@@ -84,7 +86,7 @@ const GeographicalSetting = () => {
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
   const handleEditGeoSetting = async () => {
     if (!selectedCountry.value) {
-      return toast.error("Please select country of origin")
+      return toast.error("Please select country of origin");
     }
     const editData = new FormData();
     editData.append("geographical_master_data", selectedCountry.value);

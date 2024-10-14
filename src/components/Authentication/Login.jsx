@@ -100,6 +100,7 @@ const Login = () => {
       const CompanyId = response.data.user.company_id;
       setItemInLocalStorage("COMPANYID", CompanyId);
       setItemInLocalStorage("HRMSORGID", 2);
+      // setItemInLocalStorage("HRMSORGID", 2);
       // console.log(userType)
 
       const statuses = response.data.statuses;

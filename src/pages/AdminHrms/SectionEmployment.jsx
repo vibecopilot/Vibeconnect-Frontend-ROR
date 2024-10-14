@@ -24,10 +24,12 @@ import toast from "react-hot-toast";
 import { PiPlus } from "react-icons/pi";
 import AddEmployeeAsset from "./Modals/AddEmployeeAsset";
 import EditEmployeeAsset from "./Modals/EditEmployeeAsset";
-import { FaTrash } from "react-icons/fa";
+import { FaRegAddressCard, FaTrash } from "react-icons/fa";
 import Accordion from "./Components/Accordion";
 import AddCompanyAsset from "./Modals/AddCompanyAsset";
 import EditCompanyAsset from "./Modals/EditCompanyAsset";
+import { FaFileCircleCheck } from "react-icons/fa6";
+import { MdInfoOutline, MdOutlineWebAsset } from "react-icons/md";
 
 const SectionsEmployment = () => {
   const { id } = useParams();
@@ -348,7 +350,8 @@ const SectionsEmployment = () => {
         </div>
         <div className="w-full p-2 bg-white rounded-lg mb-10">
           <Accordion
-            title={"Employment"}
+            title={"General Employment Details"}
+            icon={FaRegAddressCard}
             content={
               <>
                 <div className="flex justify-end gap-2 ">
@@ -379,9 +382,7 @@ const SectionsEmployment = () => {
                     </button>
                   )}
                 </div>
-                <h3 className="text-xl font-bold mb-2">
-                  General Employment Details
-                </h3>
+                
                 <div className="grid md:grid-cols-2 gap-2 mt-5">
                   <div className="grid gap-2 items-center ">
                     <label htmlFor="companyName" className="font-semibold">
@@ -539,6 +540,7 @@ const SectionsEmployment = () => {
 
           <Accordion
             title={"Employment Status"}
+            icon={FaFileCircleCheck}
             content={
               <>
                 <div className="flex justify-end ">
@@ -557,6 +559,7 @@ const SectionsEmployment = () => {
 
           <Accordion
             title={"Job Information"}
+            icon={MdInfoOutline}
             content={
               <>
                 <div className="flex justify-end ">
@@ -575,6 +578,7 @@ const SectionsEmployment = () => {
 
           <Accordion
             title={"Assets"}
+            icon={MdOutlineWebAsset}
             content={
               <>
                 <div className="flex justify-end ">
@@ -595,6 +599,7 @@ const SectionsEmployment = () => {
           />
           <Accordion
             title={"Company Assets"}
+            icon={MdOutlineWebAsset}
             content={
               <>
                 <div className="flex justify-end ">
