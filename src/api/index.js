@@ -2170,6 +2170,38 @@ export const updateVibeChecklistItems = async (data) => {
     throw error;
   }
 };
+export const postExistingInsPolicy = async (data) => {
+  try {
+    const response = await vibeAuth.post(
+      `/api/employee/policy/new/create/`,
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting existing policy:", error);
+    throw error;
+  }
+};
+
+export const getPolicies = async (userId) => {
+  try {
+    const response = await vibeAuth.get(`/api/employee/policy/new/get/?user_id=${userId}`,  {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error getting existing policy:", error);
+    throw error;
+  }
+};
+
 export const updateSalesView = async (data) => {
   try {
     const response = await vibeAuth.post(
@@ -5537,6 +5569,19 @@ export const postEmployeeDocs = async (data) => {
     return response.data;
   } catch (error) {
     console.error("Error posting employee docs :", error);
+    throw error;
+  }
+};
+export const deleteEmployeeDocs = async (docId) => {
+  try {
+    const response = await HrmsAuth.delete(`/employee/document/${docId}/`, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting employee docs :", error);
     throw error;
   }
 };

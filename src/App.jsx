@@ -684,6 +684,7 @@ import FlexiGeneralSettings from "./pages/AdminHrms/FlexiBenefits/FlexiSettings/
 import FlexiCategory from "./pages/AdminHrms/FlexiBenefits/FlexiSettings/FlexiCategory.jsx";
 import PerformanceSettings from "./pages/AdminHrms/Performance/PerformanceSettings.jsx";
 import MilestoneTypeSettings from "./pages/AdminHrms/MilestoneTypeSettings.jsx";
+import AddExistingPolicy from "./pages/SubPages/AddExistingPolicy.jsx";
 // new admin hrms
 
 function App() {
@@ -2113,7 +2114,7 @@ function App() {
           />
           {/* admin Insurance */}
           <Route
-            path="/admin/insurance"
+            path="/insurance"
             element={
               <ProtectedAdminRoutes>
                 <Insurance />
@@ -2121,7 +2122,7 @@ function App() {
             }
           />
           <Route
-            path="/admin/insurance/add-policy"
+            path="/insurance/add-policy"
             element={
               <ProtectedAdminRoutes>
                 <AddPolicy />
@@ -2129,7 +2130,15 @@ function App() {
             }
           />
           <Route
-            path="/admin/insurance/add-policy/policy-list"
+            path="/insurance/add-existing-policy"
+            element={
+              <ProtectedAdminRoutes>
+                <AddExistingPolicy />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/insurance/add-policy/policy-list"
             element={
               <ProtectedAdminRoutes>
                 <PolicyList />
@@ -2137,7 +2146,7 @@ function App() {
             }
           />
           <Route
-            path="/admin/insurance/add-policy/policy-details"
+            path="/insurance/add-policy/policy-details"
             element={
               <ProtectedAdminRoutes>
                 <PolicyDetails />

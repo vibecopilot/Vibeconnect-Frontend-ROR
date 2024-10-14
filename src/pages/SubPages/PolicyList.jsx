@@ -30,7 +30,7 @@ const PolicyList = () => {
               <div className="flex flex-col gap-2 my-2">
                 <p>Cover Amount <span className="font-medium"> ₹5 Lakh</span></p>
                 <p>Cashless Hospital <b>41</b> </p>
-                <Link to={"/admin/insurance/add-policy/policy-details"} className="bg-review text-white p-1 text-center rounded-md">₹629/monthly</Link>
+                <Link to={"/insurance/add-policy/policy-details"} className="bg-review text-white p-1 text-center rounded-md">₹629/monthly</Link>
                 <p>₹6755/annually</p>
               </div>
             </div>
@@ -57,7 +57,7 @@ const PolicyList = () => {
               <div className="flex flex-col gap-2 my-2">
                 <p>Cover Amount <span className="font-medium"> ₹5 Lakh</span></p>
                 <p>Cashless Hospital <b>41</b> </p>
-                <Link to={"/admin/insurance/add-policy/policy-details"} className="bg-review text-white p-1 text-center rounded-md">₹629/monthly</Link>
+                <Link to={"/insurance/add-policy/policy-details"} className="bg-review text-white p-1 text-center rounded-md">₹629/monthly</Link>
                 <p>₹6755/annually</p>
               </div>
             </div>

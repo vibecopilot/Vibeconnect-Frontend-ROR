@@ -665,7 +665,7 @@ const Navbar = () => {
                 )}
                 {feat.includes("insurances") && (
                   <NavLink
-                    to={"/admin/insurance"}
+                    to={"/insurance"}
                     className={({ isActive }) =>
                       ` ${
                         isActive

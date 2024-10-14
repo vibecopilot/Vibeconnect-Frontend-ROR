@@ -312,6 +312,7 @@ if(!formData.heading){
     };
   }, []);
   const themeColor = useSelector((state) => state.theme.color);
+  
   return (
     <section className="min-h-screen p-4 sm:p-0 flex flex-col md:flex-row">
       <div className="fixed hidden md:block left-0 top-0 h-full md:static md:h-auto md:flex-shrink-0">

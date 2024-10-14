@@ -119,7 +119,7 @@ const AddPolicy = () => {
           )}
           <div className="flex justify-center">
 
-          <Link to={"/admin/insurance/add-policy/policy-list"} className="border-2 rounded-md border-black p-1 px-4 font-medium hover:bg-black hover:text-white transition-all duration-300 ease-in-out">
+          <Link to={"/insurance/add-policy/policy-list"} className="border-2 rounded-md border-black p-1 px-4 font-medium hover:bg-black hover:text-white transition-all duration-300 ease-in-out">
             Next
           </Link>
           </div>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { EditVendors, getVendorsDetails } from "../../api";
+import { EditVendors, getVendorCategory, getVendorsDetails, getVendorsType } from "../../api";
 import { useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import FileInputBox from "../../containers/Inputs/FileInputBox";
@@ -10,6 +10,8 @@ import Navbar from "../../components/Navbar";
 
 const EditSuppliers = () => {
   const siteId = getItemInLocalStorage("SITEID");
+  const [types, setTypes] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [formData, setFormData] = useState({
     vendor_name: "",
     company_name: "",
@@ -34,12 +36,35 @@ const EditSuppliers = () => {
     attachments: [],
     vtype: "",
     notes: "",
-    active: true
+    active: true,
+    type: "",
+    category: "",
   });
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
+
+  useEffect(() => {
+    const fetchType = async () => {
+      try {
+        const typeRes = await getVendorsType();
+        setTypes(typeRes.data.suppliers);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    const fetchCategory = async () => {
+      try {
+        const catRes = await getVendorCategory();
+        setCategories(catRes.data.categories);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchType();
+    fetchCategory();
+  }, []);
 
   const { id } = useParams();
   const navigate = useNavigate();
@@ -79,6 +104,8 @@ const EditSuppliers = () => {
     sendData.append("vendor[website_url]", formData.website_url);
     sendData.append("vendor[district]", formData.district);
     sendData.append("vendor[notes]", formData.notes);
+    sendData.append("vendor[vendor_supplier_id]", formData.type);
+    sendData.append("vendor[vendor_categories_id]", formData.category);
     formData.attachments.forEach((file, index) => {
       sendData.append(`attachments[]`, file);
     });
@@ -101,6 +128,7 @@ const EditSuppliers = () => {
       try {
         const vendorDetailsResponse = await getVendorsDetails(id);
         setFormData(vendorDetailsResponse.data);
+        // setFormData({...formData, type: vendorDetailsResponse.supplier.id})
         console.log(vendorDetailsResponse);
       } catch (error) {
         console.log(error);
@@ -244,22 +272,36 @@ const EditSuppliers = () => {
               <label htmlFor="" className="font-semibold">
                 Select Supplier Type:
               </label>
-              <select className="border p-1 px-4 border-gray-500 rounded-md">
+              <select
+                className="border p-1 px-4 border-gray-500 rounded-md"
+                name="type"
+                value={formData.type}
+                onChange={handleChange}
+              >
                 <option value="">Select Supplier Type</option>
-                <option value="unit1">Type 1</option>
-                <option value="unit2">Type 2</option>
-                <option value="unit2">Type 3</option>
+                {types.map((type) => (
+                  <option value={type.id} key={type.id}>
+                    {type.name}
+                  </option>
+                ))}
               </select>
             </div>
             <div className="flex flex-col">
               <label htmlFor="" className="font-semibold">
                 Select Category:
               </label>
-              <select className="border p-1 px-4 border-gray-500 rounded-md">
+              <select
+                className="border p-1 px-4 border-gray-500 rounded-md"
+                name="category"
+                value={formData.category}
+                onChange={handleChange}
+              >
                 <option value="">Select Category</option>
-                <option value="unit1">Category 1</option>
-                <option value="unit2">Category 2</option>
-                <option value="unit2">Category 3</option>
+                {categories.map((cat) => (
+                  <option value={cat.id} key={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
               </select>
             </div>
             <div className="flex flex-col gap-2">

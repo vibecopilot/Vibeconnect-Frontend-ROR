@@ -27,7 +27,12 @@ import {
   FaFileAlt,
 } from "react-icons/fa";
 import Accordion from "./Components/Accordion";
-import { getEmployeeDocs, hrmsDomain, postEmployeeDocs } from "../../api";
+import {
+  deleteEmployeeDocs,
+  getEmployeeDocs,
+  hrmsDomain,
+  postEmployeeDocs,
+} from "../../api";
 import { dateFormat, dateTimeFormat } from "../../utils/dateUtils";
 import { IoDocument } from "react-icons/io5";
 import toast from "react-hot-toast";
@@ -86,6 +91,7 @@ const SectionDoc = () => {
   //   doc.save(`${currentItem.document_name}.pdf`);
   // };
   const [addLetter, setAddLetter] = useState(false);
+  const [deleteDocModal, setDeleteDocModal] = useState(false);
   const openLetter = () => {
     setAddLetter(true);
   };
@@ -127,11 +133,30 @@ const SectionDoc = () => {
       console.log(error);
     }
   };
+  const [docDelId, setDocDelId] = useState("");
+  const handleDeleteDocModal = async (id) => {
+    console.log(id)
+    setDocDelId(id);
+    setDeleteDocModal(true);
+  };
+
+  const handleDeleteEmployeeDoc = async () => {
+    try {
+      await deleteEmployeeDocs(docDelId);
+      fetchEmployeeDocs();
+      setDeleteDocModal(false);
+      toast.success("Employee document deleted successfully ");
+    } catch (error) {
+      console.log(object);
+    }
+  };
+  useEffect(() => {
+    Modal.setAppElement('#root');
+  }, []);
 
   return (
     <div className="flex flex-col ml-20">
       <EditEmployeeDirectory />
-
       <div className="flex">
         <div className="">
           <EmployeeSections empId={id} />
@@ -173,7 +198,10 @@ const SectionDoc = () => {
                           >
                             <BsEye />
                           </button>
-                          <button className="p-1  px-2 border border-blue-400 rounded-r-md text-red-500 hover:bg-red-100">
+                          <button
+                            className="p-1  px-2 border border-blue-400 rounded-r-md text-red-500 hover:bg-red-100"
+                            onClick={() => handleDeleteDocModal(doc.id)}
+                          >
                             <FaTrash />
                           </button>
                         </div>
@@ -311,6 +339,39 @@ const SectionDoc = () => {
                 onClick={closeLetter}
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      </Modal>
+      <Modal
+        isOpen={deleteDocModal}
+        onRequestClose={() => setDeleteDocModal(true)}
+        // contentLabel="add Document "
+        className="fixed inset-0 flex flex-col items-center justify-center p-4"
+        overlayClassName="fixed inset-0 bg-black bg-opacity-50"
+      >
+        <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full flex flex-col h-auto max-h-[80vh] overflow-y-auto">
+          {/* <h2 className="text-2xl font-semibold mb-4">{currentItem?.name}</h2> */}
+          <h2 className="font-medium text-xl border-b border-gray-3">
+            Delete Document
+          </h2>
+          <div className="flex flex-col gap-2">
+            <p className="font-medium mt-2">
+              Are you sure you want to delete this document?
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                className="rounded-full px-4 p-1 bg-green-400 text-white"
+                onClick={handleDeleteEmployeeDoc}
+              >
+                Yes
+              </button>
+              <button
+                className="rounded-full px-4 p-1 bg-red-400 text-white"
+                onClick={() => setDeleteDocModal(false)}
+              >
+                No
               </button>
             </div>
           </div>

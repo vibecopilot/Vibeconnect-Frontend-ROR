@@ -4,6 +4,7 @@ import policy from "/policy.png";
 import { BiPlus } from "react-icons/bi";
 import { PiPlusCircle } from "react-icons/pi";
 import Navbar from "../../components/Navbar";
+import { Link } from "react-router-dom";
 
 const PolicyDetails = () => {
   return (
@@ -114,7 +115,9 @@ const PolicyDetails = () => {
               </div>
             </div>
             <div className="flex justify-center">
-              <button className="bg-black p-1 px-4 rounded-md text-white border-2 border-black hover:bg-white hover:text-black transition-all duration-300">Process to proposal</button>
+              <Link to={"/insurance"} className="bg-black p-1 px-4 rounded-md text-white border-2 border-black hover:bg-white hover:text-black transition-all duration-300">
+                Process to proposal
+              </Link>
             </div>
           </div>
         </div>
@@ -123,7 +126,4 @@ const PolicyDetails = () => {
   );
 };
 
-
-
-
-export default PolicyDetails
+export default PolicyDetails;

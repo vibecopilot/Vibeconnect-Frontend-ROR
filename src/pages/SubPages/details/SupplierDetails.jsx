@@ -70,7 +70,9 @@ const SupplierDetails = () => {
               </div>
               <div className="grid grid-cols-2 items-center">
                 <p>Secondary Phone : </p>
-                <p className="text-sm font-normal">{Details.secondary_mobile}</p>
+                <p className="text-sm font-normal">
+                  {Details.secondary_mobile}
+                </p>
               </div>
               <div className="grid grid-cols-2 items-center">
                 <p>Primary Email : </p>
@@ -86,11 +88,11 @@ const SupplierDetails = () => {
               </div>
               <div className="grid grid-cols-2 items-center">
                 <p>Supplier Type : </p>
-                <p className="text-sm font-normal">{Details.vtype}</p>
+                <p className="text-sm font-normal">{Details?.supplier?.name}</p>
               </div>
               <div className="grid grid-cols-2 items-center">
                 <p>Category : </p>
-                <p className="text-sm font-normal"></p>
+                <p className="text-sm font-normal">{Details?.category?.name}</p>
               </div>
               <div className="grid grid-cols-2 items-center">
                 <p>Website : </p>
@@ -102,17 +104,17 @@ const SupplierDetails = () => {
               </div>
               <div className="grid grid-cols-2 items-center">
                 <p>Status : </p>
-                <p className="text-sm font-normal ">{Details.active ? 
-                <p className="bg-green-400 px-4 w-fit text-white rounded-full">
-
-                  Active
-                </p> 
-                :
-                 <p className="bg-red-400 px-4 w-fit text-white rounded-full">
-
-                   Inactive
-                 </p>
-                 }</p>
+                <div className="text-sm font-normal ">
+                  {Details.active ? (
+                    <p className="bg-green-400 px-4 w-fit text-white rounded-full">
+                      Active
+                    </p>
+                  ) : (
+                    <p className="bg-red-400 px-4 w-fit text-white rounded-full">
+                      Inactive
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -121,10 +123,11 @@ const SupplierDetails = () => {
               Supplier Location Details
             </h2>
             <div className="my-5 md:px-10 items-center font-medium grid gap-5 md:grid-cols-3 text-sm">
-              
               <div className="grid  items-center md:col-span-3">
                 <p>Address : </p>
-                <p className="text-sm font-normal">{Details.address} {Details.address2}</p>
+                <p className="text-sm font-normal">
+                  {Details.address} {Details.address2}
+                </p>
               </div>
 
               <div className="grid grid-cols-2">
@@ -169,13 +172,14 @@ const SupplierDetails = () => {
               </div>
               <div className="grid grid-cols-2">
                 <p>Bank & Branch Name :</p>
-                <p className="text-sm font-normal">{Details.bank_branch_name}</p>
+                <p className="text-sm font-normal">
+                  {Details.bank_branch_name}
+                </p>
               </div>
               <div className="grid grid-cols-2">
                 <p>IFSC :</p>
                 <p className="text-sm font-normal">{Details.ifsc_code}</p>
               </div>
-             
             </div>
           </div>
           <div>
@@ -184,20 +188,18 @@ const SupplierDetails = () => {
             </h2>
             <div className="flex  flex-col my-2 gap-2">
               <p className="font-medium">Notes : </p>
-              <div className="bg-gray-400 p-1 text-white rounded-md">{Details.notes}</div>
+              <div className="bg-gray-400 p-1 text-white rounded-md">
+                {Details.notes}
+              </div>
             </div>
-           
           </div>
-       
+
           <div>
             <h2 className="border-b  text-xl border-black font-semibold">
               Attachments
             </h2>
             <div className="flex justify-between gap-2 w-full">
-              <div className="bg-gray-100 p-1 rounded-md my-2 px-2 w-96">
-                
-                
-              </div>
+              <div className="bg-gray-100 p-1 rounded-md my-2 px-2 w-96"></div>
             </div>
           </div>
         </div>
