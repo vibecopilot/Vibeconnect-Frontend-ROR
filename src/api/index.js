@@ -2190,11 +2190,14 @@ export const postExistingInsPolicy = async (data) => {
 
 export const getPolicies = async (userId) => {
   try {
-    const response = await vibeAuth.get(`/api/employee/policy/new/get/?user_id=${userId}`,  {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
+    const response = await vibeAuth.get(
+      `/api/employee/policy/new/get/?user_id=${userId}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
     return response.data;
   } catch (error) {
     console.error("Error getting existing policy:", error);
@@ -4969,6 +4972,18 @@ export const postAttendanceRegularization = async (data) => {
     return response.data;
   } catch (error) {
     console.error("Error posting attendance regularization:", error);
+    throw error;
+  }
+};
+export const approveRejectMultipleRegRequest = async (data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/attendance/regularization-bulk/requests/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting request action:", error);
     throw error;
   }
 };

@@ -179,7 +179,6 @@ const OnBoarding = () => {
 
       <div className="w-full flex m-3 flex-col overflow-hidden">
         <div className="flex justify-between my-5"></div>
-
         <Table columns={columns1} data={data} isPagination={true} />
       </div>
     </section>

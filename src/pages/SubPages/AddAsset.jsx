@@ -436,7 +436,9 @@ const AddAsset = () => {
                     className="border p-1 px-4 border-gray-500 rounded-md"
                   />
                 </div>
-                <div className="flex flex-col">
+                <div className="flex ">
+
+                
                   <input
                     type="text"
                     name="capacity"
@@ -444,10 +446,10 @@ const AddAsset = () => {
                     value={formData.capacity}
                     onChange={handleChange}
                     placeholder="Capacity"
-                    className="border p-1 px-4 border-gray-500 rounded-md"
-                  />
-                </div>
-                <div className="flex flex-col">
+                    className="border p-1 px-4 border-gray-500 w-1/2 rounded-l-md"
+                    />
+              
+                
                   <input
                     type="text"
                     name="unit"
@@ -455,9 +457,10 @@ const AddAsset = () => {
                     value={formData.unit}
                     onChange={handleChange}
                     placeholder="Unit of measurement"
-                    className="border p-1 px-4 border-gray-500 rounded-md"
-                  />
-                </div>
+                    className="border p-1 px-4 border-gray-500 rounded-r-md w-1/2 placeholder:text-sm"
+                    />
+               
+                    </div>
 
                 <div className="flex flex-col">
                   <select

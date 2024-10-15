@@ -113,6 +113,7 @@ const SectionsPersonal = () => {
     try {
       const res = await getEmployeeDetails(id);
       const rawAadharValue = res.aadhar_number.replace(/\D/g, "");
+      console.log(rawAadharValue)
       setFormData({
         ...formData,
         firstName: res.first_name,
@@ -123,7 +124,7 @@ const SectionsPersonal = () => {
         dob: res.date_of_birth,
         pan: res.pan,
         bloodGroup: res.blood_group,
-        // aadhar: res.aadhar_number,
+        // aadhar: rawAadharValue.match(/.{1,4}/g)?.join("-") || "",
         aadhar: rawAadharValue.match(/.{1,4}/g)?.join("-") || "",
         maritalStatus: res.marital_status,
         emergencyContactName: res.emergency_contact_name,
@@ -133,6 +134,7 @@ const SectionsPersonal = () => {
       console.log(error);
     }
   };
+  console.log(formData)
   const fetchEmployeeFamilyDetails = async () => {
     try {
       const res = await getEmployeeFamilyDetails(id);
@@ -226,7 +228,7 @@ const SectionsPersonal = () => {
     editData.append("date_of_birth", formData.dob);
     editData.append("blood_group", formData.bloodGroup);
     editData.append("pan", formData.pan);
-    editData.append("aadhar_number", rawAadhar);
+    editData.append("aadhar_number", formData.aadhar.replace(/\D/g, ""));
     editData.append("marital_status", formData.maritalStatus);
     editData.append("emergency_contact_name", formData.emergencyContactName);
     editData.append("emergency_contact_no", formData.emergencyContactNo);

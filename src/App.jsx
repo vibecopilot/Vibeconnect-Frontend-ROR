@@ -2116,25 +2116,25 @@ function App() {
           <Route
             path="/insurance"
             element={
-              <ProtectedAdminRoutes>
+              <ProtectedRoute>
                 <Insurance />
-              </ProtectedAdminRoutes>
+              </ProtectedRoute>
             }
           />
           <Route
             path="/insurance/add-policy"
             element={
-              <ProtectedAdminRoutes>
+              <ProtectedRoute>
                 <AddPolicy />
-              </ProtectedAdminRoutes>
+              </ProtectedRoute>
             }
           />
           <Route
             path="/insurance/add-existing-policy"
             element={
-              <ProtectedAdminRoutes>
+              <ProtectedRoute>
                 <AddExistingPolicy />
-              </ProtectedAdminRoutes>
+              </ProtectedRoute>
             }
           />
           <Route

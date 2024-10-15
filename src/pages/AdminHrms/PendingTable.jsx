@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Table from "../../components/table/Table";
 import { BiEdit } from "react-icons/bi";
 import { TiTick } from "react-icons/ti";
@@ -6,7 +6,11 @@ import { IoClose } from "react-icons/io5";
 import Collapsible from "react-collapsible";
 import CustomTrigger from "../../containers/CustomTrigger";
 import { FaTrash } from "react-icons/fa";
-import { getEmployeeRegularizationReq, postRegularizationApproval } from "../../api";
+import {
+  approveRejectMultipleRegRequest,
+  getEmployeeRegularizationReq,
+  postRegularizationApproval,
+} from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import toast from "react-hot-toast";
 const PendingTable = () => {
@@ -111,10 +115,16 @@ const PendingTable = () => {
       name: "Approval",
       selector: (row) => (
         <div className="flex justify-center gap-2">
-          <button className="text-green-400 font-medium hover:bg-green-400 hover:text-white transition-all duration-200 p-1 rounded-full" onClick={()=>handleReqApproval(row.id, "approved")}>
+          <button
+            className="text-green-400 font-medium hover:bg-green-400 hover:text-white transition-all duration-200 p-1 rounded-full"
+            onClick={() => handleReqApproval(row.id, "approved")}
+          >
             <TiTick size={20} />
           </button>
-          <button className="text-red-400 font-medium hover:bg-red-400 hover:text-white transition-all duration-200 p-1 rounded-full" onClick={()=>handleReqApproval(row.id, "rejected")}>
+          <button
+            className="text-red-400 font-medium hover:bg-red-400 hover:text-white transition-all duration-200 p-1 rounded-full"
+            onClick={() => handleReqApproval(row.id, "rejected")}
+          >
             <IoClose size={20} />
           </button>
         </div>
@@ -129,7 +139,7 @@ const PendingTable = () => {
   const fetchRegularizationReq = async () => {
     try {
       const res = await getEmployeeRegularizationReq(hrmsOrgId);
-      const pendingReq = res.filter((req)=> req.status === "pending")
+      const pendingReq = res.filter((req) => req.status === "pending");
       setFilteredRequests(pendingReq);
       setRequests(pendingReq);
     } catch (error) {
@@ -140,29 +150,96 @@ const PendingTable = () => {
     fetchRegularizationReq();
   }, []);
 
-  const handleReqApproval = async (approvalId,approvalStatus) => {
+  const handleReqApproval = async (approvalId, approvalStatus) => {
     const postStatus = new FormData();
     postStatus.append("status", approvalStatus);
     try {
-      await postRegularizationApproval(approvalId, postStatus)
-      toast.success(`Regularization request ${approvalStatus}`)
-      fetchRegularizationReq()
+      await postRegularizationApproval(approvalId, postStatus);
+      toast.success(`Regularization request ${approvalStatus}`);
+      fetchRegularizationReq();
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
   };
 
-  const [searchText, setSearchText] = useState("")
-  const handleSearch = (e)=>{
-    const searchValue = e.target.value
-    setSearchText(searchValue)
-    if (searchValue.trim()=== "") {
-      setFilteredRequests(requests)
+  const [searchText, setSearchText] = useState("");
+  const handleSearch = (e) => {
+    const searchValue = e.target.value;
+    setSearchText(searchValue);
+    if (searchValue.trim() === "") {
+      setFilteredRequests(requests);
     } else {
-      const filteredResult = requests.filter((employee)=> `${employee.first_name} ${employee.last_name}`.toLowerCase().includes(searchValue.toLowerCase()))
-      setFilteredRequests(filteredResult)
+      const filteredResult = requests.filter((employee) =>
+        `${employee.first_name} ${employee.last_name}`
+          .toLowerCase()
+          .includes(searchValue.toLowerCase())
+      );
+      setFilteredRequests(filteredResult);
     }
-  }
+  };
+
+  const [selectedRows, setSelectedRows] = useState([]);
+
+  const handleSelectedRows = (rows) => {
+    const selectedId = rows.map((row) => row.id);
+    setSelectedRows(selectedId);
+  };
+
+  const handleApproveMultipleRegularization = async () => {
+    if (selectedRows.length === 0) {
+      toast.error(
+        "No regularization request selected. Please select at least one."
+      );
+      return;
+    }
+    const approveData = {
+      attendance_request_ids: selectedRows,
+      action: "approve",
+    };
+    setSelectedRows([]);
+    try {
+      await approveRejectMultipleRegRequest(approveData);
+      fetchRegularizationReq();
+      setshowApproveModal(false);
+      toast.success("Selected Regularization request Approved");
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const handleRejectMultipleRegularization = async () => {
+    if (selectedRows.length === 0) {
+      toast.error(
+        "No regularization request selected. Please select at least one."
+      );
+      return;
+    }
+    const approveData = {
+      attendance_request_ids: selectedRows,
+      action: "reject",
+    };
+    setSelectedRows([]);
+    try {
+      await approveRejectMultipleRegRequest(approveData);
+      fetchRegularizationReq();
+      setshowRejectModal(false);
+      toast.success("Selected Regularization request Rejected");
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const dropdownRef = useRef(null);
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowActionsDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [setShowActionsDropdown]);
 
   return (
     <section className="flex">
@@ -171,30 +248,35 @@ const PendingTable = () => {
           <input
             type="text"
             placeholder="Search by employee name"
-            className="border border-gray-400 w-96 placeholder:text-sm rounded-lg p-2"
-value={searchText}
-onChange={handleSearch}
+            className="border border-gray-400 w-full placeholder:text-sm rounded-lg p-2"
+            value={searchText}
+            onChange={handleSearch}
           />
           <div className="flex gap-2">
-
-          <button
-            className="px-4 py-2 bg-blue-600 text-white rounded-md"
-            onClick={() => setShowFilterModal(true)}
+            <button
+              className="px-4 py-2 bg-blue-600 text-white rounded-md"
+              onClick={() => setShowFilterModal(true)}
             >
-            Filter
-          </button>
-          <button
-            onClick={() => setShowActionsDropdown(!showActionsDropdown)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md"
+              Filter
+            </button>
+            <button
+              onClick={() => setShowActionsDropdown(!showActionsDropdown)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md"
             >
-            Actions
-          </button>
-            </div>
+              Actions
+            </button>
+          </div>
           {showActionsDropdown && (
-            <div className="absolute top-35 right-2 mt-10 w-72 bg-white border border-gray-300 rounded-md shadow-lg z-10">
+            <div
+              className="absolute top-35 right-2 mt-11 w-60 bg-white border border-gray-300 rounded-md shadow-lg z-10"
+              ref={dropdownRef}
+            >
               <button
                 className="w-full px-4 py-2 text-left hover:bg-gray-100"
-                onClick={() => setshowApproveModal(!showApproveModal)}
+                onClick={() => {
+                  setshowApproveModal(!showApproveModal);
+                  setShowActionsDropdown(false);
+                }}
               >
                 Approve multiple requests
               </button>
@@ -204,7 +286,7 @@ onChange={handleSearch}
               >
                 Reject multiple requests
               </button>
-              <button
+              {/* <button
                 className="w-full px-4 py-2 text-left hover:bg-gray-100"
                 onClick={() =>
                   setshowApproveFilterModal(!showApproveFilterModal)
@@ -223,13 +305,18 @@ onChange={handleSearch}
                 onClick={() => setshowBulkModal(!showBulkModal)}
               >
                 Bulk Upload Regularization
-              </button>
+              </button> */}
             </div>
           )}
         </div>
-        <Table columns={columns} data={filteredRequests} selectableRow={true} isPagination={true} />
+        <Table
+          columns={columns}
+          data={filteredRequests}
+          selectableRow={true}
+          isPagination={true}
+          onSelectedRows={handleSelectedRows}
+        />
       </div>
-
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div className="bg-white p-4 rounded-lg w-96">
@@ -331,26 +418,41 @@ onChange={handleSearch}
       {showApproveModal && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div className="bg-white p-4 rounded-lg w-96">
-            <h2 className="text-lg font-bold mb-4">Are you sure?</h2>
-            <p>Do you really want to approve selected records?</p>
-            <div className="grid md:grid-cols-1 gap-5 mt-5">
-              <div className="grid gap-2 items-center w-full">
-                <label htmlFor="regularizationReason">Approver's comment</label>
-                <textarea
-                  type="text"
-                  name="regularizationReason"
-                  value={modalData.regularizationReason}
-                  onChange={handleChange}
-                  className="border border-gray-400 p-2 rounded-md"
-                />
-              </div>
+            <h2 className="text-lg font-bold mb-2">Are you sure?</h2>
+            <h3 className="font-medium my-2">
+              Do you really want to approve selected records?
+            </h3>
+
+            <div className="grid gap-2 items-center w-full">
+              <label
+                htmlFor="regularizationReason"
+                className="font-medium text-gray-500"
+              >
+                Approver's comment
+              </label>
+              <textarea
+                type="text"
+                name="regularizationReason"
+                value={modalData.regularizationReason}
+                onChange={handleChange}
+                className="border border-gray-400 p-2 rounded-md"
+              />
             </div>
-            <button
-              className="mt-4 bg-blue-500 text-white py-2 px-4 rounded-lg"
-              onClick={() => setshowApproveModal(false)}
-            >
-              Close
-            </button>
+
+            <div className="flex justify-end gap-2 my-2">
+              <button
+                className="border-2 border-red-500 text-red-500  py-1 px-6 rounded-full"
+                onClick={() => setshowApproveModal(false)}
+              >
+                Close
+              </button>
+              <button
+                className=" bg-green-500 text-white py-1 px-6 rounded-full"
+                onClick={handleApproveMultipleRegularization}
+              >
+                Submit
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -358,9 +460,9 @@ onChange={handleSearch}
       {showRejectModal && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div className="bg-white p-4 rounded-lg w-96">
-            <h2 className="text-lg font-bold mb-4">Are you sure?</h2>
-            <p>Do you really want to reject selected records?</p>
-            <div className="grid md:grid-cols-1 gap-5 mt-5">
+            <h2 className="text-lg font-bold mb-2">Are you sure?</h2>
+            <h3 className="font-medium my-2">Do you really want to reject selected records?</h3>
+          
               <div className="grid gap-2 items-center w-full">
                 <label htmlFor="regularizationReason">Approver's comment</label>
                 <textarea
@@ -371,13 +473,21 @@ onChange={handleSearch}
                   className="border border-gray-400 p-2 rounded-md"
                 />
               </div>
+           
+            <div className="flex justify-end gap-2 my-2">
+              <button
+                className="border-2 border-red-500 text-red-500  py-1 px-6 rounded-full"
+                onClick={() => setshowRejectModal(false)}
+              >
+                Close
+              </button>
+              <button
+                className=" bg-green-500 text-white py-1 px-6 rounded-full"
+                onClick={handleRejectMultipleRegularization}
+              >
+                Submit
+              </button>
             </div>
-            <button
-              className="mt-4 bg-blue-500 text-white py-2 px-4 rounded-lg"
-              onClick={() => setshowRejectModal(false)}
-            >
-              Close
-            </button>
           </div>
         </div>
       )}

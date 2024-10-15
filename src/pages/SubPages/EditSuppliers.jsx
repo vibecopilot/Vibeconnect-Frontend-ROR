@@ -1,5 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { EditVendors, getVendorCategory, getVendorsDetails, getVendorsType } from "../../api";
+import {
+  EditVendors,
+  getVendorCategory,
+  getVendorsDetails,
+  getVendorsType,
+} from "../../api";
 import { useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import FileInputBox from "../../containers/Inputs/FileInputBox";
@@ -37,8 +42,8 @@ const EditSuppliers = () => {
     vtype: "",
     notes: "",
     active: true,
-    type: "",
-    category: "",
+    vendor_categories_id: "",
+    vendor_supplier_id: "",
   });
 
   const handleChange = (e) => {
@@ -72,10 +77,13 @@ const EditSuppliers = () => {
     if (!formData.company_name || !formData.vendor_name) {
       return toast.error("All fields are Required!");
     }
-    if (formData.email &&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       return toast.error("Invalid email address!");
     }
-    if (formData.secondary_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.secondary_email)) {
+    if (
+      formData.secondary_email &&
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.secondary_email)
+    ) {
       return toast.error("Invalid Secondary Email!");
     }
 
@@ -104,8 +112,11 @@ const EditSuppliers = () => {
     sendData.append("vendor[website_url]", formData.website_url);
     sendData.append("vendor[district]", formData.district);
     sendData.append("vendor[notes]", formData.notes);
-    sendData.append("vendor[vendor_supplier_id]", formData.type);
-    sendData.append("vendor[vendor_categories_id]", formData.category);
+    sendData.append("vendor[vendor_supplier_id]", formData.vendor_supplier_id);
+    sendData.append(
+      "vendor[vendor_categories_id]",
+      formData.vendor_categories_id
+    );
     formData.attachments.forEach((file, index) => {
       sendData.append(`attachments[]`, file);
     });
@@ -128,7 +139,7 @@ const EditSuppliers = () => {
       try {
         const vendorDetailsResponse = await getVendorsDetails(id);
         setFormData(vendorDetailsResponse.data);
-        // setFormData({...formData, type: vendorDetailsResponse.supplier.id})
+        // setFormData({...formData, type: vendorDetailsResponse.vendor_supplier_id})
         console.log(vendorDetailsResponse);
       } catch (error) {
         console.log(error);
@@ -143,14 +154,18 @@ const EditSuppliers = () => {
       ...formData,
       [fieldName]: files,
     });
-    console.log(fieldName);
+    
   };
-  const themeColor = useSelector((state)=> state.theme.color)
+  const themeColor = useSelector((state) => state.theme.color);
+
   return (
     <section className="flex  ">
       <Navbar />
       <div className="w-full mx-3 mb-5 flex  flex-col overflow-hidden">
-        <h2 style={{background: themeColor}} className="text-center text-xl font-bold p-2 bg- rounded-full text-white">
+        <h2
+          style={{ background: themeColor }}
+          className="text-center text-xl font-bold p-2 bg- rounded-full text-white"
+        >
           Edit Supplier
         </h2>
         <div className="md:mx-20 my-5 mb-10 border border-gray-400 p-5 px-10 rounded-lg shadow-xl">
@@ -200,7 +215,12 @@ const EditSuppliers = () => {
                 className="border p-1 px-4 border-gray-500 rounded-md"
                 pattern="[0-9]*"
                 onKeyDown={(e) => {
-                  if (!/[0-9]/.test(e.key) && e.key !== "Backspace" && e.key !== "ArrowLeft" && e.key !== "ArrowRight") {
+                  if (
+                    !/[0-9]/.test(e.key) &&
+                    e.key !== "Backspace" &&
+                    e.key !== "ArrowLeft" &&
+                    e.key !== "ArrowRight"
+                  ) {
                     e.preventDefault();
                   }
                 }}
@@ -220,7 +240,12 @@ const EditSuppliers = () => {
                 className="border p-1 px-4 border-gray-500 rounded-md"
                 pattern="[0-9]*"
                 onKeyDown={(e) => {
-                  if (!/[0-9]/.test(e.key) && e.key !== "Backspace" && e.key !== "ArrowLeft" && e.key !== "ArrowRight") {
+                  if (
+                    !/[0-9]/.test(e.key) &&
+                    e.key !== "Backspace" &&
+                    e.key !== "ArrowLeft" &&
+                    e.key !== "ArrowRight"
+                  ) {
                     e.preventDefault();
                   }
                 }}
@@ -274,8 +299,8 @@ const EditSuppliers = () => {
               </label>
               <select
                 className="border p-1 px-4 border-gray-500 rounded-md"
-                name="type"
-                value={formData.type}
+                name="vendor_supplier_id"
+                value={formData.vendor_supplier_id}
                 onChange={handleChange}
               >
                 <option value="">Select Supplier Type</option>
@@ -292,8 +317,8 @@ const EditSuppliers = () => {
               </label>
               <select
                 className="border p-1 px-4 border-gray-500 rounded-md"
-                name="category"
-                value={formData.category}
+                name="vendor_categories_id"
+                value={formData.vendor_categories_id}
                 onChange={handleChange}
               >
                 <option value="">Select Category</option>
@@ -335,29 +360,36 @@ const EditSuppliers = () => {
               />
             </div>
             <div className="flex gap-4 items-center">
-                  <p>Inactive</p>
-                  <Switch
-                    checked={formData.active}
-                    onChange={() =>
-                      setFormData((prevState) => ({
-                        ...prevState,
-                        active: !prevState.active,
-                      }))
-                    }
-                  />
-                  <p>Active</p>
-                </div>
+              <p>Inactive</p>
+              <Switch
+                checked={formData.active}
+                onChange={() =>
+                  setFormData((prevState) => ({
+                    ...prevState,
+                    active: !prevState.active,
+                  }))
+                }
+              />
+              <p>Active</p>
+            </div>
           </div>
           <div>
-          <h2 className="border-b text-center text-xl my-5 border-black mb-6 font-semibold">
-            Additional INFO
-          </h2>
-          
+            <h2 className="border-b text-center text-xl my-5 border-black mb-6 font-semibold">
+              Additional INFO
+            </h2>
+
             <div className="flex flex-col gap-2">
               <label htmlFor="" className="font-medium">
                 Note :
               </label>
-           <textarea name="notes" value={formData.notes} onChange={handleChange} id="" rows={3} className="border p-1 px-4 border-gray-500 rounded-md"></textarea>
+              <textarea
+                name="notes"
+                value={formData.notes}
+                onChange={handleChange}
+                id=""
+                rows={3}
+                className="border p-1 px-4 border-gray-500 rounded-md"
+              ></textarea>
             </div>
           </div>
           <h2 className="border-b text-center text-xl my-5 border-black mb-6 font-semibold">
@@ -448,7 +480,12 @@ const EditSuppliers = () => {
                 className="border p-1 px-4 border-gray-500 rounded-md"
                 pattern="[0-9]*"
                 onKeyDown={(e) => {
-                  if (!/[0-9]/.test(e.key) && e.key !== "Backspace" && e.key !== "ArrowLeft" && e.key !== "ArrowRight") {
+                  if (
+                    !/[0-9]/.test(e.key) &&
+                    e.key !== "Backspace" &&
+                    e.key !== "ArrowLeft" &&
+                    e.key !== "ArrowRight"
+                  ) {
                     e.preventDefault();
                   }
                 }}
@@ -501,7 +538,12 @@ const EditSuppliers = () => {
                 className="border p-1 px-4 border-gray-500 rounded-md"
                 pattern="[0-9]*"
                 onKeyDown={(e) => {
-                  if (!/[0-9]/.test(e.key) && e.key !== "Backspace" && e.key !== "ArrowLeft" && e.key !== "ArrowRight") {
+                  if (
+                    !/[0-9]/.test(e.key) &&
+                    e.key !== "Backspace" &&
+                    e.key !== "ArrowLeft" &&
+                    e.key !== "ArrowRight"
+                  ) {
                     e.preventDefault();
                   }
                 }}
