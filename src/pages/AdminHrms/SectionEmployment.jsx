@@ -30,6 +30,8 @@ import AddCompanyAsset from "./Modals/AddCompanyAsset";
 import EditCompanyAsset from "./Modals/EditCompanyAsset";
 import { FaFileCircleCheck } from "react-icons/fa6";
 import { MdInfoOutline, MdOutlineWebAsset } from "react-icons/md";
+import { useSelector } from "react-redux";
+import AddJobInfo from "./Modals/AddJobInfo";
 
 const SectionsEmployment = () => {
   const { id } = useParams();
@@ -340,7 +342,7 @@ const SectionsEmployment = () => {
       console.log(error);
     }
   };
-
+  const themeColor = useSelector((state) => state.theme.color);
   return (
     <div className="flex flex-col ml-20">
       <EditEmployeeDirectory />
@@ -359,14 +361,14 @@ const SectionsEmployment = () => {
                     <>
                       <button
                         type="button"
-                        className="border-2 rounded-full p-1 transition-all duration-150 hover:bg-opacity-30 border-green-400  px-4 text-green-400 mb-2 hover:bg-green-300 font-semibold  "
+                        className="border-2 rounded-full p-1 transition-all duration-150 hover:bg-opacity-30 border-green-400  px-4 text-green-400 hover:bg-green-300 font-semibold  "
                         onClick={handleEditEmployment}
                       >
                         Save
                       </button>
                       <button
                         type="button"
-                        className="border-2 rounded-full p-1 border-red-400  px-4 text-red-400 mb-2 hover:bg-opacity-30 hover:bg-red-300 font-semibold  "
+                        className="border-2 rounded-full p-1 border-red-400  px-4 text-red-400  hover:bg-opacity-30 hover:bg-red-300 font-semibold  "
                         onClick={() => setIsEditing(false)}
                       >
                         Cancel
@@ -375,15 +377,16 @@ const SectionsEmployment = () => {
                   ) : (
                     <button
                       type="button"
-                      className="bg-black text-white mb-2 hover:bg-gray-700 font-semibold py-2 px-4 rounded"
+                      style={{ background: themeColor }}
+                      className="bg-black text-white hover:bg-gray-700 font-semibold py-2 px-4 rounded"
                       onClick={() => setIsEditing(true)}
                     >
                       Edit
                     </button>
                   )}
                 </div>
-                
-                <div className="grid md:grid-cols-2 gap-2 mt-5">
+
+                <div className="grid md:grid-cols-2 gap-2 mt-2">
                   <div className="grid gap-2 items-center ">
                     <label htmlFor="companyName" className="font-semibold">
                       Employee Code:
@@ -391,8 +394,8 @@ const SectionsEmployment = () => {
                     <input
                       type="text"
                       id="companyName"
-                      className={`mt-1 p-2  border rounded-md ${
-                        !isEditing ? "bg-gray-200" : ""
+                      className={`mt-1 p-2  border rounded-md  ${
+                        !isEditing ? "bg-gray-200 text-gray-500" : ""
                       }`}
                       placeholder="Enter Employee code"
                       value={formData.employeeCode}
@@ -410,13 +413,13 @@ const SectionsEmployment = () => {
                       type="date"
                       id="jobTitle"
                       className={`mt-1 p-2  border rounded-md ${
-                        !isEditing ? "bg-gray-200" : ""
+                        !isEditing ? "bg-gray-200  text-gray-500" : ""
                       }`}
                       placeholder="Enter Job Title"
                       value={formData.joinDate}
                       onChange={handleChange}
                       name="joinDate"
-                      readOnly={!isEditing}
+                      readOnly={!isEditing} 
                     />
                   </div>
                   <div className="grid gap-2 items-center">
@@ -424,8 +427,8 @@ const SectionsEmployment = () => {
                       Employment Type:
                     </label>
                     <select
-                      className={`mt-1 p-2  border rounded-md ${
-                        !isEditing ? "bg-gray-200" : ""
+                      className={`mt-1 p-2  border rounded-md  ${
+                        !isEditing ? "bg-gray-200 text-gray-500" : ""
                       }`}
                       value={formData.employmentType}
                       onChange={handleChange}
@@ -445,8 +448,8 @@ const SectionsEmployment = () => {
                       type="date"
                       name="probationDueDate"
                       id=""
-                      className={`mt-1 p-2  border rounded-md ${
-                        !isEditing ? "bg-gray-200" : ""
+                      className={`mt-1 p-2  border rounded-md  ${
+                        !isEditing ? "bg-gray-200 text-gray-500" : ""
                       }`}
                       value={formData.probationDueDate}
                       onChange={handleChange}
@@ -503,7 +506,7 @@ const SectionsEmployment = () => {
                       type="text"
                       id="designation"
                       className={`mt-1 p-2  border rounded-md ${
-                        !isEditing ? "bg-gray-200" : ""
+                        !isEditing ? "bg-gray-200 text-gray-400" : ""
                       }`}
                       placeholder="Enter Designation"
                       onChange={handleChange}
@@ -564,6 +567,7 @@ const SectionsEmployment = () => {
               <>
                 <div className="flex justify-end ">
                   <button
+                    style={{ background: themeColor }}
                     onClick={openModal1}
                     className="bg-black text-white mb-2 hover:bg-gray-700 font-semibold py-1 px-4 rounded"
                   >
@@ -732,81 +736,7 @@ const SectionsEmployment = () => {
             </div>
           )}
 
-          {modalIsOpen1 && (
-            <div className="fixed inset-0 z-50 flex items-center overflow-y-auto justify-center bg-gray-500 bg-opacity-50">
-              <div class="max-h-screen bg-white p-8 w-96 rounded-lg shadow-lg overflow-y-auto">
-                <form>
-                  <h2 className="text-2xl font-bold mb-4">Job Information</h2>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Effective From *{" "}
-                    </label>
-                    <input
-                      type="date"
-                      className="mt-1 p-2  border rounded-md"
-                    />
-                  </div>
-                  <div className="mt-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Branch Location *
-                    </label>
-                    <select className="mt-1 p-2  border rounded-md" />
-                  </div>
-                  <div className="mt-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Department *{" "}
-                    </label>
-                    <select className="mt-1 p-2  border rounded-md">
-                      <option>HR</option>
-                    </select>
-                  </div>
-                  <div className="mt-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Designation *{" "}
-                    </label>
-                    <input
-                      type="text"
-                      className="mt-1 p-2  border rounded-md"
-                    />
-                  </div>
-                  <div className="mt-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Reporting supervisor{" "}
-                    </label>
-                    <input
-                      type="text"
-                      className="mt-1 p-2  border rounded-md"
-                    />
-                  </div>
-                  <div className="mt-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Comment{" "}
-                    </label>
-                    <input
-                      type="text"
-                      className="mt-1 p-2  border rounded-md"
-                    />
-                  </div>
-
-                  <div className="flex mt-2 justify-end">
-                    <button
-                      type="button"
-                      onClick={closeModal1}
-                      className="border-2 font-semibold hover:bg-black hover:text-white duration-150 transition-all border-black p-2 rounded-md text-black mr-4"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="bg-blue-500 text-white font-semibold p-2 rounded-md"
-                    >
-                      Save
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          )}
+          {modalIsOpen1 && <AddJobInfo closeModal1={closeModal1} />}
 
           {assetModal && (
             <AddEmployeeAsset
