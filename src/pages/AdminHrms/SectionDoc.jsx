@@ -29,9 +29,12 @@ import {
 import Accordion from "./Components/Accordion";
 import {
   deleteEmployeeDocs,
+  deleteEmployeeLetters,
   getEmployeeDocs,
+  getEmployeeLetters,
   hrmsDomain,
   postEmployeeDocs,
+  postEmployeeLetters,
 } from "../../api";
 import { dateFormat, dateTimeFormat } from "../../utils/dateUtils";
 import { IoDocument } from "react-icons/io5";
@@ -56,12 +59,23 @@ const SectionDoc = () => {
     name: "",
     doc: [],
   });
+  const [letterData, setLetterData] = useState({
+    name: "",
+    letters: [],
+  });
 
   const handleFileChange = (e) => {
     const selectedFile = Array.from(e.target.files);
     setFormData((prevData) => ({
       ...prevData,
       doc: selectedFile,
+    }));
+  };
+  const handleLetterChange = (e) => {
+    const selectedFile = Array.from(e.target.files);
+    setLetterData((prevData) => ({
+      ...prevData,
+      letters: selectedFile,
     }));
   };
 
@@ -75,9 +89,18 @@ const SectionDoc = () => {
     setCurrentItem(item);
     setModalIsOpen(true);
   };
+  const [lettersModal, setLettersModal] = useState(false);
+  const openLetterModal = (item) => {
+    setCurrentItem(item);
+    setLettersModal(true);
+  };
 
   const closeModal = () => {
     setModalIsOpen(false);
+    setCurrentItem(null);
+  };
+  const closeLetterModal = () => {
+    setLettersModal(false);
     setCurrentItem(null);
   };
 
@@ -99,6 +122,7 @@ const SectionDoc = () => {
     setAddLetter(false);
   };
   const [documentList, setDocumentList] = useState([]);
+  const [lettersList, setLettersList] = useState([]);
   const fetchEmployeeDocs = async () => {
     try {
       const res = await getEmployeeDocs(id);
@@ -107,8 +131,17 @@ const SectionDoc = () => {
       console.log(error);
     }
   };
+  const fetchEmployeeLetters = async () => {
+    try {
+      const res = await getEmployeeLetters(id);
+      setLettersList(res);
+    } catch (error) {
+      console.log(error);
+    }
+  };
   useEffect(() => {
     fetchEmployeeDocs();
+    fetchEmployeeLetters();
   }, []);
 
   const capitalize = (name) => {
@@ -133,11 +166,42 @@ const SectionDoc = () => {
       console.log(error);
     }
   };
+  const handleAddEmployeeLetters = async () => {
+    if (!letterData.name) {
+      toast.error("Please provide the letter name.");
+      return;
+    }
+    if (!letterData.letters || letterData.letters.length === 0) {
+      toast.error("Please upload  document.");
+      return;
+    }
+    const postData = new FormData();
+    postData.append("document_name", letterData.name);
+    postData.append("employee", id);
+    letterData.letters.forEach((file) => {
+      postData.append("letter_file", file);
+    });
+    try {
+      await postEmployeeLetters(postData);
+      fetchEmployeeLetters();
+      toast.success(`${letterData.name} added in employee letters`);
+      setAddLetter(false);
+      setLetterData({ ...letterData, name: "", letters: [] });
+    } catch (error) {
+      console.log(error);
+    }
+  };
   const [docDelId, setDocDelId] = useState("");
+  const [letterDelId, setLetterDelId] = useState("");
   const handleDeleteDocModal = async (id) => {
-    console.log(id)
+    console.log(id);
     setDocDelId(id);
     setDeleteDocModal(true);
+  };
+  const handleDeleteLetterModal = async (id) => {
+ 
+    setLetterDelId(id);
+    setDeleteLetter(true);
   };
 
   const handleDeleteEmployeeDoc = async () => {
@@ -150,8 +214,19 @@ const SectionDoc = () => {
       console.log(object);
     }
   };
+  const [deleteLetter, setDeleteLetter] = useState(false)
+  const handleDeleteEmployeeLetter = async () => {
+    try {
+      await deleteEmployeeLetters(letterDelId);
+      fetchEmployeeLetters();
+      setDeleteLetter(false);
+      toast.success("Employee letter deleted successfully ");
+    } catch (error) {
+      console.log(object);
+    }
+  };
   useEffect(() => {
-    Modal.setAppElement('#root');
+    Modal.setAppElement("#root");
   }, []);
 
   return (
@@ -165,6 +240,7 @@ const SectionDoc = () => {
           <Accordion
             icon={MdDescription}
             title={"Employee Documents"}
+          
             content={
               <div className="border-b border-gray-200 mb-1">
                 <div className="bg-blue-100 p-4 rounded-lg">
@@ -180,7 +256,7 @@ const SectionDoc = () => {
                     {documentList.map((doc, index) => (
                       <div
                         key={doc.id}
-                        className="bg-white p-4 rounded-lg shadow-md border border-gray-200 flex flex-col items-center cursor-pointer"
+                        className="bg-white p-4 rounded-lg shadow-md border border-gray-200 flex flex-col items-center "
                       >
                         <div className="text-3xl mb-2 text-blue-600">
                           <IoDocument />
@@ -192,12 +268,14 @@ const SectionDoc = () => {
                           Updated On: {dateFormat(doc.updated_date)}
                         </p>
                         <div className="flex justify-end w-full ">
-                          <button
-                            className="border-blue-400 px-2 hover:bg-yellow-100 border rounded-l-md p-1"
-                            onClick={() => openModal(doc)}
-                          >
-                            <BsEye />
-                          </button>
+                        <a
+                          href={hrmsDomain + doc.document_file}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="border-blue-400 px-2 hover:bg-yellow-100 border rounded-l-md p-1"
+                        >
+                          <BsEye />
+                        </a>
                           <button
                             className="p-1  px-2 border border-blue-400 rounded-r-md text-red-500 hover:bg-red-100"
                             onClick={() => handleDeleteDocModal(doc.id)}
@@ -217,8 +295,8 @@ const SectionDoc = () => {
             icon={MdDescription}
             content={
               <div className="bg-green-100 p-4 rounded-lg mb-1">
-                <div className="flex justify-between items-center mb-2">
-                  <h2 className="text-xl font-semibold">Employee Letters</h2>
+                <div className="flex justify-end items-center mb-2">
+                  {/* <h2 className="text-xl font-semibold">Employee Letters</h2> */}
                   <button
                     onClick={openLetter}
                     className="text-green-500 px-2 border-2 rounded-full border-green-500 flex gap-2 items-center p-1 "
@@ -229,19 +307,41 @@ const SectionDoc = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {lettersList.map((letter, index) => (
                     <div
-                      key={index}
-                      className="bg-white p-4 rounded-lg shadow-md border border-gray-200 flex flex-col items-center cursor-pointer"
+                      key={letter.id}
+                      className="bg-white p-4 rounded-lg shadow-md border border-gray-200 flex flex-col items-center "
                       onClick={() => openModal(letter)}
                     >
                       <div className="text-3xl mb-2 text-green-600">
-                        {letter.icon}
+                        <FaFileAlt />
                       </div>
                       <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                        {letter.name}
+                        {capitalize(letter?.document_name)}
                       </h3>
                       <p className="text-sm text-gray-500">
-                        Updated On: {letter.updatedOn}
+                        Updated On: {dateFormat(letter?.updated_date)}
                       </p>
+                      <div className="flex justify-end w-full ">
+                        {/* <button
+                          className="border-blue-400 px-2 hover:bg-yellow-100 border rounded-l-md p-1"
+                          onClick={() => openLetterModal(doc)}
+                        >
+                          <BsEye />
+                        </button> */}
+                        <a
+                          href={hrmsDomain + letter.letter_file}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="border-blue-400 px-2 hover:bg-yellow-100 border rounded-l-md p-1"
+                        >
+                          <BsEye />
+                        </a>
+                        <button
+                          className="p-1  px-2 border border-blue-400 rounded-r-md text-red-500 hover:bg-red-100"
+                          onClick={() => handleDeleteLetterModal(letter.id)}
+                        >
+                          <FaTrash />
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -250,12 +350,18 @@ const SectionDoc = () => {
           />
         </div>
       </div>
-      {modalIsOpen && (
+      {/* {modalIsOpen && (
         <PdfViewer
           fileUrl={hrmsDomain + currentItem.document_file}
           onClose={closeModal}
         />
-      )}
+      )} */}
+      {/* {lettersModal && (
+        <PdfViewer
+          fileUrl={hrmsDomain + currentItem.letter_file}
+          onClose={closeLetterModal}
+        />
+      )} */}
 
       <Modal
         isOpen={addDoc}
@@ -312,7 +418,7 @@ const SectionDoc = () => {
         overlayClassName="fixed inset-0 bg-black bg-opacity-50"
       >
         <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full flex flex-col h-auto max-h-[80vh] overflow-y-auto">
-          <h2 className="text-2xl font-semibold mb-4">{currentItem?.name}</h2>
+          {/* <h2 className="text-2xl font-semibold mb-4">{currentItem?.name}</h2> */}
           <h2 className="font-medium text-xl border-b border-gray-3">
             Add Letter
           </h2>
@@ -325,13 +431,21 @@ const SectionDoc = () => {
                 type="text"
                 className="border border-gray-400 p-1 rounded-md"
                 placeholder="Document name"
+                value={letterData.name}
+                onChange={(e) =>
+                  setLetterData({ ...letterData, name: e.target.value })
+                }
+                name="name"
               />
             </div>
             <div className="border-2 border-dashed p-2 mt-2">
-              <input type="file" name="" id="" />
+              <input type="file" name="" id="" onChange={handleLetterChange} />
             </div>
             <div className="flex justify-end w-full gap-2">
-              <button className="bg-blue-400 text-white p-1 px-2 w-full rounded-md">
+              <button
+                className="bg-blue-400 text-white p-1 px-2 w-full rounded-md"
+                onClick={handleAddEmployeeLetters}
+              >
                 Save
               </button>
               <button
@@ -370,6 +484,39 @@ const SectionDoc = () => {
               <button
                 className="rounded-full px-4 p-1 bg-red-400 text-white"
                 onClick={() => setDeleteDocModal(false)}
+              >
+                No
+              </button>
+            </div>
+          </div>
+        </div>
+      </Modal>
+      <Modal
+        isOpen={deleteLetter}
+        onRequestClose={() => setDeleteLetter(true)}
+        // contentLabel="add Document "
+        className="fixed inset-0 flex flex-col items-center justify-center p-4"
+        overlayClassName="fixed inset-0 bg-black bg-opacity-50"
+      >
+        <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full flex flex-col h-auto max-h-[80vh] overflow-y-auto">
+          {/* <h2 className="text-2xl font-semibold mb-4">{currentItem?.name}</h2> */}
+          <h2 className="font-medium text-xl border-b border-gray-3">
+            Delete Document
+          </h2>
+          <div className="flex flex-col gap-2">
+            <p className="font-medium mt-2">
+              Are you sure you want to delete this Letter?
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                className="rounded-full px-4 p-1 bg-green-400 text-white"
+                onClick={handleDeleteEmployeeLetter}
+              >
+                Yes
+              </button>
+              <button
+                className="rounded-full px-4 p-1 bg-red-400 text-white"
+                onClick={() => setDeleteLetter(false)}
               >
                 No
               </button>

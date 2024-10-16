@@ -610,7 +610,6 @@ const AddPolicy = () => {
                       className="border rounded-md p-2"
                     />
                   </div>
-
                   <div className="flex flex-col gap-2">
                     <label>Medical Reports: required</label>
                     <input

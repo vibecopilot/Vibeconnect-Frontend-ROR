@@ -3481,6 +3481,19 @@ export const getMyHRMSEmployees = async (orgId) => {
     throw error;
   }
 };
+export const getMyHRMSEmployeesAllData = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(`/user-details/?organization_id=${orgId}`, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error getting employee :", error);
+    throw error;
+  }
+};
 export const deleteHRMSEmployee = async (empId) => {
   try {
     const response = await HrmsAuth.delete(`/employee/${empId}/`, {
@@ -5451,7 +5464,7 @@ export const getDataChangeRequestDetails = async (requestId) => {
 };
 export const getUserDetails = async (empId) => {
   try {
-    const response = await HrmsAuth.get(`/user-details/${empId}/`);
+    const response = await HrmsAuth.get(`/user-details/?employee_id=${empId}`);
     return response.data;
   } catch (error) {
     console.error("Error getting user details :", error);
@@ -5597,6 +5610,45 @@ export const deleteEmployeeDocs = async (docId) => {
     return response.data;
   } catch (error) {
     console.error("Error deleting employee docs :", error);
+    throw error;
+  }
+};
+export const deleteEmployeeLetters = async (docId) => {
+  try {
+    const response = await HrmsAuth.delete(`/employee/letter/${docId}/`, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting employee letters :", error);
+    throw error;
+  }
+};
+export const getEmployeeLetters = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(`/employee/letter/?employee_id=${orgId}`, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error getting employee letters :", error);
+    throw error;
+  }
+};
+export const postEmployeeLetters = async (data) => {
+  try {
+    const response = await HrmsAuth.post(`/employee/letter/`,data, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error getting posting letters :", error);
     throw error;
   }
 };
