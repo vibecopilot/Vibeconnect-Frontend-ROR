@@ -7,6 +7,7 @@ import { Link, useParams } from "react-router-dom";
 import Table from "../../../../components/table/Table";
 import toast from "react-hot-toast";
 import { BsEye } from "react-icons/bs";
+import { BiEdit } from "react-icons/bi";
 
 const AMCDetails = () => {
   const today = new Date().toISOString().split("T")[0];
@@ -53,14 +54,15 @@ const AMCDetails = () => {
       toast.error(" Start Date must be before End Date.");
       return;
     }
-    if (
-      formData.vendor_id === "" ||
-      formData.start_date === "" ||
-      formData.end_date === "" ||
-      formData.frequency === ""
-    ) {
-      return toast.error("All fields are Required");
+   
+
+    if (!formData.vendor_id) {
+      return toast.error("Please select supplier");
     }
+    if (!formData.start_date || !formData.end_date) {
+      return toast.error("Please select start and end date");
+    }
+
     try {
       const dataToSend = new FormData();
       dataToSend.append("asset_amc[vendor_id]", formData.vendor_id);
@@ -72,7 +74,7 @@ const AMCDetails = () => {
       const res = await postAMC(dataToSend);
       console.log(res);
       setFormData(initialFormData);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: "smooth" });
       setUpdate(true);
       toast.success("New AMC Added");
     } catch (error) {
@@ -101,6 +103,9 @@ const AMCDetails = () => {
         <div className="flex items-center gap-4">
           <Link to={`/asset/asset-amc/${row.id}`}>
             <BsEye size={15} />
+          </Link>
+          <Link to={`/assets/edit-amc/${row.id}`}>
+            <BiEdit size={15} />
           </Link>
         </div>
       ),
@@ -141,9 +146,11 @@ const AMCDetails = () => {
           <h2 className="border-b  text-xl border-black font-semibold">
             Add AMC
           </h2>
-          <div className="grid md:grid-cols-3 gap-5">
+          <div className="grid md:grid-cols-3 gap-5 py-2">
             <div className="flex flex-col">
-              <label htmlFor="">Vendor :</label>
+              <label htmlFor="" className="font-medium">
+                Vendor <span className="text-red-500">*</span>
+              </label>
               <select
                 name="vendor_id"
                 id=""
@@ -160,7 +167,9 @@ const AMCDetails = () => {
               </select>
             </div>
             <div className="flex flex-col">
-              <label htmlFor="">Start Date :</label>
+              <label htmlFor="" className="font-medium">
+                Start Date <span className="text-red-500">*</span>
+              </label>
               <input
                 type="date"
                 name="start_date"
@@ -172,7 +181,9 @@ const AMCDetails = () => {
               />
             </div>
             <div className="flex flex-col">
-              <label htmlFor="">End Date :</label>
+              <label htmlFor="" className="font-medium">
+                End Date <span className="text-red-500">*</span>
+              </label>
               <input
                 type="date"
                 name="end_date"
@@ -184,8 +195,8 @@ const AMCDetails = () => {
               />
             </div>
             <div className="flex flex-col">
-              <label htmlFor="" className="font-semibold">
-                Frequency :
+              <label htmlFor="" className="font-medium">
+                Frequency
               </label>
               <select
                 name="frequency"

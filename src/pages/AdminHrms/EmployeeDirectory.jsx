@@ -939,8 +939,11 @@ function EmployeeDirectory() {
                 {selectedLetter === null || selectedLetter === letter ? (
                   <>
                     <h2 className="text-xl font-mono font-semibold border-b-2 border-dashed my-4">
-                      <span style={{background: themeColor}} className="p-2 rounded-md text-white px-4">
-                      {letter}
+                      <span
+                        style={{ background: themeColor }}
+                        className="p-2 rounded-md text-white px-4"
+                      >
+                        {letter}
                       </span>
                     </h2>
                     <div className="flex flex-wrap">
@@ -955,10 +958,10 @@ function EmployeeDirectory() {
                           <div
                             key={employee.id}
                             style={{ background: themeColor, color: "white" }}
-                            className={`${
+                            className={` ${
                               employeeId === employee.id
                                 ? "bg-gradient-to-r from-yellow-400 via-red-300 to-pink-400 border-2 border-pink-400 "
-                                : "bg-gradient-to-r from-yellow-400 via-red-300 to-pink-400 "
+                                : "bg-gradient-to-r from-yellow-400 via-red-300 to-pink-400 border-2 border-white "
                             }  w-80 p-2 m-2 rounded-xl  cursor-pointer`}
                             // className="bg-white w-64 p-2 m-2 rounded-lg border cursor-pointer"
                             // onClick={() => setEmployeeId(employee.id)}

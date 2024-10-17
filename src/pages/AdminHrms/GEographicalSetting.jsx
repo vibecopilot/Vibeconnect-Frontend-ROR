@@ -6,6 +6,7 @@ import {
   getCountriesList,
   getCountryData,
   getOrganizationGeoMasterData,
+  postOrganizationGeoSettings,
 } from "../../api";
 import Select from "react-select";
 import { getItemInLocalStorage } from "../../utils/localStorage";
@@ -92,10 +93,18 @@ const GeographicalSetting = () => {
     editData.append("geographical_master_data", selectedCountry.value);
     editData.append("organization", hrmsOrgId);
     try {
-      const res = await editOrganizationGeoSettings(geoId, editData);
-      fetchAllGeoSettings();
-      toast.success("Geographical setting updated successfully");
-      setIsEditing(false);
+      //
+      if (geoId) {
+        const res = await editOrganizationGeoSettings(geoId, editData);
+        fetchAllGeoSettings();
+        toast.success("Geographical setting updated successfully");
+        setIsEditing(false);
+      } else {
+        const res = await postOrganizationGeoSettings(editData);
+        fetchAllGeoSettings();
+        toast.success("Geographical setting updated successfully");
+        setIsEditing(false);
+      }
     } catch (error) {
       console.log(error);
     }

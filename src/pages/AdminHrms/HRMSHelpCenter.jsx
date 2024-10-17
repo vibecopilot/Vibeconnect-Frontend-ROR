@@ -313,12 +313,12 @@ const HRMSHelpCenter = ({ help, showModal }) => {
                 <li>
                   <ul style={listItemStyle}>
                     <li className="flex">
-                      Organization---{">"}Bank Account---{">"}Click on {"    "}
-                      <div  className="text-blue-400">
+                      Organization {" "}---{">"}Bank Account{""}---{">"}Click on Add
+                      {/* <div  className="text-blue-400">
                         <button   className=" text-white py-1 px-4 rounded-lg flex items-center gap-2"
                         style={{ background: themeColor }}><PiPlus/> Bank</button>
                      
-                      </div>
+                      </div> */}
                     </li>
                   </ul>
                 </li>

@@ -3387,6 +3387,23 @@ export const editOrganizationGeoSettings = async (geoId, data) => {
     throw error;
   }
 };
+export const postOrganizationGeoSettings = async (data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/organization/geographical-settings/`,
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error editing Geo settings :", error);
+    throw error;
+  }
+};
 // location
 export const getMyOrganizationLocations = async (orgId) => {
   try {
@@ -3483,11 +3500,14 @@ export const getMyHRMSEmployees = async (orgId) => {
 };
 export const getMyHRMSEmployeesAllData = async (orgId) => {
   try {
-    const response = await HrmsAuth.get(`/user-details/?organization_id=${orgId}`, {
-      headers: {
-        "Content-Type": "multipart/form-data/",
-      },
-    });
+    const response = await HrmsAuth.get(
+      `/user-details/?organization_id=${orgId}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
     return response.data;
   } catch (error) {
     console.error("Error getting employee :", error);
@@ -5628,11 +5648,14 @@ export const deleteEmployeeLetters = async (docId) => {
 };
 export const getEmployeeLetters = async (orgId) => {
   try {
-    const response = await HrmsAuth.get(`/employee/letter/?employee_id=${orgId}`, {
-      headers: {
-        "Content-Type": "multipart/form-data/",
-      },
-    });
+    const response = await HrmsAuth.get(
+      `/employee/letter/?employee_id=${orgId}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
     return response.data;
   } catch (error) {
     console.error("Error getting employee letters :", error);
@@ -5641,7 +5664,7 @@ export const getEmployeeLetters = async (orgId) => {
 };
 export const postEmployeeLetters = async (data) => {
   try {
-    const response = await HrmsAuth.post(`/employee/letter/`,data, {
+    const response = await HrmsAuth.post(`/employee/letter/`, data, {
       headers: {
         "Content-Type": "multipart/form-data/",
       },
