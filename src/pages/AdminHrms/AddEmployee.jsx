@@ -202,11 +202,10 @@ const AddEmployee = () => {
             toast.error(`${key}: ${msg}`);
           });
         });
-      }else {
+      } else {
         toast.error("Failed to add employee. Please try again.");
       }
       console.log(error);
-    
     }
   };
 

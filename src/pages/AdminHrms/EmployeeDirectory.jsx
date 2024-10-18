@@ -99,6 +99,10 @@ function EmployeeDirectory() {
     setSelectedLetter(letter);
     // setSelectedEmployee(null);
   };
+  const handleAll = () => {
+    setSelectedLetter(null);
+    // setSelectedEmployee(null);
+  };
 
   const filteredEmployees = selectedLetter
     ? groupedEmployees[selectedLetter] || []
@@ -978,7 +982,7 @@ function EmployeeDirectory() {
                                   />
                                 ) : (
                                   <div
-                                    className="bg-gray-300 rounded-full text-lg border-white border-4 text-white h-20 w-20 flex items-center font-medium justify-center mr-4"
+                                    className="bg-gray-300 rounded-full text-xl border-white border-4 text-white h-20 w-20 flex items-center font-medium justify-center mr-4"
                                     style={{
                                       backgroundColor:
                                         getColorForEmployee(index),
@@ -1057,13 +1061,19 @@ function EmployeeDirectory() {
               </div>
             ))}
           </div>
-          <div className="w-10 bg-white text-black p-4 max-h-fit overflow-y-auto hide-scrollbar">
+          <div className="w-10 bg-white text-black p-4 max-h-fit overflow-y-auto hide-scrollbar mb-2">
             <div className="flex flex-col">
+              <button
+                onClick={handleAll}
+                className=" p-1 text-sm font-medium text-gray-500"
+              >
+                All
+              </button>
               {alphabet.map((letter) => (
                 <button
                   key={letter}
                   onClick={() => handleLetterClick(letter)}
-                  className=" p-1 text-sm "
+                  className=" p-1 text-sm font-medium text-gray-500"
                   title={letter}
                 >
                   {letter}
@@ -1180,12 +1190,21 @@ function EmployeeDirectory() {
                     >
                       Hold
                     </button>
-                    <button
-                      type="submit"
-                      className="bg-red-500 text-sm font-medium text-white hover:bg-gray-700  py-2 px-4 rounded-full"
-                    >
-                      Deactivate
-                    </button>
+                    {selectedEmployee?.employee?.status ? (
+                      <button
+                        type="submit"
+                        className="bg-red-500 text-sm font-medium text-white hover:bg-gray-700  py-2 px-4 rounded-full"
+                      >
+                        Deactivate
+                      </button>
+                    ) : (
+                      <button
+                        type="submit"
+                        className="bg-green-500 text-sm font-medium text-white hover:bg-gray-700  py-2 px-4 rounded-full"
+                      >
+                        Activate
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
