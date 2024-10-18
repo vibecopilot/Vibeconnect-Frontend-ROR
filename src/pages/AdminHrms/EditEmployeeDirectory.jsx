@@ -1,21 +1,36 @@
 import React, { useState, useRef, useEffect } from "react";
 import AdminHRMS from "./AdminHrms";
 import { FaChevronDown } from "react-icons/fa";
-import { getEmployeeDetails } from "../../api";
+import {
+  editEmployeeDetails,
+  getEmployeeDetails,
+  getUserDetails,
+  hrmsDomain,
+} from "../../api";
 import { useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
+import { getItemInLocalStorage } from "../../utils/localStorage";
+import toast from "react-hot-toast";
 
 const EditEmployeeDirectory = () => {
   const themeColor = useSelector((state) => state.theme.color);
   const { id } = useParams();
   const inputRef = useRef(null);
   const [imageFile, setImageFile] = useState(null);
+  const [profilePhoto, setProfilePhoto] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const handleImageClick = () => {
     inputRef.current.click();
   };
+  const [details, setDetails] = useState({});
 
   const handleImageChange = (event) => {
-    setImageFile(event.target.files[0]);
+    const file = event.target.files[0];
+    if (file) {
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+      handleEditEmployeeBasicInfo(file);
+    }
   };
   const [isOpen, setIsOpen] = useState(false);
 
@@ -32,33 +47,86 @@ const EditEmployeeDirectory = () => {
         console.log(error);
       }
     };
+    const fetchEmployeeDetail = async () => {
+      try {
+        const res = await getUserDetails(id);
+        // setEmpDetails(res);
+        setDetails(res);
+        setProfilePhoto(res?.employee?.profile_photo);
+      } catch (error) {
+        console.log(error);
+      }
+    };
     fetchEmployeeDetails();
+    fetchEmployeeDetail();
   }, []);
 
+  const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
+  const handleEditEmployeeBasicInfo = async (file) => {
+    const editData = new FormData();
+    editData.append("first_name", details?.employee?.first_name);
+    editData.append("last_name", details?.employee?.last_name);
+    editData.append("email_id", details?.employee?.email_id);
+    editData.append("mobile", details?.employee?.mobile);
+    editData.append("gender", details?.employee?.gender);
+    editData.append("date_of_birth", details?.employee?.date_of_birth);
+    editData.append("blood_group", details?.employee?.blood_group);
+    editData.append("pan", details?.employee?.pan);
+    editData.append(
+      "aadhar_number",
+      details?.employee?.aadhar_number.replace(/\D/g, "")
+    );
+    editData.append("marital_status", details?.employee?.marital_status);
+    editData.append(
+      "emergency_contact_name",
+      details?.employee?.emergency_contact_name
+    );
+    editData.append(
+      "emergency_contact_no",
+      details?.employee?.emergency_contact_no
+    );
+    editData.append("organization", hrmsOrgId);
+    editData.append("profile_photo", file);
+    try {
+      await editEmployeeDetails(id, editData);
+
+      toast.success("Profile photo updated successfully");
+    } catch (error) {
+      console.log(error);
+      toast.error("Something went wrong please try again");
+    }
+  };
   return (
     <div className="flex">
       <AdminHRMS />
-      <div className=" w-full  p-4 ">
+      <div className=" w-full p-4">
         {/* <h1 className="text-2xl font-semibold mb-4">Employee Directory</h1> */}
         <div className="bg-white border-gray-400 border-b border-dashed p-2">
-          <div className="flex shadow-custom-all-sides p-2 px-4 rounded-xl ">
+          <div className="flex shadow-custom-all-sides p-2  rounded-xl ">
             <div
               onClick={handleImageClick}
               className="cursor-pointer w-64 my-4"
             >
               {imageFile ? (
                 <img
-                  src={URL.createObjectURL(imageFile)}
-                  alt="Uploaded"
+                  src={imagePreview}
+                  alt={details?.employee?.first_name}
+                  className="border-4 border-gray-300 rounded-full w-40 h-40 object-cover"
+                />
+              ) : profilePhoto ? (
+                <img
+                  src={hrmsDomain + profilePhoto}
+                  alt={details?.employee?.first_name}
                   className="border-4 border-gray-300 rounded-full w-40 h-40 object-cover"
                 />
               ) : (
                 <div
                   style={{ background: themeColor }}
-                  className="flex items-center justify-center rounded-full w-40 h-40 "
+                  className="flex items-center justify-center rounded-full w-40 h-40"
                 >
-                  <span className="text-4xl font-semibold text-white">
+                  <span className="text-4xl font-semibold text-white from-neutral-100">
                     {empDetails?.first_name?.charAt(0).toUpperCase() || ""}
+                    {""}
                     {empDetails?.last_name?.charAt(0).toUpperCase() || ""}
                   </span>
                 </div>
@@ -120,34 +188,42 @@ const EditEmployeeDirectory = () => {
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-4 p-2 px-5 items-center border rounded-xl">
+              <div className="grid grid-cols-2 gap-4 p-2 px-2 bg-gray-50 items-center border rounded-xl">
                 <div className="grid grid-cols-2 items-center">
                   <p className="font-medium">Joined on :</p>
-                  <p className="text-sm font-medium">12-12-2022</p>
+                  <p className="text-sm font-medium">
+                    {details?.employment_info?.joining_date}
+                  </p>
                 </div>
 
                 <div className="grid grid-cols-2 items-center">
                   <p className="font-medium">Mobile No :</p>
                   <p className="text-sm font-medium">
-                    +91-{empDetails?.mobile}
+                    +91-{details?.employee?.mobile}
                   </p>
                 </div>
                 <div className="grid grid-cols-2 items-center">
                   <p className="font-medium">Department:</p>
-                  <p className="text-sm font-medium">Marketing</p>
+                  <p className="text-sm font-medium">
+                    {details?.employment_info?.department_name}
+                  </p>
                 </div>
 
                 <div className="grid grid-cols-2 items-center">
                   <p className="font-medium">Branch Location:</p>
-                  <p className="text-sm font-medium">Mumbai, Maharashtra</p>
+                  <p className="text-sm font-medium">
+                    {details?.employment_info?.branch_location_name}
+                  </p>
                 </div>
                 <div className="grid grid-cols-2 items-center">
                   <p className="font-medium">Email:</p>
                   <p className="text-sm font-medium">{empDetails.email_id}</p>
                 </div>
                 <div className="grid grid-cols-2 items-center">
-                  <p className="font-medium">Position:</p>
-                  <p className="text-sm font-medium">Digital Marketer</p>
+                  <p className="font-medium">Designation:</p>
+                  <p className="text-sm font-medium">
+                    {details?.employment_info?.designation}
+                  </p>
                 </div>
               </div>
             </div>

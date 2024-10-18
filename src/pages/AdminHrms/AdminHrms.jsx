@@ -28,11 +28,16 @@ import {
   FaRegFile,
   FaRegFilePowerpoint,
 } from "react-icons/fa";
-import { ImFileText2 } from "react-icons/im";
+import { ImFileText2, ImTree } from "react-icons/im";
 import { RiSettings3Line } from "react-icons/ri";
 import { FaMoneyBills, FaMoneyBillWheat } from "react-icons/fa6";
 import { BiSolidReport } from "react-icons/bi";
 import { GrDocumentPerformance } from "react-icons/gr";
+import { BsFillFileEarmarkSpreadsheetFill } from "react-icons/bs";
+import {
+  TbAlertSquareFilled,
+  TbAlertSquareRoundedFilled,
+} from "react-icons/tb";
 const AdminHRMS = () => {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState("");
@@ -380,7 +385,9 @@ const AdminHRMS = () => {
                 }`
               }
             >
-              <div>{React.createElement(FaRegFile, { size: "20" })}</div>
+              <div>
+                {React.createElement(TbAlertSquareFilled, { size: "20" })}
+              </div>
               <h2
                 className={`whitespace-pre duration-300 ${
                   !open && "opacity-0 translate-x-28 overflow-hidden"
@@ -396,7 +403,6 @@ const AdminHRMS = () => {
                 Alerts
               </h2>
             </NavLink>
-
             <div>
               <div
                 onClick={toggleOrgMenu}
@@ -596,9 +602,7 @@ const AdminHRMS = () => {
                       }`
                     }
                   >
-                    <div>
-                      {React.createElement(RiSettings3Line, { size: "20" })}
-                    </div>
+                    <div>{React.createElement(ImTree, { size: "20" })}</div>
                     <h2
                       className={`whitespace-pre duration-300 ${
                         !open && "opacity-0 translate-x-28 overflow-hidden"
@@ -816,7 +820,9 @@ const AdminHRMS = () => {
                     }
                   >
                     <div>
-                      {React.createElement(IoSettingsOutline, { size: "20" })}
+                      {React.createElement(BsFillFileEarmarkSpreadsheetFill, {
+                        size: "20",
+                      })}
                     </div>
                     <h2
                       className={`whitespace-pre duration-300 ${
@@ -1194,12 +1200,15 @@ const AdminHRMS = () => {
                   <NavLink
                     // to="/admin/flexi-benefits"
                     to={"#"}
-                    className={({ isActive }) =>
-                      `${
-                        isActive
-                          ? "text-black bg-white flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
-                          : "group flex items-center text-sm gap-3.5 font-medium p-2 "
-                      }`
+                    // className={({ isActive }) =>
+                    //   `${
+                    //     isActive
+                    //       ? "text-black bg-white flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                    //       : "group flex items-center text-sm gap-3.5 font-medium p-2 "
+                    //   }`
+                    // }
+                    className={
+                      "group flex items-center text-sm gap-3.5 font-medium p-2 "
                     }
                   >
                     <div>

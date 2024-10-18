@@ -5,6 +5,9 @@ import AddEmployeeDetailsList from "./AddEmployeeDetailsList";
 import { GrHelpBook } from "react-icons/gr";
 import { postSalaryGeneralInfo, postTaxStatutory } from "../../api";
 import { useSelector } from "react-redux";
+import Accordion from "./Components/Accordion";
+import { FaFileCircleCheck } from "react-icons/fa6";
+import SalaryAccordion from "./Components/SalaryAccordion";
 
 const OnboardingSalary = ({ empId }) => {
   const themeColor = useSelector((state) => state.theme.color);
@@ -156,14 +159,60 @@ const OnboardingSalary = ({ empId }) => {
     }
   }, [formData.howEnteringAmount, formData.CTCFrequency]);
 
+  const [fixedAllowanceItems, setFixedAllowanceItems] = useState([
+    { label: "Enter the Amount for Basic", monthly: 2500, yearly: 30000 },
+    {
+      label: "Enter the Amount for Conveyance Allowance",
+      monthly: 1600,
+      yearly: 19200,
+    },
+    { label: "Enter the Amount for HRA", monthly: 900, yearly: 10800 },
+    { label: "Enter the Amount for Medical", monthly: 0, yearly: 0 },
+    { label: "Enter the Amount for Special Allowance", monthly: 0, yearly: 0 },
+    { label: "Enter the Amount for Allowance", monthly: 0, yearly: 0 },
+  ]);
+
+  const totalMonthly = fixedAllowanceItems.reduce(
+    (sum, item) => sum + item.monthly,
+    0
+  );
+  const totalYearly = fixedAllowanceItems.reduce(
+    (sum, item) => sum + item.yearly,
+    0
+  );
+
+  const handleMonthlyChange = (index, value) => {
+    const updatedItems = [...fixedAllowanceItems];
+    updatedItems[index].monthly = Number(value); // Update the monthly value
+    // Update yearly value based on new monthly input, assuming 12 months in a year
+    updatedItems[index].yearly = Number(value) * 12;
+    setFixedAllowanceItems(updatedItems);
+  };
+
+  const outputData = [
+    {
+      description: "Total Take Home (excluding Variable)",
+      monthly: "₹ 5,000",
+      yearly: "₹ 60,000",
+    },
+    {
+      description: "Total CTC (excluding Variable & Other Benefits)",
+      monthly: "₹ 5,000",
+      yearly: "₹ 60,000",
+    },
+    {
+      description: "Total CTC (including Variable)",
+      yearly: "₹ 60,000",
+    },
+  ];
   return (
     <div className="flex w-full">
       {/* <AddEmployeeDetailsList /> */}
-      <div className="w-full p-6 bg-white rounded-lg">
-        <h2 className="border-b text-center text-xl border-black mb-6 font-bold mt-2">
+      <div className="w-full p-2 px-2 bg-white rounded-lg">
+        <h2 className="border-b text-center text-xl border-black  font-bold mt-2">
           Salary
         </h2>
-        <div className="w-full mt-10 p-5 border border-gray-300 rounded-md">
+        <div className="w-full mt-2 p-5 border border-gray-300 rounded-md">
           <h2 className="text-2xl font-semibold mb-4">Add New CTC</h2>
           <div className=" w-full my-2 flex  overflow-hidden flex-col">
             <div className="flex w-full">
@@ -835,6 +884,7 @@ const OnboardingSalary = ({ empId }) => {
                 <button
                   className="bg-black text-white mb-2 hover:bg-gray-700 font-medium py-2 px-4 rounded-md"
                   onClick={handleAddTaxStatutory}
+                  style={{ background: themeColor }}
                 >
                   Save & Proceed
                 </button>
@@ -843,231 +893,110 @@ const OnboardingSalary = ({ empId }) => {
           )}
           {page === "CTC Components" && (
             <div>
-              <div className="flex justify-between items-center ml-10">
-                <h2 className="text-lg font-semibold">Components</h2>
-                <p className="text-lg font-semibold ">
-                  &nbsp;&nbsp;&nbsp;&nbsp;Monthly
-                </p>
-                <p className="text-lg font-semibold mr-20">Yearly</p>
-              </div>
-              <div className="p-6 bg-white shadow-md rounded-md">
-                <div className="flex justify-between items-center">
-                  <h2 className="text-lg font-semibold">Fixed Allowance</h2>
-                  <p className="text-lg font-semibold ml-28 pl-24">₹{total}</p>
-                  <p className="text-lg font-semibold ml-28">₹{total * 12}</p>
-                  <button
-                    className="ml-4 text-blue-500 focus:outline-none"
-                    onClick={() => setIsOpen(!isOpen)}
-                  >
-                    {isOpen ? "∧" : "∨"}
-                  </button>
-                </div>
-                {isOpen && (
-                  <div className="mt-4 space-y-4 w-4/5">
-                    <hr />
-                    <div className="flex justify-between">
-                      <label className="text-gray-600">
-                        Enter the Amount for Basic
-                      </label>
-                      <input
-                        type="number"
-                        className="border w-20 border-gray-400 ml-4 p-2 rounded-md"
-                        value={basic}
-                        onChange={(e) => setBasic(parseInt(e.target.value))}
-                      />
-                      <p>{basic * 12}</p>
-                    </div>
-                    <div className="flex justify-between">
-                      <label className="text-gray-600">
-                        Enter the Amount for HRA
-                      </label>
-                      <input
-                        type="number"
-                        className="border w-20 border-gray-400 ml-4 p-2 rounded-md"
-                        value={hra}
-                        onChange={(e) => setHra(parseInt(e.target.value))}
-                      />
-                      <p>{hra * 12}</p>
-                    </div>
-                    <div className="flex justify-between">
-                      <label className="text-gray-600">
-                        Enter the Amount for Child Education
-                      </label>
-                      <input
-                        type="number"
-                        className="border w-20 border-gray-400 p-2 mr-14 rounded-md"
-                        value={childEducation}
-                        onChange={(e) =>
-                          setChildEducation(parseInt(e.target.value))
-                        }
-                      />
-                      <p>{childEducation * 12}</p>
-                    </div>
-                    <div className="flex justify-between">
-                      <label className="text-gray-600">
-                        Enter the Amount for Special
-                      </label>
-                      <input
-                        type="number"
-                        className="border w-20 border-gray-400 p-2 rounded-md"
-                        value={special}
-                        onChange={(e) => setSpecial(parseInt(e.target.value))}
-                      />
-                      <p>{special * 12}</p>
-                    </div>
+              <div className="w-full mx-auto p-4">
+                <div className="flex items-center mb-4">
+                  <h2 className="text-lg font-semibold w-1/2">Components</h2>
+                  <div className="flex w-1/2">
+                    <p className="text-lg font-semibold w-1/3 text-center">
+                      Monthly
+                    </p>
+                    <p className="text-lg font-semibold w-1/3 text-right">
+                      Yearly
+                    </p>
+                    <span className="w-1/3"></span>
                   </div>
-                )}
-                {/* <div className="mt-4">
-               <p className="text-gray-600">Total Take Home (excluding Variable): ₹{total}</p>
-               <p className="text-gray-600">Total CTC (excluding Variable & Other Benefits): ₹{total}</p>
-               <p className="text-gray-600">Total CTC (including Variable): ₹{total}</p>
-             </div> */}
-              </div>
+                </div>
 
-              <div className="p-6 bg-white shadow-md rounded-md">
-                <div className="flex justify-between items-center">
-                  <h2 className="text-lg font-semibold">
-                    Total Employer Statutory Contributions
-                  </h2>
-                  <p className="text-lg font-semibold ">₹0</p>
-                  <p className="text-lg font-semibold ml-28">₹0</p>
-                  <button
-                    className="ml-4 text-blue-500 focus:outline-none"
-                    onClick={() => setIsOpen1(!isOpen1)}
-                  >
-                    {isOpen1 ? "∧" : "∨"}
-                  </button>
-                </div>
-                {isOpen1 && (
-                  <div className="mt-4 space-y-4 w-4/5">
-                    <hr />
-                    <div className="flex justify-between">
-                      <label className="text-gray-600 ">
-                        Employer PF Contribution
-                      </label>
-                      <p className="ml-4">0</p>
-                      <p>0</p>
-                    </div>
-                    <div className="flex justify-between">
-                      <label className="text-gray-600">
-                        Employer ESIC Contribution
-                      </label>
-                      <p className="ml-1">0</p>
-                      <p>0</p>
-                    </div>
-                    <div className="flex justify-between">
-                      <label className="text-gray-600">
-                        Employer LWF Contribution
-                      </label>
-                      <p className="">0</p>
-                      <p>0</p>
-                    </div>
-                    <div className="flex justify-between">
-                      <label className="text-gray-600">
-                        Employer NPS Contribution
-                      </label>
-                      <p>0</p>
-                      <p>0</p>
-                    </div>
-                  </div>
-                )}
+                <SalaryAccordion
+                  title="Fixed Allowance"
+                  items={fixedAllowanceItems}
+                  totalMonthly={totalMonthly}
+                  totalYearly={totalYearly}
+                  onMonthlyChange={handleMonthlyChange}
+                />
+                <SalaryAccordion
+                  title="Other Benefits"
+                  items={[]}
+                  totalMonthly={0}
+                  totalYearly={0}
+                />
+                <SalaryAccordion
+                  title="Flexi Benefits"
+                  items={[]}
+                  totalMonthly={0}
+                  totalYearly={0}
+                />
+                <SalaryAccordion
+                  title="Total Employer Statutory Contributions"
+                  items={[]}
+                  totalMonthly={0}
+                  totalYearly={0}
+                />
+                <SalaryAccordion
+                  title="Total Employee Statutory Deductions"
+                  items={[]}
+                  totalMonthly={0}
+                  totalYearly={0}
+                />
+                <SalaryAccordion
+                  title="Fixed Deductions"
+                  items={[]}
+                  totalMonthly={0}
+                  totalYearly={0}
+                />
+                <SalaryAccordion
+                  title="Variable Allowances"
+                  items={[]}
+                  totalMonthly={0}
+                  totalYearly={0}
+                />
+                <SalaryAccordion
+                  title="Variable Deductions"
+                  items={[]}
+                  totalMonthly={0}
+                  totalYearly={0}
+                />
               </div>
+              <table className="w-full bg-gray-50 rounded-lg overflow-hidden">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="text-left p-3 font-semibold text-blue-500">
+                      Consolidated Output
+                    </th>
+                    <th className="text-right p-3 font-semibold text-gray-600">
+                      Monthly
+                    </th>
+                    <th className="text-right p-3 font-semibold text-gray-600">
+                      Yearly
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {outputData.map((row, index) => (
+                    <tr key={index} className="border-t border-gray-200">
+                      <td className="p-3 text-gray-700">{row.description}</td>
+                      <td className="p-3 text-right text-gray-700">
+                        {row.monthly || "-"}
+                      </td>
+                      <td className="p-3 text-right text-gray-700">
+                        {row.yearly}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
 
-              <div className="p-6 bg-white shadow-md rounded-md">
-                <div className="flex justify-between items-center">
-                  <h2 className="text-lg font-semibold">
-                    Total Employer Statutory Deductions
-                  </h2>
-                  <p className="text-lg font-semibold ml-4">₹0</p>
-                  <p className="text-lg font-semibold ml-28">₹0</p>
-                  <button
-                    className="ml-4 text-blue-500 focus:outline-none"
-                    onClick={() => setIsOpen2(!isOpen2)}
-                  >
-                    {isOpen2 ? "∧" : "∨"}
-                  </button>
-                </div>
-                {isOpen2 && (
-                  <div className="mt-4 space-y-4 w-4/5">
-                    <hr />
-                    <div className="flex justify-between">
-                      <label className="text-gray-600 ">
-                        Employer PF Contribution
-                      </label>
-                      <p className="ml-5">0</p>
-                      <p>0</p>
-                    </div>
-                    <div className="flex justify-between">
-                      <label className="text-gray-600">
-                        Employer ESIC Contribution
-                      </label>
-                      <p className="ml-1">0</p>
-                      <p>0</p>
-                    </div>
-                    <div className="flex justify-between">
-                      <label className="text-gray-600">
-                        Employer LWF Contribution
-                      </label>
-                      <p className="ml-1">0</p>
-                      <p>0</p>
-                    </div>
-                    <div className="flex justify-between">
-                      <label className="text-gray-600">
-                        Employer PT Contribution
-                      </label>
-                      <p className="ml-4">0</p>
-                      <p>0</p>
-                    </div>
-                    <div className="flex justify-between">
-                      <label className="text-gray-600">
-                        Employer NPS Contribution
-                      </label>
-                      <p className="ml-2">0</p>
-                      <p>0</p>
-                    </div>
-                  </div>
-                )}
-                {/* <div className="mt-4">
-                 <p className="text-gray-600">Total Take Home (excluding Variable): ₹{total}</p>
-                 <p className="text-gray-600">Total CTC (excluding Variable & Other Benefits): ₹{total}</p>
-                 <p className="text-gray-600">Total CTC (including Variable): ₹{total}</p>
-               </div> */}
-              </div>
-              <div className="mt-5 flex justify-between items-center">
-                <h2 className="text-lg font-semibold">Consolidated output</h2>
-                <p className="text-lg font-semibold ml-20">
-                  &nbsp;&nbsp;&nbsp;&nbsp;Monthly
-                </p>
-                <p className="text-lg font-semibold  pr-48">Yearly</p>
-              </div>
-              <div className="w-3/4">
-                <div className="mt-5  flex justify-between">
-                  <p className="text-gray-600">
-                    Total Take Home (excluding Variable)
-                  </p>
-                  <p className="ml-10">₹5000</p>
-                  <p>₹{5000 * 12}</p>
-                </div>
-                <div className="flex justify-between">
-                  <p className="text-gray-600">
-                    Total CTC (excluding Variable & Other Benefits)
-                  </p>
-                  <p className="mr-6">₹5000</p>
-                  <p>₹60000</p>
-                </div>
-                <div className="flex justify-between">
-                  <p className="text-gray-600">
-                    Total CTC (including Variable)
-                  </p>
-                  <p className="ml-24">₹4562</p>
-                  <p>₹{4562 * 12}</p>
-                </div>
-              </div>
               <div className="mt-10 flex justify-center gap-2">
-                <button className="bg-black text-white mb-2 hover:bg-gray-700 font-semibold py-2 px-4 rounded">
-                  Cancel
+                <button
+                  className=" text-gray-500 mb-2  font-medium py-2 px-4 rounded-md border-2 border-gray-500"
+                  onClick={() => setPage("Tax and Statutory Setting")}
+                >
+                  Back
                 </button>
-                <button className="bg-black text-white mb-2 hover:bg-gray-700 font-semibold py-2 px-4 rounded">
+                <button
+                  style={{ background: themeColor }}
+                  className="bg-black text-white mb-2 hover:bg-gray-700 font-semibold py-2 px-4 rounded"
+                >
                   Save & Proceed
                 </button>
               </div>

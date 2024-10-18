@@ -3,9 +3,9 @@ import EmployeeSections from "./EmployeeSections";
 import EditEmployeeDirectory from "./EditEmployeeDirectory";
 import Table from "../../components/table/Table";
 import { BiEdit } from "react-icons/bi";
-import Collapsible from "react-collapsible";
-import CustomTrigger from "../../containers/CustomTrigger";
+
 import Select from "react-select";
+
 import {
   editEmployeeAddressDetails,
   editEmployeeDetails,
@@ -36,6 +36,9 @@ const SectionsPersonal = () => {
   };
   const openModal = () => setModalIsOpen(true);
   const closeModal = () => setModalIsOpen(false);
+  const [paymentData, setPaymentData] = useState({
+    paymentMode: "Cash",
+  });
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -113,7 +116,7 @@ const SectionsPersonal = () => {
     try {
       const res = await getEmployeeDetails(id);
       const rawAadharValue = res.aadhar_number.replace(/\D/g, "");
-      console.log(rawAadharValue)
+      console.log(rawAadharValue);
       setFormData({
         ...formData,
         firstName: res.first_name,
@@ -134,7 +137,7 @@ const SectionsPersonal = () => {
       console.log(error);
     }
   };
-  console.log(formData)
+  console.log(formData);
   const fetchEmployeeFamilyDetails = async () => {
     try {
       const res = await getEmployeeFamilyDetails(id);
@@ -221,6 +224,7 @@ const SectionsPersonal = () => {
   const handleEditEmployeeBasicInfo = async () => {
     const editData = new FormData();
     editData.append("first_name", formData.firstName);
+
     editData.append("last_name", formData.lastName);
     editData.append("email_id", formData.email);
     editData.append("mobile", formData.mobile);
@@ -304,7 +308,7 @@ const SectionsPersonal = () => {
         <div className="">
           <EmployeeSections empId={id} />
         </div>
-        <div className="w-full p-2 bg-white rounded-lg ">
+        <div className="w-full p-2 bg-white rounded-lg  mb-5">
           <Accordion
             icon={RiContactsBook2Line}
             title={"Basic Information"}
@@ -750,25 +754,81 @@ const SectionsPersonal = () => {
                   </div>
                   <div className="mt-2">
                     <label className="block text-sm font-medium text-gray-700">
-                      Payment Mode *
+                      Payment Mode <span className="text-red-500">*</span>
                     </label>
-                    <select className="mt-1 p-2 w-full border rounded-md">
+                    <select
+                      className="mt-1 p-2 w-full border rounded-md"
+                      value={paymentData.paymentMode}
+                      onChange={(e) =>
+                        setPaymentData({
+                          ...paymentData,
+                          paymentMode: e.target.value,
+                        })
+                      }
+                    >
                       <option value="Cash">Cash</option>
                       <option value="Cheque">Cheque</option>
                       <option value="Bank Transfer">Bank Transfer</option>
                     </select>
                   </div>
-                  <div className="flex mt-2 justify-end">
+                  {paymentData.paymentMode === "Bank Transfer" && (
+                    <div className="flex flex-col gap-3">
+                      <div className="flex flex-col gap-2 mt-2">
+                        <label className="block text-sm font-medium text-gray-700">
+                          Bank Name <span className="text-red-400">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          name="bankName"
+                          id=""
+                          className="border border-gray-300  p-2  rounded-md"
+                          placeholder="Enter bank name"
+                          // value={formData.bankName}
+                          // onChange={handleChange}
+                        />
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <label className="block text-sm font-medium text-gray-700">
+                          Bank Account Number{" "}
+                          <span className="text-red-300">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          name="accountNumber"
+                          id=""
+                          className="border border-gray-400  p-2  rounded-md"
+                          placeholder="Enter bank account no."
+                          // value={formData.accountNumber}
+                          // onChange={handleChange}
+                        />
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <label className="block text-sm font-medium text-gray-700">
+                          Bank IFSC code <span className="text-red-400">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          name="ifsc"
+                          id=""
+                          className="border border-gray-300  p-2  rounded-md"
+                          placeholder="Enter IFSC"
+                          // value={formData.ifsc}
+                          // onChange={handleChange}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  <div className="flex mt-2 justify-end gap-2">
                     <button
                       type="button"
                       onClick={closeModal}
-                      className="border-2 font-semibold hover:bg-black hover:text-white duration-150 transition-all border-black p-2 rounded-md text-black mr-4"
+                      className="border-2 border-red-500 text-red-500 px-4 p-1 rounded-full"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      className="bg-blue-500 text-white font-semibold p-2 rounded-md"
+                      className="bg-green-500 text-white p-1 px-5 rounded-full"
                     >
                       Save
                     </button>

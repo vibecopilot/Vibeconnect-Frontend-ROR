@@ -13,6 +13,7 @@ import {
   getMyHRMSEmployees,
   getMyHRMSEmployeesAllData,
   getUserDetails,
+  hrmsDomain,
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 
@@ -61,6 +62,7 @@ function EmployeeDirectory() {
         email_id: employee.email_id,
         mobile: employee.mobile,
         status: employee.status,
+        profile_photo: employee.profile_photo,
         address_information: employeeData.address_information || null,
         employment_info: employeeData.employment_info || null,
         family_information: employeeData.family_information || null,
@@ -71,10 +73,7 @@ function EmployeeDirectory() {
     return acc;
   }, {});
 
-  console.log(groupedEmployees);
-
   const [isOpen, setIsOpen] = useState(false);
-
   const toggleDropdown = () => {
     setIsOpen(!isOpen);
   };
@@ -932,8 +931,8 @@ function EmployeeDirectory() {
             </div>
           </div>
         )}
-        <div className="flex  h-screen ">
-          <div className=" p-4 flex flex-wrap overflow-y-auto mt-2 ml-20 w-full ">
+        <div className="flex h-screen ">
+          <div className=" p-4 flex flex-wrap overflow-y-auto mt-2 ml-20 w-[80%] ">
             {alphabet.map((letter) => (
               <div key={letter} id={letter} className="w-full">
                 {selectedLetter === null || selectedLetter === letter ? (
@@ -971,21 +970,30 @@ function EmployeeDirectory() {
                           >
                             <div className="flex items-center w-full">
                               <div className="w-32">
-                                <div
-                                  className="bg-gray-300 rounded-full border-white border text-white h-16 w-16 flex items-center font-medium justify-center mr-4"
-                                  style={{
-                                    backgroundColor: getColorForEmployee(index),
-                                  }}
-                                >
-                                  {employee.first_name
-                                    .split(" ")
-                                    .map((n) => n[0])
-                                    .join("")}
-                                  {employee.last_name
-                                    .split(" ")
-                                    .map((n) => n[0])
-                                    .join("")}
-                                </div>
+                                {employee?.profile_photo ? (
+                                  <img
+                                    src={hrmsDomain + employee?.profile_photo}
+                                    alt="Profile"
+                                    className="rounded-full h-20 w-20 border-4 border-white object-cover mr-4"
+                                  />
+                                ) : (
+                                  <div
+                                    className="bg-gray-300 rounded-full text-lg border-white border-4 text-white h-20 w-20 flex items-center font-medium justify-center mr-4"
+                                    style={{
+                                      backgroundColor:
+                                        getColorForEmployee(index),
+                                    }}
+                                  >
+                                    {employee.first_name
+                                      .split(" ")
+                                      .map((n) => n[0])
+                                      .join("")}
+                                    {employee.last_name
+                                      .split(" ")
+                                      .map((n) => n[0])
+                                      .join("")}
+                                  </div>
+                                )}
                               </div>
                               <div className="w-full">
                                 <h2 className="font-semibold">
@@ -1063,27 +1071,38 @@ function EmployeeDirectory() {
               ))}
             </div>
           </div>
-          <div className="w-[30rem] max-h-[30rem] p-4 bg-gray-50 m-1 rounded-xl text-gray-600">
+          <div className="w-[25rem] max-h-[30rem] p-4 bg-gray-50 m-1 rounded-xl text-gray-600">
             <h1 className="text-2xl font-semibold mb-4">Employee Details</h1>
             {Object.keys(selectedEmployee).length > 0 ? (
               <div className="flex flex-col justify-between gap-10 h-96">
+                {/* <p>{selectedEmployee}</p> */}
                 <div className="flex flex-col gap-2 border-b border-dashed border-gray-300">
                   <div className="flex items-center border-b border-dashed border-gray-300 p-1">
-                    <div
-                      className="bg-gray-300 rounded-full text-white h-16 w-16 flex items-center font-medium justify-center mr-4"
-                      style={{
-                        background: themeColor,
-                      }}
-                    >
-                      {selectedEmployee?.employee?.first_name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
-                      {selectedEmployee?.employee?.last_name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
-                    </div>
+                    {selectedEmployee?.employee?.profile_photo ? (
+                      <img
+                        src={
+                          hrmsDomain + selectedEmployee?.employee?.profile_photo
+                        }
+                        alt="Profile"
+                        className="rounded-full h-20 w-20 border-4 border-white object-cover mr-4"
+                      />
+                    ) : (
+                      <div
+                        className="bg-gray-300 rounded-full text-white h-16 w-16 flex items-center font-medium justify-center mr-4"
+                        style={{
+                          background: themeColor,
+                        }}
+                      >
+                        {selectedEmployee?.employee?.first_name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")}
+                        {selectedEmployee?.employee?.last_name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")}
+                      </div>
+                    )}
                     <div className="flex flex-col gap-1">
                       <h2 className="text-xl font-medium">
                         {selectedEmployee?.employee?.first_name}{" "}
@@ -1098,45 +1117,47 @@ function EmployeeDirectory() {
                       </p>
                     </div>
                   </div>
-                  <p className="grid grid-cols-2 items-center">
-                    <span className="font-medium text-sm">Status :</span>{" "}
-                    <span
-                      className={`${
-                        selectedEmployee?.employee?.status
-                          ? "bg-green-400 text-white"
-                          : "bg-red-400 text-white"
-                      } rounded-full w-fit px-4`}
-                    >
-                      {selectedEmployee?.employee?.status
-                        ? "Active"
-                        : "Inactive"}
-                    </span>
-                  </p>
-                  <p className="grid grid-cols-2">
-                    <span className="font-medium text-sm">
-                      Branch Location :
-                    </span>{" "}
-                    <span className="font-medium text-sm">
-                      <p>
-                        {
-                          selectedEmployee?.employment_info
-                            ?.branch_location_name
-                        }
-                      </p>
-                    </span>
-                  </p>
-                  <p className="grid grid-cols-2">
-                    <span className="font-medium text-sm">Phone : </span>{" "}
-                    <span className="font-medium text-sm">
-                      {selectedEmployee?.employee?.mobile}
-                    </span>
-                  </p>
-                  <p className="grid grid-cols-2">
-                    <span className="font-medium text-sm">Email :</span>{" "}
-                    <span className="font-medium text-sm w-[10rem] break-words">
-                      {selectedEmployee?.employee?.email_id}
-                    </span>
-                  </p>
+                  <div className="flex flex-col gap-4">
+                    <p className="grid grid-cols-2 items-center">
+                      <span className="font-medium text-sm">Status :</span>{" "}
+                      <span
+                        className={`${
+                          selectedEmployee?.employee?.status
+                            ? "bg-green-400 text-white"
+                            : "bg-red-400 text-white"
+                        } rounded-full w-fit px-4`}
+                      >
+                        {selectedEmployee?.employee?.status
+                          ? "Active"
+                          : "Inactive"}
+                      </span>
+                    </p>
+                    <div className="grid grid-cols-2">
+                      <span className="font-medium text-sm">
+                        Branch Location :
+                      </span>{" "}
+                      <span className="font-medium text-xs">
+                        <p>
+                          {
+                            selectedEmployee?.employment_info
+                              ?.branch_location_name
+                          }
+                        </p>
+                      </span>
+                    </div>
+                    <p className="grid grid-cols-2">
+                      <span className="font-medium text-sm">Phone : </span>{" "}
+                      <span className="font-medium text-xs">
+                        {selectedEmployee?.employee?.mobile}
+                      </span>
+                    </p>
+                    <p className="grid grid-cols-2">
+                      <span className="font-medium text-sm">Email :</span>{" "}
+                      <span className="font-medium text-xs  break-words">
+                        {selectedEmployee?.employee?.email_id}
+                      </span>
+                    </p>
+                  </div>
                 </div>
                 <div className="flex flex-col gap-4">
                   <Link

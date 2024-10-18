@@ -192,8 +192,21 @@ const AddEmployee = () => {
       setDisableSave(true);
       toast.success("Basic Info saved Successfully");
     } catch (error) {
+      // console.log(error);
+      // toast.error("Failed to add employee. Please try again.");
+      if (error.response && error.response.data && error.response.data.errors) {
+        // Loop through all errors and display them
+        const errorMessages = error.response.data.errors;
+        Object.keys(errorMessages).forEach((key) => {
+          errorMessages[key].forEach((msg) => {
+            toast.error(`${key}: ${msg}`);
+          });
+        });
+      }else {
+        toast.error("Failed to add employee. Please try again.");
+      }
       console.log(error);
-      toast.error("Failed to add employee. Please try again.");
+    
     }
   };
 

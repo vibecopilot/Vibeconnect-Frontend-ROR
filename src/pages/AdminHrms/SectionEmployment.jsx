@@ -378,10 +378,10 @@ const SectionsEmployment = () => {
                     <button
                       type="button"
                       style={{ background: themeColor }}
-                      className="bg-black text-white hover:bg-gray-700 font-semibold py-2 px-4 rounded"
+                      className="bg-black text-white hover:bg-gray-700 font-semibold py-2 px-4 rounded-full flex items-center gap-2"
                       onClick={() => setIsEditing(true)}
                     >
-                      Edit
+                      <BiEdit /> Edit
                     </button>
                   )}
                 </div>
@@ -419,7 +419,7 @@ const SectionsEmployment = () => {
                       value={formData.joinDate}
                       onChange={handleChange}
                       name="joinDate"
-                      readOnly={!isEditing} 
+                      readOnly={!isEditing}
                     />
                   </div>
                   <div className="grid gap-2 items-center">
@@ -428,7 +428,7 @@ const SectionsEmployment = () => {
                     </label>
                     <select
                       className={`mt-1 p-2  border rounded-md  ${
-                        !isEditing ? "bg-gray-200 text-gray-500" : ""
+                        !isEditing ? "bg-gray-200 " : ""
                       }`}
                       value={formData.employmentType}
                       onChange={handleChange}
@@ -440,7 +440,7 @@ const SectionsEmployment = () => {
                       <option value="partTime">Part Time</option>
                     </select>
                   </div>
-                  <div className="grid gap-2 items-center ">
+                  <div className="grid gap-2 items-center">
                     <label htmlFor="jobTitle" className="font-semibold">
                       Probation Due Date:
                     </label>
@@ -506,7 +506,7 @@ const SectionsEmployment = () => {
                       type="text"
                       id="designation"
                       className={`mt-1 p-2  border rounded-md ${
-                        !isEditing ? "bg-gray-200 text-gray-400" : ""
+                        !isEditing ? "bg-gray-200 text-gray-500" : ""
                       }`}
                       placeholder="Enter Designation"
                       onChange={handleChange}
@@ -549,7 +549,7 @@ const SectionsEmployment = () => {
                 <div className="flex justify-end ">
                   <button
                     onClick={openModal}
-                    className="bg-black text-white mb-2 hover:bg-gray-700 font-medium py-2 px-4 rounded"
+                    className="bg-blue-500 text-white mb-2  font-semibold py-1 px-4 rounded-full flex items-center gap-2"
                   >
                     Update Employment Status
                   </button>
@@ -569,7 +569,7 @@ const SectionsEmployment = () => {
                   <button
                     style={{ background: themeColor }}
                     onClick={openModal1}
-                    className="bg-black text-white mb-2 hover:bg-gray-700 font-semibold py-1 px-4 rounded"
+                    className="bg-blue-500 text-white mb-2 font-semibold py-1 px-4 rounded-full flex items-center gap-2"
                   >
                     Update Position
                   </button>
@@ -585,10 +585,10 @@ const SectionsEmployment = () => {
             icon={MdOutlineWebAsset}
             content={
               <>
-                <div className="flex justify-end ">
+                <div className="flex justify-end">
                   <button
                     onClick={() => setAssetModal(true)}
-                    className="bg-blue-500 text-white mb-2  font-semibold py-1 px-4 rounded-full flex items-center gap-2"
+                    className="bg-blue-500 text-white mb-2 font-semibold py-1 px-4 rounded-full flex items-center gap-2"
                   >
                     <PiPlus /> Add Row
                   </button>

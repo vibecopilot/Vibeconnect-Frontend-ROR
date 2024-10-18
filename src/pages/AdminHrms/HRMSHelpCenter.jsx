@@ -384,7 +384,7 @@ const HRMSHelpCenter = ({ help, showModal }) => {
                     <li>You can edit/delete the milestones at any time.</li>
                   </ul>
                 </li>
-                <li>
+                {/* <li>
                   <ul style={listItemStyle}>
                     <li>
                       <a href="" className="text-blue-400">
@@ -393,7 +393,7 @@ const HRMSHelpCenter = ({ help, showModal }) => {
                       to know more
                     </li>
                   </ul>
-                </li>
+                </li> */}
               </ul>
             </div>{" "}
           </>
