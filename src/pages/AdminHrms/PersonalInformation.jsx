@@ -122,13 +122,13 @@ const PersonalInformation = () => {
     <section className="flex ml-20">
       <OrganisationSetting />
       <div className=" w-full flex m-3 flex-col overflow-hidden">
-        <div className=" flex gap-2 justify-end my-5">
+        <div className=" flex gap-2 justify-end my-2">
           <button
             onClick={() => setShowModal(true)}
-            className="border-2 font-semibold hover:bg-black hover:text-white duration-150 transition-all border-black p-2 rounded-md text-black cursor-pointer text-center flex items-center  gap-2 justify-center"
+            className="bg-blue-400 rounded-full text-white flex items-center gap-2 p-1 px-2"
           >
             <PiPlusCircle size={20} />
-            Add Fields
+            Add Field
           </button>
         </div>
         {showModal && (
@@ -367,15 +367,14 @@ const PersonalInformation = () => {
             </div>
           </div>
         )}
-        <p className="font-bold mb-2">Personal Details</p>
-
-        <h1 className="mb-1">Basic Information</h1>
+        <p className="font-bold mb-2 border-b">Personal Details</p>
+        <h1 className="mb-1 font-medium">Basic Information</h1>
         <Table columns={columns} data={data} isPagination={true} />
-        <h1 className="mb-1">Family Information</h1>
+        <h1 className="mb-1 font-medium">Family Information</h1>
         <Table columns={columns} data={data1} isPagination={true} />
-        <h1 className="mb-1">Address Information</h1>
+        <h1 className="mb-1 font-medium">Address Information</h1>
         <Table columns={columns} data={data3} isPagination={true} />
-        <h1 className="mb-1">Bank Information</h1>
+        <h1 className="mb-1 font-medium">Bank Information</h1>
         <Table columns={columns} data={data2} isPagination={true} />
       </div>
       <HRMSHelpCenter help="personal" showModal={() => setShowModal(true)} />
