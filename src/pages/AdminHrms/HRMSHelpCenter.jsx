@@ -11,7 +11,7 @@ const HRMSHelpCenter = ({ help, showModal }) => {
   const page = help;
   const listItemStyle = {
     listStyleType: "disc",
-    color: "black",
+    color: "gray",
     fontSize: "14px",
     fontWeight: 500,
   };
@@ -54,14 +54,14 @@ const HRMSHelpCenter = ({ help, showModal }) => {
                   </ul>
                 </li>
 
-                <li>
+                {/* <li>
                   <p>
                     <a href="basic-link" className="text-blue-400">
                       Click Here{" "}
                     </a>
                     for more details
                   </p>
-                </li>
+                </li> */}
               </ul>
             </div>{" "}
           </>
@@ -156,11 +156,12 @@ const HRMSHelpCenter = ({ help, showModal }) => {
                   <ul style={listItemStyle}>
                     <li>
                       Click on{" "}
-                      
-                        <button  className="  w-24 text-white py-1 px-4 rounded-lg"
-              style={{ background: themeColor }}>
-                        Add Department</button>
-                      {" "}
+                      <button
+                        className="  w-24 text-white py-1 px-4 rounded-lg"
+                        style={{ background: themeColor }}
+                      >
+                        Add Department
+                      </button>{" "}
                       --- Enter department name and select the head of the
                       department from the employee list.
                     </li>
@@ -222,10 +223,15 @@ const HRMSHelpCenter = ({ help, showModal }) => {
                   {/* <a href="" className="text-blue-400">
                    Holiday Report 
                   </a> */}
-                  <button   className=" text-white py-1 px-4 rounded-lg"
-              style={{ background: themeColor }}>
-                <div className="flex  items-center gap-2"> <FaDownload size={15}/>  Holiday Report</div>
-                     </button>
+                  <button
+                    className=" text-white py-1 px-4 rounded-lg"
+                    style={{ background: themeColor }}
+                  >
+                    <div className="flex  items-center gap-2">
+                      {" "}
+                      <FaDownload size={15} /> Holiday Report
+                    </div>
+                  </button>
                 </li>
               </ul>
             </div>{" "}
@@ -257,11 +263,16 @@ const HRMSHelpCenter = ({ help, showModal }) => {
                 </li>
                 <li>
                   <ul style={listItemStyle}>
-                    <li>
-                      Organization module{" "}---{">"}{" "}Employee fields{" "}---{">"}{" "}{" "}
-                      <button  onClick={showModal} className="  text-white py-1 px-4 rounded-lg"
-              style={{ background: themeColor }}>
-                        Add Fields</button>
+                    <li className="">
+                      Organization module ---{">"} 
+                      Employee fields ---{">"}{" "} 
+                      <button
+                        onClick={showModal}
+                        className="text-white py-1 px-2 rounded-lg "
+                        style={{ background: themeColor }}
+                      >
+                        Add Fields
+                      </button>
                     </li>
                   </ul>
                 </li>
@@ -313,7 +324,7 @@ const HRMSHelpCenter = ({ help, showModal }) => {
                 <li>
                   <ul style={listItemStyle}>
                     <li className="flex">
-                      Organization {" "}---{">"}Bank Account{""}---{">"}Click on Add
+                      Organization ---{">"}Bank Account{""}---{">"}Click on Add
                       {/* <div  className="text-blue-400">
                         <button   className=" text-white py-1 px-4 rounded-lg flex items-center gap-2"
                         style={{ background: themeColor }}><PiPlus/> Bank</button>

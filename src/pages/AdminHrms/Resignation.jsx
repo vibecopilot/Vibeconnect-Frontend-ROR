@@ -1,6 +1,8 @@
 import React from "react";
 import AdminHRMS from "./AdminHrms";
 import { GrHelpBook } from "react-icons/gr";
+import { ImInfo } from "react-icons/im";
+import { FaCircleInfo } from "react-icons/fa6";
 
 const Resignation = () => {
   const listItemStyle = {
@@ -20,8 +22,8 @@ const Resignation = () => {
           located here.
         </p>
         <h1 className="text-2xl font-bold mb-4 mt-2">Resignation Form</h1>
-        <form className="space-y-4">
-          <div className=" border rounded-lg p-2 border-red-50 bg-red-50">
+        <form className="space-y-4 mb-10">
+          <div className=" border rounded-lg p-2 border-red-50 bg-red-100">
             <p className="font-bold">Basic Information</p>
             <div className="grid md:grid-cols-2 gap-2 text-sm mt-2 ">
               <div className="flex justify-between">
@@ -200,7 +202,9 @@ const Resignation = () => {
           <p className="font-bold border-b">
             Estimated Full & Final Settlement and Recovery
           </p>
-          <p className="font-medium">Leave Encashment/Recovery:</p>
+          <p className="font-medium bg-gray-400 p-1 rounded-md text-white">
+            Leave Encashment/Recovery:
+          </p>
           <div className="grid md:grid-cols-2 gap-2">
             <div className="grid gap-2 items-center w-full">
               <label className="block font-medium">
@@ -226,8 +230,9 @@ const Resignation = () => {
               />
             </div>
             <div className="grid gap-2 items-center w-full">
-              <label className="block font-medium">
-                Overwrite Leave Encashment/Recovery Days:
+              <label className=" font-medium flex items-center gap-2 ">
+                Overwrite Leave Encashment/Recovery Days{" "}
+                <FaCircleInfo title="Enter the leave encashment days which you would like to show in F&F" />
               </label>
               <input
                 type="number"
@@ -235,8 +240,9 @@ const Resignation = () => {
               />
             </div>
             <div className="grid gap-2 items-center w-full">
-              <label className="block font-medium">
-                Overwrite Leave Encashment/Recovery Amount:
+              <label className="font-medium flex items-center gap-2">
+                Overwrite Leave Encashment/Recovery Amount{" "}
+                <FaCircleInfo title="Enter the leave encashment amount you would like to pay in F&F" />
               </label>
               <input
                 type="number"
@@ -247,16 +253,22 @@ const Resignation = () => {
               <label className="block font-medium">
                 How to calculate Leave encash exemption?
               </label>
-              <input
-                type="text"
-                value="Manually Enter the Amount while calculating the FNF"
-                readOnly
+              <select
+                name=""
+                id=""
                 className="border border-gray-400 p-2 rounded-md"
-              />
+              >
+                <option value="Manually Enter the Amount while calculating the FNF">
+                  Manually Enter the Amount while calculating the FNF
+                </option>
+                <option value="Automatically calculate as per Government's Limit (300000)F">
+                  Automatically calculate as per Government's Limit (300000)
+                </option>
+              </select>
             </div>
             <div className="grid gap-2 items-center w-full">
               <label className="block font-medium">
-                Leave Encashment Exemption to be paid:
+                Leave Encashment Exemption to be paid
               </label>
               <input
                 type="number"
@@ -264,43 +276,46 @@ const Resignation = () => {
                 className="border border-gray-400 p-2 rounded-md"
               />
             </div>
-            <div className="grid gap-2 items-center w-full">
-              <label className="block font-medium">
-                Eligible for Gratuity:
-              </label>
-              <div>
-                <label>
-                  <input
-                    type="radio"
-                    name="gratuity"
-                    value="yes"
-                    className="mr-2"
-                    checked
-                  />{" "}
-                  Yes
+            <div className="grid grid-cols-2 gap-2 items-center w-full">
+              <div className="grid gap-2 items-center">
+                <label className="block font-medium">
+                  Eligible for Gratuity:
                 </label>
-                <label className="ml-4">
-                  <input
-                    type="radio"
-                    name="gratuity"
-                    value="no"
-                    className="mr-2"
-                  />{" "}
-                  No
-                </label>
+                <div>
+                  <label>
+                    <input
+                      type="radio"
+                      name="gratuity"
+                      value="yes"
+                      className="mr-2"
+                      checked
+                    />{" "}
+                    Yes
+                  </label>
+                  <label className="ml-4">
+                    <input
+                      type="radio"
+                      name="gratuity"
+                      value="no"
+                      className="mr-2"
+                    />{" "}
+                    No
+                  </label>
+                </div>
+              </div>
+              <div className="grid gap-2 items-center w-full">
+                <label className="block font-medium">Gratuity Amount:</label>
+                <input
+                  type="text"
+                  value="0"
+                  className="border border-gray-200 p-2 rounded-md bg-gray-200"
+                />
               </div>
             </div>
             <div className="grid gap-2 items-center w-full">
-              <label className="block font-medium">Gratuity Amount:</label>
-              <input
-                type="number"
-                value="0"
-                className="border border-gray-400 p-2 rounded-md"
-              />
-            </div>
-            <div className="grid gap-2 items-center w-full">
-              <label className="block font-medium">
-                Overwrite Gratuity Amount:
+              <label className=" font-medium flex items-center gap-2">
+                Overwrite Gratuity Amount{" "}
+                <FaCircleInfo title="Enter the Gratuity amount you would like to pay in F&F" />
               </label>
               <input
                 type="number"
@@ -308,28 +323,34 @@ const Resignation = () => {
               />
             </div>
           </div>
-          <p className="font-bold">Notice Period Recovery:</p>
+          <p className="font-medium bg-gray-400 p-1 rounded-md text-white">
+            Notice Period Recovery
+          </p>
           <div className="grid md:grid-cols-2 gap-2 mt-2">
             <div className="grid gap-2 items-center w-full">
-              <label className="block font-medium">Served Notice Days:</label>
+              <label className="block font-medium">
+                Served Notice Days <span className="text-red-500">*</span>
+              </label>
               <input
                 type="number"
                 value="30"
                 readOnly
-                className="border border-gray-400 p-2 rounded-md"
-              />
-            </div>
-            <div className="grid gap-2 items-center w-full">
-              <label className="block font-medium">Notice Recovery Days:</label>
-              <input
-                type="number"
-                value="0"
-                className="border border-gray-400 p-2 rounded-md"
+                className="border border-gray-200 p-2 rounded-md bg-gray-200"
               />
             </div>
             <div className="grid gap-2 items-center w-full">
               <label className="block font-medium">
-                Notice Period Recovery Amount:
+                Notice Recovery Days <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                value="0"
+                className="border border-gray-200 p-2 rounded-md bg-gray-200"
+              />
+            </div>
+            <div className="grid gap-2 items-center w-full">
+              <label className="block font-medium">
+                Notice Period Recovery Amount
               </label>
               <input
                 type="number"
@@ -338,8 +359,9 @@ const Resignation = () => {
               />
             </div>
             <div className="grid gap-2 items-center w-full">
-              <label className="block font-medium">
-                Overwrite Notice Period Recovery Amount:
+              <label className="font-medium flex gap-2 items-center">
+                Overwrite Notice Period Recovery Amount{" "}
+                <FaCircleInfo title="Enter the notice period recovery amount you would like to recover from employee F&F" />
               </label>
               <input
                 type="number"
@@ -347,9 +369,20 @@ const Resignation = () => {
               />
             </div>
           </div>
-          <button type="submit" className="bg-blue-500 text-white p-2 rounded">
-            Submit
-          </button>
+          <div className="flex items-center gap-2 justify-center">
+            <button
+              type="submit"
+              className="bg-blue-500 border-2 border-blue-500 text-white p-2 px-4 rounded-md"
+            >
+              Submit
+            </button>
+            <button
+              type="submit"
+              className="border-red-500 border-2 px-4 p-2 rounded-md text-red-500 "
+            >
+              Cancel
+            </button>
+          </div>
         </form>
       </div>
       <div className="my-4 mx-2 w-fit">

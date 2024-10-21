@@ -226,8 +226,7 @@ const OrganisationSetting = () => {
               </h2>
             </NavLink>
           </li>
-          {/* <li>
-           
+          <li>
             <div
               onClick={toggleDropdown1}
               className="cursor-pointer group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-200 rounded-md"
@@ -339,7 +338,7 @@ const OrganisationSetting = () => {
                 </li>
               </ul>
             )}
-          </li> */}
+          </li>
 
           <li>
             <NavLink

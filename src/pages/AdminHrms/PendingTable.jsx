@@ -461,19 +461,20 @@ const PendingTable = () => {
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div className="bg-white p-4 rounded-lg w-96">
             <h2 className="text-lg font-bold mb-2">Are you sure?</h2>
-            <h3 className="font-medium my-2">Do you really want to reject selected records?</h3>
-          
-              <div className="grid gap-2 items-center w-full">
-                <label htmlFor="regularizationReason">Approver's comment</label>
-                <textarea
-                  type="text"
-                  name="regularizationReason"
-                  value={modalData.regularizationReason}
-                  onChange={handleChange}
-                  className="border border-gray-400 p-2 rounded-md"
-                />
-              </div>
-           
+            <h3 className="font-medium my-2">
+              Do you really want to reject selected records?
+            </h3>
+            <div className="grid gap-2 items-center w-full">
+              <label htmlFor="regularizationReason">Approver's comment</label>
+              <textarea
+                type="text"
+                name="regularizationReason"
+                value={modalData.regularizationReason}
+                onChange={handleChange}
+                className="border border-gray-400 p-2 rounded-md"
+              />
+            </div>
+
             <div className="flex justify-end gap-2 my-2">
               <button
                 className="border-2 border-red-500 text-red-500  py-1 px-6 rounded-full"
