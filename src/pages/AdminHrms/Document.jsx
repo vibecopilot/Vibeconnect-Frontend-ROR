@@ -71,22 +71,18 @@ const Document = () => {
     <section className="flex ml-20">
       <OrganisationSetting />
       <div className=" w-full flex m-3 flex-col overflow-hidden">
-        <div className=" flex justify-between my-5">
-          <p className="font-bold mb-2">Documents</p>
-          {/* <Link
-            to={"/templates/leave-templates"}
-            className="border-2 font-semibold hover:bg-black hover:text-white duration-150 transition-all border-black p-2 rounded-md text-black cursor-pointer text-center flex items-center  gap-2 justify-center"
-          >
-            <PiPlusCircle size={20} />
-            Add
-          </Link> */}
-          <button
-            onClick={() => setShowModal(true)}
-            className="border-2 font-semibold hover:bg-black hover:text-white duration-150 transition-all border-black p-2 rounded-md text-black cursor-pointer text-center flex items-center  gap-2 justify-center"
-          >
-            <PiPlusCircle size={20} />
-            Add Fields
-          </button>
+        <div className=" flex justify-between my-2">
+          <div className=" flex gap-2 justify-between w-full mt-2">
+            <p className="font-bold mb-2">Documents</p>
+            <button
+              disabled
+              onClick={() => setShowModal(true)}
+              className="bg-blue-400 rounded-full text-white flex items-center gap-2 p-1 px-2 font-medium pr-3 cursor-not-allowed"
+            >
+              <PiPlusCircle size={20} />
+              Add Field
+            </button>
+          </div>
           {showModal && (
             <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
               <div className="bg-white p-4 rounded-lg w-96">

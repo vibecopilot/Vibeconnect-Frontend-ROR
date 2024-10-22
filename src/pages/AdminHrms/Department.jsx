@@ -30,7 +30,7 @@ const Department = () => {
 
   const listItemStyle = {
     listStyleType: "disc",
-    color: "black",
+    color: "gray",
     fontSize: "14px",
     fontWeight: 500,
   };

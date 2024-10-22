@@ -34,6 +34,10 @@ const OrganisationSetting = () => {
   const toggleDropdown1 = () => {
     setDropdownOpen1(!dropdownOpen1);
   };
+  const [calendarDrop, setCalendarDrop] = useState(false);
+  const toggleCalendarDrop = () => {
+    setCalendarDrop(!calendarDrop);
+  };
 
   return (
     <div className="flex">
@@ -227,7 +231,7 @@ const OrganisationSetting = () => {
             </NavLink>
           </li>
           <li>
-            <div
+            {/* <div
               onClick={toggleDropdown1}
               className="cursor-pointer group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-200 rounded-md"
             >
@@ -253,7 +257,7 @@ const OrganisationSetting = () => {
               >
                 Employee Fields
               </h2>
-            </div>
+            </div> */}
             {dropdownOpen1 && (
               <ul className="pl-8 space-y-2 mt-2">
                 <li>
@@ -370,7 +374,7 @@ const OrganisationSetting = () => {
           </li>
         </ul>
         <div
-          onClick={toggleDropdown1}
+          onClick={toggleCalendarDrop}
           className="cursor-pointer group flex items-center text-sm gap-2 font-medium p-2 hover:bg-gray-200 rounded-md mt-4"
         >
           <div>{React.createElement(ImFileText2, { size: "20" })}</div>
@@ -382,7 +386,7 @@ const OrganisationSetting = () => {
             Calendar Milestones and Events
           </h2>
           <div className="">
-            {dropdownOpen1 ? (
+            {calendarDrop ? (
               <FiChevronUp size={20} />
             ) : (
               <FiChevronDown size={20} />
@@ -396,7 +400,7 @@ const OrganisationSetting = () => {
             Calendar Milestones and Events
           </h2>
         </div>
-        {dropdownOpen1 && open1 && (
+        {calendarDrop && open1 && (
           <ul className="pl-8 space-y-2 mt-2">
             <li>
               <NavLink

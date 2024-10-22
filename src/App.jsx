@@ -685,6 +685,7 @@ import FlexiCategory from "./pages/AdminHrms/FlexiBenefits/FlexiSettings/FlexiCa
 import PerformanceSettings from "./pages/AdminHrms/Performance/PerformanceSettings.jsx";
 import MilestoneTypeSettings from "./pages/AdminHrms/MilestoneTypeSettings.jsx";
 import AddExistingPolicy from "./pages/SubPages/AddExistingPolicy.jsx";
+import EditEmployee from "./pages/AdminHrms/EditEmployee.jsx";
 // new admin hrms
 
 function App() {
@@ -5634,6 +5635,14 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <AddEmployee />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/edit-employee/basics"
+            element={
+              <ProtectedAdminRoutes>
+                <EditEmployee />
               </ProtectedAdminRoutes>
             }
           />

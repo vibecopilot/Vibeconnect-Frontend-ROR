@@ -54,7 +54,7 @@ const AttAddTemplate = () => {
 
   const listItemStyle = {
     listStyleType: "disc",
-    color: "black",
+    color: "gray",
     fontSize: "14px",
     fontWeight: 500,
   };
@@ -62,8 +62,6 @@ const AttAddTemplate = () => {
   return (
     <div className="flex ml-20">
       <AdminHRMS />
-
-      {/* Sidebar for process steps */}
       <div className="bg-white border-r py-6 px-4 w-72">
         <h2 className="text-xl font-semibold mb-6">Process</h2>
         <div className="space-y-4">
@@ -75,7 +73,7 @@ const AttAddTemplate = () => {
                   ? "cursor-pointer"
                   : "cursor-not-allowed"
               }`}
-              onClick={() => handleStepClick(index)} // Handle click only for completed or current steps
+              onClick={() => handleStepClick(index)}
             >
               <div className="relative flex items-center justify-center">
                 {step.completed ? (
@@ -105,7 +103,6 @@ const AttAddTemplate = () => {
         </div>
       </div>
 
-      {/* Conditionally render step components */}
       <div className="flex-grow py-6 px-2">
         {currentStep === 0 && (
           <TemplateGeneralSetting

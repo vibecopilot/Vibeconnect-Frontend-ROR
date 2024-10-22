@@ -27,7 +27,7 @@ const paymentOptions = [
   { value: "offcycle", label: "Off-Cycle" },
 ];
 
-const AddEmployee = () => {
+const EditEmployee = () => {
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
   const [steps, setSteps] = useState("basic");
   const listItemStyle = {
@@ -820,4 +820,7 @@ const AddEmployee = () => {
   );
 };
 
-export default AddEmployee;
+
+
+
+export default EditEmployee
