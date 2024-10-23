@@ -6,7 +6,11 @@ import { FaQrcode, FaRegFileAlt } from "react-icons/fa";
 import AssetQrCode from "./AssetQrCode";
 import DataTable from "react-data-table-component";
 import { Link, useParams } from "react-router-dom";
-import { domainPrefix, getAssetparamsDetails, postAssetparams } from "../../../../api";
+import {
+  domainPrefix,
+  getAssetparamsDetails,
+  postAssetparams,
+} from "../../../../api";
 import toast from "react-hot-toast";
 import Table from "../../../../components/table/Table";
 import { SendDateFormat } from "../../../../utils/dateUtils";
@@ -41,7 +45,11 @@ const Assetinfo = ({ assetData }) => {
   const {
     floor_name,
     building_name,
+    longitude,
     name,
+    latitude,
+    asset_number,
+    equipemnt_id,
     unit_name,
     serial_number,
     model_number,
@@ -66,6 +74,7 @@ const Assetinfo = ({ assetData }) => {
   } = assetData;
   const [qrCode, setQrCode] = useState(false);
   const [paramsId, setParamsId] = useState("");
+  const [page, setPage] = useState("consumption");
   console.log(assetData);
 
   const isImage = (filePath) => {
@@ -87,11 +96,10 @@ const Assetinfo = ({ assetData }) => {
   };
 
   const [editParams, setEditParams] = useState(false);
- 
+
   const handleEditParameter = async (id) => {
     setEditParams(true);
     setParamsId(id);
-   
   };
 
   const assetParmsColumn = [
@@ -231,6 +239,14 @@ const Assetinfo = ({ assetData }) => {
                 <p>Unit : </p>
                 <p className="text-sm font-normal">{unit_name}</p>
               </div>
+              <div className="grid grid-cols-2">
+                <p>Latitude : </p>
+                <p className="text-sm font-normal">{latitude}</p>
+              </div>
+              <div className="grid grid-cols-2">
+                <p>Longitude : </p>
+                <p className="text-sm font-normal">{longitude}</p>
+              </div>
             </div>
           </div>
           <div>
@@ -246,7 +262,14 @@ const Assetinfo = ({ assetData }) => {
                 <p>Asset Name : </p>
                 <p className="text-sm font-normal">{name}</p>
               </div>
-
+              <div className="grid grid-cols-2">
+                <p>Asset Number : </p>
+                <p className="text-sm font-normal"> {asset_number}</p>
+              </div>
+              <div className="grid grid-cols-2">
+                <p>Equipment Id : </p>
+                <p className="text-sm font-normal"> {equipemnt_id}</p>
+              </div>
               <div className="grid grid-cols-2">
                 <p>Model Number : </p>
                 <p className="text-sm font-normal"> {model_number}</p>
@@ -316,7 +339,13 @@ const Assetinfo = ({ assetData }) => {
               <p className="font-medium">Comments : </p>
               <div className="bg-gray-400 p-1 text-white rounded-md">
                 {remarks ? (
-                  remarks
+                  <div>
+                    {remarks === "null" ? (
+                      <h2>No Comments</h2>
+                    ) : (
+                      <h2>{remarks}</h2>
+                    )}
+                  </div>
                 ) : (
                   <div className="text-center w-full">No Comments</div>
                 )}
@@ -326,7 +355,13 @@ const Assetinfo = ({ assetData }) => {
               <p className="font-medium">Description : </p>
               <div className="bg-gray-400 p-1 text-white rounded-md">
                 {description ? (
-                  description
+                  <div>
+                    {description === "null" ? (
+                      <h2>No Description</h2>
+                    ) : (
+                      <h2>{description}</h2>
+                    )}
+                  </div>
                 ) : (
                   <div className="text-center w-full">No Description</div>
                 )}
@@ -496,170 +531,330 @@ const Assetinfo = ({ assetData }) => {
                 )}
               </div>
             </div>
-
-            <div className="">
-              <h2 className="border-b  text-xl border-black font-semibold">
-                Consumption Parameter
-              </h2>
-              <div className="grid md:grid-cols-3 item-start gap-x-4 gap-y-2 w-full py-2">
-                <div className="flex flex-col">
-                  <label htmlFor="name" className="font-medium">
-                    Name :
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    id="name"
-                    value={formData.name || ""}
-                    onChange={handleAssetParamsChange}
-                    placeholder="Name"
-                    className="border p-1 px-4 border-gray-500 rounded-md"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label htmlFor="order" className="font-medium">
-                    Order :
-                  </label>
-                  <input
-                    type="text"
-                    name="order"
-                    id="order"
-                    value={formData.order || ""}
-                    onChange={handleAssetParamsChange}
-                    placeholder="Enter Order"
-                    className="border p-1 px-4 border-gray-500 rounded-md"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label htmlFor="charactorLimt" className="font-medium">
-                    Input Character Limit :
-                  </label>
-                  <input
-                    type="text"
-                    name="digit"
-                    value={formData.digit || ""}
-                    onChange={handleAssetParamsChange}
-                    id="charactorLimit"
-                    placeholder="Input Character Limit"
-                    className="border p-1 px-4 border-gray-500 rounded-md"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label htmlFor="bleow" className="font-medium">
-                    Alert Below :
-                  </label>
-                  <input
-                    type="text"
-                    name="alert_below"
-                    id="below"
-                    value={formData.alert_below}
-                    onChange={handleAssetParamsChange}
-                    placeholder="Alert Below Value"
-                    className="border p-1 px-4 border-gray-500 rounded-md"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label htmlFor="above" className="font-medium">
-                    Alert Above :
-                  </label>
-                  <input
-                    type="text"
-                    name="alert_above"
-                    id="above"
-                    value={formData.alert_above}
-                    onChange={handleAssetParamsChange}
-                    placeholder="Alert Above Value"
-                    className="border p-1 px-4 border-gray-500 rounded-md"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label htmlFor="min" className="font-medium">
-                    Min :
-                  </label>
-                  <input
-                    type="text"
-                    name="min_val"
-                    id="min"
-                    value={formData.min_val}
-                    onChange={handleAssetParamsChange}
-                    placeholder="Min Value"
-                    className="border p-1 px-4 border-gray-500 rounded-md"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label htmlFor="name" className="font-medium">
-                    Max :
-                  </label>
-                  <input
-                    type="text"
-                    name="max_val"
-                    id="above"
-                    value={formData.max_val}
-                    onChange={handleAssetParamsChange}
-                    placeholder="Max Value"
-                    className="border p-1 px-4 border-gray-500 rounded-md"
-                  />
-                </div>
-                {/* <div className="grid grid-cols-3 gap-4 my-4"> */}
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    name="dashboard_view"
-                    id="dashboard_view"
-                    checked={formData.dashboard_view || false}
-                    onChange={() =>
-                      setFormData((prevState) => ({
-                        ...prevState,
-                        dashboard_view: !prevState.dashboard_view,
-                      }))
-                    }
-                  />
-                  <label htmlFor="dashboard_view">Dashboard View</label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    name="consumption_view"
-                    id="consumption_view"
-                    checked={formData.consumption_view || false}
-                    // onClick={() => setMeterApplicable(!meterApplicable)}
-                    onChange={() =>
-                      setFormData((prevState) => ({
-                        ...prevState,
-                        consumption_view: !prevState.consumption_view,
-                      }))
-                    }
-                  />
-                  <label htmlFor="consumption_view">Consumption View</label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    name="check_prev"
-                    id="check_prev"
-                    checked={formData.check_prev || false}
-                    // onClick={() => setMeterApplicable(!meterApplicable)}
-                    onChange={() =>
-                      setFormData((prevState) => ({
-                        ...prevState,
-                        check_prev: !prevState.check_prev,
-                      }))
-                    }
-                  />
-                  <label htmlFor="check_prev">Check previous Reading</label>
-                </div>
-                {/* </div> */}
-              </div>
-              <div className="flex justify-center">
-                <button
-                  className="bg-black p-1 px-4 font-medium text-white rounded-md"
-                  onClick={handleAddConsumptionMeasure}
+            <div className="flex w-full  m-2">
+              <div className="flex w-full md:flex-row flex-col space-x-4 border-b border-gray-400">
+                <h2
+                  className={`p-2 px-4 ${
+                    page === "consumption"
+                      ? "text-blue-500 font-medium  shadow-custom-all-sides"
+                      : "text-black"
+                  } rounded-t-md  cursor-pointer text-center text-sm flex items-center justify-center transition-all duration-300`}
+                  onClick={() => setPage("consumption")}
                 >
-                  Add
-                </button>
+                  CONSUMPTION ASSET MEASURE
+                </h2>
+                <h2
+                  className={`p-2 ${
+                    page === "nonconsumption"
+                      ? "text-blue-500 font-medium  shadow-custom-all-sides"
+                      : "text-black"
+                  } rounded-t-md  cursor-pointer text-center text-sm flex items-center justify-center transition-all duration-300`}
+                  onClick={() => setPage("nonconsumption")}
+                >
+                  NON CONSUMPTION ASSET MEASURE
+                </h2>
               </div>
-              <div className="border-b-2 my-2 border-gray-400" />
             </div>
+
+            {page === "consumption" && (
+              <div className="p-5">
+                <h2 className="border-b  text-xl border-black font-semibold my-3">
+                  Consumption Parameter
+                </h2>
+                <div className="grid md:grid-cols-3 item-start gap-x-4 gap-y-2 w-full py-2">
+                  <div className="flex flex-col">
+                    <label htmlFor="name" className="font-medium">
+                      Name :
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      id="name"
+                      value={formData.name || ""}
+                      onChange={handleAssetParamsChange}
+                      placeholder="Name"
+                      className="border p-1 px-4 border-gray-500 rounded-md"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <label htmlFor="order" className="font-medium">
+                      Order :
+                    </label>
+                    <input
+                      type="text"
+                      name="order"
+                      id="order"
+                      value={formData.order || ""}
+                      onChange={handleAssetParamsChange}
+                      placeholder="Enter Order"
+                      className="border p-1 px-4 border-gray-500 rounded-md"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <label htmlFor="charactorLimt" className="font-medium">
+                      Input Character Limit :
+                    </label>
+                    <input
+                      type="text"
+                      name="digit"
+                      value={formData.digit || ""}
+                      onChange={handleAssetParamsChange}
+                      id="charactorLimit"
+                      placeholder="Input Character Limit"
+                      className="border p-1 px-4 border-gray-500 rounded-md"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <label htmlFor="bleow" className="font-medium">
+                      Alert Below :
+                    </label>
+                    <input
+                      type="text"
+                      name="alert_below"
+                      id="below"
+                      value={formData.alert_below}
+                      onChange={handleAssetParamsChange}
+                      placeholder="Alert Below Value"
+                      className="border p-1 px-4 border-gray-500 rounded-md"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <label htmlFor="above" className="font-medium">
+                      Alert Above :
+                    </label>
+                    <input
+                      type="text"
+                      name="alert_above"
+                      id="above"
+                      value={formData.alert_above}
+                      onChange={handleAssetParamsChange}
+                      placeholder="Alert Above Value"
+                      className="border p-1 px-4 border-gray-500 rounded-md"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <label htmlFor="min" className="font-medium">
+                      Min :
+                    </label>
+                    <input
+                      type="text"
+                      name="min_val"
+                      id="min"
+                      value={formData.min_val}
+                      onChange={handleAssetParamsChange}
+                      placeholder="Min Value"
+                      className="border p-1 px-4 border-gray-500 rounded-md"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <label htmlFor="name" className="font-medium">
+                      Max :
+                    </label>
+                    <input
+                      type="text"
+                      name="max_val"
+                      id="above"
+                      value={formData.max_val}
+                      onChange={handleAssetParamsChange}
+                      placeholder="Max Value"
+                      className="border p-1 px-4 border-gray-500 rounded-md"
+                    />
+                  </div>
+                  {/* <div className="grid grid-cols-3 gap-4 my-4"> */}
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      name="dashboard_view"
+                      id="dashboard_view"
+                      checked={formData.dashboard_view || false}
+                      onChange={() =>
+                        setFormData((prevState) => ({
+                          ...prevState,
+                          dashboard_view: !prevState.dashboard_view,
+                        }))
+                      }
+                    />
+                    <label htmlFor="dashboard_view">Dashboard View</label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      name="consumption_view"
+                      id="consumption_view"
+                      checked={formData.consumption_view || false}
+                      // onClick={() => setMeterApplicable(!meterApplicable)}
+                      onChange={() =>
+                        setFormData((prevState) => ({
+                          ...prevState,
+                          consumption_view: !prevState.consumption_view,
+                        }))
+                      }
+                    />
+                    <label htmlFor="consumption_view">Consumption View</label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      name="check_prev"
+                      id="check_prev"
+                      checked={formData.check_prev || false}
+                      // onClick={() => setMeterApplicable(!meterApplicable)}
+                      onChange={() =>
+                        setFormData((prevState) => ({
+                          ...prevState,
+                          check_prev: !prevState.check_prev,
+                        }))
+                      }
+                    />
+                    <label htmlFor="check_prev">Check previous Reading</label>
+                  </div>
+                  {/* </div> */}
+                </div>
+                <div className="flex justify-center">
+                  <button
+                    className="bg-black p-1 px-4 font-medium text-white rounded-md"
+                    onClick={handleAddConsumptionMeasure}
+                  >
+                    Add
+                  </button>
+                </div>
+                <div className="border-b-2 my-2 border-gray-400" />
+              </div>
+            )}
+            {page === "nonconsumption" && (
+              <div className="p-5">
+                <h2 className="border-b  text-xl border-black font-semibold my-3">
+                  NON CONSUMPTION ASSET MEASURE
+                </h2>
+                <div className="grid md:grid-cols-3 item-start gap-x-4 gap-y-2 w-full py-2">
+                  <div className="flex flex-col">
+                    <label htmlFor="name" className="font-medium">
+                      Name :
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      id="name"
+                      value={formData.name || ""}
+                      onChange={handleAssetParamsChange}
+                      placeholder="Name"
+                      className="border p-1 px-4 border-gray-500 rounded-md"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <label htmlFor="order" className="font-medium">
+                      Unit Type :
+                    </label>
+                    <input
+                      type="text"
+                      name="order"
+                      id="order"
+                      value={formData.order || ""}
+                      onChange={handleAssetParamsChange}
+                      placeholder="Enter Unit Type"
+                      className="border p-1 px-4 border-gray-500 rounded-md"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <label htmlFor="charactorLimt" className="font-medium">
+                      Min :
+                    </label>
+                    <input
+                      type="text"
+                      name="digit"
+                      value={formData.digit || ""}
+                      onChange={handleAssetParamsChange}
+                      id="charactorLimit"
+                      placeholder="Input Character Limit"
+                      className="border p-1 px-4 border-gray-500 rounded-md"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <label htmlFor="bleow" className="font-medium">
+                      Max :
+                    </label>
+                    <input
+                      type="text"
+                      name="alert_below"
+                      id="below"
+                      value={formData.alert_below}
+                      onChange={handleAssetParamsChange}
+                      placeholder="Max"
+                      className="border p-1 px-4 border-gray-500 rounded-md"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <label htmlFor="above" className="font-medium">
+                      Alert Below Val. :
+                    </label>
+                    <input
+                      type="text"
+                      name="alert_above"
+                      id="above"
+                      value={formData.alert_above}
+                      onChange={handleAssetParamsChange}
+                      placeholder="Alert Below Val."
+                      className="border p-1 px-4 border-gray-500 rounded-md"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <label htmlFor="min" className="font-medium">
+                      Alert Above Val. :
+                    </label>
+                    <input
+                      type="text"
+                      name="min_val"
+                      id="min"
+                      value={formData.min_val}
+                      onChange={handleAssetParamsChange}
+                      placeholder="Alert Above Val."
+                      className="border p-1 px-4 border-gray-500 rounded-md"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <label htmlFor="name" className="font-medium">
+                      Multiplier Factor :
+                    </label>
+                    <input
+                      type="text"
+                      name="max_val"
+                      id="above"
+                      value={formData.max_val}
+                      onChange={handleAssetParamsChange}
+                      placeholder="Multiplier Factor"
+                      className="border p-1 px-4 border-gray-500 rounded-md"
+                    />
+                  </div>
+                  {/* <div className="grid grid-cols-3 gap-4 my-4"> */}
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      name="dashboard_view"
+                      id="dashboard_view"
+                      checked={formData.dashboard_view || false}
+                      onChange={() =>
+                        setFormData((prevState) => ({
+                          ...prevState,
+                          dashboard_view: !prevState.dashboard_view,
+                        }))
+                      }
+                    />
+                    <label htmlFor="dashboard_view">Dashboard View</label>
+                  </div>
+
+                  {/* </div> */}
+                </div>
+                <div className="flex justify-center">
+                  <button
+                    className="bg-black p-1 px-4 font-medium text-white rounded-md"
+                    onClick={handleAddConsumptionMeasure}
+                  >
+                    Add
+                  </button>
+                </div>
+                <div className="border-b-2 my-2 border-gray-400" />
+              </div>
+            )}
           </div>
           <Table
             columns={assetParmsColumn}
@@ -669,6 +864,7 @@ const Assetinfo = ({ assetData }) => {
         </div>
         {qrCode && (
           <AssetQrCode
+            assetId={id}
             assetName={name}
             building={building_name}
             floor={floor_name}
@@ -677,7 +873,13 @@ const Assetinfo = ({ assetData }) => {
             QR={domainPrefix + assetData.qr_code_image_url}
           />
         )}
-        {editParams && <EditAssetParams id={paramsId} assetId={id} onclose={()=> setEditParams(false)} />}
+        {editParams && (
+          <EditAssetParams
+            id={paramsId}
+            assetId={id}
+            onclose={() => setEditParams(false)}
+          />
+        )}
       </div>
     </section>
   );

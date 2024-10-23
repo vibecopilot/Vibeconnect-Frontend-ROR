@@ -10,6 +10,9 @@ import {
 import { getSiteAssetDetails } from "../../../api";
 import { useParams } from "react-router-dom";
 import Navbar from "../../../components/Navbar";
+import AssetDetailsLogs from "./assetSubDetails/AssetDetailsLogs";
+import CostOfOwnership from "./assetSubDetails/CostOfOwnership";
+import AssetsDetailsAssociated from "./assetSubDetails/AssetsDetailsAssociated";
 
 const AssetDetails = () => {
   const [page, setPage] = useState("assetInfo");
@@ -76,6 +79,15 @@ const AssetDetails = () => {
             >
               PPM
             </h2>
+            <h2
+              className={`p-1 ${
+                page === "logs" &&
+                "bg-white text-blue-500 shadow-custom-all-sides"
+              } rounded-full px-4 cursor-pointer text-center transition-all duration-300 ease-linear`}
+              onClick={() => setPage("logs")}
+            >
+              Logs
+            </h2>
             {/* <h2
               className={`p-1 ${
                 page === "activityFeed" && "bg-white text-blue-500"
@@ -83,15 +95,31 @@ const AssetDetails = () => {
               onClick={() => setPage("activityFeed")}
             >
               Activity Feed
-            </h2>
+            </h2> */}
             <h2
               className={`p-1 ${
                 page === "history" && "bg-white text-blue-500"
               } rounded-full px-4 cursor-pointer text-center`}
               onClick={() => setPage("history")}
             >
-              History
-            </h2> */}
+              History Card
+            </h2>
+            <h2
+              className={`p-1 ${
+                page === "costOfOwnership" && "bg-white text-blue-500"
+              } rounded-full px-4 cursor-pointer text-center`}
+              onClick={() => setPage("costOfOwnership")}
+            >
+              Cost Of Ownership
+            </h2>
+            <h2
+              className={`p-1 ${
+                page === "associated" && "bg-white text-blue-500"
+              } rounded-full px-4 cursor-pointer text-center`}
+              onClick={() => setPage("associated")}
+            >
+              Associated Assets
+            </h2>
           </div>
         </div>
         {page === "assetInfo" && (
@@ -119,9 +147,24 @@ const AssetDetails = () => {
             <ActivityFeed />
           </div>
         )}
+         {page === "logs" && (
+          <div>
+            <AssetDetailsLogs />
+          </div>
+        )}
         {page === "history" && (
           <div>
             <History />
+          </div>
+        )}
+        {page === "costOfOwnership" && (
+          <div>
+            <CostOfOwnership />
+          </div>
+        )}
+        {page === "associated" && (
+          <div>
+            <AssetsDetailsAssociated />
           </div>
         )}
       </div>

@@ -13,7 +13,7 @@ import {
   postSiteAsset,
 } from "../../api";
 import { BiCross, BiPlus } from "react-icons/bi";
-import { IoClose } from "react-icons/io5";
+import { IoAddCircle, IoAddCircleOutline, IoClose } from "react-icons/io5";
 import AddSuppliers from "../../containers/modals/AddSuppliersModal";
 import toast from "react-hot-toast";
 import { useNavigate, useParams } from "react-router-dom";
@@ -21,6 +21,7 @@ import Selector from "../../containers/Selector";
 import FileInputBox from "../../containers/Inputs/FileInputBox";
 import { useSelector } from "react-redux";
 import Navbar from "../../components/Navbar";
+import { IoMdClose } from "react-icons/io";
 
 const EditAsset = () => {
   const buildings = getItemInLocalStorage("Building");
@@ -49,7 +50,10 @@ const EditAsset = () => {
     floor_id: "",
     unit_id: "",
     name: "",
+    latitude: "",
+    longitude: "",
     asset_number: "",
+    equipemnt_id: "",
     serial_number: "",
     model_number: "",
     wing_id: "",
@@ -76,11 +80,12 @@ const EditAsset = () => {
     remarks: "",
     oem_name: "",
     uom: "",
-
+    comprehensive: "",
+    nonComprehensive: "",
     //
     invoice: [],
     insurance: [],
-    manuals: [],
+    manual: [],
     others: [],
   });
   console.log(formData);
@@ -91,7 +96,7 @@ const EditAsset = () => {
       try {
         const details = await getSiteAssetDetails(id);
         // setFormData(details.data);
-        setFormData(prevFormData => ({
+        setFormData((prevFormData) => ({
           ...prevFormData,
           ...details.data,
           is_meter: details.data.is_meter || false,
@@ -100,8 +105,8 @@ const EditAsset = () => {
           breakdown: details.data.breakdown || false,
           invoice: details.data.invoice || [],
           insurance: details.data.insurance || [],
-          manuals: details.data.manuals || [],
-          others: details.data.others || []
+          manual: details.data.manual || [],
+          others: details.data.others || [],
         }));
         fetchFloor(details.data.building_id);
         getUnit(details.data.floor_id);
@@ -171,7 +176,6 @@ const EditAsset = () => {
             id: item.id,
           }))
         );
-      
       } catch (error) {
         console.log(error);
       }
@@ -181,8 +185,6 @@ const EditAsset = () => {
     fetchVendor();
     fetchAssetGroups();
   }, [id]);
-
-
 
   const handleChange = async (e) => {
     async function fetchFloor(floorID) {
@@ -256,7 +258,7 @@ const EditAsset = () => {
         ...formData,
         asset_group_id: groupId,
       });
-    }  else {
+    } else {
       setFormData({
         ...formData,
         [e.target.name]: e.target.value,
@@ -289,23 +291,46 @@ const EditAsset = () => {
   // };
 
   const handleFileChange = (files, fieldName) => {
-    setFormData(prevFormData => ({
+    setFormData((prevFormData) => ({
       ...prevFormData,
-      [fieldName]: files || [], // Ensure it's always an array
+      [fieldName]: files, // Ensure it's always an array
     }));
     console.log(fieldName);
   };
-  
+
   const navigate = useNavigate();
 
   const handleSubmit = async () => {
-    if (
-      formData.name === "" ||
-      formData.building_id === "" ||
-      formData.floor_id === "" ||
-      formData.unit_id === ""
-    ) {
-      return toast.error("All fields are required");
+    if (formData.building_id === "") {
+      return toast.error("Please Select Building Name");
+    }
+    if (formData.latitude === "") {
+      return toast.error("Please Enter Latitude");
+    }
+    if (formData.longitude === "") {
+      return toast.error("Please Enter Longitude");
+    }
+
+    if (formData.name === "") {
+      return toast.error("Please Enter Asset Name");
+    }
+    if (formData.oem_name === "") {
+      return toast.error("Please Enter ORM Name");
+    }
+    if (formData.asset_number === "") {
+      return toast.error("Please Enter Asset Number");
+    }
+    if (formData.equipemnt_id === "") {
+      return toast.error("Please Enter Equipment Id");
+    }
+    if (formData.purchase_cost === "") {
+      return toast.error("Please Enter Purchase Cost");
+    }
+    if (formData.asset_group_id === "") {
+      return toast.error("Please Select Group");
+    }
+    if (formData.sub_group_id === "") {
+      return toast.error("Please Select Sub Group");
     }
 
     if (
@@ -344,14 +369,22 @@ const EditAsset = () => {
       formDataSend.append("site_asset[building_id]", formData.building_id);
       formDataSend.append("site_asset[floor_id]", formData.floor_id);
       formDataSend.append("site_asset[unit_id]", formData.unit_id);
+      formDataSend.append("site_asset[latitude]", formData.latitude);
+      formDataSend.append("site_asset[longitude]", formData.longitude);
       formDataSend.append("site_asset[name]", formData.name);
+      formDataSend.append("site_asset[asset_number]", formData.asset_number);
+      formDataSend.append("site_asset[equipemnt_id]", formData.equipemnt_id);
       formDataSend.append("site_asset[oem_name]", formData.oem_name);
       formDataSend.append("site_asset[serial_number]", formData.serial_number);
       formDataSend.append("site_asset[model_number]", formData.model_number);
       formDataSend.append("site_asset[purchased_on]", formData.purchased_on);
       formDataSend.append("site_asset[purchase_cost]", formData.purchase_cost);
       formDataSend.append("site_asset[installation]", formData.installation);
-      formDataSend.append("site_asset[parent_asset_id]", formData.parent_asset_id);
+      formDataSend.append("site_asset[assetType]", formData.installation);
+      formDataSend.append(
+        "site_asset[parent_asset_id]",
+        formData.parent_asset_id
+      );
       formDataSend.append(
         "site_asset[warranty_expiry]",
         formData.warranty_expiry
@@ -373,18 +406,18 @@ const EditAsset = () => {
       (formData.invoice || []).forEach((file, index) => {
         formDataSend.append(`purchase_invoices[]`, file);
       });
-  
+
       (formData.insurance || []).forEach((file, index) => {
         console.log("-----------------");
         console.log(index);
         console.log(file);
         formDataSend.append(`insurances[]`, file);
       });
-  
-      (formData.manuals || []).forEach((file, index) => {
+
+      (formData.manual || []).forEach((file, index) => {
         formDataSend.append(`manuals[]`, file);
       });
-  
+
       (formData.others || []).forEach((file, index) => {
         formDataSend.append(`other_files[]`, file);
       });
@@ -400,13 +433,53 @@ const EditAsset = () => {
     }
   };
 
+  const [meterCategory, setMeterCategory] = useState("");
+
+  const [subMeterCategory, setSubMeterCategory] = useState("");
+
+  const handleMeterCategoryChange = (e) => {
+    setMeterCategory(e.target.value);
+  };
+  const handleSubMeterCategoryChange = (e) => {
+    setSubMeterCategory(e.target.value);
+  };
+
+  const [consumption, setConsumption] = useState("");
+
+  const handleConsumptionChange = (e) => {
+    setConsumption(e.target.value);
+  };
+
+  // Consumption
+  const [consumptionData, setConsumptionData] = useState([]);
+  const handleAddConsumption = () => {
+    setConsumptionData((prev) => [
+      ...prev,
+      {
+        name: "",
+        order: "",
+        digit: "",
+        alert_below: "",
+        alert_above: "",
+        min_val: "",
+        max_val: "",
+        dashboard_view: false,
+        consumption_view: false,
+        check_prev: false,
+      },
+    ]);
+  };
+
+  const handleRemoveConsumption = (index) => {
+    setConsumptionData((prev) => prev.filter((_, i) => i !== index));
+  };
+
   return (
     // <section>
     //   <div className="m-2">
     <section className="flex">
       <div className="hidden md:block">
-
-      <Navbar />
+        <Navbar />
       </div>
       <div className="md:p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
         <h2
@@ -501,6 +574,36 @@ const EditAsset = () => {
                   ))}
                 </select>
               </div>
+              <div className="flex flex-col">
+                <label className="block text-gray-700 mb-1 font-medium">
+                  Latitude
+                  <span className="text-red-500 font-medium">*</span>
+                </label>
+                <input
+                  type="number"
+                  name="latitude"
+                  id=""
+                  onChange={handleChange}
+                  value={formData.latitude}
+                  placeholder="Latitude"
+                  className="border p-1 px-4 border-gray-500 rounded-md"
+                />
+              </div>
+              <div className="flex flex-col">
+                <label className="block text-gray-700 mb-1 font-medium">
+                  Longitude
+                  <span className="text-red-500 font-medium">*</span>
+                </label>
+                <input
+                  type="number"
+                  name="longitude"
+                  id=""
+                  onChange={handleChange}
+                  value={formData.longitude}
+                  placeholder="Longitude"
+                  className="border p-1 px-4 border-gray-500 rounded-md"
+                />
+              </div>
             </div>
           </div>
           <div className="my-5">
@@ -510,6 +613,10 @@ const EditAsset = () => {
             <div className="flex sm:flex-row flex-col justify-around items-center">
               <div className="grid md:grid-cols-3 item-start gap-x-4 gap-y-2 w-full">
                 <div className="flex flex-col">
+                  <label className="block text-gray-700 mb-1 font-medium">
+                    Asset Name
+                    <span className="text-red-500 font-medium">*</span>
+                  </label>
                   <input
                     type="text"
                     name="name"
@@ -521,6 +628,10 @@ const EditAsset = () => {
                   />
                 </div>
                 <div className="flex flex-col">
+                  <label className="block text-gray-700 mb-1 font-medium">
+                    OEM Name
+                    <span className="text-red-500 font-medium">*</span>
+                  </label>
                   <input
                     type="text"
                     name="oem_name"
@@ -531,9 +642,13 @@ const EditAsset = () => {
                     className="border p-1 px-4 border-gray-500 rounded-md"
                   />
                 </div>
-                {/* <div className="flex flex-col">
+                <div className="flex flex-col">
+                  <label className="block text-gray-700 mb-1 font-medium">
+                    Asset Number
+                    <span className="text-red-500 font-medium">*</span>
+                  </label>
                   <input
-                    type="text"
+                    type="number"
                     name="asset_number"
                     id="asset_number"
                     onChange={handleChange}
@@ -541,20 +656,41 @@ const EditAsset = () => {
                     placeholder="Asset Number"
                     className="border p-1 px-4 border-gray-500 rounded-md"
                   />
-                </div> */}
+                </div>
+                <div className="flex flex-col">
+                  <label className="block text-gray-700 mb-1 font-medium">
+                    Equipment Id
+                    <span className="text-red-500 font-medium">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="equipemnt_id"
+                    id="equipment_id"
+                    onChange={handleChange}
+                    value={formData.equipemnt_id}
+                    placeholder="Equipment Id"
+                    className="border p-1 px-4 border-gray-500 rounded-md"
+                  />
+                </div>
 
                 <div className="flex flex-col">
+                  <label className="block text-gray-700 mb-1 font-medium">
+                    Model Number
+                  </label>
                   <input
                     type="text"
                     name="model_number"
                     id="model_number"
                     value={formData.model_number}
                     onChange={handleChange}
-                    placeholder="Model Number "
+                    placeholder="Model Number"
                     className="border p-1 px-4 border-gray-500 rounded-md"
                   />
                 </div>
                 <div className="flex flex-col">
+                  <label className="block text-gray-700 mb-1 font-medium">
+                    Serial Number
+                  </label>
                   <input
                     type="text"
                     name="serial_number"
@@ -566,6 +702,10 @@ const EditAsset = () => {
                   />
                 </div>
                 <div className="flex flex-col">
+                  <label className="block text-gray-700 mb-1 font-medium">
+                    Purchase Cost
+                    <span className="text-red-500 font-medium">*</span>
+                  </label>
                   <input
                     type="text"
                     name="purchase_cost"
@@ -577,6 +717,9 @@ const EditAsset = () => {
                   />
                 </div>
                 <div className="flex flex-col">
+                  <label className="block text-gray-700 mb-1 font-medium">
+                    Capacity
+                  </label>
                   <input
                     type="text"
                     name="capacity"
@@ -588,6 +731,9 @@ const EditAsset = () => {
                   />
                 </div>
                 <div className="flex flex-col">
+                  <label className="block text-gray-700 mb-1 font-medium">
+                    Unit
+                  </label>
                   <input
                     type="text"
                     name="uom"
@@ -600,6 +746,10 @@ const EditAsset = () => {
                 </div>
 
                 <div className="flex flex-col">
+                  <label className="block text-gray-700 mb-1 font-medium">
+                    Group
+                    <span className="text-red-500 font-medium">*</span>
+                  </label>
                   <select
                     className="border p-1 px-4 border-gray-500 rounded-md"
                     value={formData.asset_group_id}
@@ -615,6 +765,10 @@ const EditAsset = () => {
                   </select>
                 </div>
                 <div className="flex flex-col">
+                  <label className="block text-gray-700 mb-1 font-medium">
+                    Sub Group
+                    <span className="text-red-500 font-medium">*</span>
+                  </label>
                   <select
                     className="border p-1 px-4 border-gray-500 rounded-md"
                     name="sub_group_id"
@@ -764,14 +918,27 @@ const EditAsset = () => {
                     value={formData.parent_asset_id}
                   >
                     <option value="">Select Parent Asset </option>
-                    {parentAssets.map((parent)=>(
-                      <option value={parent.id} key={parent.id}>{parent.name}</option>
+                    {parentAssets.map((parent) => (
+                      <option value={parent.id} key={parent.id}>
+                        {parent.name}
+                      </option>
                     ))}
                   </select>
                 )}
               </div>
             </div>
-
+            <div className="grid grid-cols-3">
+            <div className=" mt-4">
+              <select
+                className="border p-1 px-4 border-gray-500 rounded-md w-full"
+                name=""
+              >
+                <option value="">Select Asset Type</option>
+                <option value="comprehensive">Comprehensive</option>
+                <option value="non-Comprehensive">Non-Comprehensive</option>
+              </select>
+            </div>
+          </div>
             <div>
               <div className="flex flex-col justify-around">
                 <label
@@ -835,7 +1002,7 @@ const EditAsset = () => {
                     onChange={() =>
                       setFormData({ ...formData, warranty: false })
                     }
-                    checked={formData.warranty_start === "" &&  false}
+                    checked={formData.warranty_start === "" && false}
                     id="notInWarranty"
                     className="checked:accent-black"
                     name="warranty"
@@ -890,15 +1057,15 @@ const EditAsset = () => {
             </div>
             <div className="my-5">
               <p className="border-b border-black font-semibold">
-                Supplier Details
+                Supplier Contact Details
               </p>
               <div className="flex md:items-center md:justify-between flex-col md:flex-row">
                 <div className="flex flex-col my-2">
-                  <label htmlFor="" className="font-semibold">
+                  <label htmlFor="" className="block text-gray-700 mb-1">
                     Select Supplier:
                   </label>
                   <select
-                    className="border p-1 px-4 border-gray-500 rounded-md"
+                    className="border p-1 px-4 border-gray-500 rounded-md w-full"
                     value={formData.vendor_id}
                     onChange={handleChange}
                     name="vendor_id"
@@ -911,12 +1078,12 @@ const EditAsset = () => {
                     ))}
                   </select>
                 </div>
-                {/* <button
-                  className="p-1 border-2 border-black px-4 rounded-md hover:bg-black hover:text-white transition-all duration-300"
+                <button
+                  className="p-1 border-2 border-black px-4 rounded-md hover:bg-black hover:text-white transition-all duration-300 flex items-center gap-1"
                   onClick={() => showAddSupplierMOdal(true)}
                 >
-                  Add Supplier
-                </button> */}
+                  <IoAddCircle size={20} /> Add Supplier
+                </button>
                 {addSupplierModal && (
                   <AddSuppliers onclose={() => showAddSupplierMOdal(false)} />
                 )}
@@ -926,23 +1093,269 @@ const EditAsset = () => {
               <p className="border-b border-black font-semibold">
                 Meter Category Type
               </p>
-              <div className="flex flex-col my-2">
-                <label htmlFor="" className="font-semibold">
-                  Select Meter Category:
-                </label>
-                <select
-                  className="border p-1 px-4 border-gray-500 rounded-md"
-                  value={formData.meter_category}
-                  onChange={handleChange}
-                  name="meter_category"
-                >
-                  <option value="">Select Meter Category</option>
-                  <option value="unit1">Category 1</option>
-                  <option value="unit2">Category 2</option>
-                  <option value="unit2">Category 3</option>
-                </select>
+              <div className="grid md:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-5">
+                <div className="flex flex-col mt-4 w-full">
+                  <label className="block text-gray-700 mb-1">
+                    Select Meter Category Type
+                  </label>
+                  <select
+                    className="border p-1 px-4 border-gray-500 rounded-md w-full"
+                    name="meter_category"
+                    onChange={handleMeterCategoryChange}
+                    value={meterCategory}
+                  >
+                    <option value="">Select Meter Category</option>
+                    <option value="Board">Board</option>
+                    <option value="DG">DG</option>
+                    <option value="Renewable">Renewable</option>
+                    <option value="FreshWater">Fresh Water</option>
+                    <option value="Recycled">Recycled</option>
+                  </select>
+                </div>
+                <div className="flex flex-col">
+                  {meterCategory === "Board" && (
+                    <div className="mt-4 w-full">
+                      <label className="block text-gray-700 mb-1">Board</label>
+                      <select
+                        className="border p-1 px-4 border-gray-500 rounded-md w-full"
+                        name="meter_category"
+                      >
+                        <option value="">Select Board</option>
+                        <option value="">HT</option>
+                        <option value="">VCB</option>
+                        <option value="">Transformer</option>
+                        <option value="">LT</option>
+                      </select>
+                    </div>
+                  )}
+                  {meterCategory === "DG" && (
+                    <div className="mt-4 w-full">
+                      <label className="block text-gray-700 mb-1">DG</label>
+                      <select
+                        className="border p-1 px-4 border-gray-500 rounded-md w-full"
+                        name="meter_category"
+                      >
+                        <option value="">Select DG</option>
+                      </select>
+                    </div>
+                  )}
+                  {meterCategory === "Renewable" && (
+                    <div className="mt-4 w-full">
+                      <label className="block text-gray-700 mb-1">
+                        Renewable
+                      </label>
+                      <select
+                        className="border p-1 px-4 border-gray-500 rounded-md w-full"
+                        name="meter_category"
+                      >
+                        <option value="">Select Renewable</option>
+                        <option value="">Solar</option>
+                        <option value="">Bio Methanol</option>
+                        <option value="">Wind</option>
+                      </select>
+                    </div>
+                  )}
+                  {meterCategory === "FreshWater" && (
+                    <div className="mt-4 w-full">
+                      <label className="block text-gray-700 mb-1 ">
+                        Fresh Water
+                      </label>
+                      <select
+                        className="border p-1 px-4 border-gray-500 rounded-md w-full"
+                        name="meter_category"
+                        onChange={handleSubMeterCategoryChange}
+                        value={subMeterCategory}
+                      >
+                        <option value="">SelectFresh Water</option>
+                        <option value="sourceInput">Source (Input)</option>
+                        <option value="">Destination (Output)</option>
+                      </select>
+                    </div>
+                  )}
+                  {meterCategory === "Recycled" && (
+                    <div className="mt-4 w-full">
+                      <label className="block text-gray-700 mb-1">
+                        Recycled
+                      </label>
+                      <select
+                        className="border p-1 px-4 border-gray-500 rounded-md w-full"
+                        name="meter_category"
+                      >
+                        <option value="">Select Recycled</option>
+                      </select>
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-col">
+                  {subMeterCategory === "sourceInput" && (
+                    <div className="mt-4 w-full">
+                      <label className="block text-gray-700 mb-1 ">
+                        Sub Fresh Water
+                      </label>
+                      <select
+                        className="border p-1 px-4 border-gray-500 rounded-md w-full"
+                        name=""
+                      >
+                        <option value="">Select Fresh Water</option>
+                        <option value="">Municipal Corporation</option>
+                        <option value="">Tanker</option>
+                        <option value="">Borewell</option>
+                        <option value="">Rainwater</option>
+                        <option value="">Jackwell</option>
+                        <option value="">Pump</option>
+                      </select>
+                    </div>
+                  )}
+                </div>
               </div>
             </div> */}
+          </div>
+          <div className="my-5">
+            <p className="border-b border-black font-semibold">
+              CONSUMPTION ASSET MEASURE
+            </p>
+            <div className="flex flex-col mt-4 w-full">
+              <select
+                className="border p-1 px-4 border-gray-500 rounded-md w-fit"
+                name="meter_category"
+                onChange={handleConsumptionChange}
+                value={consumption}
+              >
+                <option value="">Select Consumption Asset Measure Type</option>
+                <option value="ConsumptionAssetMeasureType">
+                  Consumption Asset Measure Type
+                </option>
+                <option value="nonConsumption">
+                  Non Consumption Asset Measure Type
+                </option>
+              </select>
+            </div>
+            <div className="flex flex-col">
+              {consumption === "ConsumptionAssetMeasureType" && (
+                <div className="my-5 space-y-3">
+                  {consumptionData.map((formData, index) => (
+                    <div
+                      key={index}
+                      className="grid lg:grid-cols-3 md:grid-cols-1 sm:grid-cols-1 gap-5 border rounded-md p-5"
+                    >
+                      <div className="flex flex-col">
+                        <label
+                          htmlFor="name_Consumption"
+                          className="font-medium"
+                        >
+                          Name:
+                        </label>
+                        <input
+                          type="text"
+                          name="nameConsumption"
+                          id="name_Consumption"
+                          placeholder="Name"
+                          className="border p-1 px-4 border-gray-500 rounded-md"
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <label htmlFor="unit_type" className="font-medium">
+                          Unit Type:
+                        </label>
+                        <select
+                          className="border p-1 px-4 border-gray-500 rounded-md"
+                          name="unit_type"
+                          id="unit_type"
+                        >
+                          <option value="">Select Unit Type</option>
+                        </select>
+                      </div>
+                      <div className="flex flex-col">
+                        <label htmlFor={`min`} className="font-medium">
+                          Min:
+                        </label>
+                        <input
+                          type="text"
+                          name="min_val"
+                          id={`min`}
+                          placeholder="Min"
+                          className="border p-1 px-4 border-gray-500 rounded-md"
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <label htmlFor={`max`} className="font-medium">
+                          Max:
+                        </label>
+                        <input
+                          type="text"
+                          name="max_val"
+                          id={`max`}
+                          placeholder="Max"
+                          className="border p-1 px-4 border-gray-500 rounded-md"
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <label htmlFor={`below`} className="font-medium">
+                          Alert Below Value:
+                        </label>
+                        <input
+                          type="text"
+                          name="alert_below"
+                          id={`below`}
+                          placeholder="Alert Below Value"
+                          className="border p-1 px-4 border-gray-500 rounded-md"
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <label htmlFor={`above`} className="font-medium">
+                          Alert Above Value:
+                        </label>
+                        <input
+                          type="text"
+                          name="alert_above"
+                          id={`above`}
+                          placeholder="Alert Above Value"
+                          className="border p-1 px-4 border-gray-500 rounded-md"
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <label
+                          htmlFor={`multiplier_factor`}
+                          className="font-medium"
+                        >
+                          Multiplier Factor:
+                        </label>
+                        <input
+                          type="text"
+                          name="multiplierFactor"
+                          id={`multiplier_factor`}
+                          placeholder="Multiplier Factor"
+                          className="border p-1 px-4 border-gray-500 rounded-md"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          name=" CheckPreviousReading"
+                          id="previous_reading"
+                        />
+                        <label htmlFor={`previous_reading`}>
+                          Check Previous Reading
+                        </label>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveConsumption(index)}
+                        className="col-span-3 text-red-600 underline mt-2"
+                      >
+                        <IoMdClose size={20} />
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    className="border border-black rounded-md py-2 px-3 my-2"
+                    onClick={handleAddConsumption}
+                  >
+                    <IoAddCircleOutline />
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
           <h2 className="border-b text-center text-xl border-black mb-6 font-bold">
             Attachments
@@ -971,8 +1384,8 @@ const EditAsset = () => {
                 Manuals
               </p>
               <FileInputBox
-                handleChange={(files) => handleFileChange(files, "manuals")}
-                fieldName={"manuals"}
+                handleChange={(files) => handleFileChange(files, "manual")}
+                fieldName={"manual"}
               />
             </div>
             <div>

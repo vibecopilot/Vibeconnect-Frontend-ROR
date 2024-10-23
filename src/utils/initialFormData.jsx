@@ -12,6 +12,8 @@ export const initialAddAssetFormData = {
     floor_id: "",
     unit_id: "",
     name: "",
+    latitude: "",
+    longitude: "",
     serial_number: "",
     model_number: "",
     purchase_cost: "",
@@ -35,8 +37,8 @@ export const initialAddAssetFormData = {
     vendor_id: "",
     oem_name:"",
     parent_asset_id:"",
-  
-    
+    asset_number: "",
+    equipment_id: "",
   
     invoice: [],
     insurance: [],

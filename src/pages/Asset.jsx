@@ -15,6 +15,7 @@ import {
   getSiteSearchedAsset,
   getUnits,
   getVibeBackground,
+  downloadQrCode,
 } from "../api";
 import { getItemInLocalStorage } from "../utils/localStorage";
 import AMC from "./SubPages/AMC";
@@ -33,6 +34,8 @@ import { CirclesWithBar, DNA, ThreeDots } from "react-loader-spinner";
 import AssetNav from "../components/navbars/AssetNav";
 import ImportAssetModal from "../containers/modals/ImportAssetModal";
 import { Pagination } from "antd";
+import { FaDownload } from "react-icons/fa";
+import toast from "react-hot-toast";
 
 // import jsPDF from "jspdf";
 // import QRCode from "qrcode.react";
@@ -42,7 +45,7 @@ const Asset = () => {
   const [filter, setFilter] = useState(false);
   // const [omitColumn, setOmitColumn] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState(columnsData);
-  const [selectedRows, setSelectedRows] = useState([]);
+  // const [selectedRows, setSelectedRows] = useState([]);
   const [floors, setFloors] = useState([]);
   const [unitName, setUnitName] = useState([]);
   const [selectedBuilding, setSelectedBuilding] = useState("");
@@ -57,7 +60,7 @@ const Asset = () => {
   const [uploadModal, setUploadModal] = useState(false);
   const [pageNo, setPageNo] = useState(1);
   const [total, setTotal] = useState(0);
-  const [perPage, setPerPage] = useState(10)
+  const [perPage, setPerPage] = useState(10);
   const handleCheckboxChange = (event) => {
     const value = event.target.value;
     setSelectedOptions((prevSelectedOptions) =>
@@ -84,7 +87,7 @@ const Asset = () => {
     const date = new Date(dateString);
     return date.toLocaleString();
   };
-  document.title = `Assets - Vibe Connect`
+  document.title = `Assets - Vibe Connect`;
   const column = [
     {
       name: "Action",
@@ -103,7 +106,7 @@ const Asset = () => {
       name: "Asset Name",
       selector: (row) => row.name,
       sortable: true,
-      width: "150px"
+      width: "150px",
     },
 
     {
@@ -114,8 +117,16 @@ const Asset = () => {
 
     { name: "Floor", selector: (row) => row.floor_name, sortable: true },
     { name: "Unit", selector: (row) => row.unit_name, sortable: true },
-
-   
+    {
+      name: "Asset Number",
+      selector: (row) => row.asset_number,
+      sortable: true,
+    },
+    {
+      name: "Equipment Id",
+      selector: (row) => row.equipemnt_id,
+      sortable: true,
+    },
     {
       name: "OEM Name",
       selector: (row) => row.oem_name,
@@ -263,7 +274,7 @@ const Asset = () => {
       );
 
       setFilteredData(response.data.site_assets);
-      setTotal(response.data.total_count); 
+      setTotal(response.data.total_count);
       console.log(response);
     } catch (error) {
       console.error("Error fetching search data:", error);
@@ -289,7 +300,7 @@ const Asset = () => {
 
   const handlePageChange = (page, pageSize) => {
     setPageNo(page);
-    setPerPage(pageSize)
+    setPerPage(pageSize);
   };
 
   const exportToExcel = () => {
@@ -440,6 +451,43 @@ const Asset = () => {
 
   console.log(uploadModal);
 
+  const [selectedRows, setSelectedRows] = useState([]);
+
+  const handleSelectedRows = (rows) => {
+    const selectedId = rows.map((row) => row.id);
+    console.log(selectedId);
+    setSelectedRows(selectedId);
+  };
+
+  const handleQrDownload = async () => {
+    if (selectedRows.length === 0) {
+      return toast.error("Please select at least one data.");
+    }
+  
+    console.log(selectedRows);
+    toast.loading("Qr code downloading, please wait!");
+  
+    try {
+      const response = await downloadQrCode(selectedRows);
+      const blob = new Blob([response.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "qr_codes.pdf");
+      document.body.appendChild(link);
+      link.click();
+      window.URL.revokeObjectURL(url);
+      link.parentNode.removeChild(link);
+      console.log(response);
+      toast.dismiss();
+      toast.success("Qr code downloaded successfully");
+    } catch (error) {
+      toast.dismiss();
+      console.error("Error downloading Qr code:", error);
+      toast.error("Something went wrong, please try again");
+    }
+  };
+  
   return (
     <section
       className="flex"
@@ -528,11 +576,19 @@ const Asset = () => {
               <IoAddCircleOutline />
               Add Asset
             </Link>
+            <button
+              style={{ background: themeColor }}
+              className="px-4 py-2  font-medium text-white rounded-md flex gap-2 items-center justify-center"
+              onClick={handleQrDownload}
+            >
+              <FaDownload />
+              QR Code
+            </button>
             <div className="" ref={dropdownRef}>
               <button
                 onClick={() => setDropdownOpen(!dropdownOpen)}
                 style={{ background: themeColor }}
-                className="px-4 py-2  font-medium text-white rounded-md flex gap-2 items-center justify-center"
+                className="px-4 py-2  font-medium text-white rounded-md flex gap-2 items-center justify-center w-full"
               >
                 Hide Columns
                 {dropdownOpen ? <IoIosArrowDown /> : <MdKeyboardArrowRight />}
@@ -607,6 +663,8 @@ const Asset = () => {
               data={filteredData}
               fixedHeader
               pagination={false}
+              selectableRow={true}
+              onSelectedRows={handleSelectedRows}
             />
             <div className="bg-white mb-10 p-2 flex justify-end">
               <Pagination
@@ -617,8 +675,6 @@ const Asset = () => {
                 responsive
                 showSizeChanger
                 onShowSizeChange={handlePageChange}
-                
-               
               />
             </div>
           </>

@@ -685,6 +685,7 @@ import FlexiCategory from "./pages/AdminHrms/FlexiBenefits/FlexiSettings/FlexiCa
 import PerformanceSettings from "./pages/AdminHrms/Performance/PerformanceSettings.jsx";
 import MilestoneTypeSettings from "./pages/AdminHrms/MilestoneTypeSettings.jsx";
 import AddExistingPolicy from "./pages/SubPages/AddExistingPolicy.jsx";
+import MeterCategoryType from "./pages/Setup/MeterCategoryType/MeterCategoryType.jsx";
 // new admin hrms
 
 function App() {
@@ -959,6 +960,14 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <AssetGroup />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/setup/meter-category-type"
+            element={
+              <ProtectedAdminRoutes>
+                <MeterCategoryType />
               </ProtectedAdminRoutes>
             }
           />

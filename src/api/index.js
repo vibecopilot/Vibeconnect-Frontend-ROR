@@ -27,12 +27,20 @@ export const getPerPageSiteAsset = async (page, perPage) =>
       token: token,
     },
   });
+export const downloadQrCode = async (ids) =>
+  axiosInstance.get(`/site_assets/print_qr_codes?asset_ids=${ids}`, {
+    responseType: "blob",
+    params: {
+      token: token,
+    },
+  });
 export const getSiteAsset = async (page) =>
   axiosInstance.get(`/site_assets.json`, {
     params: {
       token: token,
     },
   });
+
 export const getMeteredSiteAsset = async () =>
   axiosInstance.get(`/site_assets.json?q[is_meter]=true`, {
     params: {

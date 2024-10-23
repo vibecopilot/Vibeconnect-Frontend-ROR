@@ -53,6 +53,7 @@ const SetupNavbar = () => {
         {feat.includes("communication") && ( <Link to={"/admin/communication-access-control"}className="hover:bg-white hover:text-black  p-2 rounded-lg ">Communication Setup Control</Link>)}
         {feat.includes("vendors") && ( <Link to={"/setup/supplier-setup"}className="hover:bg-white hover:text-black  p-2 rounded-lg ">Supplier</Link>)}
         {feat.includes("gatepass") && ( <Link to={"/setup/visitor-setup"}className="hover:bg-white hover:text-black  p-2 rounded-lg ">Visitor</Link>)}
+        {feat.includes("assets") && ( <Link to={"/setup/meter-category-type"}  className="hover:bg-white hover:text-black  p-2 rounded-lg ">Meter Category Type</Link>)}
       </ul>
     </div>
   </div>

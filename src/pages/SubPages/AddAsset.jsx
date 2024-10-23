@@ -11,7 +11,7 @@ import {
   postSiteAsset,
 } from "../../api";
 import { BiCross, BiPlus } from "react-icons/bi";
-import { IoClose } from "react-icons/io5";
+import { IoAddCircle, IoAddCircleOutline, IoClose } from "react-icons/io5";
 import AddSuppliers from "../../containers/modals/AddSuppliersModal";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
@@ -20,6 +20,7 @@ import { initialAddAssetFormData } from "../../utils/initialFormData";
 import FileInputBox from "../../containers/Inputs/FileInputBox";
 import { useSelector } from "react-redux";
 import Navbar from "../../components/Navbar";
+import { IoMdClose } from "react-icons/io";
 
 const AddAsset = () => {
   const buildings = getItemInLocalStorage("Building");
@@ -37,11 +38,15 @@ const AddAsset = () => {
   const [parentAsset, setParentAsset] = useState([]);
   console.log(formData);
   const themeColor = useSelector((state) => state.theme.color);
-  useEffect(() => {
-    const fetchVendors = async () => {
+  const fetchVendors = async () => {
+    try {
       const vendorResp = await getVendors();
       setVendors(vendorResp.data);
-    };
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(() => {
     const fetchAssetGroups = async () => {
       const assetGroupResponse = await getAssetGroups();
       setAssetGroup(assetGroupResponse.data);
@@ -56,7 +61,7 @@ const AddAsset = () => {
 
   const handleChange = async (e) => {
     async function fetchFloor(floorID) {
-      console.log(floorID)
+      console.log(floorID);
       try {
         const build = await getFloors(floorID);
         setFloors(build.data.map((item) => ({ name: item.name, id: item.id })));
@@ -160,7 +165,6 @@ const AddAsset = () => {
   // };
 
   const handleFileChange = (files, fieldName) => {
-    
     setFormData({
       ...formData,
       [fieldName]: files,
@@ -183,15 +187,37 @@ const AddAsset = () => {
     //   return;
     // }
 
-    if (
-      formData.name === "" ||
-      formData.building_id === "" ||
-      formData.floor_id === "" ||
-      formData.unit_id === ""
-    ) {
-      return toast.error("All fields are required");
+    if (formData.building_id === "") {
+      return toast.error("Please Select Building Name");
+    }
+    if (formData.latitude === "") {
+      return toast.error("Please Enter Latitude");
+    }
+    if (formData.longitude === "") {
+      return toast.error("Please Enter Longitude");
     }
 
+    if (formData.name === "") {
+      return toast.error("Please Enter Asset Name");
+    }
+    if (formData.oem_name === "") {
+      return toast.error("Please Enter ORM Name");
+    }
+    if (formData.asset_number === "") {
+      return toast.error("Please Enter Asset Number");
+    }
+    if (formData.equipment_id === "") {
+      return toast.error("Please Enter Equipment Id");
+    }
+    if (formData.purchase_cost === "") {
+      return toast.error("Please Enter Purchase Cost");
+    }
+    if (formData.asset_group_id === "") {
+      return toast.error("Please Select Group");
+    }
+    if (formData.asset_sub_group_id === "") {
+      return toast.error("Please Select Sub Group");
+    }
     if (
       formData.warranty_start &&
       formData.warranty_expiry &&
@@ -231,11 +257,15 @@ const AddAsset = () => {
       formDataSend.append("site_asset[unit_id]", formData.unit_id);
       formDataSend.append("site_asset[name]", formData.name);
       formDataSend.append("site_asset[oem_name]", formData.oem_name);
+      formDataSend.append("site_asset[latitude]", formData.latitude);
+      formDataSend.append("site_asset[longitude]", formData.longitude);
+      formDataSend.append("site_asset[asset_number]", formData.asset_number);
+      formDataSend.append("site_asset[equipemnt_id]", formData.equipment_id);
       formDataSend.append("site_asset[serial_number]", formData.serial_number);
       formDataSend.append("site_asset[model_number]", formData.model_number);
       formDataSend.append("site_asset[purchased_on]", formData.purchased_on);
       formDataSend.append("site_asset[purchase_cost]", formData.purchase_cost);
-     
+
       formDataSend.append(
         "site_asset[asset_group_id]",
         formData.asset_group_id
@@ -297,6 +327,47 @@ const AddAsset = () => {
     }
   };
 
+  const [meterCategory, setMeterCategory] = useState("");
+
+  const [subMeterCategory, setSubMeterCategory] = useState("");
+
+  const handleMeterCategoryChange = (e) => {
+    setMeterCategory(e.target.value);
+  };
+  const handleSubMeterCategoryChange = (e) => {
+    setSubMeterCategory(e.target.value);
+  };
+
+  const [consumption, setConsumption] = useState("");
+
+  const handleConsumptionChange = (e) => {
+    setConsumption(e.target.value);
+  };
+
+  // Consumption
+  const [consumptionData, setConsumptionData] = useState([]);
+  const handleAddConsumption = () => {
+    setConsumptionData((prev) => [
+      ...prev,
+      {
+        name: "",
+        order: "",
+        digit: "",
+        alert_below: "",
+        alert_above: "",
+        min_val: "",
+        max_val: "",
+        dashboard_view: false,
+        consumption_view: false,
+        check_prev: false,
+      },
+    ]);
+  };
+
+  const handleRemoveConsumption = (index) => {
+    setConsumptionData((prev) => prev.filter((_, i) => i !== index));
+  };
+
   return (
     // <section>
     //   <div className="m-2">
@@ -319,7 +390,8 @@ const AddAsset = () => {
             <div className="grid md:grid-cols-3 item-start gap-x-4 gap-y-2 w-full">
               <div className="flex flex-col">
                 <label htmlFor="" className="font-semibold">
-                  Select Building :
+                  Select Building :{" "}
+                  <span className="text-red-500 font-medium">*</span>
                 </label>
                 <select
                   className="border p-1 px-4 border-gray-500 rounded-md"
@@ -372,6 +444,36 @@ const AddAsset = () => {
                   ))}
                 </select>
               </div>
+              <div className="flex flex-col">
+                <label className="block text-gray-700 mb-1 font-medium">
+                  Latitude
+                  <span className="text-red-500 font-medium">*</span>
+                </label>
+                <input
+                  type="number"
+                  name="latitude"
+                  id=""
+                  onChange={handleChange}
+                  value={formData.latitude}
+                  placeholder="Latitude"
+                  className="border p-1 px-4 border-gray-500 rounded-md"
+                />
+              </div>
+              <div className="flex flex-col">
+                <label className="block text-gray-700 mb-1 font-medium">
+                  Longitude
+                  <span className="text-red-500 font-medium">*</span>
+                </label>
+                <input
+                  type="number"
+                  name="longitude"
+                  id=""
+                  onChange={handleChange}
+                  value={formData.longitude}
+                  placeholder="Longitude"
+                  className="border p-1 px-4 border-gray-500 rounded-md"
+                />
+              </div>
             </div>
           </div>
           <div className="my-5">
@@ -381,6 +483,10 @@ const AddAsset = () => {
             <div className="flex sm:flex-row flex-col justify-around items-center">
               <div className="grid md:grid-cols-3 item-start gap-x-4 gap-y-4 w-full">
                 <div className="flex flex-col">
+                  <label className="block text-gray-700 mb-1 font-medium">
+                    Asset Name
+                    <span className="text-red-500 font-medium">*</span>
+                  </label>
                   <input
                     type="text"
                     name="name"
@@ -392,6 +498,10 @@ const AddAsset = () => {
                   />
                 </div>
                 <div className="flex flex-col">
+                  <label className="block text-gray-700 mb-1 font-medium">
+                    OEM Name
+                    <span className="text-red-500 font-medium">*</span>
+                  </label>
                   <input
                     type="text"
                     name="oem_name"
@@ -399,11 +509,43 @@ const AddAsset = () => {
                     onChange={handleChange}
                     value={formData.oem_name}
                     placeholder="OEM Name"
+                    className="border p-1 px-4 border-gray-500 rounded-md w-full placeholder:text-gray-400"
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label className="block text-gray-700 mb-1 font-medium">
+                    Asset Number
+                    <span className="text-red-500 font-medium">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    name="asset_number"
+                    id="asset_number"
+                    onChange={handleChange}
+                    value={formData.asset_number}
+                    placeholder="Asset Number"
                     className="border p-1 px-4 border-gray-500 rounded-md"
                   />
                 </div>
-
                 <div className="flex flex-col">
+                  <label className="block text-gray-700 mb-1 font-medium">
+                    Equipment Id
+                    <span className="text-red-500 font-medium">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="equipment_id"
+                    id="equipment_id"
+                    onChange={handleChange}
+                    value={formData.equipment_id}
+                    placeholder="Equipment Id"
+                    className="border p-1 px-4 border-gray-500 rounded-md"
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label className="block text-gray-700 mb-1 font-medium">
+                    Model Number
+                  </label>
                   <input
                     type="text"
                     name="model_number"
@@ -415,6 +557,9 @@ const AddAsset = () => {
                   />
                 </div>
                 <div className="flex flex-col">
+                  <label className="block text-gray-700 mb-1 font-medium">
+                    Serial Number
+                  </label>
                   <input
                     type="text"
                     name="serial_number"
@@ -426,43 +571,50 @@ const AddAsset = () => {
                   />
                 </div>
                 <div className="flex flex-col">
+                  <label className="block text-gray-700 mb-1 font-medium">
+                    Purchase Cost
+                    <span className="text-red-500 font-medium">*</span>
+                  </label>
                   <input
                     type="text"
                     name="purchase_cost"
                     id="purchase_cost"
                     value={formData.purchase_cost}
                     onChange={handleChange}
-                    placeholder="Purchase Cost "
+                    placeholder="Purchase Cost"
                     className="border p-1 px-4 border-gray-500 rounded-md"
                   />
                 </div>
-                <div className="flex ">
-
-                
-                  <input
-                    type="text"
-                    name="capacity"
-                    id="capacity"
-                    value={formData.capacity}
-                    onChange={handleChange}
-                    placeholder="Capacity"
-                    className="border p-1 px-4 border-gray-500 w-1/2 rounded-l-md"
-                    />
-              
-                
-                  <input
-                    type="text"
-                    name="unit"
-                    id="unit"
-                    value={formData.unit}
-                    onChange={handleChange}
-                    placeholder="Unit of measurement"
-                    className="border p-1 px-4 border-gray-500 rounded-r-md w-1/2 placeholder:text-sm"
-                    />
-               
-                    </div>
-
                 <div className="flex flex-col">
+                  <label className="block text-gray-700 mb-1 font-medium">
+                    Capacity
+                  </label>
+                  <div className="flex">
+                    <input
+                      type="text"
+                      name="capacity"
+                      id="capacity"
+                      value={formData.capacity}
+                      onChange={handleChange}
+                      placeholder="Capacity"
+                      className="border p-1 px-4 border-gray-500 w-1/2 rounded-l-md"
+                    />
+                    <input
+                      type="text"
+                      name="unit"
+                      id="unit"
+                      value={formData.unit}
+                      onChange={handleChange}
+                      placeholder="Unit of measurement"
+                      className="border p-1 px-4 border-gray-500 rounded-r-md w-1/2 placeholder:text-sm"
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-col">
+                  <label className="block text-gray-700 mb-1 font-medium">
+                    Group
+                    <span className="text-red-500 font-medium">*</span>
+                  </label>
                   <select
                     className="border p-1 px-4 border-gray-500 rounded-md"
                     value={formData.asset_group_id}
@@ -478,6 +630,10 @@ const AddAsset = () => {
                   </select>
                 </div>
                 <div className="flex flex-col">
+                  <label className="block text-gray-700 mb-1 font-medium">
+                    Sub Group
+                    <span className="text-red-500 font-medium">*</span>
+                  </label>
                   <select
                     className="border p-1 px-4 border-gray-500 rounded-md"
                     name="asset_sub_group_id"
@@ -546,7 +702,6 @@ const AddAsset = () => {
                     <label htmlFor="no">No</label>
                   </div>
                 </div>
-
                 <div className="flex items-center gap-2">
                   <input
                     type="checkbox"
@@ -566,7 +721,7 @@ const AddAsset = () => {
                 {formData.is_meter && (
                   <>
                     <div className="flex items-center gap-4">
-                      <p className="font-semibold">Asset Type:</p>
+                      <p className="font-semibold">Meter Type:</p>
                       <div className="flex gap-2">
                         <input
                           type="radio"
@@ -609,18 +764,31 @@ const AddAsset = () => {
                     onChange={handleChange}
                     value={formData.parent_asset_id}
                   >
-                    <option value="">Select Parent Asset </option>
-                    {parentAsset && parentAsset.map((parent) => (
-                      <option value={parent.id} key={parent.id}>
-                        {parent.name}
-                      </option>
-                    ))}
+                    <option value="">Select Parent Meter Type </option>
+                    {parentAsset &&
+                      parentAsset.map((parent) => (
+                        <option value={parent.id} key={parent.id}>
+                          {parent.name}
+                        </option>
+                      ))}
                   </select>
                 )}
               </div>
             </div>
+            <div className="grid grid-cols-1">
+              <div className="mt-4">
+                <select
+                  className="border p-1 px-4 border-gray-500 rounded-md"
+                  name="asset_type"
+                >
+                  <option value="">Select Asset Type</option>
+                  <option value="comprehensive">Comprehensive</option>
+                  <option value="non-Comprehensive">Non-Comprehensive</option>
+                </select>
+              </div>
+            </div>
           </div>
-          <div className="my-5">
+          <div className="my-5 w-full">
             <p className="border-b border-black font-semibold">
               Warranty Details
             </p>
@@ -703,13 +871,13 @@ const AddAsset = () => {
               <p className="border-b border-black font-semibold">
                 Supplier Contact Details
               </p>
-              <div className=" flex md:items-center md:justify-between flex-col md:flex-row">
+              <div className="flex md:items-center md:justify-between flex-col md:flex-row">
                 <div className="flex flex-col my-2">
-                  <label htmlFor="" className="font-semibold">
+                  <label htmlFor="" className="block text-gray-700 mb-1">
                     Select Supplier:
                   </label>
                   <select
-                    className="border p-1 px-4 border-gray-500 rounded-md"
+                    className="border p-1 px-4 border-gray-500 rounded-md w-full"
                     value={formData.vendor_id}
                     onChange={handleChange}
                     name="vendor_id"
@@ -717,43 +885,294 @@ const AddAsset = () => {
                     <option value="">Select Supplier</option>
                     {vendors.map((vendor) => (
                       <option value={vendor.id} key={vendor.id}>
-                        {vendor.vendor_name}
+                        {vendor.vendor_name} - {vendor.company_name}
                       </option>
                     ))}
                   </select>
                 </div>
-                {/* <button
-                  className="p-1 border-2 border-black px-4 rounded-md hover:bg-black hover:text-white transition-all duration-300"
+                <button
+                  className="p-1 border-2 border-black px-4 rounded-md hover:bg-black hover:text-white transition-all duration-300 flex items-center gap-1"
                   onClick={() => showAddSupplierMOdal(true)}
                 >
-                  Add Supplier
+                  <IoAddCircle size={20} /> Add Supplier
                 </button>
                 {addSupplierModal && (
-                  <AddSuppliers onclose={() => showAddSupplierMOdal(false)} />
-                )} */}
+                  <AddSuppliers
+                    onclose={() => showAddSupplierMOdal(false)}
+                    fetchVendors={fetchVendors}
+                  />
+                )}
               </div>
             </div>
             {/* <div className="my-5">
               <p className="border-b border-black font-semibold">
                 Meter Category Type
               </p>
-              <div className="flex flex-col my-2">
-                <label htmlFor="" className="font-semibold">
-                  Select Meter Category:
-                </label>
-                <select
-                  className="border p-1 px-4 border-gray-500 rounded-md"
-                  value={formData.meter_category}
-                  onChange={handleChange}
-                  name="meter_category"
-                >
-                  <option value="">Select Meter Category</option>
-                  <option value="unit1">Category 1</option>
-                  <option value="unit2">Category 2</option>
-                  <option value="unit2">Category 3</option>
-                </select>
+              <div className="grid md:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-5">
+                <div className="flex flex-col mt-4 w-full">
+                  <label className="block text-gray-700 mb-1">
+                    Select Meter Category Type
+                  </label>
+                  <select
+                    className="border p-1 px-4 border-gray-500 rounded-md w-full"
+                    name="meter_category"
+                    onChange={handleMeterCategoryChange}
+                    value={meterCategory}
+                  >
+                    <option value="">Select Meter Category</option>
+                    <option value="Board">Board</option>
+                    <option value="DG">DG</option>
+                    <option value="Renewable">Renewable</option>
+                    <option value="FreshWater">Fresh Water</option>
+                    <option value="Recycled">Recycled</option>
+                  </select>
+                </div>
+                <div className="flex flex-col">
+                  {meterCategory === "Board" && (
+                    <div className="mt-4 w-full">
+                      <label className="block text-gray-700 mb-1">Board</label>
+                      <select
+                        className="border p-1 px-4 border-gray-500 rounded-md w-full"
+                        name="meter_category"
+                      >
+                        <option value="">Select Sub Board</option>
+                        <option value="">HT</option>
+                        <option value="">VCB</option>
+                        <option value="">Transformer</option>
+                        <option value="">LT</option>
+                      </select>
+                    </div>
+                  )}
+                  {meterCategory === "DG" && (
+                    <div className="mt-4 w-full">
+                      <label className="block text-gray-700 mb-1">
+                        Select Sub DG
+                      </label>
+                      <select
+                        className="border p-1 px-4 border-gray-500 rounded-md w-full"
+                        name="meter_category"
+                      >
+                        <option value="">Select DG</option>
+                      </select>
+                    </div>
+                  )}
+                  {meterCategory === "Renewable" && (
+                    <div className="mt-4 w-full">
+                      <label className="block text-gray-700 mb-1">
+                        Renewable
+                      </label>
+                      <select
+                        className="border p-1 px-4 border-gray-500 rounded-md w-full"
+                        name="meter_category"
+                      >
+                        <option value="">Select Sub Renewable</option>
+                        <option value="">Solar</option>
+                        <option value="">Bio Methanol</option>
+                        <option value="">Wind</option>
+                      </select>
+                    </div>
+                  )}
+                  {meterCategory === "FreshWater" && (
+                    <div className="mt-4 w-full">
+                      <label className="block text-gray-700 mb-1 ">
+                        Fresh Water
+                      </label>
+                      <select
+                        className="border p-1 px-4 border-gray-500 rounded-md w-full"
+                        name="meter_category"
+                        onChange={handleSubMeterCategoryChange}
+                        value={subMeterCategory}
+                      >
+                        <option value="">SelectFresh Water</option>
+                        <option value="sourceInput">Source (Input)</option>
+                        <option value="">Destination (Output)</option>
+                      </select>
+                    </div>
+                  )}
+                  {meterCategory === "Recycled" && (
+                    <div className="mt-4 w-full">
+                      <label className="block text-gray-700 mb-1">
+                        Recycled
+                      </label>
+                      <select
+                        className="border p-1 px-4 border-gray-500 rounded-md w-full"
+                        name="meter_category"
+                      >
+                        <option value="">Select Recycled</option>
+                      </select>
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-col">
+                  {subMeterCategory === "sourceInput" && (
+                    <div className="mt-4 w-full">
+                      <label className="block text-gray-700 mb-1 ">
+                        Sub Fresh Water
+                      </label>
+                      <select
+                        className="border p-1 px-4 border-gray-500 rounded-md w-full"
+                        name=""
+                      >
+                        <option value="">Select Fresh Water</option>
+                        <option value="">Municipal Corporation</option>
+                        <option value="">Tanker</option>
+                        <option value="">Borewell</option>
+                        <option value="">Rainwater</option>
+                        <option value="">Jackwell</option>
+                        <option value="">Pump</option>
+                      </select>
+                    </div>
+                  )}
+                </div>
               </div>
             </div> */}
+          </div>
+          <div className="my-5">
+            <p className="border-b border-black font-semibold">
+              CONSUMPTION ASSET MEASURE
+            </p>
+            <div className="flex flex-col mt-4 w-full">
+              <select
+                className="border p-1 px-4 border-gray-500 rounded-md w-fit"
+                name="meter_category"
+                onChange={handleConsumptionChange}
+                value={consumption}
+              >
+                <option value="">Select Consumption Asset Measure Type</option>
+                <option value="ConsumptionAssetMeasureType">
+                  Consumption Asset Measure Type
+                </option>
+                <option value="nonConsumption">
+                  Non Consumption Asset Measure Type
+                </option>
+              </select>
+            </div>
+            <div className="flex flex-col">
+              {consumption === "ConsumptionAssetMeasureType" && (
+                <div className="my-5 space-y-3">
+                  {consumptionData.map((formData, index) => (
+                    <div
+                      key={index}
+                      className="grid lg:grid-cols-3 md:grid-cols-1 sm:grid-cols-1 gap-5 border rounded-md p-5"
+                    >
+                      <div className="flex flex-col">
+                        <label
+                          htmlFor="name_Consumption"
+                          className="font-medium"
+                        >
+                          Name:
+                        </label>
+                        <input
+                          type="text"
+                          name="nameConsumption"
+                          id="name_Consumption"
+                          placeholder="Name"
+                          className="border p-1 px-4 border-gray-500 rounded-md"
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <label htmlFor="unit_type" className="font-medium">
+                          Unit Type:
+                        </label>
+                        <select
+                          className="border p-1 px-4 border-gray-500 rounded-md"
+                          name="unit_type"
+                          id="unit_type"
+                        >
+                          <option value="">Select Unit Type</option>
+                        </select>
+                      </div>
+                      <div className="flex flex-col">
+                        <label htmlFor={`min`} className="font-medium">
+                          Min:
+                        </label>
+                        <input
+                          type="text"
+                          name="min_val"
+                          id={`min`}
+                          placeholder="Min"
+                          className="border p-1 px-4 border-gray-500 rounded-md"
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <label htmlFor={`max`} className="font-medium">
+                          Max:
+                        </label>
+                        <input
+                          type="text"
+                          name="max_val"
+                          id={`max`}
+                          placeholder="Max"
+                          className="border p-1 px-4 border-gray-500 rounded-md"
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <label htmlFor={`below`} className="font-medium">
+                          Alert Below Value:
+                        </label>
+                        <input
+                          type="text"
+                          name="alert_below"
+                          id={`below`}
+                          placeholder="Alert Below Value"
+                          className="border p-1 px-4 border-gray-500 rounded-md"
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <label htmlFor={`above`} className="font-medium">
+                          Alert Above Value:
+                        </label>
+                        <input
+                          type="text"
+                          name="alert_above"
+                          id={`above`}
+                          placeholder="Alert Above Value"
+                          className="border p-1 px-4 border-gray-500 rounded-md"
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <label
+                          htmlFor={`multiplier_factor`}
+                          className="font-medium"
+                        >
+                          Multiplier Factor:
+                        </label>
+                        <input
+                          type="text"
+                          name="multiplierFactor"
+                          id={`multiplier_factor`}
+                          placeholder="Multiplier Factor"
+                          className="border p-1 px-4 border-gray-500 rounded-md"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          name=" CheckPreviousReading"
+                          id="previous_reading"
+                        />
+                        <label htmlFor={`previous_reading`}>
+                          Check Previous Reading
+                        </label>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveConsumption(index)}
+                        className="col-span-3 text-red-600 underline mt-2"
+                      >
+                        <IoMdClose size={20} />
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    className="border border-black rounded-md py-2 px-3 my-2"
+                    onClick={handleAddConsumption}
+                  >
+                    <IoAddCircleOutline />
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
           <h2 className="border-b text-center text-xl border-black mb-6 font-bold">
             Attachments
