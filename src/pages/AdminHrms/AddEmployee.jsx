@@ -239,7 +239,7 @@ const AddEmployee = () => {
                   ? " text-white bg-blue-500 font-medium cursor-pointer"
                   : "text-white bg-gray-400 font-medium cursor-not-allowed"
               }`}
-              disabled={steps !== "basic"}
+              // disabled={steps !== "basic"}
               onClick={() => setSteps("basic")}
             >
               <div>{React.createElement(ImFileText2, { size: "20" })}</div>
@@ -253,7 +253,7 @@ const AddEmployee = () => {
                   : "text-white bg-gray-400 font-medium cursor-not-allowed"
               }`}
               onClick={() => setSteps("employment")}
-              disabled={steps !== "employment"}
+              // disabled={steps !== "employment"}
             >
               <div>{React.createElement(MdOutlineWork, { size: "20" })}</div>
               Employment
@@ -266,7 +266,7 @@ const AddEmployee = () => {
                   : "text-white bg-gray-400 font-medium cursor-not-allowed"
               }`}
               onClick={() => setSteps("salary")}
-              disabled={steps !== "salary"}
+              // disabled={steps !== "salary"}
             >
               <div>{React.createElement(FcMoneyTransfer, { size: "20" })}</div>
               Salary
@@ -278,7 +278,7 @@ const AddEmployee = () => {
                   ? " text-white bg-blue-500 font-medium cursor-pointer"
                   : "text-white bg-gray-400 font-medium cursor-not-allowed"
               }`}
-              disabled={steps !== "statutory"}
+              // disabled={steps !== "statutory"}
               onClick={() => setSteps("statutory")}
             >
               <div>{React.createElement(ImFileText2, { size: "20" })}</div>
@@ -348,6 +348,7 @@ const AddEmployee = () => {
                   value={formData.mobile}
                   onChange={handleChange}
                   name="mobile"
+                  maxLength={13}
                   pattern="[0-9]*"
                   onKeyDown={(e) => {
                     if (
@@ -442,7 +443,7 @@ const AddEmployee = () => {
                   placeholder="xxxx-xxxx-xxxx"
                 />
               </div>
-              <div className="grid gap-2 items-center w-full">
+              {/* <div className="grid gap-2 items-center w-full">
                 <label className="block text-sm font-medium text-gray-700">
                   ESIC No.
                 </label>
@@ -456,7 +457,7 @@ const AddEmployee = () => {
                   maxLength={17}
                   placeholder="ESIC no."
                 />
-              </div>
+              </div> */}
               <div className="grid gap-2 items-center w-full">
                 <label className="block text-sm font-medium text-gray-700">
                   Marital Status
@@ -512,6 +513,7 @@ const AddEmployee = () => {
                 />
               </div>
             </div>
+
             <h2 className="border-b text-center text-xl border-black  mb-6 font-bold mt-2">
               Family Information
             </h2>

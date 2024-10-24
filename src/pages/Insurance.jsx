@@ -83,6 +83,7 @@ const Insurance = () => {
     setPolicies(policiesData);
   };
   const handleDownload = (filename) => {
+    console.log("call");
     if (!filename) {
       console.log("Filename is null or undefined, aborting download.");
       return;
@@ -361,19 +362,17 @@ const Insurance = () => {
                         </p>
                       </div>
                     </div>
-                    <div className=" items-end  flex-col gap-2 flex  ">
-                      <div className="bg-green-400 rounded-full p-1 px-4 text-white flex gap-2 items-center cursor-pointer">
+                    <div className="items-end flex-col gap-2 flex">
+                      <button
+                        className="bg-green-400 rounded-full p-1 px-4 text-white flex gap-2 items-center cursor-pointer"
+                        onClick={() => handleDownload(policy.policy_document)}
+                      >
                         {policy.policy_document && (
                           <>
-                            <FaDownload
-                              onClick={() =>
-                                handleDownload(policy.policy_document)
-                              }
-                            />{" "}
-                            Download
+                            <FaDownload /> Download
                           </>
                         )}
-                      </div>
+                      </button>
                       <button
                         className="bg-green-400 rounded-full p-1 px-3 text-white flex gap-2 items-center"
                         onClick={() =>
@@ -710,13 +709,17 @@ const Insurance = () => {
                             }}
                             onClick={onClosePolicyDetailRequested}
                           >
-                          <MdClose/>
+                            <MdClose />
                           </div>
-                          <h4 className="font-medium">Requested Policy Details</h4>
+                          <h4 className="font-medium">
+                            Requested Policy Details
+                          </h4>
                           <hr style={{ borderColor: "#fff" }} />
                           <div className="col-md-12 row ">
                             <div className="col-md-4">
-                              <u className="font-medium">Policy Holder Details : </u>
+                              <u className="font-medium">
+                                Policy Holder Details :{" "}
+                              </u>
                             </div>
                           </div>
                           <div className="grid grid-cols-2 gap-2">
