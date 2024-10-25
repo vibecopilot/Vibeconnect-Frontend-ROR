@@ -220,7 +220,6 @@ const Insurance = () => {
     setSelectedPolicyBeneficiaryRelation(policyBeneficiaryRelation);
     setSelectedPolicyBeneficiaryContactInfo(policyBeneficiaryContactNo);
     // setSelectedPolicyIdentificationProof(policyIdenticationproof);
-
     // setSelectedPolicyInsuredMemberName()
     // setSelectedPolicyInsuredMemberDob()
     // setSelectedPolicyInsuredMemberGender()

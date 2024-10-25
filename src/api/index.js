@@ -3226,6 +3226,23 @@ export const postDocAppointment = async (data) => {
     throw error;
   }
 };
+export const sendBusinessCard = async (data) => {
+  try {
+    const response = await vibeAuth.post(
+      `/api/employee/card/send-business_card/`,
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error sending business card :", error);
+    throw error;
+  }
+};
 // HRMS
 export const getAllHrmsOrganisation = async () => {
   try {
