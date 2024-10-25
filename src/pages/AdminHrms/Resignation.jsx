@@ -25,7 +25,7 @@ const Resignation = () => {
         <form className="space-y-4 mb-10">
           <div className=" border rounded-lg p-2 border-red-50 bg-red-100">
             <p className="font-bold">Basic Information</p>
-            <div className="grid md:grid-cols-2 gap-2 text-sm mt-2 ">
+            <div className="grid md:grid-cols-2 gap-2 text-sm mt-2 text-gray-800">
               <div className="flex justify-between">
                 <label className="block font-medium">Employee Name:</label>
 
