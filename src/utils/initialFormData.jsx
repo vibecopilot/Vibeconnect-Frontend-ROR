@@ -39,7 +39,7 @@ export const initialAddAssetFormData = {
     parent_asset_id:"",
     asset_number: "",
     equipment_id: "",
-  
+    comprehensive : "",
     invoice: [],
     insurance: [],
     manuals: [],
