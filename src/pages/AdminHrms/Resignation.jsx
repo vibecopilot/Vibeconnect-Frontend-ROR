@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import AdminHRMS from "./AdminHrms";
 import { GrHelpBook } from "react-icons/gr";
 import { ImInfo } from "react-icons/im";
 import { FaCircleInfo } from "react-icons/fa6";
+import { getUserDetails } from "../../api";
+import { useParams } from "react-router-dom";
 
 const Resignation = () => {
   const listItemStyle = {
@@ -11,6 +13,27 @@ const Resignation = () => {
     fontSize: "14px",
     fontWeight: 500,
   };
+  const { id } = useParams();
+  const [empDetails, setEmpDetails] = useState({})
+  useEffect(() => {
+    const fetchUserDetails = async () => {
+      try {
+        const res = await getUserDetails(id);
+        setEmpDetails(res)
+
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchUserDetails()
+  }, []);
+
+  const today = new Date()
+  const formattedDate = today.toLocaleDateString("en-GB",{
+    day: "numeric",
+    month: "numeric",
+    year: "numeric"
+  }) 
   return (
     <div className="flex justify-between">
       <AdminHRMS />
@@ -25,53 +48,50 @@ const Resignation = () => {
         <form className="space-y-4 mb-10">
           <div className=" border rounded-lg p-2 border-red-50 bg-red-100">
             <p className="font-bold">Basic Information</p>
-            <div className="grid md:grid-cols-2 gap-2 text-sm mt-2 text-gray-800">
+            <div className="grid md:grid-cols-2 gap-4  text-sm mt-2 text-gray-800">
               <div className="flex justify-between">
                 <label className="block font-medium">Employee Name:</label>
-
-                <p>Mittu Panda</p>
+                <p>{empDetails?.employee?.first_name} {empDetails?.employee?.last_name}</p>
               </div>
               <div className="flex justify-between">
                 <label className="block font-medium">Employee Code:</label>
-
-                <p>123</p>
+                <p>{empDetails?.employment_info?.employee_code}</p>
               </div>
               <div className="flex justify-between">
                 <label className="block font-medium">Employment Status:</label>
-
-                <p>Confirmed</p>
+                <p>{empDetails?.employee?.status ? <span className="text-green-500">Active</span>  : <span className="text-red-500">Inactive</span>}</p>
               </div>
               <div className="flex justify-between">
                 <label className="block font-medium">Designation:</label>
 
-                <p>Business & Operations Manager</p>
+                <p>{empDetails?.employment_info?.designation}</p>
               </div>
               <div className="flex justify-between">
                 <label className="block font-medium">Joining Date:</label>
 
-                <p>02-Sep-2019</p>
+                <p>{empDetails?.employment_info?.joining_date}</p>
               </div>
               <div className="flex justify-between">
                 <label className="block font-medium">Branch Location:</label>
 
-                <p>Mumbai; Mumbai; Maharashtra</p>
+                <p>{empDetails?.employment_info?.branch_location_name}</p>
               </div>
               <div className="flex justify-between">
                 <label className="block font-medium">Department:</label>
 
-                <p>Management</p>
+                <p>{empDetails?.employment_info?.department_name}</p>
               </div>
               <div className="flex justify-between">
                 <label className="block font-medium">
-                  Supervisor Name & Code:
+                  Supervisor Name :
                 </label>
 
-                <p>Praveen Nair - BPC1</p>
+                <p>{empDetails?.employment_info?.supervisor_name}</p>
               </div>
               <div className="flex justify-between">
                 <label className="block font-medium">Submission Date:</label>
 
-                <p>13-Jul-2024</p>
+                <p>{formattedDate}</p>
               </div>
             </div>
           </div>

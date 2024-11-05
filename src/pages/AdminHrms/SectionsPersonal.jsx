@@ -14,6 +14,8 @@ import {
   getEmployeeDetails,
   getEmployeeFamilyDetails,
   getEmployeePaymentInfo,
+  postEmployeeAddress,
+  postEmployeeFamily,
 } from "../../api";
 import { useParams } from "react-router-dom";
 import { getItemInLocalStorage } from "../../utils/localStorage";
@@ -224,7 +226,6 @@ const SectionsPersonal = () => {
   const handleEditEmployeeBasicInfo = async () => {
     const editData = new FormData();
     editData.append("first_name", formData.firstName);
-
     editData.append("last_name", formData.lastName);
     editData.append("email_id", formData.email);
     editData.append("mobile", formData.mobile);
@@ -259,11 +260,17 @@ const SectionsPersonal = () => {
     postData.append("spouse_name", familyData.spouseName);
     postData.append("employee", id);
     try {
-      const res = await editEmployeeFamilyDetails(
-        familyData.familyId,
-        postData
-      );
-      toast.success("Family details updated successfully");
+      if (familyData.familyId) {
+        const res = await editEmployeeFamilyDetails(
+          familyData.familyId,
+          postData
+        );
+        toast.success("Family details updated successfully");
+      } else {
+        const res = await postEmployeeFamily(postData);
+        toast.success("Family details updated successfully");
+      }
+      setIsFamEditing(false);
     } catch (error) {
       console.log(error);
       toast.error("Something went wrong please try again");
@@ -275,6 +282,30 @@ const SectionsPersonal = () => {
   };
 
   const handleEditAddress = async () => {
+    if (!addressData.address1) {
+      toast.error("Address Line 1 is required");
+      return;
+    }
+    if (!addressData.address2) {
+      toast.error("Address Line 2 is required");
+      return;
+    }
+    if (!addressData.country) {
+      toast.error("Country is required");
+      return;
+    }
+    if (!addressData.state) {
+      toast.error("State/Province is required");
+      return;
+    }
+    if (!addressData.city) {
+      toast.error("City is required");
+      return;
+    }
+    if (!addressData.code) {
+      toast.error("ZIP Code is required");
+      return;
+    }
     const postAddress = new FormData();
     postAddress.append("address_line_1", addressData.address1);
     postAddress.append("address_line_2", addressData.address2);
@@ -284,11 +315,17 @@ const SectionsPersonal = () => {
     postAddress.append("zip_code", addressData.code);
     postAddress.append("employee", id);
     try {
-      const res = await editEmployeeAddressDetails(
-        addressData.addressId,
-        postAddress
-      );
-      toast.success("Address details updated successfully");
+      if (addressData.addressId) {
+        const res = await editEmployeeAddressDetails(
+          addressData.addressId,
+          postAddress
+        );
+        toast.success("Address details updated successfully");
+      } else {
+        const res = await postEmployeeAddress(postAddress);
+        toast.success("Address details updated successfully");
+      }
+      setIsAddressEditing(false);
     } catch (error) {
       console.log(error);
       toast.error("Something went wrong please try again");
@@ -666,6 +703,7 @@ const SectionsPersonal = () => {
                       }`}
                       placeholder="City"
                       readOnly={!isAddressEditing}
+                      onChange={handleAddressChange}
                     />
                   </div>
                   <div>

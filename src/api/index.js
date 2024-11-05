@@ -5693,3 +5693,33 @@ export const postEmployeeLetters = async (data) => {
     throw error;
   }
 };
+export const getTaxAndStatSetting = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/TaxAndStatutorySettings/master/?organization_id=${orgId}`,
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting tax and stat setting :", error);
+    throw error;
+  }
+};
+export const postTaxAndStatSetting = async (data) => {
+  try {
+    const response = await HrmsAuth.post(`/TaxAndStatutorySettings/`, data, {
+      // headers: {
+      //   "Content-Type": "multipart/form-data/",
+      // },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error getting tax and stat setting :", error);
+    throw error;
+  }
+};

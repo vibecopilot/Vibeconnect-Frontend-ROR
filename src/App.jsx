@@ -6047,6 +6047,14 @@ function App() {
             }
           />
           <Route
+            path="/hrms/separation/separate-application/resignation/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <Resignation />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
             path="/admin/edit-attendance-process/:id"
             element={
               <ProtectedAdminRoutes>
