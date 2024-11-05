@@ -83,7 +83,7 @@
 .fc-event {
   background: var(--calendar-Header);
   /* border-color: #007bff; */
-  color: #fff;
+  color: #fff  ;
   padding: 5px;
   /* border-radius: 3px; */
   /* font-size: 0.9em; */

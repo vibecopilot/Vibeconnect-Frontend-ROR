@@ -658,6 +658,12 @@ export const getChecklistDetails = async (id) =>
       token: token,
     },
   });
+  export const ChecklistImport = async (file) =>
+    axiosInstance.post(`/checklist/checklist_import.json?`, file, {
+      params: {
+        token: token,
+      },
+    });
 export const postAssetAssociation = async (data) =>
   axiosInstance.post(`/activities.json`, data, {
     params: {
@@ -679,7 +685,7 @@ export const getPPMTask = async () =>
   });
 export const getRoutineTaskDetails = async (assetId, activityId) =>
   axiosInstance.get(
-    `/submissions.json?q[asset_id_eq]=${assetId}&q[activity_id_eq]=${activityId}`,
+    `/submissions.json?q[checklist_id_present]=1&q[asset_id_eq]=${assetId}&q[activity_id_eq]=${activityId}`,
     {
       params: {
         token: token,
@@ -706,7 +712,7 @@ export const getScheduleDetails = async (sId, activityId) =>
 //     }
 //   );
 export const getAssetPPMs = async (assetId) =>
-  axiosInstance.get(`/site_assets/${assetId}/asset_ppm_show.json`, {
+  axiosInstance.get(`/site_assets/${assetId}/asset_ppm_show.json?q[checklist_id_present]=1`, {
     params: {
       token: token,
     },
@@ -721,7 +727,45 @@ export const getSoftServiceStatus = async (data) =>
       },
     }
   );
+  export const getPPMCalendar = async () =>
+    axiosInstance.get(`/activities/calendar_data.json&q[checklist_ctype_eq]=ppm`, {
+      params: {
+        
+        token: token,
+      },
+    });
+  
 
+  export const postMasters = async (data) =>
+    axiosInstance.post(`/inventories.json`, data, {
+      params: {
+        token: token,
+      },
+    });
+    export const ImportMasters = async (file) =>
+      axiosInstance.post(`/inventories/import.json`, file, {
+        params: {
+          token: token,
+        },
+      });
+    export const getMasters = async () =>
+      axiosInstance.get("/inventories.json", {
+        params: {
+          token: token,
+        },
+      });
+      export const getMastersDetails = async (id) =>
+        axiosInstance.get(`/inventories/${id}.json`, {
+          params: {
+            token: token,
+          },
+        });
+        export const UpdateMasters = async (data, id) =>
+          axiosInstance.put(`/inventories/${id}.json`, data, {
+            params: {
+              token: token,
+            },
+          });
 //booking & request
 export const postFlightTicketRequest = async (data) =>
   axiosInstance.post(`/flight_requests.json`, data, {
@@ -1191,6 +1235,21 @@ export const postChecklist = async (data) =>
       token: token,
     },
   });
+  export const getGenericGroupAssetChecklist = async () =>
+    axiosInstance.get(`/generic_infos.json?q[info_type_eq]=checklist`, {
+      params: {
+        token: token,
+      },
+    });
+    export const getGenericSubGroupAssetChecklist = async (groupid) =>
+      axiosInstance.get(
+        `/generic_sub_infos.json?q[generic_info_id_eq]=${groupid}`,
+        {
+          params: {
+            token: token,
+          },
+        }
+      );
 export const getGenericGroup = async () =>
   axiosInstance.get(`/generic_infos.json?q[info_type_eq]=soft_services`, {
     params: {

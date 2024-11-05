@@ -685,6 +685,10 @@ import FlexiCategory from "./pages/AdminHrms/FlexiBenefits/FlexiSettings/FlexiCa
 import PerformanceSettings from "./pages/AdminHrms/Performance/PerformanceSettings.jsx";
 import MilestoneTypeSettings from "./pages/AdminHrms/MilestoneTypeSettings.jsx";
 import AddExistingPolicy from "./pages/SubPages/AddExistingPolicy.jsx";
+import AddMasters from "./pages/SubPages/AddMasters.jsx";
+import EditMasters from "./pages/SubPages/EditMasters.jsx";
+import MasterDetails from "./pages/SubPages/MasterDetails.jsx";
+import PPMCalendar from "./pages/PPMCalendar.jsx";
 // new admin hrms
 
 function App() {
@@ -975,6 +979,14 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <AddPPMActivity />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/assets/ppm-calendar"
+            element={
+              <ProtectedAdminRoutes>
+                <PPMCalendar/>
               </ProtectedAdminRoutes>
             }
           />
@@ -2257,6 +2269,30 @@ function App() {
             }
           />
           {/* INventory */}
+          <Route
+            path="/admin/add-masters"
+            element={
+              <ProtectedAdminRoutes>
+                <AddMasters/>
+              </ProtectedAdminRoutes>
+            }
+          />
+           <Route
+            path="/admin/master-details/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <MasterDetails/>
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/edit-masters/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <EditMasters/>
+              </ProtectedAdminRoutes>
+            }
+          />
           <Route
             path="/admin/add-stock"
             element={
