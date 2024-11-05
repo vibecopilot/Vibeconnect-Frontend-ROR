@@ -1036,14 +1036,14 @@ const AdminHRMS = () => {
                 </div>
               )}
             </div>
-            <div>
+            {/* <div>
               <div
                 onClick={toggleFlexiMenu}
                 className="cursor-pointer flex items-center text-sm gap-3.5 font-medium p-2 "
               >
                 <div>
                   {React.createElement(FaMoneyBillWheat, { size: "20" })}
-                  {/* <p>Organization</p> */}
+                  
                 </div>
                 <h2
                   className={`whitespace-pre duration-300 ${
@@ -1172,15 +1172,15 @@ const AdminHRMS = () => {
                   </NavLink>
                 </div>
               )}
-            </div>
-            <div>
+            </div> */}
+            {/* <div>
               <div
                 onClick={togglePerformanceMenu}
                 className="cursor-pointer flex items-center text-sm gap-3.5 font-medium p-2 "
               >
                 <div>
                   {React.createElement(GrDocumentPerformance, { size: "20" })}
-                  {/* <p>Organization</p> */}
+                  
                 </div>
                 <h2
                   className={`whitespace-pre duration-300 ${
@@ -1260,7 +1260,7 @@ const AdminHRMS = () => {
                   </NavLink>
                 </div>
               )}
-            </div>
+            </div> */}
             <div
               onClick={toggleRosterMenu}
               className="cursor-pointer flex items-center text-sm gap-3 font-medium p-2 "

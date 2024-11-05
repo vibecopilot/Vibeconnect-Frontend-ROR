@@ -10,7 +10,7 @@ const AddBusinesscardModal = ({ onClose }) => {
   
   return (
     <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-30 backdrop-blur-sm z-20">
-      <div className="bg-white overflow-auto max-h-[70%]  md:w-[40%] p-4  flex flex-col rounded-xl">
+      <div className="bg-white overflow-auto max-h-[70%]  md:w-[40%] p-4  flex flex-col rounded-xl hide-scrollbar">
         <h2 className="text-xl font-semibold mb-2 flex gap-2 justify-center items-center border-b">
           <FaPlusCircle /> Add Business card
         </h2>

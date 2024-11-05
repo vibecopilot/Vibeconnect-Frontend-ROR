@@ -14,6 +14,9 @@ import { PiPlus, PiPlusCircle } from "react-icons/pi";
 import AddBusinesscardModal from "./AddBusinesscardModal";
 import html2canvas from "html2canvas";
 import { sendBusinessCard } from "../api";
+import businessCardTemplate from "/newCard.jpeg";
+// import businessCardTemplate from "/businessCardTemp.jpeg";
+import VCLogo from "./SVG/VCLogo.svg";
 const BusinessCard = () => {
   const user = getItemInLocalStorage("user");
   const [isQRVisible, setIsQRVisible] = useState(false);
@@ -59,6 +62,14 @@ const BusinessCard = () => {
     const vCard = new VCard();
 
     // Add vCard fields
+    // vCard
+    //   .addName("Seth", "Pankti")
+    //   .addEmail("pankti.s@vibecopilot.ai")
+    //   .addPhoneNumber("7039590622", "CELL")
+    //   .addURL("https://vibeconnect.work/")
+    //   .addCompany("Vibecopilot");
+
+    // .addOrganization("Vibe Copilot");
     vCard
       .addName(user.lastname, user.firstname)
       .addEmail(user.email)
@@ -99,14 +110,11 @@ const BusinessCard = () => {
       for (let i = 0; i < binaryString.length; i++) {
         binaryData[i] = binaryString.charCodeAt(i);
       }
-
       // Create a file object with binary data
       // const blob = await fetch(imageData).then((res) => res.blob());
       // const file = new File([blob], "business_card.png", { type: "image/png" });
       setSending(true);
-      if (sending) {
-        toast.loading("Sending business card please wait!");
-      }
+      toast.loading("Sending business card please wait!");
       const file = new File([binaryData], "business_card.png", {
         type: "image/png",
       });
@@ -138,7 +146,7 @@ const BusinessCard = () => {
         setShowVerifiedButtonSend("block");
         setShowVerifiedLoaderSend("none");
         setSending(false);
-        toast.dismiss()
+        toast.dismiss();
       }
     }
   };
@@ -190,26 +198,43 @@ const BusinessCard = () => {
             <PiPlusCircle size={20} /> Add
           </button>
         </div>
-        <div className="bCard relative flex flex-col md:flex-row gap-4 justify-center md:justify-start  md:border-2 border-gray-500 w-fit  md:px-4 py-10  rounded-2xl">
-          <div className="bg-white  rounded-full z-10 h-20 w-20 absolute left-[10rem]  md:left-[8.5rem] top-2 shadow-custom-all-sides">
+        <div className="bCard relative flex flex-col md:flex-row gap-4 justify-center md:justify-start   w-fit  md:px-4 py-10  rounded-2xl">
+          {/* <div className="bg-white  rounded-full z-10 h-20 w-20 absolute left-[10rem]  md:left-[8.5rem] top-2 shadow-custom-all-sides">
             <img src={profile} alt="" />
-          </div>
+          </div> */}
           <div
-            className=" bg-custom-gradient relative shadow-custom-all-sides h-48 w-80 rounded-2xl cursor-pointer"
+            style={{
+              backgroundImage: `url(${businessCardTemplate})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}
+            className="bg-custom-gradient relative shadow-custom-all-sides h-48 w-80 rounded-2xl border border-gray-200"
             // onClick={toggleQRVisibility}
           >
+            {/* <div>
+              <img
+                src={VCLogo}
+                alt=""
+                width="100"
+                height="100"
+                className="absolute -top-4 left-[105px]"
+              />
+            </div> */}
             <div className="flex flex-col justify-center my-2">
-              <p className="text-center font-bold text-white mt-10 text-lg">
+              <p className="text-center font-bold  mt-10 flex flex-col gap-10 text-lg">
+                {/* <p className="text-center font-bold  mt-10 text-lg"> */}
                 {user.firstname} {user.lastname}
               </p>
-              <p className="text-center font-medium text-white ">Profession</p>
-            </div>
-            <div>
-              <p className="text-center text-xs text-white">
-                testing description of card
+              <p className="text-center font-medium mt-1">
+                Social Media Marketing
               </p>
             </div>
-            <div className="mt-5 flex justify-center gap-1 md:gap-2 ">
+            {/* <div>
+              <p className="text-center text-xs ">
+                testing description of card
+              </p>
+            </div> */}
+            <div className="mt-9 flex justify-center gap-1 md:gap-2 ">
               <button
                 className="bg-white p-2 flex justify-center items-center gap-2 rounded-l-md font-medium"
                 onClick={handlePhoneCopy}
@@ -234,9 +259,9 @@ const BusinessCard = () => {
           {/* <div className="bg-black p-4 w-fit rounded-md shadow-custom-all-sides">
             <img src={QR} alt="QR Code" className="h-40 min-w-40" />
           </div> */}
-          <div className="bg-black p-2 flex justify-center items-center rounded-2xl shadow-custom-all-sides h-48 w-48">
+          <div className="bg-blue-400 p-2 flex justify-center items-center rounded-2xl shadow-custom-all-sides h-48 w-48">
             <QRCodeCanvas
-              value={generateVCardData()} // Generate vCard and set as QR code value
+              value={generateVCardData()}
               renderAs="canvas"
               size="130"
               includeMargin={true}
