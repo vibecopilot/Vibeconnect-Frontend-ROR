@@ -18,12 +18,12 @@ const AddPPMActivity = () => {
   const [startDate, setStartDate] = useState(formattedDate);
   const [endDate, setEndDate] = useState(formattedDate);
   const [addNewQuestion, setAddNewQuestion] = useState([
-    { name: "", type: "", options: ["", "", "", ""] },
+    { name: "", type: "", options: ["", "", "", ""], value_types: ["", "", "", ""] },
   ]);
   const handleAddQuestionFields = () => {
     setAddNewQuestion([
       ...addNewQuestion,
-      { name: "", type: "", options: ["", "", "", ""] },
+      { name: "", type: "", options: ["", "", "", ""], value_types: ["", "", "", ""] },
     ]);
   };
 
@@ -32,13 +32,17 @@ const AddPPMActivity = () => {
     newFields.splice(index, 1);
     setAddNewQuestion(newFields);
   };
-  const handleQuestionChange = (index, field, value) => {
+  const handleQuestionChange = (index, field, value, optionIndex = null) => {
     const newQuestions = [...addNewQuestion];
+
     if (field === "name" || field === "type") {
       newQuestions[index][field] = value;
-    } else {
-      newQuestions[index].options[field] = value;
+    } else if (field === "option") {
+      newQuestions[index].options[optionIndex] = value;
+    } else if (field === "value_type") {
+      newQuestions[index].value_types[optionIndex] = value;
     }
+
     setAddNewQuestion(newQuestions);
   };
 
@@ -62,13 +66,21 @@ const Navigate = useNavigate()
         name: q.name,
         type: q.type,
         option1: q.options[0],
+        value_type1: q.value_types[0],
         option2: q.options[1],
+        value_type2: q.value_types[1],
         option3: q.options[2],
+        value_type3: q.value_types[2],
         option4: q.options[3],
+        value_type4: q.value_types[3],
       })),
     };
     console.log(data);
 
+    if (!name || !frequency) {
+      return toast.error("Name and Frequency are required");
+    }
+    
     if (startDate>= endDate) {
       return toast.error("Start date must be before End date")
     }
@@ -157,44 +169,45 @@ const Navigate = useNavigate()
               </div>
             </div>
             <div>
-              {addNewQuestion.map((data, i) => (
+            {addNewQuestion.map((data, i) => (
                 <div key={i}>
                   <div className="my-5">
                     <h2 className="border-b-2 border-black text font-medium">
                       Add New Question
                     </h2>
                     <div className="my-2 grid gap-4">
-                    <input
-                          type="text"
-                          name={`question_${i}`}
-                          id={`question_${i}`}
-                          className="border p-1 px-4 border-gray-500 rounded-md"
-                          placeholder="Add New Question"
-                          value={data.name}
-                          onChange={(e) =>
-                            handleQuestionChange(i, "name", e.target.value)
-                          }
-                        />
+                      <input
+                        type="text"
+                        name={`question_${i}`}
+                        id={`question_${i}`}
+                        className="border p-1 px-4 border-gray-500 rounded-md"
+                        placeholder="Add New Question"
+                        value={data.name}
+                        onChange={(e) =>
+                          handleQuestionChange(i, "name", e.target.value)
+                        }
+                      />
                     </div>
                     <div className="my-2">
-                    <select
-                          name={`type_${i}`}
-                          id={`type_${i}`}
-                          value={data.type}
-                          onChange={(e) =>
-                            handleQuestionChange(i, "type", e.target.value)
-                          }
-                          className="border p-1 px-4 border-gray-500 rounded-md"
-                        >
-                          <option value="">Select Answer Type</option>
-                          <option value="multiple">
-                            Multiple Choice Question
-                          </option>
-                          <option value="inbox">Input box</option>
-                          <option value="description">Description box</option>
-                        </select>
-                        {data.type === "multiple" && (
-                          <div className="grid grid-cols-4 gap-4 my-2">
+                      <select
+                        name={`type_${i}`}
+                        id={`type_${i}`}
+                        value={data.type}
+                        onChange={(e) =>
+                          handleQuestionChange(i, "type", e.target.value)
+                        }
+                        className="border p-1 px-4 border-gray-500 rounded-md"
+                      >
+                        <option value="">Select Answer Type</option>
+                        <option value="multiple">
+                          Multiple Choice Question
+                        </option>
+                        <option value="inbox">Input box</option>
+                        <option value="description">Description box</option>
+                      </select>
+                      {data.type === "multiple" && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 my-2">
+                          <div className="flex flex-col sm:flex-row gap-2">
                             <input
                               type="text"
                               name={`option1_${i}`}
@@ -202,10 +215,21 @@ const Navigate = useNavigate()
                               className="border p-1 px-4 border-gray-500 rounded-md"
                               placeholder="option 1"
                               value={data.options[0]}
-                              onChange={(e) =>
-                                handleQuestionChange(i, 0, e.target.value)
-                              }
+                              onChange={(e) => handleQuestionChange(i, "option", e.target.value, 0)}
                             />
+                            <select
+                              name={`value_type1_${i}`}
+                              id={`value_type1_${i}`}
+                              className={`border p-1 border-gray-500 rounded-md ${data.value_types[0] === 'P' ? 'bg-green-400' : data.value_types[0] === 'N' ? 'bg-red-400' : ''}`}
+                              value={data.value_types[0]}
+                              onChange={(e) => handleQuestionChange(i, "value_type", e.target.value, 0)}
+                            >
+                              <option value="">Select</option>
+                              <option value="P">P</option>
+                              <option value="N">N</option>
+                            </select>
+                          </div>
+                          <div className="flex flex-col sm:flex-row gap-2">
                             <input
                               type="text"
                               name={`option2_${i}`}
@@ -213,10 +237,22 @@ const Navigate = useNavigate()
                               className="border p-1 px-4 border-gray-500 rounded-md"
                               placeholder="option 2"
                               value={data.options[1]}
-                              onChange={(e) =>
-                                handleQuestionChange(i, 1, e.target.value)
-                              }
+                              onChange={(e) => handleQuestionChange(i, "option", e.target.value, 1)}
                             />
+                            <select
+                              name={`value_type2_${i}`}
+                              id={`value_type2_${i}`}
+                              className={`border p-1 border-gray-500 rounded-md ${data.value_types[1] === 'P' ? 'bg-green-400' : data.value_types[1] === 'N' ? 'bg-red-400' : ''}`}
+                              value={data.value_types[1]}
+                              onChange={(e) => handleQuestionChange(i, "value_type", e.target.value, 1)}
+                            >
+                              <option value="">Select</option>
+                              <option value="P" >P</option>
+                              <option value="N" >N</option>
+                            </select>
+                          </div>
+
+                          <div className="flex flex-col sm:flex-row gap-2">
                             <input
                               type="text"
                               name={`option3_${i}`}
@@ -224,10 +260,21 @@ const Navigate = useNavigate()
                               className="border p-1 px-4 border-gray-500 rounded-md"
                               placeholder="option 3"
                               value={data.options[2]}
-                              onChange={(e) =>
-                                handleQuestionChange(i, 2, e.target.value)
-                              }
+                              onChange={(e) => handleQuestionChange(i, "option", e.target.value, 2)}
                             />
+                            <select
+                              name={`value_type3_${i}`}
+                              id={`value_type3_${i}`}
+                              className={`border p-1 border-gray-500 rounded-md ${data.value_types[2] === 'P' ? 'bg-green-400' : data.value_types[2] === 'N' ? 'bg-red-400' : ''}`}
+                              value={data.value_types[2]}
+                              onChange={(e) => handleQuestionChange(i, "value_type", e.target.value, 2)}
+                            >
+                              <option value="">Select</option>
+                              <option value="P">P</option>
+                              <option value="N">N</option>
+                            </select>
+                          </div>
+                          <div className="flex flex-col sm:flex-row gap-2">
                             <input
                               type="text"
                               name={`option4_${i}`}
@@ -235,20 +282,32 @@ const Navigate = useNavigate()
                               className="border p-1 px-4 border-gray-500 rounded-md"
                               placeholder="option 4"
                               value={data.options[3]}
-                              onChange={(e) =>
-                                handleQuestionChange(i, 3, e.target.value)
-                              }
+                              onChange={(e) => handleQuestionChange(i, "option", e.target.value, 3)}
                             />
+                            <select
+                              name={`value_type4_${i}`}
+                              id={`value_type4_${i}`}
+                              className={`border p-1 border-gray-500 rounded-md ${data.value_types[3] === 'P' ? 'bg-green-400' : data.value_types[3] === 'N' ? 'bg-red-400' : ''}`}
+                              value={data.value_types[3]}
+                              onChange={(e) => handleQuestionChange(i, "value_type", e.target.value, 3)}
+                            >
+                              <option value="">Select</option>
+                              <option value="P">P</option>
+                              <option value="N">N</option>
+                            </select>
                           </div>
-                        )}
+                        </div>
+                      )}
+
                     </div>
+
                     <div className="flex justify-end gap-2">
-                    <button
-                          className="p-1 border-2 border-red-500 text-white hover:bg-white hover:text-red-500 bg-red-500 px-4 transition-all duration-300 rounded-md "
-                          onClick={() => handleRemoveQuestionFields(i)}
-                        >
-                          <IoClose />
-                        </button>
+                      <button
+                        className="p-1 border-2 border-red-500 text-white hover:bg-white hover:text-red-500 bg-red-500 px-4 transition-all duration-300 rounded-md "
+                        onClick={() => handleRemoveQuestionFields(i)}
+                      >
+                        <IoClose />
+                      </button>
                     </div>
                   </div>
                 </div>

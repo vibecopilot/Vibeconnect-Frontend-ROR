@@ -1,1071 +1,635 @@
-import React, { useState } from 'react'
-import Navbar from '../../components/Navbar';
-import Switch from '../../Buttons/Switch';
-import { IoMdAdd } from 'react-icons/io';
-import { FaTrash } from 'react-icons/fa';
+import React, { useEffect, useState } from "react";
+import { BiPlus } from "react-icons/bi";
+import { IoClose } from "react-icons/io5";
+import { getItemInLocalStorage } from "../../utils/localStorage";
+import { getGenericGroupAssetChecklist, getGenericSubGroupAssetChecklist, getHostList, getSiteAsset, getVendors, postChecklist } from "../../api";
+import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import toast from "react-hot-toast";
+import FileInputBox from "../../containers/Inputs/FileInputBox";
+import Select from 'react-select';
+import Cron from "react-js-cron";
+import "react-js-cron/dist/styles.css";
 
-function AddMasterCheckListSetup() {
+const AddMasterCheckListSetup = () => {
+  const today = new Date().toISOString().split("T")[0];
+  const toDay = new Date();
+  const year = toDay.getFullYear();
+  const [hosts, setHosts] = useState([]);
+  const [selectedOptionssupervisior, setSelectedOptionssupervisior] = useState([]);
+  const [optionssupervisior, setOptionssupervisior] = useState([]);
+  const month = String(toDay.getMonth() + 1).padStart(2, "0");
+  const day = String(toDay.getDate()).padStart(2, "0");
+  const formattedDate = `${year}-${month}-${day}`;
+  const [supplierid, setsupplierid] = useState("");
+  const [name, setName] = useState("");
+  const [frequency, setFrequency] = useState("");
+  const [startDate, setStartDate] = useState(formattedDate);
+  const [endDate, setEndDate] = useState(formattedDate);
+ 
+  const [suppliers, setSuppliers] = useState([]);
+
+  const [addNewQuestion, setAddNewQuestion] = useState([
+    {
+      name: "", type: "", options: ["", "", "", ""], value_types: ["", "", "", ""],
+      question_mandatory: false, reading: false, help_text: "", showHelpText: false,image_for_question:[],weightage:"",rating:false
+    },
+  ]);
+  
+  const handleAddQuestionFields = () => {
+    setAddNewQuestion([
+      ...addNewQuestion,
+      {
+        name: "", type: "", options: ["", "", "", ""], value_types: ["", "", "", ""],
+        question_mandatory: false, reading: false, help_text: "", showHelpText: false,image_for_question:[],weightage:"",rating:false
+      },
+    ]);
+  };
+  
+  const handleQuestionChange = (index, field, value, optionIndex = null) => {
+    const newQuestions = [...addNewQuestion];
+  
+    if (field === "name" || field === "type") {
+      newQuestions[index][field] = value;
+    } else if (field === "option") {
+      newQuestions[index].options[optionIndex] = value;
+    } else if (field === "value_type") {
+      newQuestions[index].value_types[optionIndex] = value;
+    } else if (field === "question_mandatory" || field === "reading" || field === "showHelpText"|| field === "rating") {
+      newQuestions[index][field] = value;
+    } else if (field === "help_text") {
+      newQuestions[index].help_text = value;
+    }else if (field === "image_for_question") {
+      newQuestions[index].image_for_question = value;
+    }
+    else if (field === "weightage") {
+      newQuestions[index].weightage = value;
+    }
+  
+    setAddNewQuestion(newQuestions);
+  };
+  
+  const handleRemoveQuestionFields = (index) => {
+    const newFields = [...addNewQuestion];
+    newFields.splice(index, 1);
+    setAddNewQuestion(newFields);
+  };
+  
+
+  const siteId = getItemInLocalStorage("SITEID");
+  const userId = getItemInLocalStorage("UserId");
+  const navigate = useNavigate()
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    const supervisorIds = selectedOptionssupervisior.map(option => option.value);
+    const data = {
+      checklist: {
+        site_id: siteId,
+        weightage_enabled:weightage,
+        occurs: "",
+        name: name,
+        start_date: startDate,
+        end_date: endDate,
+        user_id: userId,
+        
+        
+        supplier_id:supplierid,
+        
+        ctype: "routine",
+      },
+      frequency: frequency,
+      question: addNewQuestion.map((q, index) => ({
+        name: q.name,
+        type: q.type,
+        option1: q.options[0],
+        value_type1: q.value_types[0],
+        option2: q.options[1],
+        value_type2: q.value_types[1],
+        option3: q.options[2],
+        value_type3: q.value_types[2],
+        option4: q.options[3],
+        value_type4: q.value_types[3],
+        question_mandatory:q.question_mandatory,
+        image_mandatory:q.reading,
+        help_text_enbled: q.showHelpText ,
+        help_text: q.showHelpText ? q.help_text : "",
+        weightage: q.weightage,
+        rating: q.rating,
+        [`image_for_question_${index + 1}`]: q.image_for_question
+      })),
+    };
+    console.log(data);
+
+    if (!name || !frequency) {
+      return toast.error("Name and Frequency are required");
+    }
+
+    if (startDate >= endDate) {
+      return toast.error("Start date must be before End date")
+    }
+
+    try {
+      const response = await postChecklist(data);
+      console.log(response);
+      toast.success("New Checklist Created")
+      navigate("/assets/checklist")
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+ 
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const usersResp = await getHostList(siteId); 
+        const supervisors = usersResp.data.hosts.map((host) => ({
+          value: host.id, 
+          label: host.name, 
+        }));
+        setHosts(usersResp.data.hosts); 
+        setOptionssupervisior(supervisors); 
+        console.log(usersResp);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchUsers();
+  }, [siteId]);
+  const themeColor = useSelector((state) => state.theme.color)
+  
+  
+ 
+ 
+  
+ 
+  const [createNew, setCreateNew] = useState(false);
   const [createTicket, setCreateTicket] = useState(false);
   const [weightage, setWeightage] = useState(false);
-  const [sections, setSections] = useState([]);
-  const [selectedValue, setSelectedValue] = useState("");
 
-  // Handle changing the type of input in the select dropdown
-  const handleChange = (event) => {
-    setSelectedValue(event.target.value);
+  const handleToggle = (type) => {
+    switch (type) {
+      case 'createNew':
+        setCreateNew(!createNew);
+        break;
+      case 'createTicket':
+        setCreateTicket(!createTicket);
+        break;
+      case 'weightage':
+        setWeightage(!weightage);
+        break;
+      default:
+        break;
+    }
   };
-
-  // Handle adding a section
-  const handleAddSection = (event) => {
-    event.preventDefault();
-    setSections([...sections, { name: '', type: '', questions: [], selectDropDown: [], selectRadioButton: [], selectCheckBox: [], selectNumeric: [], selectOptionInput: [] }]);
-  };
-
-  // Handle removing a section
-  const handleRemoveSection = (sectionIndex) => {
-    const newSections = [...sections];
-    newSections.splice(sectionIndex, 1);
-    setSections(newSections);
-  };
-
-  // Handle section input change
-  const handleSectionInputChange = (sectionIndex, event) => {
-    const { name, value, type, checked } = event.target;
-    const newSections = [...sections];
-    newSections[sectionIndex][name] = type === 'checkbox' ? checked : value;
-    setSections(newSections);
-  };
-
-  // Handle adding a question to a section
-  const handleAddQuestion = (sectionIndex, event) => {
-    event.preventDefault();
-    const newSections = [...sections];
-    newSections[sectionIndex].questions.push({ name: '', type: '', reading: false, helpText: false });
-    setSections(newSections);
-  };
-
-  // Handle removing a question from a section
-  const handleRemoveQuestion = (sectionIndex, questionIndex) => {
-    const newSections = [...sections];
-    newSections[sectionIndex].questions.splice(questionIndex, 1);
-    setSections(newSections);
-  };
-
-  // Handle question input change within a section
-  const handleQuestionInputChange = (sectionIndex, questionIndex, event) => {
-    const { name, value, type, checked } = event.target;
-    const newSections = [...sections];
-    newSections[sectionIndex].questions[questionIndex][name] = type === 'checkbox' ? checked : value;
-    setSections(newSections);
-  };
-
-  // Dropdown handlers at section level
-  const handleAddDropDown = (sectionIndex, event) => {
-    event.preventDefault();
-    const newSections = [...sections];
-    newSections[sectionIndex].selectDropDown.push({ select: '', value: '' });
-    setSections(newSections);
-  };
-
-  const handleInputChangeDropDown = (sectionIndex, dropDownIndex, event) => {
-    const { name, value } = event.target;
-    const newSections = [...sections];
-    newSections[sectionIndex].selectDropDown[dropDownIndex][name] = value;
-    setSections(newSections);
-  };
-
-  const handleRemoveDropDown = (sectionIndex, dropDownIndex) => {
-    const newSections = [...sections];
-    newSections[sectionIndex].selectDropDown.splice(dropDownIndex, 1);
-    setSections(newSections);
-  };
-
-  //radio button
-  const [selectRadioButton, setSelectRadioButton]= useState([])
-    const handleAddRadioButton = (event) => {
-    event.preventDefault();
-    setSelectRadioButton([...selectRadioButton, { name: '', mobile: '' }]);
-  };
-
-  const handleInputChangeRadioButton = (index, event) => {
-    const { name, value } = event.target;
-    const newRadioButton = [...selectRadioButton];
-    newRadioButton[index][name] = value;
-    setSelectRadioButton(newRadioButton);
-  };
-
-  const handleRemoveRadioButton = (index) => {
-    const newRadioButton = [...selectRadioButton];
-    newRadioButton.splice(index, 1);
-    setSelectRadioButton(newRadioButton);
-  };
-
-  //checkbox
-  const [selectCheckBox, setSelectCheckBox]= useState([])
-    const handleAddCheckBox = (event) => {
-    event.preventDefault();
-    setSelectCheckBox([...selectCheckBox, { value: '', type: '' }]);
-  };
-
-  const handleInputChangeCheckBox = (index, event) => {
-    const { name, value } = event.target;
-    const newCheckBox = [...selectCheckBox];
-    newCheckBox[index][name] = value;
-    setSelectCheckBox(newCheckBox);
-  };
-
-  const handleRemoveCheckBox = (index) => {
-    const newCheckBox = [...selectCheckBox];
-    newCheckBox.splice(index, 1);
-    setSelectCheckBox(newCheckBox);
-  };
-
-  //Numeric
-  const [selectNumeric, setSelectNumeric]= useState([])
-    const handleAddNumeric = (event) => {
-    event.preventDefault();
-    setSelectNumeric([...selectNumeric, { value: '', type: '' }]);
-  };
-
-  const handleInputChangeNumeric = (index, event) => {
-    const { name, value } = event.target;
-    const newNumeric = [...selectNumeric];
-    newNumeric[index][name] = value;
-    setSelectNumeric(newNumeric);
-  };
-
-  const handleRemoveNumeric = (index) => {
-    const newNumeric = [...selectNumeric];
-    newNumeric.splice(index, 1);
-    setSelectNumeric(newNumeric);
-  };
-
-  //OptionInput
-  const [selectOptionInput, setSelectOptionInput]= useState([])
-    const handleAddOptionInput = (event) => {
-    event.preventDefault();
-    setSelectOptionInput([...selectOptionInput, { value: '', type: '' }]);
-  };
-
-  const handleInputChangeOptionInput = (index, event) => {
-    const { name, value } = event.target;
-    const newOptionInput = [...selectOptionInput];
-    newOptionInput[index][name] = value;
-    setSelectOptionInput(newOptionInput);
-  };
-
-  const handleRemoveOptionInput = (index) => {
-    const newOptionInput = [...selectOptionInput];
-    newOptionInput.splice(index, 1);
-    setSelectOptionInput(newOptionInput);
-  };
-
-
- // const handleChange = (event) => {
-   // setSelectedValue(event.target.value);
-  //};
-
-
-
+ 
+  
+  
+  
+ 
+  
+ 
+    
+   
+    
   return (
-    <section className='flex'>
-      <div className='hidden md:block'>
-        <Navbar/>
-      </div>
-      <div className="w-full flex  flex-col overflow-hidden">
-        <h2 className="text-center text-xl font-bold my-5 p-2 bg-black rounded-full text-white mx-5">
-          Add Master CheckList
+    <section>
+      <div className="m-2">
+        <h2 style={{ background: themeColor }} className="text-center text-xl font-bold p-2  rounded-full text-white">
+          Add Master Checklist
         </h2>
-        <div className='flex justify-center'>
-          <div className='border border-gray-400 p-5 px-10 rounded-lg w-4/5 mb-14'>
-            <div className='md:grid grid-cols-2 gap-5 my-3'>
-              <div className="flex flex-col ">
-                <div className='flex gap-3'>
-                  <label htmlFor="meterApplicable">Create Ticket </label>
-                    <Switch  onChange={() => setCreateTicket(!createTicket)}/>
-                </div>
-                {createTicket && (
-                  <div className='lg:grid grid-cols-3 my-3'>
-                    <div className='flex flex-col my-2'>
-                      <div className='flex gap-3'>
-                        <label htmlFor="meterApplicable">Checklist Level</label>
-                        <input type="checkbox" name="level" id="meterApplicable" ></input>
-                      </div>
-                    </div>
-                    <div className='flex flex-col my-2'>
-                      <div className='flex gap-3'>
-                        <label htmlFor="meterApplicable">Question Level</label>
-                        <input type="checkbox" name="level" id="meterApplicable" ></input>
-                      </div>
-                    </div>
-                    <div className="flex flex-col">
-                      <select className="border p-1 px-4 border-gray-500 rounded-md">
-                        <option value="">Select Category</option>
-                        <option value="">Elevator</option>
-                        <option value="">IT Support</option>
-                        <option value="">Air Conditioning</option>
-                        <option value="">Cafeteria/Pantry</option>
-                        <option value="">Other</option>
-                        <option value="">Pantry</option>
-                      </select>
-                    </div>
-                  </div>
-                )}
-              </div>
-              <div className="flex flex-col ">
-                <div className='flex gap-3'>
-                  <label htmlFor="meterApplicable">Create Ticket </label>
-                  <Switch  onChange={() => setWeightage(!weightage)}/>
-                </div>
-              </div>
-            </div>
-              <h2 className='border-b border-black my-5 text-xl font-semibold'>Basic Info</h2>
-                        <div className="md:grid grid-cols-7 items-center">
-                            <div>
-                              <label htmlFor="meterApplicable" className='text-sm font-semibold'>Type</label>
-                            </div>
-                            <div className='flex md:flex-row flex- gap-5'>
-                               <div className="flex gap-2">
-                                    <input
-                                        type="radio"
-                                        id="yes"
-                                        name='masterCheckList'
-                                        className="checked:accent-black"
-                                    />
-                                    <label htmlFor="yes">PPM</label>
-                                </div>
-                                <div className="flex gap-2">
-                                    <input
-                                        type="radio"
-                                        id="yes"
-                                        name='masterCheckList'
-                                        className="checked:accent-black"
-                                    />
-                                    <label htmlFor="yes">AMC</label>
-                                </div>
-                                <div className="flex gap-2">
-                                    <input
-                                        type="radio"
-                                        id="yes"
-                                        name='masterCheckList'
-                                        className="checked:accent-black"
-                                    />
-                                    <label htmlFor="yes">Preparedness</label>
-                                </div>
-                                <div className="flex gap-2">
-                                    <input
-                                        type="radio"
-                                        id="yes"
-                                        name='masterCheckList'
-                                        className="checked:accent-black"
-                                    />
-                                    <label htmlFor="yes">Hoto</label>
-                                </div>
-                                <div className="flex gap-2">
-                                    <input
-                                        type="radio"
-                                        id="yes"
-                                        name='masterCheckList'
-                                        className="checked:accent-black"
-                                    />
-                                    <label htmlFor="yes">Routine</label>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-7 items-center my-5">
-                            <div>
-                              <label htmlFor="meterApplicable" className='text-sm font-semibold'>Schedule For</label>
-                            </div>
-                            <div className='flex gap-5'>
-                               <div className="flex gap-2">
-                                    <input
-                                        type="radio"
-                                        id="yes"
-                                        name='masterCheckList'
-                                        className="checked:accent-black"
-                                    />
-                                    <label htmlFor="yes">Asset</label>
-                                </div>
-                                <div className="flex gap-2">
-                                    <input
-                                        type="radio"
-                                        id="yes"
-                                        name='masterCheckList'
-                                        className="checked:accent-black"
-                                    />
-                                    <label htmlFor="yes">Service</label>
-                                </div>
-                            </div>
-                        </div>
-                        <div className='md:grid grid-cols gap-5 my-3'>
-                                <div className='flex flex-col '>
-                                    <div className='flex gap-10'>
-                                        <label htmlFor="" className="font-semibold ">
-                                            Activity Name  
-                                        </label>
-                                        <input
-                                          type="text"
-                                          placeholder="Enter Activity Name  "
-                                          className="border p-1 px-4 border-gray-500 rounded-md w-4/5"
-                                        />
-                                    </div>
-                                </div>
-                        </div>
-                        <div className='md:grid grid-cols gap-5 my-3'>
-                                <div className='flex flex-col '>
-                                    <div className='flex gap-14'>
-                                        <label htmlFor="" className="font-semibold ">
-                                            Description  
-                                        </label>
-                                        <textarea
-                                          name=""
-                                          id=""
-                                          cols="4"
-                                          rows="2"
-                                          placeholder="Description"
-                                          className="border p-1 px-4 border-gray-500 rounded-md w-4/5"
-                                        />
-                                    </div>
-                                </div>
-                        </div>
-                        <h2 className='border-b border-black my-5 text-xl font-semibold'>Tasks</h2>
-                        <div className='flex justify-end my-5'>
-                       <button className='font-semibold border-2 border-black px-4 p-1 flex gap-2 items-center rounded-md' onClick={handleAddSection}>
-                          <IoMdAdd /> Add Section
-                       </button>
-                    </div>
-                    {sections.map((section, sectionIndex) => (
-        <div key={sectionIndex} className='border-2 border-black rounded-md my-10'>
-          <div className='flex justify-between my-5 mx-5'>
-            <div className='md:grid grid-cols-2 gap-3'>
-              <div className="flex flex-col my-3">
-                <select className="border p-1 px-4 border-gray-500 rounded-md" name="type" value={section.type} onChange={(e) => handleSectionInputChange(sectionIndex, e)}>
-                  <option value="">Select Group</option>
-                  {/* Add options as needed */}
-                </select>
-              </div>
-              <div className="flex flex-col my-3">
-                <select className="border p-1 px-4 border-gray-500 rounded-md" name="subGroup" value={section.subGroup} onChange={(e) => handleSectionInputChange(sectionIndex, e)}>
-                  <option value="">Select Sub Group</option>
-                  {/* Add options as needed */}
-                </select>
-              </div>
-            </div>
-            <div className='mt-5'>
-              <button onClick={() => handleRemoveSection(sectionIndex)}><FaTrash /></button>
-            </div>
-          </div>
-          <div className='lg:grid grid-cols-6 gap-5 mx-5'>
-            <div className="flex flex-col ">
-              <label htmlFor="" className="font-semibold my-2">Task</label>
-              <input
-                type="text"
-                placeholder="Enter Task"
-                className="border p-1 px-4 border-gray-500 rounded-md"
-                name="task"
-                value={section.task}
-                onChange={(e) => handleSectionInputChange(sectionIndex, e)}
-              />
-            </div>
-            <div className="flex flex-col ">
-              <label htmlFor="" className="font-semibold my-2">Input Type</label>
-              <select
-              id="select"
-              name="type"
-            value={section.type}
-            onChange={(event) => handleSectionInputChange(sectionIndex, event)}
-            className="border p-1 px-4 border-gray-500 rounded-md"
+        <div className="md:mx-20 my-5 mb-10 sm:border border-gray-400 p-5 px-10 rounded-lg sm:shadow-xl">
+        <div className="py-4">
+      {/* Main Grid for all Toggles */}
+      <div className="grid grid-cols-2 gap-4 items-start">
+        {/* Create New Toggle */}
+        {/* <div className="flex items-center">
+          <span className="mr-2">Create New</span>
+          <div
+            onClick={() => handleToggle('createNew')}
+            className={`w-10 h-4 flex items-center bg-gray-300 rounded-full  cursor-pointer ${
+              createNew ? 'bg-green-500' : ''
+            }`}
           >
-            <option value="">Select Input Type</option>
-            <option value="text">Text</option>
-            <option value="dropDown">Drop Down</option>
-            <option value="radioButton">Radio Button</option>
-            <option value="checkBox">CheckBox</option>
-            <option value="numeric">Numeric</option>
-            <option value="multiline">Multiline</option>
-            <option value="date">Date</option>
-            <option value="optionInput">Option and Inputs</option>
-          </select>
-            </div>
-            <div className="flex flex-col ">
-              <div className='lg:mt-8'>
-                <div className='flex gap-2'>
-                  <label htmlFor="" className="font-semibold my-2">Mandatory</label>
-                  <input type='checkbox' name='mandatory' checked={section.mandatory} onChange={(e) => handleSectionInputChange(sectionIndex, e)}></input>
-                </div>
-              </div>
-            </div>
-            <div className="flex flex-col ">
-              <div className='lg:mt-8'>
-                <div className='flex gap-2'>
-                  <label htmlFor="" className="font-semibold my-2">Reading</label>
-                  <input type='checkbox' name='reading' checked={section.reading} onChange={(e) => handleSectionInputChange(sectionIndex, e)}></input>
-                </div>
-              </div>
-            </div>
-            <div className="flex flex-col ">
-              <div className='lg:mt-8'>
-                <div className='flex gap-2'>
-                  <label htmlFor="" className="font-semibold my-2">Help Text</label>
-                  <input type='checkbox' name='helpText' checked={section.helpText} onChange={(e) => handleSectionInputChange(sectionIndex, e)}></input>
-                </div>
-              </div>
-            </div>
+            <div
+              className={`bg-white w-4 h-4 rounded-full shadow-md transform ${
+                createNew ? 'translate-x-6' : ''
+              }`}
+            />
           </div>
-          <div className='lg:grid grid-cols gap-5 mx-5'>
-          {section.type === 'dropDown' && (
-            <div>
-              <div className="flex flex-col">
-                <label className="font-semibold my-2">Selected Enter Value</label>
-                <div className="flex gap-3">
-                  <input
-                    type="text"
-                    placeholder="Yes"
-                    name="value"
-                    className="border p-1 px-4 border-gray-500 rounded-md"
-                  />
-                  <select className="border-2 border-black rounded-md p-1" name="select">
-                    <option>Select</option>
-                    <option value="P">P</option>
-                    <option value="N">N</option>
-                  </select>
-                </div>
-              </div>
+        </div> */}
 
-              {section.selectDropDown.map((dropDown, dropDownIndex) => (
-                <div key={dropDownIndex} className="grid md:grid-cols-3 items-start gap-x-4 gap-y-4 mb-3 w-full">
-                  <div className="flex flex-col">
-                    <label className="font-semibold my-2">Selected Enter Value</label>
-                    <div className="flex gap-3">
-                      <input
-                        type="text"
-                        name="value"
-                        placeholder="Yes"
-                        value={dropDown.value}
-                        onChange={(event) => handleInputChangeDropDown(sectionIndex, dropDownIndex, event)}
-                        className="border p-1 px-4 border-gray-500 rounded-md"
-                      />
-                      <select
-                        className="border-2 border-black rounded-md p-1"
-                        name="select"
-                        value={dropDown.select}
-                        onChange={(event) => handleInputChangeDropDown(sectionIndex, dropDownIndex, event)}
-                      >
-                        <option>Select</option>
-                        <option value="P">P</option>
-                        <option value="N">N</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div className="my-3">
-                    <button onClick={() => handleRemoveDropDown(sectionIndex, dropDownIndex)}>
-                      <FaTrash />
-                    </button>
-                  </div>
-                </div>
-              ))}
+       
 
-              <div className="flex justify-end">
-                <button
-                  className="border-2 border-black p-1 rounded-md"
-                  onClick={(event) => handleAddDropDown(sectionIndex, event)}
-                >
-                  Add Option
-                </button>
-              </div>
-            </div>
-          )}
-            {selectedValue === 'radioButton' && (
-                <div className="section">
-                     <div className='flex flex-col'>
-                            <label className="font-semibold my-2">Selected Enter Value</label>
-                          <div className='flex gap-3'>
-                            <input
-                                type="radio"
-                                id="yes"
-                                name='masterCheckList'
-                                className="checked:accent-black"
-                            />
-                            <input
-                              type="text"
-                              placeholder="Yes"
-                              className="border p-1 px-4 border-gray-500 rounded-md"
-                            />
-                            <select className='border-2 border-black rounded-md p-1'>
-                                <option>Select</option>
-                                <option>P</option>
-                                <option>N</option>
-                            </select>
-                            </div>
-                        </div>
-                        {selectRadioButton.map((radioButton, index) => (
-                  <div key={index}>
-                    <div className='grid md:grid-cols-3 item-start gap-x-4 gap-y-4 mb-3 w-full'>
-                    <div className='flex flex-col'>
-                     <label className="font-semibold my-2">Selected </label>
-                     <div className='flex gap-3'>
-                     <input
-                        type="radio"
-                        id="yes"
-                        name='masterCheckList'
-                        className="checked:accent-black"
-                      />
-                     <input
-                        type="text"
-                        placeholder="Yes"
-                       className="border p-1 px-4 border-gray-500 rounded-md"
-                       />
-                      <select className='border-2 border-black rounded-md p-1'>
-                      <option>Select</option>
-                      <option>P</option>
-                        <option>N</option>
-                       </select>
-                      </div>
-                        </div>
-                     <div className='my-'>
-                     <button onClick={() => handleRemoveRadioButton(index)}>
-                        <FaTrash />
-                      </button>
-                     </div>
-                    </div>
-                  </div>
-                ))}
-                        <div className='flex justify-end'>
-                            <button className='border-2 border-black p-1 rounded-md' onClick={handleAddRadioButton}>Add Option</button>
-                        </div>
-                </div>
-            )}
-            {selectedValue === 'checkBox' && (
-                <div className="section">
-                    <div>
-                       <div className='flex flex-col'>
-                            <label className="font-semibold my-2">Selected Enter Value</label>
-                          <div className='flex gap-3'>
-                            <input
-                                type="checkbox"
-                                id="yes"
-                                name='masterCheckList'
-                                className="checked:accent-black"
-                            />
-                            <input
-                              type="text"
-                              placeholder="Yes"
-                              className="border p-1 px-4 border-gray-500 rounded-md"
-                            />
-                            </div>
-                        </div>
-                        {selectCheckBox.map((checkBox, index) => (
-                  <div key={index}>
-                    <div className='grid md:grid-cols-3 item-start gap-x-4 gap-y-4 mb-3 w-full'>
-                    <div className='flex flex-col'>
-                     <label className="font-semibold my-2">Selected </label>
-                     <div className='flex gap-3'>
-                     <input
-                        type="checkbox"
-                        id="yes"
-                        name='masterCheckList'
-                        className="checked:accent-black"
-                      />
-                     <input
-                        type="text"
-                        placeholder="Yes"
-                       className="border p-1 px-4 border-gray-500 rounded-md"
-                       />
-                      <select className='border-2 border-black rounded-md p-1'>
-                      <option>Select</option>
-                      <option>P</option>
-                        <option>N</option>
-                       </select>
-                      </div>
-                        </div>
-                     <div className='my-3'>
-                     <button onClick={() => handleRemoveCheckBox(index)}>
-                        <FaTrash />
-                      </button>
-                     </div>
-                    </div>
-                  </div>
-                ))}
-                        <div className='flex justify-end'>
-                            <button className='border-2 border-black p-1 rounded-md' onClick={handleAddCheckBox}>Add Option</button>
-                        </div>
-                    </div>
-                </div>
-            )}
-            {selectedValue === 'numeric' && (
-                <div className="section">
-                    <div>
-                       <div className='flex flex-col'>
-                            <label className="font-semibold my-2">Selected measure type</label>
-                          <div className='flex gap-3'>
-                          <select className='border-2 border-black rounded-md p-1'>
-                            <option>Select measure type</option>
-                            <option>Consumption</option>
-                            <option>Non Consumption</option>
-                          </select>
-                            </div>
-                        </div>
-                        {selectNumeric.map((numeric, index) => (
-                  <div key={index}>
-                    <div className='grid md:grid-cols-3 item-start gap-x-4 gap-y-4 mb-3 w-full'>
-                    <div className='flex flex-col'>
-                            <label className="font-semibold my-2">Selected measure type</label>
-                          <div className='flex gap-3'>
-                          <select className='border-2 border-black rounded-md p-1'>
-                            <option>Select measure type</option>
-                            <option>Consumption</option>
-                            <option>Non Consumption</option>
-                          </select>
-                            </div>
-                        </div>
-                     <div className='my-3'>
-                     <button onClick={() => handleRemoveNumeric(index)}>
-                        <FaTrash />
-                      </button>
-                     </div>
-                    </div>
-                  </div>
-                ))}
-                        <div className='flex justify-end'>
-                            <button className='border-2 border-black p-1 rounded-md' onClick={handleAddNumeric}>Add Option</button>
-                        </div>
-                    </div>
-                </div>
-            )}
-            {selectedValue === 'optionInput' && (
-                <div className="section">
-                    <div>
-                       <div className='flex flex-col'>
-                            <label className="font-semibold my-2"> Enter Value</label>
-                          <div className='flex gap-3'>
-                            <input
-                              type="text"
-                              placeholder="Yes"
-                              className="border p-1 px-4 border-gray-500 rounded-md"
-                            />
-                            </div>
-                        </div>
-                        {selectOptionInput.map((optionInput, index) => (
-                  <div key={index}>
-                    <div className='grid md:grid-cols-3 item-start gap-x-4 gap-y-4 mb-3 w-full'>
-                    <div className='flex flex-col'>
-                            <label className="font-semibold my-2">Selected measure type</label>
-                          <div className='flex gap-3'>
-                          <select className='border-2 border-black rounded-md p-1'>
-                            <option>Select measure type</option>
-                            <option>Consumption</option>
-                            <option>Non Consumption</option>
-                          </select>
-                            </div>
-                        </div>
-                     <div className='my-3'>
-                     <button onClick={() => handleRemoveOptionInput(index)}>
-                        <FaTrash />
-                      </button>
-                     </div>
-                    </div>
-                  </div>
-                ))}
-                        <div className='flex justify-end'>
-                            <button className='border-2 border-black p-1 rounded-md' onClick={handleAddOptionInput}>Add Option</button>
-                        </div>
-                    </div>
-                </div>
-            )}
-          </div>
-          <div className='lg:grid grid-cols-3 gap-5 mx-5 '>
-            {weightage && (
-              <div className='flex gap-5'>
-                <div className='flex flex-col'>
-                  <label htmlFor="" className="font-semibold my-2"> Weightage</label>
-                  <input type='text' placeholder='Enter Weightage' className='border p-1 px-4 border-gray-500 rounded-md'></input>
-                </div>
-                <div className='flex gap-3 mt-3'>
-                  <input type='checkbox' className='mt-3' ></input>
-                  <label htmlFor="" className="font-semibold mt-6">Rating</label>
-                </div>
-              </div>
-            )}
-            {section.reading && (
-              <div className='flex gap-5'>
-                <div className='flex flex-col'>
-                  <label htmlFor="" className="font-semibold my-2"> Measure Type</label>
-                  <select className="border p-1 px-4 border-gray-500 rounded-md" name="inputType">
-                    <option value="">Select Input Type</option>
-                  </select>
-                </div>
-              </div>
-            )}
-            {section.helpText && (
-              <div className='flex gap-5'>
-                <div className='flex flex-col'>
-                  <label htmlFor="" className="font-semibold my-2">Help Text</label>
-                  <input type='text' placeholder='Enter Help Text' className='border p-1 px-4 border-gray-500 rounded-md'></input>
-                </div>
-                <div className='flex gap-3 mt-3'>
-                  <p className='text-sm mt-8 lg:hidden'>No Attachment</p>
-                </div>
-              </div>
-            )}
-          </div>
-          {section.questions.map((question, questionIndex) => (
-            <div key={questionIndex}>
-              <div className='md:grid grid-cols-6 gap-5 mx-5 my-5'>
-                <div className="flex flex-col ">
-                  <label htmlFor="" className="font-semibold my-2">Task</label>
-                  <input
-                    type="text"
-                    placeholder="Enter Task"
-                    className="border p-1 px-4 border-gray-500 rounded-md"
-                    name="task"
-                    value={question.task}
-                    onChange={(e) => handleQuestionInputChange(sectionIndex, questionIndex, e)}
-                  />
-                </div>
-                <div className="flex flex-col ">
-                  <label htmlFor="" className="font-semibold my-2">Input Type</label>
-                  <select
-            id="select"
-            name="type"
-            value={section.type}
-            onChange={(event) => handleSectionInputChange(sectionIndex, event)}
-            className="border p-1 px-4 border-gray-500 rounded-md"
+        {/* Create Ticket Toggle */}
+        <div className="flex items-center">
+          <span className="mr-2">Create Ticket</span>
+          <div
+            onClick={() => handleToggle('createTicket')}
+            className={`w-10 h-4 flex items-center bg-gray-300 rounded-full  cursor-pointer ${
+              createTicket ? 'bg-green-500' : ''
+            }`}
           >
-            <option value="">Select Input Type</option>
-            <option value="text">Text</option>
-            <option value="dropDown">Drop Down</option>
-            <option value="radioButton">Radio Button</option>
-            <option value="checkBox">CheckBox</option>
-            <option value="numeric">Numeric</option>
-            <option value="multiline">Multiline</option>
-            <option value="date">Date</option>
-            <option value="optionInput">Option and Inputs</option>
-          </select>
-                </div>
-                <div className="flex flex-col ">
-                  <div className='lg:mt-8'>
-                    <div className='flex gap-2'>
-                      <label htmlFor="" className="font-semibold my-2">Mandatory</label>
-                      <input type='checkbox' name='mandatory' checked={question.mandatory} onChange={(e) => handleQuestionInputChange(sectionIndex, questionIndex, e)}></input>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex flex-col ">
-                  <div className='lg:mt-8'>
-                    <div className='flex gap-2'>
-                      <label htmlFor="" className="font-semibold my-2">Reading</label>
-                      <input type='checkbox' name='reading' checked={question.reading} onChange={(e) => handleQuestionInputChange(sectionIndex, questionIndex, e)}></input>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex flex-col ">
-                  <div className='lg:mt-8'>
-                    <div className='flex gap-2'>
-                      <label htmlFor="" className="font-semibold my-2">Help Text</label>
-                      <input type='checkbox' name='helpText' checked={question.helpText} onChange={(e) => handleQuestionInputChange(sectionIndex, questionIndex, e)}></input>
-                    </div>
-                  </div>
-                </div>
-                <div className='flex justify-end mt-10 '>
-                  <button onClick={() => handleRemoveQuestion(sectionIndex, questionIndex)}><FaTrash /></button>
-                </div>
-              </div>
-              <div className='lg:grid grid-cols gap-5 mx-5'>
-              {section.type === 'dropDown' && (
-            <div>
-              <div className="flex flex-col">
-                <label className="font-semibold my-2">Selected Enter Value</label>
-                <div className="flex gap-3">
-                  <input
-                    type="text"
-                    placeholder="Yes"
-                    name="value"
-                    className="border p-1 px-4 border-gray-500 rounded-md"
-                  />
-                  <select className="border-2 border-black rounded-md p-1" name="select">
-                    <option>Select</option>
-                    <option value="P">P</option>
-                    <option value="N">N</option>
-                  </select>
-                </div>
-              </div>
-
-              {section.selectDropDown.map((dropDown, dropDownIndex) => (
-                <div key={dropDownIndex} className="grid md:grid-cols-3 items-start gap-x-4 gap-y-4 mb-3 w-full">
-                  <div className="flex flex-col">
-                    <label className="font-semibold my-2">Selected Enter Value</label>
-                    <div className="flex gap-3">
-                      <input
-                        type="text"
-                        name="value"
-                        placeholder="Yes"
-                        value={dropDown.value}
-                        onChange={(event) => handleInputChangeDropDown(sectionIndex, dropDownIndex, event)}
-                        className="border p-1 px-4 border-gray-500 rounded-md"
-                      />
-                      <select
-                        className="border-2 border-black rounded-md p-1"
-                        name="select"
-                        value={dropDown.select}
-                        onChange={(event) => handleInputChangeDropDown(sectionIndex, dropDownIndex, event)}
-                      >
-                        <option>Select</option>
-                        <option value="P">P</option>
-                        <option value="N">N</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div className="my-3">
-                    <button onClick={() => handleRemoveDropDown(sectionIndex, dropDownIndex)}>
-                      <FaTrash />
-                    </button>
-                  </div>
-                </div>
-              ))}
-
-              <div className="flex justify-end">
-                <button
-                  className="border-2 border-black p-1 rounded-md"
-                  onClick={(event) => handleAddDropDown(sectionIndex, event)}
-                >
-                  Add Option
-                </button>
-              </div>
-            </div>
-          )}
-            {selectedValue === 'radioButton' && (
-                <div className="section">
-                     <div className='flex flex-col'>
-                            <label className="font-semibold my-2">Selected Enter Value</label>
-                          <div className='flex gap-3'>
-                            <input
-                                type="radio"
-                                id="yes"
-                                name='masterCheckList'
-                                className="checked:accent-black"
-                            />
-                            <input
-                              type="text"
-                              placeholder="Yes"
-                              className="border p-1 px-4 border-gray-500 rounded-md"
-                            />
-                            <select className='border-2 border-black rounded-md p-1'>
-                                <option>Select</option>
-                                <option>P</option>
-                                <option>N</option>
-                            </select>
-                            </div>
-                        </div>
-                        {selectRadioButton.map((radioButton, index) => (
-                  <div key={index}>
-                    <div className='grid md:grid-cols-3 item-start gap-x-4 gap-y-4 mb-3 w-full'>
-                    <div className='flex flex-col'>
-                     <label className="font-semibold my-2">Selected </label>
-                     <div className='flex gap-3'>
-                     <input
-                        type="radio"
-                        id="yes"
-                        name='masterCheckList'
-                        className="checked:accent-black"
-                      />
-                     <input
-                        type="text"
-                        placeholder="Yes"
-                       className="border p-1 px-4 border-gray-500 rounded-md"
-                       />
-                      <select className='border-2 border-black rounded-md p-1'>
-                      <option>Select</option>
-                      <option>P</option>
-                        <option>N</option>
-                       </select>
-                      </div>
-                        </div>
-                     <div className='my-'>
-                     <button onClick={() => handleRemoveRadioButton(index)}>
-                        <FaTrash />
-                      </button>
-                     </div>
-                    </div>
-                  </div>
-                ))}
-                        <div className='flex justify-end'>
-                            <button className='border-2 border-black p-1 rounded-md' onClick={handleAddRadioButton}>Add Option</button>
-                        </div>
-                </div>
-            )}
-            {selectedValue === 'checkBox' && (
-                <div className="section">
-                    <div>
-                       <div className='flex flex-col'>
-                            <label className="font-semibold my-2">Selected Enter Value</label>
-                          <div className='flex gap-3'>
-                            <input
-                                type="checkbox"
-                                id="yes"
-                                name='masterCheckList'
-                                className="checked:accent-black"
-                            />
-                            <input
-                              type="text"
-                              placeholder="Yes"
-                              className="border p-1 px-4 border-gray-500 rounded-md"
-                            />
-                            </div>
-                        </div>
-                        {selectCheckBox.map((checkBox, index) => (
-                  <div key={index}>
-                    <div className='grid md:grid-cols-3 item-start gap-x-4 gap-y-4 mb-3 w-full'>
-                    <div className='flex flex-col'>
-                     <label className="font-semibold my-2">Selected </label>
-                     <div className='flex gap-3'>
-                     <input
-                        type="checkbox"
-                        id="yes"
-                        name='masterCheckList'
-                        className="checked:accent-black"
-                      />
-                     <input
-                        type="text"
-                        placeholder="Yes"
-                       className="border p-1 px-4 border-gray-500 rounded-md"
-                       />
-                      <select className='border-2 border-black rounded-md p-1'>
-                      <option>Select</option>
-                      <option>P</option>
-                        <option>N</option>
-                       </select>
-                      </div>
-                        </div>
-                     <div className='my-3'>
-                     <button onClick={() => handleRemoveCheckBox(index)}>
-                        <FaTrash />
-                      </button>
-                     </div>
-                    </div>
-                  </div>
-                ))}
-                        <div className='flex justify-end'>
-                            <button className='border-2 border-black p-1 rounded-md' onClick={handleAddCheckBox}>Add Option</button>
-                        </div>
-                    </div>
-                </div>
-            )}
-            {selectedValue === 'numeric' && (
-                <div className="section">
-                    <div>
-                       <div className='flex flex-col'>
-                            <label className="font-semibold my-2">Selected measure type</label>
-                          <div className='flex gap-3'>
-                          <select className='border-2 border-black rounded-md p-1'>
-                            <option>Select measure type</option>
-                            <option>Consumption</option>
-                            <option>Non Consumption</option>
-                          </select>
-                            </div>
-                        </div>
-                        {selectNumeric.map((numeric, index) => (
-                  <div key={index}>
-                    <div className='grid md:grid-cols-3 item-start gap-x-4 gap-y-4 mb-3 w-full'>
-                    <div className='flex flex-col'>
-                            <label className="font-semibold my-2">Selected measure type</label>
-                          <div className='flex gap-3'>
-                          <select className='border-2 border-black rounded-md p-1'>
-                            <option>Select measure type</option>
-                            <option>Consumption</option>
-                            <option>Non Consumption</option>
-                          </select>
-                            </div>
-                        </div>
-                     <div className='my-3'>
-                     <button onClick={() => handleRemoveNumeric(index)}>
-                        <FaTrash />
-                      </button>
-                     </div>
-                    </div>
-                  </div>
-                ))}
-                        <div className='flex justify-end'>
-                            <button className='border-2 border-black p-1 rounded-md' onClick={handleAddNumeric}>Add Option</button>
-                        </div>
-                    </div>
-                </div>
-            )}
-            {selectedValue === 'optionInput' && (
-                <div className="section">
-                    <div>
-                       <div className='flex flex-col'>
-                            <label className="font-semibold my-2"> Enter Value</label>
-                          <div className='flex gap-3'>
-                            <input
-                              type="text"
-                              placeholder="Yes"
-                              className="border p-1 px-4 border-gray-500 rounded-md"
-                            />
-                            </div>
-                        </div>
-                        {selectOptionInput.map((optionInput, index) => (
-                  <div key={index}>
-                    <div className='grid md:grid-cols-3 item-start gap-x-4 gap-y-4 mb-3 w-full'>
-                    <div className='flex flex-col'>
-                            <label className="font-semibold my-2">Selected measure type</label>
-                          <div className='flex gap-3'>
-                          <select className='border-2 border-black rounded-md p-1'>
-                            <option>Select measure type</option>
-                            <option>Consumption</option>
-                            <option>Non Consumption</option>
-                          </select>
-                            </div>
-                        </div>
-                     <div className='my-3'>
-                     <button onClick={() => handleRemoveOptionInput(index)}>
-                        <FaTrash />
-                      </button>
-                     </div>
-                    </div>
-                  </div>
-                ))}
-                        <div className='flex justify-end'>
-                            <button className='border-2 border-black p-1 rounded-md' onClick={handleAddOptionInput}>Add Option</button>
-                        </div>
-                    </div>
-                </div>
-            )}
-          </div>
-              {question.reading && (
-                <div className='flex gap-5 mx-5'>
-                  <div className='flex flex-col'>
-                    <label htmlFor="" className="font-semibold my-2"> Measure Type</label>
-                    <select className="border p-1 px-4 border-gray-500 rounded-md" name="inputType">
-                      <option value="">Select Input Type</option>
-                    </select>
-                  </div>
-                </div>
-              )}
-              {question.helpText && (
-                <div className='flex gap-5 mx-5'>
-                  <div className='flex flex-col'>
-                    <label htmlFor="" className="font-semibold my-2">Help Text</label>
-                    <input type='text' placeholder='Enter Help Text' className='border p-1 px-4 border-gray-500 rounded-md'></input>
-                  </div>
-                  <div className='flex gap-3 mt-3'>
-                    <p className='text-sm mt-8 lg:hidden'>No Attachment</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
-          <div className='flex justify-end mx-5 my-5'>
-            <button className='font-semibold border-2 border-black px-4 p-1 flex gap-2 items-center rounded-md' onClick={(e) => handleAddQuestion(sectionIndex, e)}>
-              <IoMdAdd /> Add Question
-            </button>
+            <div
+              className={`bg-white w-4 h-4 rounded-full shadow-md transform ${
+                createTicket ? 'translate-x-6' : ''
+              }`}
+            />
           </div>
         </div>
-                     ))}
-                    </div>
-                </div>
-            </div>
-        </section>
-    )
-}
 
-export default AddMasterCheckListSetup
+        
+
+        {/* Weightage Toggle */}
+        <div className="flex items-center">
+          <span className="mr-2">Weightage</span>
+          <div
+            onClick={() => handleToggle('weightage')}
+            className={`w-10 h-4 flex items-center bg-gray-300 rounded-full  cursor-pointer ${
+              weightage ? 'bg-red-500' : ''
+            }`}
+          >
+            <div
+              className={`bg-white w-4 h-4 rounded-full shadow-md transform ${
+                weightage ? 'translate-x-6' : ''
+              }`}
+            />
+          </div>
+        </div>
+
+        {/* Show Weightage and Rating Fields if Weightage is on */}
+         {/* Show Select Template if Create New is on */}
+         {createNew && (
+          <div className="flex flex-col gap-1">
+            <label className="font-semibold">Select Template</label>
+            <select className="border p-1 px-4 border-gray-500 rounded-md">
+              <option value="">Select from the existing Template</option>
+              <option value="template1">Template 1</option>
+              <option value="template2">Template 2</option>
+              {/* Add more templates as needed */}
+            </select>
+          </div>
+        )}
+{/* Show Checklist Level, Question Level, and Select Fields if Create Ticket is on */}
+{createTicket && (
+          <div className="flex flex-col justify-center gap-1 mb-2">
+            {/* Radio Buttons */}
+            <div className="flex  gap-4 ">
+              
+              <div className="flex items-center mt-2">
+                <input
+                  type="radio"
+                  id="checklistLevel"
+                  name="ticketType"
+                  value="checklistLevel"
+                  className="mr-2"
+                />
+                <label htmlFor="checklistLevel">Checklist Level</label>
+              </div>
+              <div className="flex items-center mt-2">
+                <input
+                  type="radio"
+                  id="questionLevel"
+                  name="ticketType"
+                  value="questionLevel"
+                  className="mr-2"
+                />
+                <label htmlFor="questionLevel">Question Level</label>
+              </div>
+            </div>
+
+            {/* Select Fields */}
+            <div className="flex flex-col gap-1">
+              <label className="font-semibold">Select Assigned To</label>
+              <select className="border p-1 px-4 border-gray-500 rounded-md">
+                <option value="">Select Assigned To</option>
+                <option value="user1">User 1</option>
+                <option value="user2">User 2</option>
+                {/* Add more options as needed */}
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="font-semibold">Select Category</label>
+              <select className="border p-1 px-4 border-gray-500 rounded-md">
+                <option value="">Select Category</option>
+                <option value="category1">Category 1</option>
+                <option value="category2">Category 2</option>
+                {/* Add more categories as needed */}
+              </select>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+          <div className="flex  flex-col justify-around">
+            <div className="grid md:grid-cols-3 item-start gap-x-4 gap-y-2 w-full">
+              <div className="flex flex-col">
+                <label htmlFor="" className="font-semibold">
+                  Name :
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  id="name"
+                  className="border p-1 px-4 border-gray-500 rounded-md"
+                  placeholder="Enter Checklist Name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+              </div>
+              <div className="flex flex-col">
+                <label htmlFor="" className="font-semibold">
+                  Frequency :
+                </label>
+                <select
+                  name="frequency"
+                  id="frequency"
+                  className="border p-1 px-4 border-gray-500 rounded-md"
+                  value={frequency}
+                  onChange={(e) => setFrequency(e.target.value)}
+                >
+                  <option value="">Select Frequency</option>
+
+                  <option value="hourly">Hourly</option>
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                  <option value="quarterly">Quarterly</option>
+                  <option value="half yearly">Half yearly</option>
+                  <option value="yearly">Yearly</option>
+                </select>
+              </div>
+              <div className="flex flex-col">
+                <label htmlFor="" className="font-semibold">
+                  Start Date :
+                </label>
+                <input
+                  type="date"
+                  name="start_date"
+                  id="start_date"
+                  className="border p-1 px-4 border-gray-500 rounded-md"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  min={today}
+                />
+              </div>
+              <div className="flex flex-col">
+                <label htmlFor="" className="font-semibold">
+                  End Date :
+                </label>
+                <input
+                  type="date"
+                  name="end_date"
+                  id="end_date"
+                  className="border p-1 px-4 border-gray-500 rounded-md"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  min={today}
+                />
+              </div>
+            </div>
+            <div>
+              {addNewQuestion.map((data, i) => (
+                <div key={i}>
+                  <div className="my-5">
+                    <h2 className="border-b-2 border-black text font-medium">
+                      Add New Question
+                    </h2>
+                    <div className="my-2 grid gap-4">
+                      <input
+                        type="text"
+                        name={`question_${i}`}
+                        id={`question_${i}`}
+                        className="border p-1 px-4 border-gray-500 rounded-md"
+                        placeholder="Add New Question"
+                        value={data.name}
+                        onChange={(e) =>
+                          handleQuestionChange(i, "name", e.target.value)
+                        }
+                      />
+                    </div>
+                    <div className="my-2">
+                      <select
+                        name={`type_${i}`}
+                        id={`type_${i}`}
+                        value={data.type}
+                        onChange={(e) =>
+                          handleQuestionChange(i, "type", e.target.value)
+                        }
+                        className="border p-1 px-4 border-gray-500 rounded-md"
+                      >
+                        <option value="">Select Answer Type</option>
+                        <option value="multiple">
+                          Multiple Choice Question
+                        </option>
+                        <option value="inbox">Input box</option>
+                        <option value="description">Description box</option>
+                      </select>
+                      {data.type === "multiple" && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 my-2">
+                          <div className="flex flex-col sm:flex-row gap-2">
+                            <input
+                              type="text"
+                              name={`option1_${i}`}
+                              id={`option1_${i}`}
+                              className="border p-1 px-4 border-gray-500 rounded-md"
+                              placeholder="option 1"
+                              value={data.options[0]}
+                              onChange={(e) => handleQuestionChange(i, "option", e.target.value, 0)}
+                            />
+                            <select
+                              name={`value_type1_${i}`}
+                              id={`value_type1_${i}`}
+                              className={`border p-1 border-gray-500 rounded-md ${data.value_types[0] === 'P' ? 'bg-green-400' : data.value_types[0] === 'N' ? 'bg-red-400' : ''}`}
+                              value={data.value_types[0]}
+                              onChange={(e) => handleQuestionChange(i, "value_type", e.target.value, 0)}
+                            >
+                              <option value="">Select</option>
+                              <option value="P">P</option>
+                              <option value="N">N</option>
+                            </select>
+                          </div>
+                          <div className="flex flex-col sm:flex-row gap-2">
+                            <input
+                              type="text"
+                              name={`option2_${i}`}
+                              id={`option2_${i}`}
+                              className="border p-1 px-4 border-gray-500 rounded-md"
+                              placeholder="option 2"
+                              value={data.options[1]}
+                              onChange={(e) => handleQuestionChange(i, "option", e.target.value, 1)}
+                            />
+                            <select
+                              name={`value_type2_${i}`}
+                              id={`value_type2_${i}`}
+                              className={`border p-1 border-gray-500 rounded-md ${data.value_types[1] === 'P' ? 'bg-green-400' : data.value_types[1] === 'N' ? 'bg-red-400' : ''}`}
+                              value={data.value_types[1]}
+                              onChange={(e) => handleQuestionChange(i, "value_type", e.target.value, 1)}
+                            >
+                              <option value="">Select</option>
+                              <option value="P" >P</option>
+                              <option value="N" >N</option>
+                            </select>
+                          </div>
+
+                          <div className="flex flex-col sm:flex-row gap-2">
+                            <input
+                              type="text"
+                              name={`option3_${i}`}
+                              id={`option3_${i}`}
+                              className="border p-1 px-4 border-gray-500 rounded-md"
+                              placeholder="option 3"
+                              value={data.options[2]}
+                              onChange={(e) => handleQuestionChange(i, "option", e.target.value, 2)}
+                            />
+                            <select
+                              name={`value_type3_${i}`}
+                              id={`value_type3_${i}`}
+                              className={`border p-1 border-gray-500 rounded-md ${data.value_types[2] === 'P' ? 'bg-green-400' : data.value_types[2] === 'N' ? 'bg-red-400' : ''}`}
+                              value={data.value_types[2]}
+                              onChange={(e) => handleQuestionChange(i, "value_type", e.target.value, 2)}
+                            >
+                              <option value="">Select</option>
+                              <option value="P">P</option>
+                              <option value="N">N</option>
+                            </select>
+                          </div>
+                          <div className="flex flex-col sm:flex-row gap-2">
+                            <input
+                              type="text"
+                              name={`option4_${i}`}
+                              id={`option4_${i}`}
+                              className="border p-1 px-4 border-gray-500 rounded-md"
+                              placeholder="option 4"
+                              value={data.options[3]}
+                              onChange={(e) => handleQuestionChange(i, "option", e.target.value, 3)}
+                            />
+                            <select
+                              name={`value_type4_${i}`}
+                              id={`value_type4_${i}`}
+                              className={`border p-1 border-gray-500 rounded-md ${data.value_types[3] === 'P' ? 'bg-green-400' : data.value_types[3] === 'N' ? 'bg-red-400' : ''}`}
+                              value={data.value_types[3]}
+                              onChange={(e) => handleQuestionChange(i, "value_type", e.target.value, 3)}
+                            >
+                              <option value="">Select</option>
+                              <option value="P">P</option>
+                              <option value="N">N</option>
+                            </select>
+                          </div>
+                        </div>
+                      )}
+                      <div className="grid grid-cols-8 my-2">
+                      <div className="flex items-center gap-2">
+                      <input
+              type="checkbox"
+              checked={data.question_mandatory}
+              onChange={(e) => handleQuestionChange(i, "question_mandatory", e.target.checked)}
+            />
+                        <label htmlFor="" className="font-semibold">Mandatory</label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                      <input
+              type="checkbox"
+              checked={data.reading}
+              onChange={(e) => handleQuestionChange(i, "reading", e.target.checked)}
+            />
+                        <label htmlFor="" className="font-semibold">Reading</label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                      <input
+              type="checkbox"
+              checked={data.showHelpText}
+              onChange={(e) => handleQuestionChange(i, "showHelpText", e.target.checked)}
+            />
+                        <label htmlFor="" className="font-semibold">Help text</label>
+                      </div>
+                      
+                      
+                      </div>
+                    </div>
+                    {data.showHelpText && (
+              <div className="flex flex-col gap-2 my-2">
+                <input
+                  type="text"
+                  placeholder="Enter Help text"
+                  value={data.help_text}
+                  className="border p-1 px-4 border-gray-500 rounded-md"
+                  onChange={(e) => handleQuestionChange(i, "help_text", e.target.value)}
+                />
+                
+                <FileInputBox
+      handleChange={(files) => handleQuestionChange(i, "image_for_question", files)}
+      fieldName={`image_for_question_${i + 1}`}
+      isMulti={true}
+    />
+              </div>
+            )}
+                     {weightage && (
+          <div className=" grid grid-cols-4 gap-4">
+            <div className="flex flex-col gap-1">
+              <label className="font-semibold">Weightage</label>
+              <input
+                type="number"
+                className="border p-1 px-4 border-gray-500 rounded-md"
+                value={data.weightage}
+                onChange={(e) => handleQuestionChange(i, "weightage", e.target.value)}
+                placeholder="Enter weightage value"
+              />
+            </div>
+
+           
+              {/* <label className="block text-gray-700">Rating</label> */}
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="rating"
+                  checked={data.rating}
+                  onChange={(e) => handleQuestionChange(i, "rating", e.target.checked)}
+                  className="mr-2"
+                />
+                <label htmlFor="rating"> Rating</label>
+              </div>
+           
+          </div>
+        )}
+
+       
+      
+                    <div className="flex justify-end gap-2">
+                      <button
+                        className="p-1 border-2 border-red-500 text-white hover:bg-white hover:text-red-500 bg-red-500 px-4 transition-all duration-300 rounded-md "
+                        onClick={() => handleRemoveQuestionFields(i)}
+                      >
+                        <IoClose />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              <button
+                type="button"
+                className="p-1 border-2 border-black px-4 rounded-md my-2 flex gap-2 items-center"
+                onClick={() => handleAddQuestionFields()}
+              >
+                <BiPlus />
+                Add Question
+              </button>
+            </div>
+            
+           
+      
+                    
+            <div className="flex justify-center">
+              <button onClick={handleSubmit} className="bg-black text-white p-2 px-4 rounded-md font-medium">
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default AddMasterCheckListSetup;

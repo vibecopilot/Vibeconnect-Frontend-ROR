@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { IoAddCircleOutline } from "react-icons/io5";
 import { Link } from "react-router-dom";
-import { API_URL, getChecklist, getVibeBackground } from "../api";
+import { API_URL, ChecklistImport, getChecklist, getVibeBackground } from "../api";
 import Table from "../components/table/Table";
 import { BiEdit } from "react-icons/bi";
 import { MdDeleteForever } from "react-icons/md";
@@ -11,11 +11,55 @@ import { getItemInLocalStorage } from "../utils/localStorage";
 import { DNA } from "react-loader-spinner";
 import * as XLSX from "xlsx";
 import { useSelector } from "react-redux";
+import FileInputBox from "../containers/Inputs/FileInputBox";
+import { FiDownload, FiUpload } from "react-icons/fi";
+import { FaCopy, FaDownload } from "react-icons/fa";
+import Switch from "../Buttons/Switch";
+import DatePicker from 'react-datepicker';
 
 const Checklist = () => {
   const [checklists, setChecklists] = useState([]);
   const [filteredData, setFilteredData] = useState([])
   const [searchText, setSearchText] = useState("")
+  const [setshowImport, setShowImportModal] = useState(false);
+  const openModalImport = () => setShowImportModal(true);
+  const closeModalImport = () => setShowImportModal(false);
+  const [setshowDownload, setShowDownloadModal] = useState(false);
+  const openModalDownload = () => setShowDownloadModal(true);
+  const closeModalDownload = () => setShowDownloadModal(false);
+  const [dateRange, setDateRange] = useState([null, null]);
+  const [startDate, endDate] = dateRange;
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [importStatus, setImportStatus] = useState("");
+  const handleFileChange = (files) => {
+    setSelectedFiles(files);
+  };
+  const handleImportChecklist = async () => {
+    if (selectedFiles.length === 0) {
+      setImportStatus("No files selected.");
+      return;
+    }
+
+    const formData = new FormData();
+    selectedFiles.forEach((file) => {
+      formData.append("file", file);
+    });
+
+    try {
+      const response = await ChecklistImport(formData);
+      if (response.status === 200) {
+        setImportStatus("Checklist successfully imported!");
+        // Optionally, refresh checklist data
+        await getChecklist();
+      } else {
+        setImportStatus("Failed to import checklist.");
+      }
+    } catch (error) {
+      console.error("Error importing checklist:", error);
+      setImportStatus("An error occurred during import.");
+    }
+  };
+  
 const themeColor =useSelector((state)=> state.theme.color)
   useEffect(() => {
     const fetchChecklist = async () => {
@@ -59,6 +103,13 @@ const themeColor =useSelector((state)=> state.theme.color)
       sortable: true,
     },
     {
+      name: "Active",
+      selector: (row) => (
+        <Switch/>
+      ),
+      sortable: true,
+    },
+    {
       name: "Action",
       cell: (row) => (
         <div className="flex items-center gap-4">
@@ -68,6 +119,8 @@ const themeColor =useSelector((state)=> state.theme.color)
           {/* <button className="text-red-400">
             <MdDeleteForever size={25} />
           </button> */}
+          <button onClick={openModalDownload}><FaDownload size={15}/></button>
+          {/* <button><FaCopy size={15}/></button> */}
         </div>
       ),
     },
@@ -189,13 +242,19 @@ const themeColor =useSelector((state)=> state.theme.color)
             <IoAddCircleOutline size={20} />
             Add
           </Link>
-
           <button
-            className="bg-blue-500 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded"
+            className="bg-blue-500 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded flex justify-center items-center gap-2"
+            onClick={openModalImport}
+            style={{ background: themeColor }}
+          >
+         <FiDownload size={15}/> Import
+          </button>
+          <button
+            className="bg-blue-500 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded flex justify-center items-center gap-2"
             onClick={exportToExcel}
             style={{ background: themeColor }}
           >
-            Export
+           <FiUpload size={15} /> Export
           </button>
          
         </div>
@@ -214,6 +273,71 @@ const themeColor =useSelector((state)=> state.theme.color)
       </div>
     )}
     </div>
+    {setshowImport && (
+        <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex z-10 justify-center items-center">
+          <div className="bg-white p-6 rounded shadow-lg w-1/2">
+            <h2 className="text-xl mb-4">Bulk Upload</h2>
+            {/* Advanced Filter Fields */}
+         <FileInputBox handleChange={handleFileChange} fieldName="checklist" isMulti={true}/>
+         
+            <div className="mt-4 flex justify-end space-x-4">
+              <button
+                onClick={closeModalImport}
+                className="bg-red-500 text-white px-4 py-2 rounded"
+                style={{ background: themeColor }}
+              >
+                Cancel
+              </button>
+              <button
+                
+                className="bg-green-500 text-white px-4 py-2 rounded"
+                style={{ background: themeColor }}
+                onClick={handleImportChecklist}
+              >
+                Import
+              </button>
+            </div>
+            {importStatus && <p className="mt-4 text-center">{importStatus}</p>}
+        </div>
+        </div>
+      )}
+       {setshowDownload && (
+        <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex z-10 justify-center items-center">
+          <div className="bg-white p-6 rounded shadow-lg w-96">
+            <h2 className="text-xl mb-4">Report</h2>
+            {/* Advanced Filter Fields */}
+         
+            <DatePicker
+            selectsRange={true}
+            startDate={startDate}
+            endDate={endDate}
+            onChange={(update) => {
+              setDateRange(update);
+            }}
+            isClearable={true}
+            placeholderText="Enter Date"
+            className="border p-1 px-4 border-gray-500 w-64 rounded-md" 
+          />
+            <div className="mt-4 flex justify-end space-x-4">
+              <button
+                onClick={closeModalDownload}
+                className="bg-red-500 text-white px-4 py-2 rounded"
+                style={{ background: themeColor }}
+              >
+                Cancel
+              </button>
+              <button
+                
+                className="bg-green-500 text-white px-4 py-2 rounded"
+                style={{ background: themeColor }}
+              >
+                Export
+              </button>
+            </div>
+         
+        </div>
+        </div>
+      )}
     </section>
   );
 };
