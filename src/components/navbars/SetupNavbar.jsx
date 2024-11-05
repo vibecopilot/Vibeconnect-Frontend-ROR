@@ -30,7 +30,7 @@ const SetupNavbar = () => {
     
         {siteId === 10 && <Link to={"/setup/User-role"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">User Roles</Link>}
         <Link to={"/setup/users-setup"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">Users</Link>
-        {/* <Link  to={"/admin/fm-user"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">FM User</Link> */}
+        <Link  to={"/admin/fm-user"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">FM User</Link>
         {/* <Link to={"/admin/occupant-user-setup"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">Occupant User</Link> */}
         {/* <Link to={"/admin/setup-meter-type"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">Meter Types</Link> */}
         {feat.includes("assets") && ( <Link to={"/setup/asset-group"}  className="hover:bg-white hover:text-black  p-2 rounded-lg ">Asset/Stock Group</Link>)}

@@ -463,6 +463,20 @@ const themeColor = useSelector((state)=> state.theme.color)
             Additional Info
           </h2>
           <div className="px-4 flex flex-col gap-1 justify-center">
+            <p className="font-medium">Description :</p>
+            <textarea
+              name="text"
+              // placeholder="heading"
+              cols="15"
+              rows="2"
+              value={formData.text}
+              onChange={(e) =>
+                setFormData({ ...formData, text: e.target.value })
+              }
+              className="border p-1 px-4 border-gray-400 rounded-md"
+            ></textarea>
+          </div>
+          <div className="px-4 flex flex-col gap-1 justify-center">
             <p className="font-medium">Root Cause :</p>
             <textarea
               name="root_cause"

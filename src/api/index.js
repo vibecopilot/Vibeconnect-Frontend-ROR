@@ -235,6 +235,91 @@ export const getHelpDeskCategoriesSetup = async () =>
     },
   });
 
+export const downloadAsset = async () =>
+  axiosInstance.get(`/site_assets/export.xlsx/`, {
+    params: {
+      token: token,
+    },
+    responseType: "blob",
+  });
+
+export const getBreakdownDownload = async () =>
+  axiosInstance.get(`/site_assets/export.xlsx`, {
+    params: {
+      token: token,
+      "q[breakdown_eq]": 1,
+    },
+    responseType: "blob",
+  });
+
+export const getPPMOverDueDownload = async () =>
+  axiosInstance.get(`/activities/export.xlsx`, {
+    params: {
+      token: token,
+      "q[checklist_ctype_eq]": "ppm",
+      "q[status_eq]": "overdue",
+    },
+    responseType: "blob",
+  });
+
+export const getPPMPendingDownload = async () =>
+  axiosInstance.get(`/activities/export.xlsx`, {
+    params: {
+      token: token,
+      "q[checklist_ctype_eq]": "ppm",
+      "q[status_eq]": "pending",
+    },
+    responseType: "blob",
+  });
+
+export const getPPMcompleteDownload = async () =>
+  axiosInstance.get(`/activities/export.xlsx`, {
+    params: {
+      token: token,
+      "q[checklist_ctype_eq]": "ppm",
+      "q[status_eq]": "complete",
+    },
+    responseType: "blob",
+  });
+
+export const getTotalAssetCount = async () =>
+  axiosInstance.get(`/site_assets/count.json`, {
+    params: {
+      token: token,
+    },
+  });
+
+export const getBreakCount = async () =>
+  axiosInstance.get(`/site_assets/count.json`, {
+    params: {
+      token: token,
+      "q[breakdown_eq]": true, // add this line to include q[breakdown_eq]
+    },
+  });
+
+export const getPPMOverDueCount = async () =>
+  axiosInstance.get(`/activities/count.json`, {
+    params: {
+      token: token,
+      overdue: 1,
+    },
+  });
+
+export const getPPMpendingCount = async () =>
+  axiosInstance.get(`/activities/count.json`, {
+    params: {
+      token: token,
+      scheduled: 1,
+    },
+  });
+
+export const getCompleteCount = async () =>
+  axiosInstance.get(`/activities/count.json`, {
+    params: {
+      token: token,
+      complete: 1,
+    },
+  });
 export const getHelpDeskCategoriesSetupDetails = async (id) =>
   axiosInstance.get(`/pms/admin/helpdesk_categories/${id}.json`, {
     params: {
@@ -404,7 +489,18 @@ export const getFloors = async (buildId) =>
       token: token,
     },
   });
-
+  export const getFilterData = async (catId,issueStatId,prio_count, assign_eq) =>
+    axiosInstance.get(`/pms/admin/complaints.json?q[category_type_id_eq]=${catId}&q[issue_status_eq]=${issueStatId}&q[priority_cont]=${prio_count}&q[assigned_to_eq]=${assign_eq}`, {
+      params: {
+        token: token,
+      },
+    });
+export const getComplaintMode = async () =>
+  axiosInstance.get(`/complaint_modes.json`, {
+    params: {
+      token: token,
+    },
+  });
 export const updateComplaintsDetails = async (id, data) =>
   axiosInstance.put(`pms/complaints/${id}.json`, data, {
     params: {
@@ -434,17 +530,23 @@ export const getfloorsType = async (buildId) =>
     },
   });
 
-export const postComplaintsDetails = async (data) => {
-  try {
-    const response = await axiosInstance.post(
-      `/pms/complaints.json?token=${token}`,
-      data
-    );
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
+  export const postComplaintsDetails = async (data) => {
+    try {
+      const response = await axiosInstance.post(
+        `/pms/complaints.json?token=${token}`,
+        data,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  };
+  
 
 export const editComplaintsDetails = async (data) => {
   try {

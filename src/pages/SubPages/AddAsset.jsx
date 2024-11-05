@@ -265,6 +265,7 @@ const AddAsset = () => {
       formDataSend.append("site_asset[model_number]", formData.model_number);
       formDataSend.append("site_asset[purchased_on]", formData.purchased_on);
       formDataSend.append("site_asset[purchase_cost]", formData.purchase_cost);
+      formDataSend.append("site_asset[comprehensive]", formData.comprehensive);
 
       formDataSend.append(
         "site_asset[asset_group_id]",
@@ -779,11 +780,13 @@ const AddAsset = () => {
               <div className="mt-4">
                 <select
                   className="border p-1 px-4 border-gray-500 rounded-md"
-                  name="asset_type"
+                  name="comprehensive"
+                  value={formData.comprehensive}
+                  onChange={handleChange}
                 >
                   <option value="">Select Asset Type</option>
-                  <option value="comprehensive">Comprehensive</option>
-                  <option value="non-Comprehensive">Non-Comprehensive</option>
+                  <option value="true">Comprehensive</option>
+                  <option value="false">Non-Comprehensive</option>
                 </select>
               </div>
             </div>

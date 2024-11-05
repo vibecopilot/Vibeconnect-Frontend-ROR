@@ -81,7 +81,6 @@ const EditAsset = () => {
     oem_name: "",
     uom: "",
     comprehensive: "",
-    nonComprehensive: "",
     //
     invoice: [],
     insurance: [],
@@ -398,6 +397,7 @@ const EditAsset = () => {
         "site_asset[asset_group_id]",
         formData.asset_group_id
       );
+      formDataSend.append("site_asset[comprehensive]", formData.comprehensive);
       formDataSend.append("site_asset[vendor_id]", formData.vendor_id);
       formDataSend.append("site_asset[remarks]", formData.remarks);
       formDataSend.append("site_asset[description]", formData.description);
@@ -927,18 +927,20 @@ const EditAsset = () => {
                 )}
               </div>
             </div>
-            <div className="grid grid-cols-3">
-            <div className=" mt-4">
-              <select
-                className="border p-1 px-4 border-gray-500 rounded-md w-full"
-                name=""
-              >
-                <option value="">Select Asset Type</option>
-                <option value="comprehensive">Comprehensive</option>
-                <option value="non-Comprehensive">Non-Comprehensive</option>
-              </select>
+            <div className="grid grid-cols-1">
+              <div className="mt-4">
+                <select
+                  className="border p-1 px-4 border-gray-500 rounded-md"
+                  name="comprehensive"
+                  value={formData.comprehensive}
+                  onChange={handleChange}
+                >
+                  <option value="">Select Asset Type</option>
+                  <option value="true">Comprehensive</option>
+                  <option value="false">Non-Comprehensive</option>
+                </select>
+              </div>
             </div>
-          </div>
             <div>
               <div className="flex flex-col justify-around">
                 <label

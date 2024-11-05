@@ -88,8 +88,18 @@ const column = [
     sortable: true,
   },
   {
-    name: "Value",
+    name: "Opening",
+    selector: (row) => row.opening,
+    sortable: true,
+  },
+  {
+    name: "Closing",
     selector: (row) => row.value,
+    sortable: true,
+  },
+  {
+    name: "Consumption",
+    selector: (row) => row.consumption,
     sortable: true,
   },
   {
@@ -173,6 +183,7 @@ const column = [
           </tbody>
         </table>
       </div> */}
+      
       <Table columns={column} data={readings} />
 
       {/* <iframe src={`https://admin.vibecopilot.ai/show_readings?asset_id=${id}&wv=true&token=efe990d24b0379af8b5ba3d0a986ac802796bc2e0db15552`} width="100%" height="600px"></iframe> */}

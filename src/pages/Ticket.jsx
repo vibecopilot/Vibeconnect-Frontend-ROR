@@ -10,7 +10,7 @@ import {
   getTicketDashboard,
 } from "../api";
 import { BsEye } from "react-icons/bs";
-import { BiEdit } from "react-icons/bi";
+import { BiEdit, BiFilterAlt } from "react-icons/bi";
 import moment from "moment";
 import { getItemInLocalStorage } from "../utils/localStorage";
 import * as XLSX from "xlsx";
@@ -18,6 +18,7 @@ import { useSelector } from "react-redux";
 import Table from "../components/table/Table";
 import { MdKeyboardArrowLeft, MdKeyboardArrowRight } from "react-icons/md";
 import { DNA } from "react-loader-spinner";
+import TicketFilterModal from "../containers/modals/TicketFilterModal";
 const Ticket = () => {
   const [filteredData, setFilteredData] = useState([]);
   const [searchText, setSearchText] = useState("");
@@ -30,7 +31,7 @@ const Ticket = () => {
   const perPage = 10;
   const [totalRows, setTotalRows] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
-
+  const [filterModal, setFilterModal] = useState(false)
   const getTimeAgo = (timestamp) => {
     const createdTime = moment(timestamp);
     const now = moment();
@@ -452,7 +453,14 @@ const Ticket = () => {
               <PiPlusCircle size={20} />
               Add
             </Link>
-
+            <button
+              className=" font-semibold text-white px-4 p-1 flex gap-2 items-center justify-center rounded-md"
+              style={{ background: themeColor }}
+              onClick={() =>setFilterModal(!filterModal)}
+            >
+              <BiFilterAlt />
+              Filter
+            </button>
             <button
               className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
               onClick={exportAllToExcel}
@@ -509,6 +517,7 @@ const Ticket = () => {
           </button>
         </div>
       </div>
+      {filterModal && <TicketFilterModal onclose={()=> setFilterModal(false)} setFilteredData={setFilteredData} />}
     </section>
   );
 };
