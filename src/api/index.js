@@ -5723,3 +5723,19 @@ export const postTaxAndStatSetting = async (data) => {
     throw error;
   }
 };
+export const getReportingSupervisors = async (deptId, orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/reporting-supervisor/?department_id=${deptId}&organization_id=${orgId}`,
+      {
+        // headers: {
+        //   "Content-Type": "multipart/form-data/",
+        // },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting reporting supervisors :", error);
+    throw error;
+  }
+};
