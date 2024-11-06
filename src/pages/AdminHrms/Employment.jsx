@@ -7,6 +7,7 @@ import {
   getMyHRMSEmployees,
   getMyOrganizationLocations,
   getMyOrgDepartments,
+  getReportingSupervisors,
   postEmployeeEmploymentInfo,
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
@@ -29,6 +30,32 @@ const Employment = ({ setSteps, empId }) => {
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const [reportSupervisors, setReportSupervisors] = useState([]);
+  console.log(reportSupervisors);
+  const handleDepartmentChange = async (e) => {
+    const fetchReportingSupervisors = async (deptId) => {
+      const reportingSupervisors = await getReportingSupervisors(
+        deptId,
+        hrmsOrgId
+      );
+      console.log(reportingSupervisors);
+      reportingSupervisors.forEach((department) => {
+        setReportSupervisors(department.reporting_supervisor);
+      });
+      // setParentAsset(parentAssetResp.data.site_assets);
+    };
+
+    if (e.target.type === "select-one" && e.target.name === "department") {
+      const departmentId = Number(e.target.value);
+      await fetchReportingSupervisors(departmentId);
+
+      setFormData({
+        ...formData,
+        department: departmentId,
+      });
+    }
   };
 
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
@@ -176,7 +203,8 @@ const Employment = ({ setSteps, empId }) => {
             <select
               className="border border-gray-400 p-2 rounded-md"
               value={formData.department}
-              onChange={handleChange}
+              // onChange={handleChange}
+              onChange={handleDepartmentChange}
               name="department"
             >
               <option value="">Select Department</option>
@@ -212,9 +240,9 @@ const Employment = ({ setSteps, empId }) => {
               name="supervisor"
             >
               <option value="">Select Supervisor</option>
-              {employees.map((employee) => (
-                <option value={employee.id} key={employee.id}>
-                  {employee.first_name} {employee.last_name}
+              {reportSupervisors.map((supervisor) => (
+                <option value={supervisor.id} key={supervisor.id}>
+                  {supervisor.full_name}
                 </option>
               ))}
             </select>

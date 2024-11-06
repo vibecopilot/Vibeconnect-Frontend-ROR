@@ -823,12 +823,12 @@ function EmployeeDirectory() {
                       </div>
                     </div>
                   )}
-                  <button
+                  {/* <button
                     onClick={() => setIsModalOpen(true)}
                     className="bg-black text-white hover:bg-gray-700 font-semibold  px-4 rounded-md"
                   >
                     Filter
-                  </button>
+                  </button> */}
                   <Link
                     to={"/admin/add-employee/basics"}
                     style={{ background: themeColor }}

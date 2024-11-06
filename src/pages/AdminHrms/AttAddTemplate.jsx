@@ -102,7 +102,6 @@ const AttAddTemplate = () => {
           ))}
         </div>
       </div>
-
       <div className="flex-grow py-6 px-2">
         {currentStep === 0 && (
           <TemplateGeneralSetting
