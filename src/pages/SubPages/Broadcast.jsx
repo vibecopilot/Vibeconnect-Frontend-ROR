@@ -10,6 +10,7 @@ import { useSelector } from "react-redux";
 import { BsEye } from "react-icons/bs";
 import Navbar from "../../components/Navbar";
 import Communication from "../Communication";
+import { BiEdit } from "react-icons/bi";
 
 const Broadcast = () => {
   const [searchText, setSearchText] = useState("");
@@ -22,9 +23,9 @@ const Broadcast = () => {
     setUser(userType);
     const fetchBroadCast = async () => {
       const broadcastResp = await getBroadCast();
-      const sortedBroadcast = broadcastResp.data.sort((a, b)=> {
-        return new Date(b.created_at) - new Date(a.created_at)
-      })
+      const sortedBroadcast = broadcastResp.data.sort((a, b) => {
+        return new Date(b.created_at) - new Date(a.created_at);
+      });
       setFilteredData(sortedBroadcast);
       setBroadcast(sortedBroadcast);
       console.log(broadcastResp);
@@ -33,16 +34,21 @@ const Broadcast = () => {
   }, []);
   const dateFormat = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString()
+    return date.toLocaleDateString();
   };
 
   const column = [
     {
       name: "Action",
       cell: (row) => (
-        <Link to={`/communication/broadcast/broadcast-details/${row.id}`}>
-          <BsEye size={15} />
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link to={`/communication/broadcast/broadcast-details/${row.id}`}>
+            <BsEye size={15} />
+          </Link>
+          <Link to={`/communication/broadcast/edit-broadcast/${row.id}`}>
+            <BiEdit size={15} />
+          </Link>
+        </div>
       ),
       sortable: true,
     },
@@ -86,30 +92,31 @@ const Broadcast = () => {
 
   return (
     <div className="flex">
-      <Navbar/>
+      <Navbar />
       <div className="p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
-        <Communication/>
-      <div className="flex justify-between items-center sm:flex-row flex-col my-2">
-        <input
-          type="text"
-          placeholder="Search by title"
-          className="border-2 p-2 w-96 border-gray-300 rounded-lg"
-          value={searchText}
-          onChange={handleSearch}
-        />
-        {user === "pms_admin" && (
-          <Link
-            to={"/communication/broadcast/create-broadcast"}
-            style={{ background: themeColor }}
-            className="  rounded-md flex font-semibold items-center gap-2 text-white p-2"
-          >
-            <IoAddCircleOutline size={20} />
-            Add Broadcast/Notice
-          </Link>
-        )}
+        <Communication />
+        <div className="grid grid-cols-12 my-2 gap-2">
+          {/* <div className="flex justify-between items-center sm:flex-row flex-col my-2"> */}
+          <input
+            type="text"
+            placeholder="Search by title"
+            className="border p-2 border-gray-300 rounded-lg col-span-10"
+            value={searchText}
+            onChange={handleSearch}
+          />
+          {user === "pms_admin" && (
+            <Link
+              to={"/communication/broadcast/create-broadcast"}
+              style={{ background: themeColor }}
+              className="  rounded-md flex font-semibold items-center gap-2 text-white p-2 col-span-2"
+            >
+              <IoAddCircleOutline size={20} />
+              Add Broadcast/Notice
+            </Link>
+          )}
+        </div>
+        <Table columns={column} data={filteredData} />
       </div>
-      <Table columns={column} data={filteredData} />
-    </div>
     </div>
   );
 };

@@ -5,6 +5,17 @@ import FileInputBox from "../../containers/Inputs/FileInputBox";
 
 function CreateForum() {
   const themeColor = useSelector((state) => state.theme.color);
+  const [formData, setFormData] = useState({
+    title: "",
+    category: "",
+    tags: "",
+    description: "",
+    attachments: "",
+  });
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
   return (
     <section className="flex">
       <div className="hidden md:block">
@@ -28,18 +39,22 @@ function CreateForum() {
                   type="text"
                   placeholder="Enter Title "
                   className="border p-2 px-4 border-gray-400 rounded-md"
+                  onChange={handleChange}
+                  value={formData.title}
+                  name="title"
                 />
               </div>
               <div className="flex flex-col ">
                 <label htmlFor="" className="font-semibold my-2">
                   Category
                 </label>
-                <select className="border p-2 px-4 border-gray-400 rounded-md">
+                <select className="border p-2 px-4 border-gray-400 rounded-md" name="">
                   <option value="">Select Category </option>
-                  <option value="">General</option>
-                  <option value="">Discussion</option>
-                  <option value="">Feedback</option>
-                  <option value="">Support</option>
+                  <option value="General">General</option>
+                  <option value="Discussion">Discussion</option>
+                  <option value="Feedback">Feedback</option>
+                  <option value="Support">Support</option>
+                  <option value="Other">Other</option>
                 </select>
               </div>
               <div className="flex flex-col ">
@@ -68,16 +83,18 @@ function CreateForum() {
                 />
               </div>
             </div>
-            <div className="mx-5">
-              <FileInputBox
-                fieldName={"notice_image"}
-                isMulti={true}
-                // handleChange={(files) =>
-                //   handleFileChange(files, "notice_image")
-                // }
+            <div className="mx-5 flex flex-col gap-2">
+              <label htmlFor="" className="font-medium">
+                Forum profile picture
+              </label>
+              <input
+                type="file"
+                name=""
+                id=""
+                className="border p-2 rounded-md"
               />
             </div>
-            <div className="flex justify-center my-2 gap-2">
+            <div className="flex justify-center my-4 gap-2">
               <button
                 style={{ background: themeColor }}
                 className="bg-black text-white p-2 px-4 rounded-md font-medium"

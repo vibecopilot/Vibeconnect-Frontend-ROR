@@ -686,6 +686,8 @@ import PerformanceSettings from "./pages/AdminHrms/Performance/PerformanceSettin
 import MilestoneTypeSettings from "./pages/AdminHrms/MilestoneTypeSettings.jsx";
 import AddExistingPolicy from "./pages/SubPages/AddExistingPolicy.jsx";
 import EditEmployee from "./pages/AdminHrms/EditEmployee.jsx";
+import EditEvent from "./pages/SubPages/EditEvent.jsx";
+import EditBroadcast from "./pages/SubPages/EditBroadcast.jsx";
 // new admin hrms
 
 function App() {
@@ -1380,6 +1382,14 @@ function App() {
             }
           />
           <Route
+            path="/communication/event/edit-events/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <EditEvent />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
             path="/communication/event/event-details/:id"
             element={
               <ProtectedRoute>
@@ -1400,6 +1410,14 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <BroadcastDetails />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/communication/broadcast/edit-broadcast/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <EditBroadcast />
               </ProtectedAdminRoutes>
             }
           />
@@ -3633,7 +3651,7 @@ function App() {
           />
 
           <Route
-            path="/employee/add-hotel-request"
+            path="/employee/booking-request/add-hotel-request"
             element={
               <ProtectedRoute>
                 <EmployeeAddHotelRequest />

@@ -5,7 +5,12 @@ import FileInputBox from "../../containers/Inputs/FileInputBox";
 import { useSelector } from "react-redux";
 import Navbar from "../../components/Navbar";
 import { getItemInLocalStorage } from "../../utils/localStorage";
-import { postEvents, getAssignedTo } from "../../api";
+import {
+  postEvents,
+  getAssignedTo,
+  getEventsDetails,
+  editEventDetails,
+} from "../../api";
 import Select from "react-select";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -14,7 +19,7 @@ import toast from "react-hot-toast";
 import { useNavigate, useParams } from "react-router-dom";
 import { FaCheck } from "react-icons/fa";
 
-const CreateEvent = () => {
+const EditEvent = () => {
   const siteId = getItemInLocalStorage("SITEID");
   const [share, setShare] = useState("all");
   const [users, setUsers] = useState([]);
@@ -47,6 +52,7 @@ const CreateEvent = () => {
     return format(date, "yyyy-MM-dd HH:mm:ss");
   };
 
+  const { id } = useParams();
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -61,7 +67,29 @@ const CreateEvent = () => {
         console.error("Error fetching assigned users:", error);
       }
     };
+    const fetchEvent = async () => {
+      try {
+        const res = await getEventsDetails(id);
+        const response = res.data;
+        setFormData({
+          ...formData,
+          event_name: response.event_name,
+          description: response.discription,
+          end_date_time: response.end_date_time
+            ? new Date(response.end_date_time)
+            : null,
+          start_date_time: response.start_date_time
+            ? new Date(response.start_date_time)
+            : null,
+          event_image: response.event_image,
+          venue: response.venue,
+        });
+      } catch (error) {
+        console.log(error);
+      }
+    };
     fetchUsers();
+    fetchEvent();
   }, []);
 
   const handleChange = (e) => {
@@ -70,14 +98,13 @@ const CreateEvent = () => {
 
   const navigate = useNavigate();
 
-  const handleCreateEvent = async () => {
+  const handleEditEvent = async () => {
     if (formData.event_name === "" || formData.start_date_time === "") {
       return toast.error("All fields are Required");
     }
     try {
       toast.loading("Creating Event Please Wait!");
       const formDataSend = new FormData();
-
       formDataSend.append("event[site_id]", formData.site_id);
       formDataSend.append("event[event_name]", formData.event_name);
       formDataSend.append("event[discription]", formData.description);
@@ -100,8 +127,8 @@ const CreateEvent = () => {
         formDataSend.append("attachfiles[]", file);
       });
 
-      const response = await postEvents(formDataSend);
-      toast.success("Event Created Successfully");
+      const response = await editEventDetails(id, formDataSend);
+      toast.success("Event updated successfully");
       console.log("Response:", response.data);
       toast.dismiss();
       navigate("/communication/events");
@@ -164,7 +191,7 @@ const CreateEvent = () => {
               style={{ background: themeColor }}
               className="text-center text-xl font-medium p-2  rounded-md text-white"
             >
-              Create Event
+              Edit Event
             </h2>
             <h2 className="border-b text-xl border-black my-6 font-semibold">
               Event Info
@@ -202,25 +229,25 @@ const CreateEvent = () => {
                 {/* <div > */}
                 {/* <p className="font-medium mb-2">Start Time:</p> */}
                 <DatePicker
-                  selected={formData.start_date_time}
+                  selected={formData.start_date_time || null}
                   onChange={handleStartDateChange}
                   showTimeSelect
                   dateFormat="dd/MM/yyyy h:mm aa"
                   placeholderText="Select start date & time"
                   ref={datePickerRef}
-                  minDate={currentDate}
+                  //   minDate={currentDate}
                   className="border border-gray-400 p-2 w-full rounded-md"
                 />
                 {/* </div> */}-{/* <div> */}
                 {/* <p className="font-medium mb-2">End Time:</p> */}
                 <DatePicker
-                  selected={formData.end_date_time}
+                  selected={formData.end_date_time || null}
                   onChange={handleEndDateChange}
                   showTimeSelect
                   dateFormat="dd/MM/yyyy h:mm aa"
                   placeholderText="Select end date & time"
                   ref={datePickerRef}
-                  minDate={currentDate}
+                  //   minDate={currentDate}
                   className="border border-gray-400 rounded-md p-2 w-full "
                 />
                 {/* </div> */}
@@ -255,14 +282,14 @@ const CreateEvent = () => {
                 </label>
               </div>
             </div>
-           
+
             {/* <input
               ref={fileInputRef}
               type="file"
               multiple
               onChange={handleFileAttachment}
             /> */}
-           
+
             <div className="">
               <h2 className="border-b t border-black my-5 text-lg font-semibold">
                 Share With
@@ -332,23 +359,22 @@ const CreateEvent = () => {
               </div>
             </div>
             <div>
-
-            <h2 className="border-b text-xl border-black my-5 font-semibold">
-              Upload Attachments
-            </h2>
-            <FileInputBox
-              fieldName={"event_image"}
-              handleChange={(files) => handleFileChange(files, "event_image")}
-              fileType="image/*"
+              <h2 className="border-b text-xl border-black my-5 font-semibold">
+                Upload Attachments
+              </h2>
+              <FileInputBox
+                fieldName={"event_image"}
+                handleChange={(files) => handleFileChange(files, "event_image")}
+                fileType="image/*"
               />
-              </div>
+            </div>
             <div className="flex justify-center mt-10 my-5">
               <button
-              style={{background: themeColor}}
+                style={{ background: themeColor }}
                 className="bg-black text-white p-2 rounded-md hover:bg-white  flex items-center gap-2 px-4"
-                onClick={handleCreateEvent}
+                onClick={handleEditEvent}
               >
-              <FaCheck/>  Submit
+                <FaCheck /> Submit
               </button>
             </div>
           </div>
@@ -358,4 +384,4 @@ const CreateEvent = () => {
   );
 };
 
-export default CreateEvent;
+export default EditEvent;

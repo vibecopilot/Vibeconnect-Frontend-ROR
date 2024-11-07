@@ -19,29 +19,27 @@ const HotelRequest = () => {
   const themeColor = useSelector((state) => state.theme.color);
   const dateFormat = (dateString) => {
     const date = new Date(dateString);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-indexed
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are zero-indexed
     const year = date.getFullYear();
     return `${day}-${month}-${year}`;
   };
-  
-  
+
   useEffect(() => {
     const fetchFlightRequest = async () => {
       try {
         const response = await getHotelRequest();
-        const hotelreqresp = response.data.sort((a,b)=> {
-          return new Date(b.created_at) - new Date(a.created_at)
-        })
-        console.log("response from api",hotelreqresp)
-        
+        const hotelreqresp = response.data.sort((a, b) => {
+          return new Date(b.created_at) - new Date(a.created_at);
+        });
+        console.log("response from api", hotelreqresp);
+
         setHotelrequestsData(hotelreqresp);
-       
       } catch (err) {
         console.error("Failed to fetch hotel request data:", err);
       }
     };
-  
+
     fetchFlightRequest(); // Call the API
   }, []);
   const columns = [
@@ -75,7 +73,7 @@ const HotelRequest = () => {
     },
     {
       name: "Check-in Date",
-      selector: (row) =>dateFormat(row.check_in_date),
+      selector: (row) => dateFormat(row.check_in_date),
       sortable: true,
     },
     {
@@ -88,16 +86,7 @@ const HotelRequest = () => {
       selector: (row) => row.hotel_preferences,
       sortable: true,
     },
-    {
-      name: "Booking Confirmation Number",
-      selector: (row) => row.booking_confirmation_number,
-      sortable: true,
-    },
-    {
-      name: "Booking Confirmation Email",
-      selector: (row) => row.booking_certification_email,
-      sortable: true,
-    },
+
     {
       name: "Number of Rooms",
       selector: (row) => row.number_of_rooms,
@@ -108,72 +97,31 @@ const HotelRequest = () => {
       selector: (row) => row.room_type,
       sortable: true,
     },
-    {
-      name: "Special Requests",
-      selector: (row) => row.special_requests,
-      sortable: true,
-    },
-    {
-      name: "Manager Approval ",
-      selector: (row) => row.manager_approval ? "Approved" : "Not Approved",
-      sortable: true,
-    },
+    // {
+    //   name: "Manager Approval ",
+    //   selector: (row) => (row.manager_approval ? "Approved" : "Not Approved"),
+    //   sortable: true,
+    // },
     {
       name: "Booking Status ",
       selector: (row) => row.booking_status,
       sortable: true,
     },
-   
-    // {
-    //   name: "Approval",
-    //   selector: (row) =>
-    //     row.status === "Upcoming" && (
-    //       <div className="flex justify-center gap-2">
-    //         <button className="text-green-400 font-medium hover:bg-green-400 hover:text-white transition-all duration-200 p-1 rounded-full">
-    //           <TiTick size={20} />
-    //         </button>
-    //         <button className="text-red-400 font-medium hover:bg-red-400 hover:text-white transition-all duration-200 p-1 rounded-full">
-    //           <IoClose size={20} />
-    //         </button>
-    //       </div>
-    //     ),
-    //   sortable: true,
-    // },
-  ];
 
-  // Custom style for table headers
-  const customStyle = {
-    headRow: {
-      style: {
-        backgroundColor: themeColor,
-        color: "white",
-        fontSize: "10px",
-      },
-    },
-    headCells: {
-      style: {
-        textTransform: "uppercase",
-      },
-    },
-  };
-
-  // Sample data for the table
-  const data = [
     {
-      id: 1,
-      Id: "55",
-      name: "Mi",
-      Destination: "Mumbai",
-      Checkin: "23/01/2024",
-      Checkout: "15/02/2024",
-      Hotel_Preferences: "456",
-      Booking_Number: "89",
-      booking_email: "jkl",
-      noofrooms: "3",
-      room_type: "single",
-      Special_Requests: "ab",
-      Manager_Approval: "Upcoming",
-      status: "Upcoming",
+      name: "Approval",
+      selector: (row) =>
+        row.status === "pending" && (
+          <div className="flex justify-center gap-2">
+            <button className="text-green-400 font-medium hover:bg-green-400 hover:text-white transition-all duration-200 p-1 rounded-full">
+              <TiTick size={20} />
+            </button>
+            <button className="text-red-400 font-medium hover:bg-red-400 hover:text-white transition-all duration-200 p-1 rounded-full">
+              <IoClose size={20} />
+            </button>
+          </div>
+        ),
+      sortable: true,
     },
   ];
 
@@ -181,7 +129,7 @@ const HotelRequest = () => {
     <section className="flex">
       <Navbar />
       <div className="p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
-       <BookingRequestNav/>
+        <BookingRequestNav />
 
         {/* Filters and Add Button */}
         <div className="flex md:flex-row flex-col gap-5 justify-between mt-10 my-2">
@@ -239,7 +187,7 @@ const HotelRequest = () => {
             <Link
               to={"/admin/add-hotel-request"}
               style={{ background: themeColor }}
-              className="px-4 py-2  font-medium text-white rounded-md flex gap-2 items-center justify-center"  
+              className="px-4 py-2  font-medium text-white rounded-md flex gap-2 items-center justify-center"
             >
               <IoAddCircleOutline size={20} />
               Add
@@ -252,7 +200,7 @@ const HotelRequest = () => {
           responsive
           columns={columns}
           data={HotelrequestsData}
-        //   customStyles={customStyle}
+          //   customStyles={customStyle}
           pagination
           fixedHeader
           selectableRowsHighlight
