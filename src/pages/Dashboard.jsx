@@ -20,6 +20,7 @@ const Dashboard = () => {
   const [site, setSite] = useState(false);
   const [siteData, setSiteData] = useState([]);
   const dropdownRef = useRef(null);
+  const [siteName, setSiteName] = useState("")
   console.log(vibeUserId);
   const contentRef = useRef(null);
   
@@ -79,11 +80,12 @@ const Dashboard = () => {
     };
     fetchSiteData();
   }, []);
-
-  const handleSiteChange = async (id) => {
+const site_name = getItemInLocalStorage("SITENAME")
+  const handleSiteChange = async (id,site ) => {
     try {
       const response = await siteChange(id);
       setItemInLocalStorage("SITEID", id);
+      setItemInLocalStorage("SITENAME", site);
       window.location.reload()
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -131,7 +133,8 @@ const Dashboard = () => {
               className="cursor-pointer flex items-center gap-2 font-medium p-2 text-white"
             >
               <FaBuilding />
-              <h2>Sites</h2>
+              {/* <h2>{siteName}</h2> */}
+              <h2>{site_name}</h2>
               <div className="">
                 {site
                   ? React.createElement(MdExpandLess, { size: "30" })
@@ -143,7 +146,9 @@ const Dashboard = () => {
                 {siteData.map((site, index) => (
                   <button
                     key={site.id}
-                    onClick={() => handleSiteChange(site.id)}
+                    onClick={() => {handleSiteChange(site.id,site.name_with_region );
+                      setSiteName(site.name_with_region)
+                    }}
                     className="hover:text-gray-300"
                   >
                     {site.name_with_region}
