@@ -1077,6 +1077,12 @@ export const getEventsDetails = async (id) =>
       token: token,
     },
   });
+export const editEventDetails = async (id, data) =>
+  axiosInstance.put(`/events/${id}.json`, data, {
+    params: {
+      token: token,
+    },
+  });
 export const postEvents = async (data) =>
   axiosInstance.post("/events.json", data, {
     params: {
@@ -1101,6 +1107,12 @@ export const postBroadCast = async (data) =>
 
 export const getBroadcastDetails = async (id) =>
   axiosInstance.get(`/notices/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const editBroadcastDetails = async (id, data) =>
+  axiosInstance.put(`/notices/${id}.json`, data, {
     params: {
       token: token,
     },
@@ -5748,9 +5760,20 @@ export const getSiteData = async () =>
     },
   });
 
-  export const siteChange = async (id) =>
-    axiosInstance.get(`/change_site_for_app.json?siteid=${id} `, {
-      params: {
-        token: token,
-      },
-    });
+export const siteChange = async (id) =>
+  axiosInstance.get(`/change_site_for_app.json?siteid=${id} `, {
+    params: {
+      token: token,
+    },
+  });
+
+// forum
+export const postForum = async (data) =>
+  axiosInstance.post(`/forums.json`, data, {
+    params: {
+      token: token,
+    },
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });

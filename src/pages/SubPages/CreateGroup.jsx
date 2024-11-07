@@ -83,12 +83,12 @@ function CreateGroup({ onclose }) {
       <div class="max-h-screen bg-white p-2 w-[40rem] rounded-xl shadow-lg overflow-y-auto">
         <div className="flex flex-col justify-center">
           <div className=" ">
-            <h2 className="flex items-center gap-2 justify-center border-b font-medium text-xl ">
+            <h2 className="flex items-center gap-2 justify-center border-b font-medium text-xl p-2 ">
               <PiPlusCircle size={20} /> Create Group
             </h2>
 
-            <div className="md:grid grid-cols-2 gap-2 mx-2">
-              <div className="flex flex-col my-2 ">
+            <div className="md:grid grid-cols-2 gap-2 mt-2 mx-2">
+              <div className="flex flex-col mt-2 ">
                 <label className=" font-medium ">Group Name</label>
                 <input
                   type="text"
