@@ -5739,3 +5739,18 @@ export const getReportingSupervisors = async (deptId, orgId) => {
     throw error;
   }
 };
+
+// site id
+export const getSiteData = async () =>
+  axiosInstance.get(`/get_user_site.json`, {
+    params: {
+      token: token,
+    },
+  });
+
+  export const siteChange = async (id) =>
+    axiosInstance.get(`/change_site_for_app.json?siteid=${id} `, {
+      params: {
+        token: token,
+      },
+    });
