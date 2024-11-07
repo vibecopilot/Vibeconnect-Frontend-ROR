@@ -12,6 +12,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
 import { useNavigate, useParams } from "react-router-dom";
+import { FaCheck } from "react-icons/fa";
 
 const CreateEvent = () => {
   const siteId = getItemInLocalStorage("SITEID");
@@ -157,18 +158,18 @@ const CreateEvent = () => {
         <Navbar />
       </div>
       <div className="w-full flex mx-3 flex-col overflow-hidden">
-        <h2
-          style={{ background: themeColor }}
-          className="text-center text-xl font-bold p-2 my-2 rounded-full text-white"
-        >
-          Create Event
-        </h2>
         <div className="flex justify-center">
-          <div className="w-fit my-5 mb-10 border border-gray-400 p-5 px-10 rounded-lg shadow-xl">
-            <h2 className="border-b text-xl border-black mb-6 font-semibold">
+          <div className=" my-5 mb-10 border w-full max-w-[70rem] border-gray-400 p-2 rounded-lg ">
+            <h2
+              style={{ background: themeColor }}
+              className="text-center text-xl font-medium p-2  rounded-md text-white"
+            >
+              Create Event
+            </h2>
+            <h2 className="border-b text-xl border-black my-6 font-semibold">
               Event Info
             </h2>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid md:grid-cols-2 gap-4">
               <div className="flex flex-col">
                 <label htmlFor="" className="font-medium">
                   Title :
@@ -180,7 +181,7 @@ const CreateEvent = () => {
                   onChange={handleChange}
                   id=""
                   placeholder="Enter Title"
-                  className="border-gray-400 border px-2 p-1 rounded-md"
+                  className="border-gray-400 border p-2  rounded-md"
                 />
               </div>
               <div className="flex flex-col">
@@ -194,37 +195,35 @@ const CreateEvent = () => {
                   onChange={handleChange}
                   id=""
                   placeholder="Enter Venue"
-                  className="border-gray-400 border px-2 p-1 rounded-md"
+                  className="border-gray-400 border p-2  rounded-md"
                 />
               </div>
-              <div className="flex items-center gap-2">
-                <div>
-                  <p className="font-medium mb-2">Start Time:</p>
-                  <DatePicker
-                    selected={formData.start_date_time}
-                    onChange={handleStartDateChange}
-                    showTimeSelect
-                    dateFormat="dd/MM/yyyy h:mm aa"
-                    placeholderText="Select Date & Time"
-                    ref={datePickerRef}
-                    minDate={currentDate}
-                    className="border border-black p-1 rounded-md"
-                  />
-                </div>
-                -
-                <div>
-                  <p className="font-medium mb-2">End Time:</p>
-                  <DatePicker
-                    selected={formData.end_date_time}
-                    onChange={handleEndDateChange}
-                    showTimeSelect
-                    dateFormat="dd/MM/yyyy h:mm aa"
-                    placeholderText="Select Date & Time"
-                    ref={datePickerRef}
-                    minDate={currentDate}
-                    className="border border-black rounded-md p-1"
-                  />
-                </div>
+              <div className="flex items-center gap-2 w-full">
+                {/* <div > */}
+                {/* <p className="font-medium mb-2">Start Time:</p> */}
+                <DatePicker
+                  selected={formData.start_date_time}
+                  onChange={handleStartDateChange}
+                  showTimeSelect
+                  dateFormat="dd/MM/yyyy h:mm aa"
+                  placeholderText="Select start date & time"
+                  ref={datePickerRef}
+                  minDate={currentDate}
+                  className="border border-gray-400 p-2 w-full rounded-md"
+                />
+                {/* </div> */}-{/* <div> */}
+                {/* <p className="font-medium mb-2">End Time:</p> */}
+                <DatePicker
+                  selected={formData.end_date_time}
+                  onChange={handleEndDateChange}
+                  showTimeSelect
+                  dateFormat="dd/MM/yyyy h:mm aa"
+                  placeholderText="Select end date & time"
+                  ref={datePickerRef}
+                  minDate={currentDate}
+                  className="border border-gray-400 rounded-md p-2 w-full "
+                />
+                {/* </div> */}
               </div>
             </div>
             <div className="flex flex-col gap-2 my-2">
@@ -241,6 +240,7 @@ const CreateEvent = () => {
                 className="border-gray-400 border px-2 p-1 rounded-md"
               />
             </div>
+
             <div className="flex gap-4 my-5">
               <div className="flex gap-2 items-center">
                 <input type="checkbox" name="" id="imp" />
@@ -255,19 +255,14 @@ const CreateEvent = () => {
                 </label>
               </div>
             </div>
-            <h2 className="border-b text-xl border-black my-5 font-semibold">
-              Upload Attachments
-            </h2>
+           
             {/* <input
               ref={fileInputRef}
               type="file"
               multiple
               onChange={handleFileAttachment}
             /> */}
-            <FileInputBox
-              fieldName={"event_image"}
-              handleChange={(files) => handleFileChange(files, "event_image")}
-            />
+           
             <div className="">
               <h2 className="border-b t border-black my-5 text-lg font-semibold">
                 Share With
@@ -290,11 +285,20 @@ const CreateEvent = () => {
                   >
                     Individuals
                   </h2>
+                  <h2
+                    className={`p-1 ${
+                      share === "groups" && "bg-black text-white"
+                    } rounded-full px-4 cursor-pointer border-2 border-black`}
+                    onClick={() => setShare("groups")}
+                  >
+                    Groups
+                  </h2>
                 </div>
                 <div className="my-5 flex w-full">
                   {share === "individual" && (
                     <Select
                       options={users}
+                      closeMenuOnSelect={false}
                       placeholder="Select User"
                       value={users.filter((user) =>
                         formData.user_ids.includes(user.value)
@@ -308,12 +312,12 @@ const CreateEvent = () => {
                 </div>
               </div>
             </div>
-            <div>
-              <h2 className="border-b text-xl border-black m-5 font-semibold">
+            <div className="mb-4">
+              <h2 className="border-b text-xl border-black font-semibold">
                 RSVP
               </h2>
-              <div className="flex gap-10 justify-center">
-                <div className="flex gap-2">
+              <div className="flex gap-4 mt-2">
+                <div className="flex gap-2 ">
                   <input type="radio" name="RSVP" id="yes" />
                   <label htmlFor="yes" className="text-lg">
                     Yes
@@ -327,12 +331,23 @@ const CreateEvent = () => {
                 </div>
               </div>
             </div>
+            <div>
+
+            <h2 className="border-b text-xl border-black my-5 font-semibold">
+              Upload Attachments
+            </h2>
+            <FileInputBox
+              fieldName={"event_image"}
+              handleChange={(files) => handleFileChange(files, "event_image")}
+              />
+              </div>
             <div className="flex justify-center mt-10 my-5">
               <button
-                className="bg-black text-white p-2 rounded-md hover:bg-white hover:text-black hover:border-2 border-black"
+              style={{background: themeColor}}
+                className="bg-black text-white p-2 rounded-md hover:bg-white  flex items-center gap-2 px-4"
                 onClick={handleCreateEvent}
               >
-                Submit
+              <FaCheck/>  Submit
               </button>
             </div>
           </div>

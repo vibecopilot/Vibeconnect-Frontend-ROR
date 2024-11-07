@@ -1,93 +1,95 @@
-import React, { useState } from 'react'
-import Navbar from '../../components/Navbar'
+import React, { useState } from "react";
+import Navbar from "../../components/Navbar";
+import { useSelector } from "react-redux";
+import FileInputBox from "../../containers/Inputs/FileInputBox";
 
 function CreateForum() {
+  const themeColor = useSelector((state) => state.theme.color);
   return (
-    <section className='flex'>
-        <div className='hidden md:block'>
-           <Navbar/>
-        </div>
-        <div className="w-full flex mx-3 flex-col overflow-hidden mb-5">
-            <h2 className="text-center text-xl font-bold my-5 p-2 bg-black rounded-full text-white mx-10">
-                Create Forum
+    <section className="flex">
+      <div className="hidden md:block">
+        <Navbar />
+      </div>
+      <div className="w-full flex mx-3 flex-col overflow-hidden mb-5">
+        <div className="flex justify-center">
+          <div className="border border-gray-400 rounded-md my-5 w-4/5">
+            <h2
+              style={{ background: themeColor }}
+              className="text-center text-xl font-bold my-2 p-2  rounded-md text-white mx-2"
+            >
+              Create Forum
             </h2>
-            <div className='flex justify-center'>
-            <div className='border-2 border-black rounded-md my-5 w-4/5'>
-                <div className='md:grid grid-cols-3 mx-5 gap-5 my-5'>
-                    <div className="flex flex-col ">
-                        <label htmlFor="" className="font-semibold my-2">
-                            Thread Title 
-                       </label>
-                       <input
-                          type="text"
-                          placeholder="Enter Thread Title "
-                          className="border p-1 px-4 border-gray-500 rounded-md"
-                       />
-                   </div>
-                   <div className="flex flex-col ">
-                      <label htmlFor="" className="font-semibold my-2">
-                        Thread Category 
-                       </label>
-                       <select className="border p-1 px-4 border-gray-500 rounded-md">
-                          <option value="">Select Thread Category </option>
-                          <option value="">Public</option>
-                          <option value="">Private</option>
-                       </select>
-                   </div>
-                   <div className="flex flex-col ">
-                        <label htmlFor="" className="font-semibold my-2">
-                            Thread Tags 
-                       </label>
-                       <input
-                          type="text"
-                          placeholder="Threads Tags"
-                          className="border p-1 px-4 border-gray-500 rounded-md"
-                       />
-                   </div>
-                   <div className="flex flex-col ">
-                        <label htmlFor="" className="font-semibold my-2">
-                          Thread Creator
-                       </label>
-                       <input
-                          type="text"
-                          placeholder="Thread Creator"
-                          className="border p-1 px-4 border-gray-500 rounded-md"
-                       />
-                   </div>
-                   <div className="flex flex-col ">
-                        <label htmlFor="" className="font-semibold my-2">
-                          Date/Time Created 
-                       </label>
-                       <input
-                          type="date"
-                          placeholder="Date/Time Created"
-                          className="border p-1 px-4 border-gray-500 rounded-md"
-                       />
-                   </div>
-               </div>
-                <div className='grid grid-cols mx-5 gap-5 my-5'>
-                  <div className="flex flex-col ">
-                      <label htmlFor="" className="font-semibold my-2">
-                        Thread Description
-                        </label>
-                        <textarea
-                          name=""
-                          id=""
-                          cols="5"
-                          rows="3"
-                          placeholder="Description"
-                          className="border p-1 px-4 border-gray-500 rounded-md"
-                        />
-                    </div>
-               </div>
+            <div className="md:grid grid-cols-3 mx-5 gap-5 mt-5 mb-2">
+              <div className="flex flex-col ">
+                <label htmlFor="" className="font-semibold my-2">
+                  Title
+                </label>
+                <input
+                  type="text"
+                  placeholder="Enter Title "
+                  className="border p-2 px-4 border-gray-400 rounded-md"
+                />
+              </div>
+              <div className="flex flex-col ">
+                <label htmlFor="" className="font-semibold my-2">
+                  Category
+                </label>
+                <select className="border p-2 px-4 border-gray-400 rounded-md">
+                  <option value="">Select Category </option>
+                  <option value="">General</option>
+                  <option value="">Discussion</option>
+                  <option value="">Feedback</option>
+                  <option value="">Support</option>
+                </select>
+              </div>
+              <div className="flex flex-col ">
+                <label htmlFor="" className="font-semibold my-2">
+                  Tags
+                </label>
+                <input
+                  type="text"
+                  placeholder="#tags"
+                  className="border p-2 px-4 border-gray-400 rounded-md"
+                />
+              </div>
             </div>
+            <div className="grid grid-cols mx-5 gap-5 my-2">
+              <div className="flex flex-col ">
+                <label htmlFor="" className="font-semibold my-2">
+                  Thread Description
+                </label>
+                <textarea
+                  name=""
+                  id=""
+                  cols="5"
+                  rows="3"
+                  placeholder="Description"
+                  className="border p-2 px-4 border-gray-400 rounded-md"
+                />
+              </div>
             </div>
-            <div className='flex justify-center mb-10 gap-2'>
-                <button className='bg-black text-white p-2 px-4 rounded-md font-medium'>Create Forum</button>
+            <div className="mx-5">
+              <FileInputBox
+                fieldName={"notice_image"}
+                isMulti={true}
+                // handleChange={(files) =>
+                //   handleFileChange(files, "notice_image")
+                // }
+              />
             </div>
+            <div className="flex justify-center my-2 gap-2">
+              <button
+                style={{ background: themeColor }}
+                className="bg-black text-white p-2 px-4 rounded-md font-medium"
+              >
+                Create Forum
+              </button>
+            </div>
+          </div>
         </div>
+      </div>
     </section>
-  )
+  );
 }
 
-export default CreateForum
+export default CreateForum;
