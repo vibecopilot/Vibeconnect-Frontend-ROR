@@ -5,6 +5,9 @@ import { ImEye } from "react-icons/im";
 import { IoAddCircleOutline } from "react-icons/io5";
 import { Link } from "react-router-dom";
 import Switch from "../../Buttons/Switch";
+import Navbar from "../../components/Navbar";
+import Table from "../../components/table/Table";
+import { useSelector } from "react-redux";
 
 const SetupBookingFacility = () => {
   const [searchText, setSearchText] = useState("");
@@ -104,35 +107,43 @@ const SetupBookingFacility = () => {
       },
     },
   };
+  const themeColor = useSelector((state) => state.theme.color);
   return (
-    <div className="m-5">
-      <div className="flex justify-between items-center">
-        <input
-          type="text"
-          placeholder="Search By Name"
-          className="border-2 p-2 w-96 border-gray-300 rounded-lg"
-          value={searchText}
-          onChange={handleSearch}
-        />
-        <div className="flex gap-4 justify-end w-full">
-          <Link
-            to={"/facility/setup-facility"}
-            className="bg-black w-20 rounded-lg flex font-semibold items-center gap-2 text-white p-2 my-5"
-          >
-            <IoAddCircleOutline size={20} />
-            Add
-          </Link>
-          <button className="bg-black rounded-lg flex font-semibold items-center gap-2 text-white p-2 my-5">
-            <BiExport size={20} />
-            Export
-          </button>
+    <div className="flex">
+      <Navbar />
+      <div className="w-full flex mx-3 flex-col overflow-hidden">
+        <div className="flex gap-2 items-center w-full">
+          <input
+            type="text"
+            placeholder="Search by name"
+            className="border p-2 border-gray-300 rounded-md w-full"
+            value={searchText}
+            onChange={handleSearch}
+          />
+          <div className="flex gap-2 justify-end ">
+            <Link
+              style={{ background: themeColor }}
+              to={"/setup/facility/setup-facility"}
+              className="bg-black w-20 rounded-lg flex font-semibold items-center gap-2 text-white p-2 my-2"
+            >
+              <IoAddCircleOutline size={20} />
+              Add
+            </Link>
+            <button
+              style={{ background: themeColor }}
+              className="bg-black rounded-lg flex font-semibold items-center gap-2 text-white p-2 my-2"
+            >
+              <BiExport size={20} />
+              Export
+            </button>
+          </div>
         </div>
+        <Table
+          columns={setupColumn}
+          data={filteredData}
+          // customStyles={customStyle}
+        />
       </div>
-      <DataTable
-        columns={setupColumn}
-        data={filteredData}
-        customStyles={customStyle}
-      />
     </div>
   );
 };

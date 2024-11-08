@@ -359,14 +359,14 @@ const SectionsPersonal = () => {
                         className="border-2 rounded-full p-1 transition-all duration-150 hover:bg-opacity-30 border-green-400  px-4 text-green-400 mb-2 hover:bg-green-300 font-semibold flex items-center gap-2 "
                         onClick={handleEditEmployeeBasicInfo}
                       >
-                      <FaCheck/>  Save
+                        <FaCheck /> Save
                       </button>
                       <button
                         type="button"
                         className="border-2 rounded-full p-1 border-red-400  px-4 text-red-400 mb-2 hover:bg-opacity-30 hover:bg-red-300 font-semibold flex items-center gap-2 "
                         onClick={() => setIsEditing(false)}
                       >
-                      <MdClose/>  Cancel
+                        <MdClose /> Cancel
                       </button>
                     </>
                   ) : (
@@ -375,7 +375,7 @@ const SectionsPersonal = () => {
                       className="bg-blue-500 text-white mb-2 hover:bg-gray-700 font-semibold py-2 px-4 rounded-full flex items-center gap-2 "
                       onClick={() => setIsEditing(true)}
                     >
-                     <BiEdit/> Edit
+                      <BiEdit /> Edit
                     </button>
                   )}
                 </div>
@@ -548,14 +548,14 @@ const SectionsPersonal = () => {
                         onClick={handleEditFamily}
                         className="border-2 rounded-full p-1 transition-all duration-150 hover:bg-opacity-30 border-green-400  px-4 text-green-400 mb-2 hover:bg-green-300 font-semibold flex items-center gap-2 "
                       >
-                      <FaCheck/>  Save
+                        <FaCheck /> Save
                       </button>
                       <button
                         type="button"
                         className="border-2 rounded-full p-1 border-red-400  px-4 text-red-400 mb-2 hover:bg-opacity-30 hover:bg-red-300 font-semibold flex items-center gap-2 "
                         onClick={() => setIsFamEditing(false)}
                       >
-                      <MdClose/>  Cancel
+                        <MdClose /> Cancel
                       </button>
                     </>
                   ) : (
@@ -564,7 +564,7 @@ const SectionsPersonal = () => {
                       className="bg-blue-500 text-white mb-2 hover:bg-gray-700 font-semibold py-2 px-4 rounded-full flex items-center gap-2"
                       onClick={() => setIsFamEditing(true)}
                     >
-                    <BiEdit/>  Edit
+                      <BiEdit /> Edit
                     </button>
                   )}
                 </div>
@@ -651,7 +651,7 @@ const SectionsPersonal = () => {
                       className="bg-blue-500 text-white mb-2 hover:bg-gray-700 font-semibold py-2 px-4 rounded-full flex items-center gap-2"
                       onClick={() => setIsAddressEditing(true)}
                     >
-                    <BiEdit/>  Edit
+                      <BiEdit /> Edit
                     </button>
                   )}
                 </div>

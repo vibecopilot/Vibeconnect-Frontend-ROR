@@ -72,16 +72,14 @@ const FacilityBooking = () => {
     <section className="flex">
       <Navbar />
       <div className=" w-full flex mx-3  flex-col overflow-hidden">
-        <div className="flex flex-col mb-10">
-          <div className="md:border border-gray-200 rounded-md md:mx-20 my-2 px-4">
-            <div
+        <div className="flex flex-col items-center mb-10">
+          <div className="md:border rounded-md my-2 p-4">
+            <h2
               style={{ background: themeColor }}
-              className="flex justify-center  m-2 my-4  p-2 rounded-md"
+              className="text-xl p-2 rounded-md font-semibold text-center mb-4 text-white "
             >
-              <h2 className="text-xl font-semibold text-center text-white ">
-                Book Facility
-              </h2>
-            </div>
+              Book Facility
+            </h2>
             <div className="md:grid flex flex-col grid-cols-4 items-center">
               <p className="font-semibold">For :</p>
               <div className="flex gap-5">
@@ -102,21 +100,27 @@ const FacilityBooking = () => {
                   Others
                 </p>
               </div>
+            </div>
+            <div>
               {behalf === "others" && (
-                <Select
-                  options={users}
-                  placeholder="Select User"
-                  value={formData.on_behalf}
-                  onChange={(selectedOption) =>
-                    setFormData({ ...formData, on_behalf: selectedOption })
-                  }
-                  className="w-full my-2"
-                  isMulti
-                />
+                <>
+                  <label htmlFor="" className="font-medium">
+                    Select User
+                  </label>
+                  <Select
+                    options={users}
+                    placeholder="Select User"
+                    value={formData.on_behalf}
+                    onChange={(selectedOption) =>
+                      setFormData({ ...formData, on_behalf: selectedOption })
+                    }
+                    className="w-full my-2"
+                  />
+                </>
               )}
             </div>
             <div className="flex md:flex-row flex-col md:gap-8 gap-2 my-5">
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-1">
                 <label htmlFor="" className="font-semibold">
                   Select Date :
                 </label>
@@ -126,13 +130,13 @@ const FacilityBooking = () => {
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
                   id=""
-                  className="border p-[2px] px-4 border-gray-500 rounded-md"
+                  className="border p-[6px] px-4 border-gray-500 rounded-md w-60"
                 />
               </div>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-1">
                 <p className="font-semibold">Select Facility :</p>
                 <select
-                  className="border p-1 px-4 border-gray-500 rounded-md"
+                  className="border p-2 px-4 border-gray-500 rounded-md w-60"
                   value={facility}
                   onChange={(e) => setFacility(e.target.value)}
                 >
@@ -179,16 +183,16 @@ const FacilityBooking = () => {
                       Prepaid
                     </p>
                   </div>
-                  {paymentMode === "pre" && (
-                    <div>
-                      <input
-                        type="text"
-                        placeholder="Enter upi"
-                        className="border border-gray-400 p-1 px-4"
-                      />
-                    </div>
-                  )}
                 </div>
+                {paymentMode === "pre" && (
+                  <div>
+                    <input
+                      type="text"
+                      placeholder="Enter upi"
+                      className="border border-gray-400 p-1 px-4 rounded-md"
+                    />
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex flex-col my-2">
@@ -220,8 +224,16 @@ const FacilityBooking = () => {
               className="bg-gray-100 my-4 p-2 rounded-md font-bold "
             >
               <div className="grid  bg-gray-100  rounded-md gap-5 p-4">
-                <li className="font-medium"> Cancellations made between 48 and 168 hours (2 to 7 days) before the booking time will incur a 50% cancellation fee.</li>
-                <li className="font-medium"> Cancellations made less than 48 hours before the booking time will not be refunded.</li>
+                <li className="font-medium">
+                  {" "}
+                  Cancellations made between 48 and 168 hours (2 to 7 days)
+                  before the booking time will incur a 50% cancellation fee.
+                </li>
+                <li className="font-medium">
+                  {" "}
+                  Cancellations made less than 48 hours before the booking time
+                  will not be refunded.
+                </li>
               </div>
             </Collapsible>
             <Collapsible
@@ -236,8 +248,15 @@ const FacilityBooking = () => {
               className="bg-gray-100 my-4 p-2 rounded-md font-bold "
             >
               <div className="grid  bg-gray-100 rounded-md gap-5 p-4">
-                <li className="font-medium">The facility must be used for the purpose stated at the time of booking. Any change in purpose requires prior approval.</li>
-                <li className="font-medium">The booking party is responsible for any damage caused to the facility during the booking period. Any repair costs will be charged to the booking party.</li>
+                <li className="font-medium">
+                  The facility must be used for the purpose stated at the time
+                  of booking. Any change in purpose requires prior approval.
+                </li>
+                <li className="font-medium">
+                  The booking party is responsible for any damage caused to the
+                  facility during the booking period. Any repair costs will be
+                  charged to the booking party.
+                </li>
               </div>
             </Collapsible>
           </div>

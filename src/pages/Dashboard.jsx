@@ -2,7 +2,10 @@ import React, { useEffect, useRef, useState } from "react";
 import Navbar from "../components/Navbar";
 import { useSelector } from "react-redux";
 import { getTicketDashboard, getVibeCalendar } from "../api";
-import { getItemInLocalStorage, setItemInLocalStorage } from "../utils/localStorage";
+import {
+  getItemInLocalStorage,
+  setItemInLocalStorage,
+} from "../utils/localStorage";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import wave from "/wave.png";
@@ -10,9 +13,10 @@ import HighchartsComponent from "../components/HighCharts";
 import TicketDashboard from "./SubPages/TicketDashboard";
 import CommunicationDashboard from "./SubPages/CommunicationDashboard";
 import SoftServiceHighCharts from "../components/SoftServicesHighCharts";
-import { getSiteData, siteChange} from "../api";
+import { getSiteData, siteChange } from "../api";
 import { MdExpandLess, MdExpandMore } from "react-icons/md";
 import { FaBuilding } from "react-icons/fa";
+import AssetDashboard from "./SubPages/AssetDashboard";
 const Dashboard = () => {
   const themeColor = useSelector((state) => state.theme.color);
   const vibeUserId = getItemInLocalStorage("VIBEUSERID");
@@ -20,10 +24,10 @@ const Dashboard = () => {
   const [site, setSite] = useState(false);
   const [siteData, setSiteData] = useState([]);
   const dropdownRef = useRef(null);
-  const [siteName, setSiteName] = useState("")
+  const [siteName, setSiteName] = useState("");
   console.log(vibeUserId);
   const contentRef = useRef(null);
-  
+
   useEffect(() => {
     const fetchCalendar = async () => {
       try {
@@ -80,13 +84,13 @@ const Dashboard = () => {
     };
     fetchSiteData();
   }, []);
-const site_name = getItemInLocalStorage("SITENAME")
-  const handleSiteChange = async (id,site ) => {
+  const site_name = getItemInLocalStorage("SITENAME");
+  const handleSiteChange = async (id, site) => {
     try {
       const response = await siteChange(id);
       setItemInLocalStorage("SITEID", id);
       setItemInLocalStorage("SITENAME", site);
-      window.location.reload()
+      window.location.reload();
     } catch (error) {
       console.error("Error fetching data:", error);
     }
@@ -124,7 +128,9 @@ const site_name = getItemInLocalStorage("SITENAME")
         >
           <div></div>
           <nav>
-            <h1 className="text-white text-center text-xl ml-5">Vibe Connect</h1>
+            <h1 className="text-white text-center text-xl ml-5">
+              Vibe Connect
+            </h1>
           </nav>
 
           <div className="relative" ref={dropdownRef}>
@@ -146,8 +152,9 @@ const site_name = getItemInLocalStorage("SITENAME")
                 {siteData.map((site, index) => (
                   <button
                     key={site.id}
-                    onClick={() => {handleSiteChange(site.id,site.name_with_region );
-                      setSiteName(site.name_with_region)
+                    onClick={() => {
+                      handleSiteChange(site.id, site.name_with_region);
+                      setSiteName(site.name_with_region);
                     }}
                     className="hover:text-gray-300"
                   >
@@ -172,6 +179,13 @@ const site_name = getItemInLocalStorage("SITENAME")
             <SoftServiceHighCharts />
           </div>
         )}
+        {feat.includes("assets") && (
+          <div className="w-full flex flex-col p-2  ">
+            <h2 className="border-b-2 border-black font-medium mb-2">Asset</h2>
+            <AssetDashboard />
+          </div>
+        )}
+
         {feat.includes("communication") && (
           <div className="w-full flex mx-3 flex-col p-2 mb-10 ">
             <h2 className="border-b-2 border-black font-medium">

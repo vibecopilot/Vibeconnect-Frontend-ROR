@@ -1131,7 +1131,7 @@ function App() {
             element={<BookingDetails />}
           />
           <Route
-            path="/facility"
+            path="/setup/facility"
             element={
               <ProtectedAdminRoutes>
                 <SetupBookingFacility />
@@ -1139,7 +1139,7 @@ function App() {
             }
           />
           <Route
-            path="/facility/setup-facility"
+            path="/setup/facility/setup-facility"
             element={
               <ProtectedAdminRoutes>
                 <SetupFacility />

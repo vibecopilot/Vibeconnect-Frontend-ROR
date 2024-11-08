@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { getMyOrganizationLocations, getMyOrgDepartments } from "../../../api";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
+import { MdClose } from "react-icons/md";
+import { FaCheck } from "react-icons/fa";
 
-const AddJobInfo = ({closeModal1}) => {
+const AddJobInfo = ({ closeModal1 }) => {
   const [departments, setDepartments] = useState([]);
   const [locations, setLocations] = useState([]);
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
@@ -32,7 +34,7 @@ const AddJobInfo = ({closeModal1}) => {
     <div className="fixed inset-0 z-50 flex items-center overflow-y-auto justify-center bg-gray-500 bg-opacity-50">
       <div class="max-h-screen bg-white p-2 px-3 w-[32rem] rounded-lg shadow-lg overflow-y-auto">
         <form>
-          <h2 className="text-2xl font-bold mb-4">Job Information</h2>
+          <h2 className="text-xl font-semibold mb-4">Job Information</h2>
           <div className="grid grid-cols-2 gap-2">
             <div className="flex flex-col gap-2">
               <label className="block text-sm font-medium text-gray-700">
@@ -108,19 +110,19 @@ const AddJobInfo = ({closeModal1}) => {
               />
             </div>
           </div>
-          <div className="flex my-2 justify-end gap-2">
+          <div className="flex my-2 justify-center gap-2">
             <button
               type="button"
-                onClick={closeModal1}
-              className="border-2 border-red-400 rounded-full text-red-400 px-4 p-1"
+              onClick={closeModal1}
+              className="border-2 border-red-400 rounded-full text-red-400 px-4 p-1 flex items-center gap-2"
             >
-              Cancel
+              <MdClose /> Cancel
             </button>
             <button
               type="submit"
-              className=" bg-green-400 rounded-full p-1 px-4 text-white"
+              className=" bg-green-400 rounded-full p-1 px-4 text-white flex items-center gap-2"
             >
-              Save
+              <FaCheck /> Save
             </button>
           </div>
         </form>
