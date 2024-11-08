@@ -5777,3 +5777,198 @@ export const postForum = async (data) =>
       "Content-Type": "multipart/form-data",
     },
   });
+
+export const downloadAsset = async () =>
+  axiosInstance.get(`/site_assets/export.xlsx/`, {
+    params: {
+      token: token,
+    },
+    responseType: "blob",
+  });
+
+export const getBreakdownDownload = async () =>
+  axiosInstance.get(`/site_assets/export.xlsx`, {
+    params: {
+      token: token,
+      "q[breakdown_eq]": 1,
+    },
+    responseType: "blob",
+  });
+export const getAssetInDownload = async () =>
+  axiosInstance.get(`/site_assets/export.xlsx`, {
+    params: {
+      token: token,
+      "q[breakdown_eq]": false,
+    },
+    responseType: "blob",
+  });
+
+export const getScheduledDownload = async () =>
+  axiosInstance.get(`/activities/export.xlsx`, {
+    params: {
+      token: token,
+      "q[checklist_ctype_eq]": "ppm",
+      scheduled: true,
+    },
+    responseType: "blob",
+  });
+
+export const getPPMOverDueDownload = async () =>
+  axiosInstance.get(`/activities/export.xlsx`, {
+    params: {
+      token: token,
+      "q[checklist_ctype_eq]": "ppm",
+      overdue: true,
+    },
+    responseType: "blob",
+  });
+
+export const getPPMPendingDownload = async () =>
+  axiosInstance.get(`/activities/export.xlsx`, {
+    params: {
+      token: token,
+      "q[checklist_ctype_eq]": "ppm",
+      pending: true,
+    },
+    responseType: "blob",
+  });
+
+export const getPPMcompleteDownload = async () =>
+  axiosInstance.get(`/activities/export.xlsx`, {
+    params: {
+      token: token,
+      "q[checklist_ctype_eq]": "ppm",
+      complete: true,
+    },
+    responseType: "blob",
+  });
+
+export const getTotalAssetCount = async () =>
+  axiosInstance.get(`/site_assets/count.json`, {
+    params: {
+      token: token,
+    },
+  });
+
+export const getBreakCount = async () =>
+  axiosInstance.get(`/site_assets/count.json`, {
+    params: {
+      token: token,
+      "q[breakdown_eq]": true, // add this line to include q[breakdown_eq]
+    },
+  });
+
+export const getInUseAssetBreakDown = async () =>
+  axiosInstance.get(`/site_assets/count.json`, {
+    params: {
+      token: token,
+      "q[breakdown_eq]": false, // add this line to include q[breakdown_eq]
+    },
+  });
+
+export const getPPMScheduleCount = async () =>
+  axiosInstance.get(`/activities/count.json`, {
+    params: {
+      token: token,
+      "q[checklist_ctype_eq]": "ppm",
+      scheduled: true,
+    },
+  });
+
+export const getPPMOverDueCount = async () =>
+  axiosInstance.get(`/activities/count.json`, {
+    params: {
+      token: token,
+      "q[checklist_ctype_eq]": "ppm",
+      overdue: true,
+    },
+  });
+
+export const getPPMpendingCount = async () =>
+  axiosInstance.get(`/activities/count.json`, {
+    params: {
+      token: token,
+      "q[checklist_ctype_eq]": "ppm",
+      pending: true,
+    },
+  });
+export const getPPMCompleteCount = async () =>
+  axiosInstance.get(`/activities/count.json`, {
+    params: {
+      token: token,
+      "q[checklist_ctype_eq]": "ppm",
+      complete: true,
+    },
+  });
+
+export const getRoutineScheduledDownload = async () =>
+  axiosInstance.get(`/activities/export.xlsx`, {
+    params: {
+      token: token,
+      "q[checklist_ctype_eq]": "routine",
+      scheduled: true,
+    },
+    responseType: "blob",
+  });
+
+export const getRoutineOverdueDownload = async () =>
+  axiosInstance.get(`/activities/export.xlsx`, {
+    params: {
+      token: token,
+      "q[checklist_ctype_eq]": "routine",
+      overdue: true,
+    },
+    responseType: "blob",
+  });
+export const getRoutineCompleteDownload = async () =>
+  axiosInstance.get(`/activities/export.xlsx`, {
+    params: {
+      token: token,
+      "q[checklist_ctype_eq]": "routine",
+      complete: true,
+    },
+    responseType: "blob",
+  });
+
+export const getRoutinePendingDownload = async () =>
+  axiosInstance.get(`/activities/export.xlsx`, {
+    params: {
+      token: token,
+      "q[checklist_ctype_eq]": "routine",
+      pending: true,
+    },
+    responseType: "blob",
+  });
+
+export const getRoutineScheduledCount = async () =>
+  axiosInstance.get(`/activities/count.json`, {
+    params: {
+      token: token,
+      "q[checklist_ctype_eq]": "routine",
+      scheduled: true,
+    },
+  });
+export const getRoutineOverdueCount = async () =>
+  axiosInstance.get(`/activities/count.json`, {
+    params: {
+      token: token,
+      "q[checklist_ctype_eq]": "routine",
+      overdue: true,
+    },
+  });
+export const getRoutineCompleteCount = async () =>
+  axiosInstance.get(`/activities/count.json?`, {
+    params: {
+      token: token,
+      "q[checklist_ctype_eq]": "routine",
+      complete: true,
+    },
+  });
+export const getRoutinePendingCount = async () =>
+  axiosInstance.get(`/activities/count.json`, {
+    params: {
+      token: token,
+      "q[checklist_ctype_eq]": "routine",
+      pending: true,
+    },
+  });

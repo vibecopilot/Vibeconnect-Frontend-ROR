@@ -129,7 +129,7 @@ const EmployeeBooking = () => {
               />
               <div className="flex gap-4 justify-end w-full">
                 <Link
-                  to={"/bookings/new-facility-booking"}
+                  to={"/employees/facility-booking"}
                   className="bg-black w-20 rounded-lg flex font-semibold items-center gap-2 text-white p-2 my-5"
                 >
                   <IoAddCircleOutline size={20} />
