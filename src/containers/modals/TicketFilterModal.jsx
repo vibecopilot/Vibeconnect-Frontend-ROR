@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import ModalWrapper from "./ModalWrapper";
-import { getFloors, getUnits, getFilterData, getAssignedTo} from "../../api";
+import { getFloors, getUnits, getFilterData, getAssignedTo } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
-const TicketFilterModal = ({ onclose, setFilteredData }) => {
+const TicketFilterModal = ({ onclose, setFilteredData, fetchData, currentPage, perPage}) => {
   const buildings = getItemInLocalStorage("Building");
   const [selectedBuilding, setSelectedBuilding] = useState("");
   const [floors, setFloors] = useState([]);
@@ -52,13 +52,17 @@ const TicketFilterModal = ({ onclose, setFilteredData }) => {
         formData.assign
       );
       console.log(response);
-      setFilteredData(response.data.complaints)
+      setFilteredData(response.data.complaints);
       onclose();
     } catch (error) {
       console.error("Error filter Data:", error);
     }
   };
 
+  const handleReset = () => {
+    fetchData(currentPage, perPage);
+    onclose();
+  };
   console.log(formData);
 
   const handleChange = (e) => {
@@ -186,6 +190,7 @@ const TicketFilterModal = ({ onclose, setFilteredData }) => {
               onChange={handleChange}
               className="border p-2 w-full border-gray-300 rounded-md focus:ring-2 focus:ring-gray-400"
             >
+              <option value="">Select Category</option>
               {categories?.map((category) => (
                 <option value={category.id} key={category.id}>
                   {category.name}
@@ -274,7 +279,10 @@ const TicketFilterModal = ({ onclose, setFilteredData }) => {
           >
             Filter
           </button>
-          <button className="border border-gray-400 rounded-md px-6 py-2 hover:bg-gray-100">
+          <button
+            className="border border-gray-400 rounded-md px-6 py-2 hover:bg-gray-100"
+            onClick={handleReset}
+          >
             Reset
           </button>
         </div>

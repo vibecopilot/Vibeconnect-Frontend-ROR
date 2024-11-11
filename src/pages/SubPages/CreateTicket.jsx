@@ -357,7 +357,7 @@ const CreateTicket = () => {
       sendData.append("complaints[floor_name]", formData.floor_name);
       sendData.append("complaints[issue_type_id]", formData.issue_type_id);
       sendData.append("complaints[complaint_type]", formData.complaint_type);
-      sendData.append("complaints[complaint_mode]", formData.complaint_mode);
+      sendData.append("complaints[complaint_mode_id]", formData.complaint_mode);
 
       (formData.documents || []).forEach((file, index) => {
         sendData.append("documents[]", file);
