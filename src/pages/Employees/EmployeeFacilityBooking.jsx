@@ -81,45 +81,6 @@ const EmployeeFacilityBooking = () => {
               Book Facility
             </h2>
 
-            <div className="md:grid flex flex-col grid-cols-4 items-center">
-              <p className="font-semibold">For :</p>
-              <div className="flex gap-5">
-                <p
-                  className={`border-2 p-1 px-6 border-black font-medium rounded-full cursor-pointer ${
-                    behalf === "self" && "bg-black text-white"
-                  }`}
-                  onClick={() => setBehalf("self")}
-                >
-                  Self
-                </p>
-                <p
-                  className={`border-2 p-1 px-6 border-black font-medium rounded-full cursor-pointer ${
-                    behalf === "others" && "bg-black text-white"
-                  }`}
-                  onClick={() => setBehalf("others")}
-                >
-                  Others
-                </p>
-              </div>
-            </div>
-            <div>
-              {behalf === "others" && (
-                <>
-                  <label htmlFor="" className="font-medium">
-                    Select User
-                  </label>
-                  <Select
-                    options={users}
-                    placeholder="Select User"
-                    value={formData.on_behalf}
-                    onChange={(selectedOption) =>
-                      setFormData({ ...formData, on_behalf: selectedOption })
-                    }
-                    className="w-full my-2"
-                  />
-                </>
-              )}
-            </div>
             <div className="flex md:flex-row flex-col md:gap-8 gap-2 my-5">
               <div className="flex flex-col gap-1">
                 <label htmlFor="" className="font-semibold">

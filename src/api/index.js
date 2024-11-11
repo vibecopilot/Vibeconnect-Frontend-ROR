@@ -5751,6 +5751,38 @@ export const getReportingSupervisors = async (deptId, orgId) => {
     throw error;
   }
 };
+export const getTotalHRMSEmployeeCount = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/count-of-employee/?organization_id=${orgId}`,
+      {
+        // headers: {
+        //   "Content-Type": "multipart/form-data/",
+        // },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting employee count :", error);
+    throw error;
+  }
+};
+export const getDepartmentCount = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/organization/1/departments/employee-count/`,
+      {
+        // headers: {
+        //   "Content-Type": "multipart/form-data/",
+        // },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting department count :", error);
+    throw error;
+  }
+};
 
 // site id
 export const getSiteData = async () =>
@@ -5972,3 +6004,29 @@ export const getRoutinePendingCount = async () =>
       pending: true,
     },
   });
+
+  export const getFilterData = async (
+    catId,
+    issueStatId,
+    prio_count,
+    assign_eq
+  ) =>
+    axiosInstance.get(
+      `/pms/admin/complaints.json?q[category_type_id_eq]=${catId}&q[issue_status_eq]=${issueStatId}&q[priority_cont]=${prio_count}&q[assigned_to_eq]=${assign_eq}`,
+      {
+        params: {
+          token: token,
+        },
+      }
+    );
+  
+  
+    export const getComplaintMode = async () =>
+      axiosInstance.get(`/complaint_modes.json`, {
+        params: {
+          token: token,
+        },
+      });
+    
+    
+      

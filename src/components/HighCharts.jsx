@@ -32,13 +32,11 @@ const TicketHighCharts = () => {
   }, []);
 
   const sortData = (data, order = "ascending") => {
-    const sortedEntries = Object.entries(data).sort(([, a], [, b]) => 
-      order === "ascending" ? b - a : a - b 
+    const sortedEntries = Object.entries(data).sort(([, a], [, b]) =>
+      order === "ascending" ? b - a : a - b
     );
     return Object.fromEntries(sortedEntries);
   };
-
-  
 
   const generatePieChartOptions = (title, data) => {
     return {
@@ -101,7 +99,7 @@ const TicketHighCharts = () => {
 
   const generateBarChartOptions = (title, data, order) => {
     const sortedData = sortData(data, order);
-    
+
     return {
       chart: {
         type: "bar",
@@ -129,14 +127,14 @@ const TicketHighCharts = () => {
         bar: {
           dataLabels: {
             enabled: true,
-            formatter: function() {
+            formatter: function () {
               return this.y; // Display the y value (data value) on the bar
             },
             style: {
-              textOutline: false // Remove text outline (optional)
-            }
-          }
-        }
+              textOutline: false, // Remove text outline (optional)
+            },
+          },
+        },
       },
       series: [
         {
@@ -148,7 +146,7 @@ const TicketHighCharts = () => {
     };
   };
 
-  const generateColumnChartOptions = (title, data,order="ascending") => {
+  const generateColumnChartOptions = (title, data, order = "ascending") => {
     const sortedData = sortData(data, order);
     const TicketsType = Object.keys(sortedData);
     const ticketValues = Object.values(sortedData);
@@ -177,14 +175,14 @@ const TicketHighCharts = () => {
         column: {
           dataLabels: {
             enabled: true,
-            formatter: function() {
+            formatter: function () {
               return this.y; // Display the y value (data value) on the bar
             },
             style: {
-              textOutline: false // Remove text outline (optional)
-            }
-          }
-        }
+              textOutline: false, // Remove text outline (optional)
+            },
+          },
+        },
       },
       series: [
         {
@@ -195,26 +193,30 @@ const TicketHighCharts = () => {
       ],
     };
   };
-  const generateFloorColumnChartOptions = (title, data, order = "ascending") => {
+  const generateFloorColumnChartOptions = (
+    title,
+    data,
+    order = "ascending"
+  ) => {
     const sortedData = sortData(data, order);
     const floorTickets = Object.keys(sortedData);
     const ticketValues = Object.values(sortedData);
-  
+
     return {
       chart: {
         type: "column",
         borderRadius: 30,
         // scrollablePlotArea: {
-        //   minWidth: 700, 
+        //   minWidth: 700,
         //   scrollPositionX: 1
         // }
       },
       title: {
         text: title,
       },
-      max: 10, 
+      max: 10,
       scrollbar: {
-        enabled: true
+        enabled: true,
       },
       xAxis: {
         categories: floorTickets,
@@ -232,14 +234,14 @@ const TicketHighCharts = () => {
         column: {
           dataLabels: {
             enabled: true,
-            formatter: function() {
+            formatter: function () {
               return this.y; // Display the y value (data value) on the bar
             },
             style: {
-              textOutline: false // Remove text outline (optional)
-            }
-          }
-        }
+              textOutline: false, // Remove text outline (optional)
+            },
+          },
+        },
       },
       series: [
         {
@@ -260,16 +262,16 @@ const TicketHighCharts = () => {
         type: "column",
         borderRadius: 30,
         scrollablePlotArea: {
-          minWidth: 700, 
-          scrollPositionX: 1
-        }
+          minWidth: 700,
+          scrollPositionX: 1,
+        },
       },
       title: {
         text: title,
       },
-      max: 10, 
+      max: 10,
       scrollbar: {
-        enabled: true
+        enabled: true,
       },
       xAxis: {
         categories: unitTickets,
@@ -287,14 +289,14 @@ const TicketHighCharts = () => {
         column: {
           dataLabels: {
             enabled: true,
-            formatter: function() {
+            formatter: function () {
               return this.y; // Display the y value (data value) on the bar
             },
             style: {
-              textOutline: false // Remove text outline (optional)
-            }
-          }
-        }
+              textOutline: false, // Remove text outline (optional)
+            },
+          },
+        },
       },
       series: [
         {
@@ -334,7 +336,7 @@ const TicketHighCharts = () => {
               highcharts={Highcharts}
               options={generateBarChartOptions(
                 "Tickets by Category",
-                categoryData,
+                categoryData
               )}
               order="descending"
             />
@@ -352,12 +354,16 @@ const TicketHighCharts = () => {
           )}
         </div>
         <div className="bg-white shadow-custom-all-sides rounded-md">
-          {ticketTypes ? <HighchartsReact
-            highcharts={Highcharts}
-            options={generateColumnChartOptions("Tickets by Type", ticketTypes)}
+          {ticketTypes ? (
+            <HighchartsReact
+              highcharts={Highcharts}
+              options={generateColumnChartOptions(
+                "Tickets by Type",
+                ticketTypes
+              )}
               order="ascending"
-
-          /> : (
+            />
+          ) : (
             <div className="flex justify-center items-center h-full">
               <DNA
                 visible={true}
@@ -371,15 +377,15 @@ const TicketHighCharts = () => {
           )}
         </div>
         <div className="bg-white shadow-custom-all-sides rounded-md">
-
-          {floorTickets ? <HighchartsReact
-            highcharts={Highcharts}
-            options={generateFloorColumnChartOptions(
-              "Tickets by Floor",
-              floorTickets
-            )}
-          
-          />: (
+          {floorTickets ? (
+            <HighchartsReact
+              highcharts={Highcharts}
+              options={generateFloorColumnChartOptions(
+                "Tickets by Floor",
+                floorTickets
+              )}
+            />
+          ) : (
             <div className="flex justify-center items-center h-full">
               <DNA
                 visible={true}
@@ -394,13 +400,15 @@ const TicketHighCharts = () => {
         </div>
       </div>
       <div className="bg-white shadow-custom-all-sides rounded-md my-2 mr-2">
-       {unitTickets ? <HighchartsReact
-          highcharts={Highcharts}
-          options={generateUnitColumnChartOptions(
-            "Tickets by Unit",
-            unitTickets
-          )}
-        />: (
+        {unitTickets ? (
+          <HighchartsReact
+            highcharts={Highcharts}
+            options={generateUnitColumnChartOptions(
+              "Tickets by Unit",
+              unitTickets
+            )}
+          />
+        ) : (
           <div className="flex justify-center items-center h-full">
             <DNA
               visible={true}
