@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
-import { getServicesTaskList } from "../api";
+import { getServicesTaskList, getSoftServiceDownload} from "../api";
 import { useSelector } from "react-redux";
 import { CirclesWithBar, DNA, ThreeDots } from "react-loader-spinner";
+import { FaDownload } from "react-icons/fa";
+import toast from "react-hot-toast";
 
 // import "react-loader-spinner/dist/loader/css/react-spinner-loader.css";
 const SoftServiceHighCharts = () => {
@@ -31,14 +33,37 @@ const SoftServiceHighCharts = () => {
     fetchTicketInfo();
   }, []);
 
+  // download api
+  const handleSoftServiceDownload = async () => {
+    toast.loading("Downloading Please Wait");
+    try {
+      const response = await getSoftServiceDownload();
+      const url = window.URL.createObjectURL(
+        new Blob([response.data], {
+          type: response.headers["content-type"],
+        })
+      );
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "Soft_Service_file.xlsx");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success("Soft Service downloaded successfully");
+      toast.dismiss();
+    } catch (error) {
+      toast.dismiss();
+      console.error("Error downloading Soft Service:", error);
+      toast.error("Something went wrong, please try again");
+    }
+  };
+
   const sortData = (data, order = "ascending") => {
-    const sortedEntries = Object.entries(data).sort(([, a], [, b]) => 
-      order === "ascending" ? b - a : a - b 
+    const sortedEntries = Object.entries(data).sort(([, a], [, b]) =>
+      order === "ascending" ? b - a : a - b
     );
     return Object.fromEntries(sortedEntries);
   };
-
-  
 
   const generatePieChartOptions = (title, data) => {
     const colors = {
@@ -46,7 +71,7 @@ const SoftServiceHighCharts = () => {
       complete: "#4caf50", // Green
       pending: "#f44336", // Red
     };
-  
+
     return {
       chart: {
         type: "pie",
@@ -68,7 +93,6 @@ const SoftServiceHighCharts = () => {
       ],
     };
   };
-  
 
   // const generateBarChartOptions = (title, data,order) => {
   //   const sortedData = sortData(data, order);
@@ -109,7 +133,7 @@ const SoftServiceHighCharts = () => {
 
   const generateBarChartOptions = (title, data, order) => {
     const sortedData = sortData(data, order);
-    
+
     return {
       chart: {
         type: "bar",
@@ -137,14 +161,14 @@ const SoftServiceHighCharts = () => {
         bar: {
           dataLabels: {
             enabled: true,
-            formatter: function() {
+            formatter: function () {
               return this.y; // Display the y value (data value) on the bar
             },
             style: {
-              textOutline: false // Remove text outline (optional)
-            }
-          }
-        }
+              textOutline: false, // Remove text outline (optional)
+            },
+          },
+        },
       },
       series: [
         {
@@ -156,7 +180,7 @@ const SoftServiceHighCharts = () => {
     };
   };
 
-  const generateColumnChartOptions = (title, data,order="ascending") => {
+  const generateColumnChartOptions = (title, data, order = "ascending") => {
     const sortedData = sortData(data, order);
     const TicketsType = Object.keys(sortedData);
     const ticketValues = Object.values(sortedData);
@@ -177,9 +201,9 @@ const SoftServiceHighCharts = () => {
         labels: {
           rotation: 0, // Ensures the text is straight (no rotation)
           style: {
-              fontSize: '11px', // Adjust the font size for better readability
+            fontSize: "11px", // Adjust the font size for better readability
           },
-      },
+        },
       },
       yAxis: {
         min: 0,
@@ -191,14 +215,14 @@ const SoftServiceHighCharts = () => {
         column: {
           dataLabels: {
             enabled: true,
-            formatter: function() {
+            formatter: function () {
               return this.y; // Display the y value (data value) on the bar
             },
             style: {
-              textOutline: false // Remove text outline (optional)
-            }
-          }
-        }
+              textOutline: false, // Remove text outline (optional)
+            },
+          },
+        },
       },
       series: [
         {
@@ -209,26 +233,30 @@ const SoftServiceHighCharts = () => {
       ],
     };
   };
-  const generateFloorColumnChartOptions = (title, data, order = "ascending") => {
+  const generateFloorColumnChartOptions = (
+    title,
+    data,
+    order = "ascending"
+  ) => {
     const sortedData = sortData(data, order);
     const floorTickets = Object.keys(sortedData);
     const ticketValues = Object.values(sortedData);
-  
+
     return {
       chart: {
         type: "column",
         borderRadius: 30,
         // scrollablePlotArea: {
-        //   minWidth: 700, 
+        //   minWidth: 700,
         //   scrollPositionX: 1
         // }
       },
       title: {
         text: title,
       },
-      max: 10, 
+      max: 10,
       scrollbar: {
-        enabled: true
+        enabled: true,
       },
       xAxis: {
         categories: floorTickets,
@@ -238,9 +266,9 @@ const SoftServiceHighCharts = () => {
         labels: {
           rotation: 0, // Ensures the text is straight (no rotation)
           style: {
-              fontSize: '12px', // Adjust the font size for better readability
+            fontSize: "12px", // Adjust the font size for better readability
           },
-      },
+        },
       },
       yAxis: {
         min: 0,
@@ -252,14 +280,14 @@ const SoftServiceHighCharts = () => {
         column: {
           dataLabels: {
             enabled: true,
-            formatter: function() {
+            formatter: function () {
               return this.y; // Display the y value (data value) on the bar
             },
             style: {
-              textOutline: false // Remove text outline (optional)
-            }
-          }
-        }
+              textOutline: false, // Remove text outline (optional)
+            },
+          },
+        },
       },
       series: [
         {
@@ -282,7 +310,7 @@ const SoftServiceHighCharts = () => {
         scrollablePlotArea: {
           minWidth: unitTickets.length * 100, // Dynamically adjust scrollable area based on number of units
           scrollPositionX: 0, // Start the scroll from the left
-        }
+        },
       },
       title: {
         text: title,
@@ -298,9 +326,9 @@ const SoftServiceHighCharts = () => {
         labels: {
           rotation: 0, // Ensures the text is straight (no rotation)
           style: {
-              fontSize: '12px', // Adjust the font size for better readability
+            fontSize: "12px", // Adjust the font size for better readability
           },
-      },
+        },
       },
       yAxis: {
         min: 0,
@@ -312,14 +340,14 @@ const SoftServiceHighCharts = () => {
         column: {
           dataLabels: {
             enabled: true,
-            formatter: function() {
+            formatter: function () {
               return this.y; // Display the y value (data value) on the bar
             },
             style: {
-              textOutline: false // Remove text outline (optional)
-            }
-          }
-        }
+              textOutline: false, // Remove text outline (optional)
+            },
+          },
+        },
       },
       series: [
         {
@@ -329,19 +357,27 @@ const SoftServiceHighCharts = () => {
         },
       ],
     };
-};
+  };
 
-  
-
-  
   return (
     <div>
       <div className="grid md:grid-cols-2 mr-2  gap-2">
         <div className=" shadow-custom-all-sides rounded-md">
+          <div className="flex justify-end p-3">
+            <button
+              className="rounded-md bg-gray-200 py-1 px-5"
+              onClick={handleSoftServiceDownload}
+            >
+              <FaDownload />
+            </button>
+          </div>
           {statusData ? (
             <HighchartsReact
               highcharts={Highcharts}
-              options={generatePieChartOptions("Soft Services by Status", statusData)}
+              options={generatePieChartOptions(
+                "Soft Services by Status",
+                statusData
+              )}
             />
           ) : (
             <div className="flex justify-center items-center h-full">
@@ -358,12 +394,20 @@ const SoftServiceHighCharts = () => {
         </div>
 
         <div className="bg-white shadow-custom-all-sides rounded-md">
+          <div className="flex justify-end p-3">
+            <button
+              className="rounded-md bg-gray-200 py-1 px-5"
+              onClick={handleSoftServiceDownload}
+            >
+              <FaDownload />
+            </button>
+          </div>
           {categoryData ? (
             <HighchartsReact
               highcharts={Highcharts}
               options={generateBarChartOptions(
                 "Soft Services by Building",
-                categoryData,
+                categoryData
               )}
               order="descending"
             />
@@ -380,7 +424,7 @@ const SoftServiceHighCharts = () => {
             </div>
           )}
         </div>
-        
+
         {/* <div className="bg-white shadow-custom-all-sides rounded-md">
           {ticketTypes ? <HighchartsReact
             highcharts={Highcharts}
@@ -400,7 +444,6 @@ const SoftServiceHighCharts = () => {
             </div>
           )}
         </div> */}
-       
       </div>
       {/* <div className="bg-white shadow-custom-all-sides rounded-md my-2 mr-2">
           {categoryData ? <HighchartsReact
@@ -422,35 +465,53 @@ const SoftServiceHighCharts = () => {
           )}
         </div> */}
       <div className="bg-white shadow-custom-all-sides rounded-md my-2 mr-2">
-
-{floorTickets ? <HighchartsReact
-  highcharts={Highcharts}
-  options={generateFloorColumnChartOptions(
-    "Soft Services by Floor",
-    floorTickets
-  )}
-
-/>: (
-  <div className="flex justify-center items-center h-full">
-    <DNA
-      visible={true}
-      height="120"
-      width="120"
-      ariaLabel="dna-loading"
-      wrapperStyle={{}}
-      wrapperClass="dna-wrapper"
-    />
-  </div>
-)}
-</div>
+        <div className="flex justify-end p-3">
+          <button
+            className="rounded-md bg-gray-200 py-1 px-5"
+            onClick={handleSoftServiceDownload}
+          >
+            <FaDownload />
+          </button>
+        </div>
+        {floorTickets ? (
+          <HighchartsReact
+            highcharts={Highcharts}
+            options={generateFloorColumnChartOptions(
+              "Soft Services by Floor",
+              floorTickets
+            )}
+          />
+        ) : (
+          <div className="flex justify-center items-center h-full">
+            <DNA
+              visible={true}
+              height="120"
+              width="120"
+              ariaLabel="dna-loading"
+              wrapperStyle={{}}
+              wrapperClass="dna-wrapper"
+            />
+          </div>
+        )}
+      </div>
+      <div className="flex justify-end p-3">
+        <button
+          className="rounded-md bg-gray-200 py-1 px-5"
+          onClick={handleSoftServiceDownload}
+        >
+          <FaDownload  />
+        </button>
+      </div>
       <div className="bg-white shadow-custom-all-sides rounded-md my-2 mr-2">
-       {unitTickets ? <HighchartsReact
-          highcharts={Highcharts}
-          options={generateUnitColumnChartOptions(
-            "Soft Services by Unit",
-            unitTickets
-          )}
-        />: (
+        {unitTickets ? (
+          <HighchartsReact
+            highcharts={Highcharts}
+            options={generateUnitColumnChartOptions(
+              "Soft Services by Unit",
+              unitTickets
+            )}
+          />
+        ) : (
           <div className="flex justify-center items-center h-full">
             <DNA
               visible={true}

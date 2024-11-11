@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getSiteAsset } from "../../api";
+import { getSiteAsset, getRoutineTask} from "../../api";
 import Navbar from "../../components/Navbar";
 import Table from "../../components/table/Table";
 import { DNA } from "react-loader-spinner";
@@ -17,7 +17,7 @@ const AssetWidgets = () => {
   const [breakDown, setBreakDown] = useState([]);
   const [inUse, setInUse] = useState([]);
   const [allAssets, setAllAssets] = useState([]);
-
+  // const [routineTaskFilter, setRoutineTaskFilter] = useState([])
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -32,7 +32,9 @@ const AssetWidgets = () => {
         const breakdownAssets = assets.filter(
           (asset) => asset.breakdown === true
         );
-        const inUseAssets = assets.filter((asset) => asset.breakdown === false || asset.breakdown === null);
+        const inUseAssets = assets.filter(
+          (asset) => asset.breakdown === false || asset.breakdown === null
+        );
         setAllAssets(assets);
         setBreakDown(breakdownAssets);
         setInUse(inUseAssets);
@@ -44,7 +46,19 @@ const AssetWidgets = () => {
         console.error("Error fetching data:", error);
       }
     };
+    // const fetchRoutineTask = async () => {
+    //   try {
+    //     const taskResponse = await getRoutineTask();
+    //     const completeRoutineFilter = taskResponse.filter(
+    //       (routine) => routine.status === true
+    //     );
+    //     setRoutineTaskFilter(completeRoutineFilter)
+    //   } catch (error) {
+    //     console.log(error);
+    //   }
+    // };
     fetchData();
+    // fetchRoutineTask();
   }, []);
 
   const showFilteredAssets = () => {
@@ -203,45 +217,90 @@ const AssetWidgets = () => {
     <section className="flex ">
       <Navbar />
       <div className="p-4 overflow-hidden w-full my-2 flex mx-3 flex-col">
-        <div className="flex gap-4 items-center overflow-auto p-2 ">
-          <p
-            className="bg-white min-w-44 shadow-custom-all-sides p-4 rounded-md flex flex-col hover:bg-blue-400 hover:backdrop-blur-sm hover:bg-opacity-45 border-blue-400 cursor-pointer text-blue-400 border-4 items-center  text-sm w-fit font-medium transition-all duration-300"
-            onClick={() => setShowData("all")}
-          >
-            Total Assets
-            <span className="font-medium text-base text-black">
-              {totalAsset}
-            </span>
-          </p>
-          <p
-            className="bg-white min-w-44 shadow-custom-all-sides p-4 hover:bg-green-400 hover:backdrop-blur-sm hover:bg-opacity-45 border-green-400 rounded-md flex flex-col cursor-pointer border-4 items-center text-gray-500 text-sm w-fit font-medium transition-all duration-300"
-            style={{ color: "#155724" }}
-            onClick={() => setShowData("inUse")}
-          >
-            Assets in Use
-            <span className="font-medium text-base text-black">
-              {inUseCount}
-            </span>
-          </p>
-          <p
-            className="bg-white min-w-44 shadow-custom-all-sides p-4 rounded-md flex flex-col hover:bg-red-400 hover:backdrop-blur-sm hover:bg-opacity-45 border-4 items-center cursor-pointer border-red-400 text-gray-500 text-sm w-fit font-medium transition-all duration-300"
-            style={{ color: "#721c24" }}
-            onClick={() => setShowData("breakdown")}
-          >
-            Assets in Breakdown
-            <span className="font-medium text-base text-black">
-              {breakdownCount}
-            </span>
-          </p>
-          <p className="bg-white min-w-44 shadow-custom-all-sides p-4 rounded-md flex flex-col border-4 items-center cursor-pointer border-yellow-400 text-yellow-500 text-sm w-fit font-medium">
-            Activities Performed
-            <span className="font-medium text-base text-black">0</span>
-          </p>
-          <p className="bg-white min-w-44 shadow-custom-all-sides p-4 rounded-md flex flex-col border-4 items-center cursor-pointer border-cyan-400 text-cyan-500 text-sm w-fit font-medium">
-            PPM Performed
-            <span className="font-medium text-base text-black">0</span>
-          </p>
-          <p className="bg-white min-w-44 shadow-custom-all-sides p-4 rounded-md flex flex-col border-4 items-center cursor-pointer border-orange-500 text-orange-500 text-sm w-fit font-medium">
+        <div className="flex gap-4 items-center overflow-auto p-2">
+          <p 
+            className={`min-w-44 shadow-custom-all-sides p-4 rounded-md flex flex-col border-4 items-center text-sm w-fit font-medium transition-all duration-300 
+              ${ 
+                showData === "all"
+                ? "bg-blue-400 text-white border-blue-400"
+                : "bg-white text-blue-400 border-blue-400"
+              }
+              hover:bg-blue-400 hover:backdrop-blur-sm hover:bg-opacity-45 cursor-pointer`}
+              onClick={() => setShowData("all")}
+              >
+                Total Assets
+                <span className="font-medium text-base text-black">
+                  {totalAsset}
+                </span>
+              </p>
+              <p
+                className={`min-w-44 shadow-custom-all-sides p-4 rounded-md flex flex-col border-4 items-center text-sm w-fit font-medium transition-all duration-300 
+                  ${
+                    showData === "inUse"
+                    ? "bg-green-400 text-white border-green-400"
+                    : "bg-white text-green-400 border-green-400"
+                  }
+                  hover:bg-green-400 hover:backdrop-blur-sm hover:bg-opacity-45 cursor-pointer`}
+                  style={{ color: "#155724" }}
+                  onClick={() => setShowData("inUse")}
+                >
+                  Assets in Use
+                  <span className="font-medium text-base text-black">
+                  {inUseCount}
+                </span>
+              </p>
+              <p
+                className={`min-w-44 shadow-custom-all-sides p-4 rounded-md flex flex-col border-4 items-center text-sm w-fit font-medium transition-all duration-300 
+                  ${
+                    showData === "breakdown"
+                    ? "bg-red-400 text-white border-red-400" 
+                    : "bg-white text-red-400 border-red-400"
+                  }
+                  hover:bg-red-400 hover:backdrop-blur-sm hover:bg-opacity-45 cursor-pointer`}
+                style={{ color: "#721c24" }}
+                onClick={() => setShowData("breakdown")}
+              >
+                Assets in Breakdown
+                <span className="font-medium text-base text-black">
+                  {breakdownCount}
+                </span>
+              </p>
+              <p
+                className={`min-w-44 shadow-custom-all-sides p-4 rounded-md flex flex-col border-4 items-center text-sm w-fit font-medium transition-all duration-300 
+                  ${
+                    showData === "activities"
+                    ? "bg-yellow-400 text-white border-yellow-400"
+                    : "bg-white text-yellow-500 border-yellow-400"
+                  }
+                  cursor-pointer`}
+                onClick={() => setShowData("activities")}
+              >
+                Activities Performed
+                <span className="font-medium text-base text-black">0</span>
+              </p>
+              <p
+               className={`min-w-44 shadow-custom-all-sides p-4 rounded-md flex flex-col border-4 items-center text-sm w-fit font-medium transition-all duration-300 
+                ${
+                  showData === "ppm"
+                  ? "bg-cyan-400 text-white border-cyan-400"
+                  : "bg-white text-cyan-500 border-cyan-400"
+                }
+                cursor-pointer`}
+                onClick={() => setShowData("ppm")}
+              >
+                PPM Performed
+              <span className="font-medium text-base text-black">0</span>
+            </p>
+            <p
+             className={`min-w-44 shadow-custom-all-sides p-4 rounded-md flex flex-col border-4 items-center text-sm w-fit font-medium transition-all duration-300 
+              ${
+                showData === "amc"
+                ? "bg-orange-500 text-white border-orange-500"
+                : "bg-white text-orange-500 border-orange-500"
+              }
+              cursor-pointer`}
+              onClick={() => setShowData("amc")}
+            >
             AMC Performed
             <span className="font-medium text-base text-black">0</span>
           </p>

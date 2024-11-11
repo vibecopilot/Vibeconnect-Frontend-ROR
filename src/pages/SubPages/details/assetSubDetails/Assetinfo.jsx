@@ -40,6 +40,8 @@ const Assetinfo = ({ assetData }) => {
     min_val: "",
     max_val: "",
     check_prev: false,
+    unit_type:"",
+    multiplier_factor:"",
   });
 
   const {
@@ -178,7 +180,7 @@ const Assetinfo = ({ assetData }) => {
       toast.dismiss();
       toast.success("Asset Params added successfully");
       // setFormData(initialAddAssetFormData);
-      window.location.reload();
+      // window.location.reload();
     } catch (error) {
       console.error("Error submitting complaint:", error);
       toast.error("Error Creating Asset!");
@@ -591,6 +593,20 @@ const Assetinfo = ({ assetData }) => {
                     />
                   </div>
                   <div className="flex flex-col">
+                    <label htmlFor="unit" className="font-medium">
+                      Unit Type :
+                    </label>
+                    <input
+                      type="text"
+                      name="unit_type"
+                      id="unit"
+                      value={formData.unit_type || ""}
+                      onChange={handleAssetParamsChange}
+                      placeholder="Enter Unit Type"
+                      className="border p-1 px-4 border-gray-500 rounded-md"
+                    />
+                  </div>
+                  <div className="flex flex-col">
                     <label htmlFor="charactorLimt" className="font-medium">
                       Input Character Limit :
                     </label>
@@ -657,6 +673,21 @@ const Assetinfo = ({ assetData }) => {
                       value={formData.max_val}
                       onChange={handleAssetParamsChange}
                       placeholder="Max Value"
+                      className="border p-1 px-4 border-gray-500 rounded-md"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <label htmlFor="Multiplier" className="font-medium">
+                    
+                    Multiplier Factor :
+                    </label>
+                    <input
+                      type="text"
+                      name="multiplier_factor"
+                      id="Multiplier"
+                      value={formData.multiplier_factor}
+                      onChange={handleAssetParamsChange}
+                      placeholder="Multiplier Factor"
                       className="border p-1 px-4 border-gray-500 rounded-md"
                     />
                   </div>
@@ -817,9 +848,9 @@ const Assetinfo = ({ assetData }) => {
                     </label>
                     <input
                       type="text"
-                      name="max_val"
+                      name="multiplier_factor"
                       id="above"
-                      value={formData.max_val}
+                      value={formData.multiplier_factor}
                       onChange={handleAssetParamsChange}
                       placeholder="Multiplier Factor"
                       className="border p-1 px-4 border-gray-500 rounded-md"

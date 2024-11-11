@@ -290,8 +290,48 @@ const AddAsset = () => {
       formDataSend.append("site_asset[breakdown]", formData.breakdown);
       formDataSend.append("site_asset[is_meter]", formData.is_meter);
       formDataSend.append("site_asset[asset_type]", formData.asset_type);
-
       formDataSend.append("site_asset[vendor_id]", formData.vendor_id);
+      consumptionData.forEach((item) => {
+        formDataSend.append("site_asset[asset_params][][name]", item.name);
+        formDataSend.append("site_asset[asset_params][][order]", item.order);
+        formDataSend.append(
+          "site_asset[asset_params][][unit_type]",
+          item.unit_type
+        );
+        formDataSend.append("site_asset[asset_params][][digit]", item.digit);
+        formDataSend.append(
+          "site_asset[asset_params][][alert_below]",
+          item.alert_below
+        );
+        formDataSend.append(
+          "site_asset[asset_params][][alert_above]",
+          item.alert_above
+        );
+        formDataSend.append(
+          "site_asset[asset_params][][min_val]",
+          item.min_val
+        );
+        formDataSend.append(
+          "site_asset[asset_params][][max_val]",
+          item.max_val
+        );
+        formDataSend.append(
+          "site_asset[asset_params][][multiplier_factor]",
+          item.multiplier_factor
+        );
+        formDataSend.append(
+          "site_asset[asset_params][][dashboard_view]",
+          item.dashboard_view
+        );
+        formDataSend.append(
+          "site_asset[asset_params][][consumption_view]",
+          item.consumption_view
+        );
+        formDataSend.append(
+          "site_asset[asset_params][][check_prev]",
+          item.check_prev
+        );
+      });
 
       formData.invoice.forEach((file, index) => {
         formDataSend.append(`purchase_invoices[]`, file);
@@ -347,17 +387,20 @@ const AddAsset = () => {
 
   // Consumption
   const [consumptionData, setConsumptionData] = useState([]);
+
   const handleAddConsumption = () => {
     setConsumptionData((prev) => [
       ...prev,
       {
         name: "",
         order: "",
+        unit_type: "",
         digit: "",
         alert_below: "",
         alert_above: "",
         min_val: "",
         max_val: "",
+        multiplier_factor: "",
         dashboard_view: false,
         consumption_view: false,
         check_prev: false,
@@ -367,6 +410,17 @@ const AddAsset = () => {
 
   const handleRemoveConsumption = (index) => {
     setConsumptionData((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleAssetParamsChange = (index, e) => {
+    const { name, value, type, checked } = e.target;
+    setConsumptionData((prev) =>
+      prev.map((item, i) =>
+        i === index
+          ? { ...item, [name]: type === "checkbox" ? checked : value }
+          : item
+      )
+    );
   };
 
   return (
@@ -1053,97 +1107,160 @@ const AddAsset = () => {
             <div className="flex flex-col">
               {consumption === "ConsumptionAssetMeasureType" && (
                 <div className="my-5 space-y-3">
-                  {consumptionData.map((formData, index) => (
+                  {consumptionData.map((con, index) => (
                     <div
                       key={index}
-                      className="grid lg:grid-cols-3 md:grid-cols-1 sm:grid-cols-1 gap-5 border rounded-md p-5"
+                      className="grid grid-cols-1 gap-5 p-5 border rounded-md sm:grid-cols-2 lg:grid-cols-3"
                     >
                       <div className="flex flex-col">
                         <label
-                          htmlFor="name_Consumption"
+                          htmlFor={`name-${index}`}
                           className="font-medium"
                         >
-                          Name:
+                          Name :
                         </label>
                         <input
                           type="text"
-                          name="nameConsumption"
-                          id="name_Consumption"
+                          name="name"
+                          id={`name-${index}`}
+                          value={con.name}
+                          onChange={(e) => handleAssetParamsChange(index, e)}
                           placeholder="Name"
                           className="border p-1 px-4 border-gray-500 rounded-md"
                         />
                       </div>
                       <div className="flex flex-col">
-                        <label htmlFor="unit_type" className="font-medium">
-                          Unit Type:
-                        </label>
-                        <select
-                          className="border p-1 px-4 border-gray-500 rounded-md"
-                          name="unit_type"
-                          id="unit_type"
+                        <label
+                          htmlFor={`order-${index}`}
+                          className="font-medium"
                         >
-                          <option value="">Select Unit Type</option>
-                        </select>
-                      </div>
-                      <div className="flex flex-col">
-                        <label htmlFor={`min`} className="font-medium">
-                          Min:
+                          Order :
                         </label>
                         <input
                           type="text"
-                          name="min_val"
-                          id={`min`}
-                          placeholder="Min"
+                          name="order"
+                          id={`order-${index}`}
+                          value={con.order}
+                          onChange={(e) => handleAssetParamsChange(index, e)}
+                          placeholder="Enter Order"
                           className="border p-1 px-4 border-gray-500 rounded-md"
                         />
                       </div>
                       <div className="flex flex-col">
-                        <label htmlFor={`max`} className="font-medium">
-                          Max:
+                        <label
+                          htmlFor={`unit-${index}`}
+                          className="font-medium"
+                        >
+                          Unit Type :
                         </label>
                         <input
                           type="text"
-                          name="max_val"
-                          id={`max`}
-                          placeholder="Max"
+                          name="unit_type"
+                          id={`unit-${index}`}
+                          value={con.unit_type}
+                          onChange={(e) => handleAssetParamsChange(index, e)}
+                          placeholder="Enter Unit Type"
                           className="border p-1 px-4 border-gray-500 rounded-md"
                         />
                       </div>
                       <div className="flex flex-col">
-                        <label htmlFor={`below`} className="font-medium">
-                          Alert Below Value:
+                        <label
+                          htmlFor={`digit-${index}`}
+                          className="font-medium"
+                        >
+                          Input Character Limit :
+                        </label>
+                        <input
+                          type="text"
+                          name="digit"
+                          id={`digit-${index}`}
+                          value={con.digit}
+                          onChange={(e) => handleAssetParamsChange(index, e)}
+                          placeholder="Input Character Limit"
+                          className="border p-1 px-4 border-gray-500 rounded-md"
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <label
+                          htmlFor={`alert_below-${index}`}
+                          className="font-medium"
+                        >
+                          Alert Below :
                         </label>
                         <input
                           type="text"
                           name="alert_below"
-                          id={`below`}
+                          id={`alert_below-${index}`}
+                          value={con.alert_below}
+                          onChange={(e) => handleAssetParamsChange(index, e)}
                           placeholder="Alert Below Value"
                           className="border p-1 px-4 border-gray-500 rounded-md"
                         />
                       </div>
                       <div className="flex flex-col">
-                        <label htmlFor={`above`} className="font-medium">
-                          Alert Above Value:
+                        <label
+                          htmlFor={`alert_above-${index}`}
+                          className="font-medium"
+                        >
+                          Alert Above :
                         </label>
                         <input
                           type="text"
                           name="alert_above"
-                          id={`above`}
+                          id={`alert_above-${index}`}
+                          value={con.alert_above}
+                          onChange={(e) => handleAssetParamsChange(index, e)}
                           placeholder="Alert Above Value"
                           className="border p-1 px-4 border-gray-500 rounded-md"
                         />
                       </div>
                       <div className="flex flex-col">
                         <label
-                          htmlFor={`multiplier_factor`}
+                          htmlFor={`min_val-${index}`}
                           className="font-medium"
                         >
-                          Multiplier Factor:
+                          Min :
                         </label>
                         <input
                           type="text"
-                          name="multiplierFactor"
-                          id={`multiplier_factor`}
+                          name="min_val"
+                          id={`min_val-${index}`}
+                          value={con.min_val}
+                          onChange={(e) => handleAssetParamsChange(index, e)}
+                          placeholder="Min Value"
+                          className="border p-1 px-4 border-gray-500 rounded-md"
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <label
+                          htmlFor={`max_val-${index}`}
+                          className="font-medium"
+                        >
+                          Max :
+                        </label>
+                        <input
+                          type="text"
+                          name="max_val"
+                          id={`max_val-${index}`}
+                          value={con.max_val}
+                          onChange={(e) => handleAssetParamsChange(index, e)}
+                          placeholder="Max Value"
+                          className="border p-1 px-4 border-gray-500 rounded-md"
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <label
+                          htmlFor={`multiplier_factor-${index}`}
+                          className="font-medium"
+                        >
+                          Multiplier Factor :
+                        </label>
+                        <input
+                          type="text"
+                          name="multiplier_factor"
+                          id={`multiplier_factor-${index}`}
+                          value={con.multiplier_factor}
+                          onChange={(e) => handleAssetParamsChange(index, e)}
                           placeholder="Multiplier Factor"
                           className="border p-1 px-4 border-gray-500 rounded-md"
                         />
@@ -1151,17 +1268,43 @@ const AddAsset = () => {
                       <div className="flex items-center gap-2">
                         <input
                           type="checkbox"
-                          name=" CheckPreviousReading"
-                          id="previous_reading"
+                          name="dashboard_view"
+                          id={`dashboard_view-${index}`}
+                          checked={con.dashboard_view}
+                          onChange={(e) => handleAssetParamsChange(index, e)}
                         />
-                        <label htmlFor={`previous_reading`}>
-                          Check Previous Reading
+                        <label htmlFor={`dashboard_view-${index}`}>
+                          Dashboard View
+                        </label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          name="consumption_view"
+                          id={`consumption_view-${index}`}
+                          checked={con.consumption_view}
+                          onChange={(e) => handleAssetParamsChange(index, e)}
+                        />
+                        <label htmlFor={`consumption_view-${index}`}>
+                          Consumption View
+                        </label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          name="check_prev"
+                          id={`check_prev-${index}`}
+                          checked={con.check_prev}
+                          onChange={(e) => handleAssetParamsChange(index, e)}
+                        />
+                        <label htmlFor={`check_prev-${index}`}>
+                          Check previous Reading
                         </label>
                       </div>
                       <button
                         type="button"
                         onClick={() => handleRemoveConsumption(index)}
-                        className="col-span-3 text-red-600 underline mt-2"
+                        className="col-span-1 text-red-600 underline mt-2 sm:col-span-2 lg:col-span-3 flex justify-start items-center"
                       >
                         <IoMdClose size={20} />
                       </button>
