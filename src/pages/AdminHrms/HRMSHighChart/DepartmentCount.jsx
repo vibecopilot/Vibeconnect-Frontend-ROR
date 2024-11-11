@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import Highcharts from "highcharts";
 import { getDepartmentCount } from "../../../api";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
+import { BiChevronDown } from "react-icons/bi";
 
 const DepartmentCount = () => {
   const [departmentData, setDepartmentData] = useState([]);
@@ -44,7 +45,7 @@ const DepartmentCount = () => {
       type: "pie",
     },
     title: {
-      text: "Employee Count by Department",
+      text: "",
       style: {
         fontSize: "16px",
         fontWeight: "600",
@@ -68,6 +69,12 @@ const DepartmentCount = () => {
 
   return (
     <div className="ml-4">
+      <div className="flex justify-between m-2">
+        <h2 className="text-gray-500 font-medium">
+          Employee count by department
+        </h2>
+        <BiChevronDown size={30} />
+      </div>
       <HighchartsReact highcharts={Highcharts} options={pieChartOptions} />
       <div className="flex justify-center">
         <p className="font-medium text-sm mb-2 flex items-center">

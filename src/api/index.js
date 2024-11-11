@@ -431,7 +431,12 @@ export const postComplaintsDetails = async (data) => {
   try {
     const response = await axiosInstance.post(
       `/pms/complaints.json?token=${token}`,
-      data
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
     );
     return response.data;
   } catch (error) {
@@ -6005,28 +6010,24 @@ export const getRoutinePendingCount = async () =>
     },
   });
 
-  export const getFilterData = async (
-    catId,
-    issueStatId,
-    prio_count,
-    assign_eq
-  ) =>
-    axiosInstance.get(
-      `/pms/admin/complaints.json?q[category_type_id_eq]=${catId}&q[issue_status_eq]=${issueStatId}&q[priority_cont]=${prio_count}&q[assigned_to_eq]=${assign_eq}`,
-      {
-        params: {
-          token: token,
-        },
-      }
-    );
-  
-  
-    export const getComplaintMode = async () =>
-      axiosInstance.get(`/complaint_modes.json`, {
-        params: {
-          token: token,
-        },
-      });
-    
-    
-      
+export const getFilterData = async (
+  catId,
+  issueStatId,
+  prio_count,
+  assign_eq
+) =>
+  axiosInstance.get(
+    `/pms/admin/complaints.json?q[category_type_id_eq]=${catId}&q[issue_status_eq]=${issueStatId}&q[priority_cont]=${prio_count}&q[assigned_to_eq]=${assign_eq}`,
+    {
+      params: {
+        token: token,
+      },
+    }
+  );
+
+export const getComplaintMode = async () =>
+  axiosInstance.get(`/complaint_modes.json`, {
+    params: {
+      token: token,
+    },
+  });
