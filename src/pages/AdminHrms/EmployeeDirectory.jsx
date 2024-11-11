@@ -164,6 +164,10 @@ function EmployeeDirectory() {
     const searchValue = e.target.value;
     setSearchText(searchValue);
   };
+// const 
+  const handleChangeStatus = async () => {
+    // const 
+  };
 
   return (
     <div className="w-full">

@@ -80,7 +80,7 @@ const FacilityBooking = () => {
             >
               Book Facility
             </h2>
-            <div className="md:grid flex flex-col grid-cols-4 items-center">
+            {/* <div className="md:grid flex flex-col grid-cols-4 items-center">
               <p className="font-semibold">For :</p>
               <div className="flex gap-5">
                 <p
@@ -100,8 +100,8 @@ const FacilityBooking = () => {
                   Others
                 </p>
               </div>
-            </div>
-            <div>
+            </div> */}
+            {/* <div>
               {behalf === "others" && (
                 <>
                   <label htmlFor="" className="font-medium">
@@ -118,8 +118,54 @@ const FacilityBooking = () => {
                   />
                 </>
               )}
-            </div>
-            <div className="flex md:flex-row flex-col md:gap-8 gap-2 my-5">
+            </div> */}
+            <div className="grid grid-cols-4 gap-2">
+              <div className="flex flex-col gap-1">
+                <p className="font-semibold">Facility :</p>
+                <select
+                  className="border p-2 px-4 border-gray-500 rounded-md "
+                  value={facility}
+                  onChange={(e) => setFacility(e.target.value)}
+                >
+                  <option value="">Select Facility</option>
+                  <option value="user1">Conference Room</option>
+                  <option value="User2">Cabin</option>
+                </select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <p className="font-semibold">Building :</p>
+                <select
+                  className="border p-2 px-4 border-gray-500 rounded-md"
+                  value={facility}
+                  onChange={(e) => setFacility(e.target.value)}
+                >
+                  <option value="">Select Building</option>
+                  {/* <option value="user1">Conference Room</option>
+                  <option value="User2">Cabin</option> */}
+                </select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <p className="font-semibold">Floor :</p>
+                <select
+                  className="border p-2 px-4 border-gray-500 rounded-md"
+                  value={facility}
+                  onChange={(e) => setFacility(e.target.value)}
+                >
+                  <option value="">Select Floor</option>
+                </select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <p className="font-semibold"> Unit :</p>
+                <select
+                  className="border p-2 px-4 border-gray-500 rounded-md"
+                  value={facility}
+                  onChange={(e) => setFacility(e.target.value)}
+                >
+                  <option value="">Select unit</option>
+                  {/* <option value="user1">Conference Room</option>
+                  <option value="User2">Cabin</option> */}
+                </select>
+              </div>
               <div className="flex flex-col gap-1">
                 <label htmlFor="" className="font-semibold">
                   Select Date :
@@ -132,18 +178,6 @@ const FacilityBooking = () => {
                   id=""
                   className="border p-[6px] px-4 border-gray-500 rounded-md w-60"
                 />
-              </div>
-              <div className="flex flex-col gap-1">
-                <p className="font-semibold">Select Facility :</p>
-                <select
-                  className="border p-2 px-4 border-gray-500 rounded-md w-60"
-                  value={facility}
-                  onChange={(e) => setFacility(e.target.value)}
-                >
-                  <option value="">Choose Facility</option>
-                  <option value="user1">Conference Room</option>
-                  <option value="User2">Cabin</option>
-                </select>
               </div>
             </div>
 
@@ -184,7 +218,7 @@ const FacilityBooking = () => {
                     </p>
                   </div>
                 </div>
-                {paymentMode === "pre" && (
+                {/* {paymentMode === "pre" && (
                   <div>
                     <input
                       type="text"
@@ -192,7 +226,7 @@ const FacilityBooking = () => {
                       className="border border-gray-400 p-1 px-4 rounded-md"
                     />
                   </div>
-                )}
+                )} */}
               </div>
             </div>
             <div className="flex flex-col my-2">

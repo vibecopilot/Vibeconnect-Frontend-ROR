@@ -9,6 +9,7 @@ import { Link } from "react-router-dom";
 import SetupBookingFacility from "./SubPages/SetupBookingFacility";
 import SeatBooking from "./SubPages/SeatBooking";
 import Table from "../components/table/Table";
+import { useSelector } from "react-redux";
 
 const Booking = () => {
   const [searchText, setSearchText] = useState("");
@@ -86,32 +87,26 @@ const Booking = () => {
     setFilteredData(filteredResults);
   };
 
-  const customStyle = {
-    headRow: {
-      style: {
-        backgroundColor: "black",
-        color: "white",
-        fontSize: "14px",
-      },
-    },
-  };
+  const themeColor = useSelector((state) => state.theme.color);
   return (
-    <section className="flex ">
+    <section className="flex">
       <Navbar />
       <div className="w-full flex m-3 flex-col overflow-hidden">
         <div className="flex justify-center">
           <div className="sm:flex grid grid-cols-2 sm:flex-row gap-5 font-medium p-2 sm:rounded-full rounded-md opacity-90 bg-gray-200 ">
             <h2
               className={`p-1 ${
-                page === "meetingBooking" && "bg-white text-blue-500 shadow-custom-all-sides"
+                page === "meetingBooking" &&
+                "bg-white text-blue-500 shadow-custom-all-sides"
               } rounded-full px-4 cursor-pointer text-center  transition-all duration-300 ease-linear`}
               onClick={() => setPage("meetingBooking")}
             >
-             Meeting Room Bookings
+              Facility Bookings
             </h2>
             <h2
               className={`p-1 ${
-                page === "seatBooking" && "bg-white text-blue-500 shadow-custom-all-sides"
+                page === "seatBooking" &&
+                "bg-white text-blue-500 shadow-custom-all-sides"
               } rounded-full px-4 cursor-pointer text-center  transition-all duration-300 ease-linear`}
               onClick={() => setPage("seatBooking")}
             >
@@ -121,53 +116,35 @@ const Booking = () => {
         </div>
         {page === "meetingBooking" && (
           <div>
-            <div className="flex justify-between items-center">
+            <div className="flex gap-2 items-center">
               <input
                 type="text"
                 placeholder="Search By Facility"
-                className="border-2 p-2 w-96 border-gray-300 rounded-lg"
+                className="border p-2 w-full border-gray-300 rounded-lg"
                 value={searchText}
                 onChange={handleSearch}
               />
-              <div className="flex gap-4 justify-end w-full">
+              <div className="flex gap-2 justify-end">
                 <Link
                   to={"/bookings/new-facility-booking"}
-                  className="bg-black w-20 rounded-lg flex font-semibold items-center gap-2 text-white p-2 my-5"
+                  style={{ background: themeColor }}
+                  className="bg-black w-20 rounded-lg flex font-semibold items-center gap-2 text-white p-2 my-2"
                 >
                   <IoAddCircleOutline size={20} />
                   Book
                 </Link>
                 <button
+                  style={{ background: themeColor }}
                   onClick={() => showModal(true)}
-                  className="bg-black rounded-lg flex font-semibold items-center gap-2 text-white p-2 my-5"
+                  className="bg-black rounded-lg flex font-semibold items-center gap-2 text-white p-2 my-2"
                 >
                   <BiExport size={20} />
                   Export
                 </button>
               </div>
             </div>
-            {/* <DataTable
-              columns={column}
-              data={filteredData}
-              customStyles={customStyle}
-              fixedHeader
-          fixedHeaderScrollHeight="500px"
-          pagination
-          selectableRowsHighlight
-          highlightOnHover
-          omitColumn={column}
-            /> */}
-            <Table
-              columns={column}
-              data={filteredData}
-          //     customStyles={customStyle}
-          //     fixedHeader
-          // fixedHeaderScrollHeight="500px"
-          // pagination
-          // selectableRowsHighlight
-          // highlightOnHover
-          // omitColumn={column}
-            />
+
+            <Table columns={column} data={filteredData} />
             {modal && <ExportBookingModal onclose={() => showModal(false)} />}
           </div>
         )}

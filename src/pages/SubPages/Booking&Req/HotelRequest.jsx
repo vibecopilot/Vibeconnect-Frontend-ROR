@@ -67,6 +67,11 @@ const HotelRequest = () => {
       sortable: true,
     },
     {
+      name: "Email",
+      selector: (row) => row.booking_certification_email,
+      sortable: true,
+    },
+    {
       name: "Destination",
       selector: (row) => row.destination,
       sortable: true,
@@ -111,7 +116,7 @@ const HotelRequest = () => {
     {
       name: "Approval",
       selector: (row) =>
-        row.status === "pending" && (
+        row.booking_status === "pending" && (
           <div className="flex justify-center gap-2">
             <button className="text-green-400 font-medium hover:bg-green-400 hover:text-white transition-all duration-200 p-1 rounded-full">
               <TiTick size={20} />

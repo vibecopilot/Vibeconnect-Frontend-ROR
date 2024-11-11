@@ -65,7 +65,7 @@ const AddHotelRequest = () => {
   };
   const themeColor = useSelector((state) => state.theme.color);
   return (
-    <div className="flex justify-center items-center my-5 w-full p-4">
+    <div className="flex justify-center  my-2 w-full p-4">
       <div className="border border-gray-300 rounded-lg p-4 w-full mx-4  ">
         <h2
           className="text-center md:text-xl font-bold p-2  rounded-md text-white"
@@ -210,25 +210,9 @@ const AddHotelRequest = () => {
             </select>
           </div>
 
-          <div className="grid gap-2 items-center w-full">
-            <label htmlFor="bookingStatus" className="font-semibold">
-              Booking Status:
-            </label>
-            <select
-              id="bookingStatus"
-              className="border p-2 px-4 border-gray-500 rounded-md"
-              name="booking_status"
-              value={formData.booking_status}
-              onChange={handleChange}
-            >
-              <option value="">Select Booking Status</option>
-              <option value="pending">Pending</option>
-              <option value="confirmed">Confirmed</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
-          </div>
+         
 
-          <div className="grid gap-2 items-center w-full">
+          {/* <div className="grid gap-2 items-center w-full">
             <label htmlFor="managerApproval" className="font-semibold">
               Manager Approval :
             </label>
@@ -242,7 +226,7 @@ const AddHotelRequest = () => {
               <option value="true">Yes</option>
               <option value="false">No</option>
             </select>
-          </div>
+          </div> */}
         </div>
         <div className="grid gap-2 items-center w-full my-4">
           <label htmlFor="specialRequests" className="font-semibold">
