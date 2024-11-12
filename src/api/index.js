@@ -642,6 +642,18 @@ export const getChecklist = async () =>
       token: token,
     },
   });
+  export const getChecklistTemplate = async () =>
+    axiosInstance.get("/checklists/download_template", {
+      params: {
+        token: token,
+      },
+    });
+    export const getMasterChecklist = async () =>
+      axiosInstance.get("/checklists/get_master_checklist.json", {
+        params: {
+          token: token,
+        },
+      });
 export const getAssociationList = async (checklistId) =>
   axiosInstance.get(
     `/checklist_associations.json?checklist_id=${checklistId}`,
@@ -727,15 +739,19 @@ export const getSoftServiceStatus = async (data) =>
       },
     }
   );
-  export const getPPMCalendar = async () =>
-    axiosInstance.get(`/activities/calendar_data.json&q[checklist_ctype_eq]=ppm`, {
+  export const getPPMCalendar = async (startdate,enddate) =>
+    axiosInstance.get(`/activities/calendar_data.json&q[checklist_ctype_eq]=ppm?startdate=${startdate}&enddate=${enddate}`, {
       params: {
-        
         token: token,
       },
     });
   
-
+    export const postGRN = async (data) =>
+      axiosInstance.post(`/grn_details.json`, data, {
+        params: {
+          token: token,
+        },
+      });
   export const postMasters = async (data) =>
     axiosInstance.post(`/inventories.json`, data, {
       params: {
@@ -1235,6 +1251,18 @@ export const postChecklist = async (data) =>
       token: token,
     },
   });
+  export const getSiteOwner = async () =>
+    axiosInstance.get("/get_site_owner.json?q[info_type_eq]=SiteOwner", {
+      params: {
+        token: token,
+      },
+    });
+  export const postSiteOwner = async (data) =>
+    axiosInstance.post("/generic_infos.json", data, {
+      params: {
+        token: token,
+      },
+    });
   export const getGenericGroupAssetChecklist = async () =>
     axiosInstance.get(`/generic_infos.json?q[info_type_eq]=checklist`, {
       params: {

@@ -16,6 +16,7 @@ function GRN() {
     const fetchGRN = async () => {
       try {
         const resp = await getGRN();
+        console.log("GRN",resp)
         setGrns(resp.data);
       } catch (error) {
         console.log(error);
