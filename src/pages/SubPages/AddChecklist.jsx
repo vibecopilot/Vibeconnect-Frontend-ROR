@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { BiPlus } from "react-icons/bi";
 import { IoClose } from "react-icons/io5";
 import { getItemInLocalStorage } from "../../utils/localStorage";
-import { getGenericGroupAssetChecklist, getGenericSubGroupAssetChecklist, getHostList, getSiteAsset, getVendors, postChecklist } from "../../api";
+import { getChecklistDetails, getGenericGroupAssetChecklist, getGenericSubGroupAssetChecklist, getHostList, getMasterChecklist, getSiteAsset, getVendors, postChecklist } from "../../api";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import toast from "react-hot-toast";
@@ -16,19 +16,25 @@ const AddChecklist = () => {
   const toDay = new Date();
   const year = toDay.getFullYear();
   const [hosts, setHosts] = useState([]);
+  const [masters, setMasters] =useState([]);
   const [selectedOptionssupervisior, setSelectedOptionssupervisior] = useState([]);
   const [optionssupervisior, setOptionssupervisior] = useState([]);
   const month = String(toDay.getMonth() + 1).padStart(2, "0");
   const day = String(toDay.getDate()).padStart(2, "0");
   const formattedDate = `${year}-${month}-${day}`;
   const [supplierid, setsupplierid] = useState("");
+  const [masterid, setmasterid] = useState("");
+
   const [name, setName] = useState("");
   const [frequency, setFrequency] = useState("");
   const [startDate, setStartDate] = useState(formattedDate);
   const [endDate, setEndDate] = useState(formattedDate);
-  const [groupId, setGroupId] = useState('');
-  const [subgroupId, setSubgroupId] = useState([]);
+  const [lockOverdueTask, setLockOverdueTask] = useState("");
   const [suppliers, setSuppliers] = useState([]);
+
+  const handleLockOverdueTaskChange = (e) => {
+    setLockOverdueTask(e.target.value);
+  };
 
   const [addNewQuestion, setAddNewQuestion] = useState([
     {
@@ -46,7 +52,31 @@ const AddChecklist = () => {
       },
     ]);
   };
-  
+  useEffect(() => {
+    const fetchServicesChecklistDetails = async () => {
+      const checklistDetailsResponse = await getChecklistDetails(masterid);
+      const data = checklistDetailsResponse.data;
+      console.log(data);
+      setName(data.name);
+      setFrequency(data.frequency);
+      setStartDate(data.start_date);
+      setEndDate(data.end_date);
+      setAddNewQuestion(
+        data.questions.map((q) => ({
+          id: q.id,
+          name: q.name,
+          type: q.qtype,
+          options: [q.option1, q.option2, q.option3, q.option4],
+          value_types:[q.value_type1,q.value_type2,q.value_type3,q.value_type4],
+          question_mandatory:q.question_mandatory,
+          reading:q.reading,
+          showHelpText:q.help_text_enbled,
+          help_text:q.help_text
+        }))
+      );
+    };
+    fetchServicesChecklistDetails();
+  }, [masterid]);
   const handleQuestionChange = (index, field, value, optionIndex = null) => {
     const newQuestions = [...addNewQuestion];
   
@@ -98,63 +128,80 @@ const AddChecklist = () => {
   const navigate = useNavigate()
   const handleSubmit = async (event) => {
     event.preventDefault();
-    const supervisorIds = selectedOptionssupervisior.map(option => option.value);
-    const data = {
-      checklist: {
-        site_id: siteId,
-        weightage_enabled:weightage,
-        occurs: "",
-        name: name,
-        start_date: startDate,
-        end_date: endDate,
-        user_id: userId,
-        cron_expression:cronExpression,
-        grace_period:convertedSubmitMinutes,
-        grace_period_unit:convertedExtensionMinutes,
-        supplier_id:supplierid,
-        supervisors:supervisorIds,
-        ctype: "routine",
-      },
-      frequency: frequency,
-      question: addNewQuestion.map((q, index) => ({
-        name: q.name,
-        type: q.type,
-        option1: q.options[0],
-        value_type1: q.value_types[0],
-        option2: q.options[1],
-        value_type2: q.value_types[1],
-        option3: q.options[2],
-        value_type3: q.value_types[2],
-        option4: q.options[3],
-        value_type4: q.value_types[3],
-        question_mandatory:q.question_mandatory,
-        image_mandatory:q.reading,
-        help_text_enbled: q.showHelpText ,
-        help_text: q.showHelpText ? q.help_text : "",
-        weightage: q.weightage,
-        rating: q.rating,
-        [`image_for_question_${index + 1}`]: q.image_for_question
-      })),
-    };
-    console.log(data);
-
+  
+    // Validate required fields
     if (!name || !frequency) {
       return toast.error("Name and Frequency are required");
     }
-
+  
     if (startDate >= endDate) {
-      return toast.error("Start date must be before End date")
+      return toast.error("Start date must be before End date");
     }
-
+  
+    // Prepare FormData for file uploads
+    const formData = new FormData();
+  
+    // Add checklist data
+    formData.append("checklist[site_id]", siteId);
+    formData.append("checklist[weightage_enabled]", weightage);
+    formData.append("checklist[occurs]", "");
+    formData.append("checklist[name]", name);
+    formData.append("checklist[start_date]", startDate);
+    formData.append("checklist[end_date]", endDate);
+    formData.append("checklist[user_id]", userId);
+    formData.append("checklist[cron_expression]", cronExpression);
+    formData.append("checklist[grace_period]", convertedSubmitMinutes);
+    formData.append("checklist[grace_period_unit]", convertedExtensionMinutes);
+    formData.append("checklist[supplier_id]", supplierid);
+    formData.append("checklist[lock_overdue]", lockOverdueTask === "true");
+    formData.append("checklist[ctype]", "routine");
+  
+    // Add supervisor IDs
+    selectedOptionssupervisior.forEach((option, index) => {
+      formData.append(`checklist[supervisior_id][]`, option.value);
+    });
+  
+    // Add frequency
+    formData.append("frequency", frequency);
+  
+    // Add questions with files
+    addNewQuestion.forEach((q, index) => {
+      formData.append(`question[][name]`, q.name);
+      formData.append(`question[][type]`, q.type);
+      formData.append(`question[][option1]`, q.options[0] || "");
+      formData.append(`question[][value_type1]`, q.value_types[0] || "");
+      formData.append(`question[][option2]`, q.options[1] || "");
+      formData.append(`question[][value_type2]`, q.value_types[1] || "");
+      formData.append(`question[][option3]`, q.options[2] || "");
+      formData.append(`question[][value_type3]`, q.value_types[2] || "");
+      formData.append(`question[][option4]`, q.options[3] || "");
+      formData.append(`question[][value_type4]`, q.value_types[3] || "");
+      formData.append(`question[][question_mandatory]`, q.question_mandatory);
+      formData.append(`question[][reading]`, q.reading);
+      formData.append(`question[][help_text_enbled]`, q.showHelpText);
+      formData.append(`question[][help_text]`, q.showHelpText ? q.help_text : "");
+      formData.append(`question[][weightage]`, q.weightage);
+      formData.append(`question[][rating]`, q.rating);
+  
+      // Handle file uploads for each question
+      if (q.image_for_question && q.image_for_question.length > 0) {
+        q.image_for_question.forEach((file, fileIndex) => {
+          formData.append(`question[][image_for_question_${index+1}]`, file);
+        });
+      }
+    });
+  
     try {
-      const response = await postChecklist(data);
+      const response = await postChecklist(formData);
       console.log(response);
-      toast.success("New Checklist Created")
-      navigate("/assets/checklist")
+      toast.success("New Checklist Created");
+      navigate("/assets/checklist");
     } catch (error) {
       console.error("Error:", error);
+      toast.error("Failed to create checklist");
     }
   };
+  
   const handleChangesupervisior = (selected) => {
     setSelectedOptionssupervisior(selected);
   };
@@ -167,6 +214,7 @@ const AddChecklist = () => {
           value: host.id, 
           label: host.name, 
         }));
+        console.log(usersResp)
         setHosts(usersResp.data.hosts); 
         setOptionssupervisior(supervisors); 
         console.log(usersResp);
@@ -193,6 +241,25 @@ const AddChecklist = () => {
 
     fetchSuppliers(); // Execute the function to fetch suppliers
   }, []);
+  useEffect(() => {
+    const fetchMasters = async () => {
+      try {
+        const masterResp = await getMasterChecklist(); // Call API to get suppliers
+        const mastershow = masterResp.data.checklists.map((check) => ({
+          value: check.id, 
+          label: check.name, 
+        }));
+        console.log("Masters checklist",masterResp);
+       console.log("mastershow",mastershow)
+       setMasters(mastershow);
+      } catch (error) {
+        console.error("Error fetching suppliers:", error);
+        toast.error("Failed to load suppliers");
+      }
+    };
+
+    fetchMasters(); // Execute the function to fetch suppliers
+  }, []);
  
   
  
@@ -217,28 +284,14 @@ const AddChecklist = () => {
   };
  
   
-  useEffect(() => {
-    const fetchAssetsList = async () => {
-      // getting all the services
-      const assetListResp = await getSiteAsset();
-      const asset = assetListResp.data.site_assets;
-      //   console.log(servicesListResp);
-      const assetList = asset.map((a) => ({
-        value: a.id,
-        label: a.name,
-      }));
-      setAssets(assetList);
-    };
-    fetchAssetsList();
-    
-  }, []);
+ 
   
-  const [submitDays, setSubmitDays] = useState(0);
-  const [submitHours, setSubmitHours] = useState(0);
-  const [submitMinutes, setSubmitMinutes] = useState(0);
-  const [extensionDays, setExtensionDays] = useState(0);
-  const [extensionHours, setExtensionHours] = useState(0);
-  const [extensionMinutes, setExtensionMinutes] = useState(0);
+  const [submitDays, setSubmitDays] = useState();
+  const [submitHours, setSubmitHours] = useState();
+  const [submitMinutes, setSubmitMinutes] = useState();
+  const [extensionDays, setExtensionDays] = useState();
+  const [extensionHours, setExtensionHours] = useState();
+  const [extensionMinutes, setExtensionMinutes] = useState();
   
  
     const convertedSubmitMinutes =
@@ -250,24 +303,7 @@ const AddChecklist = () => {
     const convertedExtensionMinutes =
       parseInt(extensionDays) * 1440 + parseInt(extensionHours) * 60 + parseInt(extensionMinutes);
     // setTotalExtensionMinutes(convertedExtensionMinutes);
-    const [isMandatory, setIsMandatory] = useState(false);
-
-    // Toggle checkbox state
-    const handleMandatoryChange = (e) => {
-      setIsMandatory(e.target.checked);
-    };
-    const [isReading, setisReading] = useState(false);
-
-    // Toggle checkbox state
-    const handleReadingChange = (e) => {
-      setisReading(e.target.checked);
-    };
     
-    const [showHelpText, setShowHelpText] = useState(false);
-
-    const handleCheckboxChange = (e) => {
-      setShowHelpText(e.target.checked);
-    };
     
   return (
     <section>
@@ -339,11 +375,16 @@ const AddChecklist = () => {
          {createNew && (
           <div className="flex flex-col gap-1">
             <label className="font-semibold">Select Template</label>
-            <select className="border p-1 px-4 border-gray-500 rounded-md">
+            <select 
+             value={masterid}
+             onChange={(e) => setmasterid(e.target.value)}
+            className="border p-1 px-4 border-gray-500 rounded-md">
               <option value="">Select from the existing Template</option>
-              <option value="template1">Template 1</option>
-              <option value="template2">Template 2</option>
-              {/* Add more templates as needed */}
+              {masters.map((m) => (
+              <option value={m.value} key={m.value}>
+                {m.label}
+              </option>
+            ))}
             </select>
           </div>
         )}
@@ -474,6 +515,10 @@ const AddChecklist = () => {
                       Add New Question
                     </h2>
                     <div className="my-2 grid gap-4">
+                      {/* <select name="" id="" className="border p-1 px-4 border-gray-500 rounded-md"
+                      >
+                        <option value="">Select Group</option>
+                      </select> */}
                       <input
                         type="text"
                         name={`question_${i}`}
@@ -490,11 +535,12 @@ const AddChecklist = () => {
                       <select
                         name={`type_${i}`}
                         id={`type_${i}`}
-                        value={data.type}
+                        value={data.reading ? "Numeric" : data.type}
                         onChange={(e) =>
                           handleQuestionChange(i, "type", e.target.value)
                         }
                         className="border p-1 px-4 border-gray-500 rounded-md"
+                        disabled={data.reading}
                       >
                         <option value="">Select Answer Type</option>
                         <option value="multiple">
@@ -502,8 +548,9 @@ const AddChecklist = () => {
                         </option>
                         <option value="inbox">Input box</option>
                         <option value="description">Description box</option>
+                        <option value="Numeric">Numeric</option>
                       </select>
-                      {data.type === "multiple" && (
+                      {data.type === "multiple" && !data.reading && (
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 my-2">
                           <div className="flex flex-col sm:flex-row gap-2">
                             <input
@@ -596,7 +643,7 @@ const AddChecklist = () => {
                           </div>
                         </div>
                       )}
-                      <div className="grid grid-cols-8 my-2">
+                      <div className="grid grid-cols-3 my-2">
                       <div className="flex items-center gap-2">
                       <input
               type="checkbox"
@@ -692,6 +739,14 @@ const AddChecklist = () => {
                 <BiPlus />
                 Add Question
               </button>
+              {/* <button
+                type="button"
+                className="p-1 border-2 border-black px-4 rounded-md my-2 flex gap-2 items-center"
+                
+              >
+                <BiPlus />
+                Add Group
+              </button> */}
             </div>
             <h2 className="border-b-2 border-black text font-medium">
                       Schedules
@@ -699,89 +754,12 @@ const AddChecklist = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-2">
        
         
-       {/* <div className="flex flex-col" >
-           <label className=" font-semibold">Checklist Type</label>
-           <div className="flex items-center space-x-4">
-             <label className="font-semibold">
-               <input
-                 type="radio"
-                 name="checklistType"
-                 value="individual"
-                 checked={checklistType === 'individual'}
-                 onChange={handleChecklistTypeChange}
-               />{' '}
-               Individual
-             </label>
-             <label className="font-semibold">
-               <input
-                 type="radio"
-                 name="checklistType"
-                 value="assetGroup"
-                 checked={checklistType === 'assetGroup'}
-                 onChange={handleChecklistTypeChange}
-               />{' '}
-               Asset Group
-             </label>
-           </div>
-         </div> */}
+       
 
         
-         {/* {checklistType === 'individual' ? (
-           <div className="flex flex-col ">
-             <label className="font-semibold">Asset </label>
-             <Select
-              isClearable={false}
-              closeMenuOnSelect={false}
-              isMulti
-              onChange={handleChangeSelect}
-              options={assets}
-              noOptionsMessage={() => "No Assets Available"}
-              //   maxMenuHeight={90}
-              placeholder="Select Assets"
-             
-            />
-           </div>
-         ) : (
-           <>
-             <div className="flex flex-col">
-               <label className="font-semibold">Group *</label>
-               <select 
-               className="border p-1 px-4 border-gray-500 rounded-md"
-               value={groupId}
-               onChange={(e) => setGroupId(e.target.value)}
-               >
-                 <option>Select Group</option>
-                 {groups.map((group) => (
-                  <option value={group.id} key={group.id}>
-                    {group.name}
-                  </option>
-                ))}
-               </select>
-             </div>
-
-             <div className="flex flex-col">
-               <label className="font-semibold">Subgroup</label>
-               <Select
-          isMulti
-          isSearchable
-          placeholder="Select Subgroup"
-          options={subgroups}
-          value={subgroupId}
-          onChange={(selected) => setSubgroupId(selected)}
-        />
-             </div>
-           </>
-         )} */}
+        
        
-       {/* <div className="flex flex-col">
-               <label className="font-semibold">Scan Type</label>
-               <select className="border p-1 px-4 border-gray-500 rounded-md">
-                 <option value="">Select Scan Type</option>
-                 <option value="QR">QR</option>
-                 <option value="NFC">NFC</option>
-                 
-               </select>
-             </div> */}
+       
             <div className="flex flex-col gap-4">
       {/* Allowed Time to Submit */}
       <div>
@@ -789,35 +767,27 @@ const AddChecklist = () => {
         <div className="flex gap-2">
           <input
             type="number"
-            className="border p-1 px-2 border-gray-500 w-32 rounded-md"
+            className="border p-1 px-2 border-gray-500 w-44 rounded-md"
             placeholder="Enter Days"
             value={submitDays}
             onChange={(e) => setSubmitDays(e.target.value)}
           />
           <input
             type="number"
-            className="border p-1 px-2 border-gray-500 w-32 rounded-md"
+            className="border p-1 px-2 border-gray-500 w-44 rounded-md"
             placeholder="Enter Hours"
             value={submitHours}
             onChange={(e) => setSubmitHours(e.target.value)}
           />
           <input
             type="number"
-            className="border p-1 px-2 border-gray-500 w-32 rounded-md"
+            className="border p-1 px-2 border-gray-500 w-44 rounded-md"
             placeholder="Enter Minutes"
             value={submitMinutes}
             onChange={(e) => setSubmitMinutes(e.target.value)}
           />
         </div>
-        {/* <button
-          className="bg-blue-500 text-white p-2 rounded-md mt-2"
-          onClick={handleConvertSubmitTime}
-        >
-          Convert Submit Time to Minutes
-        </button>
-        {totalSubmitMinutes > 0 && (
-          <p className="mt-2 font-semibold">Total Submit Minutes: {totalSubmitMinutes}</p>
-        )} */}
+        
       </div>
 
       {/* Extension Time */}
@@ -826,35 +796,41 @@ const AddChecklist = () => {
         <div className="flex gap-2">
           <input
             type="number"
-            className="border p-1 px-2 border-gray-500 w-32 rounded-md"
+            className="border p-1 px-2 border-gray-500 w-44 rounded-md"
             placeholder="Enter Days"
             value={extensionDays}
             onChange={(e) => setExtensionDays(e.target.value)}
           />
           <input
             type="number"
-            className="border p-1 px-2 border-gray-500 w-32 rounded-md"
+            className="border p-1 px-2 border-gray-500 w-44 rounded-md"
             placeholder="Enter Hours"
             value={extensionHours}
             onChange={(e) => setExtensionHours(e.target.value)}
           />
           <input
             type="number"
-            className="border p-1 px-2 border-gray-500 w-32 rounded-md"
+            className="border p-1 px-2 border-gray-500 w-44 rounded-md"
             placeholder="Enter Minutes"
             value={extensionMinutes}
             onChange={(e) => setExtensionMinutes(e.target.value)}
           />
         </div>
-        {/* <button
-          className="bg-green-500 text-white p-2 rounded-md mt-2"
-          onClick={handleConvertExtensionTime}
+        
+      </div>
+      <div className="flex flex-col">
+        <label htmlFor="">Lock Overdue Task</label>
+        <select 
+        name="lockOverdueTask"
+        id="lockOverdueTask"
+        className="border p-1 px-2 border-gray-500 rounded-md"
+        value={lockOverdueTask}
+        onChange={handleLockOverdueTaskChange}
         >
-          Convert Extension Time to Minutes
-        </button>
-        {totalExtensionMinutes > 0 && (
-          <p className="mt-2 font-semibold">Total Extension Minutes: {totalExtensionMinutes}</p>
-        )} */}
+          <option value="">Select Lock Status</option>
+          <option value="true">Yes</option>
+          <option value="false">No</option>
+        </select>
       </div>
     </div>
             

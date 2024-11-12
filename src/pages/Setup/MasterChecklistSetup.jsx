@@ -4,6 +4,8 @@ import { IoMdAdd } from 'react-icons/io';
 import Table from '../../components/table/Table';
 import { BiEdit } from 'react-icons/bi'
 import { Link } from 'react-router-dom';
+import { getMasterChecklist } from '../../api';
+
 function MasterCheckListSetup() {
   const column = [
     {

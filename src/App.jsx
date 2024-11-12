@@ -689,6 +689,8 @@ import AddMasters from "./pages/SubPages/AddMasters.jsx";
 import EditMasters from "./pages/SubPages/EditMasters.jsx";
 import MasterDetails from "./pages/SubPages/MasterDetails.jsx";
 import PPMCalendar from "./pages/PPMCalendar.jsx";
+import CopyChecklist from "./pages/SubPages/CopyChecklist.jsx";
+import SiteOwner from "./pages/Setup/SiteOwner.jsx";
 // new admin hrms
 
 function App() {
@@ -1702,6 +1704,14 @@ function App() {
             }
           />
           <Route
+            path="/admin/copy-checklist/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <CopyChecklist/>
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
             path="/services/edit-routine/:id"
             element={
               <ProtectedAdminRoutes>
@@ -1866,6 +1876,14 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <AdminOutstationDetails />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/site-owner-setup"
+            element={
+              <ProtectedAdminRoutes>
+                <SiteOwner />
               </ProtectedAdminRoutes>
             }
           />

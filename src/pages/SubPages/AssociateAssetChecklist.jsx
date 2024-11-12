@@ -148,7 +148,7 @@ const AssociateAssetChecklist = () => {
       // window.location.reload();
       toast.success("Checklist Associated");
       setAdded(true);
-      navigate("/assets/checklist")
+      
 
       setSelectedOption([])
       setSelectedUserOption([])

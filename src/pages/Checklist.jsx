@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { IoAddCircleOutline } from "react-icons/io5";
 import { Link } from "react-router-dom";
-import { API_URL, ChecklistImport, getChecklist, getVibeBackground } from "../api";
+import { API_URL, ChecklistImport, getChecklist, getChecklistTemplate, getVibeBackground } from "../api";
 import Table from "../components/table/Table";
 import { BiEdit } from "react-icons/bi";
 import { MdDeleteForever } from "react-icons/md";
@@ -59,6 +59,30 @@ const Checklist = () => {
       setImportStatus("An error occurred during import.");
     }
   };
+  const downloadChecklistTemplate = async () => {
+    try {
+      // Use the same URL that works in your <a> tag
+      const fileUrl = 'http://13.215.74.38/checklists/download_template';
+  
+      // Create a temporary <a> element
+      const a = document.createElement('a');
+      a.href = fileUrl;
+      a.download = 'assets_import.xlsx'; // Set a file name for the download
+      a.target = '_blank'; // Optional: open in new tab (ensures CORS issues are minimized)
+      document.body.appendChild(a);
+  
+      // Trigger the download
+      a.click();
+  
+      // Clean up
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error downloading template:', error);
+      alert('Failed to download the file. Please try again later.');
+    }
+  };
+  
+  
   
 const themeColor =useSelector((state)=> state.theme.color)
   useEffect(() => {
@@ -120,7 +144,10 @@ const themeColor =useSelector((state)=> state.theme.color)
             <MdDeleteForever size={25} />
           </button> */}
           <button onClick={openModalDownload}><FaDownload size={15}/></button>
-          {/* <button><FaCopy size={15}/></button> */}
+          
+          <Link to={`/admin/copy-checklist/${row.id}`}>
+          <FaCopy size={15}/>
+          </Link>
         </div>
       ),
     },
@@ -276,11 +303,18 @@ const themeColor =useSelector((state)=> state.theme.color)
     {setshowImport && (
         <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex z-10 justify-center items-center">
           <div className="bg-white p-6 rounded shadow-lg w-1/2">
-            <h2 className="text-xl mb-4">Bulk Upload</h2>
+            <h2 className="text-xl font-bold text-center mb-4">Bulk Upload</h2>
             {/* Advanced Filter Fields */}
          <FileInputBox handleChange={handleFileChange} fieldName="checklist" isMulti={true}/>
          
             <div className="mt-4 flex justify-end space-x-4">
+              <button
+              onClick={downloadChecklistTemplate}
+              className="bg-red-500 text-white px-4 py-2 rounded"
+              style={{ background: themeColor }}
+              >
+                Download Sample Format
+              </button>
               <button
                 onClick={closeModalImport}
                 className="bg-red-500 text-white px-4 py-2 rounded"

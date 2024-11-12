@@ -7,6 +7,9 @@ import { useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { editChecklist, getChecklistDetails } from "../../../api";
 import { CloseCircle, CloseOutline } from "react-ionicons";
+import Select from 'react-select';
+import Cron from "react-js-cron";
+import "react-js-cron/dist/styles.css";
 
 const PPMChecklistDetails = () => {
   const [name, setName] = useState("");
@@ -15,15 +18,27 @@ const PPMChecklistDetails = () => {
   const [endDate, setEndDate] = useState("");
   const [update, setUpdate] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [supplierid, setsupplierid] = useState("");
+  const [lockOverdueTask, setLockOverdueTask] = useState("");
+  const [allowedmin, setallowedmin] = useState("");
+  const [extensionmin, setextensionmin] = useState("");
+  const [cronExpression, setCronExpression] = useState("0 0 * * *");
+
+  const handleCronChange = (newCron) => {
+    setCronExpression(newCron);
+  };
+
   const [addNewQuestion, setAddNewQuestion] = useState([
-    { id: "", name: "", type: "", options: ["", "", "", ""], _destroy: "0" },
+    { id: "", name: "", type: "", options: ["", "", "", ""],value_types: ["", "", "", ""],
+      question_mandatory: false, reading: false, showHelpText: false,help_text:"",
+       _destroy: "0" },
   ]);
 
   const handleAddQuestionFields = () => {
   
     setAddNewQuestion([
       ...addNewQuestion,
-      { name: "", type: "", options: ["", "", "", ""] },
+      { name: "", type: "", options: ["", "", "", ""],value_types: ["", "", "", ""],question_mandatory: false, reading: false, showHelpText: false,help_text:"" },
     ]);
   };
 
@@ -42,13 +57,26 @@ const PPMChecklistDetails = () => {
     });
   };
 
-  const handleQuestionChange = (index, field, value) => {
+  // const handleQuestionChange = (index, field, value) => {
+  //   const newQuestions = [...addNewQuestion];
+  //   if (field === "name" || field === "type") {
+  //     newQuestions[index][field] = value;
+  //   } else {
+  //     newQuestions[index].options[field] = value;
+  //   }
+  //   setAddNewQuestion(newQuestions);
+  // };
+  const handleQuestionChange = (index, field, value, optionIndex = null) => {
     const newQuestions = [...addNewQuestion];
+
     if (field === "name" || field === "type") {
       newQuestions[index][field] = value;
-    } else {
-      newQuestions[index].options[field] = value;
+    } else if (field === "option") {
+      newQuestions[index].options[optionIndex] = value;
+    } else if (field === "value_type") {
+      newQuestions[index].value_types[optionIndex] = value;
     }
+
     setAddNewQuestion(newQuestions);
   };
   const siteId = getItemInLocalStorage("SITEID");
@@ -63,12 +91,22 @@ const PPMChecklistDetails = () => {
       setFrequency(data.frequency);
       setStartDate(data.start_date);
       setEndDate(data.end_date);
+      setsupplierid(data.supplier_id)
+      setLockOverdueTask(data.lock_overdue)
+      setallowedmin(data.grace_period)
+      setextensionmin(data.grace_period_unit)
+      setCronExpression(data.cron_expression)
       setAddNewQuestion(
         data.questions.map((q) => ({
           id: q.id,
           name: q.name,
           type: q.qtype,
           options: [q.option1, q.option2, q.option3, q.option4],
+          value_types:[q.value_type1,q.value_type2,q.value_type3,q.value_type4],
+          question_mandatory:q.question_mandatory,
+          reading:q.reading,
+          showHelpText:q.help_text_enbled,
+          help_text:q.help_text
         }))
       );
     };
@@ -107,7 +145,7 @@ const PPMChecklistDetails = () => {
     formData.append("checklist[end_date]", endDate);
     formData.append("checklist[user_id]", userId);
     formData.append("frequency", frequency);
-    formData.append("ctype", "ppm");
+    formData.append("ctype", "routine");
     addNewQuestion.forEach((quest, index) => {
       if (quest.id) {
         formData.append(`question[][id]`, quest.id);
@@ -121,6 +159,10 @@ const PPMChecklistDetails = () => {
       formData.append(`question[][option2]`, quest.options[1] || "");
       formData.append(`question[][option3]`, quest.options[2] || "");
       formData.append(`question[][option4]`, quest.options[3] || "");
+      formData.append(`question[][value_type1]`, quest.value_types[0] || "");
+      formData.append(`question[][value_type2]`, quest.value_types[1] || "");
+      formData.append(`question[][value_type3]`, quest.value_types[2] || "");
+      formData.append(`question[][value_type4]`, quest.value_types[3] || "");
       if (quest._destroy) {
         formData.append(
           `question[][_destroy]`,
@@ -155,7 +197,7 @@ const PPMChecklistDetails = () => {
           style={{ background: themeColor }}
           className="text-center text-xl font-bold p-2  rounded-full text-white"
         >
-          {isEditing ? "Edit Checklist Details" : "PPM Checklist Details"}
+          {isEditing ? "Edit Checklist Details" : "Routine Checklist Details"}
         </h2>
         <div className="lg:mx-20 my-5 mb-10 sm:border border-gray-400 md:p-5 md:px-10 rounded-lg sm:shadow-xl">
           <div className="flex justify-end">
@@ -286,7 +328,7 @@ const PPMChecklistDetails = () => {
                 </div>
               </div>
               <div>
-                <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid md:grid-cols-1 gap-4 w-full">
                   {addNewQuestion
                     .filter((que) => que._destroy !== "1")
                     .map((data, i) => (
@@ -366,131 +408,594 @@ const PPMChecklistDetails = () => {
                             {data.type === "multiple" && (
                               <>
                                 {isEditing ? (
-                                  <div className="grid grid-cols-4 gap-4 my-2">
+                                  <div className="flex flex-col  gap-4 my-2">
+                                  <div className="flex flex-col sm:flex-row gap-2">
                                     <input
                                       type="text"
                                       name={`option1_${i}`}
                                       id={`option1_${i}`}
                                       className="border p-1 px-4 border-gray-500 rounded-md"
                                       placeholder="option 1"
-                                      value={data.options[0] || ""}
-                                      onChange={(e) =>
-                                        handleQuestionChange(
-                                          i,
-                                          0,
-                                          e.target.value
-                                        )
-                                      }
+                                      value={data.options[0]}
+                                      onChange={(e) => handleQuestionChange(i, "option", e.target.value, 0)}
                                     />
+                                    <select
+                                      name={`value_type1_${i}`}
+                                      id={`value_type1_${i}`}
+                                      className={`border p-1 border-gray-500 rounded-md ${data.value_types[0] === 'P' ? 'bg-green-400' : data.value_types[0] === 'N' ? 'bg-red-400' : ''}`}
+                                      value={data.value_types[0]}
+                                      onChange={(e) => handleQuestionChange(i, "value_type", e.target.value, 0)}
+                                    >
+                                      <option value="">Select</option>
+                                      <option value="P">P</option>
+                                      <option value="N">N</option>
+                                    </select>
+                                  </div>
+                                  <div className="flex flex-col sm:flex-row gap-2">
                                     <input
                                       type="text"
                                       name={`option2_${i}`}
                                       id={`option2_${i}`}
                                       className="border p-1 px-4 border-gray-500 rounded-md"
                                       placeholder="option 2"
-                                      value={data.options[1] || ""}
-                                      onChange={(e) =>
-                                        handleQuestionChange(
-                                          i,
-                                          1,
-                                          e.target.value
-                                        )
-                                      }
+                                      value={data.options[1]}
+                                      onChange={(e) => handleQuestionChange(i, "option", e.target.value, 1)}
                                     />
+                                    <select
+                                      name={`value_type2_${i}`}
+                                      id={`value_type2_${i}`}
+                                      className={`border p-1 border-gray-500 rounded-md ${data.value_types[1] === 'P' ? 'bg-green-400' : data.value_types[1] === 'N' ? 'bg-red-400' : ''}`}
+                                      value={data.value_types[1]}
+                                      onChange={(e) => handleQuestionChange(i, "value_type", e.target.value, 1)}
+                                    >
+                                      <option value="">Select</option>
+                                      <option value="P" >P</option>
+                                      <option value="N" >N</option>
+                                    </select>
+                                  </div>
+        
+                                  <div className="flex flex-col sm:flex-row gap-2">
                                     <input
                                       type="text"
                                       name={`option3_${i}`}
                                       id={`option3_${i}`}
                                       className="border p-1 px-4 border-gray-500 rounded-md"
                                       placeholder="option 3"
-                                      value={data.options[2] || ""}
-                                      onChange={(e) =>
-                                        handleQuestionChange(
-                                          i,
-                                          2,
-                                          e.target.value
-                                        )
-                                      }
+                                      value={data.options[2]}
+                                      onChange={(e) => handleQuestionChange(i, "option", e.target.value, 2)}
                                     />
+                                    <select
+                                      name={`value_type3_${i}`}
+                                      id={`value_type3_${i}`}
+                                      className={`border p-1 border-gray-500 rounded-md ${data.value_types[2] === 'P' ? 'bg-green-400' : data.value_types[2] === 'N' ? 'bg-red-400' : ''}`}
+                                      value={data.value_types[2]}
+                                      onChange={(e) => handleQuestionChange(i, "value_type", e.target.value, 2)}
+                                    >
+                                      <option value="">Select</option>
+                                      <option value="P">P</option>
+                                      <option value="N">N</option>
+                                    </select>
+                                  </div>
+                                  <div className="flex flex-col sm:flex-row gap-2">
                                     <input
                                       type="text"
                                       name={`option4_${i}`}
                                       id={`option4_${i}`}
                                       className="border p-1 px-4 border-gray-500 rounded-md"
                                       placeholder="option 4"
-                                      value={data.options[3] || ""}
-                                      onChange={(e) =>
-                                        handleQuestionChange(
-                                          i,
-                                          3,
-                                          e.target.value
-                                        )
-                                      }
+                                      value={data.options[3]}
+                                      onChange={(e) => handleQuestionChange(i, "option", e.target.value, 3)}
                                     />
+                                    <select
+                                      name={`value_type4_${i}`}
+                                      id={`value_type4_${i}`}
+                                      className={`border p-1 border-gray-500 rounded-md ${data.value_types[3] === 'P' ? 'bg-green-400' : data.value_types[3] === 'N' ? 'bg-red-400' : ''}`}
+                                      value={data.value_types[3]}
+                                      onChange={(e) => handleQuestionChange(i, "value_type", e.target.value, 3)}
+                                    >
+                                      <option value="">Select</option>
+                                      <option value="P">P</option>
+                                      <option value="N">N</option>
+                                    </select>
                                   </div>
+                                  <div className="grid grid-cols-3 my-2">
+                      <div className="flex items-center gap-2">
+                      <input
+              type="checkbox"
+              checked={data.question_mandatory}
+              onChange={(e) => handleQuestionChange(i, "question_mandatory", e.target.checked)}
+            />
+                        <label htmlFor="" className="font-semibold">Mandatory</label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                      <input
+              type="checkbox"
+              checked={data.reading}
+              onChange={(e) => handleQuestionChange(i, "reading", e.target.checked)}
+            />
+                        <label htmlFor="" className="font-semibold">Reading</label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                      <input
+              type="checkbox"
+              checked={data.showHelpText}
+              onChange={(e) => handleQuestionChange(i, "showHelpText", e.target.checked)}
+            />
+                        <label htmlFor="" className="font-semibold">Help text</label>
+                      </div>
+                      
+                      
+                      </div> 
+                       {data.showHelpText && (
+              <div className="flex flex-col gap-2 my-2">
+                <input
+                  type="text"
+                  placeholder="Enter Help text"
+                  value={data.help_text}
+                  className="border p-1 px-4 border-gray-500 rounded-md"
+                  onChange={(e) => handleQuestionChange(i, "help_text", e.target.value)}
+                /> </div>)}
+                 <h2 className="border-b-2 border-black text font-medium">
+                      Schedules
+                    </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-2">
+       
+        
+       
+
+        
+        
+       
+       
+            <div className="flex flex-col gap-4">
+      {/* Allowed Time to Submit */}
+      <div>
+        <label className="font-semibold">Allowed time to submit (in Minutes)</label>
+        <div className="flex gap-2">
+          {/* <input
+            type="number"
+            className="border p-1 px-2 border-gray-500 w-44 rounded-md"
+            placeholder="Enter Days"
+            value={submitDays}
+            onChange={(e) => setSubmitDays(e.target.value)}
+          /> */}
+          {/* <input
+            type="number"
+            className="border p-1 px-2 border-gray-500 w-44 rounded-md"
+            placeholder="Enter Hours"
+            value={submitHours}
+            onChange={(e) => setSubmitHours(e.target.value)}
+          /> */}
+          <input
+            type="number"
+            className="border p-1 px-2 border-gray-500 w-96 rounded-md"
+            placeholder="Enter Minutes"
+            value={allowedmin}
+            disabled
+            // onChange={(e) => setSubmitMinutes(e.target.value)}
+          />
+        </div>
+        
+      </div>
+
+      {/* Extension Time */}
+      <div className="flex flex-col mr-2">
+        <label className="font-semibold">Extension Time (in Minutes)</label>
+        <div className="flex gap-2">
+          {/* <input
+            type="number"
+            className="border p-1 px-2 border-gray-500 w-44 rounded-md"
+            placeholder="Enter Days"
+            value={extensionDays}
+            onChange={(e) => setExtensionDays(e.target.value)}
+          /> */}
+          {/* <input
+            type="number"
+            className="border p-1 px-2 border-gray-500 w-44 rounded-md"
+            placeholder="Enter Hours"
+            value={extensionHours}
+            onChange={(e) => setExtensionHours(e.target.value)}
+          /> */}
+          <input
+            type="number"
+            className="border p-1 px-2 border-gray-500 w-96 rounded-md"
+            placeholder="Enter Minutes"
+            value={extensionmin}
+            disabled
+            // onChange={(e) => setExtensionMinutes(e.target.value)}
+          />
+        </div>
+        
+      </div>
+      {/* <div className="flex flex-col">
+        <label htmlFor="">Lock Overdue Task</label>
+        <input 
+        name="lockOverdueTask"
+        id="lockOverdueTask"
+        className="border p-1 px-2 border-gray-500 rounded-md"
+        value={lockOverdueTask}
+        onChange={handleLockOverdueTaskChange}
+        >
+          <option value="">Select Lock Status</option>
+          <option value="true">Yes</option>
+          <option value="false">No</option>
+        </input>
+      </div> */}
+    </div>
+            
+
+             
+    <div className="flex flex-col gap-4 ">
+    {/* <div>
+        <label className="font-semibold">Supervisors</label>
+        <Select
+          value={selectedOptionssupervisior}
+          onChange={handleChangesupervisior}
+          options={optionssupervisior}
+          isMulti
+          isSearchable
+          placeholder="Select Supervisors"
+        />
+      </div> */}
+    
+        
+
+        
+         <div  className="flex flex-col ">
+               <label className="font-semibold">Supplier ID</label>
+               <input className="border p-1 px-4 border-gray-500 rounded-md"
+               value={supplierid}
+              //  onChange={(e) => setsupplierid(e.target.value)}
+               >
+                 {/* <option value="">Select Supplier</option> */}
+                 {/* {suppliers.map((supplier) => (
+              <option value={supplier.id} key={supplier.id}>
+                {supplier.company_name}
+              </option>
+            ))} */}
+                 
+               </input>
+             </div>
+             </div>
+         
+       </div>
+       <h2 className="border-b-2 border-black text font-medium">
+                      Cron Setting
+                    </h2>
+                    <div className="my-2 border-2 border-dashed flex items-center p-2 rounded-md border-gray-300">
+      
+      <Cron value={cronExpression} setValue={handleCronChange} />
+      
+    </div>
+                                </div>
                                 ) : (
-                                  <div className="grid grid-cols-4 gap-4 my-2">
+                                  // <div className="grid grid-cols-4 gap-4 my-2">
+                                  //   <input
+                                  //     type="text"
+                                  //     name={`option1_${i}`}
+                                  //     id={`option1_${i}`}
+                                  //     className=" p-1 px-4  rounded-md outline-none bg-gray-100"
+                                  //     placeholder="option 1"
+                                  //     value={data.options[0] || ""}
+                                  //     onChange={(e) =>
+                                  //       handleQuestionChange(
+                                  //         i,
+                                  //         0,
+                                  //         e.target.value
+                                  //       )
+                                  //     }
+                                  //   />
+                                  //   <input
+                                  //     type="text"
+                                  //     name={`option2_${i}`}
+                                  //     id={`option2_${i}`}
+                                  //     className=" p-1 px-4  rounded-md outline-none bg-gray-100"
+                                  //     placeholder="option 2"
+                                  //     value={data.options[1] || ""}
+                                  //     onChange={(e) =>
+                                  //       handleQuestionChange(
+                                  //         i,
+                                  //         1,
+                                  //         e.target.value
+                                  //       )
+                                  //     }
+                                  //   />
+                                  //   <input
+                                  //     type="text"
+                                  //     name={`option3_${i}`}
+                                  //     id={`option3_${i}`}
+                                  //     className=" p-1 px-4  rounded-md outline-none bg-gray-100"
+                                  //     placeholder="option 3"
+                                  //     value={data.options[2] || ""}
+                                  //     onChange={(e) =>
+                                  //       handleQuestionChange(
+                                  //         i,
+                                  //         2,
+                                  //         e.target.value
+                                  //       )
+                                  //     }
+                                  //   />
+                                  //   <input
+                                  //     type="text"
+                                  //     name={`option4_${i}`}
+                                  //     id={`option4_${i}`}
+                                  //     className=" p-1 px-4  rounded-md outline-none bg-gray-100"
+                                  //     placeholder="option 4"
+                                  //     value={data.options[3] || ""}
+                                  //     onChange={(e) =>
+                                  //       handleQuestionChange(
+                                  //         i,
+                                  //         3,
+                                  //         e.target.value
+                                  //       )
+                                  //     }
+                                  //   />
+                                  // </div>
+                                  <div className="grid  gap-4 my-2 w-full">
+                                  <div className="flex flex-col sm:flex-row gap-2">
                                     <input
                                       type="text"
                                       name={`option1_${i}`}
                                       id={`option1_${i}`}
                                       className=" p-1 px-4  rounded-md outline-none bg-gray-100"
                                       placeholder="option 1"
-                                      value={data.options[0] || ""}
-                                      onChange={(e) =>
-                                        handleQuestionChange(
-                                          i,
-                                          0,
-                                          e.target.value
-                                        )
-                                      }
+                                      value={data.options[0]}
+                                      onChange={(e) => handleQuestionChange(i, "option", e.target.value, 0)}
                                     />
+                                    <select
+                                      name={`value_type1_${i}`}
+                                      id={`value_type1_${i}`}
+                                      className={` p-1 px-4 outline-none bg-gray-100 rounded-md ${data.value_types[0] === 'P' ? 'bg-green-400' : data.value_types[0] === 'N' ? 'bg-red-400' : ''}`}
+                                      value={data.value_types[0]}
+                                      onChange={(e) => handleQuestionChange(i, "value_type", e.target.value, 0)}
+                                    >
+                                      <option value="">Select</option>
+                                      <option value="P">P</option>
+                                      <option value="N">N</option>
+                                    </select>
+                                  </div>
+                                  <div className="flex flex-col sm:flex-row gap-2">
                                     <input
                                       type="text"
                                       name={`option2_${i}`}
                                       id={`option2_${i}`}
                                       className=" p-1 px-4  rounded-md outline-none bg-gray-100"
                                       placeholder="option 2"
-                                      value={data.options[1] || ""}
-                                      onChange={(e) =>
-                                        handleQuestionChange(
-                                          i,
-                                          1,
-                                          e.target.value
-                                        )
-                                      }
+                                      value={data.options[1]}
+                                      onChange={(e) => handleQuestionChange(i, "option", e.target.value, 1)}
                                     />
+                                    <select
+                                      name={`value_type2_${i}`}
+                                      id={`value_type2_${i}`}
+                                      className={`p-1 px-4 outline-none bg-gray-100 rounded-md ${data.value_types[1] === 'P' ? 'bg-green-400' : data.value_types[1] === 'N' ? 'bg-red-400' : ''}`}
+                                      value={data.value_types[1]}
+                                      onChange={(e) => handleQuestionChange(i, "value_type", e.target.value, 1)}
+                                    >
+                                      <option value="">Select</option>
+                                      <option value="P" >P</option>
+                                      <option value="N" >N</option>
+                                    </select>
+                                  </div>
+        
+                                  <div className="flex flex-col sm:flex-row gap-2">
                                     <input
                                       type="text"
                                       name={`option3_${i}`}
                                       id={`option3_${i}`}
-                                      className=" p-1 px-4  rounded-md outline-none bg-gray-100"
+                                     className=" p-1 px-4  rounded-md outline-none bg-gray-100"
                                       placeholder="option 3"
-                                      value={data.options[2] || ""}
-                                      onChange={(e) =>
-                                        handleQuestionChange(
-                                          i,
-                                          2,
-                                          e.target.value
-                                        )
-                                      }
+                                      value={data.options[2]}
+                                      onChange={(e) => handleQuestionChange(i, "option", e.target.value, 2)}
                                     />
+                                    <select
+                                      name={`value_type3_${i}`}
+                                      id={`value_type3_${i}`}
+                                      className={`p-1 px-4 outline-none bg-gray-100 rounded-md ${data.value_types[2] === 'P' ? 'bg-green-400' : data.value_types[2] === 'N' ? 'bg-red-400' : ''}`}
+                                      value={data.value_types[2]}
+                                      onChange={(e) => handleQuestionChange(i, "value_type", e.target.value, 2)}
+                                    >
+                                      <option value="">Select</option>
+                                      <option value="P">P</option>
+                                      <option value="N">N</option>
+                                    </select>
+                                  </div>
+                                  <div className="flex flex-col sm:flex-row gap-2">
                                     <input
                                       type="text"
                                       name={`option4_${i}`}
                                       id={`option4_${i}`}
                                       className=" p-1 px-4  rounded-md outline-none bg-gray-100"
                                       placeholder="option 4"
-                                      value={data.options[3] || ""}
-                                      onChange={(e) =>
-                                        handleQuestionChange(
-                                          i,
-                                          3,
-                                          e.target.value
-                                        )
-                                      }
+                                      value={data.options[3]}
+                                      onChange={(e) => handleQuestionChange(i, "option", e.target.value, 3)}
                                     />
+                                    <select
+                                      name={`value_type4_${i}`}
+                                      id={`value_type4_${i}`}
+                                      className={` p-1 px-4 outline-none bg-gray-100 rounded-md ${data.value_types[3] === 'P' ? 'bg-green-400' : data.value_types[3] === 'N' ? 'bg-red-400' : ''}`}
+                                      value={data.value_types[3]}
+                                      onChange={(e) => handleQuestionChange(i, "value_type", e.target.value, 3)}
+                                    >
+                                      <option value="">Select</option>
+                                      <option value="P">P</option>
+                                      <option value="N">N</option>
+                                    </select>
                                   </div>
+                                  <div className="grid grid-cols-3 my-2">
+                      <div className="flex items-center gap-2">
+                      <input
+              type="checkbox"
+              checked={data.question_mandatory}
+              onChange={(e) => handleQuestionChange(i, "question_mandatory", e.target.checked)}
+              disabled
+            />
+                        <label htmlFor="" className="font-semibold">Mandatory</label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                      <input
+              type="checkbox"
+              checked={data.reading}
+              onChange={(e) => handleQuestionChange(i, "reading", e.target.checked)}
+              disabled
+            />
+                        <label htmlFor="" className="font-semibold">Reading</label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                      <input
+              type="checkbox"
+              checked={data.showHelpText}
+              onChange={(e) => handleQuestionChange(i, "showHelpText", e.target.checked)}
+              disabled
+            />
+                        <label htmlFor="" className="font-semibold">Help text</label>
+                      </div>
+                      
+                      
+                      </div>
+                      {data.showHelpText && (
+              <div className="flex flex-col gap-2 ">
+                <input
+                  type="text"
+                  placeholder="Enter Help text"
+                  value={data.help_text}
+                  className="p-1 px-4 bg-gray-100 outline-none rounded-md"
+                  onChange={(e) => handleQuestionChange(i, "help_text", e.target.value)}
+                  disabled
+                /> </div>)}
+                 <h2 className="border-b-2 border-black text font-medium">
+                      Schedules
+                    </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-2">
+       
+        
+       
+
+        
+        
+       
+       
+            <div className="flex flex-col gap-4">
+      {/* Allowed Time to Submit */}
+      <div>
+        <label className="font-semibold">Allowed time to submit (in Minutes)</label>
+        <div className="flex gap-2">
+          {/* <input
+            type="number"
+            className="border p-1 px-2 border-gray-500 w-44 rounded-md"
+            placeholder="Enter Days"
+            value={submitDays}
+            onChange={(e) => setSubmitDays(e.target.value)}
+          /> */}
+          {/* <input
+            type="number"
+            className="border p-1 px-2 border-gray-500 w-44 rounded-md"
+            placeholder="Enter Hours"
+            value={submitHours}
+            onChange={(e) => setSubmitHours(e.target.value)}
+          /> */}
+          <input
+            type="number"
+            className="border p-1 px-2 border-gray-500 w-96 rounded-md"
+            placeholder="Enter Minutes"
+            value={allowedmin}
+            disabled
+            // onChange={(e) => setSubmitMinutes(e.target.value)}
+          />
+        </div>
+        
+      </div>
+
+      {/* Extension Time */}
+      <div className="flex flex-col mr-2">
+        <label className="font-semibold">Extension Time (in Minutes)</label>
+        <div className="flex gap-2">
+          {/* <input
+            type="number"
+            className="border p-1 px-2 border-gray-500 w-44 rounded-md"
+            placeholder="Enter Days"
+            value={extensionDays}
+            onChange={(e) => setExtensionDays(e.target.value)}
+          /> */}
+          {/* <input
+            type="number"
+            className="border p-1 px-2 border-gray-500 w-44 rounded-md"
+            placeholder="Enter Hours"
+            value={extensionHours}
+            onChange={(e) => setExtensionHours(e.target.value)}
+          /> */}
+          <input
+            type="number"
+            className="border p-1 px-2 border-gray-500 w-96 rounded-md"
+            placeholder="Enter Minutes"
+            value={extensionmin}
+            disabled
+            // onChange={(e) => setExtensionMinutes(e.target.value)}
+          />
+        </div>
+        
+      </div>
+      {/* <div className="flex flex-col">
+        <label htmlFor="">Lock Overdue Task</label>
+        <input 
+        name="lockOverdueTask"
+        id="lockOverdueTask"
+        className="border p-1 px-2 border-gray-500 rounded-md"
+        value={lockOverdueTask}
+        onChange={handleLockOverdueTaskChange}
+        >
+          <option value="">Select Lock Status</option>
+          <option value="true">Yes</option>
+          <option value="false">No</option>
+        </input>
+      </div> */}
+    </div>
+            
+
+             
+    <div className="flex flex-col gap-4 ">
+    {/* <div>
+        <label className="font-semibold">Supervisors</label>
+        <Select
+          value={selectedOptionssupervisior}
+          onChange={handleChangesupervisior}
+          options={optionssupervisior}
+          isMulti
+          isSearchable
+          placeholder="Select Supervisors"
+        />
+      </div> */}
+    
+        
+
+        
+         <div  className="flex flex-col ">
+               <label className="font-semibold">Supplier ID</label>
+               <input className="border p-1 px-4 border-gray-500 rounded-md"
+               value={supplierid}
+              //  onChange={(e) => setsupplierid(e.target.value)}
+               >
+                 {/* <option value="">Select Supplier</option> */}
+                 {/* {suppliers.map((supplier) => (
+              <option value={supplier.id} key={supplier.id}>
+                {supplier.company_name}
+              </option>
+            ))} */}
+                 
+               </input>
+             </div>
+             </div>
+         
+       </div>
+       <h2 className="border-b-2 border-black text font-medium">
+                      Cron Setting
+                    </h2>
+                    <div className="my-2 border-2 border-dashed flex items-center p-2 rounded-md border-gray-300">
+      
+      <Cron value={cronExpression} setValue={handleCronChange} />
+      
+    </div>
+                                </div>
+                                
                                 )}
                               </>
                             )}

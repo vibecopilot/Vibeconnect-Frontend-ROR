@@ -75,6 +75,7 @@ const AddMasterCheckListSetup = () => {
     setAddNewQuestion(newFields);
   };
   
+  const company_id = getItemInLocalStorage("COMPANYID");
 
   const siteId = getItemInLocalStorage("SITEID");
   const userId = getItemInLocalStorage("UserId");
@@ -92,10 +93,10 @@ const AddMasterCheckListSetup = () => {
         end_date: endDate,
         user_id: userId,
         
-        
+        company_id:company_id,
         supplier_id:supplierid,
         
-        ctype: "routine",
+        ctype: "master",
       },
       frequency: frequency,
       question: addNewQuestion.map((q, index) => ({
@@ -110,7 +111,7 @@ const AddMasterCheckListSetup = () => {
         option4: q.options[3],
         value_type4: q.value_types[3],
         question_mandatory:q.question_mandatory,
-        image_mandatory:q.reading,
+        reading:q.reading,
         help_text_enbled: q.showHelpText ,
         help_text: q.showHelpText ? q.help_text : "",
         weightage: q.weightage,
