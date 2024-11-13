@@ -5866,6 +5866,52 @@ export const getRegistrationDetails = async (reqId) => {
     throw error;
   }
 };
+export const getResignations = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/api/employee/resignation/?organization_id=${orgId}`,
+      {
+        // headers: {
+        //   "Content-Type": "multipart/form-data/",
+        // },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting resignation :", error);
+    throw error;
+  }
+};
+export const postResignations = async (data) => {
+  try {
+    const response = await HrmsAuth.post(`/api/employee/resignation/`, data, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error posting resignation :", error);
+    throw error;
+  }
+};
+export const putAdditionalResignationDetails = async (resignationId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/api/admin/resignation/${resignationId}/`,
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting resignation :", error);
+    throw error;
+  }
+};
 
 // site id
 export const getSiteData = async () =>

@@ -689,6 +689,7 @@ import EditEmployee from "./pages/AdminHrms/EditEmployee.jsx";
 import EditEvent from "./pages/SubPages/EditEvent.jsx";
 import EditBroadcast from "./pages/SubPages/EditBroadcast.jsx";
 import AssociatedSites from "./pages/AdminHrms/AssociatedSites/AssociatedSites.jsx";
+import SetupSeat from "./pages/Setup/SetupSeat.jsx";
 // new admin hrms
 
 function App() {
@@ -1144,6 +1145,14 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <SetupFacility />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/setup/seat-setup"
+            element={
+              <ProtectedAdminRoutes>
+                <SetupSeat />
               </ProtectedAdminRoutes>
             }
           />
