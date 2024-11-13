@@ -470,6 +470,7 @@ const themeColor = useSelector((state)=> state.theme.color)
               cols="15"
               rows="2"
               value={formData.text}
+              disabled
               onChange={(e) =>
                 setFormData({ ...formData, text: e.target.value })
               }

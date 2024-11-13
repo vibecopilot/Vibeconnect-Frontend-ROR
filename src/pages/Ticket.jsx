@@ -108,21 +108,21 @@ const Ticket = () => {
     { name: "Priority", selector: (row) => row.priority, sortable: true },
     { name: "Assigned To", selector: (row) => row.assigned_to, sortable: true },
     { name: "Ticket Type", selector: (row) => row.issue_type, sortable: true },
-    {
-      name: "Response TAT",
-      selector: (row) => row.response_TAT,
-      sortable: true,
-    },
+    // {
+    //   name: "Response TAT",
+    //   selector: (row) => row.response_TAT,
+    //   sortable: true,
+    // },
     {
       name: "Response Time",
       selector: (row) => row.response_time,
       sortable: true,
     },
-    {
-      name: "Resolution TAT",
-      selector: (row) => row.resolution_TAT,
-      sortable: true,
-    },
+    // {
+    //   name: "Resolution TAT",
+    //   selector: (row) => row.resolution_TAT,
+    //   sortable: true,
+    // },
     {
       name: "Resolution Time",
       selector: (row) => row.resolution_time,
@@ -519,14 +519,14 @@ const Ticket = () => {
               <PiPlusCircle size={20} />
               Add
             </Link>
-            <button
+             <button
               className=" font-semibold text-white px-4 p-1 flex gap-2 items-center justify-center rounded-md"
               style={{ background: themeColor }}
               onClick={() => setFilterModal(!filterModal)}
             >
               <BiFilterAlt />
               Filter
-            </button>
+            </button> 
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setHideColumn(!hideColumn)}

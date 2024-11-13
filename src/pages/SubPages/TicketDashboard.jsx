@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { getTicketDashboard, getStatusDownload, getTicketStatusDownload} from "../../api";
+import {
+  getTicketDashboard,
+  getStatusDownload,
+  getTicketStatusDownload,
+} from "../../api";
 import { FaDownload } from "react-icons/fa";
 import toast from "react-hot-toast";
 
@@ -52,7 +56,7 @@ const TicketDashboard = () => {
       toast.error("Something went wrong, please try again");
     }
   };
-  
+
   const handleTicketStatusDownload = async () => {
     toast.loading("Downloading Please Wait");
     try {
@@ -81,20 +85,28 @@ const TicketDashboard = () => {
     <div>
       <div className="flex items-center gap-6 overflow-auto p-2 ">
         <div className="bg-white min-w-44 shadow-custom-all-sides p-4 rounded-md flex flex-col items-center text-gray-500 text-sm w-fit font-medium">
-          Tickets Created{" "}
+          <div className="flex gap-2">
+            <span>Tickets Created{" "}</span>
+            <button onClick={handleTicketStatusDownload}>
+              <FaDownload />
+            </button>
+          </div>
           <span className="font-medium text-base text-black">
             {totalTickets}
           </span>{" "}
-          <button onClick={handleTicketStatusDownload}><FaDownload /></button>
         </div>
         {Object.entries(statusData).map(([key, value]) => (
           <div
             key={key}
-            className="bg-white min-w-44 shadow-custom-all-sides p-4 font-medium rounded-md flex flex-col items-center text-gray-500 text-sm w-fit" 
+            className="bg-white min-w-44 shadow-custom-all-sides p-4 font-medium rounded-md flex flex-col items-center text-gray-500 text-sm w-fit"
           >
-            {key}{" "} 
+            <div className="flex gap-2">
+              <span>{key} </span>
+              <button onClick={() => handleStatusDownload(key)}>
+                <FaDownload />
+              </button>
+            </div>
             <span className="font-medium text-base text-black">{value}</span>
-            <button onClick={() => handleStatusDownload(key)}><FaDownload /></button>
           </div>
         ))}
       </div>
