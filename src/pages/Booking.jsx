@@ -10,6 +10,7 @@ import SetupBookingFacility from "./SubPages/SetupBookingFacility";
 import SeatBooking from "./SubPages/SeatBooking";
 import Table from "../components/table/Table";
 import { useSelector } from "react-redux";
+import { BsEye } from "react-icons/bs";
 
 const Booking = () => {
   const [searchText, setSearchText] = useState("");
@@ -19,7 +20,9 @@ const Booking = () => {
     {
       name: "Action",
       cell: (row) => (
-        <Link to={`/bookings/booking-details/${row.id}`}>{row.action}</Link>
+        <Link to={`/bookings/booking-details/${row.id}`}>
+          <BsEye />
+        </Link>
       ),
       sortable: true,
     },
@@ -55,25 +58,24 @@ const Booking = () => {
   const data = [
     {
       id: 1,
-      action: <ImEye />,
-      facility: "fac1",
-      bookedBy: "A",
-      bookedOn: "booked date",
+      facility: "Cabin",
+      bookedBy: "Ravindar Sahani",
+      bookedOn: "01/11/2024",
       facilityType: "bookable",
-      scheduledOn: "date",
-      scheduledTime: "time",
+      scheduledOn: "05/11/2024",
+      scheduledTime: "05:00PM to 06:00PM",
       bookingStatus: "confirmed",
     },
     {
       id: 2,
       action: <ImEye />,
-      facility: "Test2",
-      bookedBy: "B",
-      bookedOn: "booked date",
+      facility: "Conference Room",
+      bookedBy: "Mittu Panda",
+      bookedOn: "25/10/2024",
       facilityType: "bookable",
-      scheduledOn: "date",
-      scheduledTime: "time",
-      bookingStatus: "pending",
+      scheduledOn: "01/11/2024",
+      scheduledTime: "02:00 PM to 03:00 PM",
+      bookingStatus: "Confirmed",
     },
   ];
 

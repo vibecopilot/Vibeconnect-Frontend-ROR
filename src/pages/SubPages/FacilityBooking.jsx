@@ -6,6 +6,7 @@ import Select from "react-select";
 import { getAssignedTo } from "../../api";
 import { useSelector } from "react-redux";
 import Navbar from "../../components/Navbar";
+import { FaCheck } from "react-icons/fa";
 const FacilityBooking = () => {
   const today = new Date();
   const year = today.getFullYear();
@@ -167,6 +168,18 @@ const FacilityBooking = () => {
                 </select>
               </div>
               <div className="flex flex-col gap-1">
+                <p className="font-semibold">User :</p>
+                <select
+                  className="border p-2 px-4 border-gray-500 rounded-md"
+                  value={facility}
+                  onChange={(e) => setFacility(e.target.value)}
+                >
+                  <option value="">Select user</option>
+                  {/* <option value="user1">Conference Room</option>
+                  <option value="User2">Cabin</option> */}
+                </select>
+              </div>
+              <div className="flex flex-col gap-1">
                 <label htmlFor="" className="font-semibold">
                   Select Date :
                 </label>
@@ -242,8 +255,8 @@ const FacilityBooking = () => {
               />
             </div>
             <div className="flex justify-center">
-              <button className="p-2 px-4 bg-black text-white hover:bg-white hover:text-black rounded-md border-2 border-black font-medium transition-all duration-300">
-                Submit
+              <button className="p-2 px-4 flex items-center gap-2 bg-green-400 text-white rounded-md font-medium transition-all duration-300">
+                <FaCheck /> Submit
               </button>
             </div>
             <Collapsible
