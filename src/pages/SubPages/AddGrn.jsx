@@ -96,7 +96,7 @@ const AddGrn = () => {
       const handleSubmit = async (e) => {
         e.preventDefault();
         const formDataSend = new FormData();
-
+        
       formDataSend.append("grn_detail[vendor_id]", formData.vendor_id);
       formDataSend.append("grn_detail[payment_mode]", formData.payment_mode);
       formDataSend.append("grn_detail[invoice_number]", formData.invoice_number);
@@ -386,6 +386,19 @@ const AddGrn = () => {
             onChange={(e) => handleInventoryChange(invIndex, e)}
           ><option value="">Inventory Type</option>
           <option value="Electrical">Electrical</option>
+
+          </select></div>
+          <div className="flex flex-col">
+          <label className="font-semibold">Item</label>
+          <select
+            type="text"
+            name="item_id"
+            value={inventory.item_id}
+            className="border p-1 px-4 border-gray-500 rounded-md"
+
+            onChange={(e) => handleInventoryChange(invIndex, e)}
+          ><option value="">select item</option>
+          <option value="1">1</option>
 
           </select></div>
           <div className="flex flex-col ">

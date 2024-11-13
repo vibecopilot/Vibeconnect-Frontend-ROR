@@ -10,6 +10,7 @@ import FileInputBox from "../../containers/Inputs/FileInputBox";
 import Select from 'react-select';
 import Cron from "react-js-cron";
 import "react-js-cron/dist/styles.css";
+import { FaTrash } from "react-icons/fa";
 
 const AddChecklist = () => {
   const today = new Date().toISOString().split("T")[0];
@@ -77,28 +78,96 @@ const AddChecklist = () => {
     };
     fetchServicesChecklistDetails();
   }, [masterid]);
-  const handleQuestionChange = (index, field, value, optionIndex = null) => {
-    const newQuestions = [...addNewQuestion];
-  
-    if (field === "name" || field === "type") {
-      newQuestions[index][field] = value;
-    } else if (field === "option") {
-      newQuestions[index].options[optionIndex] = value;
-    } else if (field === "value_type") {
-      newQuestions[index].value_types[optionIndex] = value;
-    } else if (field === "question_mandatory" || field === "reading" || field === "showHelpText"|| field === "rating") {
-      newQuestions[index][field] = value;
-    } else if (field === "help_text") {
-      newQuestions[index].help_text = value;
-    }else if (field === "image_for_question") {
-      newQuestions[index].image_for_question = value;
-    }
-    else if (field === "weightage") {
-      newQuestions[index].weightage = value;
-    }
-  
-    setAddNewQuestion(newQuestions);
+  const [sections, setSections] = useState([ {
+    group: '',
+    
+    questions: [
+      {
+        name: "", type: "", options: ["", "", "", ""], value_types: ["", "", "", ""],
+        question_mandatory: false, reading: false, help_text: "", showHelpText: false,image_for_question:[],weightage:"",rating:false
+      }
+    ],
+  },]);
+
+  const addSection = () => {
+    setSections([...sections, { group: '', questions: [{
+      name: "", type: "", options: ["", "", "", ""], value_types: ["", "", "", ""],
+      question_mandatory: false, reading: false, help_text: "", showHelpText: false,image_for_question:[],
+      weightage:"",rating:false
+    }] }]);
   };
+
+  const removeSection = (index) => {
+    const updatedSections = [...sections];
+    updatedSections.splice(index, 1);
+    setSections(updatedSections);
+  };
+
+  const addQuestion = (sectionIndex) => {
+    const updatedSections = [...sections];
+    updatedSections[sectionIndex].questions.push({
+      name: "", type: "", options: ["", "", "", ""], value_types: ["", "", "", ""],
+      question_mandatory: false, reading: false, help_text: "", showHelpText: false,
+      image_for_question:[],weightage:"",rating:false
+    });
+    setSections(updatedSections);
+  };
+
+  const removeQuestion = (sectionIndex, questionIndex) => {
+    const updatedSections = [...sections];
+    updatedSections[sectionIndex].questions.splice(questionIndex, 1);
+    setSections(updatedSections);
+  };
+
+  const handleSectionChange = (index, field, value) => {
+    const updatedSections = [...sections];
+    updatedSections[index][field] = value;
+    setSections(updatedSections);
+  };
+
+  const handleQuestionChange = (sectionIndex, questionIndex, field, value, optionIndex = null) => {
+    const updatedSections = [...sections];
+    // updatedSections[sectionIndex].questions[questionIndex][field] = value;
+    if (field === "name" || field === "type") {
+      updatedSections[sectionIndex].questions[questionIndex][field] = value;
+        } else if (field === "option") {
+          updatedSections[sectionIndex].questions[questionIndex].options[optionIndex] = value;
+        } else if (field === "value_type") {
+          updatedSections[sectionIndex].questions[questionIndex].value_types[optionIndex] = value;
+        } else if (field === "question_mandatory" || field === "reading" || field === "showHelpText"|| field === "rating") {
+          updatedSections[sectionIndex].questions[questionIndex][field] = value;
+        } else if (field === "help_text") {
+          updatedSections[sectionIndex].questions[questionIndex].help_text = value;
+        }else if (field === "image_for_question") {
+          updatedSections[sectionIndex].questions[questionIndex].image_for_question = value;
+        }
+        else if (field === "weightage") {
+          updatedSections[sectionIndex].questions[questionIndex].weightage = value;
+        }
+    setSections(updatedSections);
+  };
+  // const handleQuestionChange = (index, field, value, optionIndex = null) => {
+  //   const newQuestions = [...addNewQuestion];
+  
+  //   if (field === "name" || field === "type") {
+  //     newQuestions[index][field] = value;
+  //   } else if (field === "option") {
+  //     newQuestions[index].options[optionIndex] = value;
+  //   } else if (field === "value_type") {
+  //     newQuestions[index].value_types[optionIndex] = value;
+  //   } else if (field === "question_mandatory" || field === "reading" || field === "showHelpText"|| field === "rating") {
+  //     newQuestions[index][field] = value;
+  //   } else if (field === "help_text") {
+  //     newQuestions[index].help_text = value;
+  //   }else if (field === "image_for_question") {
+  //     newQuestions[index].image_for_question = value;
+  //   }
+  //   else if (field === "weightage") {
+  //     newQuestions[index].weightage = value;
+  //   }
+  
+  //   setAddNewQuestion(newQuestions);
+  // };
   const [cronExpression, setCronExpression] = useState("0 0 * * *");
 
   const handleCronChange = (newCron) => {
@@ -508,66 +577,86 @@ const AddChecklist = () => {
               </div>
             </div>
             <div>
-              {addNewQuestion.map((data, i) => (
-                <div key={i}>
-                  <div className="my-5">
-                    <h2 className="border-b-2 border-black text font-medium">
-                      Add New Question
-                    </h2>
-                    <div className="my-2 grid gap-4">
-                      {/* <select name="" id="" className="border p-1 px-4 border-gray-500 rounded-md"
-                      >
-                        <option value="">Select Group</option>
-                      </select> */}
-                      <input
-                        type="text"
-                        name={`question_${i}`}
-                        id={`question_${i}`}
-                        className="border p-1 px-4 border-gray-500 rounded-md"
-                        placeholder="Add New Question"
-                        value={data.name}
-                        onChange={(e) =>
-                          handleQuestionChange(i, "name", e.target.value)
-                        }
-                      />
-                    </div>
-                    <div className="my-2">
-                      <select
-                        name={`type_${i}`}
-                        id={`type_${i}`}
-                        value={data.reading ? "Numeric" : data.type}
-                        onChange={(e) =>
-                          handleQuestionChange(i, "type", e.target.value)
-                        }
-                        className="border p-1 px-4 border-gray-500 rounded-md"
-                        disabled={data.reading}
-                      >
-                        <option value="">Select Answer Type</option>
+            <div className=" my-4  bg-white ">
+      <h2 className="font-semibold mb-2 border-b-2 border-black pb-1">Add New Group</h2>
+
+      
+
+      {sections.map((section, sectionIndex) => (
+        <div key={sectionIndex} className="mb-8 p-5 border rounded-lg bg-gray-50 shadow-sm">
+          {/* Section Header */}
+          <div className="flex justify-between">
+          <div className="flex flex-col gap-1 mb-4 w-full">
+            <label className="font-semibold">Group</label>
+            <select
+              value={section.group}
+              className="p-1 px-4 border w-full border-gray-500 rounded-md"
+              onChange={(e) => handleSectionChange(sectionIndex, 'group', e.target.value)}
+            >
+              <option value="">Select Group</option>
+              <option value="Group1">Group 1</option>
+              <option value="Group2">Group 2</option>
+            </select></div>
+            <div>
+            <button
+                                     className="p-1 border-2 border-red-500 text-white hover:bg-white hover:text-red-500 bg-red-500 px-4 transition-all duration-300 rounded-md "
+
+              onClick={() => removeSection(sectionIndex)}
+            >
+              <IoClose/>
+            </button>
+            </div>
+            
+          </div>
+
+          {/* Questions */}
+          {section.questions.map((question, questionIndex) => (
+            <div key={questionIndex} className="">
+              <div className="grid gap-4">
+              <input
+                type="text"
+                placeholder="Enter Question Name"
+                value={question.name}
+                className="p-1 px-4 border w-64 border-gray-500 rounded-md" 
+                               onChange={(e) =>
+                  handleQuestionChange(sectionIndex, questionIndex, 'name', e.target.value)
+                }
+              />
+
+              <select
+                value={question.reading ? "Numeric" : question.type}
+                className="p-1 px-4 border w-64 border-gray-500 rounded-md"
+                onChange={(e) =>
+                  handleQuestionChange(sectionIndex, questionIndex, 'type', e.target.value)
+                }
+                disabled={question.reading}
+              >
+                <option value="">Select Answer Type</option>
                         <option value="multiple">
                           Multiple Choice Question
                         </option>
                         <option value="inbox">Input box</option>
                         <option value="description">Description box</option>
                         <option value="Numeric">Numeric</option>
-                      </select>
-                      {data.type === "multiple" && !data.reading && (
+              </select>
+              {question.type === "multiple" && !question.reading && (
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 my-2">
                           <div className="flex flex-col sm:flex-row gap-2">
                             <input
                               type="text"
-                              name={`option1_${i}`}
-                              id={`option1_${i}`}
+                              name={`option1_${questionIndex}`}
+                              id={`option1_${questionIndex}`}
                               className="border p-1 px-4 border-gray-500 rounded-md"
                               placeholder="option 1"
-                              value={data.options[0]}
-                              onChange={(e) => handleQuestionChange(i, "option", e.target.value, 0)}
+                              value={question.options[0]}
+                              onChange={(e) => handleQuestionChange(sectionIndex,questionIndex, "option", e.target.value, 0)}
                             />
                             <select
-                              name={`value_type1_${i}`}
-                              id={`value_type1_${i}`}
-                              className={`border p-1 border-gray-500 rounded-md ${data.value_types[0] === 'P' ? 'bg-green-400' : data.value_types[0] === 'N' ? 'bg-red-400' : ''}`}
-                              value={data.value_types[0]}
-                              onChange={(e) => handleQuestionChange(i, "value_type", e.target.value, 0)}
+                              name={`value_type1_${questionIndex}`}
+                              id={`value_type1_${questionIndex}`}
+                              className={`border p-1 border-gray-500 rounded-md ${question.value_types[0] === 'P' ? 'bg-green-400' : question.value_types[0] === 'N' ? 'bg-red-400' : ''}`}
+                              value={question.value_types[0]}
+                              onChange={(e) => handleQuestionChange(sectionIndex,questionIndex, "value_type", e.target.value, 0)}
                             >
                               <option value="">Select</option>
                               <option value="P">P</option>
@@ -577,19 +666,19 @@ const AddChecklist = () => {
                           <div className="flex flex-col sm:flex-row gap-2">
                             <input
                               type="text"
-                              name={`option2_${i}`}
-                              id={`option2_${i}`}
+                              name={`option2_${questionIndex}`}
+                              id={`option2_${questionIndex}`}
                               className="border p-1 px-4 border-gray-500 rounded-md"
                               placeholder="option 2"
-                              value={data.options[1]}
-                              onChange={(e) => handleQuestionChange(i, "option", e.target.value, 1)}
+                              value={question.options[1]}
+                              onChange={(e) => handleQuestionChange(sectionIndex,questionIndex, "option", e.target.value, 1)}
                             />
                             <select
-                              name={`value_type2_${i}`}
-                              id={`value_type2_${i}`}
-                              className={`border p-1 border-gray-500 rounded-md ${data.value_types[1] === 'P' ? 'bg-green-400' : data.value_types[1] === 'N' ? 'bg-red-400' : ''}`}
-                              value={data.value_types[1]}
-                              onChange={(e) => handleQuestionChange(i, "value_type", e.target.value, 1)}
+                              name={`value_type2_${questionIndex}`}
+                              id={`value_type2_${questionIndex}`}
+                              className={`border p-1 border-gray-500 rounded-md ${question.value_types[1] === 'P' ? 'bg-green-400' : question.value_types[1] === 'N' ? 'bg-red-400' : ''}`}
+                              value={question.value_types[1]}
+                              onChange={(e) => handleQuestionChange(sectionIndex,questionIndex, "value_type", e.target.value, 1)}
                             >
                               <option value="">Select</option>
                               <option value="P" >P</option>
@@ -600,19 +689,19 @@ const AddChecklist = () => {
                           <div className="flex flex-col sm:flex-row gap-2">
                             <input
                               type="text"
-                              name={`option3_${i}`}
-                              id={`option3_${i}`}
+                              name={`option3_${questionIndex}`}
+                              id={`option3_${questionIndex}`}
                               className="border p-1 px-4 border-gray-500 rounded-md"
                               placeholder="option 3"
-                              value={data.options[2]}
-                              onChange={(e) => handleQuestionChange(i, "option", e.target.value, 2)}
+                              value={question.options[2]}
+                              onChange={(e) => handleQuestionChange(sectionIndex,questionIndex, "option", e.target.value, 2)}
                             />
                             <select
-                              name={`value_type3_${i}`}
-                              id={`value_type3_${i}`}
-                              className={`border p-1 border-gray-500 rounded-md ${data.value_types[2] === 'P' ? 'bg-green-400' : data.value_types[2] === 'N' ? 'bg-red-400' : ''}`}
-                              value={data.value_types[2]}
-                              onChange={(e) => handleQuestionChange(i, "value_type", e.target.value, 2)}
+                              name={`value_type3_${questionIndex}`}
+                              id={`value_type3_${questionIndex}`}
+                              className={`border p-1 border-gray-500 rounded-md ${question.value_types[2] === 'P' ? 'bg-green-400' : question.value_types[2] === 'N' ? 'bg-red-400' : ''}`}
+                              value={question.value_types[2]}
+                              onChange={(e) => handleQuestionChange(sectionIndex,questionIndex, "value_type", e.target.value, 2)}
                             >
                               <option value="">Select</option>
                               <option value="P">P</option>
@@ -622,19 +711,19 @@ const AddChecklist = () => {
                           <div className="flex flex-col sm:flex-row gap-2">
                             <input
                               type="text"
-                              name={`option4_${i}`}
-                              id={`option4_${i}`}
+                              name={`option4_${questionIndex}`}
+                              id={`option4_${questionIndex}`}
                               className="border p-1 px-4 border-gray-500 rounded-md"
                               placeholder="option 4"
-                              value={data.options[3]}
-                              onChange={(e) => handleQuestionChange(i, "option", e.target.value, 3)}
+                              value={question.options[3]}
+                              onChange={(e) => handleQuestionChange(sectionIndex,questionIndex, "option", e.target.value, 3)}
                             />
                             <select
-                              name={`value_type4_${i}`}
-                              id={`value_type4_${i}`}
-                              className={`border p-1 border-gray-500 rounded-md ${data.value_types[3] === 'P' ? 'bg-green-400' : data.value_types[3] === 'N' ? 'bg-red-400' : ''}`}
-                              value={data.value_types[3]}
-                              onChange={(e) => handleQuestionChange(i, "value_type", e.target.value, 3)}
+                              name={`value_type4_${questionIndex}`}
+                              id={`value_type4_${questionIndex}`}
+                              className={`border p-1 border-gray-500 rounded-md ${question.value_types[3] === 'P' ? 'bg-green-400' : question.value_types[3] === 'N' ? 'bg-red-400' : ''}`}
+                              value={question.value_types[3]}
+                              onChange={(e) => handleQuestionChange(sectionIndex,questionIndex, "value_type", e.target.value, 3)}
                             >
                               <option value="">Select</option>
                               <option value="P">P</option>
@@ -643,60 +732,71 @@ const AddChecklist = () => {
                           </div>
                         </div>
                       )}
-                      <div className="grid grid-cols-3 my-2">
-                      <div className="flex items-center gap-2">
-                      <input
-              type="checkbox"
-              checked={data.question_mandatory}
-              onChange={(e) => handleQuestionChange(i, "question_mandatory", e.target.checked)}
-            />
-                        <label htmlFor="" className="font-semibold">Mandatory</label>
-                      </div>
-                      <div className="flex items-center gap-2">
-                      <input
-              type="checkbox"
-              checked={data.reading}
-              onChange={(e) => handleQuestionChange(i, "reading", e.target.checked)}
-            />
-                        <label htmlFor="" className="font-semibold">Reading</label>
-                      </div>
-                      <div className="flex items-center gap-2">
-                      <input
-              type="checkbox"
-              checked={data.showHelpText}
-              onChange={(e) => handleQuestionChange(i, "showHelpText", e.target.checked)}
-            />
-                        <label htmlFor="" className="font-semibold">Help text</label>
-                      </div>
-                      
-                      
-                      </div>
-                    </div>
-                    {data.showHelpText && (
+                      <div className="flex gap-8">
+                      <div>
+              <label className="flex items-center gap-1">
+                <input
+                  type="checkbox"
+                  checked={question.mandatory}
+                  onChange={(e) =>
+                    handleQuestionChange(sectionIndex, questionIndex, 'mandatory', e.target.checked)
+                  }
+                />
+                <span className="font-semibold text-medium">Mandatory</span>
+              </label>
+              </div>
+              <div>
+              <label className="flex items-center gap-1">
+                <input
+                  type="checkbox"
+                  checked={question.reading}
+                  onChange={(e) =>
+                    handleQuestionChange(sectionIndex, questionIndex, 'reading', e.target.checked)
+                  }
+                />
+                <span className="font-semibold text-medium">Reading</span>
+                
+              </label></div>
+                    <div>
+              <label className="flex items-center gap-1">
+                <input
+                  type="checkbox"
+                  checked={question.showHelpText}
+                  onChange={(e) =>
+                    handleQuestionChange(sectionIndex, questionIndex, 'showHelpText', e.target.checked)
+                  }
+                />
+                
+                <span className="font-semibold text-medium">Help Text</span>
+              </label>
+              </div>
+              </div>
+              </div>
+              {question.showHelpText && (
               <div className="flex flex-col gap-2 my-2">
                 <input
                   type="text"
                   placeholder="Enter Help text"
-                  value={data.help_text}
+                  value={question.help_text}
                   className="border p-1 px-4 border-gray-500 rounded-md"
-                  onChange={(e) => handleQuestionChange(i, "help_text", e.target.value)}
+                  onChange={(e) => handleQuestionChange(sectionIndex, questionIndex, "help_text", e.target.value)}
                 />
                 
                 <FileInputBox
-      handleChange={(files) => handleQuestionChange(i, "image_for_question", files)}
-      fieldName={`image_for_question_${i + 1}`}
+      handleChange={(files) => handleQuestionChange(sectionIndex, questionIndex, "image_for_question", files)}
+      fieldName={`image_for_question_${questionIndex + 1}`}
       isMulti={true}
     />
               </div>
             )}
-                     {weightage && (
+             {weightage && (
           <div className=" grid grid-cols-4 gap-4">
             <div className="flex flex-col gap-1">
               <label className="font-semibold">Weightage</label>
               <input
                 type="number"
                 className="border p-1 px-4 border-gray-500 rounded-md"
-                value={data.weightage}
+                value={question.weightage}
                 onChange={(e) => handleQuestionChange(i, "weightage", e.target.value)}
                 placeholder="Enter weightage value"
               />
@@ -708,7 +808,7 @@ const AddChecklist = () => {
                 <input
                   type="checkbox"
                   id="rating"
-                  checked={data.rating}
+                  checked={question.rating}
                   onChange={(e) => handleQuestionChange(i, "rating", e.target.checked)}
                   className="mr-2"
                 />
@@ -717,37 +817,35 @@ const AddChecklist = () => {
            
           </div>
         )}
-
-       
-      
-                    <div className="flex justify-end gap-2">
-                      <button
-                        className="p-1 border-2 border-red-500 text-white hover:bg-white hover:text-red-500 bg-red-500 px-4 transition-all duration-300 rounded-md "
-                        onClick={() => handleRemoveQuestionFields(i)}
-                      >
-                        <IoClose />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div className="flex justify-end ">
               <button
-                type="button"
-                className="p-1 border-2 border-black px-4 rounded-md my-2 flex gap-2 items-center"
-                onClick={() => handleAddQuestionFields()}
+                                        className="p-1 border-2 border-red-500 text-white hover:bg-white hover:text-red-500 bg-red-500 px-4 transition-all duration-300 rounded-md "
+
+                onClick={() => removeQuestion(sectionIndex, questionIndex)}
               >
-                <BiPlus />
-                Add Question
+                <IoClose/>
               </button>
-              {/* <button
-                type="button"
-                className="p-1 border-2 border-black px-4 rounded-md my-2 flex gap-2 items-center"
-                
-              >
-                <BiPlus />
-                Add Group
-              </button> */}
+              </div>
             </div>
+          ))}
+
+          {/* Add Question Button */}
+          <button
+                className="p-1 border-2 border-black px-4 rounded-md my-2 flex gap-2 items-center"
+                onClick={() => addQuestion(sectionIndex)}
+          >
+            Add Question
+          </button>
+        </div>
+      ))}
+      <button
+                className="p-1 border-2 border-black px-4 rounded-md my-2 flex gap-2 items-center"
+                onClick={addSection}
+      >
+        Add Group
+      </button>
+    </div>
+    </div>
             <h2 className="border-b-2 border-black text font-medium">
                       Schedules
                     </h2>

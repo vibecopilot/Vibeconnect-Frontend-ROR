@@ -4,15 +4,15 @@ import { IoMdAdd } from 'react-icons/io';
 import Table from '../../components/table/Table';
 import { BiEdit } from 'react-icons/bi';
 import { Link, useNavigate } from 'react-router-dom';
-import { EditSiteOwner, getAssignedTo, getSiteOwner, getSiteOwnerDetails, postSiteOwner } from '../../api';
+import { EditSiteOwner, getAssignedTo, getChecklistGroupReading, getSiteOwner, getSiteOwnerDetails, postSiteOwner } from '../../api';
 import { PiPlusCircle } from 'react-icons/pi';
 import toast from "react-hot-toast";
 import {
   getItemInLocalStorage,
   setItemInLocalStorage,
 } from "../../utils/localStorage";
-
-function SiteOwner() {
+getChecklistGroupReading
+function ChecklistGroupReading() {
   const COMPANYID = getItemInLocalStorage("COMPANYID");
   const SITEID = getItemInLocalStorage("SITEID");
   
@@ -39,7 +39,7 @@ function SiteOwner() {
   useEffect(() => {
     const fetchSiteOwners = async () => {
       try {
-        const resp = await getSiteOwner();
+        const resp = await getChecklistGroupReading();
         setSites(resp.data);
       } catch (error) {
         console.log("Error fetching site owners:", error);
@@ -76,13 +76,13 @@ function SiteOwner() {
     sendData.append("generic_info[company_id]", COMPANYID);
     sendData.append("generic_info[name]", formData.name);
     sendData.append("generic_info[site_id]", SITEID);
-    sendData.append("generic_info[info_type]", "SiteOwner");
+    sendData.append("generic_info[info_type]", "GroupReading");
 
     try {
       const resp = await postSiteOwner(sendData);
-      toast.success("Site owner created successfully");
+      toast.success("Group created successfully");
       setIsModalOpen(false);
-      navigate("/admin/site-owner-setup");
+      navigate("/admin/checklist-group-reading-setup");
     } catch (error) {
       console.log(error);
       toast.error("Site Owner already exists for this site");
@@ -106,26 +106,26 @@ function SiteOwner() {
   };
 
   const column = [
-    {
-      name: "Actions",
-      cell: (row) => (
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => {
-              setSiteOwnerId(row.id);
-              fetchSiteOwnerDetails(row.id);
-              setEditIsModalOpen(true);
-            }}
-          >
-            <BiEdit size={15} />
-          </button>
-        </div>
-      ),
-    },
+    // {
+    //   name: "Actions",
+    //   cell: (row) => (
+    //     <div className="flex items-center gap-4">
+    //       <button
+    //         onClick={() => {
+    //           setSiteOwnerId(row.id);
+    //           fetchSiteOwnerDetails(row.id);
+    //           setEditIsModalOpen(true);
+    //         }}
+    //       >
+    //         <BiEdit size={15} />
+    //       </button>
+    //     </div>
+    //   ),
+    // },
     { name: 'Id', selector: (row) => row.id, sortable: true },
-    { name: 'Name', selector: (row) => row.user, sortable: true },
+    { name: 'Name', selector: (row) => row.name, sortable: true },
     { name: 'Company ID', selector: (row) => row.company_id, sortable: true },
-    { name: 'Site ID', selector: (row) => row.site, sortable: true },
+    { name: 'Site ID', selector: (row) => row.site_id, sortable: true },
     { name: 'Info Type', selector: (row) => row.info_type, sortable: true },
   ];
 
@@ -153,19 +153,16 @@ function SiteOwner() {
         {isModalOpen && (
           <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white p-6 rounded-lg shadow-lg w-80">
-              <h2 className="text-lg font-bold mb-4">Add Site Owner</h2>
-              <select
+              <h2 className="text-lg font-bold mb-4">Add Group</h2>
+
+              <input
                 value={formData.name || ""}
+                placeholder='Enter Group Name'
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 className="border p-1 px-4 w-full mb-4 border-gray-500 rounded-md"
               >
-                <option value="">Select Name</option>
-                {assignedUser?.map((assign) => (
-                  <option key={assign.id} value={assign.id}>
-                    {assign.firstname} {assign.lastname}
-                  </option>
-                ))}
-              </select>
+                
+              </input>
               <div className='flex gap-2'>
               <button
                   onClick={() => setIsModalOpen(false)}
@@ -219,4 +216,4 @@ function SiteOwner() {
   );
 }
 
-export default SiteOwner;
+export default ChecklistGroupReading;

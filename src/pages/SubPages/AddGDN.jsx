@@ -2,17 +2,18 @@ import React from "react";
 import { IoMdAdd } from "react-icons/io";
 import { RiDeleteBin6Line } from "react-icons/ri";
 import { useSelector } from "react-redux";
+import Navbar from "../../components/Navbar";
 
 const AddGdn = () => {
   const themeColor = useSelector((state) => state.theme.color);
   return (
     <section>
-      <h2
-        style={{ background: themeColor }}
-        className="text-center text-white font-semibold p-2 "
-      >
-        Add GDN
-      </h2>
+      <div className=" flex  ">
+      <Navbar/>
+      <div className='md:mx-20 my-2 mb-10 sm:border border-gray-400 p-5 px-10 rounded-lg w-full'>
+        <h2 className="text-center text-xl font-bold p-2 bg-black rounded-full text-white mb-4" style={{ background: themeColor }}>
+                       Add GDN
+                    </h2>
       <div className="w-full flex  flex-col overflow-hidden">
         <div className="border-2 flex flex-col my-5 mx-5 p-4 gap-4 rounded-md border-gray-400">
           <h2 className=" border-b-2 border-gray-400 font-semibold ">
@@ -39,7 +40,7 @@ const AddGdn = () => {
                   id=""
                   cols="1"
                   rows="1"
-                  placeholder="Description"
+                  placeholder="GDN Description"
                   className="border p-1 px-4 border-gray-500 rounded-md"
                 />
               </div>
@@ -66,16 +67,7 @@ const AddGdn = () => {
                   <option value="">Pratibha Enterprises</option>
                 </select>
               </div>
-              <div className="flex flex-col">
-                <label htmlFor="" className="font-semibold my-1">
-                  Current Stock
-                </label>
-                <input
-                  type="text"
-                  placeholder=""
-                  className="border p-1 px-4 border-gray-500 rounded-md"
-                />
-              </div>
+             
               <div className="flex flex-col">
                 <label htmlFor="" className="font-semibold my-1">
                   Quantity
@@ -85,6 +77,82 @@ const AddGdn = () => {
                   placeholder="Quantity"
                   className="border p-1 px-4 border-gray-500 rounded-md"
                 />
+              </div>
+              <div className="flex flex-col">
+                <label htmlFor="" className="font-semibold my-1">
+                  Purpose
+                </label>
+                <select
+                  
+                  
+                  className="border p-1 px-4 border-gray-500 rounded-md"
+                >
+                  <option value="">Select Purpose</option>
+                  <option value="Consuming">Consuming</option>
+                  <option value="Disposing">Disposing</option>
+                  <option value="Breakage">Breakage</option>
+                  <option value="Lost">Lost</option>
+                </select>
+              </div>
+              
+              <div className="flex flex-col">
+                <label htmlFor="" className="font-semibold my-1">
+                  Select Consuming in
+                </label>
+                <select
+                  
+                  
+                  className="border p-1 px-4 border-gray-500 rounded-md"
+                >
+                  <option value="">Select Consuming in</option>
+                  <option value="Asset">Asset</option>
+                  <option value="Service">Service</option>
+                  
+                </select>
+              </div>
+              <div className="flex flex-col">
+                <label htmlFor="" className="font-semibold my-1">
+                  Select Asset
+                </label>
+                <select
+                  
+                  
+                  className="border p-1 px-4 border-gray-500 rounded-md"
+                >
+                  <option value="">Select Asset</option>
+                  <option value="Asset">Asset</option>
+                  <option value="Service">Service</option>
+                  
+                </select>
+              </div>
+              <div className="flex flex-col">
+                <label htmlFor="" className="font-semibold my-1">
+                  Select Service
+                </label>
+                <select
+                  
+                  
+                  className="border p-1 px-4 border-gray-500 rounded-md"
+                >
+                  <option value="">Select Service</option>
+                  <option value="Asset">Asset</option>
+                  <option value="Service">Service</option>
+                  
+                </select>
+              </div>
+              <div className="flex flex-col">
+                <label htmlFor="" className="font-semibold my-1">
+                  Handed Over to
+                </label>
+                <select
+                  
+                  
+                  className="border p-1 px-4 border-gray-500 rounded-md"
+                >
+                  <option value="">Handed Over to</option>
+                  <option value="">Mittu Panda</option>
+                  <option value="">Test1</option>
+                </select>
               </div>
               <div className="flex flex-col  ">
                 <label htmlFor="" className="font-semibold my-1">
@@ -99,14 +167,7 @@ const AddGdn = () => {
                   className="border p-1 px-4 border-gray-500 rounded-md"
                 />
               </div>
-              <div className="flex flex-col">
-                <button className="bg-black text-white p-2 text-md rounded-md">
-                  Add Inventory
-                </button>
-              </div>
-              <div className="flex flex-col">
-                <RiDeleteBin6Line className="text-red-500 my-2 mx-4" />
-              </div>
+              
             </div>
           </div>
           {/* </div> */}
@@ -116,6 +177,8 @@ const AddGdn = () => {
             Submit
           </button>
         </div>
+      </div>
+      </div>
       </div>
     </section>
   );
