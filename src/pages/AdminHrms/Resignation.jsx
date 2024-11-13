@@ -3,8 +3,10 @@ import AdminHRMS from "./AdminHrms";
 import { GrHelpBook } from "react-icons/gr";
 import { ImInfo } from "react-icons/im";
 import { FaCircleInfo } from "react-icons/fa6";
-import { getUserDetails } from "../../api";
+import { getUserDetails, postResignations } from "../../api";
 import { useParams } from "react-router-dom";
+import { FaCheck } from "react-icons/fa";
+import { MdClose } from "react-icons/md";
 
 const Resignation = () => {
   const listItemStyle = {
@@ -14,26 +16,58 @@ const Resignation = () => {
     fontWeight: 500,
   };
   const { id } = useParams();
-  const [empDetails, setEmpDetails] = useState({})
+  const [empDetails, setEmpDetails] = useState({});
+  const [formData, setFormData] = useState({
+    applicateDate: "",
+    lastWorkingDate: "",
+    separationReason: "",
+    fnfMonth: "",
+    comment: "",
+  });
   useEffect(() => {
     const fetchUserDetails = async () => {
       try {
         const res = await getUserDetails(id);
-        setEmpDetails(res)
-
+        setEmpDetails(res);
       } catch (error) {
         console.log(error);
       }
     };
-    fetchUserDetails()
+    fetchUserDetails();
   }, []);
 
-  const today = new Date()
-  const formattedDate = today.toLocaleDateString("en-GB",{
+  const today = new Date();
+  const formattedDate = today.toLocaleDateString("en-GB", {
     day: "numeric",
     month: "numeric",
-    year: "numeric"
-  }) 
+    year: "numeric",
+  });
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+  console.log(formData);
+  const handleResignationSubmission = async () => {
+    const resignationData = new FormData();
+    resignationData.append("employee", id);
+    resignationData.append(
+      "resignation_application_date",
+      formData.applicateDate
+    );
+    resignationData.append(
+      "requested_last_working_date",
+      formData.lastWorkingDate
+    );
+    resignationData.append("separation_reason", formData.separationReason);
+    resignationData.append("fnf_settlement_month", formData.fnfMonth);
+    resignationData.append("comments", formData.comment);
+    try {
+      const res = await postResignations(resignationData);
+      console.log(res);
+    } catch (error) {
+      console.log(error);
+    }
+  };
   return (
     <div className="flex justify-between">
       <AdminHRMS />
@@ -45,13 +79,16 @@ const Resignation = () => {
           located here.
         </p>
         <h1 className="text-2xl font-bold mb-4 mt-2">Resignation Form</h1>
-        <form className="space-y-4 mb-10">
-          <div className=" border rounded-lg p-2 border-red-50 bg-red-100">
+        <div className="space-y-4 mb-10 ">
+          <div className=" border rounded-lg p-2 border-red-50 bg-blue-100">
             <p className="font-bold">Basic Information</p>
-            <div className="grid md:grid-cols-2 gap-4  text-sm mt-2 text-gray-800">
+            <div className="grid md:grid-cols-2 gap-4  text-sm mt-2 text-gray-600">
               <div className="flex justify-between">
                 <label className="block font-medium">Employee Name:</label>
-                <p>{empDetails?.employee?.first_name} {empDetails?.employee?.last_name}</p>
+                <p>
+                  {empDetails?.employee?.first_name}{" "}
+                  {empDetails?.employee?.last_name}
+                </p>
               </div>
               <div className="flex justify-between">
                 <label className="block font-medium">Employee Code:</label>
@@ -59,7 +96,13 @@ const Resignation = () => {
               </div>
               <div className="flex justify-between">
                 <label className="block font-medium">Employment Status:</label>
-                <p>{empDetails?.employee?.status ? <span className="text-green-500">Active</span>  : <span className="text-red-500">Inactive</span>}</p>
+                <p>
+                  {empDetails?.employee?.status ? (
+                    <span className="text-green-500">Active</span>
+                  ) : (
+                    <span className="text-red-500">Inactive</span>
+                  )}
+                </p>
               </div>
               <div className="flex justify-between">
                 <label className="block font-medium">Designation:</label>
@@ -82,9 +125,7 @@ const Resignation = () => {
                 <p>{empDetails?.employment_info?.department_name}</p>
               </div>
               <div className="flex justify-between">
-                <label className="block font-medium">
-                  Supervisor Name :
-                </label>
+                <label className="block font-medium">Supervisor Name :</label>
 
                 <p>{empDetails?.employment_info?.supervisor_name}</p>
               </div>
@@ -104,7 +145,9 @@ const Resignation = () => {
               </label>
               <input
                 type="date"
-                value="2024-07-13"
+                value={formData.applicateDate}
+                onChange={handleChange}
+                name="applicateDate"
                 className="border border-gray-400 p-2 rounded-md"
               />
             </div>
@@ -115,8 +158,10 @@ const Resignation = () => {
               </label>
               <input
                 type="date"
-                value="2024-08-11"
+                value={formData.lastWorkingDate}
+                onChange={handleChange}
                 className="border border-gray-400 p-2 rounded-md"
+                name="lastWorkingDate"
               />
             </div>
             <div className="grid gap-2 items-center w-full">
@@ -124,8 +169,136 @@ const Resignation = () => {
                 Separation Types and Reasons{" "}
                 <span className="text-red-500">*</span>
               </label>
-              <select className="border border-gray-400 p-2 rounded-md">
-                <option>Please Select</option>
+
+              <select
+                className="border border-gray-400 p-2 rounded-md"
+                value={formData.separationReason}
+                onChange={handleChange}
+                name="separationReason"
+              >
+                <option value="">Please Select</option>
+                <optgroup label="Absconding">
+                  <option value="Better Opportunity - Compensation">
+                    Better Opportunity - Compensation
+                  </option>
+                  <option value="Better Opportunity - Job Role">
+                    Better Opportunity - Job Role
+                  </option>
+                  <option value="Better Opportunity - Other">
+                    Better Opportunity - Other
+                  </option>
+                  <option value="Company Issue - Culture">
+                    Company Issue - Culture
+                  </option>
+                  <option value="Company Issue - Other">
+                    Company Issue - Other
+                  </option>
+                  <option value="Company Issue - Reporting Supervisor">
+                    Company Issue - Reporting Supervisor
+                  </option>
+                  <option value="Personal Reason - Family">
+                    Personal Reason - Family
+                  </option>
+                  <option value="Personal Reason - Health">
+                    Personal Reason - Health
+                  </option>
+                  <option value="Personal Reason - Higher Education">
+                    Personal Reason - Higher Education
+                  </option>
+                  <option value="Personal Reason - Other">
+                    Personal Reason - Other
+                  </option>
+                  <option value="Personal Reason - Relocation">
+                    Personal Reason - Relocation
+                  </option>
+                  <option value="Personal Reason - Work Commute">
+                    Personal Reason - Work Commute
+                  </option>
+                </optgroup>
+                <optgroup label="Contract End Reason For Not Renewing">
+                  <option value="Company Layoff">Company Layoff</option>
+                  <option value="Ethical Violation">Ethical Violation</option>
+                  <option value="Job Performance">Job Performance</option>
+                  <option value="Project Completion">Project Completion</option>
+                </optgroup>
+                <optgroup label="Death">
+                  <option value="Job Related Death">Job Related Death</option>
+                  <option value="Non-Job Related Death">
+                    Non-Job Related Death
+                  </option>
+                </optgroup>
+                <optgroup label="Disability">
+                  <option value="Job Related Disability">
+                    Job Related Disability
+                  </option>
+                  <option value="Non-Job Related Disability">
+                    Non-Job Related Disability
+                  </option>
+                </optgroup>
+                <optgroup label="Resignation">
+                  <option value="Better Opportunity - Compensation">
+                    Better Opportunity - Compensation
+                  </option>
+                  <option value="Better Opportunity - Job Role">
+                    Better Opportunity - Job Role
+                  </option>
+                  <option value="Better Opportunity - Other">
+                    Better Opportunity - Other
+                  </option>
+                  <option value="Company Issue - Culture">
+                    Company Issue - Culture
+                  </option>
+                  <option value="Company Issue - Other">
+                    Company Issue - Other
+                  </option>
+                  <option value="Company Issue - Reporting Supervisor">
+                    Company Issue - Reporting Supervisor
+                  </option>
+                  <option value="Personal Reason - Family">
+                    Personal Reason - Family
+                  </option>
+                  <option value="Personal Reason - Health">
+                    Personal Reason - Health
+                  </option>
+                  <option value="Personal Reason - Higher Education">
+                    Personal Reason - Higher Education
+                  </option>
+                  <option value="Personal Reason - Other">
+                    Personal Reason - Other
+                  </option>
+                  <option value="Personal Reason - Relocation">
+                    Personal Reason - Relocation
+                  </option>
+                  <option value="Personal Reason - Work Commute">
+                    Personal Reason - Work Commute
+                  </option>
+                </optgroup>
+                <optgroup label="Retirement">
+                  <option value="Company Voluntary Retirement Scheme">
+                    Company Voluntary Retirement Scheme
+                  </option>
+                  <option value="Early Retirement">Early Retirement</option>
+                  <option value="Reach Company Retirement Age">
+                    Reach Company Retirement Age
+                  </option>
+                </optgroup>
+                <optgroup label="Termination">
+                  <option value="Company Layoff">Company Layoff</option>
+                  <option value="Ethical Violation">Ethical Violation</option>
+                  <option value="Job Performance">Job Performance</option>
+                  <option value="Other">Other</option>
+                  <option value="Redundancy of Job role">
+                    Redundancy of Job role
+                  </option>
+                </optgroup>
+                <optgroup label="Transfer">
+                  <option value="Transfer Within Group Entity">
+                    Transfer Within Group Entity
+                  </option>
+                  <option value="Transfer to Other Location">
+                    Transfer to Other Location
+                  </option>
+                </optgroup>
               </select>
             </div>
             <div className="grid gap-2 items-center w-full">
@@ -134,17 +307,25 @@ const Resignation = () => {
               </label>
               <input
                 type="month"
-                name=""
+                name="fnfMonth"
+                value={formData.fnfMonth}
+                onChange={handleChange}
                 id=""
                 className="border border-gray-400 p-2 rounded-md"
               />
             </div>
             <div className="grid gap-2 items-center w-full">
               <label className="block font-medium">Comments:</label>
-              <textarea className="border border-gray-400 p-2 rounded-md"></textarea>
+              <textarea
+                className="border border-gray-400 p-2 rounded-md"
+                value={formData.comment}
+                onChange={handleChange}
+                name="comment"
+              ></textarea>
             </div>
           </div>
-          {/* <p className="font-bold">Additional Details</p>
+          <p className="font-bold border-b">Additional Details</p>
+
           <div className="grid md:grid-cols-2 gap-2 mt-2">
             <div className="grid gap-2 items-center w-full">
               <label className="block font-medium">
@@ -183,7 +364,8 @@ const Resignation = () => {
                 value="2024-08-11"
                 className="border border-gray-400 p-2 rounded-md"
               />
-            </div> */}
+            </div>
+          </div>
           <div className="grid grid-cols-2">
             <div className="grid gap-2 items-center w-full">
               <label className="block font-medium">Hold Salary?</label>
@@ -391,19 +573,19 @@ const Resignation = () => {
           </div>
           <div className="flex items-center gap-2 justify-center">
             <button
-              type="submit"
-              className="bg-blue-500 border-2 border-blue-500 text-white p-2 px-4 rounded-md"
+              onClick={handleResignationSubmission}
+              className="bg-green-500 border-2 border-green-500 text-white p-2 px-4 rounded-md flex items-center gap-2"
             >
-              Submit
+              <FaCheck /> Submit
             </button>
             <button
               type="submit"
-              className="border-red-500 border-2 px-4 p-2 rounded-md text-red-500 "
+              className="border-red-500 border-2 px-4 p-2 rounded-md text-red-500 flex items-center gap-2"
             >
-              Cancel
+              <MdClose /> Cancel
             </button>
           </div>
-        </form>
+        </div>
       </div>
       <div className="my-4 mx-2 w-fit">
         <div className="flex flex-col bg-gray-50 rounded-md text-wrap  gap-4 my-2 py-2 pl-5 pr-2 w-[18rem]">
