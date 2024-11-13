@@ -21,6 +21,8 @@ import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
 import Select from "react-select";
 import FileInputBox from "../../containers/Inputs/FileInputBox";
+import { FaCheck } from "react-icons/fa";
+import { MdClose } from "react-icons/md";
 const CreateTicket = () => {
   const navigate = useNavigate();
 
@@ -58,7 +60,6 @@ const CreateTicket = () => {
     issue_type_id: "",
     complaint_type: "",
     complaint_mode: "",
-    
   });
 
   console.log(formData);
@@ -327,8 +328,11 @@ const CreateTicket = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.building_name || !formData.floor_name) {
-      return toast.error("Please Select Tower Name & Floor!");
+    if (!formData.building_name) {
+      return toast.error("Please Select Building Name");
+    }
+    if (!formData.floor_name) {
+      return toast.error("Please Select Floor Name!");
     }
     if (!formData.category_type_id) {
       return toast.error("Please select category");
@@ -337,6 +341,9 @@ const CreateTicket = () => {
       return toast.error("Please provide title");
     }
 
+    if ((formData.documents || []).length > 4) {
+      return toast.error("You can upload maximum upto 4 images.");
+  } 
     try {
       toast.loading("Please wait generating ticket!");
       const sendData = new FormData();
@@ -348,7 +355,7 @@ const CreateTicket = () => {
       sendData.append("complaints[text]", formData.text);
       sendData.append("complaints[heading]", formData.heading);
       sendData.append("complaints[of_phase]", formData.of_phase);
-     
+
       sendData.append("complaints[site_id]", formData.site_id);
       sendData.append("complaints[assigned_to]", formData.assigned_to);
       sendData.append("complaints[priority]", formData.priority);
@@ -419,15 +426,15 @@ const CreateTicket = () => {
       <div className="fixed hidden md:block left-0 top-0 h-full md:static md:h-auto md:flex-shrink-0">
         <Navbar />
       </div>
-      <div className="flex justify-center items-center overflow-x-auto w-full  sm:w-full">
-        <div>
+      <div className="flex justify-center  overflow-x-auto w-full  sm:w-full">
+        <div className="border border-gray-400 rounded-md">
           <h2
             style={{ background: themeColor }}
-            className="text-center text-xl font-bold p-2 bg-black rounded-full text-white"
+            className="text-center text-xl font-semibold p-2 bg-black rounded-md text-white m-2"
           >
             Create Ticket
           </h2>
-          <div className="flex gap-5 my-5">
+          {/* <div className="flex gap-5 my-5">
             <button
               className={`text-gray-600 border-2 p-1 px-5 rounded-md ${
                 createTicket === "self"
@@ -446,7 +453,7 @@ const CreateTicket = () => {
               }`}
               onClick={() => setCreateTicket("tenant")}
             >
-              Tenant
+              Occupant User
             </button>
             <button
               className={`text-gray-600 border-2 p-1 px-5 rounded-md ${
@@ -456,12 +463,12 @@ const CreateTicket = () => {
               }`}
               onClick={() => setCreateTicket("FMUser")}
             >
-              FM User
+              FM Team
             </button>
-          </div>
+          </div> */}
           {createTicket === "self" && (
             <form
-              className="border border-gray-300 rounded-lg sm:w-[60rem] p-8 flex flex-col gap-5 mb-10"
+              className=" rounded-lg sm:w-[60rem] p-8 flex flex-col gap-5 mb-10"
               onSubmit={handleSubmit}
             >
               {/* Related To :*/}
@@ -514,7 +521,7 @@ const CreateTicket = () => {
                     <option value="Request">Request</option>
                   </select>
                 </div>
-                <div className="grid grid-cols-2  items-center w-full">
+                {/* <div className="grid grid-cols-2  items-center w-full">
                   <label htmlFor="" className="font-semibold ">
                     Complaint Mode
                   </label>
@@ -536,14 +543,14 @@ const CreateTicket = () => {
                       </option>
                     ))}
                   </select>
-                </div>
+                </div> */}
                 {/* </div> */}
 
                 {/* Building details */}
                 {/* <div className="flex sm:flex-row flex-col gap-3 sm:gap-0 justify-between items-center"> */}
                 <div className="grid grid-cols-2  items-center w-full">
                   <label htmlFor="" className="font-semibold ">
-                    Tower Name <span className="text-red-500">*</span>
+                    Building Name <span className="text-red-500">*</span>
                   </label>
                   <select
                     id="builiding_name"
@@ -552,7 +559,7 @@ const CreateTicket = () => {
                     onChange={buildingChange}
                     className="border p-1 px-4 max-w-44 w-44 border-gray-500 rounded-md"
                   >
-                    <option value="">Select Tower</option>
+                    <option value="">Select Building</option>
                     {building?.map((build) => (
                       <option key={build.id} value={build.id}>
                         {build.name}
@@ -750,23 +757,23 @@ const CreateTicket = () => {
               <div className="flex gap-5 justify-center items-center my-4">
                 <button
                   type="submit"
-                  className="bg-black text-white hover:bg-gray-700 font-semibold text-xl py-2 px-4 rounded"
+                  className="bg-green-400 text-white  font-semibold py-2 px-4 rounded-md flex items-center gap-2"
                 >
-                  Submit
+                  <FaCheck /> Submit
                 </button>
                 <button
                   type="reset"
-                  className="bg-gray-400 text-black hover:bg-black hover:text-white font-semibold text-xl py-2 px-4 rounded"
+                  className="bg-red-400 text-white font-semibold py-2 px-4 rounded-md flex items-center gap-2"
                   onClick={handleReset}
                 >
-                  Reset
+                  <MdClose /> Reset
                 </button>
               </div>
             </form>
           )}
           {createTicket === "tenant" && (
             <form
-              className="border border-gray-300 rounded-lg sm:w-[60rem] p-8 flex flex-col gap-5 mb-10"
+              className=" rounded-lg sm:w-[60rem] p-8 flex flex-col gap-5 mb-10"
               onSubmit={handleSubmit}
             >
               <div className="grid grid-cols-2 border-b py-3">
@@ -859,7 +866,7 @@ const CreateTicket = () => {
                 {/* <div className="flex sm:flex-row flex-col gap-3 sm:gap-0 justify-between items-center"> */}
                 <div className="grid grid-cols-2  items-center w-full">
                   <label htmlFor="" className="font-semibold ">
-                    Tower Name <span className="text-red-500">*</span>
+                    Building Name <span className="text-red-500">*</span>
                   </label>
                   <select
                     id="builiding_name"
@@ -868,7 +875,7 @@ const CreateTicket = () => {
                     onChange={buildingChange}
                     className="border p-1 px-4 max-w-44 w-44 border-gray-500 rounded-md"
                   >
-                    <option value="">Select Tower</option>
+                    <option value="">Select Building</option>
                     {building?.map((build) => (
                       <option key={build.id} value={build.id}>
                         {build.name}
@@ -1076,9 +1083,9 @@ const CreateTicket = () => {
               <div className="flex gap-5 justify-center items-center my-4">
                 <button
                   type="submit"
-                  className="bg-black text-white hover:bg-gray-700 font-semibold text-xl py-2 px-4 rounded"
+                  className="bg-green-400 text-white hover:bg-gray-700 font-semibold text-xl py-2 px-4 rounded flex items-center gap-2"
                 >
-                  Submit
+                  <FaCheck /> Submit
                 </button>
                 <button
                   type="reset"
@@ -1092,7 +1099,7 @@ const CreateTicket = () => {
           )}
           {createTicket === "FMUser" && (
             <form
-              className="border border-gray-300 rounded-lg sm:w-[60rem] p-8 flex flex-col gap-5 mb-10"
+              className=" rounded-lg sm:w-[60rem] p-8 flex flex-col gap-5 mb-10"
               onSubmit={handleSubmit}
             >
               <div className="grid grid-cols-2 border-b py-3">
@@ -1185,7 +1192,7 @@ const CreateTicket = () => {
                 {/* <div className="flex sm:flex-row flex-col gap-3 sm:gap-0 justify-between items-center"> */}
                 <div className="grid grid-cols-2  items-center w-full">
                   <label htmlFor="" className="font-semibold ">
-                    Tower Name <span className="text-red-500">*</span>
+                    Building Name <span className="text-red-500">*</span>
                   </label>
                   <select
                     id="builiding_name"
@@ -1194,7 +1201,7 @@ const CreateTicket = () => {
                     onChange={buildingChange}
                     className="border p-1 px-4 max-w-44 w-44 border-gray-500 rounded-md"
                   >
-                    <option value="">Select Tower</option>
+                    <option value="">Select Building</option>
                     {building?.map((build) => (
                       <option key={build.id} value={build.id}>
                         {build.name}

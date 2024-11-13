@@ -34,6 +34,15 @@ export const downloadQrCode = async (ids) =>
       token: token,
     },
   });
+
+  export const softServiceDownloadQrCode = async (ids) =>
+    axiosInstance.get(`/soft_services/print_qr_codes?soft_service_ids=${ids}`, {
+      responseType: "blob",
+      params: {
+        token: token,
+      },
+    });
+
 export const getSiteAsset = async (page) =>
   axiosInstance.get(`/site_assets.json`, {
     params: {
@@ -633,10 +642,19 @@ export const getFilterData = async (
   catId,
   issueStatId,
   prio_count,
-  assign_eq
+  assign_eq,
+  firstName, 
+  lastName,
+  buildingId,
+  floorId,
+  unitID,
+  startDt,
+  endDt
 ) =>
   axiosInstance.get(
-    `/pms/admin/complaints.json?q[category_type_id_eq]=${catId}&q[issue_status_eq]=${issueStatId}&q[priority_cont]=${prio_count}&q[assigned_to_eq]=${assign_eq}`,
+    `/pms/admin/complaints.json?q[category_type_id_eq]=${catId}&q[issue_status_eq]=${issueStatId}&q[priority_cont]=${prio_count}&q[assigned_to_eq]=${assign_eq}
+    &q[user_firstname_cont]=${firstName}&q[user_lastname_cont]=${lastName}&q[unit_building_id_eq]=${buildingId}&q[unit_floor_id_eq]=${floorId}
+    &q[unit_id_eq]=${unitID}&q[date_range]=${startDt}-${endDt}`,
     {
       params: {
         token: token,

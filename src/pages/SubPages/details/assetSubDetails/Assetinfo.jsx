@@ -116,12 +116,14 @@ const Assetinfo = ({ assetData }) => {
       ),
     },
     { name: "Name", selector: (row) => row.name },
-    { name: "Order", selector: (row) => row.order },
+    { name: "Sequence", selector: (row) => row.order },
+    { name: "Unit Type", selector: (row) => row.unit_type },
     { name: "Charactor Limit", selector: (row) => row.digit },
     { name: "Alert Below", selector: (row) => row.alert_below },
     { name: "Alert Above", selector: (row) => row.alert_above },
     { name: "Min", selector: (row) => row.min_val },
     { name: "Max", selector: (row) => row.max_val },
+    { name: "Multiplier Factor", selector: (row) => row.multiplier_factor },
     {
       name: "Dashboard view",
       selector: (row) => (row.dashboard_view ? "Yes" : "No"),
@@ -180,7 +182,7 @@ const Assetinfo = ({ assetData }) => {
       toast.dismiss();
       toast.success("Asset Params added successfully");
       // setFormData(initialAddAssetFormData);
-      // window.location.reload();
+      window.location.reload();
     } catch (error) {
       console.error("Error submitting complaint:", error);
       toast.error("Error Creating Asset!");
@@ -755,7 +757,7 @@ const Assetinfo = ({ assetData }) => {
             {page === "nonconsumption" && (
               <div className="p-5">
                 <h2 className="border-b  text-xl border-black font-semibold my-3">
-                  NON CONSUMPTION ASSET MEASURE
+                  Non Consumption Parameter
                 </h2>
                 <div className="grid md:grid-cols-3 item-start gap-x-4 gap-y-2 w-full py-2">
                   <div className="flex flex-col">
@@ -774,7 +776,7 @@ const Assetinfo = ({ assetData }) => {
                   </div>
                   <div className="flex flex-col">
                     <label htmlFor="order" className="font-medium">
-                      Unit Type :
+                      Order :
                     </label>
                     <input
                       type="text"
@@ -782,13 +784,27 @@ const Assetinfo = ({ assetData }) => {
                       id="order"
                       value={formData.order || ""}
                       onChange={handleAssetParamsChange}
+                      placeholder="Enter Order"
+                      className="border p-1 px-4 border-gray-500 rounded-md"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <label htmlFor="unit" className="font-medium">
+                      Unit Type :
+                    </label>
+                    <input
+                      type="text"
+                      name="unit_type"
+                      id="unit"
+                      value={formData.unit_type || ""}
+                      onChange={handleAssetParamsChange}
                       placeholder="Enter Unit Type"
                       className="border p-1 px-4 border-gray-500 rounded-md"
                     />
                   </div>
                   <div className="flex flex-col">
                     <label htmlFor="charactorLimt" className="font-medium">
-                      Min :
+                      Input Character Limit :
                     </label>
                     <input
                       type="text"
@@ -802,7 +818,7 @@ const Assetinfo = ({ assetData }) => {
                   </div>
                   <div className="flex flex-col">
                     <label htmlFor="bleow" className="font-medium">
-                      Max :
+                      Alert Below :
                     </label>
                     <input
                       type="text"
@@ -810,13 +826,13 @@ const Assetinfo = ({ assetData }) => {
                       id="below"
                       value={formData.alert_below}
                       onChange={handleAssetParamsChange}
-                      placeholder="Max"
+                      placeholder="Alert Below Value"
                       className="border p-1 px-4 border-gray-500 rounded-md"
                     />
                   </div>
                   <div className="flex flex-col">
                     <label htmlFor="above" className="font-medium">
-                      Alert Below Val. :
+                      Alert Above :
                     </label>
                     <input
                       type="text"
@@ -824,13 +840,13 @@ const Assetinfo = ({ assetData }) => {
                       id="above"
                       value={formData.alert_above}
                       onChange={handleAssetParamsChange}
-                      placeholder="Alert Below Val."
+                      placeholder="Alert Above Value"
                       className="border p-1 px-4 border-gray-500 rounded-md"
                     />
                   </div>
                   <div className="flex flex-col">
                     <label htmlFor="min" className="font-medium">
-                      Alert Above Val. :
+                      Min :
                     </label>
                     <input
                       type="text"
@@ -838,18 +854,33 @@ const Assetinfo = ({ assetData }) => {
                       id="min"
                       value={formData.min_val}
                       onChange={handleAssetParamsChange}
-                      placeholder="Alert Above Val."
+                      placeholder="Min Value"
                       className="border p-1 px-4 border-gray-500 rounded-md"
                     />
                   </div>
                   <div className="flex flex-col">
                     <label htmlFor="name" className="font-medium">
-                      Multiplier Factor :
+                      Max :
+                    </label>
+                    <input
+                      type="text"
+                      name="max_val"
+                      id="above"
+                      value={formData.max_val}
+                      onChange={handleAssetParamsChange}
+                      placeholder="Max Value"
+                      className="border p-1 px-4 border-gray-500 rounded-md"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <label htmlFor="Multiplier" className="font-medium">
+                    
+                    Multiplier Factor :
                     </label>
                     <input
                       type="text"
                       name="multiplier_factor"
-                      id="above"
+                      id="Multiplier"
                       value={formData.multiplier_factor}
                       onChange={handleAssetParamsChange}
                       placeholder="Multiplier Factor"
@@ -872,7 +903,38 @@ const Assetinfo = ({ assetData }) => {
                     />
                     <label htmlFor="dashboard_view">Dashboard View</label>
                   </div>
-
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      name="consumption_view"
+                      id="consumption_view"
+                      checked={formData.consumption_view || false}
+                      // onClick={() => setMeterApplicable(!meterApplicable)}
+                      onChange={() =>
+                        setFormData((prevState) => ({
+                          ...prevState,
+                          consumption_view: !prevState.consumption_view,
+                        }))
+                      }
+                    />
+                    <label htmlFor="consumption_view">Consumption View</label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      name="check_prev"
+                      id="check_prev"
+                      checked={formData.check_prev || false}
+                      // onClick={() => setMeterApplicable(!meterApplicable)}
+                      onChange={() =>
+                        setFormData((prevState) => ({
+                          ...prevState,
+                          check_prev: !prevState.check_prev,
+                        }))
+                      }
+                    />
+                    <label htmlFor="check_prev">Check previous Reading</label>
+                  </div>
                   {/* </div> */}
                 </div>
                 <div className="flex justify-center">

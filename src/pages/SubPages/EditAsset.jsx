@@ -34,6 +34,7 @@ const EditAsset = () => {
   const [addSupplierModal, showAddSupplierMOdal] = useState(false);
   const [vendors, setVendors] = useState([]);
   const [assetGroups, setAssetGroup] = useState([]);
+  const [consumptionData, setConsumptionData] = useState([]);
   //
   const today = new Date();
   const year = today.getFullYear();
@@ -184,7 +185,7 @@ const EditAsset = () => {
     fetchVendor();
     fetchAssetGroups();
   }, [id]);
-
+  console.log(consumptionData);
   const handleChange = async (e) => {
     async function fetchFloor(floorID) {
       try {
@@ -303,13 +304,6 @@ const EditAsset = () => {
     if (formData.building_id === "") {
       return toast.error("Please Select Building Name");
     }
-    if (formData.latitude === "") {
-      return toast.error("Please Enter Latitude");
-    }
-    if (formData.longitude === "") {
-      return toast.error("Please Enter Longitude");
-    }
-
     if (formData.name === "") {
       return toast.error("Please Enter Asset Name");
     }
@@ -451,20 +445,17 @@ const EditAsset = () => {
   };
 
   // Consumption
-  const [consumptionData, setConsumptionData] = useState([]);
+
   const handleAddConsumption = () => {
     setConsumptionData((prev) => [
       ...prev,
       {
         name: "",
-        order: "",
-        digit: "",
-        alert_below: "",
-        alert_above: "",
+        unit_type: "",
         min_val: "",
         max_val: "",
-        dashboard_view: false,
-        consumption_view: false,
+        alert_below: "",
+        alert_above: "",
         check_prev: false,
       },
     ]);
@@ -473,7 +464,6 @@ const EditAsset = () => {
   const handleRemoveConsumption = (index) => {
     setConsumptionData((prev) => prev.filter((_, i) => i !== index));
   };
-
   return (
     // <section>
     //   <div className="m-2">
@@ -496,7 +486,7 @@ const EditAsset = () => {
             <div className="grid md:grid-cols-3 item-start gap-x-4 gap-y-2 w-full">
               <div className="flex flex-col">
                 <label htmlFor="" className="font-semibold">
-                  Select Building :
+                  Select Building :<span className="text-red-500 font-medium">*</span>
                 </label>
                 <select
                   className="border p-1 px-4 border-gray-500 rounded-md"
@@ -577,7 +567,6 @@ const EditAsset = () => {
               <div className="flex flex-col">
                 <label className="block text-gray-700 mb-1 font-medium">
                   Latitude
-                  <span className="text-red-500 font-medium">*</span>
                 </label>
                 <input
                   type="number"
@@ -592,7 +581,6 @@ const EditAsset = () => {
               <div className="flex flex-col">
                 <label className="block text-gray-700 mb-1 font-medium">
                   Longitude
-                  <span className="text-red-500 font-medium">*</span>
                 </label>
                 <input
                   type="number"
@@ -1237,107 +1225,205 @@ const EditAsset = () => {
                 <div className="my-5 space-y-3">
                   {consumptionData.map((formData, index) => (
                     <div
-                    key={index}
-                    className="grid gap-5 border rounded-md p-5 lg:grid-cols-3 md:grid-cols-2 sm:grid-cols-1"
-                  >
-                    <div className="flex flex-col">
-                      <label htmlFor="name_Consumption" className="font-medium">
-                        Name:
-                      </label>
-                      <input
-                        type="text"
-                        name="nameConsumption"
-                        id="name_Consumption"
-                        placeholder="Name"
-                        className="border p-2 border-gray-500 rounded-md"
-                      />
-                    </div>
-                    <div className="flex flex-col">
-                      <label htmlFor="unit_type" className="font-medium">
-                        Unit Type:
-                      </label>
-                      <select
-                        name="unit_type"
-                        id="unit_type"
-                        className="border p-2 border-gray-500 rounded-md"
-                      >
-                        <option value="">Select Unit Type</option>
-                      </select>
-                    </div>
-                    <div className="flex flex-col">
-                      <label htmlFor="min" className="font-medium">
-                        Min:
-                      </label>
-                      <input
-                        type="text"
-                        name="min_val"
-                        id="min"
-                        placeholder="Min"
-                        className="border p-2 border-gray-500 rounded-md"
-                      />
-                    </div>
-                    <div className="flex flex-col">
-                      <label htmlFor="max" className="font-medium">
-                        Max:
-                      </label>
-                      <input
-                        type="text"
-                        name="max_val"
-                        id="max"
-                        placeholder="Max"
-                        className="border p-2 border-gray-500 rounded-md"
-                      />
-                    </div>
-                    <div className="flex flex-col">
-                      <label htmlFor="below" className="font-medium">
-                        Alert Below Value:
-                      </label>
-                      <input
-                        type="text"
-                        name="alert_below"
-                        id="below"
-                        placeholder="Alert Below Value"
-                        className="border p-2 border-gray-500 rounded-md"
-                      />
-                    </div>
-                    <div className="flex flex-col">
-                      <label htmlFor="above" className="font-medium">
-                        Alert Above Value:
-                      </label>
-                      <input
-                        type="text"
-                        name="alert_above"
-                        id="above"
-                        placeholder="Alert Above Value"
-                        className="border p-2 border-gray-500 rounded-md"
-                      />
-                    </div>
-                    <div className="flex flex-col">
-                      <label htmlFor="multiplier_factor" className="font-medium">
-                        Multiplier Factor:
-                      </label>
-                      <input
-                        type="text"
-                        name="multiplierFactor"
-                        id="multiplier_factor"
-                        placeholder="Multiplier Factor"
-                        className="border p-2 border-gray-500 rounded-md"
-                      />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <input type="checkbox" name="CheckPreviousReading" id="previous_reading" />
-                      <label htmlFor="previous_reading">Check Previous Reading</label>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveConsumption(index)}
-                      className="col-span-full text-red-600 underline mt-2"
+                      key={index}
+                      className="grid gap-5 border rounded-md p-5 lg:grid-cols-3 md:grid-cols-2 sm:grid-cols-1"
                     >
-                      <IoMdClose size={20} />
-                    </button>
-                  </div>
-                  
+                      {/* Name Input */}
+                      <div className="flex flex-col">
+                        <label
+                          htmlFor={`name_Consumption_${index}`}
+                          className="font-medium"
+                        >
+                          Name:
+                        </label>
+                        <input
+                          type="text"
+                          name={`name_Consumption_${index}`}
+                          id={`name_Consumption_${index}`}
+                          value={formData.name}
+                          onChange={(e) =>
+                            setConsumptionData((prev) =>
+                              prev.map((item, i) =>
+                                i === index
+                                  ? { ...item, name: e.target.value }
+                                  : item
+                              )
+                            )
+                          }
+                          placeholder="Name"
+                          className="border p-2 border-gray-500 rounded-md"
+                        />
+                      </div>
+
+                      {/* Unit Type Dropdown */}
+                      <div className="flex flex-col">
+                        <label
+                          htmlFor={`unit_type_${index}`}
+                          className="font-medium"
+                        >
+                          Unit Type:
+                        </label>
+                        <select
+                          name={`unit_type_${index}`}
+                          id={`unit_type_${index}`}
+                          value={formData.unit_type}
+                          onChange={(e) =>
+                            setConsumptionData((prev) =>
+                              prev.map((item, i) =>
+                                i === index
+                                  ? { ...item, unit_type: e.target.value }
+                                  : item
+                              )
+                            )
+                          }
+                          className="border p-2 border-gray-500 rounded-md"
+                        >
+                          <option value="">Select Unit Type</option>
+                          {/* Add options dynamically if available */}
+                        </select>
+                      </div>
+
+                      {/* Min Value Input */}
+                      <div className="flex flex-col">
+                        <label
+                          htmlFor={`min_val_${index}`}
+                          className="font-medium"
+                        >
+                          Min Value:
+                        </label>
+                        <input
+                          type="text"
+                          name={`min_val_${index}`}
+                          id={`min_val_${index}`}
+                          value={formData.min_val}
+                          onChange={(e) =>
+                            setConsumptionData((prev) =>
+                              prev.map((item, i) =>
+                                i === index
+                                  ? { ...item, min_val: e.target.value }
+                                  : item
+                              )
+                            )
+                          }
+                          placeholder="Min Value"
+                          className="border p-2 border-gray-500 rounded-md"
+                        />
+                      </div>
+
+                      {/* Max Value Input */}
+                      <div className="flex flex-col">
+                        <label
+                          htmlFor={`max_val_${index}`}
+                          className="font-medium"
+                        >
+                          Max Value:
+                        </label>
+                        <input
+                          type="text"
+                          name={`max_val_${index}`}
+                          id={`max_val_${index}`}
+                          value={formData.max_val}
+                          onChange={(e) =>
+                            setConsumptionData((prev) =>
+                              prev.map((item, i) =>
+                                i === index
+                                  ? { ...item, max_val: e.target.value }
+                                  : item
+                              )
+                            )
+                          }
+                          placeholder="Max Value"
+                          className="border p-2 border-gray-500 rounded-md"
+                        />
+                      </div>
+
+                      {/* Alert Below Value Input */}
+                      <div className="flex flex-col">
+                        <label
+                          htmlFor={`alert_below_${index}`}
+                          className="font-medium"
+                        >
+                          Alert Below Value:
+                        </label>
+                        <input
+                          type="text"
+                          name={`alert_below_${index}`}
+                          id={`alert_below_${index}`}
+                          value={formData.alert_below}
+                          onChange={(e) =>
+                            setConsumptionData((prev) =>
+                              prev.map((item, i) =>
+                                i === index
+                                  ? { ...item, alert_below: e.target.value }
+                                  : item
+                              )
+                            )
+                          }
+                          placeholder="Alert Below"
+                          className="border p-2 border-gray-500 rounded-md"
+                        />
+                      </div>
+
+                      {/* Alert Above Value Input */}
+                      <div className="flex flex-col">
+                        <label
+                          htmlFor={`alert_above_${index}`}
+                          className="font-medium"
+                        >
+                          Alert Above Value:
+                        </label>
+                        <input
+                          type="text"
+                          name={`alert_above_${index}`}
+                          id={`alert_above_${index}`}
+                          value={formData.alert_above}
+                          onChange={(e) =>
+                            setConsumptionData((prev) =>
+                              prev.map((item, i) =>
+                                i === index
+                                  ? { ...item, alert_above: e.target.value }
+                                  : item
+                              )
+                            )
+                          }
+                          placeholder="Alert Above"
+                          className="border p-2 border-gray-500 rounded-md"
+                        />
+                      </div>
+
+                      {/* Check Previous Checkbox */}
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          name={`check_prev_${index}`}
+                          id={`check_prev_${index}`}
+                          checked={formData.check_prev}
+                          onChange={(e) =>
+                            setConsumptionData((prev) =>
+                              prev.map((item, i) =>
+                                i === index
+                                  ? { ...item, check_prev: e.target.checked }
+                                  : item
+                              )
+                            )
+                          }
+                        />
+                        <label htmlFor={`check_prev_${index}`}>
+                          Check Previous Reading
+                        </label>
+                      </div>
+
+                      {/* Remove Button */}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveConsumption(index)}
+                        className="col-span-full text-red-600 underline mt-2"
+                      >
+                        <IoMdClose size={20} />
+                      </button>
+                    </div>
                   ))}
+                  {/* Add Consumption Button */}
                   <button
                     className="border border-black rounded-md py-2 px-3 my-2"
                     onClick={handleAddConsumption}
