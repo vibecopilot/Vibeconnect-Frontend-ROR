@@ -671,7 +671,7 @@ export const getChecklistDetails = async (id) =>
     },
   });
   export const ChecklistImport = async (file) =>
-    axiosInstance.post(`/checklist/checklist_import.json?`, file, {
+    axiosInstance.post(`/checklist/checklist_import.json`, file, {
       params: {
         token: token,
       },
@@ -1257,6 +1257,24 @@ export const postChecklist = async (data) =>
         token: token,
       },
     });
+    export const getChecklistGroupReading = async () =>
+      axiosInstance.get("/generic_infos.json?q[info_type_eq]=GroupReading", {
+        params: {
+          token: token,
+        },
+      });
+    export const getSiteOwnerDetails = async (id) =>
+      axiosInstance.get(`/generic_infos/${id}.json`, {
+        params: {
+          token: token,
+        },
+      });
+    export const EditSiteOwner = async (id, data) =>
+      axiosInstance.put(`/generic_infos/${id}.json`, data, {
+        params: {
+          token: token,
+        },
+      });
   export const postSiteOwner = async (data) =>
     axiosInstance.post("/generic_infos.json", data, {
       params: {

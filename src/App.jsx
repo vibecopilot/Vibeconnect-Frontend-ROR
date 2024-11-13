@@ -691,6 +691,7 @@ import MasterDetails from "./pages/SubPages/MasterDetails.jsx";
 import PPMCalendar from "./pages/PPMCalendar.jsx";
 import CopyChecklist from "./pages/SubPages/CopyChecklist.jsx";
 import SiteOwner from "./pages/Setup/SiteOwner.jsx";
+import ChecklistGroupReading from "./pages/Setup/ChecklistGroupReading.jsx";
 // new admin hrms
 
 function App() {
@@ -1884,6 +1885,14 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <SiteOwner />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/checklist-group-reading-setup"
+            element={
+              <ProtectedAdminRoutes>
+                <ChecklistGroupReading />
               </ProtectedAdminRoutes>
             }
           />
