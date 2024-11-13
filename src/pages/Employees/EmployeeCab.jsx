@@ -4,11 +4,10 @@ import { Link } from "react-router-dom";
 
 import DataTable from "react-data-table-component";
 import { BsEye } from "react-icons/bs";
-
+import Table from "../../components/table/Table";
 
 const EmployeeCab = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
-
 
   const columns = [
     {
@@ -36,7 +35,7 @@ const EmployeeCab = () => {
       selector: (row) => row.expected_time,
       sortable: true,
     },
-   
+
     {
       name: "Status",
       selector: (row) => row.status,
@@ -44,11 +43,13 @@ const EmployeeCab = () => {
     },
     {
       name: "Cancellation",
-      selector: (row) => (row.status === "Upcoming" && <button className="text-red-400 font-medium">Cancel</button>),
+      selector: (row) =>
+        row.status === "Upcoming" && (
+          <button className="text-red-400 font-medium">Cancel</button>
+        ),
       sortable: true,
     },
   ];
-
 
   //custom style
   const customStyle = {
@@ -56,7 +57,6 @@ const EmployeeCab = () => {
       style: {
         backgroundColor: "black",
         color: "white",
-
 
         fontSize: "10px",
       },
@@ -69,41 +69,38 @@ const EmployeeCab = () => {
   };
   const data = [
     {
-        id: 1,
+      id: 1,
       vehicle_number: 123,
       expected_date: "23/05/2024",
       expected_time: "05:30 PM",
       status: "Upcoming",
     },
- 
+
     {
       id: 2,
-     
+
       vehicle_number: 123,
       expected_date: "23/05/2024",
       expected_time: "05:30 PM",
-     
-      status: "Completed",
-  },
-  {
-    id: 3,
-    vehicle_number: 123,
-   expected_date: "23/05/2024",
-   expected_time: "05:30 PM",
-   
-   purpose:"meeting",
-   status: "Cancelled",
-},
- 
-  ];
 
+      status: "Completed",
+    },
+    {
+      id: 3,
+      vehicle_number: 123,
+      expected_date: "23/05/2024",
+      expected_time: "05:30 PM",
+
+      purpose: "meeting",
+      status: "Cancelled",
+    },
+  ];
 
   return (
     <section className="flex">
-     
       <div className=" w-full flex mx-3 flex-col overflow-hidden">
         <div className="flex md:flex-row flex-col gap-5 justify-between mt-10 my-2">
-          <div className="sm:flex grid grid-cols-2 items-center justify-center  gap-4 border border-gray-300 rounded-md px-3 p-2 w-auto">
+          <div className="sm:flex grid grid-cols-2 items-center justify-center gap-4 border border-gray-300 rounded-md px-3 p-2 w-auto">
             <div className="flex items-center gap-2">
               <input
                 type="radio"
@@ -145,7 +142,6 @@ const EmployeeCab = () => {
               </label>
             </div>
 
-
             <div className="flex items-center gap-2">
               <input
                 type="radio"
@@ -167,25 +163,11 @@ const EmployeeCab = () => {
             Add
           </Link>
         </div>
-        <DataTable
-          responsive
-          //   selectableRows
-          columns={columns}
-          data={data}
-          customStyles={customStyle}
-          pagination
-          fixedHeader
-          // fixedHeaderScrollHeight="450px"
-          selectableRowsHighlight
-          highlightOnHover
-        />
+
+        <Table columns={columns} data={data} />
       </div>
     </section>
   );
 };
 
-
-export default EmployeeCab
-
-
-
+export default EmployeeCab;

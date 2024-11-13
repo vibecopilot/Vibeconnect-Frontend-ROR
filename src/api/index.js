@@ -5775,7 +5775,7 @@ export const getTotalHRMSEmployeeCount = async (orgId) => {
 export const getDepartmentCount = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
-      `/organization/1/departments/employee-count/`,
+      `/organization/${orgId}/departments/employee-count/`,
       {
         // headers: {
         //   "Content-Type": "multipart/form-data/",
@@ -5785,6 +5785,84 @@ export const getDepartmentCount = async (orgId) => {
     return response.data;
   } catch (error) {
     console.error("Error getting department count :", error);
+    throw error;
+  }
+};
+export const getLocationCount = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/organization/${orgId}/location/employee-count`,
+      {
+        // headers: {
+        //   "Content-Type": "multipart/form-data/",
+        // },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting location count :", error);
+    throw error;
+  }
+};
+export const getGenderCount = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/organization/${orgId}/gender/employee-count/`,
+      {
+        // headers: {
+        //   "Content-Type": "multipart/form-data/",
+        // },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting gender count :", error);
+    throw error;
+  }
+};
+export const getDeviceRegistrationRequests = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/device-registration/?organization_id=${orgId}`,
+      {
+        // headers: {
+        //   "Content-Type": "multipart/form-data/",
+        // },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting device registration request :", error);
+    throw error;
+  }
+};
+export const postRegistrationRequestApproval = async (data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/device-registration/update-status/`,
+      data,
+      {
+        // headers: {
+        //   "Content-Type": "multipart/form-data/",
+        // },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting device registration approval :", error);
+    throw error;
+  }
+};
+export const getRegistrationDetails = async (reqId) => {
+  try {
+    const response = await HrmsAuth.get(`/device-registration/${reqId}`, {
+      // headers: {
+      //   "Content-Type": "multipart/form-data/",
+      // },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error posting device registration approval :", error);
     throw error;
   }
 };

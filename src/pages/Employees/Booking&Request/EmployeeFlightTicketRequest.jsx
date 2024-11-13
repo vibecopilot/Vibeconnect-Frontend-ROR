@@ -64,12 +64,6 @@ const EmployeeFlightRequest = () => {
         </div>
       ),
     },
-
-    {
-      name: "Employee Name",
-      selector: (row) => row.name,
-      sortable: true,
-    },
     {
       name: "Departure City",
       selector: (row) => row.Departure_City,
@@ -90,26 +84,10 @@ const EmployeeFlightRequest = () => {
       selector: (row) => row.Checkout,
       sortable: true,
     },
-    {
-      name: "Preferred Airline",
-      selector: (row) => row.Preferred,
-      sortable: true,
-    },
-
+    
     {
       name: "Class",
       selector: (row) => row.Class,
-      sortable: true,
-    },
-
-    {
-      name: "Passport Information",
-      selector: (row) => row.Passport_Information,
-      sortable: true,
-    },
-    {
-      name: "Manager Approval",
-      selector: (row) => row.Manager_Approval,
       sortable: true,
     },
     {
@@ -120,12 +98,11 @@ const EmployeeFlightRequest = () => {
     {
       name: "Cancellation",
       cell: (row) =>
-        row.status === "Upcoming" && (
+        row.status === "pending" && (
           <button className="text-red-400 font-medium">Cancel</button>
         ),
     },
   ];
-
 
   return (
     <section className="flex">

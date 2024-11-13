@@ -38,6 +38,7 @@ import {
   TbAlertSquareFilled,
   TbAlertSquareRoundedFilled,
 } from "react-icons/tb";
+import { HiOutlineDevicePhoneMobile } from "react-icons/hi2";
 const AdminHRMS = () => {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState("");
@@ -375,7 +376,7 @@ const AdminHRMS = () => {
                 Dashboard
               </h2>
             </NavLink>
-            <NavLink
+            {/* <NavLink
               to="/admin/hrms/alerts"
               className={({ isActive }) =>
                 `${
@@ -402,7 +403,7 @@ const AdminHRMS = () => {
               >
                 Alerts
               </h2>
-            </NavLink>
+            </NavLink> */}
             <div>
               <div
                 onClick={toggleOrgMenu}
@@ -960,7 +961,7 @@ const AdminHRMS = () => {
                     }
                   >
                     <div>
-                      {React.createElement(IoCashOutline, { size: "20" })}
+                      {React.createElement(HiOutlineDevicePhoneMobile, { size: "20" })}
                     </div>
                     <h2
                       className={`whitespace-pre duration-300 ${
