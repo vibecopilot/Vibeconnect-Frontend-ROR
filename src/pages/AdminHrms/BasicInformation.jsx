@@ -1,9 +1,16 @@
 import React, { useEffect, useState } from "react";
 import OrganisationSetting from "./OrganisationSetting";
 import HRMSHelpCenter from "./HRMSHelpCenter";
-import { editMyOrganization, getAllHrmsOrganisation, getMyOrganization } from "../../api";
+import {
+  editMyOrganization,
+  getAllHrmsOrganisation,
+  getMyOrganization,
+} from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import toast from "react-hot-toast";
+import { BiEdit } from "react-icons/bi";
+import { MdClose } from "react-icons/md";
+import { FaCheck } from "react-icons/fa";
 
 const BasicInformation = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -74,15 +81,12 @@ const BasicInformation = () => {
       toast.error("Inactive access days is required");
       return;
     }
-   
-   
+
     if (!formData.probationPeriod) {
       toast.error("Probation period is required");
       return;
     }
-  
-    setIsEditing(false);
-  
+
     const postData = new FormData();
     postData.append("name", formData.companyName);
     postData.append("contact_number", formData.contactNumber);
@@ -101,17 +105,16 @@ const BasicInformation = () => {
     );
     postData.append("override_old_email", formData.overwriteEmail);
     postData.append("default_probation_period", formData.probationPeriod);
-  
+
     try {
       const res = await editMyOrganization(hrmsOrgId, postData);
       toast.success("Organization details updated successfully");
-    
+      setIsEditing(false);
     } catch (error) {
       toast.error("An error occurred while updating the organization");
       console.log(error);
     }
   };
-  
 
   return (
     <div className="flex ml-20 justify-between">
@@ -123,24 +126,33 @@ const BasicInformation = () => {
           {!isEditing ? (
             <button
               onClick={() => setIsEditing(!isEditing)}
-              className="mb-4 px-4 py-2 bg-blue-500 text-white rounded-md"
+              className="mb-4 px-4 py-1 bg-blue-500 text-white rounded-full flex items-center gap-2"
             >
-              Edit
+              <BiEdit /> Edit
             </button>
           ) : (
-            <button
-              onClick={HandleEditMyOrganization}
-              className="mb-4 px-4 py-2 bg-green-500 text-white rounded-md"
-            >
-              Save
-            </button>
+            <div className="flex gap-2 items-center">
+              <button
+                onClick={HandleEditMyOrganization}
+                className="mb-4 px-4 py-1 bg-green-500 text-white rounded-full flex items-center gap-2"
+              >
+                <FaCheck /> Save
+              </button>
+              <button
+                onClick={() => setIsEditing(false)}
+                className="mb-4 px-4 py-1 border-2 border-red-500 text-red-400 rounded-full flex items-center gap-2"
+              >
+                <MdClose /> Cancel
+              </button>
+            </div>
           )}
         </div>
         <div>
           <div className="grid w-full gap-2">
             <div className="mb-2">
               <label className="block text-gray-700 font-medium">
-                Registered Name of your Company
+                Registered name of your Company{" "}
+                <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -148,15 +160,14 @@ const BasicInformation = () => {
                 value={formData.companyName}
                 onChange={handleChange}
                 className={`w-full px-3 py-2 border border-gray-300 rounded-md ${
-                  !isEditing ? "bg-gray-200" : ""
+                  !isEditing ? "bg-gray-200 text-gray-500" : ""
                 }`}
                 readOnly={!isEditing}
               />
             </div>
-
             <div className="mb-2">
               <label className="block text-gray-700 font-medium">
-                Company Contact Number
+                Company contact number <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -164,7 +175,7 @@ const BasicInformation = () => {
                 value={formData.contactNumber}
                 onChange={handleChange}
                 className={`w-full px-3 py-2 border border-gray-300 rounded-md ${
-                  !isEditing ? "bg-gray-200" : ""
+                  !isEditing ? "bg-gray-200 text-gray-500" : ""
                 }`}
                 readOnly={!isEditing}
               />
@@ -172,7 +183,7 @@ const BasicInformation = () => {
 
             <div className="mb-2">
               <label className="block text-gray-700 font-medium">
-                Company's Retirement Age
+                Company's retirement age <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
@@ -180,7 +191,7 @@ const BasicInformation = () => {
                 value={formData.retirementAge}
                 onChange={handleChange}
                 className={`w-full px-3 py-2 border border-gray-300 rounded-md ${
-                  !isEditing ? "bg-gray-200" : ""
+                  !isEditing ? "bg-gray-200 text-gray-500" : ""
                 }`}
                 readOnly={!isEditing}
               />
@@ -188,7 +199,8 @@ const BasicInformation = () => {
 
             <div className="mb-2">
               <label className="block text-gray-700 font-medium">
-                Minimum Age for a Person to be an Employee
+                Minimum Age for a person to be an employee{" "}
+                <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
@@ -196,7 +208,7 @@ const BasicInformation = () => {
                 value={formData.minEmployeeAge}
                 onChange={handleChange}
                 className={`w-full px-3 py-2 border border-gray-300 rounded-md ${
-                  !isEditing ? "bg-gray-200" : ""
+                  !isEditing ? "bg-gray-200 text-gray-500" : ""
                 }`}
                 readOnly={!isEditing}
               />
@@ -204,7 +216,8 @@ const BasicInformation = () => {
 
             <div className="mb-2">
               <label className="block text-gray-700 font-medium">
-                Inactive Employees Access Days from Last Working Date
+                Inactive employees Access Days from last working date{" "}
+                <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
@@ -212,7 +225,7 @@ const BasicInformation = () => {
                 value={formData.inactiveAccessDays}
                 onChange={handleChange}
                 className={`w-full px-3 py-2 border border-gray-300 rounded-md ${
-                  !isEditing ? "bg-gray-200" : ""
+                  !isEditing ? "bg-gray-200 text-gray-500" : ""
                 }`}
                 readOnly={!isEditing}
               />
@@ -220,7 +233,7 @@ const BasicInformation = () => {
 
             <div className="mb-2">
               <label className="block text-gray-700 font-medium">
-                Last Working Date can be before Resignation Date?
+                Last working date can be before resignation date?
               </label>
               <div
                 className={`w-full px-3 py-2 border border-gray-300 rounded-md ${
@@ -233,7 +246,12 @@ const BasicInformation = () => {
                     name="lastWorkingDateBeforeResignation"
                     value="true"
                     checked={formData.lastWorkingDateBeforeResignation === true}
-                    onChange={()=>setFormData({...formData, lastWorkingDateBeforeResignation: true})}
+                    onChange={() =>
+                      setFormData({
+                        ...formData,
+                        lastWorkingDateBeforeResignation: true,
+                      })
+                    }
                     disabled={!isEditing}
                     className="form-radio text-indigo-600"
                   />
@@ -247,7 +265,12 @@ const BasicInformation = () => {
                     checked={
                       formData.lastWorkingDateBeforeResignation === false
                     }
-                    onChange={()=>setFormData({...formData, lastWorkingDateBeforeResignation: false})}
+                    onChange={() =>
+                      setFormData({
+                        ...formData,
+                        lastWorkingDateBeforeResignation: false,
+                      })
+                    }
                     disabled={!isEditing}
                     className="form-radio text-indigo-600"
                   />
@@ -258,7 +281,8 @@ const BasicInformation = () => {
 
             <div className="mb-2">
               <label className="block text-gray-700 font-medium">
-                Default Probation Period (in days)
+                Default Probation period (in days){" "}
+                <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
@@ -266,13 +290,13 @@ const BasicInformation = () => {
                 value={formData.probationPeriod}
                 onChange={handleChange}
                 className={`w-full px-3 py-2 border border-gray-300 rounded-md ${
-                  !isEditing ? "bg-gray-200" : ""
+                  !isEditing ? "bg-gray-200 text-gray-500" : ""
                 }`}
                 readOnly={!isEditing}
               />
             </div>
 
-            <div className="mb-2">
+            {/* <div className="mb-2">
               <label className="block text-gray-700 font-medium">
                 Unauthorized Absence Rate
               </label>
@@ -286,7 +310,7 @@ const BasicInformation = () => {
                 }`}
                 readOnly={!isEditing}
               />
-            </div>
+            </div> */}
 
             <div className="mb-2">
               <label className="block text-gray-700 font-medium">
@@ -303,7 +327,9 @@ const BasicInformation = () => {
                     name="overwriteEmail"
                     value="true"
                     checked={formData.overwriteEmail === true}
-                    onChange={()=>setFormData({...formData, overwriteEmail: true})}
+                    onChange={() =>
+                      setFormData({ ...formData, overwriteEmail: true })
+                    }
                     disabled={!isEditing}
                     className="form-radio text-indigo-600"
                   />
@@ -315,7 +341,9 @@ const BasicInformation = () => {
                     name="overwriteEmail"
                     value="false"
                     checked={formData.overwriteEmail === false}
-                    onChange={()=>setFormData({...formData, overwriteEmail: false})}
+                    onChange={() =>
+                      setFormData({ ...formData, overwriteEmail: false })
+                    }
                     disabled={!isEditing}
                     className="form-radio text-indigo-600"
                   />
@@ -325,7 +353,7 @@ const BasicInformation = () => {
             </div>
           </div>
         </div>
-        <div className="bg-white p-6 rounded-lg border border-gray-200 ">
+        {/* <div className="bg-white p-6 rounded-lg border border-gray-200 ">
           <h2 className="text-xl font-semibold mb-4">VibeCopilot</h2>
           <div className="grid grid-cols-1 gap-4">
             <div className="flex justify-between">
@@ -353,7 +381,7 @@ const BasicInformation = () => {
               <span>23/20/2023</span>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
       <HRMSHelpCenter help={"basic"} />
     </div>

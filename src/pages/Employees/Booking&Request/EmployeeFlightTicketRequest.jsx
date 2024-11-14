@@ -16,7 +16,7 @@ const EmployeeFlightRequest = () => {
         to={to}
         className={({ isActive }) =>
           `p-1 rounded-full px-4 cursor-pointer text-center transition-all duration-300 ease-linear ${
-            isActive ? 'bg-white text-blue-500 shadow-custom-all-sides' : 'hover:bg-gray-800'
+            isActive && "bg-white text-blue-500 shadow-custom-all-sides"
           }`
         }
       >
@@ -65,16 +65,6 @@ const EmployeeFlightRequest = () => {
       ),
     },
     {
-      name: "Employee ID",
-      selector: (row) => row.Id,
-      sortable: true,
-    },
-    {
-      name: "Employee Name",
-      selector: (row) => row.name,
-      sortable: true,
-    },
-    {
       name: "Departure City",
       selector: (row) => row.Departure_City,
       sortable: true,
@@ -94,39 +84,10 @@ const EmployeeFlightRequest = () => {
       selector: (row) => row.Checkout,
       sortable: true,
     },
-    {
-      name: "Preferred Airline",
-      selector: (row) => row.Preferred,
-      sortable: true,
-    },
-    {
-      name: "Ticket Confirmation Number",
-      selector: (row) => row.Ticket_number,
-      sortable: true,
-    },
-    {
-      name: "Booking Confirmation Email",
-      selector: (row) => row.booking_email,
-      sortable: true,
-    },
+    
     {
       name: "Class",
       selector: (row) => row.Class,
-      sortable: true,
-    },
-    {
-      name: "Passenger Name",
-      selector: (row) => row.Passenger_Name,
-      sortable: true,
-    },
-    {
-      name: "Passport Information",
-      selector: (row) => row.Passport_Information,
-      sortable: true,
-    },
-    {
-      name: "Manager Approval",
-      selector: (row) => row.Manager_Approval,
       sortable: true,
     },
     {
@@ -137,28 +98,11 @@ const EmployeeFlightRequest = () => {
     {
       name: "Cancellation",
       cell: (row) =>
-        row.status === "Upcoming" && (
+        row.status === "pending" && (
           <button className="text-red-400 font-medium">Cancel</button>
         ),
     },
   ];
-
-  // Custom styles for the table
-  // const customStyles = {
-  //   headRow: {
-  //     style: {
-  //       backgroundColor: themeColor,
-  //       color: "white",
-  //       fontSize: "12px",
-  //     },
-  //   },
-  //   headCells: {
-  //     style: {
-  //       textTransform: "uppercase",
-  //       fontSize: "10px",
-  //     },
-  //   },
-  // };
 
   return (
     <section className="flex">
@@ -179,87 +123,87 @@ const EmployeeFlightRequest = () => {
               Transportation Request
             </CustomNavLink>
             <CustomNavLink to="/employee/booking-request/traveling-allowance-request">
-               Traveling Allowance Request
+              Traveling Allowance Request
             </CustomNavLink>
           </div>
         </div>
-
-      <div className="w-full flex mx-3 flex-col overflow-hidden">
-        <div className="flex md:flex-row flex-col gap-5 justify-between mt-10 my-2">
-          <div className="sm:flex grid grid-cols-2 items-center justify-center  gap-4 border border-gray-300 rounded-md px-3 p-2 w-auto">
-            <div className="flex items-center gap-2">
-              <input
-                type="radio"
-                id="all"
-                name="status"
-                checked={selectedStatus === "all"}
-                onChange={() => handleStatusChange("all")}
-              />
-              <label htmlFor="all" className="text-sm">
-                All
-              </label>
+        <div className="w-full flex mx-3 flex-col overflow-hidden">
+          <div className="flex md:flex-row flex-col gap-5 justify-between mt-10 my-2">
+            <div className="sm:flex grid grid-cols-2 items-center justify-center  gap-4 border border-gray-300 rounded-md px-3 p-2 w-auto">
+              <div className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  id="all"
+                  name="status"
+                  checked={selectedStatus === "all"}
+                  onChange={() => handleStatusChange("all")}
+                />
+                <label htmlFor="all" className="text-sm">
+                  All
+                </label>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  id="upcoming"
+                  name="status"
+                  checked={selectedStatus === "upcoming"}
+                  onChange={() => handleStatusChange("upcoming")}
+                />
+                <label htmlFor="upcoming" className="text-sm">
+                  Upcoming
+                </label>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  id="completed"
+                  name="status"
+                  checked={selectedStatus === "completed"}
+                  onChange={() => handleStatusChange("completed")}
+                />
+                <label htmlFor="completed" className="text-sm">
+                  Completed
+                </label>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  id="cancelled"
+                  name="status"
+                  checked={selectedStatus === "cancelled"}
+                  onChange={() => handleStatusChange("cancelled")}
+                />
+                <label htmlFor="cancelled" className="text-sm">
+                  Cancelled
+                </label>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="radio"
-                id="upcoming"
-                name="status"
-                checked={selectedStatus === "upcoming"}
-                onChange={() => handleStatusChange("upcoming")}
-              />
-              <label htmlFor="upcoming" className="text-sm">
-                Upcoming
-              </label>
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="radio"
-                id="completed"
-                name="status"
-                checked={selectedStatus === "completed"}
-                onChange={() => handleStatusChange("completed")}
-              />
-              <label htmlFor="completed" className="text-sm">
-                Completed
-              </label>
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="radio"
-                id="cancelled"
-                name="status"
-                checked={selectedStatus === "cancelled"}
-                onChange={() => handleStatusChange("cancelled")}
-              />
-              <label htmlFor="cancelled" className="text-sm">
-                Cancelled
-              </label>
-            </div>
+            <span className="mr-4">
+              <Link
+                to="/employee/add-flight-request"
+                className="border-2 font-semibold hover:bg-black hover:text-white transition-all border-black p-2 rounded-md text-black cursor-pointer text-center flex items-center gap-2 justify-center"
+                style={{ height: "1cm" }}
+              >
+                <PiPlusCircle size={20} />
+                Add
+              </Link>
+            </span>
           </div>
-          <span className="mr-4">
-            <Link
-              to="/employee/add-flight-request"
-              className="border-2 font-semibold hover:bg-black hover:text-white transition-all border-black p-2 rounded-md text-black cursor-pointer text-center flex items-center gap-2 justify-center"
-              style={{ height: "1cm" }}
-            >
-              <PiPlusCircle size={20} />
-              Add
-            </Link>
-          </span>
-        </div>
-        <div className="w-full">
-          <Table
-            responsive
-            columns={columns}
-            data={data}
-            // customStyles={customStyles}
-            pagination
-            fixedHeader
-            selectableRowsHighlight
-            highlightOnHover
-          />
-        </div>
-      </div> </div>
+          <div className="w-full">
+            <Table
+              responsive
+              columns={columns}
+              data={data}
+              // customStyles={customStyles}
+              pagination
+              fixedHeader
+              selectableRowsHighlight
+              highlightOnHover
+            />
+          </div>
+        </div>{" "}
+      </div>
     </section>
   );
 };

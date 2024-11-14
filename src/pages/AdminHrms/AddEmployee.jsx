@@ -32,7 +32,7 @@ const AddEmployee = () => {
   const [steps, setSteps] = useState("basic");
   const listItemStyle = {
     listStyleType: "disc",
-    color: "black",
+    color: "gray",
     fontSize: "14px",
     fontWeight: 500,
   };
@@ -50,6 +50,7 @@ const AddEmployee = () => {
     bloodGroup: "",
     pan: "",
     aadhar: "",
+    esic: "",
     maritalStatus: "",
     emergencyContactName: "",
     emergencyContactNumber: "",
@@ -238,7 +239,7 @@ const AddEmployee = () => {
                   ? " text-white bg-blue-500 font-medium cursor-pointer"
                   : "text-white bg-gray-400 font-medium cursor-not-allowed"
               }`}
-              disabled={steps !== "basic"}
+              // disabled={steps !== "basic"}
               onClick={() => setSteps("basic")}
             >
               <div>{React.createElement(ImFileText2, { size: "20" })}</div>
@@ -252,7 +253,7 @@ const AddEmployee = () => {
                   : "text-white bg-gray-400 font-medium cursor-not-allowed"
               }`}
               onClick={() => setSteps("employment")}
-              disabled={steps !== "employment"}
+              // disabled={steps !== "employment"}
             >
               <div>{React.createElement(MdOutlineWork, { size: "20" })}</div>
               Employment
@@ -277,7 +278,7 @@ const AddEmployee = () => {
                   ? " text-white bg-blue-500 font-medium cursor-pointer"
                   : "text-white bg-gray-400 font-medium cursor-not-allowed"
               }`}
-              disabled={steps !== "statutory"}
+              // disabled={steps !== "statutory"}
               onClick={() => setSteps("statutory")}
             >
               <div>{React.createElement(ImFileText2, { size: "20" })}</div>
@@ -347,6 +348,7 @@ const AddEmployee = () => {
                   value={formData.mobile}
                   onChange={handleChange}
                   name="mobile"
+                  maxLength={13}
                   pattern="[0-9]*"
                   onKeyDown={(e) => {
                     if (
@@ -428,7 +430,7 @@ const AddEmployee = () => {
               </div>
               <div className="grid gap-2 items-center w-full">
                 <label className="block text-sm font-medium text-gray-700">
-                  Aadhar No
+                  Aadhar No.
                 </label>
                 <input
                   type="text"
@@ -441,6 +443,21 @@ const AddEmployee = () => {
                   placeholder="xxxx-xxxx-xxxx"
                 />
               </div>
+              {/* <div className="grid gap-2 items-center w-full">
+                <label className="block text-sm font-medium text-gray-700">
+                  ESIC No.
+                </label>
+                <input
+                  type="text"
+                  className="border border-gray-400 p-2 rounded-md"
+                  // placeholder="Aadhar Number"
+                  value={formData.esic}
+                  name="esic"
+                  onChange={handleChange}
+                  maxLength={17}
+                  placeholder="ESIC no."
+                />
+              </div> */}
               <div className="grid gap-2 items-center w-full">
                 <label className="block text-sm font-medium text-gray-700">
                   Marital Status
@@ -496,6 +513,7 @@ const AddEmployee = () => {
                 />
               </div>
             </div>
+
             <h2 className="border-b text-center text-xl border-black  mb-6 font-bold mt-2">
               Family Information
             </h2>
@@ -789,13 +807,13 @@ const AddEmployee = () => {
                 </ul>
               </li>
 
-              <li>
+              {/* <li>
                 <p>
                   Any custom fields added in Organisation {">"} Organisation
                   Settings {">"} Employee Fields {">"} Personal Details will be
                   reflected on the page{" "}
                 </p>
-              </li>
+              </li> */}
             </ul>
           </div>
         </div>

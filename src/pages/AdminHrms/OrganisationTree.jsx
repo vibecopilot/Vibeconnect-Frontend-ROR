@@ -64,7 +64,7 @@ const OrgTreeSettings = () => {
                   <label htmlFor="" className="font-semibold ">
                     Step 3
                   </label>
-                  <label htmlFor="">Assign Department Heads</label>
+                  <label htmlFor="">Assign Reporting supervisor</label>
                 </div>
                 <Link
                   to={"/admin/organisation-view3"}

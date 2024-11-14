@@ -5,6 +5,12 @@ import { ImEye } from "react-icons/im";
 import { IoAddCircleOutline } from "react-icons/io5";
 import { Link } from "react-router-dom";
 import Switch from "../../Buttons/Switch";
+import Navbar from "../../components/Navbar";
+import Table from "../../components/table/Table";
+import { useSelector } from "react-redux";
+import { BsEye } from "react-icons/bs";
+import SeatBooking from "./SeatBooking";
+import SetupSeatBooking from "./SetupSeatBooking";
 
 const SetupBookingFacility = () => {
   const [searchText, setSearchText] = useState("");
@@ -13,7 +19,9 @@ const SetupBookingFacility = () => {
     {
       name: "Action",
       cell: (row) => (
-        <Link to={`/bookings/booking-details/${row.id}`}>{row.action}</Link>
+        <Link to={`/bookings/booking-details/${row.id}`}>
+          <BsEye />
+        </Link>
       ),
       sortable: true,
     },
@@ -95,44 +103,76 @@ const SetupBookingFacility = () => {
     setFilteredData(filteredResults);
   };
 
-  const customStyle = {
-    headRow: {
-      style: {
-        backgroundColor: "black",
-        color: "white",
-        fontSize: "14px",
-      },
-    },
-  };
+
+  const themeColor = useSelector((state) => state.theme.color);
+  const [page, setPage] = useState("facility");
   return (
-    <div className="m-5">
-      <div className="flex justify-between items-center">
-        <input
-          type="text"
-          placeholder="Search By Name"
-          className="border-2 p-2 w-96 border-gray-300 rounded-lg"
-          value={searchText}
-          onChange={handleSearch}
-        />
-        <div className="flex gap-4 justify-end w-full">
-          <Link
-            to={"/facility/setup-facility"}
-            className="bg-black w-20 rounded-lg flex font-semibold items-center gap-2 text-white p-2 my-5"
-          >
-            <IoAddCircleOutline size={20} />
-            Add
-          </Link>
-          <button className="bg-black rounded-lg flex font-semibold items-center gap-2 text-white p-2 my-5">
-            <BiExport size={20} />
-            Export
-          </button>
+    <div className="flex">
+      <Navbar />
+
+      <div className="w-full flex mx-3 flex-col overflow-hidden">
+        <div className="flex justify-center my-2">
+          <div className="sm:flex grid grid-cols-2 sm:flex-row gap-5 font-medium p-2 sm:rounded-full rounded-md opacity-90 bg-gray-200 ">
+            <h2
+              className={`p-1 ${
+                page === "facility" &&
+                "bg-white text-blue-500 shadow-custom-all-sides"
+              } rounded-full px-4 cursor-pointer text-center  transition-all duration-300 ease-linear`}
+              onClick={() => setPage("facility")}
+            >
+              Facility
+            </h2>
+            <h2
+              className={`p-1 ${
+                page === "seatBooking" &&
+                "bg-white text-blue-500 shadow-custom-all-sides"
+              } rounded-full px-4 cursor-pointer text-center  transition-all duration-300 ease-linear`}
+              onClick={() => setPage("seatBooking")}
+            >
+              Seat
+            </h2>
+          </div>
         </div>
+        {page === "facility" && (
+          <>
+            <div className="flex gap-2 items-center w-full">
+              <input
+                type="text"
+                placeholder="Search by name"
+                className="border p-2 border-gray-300 rounded-md w-full"
+                value={searchText}
+                onChange={handleSearch}
+              />
+              <div className="flex gap-2 justify-end ">
+                <Link
+                  style={{ background: themeColor }}
+                  to={"/setup/facility/setup-facility"}
+                  className="bg-black w-20 rounded-lg flex font-semibold items-center gap-2 text-white p-2 my-2"
+                >
+                  <IoAddCircleOutline size={20} />
+                  Add
+                </Link>
+                <button
+                  style={{ background: themeColor }}
+                  className="bg-black rounded-lg flex font-semibold items-center gap-2 text-white p-2 my-2"
+                >
+                  <BiExport size={20} />
+                  Export
+                </button>
+              </div>
+            </div>
+            <Table
+              columns={setupColumn}
+              data={filteredData}
+              // customStyles={customStyle}
+            />
+          </>
+        )}
+
+        {page === "seatBooking" && (
+         <SetupSeatBooking/>
+        )}
       </div>
-      <DataTable
-        columns={setupColumn}
-        data={filteredData}
-        customStyles={customStyle}
-      />
     </div>
   );
 };

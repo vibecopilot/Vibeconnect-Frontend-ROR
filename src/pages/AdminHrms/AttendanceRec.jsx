@@ -4,6 +4,7 @@ import { useSelector } from "react-redux";
 import {
   FaAngleLeft,
   FaAngleRight,
+  FaCheck,
   FaChevronLeft,
   FaChevronRight,
   FaRedo,
@@ -13,6 +14,8 @@ import EmployeeDetailView from "./EmployeeDetailView";
 import { getAttendanceRecord } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import { Link } from "react-router-dom";
+import { MdClose } from "react-icons/md";
+import { DNA } from "react-loader-spinner";
 
 const getDateRange = (startDate) => {
   const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -46,7 +49,12 @@ const AttendanceRec = () => {
   const [isModalOpen2, setIsModalOpen2] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [selectedRecord1, setSelectedRecord1] = useState(false);
+  const [selectedEmpAttendance, setSelectedEmpAttendance] = useState(false);
+  const [addRegularization, setAddRegularization] = useState(false);
   const employeesPerPage = 10;
+  const [regData, setRegData] = useState({
+    requestType: "",
+  });
 
   const days = getDateRange(startDate);
   const themeColor = useSelector((state) => state.theme.color);
@@ -75,12 +83,20 @@ const AttendanceRec = () => {
   };
   const [filteredEmployees, setFilteredEmployees] = useState([]);
   const [employees, setEmployees] = useState([]);
+  const [loading, setLoading] = useState(true);
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
   const fetchEmployeeAttendance = async () => {
-    const res = await getAttendanceRecord(hrmsOrgId);
-    const data = res.results;
-    setEmployees(data);
-    setFilteredEmployees(data);
+    setLoading(true);
+    try {
+      const res = await getAttendanceRecord(hrmsOrgId);
+      const data = res.results;
+      setEmployees(data);
+      setFilteredEmployees(data);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -159,6 +175,10 @@ const AttendanceRec = () => {
   useEffect(() => {
     console.log("Weekly Date Range:", dateRange);
   }, [startDate]);
+
+  const handleRegChanges = async (e) => {
+    setRegData({ ...regData, [e.target.name]: e.target.value });
+  };
 
   return (
     <div className="flex">
@@ -291,53 +311,82 @@ const AttendanceRec = () => {
           </div>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full bg-white shadow-sm border-collapse">
-            <thead>
-              <tr className="bg-gray-200">
-                <th className="p-2 text-left ">Employee Name</th>
-                {nextSevenDays.map((date, index) => (
-                  <th
-                    key={index}
-                    className="p-2  border-none text-center font-mono"
-                  >
-                    {formatDate(date.toISOString())}
-                  </th>
-                ))}
-                {/* <th></th> */}
-              </tr>
-            </thead>
-            <tbody>
-              {filteredEmployees.map((employee) => (
-                <tr key={employee.id} className="hover:bg-gray-50">
-                  <td className="p-2 font-medium border-b flex items-center gap-2">
-                    <div
-                      className=" text-white p-2 flex items-center justify-center rounded-full h-10 w-10 text-xs text-center border border-gray-700"
-                      style={{ background: themeColor }}
-                    >
-                      {employee.first_name.charAt(0).toUpperCase()}
-                      {employee.last_name.charAt(0).toUpperCase()}
-                    </div>
-                    {employee.first_name} {employee.last_name}
-                  </td>
+          {loading ? (
+            <div className="flex justify-center items-center h-full">
+              <DNA
+                visible={true}
+                height="120"
+                width="120"
+                ariaLabel="dna-loading"
+                wrapperStyle={{}}
+                wrapperClass="dna-wrapper"
+              />
+            </div>
+          ) : filteredEmployees.length > 0 ? (
+            <table className="w-full bg-white shadow-sm border-collapse">
+              <thead>
+                <tr className="bg-gray-200">
+                  <th className="p-2 text-left ">Employee Name</th>
                   {nextSevenDays.map((date, index) => (
-                    <td key={index} className="p-2 text-center border-b">
-                      <span
-                        className={
-                          getAttendanceStatus(employee, date) === "Present"
-                            ? "text-green-600 border-2 rounded-full border-green-600 p-1 px-3"
-                            : getAttendanceStatus(employee, date) === "Absent"
-                            ? "text-red-600 border-2 rounded-full border-red-600 p-1 px-3"
-                            : ""
-                        }
-                      >
-                        {getAttendanceStatus(employee, date)}
-                      </span>
-                    </td>
+                    <th
+                      key={index}
+                      className="p-2  border-none text-center font-mono"
+                    >
+                      {formatDate(date.toISOString())}
+                    </th>
                   ))}
+                  {/* <th></th> */}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filteredEmployees.map((employee) => (
+                  <tr key={employee.id} className="hover:bg-gray-50">
+                    <td className="p-2 font-medium border-b flex items-center gap-2">
+                      {employee?.profile_photo ? (
+                        <div className=" h-10 w-10 rounded-full border">
+                          <img
+                            src={employee.profile_photo}
+                            alt=""
+                            className="rounded-full h-10 w-10"
+                          />
+                        </div>
+                      ) : (
+                        <div
+                          className=" text-white p-2 flex items-center justify-center rounded-full h-10 w-10 text-xs text-center border border-gray-700"
+                          style={{ background: themeColor }}
+                        >
+                          {employee.first_name.charAt(0).toUpperCase()}
+                          {employee.last_name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      {employee.first_name} {employee.last_name}
+                    </td>
+                    {nextSevenDays.map((date, index) => (
+                      <td key={index} className="p-2 text-center border-b">
+                        <span
+                          style={{ cursor: "pointer" }}
+                          onClick={() => setSelectedEmpAttendance(true)}
+                          className={
+                            getAttendanceStatus(employee, date) === "Present"
+                              ? "text-green-600 border-2 rounded-full border-green-600 p-1 px-3"
+                              : getAttendanceStatus(employee, date) === "Absent"
+                              ? "text-red-600 border-2 rounded-full border-red-600 p-1 px-3"
+                              : ""
+                          }
+                        >
+                          {getAttendanceStatus(employee, date)}
+                        </span>
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div className="flex justify-center items-center h-full">
+              <p>No records to show</p>
+            </div>
+          )}
         </div>
         {isModalOpen && (
           <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center">
@@ -551,123 +600,216 @@ const AttendanceRec = () => {
           </div>
         </div>
       )}
-      {selectedRecord && !selectedRecord1 && (
-        <div className="fixed right-0 top-0 bg-white shadow-lg p-6 w-1/3 h-full overflow-auto">
-          <h2 className="text-2xl font-bold mb-4">Selected Employee Details</h2>
-          <div className="flex gap-2">
-            <div className="mt-2">
-              <span className="bg-gray-200 p-2 rounded-full mt-2 mr-2">
-                {selectedRecord.code}
-              </span>
-            </div>
-            <div className="flex flex-col mb-2">
-              <p className="font-semibold text-sm">{selectedRecord.employee}</p>
-              <p className="font-sm">Business & Operations Manager</p>
-            </div>
-          </div>
-          <div className="flex justify-between">
-            <div>
-              <p>Attendance Details </p>
-              <p>6 Jul 24, Mon</p>
-            </div>
-            <div className="w-10 h-8 border p-2 flex justify-center items-center border-green-800 rounded-md">
-              <p className="font-bold  ">P</p>
-            </div>
-          </div>
-          <div className="mb-2 mt-2 flex justify-between">
-            <p>Check In</p>
-            <p>09:00 am</p>
-          </div>
-          <div className="mb-2 flex justify-between">
-            <p>Check Out</p>
-            <p>06:00 am</p>
-          </div>
-          <div className="mb-2 flex justify-between">
-            <p>Working Hrs.</p>
-            <p>08</p>
-          </div>
-          <div className="mb-2 flex justify-between">
-            <p>Break Hrs.</p>
-            <p>0</p>
-          </div>
-          <div className="mb-2 flex justify-between">
-            <p>Status</p>
-            <p>Present</p>
-          </div>
-          <div className="mb-2 flex justify-between">
-            <p>Deviation Hrs.</p>
-            <p>04:15</p>
-          </div>
-          <div className="mb-2 flex justify-between">
-            <p>Late/Early Mark.</p>
-            <p>/</p>
-          </div>
-          <div className="mb-2 flex justify-between">
-            <p>Shift Time</p>
-            <p>{selectedRecord.schedule}</p>
-          </div>
+      {selectedEmpAttendance && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white px-6 py-4 rounded-xl shadow-lg w-1/3">
+            <h2 className=" font-semibold mb-2 border-b">
+              Selected Employee Details
+            </h2>
+            {!addRegularization ? (
+              <div>
+                <div
+                  style={{ background: themeColor }}
+                  className="flex justify-between gap-2 bg-gray-100 items-center p-2 rounded-md"
+                >
+                  <div className="flex gap-2 items-center">
+                    <div className="bg-white p-2 h-10 w-10 rounded-full mr-2">
+                      MP
+                    </div>
+                    <div className="flex flex-col ">
+                      <p className="font-semibold text-white text-lg">
+                        Mittu Panda
+                      </p>
+                      <p className="font-sm text-white">
+                        Business & Operations Manager
+                      </p>
+                    </div>
+                  </div>
+                  <div className=" h-8 border-2 p-2 flex justify-center items-center bg-green-500 rounded-md">
+                    <p className="font-medium  text-white">Present</p>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2 my-2">
+                  <div className="w-full border-b flex justify-between items-center">
+                    <p className="font-medium">Attendance Details </p>
+                    <p className="font-mono">6 Jul 24, Mon</p>
+                  </div>
 
-          {/* Add more details here as needed */}
-          <div className="flex gap-2 ">
-            <button
-              className="mt-5 bg-blue-500 text-white px-4 py-2 rounded"
-              onClick={handleselectedRecord1}
-            >
-              Apply for Regularization
-            </button>
+                  <div className=" flex justify-between">
+                    <p className="font-medium">Check In :</p>
+                    <p>09:00 am</p>
+                  </div>
+                  <div className=" flex justify-between">
+                    <p className="font-medium">Check Out :</p>
+                    <p>06:00 am</p>
+                  </div>
+                  <div className=" flex justify-between">
+                    <p className="font-medium">Working Hrs :</p>
+                    <p>08</p>
+                  </div>
+                  <div className=" flex justify-between">
+                    <p className="font-medium">Break Hrs :</p>
+                    <p>0</p>
+                  </div>
+                  <div className=" flex justify-between">
+                    <p className="font-medium">Status :</p>
+                    <p>Present</p>
+                  </div>
+                  <div className=" flex justify-between">
+                    <p className="font-medium">Deviation Hrs :</p>
+                    <p>04:15</p>
+                  </div>
+                  <div className=" flex justify-between">
+                    <p className="font-medium">Late/Early Mark :</p>
+                    <p>/</p>
+                  </div>
+                  <div className=" flex justify-between">
+                    <p className="font-medium">Shift Time :</p>
+                    {/* <p>{selectedRecord.schedule}</p> */}
+                  </div>
 
-            <button
-              className="mt-5 bg-red-500 text-white px-4 py-2 rounded"
-              onClick={() => setSelectedRecord(!selectedRecord)}
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
-      {selectedRecord && selectedRecord1 && (
-        <div className="fixed right-0 top-0 bg-white shadow-lg p-6 w-1/3 h-full overflow-auto">
-          <h2 className="text-2xl font-bold mb-4">Selected Employee Details</h2>
+                  {/* Add more details here as needed */}
+                  <div className="flex gap-2 justify-end border-t p-1 ">
+                    <button
+                      className=" bg-blue-500 text-white px-4 py-2 rounded-full"
+                      onClick={() => setAddRegularization(true)}
+                    >
+                      Apply for Regularization
+                    </button>
 
-          <div className="flex justify-between">
-            <div>
-              <p>New regularisation Request </p>
-              <p>6 Jul 24, Mon</p>
-            </div>
-            <div className="w-10 h-8 border p-2 flex justify-center items-center border-green-800 rounded-md">
-              <p className="font-bold  ">P</p>
-            </div>
-          </div>
-
-          <div className="grid gap-2 items-center w-full">
-            <span className="text-gray-700">Type of Request</span>
-            <select className="border border-gray-400 p-2 rounded-md">
-              <option>Select Type of Request</option>
-            </select>
-            <div className="grid gap-2 items-center w-full">
-              <span className="text-gray-700">Comment</span>
-              <input
-                type="text"
-                className="border border-gray-400 p-2 rounded-md"
-              />
-            </div>
-          </div>
-
-          {/* Add more details here as needed */}
-          <div className="flex gap-2 ">
-            <button
-              className="mt-5 bg-blue-500 text-white px-4 py-2 rounded"
-              onClick={() => setSelectedRecord(!selectedRecord)}
-            >
-              Sumbit
-            </button>
-
-            <button
-              className="mt-5 bg-red-500 text-white px-4 py-2 rounded"
-              onClick={handleselectedRecord1}
-            >
-              Cancel
-            </button>
+                    <button
+                      className=" bg-red-500 text-white px-4 py-2 rounded-full"
+                      onClick={() => setSelectedEmpAttendance(false)}
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <div
+                  style={{ background: themeColor }}
+                  className="flex justify-between gap-2 bg-gray-100 items-center p-2 rounded-md"
+                >
+                  <div className="flex gap-2 items-center">
+                    <div className="flex flex-col ">
+                      <p className="font-semibold text-white text-lg">
+                        New regularisation Request
+                      </p>
+                      <p className="font-mono text-white">6 Jul 24, Mon</p>
+                    </div>
+                  </div>
+                  <div className=" h-8 border-2 p-2 flex justify-center items-center bg-green-500 rounded-md">
+                    <p className="font-medium  text-white">Present</p>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2 my-2">
+                  <div className="w-full border-b flex justify-between items-center">
+                    <p className="font-medium">Regularization Details </p>
+                  </div>
+                  <div className=" flex flex-col gap-2">
+                    <label htmlFor="" className="font-medium">
+                      Type of request
+                    </label>
+                    <select
+                      name="requestType"
+                      id=""
+                      className="border border-gray-300 rounded-md p-2"
+                      value={regData.requestType}
+                      onChange={handleRegChanges}
+                    >
+                      <option value="">Select request type</option>
+                      <option value="Check in">Check in request</option>
+                      <option value="Check out">Check out request</option>
+                      <option value="Check in & out">
+                        Check in & Check out request
+                      </option>
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    {regData.requestType === "Check in" && (
+                      <div className="flex flex-col gap-2">
+                        <label htmlFor="" className="font-medium">
+                          Check-In
+                        </label>
+                        <input
+                          type="time"
+                          name=""
+                          id=""
+                          className="border border-gray-300 rounded-md p-2"
+                        />
+                      </div>
+                    )}
+                    {regData.requestType === "Check out" && (
+                      <div className="flex flex-col gap-2">
+                        <label htmlFor="" className="font-medium">
+                          Check-Out
+                        </label>
+                        <input
+                          type="time"
+                          name=""
+                          id=""
+                          className="border border-gray-300 rounded-md p-2"
+                        />
+                      </div>
+                    )}
+                    {regData.requestType === "Check in & out" && (
+                      <div className="grid grid-cols-2 gap-1">
+                        <div className="flex flex-col gap-2">
+                          <label htmlFor="" className="font-medium">
+                            Check in
+                          </label>
+                          <input
+                            type="time"
+                            name=""
+                            id=""
+                            className="border border-gray-300 rounded-md p-2"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <label htmlFor="" className="font-medium">
+                            Check out
+                          </label>
+                          <input
+                            type="time"
+                            name=""
+                            id=""
+                            className="border border-gray-300 rounded-md p-2"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label htmlFor="" className="font-medium">
+                      Comment
+                    </label>
+                    <textarea
+                      name=""
+                      id=""
+                      cols="30"
+                      rows="4"
+                      className="border border-gray-300 rounded-md"
+                    ></textarea>
+                  </div>
+                  <div className="flex gap-2 justify-end border-t p-1 ">
+                    <button
+                      className=" bg-red-500 text-white px-4 py-2 rounded-full flex items-center gap-2"
+                      onClick={() => setAddRegularization(false)}
+                    >
+                      <MdClose /> Cancel
+                    </button>
+                    <button
+                      className=" bg-green-500 text-white px-4 py-2 rounded-full flex items-center gap-2"
+                      // onClick={handleselectedRecord1}
+                    >
+                      <FaCheck /> Submit
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

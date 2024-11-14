@@ -164,6 +164,10 @@ function EmployeeDirectory() {
     const searchValue = e.target.value;
     setSearchText(searchValue);
   };
+// const 
+  const handleChangeStatus = async () => {
+    // const 
+  };
 
   return (
     <div className="w-full">
@@ -823,12 +827,12 @@ function EmployeeDirectory() {
                       </div>
                     </div>
                   )}
-                  <button
+                  {/* <button
                     onClick={() => setIsModalOpen(true)}
                     className="bg-black text-white hover:bg-gray-700 font-semibold  px-4 rounded-md"
                   >
                     Filter
-                  </button>
+                  </button> */}
                   <Link
                     to={"/admin/add-employee/basics"}
                     style={{ background: themeColor }}
@@ -1177,13 +1181,13 @@ function EmployeeDirectory() {
                     <FaUserEdit /> View Profile
                   </Link>
                   <div className="flex justify-center gap-3">
-                    <button
-                      type="submit"
+                    <Link
+                      to={`/hrms/separation/separate-application/resignation/${selectedEmployee?.employee?.id}`}
                       style={{ background: themeColor }}
                       className="bg-black text-white hover:bg-gray-700 py-2 px-4 rounded-full"
                     >
                       Separate
-                    </button>
+                    </Link>
                     <button
                       type="submit"
                       className="bg-yellow-500 text-white hover:bg-gray-700  py-2 px-5 rounded-full"

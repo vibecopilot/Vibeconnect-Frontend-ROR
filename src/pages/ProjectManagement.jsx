@@ -211,7 +211,7 @@ const ProjectManagement = () => {
 const navigate = useNavigate()
   const goToProject = (id) => {
     // if (!isEditingDate) {
-      navigate(`/project-management/customBoard/${id}`);
+      navigate(`/project-management/customBoard/?id=${id}`);
     // }
     
   };

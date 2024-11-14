@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { BiUpload, BiFile } from "react-icons/bi";
+import { BiUpload, BiFile, BiTrash } from "react-icons/bi";
 import {
   FaFileImage,
   FaFilePdf,
@@ -30,7 +30,7 @@ const getFileIcon = (fileType) => {
   }
 };
 
-const FileInputBox = ({ handleChange, fieldName, isMulti }) => {
+const FileInputBox = ({ handleChange, fieldName, isMulti,  fileType = "*" }) => {
   const [files, setFiles] = useState([]);
   const [fileURLs, setFileURLs] = useState([]);
 
@@ -42,6 +42,17 @@ const FileInputBox = ({ handleChange, fieldName, isMulti }) => {
 
     if (handleChange) {
       handleChange(selectedFiles);
+    }
+  };
+  const handleRemoveFile = (index) => {
+    const updatedFiles = files.filter((_, i) => i !== index);
+    const updatedFileURLs = fileURLs.filter((_, i) => i !== index);
+
+    setFiles(updatedFiles);
+    setFileURLs(updatedFileURLs);
+
+    if (handleChange) {
+      handleChange(updatedFiles);
     }
   };
 
@@ -63,6 +74,7 @@ const FileInputBox = ({ handleChange, fieldName, isMulti }) => {
           className="hidden"
           multiple={isMulti}
           onChange={handleFileChange}
+          accept={fileType}
         />
       </label>
       {files.length > 0 && (
@@ -88,6 +100,12 @@ const FileInputBox = ({ handleChange, fieldName, isMulti }) => {
                   </div>
                 )}
               </a>
+              <button
+                onClick={() => handleRemoveFile(index)}
+                className="mt-2 text-red-500"
+              >
+                <BiTrash size={20} />
+              </button>
             </div>
           ))}
         </div>
