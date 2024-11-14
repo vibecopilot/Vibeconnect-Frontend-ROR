@@ -4,7 +4,7 @@ import { IoMdAdd } from 'react-icons/io';
 import Table from '../../components/table/Table';
 import { BiEdit } from 'react-icons/bi';
 import { Link, useNavigate } from 'react-router-dom';
-import { EditSiteOwner, getAssignedTo, getSiteOwner, getSiteOwnerDetails, postSiteOwner } from '../../api';
+import { EditSiteOwner, getAssignedTo, getSetupUsers, getSiteOwner, getSiteOwnerDetails, postSiteOwner } from '../../api';
 import { PiPlusCircle } from 'react-icons/pi';
 import toast from "react-hot-toast";
 import {
@@ -15,7 +15,7 @@ import {
 function SiteOwner() {
   const COMPANYID = getItemInLocalStorage("COMPANYID");
   const SITEID = getItemInLocalStorage("SITEID");
-  
+  const[added,setadded]=useState(false);
   const [assignedUser, setAssignedUser] = useState([]);
   const [site, setSites] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -46,20 +46,30 @@ function SiteOwner() {
       }
     };
     fetchSiteOwners();
-  }, []);
+  }, [added]);
 
   // Fetch assigned users for the dropdown
   useEffect(() => {
     const fetchAssignedTo = async () => {
       try {
-        const response = await getAssignedTo();
-        setAssignedUser(response.data);
+        const response = await getSetupUsers();
+  
+        // Assuming response.data is an array of user objects
+        const formattedUsers = response.data.map(user => ({
+          id: user.id,
+          firstname: user.firstname,
+          lastname: user.lastname,
+        }));
+  
+        setAssignedUser(formattedUsers);
       } catch (error) {
         console.error("Error fetching assigned users:", error);
       }
     };
+  
     fetchAssignedTo();
   }, []);
+  
 
   // Fetch details of a single site owner for editing
   const fetchSiteOwnerDetails = async (id) => {
@@ -81,6 +91,7 @@ function SiteOwner() {
     try {
       const resp = await postSiteOwner(sendData);
       toast.success("Site owner created successfully");
+      
       setIsModalOpen(false);
       navigate("/admin/site-owner-setup");
     } catch (error) {
@@ -98,6 +109,7 @@ function SiteOwner() {
     try {
       await EditSiteOwner(siteOwnerId, sendData);
       toast.success("Site owner updated successfully");
+      setadded(true);
       setEditIsModalOpen(false);
     } catch (error) {
       console.error("Error updating site owner:", error);

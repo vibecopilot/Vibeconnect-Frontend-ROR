@@ -697,7 +697,7 @@ export const getPPMTask = async () =>
   });
 export const getRoutineTaskDetails = async (assetId, activityId) =>
   axiosInstance.get(
-    `/submissions.json?q[checklist_id_present]=1&q[asset_id_eq]=${assetId}&q[activity_id_eq]=${activityId}`,
+    `/submissions.json?q[checklist_id_is_not_null]=1&q[asset_id_eq]=${assetId}&q[activity_id_eq]=${activityId}`,
     {
       params: {
         token: token,
