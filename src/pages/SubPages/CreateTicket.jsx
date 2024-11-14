@@ -60,7 +60,7 @@ const CreateTicket = () => {
     assigned_to: "",
     issue_type_id: "",
     complaint_type: "",
-    complaint_mode: "",
+    complaint_mode_id: "",
   });
 
 
@@ -112,7 +112,6 @@ const CreateTicket = () => {
       }
     };
 
-
     const fetchComplaintMode = async () => {
       try {
         const response = await getComplaintMode();
@@ -123,7 +122,6 @@ const CreateTicket = () => {
       }
     };
 
-
     const fetchUsers = async () => {
       try {
         const setupUsers = await getSetupUsers(); // API call to fetch users
@@ -132,14 +130,12 @@ const CreateTicket = () => {
           label: user.firstname,
         }));
 
-
         setUsers(formattedOptions);
         console.log(formattedOptions);
       } catch (error) {
         console.log(error);
       }
     };
-
 
     fetchData();
     fetchAssignedTo();
@@ -154,11 +150,9 @@ const CreateTicket = () => {
     setState(event.target.value);
   };
 
-
   // const handleFileChange = async (event) => {
   //   const files = event.target.files;
   //   const base64Array = [];
-
 
   //   for (const file of files) {
   //     const base64 = await convertFileToBase64(file);
@@ -169,16 +163,13 @@ const CreateTicket = () => {
   //     return base64.split(",")[1];
   //   });
 
-
   //   console.log("Format", formattedBase64Array);
-
 
   //   setFormData({
   //     ...formData,
   //     documents: formattedBase64Array,
   //   });
   // };
-
 
   // const convertFileToBase64 = (file) => {
   //   return new Promise((resolve, reject) => {
@@ -189,7 +180,6 @@ const CreateTicket = () => {
   //   });
   // };
 
-
   // file append test
   // const handleFileChange = (event, fieldName) => {
   //   const files = Array.from(event.target.files);
@@ -199,12 +189,10 @@ const CreateTicket = () => {
   //   });
   // };
 
-
   const handleUserChange = (selectedOption) => {
     setSelectedUser(selectedOption); // Update selected user state
     console.log("Selected user:", selectedOption);
   };
-
 
   const handleChange = async (e) => {
     async function fetchSubCategory(categoryId) {
@@ -300,10 +288,8 @@ const CreateTicket = () => {
     }
   };
 
-
   // const handleSubmit = async (e) => {
   //   e.preventDefault();
-
 
   //   if (!formData.building_name || !formData.floor_name) {
   //     return toast.error("Please Select Tower Name & Floor!");
@@ -315,10 +301,8 @@ const CreateTicket = () => {
   //     return toast.error("Please provide title");
   //   }
 
-
   //   try {
   //     toast.loading("Please wait generating ticket!");
-
 
   //     const response = await postComplaintsDetails(formData);
   //     // const response = await postComplaintsDetails(formData);
@@ -349,7 +333,6 @@ const CreateTicket = () => {
   //   }
   // };
 
-
   const handleFileChange = (files, fieldName) => {
     setFormData((prevFormData) => ({
       ...prevFormData,
@@ -358,10 +341,8 @@ const CreateTicket = () => {
     console.log(fieldName);
   };
 
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-
 
     if (!formData.building_name) {
       return toast.error("Please Select Building Name");
@@ -376,7 +357,9 @@ const CreateTicket = () => {
       return toast.error("Please provide title");
     }
 
-
+    if ((formData.documents || []).length > 4) {
+      return toast.error("You can upload maximum upto 4 images.");
+  } 
     try {
       toast.loading("Please wait generating ticket!");
       const sendData = new FormData();
@@ -389,7 +372,6 @@ const CreateTicket = () => {
       sendData.append("complaints[heading]", formData.heading);
       sendData.append("complaints[of_phase]", formData.of_phase);
 
-
       sendData.append("complaints[site_id]", formData.site_id);
       sendData.append("complaints[assigned_to]", formData.assigned_to);
       sendData.append("complaints[priority]", formData.priority);
@@ -398,14 +380,12 @@ const CreateTicket = () => {
       sendData.append("complaints[floor_name]", formData.floor_name);
       sendData.append("complaints[issue_type_id]", formData.issue_type_id);
       sendData.append("complaints[complaint_type]", formData.complaint_type);
-      sendData.append("complaints[complaint_mode_id]", formData.complaint_mode);
-
+      sendData.append("complaints[complaint_mode_id]", formData.complaint_mode_id);
 
       (formData.documents || []).forEach((file, index) => {
         sendData.append("documents[]", file);
         // console.log(documents)
       });
-
 
       const response = await postComplaintsDetails(formData);
       console.log(response);
@@ -461,7 +441,6 @@ const CreateTicket = () => {
   }, []);
   const themeColor = useSelector((state) => state.theme.color);
   const [createTicket, setCreateTicket] = useState("self");
-
 
   return (
     <section className="min-h-screen p-4 sm:p-0 flex flex-col md:flex-row">
@@ -541,7 +520,6 @@ const CreateTicket = () => {
                   </div>
                 )}
 
-
                 <div className="grid grid-cols-2  items-center w-full">
                   <label htmlFor="" className="font-semibold ">
                     Type of
@@ -570,25 +548,24 @@ const CreateTicket = () => {
                   </label>
                   <select
                     className="border p-1 px-4 max-w-44 w-44 border-gray-500 rounded-md "
-                    value={formData.complaint_mode}
-                    name="complaint_mode"
+                    value={formData.complaint_mode_id}
+                    name="complaint_mode_id"
                     onChange={(e) =>
                       setFormData({
                         ...formData,
-                        complaint_mode: e.target.value,
+                        complaint_mode_id: e.target.value,
                       })
                     }
                   >
                     <option value="">Select Complaint Mode</option>
                     {complaintMode.map((complaint) => (
-                      <option key={complaint.id} value={complaint.name}>
+                      <option key={complaint.id} value={complaint.id}>
                         {complaint.name}
                       </option>
                     ))}
                   </select>
                 </div> */}
                 {/* </div> */}
-
 
                 {/* Building details */}
                 {/* <div className="flex sm:flex-row flex-col gap-3 sm:gap-0 justify-between items-center"> */}
@@ -635,16 +612,13 @@ const CreateTicket = () => {
                   </select>
                 </div>
 
-
                 {/* </div> */}
-
 
                 {/* <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-0 justify-between "> */}
                 <div className="grid grid-cols-2 items-center w-full">
                   <label htmlFor="" className="font-semibold ">
                     Unit Name
                   </label>
-
 
                   <select
                     id="six"
@@ -682,7 +656,6 @@ const CreateTicket = () => {
                 </div>
                 {/* </div> */}
 
-
                 {/* <div className="flex sm:grid sm:grid-cols-2 flex-col sm:flex-row items-center justify-between gap-3 sm:gap-0"> */}
                 <div className="grid grid-cols-2  items-center w-full">
                   <label htmlFor="" className="font-semibold ">
@@ -707,7 +680,6 @@ const CreateTicket = () => {
                     ))}
                   </select>
                 </div>
-
 
                 <div className="grid grid-cols-2  items-center w-full">
                   <label htmlFor="" className="font-semibold ">
@@ -774,7 +746,6 @@ const CreateTicket = () => {
                 {/* </div> */}
               </div>
 
-
               {/* Description */}
               {/* <div className="flex sm:block sm:flex-row items-center justify-center"> */}
               <div className="flex flex-col justify-around ">
@@ -802,7 +773,6 @@ const CreateTicket = () => {
                   isMulti={true}
                 />
               </div>
-
 
               {/* Submit and Reset Buttons */}
               <div className="flex gap-5 justify-center items-center my-4">
@@ -913,7 +883,6 @@ const CreateTicket = () => {
                 </div>
                 {/* </div> */}
 
-
                 {/* Building details */}
                 {/* <div className="flex sm:flex-row flex-col gap-3 sm:gap-0 justify-between items-center"> */}
                 <div className="grid grid-cols-2  items-center w-full">
@@ -959,16 +928,13 @@ const CreateTicket = () => {
                   </select>
                 </div>
 
-
                 {/* </div> */}
-
 
                 {/* <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-0 justify-between "> */}
                 <div className="grid grid-cols-2 items-center w-full">
                   <label htmlFor="" className="font-semibold ">
                     Unit Name
                   </label>
-
 
                   <select
                     id="six"
@@ -1006,7 +972,6 @@ const CreateTicket = () => {
                 </div>
                 {/* </div> */}
 
-
                 {/* <div className="flex sm:grid sm:grid-cols-2 flex-col sm:flex-row items-center justify-between gap-3 sm:gap-0"> */}
                 <div className="grid grid-cols-2  items-center w-full">
                   <label htmlFor="" className="font-semibold ">
@@ -1031,7 +996,6 @@ const CreateTicket = () => {
                     ))}
                   </select>
                 </div>
-
 
                 <div className="grid grid-cols-2  items-center w-full">
                   <label htmlFor="" className="font-semibold ">
@@ -1098,7 +1062,6 @@ const CreateTicket = () => {
                 {/* </div> */}
               </div>
 
-
               {/* Description */}
               {/* <div className="flex sm:block sm:flex-row items-center justify-center"> */}
               <div className="flex flex-col justify-around ">
@@ -1118,7 +1081,6 @@ const CreateTicket = () => {
               </div>
               {/* </div> */}
 
-
               {/* File Input */}
               <FileInput
                 handleFileChange={(event) => handleFileChange(event)}
@@ -1137,7 +1099,6 @@ const CreateTicket = () => {
                   </div>
                 ))}
               </div>
-
 
               {/* Submit and Reset Buttons */}
               <div className="flex gap-5 justify-center items-center my-4">
@@ -1200,7 +1161,6 @@ const CreateTicket = () => {
                   </div>
                 )}
 
-
                 <div className="grid grid-cols-2  items-center w-full">
                   <label htmlFor="" className="font-semibold ">
                     Type of
@@ -1223,7 +1183,6 @@ const CreateTicket = () => {
                     <option value="Request">Request</option>
                   </select>
                 </div>
-
 
                 <div className="grid grid-cols-2  items-center w-full">
                   <label htmlFor="" className="font-semibold ">
@@ -1249,7 +1208,6 @@ const CreateTicket = () => {
                   </select>
                 </div>
                 {/* </div> */}
-
 
                 {/* Building details */}
                 {/* <div className="flex sm:flex-row flex-col gap-3 sm:gap-0 justify-between items-center"> */}
@@ -1296,16 +1254,13 @@ const CreateTicket = () => {
                   </select>
                 </div>
 
-
                 {/* </div> */}
-
 
                 {/* <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-0 justify-between "> */}
                 <div className="grid grid-cols-2 items-center w-full">
                   <label htmlFor="" className="font-semibold ">
                     Unit Name
                   </label>
-
 
                   <select
                     id="six"
@@ -1343,7 +1298,6 @@ const CreateTicket = () => {
                 </div>
                 {/* </div> */}
 
-
                 {/* <div className="flex sm:grid sm:grid-cols-2 flex-col sm:flex-row items-center justify-between gap-3 sm:gap-0"> */}
                 <div className="grid grid-cols-2  items-center w-full">
                   <label htmlFor="" className="font-semibold ">
@@ -1368,7 +1322,6 @@ const CreateTicket = () => {
                     ))}
                   </select>
                 </div>
-
 
                 <div className="grid grid-cols-2  items-center w-full">
                   <label htmlFor="" className="font-semibold ">
@@ -1435,7 +1388,6 @@ const CreateTicket = () => {
                 {/* </div> */}
               </div>
 
-
               {/* Description */}
               {/* <div className="flex sm:block sm:flex-row items-center justify-center"> */}
               <div className="flex flex-col justify-around ">
@@ -1455,7 +1407,6 @@ const CreateTicket = () => {
               </div>
               {/* </div> */}
 
-
               {/* File Input */}
               <FileInput
                 handleFileChange={(event) => handleFileChange(event)}
@@ -1474,7 +1425,6 @@ const CreateTicket = () => {
                   </div>
                 ))}
               </div>
-
 
               {/* Submit and Reset Buttons */}
               <div className="flex gap-5 justify-center items-center my-4">

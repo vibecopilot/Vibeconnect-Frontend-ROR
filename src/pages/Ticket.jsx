@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import DataTable from "react-data-table-component";
 import Navbar from "../components/Navbar";
 import { PiPlusCircle } from "react-icons/pi";
@@ -113,21 +114,21 @@ const Ticket = () => {
     //   selector: (row) => row.response_TAT,
     //   sortable: true,
     // },
-    {
-      name: "Response Time",
-      selector: (row) => row.response_time,
-      sortable: true,
-    },
+    // {
+    //   name: "Response Time",
+    //   selector: (row) => row.response_time,
+    //   sortable: true,
+    // },
     // {
     //   name: "Resolution TAT",
     //   selector: (row) => row.resolution_TAT,
     //   sortable: true,
     // },
-    {
-      name: "Resolution Time",
-      selector: (row) => row.resolution_time,
-      sortable: true,
-    },
+    // {
+    //   name: "Resolution Time",
+    //   selector: (row) => row.resolution_time,
+    //   sortable: true,
+    // },
     {
       name: "Total Time",
       selector: (row) => getTimeAgo(row.created_at),
@@ -519,14 +520,14 @@ const Ticket = () => {
               <PiPlusCircle size={20} />
               Add
             </Link>
-            {/* <button
+             <button
               className=" font-semibold text-white px-4 p-1 flex gap-2 items-center justify-center rounded-md"
               style={{ background: themeColor }}
               onClick={() => setFilterModal(!filterModal)}
             >
               <BiFilterAlt />
               Filter
-            </button> */}
+            </button> 
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setHideColumn(!hideColumn)}
