@@ -3,11 +3,16 @@ import AdminHRMS from "./AdminHrms";
 import { GrHelpBook } from "react-icons/gr";
 import { ImInfo } from "react-icons/im";
 import { FaCircleInfo } from "react-icons/fa6";
-import { getUserDetails, postResignations } from "../../api";
+import {
+  getReportingSupervisors,
+  getUserDetails,
+  postResignations,
+} from "../../api";
 import { useParams } from "react-router-dom";
 import { FaCheck } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
-
+import { getItemInLocalStorage } from "../../utils/localStorage";
+import Select from "react-select";
 const Resignation = () => {
   const listItemStyle = {
     listStyleType: "disc",
@@ -24,16 +29,34 @@ const Resignation = () => {
     fnfMonth: "",
     comment: "",
   });
+  const [addInfo, setAddInfo] = useState({
+    approvalAuthority: "",
+    effectiveDateOfApprovalAuthority: "",
+    transferReportingSupervisor: "",
+    EffectiveDateOfReportingSupervisor: "",
+    holdSalary: false,
+    accessAfterLastDay: "",
+    totalEncashmentDay: "",
+    totalEncashmentAmount: "",
+    calculateEncashExemption: "",
+    eligibleForGratuity: false,
+    gratuityAmount: "",
+    servedNoticeDay: "",
+    noticeRecoveryDay: "",
+    noticeRecoveryAmount: "",
+  });
   useEffect(() => {
     const fetchUserDetails = async () => {
       try {
         const res = await getUserDetails(id);
         setEmpDetails(res);
+        fetchReportingSupervisor(res?.employment_info?.department);
       } catch (error) {
         console.log(error);
       }
     };
     fetchUserDetails();
+    fetchReportingSupervisor();
   }, []);
 
   const today = new Date();
@@ -67,6 +90,36 @@ const Resignation = () => {
     } catch (error) {
       console.log(error);
     }
+  };
+  const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
+  const [reportingSupervisor, setReportingSupervisor] = useState([]);
+
+  const fetchReportingSupervisor = async (departmentId) => {
+    try {
+      const res = await getReportingSupervisors(departmentId, hrmsOrgId);
+      console.log(res.reporting_supervisor);
+      const supervisors = res.flatMap((department) =>
+        department.reporting_supervisor.map((user) => ({
+          value: user.id,
+          label: user.full_name,
+        }))
+      );
+      setReportingSupervisor(supervisors);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const [selectedOption, setSelectedOption] = useState([]);
+  const handleChangeApprovalAuthority = (selectedOption) => {
+    console.log(selectedOption);
+    setSelectedOption(selectedOption);
+  };
+  const [selectedReporting, setSelectedReporting] = useState("");
+  const handleChangeReportingSupervisorAuthority = (
+    selectedReportingOption
+  ) => {
+    console.log(selectedReportingOption);
+    setSelectedReporting(selectedReportingOption);
   };
   return (
     <div className="flex justify-between">
@@ -314,15 +367,15 @@ const Resignation = () => {
                 className="border border-gray-400 p-2 rounded-md"
               />
             </div>
-            <div className="grid gap-2 items-center w-full">
-              <label className="block font-medium">Comments:</label>
-              <textarea
-                className="border border-gray-400 p-2 rounded-md"
-                value={formData.comment}
-                onChange={handleChange}
-                name="comment"
-              ></textarea>
-            </div>
+          </div>
+          <div className="grid gap-2 items-center w-full">
+            <label className="block font-medium">Comments:</label>
+            <textarea
+              className="border border-gray-400 p-2 rounded-md"
+              value={formData.comment}
+              onChange={handleChange}
+              name="comment"
+            ></textarea>
           </div>
           <p className="font-bold border-b">Additional Details</p>
 
@@ -331,9 +384,11 @@ const Resignation = () => {
               <label className="block font-medium">
                 Approval Authority for Pending Applications:
               </label>
-              <input
-                type="text"
-                className="border border-gray-400 p-2 rounded-md"
+              <Select
+                onChange={handleChangeApprovalAuthority}
+                options={reportingSupervisor}
+                noOptionsMessage={() => "Please Select"}
+                // maxMenuHeight={90}
               />
             </div>
             <div className="grid gap-2 items-center w-full">
@@ -350,9 +405,11 @@ const Resignation = () => {
               <label className="block font-medium">
                 Transfer Reporting Supervisor Authority To:
               </label>
-              <input
-                type="text"
-                className="border border-gray-400 p-2 rounded-md"
+              <Select
+                onChange={handleChangeReportingSupervisorAuthority}
+                options={reportingSupervisor}
+                noOptionsMessage={() => "Please Select"}
+                // maxMenuHeight={90}
               />
             </div>
             <div className="grid gap-2 items-center w-full">
