@@ -236,7 +236,7 @@ const AddChecklist = () => {
         // Handle file uploads for each question
         if (q.image_for_question && q.image_for_question.length > 0) {
           q.image_for_question.forEach((file) => {
-            formData.append(`groups[][questions][][image_for_question ${questionIndex+1}][]`, file);
+            formData.append(`groups[][questions][][image_for_question_${questionIndex+1}][]`, file);
           });
         }
       });

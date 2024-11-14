@@ -7,6 +7,7 @@ import MyDateTable from "../../../../containers/MyDateTable";
 import { useSelector } from "react-redux";
 import { getAssetReadingDetails } from "../../../../api";
 import Table from "../../../../components/table/Table";
+import toast from "react-hot-toast";
 
 const getDateArray = (start, end) => {
   let arr = [];
@@ -42,8 +43,11 @@ const Readings = () => {
 const {id} = useParams()
 useEffect(()=> {
   const fetchReading = async()=>{
+    toast.loading("Please wait");
    try {
      const readingResp = await getAssetReadingDetails(id)
+     toast.dismiss()
+      toast.success("Reading fetched successfully");
      console.log(readingResp.data)
      setReadings(readingResp.data)
    } catch (error) {
