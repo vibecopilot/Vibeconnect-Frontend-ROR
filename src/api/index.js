@@ -5758,19 +5758,19 @@ export const postEmployeeLetters = async (data) => {
   }
 };
 
-export const getSiteData = async () =>
-  axiosInstance.get(`/get_user_site.json`, {
-    params: {
-      token: token,
-    },
-  });
+// export const getSiteData = async () =>
+//   axiosInstance.get(`/get_user_site.json`, {
+//     params: {
+//       token: token,
+//     },
+//   });
 
-export const siteChange = async (id) =>
-  axiosInstance.get(`/change_site_for_app.json?siteid=${id} `, {
-    params: {
-      token: token,
-    },
-  });
+// export const siteChange = async (id) =>
+//   axiosInstance.get(`/change_site_for_app.json?siteid=${id} `, {
+//     params: {
+//       token: token,
+//     },
+//   });
 export const getTaxAndStatSetting = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
