@@ -18,8 +18,11 @@ const RoutineTask = () => {
 
   useEffect(() => {
     const fetchRoutineTask = async () => {
+      toast.loading("Please wait");
       try {
         const taskResponse = await getRoutineTask();
+        toast.dismiss()
+      toast.success("Routine task data fetched successfully");
         // const filteredServiceTask = taskResponse.data.activities.filter(
         //   (asset) => asset.asset_name
         // );

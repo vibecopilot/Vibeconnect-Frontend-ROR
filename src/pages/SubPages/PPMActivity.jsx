@@ -10,6 +10,7 @@ import { BsEye } from "react-icons/bs";
 import AssetNav from "../../components/navbars/AssetNav";
 import Navbar from "../../components/Navbar";
 import { getItemInLocalStorage } from "../../utils/localStorage";
+import toast from "react-hot-toast";
 
 const PPMActivity = () => {
   const [ppms, setPPms] = useState([]);
@@ -31,8 +32,11 @@ const PPMActivity = () => {
     }
   };
   useEffect(() => {
+    toast.loading("Please wait");
     try {
       const fetchServicePPM = async () => {
+        toast.dismiss()
+      toast.success("PPM Checklist data fetched successfully");
         const ServicePPMResponse = await getAssetPPMList();
         const sortedPPMData = ServicePPMResponse.data.checklists.sort((a, b) => {
          

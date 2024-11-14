@@ -12,6 +12,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { FaRegFileAlt } from "react-icons/fa";
 import { HiArrowLeft, HiArrowRight } from 'react-icons/hi';
+import toast from "react-hot-toast";
 
 const PPM = () => {
   const { id } = useParams();
@@ -24,8 +25,11 @@ const PPM = () => {
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const fetchPPMData = async () => {
+    toast.loading("Please wait");
     try {
       const ppmRes = await getAssetPPMs(id);
+      toast.dismiss()
+      toast.success("PPM Schedule  fetched successfully");
       setFilteredPPMData(ppmRes.data.activities);
       setPPMData(ppmRes.data.activities);
       console.log(ppmRes.data.activities);

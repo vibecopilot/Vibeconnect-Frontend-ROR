@@ -724,7 +724,7 @@ export const getScheduleDetails = async (sId, activityId) =>
 //     }
 //   );
 export const getAssetPPMs = async (assetId) =>
-  axiosInstance.get(`/site_assets/${assetId}/asset_ppm_show.json?q[checklist_id_present]=1`, {
+  axiosInstance.get(`/site_assets/${assetId}/asset_ppm_show.json?q[checklist_id_is_not_null]=1`, {
     params: {
       token: token,
     },

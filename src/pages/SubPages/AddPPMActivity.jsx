@@ -236,7 +236,7 @@ const AddPPMActivity = () => {
         // Handle file uploads for each question
         if (q.image_for_question && q.image_for_question.length > 0) {
           q.image_for_question.forEach((file) => {
-            formData.append(`groups[][questions][][image_for_question ${questionIndex+1}][]`, file);
+            formData.append(`groups[][questions][][image_for_question_${questionIndex+1}][]`, file);
           });
         }
       });
@@ -246,7 +246,7 @@ const AddPPMActivity = () => {
       const response = await postChecklist(formData);
       console.log(response);
       toast.success("New Checklist Created");
-      navigate("/assets/checklist");
+      navigate("/assets/ppm");
     } catch (error) {
       console.error("Error:", error);
       toast.error("Failed to create checklist");

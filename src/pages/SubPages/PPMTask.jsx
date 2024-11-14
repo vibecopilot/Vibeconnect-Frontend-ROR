@@ -20,8 +20,11 @@ const PPMTask = () => {
   
   useEffect(() => {
     const fetchPPMTask = async () => {
+      toast.loading("Please wait");
       try {
         const taskResponse = await getPPMTask();
+        toast.dismiss()
+      toast.success("PPM task data fetched successfully");
         // const filteredServiceTask = taskResponse.data.activities.filter(
         //   (asset) => asset.asset_name
         // );
