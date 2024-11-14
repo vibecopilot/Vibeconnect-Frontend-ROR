@@ -5,7 +5,7 @@ import { getItemInLocalStorage } from "../../../utils/localStorage";
 import { useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import toast from "react-hot-toast";
-import { editChecklist, getChecklistDetails } from "../../../api";
+import { editChecklist, getChecklistDetails, getHostList } from "../../../api";
 import { CloseCircle, CloseOutline } from "react-ionicons";
 import Select from 'react-select';
 import Cron from "react-js-cron";
@@ -22,6 +22,10 @@ const PPMChecklistDetails = () => {
   const [lockOverdueTask, setLockOverdueTask] = useState("");
   const [allowedmin, setallowedmin] = useState("");
   const [extensionmin, setextensionmin] = useState("");
+  const [selectedSupervisors, setSelectedSupervisors] = useState([]);
+  const [supervisorOptions, setSupervisorOptions] = useState([]);
+  const [hosts, setHosts] = useState([]);
+ 
   const [cronExpression, setCronExpression] = useState("0 0 * * *");
 
   const handleCronChange = (newCron) => {
@@ -56,7 +60,9 @@ const PPMChecklistDetails = () => {
       return updatedQuest;
     });
   };
-
+  const handleLockOverdueTaskChange = (e) => {
+    setLockOverdueTask(e.target.value);
+  };
   // const handleQuestionChange = (index, field, value) => {
   //   const newQuestions = [...addNewQuestion];
   //   if (field === "name" || field === "type") {
@@ -82,6 +88,30 @@ const PPMChecklistDetails = () => {
   const siteId = getItemInLocalStorage("SITEID");
   const userId = getItemInLocalStorage("UserId");
   const { id } = useParams();
+  const handleSupervisorChange = (selected) => {
+    setSelectedSupervisors(selected);
+  };
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const usersResp = await getHostList(siteId);
+        const supervisors = usersResp.data.hosts.map((host) => ({
+          value: host.id,
+          label: host.name,
+        }));
+        
+        setHosts(usersResp.data.hosts);
+        setSupervisorOptions(supervisors);
+      } catch (error) {
+        console.error('Error fetching hosts:', error);
+      }
+    };
+
+    if (siteId) {
+      fetchUsers();
+    }
+  }, [siteId]);
+
   useEffect(() => {
     const fetchServicesChecklistDetails = async () => {
       const checklistDetailsResponse = await getChecklistDetails(id);
@@ -96,6 +126,12 @@ const PPMChecklistDetails = () => {
       setallowedmin(data.grace_period)
       setextensionmin(data.grace_period_unit)
       setCronExpression(data.cron_expression)
+      setSelectedSupervisors(
+        data.supervisors?.map((sup) => ({
+          value: sup,
+          label: sup,
+        })) || []
+      );
       setAddNewQuestion(
         data.questions.map((q) => ({
           id: q.id,
@@ -114,29 +150,6 @@ const PPMChecklistDetails = () => {
   }, [id, update]);
   const handleSubmit = async (event) => {
     event.preventDefault();
-    // const data = {
-    //   checklist: {
-    //     site_id: siteId,
-    //     occurs: "",
-    //     name: name,
-    //     start_date: startDate,
-    //     end_date: endDate,
-    //     user_id: userId,
-    //   },
-    //   frequency: frequency,
-    //   ctype: "ppm",
-    //   question: addNewQuestion.map((q) => ({
-    //
-    //     name: q.name,
-    //     type: q.type,
-    //     option1: q.options[0],
-    //     option2: q.options[1],
-    //     option3: q.options[2],
-    //     option4: q.options[3],
-    //     _destroy: q._destroy
-    //   })),
-    // };
-    // console.log(data);
     const formData = new FormData();
     formData.append("checklist[site_id]", siteId);
     formData.append("checklist[occurs]", "");
@@ -189,7 +202,25 @@ const PPMChecklistDetails = () => {
   const toggleEdit = () => {
     setIsEditing(!isEditing);
   };
+  const [createNew, setCreateNew] = useState(false);
+  const [createTicket, setCreateTicket] = useState(false);
+  const [weightage, setWeightage] = useState(false);
 
+  const handleToggle = (type) => {
+    switch (type) {
+      case 'createNew':
+        setCreateNew(!createNew);
+        break;
+      case 'createTicket':
+        setCreateTicket(!createTicket);
+        break;
+      case 'weightage':
+        setWeightage(!weightage);
+        break;
+      default:
+        break;
+    }
+  };
   return (
     <section>
       <div className="m-2">
@@ -197,7 +228,7 @@ const PPMChecklistDetails = () => {
           style={{ background: themeColor }}
           className="text-center text-xl font-bold p-2  rounded-full text-white"
         >
-          {isEditing ? "Edit Checklist Details" : "Routine Checklist Details"}
+          {isEditing ? "Edit Checklist Details" : "PPM Checklist Details"}
         </h2>
         <div className="lg:mx-20 my-5 mb-10 sm:border border-gray-400 md:p-5 md:px-10 rounded-lg sm:shadow-xl">
           <div className="flex justify-end">
@@ -218,6 +249,134 @@ const PPMChecklistDetails = () => {
             )}
           </div>
           <form onSubmit={handleSubmit}>
+          <div className="py-4">
+      {/* Main Grid for all Toggles */}
+      <div className="grid grid-cols-2 gap-4 items-start">
+        {/* Create New Toggle */}
+        {/* <div className="flex items-center">
+          <span className="mr-2">Create New</span>
+          <div
+            onClick={() => handleToggle('createNew')}
+            className={`w-10 h-4 flex items-center bg-gray-300 rounded-full  cursor-pointer ${
+              createNew ? 'bg-green-500' : ''
+            }`}
+          >
+            <div
+              className={`bg-white w-4 h-4 rounded-full shadow-md transform ${
+                createNew ? 'translate-x-6' : ''
+              }`}
+            />
+          </div>
+        </div> */}
+
+       
+
+        {/* Create Ticket Toggle */}
+        <div className="flex items-center">
+          <span className="mr-2">Create Ticket</span>
+          <div
+            onClick={() => handleToggle('createTicket')}
+            className={`w-10 h-4 flex items-center bg-gray-300 rounded-full  cursor-pointer ${
+              createTicket ? 'bg-green-500' : ''
+            }`}
+          >
+            <div
+              className={`bg-white w-4 h-4 rounded-full shadow-md transform ${
+                createTicket ? 'translate-x-6' : ''
+              }`}
+            />
+          </div>
+        </div>
+
+        
+
+        {/* Weightage Toggle */}
+        <div className="flex items-center">
+          <span className="mr-2">Weightage</span>
+          <div
+            onClick={() => handleToggle('weightage')}
+            className={`w-10 h-4 flex items-center bg-gray-300 rounded-full  cursor-pointer ${
+              weightage ? 'bg-red-500' : ''
+            }`}
+          >
+            <div
+              className={`bg-white w-4 h-4 rounded-full shadow-md transform ${
+                weightage ? 'translate-x-6' : ''
+              }`}
+            />
+          </div>
+        </div>
+
+        {/* Show Weightage and Rating Fields if Weightage is on */}
+         {/* Show Select Template if Create New is on */}
+         {createNew && (
+          <div className="flex flex-col gap-1">
+            <label className="font-semibold">Select Template</label>
+            <select 
+             value={masterid}
+             onChange={(e) => setmasterid(e.target.value)}
+            className="border p-1 px-4 border-gray-500 rounded-md">
+              <option value="">Select from the existing Template</option>
+              {masters.map((m) => (
+              <option value={m.value} key={m.value}>
+                {m.label}
+              </option>
+            ))}
+            </select>
+          </div>
+        )}
+{/* Show Checklist Level, Question Level, and Select Fields if Create Ticket is on */}
+{createTicket && (
+          <div className="flex flex-col justify-center gap-1 mb-2">
+            {/* Radio Buttons */}
+            <div className="flex  gap-4 ">
+              
+              <div className="flex items-center mt-2">
+                <input
+                  type="radio"
+                  id="checklistLevel"
+                  name="ticketType"
+                  value="checklistLevel"
+                  className="mr-2"
+                />
+                <label htmlFor="checklistLevel">Checklist Level</label>
+              </div>
+              <div className="flex items-center mt-2">
+                <input
+                  type="radio"
+                  id="questionLevel"
+                  name="ticketType"
+                  value="questionLevel"
+                  className="mr-2"
+                />
+                <label htmlFor="questionLevel">Question Level</label>
+              </div>
+            </div>
+
+            {/* Select Fields */}
+            <div className="flex flex-col gap-1">
+              <label className="font-semibold">Select Assigned To</label>
+              <select className="border p-1 px-4 border-gray-500 rounded-md">
+                <option value="">Select Assigned To</option>
+                <option value="user1">User 1</option>
+                <option value="user2">User 2</option>
+                {/* Add more options as needed */}
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="font-semibold">Select Category</label>
+              <select className="border p-1 px-4 border-gray-500 rounded-md">
+                <option value="">Select Category</option>
+                <option value="category1">Category 1</option>
+                <option value="category2">Category 2</option>
+                {/* Add more categories as needed */}
+              </select>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
             <div className="flex flex-col justify-around">
               <div className="grid md:grid-cols-3 item-start gap-x-4 gap-y-2 w-full">
                 <div className="flex flex-col">
@@ -534,7 +693,37 @@ const PPMChecklistDetails = () => {
                   value={data.help_text}
                   className="border p-1 px-4 border-gray-500 rounded-md"
                   onChange={(e) => handleQuestionChange(i, "help_text", e.target.value)}
-                /> </div>)}
+                /> </div>
+                )}
+    {weightage && (
+          <div className=" grid grid-cols-4 gap-4">
+            <div className="flex flex-col gap-1">
+              <label className="font-semibold">Weightage</label>
+              <input
+                type="number"
+                className="border p-1 px-4 border-gray-500 rounded-md"
+                value={data.weightage}
+                onChange={(e) => handleQuestionChange(i, "weightage", e.target.value)}
+                placeholder="Enter weightage value"
+              />
+            </div>
+
+           
+              {/* <label className="block text-gray-700">Rating</label> */}
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="rating"
+                  checked={data.rating}
+                  onChange={(e) => handleQuestionChange(i, "rating", e.target.checked)}
+                  className="mr-2"
+                />
+                <label htmlFor="rating"> Rating</label>
+              </div>
+           
+          </div>
+        )}
+
                  <h2 className="border-b-2 border-black text font-medium">
                       Schedules
                     </h2>
@@ -607,55 +796,55 @@ const PPMChecklistDetails = () => {
         </div>
         
       </div>
-      {/* <div className="flex flex-col">
+      <div className="flex flex-col">
         <label htmlFor="">Lock Overdue Task</label>
-        <input 
+        <select 
         name="lockOverdueTask"
         id="lockOverdueTask"
         className="border p-1 px-2 border-gray-500 rounded-md"
-        value={lockOverdueTask}
-        onChange={handleLockOverdueTaskChange}
+        // value={lockOverdueTask}
+        // onChange={handleLockOverdueTaskChange}
         >
           <option value="">Select Lock Status</option>
           <option value="true">Yes</option>
           <option value="false">No</option>
-        </input>
-      </div> */}
+        </select>
+      </div>
     </div>
             
 
              
     <div className="flex flex-col gap-4 ">
-    {/* <div>
+    <div>
         <label className="font-semibold">Supervisors</label>
         <Select
-          value={selectedOptionssupervisior}
-          onChange={handleChangesupervisior}
-          options={optionssupervisior}
-          isMulti
-          isSearchable
-          placeholder="Select Supervisors"
-        />
-      </div> */}
+        value={selectedSupervisors}
+        onChange={handleSupervisorChange}
+        options={supervisorOptions}
+        isMulti
+        isSearchable
+        placeholder="Select Supervisors"
+      />
+      </div>
     
         
 
         
-         <div  className="flex flex-col ">
+         {/* <div  className="flex flex-col ">
                <label className="font-semibold">Supplier ID</label>
                <input className="border p-1 px-4 border-gray-500 rounded-md"
                value={supplierid}
-              //  onChange={(e) => setsupplierid(e.target.value)}
+               onChange={(e) => setsupplierid(e.target.value)}
                >
-                 {/* <option value="">Select Supplier</option> */}
-                 {/* {suppliers.map((supplier) => (
+                 <option value="">Select Supplier</option>
+                 {suppliers.map((supplier) => (
               <option value={supplier.id} key={supplier.id}>
                 {supplier.company_name}
               </option>
-            ))} */}
+            ))}
                  
                </input>
-             </div>
+             </div> */}
              </div>
          
        </div>
@@ -669,68 +858,7 @@ const PPMChecklistDetails = () => {
     </div>
                                 </div>
                                 ) : (
-                                  // <div className="grid grid-cols-4 gap-4 my-2">
-                                  //   <input
-                                  //     type="text"
-                                  //     name={`option1_${i}`}
-                                  //     id={`option1_${i}`}
-                                  //     className=" p-1 px-4  rounded-md outline-none bg-gray-100"
-                                  //     placeholder="option 1"
-                                  //     value={data.options[0] || ""}
-                                  //     onChange={(e) =>
-                                  //       handleQuestionChange(
-                                  //         i,
-                                  //         0,
-                                  //         e.target.value
-                                  //       )
-                                  //     }
-                                  //   />
-                                  //   <input
-                                  //     type="text"
-                                  //     name={`option2_${i}`}
-                                  //     id={`option2_${i}`}
-                                  //     className=" p-1 px-4  rounded-md outline-none bg-gray-100"
-                                  //     placeholder="option 2"
-                                  //     value={data.options[1] || ""}
-                                  //     onChange={(e) =>
-                                  //       handleQuestionChange(
-                                  //         i,
-                                  //         1,
-                                  //         e.target.value
-                                  //       )
-                                  //     }
-                                  //   />
-                                  //   <input
-                                  //     type="text"
-                                  //     name={`option3_${i}`}
-                                  //     id={`option3_${i}`}
-                                  //     className=" p-1 px-4  rounded-md outline-none bg-gray-100"
-                                  //     placeholder="option 3"
-                                  //     value={data.options[2] || ""}
-                                  //     onChange={(e) =>
-                                  //       handleQuestionChange(
-                                  //         i,
-                                  //         2,
-                                  //         e.target.value
-                                  //       )
-                                  //     }
-                                  //   />
-                                  //   <input
-                                  //     type="text"
-                                  //     name={`option4_${i}`}
-                                  //     id={`option4_${i}`}
-                                  //     className=" p-1 px-4  rounded-md outline-none bg-gray-100"
-                                  //     placeholder="option 4"
-                                  //     value={data.options[3] || ""}
-                                  //     onChange={(e) =>
-                                  //       handleQuestionChange(
-                                  //         i,
-                                  //         3,
-                                  //         e.target.value
-                                  //       )
-                                  //     }
-                                  //   />
-                                  // </div>
+                                  
                                   <div className="grid  gap-4 my-2 w-full">
                                   <div className="flex flex-col sm:flex-row gap-2">
                                     <input
@@ -862,6 +990,34 @@ const PPMChecklistDetails = () => {
                   onChange={(e) => handleQuestionChange(i, "help_text", e.target.value)}
                   disabled
                 /> </div>)}
+                {weightage && (
+          <div className=" grid grid-cols-4 gap-4">
+            <div className="flex flex-col gap-1">
+              <label className="font-semibold">Weightage</label>
+              <input
+                type="number"
+                className="border p-1 px-4 border-gray-500 rounded-md"
+                value={data.weightage}
+                onChange={(e) => handleQuestionChange(i, "weightage", e.target.value)}
+                placeholder="Enter weightage value"
+              />
+            </div>
+
+           
+              {/* <label className="block text-gray-700">Rating</label> */}
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="rating"
+                  checked={data.rating}
+                  onChange={(e) => handleQuestionChange(i, "rating", e.target.checked)}
+                  className="mr-2"
+                />
+                <label htmlFor="rating"> Rating</label>
+              </div>
+           
+          </div>
+        )}
                  <h2 className="border-b-2 border-black text font-medium">
                       Schedules
                     </h2>
@@ -934,9 +1090,10 @@ const PPMChecklistDetails = () => {
         </div>
         
       </div>
+      
       {/* <div className="flex flex-col">
         <label htmlFor="">Lock Overdue Task</label>
-        <input 
+        <select 
         name="lockOverdueTask"
         id="lockOverdueTask"
         className="border p-1 px-2 border-gray-500 rounded-md"
@@ -946,43 +1103,43 @@ const PPMChecklistDetails = () => {
           <option value="">Select Lock Status</option>
           <option value="true">Yes</option>
           <option value="false">No</option>
-        </input>
+        </select>
       </div> */}
     </div>
             
 
              
     <div className="flex flex-col gap-4 ">
-    {/* <div>
+    <div>
         <label className="font-semibold">Supervisors</label>
         <Select
-          value={selectedOptionssupervisior}
-          onChange={handleChangesupervisior}
-          options={optionssupervisior}
-          isMulti
-          isSearchable
-          placeholder="Select Supervisors"
-        />
-      </div> */}
+        value={selectedSupervisors}
+        onChange={handleSupervisorChange}
+        options={supervisorOptions}
+        isMulti
+        isSearchable
+        placeholder="Select Supervisors"
+      />
+      </div>
     
         
 
         
-         <div  className="flex flex-col ">
+         {/* <div  className="flex flex-col ">
                <label className="font-semibold">Supplier ID</label>
                <input className="border p-1 px-4 border-gray-500 rounded-md"
                value={supplierid}
-              //  onChange={(e) => setsupplierid(e.target.value)}
+               onChange={(e) => setsupplierid(e.target.value)}
                >
-                 {/* <option value="">Select Supplier</option> */}
-                 {/* {suppliers.map((supplier) => (
+                 <option value="">Select Supplier</option>
+                 {suppliers.map((supplier) => (
               <option value={supplier.id} key={supplier.id}>
                 {supplier.company_name}
               </option>
-            ))} */}
+            ))}
                  
                </input>
-             </div>
+             </div> */}
              </div>
          
        </div>

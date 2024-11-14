@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { BiPlus } from "react-icons/bi";
 import { IoClose } from "react-icons/io5";
 import { getItemInLocalStorage } from "../../utils/localStorage";
-import { getChecklistDetails, getGenericGroupAssetChecklist, getGenericSubGroupAssetChecklist, getHostList, getMasterChecklist, getSiteAsset, getVendors, postChecklist } from "../../api";
+import { getChecklistDetails, getChecklistGroupReading, getGenericGroupAssetChecklist, getGenericSubGroupAssetChecklist, getHostList, getMasterChecklist, getSiteAsset, getVendors, postChecklist } from "../../api";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import toast from "react-hot-toast";
@@ -25,7 +25,7 @@ const AddChecklist = () => {
   const formattedDate = `${year}-${month}-${day}`;
   const [supplierid, setsupplierid] = useState("");
   const [masterid, setmasterid] = useState("");
-
+  const [site, setSites] = useState([]);
   const [name, setName] = useState("");
   const [frequency, setFrequency] = useState("");
   const [startDate, setStartDate] = useState(formattedDate);
@@ -36,7 +36,18 @@ const AddChecklist = () => {
   const handleLockOverdueTaskChange = (e) => {
     setLockOverdueTask(e.target.value);
   };
-
+  useEffect(() => {
+    const fetchSiteOwners = async () => {
+      try {
+        const resp = await getChecklistGroupReading();
+        
+        setSites(resp.data);
+      } catch (error) {
+        console.log("Error fetching site owners:", error);
+      }
+    };
+    fetchSiteOwners();
+  }, []);
   const [addNewQuestion, setAddNewQuestion] = useState([
     {
       name: "", type: "", options: ["", "", "", ""], value_types: ["", "", "", ""],
@@ -146,51 +157,14 @@ const AddChecklist = () => {
         }
     setSections(updatedSections);
   };
-  // const handleQuestionChange = (index, field, value, optionIndex = null) => {
-  //   const newQuestions = [...addNewQuestion];
   
-  //   if (field === "name" || field === "type") {
-  //     newQuestions[index][field] = value;
-  //   } else if (field === "option") {
-  //     newQuestions[index].options[optionIndex] = value;
-  //   } else if (field === "value_type") {
-  //     newQuestions[index].value_types[optionIndex] = value;
-  //   } else if (field === "question_mandatory" || field === "reading" || field === "showHelpText"|| field === "rating") {
-  //     newQuestions[index][field] = value;
-  //   } else if (field === "help_text") {
-  //     newQuestions[index].help_text = value;
-  //   }else if (field === "image_for_question") {
-  //     newQuestions[index].image_for_question = value;
-  //   }
-  //   else if (field === "weightage") {
-  //     newQuestions[index].weightage = value;
-  //   }
-  
-  //   setAddNewQuestion(newQuestions);
-  // };
   const [cronExpression, setCronExpression] = useState("0 0 * * *");
 
   const handleCronChange = (newCron) => {
     setCronExpression(newCron);
   };
-  const handleRemoveQuestionFields = (index) => {
-    const newFields = [...addNewQuestion];
-    newFields.splice(index, 1);
-    setAddNewQuestion(newFields);
-  };
-  // const handleQuestionChange = (index, field, value, optionIndex = null) => {
-  //   const newQuestions = [...addNewQuestion];
-
-  //   if (field === "name" || field === "type") {
-  //     newQuestions[index][field] = value;
-  //   } else if (field === "option") {
-  //     newQuestions[index].options[optionIndex] = value;
-  //   } else if (field === "value_type") {
-  //     newQuestions[index].value_types[optionIndex] = value;
-  //   }
-
-  //   setAddNewQuestion(newQuestions);
-  // };
+ 
+ 
 
   const siteId = getItemInLocalStorage("SITEID");
   const userId = getItemInLocalStorage("UserId");
@@ -226,38 +200,46 @@ const AddChecklist = () => {
     formData.append("checklist[ctype]", "routine");
   
     // Add supervisor IDs
-    selectedOptionssupervisior.forEach((option, index) => {
+    selectedOptionssupervisior.forEach((option) => {
       formData.append(`checklist[supervisior_id][]`, option.value);
     });
   
     // Add frequency
     formData.append("frequency", frequency);
   
-    // Add questions with files
-    addNewQuestion.forEach((q, index) => {
-      formData.append(`question[][name]`, q.name);
-      formData.append(`question[][type]`, q.type);
-      formData.append(`question[][option1]`, q.options[0] || "");
-      formData.append(`question[][value_type1]`, q.value_types[0] || "");
-      formData.append(`question[][option2]`, q.options[1] || "");
-      formData.append(`question[][value_type2]`, q.value_types[1] || "");
-      formData.append(`question[][option3]`, q.options[2] || "");
-      formData.append(`question[][value_type3]`, q.value_types[2] || "");
-      formData.append(`question[][option4]`, q.options[3] || "");
-      formData.append(`question[][value_type4]`, q.value_types[3] || "");
-      formData.append(`question[][question_mandatory]`, q.question_mandatory);
-      formData.append(`question[][reading]`, q.reading);
-      formData.append(`question[][help_text_enbled]`, q.showHelpText);
-      formData.append(`question[][help_text]`, q.showHelpText ? q.help_text : "");
-      formData.append(`question[][weightage]`, q.weightage);
-      formData.append(`question[][rating]`, q.rating);
+    // Add sections and questions
+    sections.forEach((section, sectionIndex) => {
+      formData.append(`groups[][group]`, section.group);
   
-      // Handle file uploads for each question
-      if (q.image_for_question && q.image_for_question.length > 0) {
-        q.image_for_question.forEach((file, fileIndex) => {
-          formData.append(`question[][image_for_question_${index+1}]`, file);
+      section.questions.forEach((q, questionIndex) => {
+        formData.append(`groups[][questions][][name]`, q.name);
+        formData.append(`groups[][questions][][type]`, q.type);
+        formData.append(`groups[][questions][][reading]`, q.reading);
+        formData.append(`groups[][questions][][question_mandatory]`, q.mandatory);
+        formData.append(`groups[][questions][][help_text_enbled]`, q.showHelpText);
+        formData.append(`groups[][questions][][help_text]`, q.help_text || "");
+        formData.append(`groups[][questions][][weightage]`, q.weightage);
+        formData.append(`groups[][questions][][rating]`, q.rating);
+  
+        // Add options and value types
+        q.options.forEach((option, optionIndex) => {
+          formData.append(
+            `groups[][questions][][options][]`,
+            option || ""
+          );
+          formData.append(
+            `groups[][questions][][value_types][]`,
+            q.value_types[optionIndex] || ""
+          );
         });
-      }
+  
+        // Handle file uploads for each question
+        if (q.image_for_question && q.image_for_question.length > 0) {
+          q.image_for_question.forEach((file) => {
+            formData.append(`groups[][questions][][image_for_question ${questionIndex+1}][]`, file);
+          });
+        }
+      });
     });
   
     try {
@@ -270,6 +252,7 @@ const AddChecklist = () => {
       toast.error("Failed to create checklist");
     }
   };
+  
   
   const handleChangesupervisior = (selected) => {
     setSelectedOptionssupervisior(selected);
@@ -594,8 +577,11 @@ const AddChecklist = () => {
               onChange={(e) => handleSectionChange(sectionIndex, 'group', e.target.value)}
             >
               <option value="">Select Group</option>
-              <option value="Group1">Group 1</option>
-              <option value="Group2">Group 2</option>
+              {site.map((supplier) => (
+              <option value={supplier.id} key={supplier.id}>
+                {supplier.name}
+              </option>
+            ))}
             </select></div>
             <div>
             <button
@@ -797,7 +783,7 @@ const AddChecklist = () => {
                 type="number"
                 className="border p-1 px-4 border-gray-500 rounded-md"
                 value={question.weightage}
-                onChange={(e) => handleQuestionChange(i, "weightage", e.target.value)}
+                onChange={(e) => handleQuestionChange(sectionIndex,questionIndex, "weightage", e.target.value)}
                 placeholder="Enter weightage value"
               />
             </div>
@@ -809,7 +795,7 @@ const AddChecklist = () => {
                   type="checkbox"
                   id="rating"
                   checked={question.rating}
-                  onChange={(e) => handleQuestionChange(i, "rating", e.target.checked)}
+                  onChange={(e) => handleQuestionChange(sectionIndex,questionIndex, "rating", e.target.checked)}
                   className="mr-2"
                 />
                 <label htmlFor="rating"> Rating</label>

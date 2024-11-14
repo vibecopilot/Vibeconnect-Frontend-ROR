@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import Navbar from '../../components/Navbar';
 import { IoMdAdd } from 'react-icons/io';
 import Table from '../../components/table/Table';
@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom';
 import { getMasterChecklist } from '../../api';
 
 function MasterCheckListSetup() {
+  const [masterchecklists, setmasterChecklists] = useState([]);
   const column = [
     {
       name: "Actions",
@@ -19,12 +20,27 @@ function MasterCheckListSetup() {
         </div>
       ),
     },
-    { name: "Id", selector: (row) => row.Id, sortable: true },
-    { name: "Activity Name", selector: (row) => row.activityName, sortable: true },
+    { name: "Id", selector: (row) => row.id, sortable: true },
+    { name: "Activity Name", selector: (row) => row.name, sortable: true },
     { name: "Meter Category", selector: (row) => row.meterCategory, sortable: true },
-    { name: "Number Of Questions", selector: (row) => row.numberOfQuestions, sortable: true },
+    { name: "Number Of Questions", selector: (row) => row.questions.length, sortable: true },
     { name: "Scheduled For", selector: (row) => row.scheduledFor, sortable: true },
 ];
+useEffect(() => {
+  const fetchChecklist = async () => {
+   try {
+     const checklist = await getMasterChecklist();
+     const sortedChecklists = checklist.data.checklists.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+     setmasterChecklists(sortedChecklists);
+     console.log(checklist.data.checklists)
+     
+   } catch (error) {
+    console.log(error)
+   }
+  };
+  fetchChecklist();
+  
+}, []);
 const data = [
     {
       id: 1,
@@ -54,7 +70,7 @@ const data = [
         <div className='my-3'>
           <Table 
             columns={column}
-            data={data}
+            data={masterchecklists}
             isPagination={true}
           />
         </div>

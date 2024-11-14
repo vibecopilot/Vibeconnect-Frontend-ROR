@@ -126,13 +126,13 @@ const themeColor =useSelector((state)=> state.theme.color)
       ),
       sortable: true,
     },
-    {
-      name: "Active",
-      selector: (row) => (
-        <Switch/>
-      ),
-      sortable: true,
-    },
+    // {
+    //   name: "Active",
+    //   selector: (row) => (
+    //     <Switch/>
+    //   ),
+    //   sortable: true,
+    // },
     {
       name: "Action",
       cell: (row) => (
@@ -143,7 +143,7 @@ const themeColor =useSelector((state)=> state.theme.color)
           {/* <button className="text-red-400">
             <MdDeleteForever size={25} />
           </button> */}
-          <button onClick={openModalDownload}><FaDownload size={15}/></button>
+          {/* <button onClick={openModalDownload}><FaDownload size={15}/></button> */}
           
           <Link to={`/admin/copy-checklist/${row.id}`}>
           <FaCopy size={15}/>

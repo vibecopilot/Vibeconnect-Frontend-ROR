@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import FileInputBox from '../../containers/Inputs/FileInputBox'
-import { getVendors, postGRN } from '../../api'
+import { getMasters, getVendors, postGRN } from '../../api'
 import { useSelector } from "react-redux";
 import Navbar from '../../components/Navbar';
 import { FaTrash } from "react-icons/fa";
@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 const AddGrn = () => {
   const themeColor = useSelector((state) => state.theme.color);
     const [vendors, setVendors] = useState([]);
+    const [invent, setinvent] = useState([]);
     const [inventories, setInventories] = useState([
       { item_id:"",expected_quantity:"",received_quantity: "",rejected_quantity:"",rate: "",
         csgt_rate: "",csgt_amt: "",sgst_rate:"",sgst_amt: "",igst_rate: "",igst_amt: "",
@@ -109,6 +110,7 @@ const AddGrn = () => {
       formDataSend.append("grn_detail[adjustment_amount]", formData.adjustment_amount);
       formDataSend.append("grn_detail[notes]", formData.notes);
       inventories.forEach((inventory, invIndex) => {
+        formDataSend.append("inventory_details[][item_id]", inventory.inventory_type);
         Object.entries(inventory).forEach(([key, value]) => {
           if (key !== "batches") {
             formDataSend.append(`inventory_details[][${key}]`, value);
@@ -176,6 +178,30 @@ const AddGrn = () => {
         alert("Failed to submit GRN");
       }
     };
+    useEffect(() => {
+      const fetchInventory = async () => {
+        try {
+          const invResp = await getMasters();
+  
+          // Ensure invResp.data is an array and map the required fields
+          const sortedInvData = Array.isArray(invResp.data)
+            ? invResp.data.map((host) => ({
+                id: host.id,         // Use 'id' for the option value
+                name: host.name,     // Use 'name' for the option text
+                type: host.inventory_type, // Include inventory type if needed
+              }))
+            : [];
+  
+          setinvent(sortedInvData);
+  
+          console.log('Fetched Inventory:', sortedInvData);
+        } catch (error) {
+          console.error('Error fetching inventory:', error);
+        }
+      };
+  
+      fetchInventory();
+    }, []);
   return (
     <section>
       
@@ -378,17 +404,21 @@ const AddGrn = () => {
           <div className="flex flex-col">
           <label className="font-semibold">Inventory Type</label>
           <select
-            type="text"
-            name="inventory_type"
-            value={inventory.inventory_type}
-            className="border p-1 px-4 border-gray-500 rounded-md"
-
-            onChange={(e) => handleInventoryChange(invIndex, e)}
-          ><option value="">Inventory Type</option>
-          <option value="Electrical">Electrical</option>
-
-          </select></div>
-          <div className="flex flex-col">
+        type="text"
+        name="inventory_type"
+        value={inventory.inventory_type || ''}
+        className="border p-1 px-4 border-gray-500 rounded-md"
+        onChange={(e) => handleInventoryChange(invIndex, e)}
+      >
+        <option value="">Select Inventory</option>
+        {/* Map over the fetched inventory data */}
+        {invent.map((supplier) => (
+          <option value={supplier.id} key={supplier.id}>
+            {supplier.name}
+          </option>
+        ))}
+      </select></div>
+          {/* <div className="flex flex-col">
           <label className="font-semibold">Item</label>
           <select
             type="text"
@@ -397,10 +427,15 @@ const AddGrn = () => {
             className="border p-1 px-4 border-gray-500 rounded-md"
 
             onChange={(e) => handleInventoryChange(invIndex, e)}
-          ><option value="">select item</option>
-          <option value="1">1</option>
+          >
+            <option value="">Select Item</option>
+            {invent.map((supplier) => (
+            <option value={supplier.id} key={supplier.id}>
+              {supplier.name}
+            </option>
+          ))}
 
-          </select></div>
+          </select></div> */}
           <div className="flex flex-col ">
                         <label htmlFor="" className="font-semibold ">
                             Expected Quantity
