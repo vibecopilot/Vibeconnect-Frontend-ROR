@@ -1039,138 +1039,7 @@ const EditChecklist = () => {
           </div>
         )}
 
-                 <h2 className="border-b-2 border-black text font-medium">
-                      Schedules
-                    </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-2">
-       
-        
-       
-
-        
-        
-       
-       
-            <div className="flex flex-col gap-4">
-      {/* Allowed Time to Submit */}
-      <div>
-        <label className="font-semibold">Allowed time to submit (in Minutes)</label>
-        <div className="flex gap-2">
-          {/* <input
-            type="number"
-            className="border p-1 px-2 border-gray-500 w-44 rounded-md"
-            placeholder="Enter Days"
-            value={submitDays}
-            onChange={(e) => setSubmitDays(e.target.value)}
-          /> */}
-          {/* <input
-            type="number"
-            className="border p-1 px-2 border-gray-500 w-44 rounded-md"
-            placeholder="Enter Hours"
-            value={submitHours}
-            onChange={(e) => setSubmitHours(e.target.value)}
-          /> */}
-          <input
-            type="number"
-            className="border p-1 px-2 border-gray-500 w-96 rounded-md"
-            placeholder="Enter Minutes"
-            value={allowedmin}
-            disabled
-            // onChange={(e) => setSubmitMinutes(e.target.value)}
-          />
-        </div>
-        
-      </div>
-
-      {/* Extension Time */}
-      <div className="flex flex-col mr-2">
-        <label className="font-semibold">Extension Time (in Minutes)</label>
-        <div className="flex gap-2">
-          {/* <input
-            type="number"
-            className="border p-1 px-2 border-gray-500 w-44 rounded-md"
-            placeholder="Enter Days"
-            value={extensionDays}
-            onChange={(e) => setExtensionDays(e.target.value)}
-          /> */}
-          {/* <input
-            type="number"
-            className="border p-1 px-2 border-gray-500 w-44 rounded-md"
-            placeholder="Enter Hours"
-            value={extensionHours}
-            onChange={(e) => setExtensionHours(e.target.value)}
-          /> */}
-          <input
-            type="number"
-            className="border p-1 px-2 border-gray-500 w-96 rounded-md"
-            placeholder="Enter Minutes"
-            value={extensionmin}
-            disabled
-            // onChange={(e) => setExtensionMinutes(e.target.value)}
-          />
-        </div>
-        
-      </div>
-      <div className="flex flex-col">
-        <label htmlFor="">Lock Overdue Task</label>
-        <select 
-        name="lockOverdueTask"
-        id="lockOverdueTask"
-        className="border p-1 px-2 border-gray-500 rounded-md"
-        // value={lockOverdueTask}
-        // onChange={handleLockOverdueTaskChange}
-        >
-          <option value="">Select Lock Status</option>
-          <option value="true">Yes</option>
-          <option value="false">No</option>
-        </select>
-      </div>
-    </div>
-            
-
-             
-    <div className="flex flex-col gap-4 ">
-    <div>
-        <label className="font-semibold">Supervisors</label>
-        <Select
-        value={selectedSupervisors}
-        onChange={handleSupervisorChange}
-        options={supervisorOptions}
-        isMulti
-        isSearchable
-        placeholder="Select Supervisors"
-      />
-      </div>
-    
-        
-
-        
-         {/* <div  className="flex flex-col ">
-               <label className="font-semibold">Supplier ID</label>
-               <input className="border p-1 px-4 border-gray-500 rounded-md"
-               value={supplierid}
-               onChange={(e) => setsupplierid(e.target.value)}
-               >
-                 <option value="">Select Supplier</option>
-                 {suppliers.map((supplier) => (
-              <option value={supplier.id} key={supplier.id}>
-                {supplier.company_name}
-              </option>
-            ))}
-                 
-               </input>
-             </div> */}
-             </div>
-         
-       </div>
-       <h2 className="border-b-2 border-black text font-medium">
-                      Cron Setting
-                    </h2>
-                    <div className="my-2 border-2 border-dashed flex items-center p-2 rounded-md border-gray-300">
-      
-      <Cron value={cronExpression} setValue={handleCronChange} />
-      
-    </div>
+               
                                 </div>
                                 ) : (
                                   
@@ -1333,7 +1202,40 @@ const EditChecklist = () => {
            
           </div>
         )}
-                 <h2 className="border-b-2 border-black text font-medium">
+              
+                                </div>
+                                
+                                )}
+                                
+                              </>
+                            )}
+                          </div>
+                          
+                          {isEditing && (
+                            <div className="flex justify-end gap-2">
+                              <button
+                                className="p-1 border-2 border-red-500 text-white hover:bg-white hover:text-red-500 bg-red-500 px-4 transition-all duration-300 rounded-md "
+                                onClick={() => handleRemoveQuestionFields(i)}
+                              >
+                                <IoClose />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                </div>
+                {isEditing && (
+                  <button
+                    type="button"
+                    className="p-1 border-2 border-black px-4 rounded-md my-2 flex gap-2 items-center"
+                    onClick={() => handleAddQuestionFields()}
+                  >
+                    <BiPlus />
+                    Add Question
+                  </button>
+                )}
+                   <h2 className="border-b-2 border-black text font-medium">
                       Schedules
                     </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-2">
@@ -1466,36 +1368,6 @@ const EditChecklist = () => {
       <Cron value={cronExpression} setValue={handleCronChange} />
       
     </div>
-                                </div>
-                                
-                                )}
-                              </>
-                            )}
-                          </div>
-                          {isEditing && (
-                            <div className="flex justify-end gap-2">
-                              <button
-                                className="p-1 border-2 border-red-500 text-white hover:bg-white hover:text-red-500 bg-red-500 px-4 transition-all duration-300 rounded-md "
-                                onClick={() => handleRemoveQuestionFields(i)}
-                              >
-                                <IoClose />
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                </div>
-                {isEditing && (
-                  <button
-                    type="button"
-                    className="p-1 border-2 border-black px-4 rounded-md my-2 flex gap-2 items-center"
-                    onClick={() => handleAddQuestionFields()}
-                  >
-                    <BiPlus />
-                    Add Question
-                  </button>
-                )}
               </div>
               <div className="flex justify-center">
                 {isEditing && (
