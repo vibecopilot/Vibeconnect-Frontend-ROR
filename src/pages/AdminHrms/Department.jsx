@@ -18,7 +18,9 @@ import {
 import Select from "react-select";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import toast from "react-hot-toast";
-import { FaTrash } from "react-icons/fa";
+import { FaCheck, FaTrash } from "react-icons/fa";
+import MultiSelect from "./Components/MultiSelect";
+import { MdClose } from "react-icons/md";
 const Department = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalOpen1, setIsModalOpen1] = useState(false);
@@ -30,7 +32,7 @@ const Department = () => {
 
   const listItemStyle = {
     listStyleType: "disc",
-    color: "black",
+    color: "gray",
     fontSize: "14px",
     fontWeight: 500,
   };
@@ -75,6 +77,8 @@ const Department = () => {
   };
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
   const [employees, setEmployees] = useState([]);
+  const [supervisors, setSupervisors] = useState([]);
+  const [filteredSupervisors, setFilteredSupervisors] = useState([]);
   useEffect(() => {
     const fetchAllEmployees = async () => {
       try {
@@ -86,6 +90,8 @@ const Department = () => {
         }));
 
         setEmployees(employeesList);
+        setSupervisors(employeesList);
+        setFilteredSupervisors(employeesList);
         console.log(res);
       } catch (error) {
         console.log(error);
@@ -148,13 +154,17 @@ const Department = () => {
     postData.append("head_of_department", deptHeadId);
 
     postData.append("organization", hrmsOrgId);
-
+    const reportingSupervisors = selectedOptions.map((item) => item);
+    reportingSupervisors.forEach((supervisor) => {
+      postData.append("reporting_supervisor", supervisor);
+    });
     try {
       const postRes = await addHrmsOrganizationDepartment(postData);
       toast.success("Department added successfully");
       fetchMyDepartments();
       setIsModalOpen(false);
       setDepartmentName("");
+      setSelectedOptions([]);
     } catch (error) {
       toast.error("An error occurred while adding the department");
       console.log(error);
@@ -171,6 +181,7 @@ const Department = () => {
         (employee) => employee.value === response.head_of_department
       );
       setEditSelectedOption(selectedHead || null);
+      setEditSelectedOptions(response.reporting_supervisor);
     } catch (error) {
       console.log(error);
     }
@@ -181,6 +192,10 @@ const Department = () => {
     editData.append("name", editDepartmentName);
     editData.append("head_of_department", editSelectedOption.value);
     editData.append("organization", hrmsOrgId);
+    const reportingSupervisors = editSelectedOptions.map((item) => item);
+    reportingSupervisors.forEach((supervisor) => {
+      editData.append("reporting_supervisor", supervisor);
+    });
 
     try {
       const res = await editHrmsOrganizationDepartment(deptId, editData);
@@ -191,6 +206,25 @@ const Department = () => {
       console.log(error);
     }
   };
+  const [selectedOptions, setSelectedOptions] = useState([]);
+  const [editSelectedOptions, setEditSelectedOptions] = useState([]);
+  const handleSelect = (option) => {
+    if (selectedOptions.includes(option)) {
+      setSelectedOptions(selectedOptions.filter((item) => item !== option));
+    } else {
+      setSelectedOptions([...selectedOptions, option]);
+    }
+  };
+  const handleSelectEdit = (option) => {
+    if (editSelectedOptions.includes(option)) {
+      setEditSelectedOptions(
+        editSelectedOptions.filter((item) => item !== option)
+      );
+    } else {
+      setEditSelectedOptions([...editSelectedOptions, option]);
+    }
+  };
+
   return (
     <section className="flex ml-20">
       <OrganisationSetting />
@@ -287,10 +321,7 @@ const Department = () => {
           <div className="bg-white p-5 rounded-md shadow-md w-1/3">
             <h2 className="text-xl font-semibold mb-4">Add Department</h2>
             <div className="mb-4">
-              <label
-                htmlFor="departmentName"
-                className="block text-sm font-medium text-gray-700"
-              >
+              <label htmlFor="departmentName" className="block  font-medium ">
                 Department Name
               </label>
               <input
@@ -303,10 +334,7 @@ const Department = () => {
               />
             </div>
             <div className="mb-4">
-              <label
-                htmlFor="headOfDepartment"
-                className="block text-sm font-medium text-gray-700"
-              >
+              <label htmlFor="headOfDepartment" className="block  font-medium">
                 Head of Department
               </label>
 
@@ -317,18 +345,28 @@ const Department = () => {
                 placeholder="Select Department Head"
               />
             </div>
-            <div className="flex justify-end">
+            <MultiSelect
+              options={supervisors}
+              title={"Select reporting supervisors?"}
+              handleSelect={handleSelect}
+              // handleSelectAll={handleSelectAll}
+              selectedOptions={selectedOptions}
+              setSelectedOptions={setSelectedOptions}
+              setOptions={setSupervisors}
+              searchOptions={filteredSupervisors}
+            />
+            <div className="flex justify-center gap-2 mt-4">
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="bg-gray-300 text-gray-700 p-2 rounded-md mr-2"
+                className="border-2 border-red-500 text-red-500 p-1 px-4 rounded-full flex items-center gap-2"
               >
-                Cancel
+                <MdClose /> Cancel
               </button>
               <button
                 onClick={handleAddDept}
-                className="bg-blue-500 text-white p-2 rounded-md"
+                className="border-2 border-green-500 bg-green-500 text-white p-1 px-4 rounded-full flex items-center gap-2"
               >
-                Add
+                <FaCheck /> Add
               </button>
             </div>
           </div>
@@ -339,10 +377,7 @@ const Department = () => {
           <div className="bg-white p-5 rounded-md shadow-md w-1/3">
             <h2 className="text-xl font-semibold mb-4">Edit Department</h2>
             <div className="mb-4">
-              <label
-                htmlFor="departmentName"
-                className="block text-sm font-medium text-gray-700"
-              >
+              <label htmlFor="departmentName" className="block  font-medium ">
                 Department Name
               </label>
               <input
@@ -355,10 +390,7 @@ const Department = () => {
               />
             </div>
             <div className="mb-4">
-              <label
-                htmlFor="headOfDepartment"
-                className="block text-sm font-medium text-gray-700"
-              >
+              <label htmlFor="headOfDepartment" className="block font-medium">
                 Head of Department
               </label>
               <Select
@@ -369,18 +401,28 @@ const Department = () => {
                 placeholder="Select Department Head"
               />
             </div>
-            <div className="flex justify-end">
+            <MultiSelect
+              options={supervisors}
+              title={"Select reporting supervisors?"}
+              handleSelect={handleSelectEdit}
+              // handleSelectAll={handleSelectAll}
+              selectedOptions={editSelectedOptions}
+              setSelectedOptions={setEditSelectedOptions}
+              setOptions={setSupervisors}
+              searchOptions={filteredSupervisors}
+            />
+            <div className="flex justify-center gap-2 mt-4">
               <button
                 onClick={() => setIsModalOpen1(false)}
-                className="bg-gray-300 text-gray-700 p-2 rounded-md mr-2"
+                className="border-2 border-red-500 text-red-500 p-1 px-4 rounded-full flex items-center gap-2"
               >
-                Close
+                <MdClose /> Close
               </button>
               <button
                 onClick={UpdateDepartment}
-                className="bg-blue-500 text-white p-2 rounded-md"
+                className="border-2 border-green-500 bg-green-500 text-white p-1 px-4 rounded-full flex items-center gap-2"
               >
-                Update
+                <FaCheck /> Update
               </button>
             </div>
           </div>

@@ -686,6 +686,11 @@ import PerformanceSettings from "./pages/AdminHrms/Performance/PerformanceSettin
 import MilestoneTypeSettings from "./pages/AdminHrms/MilestoneTypeSettings.jsx";
 import AddExistingPolicy from "./pages/SubPages/AddExistingPolicy.jsx";
 import MeterCategoryType from "./pages/Setup/MeterCategoryType/MeterCategoryType.jsx";
+import EditEmployee from "./pages/AdminHrms/EditEmployee.jsx";
+import EditEvent from "./pages/SubPages/EditEvent.jsx";
+import EditBroadcast from "./pages/SubPages/EditBroadcast.jsx";
+import AssociatedSites from "./pages/AdminHrms/AssociatedSites/AssociatedSites.jsx";
+import SetupSeat from "./pages/Setup/SetupSeat.jsx";
 // new admin hrms
 
 function App() {
@@ -1137,7 +1142,7 @@ function App() {
             element={<BookingDetails />}
           />
           <Route
-            path="/facility"
+            path="/setup/facility"
             element={
               <ProtectedAdminRoutes>
                 <SetupBookingFacility />
@@ -1145,10 +1150,18 @@ function App() {
             }
           />
           <Route
-            path="/facility/setup-facility"
+            path="/setup/facility/setup-facility"
             element={
               <ProtectedAdminRoutes>
                 <SetupFacility />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/setup/seat-setup"
+            element={
+              <ProtectedAdminRoutes>
+                <SetupSeat />
               </ProtectedAdminRoutes>
             }
           />
@@ -1388,6 +1401,14 @@ function App() {
             }
           />
           <Route
+            path="/communication/event/edit-events/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <EditEvent />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
             path="/communication/event/event-details/:id"
             element={
               <ProtectedRoute>
@@ -1408,6 +1429,14 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <BroadcastDetails />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/communication/broadcast/edit-broadcast/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <EditBroadcast />
               </ProtectedAdminRoutes>
             }
           />
@@ -3641,7 +3670,7 @@ function App() {
           />
 
           <Route
-            path="/employee/add-hotel-request"
+            path="/employee/booking-request/add-hotel-request"
             element={
               <ProtectedRoute>
                 <EmployeeAddHotelRequest />
@@ -4208,6 +4237,14 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <Department />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/associated-sites"
+            element={
+              <ProtectedAdminRoutes>
+                <AssociatedSites />
               </ProtectedAdminRoutes>
             }
           />
@@ -5647,6 +5684,14 @@ function App() {
             }
           />
           <Route
+            path="/admin/edit-employee/basics"
+            element={
+              <ProtectedAdminRoutes>
+                <EditEmployee />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
             path="/hrms/organization-tree-setting"
             element={
               <ProtectedAdminRoutes>
@@ -6040,6 +6085,14 @@ function App() {
           />
           <Route
             path="/hrms/separation/separate-application/resignation"
+            element={
+              <ProtectedAdminRoutes>
+                <Resignation />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/hrms/separation/separate-application/resignation/:id"
             element={
               <ProtectedAdminRoutes>
                 <Resignation />

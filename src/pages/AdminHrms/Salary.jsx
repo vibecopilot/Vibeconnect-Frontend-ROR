@@ -3,11 +3,17 @@ import AdminHRMS from "./AdminHrms";
 import { FaTrash } from "react-icons/fa";
 import AddEmployeeDetailsList from "./AddEmployeeDetailsList";
 import { GrHelpBook } from "react-icons/gr";
-import { postSalaryGeneralInfo, postTaxStatutory } from "../../api";
+import {
+  getTaxAndStatSetting,
+  postSalaryGeneralInfo,
+  postTaxAndStatSetting,
+  postTaxStatutory,
+} from "../../api";
 import { useSelector } from "react-redux";
 import Accordion from "./Components/Accordion";
 import { FaFileCircleCheck } from "react-icons/fa6";
 import SalaryAccordion from "./Components/SalaryAccordion";
+import { getItemInLocalStorage } from "../../utils/localStorage";
 
 const OnboardingSalary = ({ empId }) => {
   const themeColor = useSelector((state) => state.theme.color);
@@ -183,8 +189,7 @@ const OnboardingSalary = ({ empId }) => {
 
   const handleMonthlyChange = (index, value) => {
     const updatedItems = [...fixedAllowanceItems];
-    updatedItems[index].monthly = Number(value); // Update the monthly value
-    // Update yearly value based on new monthly input, assuming 12 months in a year
+    updatedItems[index].monthly = Number(value);
     updatedItems[index].yearly = Number(value) * 12;
     setFixedAllowanceItems(updatedItems);
   };
@@ -205,6 +210,78 @@ const OnboardingSalary = ({ empId }) => {
       yearly: "₹ 60,000",
     },
   ];
+  const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
+  const [taxStatFields, setTaxStatFields] = useState([]);
+  // const [statData, setStatData] = useState(
+  //   taxStatFields.reduce((acc, field) => {
+  //     acc[field.id] =
+  //       field.value_type === "boolean"
+  //         ? field.default_value === "true"
+  //         : field.default_value;
+  //     return acc;
+  //   }, {})
+  // );
+
+  const [statData, setStatData] = useState({});
+
+  useEffect(() => {
+    const fetchTaxStat = async () => {
+      try {
+        const res = await getTaxAndStatSetting(hrmsOrgId);
+        setTaxStatFields(res);
+        const initialStatData = res.reduce((acc, field) => {
+          acc[field.id] =
+            field.value_type === "boolean"
+              ? field.default_value === "true"
+              : field.default_value;
+          return acc;
+        }, {});
+
+        setStatData(initialStatData);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchTaxStat();
+  }, []);
+
+  // useEffect(() => {
+  //   const fetchTaxStat = async () => {
+  //     try {
+  //       const res = await getTaxAndStatSetting(hrmsOrgId);
+  //       console.log(res);
+  //       setTaxStatFields(res);
+  //     } catch (error) {
+  //       console.log(error);
+  //     }
+  //   };
+  //   fetchTaxStat();
+  // }, []);
+  const handleStatChange = (id, event, valueType) => {
+    const updatedValue =
+      valueType === "boolean"
+        ? event.target.value === "true"
+        : event.target.value;
+    setStatData({
+      ...statData,
+      [id]: updatedValue,
+    });
+  };
+  console.log(statData);
+  const handlePostTaxStatutory = async () => {
+    const taxData = Object.entries(statData).map(([key, value]) => ({
+      employee: 1,
+      master_id: key,
+      value: String(value),
+    }));
+    try {
+      const res = await postTaxAndStatSetting(taxData);
+      setPage("CTC Components");
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <div className="flex w-full">
       {/* <AddEmployeeDetailsList /> */}
@@ -512,379 +589,76 @@ const OnboardingSalary = ({ empId }) => {
           )}
           {page === "Tax and Statutory Setting" && (
             <div>
-              <div className="mb-4">
-                <label className="block text-gray-700 font-medium">
-                  PF Deduction <span className="text-red-500">*</span>
-                </label>
-                <div className="mt-2">
-                  <label className="inline-flex items-center">
-                    <input
-                      type="radio"
-                      name="pfDeduction"
-                      checked={taxData.pfDeduction === true}
-                      onChange={() =>
-                        setTaxData({ ...taxData, pfDeduction: true })
-                      }
-                      className="form-radio"
-                    />
-                    <span className="ml-2">Yes</span>
+              {taxStatFields.map((field) => (
+                <div key={field.id} className="flex gap-2 flex-col my-2">
+                  <label className="block text-gray-700 font-medium">
+                    {field.label}
                   </label>
-                  <label className="inline-flex items-center ml-6">
+                  {field.value_type === "boolean" && (
+                    <div className="flex gap-4 items-center">
+                      <label className="flex gap-2">
+                        <input
+                          type="radio"
+                          name={`boolean-${field.id}`}
+                          value="true" // String "true"
+                          checked={statData[field.id] === true} // Boolean check
+                          onChange={(e) =>
+                            handleStatChange(field.id, e, "boolean")
+                          }
+                        />
+                        Yes
+                      </label>
+                      <label className="flex gap-2">
+                        <input
+                          type="radio"
+                          name={`boolean-${field.id}`}
+                          value="false" // String "false"
+                          checked={statData[field.id] === false} // Boolean check
+                          onChange={(e) =>
+                            handleStatChange(field.id, e, "boolean")
+                          }
+                        />
+                        No
+                      </label>
+                    </div>
+                  )}
+                  {field.value_type === "number" && (
                     <input
-                      type="radio"
-                      name="pfDeduction"
-                      checked={taxData.pfDeduction === false}
-                      onChange={() =>
-                        setTaxData({ ...taxData, pfDeduction: false })
-                      }
-                      className="form-radio"
+                      type="number"
+                      value={statData[field.id]}
+                      onChange={(e) => handleStatChange(field.id, e, "number")}
+                      placeholder="Enter PF wage"
+                      className="border w-full border-gray-500 p-2 rounded-md"
                     />
-                    <span className="ml-2">No</span>
-                  </label>
+                  )}
+                  {field.value_type === "string" && (
+                    <input
+                      type="text"
+                      value={statData[field.id]}
+                      onChange={(e) => handleStatChange(field.id, e, "string")}
+                      placeholder="Enter text"
+                      className="border w-full border-gray-500 p-2 rounded-md"
+                    />
+                  )}
+                  {field.value_type === "drop down" && (
+                    <select
+                      name=""
+                      id=""
+                      value={statData[field.id]}
+                      onChange={(e) => handleStatChange(field.id, e, "string")}
+                      className="border w-full border-gray-500 p-2 rounded-md"
+                    >
+                      <option value="">Select Template</option>
+                      <option value="temp">Template</option>
+                    </select>
+                  )}
                 </div>
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 font-medium">
-                  Provident Pension Deduction{" "}
-                  <span className="text-red-500">*</span>
-                </label>
-                <div className="mt-2">
-                  <label className="inline-flex items-center">
-                    <input
-                      type="radio"
-                      name="providentPensionDeduction"
-                      checked={taxData.providentPension === true}
-                      onChange={() =>
-                        setTaxData({ ...taxData, providentPension: true })
-                      }
-                      className="form-radio"
-                    />
-                    <span className="ml-2">Yes</span>
-                  </label>
-                  <label className="inline-flex items-center ml-6">
-                    <input
-                      type="radio"
-                      name="providentPensionDeduction"
-                      checked={taxData.providentPension === false}
-                      onChange={() =>
-                        setTaxData({ ...taxData, providentPension: false })
-                      }
-                      className="form-radio"
-                    />
-                    <span className="ml-2">No</span>
-                  </label>
-                </div>
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 font-medium">
-                  Employee’s PF contribution capped at the PF Ceiling?{" "}
-                  <span className="text-red-500">*</span>
-                </label>
-                <div className="mt-2">
-                  <label className="inline-flex items-center">
-                    <input
-                      type="radio"
-                      name="employeePfCapped"
-                      checked={
-                        taxData.employeeProvidentContributionCapped === true
-                      }
-                      onChange={() =>
-                        setTaxData({
-                          ...taxData,
-                          employeeProvidentContributionCapped: true,
-                        })
-                      }
-                      className="form-radio"
-                    />
-                    <span className="ml-2">Yes</span>
-                  </label>
-                  <label className="inline-flex items-center ml-6">
-                    <input
-                      type="radio"
-                      name="employeePfCapped"
-                      checked={
-                        taxData.employeeProvidentContributionCapped === false
-                      }
-                      onChange={() =>
-                        setTaxData({
-                          ...taxData,
-                          employeeProvidentContributionCapped: false,
-                        })
-                      }
-                      className="form-radio"
-                    />
-                    <span className="ml-2">No</span>
-                  </label>
-                </div>
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 font-medium">
-                  Employer’s PF contribution capped at the PF Ceiling?{" "}
-                  <span className="text-red-500">*</span>
-                </label>
-                <div className="mt-2">
-                  <label className="inline-flex items-center">
-                    <input
-                      type="radio"
-                      name="employerPfCapped"
-                      checked={
-                        taxData.employerProvidentCOntributionCapped === true
-                      }
-                      onChange={() =>
-                        setTaxData({
-                          ...taxData,
-                          employerProvidentCOntributionCapped: true,
-                        })
-                      }
-                      className="form-radio"
-                    />
-                    <span className="ml-2">Yes</span>
-                  </label>
-                  <label className="inline-flex items-center ml-6">
-                    <input
-                      type="radio"
-                      name="employerPfCapped"
-                      checked={
-                        taxData.employerProvidentCOntributionCapped === false
-                      }
-                      onChange={() =>
-                        setTaxData({
-                          ...taxData,
-                          employerProvidentCOntributionCapped: false,
-                        })
-                      }
-                      className="form-radio"
-                    />
-                    <span className="ml-2">No</span>
-                  </label>
-                </div>
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 font-medium">
-                  Provident Fund Wage <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  name="fixedAmtForProvidentFundWage"
-                  className="w-full mt-2 p-2 border border-gray-300 rounded"
-                  placeholder="Leave blank for no amount"
-                  value={taxData.fixedAmtForProvidentFundWage}
-                  onChange={handleChangeTax}
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 font-medium">
-                  PF Template <span className="text-red-500">*</span>
-                </label>
-                <select
-                  name=""
-                  id=""
-                  onChange={handleChangeTax}
-                  value={taxData.pfTemplate}
-                  className="border border-gray-300 mt-1 rounded-md p-2 w-full"
-                >
-                  <option value="">Select PF Template</option>
-                  <option value="temp1">Temp 1</option>
-                  <option value="temp2">Temp 2</option>
-                </select>
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 font-medium">
-                  ESIC Deduction <span className="text-red-500">*</span>
-                </label>
-                <div className="mt-2">
-                  <label className="inline-flex items-center">
-                    <input
-                      type="radio"
-                      name="esicDeduction"
-                      checked={taxData.esicDeduction === true}
-                      onChange={() =>
-                        setTaxData({ ...taxData, esicDeduction: true })
-                      }
-                      className="form-radio"
-                    />
-                    <span className="ml-2">Yes</span>
-                  </label>
-                  <label className="inline-flex items-center ml-6">
-                    <input
-                      type="radio"
-                      name="esicDeduction"
-                      checked={taxData.esicDeduction === false}
-                      onChange={() =>
-                        setTaxData({ ...taxData, esicDeduction: false })
-                      }
-                      className="form-radio"
-                    />
-                    <span className="ml-2">No</span>
-                  </label>
-                </div>
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 font-medium">
-                  PT Deduction <span className="text-red-500">*</span>
-                </label>
-                <div className="mt-2">
-                  <label className="inline-flex items-center">
-                    <input
-                      type="radio"
-                      name="ptDeduction"
-                      checked={taxData.ptDeduction === true}
-                      onChange={() =>
-                        setTaxData({ ...taxData, ptDeduction: true })
-                      }
-                      className="form-radio"
-                    />
-                    <span className="ml-2">Yes</span>
-                  </label>
-                  <label className="inline-flex items-center ml-6">
-                    <input
-                      type="radio"
-                      name="ptDeduction"
-                      checked={taxData.ptDeduction === false}
-                      onChange={() =>
-                        setTaxData({ ...taxData, ptDeduction: false })
-                      }
-                      className="form-radio"
-                    />
-                    <span className="ml-2">No</span>
-                  </label>
-                </div>
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 font-medium">
-                  LWF Deduction <span className="text-red-500">*</span>
-                </label>
-                <div className="mt-2">
-                  <label className="inline-flex items-center">
-                    <input
-                      type="radio"
-                      name="lwfDeduction"
-                      checked={taxData.lwfDeduction === true}
-                      onChange={() =>
-                        setTaxData({ ...taxData, lwfDeduction: true })
-                      }
-                      className="form-radio"
-                    />
-                    <span className="ml-2">Yes</span>
-                  </label>
-                  <label className="inline-flex items-center ml-6">
-                    <input
-                      type="radio"
-                      name="lwfDeduction"
-                      checked={taxData.lwfDeduction === false}
-                      onChange={() =>
-                        setTaxData({ ...taxData, lwfDeduction: false })
-                      }
-                      className="form-radio"
-                    />
-                    <span className="ml-2">No</span>
-                  </label>
-                </div>
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 font-medium">
-                  Income Tax Deduction <span className="text-red-500">*</span>
-                </label>
-                <div className="mt-2">
-                  <label className="inline-flex items-center">
-                    <input
-                      type="radio"
-                      name="incomeTaxDeduction"
-                      checked={taxData.incomeTaxDeduction === true}
-                      onChange={() =>
-                        setTaxData({ ...taxData, incomeTaxDeduction: true })
-                      }
-                      className="form-radio"
-                    />
-                    <span className="ml-2">Yes</span>
-                  </label>
-                  <label className="inline-flex items-center ml-6">
-                    <input
-                      type="radio"
-                      name="incomeTaxDeduction"
-                      checked={taxData.incomeTaxDeduction === false}
-                      onChange={() =>
-                        setTaxData({ ...taxData, incomeTaxDeduction: false })
-                      }
-                      className="form-radio"
-                    />
-                    <span className="ml-2">No</span>
-                  </label>
-                </div>
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 font-medium">
-                  Gratuity Applicable <span className="text-red-400">*</span>
-                </label>
-                <div className="mt-2">
-                  <label className="inline-flex items-center">
-                    <input
-                      type="radio"
-                      name="gratuityApplicable"
-                      checked={taxData.gratuityApplicable === true}
-                      onChange={() =>
-                        setTaxData({ ...taxData, gratuityApplicable: true })
-                      }
-                      className="form-radio"
-                    />
-                    <span className="ml-2">Yes</span>
-                  </label>
-                  <label className="inline-flex items-center ml-6">
-                    <input
-                      type="radio"
-                      name="gratuityApplicable"
-                      checked={taxData.gratuityApplicable === false}
-                      onChange={() =>
-                        setTaxData({ ...taxData, gratuityApplicable: false })
-                      }
-                      className="form-radio"
-                    />
-                    <span className="ml-2">No</span>
-                  </label>
-                </div>
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 font-medium">
-                  NPS Deduction <span className="text-red-500">*</span>
-                </label>
-                <div className="mt-2">
-                  <label className="inline-flex items-center">
-                    <input
-                      type="radio"
-                      name="npsDeduction"
-                      checked={taxData.npsDeduction === true}
-                      onChange={() =>
-                        setTaxData({ ...taxData, npsDeduction: true })
-                      }
-                      className="form-radio"
-                    />
-                    <span className="ml-2">Yes</span>
-                  </label>
-                  <label className="inline-flex items-center ml-6">
-                    <input
-                      type="radio"
-                      name="npsDeduction"
-                      checked={taxData.npsDeduction === false}
-                      onChange={() =>
-                        setTaxData({ ...taxData, npsDeduction: false })
-                      }
-                      className="form-radio"
-                    />
-                    <span className="ml-2">No</span>
-                  </label>
-                </div>
-              </div>
-              <div className=" flex justify-center gap-2">
+              ))}
+              <div className="flex justify-center items-center ">
                 <button
-                  className=" text-gray-500 mb-2  font-medium py-2 px-4 rounded-md border-2 border-gray-500"
-                  onClick={() => setPage("General Info")}
-                >
-                  Back
-                </button>
-                <button
-                  className="bg-black text-white mb-2 hover:bg-gray-700 font-medium py-2 px-4 rounded-md"
-                  onClick={handleAddTaxStatutory}
                   style={{ background: themeColor }}
+                  className="text-white p-2 rounded-md"
+                  onClick={handlePostTaxStatutory}
                 >
                   Save & Proceed
                 </button>
@@ -906,7 +680,6 @@ const OnboardingSalary = ({ empId }) => {
                     <span className="w-1/3"></span>
                   </div>
                 </div>
-
                 <SalaryAccordion
                   title="Fixed Allowance"
                   items={fixedAllowanceItems}
@@ -985,7 +758,7 @@ const OnboardingSalary = ({ empId }) => {
                   ))}
                 </tbody>
               </table>
-
+              
               <div className="mt-10 flex justify-center gap-2">
                 <button
                   className=" text-gray-500 mb-2  font-medium py-2 px-4 rounded-md border-2 border-gray-500"

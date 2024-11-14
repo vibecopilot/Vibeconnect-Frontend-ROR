@@ -10,6 +10,7 @@ import Table from "../../components/table/Table";
 import { useSelector } from "react-redux";
 import Communication from "../Communication";
 import Navbar from "../../components/Navbar";
+import { BiEdit } from "react-icons/bi";
 
 const Events = () => {
   const [searchText, setSearchText] = useState("");
@@ -17,16 +18,16 @@ const Events = () => {
   const [user, setUser] = useState("");
   const [events, setEvents] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
-  const themeColor = useSelector((state)=> state.theme.color)
+  const themeColor = useSelector((state) => state.theme.color);
 
   useEffect(() => {
     const userType = getItemInLocalStorage("USERTYPE");
     setUser(userType);
     const fetchEvents = async () => {
       const eventsResponse = await getEvents();
-      const sortedEvents = eventsResponse.data.sort((a,b)=> {
-        return new Date(b.created_at) - new Date(a.created_at)
-      })
+      const sortedEvents = eventsResponse.data.sort((a, b) => {
+        return new Date(b.created_at) - new Date(a.created_at);
+      });
       console.log(eventsResponse);
       setEvents(sortedEvents);
       setFilteredData(sortedEvents);
@@ -42,9 +43,14 @@ const Events = () => {
     {
       name: "Action",
       cell: (row) => (
-        <Link to={`/communication/event/event-details/${row.id}`}>
-          <BsEye size={15} />
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link to={`/communication/event/event-details/${row.id}`}>
+            <BsEye size={15} />
+          </Link>
+          <Link to={`/communication/event/edit-events/${row.id}`}>
+            <BiEdit size={15} />
+          </Link>
+        </div>
       ),
       sortable: true,
     },
@@ -97,35 +103,34 @@ const Events = () => {
     setFilteredData(filteredResults);
   };
 
-
   return (
     <div className="flex ">
-    <Navbar/>
-    <div className="p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
-      <Communication/>
-      <div className="flex justify-between gap-2 items-center my-2 sm:flex-row flex-col ">
-        <input
-          type="text"
-          placeholder="Search by title"
-          className="border-2 p-2 sm:w-96 border-gray-300 rounded-lg"
-          value={searchText}
-          onChange={handleSearch}
-        />
-        <div className="flex gap-2">
-          
-          {/* {user === "pms_admin" && ( */}
+      <Navbar />
+      <div className="p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
+        <Communication />
+        {/* <div className="flex justify-between gap-2 items-center my-2 sm:flex-row flex-col "> */}
+        <div className="grid grid-cols-12 my-2 gap-2">
+          <input
+            type="text"
+            placeholder="Search by title"
+            className="border p-2 border-gray-300 rounded-lg col-span-11"
+            value={searchText}
+            onChange={handleSearch}
+          />
+          <div className="flex gap-2">
+            {/* {user === "pms_admin" && ( */}
             <Link
-            style={{background: themeColor}}
+              style={{ background: themeColor }}
               to={"/communication/create-event"}
-              className="  rounded-md flex font-semibold  items-center gap-2 text-white p-2 "
+              className="w-full  rounded-md flex font-semibold justify-center  items-center gap-2 text-white p-2 col-span-1"
             >
               <IoAddCircleOutline size={20} />
               Add
             </Link>
-          {/* )} */}
+            {/* )} */}
+          </div>
         </div>
-      </div>
-      <Table columns={column} data={filteredData} isPagination={true} />
+        <Table columns={column} data={filteredData} isPagination={true} />
       </div>
     </div>
   );

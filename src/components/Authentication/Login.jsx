@@ -47,6 +47,8 @@ const Login = () => {
 
       const selectedSiteId = response.data.user.selected_site_id;
       const userName = response.data.user.firstname;
+      const userEmail = response.data?.user?.email;
+      setItemInLocalStorage("USEREMAIL", userEmail);
       setItemInLocalStorage("SITEID", selectedSiteId);
       setItemInLocalStorage("Name", userName);
       const features = response.data.features;
@@ -101,7 +103,7 @@ const Login = () => {
       const CompanyId = response.data.user.company_id;
       setItemInLocalStorage("COMPANYID", CompanyId);
       // setItemInLocalStorage("HRMSORGID", 4);
-      setItemInLocalStorage("HRMSORGID", 2);
+      setItemInLocalStorage("HRMSORGID", 1);
       // console.log(userType)
 
       const statuses = response.data.statuses;

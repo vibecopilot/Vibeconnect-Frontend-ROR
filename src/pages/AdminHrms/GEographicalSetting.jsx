@@ -11,6 +11,9 @@ import {
 import Select from "react-select";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import toast from "react-hot-toast";
+import { BiEdit } from "react-icons/bi";
+import { MdClose } from "react-icons/md";
+import { FaCheck } from "react-icons/fa";
 const GeographicalSetting = () => {
   const [isEditing, setIsEditing] = useState(false);
 
@@ -120,17 +123,25 @@ const GeographicalSetting = () => {
           {!isEditing ? (
             <button
               onClick={() => setIsEditing(!isEditing)}
-              className="mb-4 px-4 py-2 bg-blue-500 text-white rounded-md"
+              className="mb-4 px-4 py-2 bg-blue-500 text-white rounded-md flex items-center gap-2"
             >
-              Edit
+              <BiEdit /> Edit
             </button>
           ) : (
-            <button
-              onClick={handleEditGeoSetting}
-              className="mb-4 px-4 py-2 bg-green-500 text-white rounded-md"
-            >
-              Save
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleEditGeoSetting}
+                className="mb-4 px-4 py-2 bg-green-500 text-white rounded-full flex items-center gap-2"
+              >
+                <FaCheck /> Save
+              </button>
+              <button
+                onClick={() => setIsEditing(!isEditing)}
+                className="mb-4 px-4 py-2 border-2 border-red-500 text-red-400 rounded-full flex items-center gap-2"
+              >
+                <MdClose /> Cancel
+              </button>
+            </div>
           )}
         </div>
         <div className="mb-4">

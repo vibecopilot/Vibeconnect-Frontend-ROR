@@ -17,7 +17,9 @@ const EmployeeHotelRequest = () => {
         to={to}
         className={({ isActive }) =>
           `p-1 rounded-full px-4 cursor-pointer text-center transition-all duration-300 ease-linear ${
-            isActive ? 'bg-white text-blue-500 shadow-custom-all-sides' : 'hover:bg-gray-800'
+            isActive
+              && "bg-white text-blue-500 shadow-custom-all-sides"
+              
           }`
         }
       >
@@ -37,16 +39,7 @@ const EmployeeHotelRequest = () => {
         </div>
       ),
     },
-    {
-      name: "Employee ID",
-      selector: (row) => row.Id,
-      sortable: true,
-    },
-    {
-      name: "Employee Name",
-      selector: (row) => row.name,
-      sortable: true,
-    },
+
     {
       name: "Destination",
       selector: (row) => row.Destination,
@@ -62,21 +55,7 @@ const EmployeeHotelRequest = () => {
       selector: (row) => row.Checkout,
       sortable: true,
     },
-    {
-      name: "Hotel Preferences",
-      selector: (row) => row.Hotel_Preferences,
-      sortable: true,
-    },
-    {
-      name: "Booking Confirmation Number",
-      selector: (row) => row.Booking_Number,
-      sortable: true,
-    },
-    {
-      name: "Booking Confirmation Email",
-      selector: (row) => row.booking_email,
-      sortable: true,
-    },
+
     {
       name: "Number of Rooms",
       selector: (row) => row.noofrooms,
@@ -87,16 +66,7 @@ const EmployeeHotelRequest = () => {
       selector: (row) => row.room_type,
       sortable: true,
     },
-    {
-      name: "Special Requests",
-      selector: (row) => row.Special_Requests,
-      sortable: true,
-    },
-    {
-      name: "Manager Approval ",
-      selector: (row) => row.Manager_Approval,
-      sortable: true,
-    },
+
     {
       name: "Booking Status ",
       selector: (row) => row.status,
@@ -104,7 +74,10 @@ const EmployeeHotelRequest = () => {
     },
     {
       name: "Cancellation",
-      selector: (row) => (row.status === "Upcoming" && <button className="text-red-400 font-medium">Cancel</button>),
+      selector: (row) =>
+        row.status === "Upcoming" && (
+          <button className="text-red-400 font-medium">Cancel</button>
+        ),
       sortable: true,
     },
   ];
@@ -141,7 +114,7 @@ const EmployeeHotelRequest = () => {
       room_type: "single",
       Special_Requests: "ab",
       Manager_Approval: "Upcoming",
-      status: "pending",
+      status: "Upcoming",
     },
   ];
 
@@ -152,11 +125,22 @@ const EmployeeHotelRequest = () => {
         {/* Navigation Bar */}
         <div className="flex justify-center my-2">
           <div className="sm:flex grid grid-cols-2 sm:flex-row gap-5 font-medium p-2 sm:rounded-full rounded-md opacity-90 bg-gray-200">
-            <CustomNavLink to="/employee/booking-request/hotel-request">Hotel Request</CustomNavLink>
-            <CustomNavLink to="/employee/booking-request/flight-ticket-request">Flight Ticket Request</CustomNavLink>
-            <CustomNavLink to="/employee/booking-request/cab-bus-request">Cab/Bus Request</CustomNavLink>
-            <CustomNavLink to="/employee/booking-request/transportation-request">Transportation Request</CustomNavLink>
-            <CustomNavLink to="/employee/booking-request/traveling-allowance-request"> Traveling Allowance Request</CustomNavLink>
+            <CustomNavLink to="/employee/booking-request/hotel-request">
+              Hotel Request
+            </CustomNavLink>
+            <CustomNavLink to="/employee/booking-request/flight-ticket-request">
+              Flight Ticket Request
+            </CustomNavLink>
+            <CustomNavLink to="/employee/booking-request/cab-bus-request">
+              Cab/Bus Request
+            </CustomNavLink>
+            <CustomNavLink to="/employee/booking-request/transportation-request">
+              Transportation Request
+            </CustomNavLink>
+            <CustomNavLink to="/employee/booking-request/traveling-allowance-request">
+              {" "}
+              Traveling Allowance Request
+            </CustomNavLink>
           </div>
         </div>
 
@@ -214,7 +198,7 @@ const EmployeeHotelRequest = () => {
           </div>
           <span className="flex gap-4">
             <Link
-              to={"/employee/add-hotel-request"}
+              to={"/employee/booking-request/add-hotel-request"}
               className="border-2 font-semibold hover:bg-black hover:text-white transition-all border-black p-2 rounded-md text-black cursor-pointer text-center flex items-center gap-2 justify-center"
               style={{ height: "1cm" }}
             >

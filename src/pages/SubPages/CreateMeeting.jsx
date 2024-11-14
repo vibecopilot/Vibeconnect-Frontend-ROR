@@ -292,7 +292,7 @@ const CreateMeeting = () => {
     TeamCreateMeeting();
   };
 
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const handleSaveMeeting = async () => {
     const idList = selectedOption.map((email) => parseInt(email.value));
@@ -328,8 +328,8 @@ const CreateMeeting = () => {
     console.log(otheremails);
     const id = idList.join(",");
     formData.append("participent_ids", id);
-const internalEmails = emailList.join(",")
-// console.log(internalEmails)
+    const internalEmails = emailList.join(",");
+    // console.log(internalEmails)
     formData.append("email", internalEmails);
     formData.append("to__date", selectedToDate);
     const mainWeek = selectedWeekdays.join(",");
@@ -341,7 +341,7 @@ const internalEmails = emailList.join(",")
       const meetingResp = await CreateVibeMeeting(formData);
       toast.dismiss();
       toast.success("Meeting Created Successfully");
-      navigate("/meetings")
+      navigate("/meetings");
       // setPopupDate(null);
       if (meetingResp.success) {
         setMeetingTitle("");

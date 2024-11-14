@@ -10,6 +10,9 @@ import {
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import toast from "react-hot-toast";
+import { BiEdit } from "react-icons/bi";
+import { FaCheck } from "react-icons/fa";
+import { MdClose } from "react-icons/md";
 
 const AddressInformation = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -54,7 +57,7 @@ const AddressInformation = () => {
           });
 
           console.log(address);
-        } 
+        }
       } catch (error) {
         console.log(error);
       }
@@ -118,17 +121,25 @@ const AddressInformation = () => {
           {!isEditing ? (
             <button
               onClick={() => setIsEditing(!isEditing)}
-              className="mb-4 px-4 py-2 bg-blue-500 text-white rounded-md"
+              className="mb-4 px-4 py-2 bg-blue-500 text-white rounded-md flex items-center gap-2"
             >
-              Edit
+              <BiEdit /> Edit
             </button>
           ) : (
-            <button
-              onClick={handleEditAddress}
-              className="mb-4 px-4 py-2 bg-green-500 text-white rounded-md"
-            >
-              Save
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleEditAddress}
+                className="mb-4 px-4 py-2 bg-green-500 text-white rounded-full flex items-center gap-2"
+              >
+                <FaCheck /> Save
+              </button>
+              <button
+                onClick={() => setIsEditing(!isEditing)}
+                className="mb-4 px-4 py-2 border-2 border-red-500 text-red-400 rounded-full flex items-center gap-2"
+              >
+                <MdClose /> Cancel
+              </button>
+            </div>
           )}
         </div>
         <div>

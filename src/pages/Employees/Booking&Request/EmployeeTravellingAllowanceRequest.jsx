@@ -17,7 +17,7 @@ const EmployeeTravellingAllowanceRequest = () => {
         to={to}
         className={({ isActive }) =>
           `p-1 rounded-full px-4 cursor-pointer text-center transition-all duration-300 ease-linear ${
-            isActive ? 'bg-white text-blue-500 shadow-custom-all-sides' : 'hover:bg-gray-800'
+            isActive && 'bg-white text-blue-500 shadow-custom-all-sides' 
           }`
         }
       >

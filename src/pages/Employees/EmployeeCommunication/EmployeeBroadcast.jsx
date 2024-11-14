@@ -12,17 +12,17 @@ import Navbar from "../../../components/Navbar";
 const EmployeeBroadcast = () => {
   const [searchText, setSearchText] = useState("");
   const [user, setUser] = useState("");
-  const [broadcast, setBroadcast] = useState([])
+  const [broadcast, setBroadcast] = useState([]);
 
   useEffect(() => {
     const userType = getItemInLocalStorage("USERTYPE");
     setUser(userType);
-    const fetchBroadCast = async()=>{
-      const broadcastResp = await getBroadCast()
-      setFilteredData(broadcastResp.data)
-      console.log(broadcastResp)
-    }
-    fetchBroadCast()
+    const fetchBroadCast = async () => {
+      const broadcastResp = await getBroadCast();
+      setFilteredData(broadcastResp.data);
+      console.log(broadcastResp);
+    };
+    fetchBroadCast();
   }, []);
   const dateFormat = (dateString) => {
     const date = new Date(dateString);
@@ -72,7 +72,6 @@ const EmployeeBroadcast = () => {
     //   sortable: true,
     // },
   ];
- 
 
   const [filteredData, setFilteredData] = useState([]);
   const handleSearch = (event) => {
@@ -84,39 +83,34 @@ const EmployeeBroadcast = () => {
     setFilteredData(filteredResults);
   };
 
-  
   return (
     <div className="flex ">
-    <Navbar/>
-    <div className="p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
-     <EmployeeCommunication/>
+      <Navbar />
+      <div className="p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
+        <EmployeeCommunication />
 
-      <div className="flex justify-between items-center sm:flex-row flex-col my-2">
-        <input
-          type="text"
-          placeholder="Search by title"
-          className="border-2 p-2 w-96 border-gray-300 rounded-lg"
-          value={searchText}
-          onChange={handleSearch}
-        />
-        {user === "pms_admin" && (
-          <Link
-            to={"/communication/broadcast/create-broadcast"}
-            className="bg-black  rounded-lg flex font-semibold items-center gap-2 text-white p-2 my-5"
-          >
-            <IoAddCircleOutline size={20} />
-            Add Broadcast/Notice
-          </Link>
-        )}
-      </div>
-      <Table
-        columns={column}
-        data={filteredData}
-       
-      />
+        <div className="flex justify-between items-center sm:flex-row flex-col my-2 w-full">
+          <input
+            type="text"
+            placeholder="Search by title"
+            className="border p-2 w-full border-gray-300 rounded-lg"
+            value={searchText}
+            onChange={handleSearch}
+          />
+          {user === "pms_admin" && (
+            <Link
+              to={"/communication/broadcast/create-broadcast"}
+              className="bg-black  rounded-lg flex font-semibold items-center gap-2 text-white p-2 my-5"
+            >
+              <IoAddCircleOutline size={20} />
+              Add Broadcast/Notice
+            </Link>
+          )}
+        </div>
+        <Table columns={column} data={filteredData} />
       </div>
     </div>
   );
 };
 
-export default EmployeeBroadcast
+export default EmployeeBroadcast;
