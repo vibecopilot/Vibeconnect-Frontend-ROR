@@ -59,7 +59,7 @@ const CreateTicket = () => {
     assigned_to: "",
     issue_type_id: "",
     complaint_type: "",
-    complaint_mode: "",
+    complaint_mode_id: "",
   });
 
   console.log(formData);
@@ -364,7 +364,7 @@ const CreateTicket = () => {
       sendData.append("complaints[floor_name]", formData.floor_name);
       sendData.append("complaints[issue_type_id]", formData.issue_type_id);
       sendData.append("complaints[complaint_type]", formData.complaint_type);
-      sendData.append("complaints[complaint_mode_id]", formData.complaint_mode);
+      sendData.append("complaints[complaint_mode_id]", formData.complaint_mode_id);
 
       (formData.documents || []).forEach((file, index) => {
         sendData.append("documents[]", file);
@@ -527,18 +527,18 @@ const CreateTicket = () => {
                   </label>
                   <select
                     className="border p-1 px-4 max-w-44 w-44 border-gray-500 rounded-md "
-                    value={formData.complaint_mode}
-                    name="complaint_mode"
+                    value={formData.complaint_mode_id}
+                    name="complaint_mode_id"
                     onChange={(e) =>
                       setFormData({
                         ...formData,
-                        complaint_mode: e.target.value,
+                        complaint_mode_id: e.target.value,
                       })
                     }
                   >
                     <option value="">Select Complaint Mode</option>
                     {complaintMode.map((complaint) => (
-                      <option key={complaint.id} value={complaint.name}>
+                      <option key={complaint.id} value={complaint.id}>
                         {complaint.name}
                       </option>
                     ))}

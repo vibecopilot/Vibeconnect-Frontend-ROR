@@ -228,7 +228,7 @@ const TicketFilterModal = ({
               className="border p-2 w-full border-gray-300 rounded-md focus:ring-2 focus:ring-gray-400"
             />
           </div>
-          <div className="flex flex-col">
+          {/* <div className="flex flex-col">
             <label htmlFor="create_by" className="font-semibold text-gray-600">
               Created By
             </label>
@@ -241,7 +241,7 @@ const TicketFilterModal = ({
               placeholder="Created By"
               className="border p-2 w-full border-gray-300 rounded-md focus:ring-2 focus:ring-gray-400"
             />
-          </div>
+          </div> */}
           <div className="flex flex-col">
             <label htmlFor="category" className="font-semibold text-gray-600">
               Category
