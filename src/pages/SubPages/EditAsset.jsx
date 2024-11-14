@@ -95,6 +95,25 @@ const EditAsset = () => {
     const getDetails = async () => {
       try {
         const details = await getSiteAssetDetails(id);
+        const assetParams = details.data.asset_params || [];
+        console.log(assetParams);
+        const initialConsumptionData = assetParams.map((param) => ({
+          id: param.id || "",
+          name: param.name || "",
+          order: param.order || "",
+          unit_type: param.unit_type || "",
+          digit: param.digit || "",
+          min_val: param.min_val || "",
+          max_val: param.max_val || "",
+          multiplier_factor: param.multiplier_factor || "",
+          alert_below: param.alert_below || "",
+          alert_above: param.alert_above || "",
+          check_prev: param.check_prev || false,
+          dashboard_view: param.dashboard_view || false,
+          consumption_view: param.consumption_view || false,
+        }));
+
+        setConsumptionData(initialConsumptionData);
         // setFormData(details.data);
         setFormData((prevFormData) => ({
           ...prevFormData,
@@ -185,7 +204,6 @@ const EditAsset = () => {
     fetchVendor();
     fetchAssetGroups();
   }, [id]);
-  console.log(consumptionData);
   const handleChange = async (e) => {
     async function fetchFloor(floorID) {
       try {
@@ -397,6 +415,48 @@ const EditAsset = () => {
       formDataSend.append("site_asset[description]", formData.description);
       formDataSend.append("site_asset[uom]", formData.uom);
       formDataSend.append("site_asset[asset_type]", formData.asset_type);
+      consumptionData.forEach((item) => {
+        formDataSend.append("asset_params[][id]", item.id);
+        formDataSend.append("asset_params[][name]", item.name);
+        formDataSend.append("asset_params[][order]", item.order);
+        formDataSend.append(
+          "asset_params[][unit_type]",
+          item.unit_type
+        );
+        formDataSend.append("asset_params[][digit]", item.digit);
+        formDataSend.append(
+          "asset_params[][alert_below]",
+          item.alert_below
+        );
+        formDataSend.append(
+          "asset_params[][alert_above]",
+          item.alert_above
+        );
+        formDataSend.append(
+          "asset_params[][min_val]",
+          item.min_val
+        );
+        formDataSend.append(
+          "asset_params[][max_val]",
+          item.max_val
+        );
+        formDataSend.append(
+          "asset_params[][multiplier_factor]",
+          item.multiplier_factor
+        );
+        formDataSend.append(
+          "asset_params[][dashboard_view]",
+          item.dashboard_view
+        );
+        formDataSend.append(
+          "asset_params[][consumption_view]",
+          item.consumption_view
+        );
+        formDataSend.append(
+          "asset_params[][check_prev]",
+          item.check_prev
+        );
+      });
       (formData.invoice || []).forEach((file, index) => {
         formDataSend.append(`purchase_invoices[]`, file);
       });
@@ -445,17 +505,22 @@ const EditAsset = () => {
   };
 
   // Consumption
-
   const handleAddConsumption = () => {
     setConsumptionData((prev) => [
       ...prev,
       {
+        id:"",
         name: "",
+        order: "",
         unit_type: "",
-        min_val: "",
-        max_val: "",
+        digit: "",
         alert_below: "",
         alert_above: "",
+        min_val: "",
+        max_val: "",
+        multiplier_factor: "",
+        dashboard_view: false,
+        consumption_view: false,
         check_prev: false,
       },
     ]);
@@ -464,6 +529,8 @@ const EditAsset = () => {
   const handleRemoveConsumption = (index) => {
     setConsumptionData((prev) => prev.filter((_, i) => i !== index));
   };
+
+  console.log(consumptionData);
   return (
     // <section>
     //   <div className="m-2">
@@ -486,7 +553,8 @@ const EditAsset = () => {
             <div className="grid md:grid-cols-3 item-start gap-x-4 gap-y-2 w-full">
               <div className="flex flex-col">
                 <label htmlFor="" className="font-semibold">
-                  Select Building :<span className="text-red-500 font-medium">*</span>
+                  Select Building :
+                  <span className="text-red-500 font-medium">*</span>
                 </label>
                 <select
                   className="border p-1 px-4 border-gray-500 rounded-md"
@@ -1238,7 +1306,6 @@ const EditAsset = () => {
                         </label>
                         <input
                           type="text"
-                          name={`name_Consumption_${index}`}
                           id={`name_Consumption_${index}`}
                           value={formData.name}
                           onChange={(e) =>
@@ -1255,7 +1322,33 @@ const EditAsset = () => {
                         />
                       </div>
 
-                      {/* Unit Type Dropdown */}
+                      {/* Order Input */}
+                      <div className="flex flex-col">
+                        <label
+                          htmlFor={`order_${index}`}
+                          className="font-medium"
+                        >
+                          Sequence:
+                        </label>
+                        <input
+                          type="text"
+                          id={`order_${index}`}
+                          value={formData.order}
+                          onChange={(e) =>
+                            setConsumptionData((prev) =>
+                              prev.map((item, i) =>
+                                i === index
+                                  ? { ...item, order: e.target.value }
+                                  : item
+                              )
+                            )
+                          }
+                          placeholder="Sequence"
+                          className="border p-2 border-gray-500 rounded-md"
+                        />
+                      </div>
+
+                      {/* Unit Type Input Field */}
                       <div className="flex flex-col">
                         <label
                           htmlFor={`unit_type_${index}`}
@@ -1263,9 +1356,9 @@ const EditAsset = () => {
                         >
                           Unit Type:
                         </label>
-                        <select
-                          name={`unit_type_${index}`}
+                        <input
                           id={`unit_type_${index}`}
+                          type="text"
                           value={formData.unit_type}
                           onChange={(e) =>
                             setConsumptionData((prev) =>
@@ -1277,10 +1370,85 @@ const EditAsset = () => {
                             )
                           }
                           className="border p-2 border-gray-500 rounded-md"
+                          placeholder="Enter Unit Type"
+                        />
+                      </div>
+
+                      {/* Digit Input */}
+                      <div className="flex flex-col">
+                        <label
+                          htmlFor={`digit_${index}`}
+                          className="font-medium"
                         >
-                          <option value="">Select Unit Type</option>
-                          {/* Add options dynamically if available */}
-                        </select>
+                          Input Character Limit :
+                        </label>
+                        <input
+                          type="text"
+                          id={`digit_${index}`}
+                          value={formData.digit}
+                          onChange={(e) =>
+                            setConsumptionData((prev) =>
+                              prev.map((item, i) =>
+                                i === index
+                                  ? { ...item, digit: e.target.value }
+                                  : item
+                              )
+                            )
+                          }
+                          placeholder="Digit"
+                          className="border p-2 border-gray-500 rounded-md"
+                        />
+                      </div>
+                      {/* Alert Below Input */}
+                      <div className="flex flex-col">
+                        <label
+                          htmlFor={`alert_below_${index}`}
+                          className="font-medium"
+                        >
+                          Alert Below:
+                        </label>
+                        <input
+                          type="text"
+                          id={`alert_below_${index}`}
+                          value={formData.alert_below}
+                          onChange={(e) =>
+                            setConsumptionData((prev) =>
+                              prev.map((item, i) =>
+                                i === index
+                                  ? { ...item, alert_below: e.target.value }
+                                  : item
+                              )
+                            )
+                          }
+                          placeholder="Alert Below"
+                          className="border p-2 border-gray-500 rounded-md"
+                        />
+                      </div>
+
+                      {/* Alert Above Input */}
+                      <div className="flex flex-col">
+                        <label
+                          htmlFor={`alert_above_${index}`}
+                          className="font-medium"
+                        >
+                          Alert Above:
+                        </label>
+                        <input
+                          type="text"
+                          id={`alert_above_${index}`}
+                          value={formData.alert_above}
+                          onChange={(e) =>
+                            setConsumptionData((prev) =>
+                              prev.map((item, i) =>
+                                i === index
+                                  ? { ...item, alert_above: e.target.value }
+                                  : item
+                              )
+                            )
+                          }
+                          placeholder="Alert Above"
+                          className="border p-2 border-gray-500 rounded-md"
+                        />
                       </div>
 
                       {/* Min Value Input */}
@@ -1293,7 +1461,6 @@ const EditAsset = () => {
                         </label>
                         <input
                           type="text"
-                          name={`min_val_${index}`}
                           id={`min_val_${index}`}
                           value={formData.min_val}
                           onChange={(e) =>
@@ -1320,7 +1487,6 @@ const EditAsset = () => {
                         </label>
                         <input
                           type="text"
-                          name={`max_val_${index}`}
                           id={`max_val_${index}`}
                           value={formData.max_val}
                           onChange={(e) =>
@@ -1337,65 +1503,87 @@ const EditAsset = () => {
                         />
                       </div>
 
-                      {/* Alert Below Value Input */}
+                      {/* Multiplier Factor Input */}
                       <div className="flex flex-col">
                         <label
-                          htmlFor={`alert_below_${index}`}
+                          htmlFor={`multiplier_factor_${index}`}
                           className="font-medium"
                         >
-                          Alert Below Value:
+                          Multiplier Factor:
                         </label>
                         <input
                           type="text"
-                          name={`alert_below_${index}`}
-                          id={`alert_below_${index}`}
-                          value={formData.alert_below}
+                          id={`multiplier_factor_${index}`}
+                          value={formData.multiplier_factor}
                           onChange={(e) =>
                             setConsumptionData((prev) =>
                               prev.map((item, i) =>
                                 i === index
-                                  ? { ...item, alert_below: e.target.value }
+                                  ? {
+                                      ...item,
+                                      multiplier_factor: e.target.value,
+                                    }
                                   : item
                               )
                             )
                           }
-                          placeholder="Alert Below"
+                          placeholder="Multiplier Factor"
                           className="border p-2 border-gray-500 rounded-md"
                         />
                       </div>
 
-                      {/* Alert Above Value Input */}
-                      <div className="flex flex-col">
-                        <label
-                          htmlFor={`alert_above_${index}`}
-                          className="font-medium"
-                        >
-                          Alert Above Value:
-                        </label>
+                      {/* Dashboard View Checkbox */}
+                      <div className="flex items-center gap-2">
                         <input
-                          type="text"
-                          name={`alert_above_${index}`}
-                          id={`alert_above_${index}`}
-                          value={formData.alert_above}
+                          type="checkbox"
+                          id={`dashboard_view_${index}`}
+                          checked={formData.dashboard_view}
                           onChange={(e) =>
                             setConsumptionData((prev) =>
                               prev.map((item, i) =>
                                 i === index
-                                  ? { ...item, alert_above: e.target.value }
+                                  ? {
+                                      ...item,
+                                      dashboard_view: e.target.checked,
+                                    }
                                   : item
                               )
                             )
                           }
-                          placeholder="Alert Above"
-                          className="border p-2 border-gray-500 rounded-md"
                         />
+                        <label htmlFor={`dashboard_view_${index}`}>
+                          Dashboard View
+                        </label>
+                      </div>
+
+                      {/* Consumption View Checkbox */}
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          id={`consumption_view_${index}`}
+                          checked={formData.consumption_view}
+                          onChange={(e) =>
+                            setConsumptionData((prev) =>
+                              prev.map((item, i) =>
+                                i === index
+                                  ? {
+                                      ...item,
+                                      consumption_view: e.target.checked,
+                                    }
+                                  : item
+                              )
+                            )
+                          }
+                        />
+                        <label htmlFor={`consumption_view_${index}`}>
+                          Consumption View
+                        </label>
                       </div>
 
                       {/* Check Previous Checkbox */}
                       <div className="flex items-center gap-2">
                         <input
                           type="checkbox"
-                          name={`check_prev_${index}`}
                           id={`check_prev_${index}`}
                           checked={formData.check_prev}
                           onChange={(e) =>
@@ -1423,6 +1611,7 @@ const EditAsset = () => {
                       </button>
                     </div>
                   ))}
+
                   {/* Add Consumption Button */}
                   <button
                     className="border border-black rounded-md py-2 px-3 my-2"

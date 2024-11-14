@@ -79,7 +79,7 @@ const AssetDetails = () => {
             >
               PPM
             </h2>
-            <h2
+            {/* <h2
               className={`p-1 ${
                 page === "logs" &&
                 "bg-white text-blue-500 shadow-custom-all-sides"
@@ -87,7 +87,7 @@ const AssetDetails = () => {
               onClick={() => setPage("logs")}
             >
               Logs
-            </h2>
+            </h2> */}
             {/* <h2
               className={`p-1 ${
                 page === "activityFeed" && "bg-white text-blue-500"
@@ -96,15 +96,15 @@ const AssetDetails = () => {
             >
               Activity Feed
             </h2> */}
-            <h2
+            {/* <h2
               className={`p-1 ${
                 page === "history" && "bg-white text-blue-500"
               } rounded-full px-4 cursor-pointer text-center`}
               onClick={() => setPage("history")}
             >
               History Card
-            </h2>
-            <h2
+            </h2> */}
+            {/* <h2
               className={`p-1 ${
                 page === "costOfOwnership" && "bg-white text-blue-500"
               } rounded-full px-4 cursor-pointer text-center`}
@@ -119,7 +119,7 @@ const AssetDetails = () => {
               onClick={() => setPage("associated")}
             >
               Associated Assets
-            </h2>
+            </h2> */}
           </div>
         </div>
         {page === "assetInfo" && (

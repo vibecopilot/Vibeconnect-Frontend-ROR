@@ -582,7 +582,7 @@ const Assetinfo = ({ assetData }) => {
                   </div>
                   <div className="flex flex-col">
                     <label htmlFor="order" className="font-medium">
-                      Order :
+                    Sequence :
                     </label>
                     <input
                       type="text"
@@ -590,7 +590,7 @@ const Assetinfo = ({ assetData }) => {
                       id="order"
                       value={formData.order || ""}
                       onChange={handleAssetParamsChange}
-                      placeholder="Enter Order"
+                      placeholder="Enter Sequence"
                       className="border p-1 px-4 border-gray-500 rounded-md"
                     />
                   </div>
@@ -776,7 +776,7 @@ const Assetinfo = ({ assetData }) => {
                   </div>
                   <div className="flex flex-col">
                     <label htmlFor="order" className="font-medium">
-                      Order :
+                      Sequence :
                     </label>
                     <input
                       type="text"
@@ -784,7 +784,7 @@ const Assetinfo = ({ assetData }) => {
                       id="order"
                       value={formData.order || ""}
                       onChange={handleAssetParamsChange}
-                      placeholder="Enter Order"
+                      placeholder="Enter Sequence"
                       className="border p-1 px-4 border-gray-500 rounded-md"
                     />
                   </div>

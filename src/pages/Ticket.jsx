@@ -113,21 +113,21 @@ const Ticket = () => {
     //   selector: (row) => row.response_TAT,
     //   sortable: true,
     // },
-    {
-      name: "Response Time",
-      selector: (row) => row.response_time,
-      sortable: true,
-    },
+    // {
+    //   name: "Response Time",
+    //   selector: (row) => row.response_time,
+    //   sortable: true,
+    // },
     // {
     //   name: "Resolution TAT",
     //   selector: (row) => row.resolution_TAT,
     //   sortable: true,
     // },
-    {
-      name: "Resolution Time",
-      selector: (row) => row.resolution_time,
-      sortable: true,
-    },
+    // {
+    //   name: "Resolution Time",
+    //   selector: (row) => row.resolution_time,
+    //   sortable: true,
+    // },
     {
       name: "Total Time",
       selector: (row) => getTimeAgo(row.created_at),
