@@ -30,7 +30,7 @@ const SetupNavbar = () => {
     
         {siteId === 10 && <Link to={"/setup/User-role"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">User Roles</Link>}
         <Link to={"/setup/users-setup"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">Users</Link>
-        {/* <Link  to={"/admin/fm-user"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">FM User</Link> */}
+        <Link  to={"/admin/fm-user"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">FM User</Link>
         {/* <Link to={"/admin/occupant-user-setup"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">Occupant User</Link> */}
         {/* <Link to={"/admin/setup-meter-type"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">Meter Types</Link> */}
         {feat.includes("assets") && ( <Link to={"/setup/asset-group"}  className="hover:bg-white hover:text-black  p-2 rounded-lg ">Asset/Stock Group</Link>)}
@@ -53,6 +53,7 @@ const SetupNavbar = () => {
         {feat.includes("communication") && ( <Link to={"/admin/communication-access-control"}className="hover:bg-white hover:text-black  p-2 rounded-lg ">Communication Setup Control</Link>)}
         {feat.includes("vendors") && ( <Link to={"/setup/supplier-setup"}className="hover:bg-white hover:text-black  p-2 rounded-lg ">Supplier</Link>)}
         {feat.includes("gatepass") && ( <Link to={"/setup/visitor-setup"}className="hover:bg-white hover:text-black  p-2 rounded-lg ">Visitor</Link>)}
+        {feat.includes("assets") && ( <Link to={"/setup/meter-category-type"}  className="hover:bg-white hover:text-black  p-2 rounded-lg ">Meter Category Type</Link>)}
       </ul>
     </div>
   </div>

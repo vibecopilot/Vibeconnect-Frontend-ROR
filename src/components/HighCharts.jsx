@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
-import { getTicketDashboard } from "../api";
+import { getTicketDashboard, getTicketStatusDownload} from "../api";
 import { useSelector } from "react-redux";
 import { CirclesWithBar, DNA, ThreeDots } from "react-loader-spinner";
+import { FaDownload } from "react-icons/fa";
+import toast from "react-hot-toast";
 
 // import "react-loader-spinner/dist/loader/css/react-spinner-loader.css";
 const TicketHighCharts = () => {
@@ -31,6 +33,30 @@ const TicketHighCharts = () => {
     fetchTicketInfo();
   }, []);
 
+  // download section 
+  const handleTicketStatusDownload = async () => {
+    toast.loading("Downloading Please Wait");
+    try {
+      const response = await getTicketStatusDownload();
+      const url = window.URL.createObjectURL(
+        new Blob([response.data], {
+          type: response.headers["content-type"],
+        })
+      );
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "ticket_file.xlsx");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success("Ticket downloaded successfully");
+      toast.dismiss();
+    } catch (error) {
+      toast.dismiss();
+      console.error("Error downloading Ticket:", error);
+      toast.error("Something went wrong, please try again");
+    }
+  };
   const sortData = (data, order = "ascending") => {
     const sortedEntries = Object.entries(data).sort(([, a], [, b]) =>
       order === "ascending" ? b - a : a - b
@@ -311,6 +337,14 @@ const TicketHighCharts = () => {
     <div>
       <div className="grid md:grid-cols-2 mr-2  gap-2">
         <div className=" shadow-custom-all-sides rounded-md">
+        <div className="flex justify-end p-3">
+          <button
+            className="rounded-md bg-gray-200 py-1 px-5"
+            onClick={handleTicketStatusDownload}
+          >
+            <FaDownload />
+          </button>
+        </div>
           {statusData ? (
             <HighchartsReact
               highcharts={Highcharts}
@@ -331,6 +365,14 @@ const TicketHighCharts = () => {
         </div>
 
         <div className="bg-white shadow-custom-all-sides rounded-md">
+        <div className="flex justify-end p-3">
+          <button
+            className="rounded-md bg-gray-200 py-1 px-5"
+            onClick={handleTicketStatusDownload}
+          >
+            <FaDownload />
+          </button>
+        </div>
           {categoryData ? (
             <HighchartsReact
               highcharts={Highcharts}
@@ -354,6 +396,14 @@ const TicketHighCharts = () => {
           )}
         </div>
         <div className="bg-white shadow-custom-all-sides rounded-md">
+        <div className="flex justify-end p-3">
+          <button
+            className="rounded-md bg-gray-200 py-1 px-5"
+            onClick={handleTicketStatusDownload}
+          >
+            <FaDownload />
+          </button>
+        </div>
           {ticketTypes ? (
             <HighchartsReact
               highcharts={Highcharts}
@@ -377,6 +427,14 @@ const TicketHighCharts = () => {
           )}
         </div>
         <div className="bg-white shadow-custom-all-sides rounded-md">
+        <div className="flex justify-end p-3">
+          <button
+            className="rounded-md bg-gray-200 py-1 px-5"
+            onClick={handleTicketStatusDownload}
+          >
+            <FaDownload />
+          </button>
+        </div>
           {floorTickets ? (
             <HighchartsReact
               highcharts={Highcharts}
@@ -400,6 +458,14 @@ const TicketHighCharts = () => {
         </div>
       </div>
       <div className="bg-white shadow-custom-all-sides rounded-md my-2 mr-2">
+      <div className="flex justify-end p-3">
+          <button
+            className="rounded-md bg-gray-200 py-1 px-5"
+            onClick={handleTicketStatusDownload}
+          >
+            <FaDownload />
+          </button>
+        </div>
         {unitTickets ? (
           <HighchartsReact
             highcharts={Highcharts}

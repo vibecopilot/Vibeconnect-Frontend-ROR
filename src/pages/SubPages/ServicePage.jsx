@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getSoftServices } from "../../api";
+import { getSoftServices, softServiceDownloadQrCode} from "../../api";
 import { BiEdit, BiFilterAlt } from "react-icons/bi";
 import { IoAddCircleOutline } from "react-icons/io5";
 import Table from "../../components/table/Table";
@@ -10,6 +10,8 @@ import Navbar from "../../components/Navbar";
 import * as XLSX from "xlsx";
 import { DNA } from "react-loader-spinner";
 import { useSelector } from "react-redux";
+import { FaDownload } from "react-icons/fa";
+import toast from "react-hot-toast";
 
 const ServicePage = () => {
   const [searchText, setSearchText] = useState("");
@@ -123,6 +125,44 @@ const ServicePage = () => {
     link.click();
   };
   const themeColor = useSelector((state) => state.theme.color);
+
+
+  const [selectedRows, setSelectedRows] = useState([]);
+
+  const handleSelectedRows = (rows) => {
+    const selectedId = rows.map((row) => row.id);
+    console.log(selectedId);
+    setSelectedRows(selectedId);
+  };
+
+  const handleQrDownload = async () => {
+    if (selectedRows.length === 0) {
+      return toast.error("Please select at least one data.");
+    }
+  
+    console.log(selectedRows);
+    toast.loading("Qr code downloading, please wait!");
+  
+    try {
+      const response = await softServiceDownloadQrCode(selectedRows);
+      const blob = new Blob([response.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "qr_codes.pdf");
+      document.body.appendChild(link);
+      link.click();
+      window.URL.revokeObjectURL(url);
+      link.parentNode.removeChild(link);
+      console.log(response);
+      toast.dismiss();
+      toast.success("Qr code downloaded successfully");
+    } catch (error) {
+      toast.dismiss();
+      console.error("Error downloading Qr code:", error);
+      toast.error("Something went wrong, please try again");
+    }
+  };
   return (
     <section className="flex ">
       <Navbar />
@@ -191,6 +231,14 @@ const ServicePage = () => {
               Add
             </Link>
             <button
+              style={{ background: themeColor }}
+              className="px-4 py-2  font-medium text-white rounded-md flex gap-2 items-center justify-center"
+              onClick={handleQrDownload}
+            >
+              <FaDownload />
+              QR Code
+            </button>
+            <button
               className="bg-blue-500 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded"
               onClick={exportToExcel}
               style={{ background: themeColor }}
@@ -207,7 +255,7 @@ const ServicePage = () => {
           </div>
         </div>
         {servicess.length !== 0 ? (
-          <Table columns={column} data={filteredData} />
+          <Table columns={column} data={filteredData} onSelectedRows={handleSelectedRows} selectableRow={true}/>
         ) : (
           <div className="flex justify-center items-center h-full">
             <DNA

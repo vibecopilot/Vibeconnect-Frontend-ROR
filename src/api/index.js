@@ -28,12 +28,29 @@ export const getPerPageSiteAsset = async (page, perPage) =>
       token: token,
     },
   });
+export const downloadQrCode = async (ids) =>
+  axiosInstance.get(`/site_assets/print_qr_codes?asset_ids=${ids}`, {
+    responseType: "blob",
+    params: {
+      token: token,
+    },
+  });
+
+  export const softServiceDownloadQrCode = async (ids) =>
+    axiosInstance.get(`/soft_services/print_qr_codes?soft_service_ids=${ids}`, {
+      responseType: "blob",
+      params: {
+        token: token,
+      },
+    });
+
 export const getSiteAsset = async (page) =>
   axiosInstance.get(`/site_assets.json`, {
     params: {
       token: token,
     },
   });
+
 export const getMeteredSiteAsset = async () =>
   axiosInstance.get(`/site_assets.json?q[is_meter]=true`, {
     params: {
@@ -228,6 +245,35 @@ export const getHelpDeskCategoriesSetup = async () =>
     },
   });
 
+
+  // ticket download section
+  export const getTicketStatusDownload = async () =>
+    axiosInstance.get(`/pms/admin/complaints/export_complaints.xlsx?`, {
+      params: {
+        token: token,
+      },
+      responseType: "blob",
+    });
+
+    export const getStatusDownload = async (id) =>
+      axiosInstance.get(`/pms/admin/complaints/export_complaints.xlsx`, {
+        params: {
+          token: token,
+          'q[complaint_status_name_eq]': id,
+        },
+        responseType: "blob",
+      });    
+
+    // soft Service
+    export const getSoftServiceDownload = async () =>
+      axiosInstance.get(`/soft_services/export_soft_service.xlsx?`, {
+        params: {
+          token: token,
+        },
+        responseType: "blob",
+      });
+  
+
 export const getHelpDeskCategoriesSetupDetails = async (id) =>
   axiosInstance.get(`/pms/admin/helpdesk_categories/${id}.json`, {
     params: {
@@ -397,6 +443,7 @@ export const getFloors = async (buildId) =>
       token: token,
     },
   });
+
 
 export const updateComplaintsDetails = async (id, data) =>
   axiosInstance.put(`pms/complaints/${id}.json`, data, {
@@ -5710,6 +5757,20 @@ export const postEmployeeLetters = async (data) => {
     throw error;
   }
 };
+
+export const getSiteData = async () =>
+  axiosInstance.get(`/get_user_site.json`, {
+    params: {
+      token: token,
+    },
+  });
+
+export const siteChange = async (id) =>
+  axiosInstance.get(`/change_site_for_app.json?siteid=${id} `, {
+    params: {
+      token: token,
+    },
+  });
 export const getTaxAndStatSetting = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
