@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { PiPlusCircle } from "react-icons/pi";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
@@ -11,11 +11,40 @@ import { useSelector } from "react-redux";
 import Table from "../components/table/Table";
 import ToggleSwitch from "../Buttons/ToggleSwitch";
 import Pantry from "./Pantry";
-
+import { getFB } from "../api";
 const FoodsBeverage = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const themeColor = useSelector((state) => state.theme.color);
-  const [page, setPage] = useState("F&B")
+  const [page, setPage] = useState("F&B");
+  const [fb, setFb] = useState([]);
+  const [filterFb, setFilterFb] = useState([]);
+  useEffect(() => {
+    const fetchFB = async () => {
+      try {
+        const fbRes = await getFB();
+        console.log(fbRes);
+        setFb(fbRes.data);
+        setFilterFb(fbRes.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchFB();
+  }, []);
+
+  const [searchText, setSearchText] = useState("");
+  const handleSearch = (e) => {
+    const searchValue = e.target.value;
+    setSearchText(searchValue);
+    if (searchValue.trim() === "") {
+      setFilterFb(fb);
+    } else {
+      const filteredResult = fb.filter((items) =>
+        items.restaurant_name.toLowerCase().includes(searchValue.toLowerCase())
+      );
+      setFilterFb(filteredResult);
+    }
+  };
 
   const columns = [
     {
@@ -33,34 +62,51 @@ const FoodsBeverage = () => {
     },
     {
       name: "Name",
-      selector: (row) => row.name,
+      selector: (row) => row.restaurant_name,
       sortable: true,
     },
 
     {
       name: "Open Days",
-      selector: (row) => row.Open_Days,
+      selector: (row) => {
+        if (!row?.restaurant_schedule) return "No schedule";
+
+        // Get the first letter of each day and join them into a string
+        return Object.keys(row.restaurant_schedule)
+          .map((day) => day.charAt(0)) // Get the first letter of each day
+          .join(", "); // Join them with a comma
+      },
       sortable: true,
     },
 
-
-
     {
       name: "Booking Allowed",
-      selector: (row) => row.Booking_Allowed,
+      cell: (row) => (
+        <div className="flex items-center gap-4">
+          <ToggleSwitch />
+        </div>
+      ),
       sortable: true,
     },
 
     {
       name: "Order Allowed",
-      selector: (row) => row.Order_allow,
+      cell: (row) => (
+        <div className="flex items-center gap-4">
+          <ToggleSwitch />
+        </div>
+      ),
       sortable: true,
     },
     {
-        name: "Active",
-        selector: (row) => row.active,
-        sortable: true,
-      },
+      name: "Active",
+      cell: (row) => (
+        <div className="flex items-center gap-4">
+          <ToggleSwitch />
+        </div>
+      ),
+      sortable: true,
+    },
 
     {
       name: "Cancellation",
@@ -107,37 +153,35 @@ const FoodsBeverage = () => {
     {
       id: 1,
       name: "Haven Cafe",
-      Open_Days:"M T W T F S S",
-      Booking_Allowed: <ToggleSwitch/>,
-      Order_allow:<ToggleSwitch/>,
-      active: <ToggleSwitch/>,
-
+      Open_Days: "M T W T F S S",
+      Booking_Allowed: <ToggleSwitch />,
+      Order_allow: <ToggleSwitch />,
+      active: <ToggleSwitch />,
     },
     {
-        id: 2,
-        name: "Haven Cafe",
-        Open_Days:"M T W T F S S",
-        Booking_Allowed: <ToggleSwitch/>,
-        Order_allow:<ToggleSwitch/>,
-        active: <ToggleSwitch/>,
-
+      id: 2,
+      name: "Haven Cafe",
+      Open_Days: "M T W T F S S",
+      Booking_Allowed: <ToggleSwitch />,
+      Order_allow: <ToggleSwitch />,
+      active: <ToggleSwitch />,
     },
     {
-        id: 3,
-        name: "Haven Cafe",
-        Open_Days:"M T W T F S S",
-        Booking_Allowed: <ToggleSwitch/>,
-        Order_allow:<ToggleSwitch/>,
-        active: <ToggleSwitch/>,
+      id: 3,
+      name: "Haven Cafe",
+      Open_Days: "M T W T F S S",
+      Booking_Allowed: <ToggleSwitch />,
+      Order_allow: <ToggleSwitch />,
+      active: <ToggleSwitch />,
     },
   ];
 
   return (
     <section className="flex">
-      <Navbar/>
-      <div className=" w-full flex mx-3 flex-col overflow-hidden">
-      <div className="flex justify-center my-2 w-full">
-      <div className="sm:flex grid grid-cols-2 sm:flex-row gap-5 font-medium p-1 sm:rounded-full rounded-md bg-gray-200">
+      <Navbar />
+      <div className=" w-full flex mx-3 flex-col overflow-hidden my-5">
+        <div className="flex justify-center my-2 w-full">
+          <div className="sm:flex grid grid-cols-2 sm:flex-row gap-5 font-medium p-1 sm:rounded-full rounded-md bg-gray-200">
             <h2
               className={`p-1 ${
                 page === "F&B" &&
@@ -158,96 +202,101 @@ const FoodsBeverage = () => {
             </h2>
           </div>
         </div>
-        {page === "F&B" && <>
-        <div className="flex md:flex-row flex-col gap-5 justify-between mt-10 my-2">
-          <div className="sm:flex grid grid-cols-2 items-center justify-center  gap-4 border border-gray-300 rounded-md px-3 p-2 w-auto">
-            <div className="flex items-center gap-2">
-              <input
-                type="radio"
-                id="all"
-                name="status"
-                checked={selectedStatus === "all"}
-                onChange={() => handleStatusChange("all")}
-              />
-              <label htmlFor="all" className="text-sm">
-                All
-              </label>
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="radio"
-                id="upcoming"
-                name="status"
-                // checked={selectedStatus === "open"}
-                checked={
-                  selectedStatus === "upcoming" || selectedStatus === "upcoming"
-                }
-                // onChange={() => handleStatusChange("open")}
-              />
-              <label htmlFor="open" className="text-sm">
-                upcoming
-              </label>
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="radio"
-                id="completed"
-                name="status"
-                checked={selectedStatus === "completed"}
-                onChange={() => handleStatusChange("completed")}
-              />
-              <label htmlFor="completed" className="text-sm">
-                Completed
-              </label>
-            </div>
+        {page === "F&B" && (
+          <>
+            <div className="flex md:flex-row flex-col gap-5 justify-between mt-10 my-2">
+              <div className="sm:flex grid grid-cols-2 items-center justify-center  gap-4 border border-gray-300 rounded-md px-3 p-2 w-auto">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    id="all"
+                    name="status"
+                    checked={selectedStatus === "all"}
+                    onChange={() => handleStatusChange("all")}
+                  />
+                  <label htmlFor="all" className="text-sm">
+                    All
+                  </label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    id="upcoming"
+                    name="status"
+                    // checked={selectedStatus === "open"}
+                    checked={
+                      selectedStatus === "upcoming" ||
+                      selectedStatus === "upcoming"
+                    }
+                    // onChange={() => handleStatusChange("open")}
+                  />
+                  <label htmlFor="open" className="text-sm">
+                    upcoming
+                  </label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    id="completed"
+                    name="status"
+                    checked={selectedStatus === "completed"}
+                    onChange={() => handleStatusChange("completed")}
+                  />
+                  <label htmlFor="completed" className="text-sm">
+                    Completed
+                  </label>
+                </div>
 
-            <div className="flex items-center gap-2">
-              <input
-                type="radio"
-                id="cancelled"
-                name="status"
-                checked={selectedStatus === "cancelled"}
-                //   onChange={() => handleStatusChange("cancelled")}
-              />
-              <label htmlFor="completed" className="text-sm">
-                Cancelled
-              </label>
-            </div>
-          </div>
-          <span className="flex gap-4">
-            <Link
-              to={"/admin/add-fb"}
-              className="border-2 font-semibold hover:bg-black hover:text-white transition-all border-black p-2 rounded-md text-black cursor-pointer text-center flex items-center gap-2 justify-center"
-              style={{ height: "1cm" }}
-            >
-              <PiPlusCircle size={20} />
-              Add
-            </Link>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    id="cancelled"
+                    name="status"
+                    checked={selectedStatus === "cancelled"}
+                    //   onChange={() => handleStatusChange("cancelled")}
+                  />
+                  <label htmlFor="completed" className="text-sm">
+                    Cancelled
+                  </label>
+                </div>
+              </div>
+              <span className="flex gap-4">
+                <Link
+                  to={"/admin/add-fb"}
+                  className="border-2 font-semibold hover:bg-black hover:text-white transition-all border-black p-2 rounded-md text-black cursor-pointer text-center flex items-center gap-2 justify-center"
+                  style={{ height: "1cm" }}
+                >
+                  <PiPlusCircle size={20} />
+                  Add
+                </Link>
 
-            <input
-            type="text"
-            placeholder="Search  "
-            className="border border-gray-400 w-96 placeholder:text-xs rounded-lg p-2"
-            //   value={searchText}
-            //   onChange={handleSearch}
-          />
-        <button
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-          // onClick={exportToExcel}
-          >
-          Export
-        </button>
-          </span>
-        </div>
-        <Table
-          responsive
-          //   selectableRows
-          columns={columns}
-          data={data}
-          isPagination={true}
-        />
-         </>}
-         {page === "pantry" && <Pantry/>}
+                <input
+                  type="text"
+                  placeholder="Search  "
+                  className="border border-gray-400 w-96 placeholder:text-xs rounded-lg p-2"
+                  value={searchText}
+                  onChange={handleSearch}
+                />
+                <button
+                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                  // onClick={exportToExcel}
+                >
+                  Export
+                </button>
+              </span>
+            </div>
+            <div className="mb-3">
+              <Table
+                responsive
+                //   selectableRows
+                columns={columns}
+                data={filterFb}
+                isPagination={true}
+              />
+            </div>
+          </>
+        )}
+        {page === "pantry" && <Pantry />}
       </div>
     </section>
   );

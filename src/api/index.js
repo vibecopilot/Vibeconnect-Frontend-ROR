@@ -6216,3 +6216,25 @@ export const getComplaintMode = async () =>
       token: token,
     },
   });
+
+  //Food
+export const postFB = async (data) =>
+  axiosInstance.post("/food_and_beverages.json", data, {
+    params: {
+      token: token,
+    },
+  });
+
+export const getFB = async () =>
+  axiosInstance.get("/food_and_beverages.json", {
+    params: {
+      token: token,
+    },
+  });
+
+export const getFBDetails = async (id) =>
+  axiosInstance.get(`/food_and_beverages/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
