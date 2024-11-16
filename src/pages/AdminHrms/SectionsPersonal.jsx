@@ -14,6 +14,7 @@ import {
   getEmployeeDetails,
   getEmployeeFamilyDetails,
   getEmployeePaymentInfo,
+  getHrmsUserRole,
   postEmployeeAddress,
   postEmployeeFamily,
 } from "../../api";
@@ -97,6 +98,7 @@ const SectionsPersonal = () => {
     bloodGroup: "",
     emergencyContactName: "",
     emergencyContactNo: "",
+    userType:""
   });
   const [familyData, setFamilyData] = useState({
     fatherName: "",
@@ -134,6 +136,7 @@ const SectionsPersonal = () => {
         maritalStatus: res?.marital_status,
         emergencyContactName: res?.emergency_contact_name,
         emergencyContactNo: res?.emergency_contact_no,
+        userType: res?.user_type
       });
     } catch (error) {
       console.log(error);
@@ -193,6 +196,7 @@ const SectionsPersonal = () => {
     fetchEmployeeFamilyDetails();
     fetchEmployeeAddressDetails();
     fetchEmployeePaymentInfo();
+    fetchUserRoles()
   }, []);
 
   // const handleChange = (e) => {
@@ -237,6 +241,7 @@ const SectionsPersonal = () => {
     editData.append("marital_status", formData.maritalStatus);
     editData.append("emergency_contact_name", formData.emergencyContactName);
     editData.append("emergency_contact_no", formData.emergencyContactNo);
+    editData.append("user_type", formData.userType);
     editData.append("organization", hrmsOrgId);
     try {
       const res = await editEmployeeDetails(id, editData);
@@ -337,6 +342,15 @@ const SectionsPersonal = () => {
     { value: "expense", label: "Expense" },
     { value: "offcycle", label: "Off-Cycle" },
   ];
+  const [roles, setRoles] = useState([]);
+  const fetchUserRoles = async () => {
+    try {
+      const res = await getHrmsUserRole(hrmsOrgId);
+      setRoles(res);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <div className="flex flex-col ml-20">
@@ -528,6 +542,25 @@ const SectionsPersonal = () => {
                     >
                       <option value="single">Single</option>
                       <option value="married">Married</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Role
+                    </label>
+                    <select
+                      className={`mt-1 p-2 w-full border rounded-md ${
+                        !isEditing ? "bg-gray-200" : ""
+                      }`}
+                      disabled={!isEditing}
+                      onChange={handleChange}
+                      value={formData.userType}
+                      name="userType"
+                    >
+                     <option value="">Select Role</option>
+                     {roles.map((role)=>(
+                      <option value={role.id} key={role.id}>{role.label}</option>
+                     ))}
                     </select>
                   </div>
                 </div>

@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import {
   getAssociatedSites,
+  getEmployeeJobInfoDetails,
   getMyOrganizationLocations,
   getMyOrgDepartments,
   getReportingSupervisors,
   postEmployeeJobInfo,
+  putEmployeeJobInfoDetails,
 } from "../../../api";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
 import { MdClose } from "react-icons/md";
@@ -12,7 +14,7 @@ import { FaCheck } from "react-icons/fa";
 import Select from "react-select";
 import { useParams } from "react-router-dom";
 import toast from "react-hot-toast";
-const AddJobInfo = ({ closeModal1, fetchJobInfo }) => {
+const EditJobInfo = ({ closeModal1, fetchJobInfo, infoId }) => {
   const [departments, setDepartments] = useState([]);
   const [locations, setLocations] = useState([]);
   const [sites, setSites] = useState([]);
@@ -23,6 +25,35 @@ const AddJobInfo = ({ closeModal1, fetchJobInfo }) => {
     designation: "",
     comment: "",
   });
+
+  const fetchJobInfoDetails = async () => {
+    try {
+      const res = await getEmployeeJobInfoDetails(infoId);
+      console.log(res);
+      const formattedStartDate = res.start_date
+        ? new Date(res.start_date).toISOString().split("T")[0]
+        : "";
+
+      setFormData({
+        ...formData,
+        department: res.department,
+        designation: res.designation,
+        comment: res.comment,
+        startDate: formattedStartDate,
+      });
+      setSelectedOption({
+        value: res.associated_organization,
+        label: res.associated_organization_name,
+      });
+      setSelectedSupervisorOption({
+        value: res.reporting_supervisor,
+        label: res.reporting_supervisor_name,
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
   const fetchLocation = async () => {
     try {
@@ -44,7 +75,7 @@ const AddJobInfo = ({ closeModal1, fetchJobInfo }) => {
   const fetchAssociatedSites = async () => {
     try {
       const res = await getAssociatedSites(hrmsOrgId);
-      const ActiveSites = res.filter((site)=> site.status)
+      const ActiveSites = res.filter((site) => site.status);
       const allSites = ActiveSites.map((site) => ({
         value: site.id,
         label: site.site_name,
@@ -95,6 +126,7 @@ const AddJobInfo = ({ closeModal1, fetchJobInfo }) => {
   };
 
   useEffect(() => {
+    fetchJobInfoDetails();
     fetchLocation();
     fetchDepartments();
     fetchAssociatedSites();
@@ -125,10 +157,10 @@ const AddJobInfo = ({ closeModal1, fetchJobInfo }) => {
     postData.append("comment", formData.comment);
     postData.append("designation", formData.designation);
     try {
-      const res = await postEmployeeJobInfo(postData);
-      toast.success("Job INFO updated successfully")
-      fetchJobInfo()
-      closeModal1()
+      const res = await putEmployeeJobInfoDetails(infoId, postData);
+      toast.success("Job INFO updated successfully");
+      fetchJobInfo();
+      closeModal1();
     } catch (error) {
       console.log(error);
     }
@@ -166,6 +198,7 @@ const AddJobInfo = ({ closeModal1, fetchJobInfo }) => {
               </select> */}
               <Select
                 options={sites}
+                value={selectedOption}
                 onChange={handleAssociatedSiteChange}
                 noOptionsMessage={() => "Select site"}
                 maxMenuHeight={200}
@@ -198,6 +231,7 @@ const AddJobInfo = ({ closeModal1, fetchJobInfo }) => {
                 onChange={handleSupervisorChange}
                 noOptionsMessage={() => "Select Supervisor"}
                 maxMenuHeight={150}
+                value={selectedSupervisorOption}
               />
             </div>
             <div className="mt-2">
@@ -250,4 +284,4 @@ const AddJobInfo = ({ closeModal1, fetchJobInfo }) => {
   );
 };
 
-export default AddJobInfo;
+export default EditJobInfo;

@@ -691,6 +691,7 @@ import EditEvent from "./pages/SubPages/EditEvent.jsx";
 import EditBroadcast from "./pages/SubPages/EditBroadcast.jsx";
 import AssociatedSites from "./pages/AdminHrms/AssociatedSites/AssociatedSites.jsx";
 import SetupSeat from "./pages/Setup/SetupSeat.jsx";
+import UserRoles from "./pages/AdminHrms/UserRoles.jsx";
 // new admin hrms
 
 function App() {
@@ -6193,6 +6194,14 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <MilestoneTypeSettings />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/user-roles"
+            element={
+              <ProtectedAdminRoutes>
+                <UserRoles />
               </ProtectedAdminRoutes>
             }
           />
