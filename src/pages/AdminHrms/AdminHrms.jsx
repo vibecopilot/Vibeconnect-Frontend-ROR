@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { HiMenuAlt3 } from "react-icons/hi";
 import { HiCheck } from "react-icons/hi";
-import { FaBuilding } from "react-icons/fa";
+import { FaBuilding, FaUserTie } from "react-icons/fa";
 import { useNavigate, NavLink, useLocation } from "react-router-dom";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import {
@@ -327,6 +327,7 @@ const AdminHRMS = () => {
     "/admin/employee-directory-Transaction",
     "/admin/employee-directory-Change-logs",
   ];
+  const routes10 = ["/user-roles"];
   return (
     <section className="flex gap-6 fixed top-0 left-0 bottom-0 h-screen z-30">
       <div
@@ -591,6 +592,32 @@ const AdminHRMS = () => {
                       } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
                     >
                       Employee Directory
+                    </h2>
+                  </NavLink>
+                  <NavLink
+                    to="/user-roles"
+                    className={({ isActive }) =>
+                      `${
+                        isActiveLink(location, routes10)
+                          ? "text-black bg-white flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                          : "group flex items-center text-sm gap-3.5 font-medium p-2 "
+                      }`
+                    }
+                  >
+                    <div>{React.createElement(FaUserTie, { size: "20" })}</div>
+                    <h2
+                      className={`whitespace-pre duration-300 ${
+                        !open && "opacity-0 translate-x-28 overflow-hidden"
+                      }`}
+                    >
+                      User Roles
+                    </h2>
+                    <h2
+                      className={`${
+                        open && "hidden"
+                      } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+                    >
+                      User Roles
                     </h2>
                   </NavLink>
                   <NavLink
@@ -894,7 +921,7 @@ const AdminHRMS = () => {
                       Attendance Audit
                     </h2>
                   </NavLink>
-                  <NavLink
+                  {/* <NavLink
                     to="/admin/hrms/Attendance-Process"
                     className={({ isActive }) =>
                       `${
@@ -921,7 +948,7 @@ const AdminHRMS = () => {
                     >
                       Attendance Process
                     </h2>
-                  </NavLink>
+                  </NavLink> */}
                   <NavLink
                     to="/admin/hrms/setting"
                     className={() =>
@@ -961,7 +988,9 @@ const AdminHRMS = () => {
                     }
                   >
                     <div>
-                      {React.createElement(HiOutlineDevicePhoneMobile, { size: "20" })}
+                      {React.createElement(HiOutlineDevicePhoneMobile, {
+                        size: "20",
+                      })}
                     </div>
                     <h2
                       className={`whitespace-pre duration-300 ${

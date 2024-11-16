@@ -36,13 +36,13 @@ export const downloadQrCode = async (ids) =>
     },
   });
 
-  export const softServiceDownloadQrCode = async (ids) =>
-    axiosInstance.get(`/soft_services/print_qr_codes?soft_service_ids=${ids}`, {
-      responseType: "blob",
-      params: {
-        token: token,
-      },
-    });
+export const softServiceDownloadQrCode = async (ids) =>
+  axiosInstance.get(`/soft_services/print_qr_codes?soft_service_ids=${ids}`, {
+    responseType: "blob",
+    params: {
+      token: token,
+    },
+  });
 
 export const getSiteAsset = async (page) =>
   axiosInstance.get(`/site_assets.json`, {
@@ -245,34 +245,32 @@ export const getHelpDeskCategoriesSetup = async () =>
     },
   });
 
+// ticket download section
+export const getTicketStatusDownload = async () =>
+  axiosInstance.get(`/pms/admin/complaints/export_complaints.xlsx?`, {
+    params: {
+      token: token,
+    },
+    responseType: "blob",
+  });
 
-  // ticket download section
-  export const getTicketStatusDownload = async () =>
-    axiosInstance.get(`/pms/admin/complaints/export_complaints.xlsx?`, {
-      params: {
-        token: token,
-      },
-      responseType: "blob",
-    });
+export const getStatusDownload = async (id) =>
+  axiosInstance.get(`/pms/admin/complaints/export_complaints.xlsx`, {
+    params: {
+      token: token,
+      "q[complaint_status_name_eq]": id,
+    },
+    responseType: "blob",
+  });
 
-    export const getStatusDownload = async (id) =>
-      axiosInstance.get(`/pms/admin/complaints/export_complaints.xlsx`, {
-        params: {
-          token: token,
-          'q[complaint_status_name_eq]': id,
-        },
-        responseType: "blob",
-      });    
-
-    // soft Service
-    export const getSoftServiceDownload = async () =>
-      axiosInstance.get(`/soft_services/export_soft_service.xlsx?`, {
-        params: {
-          token: token,
-        },
-        responseType: "blob",
-      });
-  
+// soft Service
+export const getSoftServiceDownload = async () =>
+  axiosInstance.get(`/soft_services/export_soft_service.xlsx?`, {
+    params: {
+      token: token,
+    },
+    responseType: "blob",
+  });
 
 export const getHelpDeskCategoriesSetupDetails = async (id) =>
   axiosInstance.get(`/pms/admin/helpdesk_categories/${id}.json`, {
@@ -443,7 +441,6 @@ export const getFloors = async (buildId) =>
       token: token,
     },
   });
-
 
 export const updateComplaintsDetails = async (id, data) =>
   axiosInstance.put(`pms/complaints/${id}.json`, data, {
@@ -5960,7 +5957,42 @@ export const putAdditionalResignationDetails = async (resignationId, data) => {
   try {
     const response = await HrmsAuth.put(
       `/api/admin/resignation/${resignationId}/`,
+      data
+      // {
+      //   headers: {
+      //     "Content-Type": "multipart/form-data/",
+      //   },
+      // }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting resignation :", error);
+    throw error;
+  }
+};
+export const getAssociatedSites = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/associated/?organization_id=${orgId}`
+
+      // {
+      //   headers: {
+      //     "Content-Type": "multipart/form-data/",
+      //   },
+      // }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting associated sites :", error);
+    throw error;
+  }
+};
+export const postAssociatedSites = async (data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/associated/`,
       data,
+
       {
         headers: {
           "Content-Type": "multipart/form-data/",
@@ -5969,7 +6001,181 @@ export const putAdditionalResignationDetails = async (resignationId, data) => {
     );
     return response.data;
   } catch (error) {
-    console.error("Error posting resignation :", error);
+    console.error("Error getting associated sites :", error);
+    throw error;
+  }
+};
+export const getAssociatedSiteDetails = async (siteId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/associated/${siteId}`,
+
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting associated sites :", error);
+    throw error;
+  }
+};
+export const putAssociatedSiteDetails = async (siteId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/associated/${siteId}/`,
+      data,
+
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error update associated sites :", error);
+    throw error;
+  }
+};
+export const getEmployeeJobInfo = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/associated-organization/?organization_id=${orgId}`,
+
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting job info :", error);
+    throw error;
+  }
+};
+export const getEmployeeJobInfoDetails = async (infoId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/associated-organization/${infoId}`,
+
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting job info :", error);
+    throw error;
+  }
+};
+export const putEmployeeJobInfoDetails = async (infoId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/associated-organization/${infoId}/`,
+      data,
+
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating job info :", error);
+    throw error;
+  }
+};
+export const postEmployeeJobInfo = async (data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/associated-organization/`,
+      data,
+
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting job info :", error);
+    throw error;
+  }
+};
+export const getHrmsUserRole = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/user-type/?organization_id=${orgId}`,
+
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting user roles :", error);
+    throw error;
+  }
+};
+export const getHrmsUserRoleDetails = async (roleId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/user-type/${roleId}`,
+
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting user roles :", error);
+    throw error;
+  }
+};
+export const putHrmsUserRoleDetails = async (roleId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/user-type/${roleId}`,data,
+
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting user roles :", error);
+    throw error;
+  }
+};
+export const postHrmsUserRole = async (data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/user-type/`,
+      data,
+
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting user roles :", error);
     throw error;
   }
 };

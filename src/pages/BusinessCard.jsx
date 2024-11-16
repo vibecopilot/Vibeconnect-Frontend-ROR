@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import Navbar from "../components/Navbar";
 import { FaPhoneAlt } from "react-icons/fa";
 import { MdEmail } from "react-icons/md";
@@ -165,6 +165,19 @@ const BusinessCard = () => {
       setIsEmailValid(false);
     }
   };
+  const elementRef = useRef(null);
+
+  const captureAndShare = async () => {
+    if (elementRef.current) {
+      
+      const canvas = await html2canvas(elementRef.current);
+      const imgDataUrl = canvas.toDataURL('image/png');
+      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(imgDataUrl)}`;
+      window.open(whatsappUrl, '_blank');
+    }
+  };
+
+
   return (
     <section className="flex">
       <div className="hidden md:block">
@@ -189,6 +202,7 @@ const BusinessCard = () => {
             >
               Share
             </button>
+            {/* <button onClick={captureAndShare}>Whats app</button> */}
           </div>
           <button
             style={{ background: themeColor }}
@@ -198,7 +212,7 @@ const BusinessCard = () => {
             <PiPlusCircle size={20} /> Add
           </button>
         </div>
-        <div className="bCard relative flex flex-col md:flex-row gap-4 justify-center md:justify-start   w-fit  md:px-4 py-10  rounded-2xl">
+        <div ref={elementRef} className="bCard relative flex flex-col md:flex-row gap-4 justify-center md:justify-start   w-fit  md:px-4 py-10  rounded-2xl">
           {/* <div className="bg-white  rounded-full z-10 h-20 w-20 absolute left-[10rem]  md:left-[8.5rem] top-2 shadow-custom-all-sides">
             <img src={profile} alt="" />
           </div> */}

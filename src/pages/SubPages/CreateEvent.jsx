@@ -28,6 +28,10 @@ const CreateEvent = () => {
     end_date_time: "",
     user_ids: "",
     event_image: [],
+    shared: "",
+    email_enabled: false,
+    rsvp_enabled:false,
+    important: false
   });
   console.log(formData);
   const fileInputRef = useRef(null);
@@ -91,6 +95,12 @@ const CreateEvent = () => {
       );
       formDataSend.append("event[venue]", formData.venue);
       formDataSend.append("event[user_ids]", formData.user_ids);
+      formDataSend.append("event[shared]", share);
+      formDataSend.append("event[email_enabled]", formData.email_enabled);
+      formDataSend.append("event[rsvp_enabled]", formData.rsvp_enabled);
+      formDataSend.append("event[important]", formData.important);
+      // formDataSend.append("event[important]", formData.important);
+
 
       // formData.user_ids.forEach((user_id) => {
       //   formDataSend.append("event[user_ids]", user_id);
@@ -243,13 +253,13 @@ const CreateEvent = () => {
 
             <div className="flex gap-4 my-5">
               <div className="flex gap-2 items-center">
-                <input type="checkbox" name="" id="imp" />
+                <input type="checkbox" name="" id="imp" checked={formData.important === true} onChange={()=> setFormData({...formData, important: !formData.important})} />
                 <label htmlFor="imp" className="font-semibold">
                   Important
                 </label>
               </div>
               <div className="flex gap-2 items-center">
-                <input type="checkbox" name="" id="email" />
+                <input type="checkbox" name="" id="email" checked={formData.email_enabled === true} onChange={()=> setFormData({...formData, email_enabled: !formData.email_enabled})} />
                 <label htmlFor="email" className="font-semibold">
                   Send Email
                 </label>
@@ -318,13 +328,13 @@ const CreateEvent = () => {
               </h2>
               <div className="flex gap-4 mt-2">
                 <div className="flex gap-2 ">
-                  <input type="radio" name="RSVP" id="yes" />
+                  <input type="radio" name="RSVP" id="yes" checked={formData.rsvp_enabled === true} onChange={()=> setFormData({...formData, rsvp_enabled: true})} />
                   <label htmlFor="yes" className="text-lg">
                     Yes
                   </label>
                 </div>
                 <div className="flex gap-2">
-                  <input type="radio" name="RSVP" id="no" />
+                  <input type="radio" name="RSVP" id="no" checked={formData.rsvp_enabled === false} onChange={()=> setFormData({...formData, rsvp_enabled: false})} />
                   <label htmlFor="no" className="text-lg">
                     No
                   </label>

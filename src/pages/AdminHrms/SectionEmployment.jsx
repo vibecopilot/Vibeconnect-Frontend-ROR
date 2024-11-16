@@ -15,6 +15,7 @@ import {
   getCompanyAsset,
   getEmployeeAsset,
   getEmployeeEmploymentDetails,
+  getEmployeeJobInfo,
   getMyHRMSEmployees,
   getMyOrganizationLocations,
   getMyOrgDepartments,
@@ -33,6 +34,8 @@ import { FaFileCircleCheck } from "react-icons/fa6";
 import { MdClose, MdInfoOutline, MdOutlineWebAsset } from "react-icons/md";
 import { useSelector } from "react-redux";
 import AddJobInfo from "./Modals/AddJobInfo";
+import { dateFormat } from "../../utils/dateUtils";
+import EditJobInfo from "./Modals/EditJobInfo";
 
 const SectionsEmployment = () => {
   const { id } = useParams();
@@ -130,31 +133,37 @@ const SectionsEmployment = () => {
       sortable: true,
     },
   ];
-  const column1 = [
+  const jobInfoColumn = [
     {
       name: "view",
 
       cell: (row) => (
         <div className="flex items-center gap-4">
-          <button onClick={openModal1}>
+          <button onClick={()=>handleEditJobInfoModal(row.id)}>
             <BiEdit size={15} />
           </button>
         </div>
       ),
     },
 
-    { name: "Effective From", selector: (row) => row.from, sortable: true },
-    { name: "Effective To", selector: (row) => row.to, sortable: true },
-    { name: "Branch Location", selector: (row) => row.loc, sortable: true },
+    { name: "Effective From", selector: (row) =>dateFormat(row.start_date), sortable: true },
+    { name: "Effective To", selector: (row) => dateFormat(row.end_date), sortable: true },
+    { name: "Associated Site", selector: (row) => row.associated_organization_name, sortable: true },
 
-    { name: "Department", selector: (row) => row.dept, sortable: true },
-    { name: "Designation", selector: (row) => row.desgn, sortable: true },
+    { name: "Department", selector: (row) => row.department_name, sortable: true },
+    { name: "Designation", selector: (row) => row.designation, sortable: true },
     {
       name: "Reporting Supervisor",
-      selector: (row) => row.supervisior,
+      selector: (row) => row.reporting_supervisor_name,
       sortable: true,
     },
   ];
+  const [showEditJobInfoModal, setShowEditJobInfoModal] = useState(false)
+const [jobInfoId, setJobInfoId] = useState("")
+  const handleEditJobInfoModal =(infoId)=>{
+    setJobInfoId(infoId)
+    setShowEditJobInfoModal(true)
+  } 
   const assetColumn = [
     {
       name: "Which brand laptop",
@@ -306,10 +315,20 @@ const SectionsEmployment = () => {
       console.log(error);
     }
   };
+  const [jobInfo, setJobInfo] = useState([]);
+  const fetchJobInfo = async () => {
+    try {
+      const res = await getEmployeeJobInfo(hrmsOrgId);
+      setJobInfo(res);
+    } catch (error) {
+      console.log(error);
+    }
+  };
   useEffect(() => {
     fetchEmploymentDetails();
     fetchEmployeeAssets();
     fetchCompanyAssets();
+    fetchJobInfo();
   }, []);
 
   const handleEditEmployment = async () => {
@@ -597,11 +616,15 @@ const SectionsEmployment = () => {
                     onClick={openModal1}
                     className="bg-blue-500 text-white mb-2 font-semibold py-1 px-4 rounded-full flex items-center gap-2"
                   >
-                    Update Position
+                    Update Info
                   </button>
                 </div>
 
-                <Table columns={column1} data={data1} isPagination={true} />
+                <Table
+                  columns={jobInfoColumn}
+                  data={jobInfo}
+                  isPagination={true}
+                />
               </>
             }
           />
@@ -759,7 +782,8 @@ const SectionsEmployment = () => {
             </div>
           )}
 
-          {modalIsOpen1 && <AddJobInfo closeModal1={closeModal1} />}
+          {modalIsOpen1 && <AddJobInfo closeModal1={closeModal1} fetchJobInfo={fetchJobInfo} />}
+          {showEditJobInfoModal && <EditJobInfo closeModal1={()=>setShowEditJobInfoModal(false)} fetchJobInfo={fetchJobInfo} infoId={jobInfoId} />}
 
           {assetModal && (
             <AddEmployeeAsset

@@ -22,6 +22,9 @@ const CreateBroadcast = () => {
     expiry_date: "",
     user_ids: "",
     notice_image: [],
+    shared: "",
+    group_id: "",
+    important: "",
   });
   console.log(formData);
   const datePickerRef = useRef(null);
@@ -76,12 +79,11 @@ const CreateBroadcast = () => {
         formData.notice_discription
       );
       formDataSend.append("notice[expiry_date]", formData.expiry_date);
+      formDataSend.append("notice[shared]", formData.expiry_date);
       formDataSend.append("notice[user_ids]", formData.user_ids);
-
       formData.notice_image.forEach((file) => {
         formDataSend.append("attachfiles[]", file);
       });
-
       const response = await postBroadCast(formDataSend);
       toast.success("Broadcast Created Successfully");
       navigate("/communication/broadcast");
@@ -107,7 +109,7 @@ const CreateBroadcast = () => {
       </div>
       <div className="w-full flex mx-3 flex-col overflow-hidden">
         <div className="flex justify-center">
-          <div className="md:mx-20 my-5 mb-10 md:border md:p-5 md:px-2 rounded-lg w-full">
+          <div className="md:mx-20 my-5 mb-10 md:border p-2 md:px-2 rounded-lg w-full">
             <h2
               style={{ background: themeColor }}
               className="text-center text-xl font-bold p-2 mb-2  rounded-md text-white"
@@ -162,7 +164,18 @@ const CreateBroadcast = () => {
                   />
                 </div>
                 <div className="flex gap-2 items-center">
-                  <input type="checkbox" name="" id="imp" />
+                  <input
+                    type="checkbox"
+                    name=""
+                    id="imp"
+                    checked={formData.important === true}
+                    onChange={() =>
+                      setFormData({
+                        ...formData,
+                        important: !formData.important,
+                      })
+                    }
+                  />
                   <label htmlFor="imp">Mark as Important</label>
                 </div>
               </div>
