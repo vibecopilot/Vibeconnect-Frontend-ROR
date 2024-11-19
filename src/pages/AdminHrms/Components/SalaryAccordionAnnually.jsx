@@ -1,12 +1,12 @@
 import { useState, useRef, useEffect } from "react";
 import { MdExpandLess, MdExpandMore } from "react-icons/md";
 
-const SalaryAccordion = ({
+const SalaryAccordionAnnually = ({
   title,
   items,
   totalMonthly,
   totalYearly,
-  onMonthlyChange,
+  onYearlyChange,
   showInput = true,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -56,23 +56,23 @@ const SalaryAccordion = ({
             <div key={index} className="flex items-center justify-between py-2">
               <span className="text-gray-700 w-1/2">{item.label}</span>
               <div className="flex items-center w-1/2">
-                <div className="w-1/3 flex justify-center">
-                  <div className="flex items-center ">
-                    <span className="text-gray-500 mr-1 ">₹</span>
+                <span className="w-1/3 text-center">₹{item.monthly.toLocaleString()}</span>
+                <div className="w-1/3 flex justify-end ">
+                  <div className="flex items-center border bg-gray-300 pl-2 rounded">
+                    <span className="text-gray-500 mr-1">₹</span>
                     {inputShow ? (
                       <input
                         type="number"
-                        value={item.monthly}
+                        value={item.yearly}
                         //   onChange={() => {}}
                         className="w-20 p-1 border rounded text-right"
-                        onChange={(e) => onMonthlyChange(index, e.target.value)}
+                        onChange={(e) => onYearlyChange(index, e.target.value)}
                       />
                     ) : (
-                      <p>{item.monthly}</p>
+                      <p>{item.yearly}</p>
                     )}
                   </div>
                 </div>
-                <span className="w-1/3 text-right">₹{item.yearly.toLocaleString()}</span>
                 <span className="w-1/3"></span>
               </div>
             </div>
@@ -83,4 +83,4 @@ const SalaryAccordion = ({
   );
 };
 
-export default SalaryAccordion;
+export default SalaryAccordionAnnually;

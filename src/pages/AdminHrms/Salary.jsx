@@ -16,6 +16,8 @@ import Accordion from "./Components/Accordion";
 import { FaFileCircleCheck } from "react-icons/fa6";
 import SalaryAccordion from "./Components/SalaryAccordion";
 import { getItemInLocalStorage } from "../../utils/localStorage";
+import FixedAllowance from "./FixedAllowance";
+import SalaryAccordionAnnually from "./Components/SalaryAccordionAnnually";
 
 const OnboardingSalary = ({ empId }) => {
   const themeColor = useSelector((state) => state.theme.color);
@@ -193,17 +195,56 @@ const OnboardingSalary = ({ empId }) => {
     }
   }, [formData.howEnteringAmount, formData.CTCFrequency]);
 
+  useEffect(() => {
+    if (formData.monthlyCTCAmount) {
+      setFixedAllowanceItems((prevItems) => {
+        const updatedItems = [...prevItems];
+        updatedItems[0].monthly = formData.monthlyCTCAmount; // Update "Basic" monthly
+        return updatedItems;
+      });
+    }
+  }, [formData.monthlyCTCAmount]);
+
   const [fixedAllowanceItems, setFixedAllowanceItems] = useState([
-    { label: "Enter the Amount for Basic", monthly: 2500, yearly: 30000 },
+    {
+      label: "Enter the Amount for Basic",
+      monthly: "",
+      yearly: "",
+    },
     {
       label: "Enter the Amount for Conveyance Allowance",
-      monthly: 1600,
-      yearly: 19200,
+      monthly: "",
+      yearly: "",
     },
-    { label: "Enter the Amount for HRA", monthly: 900, yearly: 10800 },
-    { label: "Enter the Amount for Medical", monthly: 0, yearly: 0 },
-    { label: "Enter the Amount for Special Allowance", monthly: 0, yearly: 0 },
-    { label: "Enter the Amount for Allowance", monthly: 0, yearly: 0 },
+    { label: "Enter the Amount for HRA", monthly: "", yearly: "" },
+    { label: "Enter the Amount for Medical", monthly: "", yearly: "" },
+    {
+      label: "Enter the Amount for Special Allowance",
+      monthly: "",
+      yearly: "",
+    },
+    { label: "Enter the Amount for Allowance", monthly: "", yearly: "" },
+  ]);
+  const [employerContributions, setEmployerContribution] = useState([
+    { label: "Employer PF Contribution", monthly: 0, yearly: 0 },
+    {
+      label: "Employer ESIC Contribution",
+      monthly: 0,
+      yearly: 0,
+    },
+    { label: "Employer LWF Contribution", monthly: 0, yearly: 0 },
+    { label: "Employer NPS Contribution", monthly: 0, yearly: 0 },
+  ]);
+  const [employeeDeduction, setEmployeeDeduction] = useState([
+    { label: "Employee PF Deduction", monthly: 0, yearly: 0 },
+    {
+      label: "Employee ESIC Deduction",
+      monthly: 0,
+      yearly: 0,
+    },
+    { label: "Employee LWF Deduction", monthly: 0, yearly: 0 },
+    { label: "Employee PT Deduction", monthly: 0, yearly: 0 },
+    { label: "Employee NPS Deduction", monthly: 0, yearly: 0 },
   ]);
 
   const totalMonthly = fixedAllowanceItems.reduce(
@@ -221,21 +262,27 @@ const OnboardingSalary = ({ empId }) => {
     updatedItems[index].yearly = Number(value) * 12;
     setFixedAllowanceItems(updatedItems);
   };
+  const handleYearlyChange = (index, value) => {
+    const updatedItems = [...fixedAllowanceItems];
+    updatedItems[index].yearly = Number(value);
+    updatedItems[index].monthly = Number(value) / 12;
+    setFixedAllowanceItems(updatedItems);
+  };
 
   const outputData = [
     {
       description: "Total Take Home (excluding Variable)",
-      monthly: "₹ 5,000",
-      yearly: "₹ 60,000",
+      monthly: "₹0",
+      yearly: "₹0",
     },
     {
       description: "Total CTC (excluding Variable & Other Benefits)",
-      monthly: "₹ 5,000",
-      yearly: "₹ 60,000",
+      monthly: "₹0",
+      yearly: "₹0",
     },
     {
       description: "Total CTC (including Variable)",
-      yearly: "₹ 60,000",
+      yearly: "₹0",
     },
   ];
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
@@ -745,7 +792,9 @@ const OnboardingSalary = ({ empId }) => {
                   </div>
                 ))
               ) : (
-                <p className="text-gray-500 text-sm text-center my-4">Select CTC Template</p>
+                <p className="text-gray-500 text-sm text-center my-4">
+                  Please Select CTC Template{" "}
+                </p>
               )}
 
               <div className="flex justify-center items-center ">
@@ -774,13 +823,30 @@ const OnboardingSalary = ({ empId }) => {
                     <span className="w-1/3"></span>
                   </div>
                 </div>
-                <SalaryAccordion
-                  title="Fixed Allowance"
-                  items={fixedAllowanceItems}
-                  totalMonthly={totalMonthly}
-                  totalYearly={totalYearly}
-                  onMonthlyChange={handleMonthlyChange}
-                />
+                {formData.CTCFrequency === "Annually" && (
+                  <>
+                    <SalaryAccordionAnnually
+                      title="Fixed Allowance"
+                      items={fixedAllowanceItems}
+                      totalMonthly={totalMonthly}
+                      totalYearly={totalYearly}
+                      onYearlyChange={handleYearlyChange}
+                    />
+                  </>
+                )}
+
+                {formData.CTCFrequency === "monthly" && (
+                  <>
+                    <SalaryAccordion
+                      title="Fixed Allowance"
+                      items={fixedAllowanceItems}
+                      totalMonthly={totalMonthly}
+                      totalYearly={totalYearly}
+                      onMonthlyChange={handleMonthlyChange}
+                    />
+                  </>
+                )}
+
                 {/* <SalaryAccordion
                   title="Other Benefits"
                   items={[]}
@@ -795,15 +861,18 @@ const OnboardingSalary = ({ empId }) => {
                 /> */}
                 <SalaryAccordion
                   title="Total Employer Statutory Contributions"
-                  items={[]}
+                  items={employerContributions}
                   totalMonthly={0}
                   totalYearly={0}
+                  showInput={false}
                 />
+
                 <SalaryAccordion
                   title="Total Employee Statutory Deductions"
-                  items={[]}
+                  items={employeeDeduction}
                   totalMonthly={0}
                   totalYearly={0}
+                  showInput={false}
                 />
                 {/* <SalaryAccordion
                   title="Fixed Deductions"
