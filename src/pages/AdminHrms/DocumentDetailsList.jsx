@@ -220,7 +220,7 @@ const DocumentDetailsList = () => {
                     </h2>
                   </NavLink>
                 </li>
-                <li>
+                {/* <li>
                   <NavLink
                     to="/admin/document/old-letter-template"
                     className={({ isActive }) =>
@@ -239,7 +239,7 @@ const DocumentDetailsList = () => {
                     Old Letter Template
                     </h2>
                   </NavLink>
-                </li>
+                </li> */}
 
               </ul>
             )}

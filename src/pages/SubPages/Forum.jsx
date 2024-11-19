@@ -13,6 +13,7 @@ import { useSelector } from "react-redux";
 import Navbar from "../../components/Navbar";
 import Communication from "../Communication";
 import { PiPlusCircle } from "react-icons/pi";
+import { getForum } from "../../api";
 
 function Forum() {
   const themeColor = useSelector((state) => state.theme.color);
@@ -36,6 +37,19 @@ function Forum() {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
+  }, []);
+
+  const [forums, setForums] = useState([]);
+  const fetchForums = async () => {
+    try {
+      const res = await getForum();
+      console.log(res);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(() => {
+    fetchForums();
   }, []);
   return (
     <section className="flex">

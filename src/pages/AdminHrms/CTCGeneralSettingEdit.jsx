@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import CTCDetailsList from "./CTCDetailsList";
 import { useSelector } from "react-redux";
 import AdminHRMS from "./AdminHrms";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, useParams } from "react-router-dom";
 import {
   FaChevronRight,
   FaProjectDiagram,
@@ -15,13 +15,16 @@ import Restrictions from "./CTCTemplates/Restrictions";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import {
   createCTCTemplate,
+  editCTCTemplateDetails,
   getTaxAndStatSetting,
+  getTaxAndStatSettingByTemplateId,
   postCTCTemplate,
   postTaxAndStatSetting,
+  showCTCTemplateDetails,
 } from "../../api";
 import toast from "react-hot-toast";
 
-const CTCGeneralSetting = () => {
+const CTCGeneralSettingEdit = () => {
   const themeColor = useSelector((state) => state.theme.color);
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
   const [selectedOptions, setSelectedOptions] = useState([]);
@@ -40,6 +43,32 @@ const CTCGeneralSetting = () => {
     // },
   ];
   const [activePage, setActivePage] = useState(0);
+  const { id } = useParams();
+  const [editableFields, setEditableFields] = useState([]);
+  useEffect(() => {
+    const fetchCTCTemplateDetails = async () => {
+      try {
+        const res = await showCTCTemplateDetails(id);
+
+        setLabel(res[0].name);
+        setCTCType(res[0].type);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    const fetchCTCTaxStatutory = async () => {
+      try {
+        const res = await getTaxAndStatSettingByTemplateId(id);
+        setTaxStatFields(res);
+        setEditableFields(res.map((field) => ({ ...field, value: field.value })));
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchCTCTemplateDetails();
+    fetchCTCTaxStatutory();
+  }, []);
 
   const navigate = useNavigate();
   const handleCancel = () => {
@@ -48,7 +77,7 @@ const CTCGeneralSetting = () => {
   const [label, setLabel] = useState("");
   const [ctcType, setCTCType] = useState("");
   const [templateId, setTemplateId] = useState("");
-  const handleAddTemplate = async () => {
+  const handleEditTemplate = async () => {
     if (!label) {
       return toast.error("Please Enter Template Label");
     }
@@ -68,13 +97,10 @@ const CTCGeneralSetting = () => {
     // postData.append("fixed_salary_deductions", selectedDeduction);
     postData.append("organization", hrmsOrgId);
     try {
-      const res = await createCTCTemplate(postData);
-      setTemplateId(res.data.id);
+      const res = await editCTCTemplateDetails(id, postData);
+      setTemplateId(res.id);
       console.log(res);
       handleNext();
-      // setActivePage((prevPage) => Math.min(stepsData.length - 1, prevPage + 1));
-      // toast.success("CTC Template created successfully");
-      // navigate("/admin/hrms/ctc/CTC-Template");
     } catch (error) {
       console.log(error);
     }
@@ -125,7 +151,6 @@ const CTCGeneralSetting = () => {
     });
   };
 
-  console.log(statData);
   const handlePostTaxStatutory = async () => {
     const taxData = Object.entries(statData).map(([key, value]) => ({
       template: templateId,
@@ -225,7 +250,7 @@ const CTCGeneralSetting = () => {
                 Cancel
               </button>
               <button
-                onClick={handleAddTemplate}
+                onClick={handleEditTemplate}
                 style={{ background: themeColor }}
                 className="bg-black text-white hover:bg-gray-700 font-medium py-2 px-4 rounded-md"
               >
@@ -351,8 +376,6 @@ const CTCGeneralSetting = () => {
   );
 };
 
-export default CTCGeneralSetting;
-
 {
   /* {activePage === 1 && (
           <ComponentCTCTemplate
@@ -367,3 +390,5 @@ export default CTCGeneralSetting;
         )} */
 }
 // {activePage === 2 && <Restrictions tempId={templateId} />}
+
+export default CTCGeneralSettingEdit;

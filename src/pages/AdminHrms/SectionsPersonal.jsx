@@ -138,11 +138,12 @@ const SectionsPersonal = () => {
         emergencyContactNo: res?.emergency_contact_no,
         userType: res?.user_type
       });
+      
     } catch (error) {
       console.log(error);
     }
   };
-  console.log(formData);
+  
   const fetchEmployeeFamilyDetails = async () => {
     try {
       const res = await getEmployeeFamilyDetails(id);

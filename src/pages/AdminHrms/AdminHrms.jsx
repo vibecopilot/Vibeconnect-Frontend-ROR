@@ -646,7 +646,7 @@ const AdminHRMS = () => {
                       Organization Tree Setting
                     </h2>
                   </NavLink>
-                  <NavLink
+                  {/* <NavLink
                     to="/hrms/employee-transaction"
                     className={() =>
                       `${
@@ -673,8 +673,8 @@ const AdminHRMS = () => {
                     >
                       Employee Transaction
                     </h2>
-                  </NavLink>
-                  <NavLink
+                  </NavLink> */}
+                  {/* <NavLink
                     to="/hrms/investment"
                     className={({ isActive }) =>
                       `${
@@ -701,7 +701,7 @@ const AdminHRMS = () => {
                     >
                       Investment
                     </h2>
-                  </NavLink>
+                  </NavLink> */}
                   <NavLink
                     to="/admin/add-employee/"
                     className={({ isActive }) =>
@@ -728,7 +728,7 @@ const AdminHRMS = () => {
                       Onboarding
                     </h2>
                   </NavLink>
-                  <NavLink
+                  {/* <NavLink
                     to="/hrms/pending-contract-renewal"
                     className={({ isActive }) =>
                       `${
@@ -755,7 +755,7 @@ const AdminHRMS = () => {
                     >
                       Pending Contract Renewal
                     </h2>
-                  </NavLink>
+                  </NavLink> */}
                   <NavLink
                     to="/hrms/separation/"
                     className={({ isActive }) =>

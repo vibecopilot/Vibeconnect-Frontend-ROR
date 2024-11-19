@@ -343,6 +343,7 @@ const Department = () => {
                 noOptionsMessage={() => "No Employee Available"}
                 onChange={handleUserChangeSelect}
                 placeholder="Select Department Head"
+                maxMenuHeight={200}
               />
             </div>
             <MultiSelect
@@ -399,6 +400,7 @@ const Department = () => {
                 noOptionsMessage={() => "No Employee Available"}
                 onChange={handleEditUserChangeSelect}
                 placeholder="Select Department Head"
+                maxMenuHeight={200}
               />
             </div>
             <MultiSelect

@@ -59,13 +59,13 @@ const WorkflowTrigger = () => {
             placeholder="Search by name "
             className="border border-gray-400 w-96 placeholder:text-sm rounded-lg p-2"
           />
-          <button
+          {/* <button
             onClick={() => setShowModal(true)}
             className="border-2 font-semibold hover:bg-black hover:text-white duration-150 transition-all border-black p-2 rounded-md text-black cursor-pointer text-center flex items-center  gap-2 justify-center"
           >
             <PiPlusCircle size={20} />
             Add
-          </button>
+          </button> */}
         </div>
         {showModal && (
           <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">

@@ -147,7 +147,7 @@ const SectionsEmployment = () => {
     },
 
     { name: "Effective From", selector: (row) =>dateFormat(row.start_date), sortable: true },
-    { name: "Effective To", selector: (row) => dateFormat(row.end_date), sortable: true },
+    { name: "Effective To", selector: (row) => row.end_date?dateFormat(row.end_date): "", sortable: true },
     { name: "Associated Site", selector: (row) => row.associated_organization_name, sortable: true },
 
     { name: "Department", selector: (row) => row.department_name, sortable: true },
