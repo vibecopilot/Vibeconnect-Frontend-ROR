@@ -57,9 +57,10 @@ export const getMeteredSiteAsset = async () =>
       token: token,
     },
   });
-export const getSiteSearchedAsset = async (oem, assetName, building, unit) =>
+export const getSiteSearchedAsset = async (searchValue) =>
   axiosInstance.get(
-    `/site_assets.json?q[oem_name_cont]=${oem}&q[name_cont]=${assetName}&q[building_name_cont]=${building}&q[unit_name_cont]=${unit}`,
+    `/site_assets.json?q[oem_name_or_name_or_building_name_or_unit_name_cont]=${searchValue}`,
+    // `/site_assets.json?q[oem_name_cont]=${oem}&q[name_cont]=${assetName}&q[building_name_cont]=${building}&q[unit_name_cont]=${unit}`,
     {
       params: {
         token: token,
