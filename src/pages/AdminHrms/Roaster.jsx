@@ -114,7 +114,7 @@ console.log(currentMonth)
               value={currentMonth}
               onChange={(e) => setCurrentMonth(e.target.value)}
             />
-            <button onClick={toggleModal} className="border p-2 rounded-md">
+            {/* <button onClick={toggleModal} className="border p-2 rounded-md">
               Upload Records
             </button>
             <button className="border p-2 rounded" onClick={handleModalToggle}>
@@ -123,7 +123,7 @@ console.log(currentMonth)
             <label className="text-white" htmlFor="">
               Multiselect
             </label>
-            <ToggleSwitch />
+            <ToggleSwitch /> */}
           </div>
         </header>
 

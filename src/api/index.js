@@ -5156,6 +5156,55 @@ export const postCTCTemplate = async (data) => {
     throw error;
   }
 };
+export const createCTCTemplate = async (data) => {
+  try {
+    const response = await HrmsAuth.post(`/template/create/`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error creating CTC template:", error);
+    throw error;
+  }
+};
+export const showCTCTemplates = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/template/create/?organization_id=${orgId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting CTC template:", error);
+    throw error;
+  }
+};
+export const showCTCTemplateDetails = async (tempId) => {
+  try {
+    const response = await HrmsAuth.get(`/template/create/${tempId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error getting CTC template:", error);
+    throw error;
+  }
+};
+export const editCTCTemplateDetails = async (tempId, data) => {
+  try {
+    const response = await HrmsAuth.put(`/template/create/${tempId}/`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error getting CTC template:", error);
+    throw error;
+  }
+};
+export const getTaxAndStatSettingByTemplateId = async (templateId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/TaxAndStatutorySettings/?template_id=${templateId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting tax and stat by template id:", error);
+    throw error;
+  }
+};
 
 export const editCTCTemplate = async (tempId, data) => {
   try {
@@ -5172,6 +5221,15 @@ export const editCTCTemplate = async (tempId, data) => {
 export const deleteCTCTemplate = async (tempId) => {
   try {
     const response = await HrmsAuth.delete(`/payroll/ctc-template/${tempId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting CTC template:", error);
+    throw error;
+  }
+};
+export const deleteNewCTCTemplate = async (tempId) => {
+  try {
+    const response = await HrmsAuth.delete(`/template/create/${tempId}/`);
     return response.data;
   } catch (error) {
     console.error("Error deleting CTC template:", error);
@@ -6147,7 +6205,8 @@ export const getHrmsUserRoleDetails = async (roleId) => {
 export const putHrmsUserRoleDetails = async (roleId, data) => {
   try {
     const response = await HrmsAuth.put(
-      `/user-type/${roleId}`,data,
+      `/user-type/${roleId}`,
+      data,
 
       {
         headers: {
@@ -6179,6 +6238,23 @@ export const postHrmsUserRole = async (data) => {
     throw error;
   }
 };
+export const getOrganizationTreeChart = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/organization/tree/?organization_id=${orgId}`,
+
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting organization tree", error);
+    throw error;
+  }
+};
 
 // site id
 export const getSiteData = async () =>
@@ -6203,6 +6279,12 @@ export const postForum = async (data) =>
     },
     headers: {
       "Content-Type": "multipart/form-data",
+    },
+  });
+export const getForum = async () =>
+  axiosInstance.get(`/forums.json`, {
+    params: {
+      token: token,
     },
   });
 

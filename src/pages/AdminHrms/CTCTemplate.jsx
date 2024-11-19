@@ -4,7 +4,7 @@ import Table from "../../components/table/Table";
 import AdminHRMS from "./AdminHrms";
 import { Link } from "react-router-dom";
 import { PiPlusCircle } from "react-icons/pi";
-import { deleteCTCTemplate, getCTCTemplate } from "../../api";
+import { deleteCTCTemplate, deleteNewCTCTemplate, getCTCTemplate, showCTCTemplates } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import { useSelector } from "react-redux";
 import { GrHelpBook } from "react-icons/gr";
@@ -23,36 +23,36 @@ const CTCTemplate = () => {
   const columns = [
     {
       name: "Template Name",
-      selector: (row) => row.label,
+      selector: (row) => row.name,
       sortable: true,
     },
-    {
-      name: "No. Of Employees Covered",
-      selector: (row) => row.Label,
-      sortable: true,
-    },
-    {
-      name: "Fixed Allowances",
-      selector: (row) => row.fixed_salary_allowance.length,
-      sortable: true,
-    },
-    {
-      name: "Other Allowances	",
-      selector: (row) => row.Country,
-      sortable: true,
-    },
-    {
-      name: "Fixed Deductions",
-      selector: (row) => row.fixed_salary_deductions.length,
-      sortable: true,
-    },
+    // {
+    //   name: "No. Of Employees Covered",
+    //   selector: (row) => row.Label,
+    //   sortable: true,
+    // },
+    // {
+    //   name: "Fixed Allowances",
+    //   selector: (row) => row.fixed_salary_allowance.length,
+    //   sortable: true,
+    // },
+    // {
+    //   name: "Other Allowances	",
+    //   selector: (row) => row.Country,
+    //   sortable: true,
+    // },
+    // {
+    //   name: "Fixed Deductions",
+    //   selector: (row) => row.fixed_salary_deductions.length,
+    //   sortable: true,
+    // },
     {
       name: "Action",
 
       cell: (row) => (
         <div className="flex items-center gap-4">
           <Link
-          // to={`/admin/edit-templates/${row.id}`}
+          to={`/admin/hrms/ctc/ctc-template/edit/${row.id}`}
           >
             <BiEdit size={15} />
           </Link>
@@ -69,7 +69,7 @@ const CTCTemplate = () => {
 
   const handleDeleteTemplate = async (id) => {
     try {
-      await deleteCTCTemplate(id);
+      await deleteNewCTCTemplate(id);
       fetchCTCTemplates();
       toast.success("CTC template deleted successfully");
     } catch (error) {
@@ -82,7 +82,7 @@ const CTCTemplate = () => {
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
   const fetchCTCTemplates = async () => {
     try {
-      const res = await getCTCTemplate(hrmsOrgId);
+      const res = await showCTCTemplates(hrmsOrgId);
       setFilteredTemplates(res);
       setTemplates(res);
     } catch (error) {
@@ -102,7 +102,7 @@ const CTCTemplate = () => {
       setFilteredTemplates(templates);
     } else {
       const filteredResult = templates.filter((template) =>
-        template.label.toLowerCase().includes(searchValue.toLowerCase())
+        template.name.toLowerCase().includes(searchValue.toLowerCase())
       );
       setFilteredTemplates(filteredResult);
     }

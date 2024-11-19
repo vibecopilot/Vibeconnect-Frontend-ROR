@@ -5,9 +5,11 @@ import AddEmployeeDetailsList from "./AddEmployeeDetailsList";
 import { GrHelpBook } from "react-icons/gr";
 import {
   getTaxAndStatSetting,
+  getTaxAndStatSettingByTemplateId,
   postSalaryGeneralInfo,
   postTaxAndStatSetting,
   postTaxStatutory,
+  showCTCTemplates,
 } from "../../api";
 import { useSelector } from "react-redux";
 import Accordion from "./Components/Accordion";
@@ -67,6 +69,32 @@ const OnboardingSalary = ({ empId }) => {
       ...(name === "effectiveDateDiffer" &&
         !value && { actualEffectiveDate: "" }),
     }));
+  };
+  const [templateData, setTemplateData] = useState([]);
+  const handleCTCTemplateChange = async (e) => {
+    const fetchTaxStat = async (templateId) => {
+      try {
+        const res = await getTaxAndStatSettingByTemplateId(templateId);
+        setTemplateData(res);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    if (e.target.type === "select-one" && e.target.name === "ctcTemplate") {
+      const tempId = Number(e.target.value);
+      await fetchTaxStat(tempId);
+
+      setFormData({
+        ...formData,
+        ctcTemplate: tempId,
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [e.target.name]: e.target.value,
+      });
+    }
   };
 
   useEffect(() => {
@@ -244,19 +272,27 @@ const OnboardingSalary = ({ empId }) => {
     };
     fetchTaxStat();
   }, []);
-
   // useEffect(() => {
   //   const fetchTaxStat = async () => {
   //     try {
   //       const res = await getTaxAndStatSetting(hrmsOrgId);
-  //       console.log(res);
   //       setTaxStatFields(res);
+  //       const initialStatData = res.reduce((acc, field) => {
+  //         acc[field.id] =
+  //           field.value_type === "boolean"
+  //             ? field.default_value === "true"
+  //             : field.default_value;
+  //         return acc;
+  //       }, {});
+
+  //       setStatData(initialStatData);
   //     } catch (error) {
   //       console.log(error);
   //     }
   //   };
   //   fetchTaxStat();
   // }, []);
+
   const handleStatChange = (id, event, valueType) => {
     const updatedValue =
       valueType === "boolean"
@@ -267,7 +303,7 @@ const OnboardingSalary = ({ empId }) => {
       [id]: updatedValue,
     });
   };
-  console.log(statData);
+  console.log(formData);
   const handlePostTaxStatutory = async () => {
     const taxData = Object.entries(statData).map(([key, value]) => ({
       employee: 1,
@@ -281,7 +317,18 @@ const OnboardingSalary = ({ empId }) => {
       console.log(error);
     }
   };
-
+  const [ctcTemplates, setCTCTemplates] = useState([]);
+  const CTCTemplates = async () => {
+    try {
+      const res = await showCTCTemplates(hrmsOrgId);
+      setCTCTemplates(res);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(() => {
+    CTCTemplates();
+  }, []);
   return (
     <div className="flex w-full">
       {/* <AddEmployeeDetailsList /> */}
@@ -421,16 +468,14 @@ const OnboardingSalary = ({ empId }) => {
                 <select
                   id="ctcTemplate"
                   value={formData.ctcTemplate}
-                  onChange={handleChange}
+                  onChange={handleCTCTemplateChange}
                   name="ctcTemplate"
                   className="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                 >
-                  <option value="" disabled>
-                    Select Template
-                  </option>
-                  <option value="template1">Template 1</option>
-                  <option value="template2">Template 2</option>
-                  <option value="template3">Template 3</option>
+                  <option value="">Select Template</option>
+                  {ctcTemplates.map((template) => (
+                    <option value={template.id}>{template.name}</option>
+                  ))}
                 </select>
               </div>
               <div className="mb-4">
@@ -588,77 +633,126 @@ const OnboardingSalary = ({ empId }) => {
             </div>
           )}
           {page === "Tax and Statutory Setting" && (
-            <div>
-              {taxStatFields.map((field) => (
-                <div key={field.id} className="flex gap-2 flex-col my-2">
-                  <label className="block text-gray-700 font-medium">
-                    {field.label}
-                  </label>
-                  {field.value_type === "boolean" && (
-                    <div className="flex gap-4 items-center">
-                      <label className="flex gap-2">
+            // <div>
+            //   {taxStatFields.map((field) => (
+            //     <div key={field.id} className="flex gap-2 flex-col my-2">
+            //       <label className="block text-gray-700 font-medium">
+            //         {field.label}
+            //       </label>
+            //       {field.value_type === "boolean" && (
+            //         <div className="flex gap-4 items-center">
+            //           <label className="flex gap-2">
+            //             <input
+            //               type="radio"
+            //               name={`boolean-${field.id}`}
+            //               value="true" // String "true"
+            //               checked={statData[field.id] === true} // Boolean check
+            //               onChange={(e) =>
+            //                 handleStatChange(field.id, e, "boolean")
+            //               }
+            //             />
+            //             Yes
+            //           </label>
+            //           <label className="flex gap-2">
+            //             <input
+            //               type="radio"
+            //               name={`boolean-${field.id}`}
+            //               value="false" // String "false"
+            //               checked={statData[field.id] === false} // Boolean check
+            //               onChange={(e) =>
+            //                 handleStatChange(field.id, e, "boolean")
+            //               }
+            //             />
+            //             No
+            //           </label>
+            //         </div>
+            //       )}
+            //       {field.value_type === "number" && (
+            //         <input
+            //           type="number"
+            //           value={statData[field.id]}
+            //           onChange={(e) => handleStatChange(field.id, e, "number")}
+            //           placeholder="Enter PF wage"
+            //           className="border w-full border-gray-500 p-2 rounded-md"
+            //         />
+            //       )}
+            //       {field.value_type === "string" && (
+            //         <input
+            //           type="text"
+            //           value={statData[field.id]}
+            //           onChange={(e) => handleStatChange(field.id, e, "string")}
+            //           placeholder="Enter text"
+            //           className="border w-full border-gray-500 p-2 rounded-md"
+            //         />
+            //       )}
+            //       {field.value_type === "drop down" && (
+            //         <select
+            //           name=""
+            //           id=""
+            //           value={statData[field.id]}
+            //           onChange={(e) => handleStatChange(field.id, e, "string")}
+            //           className="border w-full border-gray-500 p-2 rounded-md"
+            //         >
+            //           <option value="">Select Template</option>
+            //           <option value="temp">Template</option>
+            //         </select>
+            //       )}
+            //     </div>
+            //   ))}
+            // <div className="flex justify-center items-center ">
+            //   <button
+            //     style={{ background: themeColor }}
+            //     className="text-white p-2 rounded-md"
+            //     onClick={handlePostTaxStatutory}
+            //   >
+            //     Save & Proceed
+            //   </button>
+            // </div>
+            // </div>
+            <div className="mt-4">
+              {templateData.length > 0 ? (
+                templateData.map((item) => (
+                  <div key={item.id} className="mb-4">
+                    <p className="text-sm font-medium text-gray-700">
+                      {item.master_name}
+                    </p>
+                    <div className="flex items-center space-x-4 mt-2">
+                      <label className="flex items-center">
                         <input
                           type="radio"
-                          name={`boolean-${field.id}`}
-                          value="true" // String "true"
-                          checked={statData[field.id] === true} // Boolean check
-                          onChange={(e) =>
-                            handleStatChange(field.id, e, "boolean")
-                          }
+                          name={`option-${item.id}`}
+                          value="true"
+                          checked={item.value === "true"}
+                          readOnly
+                          disabled
+                          className="form-radio h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
                         />
-                        Yes
+                        <span className="ml-2 text-sm text-gray-700">Yes</span>
                       </label>
-                      <label className="flex gap-2">
+                      <label className="flex items-center">
                         <input
                           type="radio"
-                          name={`boolean-${field.id}`}
-                          value="false" // String "false"
-                          checked={statData[field.id] === false} // Boolean check
-                          onChange={(e) =>
-                            handleStatChange(field.id, e, "boolean")
-                          }
+                          name={`option-${item.id}`}
+                          value="false"
+                          checked={item.value === "false"}
+                          readOnly
+                          disabled
+                          className="form-radio h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
                         />
-                        No
+                        <span className="ml-2 text-sm text-gray-700">No</span>
                       </label>
                     </div>
-                  )}
-                  {field.value_type === "number" && (
-                    <input
-                      type="number"
-                      value={statData[field.id]}
-                      onChange={(e) => handleStatChange(field.id, e, "number")}
-                      placeholder="Enter PF wage"
-                      className="border w-full border-gray-500 p-2 rounded-md"
-                    />
-                  )}
-                  {field.value_type === "string" && (
-                    <input
-                      type="text"
-                      value={statData[field.id]}
-                      onChange={(e) => handleStatChange(field.id, e, "string")}
-                      placeholder="Enter text"
-                      className="border w-full border-gray-500 p-2 rounded-md"
-                    />
-                  )}
-                  {field.value_type === "drop down" && (
-                    <select
-                      name=""
-                      id=""
-                      value={statData[field.id]}
-                      onChange={(e) => handleStatChange(field.id, e, "string")}
-                      className="border w-full border-gray-500 p-2 rounded-md"
-                    >
-                      <option value="">Select Template</option>
-                      <option value="temp">Template</option>
-                    </select>
-                  )}
-                </div>
-              ))}
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-500 text-sm text-center my-4">Select CTC Template</p>
+              )}
+
               <div className="flex justify-center items-center ">
                 <button
                   style={{ background: themeColor }}
                   className="text-white p-2 rounded-md"
-                  onClick={handlePostTaxStatutory}
+                  onClick={() => setPage("CTC Components")}
                 >
                   Save & Proceed
                 </button>
@@ -687,7 +781,7 @@ const OnboardingSalary = ({ empId }) => {
                   totalYearly={totalYearly}
                   onMonthlyChange={handleMonthlyChange}
                 />
-                <SalaryAccordion
+                {/* <SalaryAccordion
                   title="Other Benefits"
                   items={[]}
                   totalMonthly={0}
@@ -698,7 +792,7 @@ const OnboardingSalary = ({ empId }) => {
                   items={[]}
                   totalMonthly={0}
                   totalYearly={0}
-                />
+                /> */}
                 <SalaryAccordion
                   title="Total Employer Statutory Contributions"
                   items={[]}
@@ -711,7 +805,7 @@ const OnboardingSalary = ({ empId }) => {
                   totalMonthly={0}
                   totalYearly={0}
                 />
-                <SalaryAccordion
+                {/* <SalaryAccordion
                   title="Fixed Deductions"
                   items={[]}
                   totalMonthly={0}
@@ -728,7 +822,7 @@ const OnboardingSalary = ({ empId }) => {
                   items={[]}
                   totalMonthly={0}
                   totalYearly={0}
-                />
+                /> */}
               </div>
               <table className="w-full bg-gray-50 rounded-lg overflow-hidden">
                 <thead>
@@ -758,7 +852,7 @@ const OnboardingSalary = ({ empId }) => {
                   ))}
                 </tbody>
               </table>
-              
+
               <div className="mt-10 flex justify-center gap-2">
                 <button
                   className=" text-gray-500 mb-2  font-medium py-2 px-4 rounded-md border-2 border-gray-500"

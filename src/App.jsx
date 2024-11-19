@@ -692,6 +692,8 @@ import EditBroadcast from "./pages/SubPages/EditBroadcast.jsx";
 import AssociatedSites from "./pages/AdminHrms/AssociatedSites/AssociatedSites.jsx";
 import SetupSeat from "./pages/Setup/SetupSeat.jsx";
 import UserRoles from "./pages/AdminHrms/UserRoles.jsx";
+import OrganizationChart from "./pages/AdminHrms/OrganizationTree/OrganizationChart.jsx";
+import CTCGeneralSettingEdit from "./pages/AdminHrms/CTCGeneralSettingEdit.jsx";
 // new admin hrms
 
 function App() {
@@ -4919,7 +4921,8 @@ function App() {
             path="/hrms/organization-tree-setting"
             element={
               <ProtectedAdminRoutes>
-                <OrganizationTree />
+                {/* <OrganizationTree /> */}
+                <OrganizationChart/>
               </ProtectedAdminRoutes>
             }
           />
@@ -6121,6 +6124,14 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <CTCGeneralSetting />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/hrms/ctc/ctc-template/edit/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <CTCGeneralSettingEdit />
               </ProtectedAdminRoutes>
             }
           />

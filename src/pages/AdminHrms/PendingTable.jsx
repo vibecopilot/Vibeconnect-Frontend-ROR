@@ -253,12 +253,12 @@ const PendingTable = () => {
             onChange={handleSearch}
           />
           <div className="flex gap-2">
-            <button
+            {/* <button
               className="px-4 py-2 bg-blue-600 text-white rounded-md"
               onClick={() => setShowFilterModal(true)}
             >
               Filter
-            </button>
+            </button> */}
             <button
               onClick={() => setShowActionsDropdown(!showActionsDropdown)}
               className="px-4 py-2 bg-blue-600 text-white rounded-md"

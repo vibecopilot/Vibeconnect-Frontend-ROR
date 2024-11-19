@@ -109,15 +109,15 @@ const HRMSDashboard = () => {
       <div className="p-2 w-full flex  overflow-hidden flex-col">
         <div className="bg-white flex justify-items-end  p-4 shadow-md absolute overflow-y-auto top-0 left-0 right-0">
           <h1 className="text-2xl font-bold pl-20 top-0 left-0 right-0">
-            Welcome, Mittu Panda
+            Welcome To Logicon
           </h1>
-          <div
+          {/* <div
             className="bg-white mt-1 text-black text-center font-semibold absolute right-32 border-r-4"
             style={{ width: "130px", height: "30px", borderRadius: "5%" }}
           >
             Vibe CopilotAI
           </div>
-          &nbsp;
+          &nbsp; */}
         </div>
 
         <div className="mt-16 overflow-y-auto absolute top-1 left-20">
@@ -182,16 +182,16 @@ const HRMSDashboard = () => {
               </div>
 
               <div className="flex flex-col ">
-                <div className="font-medium mt-10 ml-5">
+                <div className="font-medium my-10 ml-5">
                   <h1 className="text-xl flex items-center gap-2">
                     Announcement <IoReload />{" "}
                   </h1>
                 </div>
-                <div className="font-medium text-2xl mb-10 mt-10 ml-5">
+                {/* <div className="font-medium text-2xl mb-10 mt-10 ml-5">
                   <h1 className="text-xl flex items-center gap-2">
                     Employee Feeds <IoReload />
                   </h1>
-                </div>
+                </div> */}
               </div>
             </div>
           </div>
