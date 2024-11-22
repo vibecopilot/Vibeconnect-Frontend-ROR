@@ -140,6 +140,10 @@ const AddEmployee = () => {
       toast.error("Date of Birth is required!");
       return;
     }
+    if (!formData.paymentMode) {
+      toast.error("Please select Payment mode");
+      return;
+    }
     const postData = new FormData();
     postData.append("first_name", formData.firstName);
     postData.append("last_name", formData.lastName);
@@ -182,7 +186,7 @@ const AddEmployee = () => {
         console.log(error);
       }
       const postPayment = new FormData();
-      postPayment.append("payment_mode", formData.paymentMode);
+      postPayment.append("payments_mode", formData.paymentMode);
       postPayment.append("employee", empRes.id);
       // Backend team working on more fields
       try {
