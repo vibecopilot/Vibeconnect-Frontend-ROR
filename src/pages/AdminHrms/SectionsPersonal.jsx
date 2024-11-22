@@ -98,7 +98,8 @@ const SectionsPersonal = () => {
     bloodGroup: "",
     emergencyContactName: "",
     emergencyContactNo: "",
-    userType:""
+    userType:"",
+    status:false
   });
   const [familyData, setFamilyData] = useState({
     fatherName: "",
@@ -131,6 +132,7 @@ const SectionsPersonal = () => {
         dob: res?.date_of_birth,
         pan: res?.pan,
         bloodGroup: res?.blood_group,
+        status: res?.status,
         // aadhar: rawAadharValue.match(/.{1,4}/g)?.join("-") || "",
         aadhar: rawAadharValue?.match(/.{1,4}/g)?.join("-") || "",
         maritalStatus: res?.marital_status,
@@ -243,6 +245,7 @@ const SectionsPersonal = () => {
     editData.append("emergency_contact_name", formData.emergencyContactName);
     editData.append("emergency_contact_no", formData.emergencyContactNo);
     editData.append("user_type", formData.userType);
+    editData.append("status", formData.status);
     editData.append("organization", hrmsOrgId);
     try {
       const res = await editEmployeeDetails(id, editData);

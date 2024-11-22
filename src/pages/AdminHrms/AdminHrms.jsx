@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { HiMenuAlt3 } from "react-icons/hi";
 import { HiCheck } from "react-icons/hi";
-import { FaBuilding, FaUserTie } from "react-icons/fa";
+import { FaBuilding, FaRegFileAlt, FaUserTie } from "react-icons/fa";
 import { useNavigate, NavLink, useLocation } from "react-router-dom";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import {
@@ -1380,7 +1380,7 @@ const AdminHRMS = () => {
                 Expenses
               </h2>
               <div className="ml-auto">
-                {isEmpOpen
+                {isExpenseOpen
                   ? React.createElement(MdExpandLess, { size: "20" })
                   : React.createElement(MdExpandMore, { size: "20" })}
               </div>
@@ -1506,7 +1506,7 @@ const AdminHRMS = () => {
                     }
                   >
                     <div>
-                      {React.createElement(IoSettingsOutline, { size: "20" })}
+                      {React.createElement(FaRegFileAlt, { size: "20" })}
                     </div>
                     <h2
                       className={`whitespace-pre duration-300 ${
@@ -1629,7 +1629,7 @@ const AdminHRMS = () => {
                 </div>
               </div>
               {ispayOpen && (
-                <div className="">
+                <div className="flex flex-col gap-2 mt-1">
                   <NavLink
                     to="/admin/hrms/run-payroll"
                     className={({ isActive }) =>
@@ -1723,7 +1723,7 @@ const AdminHRMS = () => {
                     }
                   >
                     <div>
-                      {React.createElement(ImFileText2, { size: "20" })}
+                      {React.createElement(IoSettingsOutline, { size: "20" })}
                     </div>
                     <h2
                       className={`whitespace-pre duration-300 ${

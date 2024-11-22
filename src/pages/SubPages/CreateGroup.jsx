@@ -4,80 +4,84 @@ import Select from "react-select";
 import { useSelector } from "react-redux";
 import { PiPlusCircle } from "react-icons/pi";
 import MultiSelect from "../AdminHrms/Components/MultiSelect";
-import { getMyHRMSEmployees } from "../../api";
+import { getMyHRMSEmployees, getSetupUsers, postGroups } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import FileInputBox from "../../containers/Inputs/FileInputBox";
 import { FaCheck } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
+import toast from "react-hot-toast";
 function CreateGroup({ onclose }) {
   const [formData, setFormData] = useState({
-    group: [],
-    groupAddMember: [],
-    groupRemoveMember: [],
-    repeat: false,
+    groupName: "",
+    groupDescription: "",
+    profilePic: [],
   });
-  const options = [
-    {
-      value: "Akshat",
-      label: "Akshat",
-      email: "akshat.shrawat@vibecopilot.ai",
-    },
-    { value: "Kunal", label: "Kunal", email: "kunal.sah@vibecopilot.ai" },
-    { value: "Anurag", label: "Anurag", email: "anurag.sharma@vibecopilot.ai" },
-  ];
-  const addMember = [
-    {
-      value: "karan",
-      label: "karan",
-      email: "karan.abc@vibecopilot.ai",
-    },
-    { value: "virat", label: "virat", email: "virat.vit@vibecopilot.ai" },
-    { value: "sameer", label: "sameer", email: "sameer.sharma@vibecopilot.ai" },
-  ];
-  const removeMember = [
-    {
-      value: "vijay",
-      label: "vijay",
-      email: "vijay.abc@vibecopilot.ai",
-    },
-    { value: "vinay", label: "vinay", email: "vinay.vinay@vibecopilot.ai" },
-    { value: "sachin", label: "sachin", email: "sachin.sharma@vibecopilot.ai" },
-  ];
+
   const themeColor = useSelector((state) => state.theme.color);
-  const [supervisors, setSupervisors] = useState([]);
-  const [filteredSupervisors, setFilteredSupervisors] = useState([]);
+  const [members, setMembers] = useState([]);
+  const [filteredMembers, setFilteredMembers] = useState([]);
   const [selectedOptions, setSelectedOptions] = useState([]);
-  const [editSelectedOptions, setEditSelectedOptions] = useState([]);
+
   const handleSelectEdit = (option) => {
-    if (editSelectedOptions.includes(option)) {
-      setEditSelectedOptions(
-        editSelectedOptions.filter((item) => item !== option)
-      );
+    if (selectedOptions.includes(option)) {
+      setSelectedOptions(selectedOptions.filter((item) => item !== option));
     } else {
-      setEditSelectedOptions([...editSelectedOptions, option]);
+      setSelectedOptions([...selectedOptions, option]);
     }
   };
-  const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
-  useEffect(() => {
-    const fetchAllEmployees = async () => {
-      try {
-        const res = await getMyHRMSEmployees(hrmsOrgId);
 
-        const employeesList = res.map((emp) => ({
+  console.log(selectedOptions);
+
+  useEffect(() => {
+    const fetchAllMembers = async () => {
+      try {
+        const res = await getSetupUsers();
+
+        const employeesList = res.data.map((emp) => ({
           value: emp.id,
-          label: `${emp.first_name} ${emp.last_name}`,
+          label: `${emp.firstname} ${emp.lastname}`,
         }));
 
-        setEmployees(employeesList);
-        setSupervisors(employeesList);
-        setFilteredSupervisors(employeesList);
-        console.log(res);
+        setMembers(employeesList);
+        setFilteredMembers(employeesList);
       } catch (error) {
         console.log(error);
       }
     };
-    fetchAllEmployees();
+    fetchAllMembers();
   }, []);
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+  const user_id = getItemInLocalStorage("UserId");
+  const handleCreateGroup = async () => {
+    const postData = new FormData();
+    postData.append("group[group_name]", formData.groupName);
+    postData.append("group[group_description]", formData.groupDescription);
+    postData.append("group[created_by_id]", user_id);
+    selectedOptions.forEach((member)=>{
+      postData.append("group[member_ids][]", member);
+    
+    })
+    
+
+    try {
+      const res = await postGroups(postData);
+      toast.success("Group created successfully")
+      onclose()
+      setFormData({
+        groupName: "",
+        groupDescription: "",
+      });
+  
+    
+      setSelectedOptions([]);
+  
+     
+    } catch (error) {
+      console.log(error);
+    }
+  };
   return (
     <div className="fixed inset-0 z-50 flex items-center overflow-y-auto justify-center bg-gray-500 bg-opacity-50">
       <div class="max-h-screen bg-white p-2 w-[40rem] rounded-xl shadow-lg overflow-y-auto">
@@ -89,34 +93,41 @@ function CreateGroup({ onclose }) {
 
             <div className="md:grid grid-cols-2 gap-2 mt-2 mx-2">
               <div className="flex flex-col mt-2 ">
-                <label className=" font-medium ">Group Name</label>
+                <label className=" font-medium ">Group name</label>
                 <input
                   type="text"
                   placeholder="Group name"
                   className="border p-2 border-gray-300 rounded-md"
+                  value={formData.groupName}
+                  onChange={handleChange}
+                  name="groupName"
                 />
               </div>
               <div className="flex flex-col mt-2 ">
                 <MultiSelect
-                  options={supervisors}
+                  options={members}
                   title={"Select members"}
                   handleSelect={handleSelectEdit}
                   // handleSelectAll={handleSelectAll}
-                  selectedOptions={editSelectedOptions}
-                  setSelectedOptions={setEditSelectedOptions}
-                  setOptions={setSupervisors}
-                  searchOptions={filteredSupervisors}
+                  selectedOptions={selectedOptions}
+                  setSelectedOptions={setSelectedOptions}
+                  setOptions={setMembers}
+                  searchOptions={filteredMembers}
+                  compTitle="Select Group Members"
                 />
               </div>
             </div>
             <div className="flex flex-col mx-2 ">
               <label className=" font-medium ">Description</label>
               <textarea
-                name=""
+                name="groupDescription"
                 id=""
                 cols="30"
                 rows="3"
                 className="border p-2 border-gray-300 rounded-md"
+                placeholder="Group description"
+                value={formData.groupDescription}
+                onChange={handleChange}
               ></textarea>
             </div>
             <div className="flex flex-col m-2 ">
@@ -131,16 +142,16 @@ function CreateGroup({ onclose }) {
             </div>
             <div className="flex justify-center items-center gap-2">
               <button
-                className="flex items-center gap-2 bg-green-400 text-white p-2 rounded-full px-4 my-2"
-                onClick={() => onclose()}
-              >
-                <FaCheck /> Create
-              </button>
-              <button
                 className="flex items-center gap-2 bg-red-400 text-white p-2 rounded-full px-4 my-2"
                 onClick={() => onclose()}
               >
                 <MdClose /> Close
+              </button>
+              <button
+                className="flex items-center gap-2 bg-green-400 text-white p-2 rounded-full px-4 my-2"
+                onClick={handleCreateGroup}
+              >
+                <FaCheck /> Create
               </button>
             </div>
           </div>

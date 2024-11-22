@@ -251,19 +251,19 @@ const AttendanceRec = () => {
             <p>Half Day</p>
           </div>
           <div className="flex gap-2">
-            <div class="w-4 h-4 bg-gray-500 mt-1 rounded-full"></div>
+            <div className="w-4 h-4 bg-gray-500 mt-1 rounded-full"></div>
             <p>No Shift/Template missing</p>
           </div>
           <div className="flex gap-2">
-            <div class="w-4 h-4 bg-black mt-1 rounded-full"></div>
+            <div className="w-4 h-4 bg-black mt-1 rounded-full"></div>
             <p> Invalid Record</p>
           </div>
           <div className="flex gap-2">
-            <div class="w-4 h-4 bg-yellow-400 mt-1 rounded-full"></div>
+            <div className="w-4 h-4 bg-yellow-400 mt-1 rounded-full"></div>
             <p> Early</p>
           </div>
           <div className="flex gap-2">
-            <div class="w-4 h-4 bg-pink-400 mt-1 rounded-full"></div>
+            <div className="w-4 h-4 bg-pink-400 mt-1 rounded-full"></div>
             <p> Late</p>
           </div>
         </div>
