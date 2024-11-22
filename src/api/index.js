@@ -1118,7 +1118,7 @@ export const getEvents = async () =>
   axiosInstance.get("/events.json", {
     params: {
       token: token,
-      // token: "775d6ae27272741669a65456ea10cc56cd4cce2bb99287b6",
+      
     },
   });
 export const getEventsDetails = async (id) =>
@@ -1135,6 +1135,12 @@ export const editEventDetails = async (id, data) =>
   });
 export const postEvents = async (data) =>
   axiosInstance.post("/events.json", data, {
+    params: {
+      token: token,
+    },
+  });
+export const postGroups = async (data) =>
+  axiosInstance.post("/groups.json", data, {
     params: {
       token: token,
     },
@@ -4392,6 +4398,19 @@ export const editLeaveSetting = async (settingId, data) => {
     throw error;
   }
 };
+export const postLeaveSetting = async (data) => {
+  try {
+    const response = await HrmsAuth.post(`/leave-settings/`, data, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error updating leave settings:", error);
+    throw error;
+  }
+};
 export const getLeaveCategoryDetails = async (categoryId) => {
   try {
     const response = await HrmsAuth.get(`/leave-categories/${categoryId}/`, {
@@ -6253,6 +6272,23 @@ export const getOrganizationTreeChart = async (orgId) => {
     return response.data;
   } catch (error) {
     console.error("Error getting organization tree", error);
+    throw error;
+  }
+};
+export const postCTCComponent = async (data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/ctc/components/`,data,
+
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting CTC component", error);
     throw error;
   }
 };

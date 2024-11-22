@@ -16,6 +16,7 @@ import {
   hrmsDomain,
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
+import toast from "react-hot-toast";
 
 function EmployeeDirectory() {
   const themeColor = useSelector((state) => state.theme.color);
@@ -36,16 +37,19 @@ function EmployeeDirectory() {
   const [selectedEmployee, setSelectedEmployee] = useState({});
   const [selectedLetter, setSelectedLetter] = useState(null);
 
+  const fetchAllEmployees = async () => {
+    try {
+      toast.loading("Loading employees Please wait!");
+      const res = await getMyHRMSEmployeesAllData(hrmsOrgId);
+      console.log(res);
+      setEmployeesData(res);
+      toast.dismiss();
+    } catch (error) {
+      console.log(error);
+      toast.error("Something went wrong");
+    }
+  };
   useEffect(() => {
-    const fetchAllEmployees = async () => {
-      try {
-        const res = await getMyHRMSEmployeesAllData(hrmsOrgId);
-        console.log(res);
-        setEmployeesData(res);
-      } catch (error) {
-        console.log(error);
-      }
-    };
     fetchAllEmployees();
   }, []);
 
@@ -144,6 +148,9 @@ function EmployeeDirectory() {
   const handleDeleteEmployee = async () => {
     try {
       await deleteHRMSEmployee(employeeId);
+      setIsDeleteModalOpen(false);
+      fetchAllEmployees();
+      toast.success("Employee deleted successfully");
     } catch (error) {
       console.log(error);
     }
@@ -164,9 +171,9 @@ function EmployeeDirectory() {
     const searchValue = e.target.value;
     setSearchText(searchValue);
   };
-// const 
+  // const
   const handleChangeStatus = async () => {
-    // const 
+    // const
   };
 
   return (

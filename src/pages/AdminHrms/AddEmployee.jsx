@@ -153,6 +153,7 @@ const AddEmployee = () => {
     postData.append("marital_status", formData.maritalStatus);
     postData.append("emergency_contact_name", formData.emergencyContactName);
     postData.append("emergency_contact_no", formData.emergencyContactNumber);
+    postData.append("status", true);
     postData.append("organization", hrmsOrgId);
     try {
       const empRes = await postEmployeeOnBoarding(postData);
@@ -774,7 +775,9 @@ const AddEmployee = () => {
       {steps === "employment" && (
         <Employment setSteps={setSteps} empId={empId} />
       )}
-      {steps === "salary" && <OnboardingSalary empId={empId} />}
+      {steps === "salary" && (
+        <OnboardingSalary empId={empId} setSteps={setSteps} />
+      )}
       {steps === "statutory" && <Statutory empId={empId} />}
 
       <div className="my-4 mx-2 w-fit">

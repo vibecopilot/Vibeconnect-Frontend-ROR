@@ -2,12 +2,14 @@ import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { postEmployeeStatutoryInfo } from "../../api";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 const Statutory = ({ empId }) => {
   const themeColor = useSelector((state) => state.theme.color);
   const [formData, setFormData] = useState({
     pf: false,
     esic: false,
+    esicNumber:"",
     pt: false,
     lwf: false,
     IT: false,
@@ -30,11 +32,14 @@ const Statutory = ({ empId }) => {
     postData.append("gratuity_applicable", formData.gratuity);
     postData.append("nps_applicable", formData.nps);
     postData.append("tax_regime", formData.taxRegime);
+    postData.append("esic_number", formData.esicNumber);
     postData.append("decimal_rates_allowed", formData.decimalPoint);
     postData.append("employee", empId);
     try {
       await postEmployeeStatutoryInfo(postData);
-      navigate("/admin/hrms/employee-directory");
+      // navigate("/admin/hrms/employee-directory");
+      navigate(`/hrms/employee-directory-Personal/${empId}`);
+      toast.success("Employee onboarding completed successfully!");
     } catch (error) {
       console.log(error);
     }
@@ -115,7 +120,9 @@ const Statutory = ({ empId }) => {
                 </label>
                 <input
                   type="text"
-                  name=""
+                  name="esicNumber"
+                  value={formData.esicNumber}
+                  onChange={handleChange}
                   id=""
                   className="border border-gray-400 rounded-md p-2 w-full"
                   maxLength={17}
