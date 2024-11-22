@@ -92,7 +92,7 @@ const PPMActivity = () => {
     // },
     {
       name: "No. Of Questions",
-      selector: (row) => row.questions.length,
+      selector: (row) => row?.questions?.length,
       sortable: true,
     },
     {
