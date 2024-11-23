@@ -59,12 +59,12 @@ const PPMActivity = () => {
       cell: (row) => (
         <div className="flex items-center gap-4">
           {/* :assetId/:activityId */}
-          <Link to={`/asset/ppm-activity-details/${row.id}`}>
+          {/* <Link to={`/asset/ppm-activity-details/${row.id}`}>
                 <BsEye size={15} />
-              </Link>
-          {/* <Link to={`/services/edit-ppm/${row.id}`}>
-            <BiEdit size={15} />
-          </Link> */}
+              </Link> */}
+          <Link to={`/asset/edit-ppm/${row.id}`}>
+            <BsEye size={15} />
+          </Link>
         </div>
       ),
     },
@@ -95,8 +95,8 @@ const PPMActivity = () => {
     //   sortable: true,
     // },
     {
-      name: "No. Of Questions",
-      selector: (row) => row.questions.length,
+      name: "No. Of Groups",
+      selector: (row) => row.groups.length,
       sortable: true,
     },
     {

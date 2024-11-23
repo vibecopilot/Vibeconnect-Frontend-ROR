@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { IoAddCircleOutline } from "react-icons/io5";
 import { Link } from "react-router-dom";
-import { API_URL, ChecklistImport, getChecklist, getChecklistTemplate, getVibeBackground } from "../api";
+import { API_URL, ChecklistImport, downloadSampleChecklist, exportChecklist, getChecklist, getChecklistTemplate, getVibeBackground } from "../api";
 import Table from "../components/table/Table";
 import { BiEdit } from "react-icons/bi";
 import { MdDeleteForever } from "react-icons/md";
@@ -16,6 +16,7 @@ import { FiDownload, FiUpload } from "react-icons/fi";
 import { FaCopy, FaDownload } from "react-icons/fa";
 import Switch from "../Buttons/Switch";
 import DatePicker from 'react-datepicker';
+import { BsEye } from "react-icons/bs";
 
 const Checklist = () => {
   const [checklists, setChecklists] = useState([]);
@@ -59,29 +60,28 @@ const Checklist = () => {
       setImportStatus("An error occurred during import.");
     }
   };
-  const downloadChecklistTemplate = async () => {
+  const handleDownload = async () => {
     try {
-      // Use the same URL that works in your <a> tag
-      const fileUrl = 'http://13.215.74.38/checklists/download_template';
-  
-      // Create a temporary <a> element
-      const a = document.createElement('a');
-      a.href = fileUrl;
-      a.download = 'assets_import.xlsx'; // Set a file name for the download
-      a.target = '_blank'; // Optional: open in new tab (ensures CORS issues are minimized)
-      document.body.appendChild(a);
-  
-      // Trigger the download
-      a.click();
-  
-      // Clean up
-      document.body.removeChild(a);
+      // Call the exportChecklist function
+      const response = await downloadSampleChecklist();
+
+      // Create a Blob and download URL for the file
+      const blob = new Blob([response.data], { type: response.headers["content-type"] });
+      const downloadUrl = window.URL.createObjectURL(blob);
+
+      // Create an anchor element for the download
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = "export_checklist.xlsx"; // Name of the downloaded file
+      link.click();
+
+      // Clean up the URL object
+      window.URL.revokeObjectURL(downloadUrl);
     } catch (error) {
-      console.error('Error downloading template:', error);
-      alert('Failed to download the file. Please try again later.');
+      console.error("Failed to export checklist:", error);
+      alert("Error exporting checklist. Please try again.");
     }
   };
-  
   
   
 const themeColor =useSelector((state)=> state.theme.color)
@@ -112,8 +112,8 @@ const themeColor =useSelector((state)=> state.theme.color)
     { name: "Start Date", selector: (row) => row.start_date, sortable: true },
     { name: "End Date", selector: (row) => row.end_date, sortable: true },
     {
-      name: "No. of Questions",
-      selector: (row) => row.questions.length,
+      name: "No. of Groups",
+      selector: (row) => row.groups.length,
       sortable: true,
     },
    
@@ -138,7 +138,7 @@ const themeColor =useSelector((state)=> state.theme.color)
       cell: (row) => (
         <div className="flex items-center gap-4">
           <Link to={`/admin/edit-checklist/${row.id}`}>
-            <BiEdit size={15} />
+            <BsEye size={15} />
           </Link>
           {/* <button className="text-red-400">
             <MdDeleteForever size={25} />
@@ -218,30 +218,28 @@ const themeColor =useSelector((state)=> state.theme.color)
     return date.toLocaleString();
   };
 
-  const exportToExcel = () => {
-    const mappedData = filteredData.map((check) => ({
-     
-      "Checklist Name": check.name,
-      "Start Date": check.start_date,
-      "End Date": check.end_date,
-      "Frequency": check.frequency,
-      "Created On": dateFormat(check.created_at),
-      // "Question": check.questions.map(q => q.toString()).join(', ')
-    }));
-    const fileType =
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8";
-    const fileName = "Checklist_data.xlsx";
-    const ws = XLSX.utils.json_to_sheet(mappedData);
-    const wb = { Sheets: { data: ws }, SheetNames: ["data"] };
-    const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-    const data = new Blob([excelBuffer], { type: fileType });
-    const url = URL.createObjectURL(data);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = fileName;
-    link.click();
-  };
+  const handleExport = async () => {
+    try {
+      // Call the exportChecklist function
+      const response = await exportChecklist();
 
+      // Create a Blob and download URL for the file
+      const blob = new Blob([response.data], { type: response.headers["content-type"] });
+      const downloadUrl = window.URL.createObjectURL(blob);
+
+      // Create an anchor element for the download
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = "export_checklist.xlsx"; // Name of the downloaded file
+      link.click();
+
+      // Clean up the URL object
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error("Failed to export checklist:", error);
+      alert("Error exporting checklist. Please try again.");
+    }
+  };
   return (
     <section
       className="flex"
@@ -278,7 +276,7 @@ const themeColor =useSelector((state)=> state.theme.color)
           </button>
           <button
             className="bg-blue-500 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded flex justify-center items-center gap-2"
-            onClick={exportToExcel}
+            onClick={handleExport}
             style={{ background: themeColor }}
           >
            <FiUpload size={15} /> Export
@@ -309,7 +307,7 @@ const themeColor =useSelector((state)=> state.theme.color)
          
             <div className="mt-4 flex justify-end space-x-4">
               <button
-              onClick={downloadChecklistTemplate}
+              onClick={handleDownload}
               className="bg-red-500 text-white px-4 py-2 rounded"
               style={{ background: themeColor }}
               >

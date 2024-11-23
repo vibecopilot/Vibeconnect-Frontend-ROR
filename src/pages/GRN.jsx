@@ -39,7 +39,7 @@ function GRN() {
 
     { name: "Id", selector: (row) => row.id, sortable: true },
     { name: "Inventory", selector: (row) => row.Inventory, sortable: true },
-    { name: "Supplier ID", selector: (row) => row.vendor_id, sortable: true },
+    { name: "Supplier", selector: (row) => row.vendor, sortable: true },
     {
       name: "Invoice Number",
       selector: (row) => row.invoice_number,
@@ -91,7 +91,7 @@ function GRN() {
     { name: "QC Amount", selector: (row) => row.QCAmount, sortable: true },
     {
       name: "Invoice Date	",
-      selector: (row) => row.invoice_date,
+      selector: (row) => new Date(row.invoice_date).toLocaleDateString(),
       sortable: true,
     },
     {
@@ -137,7 +137,7 @@ function GRN() {
       sortable: true,
     },
     { name: "Aging", selector: (row) => row.Aging, sortable: true },
-    { name: "Created On", selector: (row) => row.created_at, sortable: true },
+    { name: "Created On", selector: (row) => new Date(row.created_at).toLocaleDateString(), sortable: true },
     { name: "Created By", selector: (row) => row.CreatedBy, sortable: true },
   ];
 

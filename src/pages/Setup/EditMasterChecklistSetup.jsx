@@ -14,7 +14,7 @@ import "react-js-cron/dist/styles.css";
 import { FaTrash } from "react-icons/fa";
 import { useParams } from "react-router-dom";
 
-const EditChecklist = () => {
+const EditMasterChecklistSetup = () => {
   const { id } = useParams();
   const [isEditing, setIsEditing] = useState(false);
   const [update, setUpdate] = useState(false);
@@ -299,11 +299,11 @@ const EditChecklist = () => {
     formData.append("checklist[start_date]", startDate);
     formData.append("checklist[end_date]", endDate);
     formData.append("checklist[user_id]", userId);
-    formData.append("checklist[cron_expression]", cronExpression);
-    formData.append("checklist[grace_period]", convertedSubmitMinutes);
-    formData.append("checklist[grace_period_unit]", convertedExtensionMinutes);
-    formData.append("checklist[supplier_id]", supplierid);
-    formData.append("checklist[lock_overdue]", lockOverdueTask === "true");
+    // formData.append("checklist[cron_expression]", cronExpression);
+    // formData.append("checklist[grace_period]", convertedSubmitMinutes);
+    // formData.append("checklist[grace_period_unit]", convertedExtensionMinutes);
+    // formData.append("checklist[supplier_id]", supplierid);
+    // formData.append("checklist[lock_overdue]", lockOverdueTask === "true");
     formData.append("checklist[ctype]", "routine");
     formData.append("checklist[ticket_enabled]",createTicket);
     formData.append("checklist[ticket_level_type]",ticketType);
@@ -472,7 +472,7 @@ const EditChecklist = () => {
       <div className="m-2">
         <h2 style={{ background: themeColor }} className="text-center text-xl font-bold p-2  rounded-full text-white">
          
-          {isEditing ? " Edit  Checklist" : "Routine Checklist Details"}
+          {isEditing ? " Edit Master  Checklist" : "Master Checklist Details"}
         </h2>
         <div className="md:mx-20 my-5 mb-10 sm:border border-gray-400 p-5 px-10 rounded-lg sm:shadow-xl">
         <div className="flex justify-end">
@@ -1024,154 +1024,11 @@ const EditChecklist = () => {
       </button>
     </div>
     </div>
-            <h2 className="border-b-2 border-black text font-medium">
+            {/* <h2 className="border-b-2 border-black text font-medium">
                       Schedules
-                    </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-2">
-       
-        
-       
-
-        
-        
-       
-       
-            <div className="flex flex-col gap-4">
-      {/* Allowed Time to Submit */}
-      <div>
-        <label className="font-semibold">Allowed time to submit</label>
-        <div className="flex gap-2">
-          <input
-            type="number"
-            className={`border p-1 px-2  border-gray-500 rounded-md ${
-              !isEditing ? 'bg-gray-200' : ''
-            }`}
-            placeholder="Enter Days"
-            value={submitDays}
-            onChange={(e) => setSubmitDays(Number(e.target.value))}
-            disabled={!isEditing}
-          />
-          <input
-            type="number"
-            className={`border p-1 px-2  border-gray-500 rounded-md ${
-              !isEditing ? 'bg-gray-200' : ''
-            }`}
-            placeholder="Enter Hours"
-            value={submitHours}
-            onChange={(e) => setSubmitHours(Number(e.target.value))}
-            disabled={!isEditing}
-          />
-          <input
-            type="number"
-            className={`border p-1 px-2  border-gray-500 rounded-md ${
-              !isEditing ? 'bg-gray-200' : ''
-            }`}
-            placeholder="Enter Minutes"
-            value={submitMinutes}
-            onChange={(e) => setSubmitMinutes(Number(e.target.value))}
-            disabled={!isEditing}
-          />
-        </div>
-        
-      </div>
-
-      {/* Extension Time */}
-      <div className="flex flex-col mr-2">
-        <label className="font-semibold">Extension Time</label>
-        <div className="flex gap-2">
-          <input
-            type="number"
-            className={`border p-1 px-2  border-gray-500 rounded-md ${
-              !isEditing ? 'bg-gray-200' : ''
-            }`}
-            placeholder="Enter Days"
-            value={extensionDays}
-            onChange={(e) => setExtensionDays(e.target.value)}
-            disabled={!isEditing}
-          />
-          <input
-            type="number"
-            className={`border p-1 px-2  border-gray-500 rounded-md ${
-              !isEditing ? 'bg-gray-200' : ''
-            }`}
-            placeholder="Enter Hours"
-            value={extensionHours}
-            onChange={(e) => setExtensionHours(e.target.value)}
-            disabled={!isEditing}
-          />
-          <input
-            type="number"
-            className={`border p-1 px-2  border-gray-500 rounded-md ${
-              !isEditing ? 'bg-gray-200' : ''
-            }`}
-            placeholder="Enter Minutes"
-            value={extensionMinutes}
-            onChange={(e) => setExtensionMinutes(e.target.value)}
-            disabled={!isEditing}
-          />
-        </div>
-        
-      </div>
-      <div className="flex flex-col">
-        <label htmlFor="">Lock Overdue Task</label>
-        <select 
-        name="lockOverdueTask"
-        id="lockOverdueTask"
-        className={`border p-1 px-4  border-gray-500 rounded-md ${
-          !isEditing ? 'bg-gray-200' : ''
-        }`}
-        value={lockOverdueTask}
-        onChange={handleLockOverdueTaskChange}
-        disabled={!isEditing}
-        >
-          <option value="">Select Lock Status</option>
-          <option value="true">Yes</option>
-          <option value="false">No</option>
-        </select>
-      </div>
-    </div>
+                    </h2> */}
             
-
-             
-    <div className="flex flex-col gap-4 ">
-    <div>
-        <label className="font-semibold">Supervisors</label>
-        <Select
-          value={selectedOptionssupervisior}
-          onChange={handleChangesupervisior}
-          options={optionssupervisior}
-          isMulti
-          isSearchable
-          placeholder="Select Supervisors"
-          isDisabled={!isEditing}
-        />
-      </div>
-    
-        
-
-        
-         <div  className="flex flex-col ">
-               <label className="font-semibold">Supplier</label>
-               <select 
-               className={`border p-1 px-4  border-gray-500 rounded-md ${
-                !isEditing ? 'bg-gray-200' : ''
-              }`}
-               value={supplierid}
-               onChange={(e) => setsupplierid(e.target.value)}
-               disabled={!isEditing}
-               >
-                 <option value="">Select Supplier</option>
-                 {suppliers.map((supplier) => (
-              <option value={supplier.id} key={supplier.id}>
-                {supplier.company_name}
-              </option>
-            ))}
-                 
-               </select>
-             </div></div>
-         
-       </div>
-       <h2 className="border-b-2 border-black text font-medium">
+       {/* <h2 className="border-b-2 border-black text font-medium">
                       Cron Setting
                     </h2>
                     <div className="my-2 border-2 border-dashed flex items-center p-2 rounded-md border-gray-300">
@@ -1181,7 +1038,7 @@ const EditChecklist = () => {
       className={`${!isEditing ? 'bg-gray-100 cursor-not-allowed' : ''}`}
       />
       
-    </div>
+    </div> */}
             <div className="flex justify-center">
               <button onClick={handleSubmit} className="bg-black text-white p-2 px-4 rounded-md font-medium">
                 Save
@@ -1194,4 +1051,4 @@ const EditChecklist = () => {
   );
 };
 
-export default EditChecklist;
+export default EditMasterChecklistSetup;

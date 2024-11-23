@@ -692,6 +692,9 @@ import PPMCalendar from "./pages/PPMCalendar.jsx";
 import CopyChecklist from "./pages/SubPages/CopyChecklist.jsx";
 import SiteOwner from "./pages/Setup/SiteOwner.jsx";
 import ChecklistGroupReading from "./pages/Setup/ChecklistGroupReading.jsx";
+import GDNPurpose from "./pages/Setup/GDNPurpose.jsx";
+import EditMasterChecklistSetup from "./pages/Setup/EditMasterChecklistSetup.jsx";
+import EditPPMChecklist from "./pages/SubPages/EditPPMChecklist.jsx";
 // new admin hrms
 
 function App() {
@@ -982,6 +985,14 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <AddPPMActivity />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/asset/edit-ppm/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <EditPPMChecklist/>
               </ProtectedAdminRoutes>
             }
           />
@@ -1759,6 +1770,22 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <SupplierSetup />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/edit-master-checklist-setup/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <EditMasterChecklistSetup/>
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/gdn-purpose-setup"
+            element={
+              <ProtectedAdminRoutes>
+                <GDNPurpose/>
               </ProtectedAdminRoutes>
             }
           />

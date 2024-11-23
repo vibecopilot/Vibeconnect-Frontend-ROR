@@ -654,6 +654,20 @@ export const getChecklist = async () =>
           token: token,
         },
       });
+      export const exportChecklist = async () =>
+        axiosInstance.get("/export_checklist.xlsx", {
+          params: {
+            token: token,
+          },
+          responseType: "blob",
+        });
+        export const downloadSampleChecklist = async () =>
+          axiosInstance.get("/checklists/download_template", {
+            params: {
+              token: token,
+            },
+            responseType: "blob",
+          });
 export const getAssociationList = async (checklistId) =>
   axiosInstance.get(
     `/checklist_associations.json?checklist_id=${checklistId}`,
@@ -1251,6 +1265,18 @@ export const postChecklist = async (data) =>
       token: token,
     },
   });
+  export const postGDN = async (data) =>
+    axiosInstance.post("/gdn_details.json", data, {
+      params: {
+        token: token,
+      },
+    });
+    export const getGDN = async () =>
+      axiosInstance.get("/gdn_details.json", {
+        params: {
+          token: token,
+        },
+      });
   export const getSiteOwner = async () =>
     axiosInstance.get("/get_site_owner.json?q[info_type_eq]=SiteOwner", {
       params: {
@@ -1263,6 +1289,18 @@ export const postChecklist = async (data) =>
           token: token,
         },
       });
+      export const getGDNPurposeSetup = async () =>
+        axiosInstance.get("/generic_infos.json?q[info_type_eq]=GdnPurpose", {
+          params: {
+            token: token,
+          },
+        });
+        export const getGDNConsumingSetup = async () =>
+          axiosInstance.get("/generic_infos.json?q[info_type_eq]=GdnConsumingIn", {
+            params: {
+              token: token,
+            },
+          });
     export const getSiteOwnerDetails = async (id) =>
       axiosInstance.get(`/generic_infos/${id}.json`, {
         params: {
