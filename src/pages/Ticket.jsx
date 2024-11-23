@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+
 import DataTable from "react-data-table-component";
 import Navbar from "../components/Navbar";
 import { PiPlusCircle } from "react-icons/pi";
@@ -10,7 +11,7 @@ import {
   getTicketDashboard,
 } from "../api";
 import { BsEye } from "react-icons/bs";
-import { BiEdit } from "react-icons/bi";
+import { BiEdit, BiFilterAlt } from "react-icons/bi";
 import moment from "moment";
 import { getItemInLocalStorage } from "../utils/localStorage";
 import * as XLSX from "xlsx";
@@ -18,6 +19,8 @@ import { useSelector } from "react-redux";
 import Table from "../components/table/Table";
 import { MdKeyboardArrowLeft, MdKeyboardArrowRight } from "react-icons/md";
 import { DNA } from "react-loader-spinner";
+import TicketFilterModal from "../containers/modals/TicketFilterModal";
+import { IoIosArrowDown } from "react-icons/io";
 const Ticket = () => {
   const [filteredData, setFilteredData] = useState([]);
   const [searchText, setSearchText] = useState("");
@@ -30,6 +33,9 @@ const Ticket = () => {
   const perPage = 10;
   const [totalRows, setTotalRows] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
+  const [filterModal, setFilterModal] = useState(false);
+  const [hideColumn, setHideColumn] = useState(false);
+  const dropdownRef = useRef(null);
 
   const getTimeAgo = (timestamp) => {
     const createdTime = moment(timestamp);
@@ -103,12 +109,75 @@ const Ticket = () => {
     { name: "Priority", selector: (row) => row.priority, sortable: true },
     { name: "Assigned To", selector: (row) => row.assigned_to, sortable: true },
     { name: "Ticket Type", selector: (row) => row.issue_type, sortable: true },
+    // {
+    //   name: "Response TAT",
+    //   selector: (row) => row.response_TAT,
+    //   sortable: true,
+    // },
+    // {
+    //   name: "Response Time",
+    //   selector: (row) => row.response_time,
+    //   sortable: true,
+    // },
+    // {
+    //   name: "Resolution TAT",
+    //   selector: (row) => row.resolution_TAT,
+    //   sortable: true,
+    // },
+    // {
+    //   name: "Resolution Time",
+    //   selector: (row) => row.resolution_time,
+    //   sortable: true,
+    // },
     {
       name: "Total Time",
       selector: (row) => getTimeAgo(row.created_at),
       sortable: true,
     },
   ];
+
+  const [columnVisibility, setColumnVisibility] = useState({
+    Action: true,
+    "Ticket Number": true,
+    "Building Name": true,
+    "Floor Name": true,
+    "Unit Name": true,
+    "Customer Name": true,
+    Category: true,
+    "Sub Category": true,
+    Title: true,
+    Status: true,
+    "Created By": true,
+    "Created On": true,
+    Priority: true,
+    "Assigned To": true,
+    "Ticket Type": true,
+    "Response TAT": true,
+    "Response Time": true,
+    "Resolution TAT": true,
+    "Resolution Time": true,
+    "Total Time": true,
+  });
+
+  const handleCheckboxChange = (column) => {
+    setColumnVisibility((prev) => ({
+      ...prev,
+      [column]: !prev[column],
+    }));
+  };
+
+  const handleClickOutside = (event) => {
+    if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      setHideColumn(false);
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   //custom style
   const themeColor = useSelector((state) => state.theme.color);
@@ -133,35 +202,34 @@ const Ticket = () => {
     },
   };
 
+  const fetchData = async (page, perPage) => {
+    try {
+      const response = await getAdminPerPageComplaints(page, perPage);
+      console.log("Resp", response);
+
+      const complaints = response?.data?.complaints || [];
+      setFilteredData(complaints);
+      setComplaints(complaints);
+      setTotalRows(complaints.length);
+
+      setTotalRows(complaints.length);
+
+      const statusCounts = complaints.reduce((acc, curr) => {
+        acc[curr.issue_status] = (acc[curr.issue_status] || 0) + 1;
+        return acc;
+      }, {});
+      setTicketStatusCounts(statusCounts);
+
+      const typeCounts = complaints.reduce((acc, curr) => {
+        acc[curr.issue_type] = (acc[curr.issue_type] || 0) + 1;
+        return acc;
+      }, {});
+      setTicketTypeCounts(typeCounts);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
   useEffect(() => {
-    const fetchData = async (page, perPage) => {
-      try {
-        const response = await getAdminPerPageComplaints(page, perPage);
-        console.log("Resp", response);
-
-        const complaints = response?.data?.complaints || [];
-        setFilteredData(complaints);
-        setComplaints(complaints);
-        setTotalRows(complaints.length);
-
-        setTotalRows(complaints.length);
-
-        const statusCounts = complaints.reduce((acc, curr) => {
-          acc[curr.issue_status] = (acc[curr.issue_status] || 0) + 1;
-          return acc;
-        }, {});
-        setTicketStatusCounts(statusCounts);
-
-        const typeCounts = complaints.reduce((acc, curr) => {
-          acc[curr.issue_type] = (acc[curr.issue_type] || 0) + 1;
-          return acc;
-        }, {});
-        setTicketTypeCounts(typeCounts);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
-    };
-
     fetchData(currentPage, perPage);
   }, [currentPage]);
   const [ticketTypes, setTicketsTypes] = useState({});
@@ -452,7 +520,40 @@ const Ticket = () => {
               <PiPlusCircle size={20} />
               Add
             </Link>
-
+             <button
+              className=" font-semibold text-white px-4 p-1 flex gap-2 items-center justify-center rounded-md"
+              style={{ background: themeColor }}
+              onClick={() => setFilterModal(!filterModal)}
+            >
+              <BiFilterAlt />
+              Filter
+            </button> 
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setHideColumn(!hideColumn)}
+                style={{ background: themeColor }}
+                className="font-semibold text-white px-4 p-2 flex gap-2 items-center justify-center rounded-md whitespace-nowrap w-full"
+              >
+                Hide Columns
+                {hideColumn ? <IoIosArrowDown /> : <MdKeyboardArrowRight />}
+              </button>
+              {hideColumn && (
+                <div className="absolute py-2 right-0 top-12 bg-white border rounded shadow-md w-64 max-h-64 overflow-y-auto z-10">
+                  {Object.keys(columnVisibility).map((column) => (
+                    <label key={column} className="mr-4">
+                      <div className="flex gap-5 px-3">
+                        <input
+                          type="checkbox"
+                          checked={columnVisibility[column]}
+                          onChange={() => handleCheckboxChange(column)}
+                        />
+                        <div>{column}</div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
             <button
               className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
               onClick={exportAllToExcel}
@@ -479,7 +580,9 @@ const Ticket = () => {
             <DataTable
               responsive
               // selectableRows
-              columns={columns}
+              columns={columns.filter(
+                (column) => columnVisibility[column.name]
+              )}
               data={filteredData}
               customStyles={customStyle}
               fixedHeader
@@ -509,6 +612,15 @@ const Ticket = () => {
           </button>
         </div>
       </div>
+      {filterModal && (
+        <TicketFilterModal
+          onclose={() => setFilterModal(false)}
+          setFilteredData={setFilteredData}
+          fetchData={fetchData}
+          currentPage={currentPage}
+          perPage={perPage}
+        />
+      )}
     </section>
   );
 };

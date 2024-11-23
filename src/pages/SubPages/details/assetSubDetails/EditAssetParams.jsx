@@ -9,6 +9,7 @@ const EditAssetParams = ({ id, assetId, onclose }) => {
     name: "",
     order: "",
     digit: "",
+    unit_type: "",
     dashboard_view: false,
     consumption_view: false,
     asset_id: assetId,
@@ -16,25 +17,29 @@ const EditAssetParams = ({ id, assetId, onclose }) => {
     alert_above: "",
     min_val: "",
     max_val: "",
+    multiplier_factor: "",
     check_prev: false,
   });
-  
+
   useEffect(() => {
     const fetchDetails = async () => {
       try {
         const params = await getAssetparamsDetails(id);
-        setFormData({...formData,
-            name: params.data.name,
-            dashboard_view: params.data.dashboard_view,
-            consumption_view: params.data.consumption_view,
-            order: params.data.order,
-            digit: params.data.digit,
-            alert_above: params.data.alert_above,
-            alert_below: params.data.alert_below,
-            min_val: params.data.min_val,
-            max_val: params.data.max_val,
-            check_prev: params.data.check_prev
-        })
+        setFormData({
+          ...formData,
+          name: params.data.name,
+          dashboard_view: params.data.dashboard_view,
+          consumption_view: params.data.consumption_view,
+          order: params.data.order,
+          unit_type: params.data.unit_type,
+          digit: params.data.digit,
+          alert_above: params.data.alert_above,
+          alert_below: params.data.alert_below,
+          min_val: params.data.min_val,
+          max_val: params.data.max_val,
+          multiplier_factor: params.data.multiplier_factor,
+          check_prev: params.data.check_prev,
+        });
       } catch (error) {
         console.log(error);
       }
@@ -50,7 +55,7 @@ const EditAssetParams = ({ id, assetId, onclose }) => {
     try {
       toast.loading("Editing Asset params Please wait!");
       const response = await editAssetparamsDetails(id, formData);
-      
+
       // setFormData({});
       toast.dismiss();
       toast.success("Asset Params edited successfully");
@@ -68,7 +73,7 @@ const EditAssetParams = ({ id, assetId, onclose }) => {
           <AiOutlineClose size={20} />
         </button>
         <h2 className="border-b flex items-center gap-2 text-xl border-black font-semibold">
-        <BiEditAlt/> Edit Consumption Parameter
+          <BiEditAlt /> Edit Consumption Parameter
         </h2>
         <div className="grid md:grid-cols-3 item-start gap-x-4 gap-y-2 w-full py-2">
           <div className="flex flex-col">
@@ -87,13 +92,27 @@ const EditAssetParams = ({ id, assetId, onclose }) => {
           </div>
           <div className="flex flex-col">
             <label htmlFor="order" className="font-medium">
-              Order :
+              Sequence :
             </label>
             <input
               type="text"
               name="order"
               id="order"
               value={formData.order || ""}
+              onChange={handleAssetParamsChange}
+              placeholder="Enter Order"
+              className="border p-1 px-4 border-gray-500 rounded-md"
+            />
+          </div>
+          <div className="flex flex-col">
+            <label htmlFor="unitType" className="font-medium">
+              Unit Type :
+            </label>
+            <input
+              type="text"
+              name="unit_type"
+              id="unitType"
+              value={formData.unit_type || ""}
               onChange={handleAssetParamsChange}
               placeholder="Enter Order"
               className="border p-1 px-4 border-gray-500 rounded-md"
@@ -166,6 +185,20 @@ const EditAssetParams = ({ id, assetId, onclose }) => {
               value={formData.max_val}
               onChange={handleAssetParamsChange}
               placeholder="Max Value"
+              className="border p-1 px-4 border-gray-500 rounded-md"
+            />
+          </div>
+          <div className="flex flex-col">
+            <label htmlFor="Multiplier" className="font-medium">
+              Multiplier Factor :
+            </label>
+            <input
+              type="text"
+              name="multiplier_factor"
+              id="Multiplier"
+              value={formData.multiplier_factor}
+              onChange={handleAssetParamsChange}
+              placeholder="Multiplier Factor"
               className="border p-1 px-4 border-gray-500 rounded-md"
             />
           </div>

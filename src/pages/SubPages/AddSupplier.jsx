@@ -84,8 +84,11 @@ const AddSupplier = () => {
   };
   const navigate = useNavigate();
   const handleSubmit = async () => {
-    if (!formData.company_name || !formData.vendor_name) {
-      return toast.error("All fields are Required!");
+    if (!formData.company_name ) {
+      return toast.error("Company Name is Required");
+    }
+    if (!formData.vendor_name) {
+      return toast.error("Supplier name is required");
     }
     if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       return toast.error("Invalid email address!");
@@ -156,7 +159,7 @@ const AddSupplier = () => {
           <div className="grid md:grid-cols-3 gap-4">
             <div className="flex flex-col gap-2">
               <label htmlFor="" className="font-medium">
-                Company Name :
+                Company Name : <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -170,7 +173,7 @@ const AddSupplier = () => {
             </div>
             <div className="flex flex-col gap-2">
               <label htmlFor="" className="font-medium">
-                Vendor Name :
+                Vendor Name : <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -235,7 +238,7 @@ const AddSupplier = () => {
             </div>
             <div className="flex flex-col gap-2">
               <label htmlFor="" className="font-medium">
-                Primary Email :
+                Primary Email : <span className="text-red-500">*</span>
               </label>
               <input
                 type="email"
@@ -249,7 +252,7 @@ const AddSupplier = () => {
             </div>
             <div className="flex flex-col gap-2">
               <label htmlFor="" className="font-medium">
-                Secondary Email :
+                Secondary Email : <span className="text-red-500">*</span>
               </label>
               <input
                 type="email"

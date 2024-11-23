@@ -97,6 +97,10 @@ const Navbar = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("TOKEN");
+    localStorage.removeItem("COMPANYID");
+    localStorage.removeItem("HRMSORGID");
+    localStorage.removeItem("board_id");
+    localStorage.removeItem("menuState");
     localStorage.removeItem("Name");
     localStorage.removeItem("LASTNAME");
     localStorage.removeItem("USERTYPE");
@@ -114,7 +118,7 @@ const Navbar = () => {
     localStorage.removeItem("FEATURES");
     persistor.purge(["board"]).then(() => {
       navigate("/login");
-      window.location.reload();
+      // window.location.reload();
     });
     // navigate("/login");
     // window.location.reload();

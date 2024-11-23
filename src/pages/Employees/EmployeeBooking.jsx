@@ -98,19 +98,19 @@ const EmployeeBooking = () => {
       <Navbar />
       <div className="w-full flex m-3 flex-col overflow-hidden">
         <div className="flex justify-center">
-          <div className="flex flex-row gap-5 text-lg font-semibold p-2 rounded-full bg-gray-400">
+          <div className="sm:flex grid grid-cols-2 sm:flex-row gap-5 font-medium p-2 sm:rounded-full rounded-md opacity-90 bg-gray-200 ">
             <h2
               className={`p-1 ${
-                page === "meetingBooking" && "bg-white text-blue-500"
-              } rounded-full px-4 cursor-pointer text-sm`}
+                page === "meetingBooking" && "bg-white text-blue-500 shadow-custom-all-sides"
+              } rounded-full px-4 cursor-pointer text-center  transition-all duration-300 ease-linear`}
               onClick={() => setPage("meetingBooking")}
             >
-              Meeting Room Bookings
+              Facility Booking
             </h2>
             <h2
               className={`p-1 ${
-                page === "seatBooking" && "bg-white text-blue-500"
-              } rounded-full px-4 cursor-pointer text-sm`}
+                page === "seatBooking" && "bg-white text-blue-500 shadow-custom-all-sides"
+              } rounded-full px-4 cursor-pointer text-center  transition-all duration-300 ease-linear`}
               onClick={() => setPage("seatBooking")}
             >
               Seat Bookings
@@ -129,7 +129,7 @@ const EmployeeBooking = () => {
               />
               <div className="flex gap-4 justify-end w-full">
                 <Link
-                  to={"/bookings/new-facility-booking"}
+                  to={"/employees/facility-booking"}
                   className="bg-black w-20 rounded-lg flex font-semibold items-center gap-2 text-white p-2 my-5"
                 >
                   <IoAddCircleOutline size={20} />

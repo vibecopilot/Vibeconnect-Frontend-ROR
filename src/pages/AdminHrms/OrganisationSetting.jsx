@@ -34,6 +34,10 @@ const OrganisationSetting = () => {
   const toggleDropdown1 = () => {
     setDropdownOpen1(!dropdownOpen1);
   };
+  const [calendarDrop, setCalendarDrop] = useState(false);
+  const toggleCalendarDrop = () => {
+    setCalendarDrop(!calendarDrop);
+  };
 
   return (
     <div className="flex">
@@ -200,6 +204,34 @@ const OrganisationSetting = () => {
           </li>
           <li>
             <NavLink
+              to="/admin/associated-sites"
+              className={({ isActive }) =>
+                `${
+                  isActive
+                    ? "text-white bg-blue-500 flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                    : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-100 rounded-md"
+                }`
+              }
+            >
+              <div>{React.createElement(ImFileText2, { size: "20" })}</div>
+              <h2
+                className={`whitespace-pre duration-300 ${
+                  !open && "opacity-0 translate-x-28 overflow-hidden"
+                }`}
+              >
+                Associated sites
+              </h2>
+              <h2
+                className={`${
+                  open && "hidden"
+                } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+              >
+                Associates sites
+              </h2>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
               to="/admin/company-holidays"
               className={({ isActive }) =>
                 `${
@@ -225,6 +257,119 @@ const OrganisationSetting = () => {
                 Company Holidays
               </h2>
             </NavLink>
+          </li>
+          <li>
+            {/* <div
+              onClick={toggleDropdown1}
+              className="cursor-pointer group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-200 rounded-md"
+            >
+              <div>{React.createElement(ImFileText2, { size: "20" })}</div>
+              <h2
+                className={`whitespace-pre duration-300 ${
+                  !open1 && "opacity-0 translate-x-28 overflow-hidden"
+                }`}
+              >
+                Employee Fields
+              </h2>
+              <div className="ml-16">
+                {dropdownOpen1 ? (
+                  <FiChevronUp size={20} />
+                ) : (
+                  <FiChevronDown size={20} />
+                )}
+              </div>
+              <h2
+                className={`${
+                  open1 && "hidden"
+                } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+              >
+                Employee Fields
+              </h2>
+            </div> */}
+            {dropdownOpen1 && (
+              <ul className="pl-8 space-y-2 mt-2">
+                <li>
+                  <NavLink
+                    to="/admin/employee-fields/personal-details"
+                    className={({ isActive }) =>
+                      `${
+                        isActive
+                          ? "text-white bg-blue-500 flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                          : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-100 rounded-md"
+                      }`
+                    }
+                  >
+                    <h2
+                      className={`whitespace-pre duration-300 ${
+                        !open && "opacity-0 translate-x-28 overflow-hidden"
+                      }`}
+                    >
+                      Personal Details
+                    </h2>
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink
+                    to="/admin/employee-fields/employment-details"
+                    className={({ isActive }) =>
+                      `${
+                        isActive
+                          ? "text-white bg-blue-500 flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                          : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-100 rounded-md"
+                      }`
+                    }
+                  >
+                    <h2
+                      className={`whitespace-pre duration-300 ${
+                        !open && "opacity-0 translate-x-28 overflow-hidden"
+                      }`}
+                    >
+                      Employment Details
+                    </h2>
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink
+                    to="/admin/employee-fields/other-details"
+                    className={({ isActive }) =>
+                      `${
+                        isActive
+                          ? "text-white bg-blue-500 flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                          : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-100 rounded-md"
+                      }`
+                    }
+                  >
+                    <h2
+                      className={`whitespace-pre duration-300 ${
+                        !open && "opacity-0 translate-x-28 overflow-hidden"
+                      }`}
+                    >
+                      Other Information
+                    </h2>
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink
+                    to="/admin/employee-fields/documents"
+                    className={({ isActive }) =>
+                      `${
+                        isActive
+                          ? "text-white bg-blue-500 flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                          : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-100 rounded-md"
+                      }`
+                    }
+                  >
+                    <h2
+                      className={`whitespace-pre duration-300 ${
+                        !open && "opacity-0 translate-x-28 overflow-hidden"
+                      }`}
+                    >
+                      Documents
+                    </h2>
+                  </NavLink>
+                </li>
+              </ul>
+            )}
           </li>
 
           <li>
@@ -257,7 +402,7 @@ const OrganisationSetting = () => {
           </li>
         </ul>
         <div
-          onClick={toggleDropdown1}
+          onClick={toggleCalendarDrop}
           className="cursor-pointer group flex items-center text-sm gap-2 font-medium p-2 hover:bg-gray-200 rounded-md mt-4"
         >
           <div>{React.createElement(ImFileText2, { size: "20" })}</div>
@@ -269,7 +414,7 @@ const OrganisationSetting = () => {
             Calendar Milestones and Events
           </h2>
           <div className="">
-            {dropdownOpen1 ? (
+            {calendarDrop ? (
               <FiChevronUp size={20} />
             ) : (
               <FiChevronDown size={20} />
@@ -283,7 +428,7 @@ const OrganisationSetting = () => {
             Calendar Milestones and Events
           </h2>
         </div>
-        {dropdownOpen1 && open1 && (
+        {calendarDrop && open1 && (
           <ul className="pl-8 space-y-2 mt-2">
             <li>
               <NavLink

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import { PiPlusCircle } from "react-icons/pi";
 import { Link } from "react-router-dom";
 import { NavLink } from "react-router-dom";
@@ -10,7 +10,7 @@ import { BiEdit } from "react-icons/bi";
 import { TiTick } from "react-icons/ti";
 import { IoAddCircleOutline, IoClose } from "react-icons/io5";
 import { getFlightTicketRequest } from "../../../api";
-import BookingRequestNav from './BookingRequestnav';
+import BookingRequestNav from "./BookingRequestnav";
 
 const FlightRequest = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
@@ -20,22 +20,19 @@ const FlightRequest = () => {
     const fetchFlightRequest = async () => {
       try {
         const response = await getFlightTicketRequest();
-        const flightreqresp = response.data.sort((a,b)=> {
-          return new Date(b.created_at) - new Date(a.created_at)
-        })
-        console.log("response from api",flightreqresp)
-        
+        const flightreqresp = response.data.sort((a, b) => {
+          return new Date(b.created_at) - new Date(a.created_at);
+        });
+        console.log("response from api", flightreqresp);
+
         setFlightrequestsData(flightreqresp);
-       
       } catch (err) {
         console.error("Failed to fetch flight request data:", err);
       }
     };
-  
+
     fetchFlightRequest(); // Call the API
   }, []);
- 
- 
 
   // Handle status change function
   const handleStatusChange = (status) => {
@@ -120,20 +117,20 @@ const FlightRequest = () => {
     },
     {
       name: "Manager Approval",
-      selector: (row) => row.manager_approval ? "Approved" : "Not Approved",
+      selector: (row) => (row.manager_approval ? "Approved" : "Not Approved"),
       sortable: true,
     },
-    
+
     {
       name: "Booking Status",
       selector: (row) => row.booking_status,
       sortable: true,
     },
-   
+
     // {
     //   name: "Approval",
     //   selector: (row) =>
-       
+
     //       <div className="flex justify-center gap-2">
     //         <button className="text-green-400 font-medium hover:bg-green-400 hover:text-white transition-all duration-200 p-1 rounded-full">
     //           <TiTick size={20} />
@@ -147,86 +144,78 @@ const FlightRequest = () => {
     // },
   ];
 
- 
-
   return (
     <section className="flex">
       <Navbar />
       <div className="p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
-       <BookingRequestNav/>
-
-      <div className="w-full flex mx-3 flex-col overflow-hidden mb-4">
-        <div className="flex md:flex-row flex-col gap-5 justify-between mt-10 my-2">
-          <div className="sm:flex grid grid-cols-2 items-center justify-center  gap-4 border border-gray-300 rounded-md px-3 p-2 w-auto">
-            <div className="flex items-center gap-2">
-              <input
-                type="radio"
-                id="all"
-                name="status"
-                checked={selectedStatus === "all"}
-                onChange={() => handleStatusChange("all")}
-              />
-              <label htmlFor="all" className="text-sm">
-                All
-              </label>
+        <BookingRequestNav />
+        <div className="w-full flex mx-3 flex-col overflow-hidden mb-4">
+          <div className="flex md:flex-row flex-col gap-5 justify-between mt-10 my-2">
+            <div className="sm:flex grid grid-cols-2 items-center justify-center  gap-4 border border-gray-300 rounded-md px-3 p-2 w-auto">
+              <div className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  id="all"
+                  name="status"
+                  checked={selectedStatus === "all"}
+                  onChange={() => handleStatusChange("all")}
+                />
+                <label htmlFor="all" className="text-sm">
+                  All
+                </label>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  id="upcoming"
+                  name="status"
+                  checked={selectedStatus === "upcoming"}
+                  onChange={() => handleStatusChange("upcoming")}
+                />
+                <label htmlFor="upcoming" className="text-sm">
+                  Upcoming
+                </label>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  id="completed"
+                  name="status"
+                  checked={selectedStatus === "completed"}
+                  onChange={() => handleStatusChange("completed")}
+                />
+                <label htmlFor="completed" className="text-sm">
+                  Completed
+                </label>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  id="cancelled"
+                  name="status"
+                  checked={selectedStatus === "cancelled"}
+                  onChange={() => handleStatusChange("cancelled")}
+                />
+                <label htmlFor="cancelled" className="text-sm">
+                  Cancelled
+                </label>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="radio"
-                id="upcoming"
-                name="status"
-                checked={selectedStatus === "upcoming"}
-                onChange={() => handleStatusChange("upcoming")}
-              />
-              <label htmlFor="upcoming" className="text-sm">
-                Upcoming
-              </label>
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="radio"
-                id="completed"
-                name="status"
-                checked={selectedStatus === "completed"}
-                onChange={() => handleStatusChange("completed")}
-              />
-              <label htmlFor="completed" className="text-sm">
-                Completed
-              </label>
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="radio"
-                id="cancelled"
-                name="status"
-                checked={selectedStatus === "cancelled"}
-                onChange={() => handleStatusChange("cancelled")}
-              />
-              <label htmlFor="cancelled" className="text-sm">
-                Cancelled
-              </label>
-            </div>
+            <span className="mr-4">
+              <Link
+                to="/admin/add-flight-request"
+                style={{ background: themeColor }}
+                className="px-4 py-2  font-medium text-white rounded-md flex gap-2 items-center justify-center"
+              >
+                <IoAddCircleOutline size={20} />
+                Add
+              </Link>
+            </span>
           </div>
-          <span className="mr-4">
-            <Link
-              to="/admin/add-flight-request"
-              style={{ background: themeColor }}
-              className="px-4 py-2  font-medium text-white rounded-md flex gap-2 items-center justify-center"              
-            >
-              <IoAddCircleOutline size={20} />
-              Add
-            </Link>
-          </span>
-        </div>
-       
-          <Table
-           
-            columns={columns}
-            data={FlightrequestsData}
-          
-          />
-       
-      </div> </div>
+
+          <Table columns={columns} data={FlightrequestsData} />
+        </div>{" "}
+      </div>
     </section>
   );
 };

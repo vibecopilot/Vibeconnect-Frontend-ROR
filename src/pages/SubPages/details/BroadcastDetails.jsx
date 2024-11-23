@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { domainPrefix, getBroadcastDetails } from "../../../api";
 import { useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
+import { FaRegFileAlt } from "react-icons/fa";
 
 const BroadcastDetails = () => {
   const [broadcastDetails, setBroadcastDetails] = useState([]);

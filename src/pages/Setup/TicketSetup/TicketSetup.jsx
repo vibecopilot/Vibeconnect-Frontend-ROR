@@ -37,7 +37,7 @@ const TicketSetup = () => {
         >
           Escalation Setup
         </h2>
-        {/* <h2
+        <h2
           className={`p-1 ${
             page === "Cost Approval" &&
             "bg-white font-medium text-blue-500 shadow-custom-all-sides"
@@ -45,7 +45,7 @@ const TicketSetup = () => {
           onClick={() => setPage("Cost Approval")}
         >
           Cost Approval
-        </h2> */}
+        </h2>
 
 
       </div>

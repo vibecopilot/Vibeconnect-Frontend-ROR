@@ -2,12 +2,14 @@ import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { postEmployeeStatutoryInfo } from "../../api";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 const Statutory = ({ empId }) => {
   const themeColor = useSelector((state) => state.theme.color);
   const [formData, setFormData] = useState({
     pf: false,
     esic: false,
+    esicNumber:"",
     pt: false,
     lwf: false,
     IT: false,
@@ -30,11 +32,14 @@ const Statutory = ({ empId }) => {
     postData.append("gratuity_applicable", formData.gratuity);
     postData.append("nps_applicable", formData.nps);
     postData.append("tax_regime", formData.taxRegime);
+    postData.append("esic_number", formData.esicNumber);
     postData.append("decimal_rates_allowed", formData.decimalPoint);
     postData.append("employee", empId);
     try {
       await postEmployeeStatutoryInfo(postData);
-      navigate("/admin/hrms/employee-directory");
+      // navigate("/admin/hrms/employee-directory");
+      navigate(`/hrms/employee-directory-Personal/${empId}`);
+      toast.success("Employee onboarding completed successfully!");
     } catch (error) {
       console.log(error);
     }
@@ -47,7 +52,7 @@ const Statutory = ({ empId }) => {
           Statutory
         </h2>
         <div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4 gap-x-5">
             <div className="mb-4">
               <label className="block text-gray-700 mb-2 font-medium">
                 PF Applicable
@@ -73,7 +78,18 @@ const Statutory = ({ empId }) => {
             </div>
             <div className="mb-4">
               <label className="block text-gray-700 mb-2 font-medium">
-                ESIC Applicable
+                ESIC Applicable{" "}
+                <span className="text-sm text-gray-400">
+                  (if not,{" "}
+                  <a
+                    href="https://www.esic.in/EmployerPortal/ESICInsurancePortal/Portal_Loginnew.aspx"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    apply
+                  </a>{" "}
+                  )
+                </span>
               </label>
               <div className="flex items-center">
                 <input
@@ -94,6 +110,26 @@ const Statutory = ({ empId }) => {
                 <label>No</label>
               </div>
             </div>
+            {formData.esic && (
+              <div>
+                <label
+                  htmlFor=""
+                  className="block text-gray-700 mb-2 font-medium"
+                >
+                  ESIC Number
+                </label>
+                <input
+                  type="text"
+                  name="esicNumber"
+                  value={formData.esicNumber}
+                  onChange={handleChange}
+                  id=""
+                  className="border border-gray-400 rounded-md p-2 w-full"
+                  maxLength={17}
+                  placeholder="ESIC number"
+                />
+              </div>
+            )}
             <div className="mb-4">
               <label className="block text-gray-700 mb-2 font-medium">
                 PT Applicable
@@ -209,7 +245,37 @@ const Statutory = ({ empId }) => {
                 <label>No</label>
               </div>
             </div>
-
+            <div className="mb-4">
+              <label className="block text-gray-700 mb-2 font-medium">
+                Decimal Rates Allowed
+              </label>
+              <div className="flex items-center">
+                <input
+                  type="radio"
+                  id="Decimal Rates Allowed-yes"
+                  name="Decimal Rates Allowed"
+                  checked={formData.decimalPoint === true}
+                  onChange={() =>
+                    setFormData({ ...formData, decimalPoint: true })
+                  }
+                  className="mr-2"
+                />
+                <label htmlFor="Decimal Rates Allowed-yes" className="mr-4">
+                  Yes
+                </label>
+                <input
+                  type="radio"
+                  id="Decimal Rates Allowed-no"
+                  name="Decimal Rates Allowed"
+                  checked={formData.decimalPoint === false}
+                  onChange={() =>
+                    setFormData({ ...formData, decimalPoint: false })
+                  }
+                  className="mr-2"
+                />
+                <label htmlFor="Decimal Rates Allowed-no">No</label>
+              </div>
+            </div>
             <div className="mb-4">
               <label className="block text-gray-700 mb-2 font-medium">
                 Tax Regime
@@ -228,58 +294,8 @@ const Statutory = ({ empId }) => {
                 </select>
               </div>
             </div>
-            {/* <div className="mb-4">
-              <label className="block text-gray-700 mb-2">
-                Tax Regime Updated at
-              </label>
-              <input
-                type="text"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
-              />
-            </div>
-            <div className="mb-4">
-              <label className="block text-gray-700 mb-2">
-                Tax Regime Updated by
-              </label>
-              <input
-                type="text"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
-              />
-            </div> */}
           </div>
-
-          <div className="mb-4">
-            <label className="block text-gray-700 mb-2 font-medium">
-              Decimal Rates Allowed
-            </label>
-            <div className="flex items-center">
-              <input
-                type="radio"
-                id="Decimal Rates Allowed-yes"
-                name="Decimal Rates Allowed"
-                checked={formData.decimalPoint === true}
-                onChange={() =>
-                  setFormData({ ...formData, decimalPoint: true })
-                }
-                className="mr-2"
-              />
-              <label htmlFor="Decimal Rates Allowed-yes" className="mr-4">
-                Yes
-              </label>
-              <input
-                type="radio"
-                id="Decimal Rates Allowed-no"
-                name="Decimal Rates Allowed"
-                checked={formData.decimalPoint === false}
-                onChange={() =>
-                  setFormData({ ...formData, decimalPoint: false })
-                }
-                className="mr-2"
-              />
-              <label htmlFor="Decimal Rates Allowed-no">No</label>
-            </div>
-          </div>
-          <div className="flex justify-end">
+          <div className="flex justify-center my-2">
             <button
               onClick={handleAddStatutory}
               className="p-2 rounded-md text-white font-medium"

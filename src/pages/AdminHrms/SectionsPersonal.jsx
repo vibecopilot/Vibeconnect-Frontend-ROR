@@ -3,9 +3,9 @@ import EmployeeSections from "./EmployeeSections";
 import EditEmployeeDirectory from "./EditEmployeeDirectory";
 import Table from "../../components/table/Table";
 import { BiEdit } from "react-icons/bi";
-import Collapsible from "react-collapsible";
-import CustomTrigger from "../../containers/CustomTrigger";
+
 import Select from "react-select";
+
 import {
   editEmployeeAddressDetails,
   editEmployeeDetails,
@@ -14,15 +14,18 @@ import {
   getEmployeeDetails,
   getEmployeeFamilyDetails,
   getEmployeePaymentInfo,
+  getHrmsUserRole,
+  postEmployeeAddress,
+  postEmployeeFamily,
 } from "../../api";
 import { useParams } from "react-router-dom";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import toast from "react-hot-toast";
 import Accordion from "./Components/Accordion";
 import { RiContactsBook2Line } from "react-icons/ri";
-import { MdFamilyRestroom, MdOutlinePayment } from "react-icons/md";
+import { MdClose, MdFamilyRestroom, MdOutlinePayment } from "react-icons/md";
 import { IoHomeOutline } from "react-icons/io5";
-import { FaHome } from "react-icons/fa";
+import { FaCheck, FaHome } from "react-icons/fa";
 
 const SectionsPersonal = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -36,6 +39,9 @@ const SectionsPersonal = () => {
   };
   const openModal = () => setModalIsOpen(true);
   const closeModal = () => setModalIsOpen(false);
+  const [paymentData, setPaymentData] = useState({
+    paymentMode: "Cash",
+  });
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -92,6 +98,8 @@ const SectionsPersonal = () => {
     bloodGroup: "",
     emergencyContactName: "",
     emergencyContactNo: "",
+    userType:"",
+    status:false
   });
   const [familyData, setFamilyData] = useState({
     fatherName: "",
@@ -112,29 +120,32 @@ const SectionsPersonal = () => {
   const fetchEmployeeDetails = async () => {
     try {
       const res = await getEmployeeDetails(id);
-      const rawAadharValue = res.aadhar_number.replace(/\D/g, "");
-      console.log(rawAadharValue)
+      const rawAadharValue = res?.aadhar_number?.replace(/\D/g, "");
+      console.log(rawAadharValue);
       setFormData({
         ...formData,
-        firstName: res.first_name,
-        lastName: res.last_name,
-        email: res.email_id,
-        mobile: res.mobile,
-        gender: res.gender,
-        dob: res.date_of_birth,
-        pan: res.pan,
-        bloodGroup: res.blood_group,
+        firstName: res?.first_name,
+        lastName: res?.last_name,
+        email: res?.email_id,
+        mobile: res?.mobile,
+        gender: res?.gender,
+        dob: res?.date_of_birth,
+        pan: res?.pan,
+        bloodGroup: res?.blood_group,
+        status: res?.status,
         // aadhar: rawAadharValue.match(/.{1,4}/g)?.join("-") || "",
-        aadhar: rawAadharValue.match(/.{1,4}/g)?.join("-") || "",
-        maritalStatus: res.marital_status,
-        emergencyContactName: res.emergency_contact_name,
-        emergencyContactNo: res.emergency_contact_no,
+        aadhar: rawAadharValue?.match(/.{1,4}/g)?.join("-") || "",
+        maritalStatus: res?.marital_status,
+        emergencyContactName: res?.emergency_contact_name,
+        emergencyContactNo: res?.emergency_contact_no,
+        userType: res?.user_type
       });
+      
     } catch (error) {
       console.log(error);
     }
   };
-  console.log(formData)
+  
   const fetchEmployeeFamilyDetails = async () => {
     try {
       const res = await getEmployeeFamilyDetails(id);
@@ -142,10 +153,10 @@ const SectionsPersonal = () => {
       const familyData = res[0];
 
       const familyObject = {
-        fatherName: familyData.father_name || "",
-        motherName: familyData.mother_name || "",
-        spouseName: familyData.spouse_name || "",
-        familyId: familyData.id,
+        fatherName: familyData?.father_name || "",
+        motherName: familyData?.mother_name || "",
+        spouseName: familyData?.spouse_name || "",
+        familyId: familyData?.id,
       };
 
       setFamilyData(familyObject);
@@ -159,13 +170,13 @@ const SectionsPersonal = () => {
       const res = await getEmployeeAddressDetails(id);
       const address = res[0];
       const addressObj = {
-        address1: address.address_line_1 || "",
-        address2: address.address_line_2 || "",
-        country: address.country || "",
-        addressId: address.id,
-        city: address.city,
-        state: address.state_province,
-        code: address.zip_code,
+        address1: address?.address_line_1 || "",
+        address2: address?.address_line_2 || "",
+        country: address?.country || "",
+        addressId: address?.id,
+        city: address?.city,
+        state: address?.state_province,
+        code: address?.zip_code,
       };
 
       setAddressData(addressObj);
@@ -188,6 +199,7 @@ const SectionsPersonal = () => {
     fetchEmployeeFamilyDetails();
     fetchEmployeeAddressDetails();
     fetchEmployeePaymentInfo();
+    fetchUserRoles()
   }, []);
 
   // const handleChange = (e) => {
@@ -232,6 +244,8 @@ const SectionsPersonal = () => {
     editData.append("marital_status", formData.maritalStatus);
     editData.append("emergency_contact_name", formData.emergencyContactName);
     editData.append("emergency_contact_no", formData.emergencyContactNo);
+    editData.append("user_type", formData.userType);
+    editData.append("status", formData.status);
     editData.append("organization", hrmsOrgId);
     try {
       const res = await editEmployeeDetails(id, editData);
@@ -255,11 +269,17 @@ const SectionsPersonal = () => {
     postData.append("spouse_name", familyData.spouseName);
     postData.append("employee", id);
     try {
-      const res = await editEmployeeFamilyDetails(
-        familyData.familyId,
-        postData
-      );
-      toast.success("Family details updated successfully");
+      if (familyData.familyId) {
+        const res = await editEmployeeFamilyDetails(
+          familyData.familyId,
+          postData
+        );
+        toast.success("Family details updated successfully");
+      } else {
+        const res = await postEmployeeFamily(postData);
+        toast.success("Family details updated successfully");
+      }
+      setIsFamEditing(false);
     } catch (error) {
       console.log(error);
       toast.error("Something went wrong please try again");
@@ -271,6 +291,30 @@ const SectionsPersonal = () => {
   };
 
   const handleEditAddress = async () => {
+    if (!addressData.address1) {
+      toast.error("Address Line 1 is required");
+      return;
+    }
+    if (!addressData.address2) {
+      toast.error("Address Line 2 is required");
+      return;
+    }
+    if (!addressData.country) {
+      toast.error("Country is required");
+      return;
+    }
+    if (!addressData.state) {
+      toast.error("State/Province is required");
+      return;
+    }
+    if (!addressData.city) {
+      toast.error("City is required");
+      return;
+    }
+    if (!addressData.code) {
+      toast.error("ZIP Code is required");
+      return;
+    }
     const postAddress = new FormData();
     postAddress.append("address_line_1", addressData.address1);
     postAddress.append("address_line_2", addressData.address2);
@@ -280,11 +324,17 @@ const SectionsPersonal = () => {
     postAddress.append("zip_code", addressData.code);
     postAddress.append("employee", id);
     try {
-      const res = await editEmployeeAddressDetails(
-        addressData.addressId,
-        postAddress
-      );
-      toast.success("Address details updated successfully");
+      if (addressData.addressId) {
+        const res = await editEmployeeAddressDetails(
+          addressData.addressId,
+          postAddress
+        );
+        toast.success("Address details updated successfully");
+      } else {
+        const res = await postEmployeeAddress(postAddress);
+        toast.success("Address details updated successfully");
+      }
+      setIsAddressEditing(false);
     } catch (error) {
       console.log(error);
       toast.error("Something went wrong please try again");
@@ -296,6 +346,15 @@ const SectionsPersonal = () => {
     { value: "expense", label: "Expense" },
     { value: "offcycle", label: "Off-Cycle" },
   ];
+  const [roles, setRoles] = useState([]);
+  const fetchUserRoles = async () => {
+    try {
+      const res = await getHrmsUserRole(hrmsOrgId);
+      setRoles(res);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <div className="flex flex-col ml-20">
@@ -304,7 +363,7 @@ const SectionsPersonal = () => {
         <div className="">
           <EmployeeSections empId={id} />
         </div>
-        <div className="w-full p-2 bg-white rounded-lg ">
+        <div className="w-full p-2 bg-white rounded-lg  mb-5">
           <Accordion
             icon={RiContactsBook2Line}
             title={"Basic Information"}
@@ -315,26 +374,26 @@ const SectionsPersonal = () => {
                     <>
                       <button
                         type="button"
-                        className="border-2 rounded-full p-1 transition-all duration-150 hover:bg-opacity-30 border-green-400  px-4 text-green-400 mb-2 hover:bg-green-300 font-semibold  "
+                        className="border-2 rounded-full p-1 transition-all duration-150 hover:bg-opacity-30 border-green-400  px-4 text-green-400 mb-2 hover:bg-green-300 font-semibold flex items-center gap-2 "
                         onClick={handleEditEmployeeBasicInfo}
                       >
-                        Save
+                        <FaCheck /> Save
                       </button>
                       <button
                         type="button"
-                        className="border-2 rounded-full p-1 border-red-400  px-4 text-red-400 mb-2 hover:bg-opacity-30 hover:bg-red-300 font-semibold  "
+                        className="border-2 rounded-full p-1 border-red-400  px-4 text-red-400 mb-2 hover:bg-opacity-30 hover:bg-red-300 font-semibold flex items-center gap-2 "
                         onClick={() => setIsEditing(false)}
                       >
-                        Cancel
+                        <MdClose /> Cancel
                       </button>
                     </>
                   ) : (
                     <button
                       type="button"
-                      className="bg-black text-white mb-2 hover:bg-gray-700 font-semibold py-2 px-4 rounded"
+                      className="bg-blue-500 text-white mb-2 hover:bg-gray-700 font-semibold py-2 px-4 rounded-full flex items-center gap-2 "
                       onClick={() => setIsEditing(true)}
                     >
-                      Edit
+                      <BiEdit /> Edit
                     </button>
                   )}
                 </div>
@@ -489,6 +548,25 @@ const SectionsPersonal = () => {
                       <option value="married">Married</option>
                     </select>
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Role
+                    </label>
+                    <select
+                      className={`mt-1 p-2 w-full border rounded-md ${
+                        !isEditing ? "bg-gray-200" : ""
+                      }`}
+                      disabled={!isEditing}
+                      onChange={handleChange}
+                      value={formData.userType}
+                      name="userType"
+                    >
+                     <option value="">Select Role</option>
+                     {roles.map((role)=>(
+                      <option value={role.id} key={role.id}>{role.label}</option>
+                     ))}
+                    </select>
+                  </div>
                 </div>
               </>
             }
@@ -505,25 +583,25 @@ const SectionsPersonal = () => {
                       <button
                         type="button"
                         onClick={handleEditFamily}
-                        className="border-2 rounded-full p-1 transition-all duration-150 hover:bg-opacity-30 border-green-400  px-4 text-green-400 mb-2 hover:bg-green-300 font-semibold  "
+                        className="border-2 rounded-full p-1 transition-all duration-150 hover:bg-opacity-30 border-green-400  px-4 text-green-400 mb-2 hover:bg-green-300 font-semibold flex items-center gap-2 "
                       >
-                        Save
+                        <FaCheck /> Save
                       </button>
                       <button
                         type="button"
-                        className="border-2 rounded-full p-1 border-red-400  px-4 text-red-400 mb-2 hover:bg-opacity-30 hover:bg-red-300 font-semibold  "
+                        className="border-2 rounded-full p-1 border-red-400  px-4 text-red-400 mb-2 hover:bg-opacity-30 hover:bg-red-300 font-semibold flex items-center gap-2 "
                         onClick={() => setIsFamEditing(false)}
                       >
-                        Cancel
+                        <MdClose /> Cancel
                       </button>
                     </>
                   ) : (
                     <button
                       type="button"
-                      className="bg-black text-white mb-2 hover:bg-gray-700 font-semibold py-2 px-4 rounded"
+                      className="bg-blue-500 text-white mb-2 hover:bg-gray-700 font-semibold py-2 px-4 rounded-full flex items-center gap-2"
                       onClick={() => setIsFamEditing(true)}
                     >
-                      Edit
+                      <BiEdit /> Edit
                     </button>
                   )}
                 </div>
@@ -607,10 +685,10 @@ const SectionsPersonal = () => {
                   ) : (
                     <button
                       type="button"
-                      className="bg-black text-white mb-2 hover:bg-gray-700 font-semibold py-2 px-4 rounded"
+                      className="bg-blue-500 text-white mb-2 hover:bg-gray-700 font-semibold py-2 px-4 rounded-full flex items-center gap-2"
                       onClick={() => setIsAddressEditing(true)}
                     >
-                      Edit
+                      <BiEdit /> Edit
                     </button>
                   )}
                 </div>
@@ -662,6 +740,7 @@ const SectionsPersonal = () => {
                       }`}
                       placeholder="City"
                       readOnly={!isAddressEditing}
+                      onChange={handleAddressChange}
                     />
                   </div>
                   <div>
@@ -750,25 +829,81 @@ const SectionsPersonal = () => {
                   </div>
                   <div className="mt-2">
                     <label className="block text-sm font-medium text-gray-700">
-                      Payment Mode *
+                      Payment Mode <span className="text-red-500">*</span>
                     </label>
-                    <select className="mt-1 p-2 w-full border rounded-md">
+                    <select
+                      className="mt-1 p-2 w-full border rounded-md"
+                      value={paymentData.paymentMode}
+                      onChange={(e) =>
+                        setPaymentData({
+                          ...paymentData,
+                          paymentMode: e.target.value,
+                        })
+                      }
+                    >
                       <option value="Cash">Cash</option>
                       <option value="Cheque">Cheque</option>
                       <option value="Bank Transfer">Bank Transfer</option>
                     </select>
                   </div>
-                  <div className="flex mt-2 justify-end">
+                  {paymentData.paymentMode === "Bank Transfer" && (
+                    <div className="flex flex-col gap-3">
+                      <div className="flex flex-col gap-2 mt-2">
+                        <label className="block text-sm font-medium text-gray-700">
+                          Bank Name <span className="text-red-400">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          name="bankName"
+                          id=""
+                          className="border border-gray-300  p-2  rounded-md"
+                          placeholder="Enter bank name"
+                          // value={formData.bankName}
+                          // onChange={handleChange}
+                        />
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <label className="block text-sm font-medium text-gray-700">
+                          Bank Account Number{" "}
+                          <span className="text-red-300">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          name="accountNumber"
+                          id=""
+                          className="border border-gray-400  p-2  rounded-md"
+                          placeholder="Enter bank account no."
+                          // value={formData.accountNumber}
+                          // onChange={handleChange}
+                        />
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <label className="block text-sm font-medium text-gray-700">
+                          Bank IFSC code <span className="text-red-400">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          name="ifsc"
+                          id=""
+                          className="border border-gray-300  p-2  rounded-md"
+                          placeholder="Enter IFSC"
+                          // value={formData.ifsc}
+                          // onChange={handleChange}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  <div className="flex mt-2 justify-end gap-2">
                     <button
                       type="button"
                       onClick={closeModal}
-                      className="border-2 font-semibold hover:bg-black hover:text-white duration-150 transition-all border-black p-2 rounded-md text-black mr-4"
+                      className="border-2 border-red-500 text-red-500 px-4 p-1 rounded-full"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      className="bg-blue-500 text-white font-semibold p-2 rounded-md"
+                      className="bg-green-500 text-white p-1 px-5 rounded-full"
                     >
                       Save
                     </button>

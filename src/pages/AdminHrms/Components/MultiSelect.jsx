@@ -69,7 +69,7 @@ const MultiSelect = ({
           {!isDropdownVisible ? <FaCaretDown /> : <FaCaretUp />}
         </button>
         {isDropdownVisible && (
-          <div className="absolute z-10 w-full border rounded shadow p-2 mt-2 bg-white max-h-60 overflow-y-auto">
+          <div className="absolute z-10 w-full border rounded shadow p-2 mt-2 bg-white max-h-40 overflow-y-auto">
             <input
               type="text"
               name=""

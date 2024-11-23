@@ -5,6 +5,8 @@ export const columnsData = [
   "Unit",
   "Asset Name",
   "OEM Name",
+  "Asset Number",
+  "Equipment Id",
   "Serial Number",
   "Model Number",
   "Group",

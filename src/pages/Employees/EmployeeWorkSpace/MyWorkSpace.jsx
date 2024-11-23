@@ -13,10 +13,9 @@ import AddRegularizationReq from "./AddRegularizationReq";
 const MyWorkSpace = () => {
   const [dateRange, setDateRange] = useState([null, null]);
   const [startDate, endDate] = dateRange;
-  const [addRegularization, setAddRegularization] = useState(false)
+  const [addRegularization, setAddRegularization] = useState(false);
 
   const column = [
-  
     {
       name: "Date",
       selector: (row) => row.date,
@@ -80,7 +79,12 @@ const MyWorkSpace = () => {
           <Link to={``} title="View Details">
             <BsEye size={15} />
           </Link>
-          <button to={``} className="border p-1 px-2 rounded border-gray-300" title="Add Regularization" onClick={()=>setAddRegularization(true)}>
+          <button
+            to={``}
+            className="border p-1 px-2 rounded border-gray-300"
+            title="Add Regularization"
+            onClick={() => setAddRegularization(true)}
+          >
             <BiPlus size={15} />
           </button>
         </div>
@@ -148,7 +152,7 @@ const MyWorkSpace = () => {
   const absentCount = filteredData.filter(
     (item) => item.status === "Absent"
   ).length;
-  const themeColor = useSelector((state)=> state.theme.color)
+  const themeColor = useSelector((state) => state.theme.color);
   return (
     <section className="flex">
       <Navbar />
@@ -169,6 +173,7 @@ const MyWorkSpace = () => {
               <p className="">{absentCount}</p>
             </div>
           </div>
+
           {/* <DatePicker
             selectsRange={true}
             startDate={startDate}
@@ -181,13 +186,28 @@ const MyWorkSpace = () => {
             className="p-2 border-gray-300 rounded-md w-64 outline-none border"
           /> */}
           <div className="flex gap-2 items-center">
-            <input type="date" name="" id="" className="border border-gray-300 px-2 p-1 rounded-md" />
-            <button className=" p-2 text-white rounded-md font-medium" style={{background: themeColor}}>Download</button>
+            <button className="shadow-custom-all-sides rounded-md p-2 px-4 font-semibold">
+              Mark Attendance
+            </button>
+            <input
+              type="date"
+              name=""
+              id=""
+              className="border border-gray-300 px-2 p-1 rounded-md"
+            />
+            <button
+              className=" p-2 text-white rounded-md font-medium"
+              style={{ background: themeColor }}
+            >
+              Download
+            </button>
           </div>
         </div>
         <Table columns={column} data={filteredData} />
       </div>
-      {addRegularization && <AddRegularizationReq onclose={()=>setAddRegularization(false)} />}
+      {addRegularization && (
+        <AddRegularizationReq onclose={() => setAddRegularization(false)} />
+      )}
     </section>
   );
 };
