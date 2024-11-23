@@ -5,6 +5,7 @@ import Table from '../../components/table/Table';
 import { BiEdit } from 'react-icons/bi'
 import { Link } from 'react-router-dom';
 import { getMasterChecklist } from '../../api';
+import { BsEye } from 'react-icons/bs';
 
 function MasterCheckListSetup() {
   const [masterchecklists, setmasterChecklists] = useState([]);
@@ -14,8 +15,8 @@ function MasterCheckListSetup() {
 
       cell: (row) => (
         <div className="flex items-center gap-4">
-          <Link to={``} >
-            <BiEdit size={15} />
+          <Link to={`/edit-master-checklist-setup/${row.id}`} >
+            <BsEye size={15} />
           </Link>
         </div>
       ),
@@ -23,7 +24,7 @@ function MasterCheckListSetup() {
     { name: "Id", selector: (row) => row.id, sortable: true },
     { name: "Activity Name", selector: (row) => row.name, sortable: true },
     { name: "Meter Category", selector: (row) => row.meterCategory, sortable: true },
-    { name: "Number Of Questions", selector: (row) => row.questions.length, sortable: true },
+    // { name: "Number Of Questions", selector: (row) => row.questions.length, sortable: true },
     { name: "Scheduled For", selector: (row) => row.scheduledFor, sortable: true },
 ];
 useEffect(() => {

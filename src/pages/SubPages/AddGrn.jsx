@@ -4,7 +4,9 @@ import { getMasters, getVendors, postGRN } from '../../api'
 import { useSelector } from "react-redux";
 import Navbar from '../../components/Navbar';
 import { FaTrash } from "react-icons/fa";
-import toast from "react-hot-toast";
+import toast from "react-hot-toast"; 
+import { useNavigate } from "react-router-dom";
+
 
 const AddGrn = () => {
   const themeColor = useSelector((state) => state.theme.color);
@@ -94,6 +96,7 @@ const AddGrn = () => {
         const updatedInventories = inventories.filter((_, index) => index !== invIndex);
         setInventories(updatedInventories);
       };
+      const navigate = useNavigate();
       const handleSubmit = async (e) => {
         e.preventDefault();
         const formDataSend = new FormData();
@@ -130,7 +133,7 @@ const AddGrn = () => {
         console.log("GRN submitted successfully:", response.data);
        
         toast.success("GRN submitted successfully")
-    
+        navigate(`/assets/stock-items`);
         // Reset form after successful submission
         setFormData({
           loi_detail_id: "",
@@ -202,6 +205,11 @@ const AddGrn = () => {
   
       fetchInventory();
     }, []);
+    const calculateTotalAmount = () => {
+      return inventories.reduce((acc, curr) => {
+        return acc + (parseFloat(curr.total_amount) || 0);
+      }, 0).toFixed(2);
+    };
   return (
     <section>
       
@@ -443,7 +451,7 @@ const AddGrn = () => {
                         <input
                           type="text"
                           name="expected_quantity"
-                          placeholder="4"
+                          placeholder="Expected Quantity"
                           value={inventory.expected_quantity}
                           onChange={(e) => handleInventoryChange(invIndex, e)}
                           className="border p-1 px-4 border-gray-500 rounded-md"
@@ -689,8 +697,8 @@ const AddGrn = () => {
         </div>
         <div>
             <div className='my-3 mx-5 text-end'>
-                <button className="bg-black text-white p-2 text-small rounded-md ">
-                    Total Amount:- 0.00
+                <button className="bg-black text-white p-2 text-small rounded-md " style={{ background: themeColor }}>
+                Total Amount: ₹ {calculateTotalAmount()}
                 </button>
             </div>
             <div className='my-10 mx-5 text-center'>

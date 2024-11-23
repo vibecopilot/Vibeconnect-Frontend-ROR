@@ -14,7 +14,7 @@ import "react-js-cron/dist/styles.css";
 import { FaTrash } from "react-icons/fa";
 import { useParams } from "react-router-dom";
 
-const EditChecklist = () => {
+const EditPPMChecklist = () => {
   const { id } = useParams();
   const [isEditing, setIsEditing] = useState(false);
   const [update, setUpdate] = useState(false);
@@ -271,7 +271,7 @@ const EditChecklist = () => {
     
 
     fetchServicesChecklistDetails();
-  }, [id,update]);
+  }, [id]);
 
   const siteId = getItemInLocalStorage("SITEID");
   const userId = getItemInLocalStorage("UserId");
@@ -357,11 +357,10 @@ const EditChecklist = () => {
     try {
       const response = await editChecklist(formData,id);
       console.log(response);
-      toast.success("Routine Checklist Updated");
+      toast.success("PPM Checklist Updated ");
       setUpdate(true);
       setIsEditing(!isEditing);
       toast.dismiss()
-      
     } catch (error) {
       console.error("Error:", error);
       toast.error("Failed to update checklist");
@@ -472,7 +471,7 @@ const EditChecklist = () => {
       <div className="m-2">
         <h2 style={{ background: themeColor }} className="text-center text-xl font-bold p-2  rounded-full text-white">
          
-          {isEditing ? " Edit  Checklist" : "Routine Checklist Details"}
+          {isEditing ? " Edit PPM Checklist" : "PPM Checklist Details"}
         </h2>
         <div className="md:mx-20 my-5 mb-10 sm:border border-gray-400 p-5 px-10 rounded-lg sm:shadow-xl">
         <div className="flex justify-end">
@@ -1194,4 +1193,4 @@ const EditChecklist = () => {
   );
 };
 
-export default EditChecklist;
+export default EditPPMChecklist;

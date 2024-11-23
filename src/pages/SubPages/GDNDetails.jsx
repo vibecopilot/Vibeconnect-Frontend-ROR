@@ -1,11 +1,26 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { IoMdAdd } from "react-icons/io";
 import { Link } from "react-router-dom";
 import Table from "../../components/table/Table";
 import { BsEye } from "react-icons/bs";
 import { useSelector } from "react-redux";
+import { getGDN } from "../../api";
+
 
 const GdnDetails = () => {
+  const[gdn,setgdn]=useState([]);
+  useEffect(() => {
+    const fetchSiteOwners = async () => {
+      try {
+        const resp = await getGDN();
+        
+        setgdn(resp.data);
+      } catch (error) {
+        console.log("Error fetching site owners:", error);
+      }
+    };
+    fetchSiteOwners();
+  }, []);
   const column = [
     {
       name: "view",
@@ -18,15 +33,15 @@ const GdnDetails = () => {
         </div>
       ),
     },
-    { name: "Id", selector: (row) => row.Id, sortable: true },
-    { name: "GDN Date", selector: (row) => row.GDNDate, sortable: true },
+    { name: "Id", selector: (row) => row.id, sortable: true },
+    { name: "GDN Date", selector: (row) => row.gdn_date, sortable: true },
     {
       name: "Inventory Count",
-      selector: (row) => row.InventoryCount,
+      selector: (row) => (row.gdn_inventory_details.length),
       sortable: true,
     },
-    { name: "Status", selector: (row) => row.Status, sortable: true },
-    { name: "Created On", selector: (row) => row.CreatedOn, sortable: true },
+    { name: "Status", selector: (row) => (row.status == true)?"Active":"InActive", sortable: true },
+    { name: "Created On", selector: (row) => new Date(row.created_at).toLocaleDateString(), sortable: true },
     { name: "Created By", selector: (row) => row.CreatedBy, sortable: true },
     {
       name: "Handed Over To",
@@ -105,7 +120,7 @@ const GdnDetails = () => {
           </div>
         </div>
         <div className="">
-          <Table columns={column} data={data} isPagination={true} />
+          <Table columns={column} data={gdn} isPagination={true} />
         </div>
       </div>
     </section>

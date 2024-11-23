@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { BiPlus } from "react-icons/bi";
 import { IoClose } from "react-icons/io5";
 import { getItemInLocalStorage } from "../../utils/localStorage";
-import { getChecklistDetails, getChecklistGroupReading, getGenericGroupAssetChecklist, getGenericSubGroupAssetChecklist, getHostList, getMasterChecklist, getSiteAsset, getVendors, postChecklist } from "../../api";
+import { getAssignedTo, getChecklistDetails, getChecklistGroupReading, getHostList, getMasterChecklist, getSiteAsset, getVendors, postChecklist } from "../../api";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import toast from "react-hot-toast";
@@ -13,6 +13,10 @@ import "react-js-cron/dist/styles.css";
 import { FaTrash } from "react-icons/fa";
 
 const AddPPMActivity = () => {
+  const categories = getItemInLocalStorage("categories");
+  const [assignedUser, setAssignedUser] = useState([]);
+  const [catid,setcatid] =useState("");
+  const [assignid,setassignid] =useState("");
   const today = new Date().toISOString().split("T")[0];
   const toDay = new Date();
   const year = toDay.getFullYear();
@@ -32,10 +36,37 @@ const AddPPMActivity = () => {
   const [endDate, setEndDate] = useState(formattedDate);
   const [lockOverdueTask, setLockOverdueTask] = useState("");
   const [suppliers, setSuppliers] = useState([]);
+  const [ticketType, setTicketType] = useState('Question');
 
+  // Handle radio button change
+  const handleTicketTypeChange = (event) => {
+    setTicketType(event.target.value);
+  };
   const handleLockOverdueTaskChange = (e) => {
     setLockOverdueTask(e.target.value);
   };
+  useEffect(() => {
+   
+
+    const fetchAssignedTo = async () => {
+      try {
+        const response = await getAssignedTo();
+        const supervisors = response.data.map((host) => ({
+          value: host.id, 
+          label: host.firstname +" "+ host.lastname, 
+        }));
+        setAssignedUser(response.data);
+        setOptionssupervisior(supervisors); 
+        console.log("users",response.data)
+      } catch (error) {
+        console.error("Error fetching assigned users:", error);
+      }
+    };
+
+   
+    fetchAssignedTo();
+    
+  }, []);
   useEffect(() => {
     const fetchSiteOwners = async () => {
       try {
@@ -137,26 +168,40 @@ const AddPPMActivity = () => {
   };
 
   const handleQuestionChange = (sectionIndex, questionIndex, field, value, optionIndex = null) => {
-    const updatedSections = [...sections];
-    // updatedSections[sectionIndex].questions[questionIndex][field] = value;
+    const updatedSections = [...sections]; // Shallow copy of sections
+    const updatedQuestions = [...updatedSections[sectionIndex].questions]; // Shallow copy of questions in that section
+  
+    // Deep copy the specific question being modified
+    const updatedQuestion = { ...updatedQuestions[questionIndex] };
+  
     if (field === "name" || field === "type") {
-      updatedSections[sectionIndex].questions[questionIndex][field] = value;
-        } else if (field === "option") {
-          updatedSections[sectionIndex].questions[questionIndex].options[optionIndex] = value;
-        } else if (field === "value_type") {
-          updatedSections[sectionIndex].questions[questionIndex].value_types[optionIndex] = value;
-        } else if (field === "question_mandatory" || field === "reading" || field === "showHelpText"|| field === "rating") {
-          updatedSections[sectionIndex].questions[questionIndex][field] = value;
-        } else if (field === "help_text") {
-          updatedSections[sectionIndex].questions[questionIndex].help_text = value;
-        }else if (field === "image_for_question") {
-          updatedSections[sectionIndex].questions[questionIndex].image_for_question = value;
-        }
-        else if (field === "weightage") {
-          updatedSections[sectionIndex].questions[questionIndex].weightage = value;
-        }
+      updatedQuestion[field] = value;
+    } else if (field === "option") {
+      const updatedOptions = [...updatedQuestion.options];
+      updatedOptions[optionIndex] = value;
+      updatedQuestion.options = updatedOptions;
+    } else if (field === "value_type") {
+      const updatedValueTypes = [...updatedQuestion.value_types];
+      updatedValueTypes[optionIndex] = value;
+      updatedQuestion.value_types = updatedValueTypes;
+    } else if (field === "question_mandatory" || field === "reading" || field === "showHelpText" || field === "rating") {
+      updatedQuestion[field] = value;
+    } else if (field === "help_text") {
+      updatedQuestion.help_text = value;
+    } else if (field === "image_for_question") {
+      updatedQuestion.image_for_question = [...value]; // Ensure it's a new array
+    } else if (field === "weightage") {
+      updatedQuestion.weightage = value;
+    }
+  
+    // Update the questions array with the modified question
+    updatedQuestions[questionIndex] = updatedQuestion;
+    updatedSections[sectionIndex].questions = updatedQuestions;
+  
+    // Update the sections state
     setSections(updatedSections);
   };
+  
   
   const [cronExpression, setCronExpression] = useState("0 0 * * *");
 
@@ -197,8 +242,12 @@ const AddPPMActivity = () => {
     formData.append("checklist[grace_period_unit]", convertedExtensionMinutes);
     formData.append("checklist[supplier_id]", supplierid);
     formData.append("checklist[lock_overdue]", lockOverdueTask === "true");
-    formData.append("checklist[ctype]", "ppm");
-  
+    formData.append("checklist[ctype]", "routine");
+    formData.append("checklist[ticket_enabled]",createTicket);
+    formData.append("checklist[ticket_level_type]",ticketType);
+    formData.append("checklist[category_id]",catid);
+    formData.append("checklist[assigned_to]",assignid);
+
     // Add supervisor IDs
     selectedOptionssupervisior.forEach((option) => {
       formData.append(`checklist[supervisior_id][]`, option.value);
@@ -268,7 +317,7 @@ const AddPPMActivity = () => {
         }));
         console.log(usersResp)
         setHosts(usersResp.data.hosts); 
-        setOptionssupervisior(supervisors); 
+        // setOptionssupervisior(supervisors); 
         console.log(usersResp);
       } catch (error) {
         console.log(error);
@@ -446,46 +495,64 @@ const AddPPMActivity = () => {
             {/* Radio Buttons */}
             <div className="flex  gap-4 ">
               
-              <div className="flex items-center mt-2">
-                <input
-                  type="radio"
-                  id="checklistLevel"
-                  name="ticketType"
-                  value="checklistLevel"
-                  className="mr-2"
-                />
-                <label htmlFor="checklistLevel">Checklist Level</label>
-              </div>
-              <div className="flex items-center mt-2">
-                <input
-                  type="radio"
-                  id="questionLevel"
-                  name="ticketType"
-                  value="questionLevel"
-                  className="mr-2"
-                />
-                <label htmlFor="questionLevel">Question Level</label>
-              </div>
+            <div className="flex items-center mt-2">
+        <input
+          type="radio"
+          id="checklist"
+          name="ticketType"
+          value="Checklist"
+          checked={ticketType === 'Checklist'}
+          onChange={handleTicketTypeChange}
+          className="mr-2"
+        />
+        <label htmlFor="checklist">Checklist Level</label>
+      </div>
+      <div className="flex items-center mt-2">
+        <input
+          type="radio"
+          id="question"
+          name="ticketType"
+          value="Question"
+          checked={ticketType === 'Question'}
+          onChange={handleTicketTypeChange}
+          className="mr-2"
+        />
+        <label htmlFor="question">Question Level</label>
+      </div>
             </div>
 
             {/* Select Fields */}
             <div className="flex flex-col gap-1">
               <label className="font-semibold">Select Assigned To</label>
-              <select className="border p-1 px-4 border-gray-500 rounded-md">
+              <select 
+              value={assignid}
+              onChange={(e) => setassignid(e.target.value)}
+              className="border p-1 px-4 border-gray-500 rounded-md">
                 <option value="">Select Assigned To</option>
-                <option value="user1">User 1</option>
-                <option value="user2">User 2</option>
-                {/* Add more options as needed */}
+                {assignedUser?.map((assign) => (
+                    <option key={assign.id} value={assign.id}>
+                      {assign.firstname} {assign.lastname}
+                    </option>
+                  ))}
               </select>
             </div>
 
             <div className="flex flex-col gap-1">
               <label className="font-semibold">Select Category</label>
-              <select className="border p-1 px-4 border-gray-500 rounded-md">
+              <select 
+              value={catid}
+              onChange={(e) => setcatid(e.target.value)}
+              className="border p-1 px-4 border-gray-500 rounded-md">
                 <option value="">Select Category</option>
-                <option value="category1">Category 1</option>
-                <option value="category2">Category 2</option>
-                {/* Add more categories as needed */}
+                {categories?.map((category) => (
+                  <option
+                    onClick={() => console.log("checking-category")}
+                    value={category.id}
+                    key={category.id}
+                  >
+                    {category.name}
+                  </option>
+                ))}
               </select>
             </div>
           </div>

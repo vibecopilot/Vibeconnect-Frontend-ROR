@@ -1,14 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { getRoutineTaskDetails } from "../../../api";
 import { useParams } from "react-router-dom";
+import toast from "react-hot-toast";
 
 const AssetRoutineDetails = () => {
   const { assetId, activityId } = useParams();
   const [taskDetails, setTaskDetails] = useState([]);
 
   useEffect(() => {
+    toast.loading("Please wait");
     const fetchTaskDetails = async () => {
       const detailsResp = await getRoutineTaskDetails(assetId, activityId);
+      toast.dismiss()
+      toast.success("Schedule Details fetched successfully");
       console.log(detailsResp.data);
       setTaskDetails(detailsResp.data);
     };

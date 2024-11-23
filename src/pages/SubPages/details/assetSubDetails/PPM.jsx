@@ -39,7 +39,10 @@ const PPM = () => {
   };
 
   const fetchPPMDetails = async () => {
+    // toast.loading("Please wait");
     const PPMDetailsResp = await getAssetPPMs(id);
+    // toast.dismiss()
+    //   toast.success("Logs fetched successfully");
     const filteredData = PPMDetailsResp.data.activities.filter((activity) => {
       const activityDate = formatDate(activity.start_time); // Extract date from start_time
      

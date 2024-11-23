@@ -66,31 +66,7 @@ const CopyChecklist = () => {
       },
     ]);
   };
-  useEffect(() => {
-    const fetchServicesChecklistDetails = async () => {
-      const checklistDetailsResponse = await getChecklistDetails(id);
-      const data = checklistDetailsResponse.data;
-      console.log(data);
-      setName(data.name);
-      setFrequency(data.frequency);
-      setStartDate(data.start_date);
-      setEndDate(data.end_date);
-      setAddNewQuestion(
-        data.questions.map((q) => ({
-          id: q.id,
-          name: q.name,
-          type: q.qtype,
-          options: [q.option1, q.option2, q.option3, q.option4],
-          value_types:[q.value_type1,q.value_type2,q.value_type3,q.value_type4],
-          question_mandatory:q.question_mandatory,
-          reading:q.reading,
-          showHelpText:q.help_text_enbled,
-          help_text:q.help_text
-        }))
-      );
-    };
-    fetchServicesChecklistDetails();
-  }, [masterid]);
+ 
   const [sections, setSections] = useState([ {
     group: '',
     
@@ -166,7 +142,62 @@ const CopyChecklist = () => {
     setCronExpression(newCron);
   };
  
- 
+  useEffect(() => {
+    const fetchServicesChecklistDetails = async () => {
+      const checklistDetailsResponse = await getChecklistDetails(id);
+      const data = checklistDetailsResponse.data;
+      console.log(data);
+      setName(data.name);
+      setFrequency(data.frequency);
+      setStartDate(data.start_date);
+      setEndDate(data.end_date);
+      setsupplierid(data.supplier_id)
+      setLockOverdueTask(data.lock_overdue)
+      setCronExpression(data.checklist_cron.expression)
+      setWeightage(data.weightage_enabled)
+      setSelectedOptionssupervisior(
+        data.supervisors?.map((sup) => ({
+          value: sup,
+          label: sup,
+        })) || []
+      );
+      setSections(
+        data.groups.map((group) => ({
+          group: group.group_id,
+          questions: group.questions.map((q) => ({
+            name: q.name,
+            type: q.qtype,
+            options: [q.option1, q.option2, q.option3, q.option4],
+            value_types: [q.value_type1, q.value_type2, q.value_type3, q.value_type4],
+            question_mandatory: q.question_mandatory,
+            reading: q.reading,
+            showHelpText: q.help_text_enbled,
+            help_text: q.help_text,
+            rating: q.rating,
+            weightage: q.weightage,
+            image_for_question: [], // Assuming you need an empty array here
+          })),
+        }))
+      );
+      const totalMinutes = data.grace_period;
+      const days = Math.floor(totalMinutes / (24 * 60));
+      const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
+      const minutes = totalMinutes % 60;
+  
+      setSubmitDays(days);
+      setSubmitHours(hours);
+      setSubmitMinutes(minutes);
+      const totalExtensionMinutes = data.grace_period_unit;
+    const extDays = Math.floor(totalExtensionMinutes / (24 * 60));
+    const extHours = Math.floor((totalExtensionMinutes % (24 * 60)) / 60);
+    const extMinutes = totalExtensionMinutes % 60;
+
+    setExtensionDays(extDays);
+    setExtensionHours(extHours);
+    setExtensionMinutes(extMinutes);
+    };
+    fetchServicesChecklistDetails();
+  }, [id]);
 
   const siteId = getItemInLocalStorage("SITEID");
   const userId = getItemInLocalStorage("UserId");

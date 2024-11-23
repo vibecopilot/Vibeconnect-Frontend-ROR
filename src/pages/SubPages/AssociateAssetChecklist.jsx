@@ -6,6 +6,8 @@ import {
   getSiteAsset,
   getSoftServices,
   postAssetAssociation,
+  getAssetGroups,
+  getAssetSubGroups,
   getGenericGroupAssetChecklist,
   getGenericSubGroupAssetChecklist,
 } from "../../api";
@@ -37,7 +39,7 @@ const AssociateAssetChecklist = () => {
   useEffect(() => {
     const fetchChecklistGroup = async () => {
       try {
-        const ChecklistGroupsResp = await getGenericGroupAssetChecklist();
+        const ChecklistGroupsResp = await getAssetGroups();
         setGroups(ChecklistGroupsResp.data);
       } catch (error) {
         console.log(error);
@@ -49,9 +51,9 @@ const AssociateAssetChecklist = () => {
     if (groupId) {
       const fetchSubGroup = async () => {
         try {
-          const subCatResp = await getGenericSubGroupAssetChecklist(groupId);
+          const subCatResp = await getAssetSubGroups(groupId);
           setSubgroups(
-            subCatResp.data.map((subCat) => ({
+            subCatResp.map((subCat) => ({
               label: subCat.name, // label for react-select
               value: subCat.id, // value for react-select
             }))
@@ -71,7 +73,7 @@ const AssociateAssetChecklist = () => {
     },
     {
       name: "Assigned To",
-      selector: (row) => row.user_name,
+      selector: (row) => row.assigned_to,
       sortable: true,
     },
   ];
@@ -171,7 +173,6 @@ const AssociateAssetChecklist = () => {
         <h2 className="text-lg font-medium border-b-2 border-gray-400 mb-2">
           Associate Checklist
         </h2>
-        <div className="grid md:grid-cols-3 items-center gap-2">
         <div className="flex flex-col" >
            <label className=" font-semibold">Checklist Type</label>
            <div className="flex items-center space-x-4">
@@ -197,6 +198,8 @@ const AssociateAssetChecklist = () => {
              </label>
            </div>
          </div>
+        <div className="grid md:grid-cols-3 items-center gap-2">
+       
          {checklistType === 'individual' ? (
            <div className="flex flex-col z-20">
              <label className="font-semibold">Asset </label>
@@ -230,7 +233,7 @@ const AssociateAssetChecklist = () => {
                </select>
              </div>
 
-             <div className="flex flex-col z-20">
+             <div className="flex flex-col z-50">
                <label className="font-semibold">Subgroup</label>
                <Select
           isMulti

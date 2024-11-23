@@ -18,13 +18,17 @@ const PPMCalendar = () => {
   const fetchPPM = async () => {
     // Only proceed if both dates are set
     if (!startDate || !endDate) return;
+    if (startDate >= endDate) {
+      return toast.error("Start date must be before End date");
+    }
     toast.loading("Please wait");
     try {
       const response = await getPPMCalendar( startDate, endDate );
       const mappedEvents = response.data.map((event) => ({
         title: event.title,
         start: event.start,
-        end: event.end,
+        // end: event.end,
+        start_time:event.start_time
       }));
       toast.dismiss()
       toast.success("PPM Calendar data fetched successfully");
@@ -50,12 +54,16 @@ const PPMCalendar = () => {
     setEndDate(e.target.value);
   };
 
-  const renderEventContent = (eventInfo) => (
-    <div>
-      <strong>{eventInfo.timeText}</strong> <br />
-      <i>{eventInfo.event.title}</i>
-    </div>
-  );
+  const renderEventContent = (eventInfo) => {
+    const { title, extendedProps } = eventInfo.event;
+    return (
+      <div>
+        <strong>{extendedProps.start_time || "No time specified"}</strong>
+        <br />
+        <b>{title}</b>
+      </div>
+    );
+  };
 
   return (
     <div className="rounded-xl shadow-custom-all-sides p-2">
@@ -81,41 +89,45 @@ const PPMCalendar = () => {
             />
           </label>
         </div>
-      <FullCalendar
-        ref={calendarRef}
-        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-        headerToolbar={{
-          left: "prev",
-          center: "title",
-          right: "next dayGridMonth,timeGridWeek,timeGridDay",
-        }}
-        views={{
-          fortnightlyView: {
-            type: "dayGrid",
-            duration: { weeks: 2 },
-            buttonText: "fortnight",
-          },
-        }}
-        initialDate={selectedDate}
-        events={events}
-        eventBackgroundColor={(eventInfo) =>
-          eventInfo.event.extendedProps?.category === "Task" ? "red" : "green"
-        }
-        eventTextColor="white"
-        height={"90vh"}
-        allDayText="All Day"
-        eventTimeFormat={{
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-        }}
-        slotLabelFormat={{
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-        }}
-        eventContent={renderEventContent}
-      />
+        <FullCalendar
+  ref={calendarRef}
+  plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+  headerToolbar={{
+    left: "prev",
+    center: "title",
+    right: "next dayGridMonth,timeGridWeek,timeGridDay",
+  }}
+  views={{
+    fortnightlyView: {
+      type: "dayGrid",
+      duration: { weeks: 2 },
+      buttonText: "fortnight",
+    },
+  }}
+  initialDate={selectedDate}
+  events={events}
+  eventClassNames={(eventInfo) => {
+    const eventDate = new Date(eventInfo.event.start);
+    const currentDate = new Date();
+
+    return eventDate < currentDate ? "past-event" : "future-event";
+  }}
+  eventTextColor="white"
+  height={"90vh"}
+  allDayText="All Day"
+  eventTimeFormat={{
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  }}
+  slotLabelFormat={{
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  }}
+  eventContent={renderEventContent}
+/>;
+
     </div>
   );
 };

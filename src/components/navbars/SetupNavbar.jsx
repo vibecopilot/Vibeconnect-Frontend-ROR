@@ -42,7 +42,7 @@ const SetupNavbar = () => {
         {feat.includes("parking") && (  <Link to={"/admin/parking-setup"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">Parking</Link>)}
         {/* <Link  to={"/admin/email-rule"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">Email Rule</Link> */}
         {/* <Link to={"/admin/fm-groups-setup"}  className="hover:bg-white hover:text-black  p-2 rounded-lg ">FM Groups</Link> */}
-        <Link to={"/admin/master-checklist-setup"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">Master Checklist</Link>
+        {feat.includes("assets") && (<Link to={"/admin/master-checklist-setup"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">Master Checklist</Link>)}
         {feat.includes("purchase_order") && (  <Link to={"/admin/sac-hsn-setup"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">SAC/HSN Setup</Link>)}
         {feat.includes("purchase_order") && ( <Link  to={"/admin/addresses-setup"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">Addresses</Link>)}
         {/* <Link className="hover:bg-white hover:text-black  p-2 rounded-lg ">Export</Link> */}
@@ -55,6 +55,7 @@ const SetupNavbar = () => {
         {feat.includes("gatepass") && ( <Link to={"/setup/visitor-setup"}className="hover:bg-white hover:text-black  p-2 rounded-lg ">Visitor</Link>)}
         <Link to={"/admin/site-owner-setup"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">Site Owner</Link>
         <Link to={"/admin/checklist-group-reading-setup"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">Checklist Group Reading</Link>
+        <Link to={"/admin/gdn-purpose-setup"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">GDN Purpose</Link>
 
       </ul>
     </div>

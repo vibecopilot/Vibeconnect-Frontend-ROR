@@ -114,8 +114,8 @@ const Inventory = () => {
     { name: "Code", selector: (row) => row.code, sortable: true },
     { name: "Serial number", selector: (row) => row.serial_number, sortable: true },
     { name: "Type", selector: (row) => row.inventory_type==1?"Spares":"Consumable", sortable: true },
-    { name: "Group", selector: (row) => row.asset_group_id, sortable: true },
-    { name: "Sub Group", selector: (row) => row.asset_sub_group_id, sortable: true },
+    { name: "Group", selector: (row) => row.asset_group, sortable: true },
+    { name: "Sub Group", selector: (row) => row.asset_sub_group, sortable: true },
     { name: "Category", selector: (row) => row.category, sortable: true },
     { name: "Manufacturer", selector: (row) => row.Manufacturer, sortable: true },
     { name: "Criticality", selector: (row) => row.criticality==1?"Critical":"Non-Critical", sortable: true },
@@ -132,7 +132,7 @@ const Inventory = () => {
     },
     // { name: "Rate", selector: (row) => row.rate, sortable: true },
     { name: "Asset", selector: (row) => row.asset_id, sortable: true },
-    { name: "Status", selector: (row) => row.active, sortable: true },
+    { name: "Status", selector: (row) => (row.active==true)?"Active":"Inactive", sortable: true },
     { name: "Expiry Date", selector: (row) => dateFormat(row.expiry_date), sortable: true },
 
    
