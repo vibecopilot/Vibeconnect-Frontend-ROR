@@ -6,11 +6,17 @@ import {
   getSiteAsset,
   getSoftServices,
   postAssetAssociation,
+  getAssetGroups,
+  getAssetSubGroups,
+  getGenericGroupAssetChecklist,
+  getGenericSubGroupAssetChecklist,
 } from "../../api";
 import Select from "react-select";
 import Table from "../../components/table/Table";
 import { useParams } from "react-router-dom";
 import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
+
 const AssociateAssetChecklist = () => {
   const [assets, setAssets] = useState([]);
   const [selectedOption, setSelectedOption] = useState([]);
@@ -22,7 +28,43 @@ const AssociateAssetChecklist = () => {
   const [formData, setFormData] = useState({
     assigned_to: [],
   });
-
+  const [checklistType, setChecklistType] = useState('individual');
+  const handleChecklistTypeChange = (e) => {
+    setChecklistType(e.target.value); // Update the checklist type state based on the selected value
+  };
+  const [groupId, setGroupId] = useState('');
+  const [subgroupId, setSubgroupId] = useState([]);
+  const [groups, setGroups] = useState([]);
+  const [subgroups, setSubgroups] = useState([]);
+  useEffect(() => {
+    const fetchChecklistGroup = async () => {
+      try {
+        const ChecklistGroupsResp = await getAssetGroups();
+        setGroups(ChecklistGroupsResp.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchChecklistGroup();
+  }, []);
+  useEffect(() => {
+    if (groupId) {
+      const fetchSubGroup = async () => {
+        try {
+          const subCatResp = await getAssetSubGroups(groupId);
+          setSubgroups(
+            subCatResp.map((subCat) => ({
+              label: subCat.name, // label for react-select
+              value: subCat.id, // value for react-select
+            }))
+          );
+        } catch (error) {
+          console.log(error);
+        }
+      };
+      fetchSubGroup();
+    }
+  }, [groupId]);
   const column = [
     {
       name: "Asset Name",
@@ -31,7 +73,7 @@ const AssociateAssetChecklist = () => {
     },
     {
       name: "Assigned To",
-      selector: (row) => row.user_name,
+      selector: (row) => row.assigned_to,
       sortable: true,
     },
   ];
@@ -88,6 +130,7 @@ const AssociateAssetChecklist = () => {
   const handleChange = (e) => {
     setFormData({ ...formData, assigned_to: e.target.value });
   };
+  const navigate = useNavigate()
 
   const handleAddAssociate = async () => {
     const payload = {
@@ -107,6 +150,8 @@ const AssociateAssetChecklist = () => {
       // window.location.reload();
       toast.success("Checklist Associated");
       setAdded(true);
+      
+
       setSelectedOption([])
       setSelectedUserOption([])
     } catch (error) {
@@ -128,12 +173,37 @@ const AssociateAssetChecklist = () => {
         <h2 className="text-lg font-medium border-b-2 border-gray-400 mb-2">
           Associate Checklist
         </h2>
-        <div className="grid md:grid-cols-3 items-center gap-4">
-          <div className="w-full z-20">
-            {/* <label htmlFor="" className="font-medium my-2">
-              Services
-            </label> */}
-            <Select
+        <div className="flex flex-col" >
+           <label className=" font-semibold">Checklist Type</label>
+           <div className="flex items-center space-x-4">
+             <label className="font-semibold">
+               <input
+                 type="radio"
+                 name="checklistType"
+                 value="individual"
+                 checked={checklistType === 'individual'}
+                 onChange={handleChecklistTypeChange}
+               />{' '}
+               Individual
+             </label>
+             <label className="font-semibold">
+               <input
+                 type="radio"
+                 name="checklistType"
+                 value="assetGroup"
+                 checked={checklistType === 'assetGroup'}
+                 onChange={handleChecklistTypeChange}
+               />{' '}
+               Asset Group
+             </label>
+           </div>
+         </div>
+        <div className="grid md:grid-cols-3 items-center gap-2">
+       
+         {checklistType === 'individual' ? (
+           <div className="flex flex-col z-20">
+             <label className="font-semibold">Asset </label>
+             <Select
               isClearable={false}
               closeMenuOnSelect={false}
               isMulti
@@ -144,8 +214,55 @@ const AssociateAssetChecklist = () => {
               placeholder="Select Assets"
              
             />
-          </div>
-          <div className="w-full z-20">
+           </div>
+         ) : (
+           <>
+             <div className="flex flex-col">
+               <label className="font-semibold">Group *</label>
+               <select 
+               className="border p-1 px-4 border-gray-500 rounded-md"
+               value={groupId}
+               onChange={(e) => setGroupId(e.target.value)}
+               >
+                 <option>Select Group</option>
+                 {groups.map((group) => (
+                  <option value={group.id} key={group.id}>
+                    {group.name}
+                  </option>
+                ))}
+               </select>
+             </div>
+
+             <div className="flex flex-col z-50">
+               <label className="font-semibold">Subgroup</label>
+               <Select
+          isMulti
+          isSearchable
+          placeholder="Select Subgroup"
+          options={subgroups}
+          value={subgroupId}
+          onChange={(selected) => setSubgroupId(selected)}
+        />
+             </div>
+           </>
+         )}
+          {/* <div className="w-full z-20"> */}
+            {/* <label htmlFor="" className="font-medium my-2">
+              Services
+            </label> */}
+            {/* <Select
+              isClearable={false}
+              closeMenuOnSelect={false}
+              isMulti
+              onChange={handleChangeSelect}
+              options={assets}
+              noOptionsMessage={() => "No Assets Available"}
+              //   maxMenuHeight={90}
+              placeholder="Select Assets"
+             
+            /> */}
+          {/* </div> */}
+          <div className="w-full flex flex-col z-20">
             {/* <label className="font-medium my-2">Assign To</label> */}
             {/* <select
               value={formData.assigned_to}
@@ -159,6 +276,7 @@ const AssociateAssetChecklist = () => {
                 </option>
               ))}
             </select> */}
+            <label htmlFor="" className="font-semibold">Assign to</label>
             <Select
             closeMenuOnSelect={false}
               isMulti

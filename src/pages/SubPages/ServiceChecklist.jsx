@@ -56,8 +56,8 @@ const ServiceChecklist = () => {
       sortable: true,
     },
     {
-      name: "No. Of Questions",
-      selector: (row) => row.questions.length,
+      name: "No. Of Groups",
+      selector: (row) => row.groups.length,
       sortable: true,
     },
     {
