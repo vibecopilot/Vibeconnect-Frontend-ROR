@@ -129,7 +129,7 @@ const EmployeeDetailsList = () => {
               </h2>
             </NavLink>
           </li>
-          <li>
+          {/* <li>
             <NavLink
               to="/admin/ctc-basket"
               className={({ isActive }) =>
@@ -158,7 +158,7 @@ const EmployeeDetailsList = () => {
                CTC Basket Request
               </h2>
             </NavLink>
-          </li>
+          </li> */}
 
 
 

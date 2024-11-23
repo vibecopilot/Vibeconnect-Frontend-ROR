@@ -172,7 +172,7 @@ function RoasterShiftDetails({
             </select>
           </div>
 
-          <div className="mb-4">
+          {/* <div className="mb-4">
             <label className="block mb-2">Branch Location</label>
             <input
               type="text"
@@ -193,7 +193,7 @@ function RoasterShiftDetails({
               />
               Repeat?
             </label>
-          </div>
+          </div> */}
           {repeat && (
             <div>
               <div className="flex flex-col">

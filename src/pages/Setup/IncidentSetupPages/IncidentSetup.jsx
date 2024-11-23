@@ -113,7 +113,7 @@ const IncidentSetup = () => {
               className={`p-1 ${
                 page === "secondarySubCategory" &&
                 "bg-white font-medium text-blue-500 shadow-custom-all-sides"
-              } rounded-full hover:text-blue-500 px-2 cursor-pointer text-sm transition-all duration-300 ease-linear`}
+              } rounded-full hover:text-blue-500 px-2 cursor-pointer  transition-all duration-300 ease-linear`}
               onClick={() => setPage("secondarySubCategory")}
             >
               Secondary Sub Category
@@ -150,7 +150,7 @@ const IncidentSetup = () => {
               className={`p-1 ${
                 page === "damageCategory" &&
                 "bg-white font-medium text-blue-500 shadow-custom-all-sides"
-              } rounded-full hover:text-blue-500 px-2 cursor-pointer text-sm transition-all duration-300 ease-linear`}
+              } rounded-full hover:text-blue-500 px-2 cursor-pointer transition-all duration-300 ease-linear`}
               onClick={() => setPage("damageCategory")}
             >
               Property Damage Category

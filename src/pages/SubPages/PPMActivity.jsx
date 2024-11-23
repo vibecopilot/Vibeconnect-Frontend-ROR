@@ -96,7 +96,7 @@ const PPMActivity = () => {
     // },
     {
       name: "No. Of Groups",
-      selector: (row) => row.groups.length,
+      selector: (row) => row?.groups?.length,
       sortable: true,
     },
     {

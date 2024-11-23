@@ -15,9 +15,11 @@ import {
   getCompanyAsset,
   getEmployeeAsset,
   getEmployeeEmploymentDetails,
+  getEmployeeJobInfo,
   getMyHRMSEmployees,
   getMyOrganizationLocations,
   getMyOrgDepartments,
+  getReportingSupervisors,
   postEmployeeEmploymentInfo,
 } from "../../api";
 import toast from "react-hot-toast";
@@ -29,9 +31,11 @@ import Accordion from "./Components/Accordion";
 import AddCompanyAsset from "./Modals/AddCompanyAsset";
 import EditCompanyAsset from "./Modals/EditCompanyAsset";
 import { FaFileCircleCheck } from "react-icons/fa6";
-import { MdInfoOutline, MdOutlineWebAsset } from "react-icons/md";
+import { MdClose, MdInfoOutline, MdOutlineWebAsset } from "react-icons/md";
 import { useSelector } from "react-redux";
 import AddJobInfo from "./Modals/AddJobInfo";
+import { dateFormat } from "../../utils/dateUtils";
+import EditJobInfo from "./Modals/EditJobInfo";
 
 const SectionsEmployment = () => {
   const { id } = useParams();
@@ -129,31 +133,37 @@ const SectionsEmployment = () => {
       sortable: true,
     },
   ];
-  const column1 = [
+  const jobInfoColumn = [
     {
       name: "view",
 
       cell: (row) => (
         <div className="flex items-center gap-4">
-          <button onClick={openModal1}>
+          <button onClick={()=>handleEditJobInfoModal(row.id)}>
             <BiEdit size={15} />
           </button>
         </div>
       ),
     },
 
-    { name: "Effective From", selector: (row) => row.from, sortable: true },
-    { name: "Effective To", selector: (row) => row.to, sortable: true },
-    { name: "Branch Location", selector: (row) => row.loc, sortable: true },
+    { name: "Effective From", selector: (row) =>dateFormat(row.start_date), sortable: true },
+    { name: "Effective To", selector: (row) => row.end_date?dateFormat(row.end_date): "", sortable: true },
+    { name: "Associated Site", selector: (row) => row.associated_organization_name, sortable: true },
 
-    { name: "Department", selector: (row) => row.dept, sortable: true },
-    { name: "Designation", selector: (row) => row.desgn, sortable: true },
+    { name: "Department", selector: (row) => row.department_name, sortable: true },
+    { name: "Designation", selector: (row) => row.designation, sortable: true },
     {
       name: "Reporting Supervisor",
-      selector: (row) => row.supervisior,
+      selector: (row) => row.reporting_supervisor_name,
       sortable: true,
     },
   ];
+  const [showEditJobInfoModal, setShowEditJobInfoModal] = useState(false)
+const [jobInfoId, setJobInfoId] = useState("")
+  const handleEditJobInfoModal =(infoId)=>{
+    setJobInfoId(infoId)
+    setShowEditJobInfoModal(true)
+  } 
   const assetColumn = [
     {
       name: "Which brand laptop",
@@ -305,10 +315,20 @@ const SectionsEmployment = () => {
       console.log(error);
     }
   };
+  const [jobInfo, setJobInfo] = useState([]);
+  const fetchJobInfo = async () => {
+    try {
+      const res = await getEmployeeJobInfo(hrmsOrgId);
+      setJobInfo(res);
+    } catch (error) {
+      console.log(error);
+    }
+  };
   useEffect(() => {
     fetchEmploymentDetails();
     fetchEmployeeAssets();
     fetchCompanyAssets();
+    fetchJobInfo();
   }, []);
 
   const handleEditEmployment = async () => {
@@ -343,6 +363,31 @@ const SectionsEmployment = () => {
     }
   };
   const themeColor = useSelector((state) => state.theme.color);
+  const [reportSupervisors, setReportSupervisors] = useState([]);
+
+  const handleDepartmentChange = async (e) => {
+    const fetchReportingSupervisors = async (deptId) => {
+      const reportingSupervisors = await getReportingSupervisors(
+        deptId,
+        hrmsOrgId
+      );
+      console.log(reportingSupervisors);
+      reportingSupervisors.forEach((department) => {
+        setReportSupervisors(department.reporting_supervisor);
+      });
+      // setParentAsset(parentAssetResp.data.site_assets);
+    };
+
+    if (e.target.type === "select-one" && e.target.name === "department") {
+      const departmentId = Number(e.target.value);
+      await fetchReportingSupervisors(departmentId);
+
+      setFormData({
+        ...formData,
+        department: departmentId,
+      });
+    }
+  };
   return (
     <div className="flex flex-col ml-20">
       <EditEmployeeDirectory />
@@ -378,10 +423,10 @@ const SectionsEmployment = () => {
                     <button
                       type="button"
                       style={{ background: themeColor }}
-                      className="bg-black text-white hover:bg-gray-700 font-semibold py-2 px-4 rounded"
+                      className="bg-black text-white hover:bg-gray-700 font-semibold py-2 px-4 rounded-full flex items-center gap-2"
                       onClick={() => setIsEditing(true)}
                     >
-                      Edit
+                      <BiEdit /> Edit
                     </button>
                   )}
                 </div>
@@ -419,7 +464,7 @@ const SectionsEmployment = () => {
                       value={formData.joinDate}
                       onChange={handleChange}
                       name="joinDate"
-                      readOnly={!isEditing} 
+                      readOnly={!isEditing}
                     />
                   </div>
                   <div className="grid gap-2 items-center">
@@ -428,7 +473,7 @@ const SectionsEmployment = () => {
                     </label>
                     <select
                       className={`mt-1 p-2  border rounded-md  ${
-                        !isEditing ? "bg-gray-200 text-gray-500" : ""
+                        !isEditing ? "bg-gray-200 " : ""
                       }`}
                       value={formData.employmentType}
                       onChange={handleChange}
@@ -440,7 +485,7 @@ const SectionsEmployment = () => {
                       <option value="partTime">Part Time</option>
                     </select>
                   </div>
-                  <div className="grid gap-2 items-center ">
+                  <div className="grid gap-2 items-center">
                     <label htmlFor="jobTitle" className="font-semibold">
                       Probation Due Date:
                     </label>
@@ -486,7 +531,7 @@ const SectionsEmployment = () => {
                         !isEditing ? "bg-gray-200" : ""
                       }`}
                       value={formData.department}
-                      onChange={handleChange}
+                      onChange={handleDepartmentChange}
                       name="department"
                       disabled={!isEditing}
                     >
@@ -506,7 +551,7 @@ const SectionsEmployment = () => {
                       type="text"
                       id="designation"
                       className={`mt-1 p-2  border rounded-md ${
-                        !isEditing ? "bg-gray-200 text-gray-400" : ""
+                        !isEditing ? "bg-gray-200 text-gray-500" : ""
                       }`}
                       placeholder="Enter Designation"
                       onChange={handleChange}
@@ -515,13 +560,13 @@ const SectionsEmployment = () => {
                       readOnly={!isEditing}
                     />
                   </div>
-                  <div className="grid gap-2 items-center ">
+                  <div className="grid gap-2 items-center w-full">
                     <label htmlFor="designation" className="font-semibold">
                       Reporting Supervisor:
                     </label>
                     <select
                       className={`mt-1 p-2  border rounded-md ${
-                        !isEditing ? "bg-gray-200" : ""
+                        !isEditing ? "bg-gray-200 text-gray-500" : ""
                       }`}
                       value={formData.supervisor}
                       onChange={handleChange}
@@ -529,9 +574,9 @@ const SectionsEmployment = () => {
                       disabled={!isEditing}
                     >
                       <option value="">Select Supervisor</option>
-                      {employees.map((employee) => (
-                        <option value={employee.id} key={employee.id}>
-                          {employee.first_name} {employee.last_name}
+                      {reportSupervisors.map((supervisor) => (
+                        <option value={supervisor.id} key={supervisor.id}>
+                          {supervisor.full_name}
                         </option>
                       ))}
                     </select>
@@ -549,7 +594,7 @@ const SectionsEmployment = () => {
                 <div className="flex justify-end ">
                   <button
                     onClick={openModal}
-                    className="bg-black text-white mb-2 hover:bg-gray-700 font-medium py-2 px-4 rounded"
+                    className="bg-blue-500 text-white mb-2  font-semibold py-1 px-4 rounded-full flex items-center gap-2"
                   >
                     Update Employment Status
                   </button>
@@ -569,13 +614,17 @@ const SectionsEmployment = () => {
                   <button
                     style={{ background: themeColor }}
                     onClick={openModal1}
-                    className="bg-black text-white mb-2 hover:bg-gray-700 font-semibold py-1 px-4 rounded"
+                    className="bg-blue-500 text-white mb-2 font-semibold py-1 px-4 rounded-full flex items-center gap-2"
                   >
-                    Update Position
+                    Update Info
                   </button>
                 </div>
 
-                <Table columns={column1} data={data1} isPagination={true} />
+                <Table
+                  columns={jobInfoColumn}
+                  data={jobInfo}
+                  isPagination={true}
+                />
               </>
             }
           />
@@ -585,10 +634,10 @@ const SectionsEmployment = () => {
             icon={MdOutlineWebAsset}
             content={
               <>
-                <div className="flex justify-end ">
+                <div className="flex justify-end">
                   <button
                     onClick={() => setAssetModal(true)}
-                    className="bg-blue-500 text-white mb-2  font-semibold py-1 px-4 rounded-full flex items-center gap-2"
+                    className="bg-blue-500 text-white mb-2 font-semibold py-1 px-4 rounded-full flex items-center gap-2"
                   >
                     <PiPlus /> Add Row
                   </button>
@@ -632,7 +681,7 @@ const SectionsEmployment = () => {
                   </h2>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Please select Employment Status you wish to update{" "}
+                      Please select Employment Status you wish to update
                       <span className="text-red-500">*</span>
                     </label>
                     <select className="mt-1 p-2  border rounded-md w-full">
@@ -679,41 +728,38 @@ const SectionsEmployment = () => {
 
           {modalIsOpen2 && (
             <div className="fixed inset-0 z-50 flex items-center overflow-y-auto justify-center bg-gray-500 bg-opacity-50">
-              <div class="max-h-screen  bg-white p-8 w-96 rounded-lg shadow-lg overflow-y-auto">
+              <div class="max-h-screen bg-white p-4 w-[35rem] rounded-xl shadow-lg overflow-y-auto">
                 <form>
-                  <h2 className="text-2xl font-bold mb-4">
+                  <h2 className=" font-medium mb-4">
                     Employment Status and Comment History
                   </h2>
-                  <div>
+                  <div className="my-2">
                     <label className="block text-sm font-medium text-gray-700">
                       Effective From{" "}
                     </label>
 
-                    <input
-                      type="date"
-                      value={2 / 2 / 2024}
-                      className="mt-1 p-2  border rounded-md"
-                    />
+                    <p className="mt-1 p-2 w-full border  rounded-md">
+                      02/02/2024
+                    </p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
                       Confirmation Date
                     </label>
 
-                    <input
-                      type="date"
-                      value={2 / 2 / 2024}
-                      className="mt-1 p-2  border rounded-md"
-                    />
+                    <p className="mt-1 p-2 w-full border rounded-md">
+                      02/02/2024
+                    </p>
                   </div>
                   <div className="mt-2">
                     <label className="block text-sm font-medium text-gray-700">
                       Employment Status{" "}
                     </label>
-                    <select className="mt-1 p-2  border rounded-md">
+                    <p className="mt-1 p-2  border rounded-md">Confirmed</p>
+                    {/* <select className="mt-1 p-2  border rounded-md">
                       <option value="cash">Probation</option>
                       <option value="cash">Confirmed</option>
-                    </select>
+                    </select> */}
                   </div>
                   <div className="mt-2">
                     <label className="block text-sm font-medium text-gray-700">
@@ -722,13 +768,13 @@ const SectionsEmployment = () => {
                     {/* <textarea type="date" className="mt-1 p-2  border rounded-md"/> */}
                   </div>
 
-                  <div className="flex mt-2 justify-end">
+                  <div className="flex mt-4 justify-center">
                     <button
                       type="button"
                       onClick={closeModal2}
-                      className="border-2 font-semibold hover:bg-black hover:text-white duration-150 transition-all border-black p-2 rounded-md text-black mr-4"
+                      className="border-2 rounded-full border-red-500 text-red-500 px-4 flex items-center gap-2 p-1 "
                     >
-                      Cancel
+                      <MdClose /> Close
                     </button>
                   </div>
                 </form>
@@ -736,7 +782,8 @@ const SectionsEmployment = () => {
             </div>
           )}
 
-          {modalIsOpen1 && <AddJobInfo closeModal1={closeModal1} />}
+          {modalIsOpen1 && <AddJobInfo closeModal1={closeModal1} fetchJobInfo={fetchJobInfo} />}
+          {showEditJobInfoModal && <EditJobInfo closeModal1={()=>setShowEditJobInfoModal(false)} fetchJobInfo={fetchJobInfo} infoId={jobInfoId} />}
 
           {assetModal && (
             <AddEmployeeAsset

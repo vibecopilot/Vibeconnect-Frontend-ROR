@@ -113,7 +113,7 @@ const themeColor =useSelector((state)=> state.theme.color)
     { name: "End Date", selector: (row) => row.end_date, sortable: true },
     {
       name: "No. of Groups",
-      selector: (row) => row.groups.length,
+      selector: (row) => row?.groups?.length,
       sortable: true,
     },
    

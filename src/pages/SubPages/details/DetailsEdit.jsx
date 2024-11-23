@@ -14,6 +14,7 @@ import FileInput from "../../../Buttons/FileInput";
 import { select } from "@material-tailwind/react";
 import { useSelector } from "react-redux";
 
+
 const DetailsEdit = () => {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -55,10 +56,12 @@ const DetailsEdit = () => {
     }
   };
 
+
   const categories = getItemInLocalStorage("categories");
   // console.log(categories , "Catss")
   const statuses = getItemInLocalStorage("STATUS");
   console.log(statuses)
+
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -88,7 +91,7 @@ const DetailsEdit = () => {
           corrective_action: response.data.corrective_action,
           comment: response.data.comment,
           docs: response.data.documents,
-          
+         
         });
         console.log("check",response.data)
         setTicketInfo(response.data);
@@ -102,6 +105,7 @@ const DetailsEdit = () => {
       try {
         const cat = await fetchSubCategories(categoryId);
 
+
         setUnits(
           cat.data.sub_categories.map((item) => ({
             name: item.name,
@@ -109,27 +113,31 @@ const DetailsEdit = () => {
           }))
         );
 
+
         console.log("categories", cat);
       } catch (e) {
         console.log(e);
       }
     };
 
+
     const fetchAssignedTo = async () => {
       try {
         const response = await getAssignedTo();
         setAssignedUser(response.data);
         setEditTicketInfo(response.data);
-        
+       
       } catch (error) {
         console.error("Error fetching assigned users:", error);
       }
     };
 
+
     fetchDetails();
     fetchAssignedTo();
     // fetchEditSubCategories(formData.category_type_id);
   }, []);
+
 
   const handleTicketDetails = (e, name) => {
     setFormData({
@@ -137,6 +145,7 @@ const DetailsEdit = () => {
       [e.target.name]: e.target.value,
     });
   };
+
 
   /*
   const saveEditDetails = async () => {
@@ -149,7 +158,9 @@ const DetailsEdit = () => {
     }
   };
 
+
   */
+
 
   const saveEditDetails = async () => {
     try {
@@ -183,10 +194,12 @@ const DetailsEdit = () => {
         },
       };
 
+
       toast.loading("Please Wait Submitting Details!");
      const resp = await editComplaintsDetails(updatedData);
       console.log("Edited Ticket Details:", resp);
       toast.dismiss();
+
 
       toast.success("Updated Successfully");
       navigate("/tickets");
@@ -194,6 +207,7 @@ const DetailsEdit = () => {
       console.error("Error Saving in details update: ", error);
     }
   };
+
 
   const handleChange = async (e) => {
     async function fetchSubCategory(categoryId) {
@@ -210,6 +224,7 @@ const DetailsEdit = () => {
         console.log(e);
       }
     }
+
 
     if (
       e.target.type === "select-one" &&
@@ -231,24 +246,29 @@ const DetailsEdit = () => {
     }
   };
 
+
   console.log(formData.category_type_id);
   console.log("SubCategory" + formData.sub_category_id);
+
 
   const ticketDetails = [
  
     { title: "Site Owner  :", description: ticketinfo.responsible_person },
     { title: "Ticket No.:", description: ticketinfo.ticket_number || "" },
 
+
     // {
     //   title: "Title :",
     //   description: <p>{formData.heading}</p>,
     // },
+
 
     { title: "Site  :", description: ticketinfo.site_name },
     { title: "Building Name  :", description: ticketinfo.building_name },
     { title: "Floor Name  :", description: ticketinfo.floor_name },
     { title: "Unit  :", description: ticketinfo.unit },
     { title: "Related To  :", description: ticketinfo.issue_related_to },
+
 
     // { title: " Current status  :", description: ticketinfo.issue_status },
     {
@@ -272,6 +292,7 @@ const DetailsEdit = () => {
         </select>
       ),
     },
+
 
     // { title: "Current Issue Type  :", description: ticketinfo.issue_type },
     {
@@ -354,7 +375,9 @@ const DetailsEdit = () => {
       ),
     },
 
+
    
+
 
     {
       title: "Categories:",
@@ -370,7 +393,7 @@ const DetailsEdit = () => {
           {categories?.map((category) => (
             <option
               key={category.id}
-            
+           
               value={category.id}
             >
               {category.name}
@@ -411,6 +434,7 @@ const DetailsEdit = () => {
         >
           {/* <option value="Proactive">Proactive</option> */}
 
+
           <option value="">Select Option</option>
           <option value="Reactive">Reactive</option>
           <option value="Proactive">Proactive</option>
@@ -419,9 +443,11 @@ const DetailsEdit = () => {
     },
   ];
 
+
   const FileChange = async (event) => {
     const files = event.target.files;
     const base64Array = [];
+
 
     for (const file of files) {
       const base64 = await convertFileToBase64(file);
@@ -432,13 +458,16 @@ const DetailsEdit = () => {
       return base64.split(",")[1];
     });
 
+
     // console.log("Fornat", formattedBase64Array);
+
 
     setFormData({
       ...formData,
       documents: formattedBase64Array,
     });
   };
+
 
   const convertFileToBase64 = (file) => {
     return new Promise((resolve, reject) => {
@@ -456,12 +485,28 @@ const themeColor = useSelector((state)=> state.theme.color)
           <Detail details={ticketDetails} heading={"Edit Ticket Details"} title={formData.heading} />
         </div>
 
+
         <div className="flex flex-col  flex-wrap gap-2">
           <h2
           style={{background:themeColor}}
           className="text-center w-screen  text-white font-semibold mt-5 text-lg p-2 px-4 ">
             Additional Info
           </h2>
+          <div className="px-4 flex flex-col gap-1 justify-center">
+            <p className="font-medium">Description :</p>
+            <textarea
+              name="text"
+              // placeholder="heading"
+              cols="15"
+              rows="2"
+              value={formData.text}
+              disabled
+              onChange={(e) =>
+                setFormData({ ...formData, text: e.target.value })
+              }
+              className="border p-1 px-4 border-gray-400 rounded-md"
+            ></textarea>
+          </div>
           <div className="px-4 flex flex-col gap-1 justify-center">
             <p className="font-medium">Root Cause :</p>
             <textarea
@@ -491,6 +536,7 @@ const themeColor = useSelector((state)=> state.theme.color)
             ></textarea>
           </div>
 
+
           <div className="px-4 flex flex-col gap-1 justify-center">
             <p className="font-medium">Corrective Action :</p>
             <textarea
@@ -505,6 +551,7 @@ const themeColor = useSelector((state)=> state.theme.color)
               className="border p-1 px-4 border-gray-400 rounded-md"
             ></textarea>
           </div>
+
 
           <div className="px-4 flex flex-col gap-1 justify-center">
             <p className="font-medium">Correction :</p>
@@ -521,6 +568,7 @@ const themeColor = useSelector((state)=> state.theme.color)
             ></textarea>
           </div>
 
+
         <div className="px-4 flex flex-col gap-1 justify-center">
           <label htmlFor="description" className="font-semibold ">
             Comment:
@@ -536,6 +584,7 @@ const themeColor = useSelector((state)=> state.theme.color)
             </div>
         </div>
 
+
         {/* <div className="p-1">
         <div className="p-4">
           <label htmlFor="description" className="font-medium ">Comments:</label>
@@ -549,6 +598,7 @@ const themeColor = useSelector((state)=> state.theme.color)
       </div> */}
       </div>
 
+
       <FileInput
         type="file"
         name="documents"
@@ -557,6 +607,7 @@ const themeColor = useSelector((state)=> state.theme.color)
         multiple
         className="ml-3 px-4 p-3 rounded-md text-white bg-black "
       />
+
 
       <div className=" m-10 w-full flex justify-center  ">
         <button
@@ -570,4 +621,9 @@ const themeColor = useSelector((state)=> state.theme.color)
   );
 };
 
+
 export default DetailsEdit;
+
+
+
+

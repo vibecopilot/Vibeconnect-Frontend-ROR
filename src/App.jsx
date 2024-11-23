@@ -695,6 +695,15 @@ import ChecklistGroupReading from "./pages/Setup/ChecklistGroupReading.jsx";
 import GDNPurpose from "./pages/Setup/GDNPurpose.jsx";
 import EditMasterChecklistSetup from "./pages/Setup/EditMasterChecklistSetup.jsx";
 import EditPPMChecklist from "./pages/SubPages/EditPPMChecklist.jsx";
+import MeterCategoryType from "./pages/Setup/MeterCategoryType/MeterCategoryType.jsx";
+import EditEmployee from "./pages/AdminHrms/EditEmployee.jsx";
+import EditEvent from "./pages/SubPages/EditEvent.jsx";
+import EditBroadcast from "./pages/SubPages/EditBroadcast.jsx";
+import AssociatedSites from "./pages/AdminHrms/AssociatedSites/AssociatedSites.jsx";
+import SetupSeat from "./pages/Setup/SetupSeat.jsx";
+import UserRoles from "./pages/AdminHrms/UserRoles.jsx";
+import OrganizationChart from "./pages/AdminHrms/OrganizationTree/OrganizationChart.jsx";
+import CTCGeneralSettingEdit from "./pages/AdminHrms/CTCGeneralSettingEdit.jsx";
 // new admin hrms
 
 function App() {
@@ -973,6 +982,14 @@ function App() {
             }
           />
           <Route
+            path="/setup/meter-category-type"
+            element={
+              <ProtectedAdminRoutes>
+                <MeterCategoryType />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
             path="/assets/routine-task-details/:assetId/:activityId"
             element={
               <ProtectedAdminRoutes>
@@ -1154,7 +1171,7 @@ function App() {
             element={<BookingDetails />}
           />
           <Route
-            path="/facility"
+            path="/setup/facility"
             element={
               <ProtectedAdminRoutes>
                 <SetupBookingFacility />
@@ -1162,10 +1179,18 @@ function App() {
             }
           />
           <Route
-            path="/facility/setup-facility"
+            path="/setup/facility/setup-facility"
             element={
               <ProtectedAdminRoutes>
                 <SetupFacility />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/setup/seat-setup"
+            element={
+              <ProtectedAdminRoutes>
+                <SetupSeat />
               </ProtectedAdminRoutes>
             }
           />
@@ -1405,6 +1430,14 @@ function App() {
             }
           />
           <Route
+            path="/communication/event/edit-events/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <EditEvent />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
             path="/communication/event/event-details/:id"
             element={
               <ProtectedRoute>
@@ -1425,6 +1458,14 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <BroadcastDetails />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/communication/broadcast/edit-broadcast/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <EditBroadcast />
               </ProtectedAdminRoutes>
             }
           />
@@ -3722,7 +3763,7 @@ function App() {
           />
 
           <Route
-            path="/employee/add-hotel-request"
+            path="/employee/booking-request/add-hotel-request"
             element={
               <ProtectedRoute>
                 <EmployeeAddHotelRequest />
@@ -4289,6 +4330,14 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <Department />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/associated-sites"
+            element={
+              <ProtectedAdminRoutes>
+                <AssociatedSites />
               </ProtectedAdminRoutes>
             }
           />
@@ -4962,7 +5011,8 @@ function App() {
             path="/hrms/organization-tree-setting"
             element={
               <ProtectedAdminRoutes>
-                <OrganizationTree />
+                {/* <OrganizationTree /> */}
+                <OrganizationChart/>
               </ProtectedAdminRoutes>
             }
           />
@@ -5728,6 +5778,14 @@ function App() {
             }
           />
           <Route
+            path="/admin/edit-employee/basics"
+            element={
+              <ProtectedAdminRoutes>
+                <EditEmployee />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
             path="/hrms/organization-tree-setting"
             element={
               <ProtectedAdminRoutes>
@@ -6128,6 +6186,14 @@ function App() {
             }
           />
           <Route
+            path="/hrms/separation/separate-application/resignation/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <Resignation />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
             path="/admin/edit-attendance-process/:id"
             element={
               <ProtectedAdminRoutes>
@@ -6148,6 +6214,14 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <CTCGeneralSetting />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/hrms/ctc/ctc-template/edit/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <CTCGeneralSettingEdit />
               </ProtectedAdminRoutes>
             }
           />
@@ -6221,6 +6295,14 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <MilestoneTypeSettings />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/user-roles"
+            element={
+              <ProtectedAdminRoutes>
+                <UserRoles />
               </ProtectedAdminRoutes>
             }
           />

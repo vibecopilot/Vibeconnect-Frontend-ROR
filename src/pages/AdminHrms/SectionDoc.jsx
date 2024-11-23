@@ -199,7 +199,6 @@ const SectionDoc = () => {
     setDeleteDocModal(true);
   };
   const handleDeleteLetterModal = async (id) => {
- 
     setLetterDelId(id);
     setDeleteLetter(true);
   };
@@ -214,7 +213,7 @@ const SectionDoc = () => {
       console.log(object);
     }
   };
-  const [deleteLetter, setDeleteLetter] = useState(false)
+  const [deleteLetter, setDeleteLetter] = useState(false);
   const handleDeleteEmployeeLetter = async () => {
     try {
       await deleteEmployeeLetters(letterDelId);
@@ -240,7 +239,6 @@ const SectionDoc = () => {
           <Accordion
             icon={MdDescription}
             title={"Employee Documents"}
-          
             content={
               <div className="border-b border-gray-200 mb-1">
                 <div className="bg-blue-100 p-4 rounded-lg">
@@ -268,14 +266,14 @@ const SectionDoc = () => {
                           Updated On: {dateFormat(doc.updated_date)}
                         </p>
                         <div className="flex justify-end w-full ">
-                        <a
-                          href={hrmsDomain + doc.document_file}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="border-blue-400 px-2 hover:bg-yellow-100 border rounded-l-md p-1"
-                        >
-                          <BsEye />
-                        </a>
+                          <a
+                            href={hrmsDomain + doc.document_file}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="border-blue-400 px-2 hover:bg-yellow-100 border rounded-l-md p-1"
+                          >
+                            <BsEye />
+                          </a>
                           <button
                             className="p-1  px-2 border border-blue-400 rounded-r-md text-red-500 hover:bg-red-100"
                             onClick={() => handleDeleteDocModal(doc.id)}

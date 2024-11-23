@@ -3,10 +3,25 @@ import AdminHRMS from "./AdminHrms";
 import { FaTrash } from "react-icons/fa";
 import AddEmployeeDetailsList from "./AddEmployeeDetailsList";
 import { GrHelpBook } from "react-icons/gr";
-import { postSalaryGeneralInfo, postTaxStatutory } from "../../api";
+import {
+  getTaxAndStatSetting,
+  getTaxAndStatSettingByTemplateId,
+  postCTCComponent,
+  postSalaryGeneralInfo,
+  postTaxAndStatSetting,
+  postTaxStatutory,
+  showCTCTemplates,
+} from "../../api";
 import { useSelector } from "react-redux";
+import Accordion from "./Components/Accordion";
+import { FaFileCircleCheck } from "react-icons/fa6";
+import SalaryAccordion from "./Components/SalaryAccordion";
+import { getItemInLocalStorage } from "../../utils/localStorage";
+import FixedAllowance from "./FixedAllowance";
+import SalaryAccordionAnnually from "./Components/SalaryAccordionAnnually";
+import toast from "react-hot-toast";
 
-const OnboardingSalary = ({ empId }) => {
+const OnboardingSalary = ({ setSteps, empId }) => {
   const themeColor = useSelector((state) => state.theme.color);
   const [basic, setBasic] = useState(2000);
   const [hra, setHra] = useState(2000);
@@ -46,6 +61,160 @@ const OnboardingSalary = ({ empId }) => {
     npsDeduction: false,
   });
 
+  const [salaryData, setSalaryData] = useState({
+    basic: 0,
+    HRA: 0,
+    joiningIncentive: 0,
+    otherAllowance: 0,
+    grossSalary: 0,
+    professionTax: 200,
+    EPF12: 0,
+    netPayment: 0,
+    insurance: 1800,
+    EPF13: 0,
+    CTC: 0,
+  });
+
+  useEffect(() => {
+    calculateSalary();
+  }, [
+    salaryData.basic,
+    salaryData.HRA,
+    salaryData.joiningIncentive,
+    salaryData.otherAllowance,
+    formData.CTCFrequency,
+  ]);
+
+  const calculateSalary = () => {
+    const monthlyBasic =
+      formData.CTCFrequency === "monthly"
+        ? salaryData.basic
+        : salaryData.basic / 12;
+    const monthlyHRA =
+      formData.CTCFrequency === "monthly"
+        ? salaryData.HRA
+        : salaryData.HRA / 12;
+    const monthlyJoiningIncentive =
+      formData.CTCFrequency === "monthly"
+        ? salaryData.joiningIncentive
+        : salaryData.joiningIncentive / 12;
+    const monthlyOtherAllowance =
+      formData.CTCFrequency === "monthly"
+        ? salaryData.otherAllowance
+        : salaryData.otherAllowance / 12;
+
+    const monthlyGrossSalary =
+      monthlyBasic +
+      monthlyHRA +
+      monthlyJoiningIncentive +
+      monthlyOtherAllowance;
+    const monthlyProfessionTax = 200;
+    const monthlyEPF12 = monthlyBasic * 0.12;
+    const monthlyNetPayment =
+      monthlyGrossSalary - monthlyProfessionTax - monthlyEPF12;
+    const monthlyInsurance = 1800;
+    const monthlyEPF13 = monthlyBasic * 0.13;
+    const monthlyCTC = monthlyNetPayment + monthlyEPF13 + monthlyInsurance;
+
+    setSalaryData((prev) => ({
+      ...prev,
+      grossSalary: monthlyGrossSalary,
+      professionTax: monthlyProfessionTax,
+      EPF12: monthlyEPF12,
+      netPayment: monthlyNetPayment,
+      insurance: monthlyInsurance,
+      EPF13: monthlyEPF13,
+      CTC: monthlyCTC,
+    }));
+  };
+
+  const handleInputChange = (field, value) => {
+    setSalaryData((prev) => ({ ...prev, [field]: parseFloat(value) || 0 }));
+  };
+
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  const renderInputOrValue = (field, isMonthly, isMediumFont) => {
+    const isInput = [
+      "basic",
+      "HRA",
+      "joiningIncentive",
+      "otherAllowance",
+    ].includes(field);
+    const value = isMonthly ? salaryData[field] : salaryData[field] * 12;
+
+    if (
+      isInput &&
+      ((isMonthly && formData.CTCFrequency === "monthly") ||
+        (!isMonthly && formData.CTCFrequency === "Annually"))
+    ) {
+      return (
+        <input
+          type="number"
+          value={value || ""}
+          onChange={(e) =>
+            handleInputChange(
+              field,
+              isMonthly
+                ? e.target.value
+                : (parseFloat(e.target.value) / 12).toString()
+            )
+          }
+          className="border rounded-md p-2 w-full"
+          placeholder={field}
+        />
+      );
+    } else {
+      return (
+        <p className={isMediumFont ? "font-medium" : ""}>
+          {formatCurrency(value)}
+        </p>
+      );
+    }
+  };
+
+  const handleAddSalaryCTCComponent = async () => {
+    const postData = new FormData();
+    postData.append("employee", empId);
+    postData.append("basic_month", salaryData.basic);
+    postData.append("basic_annual", salaryData.basic * 12);
+    postData.append("hra_month", salaryData.HRA);
+    postData.append("hra_annual", salaryData.HRA * 12);
+    postData.append("joining_incentive_month", salaryData.joiningIncentive);
+    postData.append(
+      "joining_incentive_annual",
+      salaryData.joiningIncentive * 12
+    );
+    postData.append("other_allowance_month", salaryData.otherAllowance);
+    postData.append("other_allowance_annual", salaryData.otherAllowance * 12);
+    postData.append("profession_tax_month", salaryData.professionTax);
+    postData.append("epf_12_month", salaryData.EPF12);
+    postData.append("epf_12_annual", salaryData.EPF12 * 12);
+    postData.append("net_payment_month", salaryData.netPayment);
+    postData.append("net_payment_annual", salaryData.netPayment * 12);
+    postData.append("insurance_month", salaryData.insurance);
+    postData.append("insurance_annual", salaryData.insurance * 12);
+    postData.append("epf_13_month", salaryData.EPF13);
+    postData.append("epf_13_annual", salaryData.EPF13 * 12);
+    postData.append("ctc_month", salaryData.CTC);
+    postData.append("ctc_annual", salaryData.CTC * 12);
+
+    try {
+      const res = await postCTCComponent(postData);
+      toast.success("CTC component created successfully");
+      setSteps("statutory");
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const handleChangeTax = async (e) => {
     setTaxData({ ...taxData, [e.target.name]: e.target.value });
   };
@@ -58,6 +227,32 @@ const OnboardingSalary = ({ empId }) => {
       ...(name === "effectiveDateDiffer" &&
         !value && { actualEffectiveDate: "" }),
     }));
+  };
+  const [templateData, setTemplateData] = useState([]);
+  const handleCTCTemplateChange = async (e) => {
+    const fetchTaxStat = async (templateId) => {
+      try {
+        const res = await getTaxAndStatSettingByTemplateId(templateId);
+        setTemplateData(res);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    if (e.target.type === "select-one" && e.target.name === "ctcTemplate") {
+      const tempId = Number(e.target.value);
+      await fetchTaxStat(tempId);
+
+      setFormData({
+        ...formData,
+        ctcTemplate: tempId,
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [e.target.name]: e.target.value,
+      });
+    }
   };
 
   useEffect(() => {
@@ -156,15 +351,197 @@ const OnboardingSalary = ({ empId }) => {
     }
   }, [formData.howEnteringAmount, formData.CTCFrequency]);
 
+  useEffect(() => {
+    if (formData.monthlyCTCAmount) {
+      setFixedAllowanceItems((prevItems) => {
+        const updatedItems = [...prevItems];
+        updatedItems[0].monthly = formData.monthlyCTCAmount; // Update "Basic" monthly
+        return updatedItems;
+      });
+    }
+  }, [formData.monthlyCTCAmount]);
+
+  const [fixedAllowanceItems, setFixedAllowanceItems] = useState([
+    {
+      label: "Enter the Amount for Basic",
+      monthly: "",
+      yearly: "",
+    },
+    {
+      label: "Enter the Amount for Conveyance Allowance",
+      monthly: "",
+      yearly: "",
+    },
+    { label: "Enter the Amount for HRA", monthly: "", yearly: "" },
+    { label: "Enter the Amount for Medical", monthly: "", yearly: "" },
+    {
+      label: "Enter the Amount for Special Allowance",
+      monthly: "",
+      yearly: "",
+    },
+    { label: "Enter the Amount for Allowance", monthly: "", yearly: "" },
+  ]);
+  const [employerContributions, setEmployerContribution] = useState([
+    { label: "Employer PF Contribution", monthly: 0, yearly: 0 },
+    {
+      label: "Employer ESIC Contribution",
+      monthly: 0,
+      yearly: 0,
+    },
+    { label: "Employer LWF Contribution", monthly: 0, yearly: 0 },
+    { label: "Employer NPS Contribution", monthly: 0, yearly: 0 },
+  ]);
+  const [employeeDeduction, setEmployeeDeduction] = useState([
+    { label: "Employee PF Deduction", monthly: 0, yearly: 0 },
+    {
+      label: "Employee ESIC Deduction",
+      monthly: 0,
+      yearly: 0,
+    },
+    { label: "Employee LWF Deduction", monthly: 0, yearly: 0 },
+    { label: "Employee PT Deduction", monthly: 0, yearly: 0 },
+    { label: "Employee NPS Deduction", monthly: 0, yearly: 0 },
+  ]);
+
+  const totalMonthly = fixedAllowanceItems.reduce(
+    (sum, item) => sum + item.monthly,
+    0
+  );
+  const totalYearly = fixedAllowanceItems.reduce(
+    (sum, item) => sum + item.yearly,
+    0
+  );
+
+  const handleMonthlyChange = (index, value) => {
+    const updatedItems = [...fixedAllowanceItems];
+    updatedItems[index].monthly = Number(value);
+    updatedItems[index].yearly = Number(value) * 12;
+    setFixedAllowanceItems(updatedItems);
+  };
+  const handleYearlyChange = (index, value) => {
+    const updatedItems = [...fixedAllowanceItems];
+    updatedItems[index].yearly = Number(value);
+    updatedItems[index].monthly = Number(value) / 12;
+    setFixedAllowanceItems(updatedItems);
+  };
+
+  const outputData = [
+    {
+      description: "Total Take Home (excluding Variable)",
+      monthly: "₹0",
+      yearly: "₹0",
+    },
+    {
+      description: "Total CTC (excluding Variable & Other Benefits)",
+      monthly: "₹0",
+      yearly: "₹0",
+    },
+    {
+      description: "Total CTC (including Variable)",
+      yearly: "₹0",
+    },
+  ];
+  const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
+  const [taxStatFields, setTaxStatFields] = useState([]);
+  // const [statData, setStatData] = useState(
+  //   taxStatFields.reduce((acc, field) => {
+  //     acc[field.id] =
+  //       field.value_type === "boolean"
+  //         ? field.default_value === "true"
+  //         : field.default_value;
+  //     return acc;
+  //   }, {})
+  // );
+
+  const [statData, setStatData] = useState({});
+
+  useEffect(() => {
+    const fetchTaxStat = async () => {
+      try {
+        const res = await getTaxAndStatSetting(hrmsOrgId);
+        setTaxStatFields(res);
+        const initialStatData = res.reduce((acc, field) => {
+          acc[field.id] =
+            field.value_type === "boolean"
+              ? field.default_value === "true"
+              : field.default_value;
+          return acc;
+        }, {});
+
+        setStatData(initialStatData);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchTaxStat();
+  }, []);
+  // useEffect(() => {
+  //   const fetchTaxStat = async () => {
+  //     try {
+  //       const res = await getTaxAndStatSetting(hrmsOrgId);
+  //       setTaxStatFields(res);
+  //       const initialStatData = res.reduce((acc, field) => {
+  //         acc[field.id] =
+  //           field.value_type === "boolean"
+  //             ? field.default_value === "true"
+  //             : field.default_value;
+  //         return acc;
+  //       }, {});
+
+  //       setStatData(initialStatData);
+  //     } catch (error) {
+  //       console.log(error);
+  //     }
+  //   };
+  //   fetchTaxStat();
+  // }, []);
+
+  const handleStatChange = (id, event, valueType) => {
+    const updatedValue =
+      valueType === "boolean"
+        ? event.target.value === "true"
+        : event.target.value;
+    setStatData({
+      ...statData,
+      [id]: updatedValue,
+    });
+  };
+  console.log(formData);
+  const handlePostTaxStatutory = async () => {
+    const taxData = Object.entries(statData).map(([key, value]) => ({
+      employee: 1,
+      master_id: key,
+      value: String(value),
+    }));
+    try {
+      const res = await postTaxAndStatSetting(taxData);
+      setPage("CTC Components");
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const [ctcTemplates, setCTCTemplates] = useState([]);
+  const CTCTemplates = async () => {
+    try {
+      const res = await showCTCTemplates(hrmsOrgId);
+      setCTCTemplates(res);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(() => {
+    CTCTemplates();
+  }, []);
+
   return (
     <div className="flex w-full">
       {/* <AddEmployeeDetailsList /> */}
-      <div className="w-full p-6 bg-white rounded-lg">
-        <h2 className="border-b text-center text-xl border-black mb-6 font-bold mt-2">
+      <div className="w-full p-2 px-2 bg-white rounded-lg">
+        <h2 className="border-b text-center text-xl border-black  font-bold mt-2">
           Salary
         </h2>
-        <div className="w-full mt-10 p-5 border border-gray-300 rounded-md">
-          <h2 className="text-2xl font-semibold mb-4">Add New CTC</h2>
+        <div className="w-full mt-2 p-5 border border-gray-300 rounded-md">
+          <h2 className="text-2xl font-semibold mb-4">Add CTC</h2>
           <div className=" w-full my-2 flex  overflow-hidden flex-col">
             <div className="flex w-full">
               <div className=" flex gap-2 p-2 pb-0 border-b-2 border-gray-200 w-full">
@@ -295,16 +672,14 @@ const OnboardingSalary = ({ empId }) => {
                 <select
                   id="ctcTemplate"
                   value={formData.ctcTemplate}
-                  onChange={handleChange}
+                  onChange={handleCTCTemplateChange}
                   name="ctcTemplate"
                   className="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                 >
-                  <option value="" disabled>
-                    Select Template
-                  </option>
-                  <option value="template1">Template 1</option>
-                  <option value="template2">Template 2</option>
-                  <option value="template3">Template 3</option>
+                  <option value="">Select Template</option>
+                  {ctcTemplates.map((template) => (
+                    <option value={template.id}>{template.name}</option>
+                  ))}
                 </select>
               </div>
               <div className="mb-4">
@@ -462,379 +837,128 @@ const OnboardingSalary = ({ empId }) => {
             </div>
           )}
           {page === "Tax and Statutory Setting" && (
-            <div>
-              <div className="mb-4">
-                <label className="block text-gray-700 font-medium">
-                  PF Deduction <span className="text-red-500">*</span>
-                </label>
-                <div className="mt-2">
-                  <label className="inline-flex items-center">
-                    <input
-                      type="radio"
-                      name="pfDeduction"
-                      checked={taxData.pfDeduction === true}
-                      onChange={() =>
-                        setTaxData({ ...taxData, pfDeduction: true })
-                      }
-                      className="form-radio"
-                    />
-                    <span className="ml-2">Yes</span>
-                  </label>
-                  <label className="inline-flex items-center ml-6">
-                    <input
-                      type="radio"
-                      name="pfDeduction"
-                      checked={taxData.pfDeduction === false}
-                      onChange={() =>
-                        setTaxData({ ...taxData, pfDeduction: false })
-                      }
-                      className="form-radio"
-                    />
-                    <span className="ml-2">No</span>
-                  </label>
-                </div>
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 font-medium">
-                  Provident Pension Deduction{" "}
-                  <span className="text-red-500">*</span>
-                </label>
-                <div className="mt-2">
-                  <label className="inline-flex items-center">
-                    <input
-                      type="radio"
-                      name="providentPensionDeduction"
-                      checked={taxData.providentPension === true}
-                      onChange={() =>
-                        setTaxData({ ...taxData, providentPension: true })
-                      }
-                      className="form-radio"
-                    />
-                    <span className="ml-2">Yes</span>
-                  </label>
-                  <label className="inline-flex items-center ml-6">
-                    <input
-                      type="radio"
-                      name="providentPensionDeduction"
-                      checked={taxData.providentPension === false}
-                      onChange={() =>
-                        setTaxData({ ...taxData, providentPension: false })
-                      }
-                      className="form-radio"
-                    />
-                    <span className="ml-2">No</span>
-                  </label>
-                </div>
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 font-medium">
-                  Employee’s PF contribution capped at the PF Ceiling?{" "}
-                  <span className="text-red-500">*</span>
-                </label>
-                <div className="mt-2">
-                  <label className="inline-flex items-center">
-                    <input
-                      type="radio"
-                      name="employeePfCapped"
-                      checked={
-                        taxData.employeeProvidentContributionCapped === true
-                      }
-                      onChange={() =>
-                        setTaxData({
-                          ...taxData,
-                          employeeProvidentContributionCapped: true,
-                        })
-                      }
-                      className="form-radio"
-                    />
-                    <span className="ml-2">Yes</span>
-                  </label>
-                  <label className="inline-flex items-center ml-6">
-                    <input
-                      type="radio"
-                      name="employeePfCapped"
-                      checked={
-                        taxData.employeeProvidentContributionCapped === false
-                      }
-                      onChange={() =>
-                        setTaxData({
-                          ...taxData,
-                          employeeProvidentContributionCapped: false,
-                        })
-                      }
-                      className="form-radio"
-                    />
-                    <span className="ml-2">No</span>
-                  </label>
-                </div>
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 font-medium">
-                  Employer’s PF contribution capped at the PF Ceiling?{" "}
-                  <span className="text-red-500">*</span>
-                </label>
-                <div className="mt-2">
-                  <label className="inline-flex items-center">
-                    <input
-                      type="radio"
-                      name="employerPfCapped"
-                      checked={
-                        taxData.employerProvidentCOntributionCapped === true
-                      }
-                      onChange={() =>
-                        setTaxData({
-                          ...taxData,
-                          employerProvidentCOntributionCapped: true,
-                        })
-                      }
-                      className="form-radio"
-                    />
-                    <span className="ml-2">Yes</span>
-                  </label>
-                  <label className="inline-flex items-center ml-6">
-                    <input
-                      type="radio"
-                      name="employerPfCapped"
-                      checked={
-                        taxData.employerProvidentCOntributionCapped === false
-                      }
-                      onChange={() =>
-                        setTaxData({
-                          ...taxData,
-                          employerProvidentCOntributionCapped: false,
-                        })
-                      }
-                      className="form-radio"
-                    />
-                    <span className="ml-2">No</span>
-                  </label>
-                </div>
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 font-medium">
-                  Provident Fund Wage <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  name="fixedAmtForProvidentFundWage"
-                  className="w-full mt-2 p-2 border border-gray-300 rounded"
-                  placeholder="Leave blank for no amount"
-                  value={taxData.fixedAmtForProvidentFundWage}
-                  onChange={handleChangeTax}
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 font-medium">
-                  PF Template <span className="text-red-500">*</span>
-                </label>
-                <select
-                  name=""
-                  id=""
-                  onChange={handleChangeTax}
-                  value={taxData.pfTemplate}
-                  className="border border-gray-300 mt-1 rounded-md p-2 w-full"
-                >
-                  <option value="">Select PF Template</option>
-                  <option value="temp1">Temp 1</option>
-                  <option value="temp2">Temp 2</option>
-                </select>
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 font-medium">
-                  ESIC Deduction <span className="text-red-500">*</span>
-                </label>
-                <div className="mt-2">
-                  <label className="inline-flex items-center">
-                    <input
-                      type="radio"
-                      name="esicDeduction"
-                      checked={taxData.esicDeduction === true}
-                      onChange={() =>
-                        setTaxData({ ...taxData, esicDeduction: true })
-                      }
-                      className="form-radio"
-                    />
-                    <span className="ml-2">Yes</span>
-                  </label>
-                  <label className="inline-flex items-center ml-6">
-                    <input
-                      type="radio"
-                      name="esicDeduction"
-                      checked={taxData.esicDeduction === false}
-                      onChange={() =>
-                        setTaxData({ ...taxData, esicDeduction: false })
-                      }
-                      className="form-radio"
-                    />
-                    <span className="ml-2">No</span>
-                  </label>
-                </div>
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 font-medium">
-                  PT Deduction <span className="text-red-500">*</span>
-                </label>
-                <div className="mt-2">
-                  <label className="inline-flex items-center">
-                    <input
-                      type="radio"
-                      name="ptDeduction"
-                      checked={taxData.ptDeduction === true}
-                      onChange={() =>
-                        setTaxData({ ...taxData, ptDeduction: true })
-                      }
-                      className="form-radio"
-                    />
-                    <span className="ml-2">Yes</span>
-                  </label>
-                  <label className="inline-flex items-center ml-6">
-                    <input
-                      type="radio"
-                      name="ptDeduction"
-                      checked={taxData.ptDeduction === false}
-                      onChange={() =>
-                        setTaxData({ ...taxData, ptDeduction: false })
-                      }
-                      className="form-radio"
-                    />
-                    <span className="ml-2">No</span>
-                  </label>
-                </div>
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 font-medium">
-                  LWF Deduction <span className="text-red-500">*</span>
-                </label>
-                <div className="mt-2">
-                  <label className="inline-flex items-center">
-                    <input
-                      type="radio"
-                      name="lwfDeduction"
-                      checked={taxData.lwfDeduction === true}
-                      onChange={() =>
-                        setTaxData({ ...taxData, lwfDeduction: true })
-                      }
-                      className="form-radio"
-                    />
-                    <span className="ml-2">Yes</span>
-                  </label>
-                  <label className="inline-flex items-center ml-6">
-                    <input
-                      type="radio"
-                      name="lwfDeduction"
-                      checked={taxData.lwfDeduction === false}
-                      onChange={() =>
-                        setTaxData({ ...taxData, lwfDeduction: false })
-                      }
-                      className="form-radio"
-                    />
-                    <span className="ml-2">No</span>
-                  </label>
-                </div>
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 font-medium">
-                  Income Tax Deduction <span className="text-red-500">*</span>
-                </label>
-                <div className="mt-2">
-                  <label className="inline-flex items-center">
-                    <input
-                      type="radio"
-                      name="incomeTaxDeduction"
-                      checked={taxData.incomeTaxDeduction === true}
-                      onChange={() =>
-                        setTaxData({ ...taxData, incomeTaxDeduction: true })
-                      }
-                      className="form-radio"
-                    />
-                    <span className="ml-2">Yes</span>
-                  </label>
-                  <label className="inline-flex items-center ml-6">
-                    <input
-                      type="radio"
-                      name="incomeTaxDeduction"
-                      checked={taxData.incomeTaxDeduction === false}
-                      onChange={() =>
-                        setTaxData({ ...taxData, incomeTaxDeduction: false })
-                      }
-                      className="form-radio"
-                    />
-                    <span className="ml-2">No</span>
-                  </label>
-                </div>
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 font-medium">
-                  Gratuity Applicable <span className="text-red-400">*</span>
-                </label>
-                <div className="mt-2">
-                  <label className="inline-flex items-center">
-                    <input
-                      type="radio"
-                      name="gratuityApplicable"
-                      checked={taxData.gratuityApplicable === true}
-                      onChange={() =>
-                        setTaxData({ ...taxData, gratuityApplicable: true })
-                      }
-                      className="form-radio"
-                    />
-                    <span className="ml-2">Yes</span>
-                  </label>
-                  <label className="inline-flex items-center ml-6">
-                    <input
-                      type="radio"
-                      name="gratuityApplicable"
-                      checked={taxData.gratuityApplicable === false}
-                      onChange={() =>
-                        setTaxData({ ...taxData, gratuityApplicable: false })
-                      }
-                      className="form-radio"
-                    />
-                    <span className="ml-2">No</span>
-                  </label>
-                </div>
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 font-medium">
-                  NPS Deduction <span className="text-red-500">*</span>
-                </label>
-                <div className="mt-2">
-                  <label className="inline-flex items-center">
-                    <input
-                      type="radio"
-                      name="npsDeduction"
-                      checked={taxData.npsDeduction === true}
-                      onChange={() =>
-                        setTaxData({ ...taxData, npsDeduction: true })
-                      }
-                      className="form-radio"
-                    />
-                    <span className="ml-2">Yes</span>
-                  </label>
-                  <label className="inline-flex items-center ml-6">
-                    <input
-                      type="radio"
-                      name="npsDeduction"
-                      checked={taxData.npsDeduction === false}
-                      onChange={() =>
-                        setTaxData({ ...taxData, npsDeduction: false })
-                      }
-                      className="form-radio"
-                    />
-                    <span className="ml-2">No</span>
-                  </label>
-                </div>
-              </div>
-              <div className=" flex justify-center gap-2">
+            // <div>
+            //   {taxStatFields.map((field) => (
+            //     <div key={field.id} className="flex gap-2 flex-col my-2">
+            //       <label className="block text-gray-700 font-medium">
+            //         {field.label}
+            //       </label>
+            //       {field.value_type === "boolean" && (
+            //         <div className="flex gap-4 items-center">
+            //           <label className="flex gap-2">
+            //             <input
+            //               type="radio"
+            //               name={`boolean-${field.id}`}
+            //               value="true" // String "true"
+            //               checked={statData[field.id] === true} // Boolean check
+            //               onChange={(e) =>
+            //                 handleStatChange(field.id, e, "boolean")
+            //               }
+            //             />
+            //             Yes
+            //           </label>
+            //           <label className="flex gap-2">
+            //             <input
+            //               type="radio"
+            //               name={`boolean-${field.id}`}
+            //               value="false" // String "false"
+            //               checked={statData[field.id] === false} // Boolean check
+            //               onChange={(e) =>
+            //                 handleStatChange(field.id, e, "boolean")
+            //               }
+            //             />
+            //             No
+            //           </label>
+            //         </div>
+            //       )}
+            //       {field.value_type === "number" && (
+            //         <input
+            //           type="number"
+            //           value={statData[field.id]}
+            //           onChange={(e) => handleStatChange(field.id, e, "number")}
+            //           placeholder="Enter PF wage"
+            //           className="border w-full border-gray-500 p-2 rounded-md"
+            //         />
+            //       )}
+            //       {field.value_type === "string" && (
+            //         <input
+            //           type="text"
+            //           value={statData[field.id]}
+            //           onChange={(e) => handleStatChange(field.id, e, "string")}
+            //           placeholder="Enter text"
+            //           className="border w-full border-gray-500 p-2 rounded-md"
+            //         />
+            //       )}
+            //       {field.value_type === "drop down" && (
+            //         <select
+            //           name=""
+            //           id=""
+            //           value={statData[field.id]}
+            //           onChange={(e) => handleStatChange(field.id, e, "string")}
+            //           className="border w-full border-gray-500 p-2 rounded-md"
+            //         >
+            //           <option value="">Select Template</option>
+            //           <option value="temp">Template</option>
+            //         </select>
+            //       )}
+            //     </div>
+            //   ))}
+            // <div className="flex justify-center items-center ">
+            //   <button
+            //     style={{ background: themeColor }}
+            //     className="text-white p-2 rounded-md"
+            //     onClick={handlePostTaxStatutory}
+            //   >
+            //     Save & Proceed
+            //   </button>
+            // </div>
+            // </div>
+            <div className="mt-4">
+              {templateData.length > 0 ? (
+                templateData.map((item) => (
+                  <div key={item.id} className="mb-4">
+                    <p className="text-sm font-medium text-gray-700">
+                      {item.master_name}
+                    </p>
+                    <div className="flex items-center space-x-4 mt-2">
+                      <label className="flex items-center">
+                        <input
+                          type="radio"
+                          name={`option-${item.id}`}
+                          value="true"
+                          checked={item.value === "true"}
+                          readOnly
+                          disabled
+                          className="form-radio h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
+                        />
+                        <span className="ml-2 text-sm text-gray-700">Yes</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input
+                          type="radio"
+                          name={`option-${item.id}`}
+                          value="false"
+                          checked={item.value === "false"}
+                          readOnly
+                          disabled
+                          className="form-radio h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
+                        />
+                        <span className="ml-2 text-sm text-gray-700">No</span>
+                      </label>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-500 text-sm text-center my-4">
+                  Please Select CTC Template{" "}
+                </p>
+              )}
+
+              <div className="flex justify-center items-center ">
                 <button
-                  className=" text-gray-500 mb-2  font-medium py-2 px-4 rounded-md border-2 border-gray-500"
-                  onClick={() => setPage("General Info")}
-                >
-                  Back
-                </button>
-                <button
-                  className="bg-black text-white mb-2 hover:bg-gray-700 font-medium py-2 px-4 rounded-md"
-                  onClick={handleAddTaxStatutory}
+                  style={{ background: themeColor }}
+                  className="text-white p-2 rounded-md"
+                  onClick={() => setPage("CTC Components")}
                 >
                   Save & Proceed
                 </button>
@@ -843,231 +967,168 @@ const OnboardingSalary = ({ empId }) => {
           )}
           {page === "CTC Components" && (
             <div>
-              <div className="flex justify-between items-center ml-10">
-                <h2 className="text-lg font-semibold">Components</h2>
-                <p className="text-lg font-semibold ">
-                  &nbsp;&nbsp;&nbsp;&nbsp;Monthly
-                </p>
-                <p className="text-lg font-semibold mr-20">Yearly</p>
-              </div>
-              <div className="p-6 bg-white shadow-md rounded-md">
-                <div className="flex justify-between items-center">
-                  <h2 className="text-lg font-semibold">Fixed Allowance</h2>
-                  <p className="text-lg font-semibold ml-28 pl-24">₹{total}</p>
-                  <p className="text-lg font-semibold ml-28">₹{total * 12}</p>
-                  <button
-                    className="ml-4 text-blue-500 focus:outline-none"
-                    onClick={() => setIsOpen(!isOpen)}
-                  >
-                    {isOpen ? "∧" : "∨"}
-                  </button>
+              {/* <div className="w-full mx-auto p-4">
+                <div className="flex items-center mb-4">
+                  <h2 className="text-lg font-semibold w-1/2">Components</h2>
+                  <div className="flex w-1/2">
+                    <p className="text-lg font-semibold w-1/3 text-center">
+                      Monthly
+                    </p>
+                    <p className="text-lg font-semibold w-1/3 text-right">
+                      Yearly
+                    </p>
+                    <span className="w-1/3"></span>
+                  </div>
                 </div>
-                {isOpen && (
-                  <div className="mt-4 space-y-4 w-4/5">
-                    <hr />
-                    <div className="flex justify-between">
-                      <label className="text-gray-600">
-                        Enter the Amount for Basic
-                      </label>
-                      <input
-                        type="number"
-                        className="border w-20 border-gray-400 ml-4 p-2 rounded-md"
-                        value={basic}
-                        onChange={(e) => setBasic(parseInt(e.target.value))}
-                      />
-                      <p>{basic * 12}</p>
-                    </div>
-                    <div className="flex justify-between">
-                      <label className="text-gray-600">
-                        Enter the Amount for HRA
-                      </label>
-                      <input
-                        type="number"
-                        className="border w-20 border-gray-400 ml-4 p-2 rounded-md"
-                        value={hra}
-                        onChange={(e) => setHra(parseInt(e.target.value))}
-                      />
-                      <p>{hra * 12}</p>
-                    </div>
-                    <div className="flex justify-between">
-                      <label className="text-gray-600">
-                        Enter the Amount for Child Education
-                      </label>
-                      <input
-                        type="number"
-                        className="border w-20 border-gray-400 p-2 mr-14 rounded-md"
-                        value={childEducation}
-                        onChange={(e) =>
-                          setChildEducation(parseInt(e.target.value))
+                {formData.CTCFrequency === "Annually" && (
+                  <>
+                    <SalaryAccordionAnnually
+                      title="Fixed Allowance"
+                      items={fixedAllowanceItems}
+                      totalMonthly={totalMonthly}
+                      totalYearly={totalYearly}
+                      onYearlyChange={handleYearlyChange}
+                    />
+                  </>
+                )}
+
+                {formData.CTCFrequency === "monthly" && (
+                  <>
+                    <SalaryAccordion
+                      title="Fixed Allowance"
+                      items={fixedAllowanceItems}
+                      totalMonthly={totalMonthly}
+                      totalYearly={totalYearly}
+                      onMonthlyChange={handleMonthlyChange}
+                    />
+                  </>
+                )}
+
+              
+                <SalaryAccordion
+                  title="Total Employer Statutory Contributions"
+                  items={employerContributions}
+                  totalMonthly={0}
+                  totalYearly={0}
+                  showInput={false}
+                />
+
+                <SalaryAccordion
+                  title="Total Employee Statutory Deductions"
+                  items={employeeDeduction}
+                  totalMonthly={0}
+                  totalYearly={0}
+                  showInput={false}
+                />
+              </div> */}
+
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-green-100">
+                      <th className="border border-gray-300 p-2 text-left">
+                        Designation
+                      </th>
+                      <th className="border border-gray-300 p-2 text-center min-w-44">
+                        Monthly
+                      </th>
+                      <th className="border border-gray-300 p-2 text-center min-w-44">
+                        Annually
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Object.entries(salaryData).map(([key, value]) => (
+                      <tr
+                        key={key}
+                        className={
+                          key === "grossSalary" ||
+                          key === "netPayment" ||
+                          key === "CTC"
+                            ? "bg-red-100"
+                            : ""
                         }
-                      />
-                      <p>{childEducation * 12}</p>
-                    </div>
-                    <div className="flex justify-between">
-                      <label className="text-gray-600">
-                        Enter the Amount for Special
-                      </label>
-                      <input
-                        type="number"
-                        className="border w-20 border-gray-400 p-2 rounded-md"
-                        value={special}
-                        onChange={(e) => setSpecial(parseInt(e.target.value))}
-                      />
-                      <p>{special * 12}</p>
-                    </div>
-                  </div>
-                )}
-                {/* <div className="mt-4">
-               <p className="text-gray-600">Total Take Home (excluding Variable): ₹{total}</p>
-               <p className="text-gray-600">Total CTC (excluding Variable & Other Benefits): ₹{total}</p>
-               <p className="text-gray-600">Total CTC (including Variable): ₹{total}</p>
-             </div> */}
+                      >
+                        <td className="border border-gray-300 p-2 font-medium">
+                          {key === "EPF12"
+                            ? "EPF 12%"
+                            : key === "EPF13"
+                            ? "EPF 13%"
+                            : key === "HRA"
+                            ? "HRA"
+                            : key === "CTC"
+                            ? "CTC"
+                            : key.charAt(0).toUpperCase() +
+                              key
+                                .slice(1)
+                                .replace(/([A-Z])/g, " $1")
+                                .trim()}
+                        </td>
+                        <td className="border border-gray-300 p-2 text-right">
+                          {renderInputOrValue(
+                            key,
+                            true,
+                            key === "grossSalary" ||
+                              key === "netPayment" ||
+                              key === "CTC"
+                          )}
+                        </td>
+                        <td className="border border-gray-300 p-2 text-right">
+                          {renderInputOrValue(
+                            key,
+                            false,
+                            key === "grossSalary" ||
+                              key === "netPayment" ||
+                              key === "CTC"
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
 
-              <div className="p-6 bg-white shadow-md rounded-md">
-                <div className="flex justify-between items-center">
-                  <h2 className="text-lg font-semibold">
-                    Total Employer Statutory Contributions
-                  </h2>
-                  <p className="text-lg font-semibold ">₹0</p>
-                  <p className="text-lg font-semibold ml-28">₹0</p>
-                  <button
-                    className="ml-4 text-blue-500 focus:outline-none"
-                    onClick={() => setIsOpen1(!isOpen1)}
-                  >
-                    {isOpen1 ? "∧" : "∨"}
-                  </button>
-                </div>
-                {isOpen1 && (
-                  <div className="mt-4 space-y-4 w-4/5">
-                    <hr />
-                    <div className="flex justify-between">
-                      <label className="text-gray-600 ">
-                        Employer PF Contribution
-                      </label>
-                      <p className="ml-4">0</p>
-                      <p>0</p>
-                    </div>
-                    <div className="flex justify-between">
-                      <label className="text-gray-600">
-                        Employer ESIC Contribution
-                      </label>
-                      <p className="ml-1">0</p>
-                      <p>0</p>
-                    </div>
-                    <div className="flex justify-between">
-                      <label className="text-gray-600">
-                        Employer LWF Contribution
-                      </label>
-                      <p className="">0</p>
-                      <p>0</p>
-                    </div>
-                    <div className="flex justify-between">
-                      <label className="text-gray-600">
-                        Employer NPS Contribution
-                      </label>
-                      <p>0</p>
-                      <p>0</p>
-                    </div>
-                  </div>
-                )}
-              </div>
+              {/* <table className="w-full bg-gray-50 rounded-lg overflow-hidden">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="text-left p-3 font-semibold text-blue-500">
+                      Consolidated Output
+                    </th>
+                    <th className="text-right p-3 font-semibold text-gray-600">
+                      Monthly
+                    </th>
+                    <th className="text-right p-3 font-semibold text-gray-600">
+                      Yearly
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {outputData.map((row, index) => (
+                    <tr key={index} className="border-t border-gray-200">
+                      <td className="p-3 text-gray-700">{row.description}</td>
+                      <td className="p-3 text-right text-gray-700">
+                        {row.monthly || "-"}
+                      </td>
+                      <td className="p-3 text-right text-gray-700">
+                        {row.yearly}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table> */}
 
-              <div className="p-6 bg-white shadow-md rounded-md">
-                <div className="flex justify-between items-center">
-                  <h2 className="text-lg font-semibold">
-                    Total Employer Statutory Deductions
-                  </h2>
-                  <p className="text-lg font-semibold ml-4">₹0</p>
-                  <p className="text-lg font-semibold ml-28">₹0</p>
-                  <button
-                    className="ml-4 text-blue-500 focus:outline-none"
-                    onClick={() => setIsOpen2(!isOpen2)}
-                  >
-                    {isOpen2 ? "∧" : "∨"}
-                  </button>
-                </div>
-                {isOpen2 && (
-                  <div className="mt-4 space-y-4 w-4/5">
-                    <hr />
-                    <div className="flex justify-between">
-                      <label className="text-gray-600 ">
-                        Employer PF Contribution
-                      </label>
-                      <p className="ml-5">0</p>
-                      <p>0</p>
-                    </div>
-                    <div className="flex justify-between">
-                      <label className="text-gray-600">
-                        Employer ESIC Contribution
-                      </label>
-                      <p className="ml-1">0</p>
-                      <p>0</p>
-                    </div>
-                    <div className="flex justify-between">
-                      <label className="text-gray-600">
-                        Employer LWF Contribution
-                      </label>
-                      <p className="ml-1">0</p>
-                      <p>0</p>
-                    </div>
-                    <div className="flex justify-between">
-                      <label className="text-gray-600">
-                        Employer PT Contribution
-                      </label>
-                      <p className="ml-4">0</p>
-                      <p>0</p>
-                    </div>
-                    <div className="flex justify-between">
-                      <label className="text-gray-600">
-                        Employer NPS Contribution
-                      </label>
-                      <p className="ml-2">0</p>
-                      <p>0</p>
-                    </div>
-                  </div>
-                )}
-                {/* <div className="mt-4">
-                 <p className="text-gray-600">Total Take Home (excluding Variable): ₹{total}</p>
-                 <p className="text-gray-600">Total CTC (excluding Variable & Other Benefits): ₹{total}</p>
-                 <p className="text-gray-600">Total CTC (including Variable): ₹{total}</p>
-               </div> */}
-              </div>
-              <div className="mt-5 flex justify-between items-center">
-                <h2 className="text-lg font-semibold">Consolidated output</h2>
-                <p className="text-lg font-semibold ml-20">
-                  &nbsp;&nbsp;&nbsp;&nbsp;Monthly
-                </p>
-                <p className="text-lg font-semibold  pr-48">Yearly</p>
-              </div>
-              <div className="w-3/4">
-                <div className="mt-5  flex justify-between">
-                  <p className="text-gray-600">
-                    Total Take Home (excluding Variable)
-                  </p>
-                  <p className="ml-10">₹5000</p>
-                  <p>₹{5000 * 12}</p>
-                </div>
-                <div className="flex justify-between">
-                  <p className="text-gray-600">
-                    Total CTC (excluding Variable & Other Benefits)
-                  </p>
-                  <p className="mr-6">₹5000</p>
-                  <p>₹60000</p>
-                </div>
-                <div className="flex justify-between">
-                  <p className="text-gray-600">
-                    Total CTC (including Variable)
-                  </p>
-                  <p className="ml-24">₹4562</p>
-                  <p>₹{4562 * 12}</p>
-                </div>
-              </div>
               <div className="mt-10 flex justify-center gap-2">
-                <button className="bg-black text-white mb-2 hover:bg-gray-700 font-semibold py-2 px-4 rounded">
-                  Cancel
+                <button
+                  className=" text-gray-500 mb-2  font-medium py-2 px-4 rounded-md border-2 border-gray-500"
+                  onClick={() => setPage("Tax and Statutory Setting")}
+                >
+                  Back
                 </button>
-                <button className="bg-black text-white mb-2 hover:bg-gray-700 font-semibold py-2 px-4 rounded">
+                <button
+                  style={{ background: themeColor }}
+                  onClick={handleAddSalaryCTCComponent}
+                  className="bg-black text-white mb-2 hover:bg-gray-700 font-semibold py-2 px-4 rounded"
+                >
                   Save & Proceed
                 </button>
               </div>
