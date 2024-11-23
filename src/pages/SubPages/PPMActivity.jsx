@@ -10,6 +10,7 @@ import { BsEye } from "react-icons/bs";
 import AssetNav from "../../components/navbars/AssetNav";
 import Navbar from "../../components/Navbar";
 import { getItemInLocalStorage } from "../../utils/localStorage";
+import toast from "react-hot-toast";
 
 const PPMActivity = () => {
   const [ppms, setPPms] = useState([]);
@@ -31,8 +32,11 @@ const PPMActivity = () => {
     }
   };
   useEffect(() => {
+    toast.loading("Please wait");
     try {
       const fetchServicePPM = async () => {
+        toast.dismiss()
+      toast.success("PPM Checklist data fetched successfully");
         const ServicePPMResponse = await getAssetPPMList();
         const sortedPPMData = ServicePPMResponse.data.checklists.sort((a, b) => {
          
@@ -55,12 +59,12 @@ const PPMActivity = () => {
       cell: (row) => (
         <div className="flex items-center gap-4">
           {/* :assetId/:activityId */}
-          <Link to={`/asset/ppm-activity-details/${row.id}`}>
+          {/* <Link to={`/asset/ppm-activity-details/${row.id}`}>
                 <BsEye size={15} />
-              </Link>
-          {/* <Link to={`/services/edit-ppm/${row.id}`}>
-            <BiEdit size={15} />
-          </Link> */}
+              </Link> */}
+          <Link to={`/asset/edit-ppm/${row.id}`}>
+            <BsEye size={15} />
+          </Link>
         </div>
       ),
     },
@@ -91,8 +95,8 @@ const PPMActivity = () => {
     //   sortable: true,
     // },
     {
-      name: "No. Of Questions",
-      selector: (row) => row?.questions?.length,
+      name: "No. Of Groups",
+      selector: (row) => row?.groups?.length,
       sortable: true,
     },
     {

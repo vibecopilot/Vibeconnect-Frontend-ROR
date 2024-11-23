@@ -685,6 +685,16 @@ import FlexiCategory from "./pages/AdminHrms/FlexiBenefits/FlexiSettings/FlexiCa
 import PerformanceSettings from "./pages/AdminHrms/Performance/PerformanceSettings.jsx";
 import MilestoneTypeSettings from "./pages/AdminHrms/MilestoneTypeSettings.jsx";
 import AddExistingPolicy from "./pages/SubPages/AddExistingPolicy.jsx";
+import AddMasters from "./pages/SubPages/AddMasters.jsx";
+import EditMasters from "./pages/SubPages/EditMasters.jsx";
+import MasterDetails from "./pages/SubPages/MasterDetails.jsx";
+import PPMCalendar from "./pages/PPMCalendar.jsx";
+import CopyChecklist from "./pages/SubPages/CopyChecklist.jsx";
+import SiteOwner from "./pages/Setup/SiteOwner.jsx";
+import ChecklistGroupReading from "./pages/Setup/ChecklistGroupReading.jsx";
+import GDNPurpose from "./pages/Setup/GDNPurpose.jsx";
+import EditMasterChecklistSetup from "./pages/Setup/EditMasterChecklistSetup.jsx";
+import EditPPMChecklist from "./pages/SubPages/EditPPMChecklist.jsx";
 import MeterCategoryType from "./pages/Setup/MeterCategoryType/MeterCategoryType.jsx";
 import EditEmployee from "./pages/AdminHrms/EditEmployee.jsx";
 import EditEvent from "./pages/SubPages/EditEvent.jsx";
@@ -992,6 +1002,22 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <AddPPMActivity />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/asset/edit-ppm/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <EditPPMChecklist/>
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/assets/ppm-calendar"
+            element={
+              <ProtectedAdminRoutes>
+                <PPMCalendar/>
               </ProtectedAdminRoutes>
             }
           />
@@ -1731,6 +1757,14 @@ function App() {
             }
           />
           <Route
+            path="/admin/copy-checklist/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <CopyChecklist/>
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
             path="/services/edit-routine/:id"
             element={
               <ProtectedAdminRoutes>
@@ -1777,6 +1811,22 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <SupplierSetup />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/edit-master-checklist-setup/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <EditMasterChecklistSetup/>
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/gdn-purpose-setup"
+            element={
+              <ProtectedAdminRoutes>
+                <GDNPurpose/>
               </ProtectedAdminRoutes>
             }
           />
@@ -1895,6 +1945,22 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <AdminOutstationDetails />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/site-owner-setup"
+            element={
+              <ProtectedAdminRoutes>
+                <SiteOwner />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/checklist-group-reading-setup"
+            element={
+              <ProtectedAdminRoutes>
+                <ChecklistGroupReading />
               </ProtectedAdminRoutes>
             }
           />
@@ -2298,6 +2364,30 @@ function App() {
             }
           />
           {/* INventory */}
+          <Route
+            path="/admin/add-masters"
+            element={
+              <ProtectedAdminRoutes>
+                <AddMasters/>
+              </ProtectedAdminRoutes>
+            }
+          />
+           <Route
+            path="/admin/master-details/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <MasterDetails/>
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/edit-masters/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <EditMasters/>
+              </ProtectedAdminRoutes>
+            }
+          />
           <Route
             path="/admin/add-stock"
             element={
