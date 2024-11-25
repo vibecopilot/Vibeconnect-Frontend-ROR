@@ -104,6 +104,7 @@ const AddChecklist = () => {
       setFrequency(data.frequency);
       setStartDate(data.start_date);
       setEndDate(data.end_date);
+      setWeightage(data.weightage_enabled);
       setSections(
         data.groups.map((group) => ({
           group: group.group_id,
