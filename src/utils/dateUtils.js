@@ -96,7 +96,7 @@ export const formatTime = (dateTimeString) => {
 
 
 export const convertTo12HourFormat = (time) => {
-  const [hour, minute] = time.split(':');
+  const [hour, minute] = time?.split(':');
   const hourInt = parseInt(hour, 10);
   const period = hourInt >= 12 ? 'PM' : 'AM';
   const formattedHour = hourInt % 12 || 12; 
