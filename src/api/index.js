@@ -5177,10 +5177,10 @@ export const getRosterRecordDetails = async (shiftId) => {
     throw error;
   }
 };
-export const editRosterRecord = async (shiftId, data) => {
+export const editRosterRecord = async (data) => {
   try {
     const response = await HrmsAuth.put(
-      `/roster/roster-shift/${shiftId}/`,
+      `/roster/roster-shift/`,
       data
     );
     return response.data;

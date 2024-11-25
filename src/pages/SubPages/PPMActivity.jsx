@@ -16,7 +16,7 @@ const PPMActivity = () => {
   const [ppms, setPPms] = useState([]);
   const [searchPPMText, setSearchPPMCheck] = useState("");
   const [filteredPPMData, setFilteredPPMData] = useState([]);
-  const themeColor = useSelector((state)=>state.theme.color)
+  const themeColor = useSelector((state) => state.theme.color);
   const handlePPMSearch = (event) => {
     const searchValue = event.target.value;
     setSearchPPMCheck(searchValue);
@@ -28,20 +28,20 @@ const PPMActivity = () => {
       );
       setFilteredPPMData(filteredResults);
       console.log(filteredResults);
-      
     }
   };
   useEffect(() => {
     toast.loading("Please wait");
     try {
       const fetchServicePPM = async () => {
-        toast.dismiss()
-      toast.success("PPM Checklist data fetched successfully");
+        toast.dismiss();
+        toast.success("PPM Checklist data fetched successfully");
         const ServicePPMResponse = await getAssetPPMList();
-        const sortedPPMData = ServicePPMResponse.data.checklists.sort((a, b) => {
-         
-          return new Date(b.created_at) - new Date(a.created_at);
-        });
+        const sortedPPMData = ServicePPMResponse.data.checklists.sort(
+          (a, b) => {
+            return new Date(b.created_at) - new Date(a.created_at);
+          }
+        );
 
         setFilteredPPMData(sortedPPMData);
         setPPms(sortedPPMData);
@@ -52,7 +52,7 @@ const PPMActivity = () => {
       console.log(error);
     }
   }, []);
-  console.log(filteredPPMData)
+  console.log(filteredPPMData);
   const PPMColumn = [
     {
       name: "Action",
@@ -73,7 +73,7 @@ const PPMActivity = () => {
       selector: (row) => row.name,
       sortable: true,
     },
-  
+
     {
       name: "Start Date",
       selector: (row) => row.start_date,
@@ -103,7 +103,12 @@ const PPMActivity = () => {
       name: "Associations",
       selector: (row) => (
         <div>
-          <Link to={`/assets/associate-checklist/${row.id}`} className=" px-4 bg-green-400 text-white rounded-full">Associate</Link>
+          <Link
+            to={`/assets/associate-checklist/${row.id}`}
+            className=" px-4 bg-green-400 text-white rounded-full"
+          >
+            Associate
+          </Link>
         </div>
       ),
       sortable: true,
@@ -112,47 +117,46 @@ const PPMActivity = () => {
   const defaultImage = { index: 0, src: "" };
   let selectedImageSrc = defaultImage.src;
   let selectedImageIndex = defaultImage.index;
-const [selectedImage, setSelectedImage] = useState(defaultImage);
-const [selectedIndex, setSelectedIndex] = useState(null);
-const Get_Background = async () => {
-  try {
-    // const params = {
-    //   user_id: user_id,
-    // };
-    const user_id = getItemInLocalStorage("VIBEUSERID");
-    console.log(user_id);
-    const data = await getVibeBackground(user_id);
+  const [selectedImage, setSelectedImage] = useState(defaultImage);
+  const [selectedIndex, setSelectedIndex] = useState(null);
+  const Get_Background = async () => {
+    try {
+      // const params = {
+      //   user_id: user_id,
+      // };
+      const user_id = getItemInLocalStorage("VIBEUSERID");
+      console.log(user_id);
+      const data = await getVibeBackground(user_id);
 
-    if (data.success) {
-      console.log("success");
+      if (data.success) {
+        console.log("success");
 
-      console.log(data.data);
-      selectedImageSrc = API_URL + data.data.image;
+        console.log(data.data);
+        selectedImageSrc = API_URL + data.data.image;
 
-      
-      selectedImageIndex = data.data.index;
+        selectedImageIndex = data.data.index;
 
-      // Now, you can use selectedImageSrc and selectedImageIndex as needed
-      console.log("Received response:", data);
+        // Now, you can use selectedImageSrc and selectedImageIndex as needed
+        console.log("Received response:", data);
 
-      // For example, update state or perform any other actions
-      setSelectedImage(selectedImageSrc);
-      setSelectedIndex(selectedImageIndex);
-      console.log("Received selectedImageSrc:", selectedImageSrc);
-      console.log("Received selectedImageIndex:", selectedImageIndex);
-      console.log(selectedImage);
-      // dispatch(setBackground(selectedImageSrc));
-    } else {
-      console.log("Something went wrong");
+        // For example, update state or perform any other actions
+        setSelectedImage(selectedImageSrc);
+        setSelectedIndex(selectedImageIndex);
+        console.log("Received selectedImageSrc:", selectedImageSrc);
+        console.log("Received selectedImageIndex:", selectedImageIndex);
+        console.log(selectedImage);
+        // dispatch(setBackground(selectedImageSrc));
+      } else {
+        console.log("Something went wrong");
+      }
+    } catch (error) {
+      console.error("Error:", error);
     }
-  } catch (error) {
-    console.error("Error:", error);
-  }
-};
-useEffect(() => {
-  // Call the function to get the background image when the component mounts
-  Get_Background();
-}, []);
+  };
+  useEffect(() => {
+    // Call the function to get the background image when the component mounts
+    Get_Background();
+  }, []);
 
   return (
     <section
@@ -163,7 +167,7 @@ useEffect(() => {
     >
       <Navbar />
       <div className="p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
-        <AssetNav/>
+        <AssetNav />
         {/* {filter && (
               <div className="flex items-center justify-center gap-2">
                 <div>
@@ -206,14 +210,14 @@ useEffect(() => {
             onChange={handlePPMSearch}
           />
           <div className="flex flex-wrap gap-2">
-          <Link
-                  to={"/asset/add-asset-ppm"}
-                  style={{background: themeColor}}
-                  className="  rounded-lg flex font-semibold  items-center gap-2 text-white p-2 "
-                >
-                  <IoAddCircleOutline size={20} />
-                  Add
-                </Link>
+            <Link
+              to={"/asset/add-asset-ppm"}
+              style={{ background: themeColor }}
+              className="  rounded-lg flex font-semibold  items-center gap-2 text-white p-2 "
+            >
+              <IoAddCircleOutline size={20} />
+              Add
+            </Link>
             {/* <button
             className="text-lg font-semibold border-2 border-black px-4 p-1 flex gap-2 items-center rounded-md"
             onClick={() => setOmitColumn(!omitColumn)}
@@ -246,11 +250,8 @@ useEffect(() => {
           </div>
         </div>
         <Table columns={PPMColumn} data={filteredPPMData} />
-        
-     
       </div>
     </section>
-    
   );
 };
 
