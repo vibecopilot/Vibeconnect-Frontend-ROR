@@ -7,6 +7,7 @@ import Select from "react-select";
 import { useSelector } from "react-redux";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import {
+  getMyOrganization,
   getPaymentModeList,
   postEmployeeAddress,
   postEmployeeFamily,
@@ -109,8 +110,23 @@ const AddEmployee = () => {
   //   }
   // };
 
+  const [minAge, setMinAge] = useState("");
+  const fetchMyOrganization = async () => {
+    try {
+      const res = await getMyOrganization(hrmsOrgId);
+      setMinAge(res.minimum_age_required_for_joining);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchMyOrganization();
+  });
+
   const [disableNext, setDisableNext] = useState(true);
   const [disableSave, setDisableSave] = useState(false);
+
   const handleAddEmployee = async () => {
     if (!formData.firstName.trim()) {
       toast.error("First Name is required!");
@@ -140,6 +156,21 @@ const AddEmployee = () => {
       toast.error("Date of Birth is required!");
       return;
     }
+
+    const dob = new Date(formData.dob);
+    const today = new Date();
+    const age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = today.getMonth() - dob.getMonth();
+    const dayDiff = today.getDate() - dob.getDate();
+
+    const adjustedAge =
+      monthDiff > 0 || (monthDiff === 0 && dayDiff >= 0) ? age : age - 1;
+
+    if (adjustedAge < minAge) {
+      toast.error(`Employee must be at least ${minAge} years old.`);
+      return;
+    }
+
     if (!formData.paymentMode) {
       toast.error("Please select Payment mode");
       return;

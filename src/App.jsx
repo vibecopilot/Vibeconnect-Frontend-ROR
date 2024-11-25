@@ -704,6 +704,7 @@ import SetupSeat from "./pages/Setup/SetupSeat.jsx";
 import UserRoles from "./pages/AdminHrms/UserRoles.jsx";
 import OrganizationChart from "./pages/AdminHrms/OrganizationTree/OrganizationChart.jsx";
 import CTCGeneralSettingEdit from "./pages/AdminHrms/CTCGeneralSettingEdit.jsx";
+import TimeSheetRecord from "./pages/AdminHrms/TimeSheet/TimeSheetRecord.jsx";
 // new admin hrms
 
 function App() {
@@ -5704,6 +5705,14 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <ExpenseReport />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/timesheet-record"
+            element={
+              <ProtectedAdminRoutes>
+                <TimeSheetRecord />
               </ProtectedAdminRoutes>
             }
           />
