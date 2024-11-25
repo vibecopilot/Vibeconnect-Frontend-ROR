@@ -104,17 +104,22 @@ const AddPPMActivity = () => {
       setFrequency(data.frequency);
       setStartDate(data.start_date);
       setEndDate(data.end_date);
-      setAddNewQuestion(
-        data.questions.map((q) => ({
-          id: q.id,
-          name: q.name,
-          type: q.qtype,
-          options: [q.option1, q.option2, q.option3, q.option4],
-          value_types:[q.value_type1,q.value_type2,q.value_type3,q.value_type4],
-          question_mandatory:q.question_mandatory,
-          reading:q.reading,
-          showHelpText:q.help_text_enbled,
-          help_text:q.help_text
+      setSections(
+        data.groups.map((group) => ({
+          group: group.group_id,
+          questions: group.questions.map((q) => ({
+            name: q.name,
+            type: q.qtype,
+            options: [q.option1, q.option2, q.option3, q.option4],
+            value_types: [q.value_type1, q.value_type2, q.value_type3, q.value_type4],
+            question_mandatory: q.question_mandatory,
+            reading: q.reading,
+            showHelpText: q.help_text_enbled,
+            help_text: q.help_text,
+            rating: q.rating,
+            weightage: q.weightage,
+            image_for_question: [], // Assuming you need an empty array here
+          })),
         }))
       );
     };
@@ -246,7 +251,7 @@ const AddPPMActivity = () => {
     formData.append("checklist[ticket_enabled]",createTicket);
     formData.append("checklist[ticket_level_type]",ticketType);
     formData.append("checklist[category_id]",catid);
-    formData.append("checklist[assigned_to]",assignid);
+    formData.append("assigned_to",assignid);
 
     // Add supervisor IDs
     selectedOptionssupervisior.forEach((option) => {

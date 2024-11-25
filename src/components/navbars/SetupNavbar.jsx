@@ -54,8 +54,8 @@ const SetupNavbar = () => {
         {feat.includes("vendors") && ( <Link to={"/setup/supplier-setup"}className="hover:bg-white hover:text-black  p-2 rounded-lg ">Supplier</Link>)}
         {feat.includes("gatepass") && ( <Link to={"/setup/visitor-setup"}className="hover:bg-white hover:text-black  p-2 rounded-lg ">Visitor</Link>)}
         <Link to={"/admin/site-owner-setup"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">Site Owner</Link>
-        <Link to={"/admin/checklist-group-reading-setup"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">Checklist Group Reading</Link>
-        <Link to={"/admin/gdn-purpose-setup"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">GDN Purpose</Link>
+        {feat.includes("assets") && ( <Link to={"/admin/checklist-group-reading-setup"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">Checklist Group Reading</Link>)}
+       {feat.includes("assets") && ( <Link to={"/admin/gdn-purpose-setup"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">GDN Purpose</Link>)}
 
         {feat.includes("assets") && ( <Link to={"/setup/meter-category-type"}  className="hover:bg-white hover:text-black  p-2 rounded-lg ">Meter Category Type</Link>)}
       </ul>

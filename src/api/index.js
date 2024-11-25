@@ -1067,6 +1067,12 @@ export const deleteVehicleParking = async (id) =>
       token: token,
     },
   });
+  export const deleteQuestionChecklist = async (id,qid) =>
+    axiosInstance.delete(`/checklists/${id}/delete_question.json?question_id=${qid}`, {
+      params: {
+        token: token,
+      },
+    });
 
 export const getVehicleParkingDetails = async (id) =>
   axiosInstance.get(`/parking_configurations/${id}.json`, {
