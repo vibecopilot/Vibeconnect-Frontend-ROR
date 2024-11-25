@@ -307,7 +307,7 @@ const AddServicesChecklist = () => {
       const response = await postChecklist(formData);
       console.log(response);
       toast.success("New Checklist Created");
-      navigate("/assets/checklist");
+      navigate("/services/checklist");
     } catch (error) {
       console.error("Error:", error);
       toast.error("Failed to create checklist");

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { BiPlus } from "react-icons/bi";
 import { IoClose } from "react-icons/io5";
 import { getItemInLocalStorage } from "../../utils/localStorage";
-import { getChecklistDetails, getChecklistGroupReading, getGenericGroupAssetChecklist, getGenericSubGroupAssetChecklist, getHostList, getMasterChecklist, getSiteAsset, getVendors, postChecklist } from "../../api";
+import { getAssignedTo, getChecklistDetails, getChecklistGroupReading, getGenericGroupAssetChecklist, getGenericSubGroupAssetChecklist, getHostList, getMasterChecklist, getSiteAsset, getVendors, postChecklist } from "../../api";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import toast from "react-hot-toast";
@@ -14,6 +14,10 @@ import { FaTrash } from "react-icons/fa";
 import { useParams } from "react-router-dom";
 
 const CopyChecklist = () => {
+  const categories = getItemInLocalStorage("categories");
+  const [assignedUser, setAssignedUser] = useState([]);
+  const [catid,setcatid] =useState("");
+  const [assignid,setassignid] =useState("");
   const today = new Date().toISOString().split("T")[0];
   const { id } = useParams();
   const toDay = new Date();
@@ -34,10 +38,37 @@ const CopyChecklist = () => {
   const [endDate, setEndDate] = useState(formattedDate);
   const [lockOverdueTask, setLockOverdueTask] = useState("");
   const [suppliers, setSuppliers] = useState([]);
+  const [ticketType, setTicketType] = useState('Question');
 
+  // Handle radio button change
+  const handleTicketTypeChange = (event) => {
+    setTicketType(event.target.value);
+  };
   const handleLockOverdueTaskChange = (e) => {
     setLockOverdueTask(e.target.value);
   };
+  useEffect(() => {
+   
+
+    const fetchAssignedTo = async () => {
+      try {
+        const response = await getAssignedTo();
+        const supervisors = response.data.map((host) => ({
+          value: host.id, 
+          label: host.firstname +" "+ host.lastname, 
+        }));
+        setAssignedUser(response.data);
+        setOptionssupervisior(supervisors); 
+        console.log("users",response.data)
+      } catch (error) {
+        console.error("Error fetching assigned users:", error);
+      }
+    };
+
+   
+    fetchAssignedTo();
+    
+  }, []);
   useEffect(() => {
     const fetchSiteOwners = async () => {
       try {
@@ -141,7 +172,37 @@ const CopyChecklist = () => {
   const handleCronChange = (newCron) => {
     setCronExpression(newCron);
   };
- 
+  useEffect(() => {
+    const fetchServicesChecklistDetails = async () => {
+      const checklistDetailsResponse = await getChecklistDetails(masterid);
+      const data = checklistDetailsResponse.data;
+      console.log(data);
+      setName(data.name);
+      setFrequency(data.frequency);
+      setStartDate(data.start_date);
+      setEndDate(data.end_date);
+      setWeightage(data.weightage_enabled);
+      setSections(
+        data.groups.map((group) => ({
+          group: group.group_id,
+          questions: group.questions.map((q) => ({
+            name: q.name,
+            type: q.qtype,
+            options: [q.option1, q.option2, q.option3, q.option4],
+            value_types: [q.value_type1, q.value_type2, q.value_type3, q.value_type4],
+            question_mandatory: q.question_mandatory,
+            reading: q.reading,
+            showHelpText: q.help_text_enbled,
+            help_text: q.help_text,
+            rating: q.rating,
+            weightage: q.weightage,
+            image_for_question: [], // Assuming you need an empty array here
+          })),
+        }))
+      );
+    };
+    fetchServicesChecklistDetails();
+  }, [masterid]);
   useEffect(() => {
     const fetchServicesChecklistDetails = async () => {
       const checklistDetailsResponse = await getChecklistDetails(id);
@@ -151,10 +212,11 @@ const CopyChecklist = () => {
       setFrequency(data.frequency);
       setStartDate(data.start_date);
       setEndDate(data.end_date);
-      setsupplierid(data.supplier_id)
-      setLockOverdueTask(data.lock_overdue)
-      setCronExpression(data.checklist_cron.expression)
-      setWeightage(data.weightage_enabled)
+      setsupplierid(data.supplier_id);
+      setLockOverdueTask(data.lock_overdue);
+      setCronExpression(data?.checklist_cron?.expression || "0 0 * * *");
+      setCreateTicket(data.ticket_enabled);
+      setWeightage(data.weightage_enabled);
       setSelectedOptionssupervisior(
         data.supervisors?.map((sup) => ({
           value: sup,
@@ -163,7 +225,7 @@ const CopyChecklist = () => {
       );
       setSections(
         data.groups.map((group) => ({
-          group: group.group_id,
+          group: group.group_id ,
           questions: group.questions.map((q) => ({
             name: q.name,
             type: q.qtype,
@@ -231,7 +293,10 @@ const CopyChecklist = () => {
     formData.append("checklist[supplier_id]", supplierid);
     formData.append("checklist[lock_overdue]", lockOverdueTask === "true");
     formData.append("checklist[ctype]", "routine");
-  
+    formData.append("checklist[ticket_enabled]",createTicket);
+    formData.append("checklist[ticket_level_type]",ticketType);
+    formData.append("checklist[category_id]",catid);
+    formData.append("assigned_to",assignid);
     // Add supervisor IDs
     selectedOptionssupervisior.forEach((option) => {
       formData.append(`checklist[supervisior_id][]`, option.value);
@@ -476,52 +541,70 @@ const CopyChecklist = () => {
 {/* Show Checklist Level, Question Level, and Select Fields if Create Ticket is on */}
 {createTicket && (
           <div className="flex flex-col justify-center gap-1 mb-2">
-            {/* Radio Buttons */}
-            <div className="flex  gap-4 ">
-              
-              <div className="flex items-center mt-2">
-                <input
-                  type="radio"
-                  id="checklistLevel"
-                  name="ticketType"
-                  value="checklistLevel"
-                  className="mr-2"
-                />
-                <label htmlFor="checklistLevel">Checklist Level</label>
-              </div>
-              <div className="flex items-center mt-2">
-                <input
-                  type="radio"
-                  id="questionLevel"
-                  name="ticketType"
-                  value="questionLevel"
-                  className="mr-2"
-                />
-                <label htmlFor="questionLevel">Question Level</label>
-              </div>
-            </div>
-
-            {/* Select Fields */}
-            <div className="flex flex-col gap-1">
-              <label className="font-semibold">Select Assigned To</label>
-              <select className="border p-1 px-4 border-gray-500 rounded-md">
-                <option value="">Select Assigned To</option>
-                <option value="user1">User 1</option>
-                <option value="user2">User 2</option>
-                {/* Add more options as needed */}
-              </select>
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <label className="font-semibold">Select Category</label>
-              <select className="border p-1 px-4 border-gray-500 rounded-md">
-                <option value="">Select Category</option>
-                <option value="category1">Category 1</option>
-                <option value="category2">Category 2</option>
-                {/* Add more categories as needed */}
-              </select>
-            </div>
+          {/* Radio Buttons */}
+          <div className="flex  gap-4 ">
+            
+          <div className="flex items-center mt-2">
+      <input
+        type="radio"
+        id="checklist"
+        name="ticketType"
+        value="Checklist"
+        checked={ticketType === 'Checklist'}
+        onChange={handleTicketTypeChange}
+        className="mr-2"
+      />
+      <label htmlFor="checklist">Checklist Level</label>
+    </div>
+    <div className="flex items-center mt-2">
+      <input
+        type="radio"
+        id="question"
+        name="ticketType"
+        value="Question"
+        checked={ticketType === 'Question'}
+        onChange={handleTicketTypeChange}
+        className="mr-2"
+      />
+      <label htmlFor="question">Question Level</label>
+    </div>
           </div>
+
+          {/* Select Fields */}
+          <div className="flex flex-col gap-1">
+            <label className="font-semibold">Select Assigned To</label>
+            <select 
+            value={assignid}
+            onChange={(e) => setassignid(e.target.value)}
+            className="border p-1 px-4 border-gray-500 rounded-md">
+              <option value="">Select Assigned To</option>
+              {assignedUser?.map((assign) => (
+                  <option key={assign.id} value={assign.id}>
+                    {assign.firstname} {assign.lastname}
+                  </option>
+                ))}
+            </select>
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="font-semibold">Select Category</label>
+            <select 
+            value={catid}
+            onChange={(e) => setcatid(e.target.value)}
+            className="border p-1 px-4 border-gray-500 rounded-md">
+              <option value="">Select Category</option>
+              {categories?.map((category) => (
+                <option
+                  onClick={() => console.log("checking-category")}
+                  value={category.id}
+                  key={category.id}
+                >
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
         )}
       </div>
     </div>
