@@ -228,10 +228,10 @@ console.log(currentMonth)
                         </span>
                       </div>
                     </td>
-                    {weekDates.map((date, index) => {
+                    {weekDates?.map((date, index) => {
                       const shift = getShiftForDate(employee, date);
                       const isWeekend =
-                        date.getDay() === 0 || date.getDay() === 6;
+                        date?.getDay() === 0 || date?.getDay() === 6;
                       return (
                         <td key={index} className="border-none p-2 text-center">
                           {shift ? (
@@ -247,7 +247,7 @@ console.log(currentMonth)
                               <div>
                                 {/* {shift.shift_start_time} -{" "}
                                 {shift.shift_end_time} */}
-                                 {formatShiftTime(shift.shift_start_time, shift.shift_end_time)}
+                                 {formatShiftTime(shift?.shift_start_time, shift?.shift_end_time)}
                               </div>
                             </div>
                           ) : (
