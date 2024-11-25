@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import {
   Chart as ChartJS,
@@ -24,6 +24,8 @@ import { IoReload } from "react-icons/io5";
 import HighchartsReact from "highcharts-react-official";
 import EmployeeCount from "./HRMSHighChart/EmployeeCount";
 import DepartmentCount from "./HRMSHighChart/DepartmentCount";
+import { getMyOrganization } from "../../api";
+import { getItemInLocalStorage } from "../../utils/localStorage";
 
 ChartJS.register(
   ArcElement,
@@ -101,6 +103,20 @@ const HRMSDashboard = () => {
       },
     ],
   };
+  const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
+  const [orgName, setOrgName] = useState("");
+  const fetchMyOrganization = async () => {
+    try {
+      const res = await getMyOrganization(hrmsOrgId);
+      setOrgName(res.name);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(()=>{
+    fetchMyOrganization()
+  })
 
   return (
     <section className="flex ">
@@ -109,7 +125,7 @@ const HRMSDashboard = () => {
       <div className="p-2 w-full flex  overflow-hidden flex-col">
         <div className="bg-white flex justify-items-end  p-4 shadow-md absolute overflow-y-auto top-0 left-0 right-0">
           <h1 className="text-2xl font-bold pl-20 top-0 left-0 right-0">
-            Welcome To Logicon
+            Welcome To <span >{orgName}</span>
           </h1>
           {/* <div
             className="bg-white mt-1 text-black text-center font-semibold absolute right-32 border-r-4"

@@ -9,6 +9,7 @@ import RoasterShiftDetails from "./Components/RoasterShiftDetails";
 import { getRosterRecords } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import { formatShiftTime } from "../../utils/dateUtils";
+import AssignRosterShifts from "./Modals/AssignRosterShifts";
 
 const Roster = () => {
   const themeColor = useSelector((state) => state.theme.color);
@@ -35,7 +36,7 @@ const Roster = () => {
   }, []);
 
   const handleShiftClick = (employee, date, schedule) => {
-    console.log(schedule)
+    console.log(schedule);
     setSelectedShift({ employee, date, schedule });
   };
 
@@ -97,7 +98,8 @@ const Roster = () => {
       (record) => record.date === date.toISOString().split("T")[0]
     );
   };
-console.log(currentMonth)
+  console.log(currentMonth);
+  const [assignShifts, setAssignShifts] = useState(false)
   return (
     <div className="flex ">
       <AdminHRMS />
@@ -107,13 +109,16 @@ console.log(currentMonth)
           className="bg-blue-500 p-4 text-white rounded-md flex justify-between items-center"
         >
           <h1 className="text-2xl font-medium">Roster Record</h1>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
             <input
               className="border p-2 w-64 px-4 text-black rounded-md"
               type="month"
               value={currentMonth}
               onChange={(e) => setCurrentMonth(e.target.value)}
             />
+            <button className="bg-white p-2 rounded-md text-black font-medium" onClick={()=> setAssignShifts(true)}>
+              Assign Shifts
+            </button>
             {/* <button onClick={toggleModal} className="border p-2 rounded-md">
               Upload Records
             </button>
@@ -236,7 +241,9 @@ console.log(currentMonth)
                         <td key={index} className="border-none p-2 text-center">
                           {shift ? (
                             <div
-                              onClick={() => handleShiftClick(employee, shift, date)}
+                              onClick={() =>
+                                handleShiftClick(employee, shift, date)
+                              }
                               // title={isWeekend? "":""}
                               className={`rounded-md p-1 cursor-pointer transition duration-200 ${
                                 isWeekend
@@ -247,13 +254,18 @@ console.log(currentMonth)
                               <div>
                                 {/* {shift.shift_start_time} -{" "}
                                 {shift.shift_end_time} */}
-                                 {formatShiftTime(shift?.shift_start_time, shift?.shift_end_time)}
+                                {formatShiftTime(
+                                  shift?.shift_start_time,
+                                  shift?.shift_end_time
+                                )}
                               </div>
                             </div>
                           ) : (
                             <div
                               title="No Shift Assigned"
-                              onClick={() => handleShiftClick(employee, shift, date)}
+                              onClick={() =>
+                                handleShiftClick(employee, shift, date)
+                              }
                               className="bg-gray-100 cursor-pointer text-gray-500 rounded-md p-1 hover:bg-gray-200 transition duration-200"
                             >
                               NOT ASSIGNED
@@ -387,6 +399,7 @@ console.log(currentMonth)
           fetchRosterRecords={fetchRosterRecords}
         />
       )}
+      {assignShifts && <AssignRosterShifts onClose={()=> setAssignShifts(false)} fetchRosterRecords={fetchRosterRecords} />}
     </div>
   );
 };
