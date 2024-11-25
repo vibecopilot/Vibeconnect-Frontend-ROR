@@ -3,7 +3,7 @@ import { BiEdit, BiPlus } from "react-icons/bi";
 import { IoClose } from "react-icons/io5";
 import { CloseCircle, CloseOutline } from "react-ionicons";
 import { getItemInLocalStorage } from "../../utils/localStorage";
-import { editChecklist, getAssignedTo, getChecklistDetails, getChecklistGroupReading, getHostList, getMasterChecklist, getSiteAsset, getVendors, postChecklist } from "../../api";
+import { deleteQuestionChecklist, editChecklist, getAssignedTo, getChecklistDetails, getChecklistGroupReading, getHostList, getMasterChecklist, getSiteAsset, getVendors, postChecklist } from "../../api";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import toast from "react-hot-toast";
@@ -130,18 +130,18 @@ const EditMasterChecklistSetup = () => {
     
     questions: [
       {
-        name: "", type: "", options: ["", "", "", ""], value_types: ["", "", "", ""],
+        id:"",name: "", type: "", options: ["", "", "", ""], value_types: ["", "", "", ""],
         question_mandatory: false, reading: false, help_text: "", showHelpText: false,image_for_question:[],
-        weightage:"",rating:false
+        weightage:"",rating:false,_destroy: "0"
       }
     ],
   },]);
 
   const addSection = () => {
     setSections([...sections, { group: '', questions: [{
-      name: "", type: "", options: ["", "", "", ""], value_types: ["", "", "", ""],
+      id:"",name: "", type: "", options: ["", "", "", ""], value_types: ["", "", "", ""],
       question_mandatory: false, reading: false, help_text: "", showHelpText: false,image_for_question:[],
-      weightage:"",rating:false
+      weightage:"",rating:false,_destroy: "0"
     }] }]);
   };
 
@@ -156,14 +156,33 @@ const EditMasterChecklistSetup = () => {
     updatedSections[sectionIndex].questions.push({
       name: "", type: "", options: ["", "", "", ""], value_types: ["", "", "", ""],
       question_mandatory: false, reading: false, help_text: "", showHelpText: false,
-      image_for_question:[],weightage:"",rating:false
+      image_for_question:[],weightage:"",rating:false, _destroy: "0"
     });
     setSections(updatedSections);
   };
 
+  const handleDeleteQuestion = async (id, questionId) => {
+    try {
+      // Call the deleteQuestionChecklist API
+      await deleteQuestionChecklist(id, questionId);
+      console.log("Question deleted successfully");
+    } catch (error) {
+      console.error("Failed to delete question:", error);
+    }
+  };
+
   const removeQuestion = (sectionIndex, questionIndex) => {
     const updatedSections = [...sections];
-    updatedSections[sectionIndex].questions.splice(questionIndex, 1);
+    const question = updatedSections[sectionIndex].questions[questionIndex];
+  
+    if (question.id) {
+      // Mark for soft deletion
+      updatedSections[sectionIndex].questions[questionIndex]._destroy = "1";
+    } else {
+      // Remove the question entirely for new entries
+      updatedSections[sectionIndex].questions.splice(questionIndex, 1);
+    }
+  
     setSections(updatedSections);
   };
 
@@ -220,12 +239,13 @@ const EditMasterChecklistSetup = () => {
       setFrequency(data.frequency);
       setStartDate(data.start_date);
       setEndDate(data.end_date);
-      setsupplierid(data.supplier_id)
-      setLockOverdueTask(data.lock_overdue)
-      // setallowedmin(data.grace_period)
-      // setextensionmin(data.grace_period_unit)
+      setsupplierid(data.supplier_id);
+      setLockOverdueTask(data.lock_overdue);
+      setTicketType(data.ticket_level_type);
+      setassignid(data.assigned_to);
+      setCreateTicket(data.ticket_enabled);
       setCronExpression(data?.checklist_cron?.expression || "0 0 * * *");
-      setWeightage(data.weightage_enabled)
+      setWeightage(data.weightage_enabled);
       setSelectedOptionssupervisior(
         data.supervisors?.map((sup) => ({
           value: sup,
@@ -236,6 +256,7 @@ const EditMasterChecklistSetup = () => {
         data.groups.map((group) => ({
           group: group.group_id,
           questions: group.questions.map((q) => ({
+            id:q.id,
             name: q.name,
             type: q.qtype,
             options: [q.option1, q.option2, q.option3, q.option4],
@@ -304,7 +325,7 @@ const EditMasterChecklistSetup = () => {
     // formData.append("checklist[grace_period_unit]", convertedExtensionMinutes);
     // formData.append("checklist[supplier_id]", supplierid);
     // formData.append("checklist[lock_overdue]", lockOverdueTask === "true");
-    formData.append("checklist[ctype]", "routine");
+    formData.append("checklist[ctype]", "master");
     formData.append("checklist[ticket_enabled]",createTicket);
     formData.append("checklist[ticket_level_type]",ticketType);
     formData.append("checklist[category_id]",catid);
@@ -324,6 +345,9 @@ const EditMasterChecklistSetup = () => {
       formData.append(`groups[][group]`, section.group);
   
       section.questions.forEach((q, questionIndex) => {
+        if (q.id) {
+        formData.append(`groups[][questions][][id]`, q.id);
+        }
         formData.append(`groups[][questions][][name]`, q.name);
         formData.append(`groups[][questions][][type]`, q.type);
         formData.append(`groups[][questions][][reading]`, q.reading);
@@ -344,6 +368,12 @@ const EditMasterChecklistSetup = () => {
             q.value_types[optionIndex] || ""
           );
         });
+        if (q._destroy) {
+          formData.append(
+            `groups[][questions][][_destroy]`,
+            q._destroy
+          );
+        }
   
         // Handle file uploads for each question
         if (q.image_for_question && q.image_for_question.length > 0) {
@@ -472,7 +502,7 @@ const EditMasterChecklistSetup = () => {
       <div className="m-2">
         <h2 style={{ background: themeColor }} className="text-center text-xl font-bold p-2  rounded-full text-white">
          
-          {isEditing ? " Edit Master  Checklist" : "Master Checklist Details"}
+          {isEditing ? " Edit  Checklist" : "Master Checklist Details"}
         </h2>
         <div className="md:mx-20 my-5 mb-10 sm:border border-gray-400 p-5 px-10 rounded-lg sm:shadow-xl">
         <div className="flex justify-end">
@@ -728,7 +758,7 @@ const EditMasterChecklistSetup = () => {
           {/* Section Header */}
           <div className="flex justify-between">
           <div className="flex flex-col gap-1 mb-4 w-full">
-            <label className="font-semibold">Group</label>
+            <label className="font-semibold">Group {sectionIndex+1}</label>
             <select
               value={section.group}
               className={`border p-1 px-4 border-gray-500 rounded-md ${
@@ -757,7 +787,9 @@ const EditMasterChecklistSetup = () => {
           </div>
 
           {/* Questions */}
-          {section.questions.map((question, questionIndex) => (
+          {section.questions
+          .filter((que) => que._destroy !== "1")
+          .map((question, questionIndex) => (
             <div key={questionIndex} className="">
               <div className="grid gap-4">
               <input
@@ -999,7 +1031,10 @@ const EditMasterChecklistSetup = () => {
               <button
                                         className="p-1 border-2 border-red-500 text-white hover:bg-white hover:text-red-500 bg-red-500 px-4 transition-all duration-300 rounded-md "
 
-                onClick={() => removeQuestion(sectionIndex, questionIndex)}
+                                        onClick={async () => {
+                                          await handleDeleteQuestion(id, question.id); // Delete the question via API
+                                          removeQuestion(sectionIndex, questionIndex); // Update the UI after deletion
+                                        }}
               >
                 <IoClose/>
               </button>
@@ -1024,26 +1059,19 @@ const EditMasterChecklistSetup = () => {
       </button>
     </div>
     </div>
-            {/* <h2 className="border-b-2 border-black text font-medium">
-                      Schedules
-                    </h2> */}
-            
-       {/* <h2 className="border-b-2 border-black text font-medium">
-                      Cron Setting
-                    </h2>
-                    <div className="my-2 border-2 border-dashed flex items-center p-2 rounded-md border-gray-300">
+           
+         
       
-      <Cron value={cronExpression} setValue={handleCronChange} 
-      disabled={!isEditing}
-      className={`${!isEditing ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-      />
-      
-    </div> */}
-            <div className="flex justify-center">
-              <button onClick={handleSubmit} className="bg-black text-white p-2 px-4 rounded-md font-medium">
-                Save
-              </button>
-            </div>
+    {isEditing ? (
+
+<div className="flex justify-center">
+  <button onClick={handleSubmit} className="bg-black text-white p-2 px-4 rounded-md font-medium">
+    Save
+  </button>
+</div>
+):(
+<div></div>
+)}
           </div>
         </div>
       </div>

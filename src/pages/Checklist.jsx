@@ -72,7 +72,7 @@ const Checklist = () => {
       // Create an anchor element for the download
       const link = document.createElement("a");
       link.href = downloadUrl;
-      link.download = "export_checklist.xlsx"; // Name of the downloaded file
+      link.download = "sample_format_checklist.xlsx"; // Name of the downloaded file
       link.click();
 
       // Clean up the URL object
