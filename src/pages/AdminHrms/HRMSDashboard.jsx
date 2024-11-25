@@ -114,9 +114,9 @@ const HRMSDashboard = () => {
     }
   };
 
-  useEffect(()=>{
-    fetchMyOrganization()
-  })
+  useEffect(() => {
+    fetchMyOrganization();
+  });
 
   return (
     <section className="flex ">
@@ -125,7 +125,7 @@ const HRMSDashboard = () => {
       <div className="p-2 w-full flex  overflow-hidden flex-col">
         <div className="bg-white flex justify-items-end  p-4 shadow-md absolute overflow-y-auto top-0 left-0 right-0">
           <h1 className="text-2xl font-bold pl-20 top-0 left-0 right-0">
-            Welcome To <span >{orgName}</span>
+            Welcome To <span>{orgName}</span>
           </h1>
           {/* <div
             className="bg-white mt-1 text-black text-center font-semibold absolute right-32 border-r-4"

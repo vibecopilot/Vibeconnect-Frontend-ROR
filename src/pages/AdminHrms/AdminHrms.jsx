@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { HiMenuAlt3 } from "react-icons/hi";
 import { HiCheck } from "react-icons/hi";
-import { FaBuilding, FaRegFileAlt, FaUserTie } from "react-icons/fa";
+import { FaBuilding, FaRegFileAlt, FaTasks, FaUserTie } from "react-icons/fa";
 import { useNavigate, NavLink, useLocation } from "react-router-dom";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import {
@@ -51,6 +51,7 @@ const AdminHRMS = () => {
   const [ispayOpen, setIspayOpen] = useState(false);
   const [isRosterOpen, setIsRosterOpen] = useState(false);
   const [isExpenseOpen, setIsExpenseOpen] = useState(false);
+  const [isTimeSheetOpen, setIsTimeSheetOpen] = useState(false);
   const navigate = useNavigate();
   const themeColor = useSelector((state) => state.theme.color);
 
@@ -66,6 +67,9 @@ const AdminHRMS = () => {
   };
   const toggleExpenseMenu = () => {
     setIsExpenseOpen(!isExpenseOpen);
+  };
+  const toggleTimeSheetMenu = () => {
+    setIsTimeSheetOpen(!isTimeSheetOpen);
   };
 
   useEffect(() => {
@@ -1469,6 +1473,57 @@ const AdminHRMS = () => {
                     Settings
                   </h2>
                 </NavLink>
+              </div>
+            )}
+            <div
+              onClick={toggleTimeSheetMenu}
+              className="cursor-pointer flex items-center text-sm gap-3 font-medium p-2 "
+            >
+              <div>{React.createElement(FaTasks, { size: "20" })}</div>
+              <h2
+                className={`whitespace-pre duration-300 ${
+                  !open && "opacity-0 translate-x-28 overflow-hidden"
+                }`}
+              >
+                Time Sheet
+              </h2>
+              <div className="ml-auto">
+                {isTimeSheetOpen
+                  ? React.createElement(MdExpandLess, { size: "20" })
+                  : React.createElement(MdExpandMore, { size: "20" })}
+              </div>
+            </div>
+            {isTimeSheetOpen && (
+              <div className="flex flex-col gap-2 ">
+                <NavLink
+                  to="/timesheet-record"
+                  className={({ isActive }) =>
+                    `${
+                      isActive
+                        ? "text-black bg-white flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                        : "group flex items-center text-sm gap-3.5 font-medium p-2 "
+                    }`
+                  }
+                >
+                  <div>
+                    {React.createElement(BiSolidReport, { size: "20" })}
+                  </div>
+                  <h2
+                    className={`whitespace-pre duration-300 ${
+                      !open && "opacity-0 translate-x-28 overflow-hidden"
+                    }`}
+                  >
+                    Records
+                  </h2>
+                  <h2
+                    className={`${
+                      open && "hidden"
+                    } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+                  >
+                    Records
+                  </h2>
+                </NavLink>
+                
               </div>
             )}
 
