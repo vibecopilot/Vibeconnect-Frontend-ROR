@@ -151,7 +151,7 @@ const AssociateAssetChecklist = () => {
       toast.success("Checklist Associated");
       setAdded(true);
       
-
+      setAssets([])
       setSelectedOption([])
       setSelectedUserOption([])
     } catch (error) {
@@ -212,6 +212,7 @@ const AssociateAssetChecklist = () => {
               noOptionsMessage={() => "No Assets Available"}
               //   maxMenuHeight={90}
               placeholder="Select Assets"
+              value={selectedOption} 
              
             />
            </div>
@@ -284,6 +285,7 @@ const AssociateAssetChecklist = () => {
               options={assignedTo}
               noOptionsMessage={() => "No Users Available"}
               placeholder="Select Users"
+              value={selectedUserOption}
             />
           </div>
           <div>
