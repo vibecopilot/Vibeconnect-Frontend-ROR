@@ -247,7 +247,7 @@ const AddPPMActivity = () => {
     formData.append("checklist[grace_period_unit]", convertedExtensionMinutes);
     formData.append("checklist[supplier_id]", supplierid);
     formData.append("checklist[lock_overdue]", lockOverdueTask === "true");
-    formData.append("checklist[ctype]", "routine");
+    formData.append("checklist[ctype]", "ppm");
     formData.append("checklist[ticket_enabled]",createTicket);
     formData.append("checklist[ticket_level_type]",ticketType);
     formData.append("checklist[category_id]",catid);
