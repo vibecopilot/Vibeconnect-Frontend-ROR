@@ -104,7 +104,8 @@ const AssociatedSites = () => {
     country: "",
     latitude: "",
     longitude: "",
-    status: true
+    status: true,
+    radius: "",
   });
   const [siteId, setSiteId] = useState("");
   const handleEditModal = async (siteID) => {
@@ -123,7 +124,8 @@ const AssociatedSites = () => {
         latitude: res.latitude,
         longitude: res.longitude,
         pinCode: res.zip_code,
-        status: res.status
+        status: res.status,
+        radius: res?.radius,
       });
     } catch (error) {
       console.log(error);
@@ -181,6 +183,7 @@ const AssociatedSites = () => {
     postData.append("country", formData.country);
     postData.append("latitude", formData.latitude);
     postData.append("longitude", formData.longitude);
+    postData.append("radius", formData.radius);
     postData.append("status", true);
     postData.append("organization", hrmsOrgId);
 
@@ -244,6 +247,7 @@ const AssociatedSites = () => {
     editData.append("country", siteDetails.country);
     editData.append("latitude", siteDetails.latitude);
     editData.append("longitude", siteDetails.longitude);
+    editData.append("radius", siteDetails.radius);
     editData.append("status", siteDetails.status);
     editData.append("organization", hrmsOrgId);
 
@@ -257,6 +261,20 @@ const AssociatedSites = () => {
     }
   };
 
+  const [searchText, setSearchText] = useState("");
+  const handleSearch = (e) => {
+    const searchValue = e.target.value;
+    setSearchText(searchValue);
+    if (searchValue.trim() === "") {
+      setFilteredSites(associatedSites);
+    } else {
+      const filteredResults = associatedSites.filter((role) =>
+        role?.site_name.toLowerCase().includes(searchValue.toLowerCase())
+      );
+      setFilteredSites(filteredResults);
+    }
+  };
+
   return (
     <section className="flex ml-20">
       <OrganisationSetting />
@@ -266,8 +284,8 @@ const AssociatedSites = () => {
             type="text"
             placeholder="Search by name"
             className="border border-gray-400 w-full placeholder:text-sm rounded-md p-2"
-            // value={searchText}
-            // onChange={handleSearch}
+            value={searchText}
+            onChange={handleSearch}
           />
           <button
             onClick={() => setIsModalOpen1(true)}
@@ -280,7 +298,7 @@ const AssociatedSites = () => {
         </div>
         <Table columns={columns} data={filteredSites} isPagination={true} />
       </div>
-      <div className="my-4 mx-2 w-fit">
+      {/* <div className="my-4 mx-2 w-fit">
         <div className="flex flex-col  bg-gray-50 rounded-md text-wrap  gap-4 my-2 py-2 pl-5 pr-2 w-[18rem]">
           <div className="flex  gap-4 font-medium">
             <GrHelpBook size={20} />
@@ -342,7 +360,7 @@ const AssociatedSites = () => {
             </ul>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex z-10 justify-center items-center">
@@ -353,18 +371,25 @@ const AssociatedSites = () => {
               </h2>
             </div>
             <div className="max-h-96 overflow-y-auto hide-scrollbar">
-            <div className="flex justify-between items-center gap-1 border-b py-2">
-                  <label htmlFor="" className="font-medium">
-                    Active/Inactive :
-                  </label>
-                  {/* <div className="flex items-center gap-2">
+              <div className="flex justify-between items-center gap-1 border-b py-2">
+                <label htmlFor="" className="font-medium">
+                  Active/Inactive :
+                </label>
+                {/* <div className="flex items-center gap-2">
 
                  <p>Inactive</p> */}
-                 <Switch checked={siteDetails.status} onChange={()=> setSiteDetails({...siteDetails, status: !siteDetails.status})}/>
-                 {/* <p>Active</p> */}
-                  {/* </div> */}
-
-                </div>
+                <Switch
+                  checked={siteDetails.status}
+                  onChange={() =>
+                    setSiteDetails({
+                      ...siteDetails,
+                      status: !siteDetails.status,
+                    })
+                  }
+                />
+                {/* <p>Active</p> */}
+                {/* </div> */}
+              </div>
               <div className="flex flex-col gap-1 ">
                 <label htmlFor="" className="font-medium">
                   Site name <span className="text-red-500">*</span>
@@ -493,7 +518,20 @@ const AssociatedSites = () => {
                     placeholder="Longitude"
                   />
                 </div>
-               
+                <div className="flex flex-col gap-1">
+                  <label htmlFor="" className="font-medium">
+                    Radius
+                  </label>
+                  <input
+                    type="text"
+                    name="radius"
+                    value={siteDetails.radius}
+                    onChange={handleEditChange}
+                    id=""
+                    className="border border-gray-400 rounded-md p-2"
+                    placeholder="radius"
+                  />
+                </div>
               </div>
             </div>
             <div className="flex justify-center gap-2 my-2 border-t p-1">
@@ -515,7 +553,7 @@ const AssociatedSites = () => {
       )}
       {isModalOpen1 && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex z-10 justify-center items-center">
-          <div className="bg-white p-5 rounded-md shadow-xl w-[30rem]">
+          <div className="bg-white p-5 rounded-md shadow-xl w-[32rem]">
             <div className="flex justify-center border-b">
               <h2 className="text-xl font-semibold mb-2 flex items-center gap-2 text-center ">
                 <PiPlusCircleFill /> Add Associated Sites
@@ -648,6 +686,20 @@ const AssociatedSites = () => {
                     id=""
                     className="border border-gray-400 rounded-md p-2"
                     placeholder="Longitude"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label htmlFor="" className="font-medium">
+                    Radius
+                  </label>
+                  <input
+                    type="text"
+                    name="radius"
+                    value={siteDetails.radius}
+                    onChange={handleEditChange}
+                    id=""
+                    className="border border-gray-400 rounded-md p-2"
+                    placeholder="Radius"
                   />
                 </div>
               </div>

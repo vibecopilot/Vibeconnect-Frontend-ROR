@@ -318,7 +318,7 @@ const [jobInfoId, setJobInfoId] = useState("")
   const [jobInfo, setJobInfo] = useState([]);
   const fetchJobInfo = async () => {
     try {
-      const res = await getEmployeeJobInfo(hrmsOrgId);
+      const res = await getEmployeeJobInfo(id);
       setJobInfo(res);
     } catch (error) {
       console.log(error);
@@ -586,7 +586,7 @@ const [jobInfoId, setJobInfoId] = useState("")
             }
           />
 
-          <Accordion
+          {/* <Accordion
             title={"Employment Status"}
             icon={FaFileCircleCheck}
             content={
@@ -603,7 +603,7 @@ const [jobInfoId, setJobInfoId] = useState("")
                 <Table columns={column} data={data} isPagination={true} />
               </>
             }
-          />
+          /> */}
 
           <Accordion
             title={"Job Information"}

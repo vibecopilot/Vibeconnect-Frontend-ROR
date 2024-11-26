@@ -4442,7 +4442,7 @@ export const getEmployeeRegularizationReq = async (orgId) => {
 };
 export const postRegularizationApproval = async (approvalId, data) => {
   try {
-    const response = await HrmsAuth.post(
+    const response = await HrmsAuth.patch(
       `/attendance/regularization/requests/status/${approvalId}/`,
       data
       // {
@@ -6267,10 +6267,10 @@ export const putAssociatedSiteDetails = async (siteId, data) => {
     throw error;
   }
 };
-export const getEmployeeJobInfo = async (orgId) => {
+export const getEmployeeJobInfo = async (empId) => {
   try {
     const response = await HrmsAuth.get(
-      `/associated-organization/?organization_id=${orgId}`,
+      `/associated-organization/?employee_id=${empId}`,
 
       {
         headers: {
@@ -6421,6 +6421,57 @@ export const getOrganizationTreeChart = async (orgId) => {
     return response.data;
   } catch (error) {
     console.error("Error getting organization tree", error);
+    throw error;
+  }
+};
+export const getApprovalAuthorities = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/approver-settings/?organization_id=${orgId}`,
+
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting approval authorities", error);
+    throw error;
+  }
+};
+export const postApprovalAuthorities = async (data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/approver-settings/`,data,
+
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting approval authorities", error);
+    throw error;
+  }
+};
+export const editApprovalAuthoritiesStatus = async (approverID,data) => {
+  try {
+    const response = await HrmsAuth.patch(
+      `/approver-settings/${approverID}/`,data,
+
+      // {
+      //   headers: {
+      //     "Content-Type": "multipart/form-data/",
+      //   },
+      // }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting approval authorities", error);
     throw error;
   }
 };
