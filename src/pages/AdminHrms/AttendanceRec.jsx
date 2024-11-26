@@ -204,7 +204,7 @@ const AttendanceRec = () => {
                 type="month"
                 onChange={handleMonthChange}
               />
-              <select className="border p-2 text-black w-48 rounded">
+              {/* <select className="border p-2 text-black w-48 rounded">
                 <option value="">Action</option>
                 <option value="">Bulk Regularization</option>
                 <option value="">Bulk Delete</option>
@@ -227,7 +227,7 @@ const AttendanceRec = () => {
               <label className="text-white" htmlFor="">
                 Multiselect
               </label>
-              <ToggleSwitch />
+              <ToggleSwitch /> */}
             </div>
           </header>
         </div>

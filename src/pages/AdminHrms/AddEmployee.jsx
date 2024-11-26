@@ -429,7 +429,7 @@ const AddEmployee = () => {
               </div>
               <div className="grid gap-2 items-center w-full">
                 <label className="block text-sm font-medium text-gray-700">
-                  Blood Group <span className="text-red-400">*</span>
+                  Blood Group 
                 </label>
                 <select
                   className="border border-gray-400 p-2 rounded-md"
