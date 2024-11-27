@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import Table from "../../components/table/Table";
 import { Link } from "react-router-dom";
@@ -6,48 +6,77 @@ import { PiPlusCircle } from "react-icons/pi";
 import { useSelector } from "react-redux";
 import { BsEye } from "react-icons/bs";
 import { FaTrash } from "react-icons/fa";
+import { getItemInLocalStorage } from "../../utils/localStorage";
+import { getMyHRMSEmployees, getMyHRMSEmployeesAllData } from "../../api";
+import toast from "react-hot-toast";
+import { dateFormatSTD } from "../../utils/dateUtils";
 
 const OnBoardingCompleted = () => {
+  const [employees, setEmployees] = useState([]);
+  const [filteredEmployees, setFilteredEmployees] = useState([]);
+  const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
+  const fetchAllEmployees = async () => {
+    try {
+      toast.loading("Loading employees Please wait!");
+      const res = await getMyHRMSEmployees(hrmsOrgId);
+      const sortedEmployees = res.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+      setEmployees(sortedEmployees);
+      setFilteredEmployees(sortedEmployees);
+      toast.dismiss();
+    } catch (error) {
+      console.log(error);
+      toast.error("Something went wrong");
+    }
+  };
+  useEffect(() => {
+    fetchAllEmployees();
+  }, []);
   const columns = [
     {
-      name: "Employee Name",
-      selector: (row) => row.Location,
-      sortable: true,
-    },
-    {
-      name: "Joining Date",
-      selector: (row) => row.Label,
-      sortable: true,
-    },
-    {
-      name: "Onboarding Status",
-      selector: (row) => row.City,
-      sortable: true,
-    },
-    {
-      name: "Onboarding Checklist",
-      selector: (row) => row.State,
-      sortable: true,
-    },
-    {
-      name: "Portal Activation",
-      selector: (row) => row.Country,
-      sortable: true,
-    },
-    {
-      name: "Action",
+      name: "View",
       selector: (row) => (
-        <div className="flex gap-2">
-          <button className="">
+        <div>
+          <Link to={"/admin/edit-employee/basics"}>
             <BsEye />
-          </button>
-          <button className="text-red-400">
-            <FaTrash />
-          </button>
+          </Link>
         </div>
       ),
+    },
+    {
+      name: "Employee Id",
+      selector: (row) => row.id,
       sortable: true,
     },
+    {
+      name: "Employee Name",
+      selector: (row) => row.first_name,
+      sortable: true,
+    },
+    {
+      name: "Status",
+      selector: (row) => row.approval_status,
+      sortable: true,
+    },
+    {
+      name: "Registered on",
+      selector: (row) => dateFormatSTD(row.created_date),
+      sortable: true,
+    },
+
+    // {
+    //   name: "Action",
+    //   selector: (row) => (
+    //     <div className="flex gap-2">
+    //       <button className="bg-green-400 text-white rounded-full p-1 px-4" onClick={()=>handleGrantApproval(row.id, "approve")}>
+    //         <FaCheck />
+    //       </button>
+    //       <button className="bg-red-400 text-white rounded-full p-1 px-4" onClick={()=>handleGrantApproval(row.id, "reject")}>
+    //         <MdClose size={20} />
+    //       </button>
+    //     </div>
+    //   ),
+    //   sortable: true,
+    // },
   ];
 
   const data = [
@@ -85,7 +114,7 @@ const OnBoardingCompleted = () => {
             </Link>
           </div>
         </div>
-        <Table columns={columns} data={data} isPagination={true} />
+        <Table columns={columns} data={filteredEmployees} isPagination={true} />
       </div>
     </section>
   );

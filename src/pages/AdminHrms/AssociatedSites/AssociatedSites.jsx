@@ -53,6 +53,11 @@ const AssociatedSites = () => {
   };
   const columns = [
     {
+      name: "Site Id",
+      selector: (row) => row.id,
+      sortable: true,
+    },
+    {
       name: "Name",
       selector: (row) => row.site_name,
       sortable: true,
