@@ -104,6 +104,7 @@ const Login = () => {
       setItemInLocalStorage("COMPANYID", CompanyId);
       // setItemInLocalStorage("HRMSORGID", 4);
       setItemInLocalStorage("HRMSORGID", 1);
+      setItemInLocalStorage("APPROVERID", 11);
       // console.log(userType)
 
       const statuses = response.data.statuses;

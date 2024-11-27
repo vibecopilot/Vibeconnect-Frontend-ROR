@@ -106,3 +106,16 @@ export const convertTo12HourFormat = (time) => {
 export const formatShiftTime = (shiftStartTime, shiftEndTime) => {
   return `${convertTo12HourFormat(shiftStartTime)} - ${convertTo12HourFormat(shiftEndTime)}`;
 };
+
+
+export const dateFormatSTD = (dateString) => {
+  const date = new Date(dateString);
+
+  // Extract day, month, and year
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0'); // Month is 0-based
+  const year = String(date.getFullYear()).slice(-2); // Get last 2 digits of the year
+
+  // Return formatted date
+  return `${day}/${month}/${year}`;
+};

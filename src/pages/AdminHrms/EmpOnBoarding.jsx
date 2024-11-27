@@ -92,7 +92,7 @@ const EmpOnboarding = () => {
   return (
     <div className="flex ml-20">
       <AdminHRMS />
-      <div className="flex flex-col w-full p-6 bg-white rounded-lg shadow-lg">
+      <div className="flex flex-col w-full p-6 bg-white rounded-lg ">
         <div className="mb-4">
           <h2 className="text-xl font-semibold">Onboarding</h2>
         </div>
