@@ -136,7 +136,7 @@ const EditEmployeeDirectory = () => {
                 ref={inputRef}
                 onChange={handleImageChange}
                 style={{ display: "none" }}
-                 accept="image/*"
+                accept="image/*"
               />
             </div>
             <div className="w-full">

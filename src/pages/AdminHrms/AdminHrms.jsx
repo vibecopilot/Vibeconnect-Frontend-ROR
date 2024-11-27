@@ -33,6 +33,7 @@ import { RiSettings3Line } from "react-icons/ri";
 import { FaMoneyBills, FaMoneyBillWheat } from "react-icons/fa6";
 import { BiSolidReport } from "react-icons/bi";
 import { GrDocumentPerformance } from "react-icons/gr";
+import { GiClothes } from "react-icons/gi";
 import { BsFillFileEarmarkSpreadsheetFill } from "react-icons/bs";
 import {
   TbAlertSquareFilled,
@@ -730,6 +731,32 @@ const AdminHRMS = () => {
                       } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
                     >
                       Onboarding
+                    </h2>
+                  </NavLink>
+                  <NavLink
+                    to="/admin/uniform-applications/"
+                    className={({ isActive }) =>
+                      `${
+                        isActive
+                          ? "text-black bg-white flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                          : "group flex items-center text-sm gap-3.5 font-medium p-2 "
+                      }`
+                    }
+                  >
+                    <div>{React.createElement(GiClothes, { size: "20" })}</div>
+                    <h2
+                      className={`whitespace-pre duration-300 ${
+                        !open && "opacity-0 translate-x-28 overflow-hidden"
+                      }`}
+                    >
+                      Uniform Applications
+                    </h2>
+                    <h2
+                      className={`${
+                        open && "hidden"
+                      } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+                    >
+                      Uniform Applications
                     </h2>
                   </NavLink>
                   {/* <NavLink
@@ -1523,7 +1550,6 @@ const AdminHRMS = () => {
                     Records
                   </h2>
                 </NavLink>
-                
               </div>
             )}
 

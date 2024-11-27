@@ -4225,6 +4225,41 @@ export const postEmployeePaymentInfo = async (data) => {
     throw error;
   }
 };
+export const getPaymentInfoDetails = async (paymentInfoId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/employee/payment-information/${paymentInfoId}/`,
+
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error adding employee payment Info:", error);
+    throw error;
+  }
+};
+export const editPaymentInfoDetails = async (paymentInfoId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/employee/payment-information/${paymentInfoId}/`,
+      data,
+
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error adding employee payment Info:", error);
+    throw error;
+  }
+};
 export const getEmployeePaymentInfo = async (empId) => {
   try {
     const response = await HrmsAuth.get(
@@ -6541,13 +6576,95 @@ export const postApproveOrRejectEmployee = async (notificationId, data) => {
   try {
     const response = await HrmsAuth.patch(
       `/approve-reject/${notificationId}/`,
-      data,
-
-      
+      data
     );
     return response.data;
   } catch (error) {
     console.error("Error granting approval", error);
+    throw error;
+  }
+};
+export const hrmsEmployeeLogin = async (data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/employee-login/`,
+      data,
+
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting request", error);
+    throw error;
+  }
+};
+export const postUniformRequest = async (data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/employee-uniform/request/`,
+      data,
+
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting request", error);
+    throw error;
+  }
+};
+export const getUniformRequest = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `employee-uniform/request/?organization_id=${orgId}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting info", error);
+    throw error;
+  }
+};
+export const getUniformRequestDetails = async (reqID) => {
+  try {
+    const response = await HrmsAuth.get(
+      `employee-uniform/request/${reqID}/`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting info", error);
+    throw error;
+  }
+};
+export const postUniformApproval = async (approvalId, data) => {
+  try {
+    const response = await HrmsAuth.patch(
+      `/employee-uniform/request/${approvalId}/`,data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting approvalId", error);
     throw error;
   }
 };
