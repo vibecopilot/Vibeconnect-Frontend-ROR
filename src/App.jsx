@@ -705,6 +705,9 @@ import UserRoles from "./pages/AdminHrms/UserRoles.jsx";
 import OrganizationChart from "./pages/AdminHrms/OrganizationTree/OrganizationChart.jsx";
 import CTCGeneralSettingEdit from "./pages/AdminHrms/CTCGeneralSettingEdit.jsx";
 import TimeSheetRecord from "./pages/AdminHrms/TimeSheet/TimeSheetRecord.jsx";
+import EmployeesSetup from "./pages/AdminHrms/EmployeesSetup.jsx";
+import UniformApplication from "./pages/AdminHrms/UniformApplication.jsx";
+
 // new admin hrms
 
 function App() {
@@ -6147,6 +6150,14 @@ function App() {
             }
           />
           <Route
+            path="/admin/employee-directory-setup/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <EmployeesSetup />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
             path="/admin/add-employee/Employment"
             element={
               <ProtectedAdminRoutes>
@@ -6223,6 +6234,14 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <CTCGeneralSetting />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/uniform-applications/"
+            element={
+              <ProtectedAdminRoutes>
+                <UniformApplication />
               </ProtectedAdminRoutes>
             }
           />
