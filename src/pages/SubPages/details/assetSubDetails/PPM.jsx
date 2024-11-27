@@ -268,9 +268,17 @@ const PPM = () => {
                         (submission, subIndex) =>
                           submission && (
                             <div key={submission.id} className="my-2">
+                              <div className="flex gap-4 items-center bg-purple-100 mb-2 p-2 rounded-md">
+                                <p className="font-medium">
+                                  Group Name:
+                                </p>
+                                <p>
+                                  {submission.question?.group_name || "No Group"}
+                                </p>
+                              </div>
                               <div className="flex gap-4 items-center bg-green-100 mb-2 p-2 rounded-md">
                                 <p className="font-medium">
-                                  Question {subIndex + 1}:
+                                  Question :
                                 </p>
                                 <p>
                                   {submission.question?.name || "No Question"}
