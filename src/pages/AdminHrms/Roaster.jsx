@@ -10,6 +10,7 @@ import { getRosterRecords } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import { formatShiftTime } from "../../utils/dateUtils";
 import AssignRosterShifts from "./Modals/AssignRosterShifts";
+import { Pagination } from "antd";
 
 const Roster = () => {
   const themeColor = useSelector((state) => state.theme.color);
@@ -23,17 +24,7 @@ const Roster = () => {
   const [selectedShift, setSelectedShift] = useState(null);
 
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
-  const fetchRosterRecords = async () => {
-    try {
-      const res = await getRosterRecords(hrmsOrgId);
-      setEmployees(res.results);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-  useEffect(() => {
-    fetchRosterRecords();
-  }, []);
+ 
 
   const handleShiftClick = (employee, date, schedule) => {
     console.log(schedule);
@@ -100,10 +91,35 @@ const Roster = () => {
   };
   console.log(currentMonth);
   const [assignShifts, setAssignShifts] = useState(false)
+  const [rosterCount, setRosterCount] = useState("");
+  const [pageNumber, setPageNumber] = useState(1);
+  const fetchRosterRecords = async (page) => {
+    try {
+      const res = await getRosterRecords(hrmsOrgId, page);
+      setEmployees(res.results);
+      setRosterCount(res.count)
+      setPageNumber(page);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(() => {
+    fetchRosterRecords(pageNumber);
+  }, []);
+
+  const handlePageChange = (page) => {
+    setPageNumber(page); 
+    fetchRosterRecords(page); 
+  };
+
+  const capitalize = (string) => {
+    if (!string) return ""; // Handle empty or undefined strings
+    return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+  };
   return (
     <div className="flex ">
       <AdminHRMS />
-      <div className="ml-20  bg-gray-100 p-2 w-full px-6">
+      <div className="ml-20  bg-gray-100 p-2 w-full px-4">
         <header
           style={{ background: themeColor }}
           className="bg-blue-500 p-4 text-white rounded-md flex justify-between items-center"
@@ -223,12 +239,12 @@ const Roster = () => {
                       <div className="flex items-center space-x-2">
                         <div
                           style={{ background: themeColor }}
-                          className="w-10 h-10 rounded-full flex items-center justify-center text-white font-medium"
+                          className="min-w-10 min-h-10 rounded-full flex items-center justify-center text-white font-medium"
                         >
-                          {employee.first_name[0]}
-                          {employee.last_name[0]}
+                         {capitalize(employee.first_name[0])}
+                         {capitalize(employee.last_name[0])}
                         </div>
-                        <span>
+                        <span className="text-sm font-medium">
                           {employee.first_name} {employee.last_name}
                         </span>
                       </div>
@@ -279,6 +295,15 @@ const Roster = () => {
               </tbody>
             </table>
           </div>
+        </div>
+          <div className="flex justify-end mb-10 my-4">
+          <Pagination
+            showSizeChanger={false}
+            current={pageNumber}
+            total={rosterCount}
+            pageSize={10}
+            onChange={handlePageChange}
+          />
         </div>
         {/* Modal */}
         {isModalOpen && (

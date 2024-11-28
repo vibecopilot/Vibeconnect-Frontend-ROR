@@ -49,7 +49,7 @@ const OnBoardingCompleted = () => {
     },
     {
       name: "Employee Name",
-      selector: (row) => row.first_name,
+      selector: (row) => row.employee_name,
       sortable: true,
     },
     {
