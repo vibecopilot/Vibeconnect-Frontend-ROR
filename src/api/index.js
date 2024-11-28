@@ -5201,10 +5201,11 @@ export const editRosterShiftDetails = async (shiftId, data) => {
     throw error;
   }
 };
-export const getRosterRecords = async (orgId) => {
+export const getRosterRecords = async (orgId, page) => {
   try {
     const response = await HrmsAuth.get(
-      `/roster-shift-list/?organization_id=${orgId}`
+      `/roster-shift-list/?organization_id=${orgId}&page=${page}`
+      // `/roster-shift-list/?organization_id=${orgId}`
     );
     return response.data;
   } catch (error) {
