@@ -38,6 +38,7 @@ const MyWorkSpace = () => {
           (record) => record.checkIn === "Check-In"
         );
         return checkIn ? checkIn.time : "N/A";
+        
       },
       sortable: true,
     },
@@ -51,6 +52,7 @@ const MyWorkSpace = () => {
         return checkOut ? checkOut.time : "N/A";
       },
       sortable: true,
+      
     },
     {
       name: "Working Hrs",
@@ -208,7 +210,6 @@ const MyWorkSpace = () => {
     };
     const imageBlob = dataURItoBlob(employeeImage);
     postAttendance.append("user_image", imageBlob);
-
     try {
       const response = await markEmployeeAttendance(postAttendance);
       // alert("Attendance marked successfully!");

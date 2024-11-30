@@ -423,13 +423,13 @@ const Roster = () => {
           date={selectedShift.date}
           schedule={selectedShift.schedule}
           onClose={() => setSelectedShift(null)}
-          fetchRosterRecords={fetchRosterRecords}
+          fetchRosterRecords={()=>fetchRosterRecords(pageNumber)}
         />
       )}
       {assignShifts && (
         <AssignRosterShifts
           onClose={() => setAssignShifts(false)}
-          fetchRosterRecords={fetchRosterRecords}
+          fetchRosterRecords={()=>fetchRosterRecords(pageNumber)}
         />
       )}
     </div>
