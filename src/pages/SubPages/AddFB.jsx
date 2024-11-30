@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import { restaurantSchedule } from "../../utils/initialFormData";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import { useNavigate } from "react-router-dom";
+import { FaTrash } from "react-icons/fa";
 const AddFB = () => {
   const [rows, setRows] = useState([]);
   const addRow = () => {
@@ -41,9 +42,9 @@ const AddFB = () => {
     bookingNotAllowedText: "",
     gst: "",
     deliveryCharge: "",
+    ServiceCharges:"",
     minimumOrder: "",
     orderNotAllowedText: "",
-    service_charge: "",
     cover_image: [],
     menu: [],
     gallery: [],
@@ -208,7 +209,7 @@ const AddFB = () => {
     // postData.append("food_and_beverage[closing_message]", formData.orderNotAllowedText);
     postData.append(
       "food_and_beverage[serviceCharges]",
-      formData.service_charge
+      formData.ServiceCharges
     );
 
     Object.keys(formData.restaurantBook).forEach((day) => {
@@ -685,12 +686,14 @@ const AddFB = () => {
             <button
               onClick={addRow}
               className="px-4 py-2 border border-blue-500 rounded bg-blue-500 text-white hover:bg-blue-600"
+              style={{ background: themeColor }}
             >
               Add
             </button>
 
             {rows.map((row, index) => (
-              <div key={index}>
+              <div key={index} className="mb-2 flex gap-4">
+                <div>
                 <input
                   type="checkbox"
                   checked={row.order}
@@ -702,7 +705,9 @@ const AddFB = () => {
                 />
                 &nbsp;&nbsp;
                 <label>Order</label>
+                </div>
                 &nbsp;&nbsp;
+                <div>
                 <input
                   type="checkbox"
                   checked={row.booking}
@@ -714,10 +719,12 @@ const AddFB = () => {
                 />
                 &nbsp;&nbsp;
                 <label>Booking</label>
+                </div>
                 &nbsp;&nbsp;
+                <label htmlFor="">Start Date:</label>
                 <input
                   type="date"
-                  className="border border-gray-400 p-2 rounded-md"
+                  className="border border-gray-400 p-1 rounded-md"
                   value={row.date}
                   onChange={(e) => {
                     const newRows = [...rows];
@@ -725,12 +732,23 @@ const AddFB = () => {
                     setRows(newRows);
                   }}
                 />
+                <label htmlFor="">End Date:</label>
+                <input
+                  type="date"
+                  className="border border-gray-400 p-1 rounded-md"
+                  // value={row.date}
+                  // onChange={(e) => {
+                  //   const newRows = [...rows];
+                  //   newRows[index].date = e.target.value;
+                  //   setRows(newRows);
+                  // }}
+                />
                 &nbsp;
                 <button
                   onClick={() => deleteRow(index)}
-                  className="px-4 py-2 border border-red-500 rounded bg-red-500 text-white hover:bg-blue-600"
+                  className=""
                 >
-                  Delete
+                  <FaTrash size={15}/>
                 </button>
               </div>
             ))}
@@ -741,6 +759,34 @@ const AddFB = () => {
             TABLE BOOKING
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div className="col-span-1">
+              <label htmlFor="" className="block text-gray-700 font-bold mb-2">Number of Tables</label>
+              <input type="text" className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="Enter Tables"/>
+            </div>
+            <div className="col-span-1">
+              <label htmlFor="" className="block text-gray-700 font-bold mb-2">Start Date</label>
+              <input type="date" className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="Start time"/>
+            </div>
+            <div className="col-span-1">
+              <label htmlFor="" className="block text-gray-700 font-bold mb-2">End Date</label>
+              <input type="date" className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="End time"/>
+            </div>
+            <div className="col-span-1">
+              <label htmlFor="" className="block text-gray-700 font-bold mb-2">Start Time</label>
+              <input type="time" className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="Start time"/>
+            </div>
+            <div className="col-span-1">
+              <label htmlFor="" className="block text-gray-700 font-bold mb-2">End Time</label>
+              <input type="time" className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="End time"/>
+            </div>
+            <div className="col-span-1">
+              <label htmlFor="" className="block text-gray-700 font-bold mb-2">Booking Capacity</label>
+              <input type="text" className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="Enter Booking Capacity"/>
+            </div>
+            <div className="col-span-1">
+              <label htmlFor="" className="block text-gray-700 font-bold mb-2">Waiting Capacity</label>
+              <input type="text" className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="Enter Waiting Capacity"/>
+            </div>
             <div className="col-span-1">
               <label
                 className="block text-gray-700 font-bold mb-2"
@@ -797,7 +843,7 @@ const AddFB = () => {
                 className="block text-gray-700 font-bold mb-2"
                 htmlFor="booking-not-allowed-text"
               >
-                Booking Not Allowed Text
+                Booking Not Available Text
               </label>
               <input
                 className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full"
@@ -809,6 +855,57 @@ const AddFB = () => {
                 placeholder="Booking Not Allowed Text"
               />
             </div>
+            <div className="col-span-1">
+              <label
+                className="block text-gray-700 font-bold mb-2"
+                htmlFor="booking-not-allowed-text"
+              >
+                Select Days
+              </label>
+              <div className="flex gap-4">
+              <input
+                id="booking-not-allowed-text"
+                type="checkbox"
+              />
+              <label htmlFor="">S</label>
+              <input
+                
+                id="booking-not-allowed-text"
+                type="checkbox"
+                
+                
+              />
+              
+              <label htmlFor="">M</label>
+              <input
+                id="booking-not-allowed-text"
+                type="checkbox"
+              />
+              <label htmlFor="">T</label>
+              <input
+                id="booking-not-allowed-text"
+                type="checkbox"
+              />
+              <label htmlFor="">W</label>
+              <input
+                id="booking-not-allowed-text"
+                type="checkbox"
+              />
+              <label htmlFor="">T</label>
+              <input
+                id="booking-not-allowed-text"
+                type="checkbox"
+              />
+              <label htmlFor="">F</label>
+              <input
+                id="booking-not-allowed-text"
+                type="checkbox"
+              />
+              <label htmlFor="">S</label>
+             
+              </div>
+            </div>
+           
           </div>
         </div>
         <div className="w-full mx-3 my-5 p-5 shadow-lg rounded-lg border border-gray-300">
@@ -861,7 +958,9 @@ const AddFB = () => {
                 className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full"
                 id="delivery-charge"
                 type="text"
-                name="service_charge"
+                name="ServiceCharges"
+                value={formData.ServiceCharges}
+                onChange={handleChange}
                 placeholder="Service Charge(%)"
               />
             </div>

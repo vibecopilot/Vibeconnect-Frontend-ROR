@@ -691,6 +691,8 @@ import EditEvent from "./pages/SubPages/EditEvent.jsx";
 import EditBroadcast from "./pages/SubPages/EditBroadcast.jsx";
 import AssociatedSites from "./pages/AdminHrms/AssociatedSites/AssociatedSites.jsx";
 import SetupSeat from "./pages/Setup/SetupSeat.jsx";
+import FBRestaurtantEdit from "./pages/SubPages/FBResturantEdit.jsx";
+import PantryDetails from "./pages/SubPages/details/PantryDetails.jsx";
 // new admin hrms
 
 function App() {
@@ -2002,6 +2004,14 @@ function App() {
             }
           />
           <Route
+            path="/admin/pantry-details/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <PantryDetails />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
             path="/admin/add-pantry"
             element={
               <ProtectedAdminRoutes>
@@ -3301,7 +3311,7 @@ function App() {
             path="/admin/fb-edit/:id"
             element={
               <ProtectedAdminRoutes>
-                <FBEdit />
+                <FBRestaurtantEdit />
               </ProtectedAdminRoutes>
             }
           />

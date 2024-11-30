@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import FileInputBox from "../../containers/Inputs/FileInputBox";
-import { getFBDetails } from "../../api";
+import { editFB, getFBDetails } from "../../api";
 import { useNavigate, useParams } from "react-router-dom";
 import { restaurantSchedule } from "../../utils/initialFormData";
 import { getItemInLocalStorage } from "../../utils/localStorage";
+import toast from "react-hot-toast";
+
 const FBRestaurtantEdit = () => {
   const [rows, setRows] = useState([]);
   const addRow = () => {
@@ -62,6 +64,53 @@ const FBRestaurtantEdit = () => {
   });
 
   console.log("Form Data", formData);
+  useEffect(() => {
+    const fetchFBDetails = async () => {
+      try {
+        // Fetch the restaurant details
+        const details = await getFBDetails(id);
+        console.log(details);
+  
+        const data = details.data || {};
+      setFormData({
+        restaurantName: data.restaurant_name || "",
+        costForTwo: data.cost_for_two || "",
+        mobileNumber: data.mobile_number || "",
+        anotherMobileNumber: data.alternate_mobile_number || "",
+        landlineNumber: data.landline_number || "",
+        deliveryTime: data.delivery_time || "",
+        cuisines: data.cuisines || "",
+        servesAlcohol: data.serves_alcohols || "",
+        wheelchairAccessible: data.wheelchair_accessible || "",
+        cashOnDelivery: data.cash_on_delivery || "",
+        pureVeg: data.pure_veg || "",
+        address: data.address || "",
+        termsAndConditions: data.terms_and_conditions || "",
+        disclaimer: data.disclaimer || "",
+        closingMessage: data.closing_message || "",
+        minimumPerson: data.minimum_person || "",
+        maximumPerson: data.maximum_person || "",
+        canCancelBefore: data.cancel_before || "",
+        bookingNotAllowedText: data.bookingNotAllowedText || "",
+        gst: data.gst || "",
+        deliveryCharge: data.delivery_charges || "",
+        minimumOrder: data.minimum_order || "",
+        orderNotAllowedText: data.orderNotAllowedText || "",
+        service_charge: data.serviceCharges || "",
+        cover_image: data.cover_image || [],
+        menu: data.menu || [],
+        gallery: data.gallery || [],
+        restaurantBook: data.restaurant_schedule || restaurantSchedule,
+      });
+        console.log("Transformed Schedule Data:", transformedData);
+      } catch (error) {
+        console.error("Error fetching site FB details:", error);
+      }
+    };
+  
+    fetchFBDetails();
+  }, [id]); // Add 'id' as a dependency to refetch when it changes
+  
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -259,10 +308,10 @@ const FBRestaurtantEdit = () => {
       editData.append(`attachfiles[]`, file);
     });
     try {
-      const postRes = await postFB(editData, id);
+      const postRes = await editFB(id,editData);
       console.log(postRes);
-      toast.success("Fb added successfully");
-      navigate("/admin/fb");
+      toast.success("F&B Updated successfully");
+      navigate(`/admin/fb-details/${id}`);
     } catch (error) {
       console.log(error);
     }
@@ -274,7 +323,7 @@ const FBRestaurtantEdit = () => {
           style={{ background: themeColor }}
           className="text-center text-xl font-bold p-2 rounded-md text-white"
         >
-          New F&B
+          Edit F&B
         </h2>
         <div className="w-full mx-3 my-5 p-5 shadow-lg rounded-lg border border-gray-300">
           <h3 className="border-b text-center text-xl  mb-6 font-bold">
@@ -949,7 +998,7 @@ const FBRestaurtantEdit = () => {
             className="bg-black text-white p-2 px-4 rounded-md font-medium"
             onClick={handleEdit}
           >
-            Edit
+            Update
           </button>
         </div>
       </div>
