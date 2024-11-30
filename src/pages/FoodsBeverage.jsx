@@ -83,8 +83,16 @@ const FoodsBeverage = () => {
       name: "Booking Allowed",
       cell: (row) => (
         <div className="flex items-center gap-4">
-          <ToggleSwitch />
-        </div>
+        <input
+        type="checkbox"
+        checked={
+          Object.values(row?.restaurant_schedule || {}).some(
+            (day) => day.booking_allowed
+          )
+        }
+        onChange={(e) => handleToggle(row.id, "booking_allowed", e.target.checked)}
+      />
+      </div>
       ),
       sortable: true,
     },
@@ -93,8 +101,16 @@ const FoodsBeverage = () => {
       name: "Order Allowed",
       cell: (row) => (
         <div className="flex items-center gap-4">
-          <ToggleSwitch />
-        </div>
+         <input
+        type="checkbox"
+        checked={
+          Object.values(row?.restaurant_schedule || {}).some(
+            (day) => day.order_allowed
+          )
+        }
+        onChange={(e) => handleToggle(row.id, "order_allowed", e.target.checked)}
+      />
+      </div>
       ),
       sortable: true,
     },
@@ -102,37 +118,47 @@ const FoodsBeverage = () => {
       name: "Active",
       cell: (row) => (
         <div className="flex items-center gap-4">
-          <ToggleSwitch />
+          <input type="checkbox" />
         </div>
       ),
       sortable: true,
     },
 
-    {
-      name: "Cancellation",
-      selector: (row) =>
-        row.status === "Upcoming" && (
-          <button className="text-red-400 font-medium">Cancel</button>
-        ),
-      sortable: true,
-    },
-    {
-      name: "Approval",
-      selector: (row) =>
-        row.status === "Upcoming" && (
-          <div className="flex justify-center gap-2">
-            <button className="text-green-400 font-medium hover:bg-green-400 hover:text-white transition-all duration-200 p-1 rounded-full">
-              <TiTick size={20} />
-            </button>
-            <button className="text-red-400 font-medium hover:bg-red-400 hover:text-white transition-all duration-200 p-1 rounded-full">
-              <IoClose size={20} />
-            </button>
-          </div>
-        ),
-      sortable: true,
-    },
+    // {
+    //   name: "Cancellation",
+    //   selector: (row) =>
+    //     row.status === "Upcoming" && (
+    //       <button className="text-red-400 font-medium">Cancel</button>
+    //     ),
+    //   sortable: true,
+    // },
+    // {
+    //   name: "Approval",
+    //   selector: (row) =>(
+       
+    //       <div className="flex justify-center gap-2">
+    //         <button className="text-green-400 font-medium hover:bg-green-400 hover:text-white transition-all duration-200 p-1 rounded-full">
+    //           <TiTick size={20} />
+    //         </button>
+    //         <button className="text-red-400 font-medium hover:bg-red-400 hover:text-white transition-all duration-200 p-1 rounded-full">
+    //           <IoClose size={20} />
+    //         </button>
+    //       </div>
+    //   ),
+    //   sortable: true,
+    // },
   ];
-
+  const handleToggle = (id, field, value) => {
+    // Find the row by ID and update all days in the schedule
+    const row = data.find((item) => item.id === id);
+    if (row && row.restaurant_schedule) {
+      Object.keys(row.restaurant_schedule).forEach((day) => {
+        row.restaurant_schedule[day][field] = value;
+      });
+    }
+    console.log(`Updated ${field} for row ID ${id} to ${value}`);
+  };
+  
   //custom style
   const customStyle = {
     headRow: {

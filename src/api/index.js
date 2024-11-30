@@ -1512,6 +1512,12 @@ export const getGenericCategory = async () =>
       token: token,
     },
   });
+  export const getGenericCategoryRestaurtant = async () =>
+    axiosInstance.get(`/generic_infos.json?q[info_type_eq]=RestaurantCategory`, {
+      params: {
+        token: token,
+      },
+    });
 export const getGenericCategoryDetails = async (id) =>
   axiosInstance.get(`/generic_infos/${id}.json`, {
     params: {
@@ -6218,6 +6224,12 @@ export const getComplaintMode = async () =>
   });
 
   //Food
+  export const postRestaurtantMenu = async (data) =>
+    axiosInstance.post("/restaurant_menus.json", data, {
+      params: {
+        token: token,
+      },
+    });
 export const postFB = async (data) =>
   axiosInstance.post("/food_and_beverages.json", data, {
     params: {
@@ -6238,3 +6250,27 @@ export const getFBDetails = async (id) =>
       token: token,
     },
   });
+  export const editFB = async (id, data) =>
+    axiosInstance.put(`/food_and_beverages/${id}.json`, data, {
+      params: {
+        token: token,
+      },
+    });
+    export const postPantry = async (data) =>
+      axiosInstance.post("/pantries.json", data, {
+        params: {
+          token: token,
+        },
+      });
+      export const getPantry = async () =>
+        axiosInstance.get("/pantries.json", {
+          params: {
+            token: token,
+          },
+        });
+        export const getPantryDetails = async (id) =>
+          axiosInstance.get(`/pantries/${id}.json`, {
+            params: {
+              token: token,
+            },
+          });

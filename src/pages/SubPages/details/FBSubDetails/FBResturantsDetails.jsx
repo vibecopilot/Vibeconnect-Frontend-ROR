@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import image from "/profile.png";
 import { useParams } from "react-router-dom";
-import { getFBDetails } from "../../../../api";
+import { domainPrefix, getFBDetails } from "../../../../api";
 import Table from "../../../../components/table/Table";
+
 const FBRestaurtantDetails = () => {
   const [formData, setFormData] = useState({});
   const { id } = useParams();
@@ -117,216 +118,7 @@ const FBRestaurtantDetails = () => {
           RESTAURTANT DETAILS
         </h3>
         <Table responsive columns={columns} data={scheduleData} pagination={false} />
-        {/* <div class="overflow-x-auto">
-          <table class="table-auto">
-            <thead>
-              <tr>
-                <th class="px-4 py-2"></th>
-                <th class="px-4 py-2">Operational Days</th>
-                <th class="px-4 py-2">Start Time</th>
-                <th class="px-4 py-2">End Time</th>
-                <th class="px-4 py-2">Break Start Time</th>
-                <th class="px-4 py-2">Break End Time</th>
-                <th class="px-4 py-2">Booking Allowed</th>
-                <th class="px-4 py-2">Order Allowed</th>
-                <th class="px-4 py-2">Last Booking & Order Time</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td class="border px-4 py-2 text-center">
-                  <input type="checkbox" />
-                </td>
-                <td class="border px-4 py-2">Monday</td>
-                <td class="border px-4 py-2">
-                  
-                </td>
-                <td class="border px-4 py-2">
-                  <input type="time" />
-                </td>
-                <td class="border px-4 py-2 text-center">
-                  <input type="time" />
-                </td>
-                <td class="border px-4 py-2 text-center">
-                  <input type="time" />
-                </td>
-
-                <td class="border px-4 py-2 text-center">
-                  <input type="checkbox" />
-                </td>
-                <td class="border px-4 py-2 text-center">
-                  <input type="checkbox" />
-                </td>
-                <td class="border px-4 py-2 text-center">
-                  <input type="time" />
-                </td>
-              </tr>
-              <tr>
-                <td class="border px-4 py-2 text-center">
-                  <input type="checkbox" />
-                </td>
-                <td class="border px-4 py-2">Tuesday</td>
-                <td class="border px-4 py-2">
-                  <input type="time" />
-                </td>
-                <td class="border px-4 py-2">
-                  <input type="time" />
-                </td>
-                <td class="border px-4 py-2 text-center">
-                  <input type="time" />
-                </td>
-                <td class="border px-4 py-2 text-center">
-                  <input type="time" />
-                </td>
-                <td class="border px-4 py-2 text-center">
-                  <input type="checkbox" />
-                </td>
-                <td class="border px-4 py-2 text-center">
-                  <input type="checkbox" />
-                </td>
-                <td class="border px-4 py-2 text-center">
-                  <input type="time" />
-                </td>
-              </tr>
-              <tr>
-                <td class="border px-4 py-2 text-center">
-                  <input type="checkbox" />
-                </td>
-                <td class="border px-4 py-2">Wednesday</td>
-                <td class="border px-4 py-2">
-                  <input type="time" />
-                </td>
-                <td class="border px-4 py-2">
-                  <input type="time" />
-                </td>
-                <td class="border px-4 py-2 text-center">
-                  <input type="time" />
-                </td>
-                <td class="border px-4 py-2 text-center">
-                  <input type="time" />
-                </td>
-                <td class="border px-4 py-2 text-center">
-                  <input type="checkbox" />
-                </td>
-                <td class="border px-4 py-2 text-center">
-                  <input type="checkbox" />
-                </td>
-                <td class="border px-4 py-2 text-center">
-                  <input type="time" />
-                </td>
-              </tr>
-              <tr>
-                <td class="border px-4 py-2 text-center">
-                  <input type="checkbox" />
-                </td>
-                <td class="border px-4 py-2">Thursday</td>
-                <td class="border px-4 py-2">
-                  <input type="time" />
-                </td>
-                <td class="border px-4 py-2">
-                  <input type="time" />
-                </td>
-                <td class="border px-4 py-2 text-center">
-                  <input type="time" />
-                </td>
-                <td class="border px-4 py-2 text-center">
-                  <input type="time" />
-                </td>
-                <td class="border px-4 py-2 text-center">
-                  <input type="checkbox" />
-                </td>
-                <td class="border px-4 py-2 text-center">
-                  <input type="checkbox" />
-                </td>
-                <td class="border px-4 py-2 text-center">
-                  <input type="time" />
-                </td>
-              </tr>
-              <tr>
-                <td class="border px-4 py-2 text-center">
-                  <input type="checkbox" />
-                </td>
-                <td class="border px-4 py-2">Friday</td>
-                <td class="border px-4 py-2">
-                  <input type="time" />
-                </td>
-                <td class="border px-4 py-2">
-                  <input type="time" />
-                </td>
-                <td class="border px-4 py-2 text-center">
-                  <input type="time" />
-                </td>
-                <td class="border px-4 py-2 text-center">
-                  <input type="time" />
-                </td>
-                <td class="border px-4 py-2 text-center">
-                  <input type="checkbox" />
-                </td>
-                <td class="border px-4 py-2 text-center">
-                  <input type="checkbox" />
-                </td>
-                <td class="border px-4 py-2 text-center">
-                  <input type="time" />
-                </td>
-              </tr>
-              <tr>
-                <td class="border px-4 py-2 text-center">
-                  <input type="checkbox" />
-                </td>
-                <td class="border px-4 py-2">Saturday</td>
-                <td class="border px-4 py-2">
-                  <input type="time" />
-                </td>
-                <td class="border px-4 py-2">
-                  <input type="time" />
-                </td>
-                <td class="border px-4 py-2 text-center">
-                  <input type="time" />
-                </td>
-                <td class="border px-4 py-2 text-center">
-                  <input type="time" />
-                </td>
-                <td class="border px-4 py-2 text-center">
-                  <input type="checkbox" />
-                </td>
-                <td class="border px-4 py-2 text-center">
-                  <input type="checkbox" />
-                </td>
-                <td class="border px-4 py-2 text-center">
-                  <input type="time" />
-                </td>
-              </tr>
-              <tr>
-                <td class="border px-4 py-2 text-center">
-                  <input type="checkbox" />
-                </td>
-                <td class="border px-4 py-2">Sunday</td>
-                <td class="border px-4 py-2">
-                  <input type="time" />
-                </td>
-                <td class="border px-4 py-2">
-                  <input type="time" />
-                </td>
-
-                <td class="border px-4 py-2 text-center">
-                  <input type="time" />
-                </td>
-                <td class="border px-4 py-2 text-center">
-                  <input type="time" />
-                </td>
-                <td class="border px-4 py-2 text-center">
-                  <input type="checkbox" />
-                </td>
-                <td class="border px-4 py-2 text-center">
-                  <input type="checkbox" />
-                </td>
-                <td class="border px-4 py-2 text-center">
-                  <input type="time" />
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div> */}
+       
       </div>
       <div className="mx-3 my-5 p-5">
         <h3 className="border-b text-left text-xl border-black mb-6 font-bold">
@@ -352,24 +144,75 @@ const FBRestaurtantDetails = () => {
         </div>
       </div>
 
-      <div className="mx-3 my-5 p-5 ">
-        <h3 className="border-b text-left text-xl border-black mb-6 font-bold">
-          COVER
-        </h3>
-        <img src={image} alt="" className="w-64 h-64" />
-      </div>
       <div className="mx-3 my-5 p-5">
-        <h3 className="border-b text-left text-xl border-black mb-6 font-bold">
-          MENU
-        </h3>
-        <img src={image} alt="" className="w-64 h-64" />
-      </div>
-      <div className="mx-3 my-5 p-5 ">
-        <h3 className="border-b text-left text-xl border-black mb-6 font-bold">
-          GALLERY
-        </h3>
-        <img src={image} alt="" className="w-64 h-64" />
-      </div>
+  <h3 className="border-b text-left text-xl border-black mb-6 font-bold">
+    COVER
+  </h3>
+  <div className="flex gap-4 flex-wrap my-4 items-center text-center">
+    {formData.food_and_beverages_attachments?.length > 0 && formData.food_and_beverages_attachments[0] ? (
+      <img
+        src={domainPrefix + formData.food_and_beverages_attachments[0].document}
+        alt="Cover Image"
+        className="w-64 h-64 object-cover rounded-md"
+        onClick={() =>
+          window.open(
+            domainPrefix + formData.food_and_beverages_attachments[0].document,
+            "_blank"
+          )
+        }
+      />
+    ) : (
+      <p>No Cover Image</p>
+    )}
+  </div>
+</div>
+
+<div className="mx-3 my-5 p-5">
+  <h3 className="border-b text-left text-xl border-black mb-6 font-bold">
+    MENU
+  </h3>
+  <div className="flex gap-4 flex-wrap my-4 items-center text-center">
+    {formData.food_and_beverages_attachments?.length > 1 && formData.food_and_beverages_attachments[1] ? (
+      <img
+        src={domainPrefix + formData.food_and_beverages_attachments[1].document}
+        alt="Menu Image"
+        className="w-64 h-64 object-cover rounded-md"
+        onClick={() =>
+          window.open(
+            domainPrefix + formData.food_and_beverages_attachments[1].document,
+            "_blank"
+          )
+        }
+      />
+    ) : (
+      <p>No Menu Image</p>
+    )}
+  </div>
+</div>
+
+<div className="mx-3 my-5 p-5">
+  <h3 className="border-b text-left text-xl border-black mb-6 font-bold">
+    GALLERY
+  </h3>
+  <div className="flex gap-4 flex-wrap my-4 items-center text-center">
+    {formData.food_and_beverages_attachments?.length > 2 && formData.food_and_beverages_attachments[2] ? (
+      <img
+        src={domainPrefix + formData.food_and_beverages_attachments[2].document}
+        alt="Gallery Image"
+        className="w-64 h-64 object-cover rounded-md"
+        onClick={() =>
+          window.open(
+            domainPrefix + formData.food_and_beverages_attachments[2].document,
+            "_blank"
+          )
+        }
+      />
+    ) : (
+      <p>No Gallery Image</p>
+    )}
+  </div>
+</div>
+
     </div>
   );
 };

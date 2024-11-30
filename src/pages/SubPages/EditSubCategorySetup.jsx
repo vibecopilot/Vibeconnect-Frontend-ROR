@@ -1,19 +1,68 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { PiPlusCircle } from "react-icons/pi";
 import { Link } from "react-router-dom";
 import DataTable from "react-data-table-component";
 import { BsEye } from "react-icons/bs";
 import { useSelector } from "react-redux";
 import Table from "../../components/table/Table";
+import { FaTimes } from "react-icons/fa";
+import { getGenericCategoryRestaurtant, postGenericSubCategory } from "../../api";
+import toast from "react-hot-toast";
+import { getItemInLocalStorage } from "../../utils/localStorage";
 
 const EditSubCategorySetup = () => {
+  const siteID = getItemInLocalStorage("SITEID");
+  const companyId = getItemInLocalStorage("COMPANYID");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const themeColor = useSelector((state) => state.theme.color);
-
+  const [details, setDetails] = useState([]);
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
-
+  const [formData, setFormData] = useState({
+    generic_info_id:"",
+    name: "",
+    company_id: "",
+    site_id: "",
+    info_type: "", 
+  });
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+  useEffect(() => {
+    const fetchCategory = async () => {
+      try {
+        const siteDetailsResp = await getGenericCategoryRestaurtant();
+        
+        setDetails(siteDetailsResp.data);
+        
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchCategory();
+  }, []);
+  const handleCreateSubCategory = async () => {
+    
+   
+    const sendData = new FormData();
+    sendData.append("generic_sub_info[generic_info_id]", formData.generic_info_id); 
+    sendData.append("generic_sub_info[name]", formData.name);
+    try {
+      const resp = await postGenericSubCategory(sendData);
+      console.log(resp);
+      setIsModalOpen(false);
+      toast.success("Restaurtant SubCategory added successfully");
+      setFormData((prev) => ({
+        ...prev,
+        generic_info_id:"",
+        name: "",
+      }));
+      // setupdate(true);
+    } catch (error) {
+      console.log(error);
+    }
+  };
   const columns = [
     {
       name: "Action",
@@ -27,6 +76,11 @@ const EditSubCategorySetup = () => {
     },
     {
       name: "Category Name",
+      selector: (row) => row.Category_Name,
+      sortable: true,
+    },
+    {
+      name: "Sub Category Name",
       selector: (row) => row.Category_Name,
       sortable: true,
     },
@@ -129,31 +183,44 @@ const EditSubCategorySetup = () => {
           <div className="fixed inset-0 bg-black bg-opacity-50" onClick={closeModal}></div>
           <div className="bg-white w-[400px] h-[400px] rounded-lg shadow-lg p-4 relative z-10">
             <button
-              className="absolute top-2 right-2 text-gray-600 hover:text-gray-900"
+              className="absolute top-4 right-2 text-gray-600 hover:text-gray-900"
               onClick={closeModal}
             >
-              &times;
+              <FaTimes/>
             </button>
-            <h2 className="text-xl font-semibold mb-4">Add Category</h2>
+            <h2 className="text-xl font-semibold mb-4">Add Sub Category</h2>
             <form>
               <div className="mb-4">
                 <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="category-name">
                   Category Name
                 </label>
-                <input
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  id="category-name"
+                <select
+ className="border p-1 px-4 w-full border-gray-500 rounded-md"
+                   id="category-name"
+                   name="generic_info_id"
                   type="text"
+                  onChange={handleChange}
+                  value={formData.generic_info_id}
                   placeholder="Category Name"
-                />
+                >
+                  <option value="">Select Category</option>
+                  {details.map((category) => (
+    <option key={category.id} value={category.id}>
+      {category.name}
+    </option>
+  ))}
+                </select>
               </div>
               <div className="mb-4">
                 <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="subcategory">
                   SubCategory*
                 </label>
                 <input
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  id="subcategory"
+ className="border p-1 px-4 w-full border-gray-500 rounded-md"
+                   id="subcategory"
+                   name="name"
+                   onChange={handleChange}
+                   value={formData.name}
                   type="text"
                   placeholder="SubCategory"
                 />
@@ -163,8 +230,8 @@ const EditSubCategorySetup = () => {
                   Description*
                 </label>
                 <input
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  id="description"
+ className="border p-1 px-4 w-full border-gray-500 rounded-md"
+                   id="description"
                   type="text"
                   placeholder="Description"
                 />
@@ -173,17 +240,17 @@ const EditSubCategorySetup = () => {
                 <button
                   className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
                   type="button"
-                  onClick={closeModal}
+                  onClick={handleCreateSubCategory}
                 >
                   Add
                 </button>
-                <button
+                {/* <button
                   className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
                   type="button"
                   onClick={closeModal}
                 >
                   Cancel
-                </button>
+                </button> */}
               </div>
             </form>
           </div>

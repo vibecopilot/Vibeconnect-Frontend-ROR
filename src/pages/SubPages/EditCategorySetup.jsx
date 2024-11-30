@@ -1,33 +1,67 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { PiPlusCircle } from "react-icons/pi";
 import { Link } from "react-router-dom";
 import DataTable from "react-data-table-component";
 import { BsEye } from "react-icons/bs";
 import { useSelector } from "react-redux";
 import Table from "../../components/table/Table";
+import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
+import { FaTimes } from "react-icons/fa";
+import { getGenericCategoryRestaurtant, postGenericCategory } from "../../api";
+import {
+  getItemInLocalStorage,
+  setItemInLocalStorage,
+} from "../../utils/localStorage";
 
 const EditCategorySetup = () => {
+  const siteID = getItemInLocalStorage("SITEID");
+  const companyId = getItemInLocalStorage("COMPANYID");
+  const [details, setDetails] = useState([]);
+
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [update, setupdate] = useState(false);
   const themeColor = useSelector((state)=> state.theme.color);
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
-
+  useEffect(() => {
+    const fetchCategory = async () => {
+      try {
+        const siteDetailsResp = await getGenericCategoryRestaurtant();
+        
+        setDetails(siteDetailsResp.data);
+        setupdate(false);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchCategory();
+  }, [update]);
+  const [formData, setFormData] = useState({
+    name: "",
+    company_id: "",
+    site_id: "",
+    info_type: "",
+    
+  });
+  console.log(formData)
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
   const columns = [
     {
       name: "Action",
       cell: (row) => (
         <div className="flex items-center gap-4">
-          <Link to={`/admin/histdetails/${row.id}`}>
-            <BsEye size={15} />
-          </Link>
+         
         </div>
       ),
     },
     {
       name: "Category Name",
-      selector: (row) => row.Category_Name,
+      selector: (row) => row.name,
       sortable: true,
     },
     {
@@ -37,20 +71,7 @@ const EditCategorySetup = () => {
     },
   ];
 
-  const customStyle = {
-    headRow: {
-      style: {
-        backgroundColor: themeColor,
-        color: "white",
-        fontSize: "10px",
-      },
-    },
-    headCells: {
-      style: {
-        textTransform: "upperCase",
-      },
-    },
-  };
+ 
 
   const data = [
     {
@@ -59,7 +80,30 @@ const EditCategorySetup = () => {
       Timings: "10",
     },
   ];
+  const navigate = useNavigate()
+  const handleCreateCategory = async () => {
+    
+   
+    const sendData = new FormData();
+    sendData.append("generic_info[company_id]", companyId);
+    sendData.append("generic_info[name]", formData.name);
+    sendData.append("generic_info[site_id]", siteID);
+    sendData.append("generic_info[info_type]", "RestaurantCategory");
 
+    try {
+      const resp = await postGenericCategory(sendData);
+      console.log(resp);
+      setIsModalOpen(false);
+      toast.success("Restaurtant Category added successfully");
+      setFormData((prev) => ({
+        ...prev,
+        name: "",
+      }));
+      setupdate(true);
+    } catch (error) {
+      console.log(error);
+    }
+  };
   const handleStatusChange = (status) => {
     setSelectedStatus(status);
   };
@@ -121,7 +165,7 @@ const EditCategorySetup = () => {
             </button>
           </span>
         </div>
-        <Table columns={columns} data={data} isPagination={true} />
+        <Table columns={columns} data={details} isPagination={true} />
       </div>
 
       {isModalOpen && (
@@ -129,20 +173,23 @@ const EditCategorySetup = () => {
           <div className="fixed inset-0 bg-black bg-opacity-50" onClick={closeModal}></div>
           <div className="bg-white w-80 h-80 rounded-lg shadow-lg p-4 relative z-10">
             <button
-              className="absolute top-2 right-2 text-gray-600 hover:text-gray-900"
+              className="absolute top-4 right-4 text-gray-600 hover:text-gray-900"
               onClick={closeModal}
             >
-              &times;
+              <FaTimes />
             </button>
             <h2 className="text-xl font-semibold mb-4">Add Category</h2>
-            <form>
+            <div className="flex flex-col gap-4">
               <div className="mb-4">
                 <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="category-name">
                   Category Name
                 </label>
                 <input
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                   id="category-name"
+                  name="name"
+                  className="border p-1 px-4 w-full border-gray-500 rounded-md"
+                  onChange={handleChange}
+                  value={formData.name}
                   type="text"
                   placeholder="Category Name"
                 />
@@ -152,29 +199,30 @@ const EditCategorySetup = () => {
                Timings
                 </label>
                 <input
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                   id="timings"
+                  className="border p-1 px-4 w-full border-gray-500 rounded-md"
+
                   type="text"
                   placeholder="Timings"
                 />
               </div>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-center">
                 <button
-                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md "
                   type="button"
-                  onClick={closeModal}
+                  onClick={handleCreateCategory}
                 >
                   Add
                 </button>
-                <button
+                {/* <button
                   className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
                   type="button"
                   onClick={closeModal}
                 >
                   Cancel
-                </button>
+                </button> */}
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}

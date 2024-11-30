@@ -6,6 +6,7 @@ import { BsEye } from "react-icons/bs";
 import { useSelector } from "react-redux";
 import Table from "../../../components/table/Table";
 import { BiEdit } from "react-icons/bi";
+import { FaTimes } from "react-icons/fa";
 
 const FBStatusSetup = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
@@ -165,69 +166,75 @@ const FBStatusSetup = () => {
     <div className="fixed inset-0 bg-black bg-opacity-50" onClick={closeModal}></div>
     <div className="bg-white w-96 h-auto rounded-lg shadow-lg p-4 relative z-10">
       <button
-        className="absolute top-2 right-2 text-gray-600 hover:text-gray-900"
+        className="absolute top-4 right-2 text-gray-600 hover:text-gray-900"
         onClick={closeModal}
       >
-        &times;
+        <FaTimes/>
       </button>
       <h2 className="text-xl font-semibold mb-4">Add Status</h2>
-      <form>
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="status">
+      <div className="grid grid-cols-1 gap-2">
+
+        <div className="grid gap-1">
+          <label className="block text-gray-700 text-sm font-bold " htmlFor="status">
             Status
           </label>
           <input
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            id="status"
+                              className="border p-1 px-4 border-gray-500 rounded-md"
+                              id="status"
             type="text"
             placeholder="Status"
           />
         </div>
-        <div className="mb-4 flex justify-between">
-          <div className="w-1/2 mr-2">
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="display-name">
+       
+          <div className=" grid gap-1">
+            <label className="block text-gray-700 text-sm font-bold " htmlFor="display-name">
               Display Name*
             </label>
             <input
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              id="display-name"
+                              className="border p-1 px-4 border-gray-500 rounded-md"
+                              id="display-name"
               type="text"
               placeholder="Display Name"
             />
           </div>
-          <div className="w-1/2 ml-2">
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="fixed-state">
+          <div className="grid gap-1">
+            <label className="block text-gray-700 text-sm font-bold " htmlFor="fixed-state">
               Fixed State*
             </label>
-            <input
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              id="fixed-state"
-              type="text"
-              placeholder="Fixed State"
-            />
+           <select name="" id=""    
+                              className="border p-1 px-4 border-gray-500 rounded-md"
+           >
+            <option value="">Pending</option>
+            <option value="">Completed</option>
+            <option value="">Confirmed</option>
+            <option value="">Cancelled</option>
+            <option value="">Table Booking Accepted</option>
+            <option value="">Table Booking Denied</option>
+           </select>
           </div>
-        </div>
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="order">
+        
+        <div className="grid gap-1">
+          <label className="block text-gray-700 text-sm font-bold" htmlFor="order">
             Order
           </label>
           <input
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            id="order"
+                              className="border p-1 px-4 border-gray-500 rounded-md"
+                              id="order"
             type="text"
             placeholder="Order"
           />
         </div>
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="color">
+        <div className="grid gap-1 mb-2 ">
+          <label className="block text-gray-700 text-sm font-bold " htmlFor="color">
             Color:
           </label>
           <input
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            id="color"
+                              className="border p-1 px-4 border-gray-500 rounded-md"
+                              id="color"
             type="text"
             placeholder="Color"
           />
+        </div>
         </div>
         <div className="flex items-center justify-between">
           <button
@@ -245,7 +252,7 @@ const FBStatusSetup = () => {
             Cancel
           </button>
         </div>
-      </form>
+     
     </div>
   </div>
 )}

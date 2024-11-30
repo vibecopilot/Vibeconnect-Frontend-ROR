@@ -9,11 +9,7 @@ import FBRestaurtantMenu from "./FBSubDetails/FBResturantMenu";
 import { useSelector } from "react-redux";
 import Navbar from "../../../components/Navbar";
 
-// import PermitTypeTable from "./PermitTypeTable";
-// import PermitActivityTable from "./PermitActivityTable";
-// import PermitSubActivityTable from "./PermitSubActivityTable";
-// import PermitHazardCategoryTable from "./PermitHazardCatgoryTable";
-// import PermitRiskTable from "./PermitRiskTable";
+
 const FBDetails = () => {
   const [page, setPage] = useState("Restaurtant");
   const themeColor = useSelector((state) => state.theme.color);
