@@ -102,9 +102,10 @@ const Login = () => {
       setItemInLocalStorage("USERTYPE", userType);
       const CompanyId = response.data.user.company_id;
       setItemInLocalStorage("COMPANYID", CompanyId);
-      // setItemInLocalStorage("HRMSORGID", 4);
       setItemInLocalStorage("HRMSORGID", 1);
+      // setItemInLocalStorage("HRMSORGID", response.data.user.organization_id);
       setItemInLocalStorage("APPROVERID", 11);
+      setItemInLocalStorage("HRMS_EMPLOYEE_ID", 22);
       // console.log(userType)
 
       const statuses = response.data.statuses;

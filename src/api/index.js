@@ -6556,6 +6556,81 @@ export const postRegularizationRequest = async (data) => {
     throw error;
   }
 };
+export const markEmployeeAttendance = async (data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/employee/attendance/`,
+      data,
+
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting employee attendance", error);
+    throw error;
+  }
+};
+export const getEmployeeAttendanceOfMonth = async (
+  empId,
+  startDate,
+  endDate
+) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/employee/attendance/datewise/list/?employee_id=${empId}&start_date=${startDate}&end_date=${endDate}`,
+      // `/employee/attendance/?employee_id=${empId}&start_date=${startDate}&end_date=${endDate}`,
+
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting employee attendance", error);
+    throw error;
+  }
+};
+export const getEmployeeAttendanceOfToday = async (empId, today) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/employee/attendance/?employee_id=${empId}&start_date=${today}`,
+
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting employee attendance of today", error);
+    throw error;
+  }
+};
+export const getEmployeeRoster = async (empId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/roster/roster-shift/?employee_id=${empId}`,
+      data,
+
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting employee roster", error);
+    throw error;
+  }
+};
 export const getApprovalNotifications = async (approverId) => {
   try {
     const response = await HrmsAuth.get(
@@ -6639,14 +6714,11 @@ export const getUniformRequest = async (orgId) => {
 };
 export const getUniformRequestDetails = async (reqID) => {
   try {
-    const response = await HrmsAuth.get(
-      `employee-uniform/request/${reqID}/`,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data/",
-        },
-      }
-    );
+    const response = await HrmsAuth.get(`employee-uniform/request/${reqID}/`, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
     return response.data;
   } catch (error) {
     console.error("Error getting info", error);
@@ -6656,7 +6728,8 @@ export const getUniformRequestDetails = async (reqID) => {
 export const postUniformApproval = async (approvalId, data) => {
   try {
     const response = await HrmsAuth.patch(
-      `/employee-uniform/request/${approvalId}/`,data,
+      `/employee-uniform/request/${approvalId}/`,
+      data,
       {
         headers: {
           "Content-Type": "multipart/form-data/",
