@@ -11,7 +11,12 @@ import {
 } from "react-icons/fa";
 import ToggleSwitch from "../../Buttons/ToggleSwitch";
 import EmployeeDetailView from "./EmployeeDetailView";
-import { getAttendanceRecord, postRegularizationRequest } from "../../api";
+import {
+  getAttendanceRecord,
+  getEmployeeAttendanceOfToday,
+  getUserDetails,
+  postRegularizationRequest,
+} from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import { Link } from "react-router-dom";
 import { MdClose } from "react-icons/md";
@@ -120,17 +125,7 @@ const AttendanceRec = () => {
     fetchEmployeeAttendance(pageNumber);
   }, []);
 
-  const handleNext = () => {
-    if (paginationInfo.next) {
-      fetchAttendance(currentPage + 1);
-    }
-  };
-
-  const handlePrevious = () => {
-    if (paginationInfo.previous && currentPage > 1) {
-      fetchAttendance(currentPage - 1);
-    }
-  };
+  
   const handlePageChange = (page) => {
     setPageNumber(page); // Update state for pageNumber
     fetchEmployeeAttendance(page); // Fetch data for the new page
@@ -264,6 +259,52 @@ const AttendanceRec = () => {
     } catch (error) {
       console.log("Error submitting regularization request:", error);
       toast.error("Failed to submit the regularization request");
+    }
+  };
+  const [checkInTime, setCheckInTime] = useState("");
+  const [checkOutTime, setCheckOutTime] = useState("");
+  const [isPresent, setIsPresent] = useState(false);
+  const [selectedAttendanceDate, setSelectedAttendanceDate] = useState("");
+  const [empDesignation, setEmpDesignation] = useState("");
+  const fetchEmployeeFullDetails = async (empId) => {
+    try {
+      const res = await getUserDetails(empId);
+      setEmpDesignation(res?.employment_info?.designation || "Designation not assigned");
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const fetchTodayAttendance = async (empId, dateString) => {
+    await fetchEmployeeFullDetails(empId);
+    try {
+      const date = new Date(dateString);
+      const formattedDate = date.toISOString().slice(0, 10);
+      setSelectedAttendanceDate(formattedDate);
+      const res = await getEmployeeAttendanceOfToday(empId, formattedDate);
+      if (res.length > 0) {
+        const checkInRecord = res.find((record) => record.is_check_in === true);
+        // console.log(checkInRecord.is_check_in)
+        setIsPresent(checkInRecord.is_check_in);
+        const checkOutRecord = res
+          .reverse()
+          .find((record) => record.is_check_in === false);
+        const checkInTime = checkInRecord
+          ? new Date(checkInRecord.attendance_time).toLocaleTimeString()
+          : null;
+        const checkOutTime = checkOutRecord
+          ? new Date(checkOutRecord.attendance_time).toLocaleTimeString()
+          : null;
+        setCheckInTime(checkInTime || "-");
+        setCheckOutTime(checkOutTime || "-");
+      } else {
+        setCheckInTime("");
+        setCheckOutTime("");
+        
+        setIsPresent(false);
+      }
+    } catch (error) {
+      console.log("Error fetching attendance:", error);
     }
   };
 
@@ -466,6 +507,7 @@ const AttendanceRec = () => {
                               employee.last_name
                             );
                             setSelectedEmpAttendance(true);
+                            fetchTodayAttendance(employee.id, date);
                           }}
                           className={
                             getAttendanceStatus(employee, date) === "Present"
@@ -724,56 +766,65 @@ const AttendanceRec = () => {
                   className="flex justify-between gap-2 bg-gray-100 items-center p-2 rounded-md w-[40rem]"
                 >
                   <div className="flex gap-2 items-center">
-                    <div className="bg-white p-2 h-10 w-10 rounded-full mr-2">
-                      MP
+                    <div className="bg-white rounded-full mr-2">
+                      <div
+                        className=" text-white p-2 flex items-center justify-center rounded-full h-10 w-10 text-sm text-center border-2 border-white"
+                        style={{ background: themeColor }}
+                      >
+                        {selectedFirstName.charAt(0).toUpperCase()}
+                        {selectedLastName.charAt(0).toUpperCase()}
+                      </div>
                     </div>
                     <div className="flex flex-col ">
                       <p className="font-semibold text-white text-lg">
                         {selectedFirstName} {selectedLastName}
                       </p>
                       <p className="font-sm text-white">
-                        Business & Operations Manager
+                        {empDesignation}
                       </p>
                     </div>
                   </div>
-                  <div className=" h-8 border-2 p-2 flex justify-center items-center bg-green-500 rounded-md">
-                    <p className="font-medium  text-white">Present</p>
-                  </div>
+                  {isPresent ? (
+                    <div className=" h-8 border-2 p-2 flex justify-center items-center bg-green-500 rounded-md">
+                      <p className="font-medium  text-white">Present</p>
+                    </div>
+                  ) : (
+                    <div className=" h-8 border-2 p-2 flex justify-center items-center bg-red-500 rounded-md">
+                      <p className="font-medium  text-white">Absent</p>
+                    </div>
+                  )}
                 </div>
                 <div className="flex flex-col gap-2 my-2">
                   <div className="w-full border-b flex justify-between items-center">
                     <p className="font-medium">Attendance Details </p>
                     {/* <p></p> */}
-                    <p className="font-mono">28/11/24</p>
+                    <p className="font-mono">{selectedAttendanceDate}</p>
                   </div>
 
                   <div className=" flex justify-between">
                     <p className="font-medium">Check In :</p>
-                    <p>09:00 am</p>
+                    <p>{checkInTime}</p>
                   </div>
                   <div className=" flex justify-between">
                     <p className="font-medium">Check Out :</p>
-                    <p>06:00 pm</p>
+                    <p>{checkOutTime}</p>
                   </div>
                   <div className=" flex justify-between">
                     <p className="font-medium">Working Hrs :</p>
-                    <p>08</p>
+                    <p>-</p>
                   </div>
                   <div className=" flex justify-between">
                     <p className="font-medium">Break Hrs :</p>
-                    <p>0</p>
+                    <p>-</p>
                   </div>
-                  <div className=" flex justify-between">
-                    <p className="font-medium">Status :</p>
-                    <p>Present</p>
-                  </div>
+
                   <div className=" flex justify-between">
                     <p className="font-medium">Deviation Hrs :</p>
-                    <p>04:15</p>
+                    <p>-</p>
                   </div>
                   <div className=" flex justify-between">
                     <p className="font-medium">Late/Early Mark :</p>
-                    <p>/</p>
+                    <p>-</p>
                   </div>
                   <div className=" flex justify-between">
                     <p className="font-medium">Shift Time :</p>
