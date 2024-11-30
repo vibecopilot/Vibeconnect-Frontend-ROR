@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Navbar from "../../../components/Navbar";
 import EmployeePortal from "../../../components/navbars/EmployeePortal";
 import DatePicker from "react-datepicker";
@@ -9,35 +9,59 @@ import { BiPlus } from "react-icons/bi";
 import { Link } from "react-router-dom";
 import { BsEye } from "react-icons/bs";
 import AddRegularizationReq from "./AddRegularizationReq";
-
+import { getItemInLocalStorage } from "../../../utils/localStorage";
+import Webcam from "react-webcam";
+import {
+  getEmployeeAttendanceOfMonth,
+  getEmployeeAttendanceOfToday,
+  markEmployeeAttendance,
+} from "../../../api";
+import toast from "react-hot-toast";
 const MyWorkSpace = () => {
   const [dateRange, setDateRange] = useState([null, null]);
   const [startDate, endDate] = dateRange;
   const [addRegularization, setAddRegularization] = useState(false);
+
+ const [showDetails, setShowDetails] = useState(false)
+
 
   const column = [
     {
       name: "Date",
       selector: (row) => row.date,
       sortable: true,
-      //   width: "150px"
     },
-
     {
-      name: "Check in",
-      selector: (row) => row.check_in,
+      name: "Check In",
+      selector: (row) => {
+        const checkIn = row.attendanceDetails.find(
+          (record) => record.checkIn === "Check-In"
+        );
+        return checkIn ? checkIn.time : "N/A";
+      },
       sortable: true,
     },
 
-    { name: "check out", selector: (row) => row.check_out, sortable: true },
-    { name: "Working Hrs", selector: (row) => row.working_hrs, sortable: true },
-
+    {
+      name: "Check Out",
+      selector: (row) => {
+        const checkOut = [...row.attendanceDetails]
+          .reverse()
+          .find((record) => record.checkIn === "Check-Out");
+        return checkOut ? checkOut.time : "N/A";
+      },
+      sortable: true,
+    },
+    {
+      name: "Working Hrs",
+      selector: (row) => row.working_hrs,
+      sortable: true,
+    },
     {
       name: "Deviation hrs",
       selector: (row) => row.deviation,
       sortable: true,
     },
-
     {
       name: "Late/Early Mark",
       selector: (row) => row.mark,
@@ -59,7 +83,6 @@ const MyWorkSpace = () => {
         </span>
       ),
     },
-
     {
       name: "Status",
       selector: (row) => <p className="text-green-400">{row.status}</p>,
@@ -69,18 +92,16 @@ const MyWorkSpace = () => {
       name: "Shift time",
       selector: (row) => row.shift_time,
       sortable: true,
-      minWidth: "12rem",
+      // minWidth: "12rem",
     },
-
     {
       name: "Action",
       cell: (row) => (
         <div className="flex items-center gap-4">
-          <Link to={``} title="View Details">
+          <button  title="View Details">
             <BsEye size={15} />
-          </Link>
+          </button>
           <button
-            to={``}
             className="border p-1 px-2 rounded border-gray-300"
             title="Add Regularization"
             onClick={() => setAddRegularization(true)}
@@ -153,13 +174,153 @@ const MyWorkSpace = () => {
     (item) => item.status === "Absent"
   ).length;
   const themeColor = useSelector((state) => state.theme.color);
+  const hrmsEmployeeId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
+  const [showCamera, setShowCamera] = useState(false);
+  const [checkIn, setCheckIn] = useState(false);
+  const [employeeImage, setEmployeeImage] = useState([]);
+  const webcamRef = useRef(null);
+  const videoConstraints = {
+    width: 1280,
+    height: 720,
+    facingMode: "user",
+  };
+
+  const captureImage = (checkInStatus) => {
+    const imageSrc = webcamRef.current.getScreenshot();
+    setEmployeeImage(imageSrc);
+    setCheckIn(checkInStatus);
+    handleMarkAttendance();
+  };
+
+  const handleMarkAttendance = async () => {
+    const postAttendance = new FormData();
+    postAttendance.append("is_check_in", checkIn);
+    postAttendance.append("employee", hrmsEmployeeId);
+    const dataURItoBlob = (dataURI) => {
+      const byteString = atob(dataURI.split(",")[1]);
+      const mimeString = dataURI.split(",")[0].split(":")[1].split(";")[0];
+      const ab = new ArrayBuffer(byteString.length);
+      const ia = new Uint8Array(ab);
+      for (let i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i);
+      }
+      return new Blob([ab], { type: mimeString });
+    };
+    const imageBlob = dataURItoBlob(employeeImage);
+    postAttendance.append("user_image", imageBlob);
+
+    try {
+      const response = await markEmployeeAttendance(postAttendance);
+      // alert("Attendance marked successfully!");
+      toast.success("Attendance marked successfully!");
+      setShowCamera(false);
+    } catch (error) {
+      console.error("Error marking attendance:", error);
+      toast.error(
+        "Failed to mark attendance. Please ensure good lighting and scan the face."
+      );
+    }
+  };
+
+  const [attendanceData, setAttendanceData] = useState([]);
+  const [month, setMonth] = useState("");
+
+  useEffect(() => {
+    const currentDate = new Date();
+    const currentMonth = currentDate.toISOString().slice(0, 7);
+    setMonth(currentMonth);
+  }, []);
+  const [consolidatedData, setConsolidatedData] = useState([]);
+  const consolidateAttendanceData = (data) => {
+    const consolidatedRows = [];
+    data.results.forEach((employee) => {
+      const { employee_name, attendance_by_date } = employee;
+
+      Object.entries(attendance_by_date).forEach(([date, records]) => {
+        consolidatedRows.push({
+          employeeName: employee_name,
+          date,
+          attendanceDetails: records.map((record) => ({
+            time: record.attendance_time
+              ? new Date(record.attendance_time).toLocaleTimeString("en-US", {
+                  timeZone: "UTC",
+                  hour12: true,
+                })
+              : "Invalid Time",
+            checkIn: record.is_check_in ? "Check-In" : "Check-Out",
+          })),
+        });
+      });
+    });
+    console.log(consolidatedRows);
+    return consolidatedRows;
+  };
+
+  const fetchAttendance = async () => {
+    const startDate = `${month}-01`;
+
+    const nextMonth = new Date(
+      new Date(month).getFullYear(),
+      new Date(month).getMonth() + 1,
+      1
+    );
+
+    const endDate = new Date(nextMonth - 1);
+
+    const formattedEndDate = endDate.toISOString().slice(0, 10);
+
+    console.log("Start Date:", startDate);
+    console.log("End Date:", formattedEndDate);
+
+    try {
+      const res = await getEmployeeAttendanceOfMonth(
+        hrmsEmployeeId,
+        startDate,
+        formattedEndDate
+      );
+      console.log(res); // Handle the response
+      setAttendanceData(res);
+      const rows = consolidateAttendanceData(res);
+      setConsolidatedData(rows);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    if (month) {
+      fetchAttendance();
+    }
+  }, [month]);
+
+  const [attendanceMarked, setAttendanceMarked] = useState(false);
+  const today = new Date();
+  const formattedToday = today.toISOString().slice(0, 10);
+  const fetchTodayAttendance = async () => {
+    try {
+      const res = await getEmployeeAttendanceOfToday(
+        hrmsEmployeeId,
+        formattedToday
+      );
+      if (res.length !== 0) {
+        setAttendanceMarked(true);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchTodayAttendance();
+  }, []);
+
   return (
     <section className="flex">
       <Navbar />
       <div className="p-2 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
         <EmployeePortal />
-        <div className="my-2 z-20 flex justify-between items-end">
-          <div className="flex gap-4 mt-2">
+        <div className="my-2 z-20 flex lg:flex-row flex-col justify-start gap-2 md:justify-between items-start md:items-end">
+          <div className="flex md:flex-row flex-col gap-4 mt-2">
             <div className="bg-gray-200 p-4 rounded-lg w-40 text-center">
               <h3 className=" font-semibold">Total</h3>
               <p className="">{totalCount}</p>
@@ -173,37 +334,61 @@ const MyWorkSpace = () => {
               <p className="">{absentCount}</p>
             </div>
           </div>
-
-          {/* <DatePicker
-            selectsRange={true}
-            startDate={startDate}
-            endDate={endDate}
-            onChange={(update) => {
-              setDateRange(update);
-            }}
-            isClearable={true}
-            placeholderText="Search by Date range"
-            className="p-2 border-gray-300 rounded-md w-64 outline-none border"
-          /> */}
           <div className="flex gap-2 items-center">
-            <button className="shadow-custom-all-sides rounded-md p-2 px-4 font-semibold">
+            {showCamera && (
+              <div className="fixed inset-0 z-50 flex items-center overflow-y-auto justify-center bg-gray-500 bg-opacity-50">
+                <div className="max-h-screen bg-white  p-3 w-[32rem] rounded-lg shadow-lg overflow-y-auto">
+                  {/* <div> */}
+                  <Webcam
+                    audio={false}
+                    ref={webcamRef}
+                    screenshotFormat="image/jpeg"
+                    videoConstraints={videoConstraints}
+                    className="rounded-md"
+                  />
+                  <div className="flex justify-center gap-2 mt-4">
+                    {!attendanceMarked ? (
+                      <button
+                        onClick={() => captureImage(true)}
+                        className=" shadow-custom-all-sides rounded-md p-1 px-4 font-semibold bg-green-500 text-white"
+                      >
+                        Check in
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => captureImage(false)}
+                        className=" shadow-custom-all-sides rounded-md p-1 px-4 font-semibold bg-green-500 text-white"
+                      >
+                        Check out
+                      </button>
+                    )}
+                    <button
+                      className="border-2 rounded-md p-1 px-4 border-red-400 text-red-400"
+                      onClick={() => setShowCamera(false)}
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+            <button
+              className=" rounded-md p-2 px-4 font-semibold border border-gray-400"
+              onClick={() => setShowCamera(!showCamera)}
+            >
               Mark Attendance
             </button>
             <input
-              type="date"
-              name=""
-              id=""
-              className="border border-gray-300 px-2 p-1 rounded-md"
+              type="month"
+              id="month"
+              value={month}
+              onChange={(e) => setMonth(e.target.value)}
+              className=" rounded-md p-2 px-4 font-semibold border border-gray-400"
+              required
             />
-            <button
-              className=" p-2 text-white rounded-md font-medium"
-              style={{ background: themeColor }}
-            >
-              Download
-            </button>
           </div>
         </div>
-        <Table columns={column} data={filteredData} />
+        <Table columns={column} data={consolidatedData} />
       </div>
       {addRegularization && (
         <AddRegularizationReq onclose={() => setAddRegularization(false)} />

@@ -24,7 +24,6 @@ const Roster = () => {
   const [selectedShift, setSelectedShift] = useState(null);
 
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
- 
 
   const handleShiftClick = (employee, date, schedule) => {
     console.log(schedule);
@@ -90,14 +89,14 @@ const Roster = () => {
     );
   };
   console.log(currentMonth);
-  const [assignShifts, setAssignShifts] = useState(false)
+  const [assignShifts, setAssignShifts] = useState(false);
   const [rosterCount, setRosterCount] = useState("");
   const [pageNumber, setPageNumber] = useState(1);
   const fetchRosterRecords = async (page) => {
     try {
       const res = await getRosterRecords(hrmsOrgId, page);
       setEmployees(res.results);
-      setRosterCount(res.count)
+      setRosterCount(res.count);
       setPageNumber(page);
     } catch (error) {
       console.log(error);
@@ -108,8 +107,8 @@ const Roster = () => {
   }, []);
 
   const handlePageChange = (page) => {
-    setPageNumber(page); 
-    fetchRosterRecords(page); 
+    setPageNumber(page);
+    fetchRosterRecords(page);
   };
 
   const capitalize = (string) => {
@@ -132,7 +131,10 @@ const Roster = () => {
               value={currentMonth}
               onChange={(e) => setCurrentMonth(e.target.value)}
             />
-            <button className="bg-white p-2 rounded-md text-black font-medium" onClick={()=> setAssignShifts(true)}>
+            <button
+              className="bg-white p-2 rounded-md text-black font-medium"
+              onClick={() => setAssignShifts(true)}
+            >
               Assign Shifts
             </button>
             {/* <button onClick={toggleModal} className="border p-2 rounded-md">
@@ -241,8 +243,8 @@ const Roster = () => {
                           style={{ background: themeColor }}
                           className="min-w-10 min-h-10 rounded-full flex items-center justify-center text-white font-medium"
                         >
-                         {capitalize(employee.first_name[0])}
-                         {capitalize(employee.last_name[0])}
+                          {capitalize(employee.first_name[0])}
+                          {capitalize(employee.last_name[0])}
                         </div>
                         <span className="text-sm font-medium">
                           {employee.first_name} {employee.last_name}
@@ -296,7 +298,7 @@ const Roster = () => {
             </table>
           </div>
         </div>
-          <div className="flex justify-end mb-10 my-4">
+        <div className="flex justify-end mb-10 my-4">
           <Pagination
             showSizeChanger={false}
             current={pageNumber}
@@ -424,7 +426,12 @@ const Roster = () => {
           fetchRosterRecords={fetchRosterRecords}
         />
       )}
-      {assignShifts && <AssignRosterShifts onClose={()=> setAssignShifts(false)} fetchRosterRecords={fetchRosterRecords} />}
+      {assignShifts && (
+        <AssignRosterShifts
+          onClose={() => setAssignShifts(false)}
+          fetchRosterRecords={fetchRosterRecords}
+        />
+      )}
     </div>
   );
 };

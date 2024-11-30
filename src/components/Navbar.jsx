@@ -116,6 +116,7 @@ const Navbar = () => {
     localStorage.removeItem("VIBEUSERID");
     localStorage.removeItem("VIBEORGID");
     localStorage.removeItem("FEATURES");
+    localStorage.removeItem("HRMSORGID");
     persistor.purge(["board"]).then(() => {
       navigate("/login");
       // window.location.reload();
