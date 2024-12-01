@@ -73,10 +73,10 @@ const Login = () => {
         setItemInLocalStorage("VIBEORGID", vibeOrganizationId);
       }
 
-      if (featNames.includes("hrms") && response.data.user.organization_id) {
-        const res = await getHRMSEmployeeID(response.data.user.id);
-        setItemInLocalStorage("HRMS_EMPLOYEE_ID", res.id);
-      }
+      // if (featNames.includes("hrms") && response.data.user.organization_id) {
+      //   const res = await getHRMSEmployeeID(response.data.user.id);
+      //   setItemInLocalStorage("HRMS_EMPLOYEE_ID", res.id);
+      // }
 
       //
       console.log("skipped copilot");
@@ -110,6 +110,7 @@ const Login = () => {
       // setItemInLocalStorage("HRMSORGID", 1);
       setItemInLocalStorage("HRMSORGID", response.data.user.organization_id);
       setItemInLocalStorage("APPROVERID", 11);
+      setItemInLocalStorage("HRMS_EMPLOYEE_ID", 22);
 
       // console.log(userType)
 
