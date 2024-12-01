@@ -22,8 +22,7 @@ const MyWorkSpace = () => {
   const [startDate, endDate] = dateRange;
   const [addRegularization, setAddRegularization] = useState(false);
 
- const [showDetails, setShowDetails] = useState(false)
-
+  const [showDetails, setShowDetails] = useState(false);
 
   const column = [
     {
@@ -38,7 +37,6 @@ const MyWorkSpace = () => {
           (record) => record.checkIn === "Check-In"
         );
         return checkIn ? checkIn.time : "N/A";
-        
       },
       sortable: true,
     },
@@ -52,7 +50,6 @@ const MyWorkSpace = () => {
         return checkOut ? checkOut.time : "N/A";
       },
       sortable: true,
-      
     },
     {
       name: "Working Hrs",
@@ -100,7 +97,7 @@ const MyWorkSpace = () => {
       name: "Action",
       cell: (row) => (
         <div className="flex items-center gap-4">
-          <button  title="View Details">
+          <button title="View Details">
             <BsEye size={15} />
           </button>
           <button
@@ -320,8 +317,8 @@ const MyWorkSpace = () => {
       <Navbar />
       <div className="p-2 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
         <EmployeePortal />
-        <div className="my-2 z-20 flex lg:flex-row flex-col justify-start gap-2 md:justify-between items-start md:items-end">
-          <div className="flex md:flex-row flex-col gap-4 mt-2">
+        <div className="my-2 z-20 flex lg:flex-row flex-col justify-start gap-2 md:justify-end items-start md:items-end">
+          {/* <div className="flex md:flex-row flex-col gap-4 mt-2">
             <div className="bg-gray-200 p-4 rounded-lg w-40 text-center">
               <h3 className=" font-semibold">Total</h3>
               <p className="">{totalCount}</p>
@@ -334,7 +331,7 @@ const MyWorkSpace = () => {
               <h3 className=" font-semibold">Absent</h3>
               <p className="">{absentCount}</p>
             </div>
-          </div>
+          </div> */}
           <div className="flex gap-2 items-center">
             {showCamera && (
               <div className="fixed inset-0 z-50 flex items-center overflow-y-auto justify-center bg-gray-500 bg-opacity-50">
