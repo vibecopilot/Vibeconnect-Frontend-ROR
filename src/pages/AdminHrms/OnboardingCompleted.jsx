@@ -7,7 +7,7 @@ import { useSelector } from "react-redux";
 import { BsEye } from "react-icons/bs";
 import { FaTrash } from "react-icons/fa";
 import { getItemInLocalStorage } from "../../utils/localStorage";
-import { getMyHRMSEmployees, getMyHRMSEmployeesAllData } from "../../api";
+import { getApprovedEmployees, getMyHRMSEmployees, getMyHRMSEmployeesAllData } from "../../api";
 import toast from "react-hot-toast";
 import { dateFormatSTD } from "../../utils/dateUtils";
 
@@ -15,10 +15,11 @@ const OnBoardingCompleted = () => {
   const [employees, setEmployees] = useState([]);
   const [filteredEmployees, setFilteredEmployees] = useState([]);
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
+  const approverID = getItemInLocalStorage("APPROVERID");
   const fetchAllEmployees = async () => {
     try {
       toast.loading("Loading employees Please wait!");
-      const res = await getMyHRMSEmployees(hrmsOrgId);
+      const res = await getApprovedEmployees(approverID);
       const sortedEmployees = res.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
       setEmployees(sortedEmployees);
       setFilteredEmployees(sortedEmployees);

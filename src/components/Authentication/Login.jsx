@@ -3,7 +3,7 @@ import toast from "react-hot-toast";
 import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
 import { useNavigate } from "react-router-dom";
 import wave from "/wave.png";
-import { login, vibeLogin } from "../../api";
+import { getHRMSEmployeeID, login, vibeLogin } from "../../api";
 import { setItemInLocalStorage } from "../../utils/localStorage";
 
 const Login = () => {
@@ -73,6 +73,11 @@ const Login = () => {
         setItemInLocalStorage("VIBEORGID", vibeOrganizationId);
       }
 
+      if (featNames.includes("hrms") && response.data.user.organization_id) {
+        const res = await getHRMSEmployeeID(response.data.user.id);
+        setItemInLocalStorage("HRMS_EMPLOYEE_ID", res.id);
+      }
+
       //
       console.log("skipped copilot");
       const loginD = response.data.user;
@@ -102,10 +107,10 @@ const Login = () => {
       setItemInLocalStorage("USERTYPE", userType);
       const CompanyId = response.data.user.company_id;
       setItemInLocalStorage("COMPANYID", CompanyId);
-      setItemInLocalStorage("HRMSORGID", 1);
-      // setItemInLocalStorage("HRMSORGID", response.data.user.organization_id);
+      // setItemInLocalStorage("HRMSORGID", 1);
+      setItemInLocalStorage("HRMSORGID", response.data.user.organization_id);
       setItemInLocalStorage("APPROVERID", 11);
-      setItemInLocalStorage("HRMS_EMPLOYEE_ID", 22);
+
       // console.log(userType)
 
       const statuses = response.data.statuses;
@@ -121,7 +126,13 @@ const Login = () => {
       if (userType === "pms_admin") {
         navigate("/dashboard");
       } else {
-        navigate(selectedSiteId === 10 ? "/employee/dashboard" : "/mytickets");
+        navigate(
+          selectedSiteId === 10
+            ? "/employee/dashboard"
+            : response.data.user.organization_id
+            ? "/employee-portal/attendance"
+            : "/mytickets"
+        );
       }
       toast.dismiss();
       window.location.reload();
