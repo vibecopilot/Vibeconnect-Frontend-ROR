@@ -153,6 +153,9 @@ const AssociatedSites = () => {
     fetchAssociatedSites();
   }, []);
 
+  const rorSiteId = getItemInLocalStorage("SITEID")
+  const rorCompanyId = getItemInLocalStorage("COMPANYID")
+
   const handleAddAssociatedSite = async () => {
     if (!formData.siteName) {
       toast.error("Site name is required");
@@ -191,6 +194,8 @@ const AssociatedSites = () => {
     postData.append("radius", formData.radius);
     postData.append("status", true);
     postData.append("organization", hrmsOrgId);
+    postData.append("company_id_ror", rorCompanyId);
+    postData.append("site_id_ror", rorSiteId);
 
     try {
       const res = await postAssociatedSites(postData);

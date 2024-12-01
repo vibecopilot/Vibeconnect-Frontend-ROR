@@ -4486,7 +4486,7 @@ export const getEmployeeRegularizationReq = async (orgId) => {
 export const postRegularizationApproval = async (approvalId, data) => {
   try {
     const response = await HrmsAuth.patch(
-      `/attendance/regularization/requests/status/${approvalId}/`,
+      `/attendance/regularization/requests/${approvalId}/`,
       data
       // {
       //   headers: {
@@ -4559,6 +4559,22 @@ export const getLeaveCategory = async (orgId) => {
     return response.data;
   } catch (error) {
     console.error("Error getting leave categories:", error);
+    throw error;
+  }
+};
+export const getEmployeeLeave = async (empId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/employee/leave-request/?employee_id=${empId}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting leave :", error);
     throw error;
   }
 };
@@ -4728,6 +4744,23 @@ export const editLeaveApplicationDetails = async (applicationId, data) => {
     return response.data;
   } catch (error) {
     console.error("Error getting leave applications:", error);
+    throw error;
+  }
+};
+export const getHRMSEmployeeID = async (vibeID) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/vibe-id/employee/?vibe_id=${vibeID}`,
+      
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting employee id:", error);
     throw error;
   }
 };
@@ -6657,6 +6690,18 @@ export const postApproveOrRejectEmployee = async (notificationId, data) => {
     return response.data;
   } catch (error) {
     console.error("Error granting approval", error);
+    throw error;
+  }
+};
+export const getApprovedEmployees = async (approverId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `approval/approve-list/${approverId}/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting approved employees", error);
     throw error;
   }
 };

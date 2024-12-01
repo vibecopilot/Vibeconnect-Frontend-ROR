@@ -233,10 +233,10 @@ const AttendanceRec = () => {
       const todayDate = new Date().toISOString().split("T")[0];
       const requestedCheckIn = regData.checkInTime
         ? new Date(`${todayDate}T${regData.checkInTime}:00Z`).toISOString()
-        : null;
+        : "";
       const requestedCheckOut = regData.checkOutTime
         ? new Date(`${todayDate}T${regData.checkOutTime}:00Z`).toISOString()
-        : null;
+        : "";
       const postData = new FormData();
       postData.append("requested_check_in", requestedCheckIn);
       postData.append("requested_check_out", requestedCheckOut);
@@ -865,9 +865,15 @@ const AttendanceRec = () => {
                       </p>
                     </div>
                   </div>
-                  <div className=" h-8 border-2 p-2 flex justify-center items-center bg-green-500 rounded-md">
-                    <p className="font-medium  text-white">Present</p>
-                  </div>
+                  {isPresent ? (
+                    <div className=" h-8 border-2 p-2 flex justify-center items-center bg-green-500 rounded-md">
+                      <p className="font-medium  text-white">Present</p>
+                    </div>
+                  ) : (
+                    <div className=" h-8 border-2 p-2 flex justify-center items-center bg-red-500 rounded-md">
+                      <p className="font-medium  text-white">Absent</p>
+                    </div>
+                  )}
                 </div>
                 <div className="flex flex-col gap-2 my-2">
                   <div className="w-full border-b flex justify-between items-center">

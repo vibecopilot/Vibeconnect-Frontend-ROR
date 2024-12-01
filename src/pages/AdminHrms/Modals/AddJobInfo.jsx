@@ -169,14 +169,7 @@ const AddJobInfo = ({ closeModal1, fetchJobInfo }) => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Associate site <span className="text-red-500">*</span>
               </label>
-              {/* <select className="mt-1 p-2 text-black border w-full rounded-md">
-                <option value="">Select Site</option>
-                {sites.map((site) => (
-                  <option value={site.id} key={site.id}>
-                   {site.site_name}
-                  </option>
-                ))}
-              </select> */}
+              
               <Select
                 options={sites}
                 onChange={handleAssociatedSiteChange}
