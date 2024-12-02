@@ -65,7 +65,7 @@ const PPMActivity = () => {
           <Link to={`/asset/edit-ppm/${row.id}`}>
             <BsEye size={15} />
           </Link>
-          <Link to={`/admin/copy-checklist/${row.id}`}>
+          <Link to={`/admin/copy-checklist/ppm/${row.id}`}>
           <FaCopy size={15}/>
           </Link>
         </div>

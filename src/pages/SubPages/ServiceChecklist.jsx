@@ -28,7 +28,7 @@ const ServiceChecklist = () => {
           <Link to={`/services/edit-service-checklist/${row.id}`}>
             <BsEye size={15} />
           </Link>
-          <Link to={`/admin/copy-checklist/${row.id}`}>
+          <Link to={`/admin/copy-checklist/service/${row.id}`}>
           <FaCopy size={15}/>
           </Link>
         </div>

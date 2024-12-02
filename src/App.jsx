@@ -704,6 +704,8 @@ import SetupSeat from "./pages/Setup/SetupSeat.jsx";
 import UserRoles from "./pages/AdminHrms/UserRoles.jsx";
 import OrganizationChart from "./pages/AdminHrms/OrganizationTree/OrganizationChart.jsx";
 import CTCGeneralSettingEdit from "./pages/AdminHrms/CTCGeneralSettingEdit.jsx";
+import CopyChecklistPPM from "./pages/SubPages/CopyChecklistPPM.jsx";
+import CopyChecklistService from "./pages/SubPages/CopyChecklistService.jsx";
 // new admin hrms
 
 function App() {
@@ -1761,6 +1763,22 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <CopyChecklist/>
+              </ProtectedAdminRoutes>
+            }
+          />
+           <Route
+            path="/admin/copy-checklist/ppm/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <CopyChecklistPPM/>
+              </ProtectedAdminRoutes>
+            }
+          />
+           <Route
+            path="/admin/copy-checklist/service/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <CopyChecklistService/>
               </ProtectedAdminRoutes>
             }
           />
