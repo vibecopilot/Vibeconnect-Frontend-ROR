@@ -708,6 +708,8 @@ import TimeSheetRecord from "./pages/AdminHrms/TimeSheet/TimeSheetRecord.jsx";
 import EmployeesSetup from "./pages/AdminHrms/EmployeesSetup.jsx";
 import UniformApplication from "./pages/AdminHrms/UniformApplication.jsx";
 
+import CopyChecklistPPM from "./pages/SubPages/CopyChecklistPPM.jsx";
+import CopyChecklistService from "./pages/SubPages/CopyChecklistService.jsx";
 // new admin hrms
 
 function App() {
@@ -1765,6 +1767,22 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <CopyChecklist/>
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/copy-checklist/service/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <CopyChecklistService/>
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/copy-checklist/ppm/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <CopyChecklistPPM/>
               </ProtectedAdminRoutes>
             }
           />
