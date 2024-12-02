@@ -14,6 +14,7 @@ import { useSelector } from "react-redux";
 import SupplierModal from "./SupplierModal";
 import EditSupplierModal from "./EditSupplierModal";
 import toast from "react-hot-toast";
+import SetupNavbar from "../../../components/navbars/SetupNavbar";
 
 const SupplierSetup = () => {
   const [page, setPage] = useState("type");
@@ -143,7 +144,7 @@ const SupplierSetup = () => {
   };
   return (
     <section className="flex">
-      <Navbar />
+      <SetupNavbar/>
       <div className="w-full flex mx-3 mb-5 flex-col overflow-hidden">
         <div className=" flex gap-2 p-2 pb-0 border-b-2 border-gray-200 w-full">
           <h2

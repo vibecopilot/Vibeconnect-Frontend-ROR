@@ -8,13 +8,14 @@ import Navbar from "../../../components/Navbar";
 import { useSelector } from "react-redux";
 
 import { Link } from "react-router-dom";
+import SetupNavbar from "../../../components/navbars/SetupNavbar";
 
 const TicketSetup = () => {
     const [page, setPage] = useState("Setup");
 
   return (
     <div className="flex gap-4">
-       <Navbar/>
+       <SetupNavbar/>
     <div className=" w-full my-2 flex  overflow-hidden flex-col">
 
     <div className="flex w-full justify-center">

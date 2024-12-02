@@ -17,6 +17,7 @@ import { BiEdit } from "react-icons/bi";
 import Navbar from "../../components/Navbar";
 import SetupNavbar from "../../components/navbars/SetupNavbar";
 
+
 const FBCuisinesSetup = () => {
   const siteID = getItemInLocalStorage("SITEID");
   const companyId = getItemInLocalStorage("COMPANYID");

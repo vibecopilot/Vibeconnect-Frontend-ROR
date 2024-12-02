@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { IoMdAdd } from 'react-icons/io';
 import { BiEdit } from 'react-icons/bi';
 import Table from '../../../components/table/Table';
+import SetupNavbar from '../../../components/navbars/SetupNavbar';
 function InvoiceApprovalSetup() {
     const column = [
         {
@@ -34,7 +35,7 @@ function InvoiceApprovalSetup() {
     ];
   return (
     <section className='flex'>
-        <Navbar/>
+       <SetupNavbar/>
         <div className="w-full flex mx-3 flex-col overflow-hidden">
             <div className="flex flex-col sm:flex-row md:justify-between gap-3 my-3">
                 <input
