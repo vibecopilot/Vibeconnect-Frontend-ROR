@@ -260,6 +260,8 @@ const AssociatedSites = () => {
     editData.append("radius", siteDetails.radius);
     editData.append("status", siteDetails.status);
     editData.append("organization", hrmsOrgId);
+    editData.append("company_id_ror", rorCompanyId);
+    editData.append("site_id_ror", rorSiteId);
 
     try {
       const res = await putAssociatedSiteDetails(siteId, editData);
