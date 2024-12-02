@@ -46,6 +46,7 @@ function EmployeeDirectory() {
       toast.dismiss();
     } catch (error) {
       console.log(error);
+      toast.dismiss();
       toast.error("Something went wrong");
     }
   };

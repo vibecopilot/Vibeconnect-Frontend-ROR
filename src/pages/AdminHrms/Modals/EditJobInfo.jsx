@@ -33,6 +33,9 @@ const EditJobInfo = ({ closeModal1, fetchJobInfo, infoId }) => {
       const formattedStartDate = res.start_date
         ? new Date(res.start_date).toISOString().split("T")[0]
         : "";
+      const formattedEndDate = res.start_date
+        ? new Date(res.end_date).toISOString().split("T")[0]
+        : "";
 
       setFormData({
         ...formData,
@@ -40,6 +43,7 @@ const EditJobInfo = ({ closeModal1, fetchJobInfo, infoId }) => {
         designation: res.designation,
         comment: res.comment,
         startDate: formattedStartDate,
+       endDate: formattedEndDate
       });
       setSelectedOption({
         value: res.associated_organization,
@@ -150,6 +154,7 @@ const EditJobInfo = ({ closeModal1, fetchJobInfo, infoId }) => {
     const postData = new FormData();
     postData.append("employee", id);
     postData.append("start_date", formData.startDate);
+    postData.append("end_date", formData.endDate);
     postData.append("organization", hrmsOrgId);
     postData.append("reporting_supervisor", selectedSupervisorOption.value);
     postData.append("department", formData.department);
@@ -182,6 +187,18 @@ const EditJobInfo = ({ closeModal1, fetchJobInfo, infoId }) => {
                 value={formData.startDate}
                 onChange={handleChange}
                 name="startDate"
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Effective To <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                className="mt-1 p-2  border rounded-md"
+                value={formData.endDate}
+                onChange={handleChange}
+                name="endDate"
               />
             </div>
             <div className="mt-2">

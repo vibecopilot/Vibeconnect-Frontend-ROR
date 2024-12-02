@@ -693,32 +693,32 @@ export const getChecklist = async () =>
       token: token,
     },
   });
-  export const getChecklistTemplate = async () =>
-    axiosInstance.get("/checklists/download_template", {
-      params: {
-        token: token,
-      },
-    });
-    export const getMasterChecklist = async () =>
-      axiosInstance.get("/checklists/get_master_checklist.json", {
-        params: {
-          token: token,
-        },
-      });
-      export const exportChecklist = async () =>
-        axiosInstance.get("/export_checklist.xlsx", {
-          params: {
-            token: token,
-          },
-          responseType: "blob",
-        });
-        export const downloadSampleChecklist = async () =>
-          axiosInstance.get("/checklists/download_template", {
-            params: {
-              token: token,
-            },
-            responseType: "blob",
-          });
+export const getChecklistTemplate = async () =>
+  axiosInstance.get("/checklists/download_template", {
+    params: {
+      token: token,
+    },
+  });
+export const getMasterChecklist = async () =>
+  axiosInstance.get("/checklists/get_master_checklist.json", {
+    params: {
+      token: token,
+    },
+  });
+export const exportChecklist = async () =>
+  axiosInstance.get("/export_checklist.xlsx", {
+    params: {
+      token: token,
+    },
+    responseType: "blob",
+  });
+export const downloadSampleChecklist = async () =>
+  axiosInstance.get("/checklists/download_template", {
+    params: {
+      token: token,
+    },
+    responseType: "blob",
+  });
 export const getAssociationList = async (checklistId) =>
   axiosInstance.get(
     `/checklist_associations.json?checklist_id=${checklistId}`,
@@ -735,12 +735,12 @@ export const getChecklistDetails = async (id) =>
       token: token,
     },
   });
-  export const ChecklistImport = async (file) =>
-    axiosInstance.post(`/checklist/checklist_import.json`, file, {
-      params: {
-        token: token,
-      },
-    });
+export const ChecklistImport = async (file) =>
+  axiosInstance.post(`/checklist/checklist_import.json`, file, {
+    params: {
+      token: token,
+    },
+  });
 export const postAssetAssociation = async (data) =>
   axiosInstance.post(`/activities.json`, data, {
     params: {
@@ -789,11 +789,14 @@ export const getScheduleDetails = async (sId, activityId) =>
 //     }
 //   );
 export const getAssetPPMs = async (assetId) =>
-  axiosInstance.get(`/site_assets/${assetId}/asset_ppm_show.json?q[checklist_id_is_not_null]=1`, {
-    params: {
-      token: token,
-    },
-  });
+  axiosInstance.get(
+    `/site_assets/${assetId}/asset_ppm_show.json?q[checklist_id_is_not_null]=1`,
+    {
+      params: {
+        token: token,
+      },
+    }
+  );
 
 export const getSoftServiceStatus = async (data) =>
   axiosInstance.get(
@@ -804,49 +807,52 @@ export const getSoftServiceStatus = async (data) =>
       },
     }
   );
-  export const getPPMCalendar = async (startdate,enddate) =>
-    axiosInstance.get(`/activities/calendar_data.json&q[checklist_ctype_eq]=ppm?startdate=${startdate}&enddate=${enddate}`, {
+export const getPPMCalendar = async (startdate, enddate) =>
+  axiosInstance.get(
+    `/activities/calendar_data.json&q[checklist_ctype_eq]=ppm?startdate=${startdate}&enddate=${enddate}`,
+    {
       params: {
         token: token,
       },
-    });
-  
-    export const postGRN = async (data) =>
-      axiosInstance.post(`/grn_details.json`, data, {
-        params: {
-          token: token,
-        },
-      });
-  export const postMasters = async (data) =>
-    axiosInstance.post(`/inventories.json`, data, {
-      params: {
-        token: token,
-      },
-    });
-    export const ImportMasters = async (file) =>
-      axiosInstance.post(`/inventories/import.json`, file, {
-        params: {
-          token: token,
-        },
-      });
-    export const getMasters = async () =>
-      axiosInstance.get("/inventories.json", {
-        params: {
-          token: token,
-        },
-      });
-      export const getMastersDetails = async (id) =>
-        axiosInstance.get(`/inventories/${id}.json`, {
-          params: {
-            token: token,
-          },
-        });
-        export const UpdateMasters = async (data, id) =>
-          axiosInstance.put(`/inventories/${id}.json`, data, {
-            params: {
-              token: token,
-            },
-          });
+    }
+  );
+
+export const postGRN = async (data) =>
+  axiosInstance.post(`/grn_details.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const postMasters = async (data) =>
+  axiosInstance.post(`/inventories.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const ImportMasters = async (file) =>
+  axiosInstance.post(`/inventories/import.json`, file, {
+    params: {
+      token: token,
+    },
+  });
+export const getMasters = async () =>
+  axiosInstance.get("/inventories.json", {
+    params: {
+      token: token,
+    },
+  });
+export const getMastersDetails = async (id) =>
+  axiosInstance.get(`/inventories/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const UpdateMasters = async (data, id) =>
+  axiosInstance.put(`/inventories/${id}.json`, data, {
+    params: {
+      token: token,
+    },
+  });
 //booking & request
 export const postFlightTicketRequest = async (data) =>
   axiosInstance.post(`/flight_requests.json`, data, {
@@ -1067,12 +1073,15 @@ export const deleteVehicleParking = async (id) =>
       token: token,
     },
   });
-  export const deleteQuestionChecklist = async (id,qid) =>
-    axiosInstance.delete(`/checklists/${id}/delete_question.json?question_id=${qid}`, {
+export const deleteQuestionChecklist = async (id, qid) =>
+  axiosInstance.delete(
+    `/checklists/${id}/delete_question.json?question_id=${qid}`,
+    {
       params: {
         token: token,
       },
-    });
+    }
+  );
 
 export const getVehicleParkingDetails = async (id) =>
   axiosInstance.get(`/parking_configurations/${id}.json`, {
@@ -1198,7 +1207,6 @@ export const getEvents = async () =>
   axiosInstance.get("/events.json", {
     params: {
       token: token,
-      
     },
   });
 export const getEventsDetails = async (id) =>
@@ -1340,75 +1348,75 @@ export const postChecklist = async (data) =>
       token: token,
     },
   });
-  export const postGDN = async (data) =>
-    axiosInstance.post("/gdn_details.json", data, {
+export const postGDN = async (data) =>
+  axiosInstance.post("/gdn_details.json", data, {
+    params: {
+      token: token,
+    },
+  });
+export const getGDN = async () =>
+  axiosInstance.get("/gdn_details.json", {
+    params: {
+      token: token,
+    },
+  });
+export const getSiteOwner = async () =>
+  axiosInstance.get("/get_site_owner.json?q[info_type_eq]=SiteOwner", {
+    params: {
+      token: token,
+    },
+  });
+export const getChecklistGroupReading = async () =>
+  axiosInstance.get("/generic_infos.json?q[info_type_eq]=GroupReading", {
+    params: {
+      token: token,
+    },
+  });
+export const getGDNPurposeSetup = async () =>
+  axiosInstance.get("/generic_infos.json?q[info_type_eq]=GdnPurpose", {
+    params: {
+      token: token,
+    },
+  });
+export const getGDNConsumingSetup = async () =>
+  axiosInstance.get("/generic_infos.json?q[info_type_eq]=GdnConsumingIn", {
+    params: {
+      token: token,
+    },
+  });
+export const getSiteOwnerDetails = async (id) =>
+  axiosInstance.get(`/generic_infos/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const EditSiteOwner = async (id, data) =>
+  axiosInstance.put(`/generic_infos/${id}.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const postSiteOwner = async (data) =>
+  axiosInstance.post("/generic_infos.json", data, {
+    params: {
+      token: token,
+    },
+  });
+export const getGenericGroupAssetChecklist = async () =>
+  axiosInstance.get(`/generic_infos.json?q[info_type_eq]=checklist`, {
+    params: {
+      token: token,
+    },
+  });
+export const getGenericSubGroupAssetChecklist = async (groupid) =>
+  axiosInstance.get(
+    `/generic_sub_infos.json?q[generic_info_id_eq]=${groupid}`,
+    {
       params: {
         token: token,
       },
-    });
-    export const getGDN = async () =>
-      axiosInstance.get("/gdn_details.json", {
-        params: {
-          token: token,
-        },
-      });
-  export const getSiteOwner = async () =>
-    axiosInstance.get("/get_site_owner.json?q[info_type_eq]=SiteOwner", {
-      params: {
-        token: token,
-      },
-    });
-    export const getChecklistGroupReading = async () =>
-      axiosInstance.get("/generic_infos.json?q[info_type_eq]=GroupReading", {
-        params: {
-          token: token,
-        },
-      });
-      export const getGDNPurposeSetup = async () =>
-        axiosInstance.get("/generic_infos.json?q[info_type_eq]=GdnPurpose", {
-          params: {
-            token: token,
-          },
-        });
-        export const getGDNConsumingSetup = async () =>
-          axiosInstance.get("/generic_infos.json?q[info_type_eq]=GdnConsumingIn", {
-            params: {
-              token: token,
-            },
-          });
-    export const getSiteOwnerDetails = async (id) =>
-      axiosInstance.get(`/generic_infos/${id}.json`, {
-        params: {
-          token: token,
-        },
-      });
-    export const EditSiteOwner = async (id, data) =>
-      axiosInstance.put(`/generic_infos/${id}.json`, data, {
-        params: {
-          token: token,
-        },
-      });
-  export const postSiteOwner = async (data) =>
-    axiosInstance.post("/generic_infos.json", data, {
-      params: {
-        token: token,
-      },
-    });
-  export const getGenericGroupAssetChecklist = async () =>
-    axiosInstance.get(`/generic_infos.json?q[info_type_eq]=checklist`, {
-      params: {
-        token: token,
-      },
-    });
-    export const getGenericSubGroupAssetChecklist = async (groupid) =>
-      axiosInstance.get(
-        `/generic_sub_infos.json?q[generic_info_id_eq]=${groupid}`,
-        {
-          params: {
-            token: token,
-          },
-        }
-      );
+    }
+  );
 export const getGenericGroup = async () =>
   axiosInstance.get(`/generic_infos.json?q[info_type_eq]=soft_services`, {
     params: {
@@ -4217,6 +4225,41 @@ export const postEmployeePaymentInfo = async (data) => {
     throw error;
   }
 };
+export const getPaymentInfoDetails = async (paymentInfoId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/employee/payment-information/${paymentInfoId}/`,
+
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error adding employee payment Info:", error);
+    throw error;
+  }
+};
+export const editPaymentInfoDetails = async (paymentInfoId, data) => {
+  try {
+    const response = await HrmsAuth.put(
+      `/employee/payment-information/${paymentInfoId}/`,
+      data,
+
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error adding employee payment Info:", error);
+    throw error;
+  }
+};
 export const getEmployeePaymentInfo = async (empId) => {
   try {
     const response = await HrmsAuth.get(
@@ -4442,8 +4485,8 @@ export const getEmployeeRegularizationReq = async (orgId) => {
 };
 export const postRegularizationApproval = async (approvalId, data) => {
   try {
-    const response = await HrmsAuth.post(
-      `/attendance/regularization/requests/status/${approvalId}/`,
+    const response = await HrmsAuth.patch(
+      `/attendance/regularization/requests/${approvalId}/`,
       data
       // {
       //   headers: {
@@ -4473,10 +4516,11 @@ export const getRegularizationDetails = async (reqId) => {
     throw error;
   }
 };
-export const getAttendanceRecord = async (orgId) => {
+export const getAttendanceRecord = async (orgId, page) => {
   try {
     const response = await HrmsAuth.get(
-      `/employees/attendance-bulk?organization_id=${orgId}`
+      `/employees/attendance-bulk?organization_id=${orgId}&page=${page}`
+      // `/employees/attendance-bulk?organization_id=${orgId}`
       // {
       //   headers: {
       //     "Content-Type": "multipart/form-data/",
@@ -4515,6 +4559,22 @@ export const getLeaveCategory = async (orgId) => {
     return response.data;
   } catch (error) {
     console.error("Error getting leave categories:", error);
+    throw error;
+  }
+};
+export const getEmployeeLeave = async (empId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/employee/leave-request/?employee_id=${empId}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting leave :", error);
     throw error;
   }
 };
@@ -4684,6 +4744,23 @@ export const editLeaveApplicationDetails = async (applicationId, data) => {
     return response.data;
   } catch (error) {
     console.error("Error getting leave applications:", error);
+    throw error;
+  }
+};
+export const getHRMSEmployeeID = async (vibeID) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/vibe-id/employee/?vibe_id=${vibeID}`,
+      
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting employee id:", error);
     throw error;
   }
 };
@@ -5157,10 +5234,11 @@ export const editRosterShiftDetails = async (shiftId, data) => {
     throw error;
   }
 };
-export const getRosterRecords = async (orgId) => {
+export const getRosterRecords = async (orgId, page) => {
   try {
     const response = await HrmsAuth.get(
-      `/roster-shift-list/?organization_id=${orgId}`
+      `/roster-shift-list/?organization_id=${orgId}&page=${page}`
+      // `/roster-shift-list/?organization_id=${orgId}`
     );
     return response.data;
   } catch (error) {
@@ -5179,10 +5257,7 @@ export const getRosterRecordDetails = async (shiftId) => {
 };
 export const editRosterRecord = async (data) => {
   try {
-    const response = await HrmsAuth.put(
-      `/roster/roster-shift/`,
-      data
-    );
+    const response = await HrmsAuth.put(`/roster/roster-shift/`, data);
     return response.data;
   } catch (error) {
     console.error("Error updating roster records:", error);
@@ -6267,10 +6342,10 @@ export const putAssociatedSiteDetails = async (siteId, data) => {
     throw error;
   }
 };
-export const getEmployeeJobInfo = async (orgId) => {
+export const getEmployeeJobInfo = async (empId) => {
   try {
     const response = await HrmsAuth.get(
-      `/associated-organization/?organization_id=${orgId}`,
+      `/associated-organization/?employee_id=${empId}`,
 
       {
         headers: {
@@ -6424,10 +6499,64 @@ export const getOrganizationTreeChart = async (orgId) => {
     throw error;
   }
 };
+export const getApprovalAuthorities = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/approver-settings/?organization_id=${orgId}`,
+
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting approval authorities", error);
+    throw error;
+  }
+};
+export const postApprovalAuthorities = async (data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/approver-settings/`,
+      data,
+
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting approval authorities", error);
+    throw error;
+  }
+};
+export const editApprovalAuthoritiesStatus = async (approverID, data) => {
+  try {
+    const response = await HrmsAuth.patch(
+      `/approver-settings/${approverID}/`,
+      data
+
+      // {
+      //   headers: {
+      //     "Content-Type": "multipart/form-data/",
+      //   },
+      // }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting approval authorities", error);
+    throw error;
+  }
+};
 export const postCTCComponent = async (data) => {
   try {
     const response = await HrmsAuth.post(
-      `/ctc/components/`,data,
+      `/ctc/components/`,
+      data,
 
       {
         headers: {
@@ -6438,6 +6567,223 @@ export const postCTCComponent = async (data) => {
     return response.data;
   } catch (error) {
     console.error("Error posting CTC component", error);
+    throw error;
+  }
+};
+
+export const postRegularizationRequest = async (data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/attendance/regularization/requests/`,
+      data,
+
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting regularization request", error);
+    throw error;
+  }
+};
+export const markEmployeeAttendance = async (data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/employee/attendance/`,
+      data,
+
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting employee attendance", error);
+    throw error;
+  }
+};
+export const getEmployeeAttendanceOfMonth = async (
+  empId,
+  startDate,
+  endDate
+) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/employee/attendance/datewise/list/?employee_id=${empId}&start_date=${startDate}&end_date=${endDate}`,
+      // `/employee/attendance/?employee_id=${empId}&start_date=${startDate}&end_date=${endDate}`,
+
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting employee attendance", error);
+    throw error;
+  }
+};
+export const getEmployeeAttendanceOfToday = async (empId, today) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/employee/attendance/?employee_id=${empId}&start_date=${today}`,
+
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting employee attendance of today", error);
+    throw error;
+  }
+};
+export const getEmployeeRoster = async (empId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/roster/roster-shift/?employee_id=${empId}`,
+      data,
+
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting employee roster", error);
+    throw error;
+  }
+};
+export const getApprovalNotifications = async (approverId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/approval-notifications/approver/${approverId}/`,
+
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting new hires", error);
+    throw error;
+  }
+};
+export const postApproveOrRejectEmployee = async (notificationId, data) => {
+  try {
+    const response = await HrmsAuth.patch(
+      `/approve-reject/${notificationId}/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error granting approval", error);
+    throw error;
+  }
+};
+export const getApprovedEmployees = async (approverId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `approval/approve-list/${approverId}/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting approved employees", error);
+    throw error;
+  }
+};
+export const hrmsEmployeeLogin = async (data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/employee-login/`,
+      data,
+
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting request", error);
+    throw error;
+  }
+};
+export const postUniformRequest = async (data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/employee-uniform/request/`,
+      data,
+
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting request", error);
+    throw error;
+  }
+};
+export const getUniformRequest = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `employee-uniform/request/?organization_id=${orgId}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting info", error);
+    throw error;
+  }
+};
+export const getUniformRequestDetails = async (reqID) => {
+  try {
+    const response = await HrmsAuth.get(`employee-uniform/request/${reqID}/`, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error getting info", error);
+    throw error;
+  }
+};
+export const postUniformApproval = async (approvalId, data) => {
+  try {
+    const response = await HrmsAuth.patch(
+      `/employee-uniform/request/${approvalId}/`,
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting approvalId", error);
     throw error;
   }
 };

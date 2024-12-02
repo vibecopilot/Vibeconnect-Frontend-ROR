@@ -126,7 +126,7 @@ const Dashboard = () => {
           style={{ background: themeColor }}
           className="w-full h-10 rounded-md  my-1 flex justify-between items-center"
         >
-          <div></div>
+          {/* <div></div> */}
           <nav>
             <h1 className="text-white text-center text-xl ml-5">
               Vibe Connect
