@@ -72,6 +72,7 @@ const EditEmployeeDirectory = () => {
     editData.append("date_of_birth", details?.employee?.date_of_birth);
     editData.append("blood_group", details?.employee?.blood_group);
     editData.append("pan", details?.employee?.pan);
+    editData.append("status", true);
     editData.append(
       "aadhar_number",
       details?.employee?.aadhar_number.replace(/\D/g, "")

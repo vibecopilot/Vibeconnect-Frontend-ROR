@@ -139,18 +139,34 @@ const SectionsEmployment = () => {
 
       cell: (row) => (
         <div className="flex items-center gap-4">
-          <button onClick={()=>handleEditJobInfoModal(row.id)}>
+          <button onClick={() => handleEditJobInfoModal(row.id)}>
             <BiEdit size={15} />
           </button>
         </div>
       ),
     },
 
-    { name: "Effective From", selector: (row) =>dateFormat(row.start_date), sortable: true },
-    { name: "Effective To", selector: (row) => row.end_date?dateFormat(row.end_date): "", sortable: true },
-    { name: "Associated Site", selector: (row) => row.associated_organization_name, sortable: true },
+    {
+      name: "Effective From",
+      selector: (row) => dateFormat(row.start_date),
+      sortable: true,
+    },
+    {
+      name: "Effective To",
+      selector: (row) => (row.end_date ? dateFormat(row.end_date) : ""),
+      sortable: true,
+    },
+    {
+      name: "Associated Site",
+      selector: (row) => row.associated_organization_name,
+      sortable: true,
+    },
 
-    { name: "Department", selector: (row) => row.department_name, sortable: true },
+    {
+      name: "Department",
+      selector: (row) => row.department_name,
+      sortable: true,
+    },
     { name: "Designation", selector: (row) => row.designation, sortable: true },
     {
       name: "Reporting Supervisor",
@@ -158,12 +174,12 @@ const SectionsEmployment = () => {
       sortable: true,
     },
   ];
-  const [showEditJobInfoModal, setShowEditJobInfoModal] = useState(false)
-const [jobInfoId, setJobInfoId] = useState("")
-  const handleEditJobInfoModal =(infoId)=>{
-    setJobInfoId(infoId)
-    setShowEditJobInfoModal(true)
-  } 
+  const [showEditJobInfoModal, setShowEditJobInfoModal] = useState(false);
+  const [jobInfoId, setJobInfoId] = useState("");
+  const handleEditJobInfoModal = (infoId) => {
+    setJobInfoId(infoId);
+    setShowEditJobInfoModal(true);
+  };
   const assetColumn = [
     {
       name: "Which brand laptop",
@@ -782,8 +798,16 @@ const [jobInfoId, setJobInfoId] = useState("")
             </div>
           )}
 
-          {modalIsOpen1 && <AddJobInfo closeModal1={closeModal1} fetchJobInfo={fetchJobInfo} />}
-          {showEditJobInfoModal && <EditJobInfo closeModal1={()=>setShowEditJobInfoModal(false)} fetchJobInfo={fetchJobInfo} infoId={jobInfoId} />}
+          {modalIsOpen1 && (
+            <AddJobInfo closeModal1={closeModal1} fetchJobInfo={fetchJobInfo} />
+          )}
+          {showEditJobInfoModal && (
+            <EditJobInfo
+              closeModal1={() => setShowEditJobInfoModal(false)}
+              fetchJobInfo={fetchJobInfo}
+              infoId={jobInfoId}
+            />
+          )}
 
           {assetModal && (
             <AddEmployeeAsset

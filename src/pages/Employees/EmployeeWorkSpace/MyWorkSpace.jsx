@@ -17,6 +17,8 @@ import {
   markEmployeeAttendance,
 } from "../../../api";
 import toast from "react-hot-toast";
+import { PiPlus, PiPlusCircleBold, PiPlusCircleDuotone } from "react-icons/pi";
+import AddRegRequest from "./AddRegRequest";
 const MyWorkSpace = () => {
   const [dateRange, setDateRange] = useState([null, null]);
   const [startDate, endDate] = dateRange;
@@ -97,9 +99,9 @@ const MyWorkSpace = () => {
       name: "Action",
       cell: (row) => (
         <div className="flex items-center gap-4">
-          <button title="View Details">
+          {/* <button title="View Details">
             <BsEye size={15} />
-          </button>
+          </button> */}
           <button
             className="border p-1 px-2 rounded border-gray-300"
             title="Add Regularization"
@@ -311,6 +313,7 @@ const MyWorkSpace = () => {
   useEffect(() => {
     fetchTodayAttendance();
   }, []);
+  const [addRegReq, setAddRegReq] = useState(false);
 
   return (
     <section className="flex">
@@ -376,6 +379,12 @@ const MyWorkSpace = () => {
             >
               Mark Attendance
             </button>
+            <button
+              className=" rounded-md p-2 px-4 font-semibold border border-gray-400 flex items-center gap-2"
+              onClick={() => setAddRegReq(true)}
+            >
+              <PiPlusCircleBold /> Regularization
+            </button>
             <input
               type="month"
               id="month"
@@ -391,6 +400,7 @@ const MyWorkSpace = () => {
       {addRegularization && (
         <AddRegularizationReq onclose={() => setAddRegularization(false)} />
       )}
+      {addRegReq && <AddRegRequest setAddRegReq={setAddRegReq} />}
     </section>
   );
 };

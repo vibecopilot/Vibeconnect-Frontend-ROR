@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Navbar from "../../../components/Navbar";
 import {
   FaIdCard,
@@ -17,6 +17,11 @@ import form16 from "/form16.jpg";
 import pancard from "/pan-card.jpg";
 import res from "/res.jpg";
 import { AddCircleOutline } from "react-ionicons";
+import { getItemInLocalStorage } from "../../../utils/localStorage";
+import { getEmployeeDocs, postEmployeeDocs } from "../../../api";
+import toast from "react-hot-toast";
+import { dateFormat } from "highcharts";
+import { dateFormatSTD } from "../../../utils/dateUtils";
 
 const documentList = [
   {
@@ -78,6 +83,7 @@ const WorkSpaceDocs = () => {
   const openModal = (item) => {
     setCurrentItem(item);
     setModalIsOpen(true);
+    console.log(item)
   };
 
   const closeModal = () => {
@@ -102,6 +108,49 @@ const WorkSpaceDocs = () => {
   const closeLetter = () => {
     setAddLetter(false);
   };
+  //
+  const hrmsEmployeeId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
+  const [formData, setFormData] = useState({
+    docName: "",
+    doc: [],
+  });
+  const handleAddDocuments = async () => {
+    const postData = new FormData();
+    postData.append("employee", hrmsEmployeeId);
+    postData.append("document_name", formData.docName);
+    formData.doc.forEach((file) => {
+      postData.append("document_file", file);
+    });
+
+    try {
+      const res = await postEmployeeDocs(postData);
+      setAddDoc(false);
+      toast.success("Document added successfully");
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleFileChange = (e) => {
+    const selectedFile = Array.from(e.target.files);
+    setFormData((prevData) => ({
+      ...prevData,
+      doc: selectedFile,
+    }));
+  };
+  const [documentList, setDocumentList] = useState([]);
+  const fetchEmployeeDocs = async () => {
+    try {
+      const res = await getEmployeeDocs(hrmsEmployeeId);
+      setDocumentList(res);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchEmployeeDocs();
+  }, []);
 
   return (
     <section className="flex">
@@ -122,19 +171,17 @@ const WorkSpaceDocs = () => {
                 className="bg-white p-4 rounded-lg shadow-md border border-gray-200 flex flex-col items-center cursor-pointer"
                 onClick={() => openModal(doc)}
               >
-                <div className="text-3xl mb-2 text-blue-600">{doc.icon}</div>
+                {/* <div className="text-3xl mb-2 text-blue-600">{doc.icon}</div> */}
                 <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                  {doc.name}
+                  {doc.document_name}
                 </h3>
                 <p className="text-sm text-gray-500">
-                  Updated On: {doc.updatedOn}
+                  Updated On : {dateFormatSTD(doc.updated_date)}
                 </p>
               </div>
             ))}
           </div>
         </div>
-
-        {/* Employee Letters Section */}
         <div className="bg-green-100 p-4 rounded-lg shadow-md">
           <div className="flex justify-between items-center mb-2">
             <h2 className="text-xl font-semibold ">Employee Letters</h2>
@@ -217,17 +264,31 @@ const WorkSpaceDocs = () => {
                 <label htmlFor="" className="font-medium">
                   Document name
                 </label>
-                <input
-                  type="text"
+
+                <select
+                  name="docName"
+                  id=""
                   className="border border-gray-400 p-1 rounded-md"
-                  placeholder="Document name"
-                />
+                  value={formData.docName}
+                  onChange={(e) =>
+                    setFormData({ ...formData, docName: e.target.value })
+                  }
+                >
+                  <option value="">Select Document</option>
+                  <option value="Adhaar Card">Aadhar Card</option>
+                  <option value="Pan Card">Pan Card</option>
+                  <option value="Resume">Resume</option>
+                  <option value="Birth Certificate">Birth Certificate</option>
+                </select>
               </div>
               <div className="border-2 border-dashed p-2 mt-2">
-                <input type="file" name="" id="" />
+                <input type="file" name="" id="" onChange={handleFileChange} />
               </div>
               <div className="flex justify-end w-full gap-2">
-                <button className="bg-blue-400 text-white p-1 px-2 w-full rounded-md">
+                <button
+                  className="bg-blue-400 text-white p-1 px-2 w-full rounded-md"
+                  onClick={handleAddDocuments}
+                >
                   Save
                 </button>
                 <button

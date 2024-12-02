@@ -18,7 +18,7 @@ const OnBoardingCompleted = () => {
   const approverID = getItemInLocalStorage("APPROVERID");
   const fetchAllEmployees = async () => {
     try {
-      toast.loading("Loading employees Please wait!");
+      // toast.loading("Loading employees Please wait!");
       const res = await getApprovedEmployees(approverID);
       const sortedEmployees = res.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
       setEmployees(sortedEmployees);
@@ -26,7 +26,7 @@ const OnBoardingCompleted = () => {
       toast.dismiss();
     } catch (error) {
       console.log(error);
-      toast.error("Something went wrong");
+      // toast.error("Something went wrong");
     }
   };
   useEffect(() => {
