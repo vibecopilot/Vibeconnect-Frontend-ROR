@@ -3,6 +3,8 @@ import image from "/profile.png";
 import { useParams } from "react-router-dom";
 import { domainPrefix, getFBDetails } from "../../../../api";
 import Table from "../../../../components/table/Table";
+import Navbar from "../../../../components/Navbar";
+import FBDetails from "../FBDetails";
 
 const FBRestaurtantDetails = () => {
   const [formData, setFormData] = useState({});
@@ -84,67 +86,70 @@ const FBRestaurtantDetails = () => {
     }
   ]
   return (
-    <div className="flex flex-col w-full overflow-hidden">
-      <div className="mx-3 px-5">
+    <div className="flex">
+      
+      <FBDetails/>
+      <div className="overflow-hidden w-full my-8">
+      <div className=" mx-3">
         <h3 className="border-b text-left text-xl border-black mb-6 mt-2 font-bold">
           BASIC DETAILS
         </h3>
         <div className="grid md:grid-cols-3 gap-4">
           <div className="grid grid-cols-2">
-            <p className="font-bold">Restaurant Name:</p>
+            <p className="">Restaurant Name:</p>
             <p>{formData.restaurant_name}</p>
           </div>
           <div className="grid grid-cols-2">
-            <p className="font-bold">Cuisines:</p>
+            <p className="">Cuisines:</p>
             <p>{formData.cuisines}</p>
           </div>
           <div className="grid grid-cols-2">
-            <p className="font-bold">Delivery Time:</p>
+            <p className="">Delivery Time:</p>
             <p>{formData.delivery_time}</p>
           </div>
           <div className="grid grid-cols-2">
-            <p className="font-bold">Cost for Two:</p>
+            <p className="">Cost for Two:</p>
             <p>{formData.delivery_time}</p>
           </div>
           <div className="grid grid-cols-2">
-            <p className="font-bold">Address:</p>
+            <p className="">Address:</p>
             <p>{formData.address}</p>
           </div>
         </div>
       </div>
 
-      <div className="mx-3 my-5 p-5 shadow-sm rounded-lg">
+      <div className=" my-5 p-5 shadow-sm rounded-lg">
         <h3 className="border-b text-left text-xl border-black mb-6 font-bold">
           RESTAURTANT DETAILS
         </h3>
         <Table responsive columns={columns} data={scheduleData} pagination={false} />
        
       </div>
-      <div className="mx-3 my-5 p-5">
+      <div className=" my-5 p-5">
         <h3 className="border-b text-left text-xl border-black mb-6 font-bold">
           OTHER INFO
         </h3>
         <div className="grid md:grid-cols-2 gap-4">
           <div className="grid grid-cols-2">
-            <p className="font-bold">Phone Number:</p>
+            <p className="">Phone Number:</p>
             <p>{formData.mobile_number}</p>
           </div>
           <div className="grid grid-cols-2">
-            <p className="font-bold">Booking Allowed:</p>
+            <p className="">Booking Allowed:</p>
             <p>{formData.booking_allowed}</p>
           </div>
           <div className="grid grid-cols-2">
-            <p className="font-bold">Cancel Before Schedule:</p>
+            <p className="">Cancel Before Schedule:</p>
             <p>{formData.cancel_before}</p>
           </div>
           <div className="grid grid-cols-2">
-            <p className="font-bold">Closing Message:</p>
+            <p className="">Closing Message:</p>
             <p>{formData.closing_message}</p>
           </div>
         </div>
       </div>
 
-      <div className="mx-3 my-5 p-5">
+      <div className="my-5 p-5">
   <h3 className="border-b text-left text-xl border-black mb-6 font-bold">
     COVER
   </h3>
@@ -167,7 +172,7 @@ const FBRestaurtantDetails = () => {
   </div>
 </div>
 
-<div className="mx-3 my-5 p-5">
+<div className=" my-5 p-5">
   <h3 className="border-b text-left text-xl border-black mb-6 font-bold">
     MENU
   </h3>
@@ -190,7 +195,7 @@ const FBRestaurtantDetails = () => {
   </div>
 </div>
 
-<div className="mx-3 my-5 p-5">
+<div className=" my-5 p-5">
   <h3 className="border-b text-left text-xl border-black mb-6 font-bold">
     GALLERY
   </h3>
@@ -212,7 +217,8 @@ const FBRestaurtantDetails = () => {
     )}
   </div>
 </div>
-
+</div>
+   
     </div>
   );
 };

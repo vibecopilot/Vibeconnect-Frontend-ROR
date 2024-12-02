@@ -12,6 +12,7 @@ import { getItemInLocalStorage } from "../../utils/localStorage";
 import toast from "react-hot-toast";
 import EditFloorModal from "../../containers/modals/EditFloorModal";
 import Navbar from "../../components/Navbar";
+import SetupNavbar from "../../components/navbars/SetupNavbar";
 
 const Floor = () => {
   const [wing, setWing] = useState("");
@@ -111,7 +112,7 @@ const Floor = () => {
   const themeColor = useSelector((state) => state.theme.color);
   return (
     <div className="flex">
-      <Navbar />
+      <SetupNavbar/>
       <div className=" w-full flex lg:mx-3 flex-col overflow-hidden">
         <Account />
         <div className="flex flex-col m-2  gap-2">

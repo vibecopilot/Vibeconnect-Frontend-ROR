@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import { BsEye } from "react-icons/bs";
 import { useSelector } from "react-redux";
 import Table from "../../components/table/Table";
+import FBDetails from "./details/FBDetails";
 
 const EditRestaurtantBooking = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
@@ -63,11 +64,7 @@ const EditRestaurtantBooking = () => {
       },
 
 
-    {
-      name: "Cancellation",
-      selector: (row) => (row.status === "Upcoming" && <button className="text-red-400 font-medium">Cancel</button>),
-      sortable: true,
-    },
+   
   ];
 
   //custom style
@@ -107,7 +104,7 @@ const EditRestaurtantBooking = () => {
 
   return (
     <section className="flex">
-
+<FBDetails/>
       <div className=" w-full flex mx-3 flex-col overflow-hidden">
         <div className="flex md:flex-row flex-col gap-5 justify-between mt-10 my-2">
           <div className="sm:flex grid grid-cols-2 items-center justify-center  gap-4 border border-gray-300 rounded-md px-3 p-2 w-auto">

@@ -1,8 +1,26 @@
+import { NavLink } from "react-router-dom";
 import React, { useEffect, useState } from 'react'
 import { useSelector } from 'react-redux';
 import { Link } from "react-router-dom";
 import { getItemInLocalStorage } from '../../utils/localStorage';
+import Navbar from "../Navbar";
+import { ImFileText2 } from "react-icons/im";
+
+
 const SetupNavbar = () => {
+  
+  const [open, setOpen] = useState(true);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const toggleDropdown = () => {
+    setDropdownOpen(!dropdownOpen);
+  };
+  const [open1, setOpen1] = useState(true);
+  const [dropdownOpen1, setDropdownOpen1] = useState(false);
+
+  const toggleDropdown1 = () => {
+    setDropdownOpen1(!dropdownOpen1);
+  };
   const themeColor = useSelector((state)=> state.theme.color)
   const [feat, setFeat] = useState("");
   const siteId = getItemInLocalStorage("SITEID");
@@ -17,48 +35,721 @@ const SetupNavbar = () => {
   
     getAllowedFeatures();
   }, []);
-  return (
-    <div className="flex mt-1 w-full">
-    <div className='w-full mx-4'>  
-      {/* <ul className="p-4 bg-black rounded-xl mx-2 md:flex grid grid-cols-2 items-center text-white text-sm text-center justify-center overflow-x-auto  gap-2 "> */}
-      <ul
-      style={{background: themeColor}}
-      className="p-4 rounded-xl mx-2 md:flex w-full grid grid-cols-2 max-w-screen items-center text-white text-sm text-center justify-center flex-wrap gap-2 ">
-        <Link to={"/setup/account/floor"} className="hover:bg-white hover:text-black p-2 rounded-lg ">
-          Account
-        </Link>
-    
-        {siteId === 10 && <Link to={"/setup/User-role"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">User Roles</Link>}
-        <Link to={"/setup/users-setup"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">Users</Link>
-        <Link  to={"/admin/fm-user"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">FM User</Link>
-        {/* <Link to={"/admin/occupant-user-setup"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">Occupant User</Link> */}
-        {/* <Link to={"/admin/setup-meter-type"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">Meter Types</Link> */}
-        {feat.includes("assets") && ( <Link to={"/setup/asset-group"}  className="hover:bg-white hover:text-black  p-2 rounded-lg ">Asset/Stock Group</Link>)}
-        {/* <Link to={"/admin/checklist-group"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">Checklist Group</Link> */}
-        {feat.includes("tickets") && (<Link to={"/setup/ticket-setup"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">Ticket</Link>)}
-        {feat.includes("contacts") && ( <Link to={"/business/setup-category"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">Contact Category</Link>)}
-        {feat.includes("space") && ( <Link to={"/setup/facility"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">Facility</Link>)}
-        {feat.includes("bills") && ( <Link to={"/admin/invoice-approval-setup"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">Invoice Approval</Link>)}
-        {feat.includes("parking") && (  <Link to={"/admin/parking-setup"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">Parking</Link>)}
-        {/* <Link  to={"/admin/email-rule"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">Email Rule</Link> */}
-        {/* <Link to={"/admin/fm-groups-setup"}  className="hover:bg-white hover:text-black  p-2 rounded-lg ">FM Groups</Link> */}
-        {/* <Link to={"/admin/master-checklist-setup"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">Master Checklist</Link> */}
-        {feat.includes("purchase_order") && (  <Link to={"/admin/sac-hsn-setup"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">SAC/HSN Setup</Link>)}
-        {feat.includes("purchase_order") && ( <Link  to={"/admin/addresses-setup"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">Addresses</Link>)}
-        {/* <Link className="hover:bg-white hover:text-black  p-2 rounded-lg ">Export</Link> */}
-        {/* <Link to={"/setup/insights/"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">Insights</Link> */}
-        {/* <Link to={"/setup/permit-setup"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">Permit</Link> */}
-        {/* <Link to={"/setup/parking-setup"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">Parking</Link> */}
-        {feat.includes("incidents") &&(<Link to={"/admin/setup-incidents"}className="hover:bg-white hover:text-black  p-2 rounded-lg ">Incidents Setup</Link>)}
-        {feat.includes("communication") && ( <Link to={"/admin/communication-access-control"}className="hover:bg-white hover:text-black  p-2 rounded-lg ">Communication Setup Control</Link>)}
-        {feat.includes("vendors") && ( <Link to={"/setup/supplier-setup"}className="hover:bg-white hover:text-black  p-2 rounded-lg ">Supplier</Link>)}
-        {feat.includes("gatepass") && ( <Link to={"/setup/visitor-setup"}className="hover:bg-white hover:text-black  p-2 rounded-lg ">Visitor</Link>)}
-        {feat.includes("assets") && ( <Link to={"/setup/meter-category-type"}  className="hover:bg-white hover:text-black  p-2 rounded-lg ">Meter Category Type</Link>)}
-        {feat.includes("fnb") && ( <Link to={"/setup/fnb/cuisines"}  className="hover:bg-white hover:text-black  p-2 rounded-lg ">F&B</Link>)}
-      </ul>
-    </div>
-  </div>
-  )
-}
 
-export default SetupNavbar
+  return (
+    <div className="flex ">
+      <Navbar/>
+      <div className="w-64 border-r  bg-white  p-4 mt-8">
+        <ul className="space-y-4">
+          <li className="font-bold text-lg">Setups</li>
+       
+          <li>
+            <NavLink
+             to={`/setup/account/floor`}
+              className={({ isActive }) =>
+                `${
+                  isActive
+                    ? "text-white bg-blue-500 flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                    : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-100 rounded-md"
+                }`
+              }
+            >
+              <div>
+                {React.createElement(ImFileText2, { size: "20" })}
+              </div>
+              <h2
+                className={`whitespace-pre duration-300 ${
+                  !open && "opacity-0 translate-x-28 overflow-hidden"
+                }`}
+              >
+                Account
+              </h2>
+              <h2
+                className={`${
+                  open && "hidden"
+                } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+              >
+              Account
+              </h2>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
+              to={`/setup/users-setup`}
+              className={({ isActive }) =>
+                `${
+                  isActive
+                    ? "text-white bg-blue-500 flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                    : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-100 rounded-md"
+                }`
+              }
+            >
+              <div>
+                {React.createElement(ImFileText2, { size: "20" })}
+              </div>
+              <h2
+                className={`whitespace-pre duration-300 ${
+                  !open && "opacity-0 translate-x-28 overflow-hidden"
+                }`}
+              >
+                Users
+              </h2>
+              <h2
+                className={`${
+                  open && "hidden"
+                } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+              >
+               Users
+              </h2>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
+              to={`/setup/User-role`}
+              className={({ isActive }) =>
+                `${
+                  isActive
+                    ? "text-white bg-blue-500 flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                    : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-100 rounded-md"
+                }`
+              }
+            >
+              <div>
+                {React.createElement(ImFileText2, { size: "20" })}
+              </div>
+              <h2
+                className={`whitespace-pre duration-300 ${
+                  !open && "opacity-0 translate-x-28 overflow-hidden"
+                }`}
+              >
+                User Roles
+              </h2>
+              <h2
+                className={`${
+                  open && "hidden"
+                } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+              >
+               User Roles
+              </h2>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
+              to={`/admin/fm-user`}
+              className={({ isActive }) =>
+                `${
+                  isActive
+                    ? "text-white bg-blue-500 flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                    : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-100 rounded-md"
+                }`
+              }
+            >
+              <div>
+                {React.createElement(ImFileText2, { size: "20" })}
+              </div>
+              <h2
+                className={`whitespace-pre duration-300 ${
+                  !open && "opacity-0 translate-x-28 overflow-hidden"
+                }`}
+              >
+               FM User
+              </h2>
+              <h2
+                className={`${
+                  open && "hidden"
+                } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+              >
+              FM User
+              </h2>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
+              to={`/admin/occupant-user-setup`}
+              className={({ isActive }) =>
+                `${
+                  isActive
+                    ? "text-white bg-blue-500 flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                    : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-100 rounded-md"
+                }`
+              }
+            >
+              <div>
+                {React.createElement(ImFileText2, { size: "20" })}
+              </div>
+              <h2
+                className={`whitespace-pre duration-300 ${
+                  !open && "opacity-0 translate-x-28 overflow-hidden"
+                }`}
+              >
+               Occupant User
+              </h2>
+              <h2
+                className={`${
+                  open && "hidden"
+                } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+              >
+              Occupant User
+              </h2>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
+              to={`/admin/setup-meter-type`}
+              className={({ isActive }) =>
+                `${
+                  isActive
+                    ? "text-white bg-blue-500 flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                    : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-100 rounded-md"
+                }`
+              }
+            >
+              <div>
+                {React.createElement(ImFileText2, { size: "20" })}
+              </div>
+              <h2
+                className={`whitespace-pre duration-300 ${
+                  !open && "opacity-0 translate-x-28 overflow-hidden"
+                }`}
+              >
+               Meter Types
+              </h2>
+              <h2
+                className={`${
+                  open && "hidden"
+                } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+              >
+              Meter Types
+              </h2>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
+              to={`/setup/asset-group`}
+              className={({ isActive }) =>
+                `${
+                  isActive
+                    ? "text-white bg-blue-500 flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                    : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-100 rounded-md"
+                }`
+              }
+            >
+              <div>
+                {React.createElement(ImFileText2, { size: "20" })}
+              </div>
+              <h2
+                className={`whitespace-pre duration-300 ${
+                  !open && "opacity-0 translate-x-28 overflow-hidden"
+                }`}
+              >
+                Asset/Stock Group
+              </h2>
+              <h2
+                className={`${
+                  open && "hidden"
+                } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+              >
+               Asset/Stock Group
+              </h2>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
+              to={`/admin/checklist-group`}
+              className={({ isActive }) =>
+                `${
+                  isActive
+                    ? "text-white bg-blue-500 flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                    : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-100 rounded-md"
+                }`
+              }
+            >
+              <div>
+                {React.createElement(ImFileText2, { size: "20" })}
+              </div>
+              <h2
+                className={`whitespace-pre duration-300 ${
+                  !open && "opacity-0 translate-x-28 overflow-hidden"
+                }`}
+              >
+               Checklist Group
+              </h2>
+              <h2
+                className={`${
+                  open && "hidden"
+                } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+              >
+               Checklist Group
+              </h2>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
+              to={`/setup/ticket-setup`}
+              className={({ isActive }) =>
+                `${
+                  isActive
+                    ? "text-white bg-blue-500 flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                    : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-100 rounded-md"
+                }`
+              }
+            >
+              <div>
+                {React.createElement(ImFileText2, { size: "20" })}
+              </div>
+              <h2
+                className={`whitespace-pre duration-300 ${
+                  !open && "opacity-0 translate-x-28 overflow-hidden"
+                }`}
+              >
+              Ticket
+              </h2>
+              <h2
+                className={`${
+                  open && "hidden"
+                } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+              >
+               Ticket
+              </h2>
+            </NavLink>
+          </li>
+          
+          <li>
+            <NavLink
+              to={`/business/setup-category`}
+              className={({ isActive }) =>
+                `${
+                  isActive
+                    ? "text-white bg-blue-500 flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                    : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-100 rounded-md"
+                }`
+              }
+            >
+              <div>
+                {React.createElement(ImFileText2, { size: "20" })}
+              </div>
+              <h2
+                className={`whitespace-pre duration-300 ${
+                  !open && "opacity-0 translate-x-28 overflow-hidden"
+                }`}
+              >
+              Contact Category
+              </h2>
+              <h2
+                className={`${
+                  open && "hidden"
+                } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+              >
+               Contact Category
+              </h2>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
+              to={`/setup/facility`}
+              className={({ isActive }) =>
+                `${
+                  isActive
+                    ? "text-white bg-blue-500 flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                    : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-100 rounded-md"
+                }`
+              }
+            >
+              <div>
+                {React.createElement(ImFileText2, { size: "20" })}
+              </div>
+              <h2
+                className={`whitespace-pre duration-300 ${
+                  !open && "opacity-0 translate-x-28 overflow-hidden"
+                }`}
+              >
+              Facility
+              </h2>
+              <h2
+                className={`${
+                  open && "hidden"
+                } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+              >
+               Facility
+              </h2>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
+              to={`/admin/invoice-approval-setup`}
+              className={({ isActive }) =>
+                `${
+                  isActive
+                    ? "text-white bg-blue-500 flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                    : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-100 rounded-md"
+                }`
+              }
+            >
+              <div>
+                {React.createElement(ImFileText2, { size: "20" })}
+              </div>
+              <h2
+                className={`whitespace-pre duration-300 ${
+                  !open && "opacity-0 translate-x-28 overflow-hidden"
+                }`}
+              >
+              Invoice Approval
+              </h2>
+              <h2
+                className={`${
+                  open && "hidden"
+                } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+              >
+               Invoice Approval
+              </h2>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
+              to={`/admin/parking-setup`}
+              className={({ isActive }) =>
+                `${
+                  isActive
+                    ? "text-white bg-blue-500 flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                    : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-100 rounded-md"
+                }`
+              }
+            >
+              <div>
+                {React.createElement(ImFileText2, { size: "20" })}
+              </div>
+              <h2
+                className={`whitespace-pre duration-300 ${
+                  !open && "opacity-0 translate-x-28 overflow-hidden"
+                }`}
+              >
+             Parking
+              </h2>
+              <h2
+                className={`${
+                  open && "hidden"
+                } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+              >
+              Parking
+              </h2>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
+              to={`/admin/addresses-setup`}
+              className={({ isActive }) =>
+                `${
+                  isActive
+                    ? "text-white bg-blue-500 flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                    : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-100 rounded-md"
+                }`
+              }
+            >
+              <div>
+                {React.createElement(ImFileText2, { size: "20" })}
+              </div>
+              <h2
+                className={`whitespace-pre duration-300 ${
+                  !open && "opacity-0 translate-x-28 overflow-hidden"
+                }`}
+              >
+             Addresses
+              </h2>
+              <h2
+                className={`${
+                  open && "hidden"
+                } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+              >
+              Addresses
+              </h2>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
+              to={`/setup/insights/`}
+              className={({ isActive }) =>
+                `${
+                  isActive
+                    ? "text-white bg-blue-500 flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                    : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-100 rounded-md"
+                }`
+              }
+            >
+              <div>
+                {React.createElement(ImFileText2, { size: "20" })}
+              </div>
+              <h2
+                className={`whitespace-pre duration-300 ${
+                  !open && "opacity-0 translate-x-28 overflow-hidden"
+                }`}
+              >
+             Insights
+              </h2>
+              <h2
+                className={`${
+                  open && "hidden"
+                } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+              >
+              Insights
+              </h2>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
+              to={`/setup/permit-setup`}
+              className={({ isActive }) =>
+                `${
+                  isActive
+                    ? "text-white bg-blue-500 flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                    : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-100 rounded-md"
+                }`
+              }
+            >
+              <div>
+                {React.createElement(ImFileText2, { size: "20" })}
+              </div>
+              <h2
+                className={`whitespace-pre duration-300 ${
+                  !open && "opacity-0 translate-x-28 overflow-hidden"
+                }`}
+              >
+             Permit
+              </h2>
+              <h2
+                className={`${
+                  open && "hidden"
+                } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+              >
+              Permit
+              </h2>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
+              to={`/admin/sac-hsn-setup`}
+              className={({ isActive }) =>
+                `${
+                  isActive
+                    ? "text-white bg-blue-500 flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                    : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-100 rounded-md"
+                }`
+              }
+            >
+              <div>
+                {React.createElement(ImFileText2, { size: "20" })}
+              </div>
+              <h2
+                className={`whitespace-pre duration-300 ${
+                  !open && "opacity-0 translate-x-28 overflow-hidden"
+                }`}
+              >
+              SAC/HSN Setup
+              </h2>
+              <h2
+                className={`${
+                  open && "hidden"
+                } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+              >
+              SAC/HSN Setup
+              </h2>
+            </NavLink>
+        
+          </li>
+          <li>
+            <NavLink
+              to={`/admin/setup-incidents`}
+              className={({ isActive }) =>
+                `${
+                  isActive
+                    ? "text-white bg-blue-500 flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                    : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-100 rounded-md"
+                }`
+              }
+            >
+              <div>
+                {React.createElement(ImFileText2, { size: "20" })}
+              </div>
+              <h2
+                className={`whitespace-pre duration-300 ${
+                  !open && "opacity-0 translate-x-28 overflow-hidden"
+                }`}
+              >
+              Incidents Setup
+              </h2>
+              <h2
+                className={`${
+                  open && "hidden"
+                } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+              >
+              Incidents Setup
+              </h2>
+            </NavLink>
+        
+          </li>
+          <li>
+            <NavLink
+              to={`/admin/communication-access-control`}
+              className={({ isActive }) =>
+                `${
+                  isActive
+                    ? "text-white bg-blue-500 flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                    : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-100 rounded-md"
+                }`
+              }
+            >
+              <div>
+                {React.createElement(ImFileText2, { size: "20" })}
+              </div>
+              <h2
+                className={`whitespace-pre duration-300 ${
+                  !open && "opacity-0 translate-x-28 overflow-hidden"
+                }`}
+              >
+            Communication Setup Control
+              </h2>
+              <h2
+                className={`${
+                  open && "hidden"
+                } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+              >
+             Communication Setup Control
+              </h2>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
+              to={`/setup/supplier-setup`}
+              className={({ isActive }) =>
+                `${
+                  isActive
+                    ? "text-white bg-blue-500 flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                    : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-100 rounded-md"
+                }`
+              }
+            >
+              <div>
+                {React.createElement(ImFileText2, { size: "20" })}
+              </div>
+              <h2
+                className={`whitespace-pre duration-300 ${
+                  !open && "opacity-0 translate-x-28 overflow-hidden"
+                }`}
+              >
+            Supplier
+              </h2>
+              <h2
+                className={`${
+                  open && "hidden"
+                } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+              >
+             Supplier
+              </h2>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
+              to={`/setup/visitor-setup`}
+              className={({ isActive }) =>
+                `${
+                  isActive
+                    ? "text-white bg-blue-500 flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                    : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-100 rounded-md"
+                }`
+              }
+            >
+              <div>
+                {React.createElement(ImFileText2, { size: "20" })}
+              </div>
+              <h2
+                className={`whitespace-pre duration-300 ${
+                  !open && "opacity-0 translate-x-28 overflow-hidden"
+                }`}
+              >
+            Visitor
+              </h2>
+              <h2
+                className={`${
+                  open && "hidden"
+                } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+              >
+             Visitor
+              </h2>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
+              to={`/setup/meter-category-type`}
+              className={({ isActive }) =>
+                `${
+                  isActive
+                    ? "text-white bg-blue-500 flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                    : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-100 rounded-md"
+                }`
+              }
+            >
+              <div>
+                {React.createElement(ImFileText2, { size: "20" })}
+              </div>
+              <h2
+                className={`whitespace-pre duration-300 ${
+                  !open && "opacity-0 translate-x-28 overflow-hidden"
+                }`}
+              >
+             Meter Category Type
+              </h2>
+              <h2
+                className={`${
+                  open && "hidden"
+                } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+              >
+             Meter Category Type
+              </h2>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
+              to={`/setup/fnb/cuisines`}
+              className={({ isActive }) =>
+                `${
+                  isActive
+                    ? "text-white bg-blue-500 flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                    : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-100 rounded-md"
+                }`
+              }
+            >
+              <div>
+                {React.createElement(ImFileText2, { size: "20" })}
+              </div>
+              <h2
+                className={`whitespace-pre duration-300 ${
+                  !open && "opacity-0 translate-x-28 overflow-hidden"
+                }`}
+              >
+              F&B
+              </h2>
+              <h2
+                className={`${
+                  open && "hidden"
+                } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+              >
+              F&B
+              </h2>
+            </NavLink>
+          </li>
+
+
+          <li>
+          
+            
+           
+          </li>
+
+
+        </ul>
+      </div>
+
+    </div>
+  );
+};
+
+export default SetupNavbar;

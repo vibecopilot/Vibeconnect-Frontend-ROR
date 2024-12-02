@@ -15,6 +15,7 @@ import {
 } from "../../utils/localStorage";
 import { BiEdit } from "react-icons/bi";
 import Navbar from "../../components/Navbar";
+import SetupNavbar from "../../components/navbars/SetupNavbar";
 
 const FBCuisinesSetup = () => {
   const siteID = getItemInLocalStorage("SITEID");
@@ -139,7 +140,7 @@ const FBCuisinesSetup = () => {
 
   return (
     <section className="flex">
-        <Navbar/>
+        <SetupNavbar/>
       <div className="w-full flex mx-3 flex-col overflow-hidden my-10">
         <div className="flex md:flex-row flex-col gap-5 justify-between  my-2">
           <div className="sm:flex grid grid-cols-2 items-center justify-center gap-4 border border-gray-300 rounded-md px-3 p-2 w-auto">
