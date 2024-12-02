@@ -706,7 +706,7 @@ const CopyChecklistService = () => {
             <label className="font-semibold">Group</label>
             <select
               value={section.group}
-              className="p-1 px-4 border w-full border-gray-500 rounded-md"
+              className="p-1 px-4 border w-64 border-gray-500 rounded-md"
               onChange={(e) => handleSectionChange(sectionIndex, 'group', e.target.value)}
             >
               <option value="">Select Group</option>
@@ -718,11 +718,11 @@ const CopyChecklistService = () => {
             </select></div>
             <div>
             <button
-                                     className="p-1 border-2 border-red-500 text-white hover:bg-white hover:text-red-500 bg-red-500 px-4 transition-all duration-300 rounded-md "
+                                     className="p-1 border-2 border-red-500 text-white hover:bg-white hover:text-red-500 bg-red-700 px-4 transition-all duration-300 rounded-md "
 
               onClick={() => removeSection(sectionIndex)}
             >
-              <IoClose/>
+              <FaTrash/>
             </button>
             </div>
             
@@ -736,7 +736,7 @@ const CopyChecklistService = () => {
                 type="text"
                 placeholder="Enter Question Name"
                 value={question.name}
-                className="p-1 px-4 border w-64 border-gray-500 rounded-md" 
+                className="p-1 px-4 border w-full border-gray-500 rounded-md" 
                                onChange={(e) =>
                   handleQuestionChange(sectionIndex, questionIndex, 'name', e.target.value)
                 }

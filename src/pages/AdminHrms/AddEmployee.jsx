@@ -6,7 +6,10 @@ import { GrHelpBook } from "react-icons/gr";
 import Select from "react-select";
 import { useSelector } from "react-redux";
 import { getItemInLocalStorage } from "../../utils/localStorage";
+// import Select from "react-select";
 import {
+  getAssociatedSites,
+  getMyOrganization,
   getPaymentModeList,
   postEmployeeAddress,
   postEmployeeFamily,
@@ -41,6 +44,8 @@ const AddEmployee = () => {
   const [empId, setEmpId] = useState("");
 
   const [formData, setFormData] = useState({
+    userTypeRor:"",
+    password:"",
     firstName: "",
     lastName: "",
     emailId: "",
@@ -109,9 +114,29 @@ const AddEmployee = () => {
   //   }
   // };
 
+  const [minAge, setMinAge] = useState("");
+  const fetchMyOrganization = async () => {
+    try {
+      const res = await getMyOrganization(hrmsOrgId);
+      setMinAge(res.minimum_age_required_for_joining);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchMyOrganization();
+    fetchAssociatedSites();
+  },[]);
+
   const [disableNext, setDisableNext] = useState(true);
   const [disableSave, setDisableSave] = useState(false);
+
   const handleAddEmployee = async () => {
+    if (Object.keys(selectedOption).length === 0) {
+      toast.error("Please Select Site");
+      return;
+    }
     if (!formData.firstName.trim()) {
       toast.error("First Name is required!");
       return;
@@ -132,6 +157,14 @@ const AddEmployee = () => {
       toast.error("A valid 10-digit Mobile Number is required!");
       return;
     }
+    if (!formData.password) {
+      toast.error("Password is required!");
+      return;
+    }
+    if (!formData.userTypeRor) {
+      toast.error("Please select user type");
+      return;
+    }
     if (!formData.gender) {
       toast.error("Gender is required!");
       return;
@@ -140,14 +173,32 @@ const AddEmployee = () => {
       toast.error("Date of Birth is required!");
       return;
     }
+
+    const dob = new Date(formData.dob);
+    const today = new Date();
+    const age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = today.getMonth() - dob.getMonth();
+    const dayDiff = today.getDate() - dob.getDate();
+
+    const adjustedAge =
+      monthDiff > 0 || (monthDiff === 0 && dayDiff >= 0) ? age : age - 1;
+
+    if (adjustedAge < minAge) {
+      toast.error(`Employee must be at least ${minAge} years old.`);
+      return;
+    }
+
     if (!formData.paymentMode) {
       toast.error("Please select Payment mode");
       return;
     }
     const postData = new FormData();
+    postData.append("site_id", selectedOption.value);
     postData.append("first_name", formData.firstName);
     postData.append("last_name", formData.lastName);
     postData.append("email_id", formData.emailId);
+    postData.append("password", formData.password);
+    postData.append("user_type_ror", formData.userTypeRor);
     postData.append("mobile", formData.mobile);
     postData.append("gender", formData.gender);
     postData.append("date_of_birth", formData.dob);
@@ -229,6 +280,25 @@ const AddEmployee = () => {
     fetchPaymentModeList();
   }, []);
 
+  const [selectedOption, setSelectedOption] = useState({});
+  const handleAssociatedSiteChange = (option) => {
+    setSelectedOption(option);
+  };
+  const [sites, setSites] = useState([]);
+  const fetchAssociatedSites = async () => {
+    try {
+      const res = await getAssociatedSites(hrmsOrgId);
+      const ActiveSites = res.filter((site) => site.status);
+      const allSites = ActiveSites.map((site) => ({
+        value: site.id,
+        label: site.site_name,
+      }));
+      setSites(allSites);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <div className="flex ml-20 justify-between">
       {/* <AddEmployeeDetailsList /> */}
@@ -300,6 +370,18 @@ const AddEmployee = () => {
           </h2>
           <div>
             <div className="grid xl:grid-cols-3 gap-2 gap-y-4 mt-5">
+            <div className="grid gap-2 items-center w-full">
+              <label className="block text-sm font-medium text-gray-700">
+                Select site <span className="text-red-500">*</span>
+              </label>
+              
+              <Select
+                options={sites}
+                onChange={handleAssociatedSiteChange}
+                noOptionsMessage={() => "Select site"}
+                maxMenuHeight={200}
+              />
+            </div>
               <div className="grid gap-2 items-center w-full">
                 <label className="block text-sm font-medium text-gray-700">
                   First Name<span className="text-red-400">*</span>
@@ -341,6 +423,38 @@ const AddEmployee = () => {
                   onChange={handleChange}
                   name="emailId"
                 />
+              </div>
+              <div className="grid gap-2 items-center w-full">
+                <label className="block text-sm font-medium text-gray-700">
+                  Password<span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="email"
+                  className="border border-gray-400 p-2 rounded-md"
+                  placeholder="password"
+                  required
+                  value={formData.password}
+                  onChange={handleChange}
+                  name="password"
+                />
+              </div>
+              <div className="grid gap-2 items-center w-full">
+                <label className="block text-sm font-medium text-gray-700">
+                  User Type<span className="text-red-400">*</span>
+                </label>
+
+                <select
+                  className="border border-gray-400 p-2 rounded-md"
+                  required
+                  value={formData.userTypeRor}
+                  onChange={handleChange}
+                  name="userTypeRor"
+                >
+                  <option value="">Select User Type</option>
+                  <option value="pms_admin">Admin</option>
+                  <option value="employee">Employee</option>
+                </select>
+                
               </div>
               <div className="grid gap-2 items-center w-full">
                 <label className="block text-sm font-medium text-gray-700">
@@ -398,7 +512,7 @@ const AddEmployee = () => {
               </div>
               <div className="grid gap-2 items-center w-full">
                 <label className="block text-sm font-medium text-gray-700">
-                  Blood Group <span className="text-red-400">*</span>
+                  Blood Group 
                 </label>
                 <select
                   className="border border-gray-400 p-2 rounded-md"
@@ -431,6 +545,7 @@ const AddEmployee = () => {
                   value={formData.pan}
                   onChange={handleChange}
                   name="pan"
+                  maxLength={10}
                 />
               </div>
               <div className="grid gap-2 items-center w-full">

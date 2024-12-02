@@ -1,15 +1,14 @@
 import React, { useState } from "react";
 import AdminHRMS from "./AdminHrms";
+import PendingUniformRequest from "./Uniform/PendingUniformRequest";
+import CompletedUniformRequest from "./Uniform/CompletedUniformRequest";
 
-import LetterTable from "./LetterTable";
-import LetterTableCompleted from "./LetterTableCompleted";
-
-const GenerationLetter = () => {
-  const [page, setPage] = useState("Pending");
+const UniformApplication = () => {
+    const [page, setPage] = useState("Pending")
   return (
-    <div className="flex">
+    <div className="flex ml-20">
       <AdminHRMS />
-      <div className=" w-full my-2 flex  overflow-hidden flex-col ml-20">
+      <div className=" w-full my-2 flex  overflow-hidden flex-col">
         <div className=" flex gap-2 p-2 pb-0 border-b-2 border-gray-200 w-full">
           <h2
             className={`p-1 ${
@@ -32,14 +31,13 @@ const GenerationLetter = () => {
         </div>
         {page === "Pending" && (
           <div>
-            <LetterTable />
+            <PendingUniformRequest />
           </div>
         )}
-        {page === "Completed" && <LetterTableCompleted />}
+        {page === "Completed" && <CompletedUniformRequest />}
       </div>
-      <div></div>
     </div>
   );
 };
 
-export default GenerationLetter;
+export default UniformApplication;

@@ -11,11 +11,18 @@ import {
 } from "react-icons/fa";
 import ToggleSwitch from "../../Buttons/ToggleSwitch";
 import EmployeeDetailView from "./EmployeeDetailView";
-import { getAttendanceRecord } from "../../api";
+import {
+  getAttendanceRecord,
+  getEmployeeAttendanceOfToday,
+  getUserDetails,
+  postRegularizationRequest,
+} from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import { Link } from "react-router-dom";
 import { MdClose } from "react-icons/md";
 import { DNA } from "react-loader-spinner";
+import toast from "react-hot-toast";
+import { Pagination } from "antd";
 
 const getDateRange = (startDate) => {
   const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -54,6 +61,9 @@ const AttendanceRec = () => {
   const employeesPerPage = 10;
   const [regData, setRegData] = useState({
     requestType: "",
+    checkInTime: "",
+    checkOutTime: "",
+    reason: "",
   });
 
   const days = getDateRange(startDate);
@@ -85,13 +95,25 @@ const AttendanceRec = () => {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
-  const fetchEmployeeAttendance = async () => {
+  const [attendanceCount, setAttendanceCount] = useState("");
+  const [pageNumber, setPageNumber] = useState(1);
+  const [paginationInfo, setPaginationInfo] = useState({
+    next: null,
+    previous: null,
+  });
+  const fetchEmployeeAttendance = async (page) => {
     setLoading(true);
     try {
-      const res = await getAttendanceRecord(hrmsOrgId);
+      const res = await getAttendanceRecord(hrmsOrgId, page);
       const data = res.results;
+      setAttendanceCount(res.count);
       setEmployees(data);
       setFilteredEmployees(data);
+      setPaginationInfo({
+        next: res.next,
+        previous: res.previous,
+      });
+      setPageNumber(page);
     } catch (error) {
       console.log(error);
     } finally {
@@ -100,8 +122,14 @@ const AttendanceRec = () => {
   };
 
   useEffect(() => {
-    fetchEmployeeAttendance();
+    fetchEmployeeAttendance(pageNumber);
   }, []);
+
+  
+  const handlePageChange = (page) => {
+    setPageNumber(page); // Update state for pageNumber
+    fetchEmployeeAttendance(page); // Fetch data for the new page
+  };
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -180,6 +208,106 @@ const AttendanceRec = () => {
     setRegData({ ...regData, [e.target.name]: e.target.value });
   };
 
+  const [attRecords, setAttRecords] = useState([]);
+  const [employeeId, SetEmployeeId] = useState([]);
+  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedFirstName, setSelectedFirstName] = useState("");
+  const [selectedLastName, setSelectedLastName] = useState("");
+
+  const handleShowAttendanceDetails = (
+    dateSelected,
+    detailRecords,
+    empId,
+    firstName,
+    lastName
+  ) => {
+    setSelectedDate(dateSelected);
+    setAttRecords(detailRecords);
+    SetEmployeeId(empId);
+    setSelectedFirstName(firstName);
+    setSelectedLastName(lastName);
+  };
+
+  const handleAddRegRequest = async () => {
+    try {
+      const todayDate = new Date().toISOString().split("T")[0];
+      const requestedCheckIn = regData.checkInTime
+        ? new Date(`${todayDate}T${regData.checkInTime}:00Z`).toISOString()
+        : "";
+      const requestedCheckOut = regData.checkOutTime
+        ? new Date(`${todayDate}T${regData.checkOutTime}:00Z`).toISOString()
+        : "";
+      const postData = new FormData();
+      postData.append("requested_check_in", requestedCheckIn);
+      postData.append("requested_check_out", requestedCheckOut);
+      postData.append("request_type", regData.requestType);
+      postData.append("reason", regData.reason);
+      postData.append("status", "approve");
+      postData.append("employee", employeeId);
+      await postRegularizationRequest(postData);
+
+      setAddRegularization(false);
+      setSelectedEmpAttendance(false);
+      setRegData({
+        ...regData,
+        checkInTime: "",
+        checkOutTime: "",
+        requestType: "",
+        reason: "",
+      });
+      toast.success("Regularization request submitted successfully");
+    } catch (error) {
+      console.log("Error submitting regularization request:", error);
+      toast.error("Failed to submit the regularization request");
+    }
+  };
+  const [checkInTime, setCheckInTime] = useState("");
+  const [checkOutTime, setCheckOutTime] = useState("");
+  const [isPresent, setIsPresent] = useState(false);
+  const [selectedAttendanceDate, setSelectedAttendanceDate] = useState("");
+  const [empDesignation, setEmpDesignation] = useState("");
+  const fetchEmployeeFullDetails = async (empId) => {
+    try {
+      const res = await getUserDetails(empId);
+      setEmpDesignation(res?.employment_info?.designation || "Designation not assigned");
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const fetchTodayAttendance = async (empId, dateString) => {
+    await fetchEmployeeFullDetails(empId);
+    try {
+      const date = new Date(dateString);
+      const formattedDate = date.toISOString().slice(0, 10);
+      setSelectedAttendanceDate(formattedDate);
+      const res = await getEmployeeAttendanceOfToday(empId, formattedDate);
+      if (res.length > 0) {
+        const checkInRecord = res.find((record) => record.is_check_in === true);
+        // console.log(checkInRecord.is_check_in)
+        setIsPresent(checkInRecord.is_check_in);
+        const checkOutRecord = res
+          .reverse()
+          .find((record) => record.is_check_in === false);
+        const checkInTime = checkInRecord
+          ? new Date(checkInRecord.attendance_time).toLocaleTimeString()
+          : null;
+        const checkOutTime = checkOutRecord
+          ? new Date(checkOutRecord.attendance_time).toLocaleTimeString()
+          : null;
+        setCheckInTime(checkInTime || "-");
+        setCheckOutTime(checkOutTime || "-");
+      } else {
+        setCheckInTime("");
+        setCheckOutTime("");
+        
+        setIsPresent(false);
+      }
+    } catch (error) {
+      console.log("Error fetching attendance:", error);
+    }
+  };
+
   return (
     <div className="flex">
       <AdminHRMS />
@@ -204,7 +332,7 @@ const AttendanceRec = () => {
                 type="month"
                 onChange={handleMonthChange}
               />
-              <select className="border p-2 text-black w-48 rounded">
+              {/* <select className="border p-2 text-black w-48 rounded">
                 <option value="">Action</option>
                 <option value="">Bulk Regularization</option>
                 <option value="">Bulk Delete</option>
@@ -227,7 +355,7 @@ const AttendanceRec = () => {
               <label className="text-white" htmlFor="">
                 Multiselect
               </label>
-              <ToggleSwitch />
+              <ToggleSwitch /> */}
             </div>
           </header>
         </div>
@@ -365,7 +493,22 @@ const AttendanceRec = () => {
                       <td key={index} className="p-2 text-center border-b">
                         <span
                           style={{ cursor: "pointer" }}
-                          onClick={() => setSelectedEmpAttendance(true)}
+                          onClick={() => {
+                            console.log(
+                              "Employee attendance selected!",
+                              date,
+                              employee
+                            );
+                            handleShowAttendanceDetails(
+                              date,
+                              employee.attendance_records,
+                              employee.id,
+                              employee.first_name,
+                              employee.last_name
+                            );
+                            setSelectedEmpAttendance(true);
+                            fetchTodayAttendance(employee.id, date);
+                          }}
                           className={
                             getAttendanceStatus(employee, date) === "Present"
                               ? "text-green-600 border-2 rounded-full border-green-600 p-1 px-3"
@@ -387,6 +530,16 @@ const AttendanceRec = () => {
               <p>No records to show</p>
             </div>
           )}
+          <div></div>
+        </div>
+        <div className="flex justify-end mb-5 mt-2">
+          <Pagination
+            showSizeChanger={false}
+            current={pageNumber}
+            total={attendanceCount}
+            pageSize={10}
+            onChange={handlePageChange}
+          />
         </div>
         {isModalOpen && (
           <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center">
@@ -602,7 +755,7 @@ const AttendanceRec = () => {
       )}
       {selectedEmpAttendance && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white px-6 py-4 rounded-xl shadow-lg w-1/3">
+          <div className="bg-white px-6 py-4 rounded-xl shadow-lg min-w-96">
             <h2 className=" font-semibold mb-2 border-b">
               Selected Employee Details
             </h2>
@@ -610,58 +763,68 @@ const AttendanceRec = () => {
               <div>
                 <div
                   style={{ background: themeColor }}
-                  className="flex justify-between gap-2 bg-gray-100 items-center p-2 rounded-md"
+                  className="flex justify-between gap-2 bg-gray-100 items-center p-2 rounded-md w-[40rem]"
                 >
                   <div className="flex gap-2 items-center">
-                    <div className="bg-white p-2 h-10 w-10 rounded-full mr-2">
-                      MP
+                    <div className="bg-white rounded-full mr-2">
+                      <div
+                        className=" text-white p-2 flex items-center justify-center rounded-full h-10 w-10 text-sm text-center border-2 border-white"
+                        style={{ background: themeColor }}
+                      >
+                        {selectedFirstName.charAt(0).toUpperCase()}
+                        {selectedLastName.charAt(0).toUpperCase()}
+                      </div>
                     </div>
                     <div className="flex flex-col ">
                       <p className="font-semibold text-white text-lg">
-                        Mittu Panda
+                        {selectedFirstName} {selectedLastName}
                       </p>
                       <p className="font-sm text-white">
-                        Business & Operations Manager
+                        {empDesignation}
                       </p>
                     </div>
                   </div>
-                  <div className=" h-8 border-2 p-2 flex justify-center items-center bg-green-500 rounded-md">
-                    <p className="font-medium  text-white">Present</p>
-                  </div>
+                  {isPresent ? (
+                    <div className=" h-8 border-2 p-2 flex justify-center items-center bg-green-500 rounded-md">
+                      <p className="font-medium  text-white">Present</p>
+                    </div>
+                  ) : (
+                    <div className=" h-8 border-2 p-2 flex justify-center items-center bg-red-500 rounded-md">
+                      <p className="font-medium  text-white">Absent</p>
+                    </div>
+                  )}
                 </div>
                 <div className="flex flex-col gap-2 my-2">
                   <div className="w-full border-b flex justify-between items-center">
                     <p className="font-medium">Attendance Details </p>
-                    <p className="font-mono">6 Jul 24, Mon</p>
+                    {/* <p></p> */}
+                    <p className="font-mono">{selectedAttendanceDate}</p>
                   </div>
 
                   <div className=" flex justify-between">
                     <p className="font-medium">Check In :</p>
-                    <p>09:00 am</p>
+                    <p>{checkInTime}</p>
                   </div>
                   <div className=" flex justify-between">
                     <p className="font-medium">Check Out :</p>
-                    <p>06:00 am</p>
+                    <p>{checkOutTime}</p>
                   </div>
                   <div className=" flex justify-between">
                     <p className="font-medium">Working Hrs :</p>
-                    <p>08</p>
+                    <p>-</p>
                   </div>
                   <div className=" flex justify-between">
                     <p className="font-medium">Break Hrs :</p>
-                    <p>0</p>
+                    <p>-</p>
                   </div>
-                  <div className=" flex justify-between">
-                    <p className="font-medium">Status :</p>
-                    <p>Present</p>
-                  </div>
+
                   <div className=" flex justify-between">
                     <p className="font-medium">Deviation Hrs :</p>
-                    <p>04:15</p>
+                    <p>-</p>
                   </div>
                   <div className=" flex justify-between">
                     <p className="font-medium">Late/Early Mark :</p>
-                    <p>/</p>
+                    <p>-</p>
                   </div>
                   <div className=" flex justify-between">
                     <p className="font-medium">Shift Time :</p>
@@ -690,19 +853,27 @@ const AttendanceRec = () => {
               <div>
                 <div
                   style={{ background: themeColor }}
-                  className="flex justify-between gap-2 bg-gray-100 items-center p-2 rounded-md"
+                  className="flex justify-between gap-2 bg-gray-100 items-center p-2 rounded-md w-[40rem]"
                 >
                   <div className="flex gap-2 items-center">
                     <div className="flex flex-col ">
                       <p className="font-semibold text-white text-lg">
-                        New regularisation Request
+                        New regularization Request
                       </p>
-                      <p className="font-mono text-white">6 Jul 24, Mon</p>
+                      <p className="font-mono text-white">
+                        {selectedDate.toLocaleDateString("en-GB")}
+                      </p>
                     </div>
                   </div>
-                  <div className=" h-8 border-2 p-2 flex justify-center items-center bg-green-500 rounded-md">
-                    <p className="font-medium  text-white">Present</p>
-                  </div>
+                  {isPresent ? (
+                    <div className=" h-8 border-2 p-2 flex justify-center items-center bg-green-500 rounded-md">
+                      <p className="font-medium  text-white">Present</p>
+                    </div>
+                  ) : (
+                    <div className=" h-8 border-2 p-2 flex justify-center items-center bg-red-500 rounded-md">
+                      <p className="font-medium  text-white">Absent</p>
+                    </div>
+                  )}
                 </div>
                 <div className="flex flex-col gap-2 my-2">
                   <div className="w-full border-b flex justify-between items-center">
@@ -735,7 +906,9 @@ const AttendanceRec = () => {
                         </label>
                         <input
                           type="time"
-                          name=""
+                          name="checkInTime"
+                          value={regData.checkInTime}
+                          onChange={handleRegChanges}
                           id=""
                           className="border border-gray-300 rounded-md p-2"
                         />
@@ -748,7 +921,9 @@ const AttendanceRec = () => {
                         </label>
                         <input
                           type="time"
-                          name=""
+                          name="checkOutTime"
+                          value={regData.checkOutTime}
+                          onChange={handleRegChanges}
                           id=""
                           className="border border-gray-300 rounded-md p-2"
                         />
@@ -762,7 +937,9 @@ const AttendanceRec = () => {
                           </label>
                           <input
                             type="time"
-                            name=""
+                            name="checkInTime"
+                            value={regData.checkInTime}
+                            onChange={handleRegChanges}
                             id=""
                             className="border border-gray-300 rounded-md p-2"
                           />
@@ -773,7 +950,9 @@ const AttendanceRec = () => {
                           </label>
                           <input
                             type="time"
-                            name=""
+                            name="checkOutTime"
+                            value={regData.checkOutTime}
+                            onChange={handleRegChanges}
                             id=""
                             className="border border-gray-300 rounded-md p-2"
                           />
@@ -786,14 +965,16 @@ const AttendanceRec = () => {
                       Comment
                     </label>
                     <textarea
-                      name=""
+                      name="reason"
+                      value={regData.reason}
+                      onChange={handleRegChanges}
                       id=""
                       cols="30"
-                      rows="4"
-                      className="border border-gray-300 rounded-md"
+                      rows="3"
+                      className="border border-gray-300 rounded-md p-2"
                     ></textarea>
                   </div>
-                  <div className="flex gap-2 justify-end border-t p-1 ">
+                  <div className="flex gap-2 justify-end items-center border-t p-1 ">
                     <button
                       className=" bg-red-500 text-white px-4 py-2 rounded-full flex items-center gap-2"
                       onClick={() => setAddRegularization(false)}
@@ -802,7 +983,7 @@ const AttendanceRec = () => {
                     </button>
                     <button
                       className=" bg-green-500 text-white px-4 py-2 rounded-full flex items-center gap-2"
-                      // onClick={handleselectedRecord1}
+                      onClick={handleAddRegRequest}
                     >
                       <FaCheck /> Submit
                     </button>

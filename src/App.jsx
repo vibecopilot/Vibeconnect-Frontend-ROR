@@ -704,6 +704,10 @@ import SetupSeat from "./pages/Setup/SetupSeat.jsx";
 import UserRoles from "./pages/AdminHrms/UserRoles.jsx";
 import OrganizationChart from "./pages/AdminHrms/OrganizationTree/OrganizationChart.jsx";
 import CTCGeneralSettingEdit from "./pages/AdminHrms/CTCGeneralSettingEdit.jsx";
+import TimeSheetRecord from "./pages/AdminHrms/TimeSheet/TimeSheetRecord.jsx";
+import EmployeesSetup from "./pages/AdminHrms/EmployeesSetup.jsx";
+import UniformApplication from "./pages/AdminHrms/UniformApplication.jsx";
+
 import CopyChecklistPPM from "./pages/SubPages/CopyChecklistPPM.jsx";
 import CopyChecklistService from "./pages/SubPages/CopyChecklistService.jsx";
 // new admin hrms
@@ -1766,19 +1770,19 @@ function App() {
               </ProtectedAdminRoutes>
             }
           />
-           <Route
-            path="/admin/copy-checklist/ppm/:id"
-            element={
-              <ProtectedAdminRoutes>
-                <CopyChecklistPPM/>
-              </ProtectedAdminRoutes>
-            }
-          />
-           <Route
+          <Route
             path="/admin/copy-checklist/service/:id"
             element={
               <ProtectedAdminRoutes>
                 <CopyChecklistService/>
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/copy-checklist/ppm/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <CopyChecklistPPM/>
               </ProtectedAdminRoutes>
             }
           />
@@ -5726,6 +5730,14 @@ function App() {
             }
           />
           <Route
+            path="/timesheet-record"
+            element={
+              <ProtectedAdminRoutes>
+                <TimeSheetRecord />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
             path="/admin/reports/form16"
             element={
               <ProtectedAdminRoutes>
@@ -6156,6 +6168,14 @@ function App() {
             }
           />
           <Route
+            path="/admin/employee-directory-setup/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <EmployeesSetup />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
             path="/admin/add-employee/Employment"
             element={
               <ProtectedAdminRoutes>
@@ -6232,6 +6252,14 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <CTCGeneralSetting />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/uniform-applications/"
+            element={
+              <ProtectedAdminRoutes>
+                <UniformApplication />
               </ProtectedAdminRoutes>
             }
           />

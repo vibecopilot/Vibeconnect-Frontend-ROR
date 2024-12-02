@@ -114,9 +114,9 @@ const HRMSDashboard = () => {
     }
   };
 
-  useEffect(()=>{
-    fetchMyOrganization()
-  })
+  useEffect(() => {
+    fetchMyOrganization();
+  });
 
   return (
     <section className="flex ">
@@ -125,7 +125,7 @@ const HRMSDashboard = () => {
       <div className="p-2 w-full flex  overflow-hidden flex-col">
         <div className="bg-white flex justify-items-end  p-4 shadow-md absolute overflow-y-auto top-0 left-0 right-0">
           <h1 className="text-2xl font-bold pl-20 top-0 left-0 right-0">
-            Welcome To <span >{orgName}</span>
+            Welcome To <span>{orgName}</span>
           </h1>
           {/* <div
             className="bg-white mt-1 text-black text-center font-semibold absolute right-32 border-r-4"
@@ -173,21 +173,21 @@ const HRMSDashboard = () => {
               />
             </div>  */}
           </div>
-          <div className="w-full flex flex-col overflow-hidden mt-5">
-            <div className="flex justify-start gap-4 my-5 flex-wrap ml-5">
-              <div className="shadow-xl rounded-full border-4 border-gray-400 w-60 px-6 flex flex-col items-center">
+          <div className="w-full flex flex-col overflow-hidden mt-3">
+            <div className="flex justify-start gap-2 my-5 flex-wrap ml-5">
+              <div className=" rounded-xl border-4 border-gray-400 h-24 w-60 bg-opacity-50 bg-gray-300 px-6 flex flex-col justify-center items-center">
                 <p className="font-semibold md:text-lg">Pending Requests</p>
                 <p className="text-center font-semibold md:text-lg">2</p>
               </div>
-              <div className="shadow-xl rounded-full border-4 border-green-400 w-60  px-6 flex flex-col items-center ml-5">
+              <div className=" rounded-xl border-4 border-green-400  h-24 w-60 bg-opacity-50 bg-green-300  px-6 flex flex-col justify-center items-center">
                 <p className="font-semibold md:text-lg">Process Alerts</p>
                 <p className="text-center font-semibold md:text-lg">1</p>
               </div>
-              <div className="shadow-xl rounded-full border-4 border-red-400 w-60 px-6 flex flex-col items-center ml-5">
+              <div className=" rounded-xl border-4 border-red-400 h-24 w-60 bg-opacity-50 bg-red-300 px-6 flex flex-col justify-center items-center">
                 <p className="font-semibold md:text-lg">Today's Events</p>
                 <p className="text-center font-semibold md:text-lg">0</p>
               </div>
-              <div className="shadow-xl rounded-full border-4 border-orange-400 w-60 px-6 flex flex-col items-center ml-5">
+              <div className="rounded-xl border-4 border-orange-400 h-24 w-60 bg-opacity-50 bg-orange-300 px-6 flex flex-col justify-center items-center">
                 <p className="font-semibold md:text-lg">Setup Issues</p>
                 <p className="text-center font-semibold md:text-lg">1</p>
               </div>

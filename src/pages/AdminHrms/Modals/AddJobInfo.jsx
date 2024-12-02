@@ -44,7 +44,7 @@ const AddJobInfo = ({ closeModal1, fetchJobInfo }) => {
   const fetchAssociatedSites = async () => {
     try {
       const res = await getAssociatedSites(hrmsOrgId);
-      const ActiveSites = res.filter((site)=> site.status)
+      const ActiveSites = res.filter((site) => site.status);
       const allSites = ActiveSites.map((site) => ({
         value: site.id,
         label: site.site_name,
@@ -118,6 +118,7 @@ const AddJobInfo = ({ closeModal1, fetchJobInfo }) => {
     const postData = new FormData();
     postData.append("employee", id);
     postData.append("start_date", formData.startDate);
+    postData.append("end_date", formData.endDate);
     postData.append("organization", hrmsOrgId);
     postData.append("reporting_supervisor", selectedSupervisorOption.value);
     postData.append("department", formData.department);
@@ -126,9 +127,9 @@ const AddJobInfo = ({ closeModal1, fetchJobInfo }) => {
     postData.append("designation", formData.designation);
     try {
       const res = await postEmployeeJobInfo(postData);
-      toast.success("Job INFO updated successfully")
-      fetchJobInfo()
-      closeModal1()
+      toast.success("Job INFO updated successfully");
+      fetchJobInfo();
+      closeModal1();
     } catch (error) {
       console.log(error);
     }
@@ -152,18 +153,23 @@ const AddJobInfo = ({ closeModal1, fetchJobInfo }) => {
                 name="startDate"
               />
             </div>
+            <div className="flex flex-col gap-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Effective To <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                className="mt-1 p-2  border rounded-md"
+                value={formData.endDate}
+                onChange={handleChange}
+                name="endDate"
+              />
+            </div>
             <div className="mt-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Associate site <span className="text-red-500">*</span>
               </label>
-              {/* <select className="mt-1 p-2 text-black border w-full rounded-md">
-                <option value="">Select Site</option>
-                {sites.map((site) => (
-                  <option value={site.id} key={site.id}>
-                   {site.site_name}
-                  </option>
-                ))}
-              </select> */}
+              
               <Select
                 options={sites}
                 onChange={handleAssociatedSiteChange}

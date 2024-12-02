@@ -10,13 +10,17 @@ import {
   editEmployeeAddressDetails,
   editEmployeeDetails,
   editEmployeeFamilyDetails,
+  editPaymentInfoDetails,
   getEmployeeAddressDetails,
   getEmployeeDetails,
   getEmployeeFamilyDetails,
   getEmployeePaymentInfo,
   getHrmsUserRole,
+  getPaymentInfoDetails,
+  getPaymentModeList,
   postEmployeeAddress,
   postEmployeeFamily,
+  postEmployeePaymentInfo,
 } from "../../api";
 import { useParams } from "react-router-dom";
 import { getItemInLocalStorage } from "../../utils/localStorage";
@@ -26,48 +30,89 @@ import { RiContactsBook2Line } from "react-icons/ri";
 import { MdClose, MdFamilyRestroom, MdOutlinePayment } from "react-icons/md";
 import { IoHomeOutline } from "react-icons/io5";
 import { FaCheck, FaHome } from "react-icons/fa";
+import { PiPlusCircle } from "react-icons/pi";
 
 const SectionsPersonal = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [modalIsOpen, setModalIsOpen] = useState(false);
+  const [addPaymentInfoModal, setAddPaymentInfoModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isFamEditing, setIsFamEditing] = useState(false);
   const [isAddressEditing, setIsAddressEditing] = useState(false);
   const [selectedOptions, setSelectedOptions] = useState([]);
   const handleSelectChange = (selected) => {
-    setSelectedOptions(selected); // Update the state with the selected options
+    setSelectedOptions(selected);
   };
   const openModal = () => setModalIsOpen(true);
   const closeModal = () => setModalIsOpen(false);
   const [paymentData, setPaymentData] = useState({
-    paymentMode: "Cash",
+    paymentMode: "",
+    bankName: "",
+    accountNumber: "",
+    Ifsc: "",
   });
+  console.log(paymentData);
+
+  const handlePaymentChange = (e) => {
+    setPaymentData({ ...paymentData, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     // Handle form submission
     closeModal();
   };
+  const [paymentInfoId, setPaymentInfoId] = useState("");
+  const handleOpenPaymentEditModal = async (paymentId) => {
+    setModalIsOpen(true);
+    setPaymentInfoId(paymentId);
+    try {
+      const res = await getPaymentInfoDetails(paymentId);
+      console.log(res);
+      setPaymentData({
+        ...paymentData,
+        paymentMode: res.payments_mode.toString(),
+        accountNumber: res.bank_account_number,
+        bankName: res.bank_name,
+        Ifsc: res.ifsc_code,
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
-  const column = [
+  const PaymentColumn = [
+    // {
+    //   name: "Payment Type",
+    //   selector: (row) => row.Payment_Type,
+    //   sortable: true,
+    // },
     {
-      name: "Payment Type",
-      selector: (row) => row.Payment_Type,
+      name: "Payment Mode",
+      selector: (row) =>
+        row.payments_mode === 1
+          ? "Cash"
+          : row.payments_mode === 2
+          ? "Cheque"
+          : "Bank Transfer",
       sortable: true,
     },
-    { name: "Payment Mode", selector: (row) => row.mode, sortable: true },
-    { name: "Bank Name", selector: (row) => row.name, sortable: true },
+    { name: "Bank Name", selector: (row) => row.bank_name, sortable: true },
     {
       name: "Bank Account Number",
-      selector: (row) => row.account,
+      selector: (row) => row.bank_account_number,
       sortable: true,
     },
-    { name: "Bank IFSC Code", selector: (row) => row.ifsc, sortable: true },
+    {
+      name: "Bank IFSC Code",
+      selector: (row) => row.ifsc_code,
+      sortable: true,
+    },
     {
       name: "Action",
       cell: (row) => (
         <div className="flex items-center gap-4">
-          <button onClick={openModal}>
+          <button onClick={() => handleOpenPaymentEditModal(row.id)}>
             <BiEdit size={15} />
           </button>
         </div>
@@ -98,8 +143,8 @@ const SectionsPersonal = () => {
     bloodGroup: "",
     emergencyContactName: "",
     emergencyContactNo: "",
-    userType:"",
-    status:false
+    userType: "",
+    status: false,
   });
   const [familyData, setFamilyData] = useState({
     fatherName: "",
@@ -138,14 +183,13 @@ const SectionsPersonal = () => {
         maritalStatus: res?.marital_status,
         emergencyContactName: res?.emergency_contact_name,
         emergencyContactNo: res?.emergency_contact_no,
-        userType: res?.user_type
+        userType: res?.user_type,
       });
-      
     } catch (error) {
       console.log(error);
     }
   };
-  
+
   const fetchEmployeeFamilyDetails = async () => {
     try {
       const res = await getEmployeeFamilyDetails(id);
@@ -185,10 +229,11 @@ const SectionsPersonal = () => {
     }
   };
 
+  const [paymentsData, setPaymentsData] = useState([]);
   const fetchEmployeePaymentInfo = async () => {
     try {
       const res = await getEmployeePaymentInfo(id);
-      console.log(res);
+      setPaymentsData(res);
     } catch (error) {
       console.log(error);
     }
@@ -199,7 +244,7 @@ const SectionsPersonal = () => {
     fetchEmployeeFamilyDetails();
     fetchEmployeeAddressDetails();
     fetchEmployeePaymentInfo();
-    fetchUserRoles()
+    fetchUserRoles();
   }, []);
 
   // const handleChange = (e) => {
@@ -351,6 +396,55 @@ const SectionsPersonal = () => {
     try {
       const res = await getHrmsUserRole(hrmsOrgId);
       setRoles(res);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const [paymentModeList, setPaymentModeList] = useState([]);
+  useEffect(() => {
+    const fetchPaymentModeList = async () => {
+      try {
+        const res = await getPaymentModeList();
+        setPaymentModeList(res);
+        console.log(res);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchPaymentModeList();
+  }, []);
+
+  const handleEditPaymentInfo = async () => {
+    const postPayment = new FormData();
+    postPayment.append("bank_name", paymentData.bankName);
+    postPayment.append("bank_account_number", paymentData.accountNumber);
+    postPayment.append("ifsc_code", paymentData.Ifsc);
+    postPayment.append("payments_mode", paymentData.paymentMode);
+    postPayment.append("employee", id);
+
+    try {
+      const res = await editPaymentInfoDetails(paymentInfoId, postPayment);
+      toast.success("Payment info updated successfully");
+      setModalIsOpen(false);
+      fetchEmployeePaymentInfo();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const handleAddPaymentInfo = async () => {
+    const postPayment = new FormData();
+    postPayment.append("bank_name", paymentData.bankName);
+    postPayment.append("bank_account_number", paymentData.accountNumber);
+    postPayment.append("ifsc_code", paymentData.Ifsc);
+    postPayment.append("payments_mode", paymentData.paymentMode);
+    postPayment.append("employee", id);
+
+    try {
+      const res = await postEmployeePaymentInfo(postPayment);
+      toast.success("Payment info updated successfully");
+      setAddPaymentInfoModal(false);
+      fetchEmployeePaymentInfo();
     } catch (error) {
       console.log(error);
     }
@@ -561,10 +655,12 @@ const SectionsPersonal = () => {
                       value={formData.userType}
                       name="userType"
                     >
-                     <option value="">Select Role</option>
-                     {roles.map((role)=>(
-                      <option value={role.id} key={role.id}>{role.label}</option>
-                     ))}
+                      <option value="">Select Role</option>
+                      {roles.map((role) => (
+                        <option value={role.id} key={role.id}>
+                          {role.label}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>
@@ -800,9 +896,18 @@ const SectionsPersonal = () => {
             icon={MdOutlinePayment}
             title={"Payment Information"}
             content={
-              <>
-                <Table columns={column} data={data} isPagination={true} />
-              </>
+              <div>
+               {paymentsData.length === 0 && <div className="flex justify-end">
+                  <button className="bg-blue-500 text-white mb-2 hover:bg-gray-700 font-semibold py-2 px-4 rounded-full flex items-center gap-2" onClick={()=> setAddPaymentInfoModal(true)}>
+                    <PiPlusCircle size={18} /> Add
+                  </button>
+                </div>}
+                <Table
+                  columns={PaymentColumn}
+                  data={paymentsData}
+                  isPagination={false}
+                />
+              </div>
             }
           />
 
@@ -811,7 +916,7 @@ const SectionsPersonal = () => {
               <div className="max-h-screen bg-white p-8 w-96 rounded-lg shadow-lg overflow-y-auto">
                 <form onSubmit={handleSubmit}>
                   <h2 className="text-2xl font-bold mb-4">Edit Payment Type</h2>
-                  <div className="flex flex-col gap-2">
+                  {/* <div className="flex flex-col gap-2">
                     <label
                       htmlFor=""
                       className="block text-sm font-medium text-gray-700"
@@ -826,27 +931,29 @@ const SectionsPersonal = () => {
                       onChange={handleSelectChange}
                       placeholder="Select payment type(s)"
                     />
-                  </div>
+                  </div> */}
+
                   <div className="mt-2">
                     <label className="block text-sm font-medium text-gray-700">
                       Payment Mode <span className="text-red-500">*</span>
                     </label>
                     <select
-                      className="mt-1 p-2 w-full border rounded-md"
+                      className="border border-gray-400  p-2 w-full rounded-md"
+                      required
                       value={paymentData.paymentMode}
-                      onChange={(e) =>
-                        setPaymentData({
-                          ...paymentData,
-                          paymentMode: e.target.value,
-                        })
-                      }
+                      onChange={handlePaymentChange}
+                      name="paymentMode"
                     >
-                      <option value="Cash">Cash</option>
-                      <option value="Cheque">Cheque</option>
-                      <option value="Bank Transfer">Bank Transfer</option>
+                      <option value="">Select payment Mode</option>
+                      {paymentModeList &&
+                        paymentModeList.map((payment) => (
+                          <option value={payment.id} key={payment.id}>
+                            {payment.mode_name}
+                          </option>
+                        ))}
                     </select>
                   </div>
-                  {paymentData.paymentMode === "Bank Transfer" && (
+                  {paymentData.paymentMode === "3" && (
                     <div className="flex flex-col gap-3">
                       <div className="flex flex-col gap-2 mt-2">
                         <label className="block text-sm font-medium text-gray-700">
@@ -858,8 +965,8 @@ const SectionsPersonal = () => {
                           id=""
                           className="border border-gray-300  p-2  rounded-md"
                           placeholder="Enter bank name"
-                          // value={formData.bankName}
-                          // onChange={handleChange}
+                          value={paymentData.bankName}
+                          onChange={handlePaymentChange}
                         />
                       </div>
                       <div className="flex flex-col gap-2">
@@ -873,8 +980,8 @@ const SectionsPersonal = () => {
                           id=""
                           className="border border-gray-400  p-2  rounded-md"
                           placeholder="Enter bank account no."
-                          // value={formData.accountNumber}
-                          // onChange={handleChange}
+                          value={paymentData.accountNumber}
+                          onChange={handlePaymentChange}
                         />
                       </div>
                       <div className="flex flex-col gap-2">
@@ -883,12 +990,12 @@ const SectionsPersonal = () => {
                         </label>
                         <input
                           type="text"
-                          name="ifsc"
+                          name="Ifsc"
                           id=""
                           className="border border-gray-300  p-2  rounded-md"
                           placeholder="Enter IFSC"
-                          // value={formData.ifsc}
-                          // onChange={handleChange}
+                          value={paymentData.Ifsc}
+                          onChange={handlePaymentChange}
                         />
                       </div>
                     </div>
@@ -902,6 +1009,7 @@ const SectionsPersonal = () => {
                       Cancel
                     </button>
                     <button
+                      onClick={handleEditPaymentInfo}
                       type="submit"
                       className="bg-green-500 text-white p-1 px-5 rounded-full"
                     >
@@ -909,6 +1017,115 @@ const SectionsPersonal = () => {
                     </button>
                   </div>
                 </form>
+              </div>
+            </div>
+          )}
+          {addPaymentInfoModal && (
+            <div className="fixed inset-0 z-50 flex items-center overflow-y-auto justify-center bg-gray-500 bg-opacity-50">
+              <div className="max-h-screen bg-white p-8 w-96 rounded-lg shadow-lg overflow-y-auto">
+                <div>
+                  <h2 className="text-2xl font-bold mb-4">Add Payment Type</h2>
+                  {/* <div className="flex flex-col gap-2">
+                    <label
+                      htmlFor=""
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Payment Type
+                    </label>
+                    <Select
+                      id="paymentType"
+                      options={paymentOptions}
+                      isMulti // Enables multiple selection
+                      value={selectedOptions}
+                      onChange={handleSelectChange}
+                      placeholder="Select payment type(s)"
+                    />
+                  </div> */}
+
+                  <div className="mt-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Payment Mode <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      className="border border-gray-400  p-2 w-full rounded-md"
+                      required
+                      value={paymentData.paymentMode}
+                      onChange={handlePaymentChange}
+                      name="paymentMode"
+                    >
+                      <option value="">Select payment Mode</option>
+                      {paymentModeList &&
+                        paymentModeList.map((payment) => (
+                          <option value={payment.id} key={payment.id}>
+                            {payment.mode_name}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                  {paymentData.paymentMode === "3" && (
+                    <div className="flex flex-col gap-3">
+                      <div className="flex flex-col gap-2 mt-2">
+                        <label className="block text-sm font-medium text-gray-700">
+                          Bank Name <span className="text-red-400">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          name="bankName"
+                          id=""
+                          className="border border-gray-300  p-2  rounded-md"
+                          placeholder="Enter bank name"
+                          value={paymentData.bankName}
+                          onChange={handlePaymentChange}
+                        />
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <label className="block text-sm font-medium text-gray-700">
+                          Bank Account Number{" "}
+                          <span className="text-red-300">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          name="accountNumber"
+                          id=""
+                          className="border border-gray-400  p-2  rounded-md"
+                          placeholder="Enter bank account no."
+                          value={paymentData.accountNumber}
+                          onChange={handlePaymentChange}
+                        />
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <label className="block text-sm font-medium text-gray-700">
+                          Bank IFSC code <span className="text-red-400">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          name="Ifsc"
+                          id=""
+                          className="border border-gray-300  p-2  rounded-md"
+                          placeholder="Enter IFSC"
+                          value={paymentData.Ifsc}
+                          onChange={handlePaymentChange}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  <div className="flex mt-2 justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={()=>setAddPaymentInfoModal(false)}
+                      className="border-2 border-red-500 text-red-500 px-4 p-1 rounded-full"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleAddPaymentInfo}
+                      type="submit"
+                      className="bg-green-500 text-white p-1 px-5 rounded-full"
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           )}
