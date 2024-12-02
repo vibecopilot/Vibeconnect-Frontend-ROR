@@ -7,6 +7,7 @@ import { useSelector } from "react-redux";
 import Table from "../../../components/table/Table";
 import { BiEdit } from "react-icons/bi";
 import { FaTimes } from "react-icons/fa";
+import FBDetails from "./FBDetails";
 
 const FBStatusSetup = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
@@ -14,23 +15,8 @@ const FBStatusSetup = () => {
   const themeColor = useSelector((state)=> state.theme.color);
   const [selectedColor, setSelectedColor] = useState("#eb5768");
 
-  const colors = [
-    "#ff0000", // Red
-    "#ff4500", // Orange
-    "#ffd700", // Yellow
-    "#32cd32", // Green
-    "#00ced1", // Cyan
-    "#1e90ff", // Blue
-    "#8a2be2", // Purple
-    "#ff69b4", // Pink
-    "#800000", // Maroon
-    "#2e8b57", // Sea Green
-    "#000000", // Black
-    "#ffffff", // White
-  ];
-
-  const handleColorChange = (color) => {
-    setSelectedColor(color);
+  const handleInputChange = (e) => {
+    setSelectedColor(e.target.value);
   };
 
   const openModal = () => setIsModalOpen(true);
@@ -123,6 +109,7 @@ const FBStatusSetup = () => {
 
   return (
     <section className="flex">
+      <FBDetails/>
       <div className="w-full flex mx-3 flex-col overflow-hidden">
         <div className="flex md:flex-row flex-col gap-5 justify-between mt-10 my-2">
           <div className="sm:flex grid grid-cols-2 items-center justify-center gap-4 border border-gray-300 rounded-md px-3 p-2 w-auto">
@@ -262,31 +249,23 @@ const FBStatusSetup = () => {
       >
         Color:
       </label>
-      <div className="flex items-center space-x-4">
-        <input
-          type="text"
-          id="color"
-          value={selectedColor}
-          readOnly
-          className="border p-1 px-4 border-gray-500 rounded-md"
-          style={{ backgroundColor: selectedColor }}
-        />
-        <div className="relative">
-          <div className="grid grid-cols-4 gap-2 p-2 border rounded-lg bg-white shadow-lg">
-            {colors.map((color, index) => (
-              <button
-                key={index}
-                className={`w-8 h-8 rounded-md`}
-                style={{
-                  backgroundColor: color,
-                  border: color === selectedColor ? "2px solid black" : "none",
-                }}
-                onClick={() => handleColorChange(color)}
-              ></button>
-            ))}
-          </div>
-        </div>
-      </div>
+      <div className="flex flex-col items-center space-y-4 p-4">
+      <label className="block text-gray-700 text-sm font-bold">Pick a Color:</label>
+      <input
+        type="color"
+        value={selectedColor}
+        onChange={handleInputChange}
+        className="w-10 h-10 cursor-pointer rounded-full shadow-lg"
+        style={{ backgroundColor: selectedColor }}
+      />
+      <input
+        type="text"
+        value={selectedColor}
+        onChange={handleInputChange}
+        className="border p-2 text-center border  border-black rounded-md w-40"
+        placeholder="Enter Hex Code"
+      />
+    </div>
     </div>
         </div>
         <div className="flex items-center justify-between">

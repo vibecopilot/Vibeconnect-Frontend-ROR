@@ -7,11 +7,16 @@ import { BsEye } from "react-icons/bs";
 import { useSelector } from "react-redux";
 import Table from "../../../../components/table/Table";
 import { BiEdit } from "react-icons/bi";
+import FBDetails from "../FBDetails";
+import { FiDownload } from "react-icons/fi";
+import FileInputBox from "../../../../containers/Inputs/FileInputBox";
 
 const FBRestaurtantMenu = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const themeColor = useSelector((state)=> state.theme.color)
-
+  const [setshowImport, setShowImportModal] = useState(false);
+  const openModalImport = () => setShowImportModal(true);
+  const closeModalImport = () => setShowImportModal(false);
   const columns = [
     {
       name: "Action",
@@ -122,7 +127,7 @@ const FBRestaurtantMenu = () => {
 
   return (
     <section className="flex">
-
+<FBDetails/>
       <div className=" w-full flex mx-3 flex-col overflow-hidden">
         <div className="flex md:flex-row flex-col gap-5 justify-between mt-10 my-2">
           <div className="sm:flex grid grid-cols-2 items-center justify-center  gap-4 border border-gray-300 rounded-md px-3 p-2 w-auto">
@@ -189,10 +194,10 @@ const FBRestaurtantMenu = () => {
                 <PiPlusCircle size={20} />
                 Add
             </Link>
-            {/* <button className="border-2 font-semibold hover:bg-black hover:text-white transition-all border-black p-2 rounded-md text-black cursor-pointer text-center flex items-center gap-2 justify-center" style={{ height: '1cm' }}>
-                Import
+            <button className="border-2 font-semibold hover:bg-black hover:text-white transition-all border-black p-2 rounded-md text-black cursor-pointer text-center flex items-center gap-2 justify-center" style={{ height: '1cm' }} onClick={openModalImport}>
+              <FiDownload/>  Import
             </button>
-            <button className="border-2 font-semibold hover:bg-black hover:text-white transition-all border-black p-2 rounded-md text-black cursor-pointer text-center flex items-center gap-2 justify-center" style={{ height: '1cm' }}>
+            {/* <button className="border-2 font-semibold hover:bg-black hover:text-white transition-all border-black p-2 rounded-md text-black cursor-pointer text-center flex items-center gap-2 justify-center" style={{ height: '1cm' }}>
                 Filter
             </button>
             <button className="border-2 font-semibold hover:bg-black hover:text-white transition-all border-black p-2 rounded-md text-black cursor-pointer text-center flex items-center gap-2 justify-center" style={{ height: '1cm' }}>
@@ -217,6 +222,41 @@ const FBRestaurtantMenu = () => {
           isPagination={true}
 
         />
+         {setshowImport && (
+        <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex z-10 justify-center items-center">
+          <div className="bg-white p-6 rounded shadow-lg w-1/2">
+            <h2 className="text-xl font-bold text-center mb-4">Bulk Upload</h2>
+            {/* Advanced Filter Fields */}
+         {/* <FileInputBox handleChange={handleFileChange} fieldName="checklist" isMulti={true}/> */}
+         <FileInputBox/>
+            <div className="mt-4 flex justify-end space-x-4">
+              <button
+              // onClick={handleDownload}
+              className="bg-red-500 text-white px-4 py-2 rounded"
+              style={{ background: themeColor }}
+              >
+                Download Sample Format
+              </button>
+              <button
+                onClick={closeModalImport}
+                className="bg-red-500 text-white px-4 py-2 rounded"
+                style={{ background: themeColor }}
+              >
+                Cancel
+              </button>
+              <button
+                
+                className="bg-green-500 text-white px-4 py-2 rounded"
+                style={{ background: themeColor }}
+                // onClick={handleImportChecklist}
+              >
+                Import
+              </button>
+            </div>
+            {/* {importStatus && <p className="mt-4 text-center">{importStatus}</p>} */}
+        </div>
+        </div>
+      )}
       </div>
     </section>
   );

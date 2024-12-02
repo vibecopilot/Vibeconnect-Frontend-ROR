@@ -9,6 +9,7 @@ import { FaTimes } from "react-icons/fa";
 import { getGenericCategoryRestaurtant, postGenericSubCategory } from "../../api";
 import toast from "react-hot-toast";
 import { getItemInLocalStorage } from "../../utils/localStorage";
+import FBDetails from "./details/FBDetails";
 
 const EditSubCategorySetup = () => {
   const siteID = getItemInLocalStorage("SITEID");
@@ -120,6 +121,7 @@ const EditSubCategorySetup = () => {
 
   return (
     <section className="flex">
+      <FBDetails/>
       <div className="w-full flex mx-3 flex-col overflow-hidden">
         <div className="flex md:flex-row flex-col gap-5 justify-between mt-10 my-2">
           <div className="sm:flex grid grid-cols-2 items-center justify-center gap-4 border border-gray-300 rounded-md px-3 p-2 w-auto">

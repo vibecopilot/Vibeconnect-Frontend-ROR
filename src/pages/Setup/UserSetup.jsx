@@ -8,6 +8,7 @@ import { BsEye } from "react-icons/bs";
 import { useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import { getItemInLocalStorage } from "../../utils/localStorage";
+import SetupNavbar from "../../components/navbars/SetupNavbar";
 
 const UserSetup = () => {
   const [users, setUsers] = useState([]);
@@ -130,7 +131,7 @@ const UserSetup = () => {
 
   return (
     <section className="flex">
-      <Navbar />
+      <SetupNavbar/>
       <div className="w-full flex mx-3 flex-col gap-4 overflow-hidden mb-5">
         <div className="mt-5 flex md:flex-row flex-col justify-between md:items-center gap-4">
           <input

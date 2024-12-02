@@ -10,6 +10,7 @@ import { FaTrash } from "react-icons/fa";
 import Select from "react-select";
 
 const AddFB = () => {
+  const [option, setOption] = useState("bookable");
   const [selectedDays, setSelectedDays] = useState({
     all: false,
     sunday: false,
@@ -390,10 +391,61 @@ const AddFB = () => {
           <h3 className="border-b text-center text-xl  mb-6 font-bold">
             BASIC DETAILS
           </h3>
+          <div className="mb-2">
+      {/* <h1 className="text-lg font-semibold mb-4">Choose Booking Option</h1> */}
+      <form>
+        {/* Radio Buttons in Flex */}
+        <div className="flex  space-x-6">
+          {/* Bookable Option */}
+          <div className="flex items-center">
+            <input
+              id="bookable"
+              type="radio"
+              value="bookable"
+              checked={option === "bookable"}
+              onChange={(e) => setOption(e.target.value)}
+              className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+            />
+            <label
+              htmlFor="bookable"
+              className="ml-2  font-medium font-semibold "
+            >
+              Bookable
+            </label>
+          </div>
+
+          {/* Request Option */}
+          <div className="flex items-center">
+            <input
+              id="request"
+              type="radio"
+              value="request"
+              checked={option === "request"}
+              onChange={(e) => setOption(e.target.value)}
+              className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+            />
+            <label
+              htmlFor="request"
+              className="ml-2  font-medium font-semibold "
+            >
+              Request
+            </label>
+          </div>
+        </div>
+
+        {/* Display Selected Option */}
+        {/* <div className="mt-4">
+          <p className="text-sm text-gray-500">
+            Selected Option:{" "}
+            <span className="font-semibold text-gray-800">{option}</span>
+          </p>
+        </div> */}
+      </form>
+    </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <div className="col-span-1">
               <label
-                className="block font-semibold  mb-2"
+                className="block   mb-2"
                 htmlFor="restaurant-name"
               >
                 Restaurant Name <span className="text-red-500">*</span>
@@ -410,7 +462,7 @@ const AddFB = () => {
             </div>
             <div className="col-span-1">
               <label
-                className="block font-semibold mb-2"
+                className="block  mb-2"
                 htmlFor="cost-for-two"
               >
                 Cost For Two <span className="text-red-500">*</span>
@@ -427,7 +479,7 @@ const AddFB = () => {
             </div>
             <div className="col-span-1">
               <label
-                className="block font-semibold mb-2"
+                className="block  mb-2"
                 htmlFor="mobile-number"
               >
                 Mobile Number <span className="text-red-500">*</span>
@@ -444,7 +496,7 @@ const AddFB = () => {
             </div>
             <div className="col-span-1">
               <label
-                className="block font-semibold mb-2"
+                className="block  mb-2"
                 htmlFor="another-mobile-number"
               >
                 Another Mobile Number <span className="text-red-500">*</span>
@@ -461,7 +513,7 @@ const AddFB = () => {
             </div>
             <div className="col-span-1">
               <label
-                className="block font-semibold mb-2"
+                className="block  mb-2"
                 htmlFor="landline-number"
               >
                 Landline Number <span className="text-red-500">*</span>
@@ -478,7 +530,7 @@ const AddFB = () => {
             </div>
             <div className="col-span-1">
               <label
-                className="block font-semibold mb-2"
+                className="block  mb-2"
                 htmlFor="delivery-time"
               >
                 Delivery Time
@@ -495,7 +547,7 @@ const AddFB = () => {
             </div>
             <div className="col-span-1">
               <label
-                className="block font-semibold mb-2"
+                className="block  mb-2"
                 htmlFor="cuisines"
               >
                 Cuisines
@@ -522,7 +574,7 @@ const AddFB = () => {
             </div>
             <div className="col-span-1">
               <label
-                className="block font-semibold mb-2"
+                className="block  mb-2"
                 htmlFor="serves-alcohol"
               >
                 Serves Alcohol <span className="text-red-500">*</span>
@@ -542,7 +594,7 @@ const AddFB = () => {
             </div>
             <div className="col-span-1">
               <label
-                className="block font-semibold mb-2"
+                className="block  mb-2"
                 htmlFor="wheelchair-accessible"
               >
                 Wheelchair Accessible <span className="text-red-500">*</span>
@@ -562,7 +614,7 @@ const AddFB = () => {
             </div>
             <div className="col-span-1">
               <label
-                className="block font-semibold mb-2"
+                className="block  mb-2"
                 htmlFor="cash-on-delivery"
               >
                 Cash on Delivery <span className="text-red-500">*</span>
@@ -582,7 +634,7 @@ const AddFB = () => {
             </div>
             <div className="col-span-1">
               <label
-                className="block font-semibold mb-2"
+                className="block  mb-2"
                 htmlFor="pure-veg"
               >
                 Pure Veg <span className="text-red-500">*</span>
@@ -602,7 +654,7 @@ const AddFB = () => {
             </div>
             <div className="col-span-3">
               <label
-                className="block font-semibold mb-2"
+                className="block  mb-2"
                 htmlFor="address"
               >
                 Address
@@ -619,7 +671,7 @@ const AddFB = () => {
             </div>
             <div className="col-span-3">
               <label
-                className="block font-semibold mb-2"
+                className="block  mb-2"
                 htmlFor="terms-conditions"
               >
                 Terms & Conditions
@@ -636,7 +688,7 @@ const AddFB = () => {
             </div>
             <div className="col-span-3">
               <label
-                className="block font-semibold mb-2"
+                className="block  mb-2"
                 htmlFor="disclaimer"
               >
                 Disclaimer
@@ -653,7 +705,7 @@ const AddFB = () => {
             </div>
             <div className="col-span-3">
               <label
-                className="block font-semibold mb-2"
+                className="block mb-2"
                 htmlFor="closing-message"
               >
                 Closing Message
@@ -820,7 +872,7 @@ const AddFB = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <div className="col-span-1">
       <label
-        className="block font-semibold mb-2"
+        className="block  mb-2"
         htmlFor="select-operational-days"
       >
         Select Operational Days
@@ -863,14 +915,14 @@ const AddFB = () => {
       </div>
     </div>
             <div className="col-span-1">
-              <label htmlFor="" className="block font-semibold mb-2">Start Time</label>
+              <label htmlFor="" className="block  mb-2">Start Time</label>
               <input type="time" className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="Start time"/>
             </div>
             <div className="col-span-1">
-              <label htmlFor="" className="block font-semibold mb-2">End Time</label>
+              <label htmlFor="" className="block  mb-2">End Time</label>
               <input type="time" className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="End time"/>
             </div>
-            <div className="flex  gap-8 col-span-1">
+            <div className="flex  gap-10 col-span-1">
     <div className="flex items-center gap-2 ">
       <input
         id="booking-allowed"
@@ -879,7 +931,7 @@ const AddFB = () => {
       />
       <label
         htmlFor="booking-allowed"
-        className="font-semibold"
+        
       >
         Booking Allowed
       </label>
@@ -893,25 +945,25 @@ const AddFB = () => {
       />
       <label
         htmlFor="order-allowed"
-        className="font-semibold"
+        
       >
         Order Allowed
       </label>
     </div>
   </div>
             <div className="col-span-1">
-              <label htmlFor="" className="block font-semibold mb-2">Break Start Time</label>
+              <label htmlFor="" className="block  mb-2">Break Start Time</label>
               <input type="time" className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="Start time"/>
             </div>
             <div className="col-span-1">
-              <label htmlFor="" className="block font-semibold mb-2">Break End Time</label>
+              <label htmlFor="" className="block  mb-2">Break End Time</label>
               <input type="time" className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="End time"/>
             </div>
 
            
 
             <div className="col-span-1">
-              <label htmlFor="" className="block font-semibold mb-2">Last Booking & Order Time</label>
+              <label htmlFor="" className="block  mb-2">Last Booking & Order Time</label>
               <input type="time" className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="End time"/>
             </div>
             </div>
@@ -941,7 +993,7 @@ const AddFB = () => {
               }}
             />
             &nbsp;&nbsp;
-            <label className="font-semibold">Order</label>
+            <label >Order</label>
           </div>
           &nbsp;&nbsp;
           <div>
@@ -955,10 +1007,10 @@ const AddFB = () => {
               }}
             />
             &nbsp;&nbsp;
-            <label className="font-semibold">Booking</label>
+            <label >Booking</label>
           </div>
           &nbsp;&nbsp;
-          <label htmlFor="" className="font-semibold">Start Date:</label>
+          <label htmlFor="" >Start Date:</label>
           <input
             type="date"
             className="border border-gray-400 p-1 rounded-md"
@@ -970,7 +1022,7 @@ const AddFB = () => {
             }}
           />
           &nbsp;&nbsp;
-          <label htmlFor="" className="font-semibold">End Date:</label>
+          <label htmlFor="" >End Date:</label>
           <input
             type="date"
             className="border border-gray-400 p-1 rounded-md"
@@ -998,7 +1050,7 @@ const AddFB = () => {
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <div className="col-span-1">
-              <label htmlFor="" className="block font-semibold mb-2">Number of Tables</label>
+              <label htmlFor="" className="block  mb-2">Number of Tables</label>
               <input type="text" className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="Enter Tables"/>
             </div>
             {/* <div className="col-span-1">
@@ -1027,7 +1079,7 @@ const AddFB = () => {
             </div> */}
             <div className="col-span-1">
               <label
-                className="block font-semibold mb-2"
+                className="block  mb-2"
                 htmlFor="minimum-person"
               >
                 Minimum Person
@@ -1044,7 +1096,7 @@ const AddFB = () => {
             </div>
             <div className="col-span-1">
               <label
-                className="block font-semibold mb-2"
+                className="block  mb-2"
                 htmlFor="maximum-person"
               >
                 Maximum Person
@@ -1061,7 +1113,7 @@ const AddFB = () => {
             </div>
             <div className="col-span-1">
               <label
-                className="block font-semibold mb-2"
+                className="block  mb-2"
                 htmlFor="can-cancel-before"
               >
                 Can Cancel Before
@@ -1078,7 +1130,7 @@ const AddFB = () => {
             </div>
             <div className="col-span-1">
               <label
-                className="block font-semibold mb-2"
+                className="block  mb-2"
                 htmlFor="booking-not-allowed-text"
               >
                 Booking Not Available Text
@@ -1104,7 +1156,7 @@ const AddFB = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <div className="col-span-1">
               <label
-                className="block font-semibold mb-2"
+                className="block  mb-2"
                 htmlFor="GST"
               >
                 GST(%)
@@ -1121,7 +1173,7 @@ const AddFB = () => {
             </div>
             <div className="col-span-1">
               <label
-                className="block font-semibold mb-2"
+                className="block  mb-2"
                 htmlFor="delivery-charge"
               >
                 Delivery Charge
@@ -1138,7 +1190,7 @@ const AddFB = () => {
             </div>
             <div className="col-span-1">
               <label
-                className="block font-semibold mb-2"
+                className="block  mb-2"
                 htmlFor="delivery-charge"
               >
                 Service Charge(%)
@@ -1155,7 +1207,7 @@ const AddFB = () => {
             </div>
             <div className="col-span-1">
               <label
-                className="block font-semibold mb-2"
+                className="block  mb-2"
                 htmlFor="minimum-order"
               >
                 Minimum Order
@@ -1172,7 +1224,7 @@ const AddFB = () => {
             </div>
             <div className="col-span-1">
               <label
-                className="block font-semibold mb-2"
+                className="block  mb-2"
                 htmlFor="order-not-allowed-text"
               >
                 Order Not Allowed Text
@@ -1193,7 +1245,7 @@ const AddFB = () => {
           <h3 className="border-b text-center text-xl border-black mb-6 font-bold">
             ATTACHMENTS
           </h3>
-          <label htmlFor="" className="font-medium my-1 font-semibold">
+          <label htmlFor="" className="font-medium my-1 ">
             Cover Image
           </label>
 
@@ -1202,7 +1254,7 @@ const AddFB = () => {
             fieldName={"cover_image"}
             // isMulti={true}
           />
-          <label htmlFor="" className="font-medium font-semibold">
+          <label htmlFor="" className="font-medium ">
             Menu
           </label>
           <FileInputBox
@@ -1210,7 +1262,7 @@ const AddFB = () => {
             fieldName={"Menu"}
             isMulti={true}
           />
-          <label htmlFor="" className="font-medium my-1 font-semibold">
+          <label htmlFor="" className="font-medium my-1 ">
             Gallery
           </label>
           <FileInputBox
