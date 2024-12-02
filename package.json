@@ -45,6 +45,7 @@
     "react-calendar": "^4.8.0",
     "react-chartjs-2": "^5.2.0",
     "react-collapsible": "^2.10.0",
+    "react-color": "^2.19.3",
     "react-country-state-city": "^1.1.0",
     "react-data-table-component": "^7.6.2",
     "react-date-range": "^2.0.1",
