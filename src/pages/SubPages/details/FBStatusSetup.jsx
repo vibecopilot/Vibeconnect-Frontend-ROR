@@ -12,6 +12,26 @@ const FBStatusSetup = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const themeColor = useSelector((state)=> state.theme.color);
+  const [selectedColor, setSelectedColor] = useState("#eb5768");
+
+  const colors = [
+    "#ff0000", // Red
+    "#ff4500", // Orange
+    "#ffd700", // Yellow
+    "#32cd32", // Green
+    "#00ced1", // Cyan
+    "#1e90ff", // Blue
+    "#8a2be2", // Purple
+    "#ff69b4", // Pink
+    "#800000", // Maroon
+    "#2e8b57", // Sea Green
+    "#000000", // Black
+    "#ffffff", // White
+  ];
+
+  const handleColorChange = (color) => {
+    setSelectedColor(color);
+  };
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
@@ -224,7 +244,7 @@ const FBStatusSetup = () => {
             placeholder="Order"
           />
         </div>
-        <div className="grid gap-1 mb-2 ">
+        {/* <div className="grid gap-1 mb-2 ">
           <label className="block text-gray-700 text-sm font-bold " htmlFor="color">
             Color:
           </label>
@@ -234,7 +254,40 @@ const FBStatusSetup = () => {
             type="text"
             placeholder="Color"
           />
+        </div> */}
+         <div className="p-4">
+      <label
+        className="block text-gray-700 text-sm font-bold mb-2"
+        htmlFor="color"
+      >
+        Color:
+      </label>
+      <div className="flex items-center space-x-4">
+        <input
+          type="text"
+          id="color"
+          value={selectedColor}
+          readOnly
+          className="border p-1 px-4 border-gray-500 rounded-md"
+          style={{ backgroundColor: selectedColor }}
+        />
+        <div className="relative">
+          <div className="grid grid-cols-4 gap-2 p-2 border rounded-lg bg-white shadow-lg">
+            {colors.map((color, index) => (
+              <button
+                key={index}
+                className={`w-8 h-8 rounded-md`}
+                style={{
+                  backgroundColor: color,
+                  border: color === selectedColor ? "2px solid black" : "none",
+                }}
+                onClick={() => handleColorChange(color)}
+              ></button>
+            ))}
+          </div>
         </div>
+      </div>
+    </div>
         </div>
         <div className="flex items-center justify-between">
           <button

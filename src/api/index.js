@@ -1518,6 +1518,12 @@ export const getGenericCategory = async () =>
         token: token,
       },
     });
+    export const getCuisinesFBSetup = async () =>
+      axiosInstance.get(`/generic_infos.json?q[info_type_eq]=Cuisins`, {
+        params: {
+          token: token,
+        },
+      });
 export const getGenericCategoryDetails = async (id) =>
   axiosInstance.get(`/generic_infos/${id}.json`, {
     params: {

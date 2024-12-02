@@ -693,6 +693,7 @@ import AssociatedSites from "./pages/AdminHrms/AssociatedSites/AssociatedSites.j
 import SetupSeat from "./pages/Setup/SetupSeat.jsx";
 import FBRestaurtantEdit from "./pages/SubPages/FBResturantEdit.jsx";
 import PantryDetails from "./pages/SubPages/details/PantryDetails.jsx";
+import FBCuisinesSetup from "./pages/Setup/FBCuisinesSetup.jsx";
 // new admin hrms
 
 function App() {
@@ -3123,6 +3124,14 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <InsightSetup />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/setup/fnb/cuisines"
+            element={
+              <ProtectedAdminRoutes>
+                <FBCuisinesSetup/>
               </ProtectedAdminRoutes>
             }
           />
