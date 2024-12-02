@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { API_URL, getAssetPPMList, getVibeBackground } from "../../api";
-
+import { FaCopy, FaDownload } from "react-icons/fa";
 import { BiEdit } from "react-icons/bi";
 import Table from "../../components/table/Table";
 import { Link } from "react-router-dom";
@@ -64,6 +64,9 @@ const PPMActivity = () => {
               </Link> */}
           <Link to={`/asset/edit-ppm/${row.id}`}>
             <BsEye size={15} />
+          </Link>
+          <Link to={`/admin/copy-checklist/ppm/${row.id}`}>
+          <FaCopy size={15}/>
           </Link>
         </div>
       ),
