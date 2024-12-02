@@ -73,6 +73,7 @@ const SetupNavbar = () => {
               </h2>
             </NavLink>
           </li>
+
           <li>
             <NavLink
               to={`/setup/users-setup`}
@@ -103,6 +104,7 @@ const SetupNavbar = () => {
               </h2>
             </NavLink>
           </li>
+          {siteId === 10 &&
           <li>
             <NavLink
               to={`/setup/User-role`}
@@ -133,6 +135,7 @@ const SetupNavbar = () => {
               </h2>
             </NavLink>
           </li>
+}
           <li>
             <NavLink
               to={`/admin/fm-user`}
@@ -163,7 +166,7 @@ const SetupNavbar = () => {
               </h2>
             </NavLink>
           </li>
-          <li>
+          {/* <li>
             <NavLink
               to={`/admin/occupant-user-setup`}
               className={({ isActive }) =>
@@ -192,8 +195,8 @@ const SetupNavbar = () => {
               Occupant User
               </h2>
             </NavLink>
-          </li>
-          <li>
+          </li> */}
+          {/* <li>
             <NavLink
               to={`/admin/setup-meter-type`}
               className={({ isActive }) =>
@@ -222,7 +225,8 @@ const SetupNavbar = () => {
               Meter Types
               </h2>
             </NavLink>
-          </li>
+          </li> */}
+           {feat.includes("assets") && ( 
           <li>
             <NavLink
               to={`/setup/asset-group`}
@@ -253,7 +257,8 @@ const SetupNavbar = () => {
               </h2>
             </NavLink>
           </li>
-          <li>
+           )}
+          {/* <li>
             <NavLink
               to={`/admin/checklist-group`}
               className={({ isActive }) =>
@@ -282,7 +287,8 @@ const SetupNavbar = () => {
                Checklist Group
               </h2>
             </NavLink>
-          </li>
+          </li> */}
+           {feat.includes("tickets") && (
           <li>
             <NavLink
               to={`/setup/ticket-setup`}
@@ -313,7 +319,8 @@ const SetupNavbar = () => {
               </h2>
             </NavLink>
           </li>
-          
+           )}
+           {feat.includes("contacts") && ( 
           <li>
             <NavLink
               to={`/business/setup-category`}
@@ -344,6 +351,8 @@ const SetupNavbar = () => {
               </h2>
             </NavLink>
           </li>
+           )}
+            {feat.includes("space") && (
           <li>
             <NavLink
               to={`/setup/facility`}
@@ -374,6 +383,8 @@ const SetupNavbar = () => {
               </h2>
             </NavLink>
           </li>
+            )}
+             {feat.includes("bills") && (
           <li>
             <NavLink
               to={`/admin/invoice-approval-setup`}
@@ -404,6 +415,8 @@ const SetupNavbar = () => {
               </h2>
             </NavLink>
           </li>
+             )}
+              {feat.includes("parking") && (
           <li>
             <NavLink
               to={`/admin/parking-setup`}
@@ -434,6 +447,37 @@ const SetupNavbar = () => {
               </h2>
             </NavLink>
           </li>
+              )}
+               {/* <li>
+            <NavLink
+              to={`/admin/email-rule`}
+              className={({ isActive }) =>
+                `${
+                  isActive
+                    ? "text-white bg-blue-500 flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                    : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-100 rounded-md"
+                }`
+              }
+            >
+              <div>
+                {React.createElement(ImFileText2, { size: "20" })}
+              </div>
+              <h2
+                className={`whitespace-pre duration-300 ${
+                  !open && "opacity-0 translate-x-28 overflow-hidden"
+                }`}
+              >
+             Email Rule
+              </h2>
+              <h2
+                className={`${
+                  open && "hidden"
+                } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+              >
+              Email Rule
+              </h2>
+            </NavLink>
+          </li> */}
           <li>
             <NavLink
               to={`/admin/addresses-setup`}
@@ -646,6 +690,7 @@ const SetupNavbar = () => {
               </h2>
             </NavLink>
           </li>
+          {feat.includes("gatepass") && ( 
           <li>
             <NavLink
               to={`/setup/visitor-setup`}
@@ -676,6 +721,8 @@ const SetupNavbar = () => {
               </h2>
             </NavLink>
           </li>
+          )}
+          {feat.includes("assets") && (
           <li>
             <NavLink
               to={`/setup/meter-category-type`}
@@ -706,6 +753,8 @@ const SetupNavbar = () => {
               </h2>
             </NavLink>
           </li>
+          )}
+          {feat.includes("fnb") && (
           <li>
             <NavLink
               to={`/setup/fnb/cuisines`}
@@ -736,7 +785,7 @@ const SetupNavbar = () => {
               </h2>
             </NavLink>
           </li>
-
+          )}
 
           <li>
           

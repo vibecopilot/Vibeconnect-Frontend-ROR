@@ -958,7 +958,28 @@ export const getAssetReadingDetails = async (assetId) =>
       },
     }
   );
-
+  export const postDailyPickUpTransportation = async (data) =>
+    axiosInstance.post("/transportations.json", data, {
+      params: {
+        token: token,
+      },
+    });
+    export const getDailyPickUpTransportationDetails = async (id) =>
+      axiosInstance.get(
+        `/transportations/${id}.json`,
+    
+        {
+          params: {
+            token: token,
+          },
+        }
+      );
+    export const getDailyPickUpTransportation = async () =>
+      axiosInstance.get("/transportations.json", {
+        params: {
+          token: token,
+        },
+      });
 export const getSetupUsers = async () =>
   axiosInstance.get("/users.json", {
     params: {

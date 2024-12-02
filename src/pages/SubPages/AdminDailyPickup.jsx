@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import DataTable from "react-data-table-component";
 import { BsEye } from "react-icons/bs";
 import { ImCross } from "react-icons/im";
@@ -7,8 +7,25 @@ import { PiPlusCircle } from "react-icons/pi";
 import { TiTick } from "react-icons/ti";
 import { Link } from "react-router-dom";
 import Table from "../../components/table/Table";
+import { getDailyPickUpTransportation } from "../../api";
 
 const AdminDailyPickup = () => {
+  const [details, setDetails] = useState([]);
+
+  useEffect(() => {
+    const fetchCategory = async () => {
+      try {
+        const siteDetailsResp = await getDailyPickUpTransportation();
+        
+        setDetails(siteDetailsResp.data);
+        
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchCategory();
+  }, []);
+
   const columns = [
     {
       name: "Action",
@@ -37,12 +54,12 @@ const AdminDailyPickup = () => {
     },
     {
       name: "Pickup Location",
-      selector: (row) => row.pickUp,
+      selector: (row) => row.pickup_location,
       sortable: true,
     },
     {
       name: "Drop-off Location",
-      selector: (row) => row.drop,
+      selector: (row) => row.dropoff_location,
       sortable: true,
     },
     {
@@ -52,12 +69,16 @@ const AdminDailyPickup = () => {
     },
     {
       name: "Pickup Time",
-      selector: (row) => row.time,
+      selector: (row) => {
+        const date = new Date(row.time); // Ensure `row.time` is a valid date object or timestamp
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      },
       sortable: true,
     },
+    
     {
       name: "Passengers",
-      selector: (row) => row.passengers,
+      selector: (row) => row.no_of_passengers,
       sortable: true,
     },
 
@@ -67,20 +88,20 @@ const AdminDailyPickup = () => {
     //   sortable: true,
     // },
 
-    {
-      name: "Approval",
-      selector: (row) => (
-        <div className="flex gap-4">
-          <button className="text-green-400 font-medium">
-            <TiTick size={25} />
-          </button>
-          <button className="text-red-400 font-medium">
-            <ImCross />
-          </button>
-        </div>
-      ),
-      sortable: true,
-    },
+    // {
+    //   name: "Approval",
+    //   selector: (row) => (
+    //     <div className="flex gap-4">
+    //       <button className="text-green-400 font-medium">
+    //         <TiTick size={25} />
+    //       </button>
+    //       <button className="text-red-400 font-medium">
+    //         <ImCross />
+    //       </button>
+    //     </div>
+    //   ),
+    //   sortable: true,
+    // },
   ];
 
   const filteredData = [
@@ -198,7 +219,7 @@ const AdminDailyPickup = () => {
       <Table
         responsive
         columns={columns}
-        data={filteredData}
+        data={details}
         // customStyles={customStyle}
         // pagination
         // fixedHeader
