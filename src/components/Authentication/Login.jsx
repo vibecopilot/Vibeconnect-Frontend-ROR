@@ -77,6 +77,7 @@ const Login = () => {
         try {
           const res = await getHRMSEmployeeID(response.data.user.id);
           setItemInLocalStorage("HRMS_EMPLOYEE_ID", res.id);
+          setItemInLocalStorage("APPROVERID", res.id);
         } catch (error) {
           console.error("Error getting employee ID:", error);
           
@@ -115,7 +116,7 @@ const Login = () => {
       setItemInLocalStorage("COMPANYID", CompanyId);
       // setItemInLocalStorage("HRMSORGID", 1);
       setItemInLocalStorage("HRMSORGID", response.data.user.organization_id);
-      setItemInLocalStorage("APPROVERID", 11);
+      
       // setItemInLocalStorage("HRMS_EMPLOYEE_ID", 22);
 
       // console.log(userType)

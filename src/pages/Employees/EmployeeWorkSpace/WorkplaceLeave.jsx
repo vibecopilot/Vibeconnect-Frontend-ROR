@@ -242,7 +242,7 @@ const WorkplaceLeave = () => {
                     aria-modal="true"
                     aria-labelledby="modal-headline"
                   >
-                    {/* Modal content */}
+                    
                     <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                       <div className="">
                         <div className="mt-3  sm:mt-0 sm:ml-4 ">
@@ -402,7 +402,7 @@ const WorkplaceLeave = () => {
                       <button
                         type="button"
                         className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-                        onClick={() => setSingleAppModal(false)}
+                        onClick={() => setAddModal(false)}
                       >
                         Cancel
                       </button>
