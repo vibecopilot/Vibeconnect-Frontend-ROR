@@ -192,12 +192,21 @@ const FBRestaurtantEdit = () => {
         gst: data.gst || "",
         deliveryCharge: data.delivery_charges || "",
         minimumOrder: data.minimum_order || "",
-        orderNotAllowedText: data.orderNotAllowedText || "",
+        orderNotAllowedText: data.order_not_available_text || "",
         service_charge: data.serviceCharges || "",
         cover_image: data.cover_image || [],
         menu: data.menu || [],
         gallery: data.gallery || [],
-       
+        table_number:data.table_number || "",
+        start_time: data.start_time
+    ? new Date(data.start_time).toTimeString().substring(0, 5) // Extract HH:mm
+    : "",
+  end_time: data.end_time
+    ? new Date(data.end_time).toTimeString().substring(0, 5) // Extract HH:mm
+    : "",
+    last_booking_time: data.last_booking_time
+    ? new Date(data.last_booking_time).toTimeString().substring(0, 5) // Extract HH:mm
+    : ""
       });
         
         setRows(blockedDays);
@@ -427,12 +436,13 @@ const FBRestaurtantEdit = () => {
       formData.deliveryCharge
     );
     postData.append("food_and_beverage[minimum_order]", formData.minimumOrder);
-    // postData.append("food_and_beverage[closing_message]", formData.orderNotAllowedText);
+    postData.append("food_and_beverage[order_not_available_text]", formData.orderNotAllowedText);
     postData.append(
       "food_and_beverage[serviceCharges]",
       formData.ServiceCharges
     );
-   
+    postData.append("food_and_beverage[start_time]", formData.start_time);
+    postData.append("food_and_beverage[end_time]", formData.end_time);
     postData.append("food_and_beverage[sun]", selectedDays['sunday'] ? "1" : "0");
 
     postData.append("food_and_beverage[mon]", selectedDays['monday'] ? "1" : "0");

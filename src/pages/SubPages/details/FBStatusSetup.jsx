@@ -23,16 +23,16 @@ const FBStatusSetup = () => {
   const closeModal = () => setIsModalOpen(false);
 
   const columns = [
-    {
-      name: "Action",
-      cell: (row) => (
-        <div className="flex items-center gap-4">
-          <Link to={`/admin/histdetails/${row.id}`}>
-            <BiEdit size={15} />
-          </Link>
-        </div>
-      ),
-    },
+    // {
+    //   name: "Action",
+    //   cell: (row) => (
+    //     <div className="flex items-center gap-4">
+    //       <Link to={`/admin/histdetails/${row.id}`}>
+    //         <BiEdit size={15} />
+    //       </Link>
+    //     </div>
+    //   ),
+    // },
     {
       name: "Order",
       selector: (row) => row.Order,
