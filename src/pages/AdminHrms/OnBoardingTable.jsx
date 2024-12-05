@@ -9,10 +9,12 @@ import { useSelector } from "react-redux";
 import { BsEye } from "react-icons/bs";
 import {
   getApprovalNotifications,
+  getEmployeeDetails,
   postApproveOrRejectEmployee,
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import { dateFormat, dateFormatSTD } from "../../utils/dateUtils";
+import OnboardingEmployeeDetail from "./Onbording/OnboardingEmployeeDetail";
 
 const OnBoardingTable = () => {
   const [notifications, setNotifications] = useState([]);
@@ -30,15 +32,16 @@ const OnBoardingTable = () => {
   useEffect(() => {
     fetchApprovalNotification();
   }, []);
-
-  const handleGrantApproval = async (notiId,decision) => {
+ 
+  const handleGrantApproval = async (notiId, decision) => {
+    setGrantId(notiId);
     try {
       const payload = {
         approver_id: approverID,
         action: decision,
       };
-      await postApproveOrRejectEmployee(notiId,payload);
-      fetchApprovalNotification()
+      await postApproveOrRejectEmployee(notiId, payload);
+      fetchApprovalNotification();
     } catch (error) {
       console.log(error);
     }
@@ -49,9 +52,9 @@ const OnBoardingTable = () => {
       name: "View",
       selector: (row) => (
         <div>
-          <Link to={"/admin/edit-employee/basics"}>
+          <button onClick={() => handleEmployeeDetailsModal(row.record_id, row.id)}>
             <BsEye />
-          </Link>
+          </button>
         </div>
       ),
     },
@@ -80,10 +83,16 @@ const OnBoardingTable = () => {
       name: "Action",
       selector: (row) => (
         <div className="flex gap-2">
-          <button className="bg-green-400 text-white rounded-full p-1 px-4" onClick={()=>handleGrantApproval(row.id, "approve")}>
+          <button
+            className="bg-green-400 text-white rounded-full p-1 px-4"
+            onClick={() => handleEmployeeDetailsModal(row.record_id, row.id)}
+          >
             <FaCheck />
           </button>
-          <button className="bg-red-400 text-white rounded-full p-1 px-4" onClick={()=>handleGrantApproval(row.id, "reject")}>
+          <button
+            className="bg-red-400 text-white rounded-full p-1 px-4"
+            onClick={() => handleGrantApproval(row.id, "reject")}
+          >
             <MdClose size={20} />
           </button>
         </div>
@@ -93,6 +102,16 @@ const OnBoardingTable = () => {
   ];
 
   const themeColor = useSelector((state) => state.theme.color);
+  const [openDetailsModal, setDetailsModal] = useState(false);
+  const [emplId, setEmplId] = useState("");
+  const [grantId, setGrantId] = useState("");
+  const handleEmployeeDetailsModal = async (id, grant) => {
+    setGrantId(grant)
+    setEmplId(id);
+    setDetailsModal(true);
+    // fetchEmployeeDetails(id);
+  };
+
   return (
     <section className="flex">
       <div className=" w-full flex  flex-col overflow-hidden">
@@ -121,6 +140,14 @@ const OnBoardingTable = () => {
           isPagination={true}
         />
       </div>
+      {openDetailsModal && (
+        <OnboardingEmployeeDetail
+          setDetailsModal={() => setDetailsModal(false)}
+          empId={emplId}
+          grantId={grantId}
+          fetchApprovalNotification={fetchApprovalNotification}
+        />
+      )}
     </section>
   );
 };

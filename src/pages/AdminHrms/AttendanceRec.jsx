@@ -125,7 +125,6 @@ const AttendanceRec = () => {
     fetchEmployeeAttendance(pageNumber);
   }, []);
 
-  
   const handlePageChange = (page) => {
     setPageNumber(page); // Update state for pageNumber
     fetchEmployeeAttendance(page); // Fetch data for the new page
@@ -228,6 +227,13 @@ const AttendanceRec = () => {
     setSelectedLastName(lastName);
   };
 
+  function formatTime(date) {
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    const seconds = String(date.getSeconds()).padStart(2, "0");
+    return `${hours}:${minutes}:${seconds}`;
+  }
+
   const handleAddRegRequest = async () => {
     try {
       const todayDate = new Date().toISOString().split("T")[0];
@@ -237,9 +243,17 @@ const AttendanceRec = () => {
       const requestedCheckOut = regData.checkOutTime
         ? new Date(`${todayDate}T${regData.checkOutTime}:00Z`).toISOString()
         : "";
+      const formattedDate = selectedDate.toISOString().split("T")[0];
       const postData = new FormData();
-      postData.append("requested_check_in", requestedCheckIn);
-      postData.append("requested_check_out", requestedCheckOut);
+      postData.append("requested_date", formattedDate);
+      postData.append(
+        "requested_check_in",
+        regData.checkInTime ? `${regData.checkInTime}:00` : ""
+      );
+      postData.append(
+        "requested_check_out",
+        regData.checkOutTime ? `${regData.checkOutTime}:00` : ""
+      );
       postData.append("request_type", regData.requestType);
       postData.append("reason", regData.reason);
       postData.append("status", "approve");
@@ -269,7 +283,9 @@ const AttendanceRec = () => {
   const fetchEmployeeFullDetails = async (empId) => {
     try {
       const res = await getUserDetails(empId);
-      setEmpDesignation(res?.employment_info?.designation || "Designation not assigned");
+      setEmpDesignation(
+        res?.employment_info?.designation || "Designation not assigned"
+      );
     } catch (error) {
       console.log(error);
     }
@@ -300,7 +316,7 @@ const AttendanceRec = () => {
       } else {
         setCheckInTime("");
         setCheckOutTime("");
-        
+
         setIsPresent(false);
       }
     } catch (error) {
@@ -779,9 +795,7 @@ const AttendanceRec = () => {
                       <p className="font-semibold text-white text-lg">
                         {selectedFirstName} {selectedLastName}
                       </p>
-                      <p className="font-sm text-white">
-                        {empDesignation}
-                      </p>
+                      <p className="font-sm text-white">{empDesignation}</p>
                     </div>
                   </div>
                   {isPresent ? (

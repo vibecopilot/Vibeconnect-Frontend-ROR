@@ -63,9 +63,9 @@ const PendingTable = () => {
   };
 
   const formatTimeToAmPm = (timestamp) => {
-    const date = new Date(timestamp);
-    const hours = date.getUTCHours(); // Use UTC hours
-    const minutes = date.getUTCMinutes(); // Use UTC minutes
+    const date = new Date(timestamp); // Automatically considers the time zone offset
+    const hours = date.getHours(); // Local hours
+    const minutes = date.getMinutes(); // Local minutes
     const amPm = hours >= 12 ? "PM" : "AM";
     const formattedHours = hours % 12 || 12; // Convert 0-23 to 1-12, with 0 being 12 AM
     const formattedMinutes = minutes.toString().padStart(2, "0"); // Ensure two digits for minutes
@@ -105,16 +105,15 @@ const PendingTable = () => {
             {checkIn && checkOut
               ? `${checkIn} - ${checkOut}`
               : checkIn
-              ? `Check-In: ${checkIn}`
+              ? `Check-In : ${checkIn}`
               : checkOut
-              ? `Check-Out: ${checkOut}`
+              ? `Check-Out : ${checkOut}`
               : "No Timing Available"}
           </div>
         );
       },
       sortable: true,
     },
-
     {
       name: "Actual Timings",
       selector: (row) => row.actual_timing,

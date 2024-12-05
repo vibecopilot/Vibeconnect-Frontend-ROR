@@ -1233,6 +1233,24 @@ export const postGroups = async (data) =>
       token: token,
     },
   });
+export const getGroups = async () =>
+  axiosInstance.get("/groups.json",  {
+    params: {
+      token: token,
+    },
+  });
+export const getGroupsDetails = async (id) =>
+  axiosInstance.get(`/groups/${id}.json`,  {
+    params: {
+      token: token,
+    },
+  });
+export const editGroups = async (id, data) =>
+  axiosInstance.put(`/groups/${id}.json`, data,  {
+    params: {
+      token: token,
+    },
+  });
 
 //broadcast
 export const getBroadCast = async () =>

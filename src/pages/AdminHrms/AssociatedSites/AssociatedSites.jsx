@@ -153,8 +153,8 @@ const AssociatedSites = () => {
     fetchAssociatedSites();
   }, []);
 
-  const rorSiteId = getItemInLocalStorage("SITEID")
-  const rorCompanyId = getItemInLocalStorage("COMPANYID")
+  const rorSiteId = getItemInLocalStorage("SITEID");
+  const rorCompanyId = getItemInLocalStorage("COMPANYID");
 
   const handleAddAssociatedSite = async () => {
     if (!formData.siteName) {
@@ -541,8 +541,29 @@ const AssociatedSites = () => {
                     onChange={handleEditChange}
                     id=""
                     className="border border-gray-400 rounded-md p-2"
-                    placeholder="radius"
+                    placeholder="radius(meter)"
                   />
+                </div>
+              </div>
+              <div>
+                <div className="border-b-2 border-black my-2 ">
+                  <label htmlFor="" className="font-medium text-lg">
+                    Documents required on site
+                  </label>
+                </div>
+                <div className="grid grid-cols-4 mb-4">
+                  <div className="flex justify-center items-center gap-2">
+                    <input type="checkbox" name="" id="" />
+                    <label htmlFor="">Aadhar Card</label>
+                  </div>
+                  <div className="flex justify-center items-center gap-2">
+                    <input type="checkbox" name="" id="" />
+                    <label htmlFor="">Pan Card</label>
+                  </div>
+                  <div className="flex justify-center items-center gap-2">
+                    <input type="checkbox" name="" id="" />
+                    <label htmlFor="">ESIC Card</label>
+                  </div>
                 </div>
               </div>
             </div>
@@ -705,14 +726,35 @@ const AssociatedSites = () => {
                     Radius
                   </label>
                   <input
-                    type="text"
+                    type="number"
                     name="radius"
-                    value={siteDetails.radius}
-                    onChange={handleEditChange}
+                    value={formData.radius}
+                    onChange={handleChange}
                     id=""
                     className="border border-gray-400 rounded-md p-2"
-                    placeholder="Radius"
+                    placeholder="Radius (meter)"
                   />
+                </div>
+              </div>
+              <div>
+                <div className="border-b-2 border-black my-2 ">
+                  <label htmlFor="" className="font-medium text-lg">
+                    Documents required on site
+                  </label>
+                </div>
+                <div className="grid grid-cols-4 mb-4">
+                  <div className="flex justify-center items-center gap-2">
+                    <input type="checkbox" name="" id="" />
+                    <label htmlFor="">Aadhar Card</label>
+                  </div>
+                  <div className="flex justify-center items-center gap-2">
+                    <input type="checkbox" name="" id="" />
+                    <label htmlFor="">Pan Card</label>
+                  </div>
+                  <div className="flex justify-center items-center gap-2">
+                    <input type="checkbox" name="" id="" />
+                    <label htmlFor="">ESIC Card</label>
+                  </div>
                 </div>
               </div>
             </div>

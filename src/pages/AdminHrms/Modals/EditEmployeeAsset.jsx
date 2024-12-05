@@ -32,8 +32,8 @@ const EditEmployeeAsset = ({
       return toast.error("Please provide retrieval email");
     }
     const postData = new FormData();
-    postData.append("laptop_brand", formData.laptopBrand);
-    postData.append("email_id", formData.retrievalEmail);
+    postData.append("asset_name", formData.laptopBrand);
+    postData.append("asset_info", formData.retrievalEmail);
     postData.append("employee", id);
     try {
       await editEmployeeAssetDetails(empAssetID, postData);
@@ -51,8 +51,8 @@ const EditEmployeeAsset = ({
         const res = await getEmployeeAssetDetails(empAssetID);
         setFormData({
           ...formData,
-          laptopBrand: res.laptop_brand,
-          retrievalEmail: res.email_id,
+          laptopBrand: res.asset_name,
+          retrievalEmail: res.asset_info,
         });
       } catch (error) {
         console.log(error);

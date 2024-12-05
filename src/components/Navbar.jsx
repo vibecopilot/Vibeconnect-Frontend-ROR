@@ -699,7 +699,7 @@ const Navbar = () => {
                     </h2>
                   </NavLink>
                 )}
-                {feat.includes("permits") && (
+                {feat.includes("parking") && (
                   <NavLink
                     to={"/documents"}
                     className={({ isActive }) =>

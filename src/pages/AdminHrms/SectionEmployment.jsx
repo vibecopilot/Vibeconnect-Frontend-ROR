@@ -182,14 +182,14 @@ const SectionsEmployment = () => {
   };
   const assetColumn = [
     {
-      name: "Which brand laptop",
-      selector: (row) => row.laptop_brand,
+      name: "Asset",
+      selector: (row) => row.asset_name,
       sortable: true,
     },
 
     {
-      name: "Retrieve email ID",
-      selector: (row) => row.email_id,
+      name: "Description",
+      selector: (row) => row.asset_info,
       sortable: true,
     },
     {
@@ -212,14 +212,14 @@ const SectionsEmployment = () => {
   ];
   const companyAssetColumn = [
     {
-      name: "Which Company Laptop and Model Number",
+      name: "Asset",
       selector: (row) => row.asset_name,
       sortable: true,
     },
 
     {
-      name: "Mobile Phone",
-      selector: (row) => row.model_number,
+      name: "Description",
+      selector: (row) => row.asset_info,
       sortable: true,
     },
     {
@@ -646,7 +646,7 @@ const SectionsEmployment = () => {
           />
 
           <Accordion
-            title={"Assets"}
+            title={"Employee Assets"}
             icon={MdOutlineWebAsset}
             content={
               <>
