@@ -3331,6 +3331,14 @@ function App() {
               </ProtectedAdminRoutes>
             }
           />
+            <Route
+            path="/admin/fb-edit/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <FBRestaurtantEdit/>
+              </ProtectedAdminRoutes>
+            }
+          />
           <Route
             path="/fnb/status-setup/:id"
             element={

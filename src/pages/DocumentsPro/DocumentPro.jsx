@@ -6,7 +6,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFolder, faFile } from '@fortawesome/free-solid-svg-icons';
 import { useSelector } from 'react-redux';
 import ModalWrapper from "../../containers/modals/ModalWrapper";
-import { getAssignedTo } from "../../api";
+import { getAssignedTo, getSetupUsers } from "../../api";
+import Select from "react-select";
 
 const initialFolders = [
   {
@@ -78,22 +79,26 @@ const f =[
 ]
 
 const DocumentPro = () => {
-  const [assignedTo, setAssignedTo] = useState([]);
-  const [formData, setFormData] = useState({
-    assigned_to: "",
-  });
-  
+
+  const [selectedOptions, setSelectedOptions] = useState([]);
+  const [userOptions, setUserOptions] = useState([]);
+
+  const handleChange = (selected) => {
+    setSelectedOptions(selected);
+  };
+
   useEffect(() => {
     const fetchAssignedTo = async () => {
-      const assignedToList = await getAssignedTo();
-      setAssignedTo(assignedToList.data);
+      const assignedToList = await getSetupUsers();
+      const formattedOptions = assignedToList.data.map((user) => ({
+        value: user.id,
+        label: `${user.firstname} ${user.lastname}`,
+      }));
+      setUserOptions(formattedOptions);
     };
+
     fetchAssignedTo();
   }, []);
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, assigned_to: e.target.value });
-  };
   const themeColor = useSelector((state) => state.theme.color);
   const [folders, setFolders] = useState(initialFolders);
   const [currentFolder, setCurrentFolder] = useState(null);
@@ -286,13 +291,13 @@ const DocumentPro = () => {
               <option value="medium">Medium</option>
               <option value="large">Large</option>
             </select>
-          <button onClick={() => setShowForm(true)} className="text-white bg-black hover:bg-white hover:text-black border-2 border-black font-semibold py-2 px-4 rounded transition-all duration-300">
+          <button onClick={() => setShowForm(true)} className="text-white bg-black hover:bg-white  border-2 border-black font-semibold py-2 px-4 rounded transition-all duration-300" style={{ background: themeColor }}>
             New
           </button>
-          <button onClick={() => setShowUploadForm(true)} className="text-white bg-black hover:bg-white hover:text-black border-2 border-black font-semibold py-2 px-4 rounded transition-all duration-300">
+          <button onClick={() => setShowUploadForm(true)} className="text-white bg-black hover:bg-white  border-2 border-black font-semibold py-2 px-4 rounded transition-all duration-300" style={{ background: themeColor }}>
             Upload Document
           </button>
-          <button onClick={handleview} className="text-white bg-black hover:bg-white hover:text-black border-2 border-black font-semibold py-2 px-4 rounded transition-all duration-300">
+          <button onClick={handleview} className="text-white bg-black hover:bg-white  border-2 border-black font-semibold py-2 px-4 rounded transition-all duration-300" style={{ background: themeColor }}>
            View
           </button>
         </div>
@@ -418,34 +423,36 @@ const DocumentPro = () => {
           </div>
         )}
 
-        {share &&
-        <ModalWrapper onclose={() => setshare(false)}>
-          <div className="flex flex-col justify-center mt-4 p-4 border rounded shadow">
-            <h3 className="font-bold mb-4">Select User</h3>
-            <div className="mb-4">
-            <select
-        value={formData.assigned_to}
-        onChange={handleChange}
-        className="border border-gray-300 p-2 w-64 rounded-sm"
-      >
-        <option value="">Select User</option>
-        {assignedTo.map((assign) => (
-          <option key={assign.id} value={assign.id}>
-            {assign.firstname} {assign.lastname}
-          </option>
-        ))}
-      </select>
-      <br />
-             
-            </div>
-            <div className="mb-4"> <button className="bg-green-500 text-white p-2 rounded mr-2">
-                Create link
-              </button></div>
-            <button onClick={() => setshare(false)} className="bg-red-500 text-white p-2 rounded mt-4">
-              Close
-            </button>
-          </div>
-        </ModalWrapper>}
+{share && (
+  <ModalWrapper onclose={() => setshare(false)}>
+    <div className="flex flex-col justify-center mt-4 p-4 border rounded shadow overflow-hidden w-96">
+      <h3 className="mb-4">Select User</h3>
+      <div className="mb-4 ">
+      <Select
+  isMulti
+  options={userOptions}
+  value={selectedOptions}
+  onChange={handleChange}
+  getOptionLabel={(e) => `${e.label}`}
+  styles={{
+    menuPortal: (base) => ({
+      ...base,
+      zIndex: 99999, // Make sure the dropdown is visible above modal
+    }),
+  }}
+  menuPortalTarget={document.body} // Render dropdown in the body outside the modal
+/>
+
+      </div>
+      <div className="mb-4">
+        <button className="bg-green-500 text-white p-2 rounded mr-2" style={{ background: themeColor }}>
+          Share
+        </button>
+      </div>
+    </div>
+  </ModalWrapper>
+)}
+
         {showForm &&
         <ModalWrapper onclose={() => setShowForm(false)}>
           <div className="flex flex-col justify-center mt-4 p-4 border rounded shadow">
@@ -474,14 +481,14 @@ const DocumentPro = () => {
                 Add File
               </button>
             </div>
-            <button onClick={() => setShowForm(false)} className="bg-red-500 text-white p-2 rounded mt-4">
+            {/* <button onClick={() => setShowForm(false)} className="bg-red-500 text-white p-2 rounded mt-4">
               Close
-            </button>
+            </button> */}
           </div>
         </ModalWrapper>}
         {showUploadForm &&
         <ModalWrapper onclose={() => setShowUploadForm(false)}>
-          <div className="flex flex-col justify-center mt-4 mb-4 p-4 border rounded shadow">
+          <div className="flex flex-col justify-center   p-4 border rounded shadow">
             <h3 className="font-bold mb-4">Upload Document</h3>
             <div className="mb-4">
               <label className="mr-2">
@@ -512,9 +519,9 @@ const DocumentPro = () => {
                   onChange={(e) => setFolderName(e.target.value)}
                   className="w-full p-2 border border-gray-300 rounded"
                 />
-                <div className='mt-3'>
+                {/* <div className='mt-3'>
                   <input type="file" />
-                </div>
+                </div> */}
               </div>
             )}
             {uploadType === 'file' && (
@@ -522,14 +529,14 @@ const DocumentPro = () => {
                 <input type="file" onChange={handleFileChange} />
               </div>
             )}
-            <div className="mb-4">
+            {/* <div className="mb-4">
               <input
                 type="text"
                 placeholder="Description"
                 className="w-full p-2 border border-gray-300 rounded mt-2"
               />
-            </div>
-            <div className="mb-4">
+            </div> */}
+            {/* <div className="mb-4">
               <input
                 type="date"
                 className="w-full p-2 border border-gray-300 rounded mt-2"
@@ -541,13 +548,15 @@ const DocumentPro = () => {
                 placeholder="Units"
                 className="w-full p-2 border border-gray-300 rounded mt-2"
               />
-            </div>
-            <button onClick={handleFileUpload} className="bg-green-500 text-white p-2 rounded">
+            </div> */}
+            <div className="flex justify-center">
+            <button onClick={handleFileUpload} className="bg-blue-200 text-white p-2 rounded" style={{ background: themeColor }}>
               Upload
             </button>
-            <button onClick={() => setShowUploadForm(false)} className="bg-red-500 text-white p-2 rounded mt-4">
+            </div>
+            {/* <button onClick={() => setShowUploadForm(false)} className="bg-red-500 text-white p-2 rounded mt-4">
               Close
-            </button>
+            </button> */}
           </div>
         </ModalWrapper>}
       </div>

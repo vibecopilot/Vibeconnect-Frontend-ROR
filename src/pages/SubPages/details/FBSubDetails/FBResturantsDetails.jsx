@@ -7,7 +7,17 @@ import Navbar from "../../../../components/Navbar";
 import FBDetails from "../FBDetails";
 
 const FBRestaurtantDetails = () => {
-  const [formData, setFormData] = useState({});
+  const [formData, setFormData] = useState({
+    minimum_person: "",
+    mon: 0,
+    tue: 1,
+    wed: 1,
+    thu: 0,
+    fri: 1,
+    sat: 0,
+    sun: 1,
+    start_time: "9:00 AM",
+  });
   const { id } = useParams();
   const [scheduleData, setScheduleData] = useState([])
   useEffect(() => {
@@ -16,19 +26,7 @@ const FBRestaurtantDetails = () => {
         const details = await getFBDetails(id);
         console.log(details);
         setFormData(details.data)
-        const restaurantSchedule = details.data.restaurant_schedule || {};
-        const transformedData = Object.keys(restaurantSchedule).map((day) => ({
-          operational_days: day,
-          start_time: restaurantSchedule[day].start_time || null,
-          end_time: restaurantSchedule[day].end_time || null,
-          break_start_time: null,
-          break_end_time: null,
-          booking_allowed: restaurantSchedule[day].booking_allowed ? "Yes" : "No",
-          order_allowed: restaurantSchedule[day].order_allowed ? "Yes" : "No",
-          last_booking_order_time: null,
-        }));
-        setScheduleData(transformedData);
-        console.log(transformedData)
+        
       } catch (error) {
         console.error("Error fetching site FB details:", error);
       }
@@ -36,6 +34,11 @@ const FBRestaurtantDetails = () => {
     fetchFBDetails();
   }, []);
 
+  const operationalDays = Object.keys(formData).filter(
+    (key) =>
+      ["mon", "tue", "wed", "thu", "fri", "sat", "sun"].includes(key) &&
+      formData[key] === 1
+  );
   const columns = [
     {
       name: "Operational Days	",
@@ -65,17 +68,17 @@ const FBRestaurtantDetails = () => {
     },
     {
       name: "Booking Allowed",
-      selector: (row) => row.booking_allowed,
+      selector: (row) => row.booking_allowed?"Yes":"No",
       sortable: true,
     },
     {
       name: "Order Allowed",
-      selector: (row) => row.order_allowed,
+      selector: (row) => row.order_allowed?"Yes":"No",
       sortable: true,
     },
     {
       name: "Last Booking & Order Time",
-      selector: (row) => row.last_booking_order_time,
+      selector: (row) => row.last_booking_time,
       sortable: true,
     },
   ];
@@ -90,7 +93,7 @@ const FBRestaurtantDetails = () => {
       
       <FBDetails/>
       <div className="overflow-hidden w-full my-8">
-      <div className=" mx-3">
+      <div className=" mx-3 p-3" >
         <h3 className="border-b text-left text-xl border-black mb-6 mt-2 font-bold">
           BASIC DETAILS
         </h3>
@@ -122,8 +125,34 @@ const FBRestaurtantDetails = () => {
         <h3 className="border-b text-left text-xl border-black mb-6 font-bold">
           RESTAURTANT DETAILS
         </h3>
-        <Table responsive columns={columns} data={scheduleData} pagination={false} />
-       
+        {/* <Table responsive columns={columns} data={scheduleData} pagination={false} /> */}
+        <div className="grid md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2">
+            <p className="">Operational Days:</p>
+             <p>{operationalDays.map((day) => day.charAt(0).toUpperCase() + day.slice(1)).join(", ") || "None"}</p>
+          </div>
+          <div className="grid grid-cols-2">
+            <p className="">Start Time:</p>
+            <p>{formData.start_time}</p>
+          </div>
+          <div className="grid grid-cols-2">
+            <p className="">End Time:</p>
+            <p>{formData.end_time}</p>
+          </div>
+          <div className="grid grid-cols-2">
+            <p className="">Break Start Time:</p>
+            <p>{formData.break_start_time}</p>
+          </div>
+          <div className="grid grid-cols-2">
+            <p className="">Break End Time:</p>
+            <p>{formData.break_end_time}</p>
+          </div>
+          <div className="grid grid-cols-2">
+  <p className="">Last Booking & Order Time:</p>
+  <p>{formData.last_booking_time ? new Date(formData.last_booking_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</p>
+</div>
+
+        </div>
       </div>
       <div className=" my-5 p-5">
         <h3 className="border-b text-left text-xl border-black mb-6 font-bold">
@@ -136,7 +165,7 @@ const FBRestaurtantDetails = () => {
           </div>
           <div className="grid grid-cols-2">
             <p className="">Booking Allowed:</p>
-            <p>{formData.booking_allowed}</p>
+            <p>{formData.booking_allowed?"Yes":"No"}</p>
           </div>
           <div className="grid grid-cols-2">
             <p className="">Cancel Before Schedule:</p>
