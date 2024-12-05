@@ -1918,7 +1918,7 @@ const Navbar = () => {
                     </h2>
                   </NavLink>
                 )}
-              {feat.includes("permits") && (
+              {feat.includes("gatepass") && (
                 <NavLink
                   to={"/documents"}
                   className={({ isActive }) =>
