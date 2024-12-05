@@ -5,7 +5,7 @@ import FileInputBox from "../../containers/Inputs/FileInputBox";
 import { useSelector } from "react-redux";
 import Navbar from "../../components/Navbar";
 import { getItemInLocalStorage } from "../../utils/localStorage";
-import { postEvents, getAssignedTo } from "../../api";
+import { postEvents, getAssignedTo, getGroups } from "../../api";
 import Select from "react-select";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -31,7 +31,8 @@ const CreateEvent = () => {
     shared: "",
     email_enabled: false,
     rsvp_enabled:false,
-    important: false
+    important: false,
+    group_ids:""
   });
   console.log(formData);
   const fileInputRef = useRef(null);
@@ -50,7 +51,7 @@ const CreateEvent = () => {
   const formatDateTime = (date) => {
     return format(date, "yyyy-MM-dd HH:mm:ss");
   };
-
+const [groups, setGroups] = useState([])
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -65,7 +66,20 @@ const CreateEvent = () => {
         console.error("Error fetching assigned users:", error);
       }
     };
+    const fetchGroups = async()=>{
+      try {
+        const res = await getGroups()
+        const transformedUsers = res.data.map((user) => ({
+          value: user.id,
+          label: user.group_name,
+        }));
+        setGroups(transformedUsers)
+      } catch (error) {
+        console.log(error)
+      }
+    }
     fetchUsers();
+    fetchGroups()
   }, []);
 
   const handleChange = (e) => {
@@ -95,6 +109,7 @@ const CreateEvent = () => {
       );
       formDataSend.append("event[venue]", formData.venue);
       formDataSend.append("event[user_ids]", formData.user_ids);
+      formDataSend.append("event[group_id]", formData.group_ids);
       formDataSend.append("event[shared]", share);
       formDataSend.append("event[email_enabled]", formData.email_enabled);
       formDataSend.append("event[rsvp_enabled]", formData.rsvp_enabled);
@@ -128,6 +143,14 @@ const CreateEvent = () => {
     const userIdsString = selectedIds.join(",");
 
     setFormData({ ...formData, user_ids: userIdsString });
+  };
+  const handleSelectGroupChange = (selectedOptions) => {
+    const selectedIds = selectedOptions
+      ? selectedOptions.map((option) => option.value)
+      : [];
+    const userIdsString = selectedIds.join(",");
+
+    setFormData({ ...formData, group_ids: userIdsString });
   };
 
   const handleFileAttachment = (event) => {
@@ -318,7 +341,19 @@ const CreateEvent = () => {
                       className="w-full"
                     />
                   )}
-                  {share === "groups" && <p>list of groups</p>}
+                  {share === "groups" && (
+                    <Select
+                    options={groups}
+                    closeMenuOnSelect={false}
+                    placeholder="Select Group"
+                    value={groups.filter((user) =>
+                      formData.group_ids.includes(user.value)
+                    )}
+                    onChange={handleSelectGroupChange}
+                    isMulti
+                    className="w-full"
+                  />
+                  )}
                 </div>
               </div>
             </div>

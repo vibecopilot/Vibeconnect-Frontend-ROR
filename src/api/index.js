@@ -1234,19 +1234,37 @@ export const postGroups = async (data) =>
     },
   });
 export const getGroups = async () =>
-  axiosInstance.get("/groups.json",  {
+  axiosInstance.get("/groups.json", {
     params: {
       token: token,
     },
   });
 export const getGroupsDetails = async (id) =>
-  axiosInstance.get(`/groups/${id}.json`,  {
+  axiosInstance.get(`/groups/${id}.json`, {
     params: {
       token: token,
     },
   });
 export const editGroups = async (id, data) =>
-  axiosInstance.put(`/groups/${id}.json`, data,  {
+  axiosInstance.put(`/groups/${id}.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const postColorCode = async (data) =>
+  axiosInstance.post(`/color_codes.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const getColorCode = async () =>
+  axiosInstance.get(`/color_codes.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const editColorCode = async (id, data) =>
+  axiosInstance.put(`/color_codes/${id}.json`,data, {
     params: {
       token: token,
     },
@@ -4769,7 +4787,7 @@ export const getHRMSEmployeeID = async (vibeID) => {
   try {
     const response = await HrmsAuth.get(
       `/vibe-id/employee/?vibe_id=${vibeID}`,
-      
+
       {
         headers: {
           "Content-Type": "multipart/form-data/",

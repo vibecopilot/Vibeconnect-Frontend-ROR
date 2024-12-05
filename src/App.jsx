@@ -345,7 +345,7 @@ import GroupJoinDetails from "./pages/SubPages/details/GroupJoinDetails.jsx";
 import AdminHRMS from "./pages/AdminHrms/AdminHrms.jsx";
 import HRMSDashboard from "./pages/AdminHrms/HRMSDashboard.jsx";
 import { getItemInLocalStorage } from "./utils/localStorage.js";
-import { API_URL, getVibeBackground } from "./api/index.js";
+import { API_URL, getColorCode, getVibeBackground } from "./api/index.js";
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { setBackground } from "./features/theme/backgroundSlice.js";
@@ -707,7 +707,7 @@ import CTCGeneralSettingEdit from "./pages/AdminHrms/CTCGeneralSettingEdit.jsx";
 import TimeSheetRecord from "./pages/AdminHrms/TimeSheet/TimeSheetRecord.jsx";
 import EmployeesSetup from "./pages/AdminHrms/EmployeesSetup.jsx";
 import UniformApplication from "./pages/AdminHrms/UniformApplication.jsx";
-
+import { setColor } from "./features/theme/themeSlice.js";
 import CopyChecklistPPM from "./pages/SubPages/CopyChecklistPPM.jsx";
 import CopyChecklistService from "./pages/SubPages/CopyChecklistService.jsx";
 // new admin hrms
@@ -746,6 +746,23 @@ function App() {
   useEffect(() => {
     Get_Background();
   }, [setBackground]);
+
+  // useEffect(() => {
+  //   // Fetch the color code when the component mounts
+  //   const fetchColorCode = async () => {
+  //     try {
+  //       const response = await getColorCode();
+  //       if (response && response.data && response.data.length > 0) {
+  //         // setColor(response.data[0]); // Keep only the first object
+  //         dispatch(setColor(response.data[0].code)); // Assuming the color code is in 'code' field
+  //       }
+  //     } catch (error) {
+  //       console.error("Failed to fetch color code:", error);
+  //     }
+  //   };
+  
+  //   fetchColorCode();
+  // }, []);
 
   return (
     <>
