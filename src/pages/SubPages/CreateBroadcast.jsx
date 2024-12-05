@@ -25,6 +25,7 @@ const CreateBroadcast = () => {
     shared: "",
     group_id: "",
     important: "",
+    group_ids:""
   });
   console.log(formData);
   const datePickerRef = useRef(null);
@@ -51,7 +52,20 @@ const CreateBroadcast = () => {
         console.error("Error fetching assigned users:", error);
       }
     };
+    const fetchGroups = async()=>{
+      try {
+        const res = await getGroups()
+        const transformedUsers = res.data.map((user) => ({
+          value: user.id,
+          label: user.group_name,
+        }));
+        setGroups(transformedUsers)
+      } catch (error) {
+        console.log(error)
+      }
+    }
     fetchUsers();
+    fetchGroups()
   }, []);
 
   const navigate = useNavigate();
@@ -81,6 +95,7 @@ const CreateBroadcast = () => {
       formDataSend.append("notice[expiry_date]", formData.expiry_date);
       formDataSend.append("notice[shared]", formData.expiry_date);
       formDataSend.append("notice[user_ids]", formData.user_ids);
+      formDataSend.append("notice[group_id]", formData.group_ids);
       formData.notice_image.forEach((file) => {
         formDataSend.append("attachfiles[]", file);
       });
@@ -100,6 +115,15 @@ const CreateBroadcast = () => {
       ...formData,
       [fieldName]: files,
     });
+  };
+
+  const handleSelectGroupChange = (selectedOptions) => {
+    const selectedIds = selectedOptions
+      ? selectedOptions.map((option) => option.value)
+      : [];
+    const userIdsString = selectedIds.join(",");
+
+    setFormData({ ...formData, group_ids: userIdsString });
   };
 
   return (
@@ -235,7 +259,19 @@ const CreateBroadcast = () => {
                         className="w-full"
                       />
                     )}
-                    {share === "groups" && <p>list of groups</p>}
+                     {share === "groups" && (
+                    <Select
+                    options={groups}
+                    closeMenuOnSelect={false}
+                    placeholder="Select Group"
+                    value={groups.filter((user) =>
+                      formData.group_ids.includes(user.value)
+                    )}
+                    onChange={handleSelectGroupChange}
+                    isMulti
+                    className="w-full"
+                  />
+                  )}
                   </div>
                 </div>
                 <div className="my-5">

@@ -95,7 +95,7 @@ const TicketDashboard = () => {
             {totalTickets}
           </span>{" "}
         </div>
-        {Object.entries(statusData).map(([key, value]) => (
+        {Object.entries(statusData)?.map(([key, value]) => (
           <div
             key={key}
             className="bg-white min-w-44 shadow-custom-all-sides p-4 font-medium rounded-md flex flex-col items-center text-gray-500 text-sm w-fit"

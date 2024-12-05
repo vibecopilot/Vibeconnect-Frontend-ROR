@@ -34,30 +34,44 @@ function EditGroupDetails({ onclose }) {
     const fetchGroupDetails = async () => {
       try {
         const res = await getGroupsDetails(id);
+
         setFormData({
           ...formData,
           groupName: res.data.group_name,
           groupDescription: res.data.group_description,
         });
-        const selectedMembers = res.data.group_members.map((member) => member.id);
-        console.log("Selected Members:", selectedMembers);
-        setSelectedOptions(selectedMembers);
 
+        const selectedMembers = res.data.group_members.map((member) => ({
+            value: member.user_id, 
+            label: `${member.user_name}`,
+          }));
+    
+          // Log for debugging
+          console.log("Selected Members:", selectedMembers);
+    
+          setSelectedOptions(selectedMembers); 
       } catch (error) {
         console.log(error);
       }
     };
+
     fetchGroupDetails();
   }, []);
 
   const handleSelectEdit = (option) => {
-    // Assuming `option` is the ID of the selected item
-    if (selectedOptions.includes(option)) {
-      setSelectedOptions(selectedOptions.filter((item) => item !== option));
+    const exists = selectedOptions.find(
+      (selected) => selected.value === option.value
+    );
+
+    if (exists) {
+      setSelectedOptions(
+        selectedOptions.filter((selected) => selected.value !== option.value)
+      );
     } else {
       setSelectedOptions([...selectedOptions, option]);
     }
   };
+
   console.log(selectedOptions);
 
   useEffect(() => {
@@ -128,14 +142,13 @@ function EditGroupDetails({ onclose }) {
               </div>
               <div className="flex flex-col mt-2 ">
                 <MultiSelect
-                  options={members}
-                  title={"Select members"}
-                  handleSelect={handleSelectEdit}
-                  // handleSelectAll={handleSelectAll}
-                  selectedOptions={selectedOptions}
+                  options={members} 
+                  title="Select members"
+                  handleSelect={handleSelectEdit} 
+                  selectedOptions={selectedOptions} 
                   setSelectedOptions={setSelectedOptions}
-                  setOptions={setMembers}
-                  searchOptions={filteredMembers}
+                  setOptions={setMembers} 
+                  searchOptions={filteredMembers} 
                   compTitle="Select Group Members"
                 />
               </div>
