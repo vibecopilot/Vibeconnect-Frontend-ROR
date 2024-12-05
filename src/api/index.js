@@ -958,6 +958,33 @@ export const getAssetReadingDetails = async (assetId) =>
       },
     }
   );
+  export const postBusinesscard = async (data) =>
+    axiosInstance.post("/business_cards.json", data, {
+      params: {
+        token: token,
+      },
+    });
+  export const postHSNSetup = async (data) =>
+    axiosInstance.post("/hsns.json", data, {
+      params: {
+        token: token,
+      },
+    });
+    export const getHSNSetup = async () =>
+      axiosInstance.get("/hsns.json", {
+        params: {
+          token: token,
+        },
+      });
+      export const getHSNSetupDetails = async (id) =>
+        axiosInstance.get(
+          `/hsns/${id}.json`,
+          {
+            params: {
+              token: token,
+            },
+          }
+        );
   export const postDailyPickUpTransportation = async (data) =>
     axiosInstance.post("/transportations.json", data, {
       params: {

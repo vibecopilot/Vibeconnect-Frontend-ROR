@@ -1,16 +1,95 @@
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import FileInputBox from "../../containers/Inputs/FileInputBox";
-import { editFB, getFBDetails } from "../../api";
-import { useNavigate, useParams } from "react-router-dom";
+import { getCuisinesFBSetup, postFB } from "../../api";
+import toast from "react-hot-toast";
 import { restaurantSchedule } from "../../utils/initialFormData";
 import { getItemInLocalStorage } from "../../utils/localStorage";
-import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
+import { FaTrash } from "react-icons/fa";
+import Select from "react-select";
+import { editFB, getFBDetails } from "../../api";
+import {  useParams } from "react-router-dom";
 
 const FBRestaurtantEdit = () => {
-  const [rows, setRows] = useState([]);
+  const { id } = useParams();
+  const [option, setOption] = useState("bookable");
+  const [selectedDays, setSelectedDays] = useState({
+    all: false,
+    sunday: false,
+    monday: false,
+    tuesday: false,
+    wednesday: false,
+    thursday: false,
+    friday: false,
+    saturday: false,
+  });
+
+  const handleAllChange = () => {
+    const newState = !selectedDays.all;
+    setSelectedDays({
+      all: newState,
+      sunday: newState,
+      monday: newState,
+      tuesday: newState,
+      wednesday: newState,
+      thursday: newState,
+      friday: newState,
+      saturday: newState,
+    });
+  };
+
+  const handleIndividualChange = (day) => {
+    const updatedState = {
+      ...selectedDays,
+      [day]: !selectedDays[day],
+    };
+
+    // If any checkbox is unchecked, uncheck "All"
+    if (!updatedState[day]) {
+      updatedState.all = false;
+    } else {
+      // If all individual checkboxes are checked, check "All"
+      const allChecked = Object.keys(updatedState).every(
+        (key) => key === "all" || updatedState[key]
+      );
+      updatedState.all = allChecked;
+    }
+
+    setSelectedDays(updatedState);
+  };
+  const [options, setOptions] = useState([]);
+  const [selectedOptions, setSelectedOptions] = useState([]);
+
+  // Fetch cuisines data
+  useEffect(() => {
+    const fetchCuisines = async () => {
+      try {
+        const siteDetailsResp = await getCuisinesFBSetup();
+        
+        // Transform data to react-select format
+        const formattedOptions = siteDetailsResp.data.map((item) => ({
+          value: item.id, // id as the value
+          label: item.name, // name as the label
+        }));
+        
+        setOptions(formattedOptions);
+      } catch (error) {
+        console.error("Error fetching cuisines:", error);
+      }
+    };
+    fetchCuisines();
+  }, []);
+
+  // Handle selection changes
+  const handleChange1 = (selected) => {
+    setSelectedOptions(selected);
+    console.log("Selected Cuisines:", selected);
+  };
+  const [rows, setRows] = useState([{ id:"",order: false, booking: false, startDate: "", endDate: "" }]);
+
   const addRow = () => {
-    setRows([...rows, { order: false, booking: false, date: "" }]);
+    setRows([...rows, { id:"",order: false, booking: false, startDate: "", endDate: "" }]);
   };
 
   const deleteRow = (index) => {
@@ -19,18 +98,6 @@ const FBRestaurtantEdit = () => {
     setRows(newRows);
   };
   const themeColor = useSelector((state) => state.theme.color);
-  const { id } = useParams();
-  useEffect(() => {
-    const fetchFBDetails = async () => {
-      try {
-        const details = await getFBDetails(id);
-        console.log(details);
-      } catch (error) {
-        console.error("Error fetching site FB details:", error);
-      }
-    };
-    fetchFBDetails();
-  }, []);
 
   const [formData, setFormData] = useState({
     restaurantName: "",
@@ -48,15 +115,21 @@ const FBRestaurtantEdit = () => {
     termsAndConditions: "",
     disclaimer: "",
     closingMessage: "",
+    start_time:"",
+    end_time:"",
+    booking_allowed:false,
+    order_allowed:false,
+    last_booking_time:"",
+    table_number:"",
     minimumPerson: "",
     maximumPerson: "",
     canCancelBefore: "",
     bookingNotAllowedText: "",
     gst: "",
     deliveryCharge: "",
+    ServiceCharges:"",
     minimumOrder: "",
     orderNotAllowedText: "",
-    service_charge: "",
     cover_image: [],
     menu: [],
     gallery: [],
@@ -72,6 +145,28 @@ const FBRestaurtantEdit = () => {
         console.log(details);
   
         const data = details.data || {};
+        const blockedDays = (data.blocked_days || []).map((day) => ({
+          id:day.id || "",
+          order: day.order_allowed || false,
+          booking: day.booking_allowed || false,
+          startDate: day.start_date || "",
+          endDate: day.end_date || "",
+        }));
+        const apiBlockedDays = {
+          sunday: !!data.sun,     // Map 'sun' to 'sunday'
+          monday: !!data.mon,     // Map 'mon' to 'monday'
+          tuesday: !!data.tue,    // Map 'tue' to 'tuesday'
+          wednesday: !!data.wed,  // Map 'wed' to 'wednesday'
+          thursday: !!data.thu,   // Map 'thu' to 'thursday'
+          friday: !!data.fri,     // Map 'fri' to 'friday'
+          saturday: !!data.sat,   // Map 'sat' to 'saturday'
+        };
+  
+        setSelectedDays((prevState) => ({
+          ...prevState,
+          ...apiBlockedDays, // Update the days with values from API
+        }));
+        
       setFormData({
         restaurantName: data.restaurant_name || "",
         costForTwo: data.cost_for_two || "",
@@ -87,11 +182,13 @@ const FBRestaurtantEdit = () => {
         address: data.address || "",
         termsAndConditions: data.terms_and_conditions || "",
         disclaimer: data.disclaimer || "",
+        booking_allowed:data.booking_allowed || false ,
+        order_allowed:data.order_allowed || false,
         closingMessage: data.closing_message || "",
         minimumPerson: data.minimum_person || "",
         maximumPerson: data.maximum_person || "",
         canCancelBefore: data.cancel_before || "",
-        bookingNotAllowedText: data.bookingNotAllowedText || "",
+        bookingNotAllowedText: data.booking_not_available_text || "",
         gst: data.gst || "",
         deliveryCharge: data.delivery_charges || "",
         minimumOrder: data.minimum_order || "",
@@ -100,9 +197,11 @@ const FBRestaurtantEdit = () => {
         cover_image: data.cover_image || [],
         menu: data.menu || [],
         gallery: data.gallery || [],
-        restaurantBook: data.restaurant_schedule || restaurantSchedule,
+       
       });
-        console.log("Transformed Schedule Data:", transformedData);
+        
+        setRows(blockedDays);
+        
       } catch (error) {
         console.error("Error fetching site FB details:", error);
       }
@@ -110,11 +209,37 @@ const FBRestaurtantEdit = () => {
   
     fetchFBDetails();
   }, [id]); // Add 'id' as a dependency to refetch when it changes
+
+  const handleSelectAll = (event) => {
+    const isChecked = event.target.checked;
+  
+    // Update all `selected` values in the formData
+    const updatedBook = Object.keys(formData.restaurantBook).reduce(
+      (acc, day) => ({
+        ...acc,
+        [day]: {
+          ...formData.restaurantBook[day],
+          selected: isChecked,
+        },
+      }),
+      {}
+    );
+  
+    setFormData((prev) => ({
+      ...prev,
+      restaurantBook: updatedBook,
+    }));
+  };
   
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData((prevState) => ({
+      ...prevState,
+      [name]: value, // This handles both strings and booleans if passed correctly
+    }));
   };
+  
 
   const handleCheckboxChange = (day) => {
     setFormData((prevState) => ({
@@ -141,7 +266,26 @@ const FBRestaurtantEdit = () => {
       },
     }));
   };
-
+  const handlePropagateValues = (sourceDay) => {
+    const sourceValues = formData.restaurantBook[sourceDay]; // Get the values of the source day
+    const updatedBook = Object.keys(formData.restaurantBook).reduce(
+      (acc, day) => ({
+        ...acc,
+        [day]: {
+          ...formData.restaurantBook[day],
+          ...sourceValues, // Copy all values from the source day to each other day
+          selected: formData.restaurantBook[day].selected, // Preserve the selected state
+        },
+      }),
+      {}
+    );
+  
+    setFormData((prev) => ({
+      ...prev,
+      restaurantBook: updatedBook,
+    }));
+  };
+  
   const handleFileChange = (files, fieldName) => {
     setFormData({
       ...formData,
@@ -151,8 +295,8 @@ const FBRestaurtantEdit = () => {
   };
 
   const userId = getItemInLocalStorage("UserId");
-  const navigate = useNavigate();
-  const handleEdit = async () => {
+  const navigate = useNavigate()
+  const handleSubmit = async () => {
     if (!formData.restaurantName) {
       return toast.error("Restaurant Name is required");
     }
@@ -174,18 +318,16 @@ const FBRestaurtantEdit = () => {
       return toast.error("Another Mobile Number is required");
     }
     if (formData.anotherMobileNumber.length !== 10) {
-      return toast.error(
-        "Another Mobile Number must be exactly 10 characters long"
-      );
+      return toast.error("Another Mobile Number must be exactly 10 characters long");
     }
 
     if (!/^\d+$/.test(formData.anotherMobileNumber)) {
       return toast.error("Another Mobile Number must contain only digits");
     }
     // Landline Number
-    if (!formData.landlineNumber) {
-      return toast.error("Landline Number is required");
-    }
+    // if (!formData.landlineNumber) {
+    //   return toast.error("Landline Number is required");
+    // }
     if (formData.landlineNumber.length !== 10) {
       return toast.error("Landline Number must be exactly 10 characters long");
     }
@@ -193,7 +335,7 @@ const FBRestaurtantEdit = () => {
     if (!/^\d+$/.test(formData.landlineNumber)) {
       return toast.error("Landline Number must contain only digits");
     }
-
+    
     if (!formData.servesAlcohol) {
       return toast.error("Please select Serves Alcohol Yes or No");
     }
@@ -207,108 +349,115 @@ const FBRestaurtantEdit = () => {
       return toast.error("Please select Pure Veg Yes or No ");
     }
 
-    const editData = new FormData();
-    editData.append(
+    const postData = new FormData();
+    const daysMapping = {
+      sunday: "sun",
+      monday: "mon",
+      tuesday: "tue",
+      wednesday: "wed",
+      thursday: "thu",
+      friday: "fri",
+      saturday: "sat",
+    };
+    postData.append(
       "food_and_beverage[restaurant_name]",
       formData.restaurantName
     );
-    editData.append("food_and_beverage[created_by_id]", userId);
-    editData.append("food_and_beverage[cost_for_two]", formData.costForTwo);
-    editData.append("food_and_beverage[mobile_number]", formData.mobileNumber);
-    editData.append(
+    postData.append("food_and_beverage[created_by_id]", userId);
+    postData.append("food_and_beverage[cost_for_two]", formData.costForTwo);
+    postData.append("food_and_beverage[mobile_number]", formData.mobileNumber);
+    postData.append(
       "food_and_beverage[alternate_mobile_number]",
       formData.anotherMobileNumber
     );
-    editData.append(
+    postData.append(
       "food_and_beverage[landline_number]",
       formData.landlineNumber
     );
-    editData.append("food_and_beverage[delivery_time]", formData.deliveryTime);
-    editData.append("food_and_beverage[cuisines]", formData.cuisines);
-    editData.append(
+    postData.append("food_and_beverage[delivery_time]", formData.deliveryTime);
+    postData.append("food_and_beverage[cuisines]", formData.cuisines);
+    postData.append(
       "food_and_beverage[serves_alcohols]",
       formData.servesAlcohol
     );
-    editData.append(
+    postData.append(
       "food_and_beverage[wheelchair_accessible]",
       formData.wheelchairAccessible
     );
-    editData.append(
+    postData.append(
       "food_and_beverage[cash_on_delivery]",
       formData.cashOnDelivery
     );
-    editData.append("food_and_beverage[pure_veg]", formData.pureVeg);
-    editData.append("food_and_beverage[address]", formData.address);
-    editData.append(
+    postData.append("food_and_beverage[pure_veg]", formData.pureVeg);
+    postData.append("food_and_beverage[address]", formData.address);
+    postData.append(
       "food_and_beverage[terms_and_conditions]",
       formData.termsAndConditions
     );
-    editData.append("food_and_beverage[disclaimer]", formData.disclaimer);
-    editData.append(
+    postData.append("food_and_beverage[disclaimer]", formData.disclaimer);
+    postData.append(
       "food_and_beverage[closing_message]",
       formData.closingMessage
     );
-    editData.append(
+    rows.forEach((row, index) => {
+      if(row.id){
+      postData.append(`blocked_days[][id]`, row.id);
+      }
+      postData.append(`blocked_days[][order_allowed]`, row.order);
+      postData.append(`blocked_days[][booking_allowed]`, row.booking);
+      postData.append(`blocked_days[][start_date]`, row.startDate);
+      postData.append(`blocked_days[][end_date]`, row.endDate);
+    });
+    postData.append(
       "food_and_beverage[minimum_person]",
       formData.minimumPerson
     );
-    editData.append(
+    postData.append(
       "food_and_beverage[maximum_person]",
       formData.maximumPerson
     );
-    editData.append(
+    postData.append(
       "food_and_beverage[cancel_before]",
       formData.canCancelBefore
     );
-    // editData.append("food_and_beverage[closing_message]", formData.bookingNotAllowedText);
-    editData.append("food_and_beverage[gst]", formData.gst);
-    editData.append(
+    postData.append("food_and_beverage[booking_not_available_text]", formData.bookingNotAllowedText);
+    postData.append("food_and_beverage[gst]", formData.gst);
+    postData.append(
       "food_and_beverage[delivery_charges]",
       formData.deliveryCharge
     );
-    editData.append("food_and_beverage[minimum_order]", formData.minimumOrder);
-    // editData.append("food_and_beverage[closing_message]", formData.orderNotAllowedText);
-    editData.append(
+    postData.append("food_and_beverage[minimum_order]", formData.minimumOrder);
+    // postData.append("food_and_beverage[closing_message]", formData.orderNotAllowedText);
+    postData.append(
       "food_and_beverage[serviceCharges]",
-      formData.service_charge
+      formData.ServiceCharges
     );
+   
+    postData.append("food_and_beverage[sun]", selectedDays['sunday'] ? "1" : "0");
 
-    Object.keys(formData.restaurantBook).forEach((day) => {
-      editData.append(
-        `food_and_beverage[restaurant_schedule][${day}][selected]`,
-        formData.restaurantBook[day].selected ? "1" : "0"
-      );
-      editData.append(
-        `food_and_beverage[restaurant_schedule][${day}][start_time]`,
-        formData.restaurantBook[day].start_time
-      );
-      editData.append(
-        `food_and_beverage[restaurant_schedule][${day}][end_time]`,
-        formData.restaurantBook[day].end_time
-      );
-      editData.append(
-        `food_and_beverage[restaurant_schedule][${day}][booking_allowed]`,
-        //  "1"
-        formData.restaurantBook[day].booking_allowed ? "1" : "0"
-      );
-      editData.append(
-        `food_and_beverage[restaurant_schedule][${day}][order_allowed]`,
-        // "1"
-        formData.restaurantBook[day].order_allowed ? "1" : "0"
-      );
-    });
+    postData.append("food_and_beverage[mon]", selectedDays['monday'] ? "1" : "0");
+    postData.append("food_and_beverage[tue]", selectedDays['tuesday'] ? "1" : "0");
+    postData.append("food_and_beverage[wed]", selectedDays['wednesday'] ? "1" : "0");
+    postData.append("food_and_beverage[thu]", selectedDays['thursday'] ? "1" : "0");
+    postData.append("food_and_beverage[fri]", selectedDays['friday'] ? "1" : "0");
+    postData.append("food_and_beverage[sat]", selectedDays['saturday'] ? "1" : "0");
+    postData.append("food_and_beverage[booking_allowed]", formData.booking_allowed);
+    postData.append("food_and_beverage[order_allowed]", formData.order_allowed);
+    postData.append("food_and_beverage[last_booking_time]", formData.last_booking_time);
+    postData.append("food_and_beverage[table_number]", formData.table_number);
+   
 
     formData.cover_image?.forEach((file, index) => {
-      editData.append(`attachfiles[]`, file);
+      postData.append(`attachfiles[]`, file);
     });
     formData.menu?.forEach((file, index) => {
-      editData.append(`attachfiles[]`, file);
+      postData.append(`attachfiles[]`, file);
     });
     formData.gallery?.forEach((file, index) => {
-      editData.append(`attachfiles[]`, file);
+      postData.append(`attachfiles[]`, file);
     });
     try {
-      const postRes = await editFB(id,editData);
+      const postRes = await editFB(id,postData);
       console.log(postRes);
       toast.success("F&B Updated successfully");
       navigate(`/admin/fb-details/${id}`);
@@ -316,6 +465,7 @@ const FBRestaurtantEdit = () => {
       console.log(error);
     }
   };
+
   return (
     <div className="flex flex-col overflow-hidden w-full">
       <div className="md:mx-20 mb-10 sm:border border-gray-400 p-5 px-10 rounded-lg sm:shadow-xl">
@@ -329,10 +479,61 @@ const FBRestaurtantEdit = () => {
           <h3 className="border-b text-center text-xl  mb-6 font-bold">
             BASIC DETAILS
           </h3>
+          <div className="mb-2">
+      {/* <h1 className="text-lg font-semibold mb-4">Choose Booking Option</h1> */}
+      <form>
+        {/* Radio Buttons in Flex */}
+        <div className="flex  space-x-6">
+          {/* Bookable Option */}
+          <div className="flex items-center">
+            <input
+              id="bookable"
+              type="radio"
+              value="bookable"
+              checked={option === "bookable"}
+              onChange={(e) => setOption(e.target.value)}
+              className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+            />
+            <label
+              htmlFor="bookable"
+              className="ml-2  font-medium font-semibold "
+            >
+              Bookable
+            </label>
+          </div>
+
+          {/* Request Option */}
+          <div className="flex items-center">
+            <input
+              id="request"
+              type="radio"
+              value="request"
+              checked={option === "request"}
+              onChange={(e) => setOption(e.target.value)}
+              className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+            />
+            <label
+              htmlFor="request"
+              className="ml-2  font-medium font-semibold "
+            >
+              Request
+            </label>
+          </div>
+        </div>
+
+        {/* Display Selected Option */}
+        {/* <div className="mt-4">
+          <p className="text-sm text-gray-500">
+            Selected Option:{" "}
+            <span className="font-semibold text-gray-800">{option}</span>
+          </p>
+        </div> */}
+      </form>
+    </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <div className="col-span-1">
               <label
-                className="block text-gray-700 font-bold mb-2"
+                className="block   mb-2"
                 htmlFor="restaurant-name"
               >
                 Restaurant Name <span className="text-red-500">*</span>
@@ -349,7 +550,7 @@ const FBRestaurtantEdit = () => {
             </div>
             <div className="col-span-1">
               <label
-                className="block text-gray-700 font-bold mb-2"
+                className="block  mb-2"
                 htmlFor="cost-for-two"
               >
                 Cost For Two <span className="text-red-500">*</span>
@@ -366,7 +567,7 @@ const FBRestaurtantEdit = () => {
             </div>
             <div className="col-span-1">
               <label
-                className="block text-gray-700 font-bold mb-2"
+                className="block  mb-2"
                 htmlFor="mobile-number"
               >
                 Mobile Number <span className="text-red-500">*</span>
@@ -383,7 +584,7 @@ const FBRestaurtantEdit = () => {
             </div>
             <div className="col-span-1">
               <label
-                className="block text-gray-700 font-bold mb-2"
+                className="block  mb-2"
                 htmlFor="another-mobile-number"
               >
                 Another Mobile Number <span className="text-red-500">*</span>
@@ -400,10 +601,10 @@ const FBRestaurtantEdit = () => {
             </div>
             <div className="col-span-1">
               <label
-                className="block text-gray-700 font-bold mb-2"
+                className="block  mb-2"
                 htmlFor="landline-number"
               >
-                Landline Number <span className="text-red-500">*</span>
+                Landline Number 
               </label>
               <input
                 className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full"
@@ -417,7 +618,7 @@ const FBRestaurtantEdit = () => {
             </div>
             <div className="col-span-1">
               <label
-                className="block text-gray-700 font-bold mb-2"
+                className="block  mb-2"
                 htmlFor="delivery-time"
               >
                 Delivery Time
@@ -434,12 +635,12 @@ const FBRestaurtantEdit = () => {
             </div>
             <div className="col-span-1">
               <label
-                className="block text-gray-700 font-bold mb-2"
+                className="block  mb-2"
                 htmlFor="cuisines"
               >
                 Cuisines
               </label>
-              <input
+              {/* <input
                 className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full"
                 id="delivery-time"
                 type="text"
@@ -447,11 +648,21 @@ const FBRestaurtantEdit = () => {
                 value={formData.cuisines}
                 onChange={handleChange}
                 placeholder="Cuisines"
-              />
+              /> */}
+             <Select
+        id="cuisines"
+        isMulti
+        options={options}
+        value={selectedOptions}
+        onChange={handleChange1}
+        className="react-select-container"
+        classNamePrefix="react-select"
+        placeholder="Select cuisines"
+      />
             </div>
             <div className="col-span-1">
               <label
-                className="block text-gray-700 font-bold mb-2"
+                className="block  mb-2"
                 htmlFor="serves-alcohol"
               >
                 Serves Alcohol <span className="text-red-500">*</span>
@@ -471,7 +682,7 @@ const FBRestaurtantEdit = () => {
             </div>
             <div className="col-span-1">
               <label
-                className="block text-gray-700 font-bold mb-2"
+                className="block  mb-2"
                 htmlFor="wheelchair-accessible"
               >
                 Wheelchair Accessible <span className="text-red-500">*</span>
@@ -491,7 +702,7 @@ const FBRestaurtantEdit = () => {
             </div>
             <div className="col-span-1">
               <label
-                className="block text-gray-700 font-bold mb-2"
+                className="block  mb-2"
                 htmlFor="cash-on-delivery"
               >
                 Cash on Delivery <span className="text-red-500">*</span>
@@ -511,7 +722,7 @@ const FBRestaurtantEdit = () => {
             </div>
             <div className="col-span-1">
               <label
-                className="block text-gray-700 font-bold mb-2"
+                className="block  mb-2"
                 htmlFor="pure-veg"
               >
                 Pure Veg <span className="text-red-500">*</span>
@@ -531,7 +742,7 @@ const FBRestaurtantEdit = () => {
             </div>
             <div className="col-span-3">
               <label
-                className="block text-gray-700 font-bold mb-2"
+                className="block  mb-2"
                 htmlFor="address"
               >
                 Address
@@ -548,7 +759,7 @@ const FBRestaurtantEdit = () => {
             </div>
             <div className="col-span-3">
               <label
-                className="block text-gray-700 font-bold mb-2"
+                className="block  mb-2"
                 htmlFor="terms-conditions"
               >
                 Terms & Conditions
@@ -565,7 +776,7 @@ const FBRestaurtantEdit = () => {
             </div>
             <div className="col-span-3">
               <label
-                className="block text-gray-700 font-bold mb-2"
+                className="block  mb-2"
                 htmlFor="disclaimer"
               >
                 Disclaimer
@@ -582,7 +793,7 @@ const FBRestaurtantEdit = () => {
             </div>
             <div className="col-span-3">
               <label
-                className="block text-gray-700 font-bold mb-2"
+                className="block mb-2"
                 htmlFor="closing-message"
               >
                 Closing Message
@@ -604,207 +815,255 @@ const FBRestaurtantEdit = () => {
             RESTAURTANT DETAILS
           </h3>
 
-          <div class="overflow-x-auto">
-            <table class="table-auto">
-              <thead>
-                <tr>
-                  <th class="px-4 py-2"></th>
-                  <th class="px-4 py-2">Operational Days</th>
-                  <th class="px-4 py-2">Start Time</th>
-                  <th class="px-4 py-2">End Time</th>
-                  <th class="px-4 py-2">Break Start Time</th>
-                  <th class="px-4 py-2">Break End Time</th>
-                  <th class="px-4 py-2">Booking Allowed</th>
-                  <th class="px-4 py-2">Order Allowed</th>
-                  <th class="px-4 py-2">Last Booking & Order Time</th>
-                </tr>
-              </thead>
-              <tbody>
-                {Object.keys(formData.restaurantBook).map((day) => (
-                  <tr key={day}>
-                    <td className="border px-4 py-2 text-center">
-                      <input
-                        type="checkbox"
-                        checked={formData.restaurantBook[day].selected}
-                        onChange={() => handleCheckboxChange(day)}
-                      />
-                    </td>
-                    <td className="border px-4 py-2 text-center">{day}</td>
-                    <td className="border px-4 py-2 text-center">
-                      <input
-                        type="time"
-                        className="border border-gray-400 p-2 rounded-md"
-                        value={formData.restaurantBook[day].start_time}
-                        onChange={(e) =>
-                          handleTimeChange(day, "start_time", e.target.value)
-                        }
-                        disabled={!formData.restaurantBook[day].selected}
-                      />
-                    </td>
-                    <td className="border px-4 py-2 text-center">
-                      <input
-                        type="time"
-                        className="border border-gray-400 p-2 rounded-md"
-                        value={formData.restaurantBook[day].end_time}
-                        onChange={(e) =>
-                          handleTimeChange(day, "end_time", e.target.value)
-                        }
-                        disabled={!formData.restaurantBook[day].selected}
-                      />
-                    </td>
-                    <td className="border px-4 py-2 text-center">
-                      <input
-                        type="time"
-                        className="border border-gray-400 p-2 rounded-md"
-                        value={formData.restaurantBook[day].break_start_time}
-                        onChange={(e) =>
-                          handleTimeChange(
-                            day,
-                            "break_start_time",
-                            e.target.value
-                          )
-                        }
-                        disabled={!formData.restaurantBook[day].selected}
-                      />
-                    </td>
-                    <td className="border px-4 py-2 text-center">
-                      <input
-                        type="time"
-                        className="border border-gray-400 p-2 rounded-md"
-                        value={formData.restaurantBook[day].break_end_time}
-                        onChange={(e) =>
-                          handleTimeChange(
-                            day,
-                            "break_end_time",
-                            e.target.value
-                          )
-                        }
-                        disabled={!formData.restaurantBook[day].selected}
-                      />
-                    </td>
-                    <td className="border px-4 py-2 text-center">
-                      <input
-                        type="checkbox"
-                        checked={
-                          formData.restaurantBook[day].booking_allowed === true
-                        }
-                        onChange={(e) =>
-                          handleTimeChange(
-                            day,
-                            "booking_allowed",
-                            e.target.checked ? true : false
-                          )
-                        }
-                        disabled={!formData.restaurantBook[day].selected}
-                      />
-                    </td>
-                    <td className="border px-4 py-2 text-center">
-                      <input
-                        type="checkbox"
-                        checked={
-                          formData.restaurantBook[day].order_allowed === true
-                        }
-                        onChange={(e) =>
-                          handleTimeChange(
-                            day,
-                            "order_allowed",
-                            e.target.checked ? true : false
-                          )
-                        }
-                        disabled={!formData.restaurantBook[day].selected}
-                      />
-                    </td>
-                    <td className="border px-4 py-2 text-center">
-                      <input
-                        type="time"
-                        className="border border-gray-400 p-2 rounded-md"
-                        value={
-                          formData.restaurantBook[day].last_booking_order_time
-                        }
-                        onChange={(e) =>
-                          handleTimeChange(
-                            day,
-                            "last_booking_order_time",
-                            e.target.value
-                          )
-                        }
-                        disabled={!formData.restaurantBook[day].selected}
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+         
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div className="col-span-1">
+      <label
+        className="block  mb-2"
+        htmlFor="select-operational-days"
+      >
+        Select Operational Days
+      </label>
+      <div className="flex flex-wrap gap-4">
+        <div className="flex items-center gap-2">
+          <input
+            id="all"
+            type="checkbox"
+            checked={selectedDays.all}
+            onChange={handleAllChange}
+            className="h-4 w-4"
+          />
+          <label htmlFor="all" className="text-gray-700">
+            All
+          </label>
+        </div>
+        {[
+          { id: "sunday", label: "S" },
+          { id: "monday", label: "M" },
+          { id: "tuesday", label: "T" },
+          { id: "wednesday", label: "W" },
+          { id: "thursday", label: "T" },
+          { id: "friday", label: "F" },
+          { id: "saturday", label: "S" },
+        ].map((day) => (
+          <div key={day.id} className="flex items-center gap-2 ">
+            <input
+              id={day.id}
+              type="checkbox"
+              checked={selectedDays[day.id]}
+              onChange={() => handleIndividualChange(day.id)}
+              className="h-4 w-4"
+            />
+            <label htmlFor={day.id} className="text-lg text-gray-700">
+              {day.label}
+            </label>
           </div>
+        ))}
+      </div>
+    </div>
+            <div className="col-span-1">
+              <label htmlFor="" className="block  mb-2">Start Time</label>
+              <input type="time" 
+              value={formData.start_time}
+              name="start_time"
+              onChange={handleChange}
+              className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="Start time"/>
+            </div>
+            <div className="col-span-1">
+              <label htmlFor="" className="block  mb-2">End Time</label>
+              <input type="time" 
+              value={formData.end_time}
+              name="end_time"
+              onChange={handleChange}
+              className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="End time"/>
+            </div>
+            <div className="flex  gap-10 col-span-1">
+    <div className="flex items-center gap-2 ">
+    <input
+  id="booking-allowed"
+  type="checkbox"
+  name="booking_allowed"
+  checked={formData.booking_allowed}
+  onChange={(e) =>
+    handleChange({
+      target: {
+        name: "booking_allowed",
+        value: e.target.checked, // Pass the boolean value
+      },
+    })
+  }
+  className="h-4 w-4 border-gray-400 rounded"
+/>
+
+      <label
+        htmlFor="booking-allowed"
+        
+      >
+        Booking Allowed
+      </label>
+    </div>
+ 
+    
+  </div>
+            <div className="col-span-1">
+              <label htmlFor="" className="block  mb-2">Break Start Time</label>
+              <input type="time" className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="Start time"/>
+            </div>
+            <div className="col-span-1">
+              <label htmlFor="" className="block  mb-2">Break End Time</label>
+              <input type="time" className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="End time"/>
+            </div>
+
+           
+            <div className="flex items-center gap-2 ">
+            <input
+    id="order-allowed"
+    type="checkbox"
+    name="order_allowed"
+    checked={formData.order_allowed}
+    onChange={(e) =>
+      handleChange({
+        target: {
+          name: "order_allowed",
+          value: e.target.checked, // Pass the boolean value
+        },
+      })
+    }
+    className="h-4 w-4 border-gray-400 rounded"
+  />
+      <label
+        htmlFor="order-allowed"
+        
+      >
+        Order Allowed
+      </label>
+    </div>
+            <div className="col-span-1">
+              <label htmlFor="" className="block  mb-2">Last Booking & Order Time</label>
+              <input type="time" 
+              value={formData.last_booking_time}
+              name="last_booking_time"
+              onChange={handleChange}
+              className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="End time"/>
+            </div>
+            </div>
         </div>
         <div className="w-full mx-3 my-5 p-5 shadow-lg rounded-lg border border-gray-300">
           <h3 className="border-b text-center text-xl border-black mb-6 font-bold">
             BLOCKED DAYS
           </h3>
-
           <div>
-            <button
-              onClick={addRow}
-              className="px-4 py-2 border border-blue-500 rounded bg-blue-500 text-white hover:bg-blue-600"
-            >
-              Add
-            </button>
-
-            {rows.map((row, index) => (
-              <div key={index}>
-                <input
-                  type="checkbox"
-                  checked={row.order}
-                  onChange={(e) => {
-                    const newRows = [...rows];
-                    newRows[index].order = e.target.checked;
-                    setRows(newRows);
-                  }}
-                />
-                &nbsp;&nbsp;
-                <label>Order</label>
-                &nbsp;&nbsp;
-                <input
-                  type="checkbox"
-                  checked={row.booking}
-                  onChange={(e) => {
-                    const newRows = [...rows];
-                    newRows[index].booking = e.target.checked;
-                    setRows(newRows);
-                  }}
-                />
-                &nbsp;&nbsp;
-                <label>Booking</label>
-                &nbsp;&nbsp;
-                <input
-                  type="date"
-                  className="border border-gray-400 p-2 rounded-md"
-                  value={row.date}
-                  onChange={(e) => {
-                    const newRows = [...rows];
-                    newRows[index].date = e.target.value;
-                    setRows(newRows);
-                  }}
-                />
-                &nbsp;
-                <button
-                  onClick={() => deleteRow(index)}
-                  className="px-4 py-2 border border-red-500 rounded bg-red-500 text-white hover:bg-blue-600"
-                >
-                  Delete
-                </button>
-              </div>
-            ))}
+          <button
+        onClick={addRow}
+        className="px-4 py-2 border border-blue-500 rounded bg-blue-500 text-white hover:bg-blue-600"
+        style={{ background: themeColor }}
+      >
+        Add
+      </button>
+          {rows.map((row, index) => (
+        <div key={index} className="mb-2 flex gap-4 items-center">
+          <div>
+            <input
+              type="checkbox"
+              checked={row.order}
+              onChange={(e) => {
+                const newRows = [...rows];
+                newRows[index].order = e.target.checked;
+                setRows(newRows);
+              }}
+            />
+            &nbsp;&nbsp;
+            <label >Order</label>
           </div>
+          &nbsp;&nbsp;
+          <div>
+            <input
+              type="checkbox"
+              checked={row.booking}
+              onChange={(e) => {
+                const newRows = [...rows];
+                newRows[index].booking = e.target.checked;
+                setRows(newRows);
+              }}
+            />
+            &nbsp;&nbsp;
+            <label >Booking</label>
+          </div>
+          &nbsp;&nbsp;
+          <label htmlFor="" >Start Date:</label>
+          <input
+            type="date"
+            className="border border-gray-400 p-1 rounded-md"
+            value={row.startDate}
+            onChange={(e) => {
+              const newRows = [...rows];
+              newRows[index].startDate = e.target.value;
+              setRows(newRows);
+            }}
+          />
+          &nbsp;&nbsp;
+          <label htmlFor="" >End Date:</label>
+          <input
+            type="date"
+            className="border border-gray-400 p-1 rounded-md"
+            value={row.endDate}
+            onChange={(e) => {
+              const newRows = [...rows];
+              newRows[index].endDate = e.target.value;
+              setRows(newRows);
+            }}
+          />
+          &nbsp;
+          <button
+            onClick={() => deleteRow(index)}
+            className=""
+          >
+            <FaTrash size={15} />
+          </button>
+        </div>
+      ))}
+</div>
         </div>
         <div className="w-full mx-3 my-5 p-5 shadow-lg rounded-lg border border-gray-300">
           <h3 className="border-b text-center text-xl border-black mb-6 font-bold">
             TABLE BOOKING
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div className="col-span-1">
+              <label htmlFor="" className="block  mb-2">Number of Tables</label>
+              <input type="text" 
+               value={formData.table_number}
+               name="table_number"
+               onChange={handleChange}
+              className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="Enter Tables"/>
+            </div>
+            {/* <div className="col-span-1">
+              <label htmlFor="" className="block text-gray-700 font-bold mb-2">Start Date</label>
+              <input type="date" className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="Start time"/>
+            </div>
+            <div className="col-span-1">
+              <label htmlFor="" className="block text-gray-700 font-bold mb-2">End Date</label>
+              <input type="date" className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="End time"/>
+            </div>
+            <div className="col-span-1">
+              <label htmlFor="" className="block text-gray-700 font-bold mb-2">Start Time</label>
+              <input type="time" className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="Start time"/>
+            </div>
+            <div className="col-span-1">
+              <label htmlFor="" className="block text-gray-700 font-bold mb-2">End Time</label>
+              <input type="time" className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="End time"/>
+            </div>
+            <div className="col-span-1">
+              <label htmlFor="" className="block text-gray-700 font-bold mb-2">Booking Capacity</label>
+              <input type="text" className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="Enter Booking Capacity"/>
+            </div>
+            <div className="col-span-1">
+              <label htmlFor="" className="block text-gray-700 font-bold mb-2">Waiting Capacity</label>
+              <input type="text" className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="Enter Waiting Capacity"/>
+            </div> */}
             <div className="col-span-1">
               <label
-                className="block text-gray-700 font-bold mb-2"
+                className="block  mb-2"
                 htmlFor="minimum-person"
               >
                 Minimum Person
@@ -821,7 +1080,7 @@ const FBRestaurtantEdit = () => {
             </div>
             <div className="col-span-1">
               <label
-                className="block text-gray-700 font-bold mb-2"
+                className="block  mb-2"
                 htmlFor="maximum-person"
               >
                 Maximum Person
@@ -838,7 +1097,7 @@ const FBRestaurtantEdit = () => {
             </div>
             <div className="col-span-1">
               <label
-                className="block text-gray-700 font-bold mb-2"
+                className="block  mb-2"
                 htmlFor="can-cancel-before"
               >
                 Can Cancel Before
@@ -855,10 +1114,10 @@ const FBRestaurtantEdit = () => {
             </div>
             <div className="col-span-1">
               <label
-                className="block text-gray-700 font-bold mb-2"
+                className="block  mb-2"
                 htmlFor="booking-not-allowed-text"
               >
-                Booking Not Allowed Text
+                Booking Not Available Text
               </label>
               <input
                 className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full"
@@ -870,6 +1129,8 @@ const FBRestaurtantEdit = () => {
                 placeholder="Booking Not Allowed Text"
               />
             </div>
+          
+           
           </div>
         </div>
         <div className="w-full mx-3 my-5 p-5 shadow-lg rounded-lg border border-gray-300">
@@ -879,7 +1140,7 @@ const FBRestaurtantEdit = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <div className="col-span-1">
               <label
-                className="block text-gray-700 font-bold mb-2"
+                className="block  mb-2"
                 htmlFor="GST"
               >
                 GST(%)
@@ -896,7 +1157,7 @@ const FBRestaurtantEdit = () => {
             </div>
             <div className="col-span-1">
               <label
-                className="block text-gray-700 font-bold mb-2"
+                className="block  mb-2"
                 htmlFor="delivery-charge"
               >
                 Delivery Charge
@@ -913,7 +1174,7 @@ const FBRestaurtantEdit = () => {
             </div>
             <div className="col-span-1">
               <label
-                className="block text-gray-700 font-bold mb-2"
+                className="block  mb-2"
                 htmlFor="delivery-charge"
               >
                 Service Charge(%)
@@ -922,13 +1183,15 @@ const FBRestaurtantEdit = () => {
                 className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full"
                 id="delivery-charge"
                 type="text"
-                name="service_charge"
+                name="ServiceCharges"
+                value={formData.ServiceCharges}
+                onChange={handleChange}
                 placeholder="Service Charge(%)"
               />
             </div>
             <div className="col-span-1">
               <label
-                className="block text-gray-700 font-bold mb-2"
+                className="block  mb-2"
                 htmlFor="minimum-order"
               >
                 Minimum Order
@@ -945,7 +1208,7 @@ const FBRestaurtantEdit = () => {
             </div>
             <div className="col-span-1">
               <label
-                className="block text-gray-700 font-bold mb-2"
+                className="block  mb-2"
                 htmlFor="order-not-allowed-text"
               >
                 Order Not Allowed Text
@@ -966,7 +1229,7 @@ const FBRestaurtantEdit = () => {
           <h3 className="border-b text-center text-xl border-black mb-6 font-bold">
             ATTACHMENTS
           </h3>
-          <label htmlFor="" className="font-medium my-1">
+          <label htmlFor="" className="font-medium my-1 ">
             Cover Image
           </label>
 
@@ -975,7 +1238,7 @@ const FBRestaurtantEdit = () => {
             fieldName={"cover_image"}
             // isMulti={true}
           />
-          <label htmlFor="" className="font-medium">
+          <label htmlFor="" className="font-medium ">
             Menu
           </label>
           <FileInputBox
@@ -983,7 +1246,7 @@ const FBRestaurtantEdit = () => {
             fieldName={"Menu"}
             isMulti={true}
           />
-          <label htmlFor="" className="font-medium my-1">
+          <label htmlFor="" className="font-medium my-1 ">
             Gallery
           </label>
           <FileInputBox
@@ -996,9 +1259,10 @@ const FBRestaurtantEdit = () => {
         <div className="sm:flex justify-center grid gap-2 my-5 ">
           <button
             className="bg-black text-white p-2 px-4 rounded-md font-medium"
-            onClick={handleEdit}
+            onClick={handleSubmit}
+            style={{ background: themeColor }}
           >
-            Update
+            Submit
           </button>
         </div>
       </div>

@@ -38,16 +38,16 @@ const FBStatusSetup = () => {
       selector: (row) => row.Order,
       sortable: true,
     },
-    {
-      name: "Status",
-      selector: (row) => row.Status,
-      sortable: true,
-    },
-    {
-        name: "Display",
-        selector: (row) => row.Display,
-        sortable: true,
-      },
+    // {
+    //   name: "Status",
+    //   selector: (row) => row.Status,
+    //   sortable: true,
+    // },
+    // {
+    //     name: "Display",
+    //     selector: (row) => row.Display,
+    //     sortable: true,
+    //   },
       {
         name: "Fixed Status",
         selector: (row) => row.Status,
@@ -181,7 +181,7 @@ const FBStatusSetup = () => {
       <h2 className="text-xl font-semibold mb-4">Add Status</h2>
       <div className="grid grid-cols-1 gap-2">
 
-        <div className="grid gap-1">
+        {/* <div className="grid gap-1">
           <label className="block text-gray-700 text-sm font-bold " htmlFor="status">
             Status
           </label>
@@ -203,7 +203,7 @@ const FBStatusSetup = () => {
               type="text"
               placeholder="Display Name"
             />
-          </div>
+          </div> */}
           <div className="grid gap-1">
             <label className="block text-gray-700 text-sm font-bold " htmlFor="fixed-state">
               Fixed State*

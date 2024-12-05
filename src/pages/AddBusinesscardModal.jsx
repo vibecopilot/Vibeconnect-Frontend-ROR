@@ -4,10 +4,60 @@ import toast from "react-hot-toast";
 import { FaCheck, FaPlusCircle } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { postBusinesscard } from "../api";
 
 const AddBusinesscardModal = ({ onClose }) => {
   const themeColor = useSelector((state) => state.theme.color);
-  
+  const [formData, setFormData] = useState({
+    full_name: "",
+    profession: "",
+    contact_number: "",
+    email_id: "",
+    website_url: "",
+    address: "",
+    attachment: null,
+  });
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleFileChange = (e) => {
+    setFormData((prev) => ({
+      ...prev,
+      attachment: e.target.files[0], 
+    }));
+  };
+  const navigate = useNavigate()
+      const handleSubmit = async () => {
+    
+   
+        const sendData = new FormData();
+        sendData.append("business_card[full_name]", formData.full_name);
+        sendData.append("business_card[profession]", formData.profession);
+        sendData.append("business_card[contact_number]", formData.contact_number);
+        sendData.append("business_card[email_id]", formData.email_id);
+        sendData.append("business_card[website_url]", formData.website_url);
+        sendData.append("business_card[address]", formData.address);
+        if (formData.attachment) {
+          sendData.append("business_card[attachment]", formData.attachment);
+        }
+    
+       
+        try {
+          const resp = await postBusinesscard(sendData);
+          console.log(resp);
+          
+          toast.success("Business card added successfully");
+          onClose();
+        } catch (error) {
+          console.log(error);
+        }
+      };
   return (
     <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-30 backdrop-blur-sm z-20">
       <div className="bg-white overflow-auto max-h-[70%]  md:w-[40%] p-4  flex flex-col rounded-xl hide-scrollbar">
@@ -21,7 +71,9 @@ const AddBusinesscardModal = ({ onClose }) => {
             </label>
             <input
               type="text"
-              name=""
+              name="full_name"
+              onChange={handleChange}
+                             value={formData.full_name}
               id=""
               className="border-b border-gray-600 w-full p-1 focus:outline-none"
               placeholder="Full name"
@@ -33,7 +85,9 @@ const AddBusinesscardModal = ({ onClose }) => {
             </label>
             <input
               type="text"
-              name=""
+              name="profession"
+              onChange={handleChange}
+                             value={formData.profession}
               id=""
               className="border-b border-gray-600 w-full p-1 focus:outline-none"
               placeholder="Profession/Designation"
@@ -45,7 +99,9 @@ const AddBusinesscardModal = ({ onClose }) => {
             </label>
             <input
               type="text"
-              name=""
+              name="contact_number"
+              onChange={handleChange}
+                             value={formData.contact_number}
               id=""
               className="border-b border-gray-600 w-full p-1 focus:outline-none"
               placeholder="Contact number"
@@ -57,7 +113,9 @@ const AddBusinesscardModal = ({ onClose }) => {
             </label>
             <input
               type="text"
-              name=""
+              name="email_id"
+              onChange={handleChange}
+                             value={formData.email_id}
               id=""
               className="border-b border-gray-600 w-full p-1 focus:outline-none"
               placeholder="Email id"
@@ -69,7 +127,9 @@ const AddBusinesscardModal = ({ onClose }) => {
             </label>
             <input
               type="text"
-              name=""
+              name="website_url"
+              onChange={handleChange}
+                             value={formData.website_url}
               id=""
               className="border-b border-gray-600 w-full p-1 focus:outline-none"
               placeholder="Website url"
@@ -81,8 +141,10 @@ const AddBusinesscardModal = ({ onClose }) => {
               Profile image
             </label>
             <input
-              type="file"
-              name=""
+              type="file" 
+              name="attachment"
+              onChange={handleFileChange}
+             
               id=""
               className="border-2 rounded-md border-double border-gray-600 w-full p-1 focus:outline-none"
             />
@@ -93,7 +155,9 @@ const AddBusinesscardModal = ({ onClose }) => {
             </label>
             <input
               type="text"
-              name=""
+              name="address"
+              onChange={handleChange}
+                             value={formData.address}
               id=""
               className="border-b border-gray-600 w-full p-1 focus:outline-none"
               placeholder="Address"
@@ -108,6 +172,7 @@ const AddBusinesscardModal = ({ onClose }) => {
             <MdClose /> Close
           </button>
           <button
+          onClick={handleSubmit}
             style={{ background: themeColor }}
             className="p-1 rounded-md  text-white flex gap-2 items-center font-medium px-4"
           >

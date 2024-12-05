@@ -1,11 +1,28 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import Navbar from '../../components/Navbar';
 import { IoMdAdd } from 'react-icons/io'
 import { Link } from 'react-router-dom';
 import { BsEye } from 'react-icons/bs';
 import Table from '../../components/table/Table';
 import SetupNavbar from '../../components/navbars/SetupNavbar';
+import { getHSNSetup } from '../../api';
+import { PiPlusCircle } from 'react-icons/pi';
+
 function SACHSNSetup() {
+  const [hsndetails, sethsnDetails] = useState([]);
+  useEffect(() => {
+    const fetchCategory = async () => {
+      try {
+        const siteDetailsResp = await getHSNSetup();
+        
+        sethsnDetails(siteDetailsResp.data);
+       
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchCategory();
+  }, []);
     const column = [
         {
           name: "Actions",
@@ -18,15 +35,24 @@ function SACHSNSetup() {
             </div>
           ),
         },
-        { name: "Type", selector: (row) => row.type, sortable: true },
+        { name: "Type", selector: (row) => row.hsn_type, sortable: true },
         { name: "Category", selector: (row) => row.category, sortable: true },
-        { name: "SAC/HSN Code", selector: (row) => row.sacHsnCode, sortable: true },
-        { name: "CGST Rate", selector: (row) => row.cgstRate, sortable: true },
-        { name: "SGST Rate", selector: (row) => row.sgstRate, sortable: true },
-        { name: "IGST Rate", selector: (row) => row.igstRate, sortable: true },
-        { name: "Created By", selector: (row) => row.createdBy, sortable: true },
-        { name: "Created On", selector: (row) => row.createdOn, sortable: true },
-        { name: "Updated On", selector: (row) => row.updatedOn, sortable: true },
+        { name: "SAC/HSN Code", selector: (row) => row.code, sortable: true },
+        { name: "CGST Rate", selector: (row) => row.cgst_rate, sortable: true },
+        { name: "SGST Rate", selector: (row) => row.sgst_rate, sortable: true },
+        { name: "IGST Rate", selector: (row) => row.igst_rate, sortable: true },
+        { name: "Created By", selector: (row) => row.created_by_name.firstname +" " + row.created_by_name.lastname, sortable: true },
+        {
+          name: "Created On",
+          selector: (row) => new Date(row.created_at).toLocaleDateString(),
+          sortable: true
+        },
+        {
+          name: "Updated On",
+          selector: (row) => new Date(row.updated_at).toLocaleDateString(),
+          sortable: true
+        }
+        
     ];
 
     const data = [
@@ -46,7 +72,7 @@ function SACHSNSetup() {
   return (
     <section className='flex'>
         <SetupNavbar/>
-        <div className='w-full flex mx-3 flex-col overflow-hidden'>
+        <div className='w-full flex mx-3 flex-col overflow-hidden my-8'>
             <div className="flex flex-col sm:flex-row md:justify-between gap-3 my-3">
                 <input
                   type="text"
@@ -55,14 +81,14 @@ function SACHSNSetup() {
                 />
                 <div className='flex gap-3 sm:flex-row flex-col'>
                     <Link to={`/admin/add-sac-hsn-setup`} className='font-semibold border-2 border-black px-4 p-1 flex gap-2 items-center rounded-md'>
-                      <IoMdAdd /> Add
+                     <PiPlusCircle size={20}/> Add
                     </Link>
                 </div>
             </div>
             <div className='my-3'>
                 <Table 
                   columns={column}
-                  data={data}
+                  data={hsndetails}
                   isPagination={true}
                 />
             </div>

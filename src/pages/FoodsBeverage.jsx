@@ -69,15 +69,20 @@ const FoodsBeverage = () => {
     {
       name: "Open Days",
       selector: (row) => {
-        if (!row?.restaurant_schedule) return "No schedule";
-
-        // Get the first letter of each day and join them into a string
-        return Object.keys(row.restaurant_schedule)
-          .map((day) => day.charAt(0)) // Get the first letter of each day
-          .join(", "); // Join them with a comma
+        // Define the days of the week in order
+        const daysOfWeek = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+    
+        // Filter days where the value is 1 and capitalize the first letter
+        const openDays = daysOfWeek
+          .filter((day) => row[day] === 1) // Only keep days with value 1
+          .map((day) => day.charAt(0).toUpperCase() + day.slice(1)) // Capitalize first letter
+          .join(", "); // Join them into a single string
+    
+        return openDays;
       },
       sortable: true,
     },
+    
 
     {
       name: "Booking Allowed",
@@ -85,13 +90,8 @@ const FoodsBeverage = () => {
         <div className="flex items-center gap-4">
         <input
         type="checkbox"
-        checked={
-          Object.values(row?.restaurant_schedule || {}).some(
-            (day) => day.booking_allowed
-          )
-        }
-        onChange={(e) => handleToggle(row.id, "booking_allowed", e.target.checked)}
-      />
+        checked={row.booking_allowed}
+       />
       </div>
       ),
       sortable: true,
@@ -103,13 +103,8 @@ const FoodsBeverage = () => {
         <div className="flex items-center gap-4">
          <input
         type="checkbox"
-        checked={
-          Object.values(row?.restaurant_schedule || {}).some(
-            (day) => day.order_allowed
-          )
-        }
-        onChange={(e) => handleToggle(row.id, "order_allowed", e.target.checked)}
-      />
+        checked={row.order_allowed}
+        />
       </div>
       ),
       sortable: true,
