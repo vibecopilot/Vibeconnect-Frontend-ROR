@@ -351,12 +351,14 @@ const AddFB = () => {
       formData.deliveryCharge
     );
     postData.append("food_and_beverage[minimum_order]", formData.minimumOrder);
-    // postData.append("food_and_beverage[closing_message]", formData.orderNotAllowedText);
+    postData.append("food_and_beverage[order_not_available_text]", formData.orderNotAllowedText);
     postData.append(
       "food_and_beverage[serviceCharges]",
       formData.ServiceCharges
     );
-   
+    postData.append("food_and_beverage[start_time]", formData.start_time);
+    postData.append("food_and_beverage[end_time]", formData.end_time);
+
     postData.append("food_and_beverage[sun]", selectedDays['sunday'] ? "1" : "0");
 
     postData.append("food_and_beverage[mon]", selectedDays['monday'] ? "1" : "0");
@@ -1156,7 +1158,7 @@ const AddFB = () => {
           <h3 className="border-b text-center text-xl border-black mb-6 font-bold">
             ATTACHMENTS
           </h3>
-          <label htmlFor="" className="font-medium my-1 ">
+          <label htmlFor="" className="font-medium my-2 ">
             Cover Image
           </label>
 
@@ -1165,7 +1167,7 @@ const AddFB = () => {
             fieldName={"cover_image"}
             // isMulti={true}
           />
-          <label htmlFor="" className="font-medium ">
+          <label htmlFor="" className="font-medium my-2">
             Menu
           </label>
           <FileInputBox
@@ -1173,7 +1175,7 @@ const AddFB = () => {
             fieldName={"Menu"}
             isMulti={true}
           />
-          <label htmlFor="" className="font-medium my-1 ">
+          <label htmlFor="" className="font-medium my-2 ">
             Gallery
           </label>
           <FileInputBox

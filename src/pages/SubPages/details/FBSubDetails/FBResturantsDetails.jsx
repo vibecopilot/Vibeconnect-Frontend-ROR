@@ -132,21 +132,39 @@ const FBRestaurtantDetails = () => {
              <p>{operationalDays.map((day) => day.charAt(0).toUpperCase() + day.slice(1)).join(", ") || "None"}</p>
           </div>
           <div className="grid grid-cols-2">
-            <p className="">Start Time:</p>
-            <p>{formData.start_time}</p>
-          </div>
-          <div className="grid grid-cols-2">
-            <p className="">End Time:</p>
-            <p>{formData.end_time}</p>
-          </div>
-          <div className="grid grid-cols-2">
-            <p className="">Break Start Time:</p>
-            <p>{formData.break_start_time}</p>
-          </div>
-          <div className="grid grid-cols-2">
-            <p className="">Break End Time:</p>
-            <p>{formData.break_end_time}</p>
-          </div>
+  <p className="">Start Time:</p>
+  <p>
+    {formData.start_time
+      ? new Date(formData.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      : 'N/A'}
+  </p>
+</div>
+<div className="grid grid-cols-2">
+  <p className="">End Time:</p>
+  <p>
+    {formData.end_time
+      ? new Date(formData.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      : 'N/A'}
+  </p>
+</div>
+<div className="grid grid-cols-2">
+  <p className="">Break Start Time:</p>
+  <p>
+    {formData.break_start_time
+      ? new Date(formData.break_start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      : 'N/A'}
+  </p>
+</div>
+<div className="grid grid-cols-2">
+  <p className="">Break End Time:</p>
+  <p>
+    {formData.break_end_time
+      ? new Date(formData.break_end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      : 'N/A'}
+  </p>
+</div>
+
+
           <div className="grid grid-cols-2">
   <p className="">Last Booking & Order Time:</p>
   <p>{formData.last_booking_time ? new Date(formData.last_booking_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</p>
