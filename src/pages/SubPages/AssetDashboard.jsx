@@ -5,6 +5,7 @@ import {
   FaChevronDown,
   FaChevronUp,
   FaDownload,
+  FaRegCalendar,
   FaSpinner,
 } from "react-icons/fa";
 import {
@@ -32,7 +33,18 @@ import {
   getRoutinePendingCount,
 } from "../../api";
 import toast from "react-hot-toast";
-import { IoSettings, IoSettingsOutline } from "react-icons/io5";
+import { IoSettingsOutline } from "react-icons/io5";
+import {
+  AiOutlineBarChart,
+  AiOutlineLineChart,
+  AiOutlineAreaChart,
+  AiOutlineUser,
+} from "react-icons/ai";
+import { RiPieChartFill } from "react-icons/ri";
+import { FiBarChart2, FiBriefcase } from "react-icons/fi";
+import { TbUsers } from "react-icons/tb";
+import { LuAlertTriangle, LuCheckCircle } from "react-icons/lu";
+import { BsClock } from "react-icons/bs";
 function AssetDashboard() {
   const [breakCount, setBreakCount] = useState("");
   const [inUseCount, setInUseCount] = useState("");
@@ -47,6 +59,7 @@ function AssetDashboard() {
   const [routinePendingCount, setRoutinePendingCount] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
+
   const dropdownRef = useRef(null);
   const handleClickOutside = (event) => {
     if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -54,32 +67,72 @@ function AssetDashboard() {
     }
   };
 
+
   useEffect(() => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+
+  const [isAssetDropdown, setIsAssetDropdown] = useState(false);
+  const [assetChartType, setAssetChartType] = useState("pie"); // State to store chart type
+
+
+  const toggleAssetDropdown = () => setIsAssetDropdown(!isAssetDropdown);
+
+
+  // Change chart type based on dropdown selection
+  const handleAssetChartTypeChange = (type) => {
+    setAssetChartType(type);
+    setIsAssetDropdown(false); // Close the dropdown after selecting a chart type
+  };
   const optionsPPMOverdue = {
     chart: {
-      type: "pie",
+      type: assetChartType, // Ensure this is "pie", "column", etc.
       backgroundColor: "transparent",
     },
     title: {
       text: null,
     },
     tooltip: {
-      pointFormat: "{series.name}: <b>{point.y}</b>",
+      pointFormat: "{point.name}: <b>{point.y}</b>", // Updated tooltip format
       verticalAlign: "top",
     },
+    xAxis:
+      assetChartType === "column"
+        ? {
+            categories: ["In Use Asset", "Break Down"], // Add categories for column charts
+            title: {
+              text: null,
+            },
+          }
+        : undefined, // No xAxis for pie charts
     plotOptions: {
       pie: {
         allowPointSelect: true,
         cursor: "pointer",
         dataLabels: {
           enabled: true,
-          format: "<b>{point.name}</b>: {point.y}",
+          format: "<b>{point.name}</b>: {point.y}", // Updated data label format
         },
+      },
+      column: {
+        pointPadding: 0.2,
+        borderWidth: 0,
+        dataLabels: {
+          enabled: true,
+          format: "{point.y}", // Display data values for columns
+        },
+      },
+      line: {
+        dataLabels: {
+          enabled: true,
+        },
+      },
+      area: {
+        stacking: "normal",
       },
     },
     series: [
@@ -92,14 +145,34 @@ function AssetDashboard() {
             y: Number(inUseCount) || 0,
             color: "#10B981",
           },
-          { name: "Break Down", y: Number(breakCount) || 0, color: "#EF4444" },
+          {
+            name: "Break Down",
+            y: Number(breakCount) || 0,
+            color: "#EF4444",
+          },
         ],
       },
     ],
   };
+
+
+  const [isPPMDropdown, setIsPPMDropdown] = useState(false);
+  const [ppmChartType, setPPMChartType] = useState("pie"); // State to store chart type
+
+
+  const togglePPMDropdown = () => setIsPPMDropdown(!isPPMDropdown);
+
+
+  // Change chart type based on dropdown selection
+  const handlePPMChartTypeChange = (type) => {
+    setPPMChartType(type);
+    setIsPPMDropdown(false); // Close the dropdown after selecting a chart type
+  };
+
+
   const optionsPPMSchedule = {
     chart: {
-      type: "pie",
+      type: ppmChartType, // e.g., "column" or "pie"
       backgroundColor: "transparent",
     },
     title: {
@@ -108,14 +181,45 @@ function AssetDashboard() {
     tooltip: {
       pointFormat: "{series.name}: <b>{point.y}</b>",
     },
+    xAxis: ppmChartType === "column"
+      ? {
+          categories: ["PPM Overdue", "PPM Complete",], // Labels for column chart
+          title: {
+            text: null, // No additional title needed for the x-axis
+          },
+        }
+      : undefined, // Omit xAxis for pie charts
+    yAxis: ppmChartType === "column"
+      ? {
+          title: {
+            text: "Count", // Label for the y-axis in column charts
+          },
+        }
+      : undefined, // Omit yAxis for pie charts
     plotOptions: {
       pie: {
         allowPointSelect: true,
         cursor: "pointer",
         dataLabels: {
           enabled: true,
-          format: "<b>{point.name}</b>: {point.y}",
+          format: "<b>{point.name}</b>: {point.y}", // Show name and value for pie chart slices
         },
+      },
+      column: {
+        pointPadding: 0.2,
+        borderWidth: 0,
+        dataLabels: {
+          enabled: true, // Enable data labels for column chart
+          format: "{point.y}", // Show only the value above the bars
+        },
+      },
+      line: {
+        dataLabels: {
+          enabled: true,
+        },
+      },
+      area: {
+        stacking: "normal",
       },
     },
     series: [
@@ -124,20 +228,45 @@ function AssetDashboard() {
         colorByPoint: true,
         data: [
           { name: "PPM Overdue", y: Number(ppmOverDue) || 0, color: "#EF4444" },
-          // { name: "PPM Pending", y: Number(ppmPending) || 0, color: "#10B981" },
-          {
-            name: "PPM Complete",
-            y: Number(ppmComplete) || 0,
-            color: "#10B981",
-          },
+          { name: "PPM Complete", y: Number(ppmComplete) || 0, color: "#10B981" },
         ],
       },
     ],
   };
+ 
+  const [isRoutineDropdown, setIsRoutineDropdown] = useState(false);
+  const [routineChartType, setRoutineChartType] = useState("pie"); // State to store chart type
+
+
+  const toggleRoutineDropdown = () => setIsRoutineDropdown(!isRoutineDropdown);
+
+
+  // Change chart type based on dropdown selection
+  const handleRoutineChartTypeChange = (type) => {
+    setRoutineChartType(type);
+    setIsRoutineDropdown(false); // Close the dropdown after selecting a chart type
+  };
+
+
+  const getChartTypeIcon = (type) => {
+    switch (type) {
+      case "pie":
+        return <RiPieChartFill className="mr-2" />;
+      case "column":
+        return <AiOutlineBarChart className="mr-2" />;
+      case "line":
+        return <AiOutlineLineChart className="mr-2" />;
+      case "area":
+        return <AiOutlineAreaChart className="mr-2" />;
+      default:
+        return null;
+    }
+  };
+
 
   const optionsRoutineSchedule = {
     chart: {
-      type: "pie",
+      type: routineChartType, // Use chartType state here (e.g., "column", "pie")
       backgroundColor: "transparent",
     },
     title: {
@@ -146,40 +275,88 @@ function AssetDashboard() {
     tooltip: {
       pointFormat: "{series.name}: <b>{point.y}</b>",
     },
+    xAxis:
+      routineChartType === "column"
+        ? {
+            categories: ["Task Routine Overdue", "Task Routine Complete"], // Labels for column chart
+            title: {
+              text: null,
+            },
+          }
+        : undefined, // No xAxis for pie charts
+    yAxis:
+      routineChartType === "column"
+        ? {
+            title: {
+              text: "Count", // Label for the y-axis
+            },
+          }
+        : undefined, // No yAxis for pie charts
     plotOptions: {
       pie: {
         allowPointSelect: true,
         cursor: "pointer",
         dataLabels: {
           enabled: true,
-          format: "<b>{point.name}</b>: {point.y}",
+          format: "<b>{point.name}</b>: {point.y}", // Labels for pie chart
         },
+      },
+      column: {
+        pointPadding: 0.2,
+        borderWidth: 0,
+        dataLabels: {
+          enabled: true, // Enable data labels for column chart
+          format: "{point.y}", // Show values on the bars
+        },
+      },
+      line: {
+        dataLabels: {
+          enabled: true,
+        },
+      },
+      area: {
+        stacking: "normal",
+      },
+      bar: {
+        stacking: "normal",
       },
     },
     series: [
       {
         name: "Task Routine",
         colorByPoint: true,
-        data: [
-          {
-            name: "Task Routine Overdue",
-            y: Number(routineOverdueCount) || 0,
-            color: "#EF4444",
-          },
-          // {
-          //   name: "Task Routine Pending",
-          //   y: Number(routinePendingCount) || 0,
-          //   color: "#10B981",
-          // },
-          {
-            name: "Task Routine Complete",
-            y: Number(routineCompleteCount) || 0,
-            color: "#10B981",
-          },
-        ],
+        data:
+          routineChartType === "column"
+            ? [
+                {
+                  name: "Task Routine Overdue",
+                  y: Number(routineOverdueCount) || 0,
+                  color: "#EF4444",
+                },
+                {
+                  name: "Task Routine Complete",
+                  y: Number(routineCompleteCount) || 0,
+                  color: "#10B981",
+                },
+              ]
+            : [
+                // Pie chart uses similar data structure, with names and values
+                {
+                  name: "Task Routine Overdue",
+                  y: Number(routineOverdueCount) || 0,
+                  color: "#EF4444",
+                },
+                {
+                  name: "Task Routine Complete",
+                  y: Number(routineCompleteCount) || 0,
+                  color: "#10B981",
+                },
+              ],
       },
     ],
   };
+
+
   const handleTotalAssetDownload = async () => {
     toast.loading("Downloading Please Wait");
     try {
@@ -208,6 +385,7 @@ function AssetDashboard() {
     }
   };
 
+
   const handleTotalBreakdownDownload = async () => {
     toast.loading("Downloading Please Wait");
     try {
@@ -232,10 +410,12 @@ function AssetDashboard() {
     }
   };
 
+
   const assetInUseDownload = async () => {
     toast.loading("Downloading Please Wait");
     try {
       const response = await getAssetInDownload();
+
 
       const url = window.URL.createObjectURL(
         new Blob([response.data], {
@@ -256,6 +436,7 @@ function AssetDashboard() {
       toast.error("Something went wrong, please try again");
     }
   };
+
 
   const handleScheduledDownload = async () => {
     toast.loading("Downloading Please Wait");
@@ -281,6 +462,7 @@ function AssetDashboard() {
     }
   };
 
+
   const handlePPMOverDueDownload = async () => {
     toast.loading("Downloading Please Wait");
     try {
@@ -297,6 +479,7 @@ function AssetDashboard() {
       link.click();
       link.remove();
 
+
       toast.success("PPM Over Due downloaded successfully");
       toast.dismiss();
     } catch (error) {
@@ -305,6 +488,7 @@ function AssetDashboard() {
       toast.error("Something went wrong, please try again");
     }
   };
+
 
   const handlePPMPendingDownload = async () => {
     toast.loading("Downloading Please Wait");
@@ -322,6 +506,7 @@ function AssetDashboard() {
       link.click();
       link.remove();
 
+
       toast.success("PPM Pending downloaded successfully");
       toast.dismiss();
     } catch (error) {
@@ -330,6 +515,7 @@ function AssetDashboard() {
       toast.error("Something went wrong, please try again");
     }
   };
+
 
   const handlePPMCompleteDownload = async () => {
     toast.loading("Downloading Please Wait");
@@ -355,7 +541,9 @@ function AssetDashboard() {
     }
   };
 
+
   // task routine
+
 
   const handleRoutineScheduledDownload = async () => {
     toast.loading("Downloading Please Wait");
@@ -381,6 +569,7 @@ function AssetDashboard() {
     }
   };
 
+
   const handleRoutineOverDueDownload = async () => {
     toast.loading("Downloading Please Wait");
     try {
@@ -397,6 +586,7 @@ function AssetDashboard() {
       link.click();
       link.remove();
 
+
       toast.success("Routine Overdue downloaded successfully");
       toast.dismiss();
     } catch (error) {
@@ -405,6 +595,7 @@ function AssetDashboard() {
       toast.error("Something went wrong, please try again");
     }
   };
+
 
   const handleRoutinePendingDownload = async () => {
     toast.loading("Downloading Please Wait");
@@ -422,6 +613,7 @@ function AssetDashboard() {
       link.click();
       link.remove();
 
+
       toast.success("Routine Pending downloaded successfully");
       toast.dismiss();
     } catch (error) {
@@ -430,6 +622,7 @@ function AssetDashboard() {
       toast.error("Something went wrong, please try again");
     }
   };
+
 
   const handleRoutineCompleteDownload = async () => {
     toast.loading("downloading please wait");
@@ -455,6 +648,7 @@ function AssetDashboard() {
     }
   };
 
+
   useEffect(() => {
     const fetchAssetTotalCount = async () => {
       try {
@@ -464,6 +658,7 @@ function AssetDashboard() {
         console.log(error);
       }
     };
+
 
     const fetchTotalBreakdownCount = async () => {
       try {
@@ -482,6 +677,7 @@ function AssetDashboard() {
       }
     };
 
+
     const fetchPPMScheduleCount = async () => {
       try {
         const scheduleCount = await getPPMScheduleCount(); // API call to fetch users
@@ -490,6 +686,7 @@ function AssetDashboard() {
         console.log(error);
       }
     };
+
 
     const fetchPPMOverDueCount = async () => {
       try {
@@ -500,6 +697,7 @@ function AssetDashboard() {
       }
     };
 
+
     const fetchPPMpendingCount = async () => {
       try {
         const pendingCount = await getPPMpendingCount(); // API call to fetch users
@@ -508,6 +706,7 @@ function AssetDashboard() {
         console.log(error);
       }
     };
+
 
     const fetchPPMCompleteCount = async () => {
       try {
@@ -536,6 +735,7 @@ function AssetDashboard() {
       }
     };
 
+
     const fetchRoutineCompleteCount = async () => {
       try {
         const routineComplete = await getRoutineCompleteCount(); // API call to fetch users
@@ -546,6 +746,7 @@ function AssetDashboard() {
       }
     };
 
+
     const fetchRoutinePendingCount = async () => {
       try {
         const routinePending = await getRoutinePendingCount(); // API call to fetch users
@@ -555,6 +756,7 @@ function AssetDashboard() {
         console.log(error);
       }
     };
+
 
     fetchTotalBreakdownCount();
     fetchAssetTotalCount();
@@ -569,66 +771,109 @@ function AssetDashboard() {
     fetchRoutinePendingCount();
   }, []);
 
+
+  const cardColor = (type) => {
+    switch (type) {
+      case "Total Asset":
+        return { bg: "bg-blue-50", text: "text-blue-400" };
+      case "Asset Breakdown":
+        return { bg: "bg-green-50", text: "text-green-400" };
+      case "In Use Asset":
+        return { bg: "bg-yellow-50", text: "text-yellow-400" };
+      case "PPM Scheduled":
+        return { bg: "bg-blue-50", text: "text-blue-400" };
+      case "PPM Overdue":
+        return { bg: "bg-red-50", text: "text-red-400" };
+      case "PPM Pending":
+        return { bg: "bg-orange-50", text: "text-orange-400" };
+      case "PPM Complete":
+        return { bg: "bg-teal-50", text: "text-teal-400" };
+      case "Routine Task Scheduled":
+        return { bg: "bg-blue-50", text: "text-blue-400" };
+      case "Routine Task Overdue":
+        return { bg: "bg-pink-50", text: "text-pink-400" };
+      case "Routine Task Pending":
+        return { bg: "bg-yellow-50", text: "text-yellow-400" };
+      case "Routine Task Complete":
+        return { bg: "bg-green-50", text: "text-green-400" };
+      default:
+        return { bg: "bg-gray-50", text: "text-gray-400" };
+    }
+  };
+
+
   const cardData = [
     {
       title: "Total Asset",
       count: totalAssetCount,
       downloadHandler: handleTotalAssetDownload,
+      icon: <FiBriefcase className="w-4 h-4" />,
     },
     {
       title: "Asset Breakdown",
       count: breakCount,
       downloadHandler: handleTotalBreakdownDownload,
+      icon: <FiBarChart2 className="w-4 h-4" />,
     },
     {
       title: "In Use Asset",
       count: inUseCount,
       downloadHandler: assetInUseDownload,
+      icon: <TbUsers className="w-4 h-4" />,
     },
     {
       title: "PPM Scheduled",
       count: ppmSchedule,
       downloadHandler: handleScheduledDownload,
+      icon: <FaRegCalendar className="w-4 h-4" />,
     },
     {
       title: "PPM Overdue",
       count: ppmOverDue,
       downloadHandler: handlePPMOverDueDownload,
+      icon: <LuAlertTriangle className="w-4 h-4" />,
     },
     // {
     //   title: "PPM Pending",
     //   count: ppmPending,
     //   downloadHandler: handlePPMPendingDownload,
+    //   icon : <BsClock className="w-4 h-4" />
     // },
     {
       title: "PPM Complete",
       count: ppmComplete,
       downloadHandler: handlePPMCompleteDownload,
+      icon: <LuCheckCircle className="w-4 h-4" />,
     },
     {
-      title: "Task Routine Scheduled",
+      title: "Routine Task Scheduled",
       count: routineScheduleCount,
       downloadHandler: handleRoutineScheduledDownload,
+      icon: <FaRegCalendar className="w-4 h-4" />,
     },
     {
-      title: "Task Routine Overdue",
+      title: "Routine Task Overdue",
       count: routineOverdueCount,
       downloadHandler: handleRoutineOverDueDownload,
+      icon: <LuAlertTriangle className="w-4 h-4" />,
     },
     // {
-    //   title: "Task Routine Pending",
+    //   title: "Routine Task Pending",
     //   count: routinePendingCount,
     //   downloadHandler: handleRoutinePendingDownload,
+    //   icon : <BsClock className="w-4 h-4" />
     // },
     {
-      title: "Task Routine Complete",
+      title: "Routine Task Complete",
       count: routineCompleteCount,
       downloadHandler: handleRoutineCompleteDownload,
+      icon: <LuCheckCircle className="w-4 h-4" />,
     },
   ];
   const [selectedTitles, setSelectedTitles] = useState(
     cardData.map((card) => card.title)
   );
+
 
   const handleCheckboxChange = (title) => {
     setSelectedTitles((prevSelected) =>
@@ -647,9 +892,9 @@ function AssetDashboard() {
         >
           <IoSettingsOutline /> Assets
           {isDropdownOpen ? (
-              <FaChevronUp className="ml-2" />
-        ) : (
-              <FaChevronDown className="ml-2" />
+            <FaChevronUp className="ml-2" />
+          ) : (
+            <FaChevronDown className="ml-2" />
           )}
         </button>
         {isDropdownOpen && (
@@ -673,33 +918,43 @@ function AssetDashboard() {
           </div>
         )}
       </div>
-
       <div className="grid md:grid-cols-4 gap-5 mx-3">
         {cardData.map(
           (card) =>
             selectedTitles.includes(card.title) && (
               <div
                 key={card.title}
-                className="bg-white shadow-custom-all-sides border py-2 px-5 rounded-md flex flex-col text-gray-500 text-sm font-medium h-32"
+                className={`${cardColor(card.title).bg} ${
+                  cardColor(card.title).text
+                } shadow-custom-all-sides border py-2 px-3 rounded-md flex flex-col text-sm font-medium h-32`}
               >
                 <div className="flex justify-between items-center">
                   <h2 className="font-medium text-xl text-center">
                     {card.title}
                   </h2>
-                  <div>
+                  <div className="flex gap-1">
+                    <span className={`${cardColor(card.title).text}`}>
+                      {card.icon}
+                    </span>
                     {card.loading ? (
                       <div className="flex gap-2">
                         <h2 className="text-sm">Downloading ...</h2>
-                        <FaSpinner className="animate-spin text-blue-500" />
+                        <FaSpinner
+                          className={`animate-spin ${
+                            cardColor(card.title).text
+                          }`}
+                        />
                       </div>
                     ) : (
                       <button onClick={card.downloadHandler}>
-                        <FaDownload />
+                        <FaDownload
+                          className={`${cardColor(card.title).text} h-4 w-4`}
+                        />
                       </button>
                     )}
                   </div>
                 </div>
-                <div className="my-5 flex items-center justify-center">
+                <div className="my-5 flex items-center justify-start">
                   <span className="text-3xl">{card.count}</span>
                 </div>
               </div>
@@ -720,6 +975,76 @@ function AssetDashboard() {
                 >
                   <FaDownload />
                 </button>
+                <div className="relative inline-block text-left mx-1">
+                  <button
+                    onClick={toggleAssetDropdown}
+                    className="bg-blue-200 text-blue-500 px-4 rounded-md py-1"
+                  >
+                    <span className="flex justify-center">
+                      {getChartTypeIcon(assetChartType)}
+                    </span>
+                  </button>
+
+
+                  {isAssetDropdown && (
+                    <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-md shadow-lg z-10">
+                      <div className="py-1">
+                        <button
+                          onClick={() => handleAssetChartTypeChange("pie")}
+                          className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
+                            assetChartType === "pie"
+                              ? "bg-gray-200 text-black"
+                              : ""
+                          }`}
+                        >
+                          <div className="flex items-center">
+                            <RiPieChartFill className="mr-2" />
+                            <span className="text-xs">Pie</span>
+                          </div>
+                        </button>
+                        <button
+                          onClick={() => handleAssetChartTypeChange("column")}
+                          className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
+                            assetChartType === "column"
+                              ? "bg-gray-200 text-black"
+                              : ""
+                          }`}
+                        >
+                          <div className="flex items-center">
+                            <AiOutlineBarChart className="mr-2" />
+                            <span className="text-xs">Column</span>
+                          </div>
+                        </button>
+                        <button
+                          onClick={() => handleAssetChartTypeChange("line")}
+                          className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
+                            assetChartType === "line"
+                              ? "bg-gray-200 text-black"
+                              : ""
+                          }`}
+                        >
+                          <div className="flex items-center">
+                            <AiOutlineLineChart className="mr-2" />
+                            <span className="text-xs">Line</span>
+                          </div>
+                        </button>
+                        <button
+                          onClick={() => handleAssetChartTypeChange("area")}
+                          className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
+                            assetChartType === "area"
+                              ? "bg-gray-200 text-black"
+                              : ""
+                          }`}
+                        >
+                          <div className="flex items-center">
+                            <AiOutlineAreaChart className="mr-2" />
+                            <span className="text-xs">Area</span>
+                          </div>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
             <HighchartsReact
@@ -729,7 +1054,7 @@ function AssetDashboard() {
           </div>
         </div>
         <div className="w-full">
-          <div className="py-2 px-3 shadow-custom-all-sides rounded-lg border bg-white">
+          <div className="py-2 px-3 shadow-custom-all-sides rounded-lg border bg-white text-black">
             <div className="flex justify-between items-center">
               <h2 className="text-lg font-semibold text-gray-800">Total PPM</h2>
               <div>
@@ -739,6 +1064,76 @@ function AssetDashboard() {
                 >
                   <FaDownload />
                 </button>
+                <div className="relative inline-block text-left mx-1">
+                  <button
+                    onClick={togglePPMDropdown}
+                    className="bg-blue-200 text-blue-500 px-4 rounded-md py-1"
+                  >
+                    <span className="flex justify-center">
+                      {getChartTypeIcon(ppmChartType)}
+                    </span>
+                  </button>
+
+
+                  {isPPMDropdown && (
+                    <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-md shadow-lg z-10">
+                      <div className="py-1">
+                        <button
+                          onClick={() => handlePPMChartTypeChange("pie")}
+                          className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
+                            ppmChartType === "pie"
+                              ? "bg-gray-200 text-black"
+                              : ""
+                          }`}
+                        >
+                          <div className="flex items-center">
+                            <RiPieChartFill className="mr-2" />
+                            <span className="text-xs">Pie</span>
+                          </div>
+                        </button>
+                        <button
+                          onClick={() => handlePPMChartTypeChange("column")}
+                          className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
+                            ppmChartType === "column"
+                              ? "bg-gray-200 text-black"
+                              : ""
+                          }`}
+                        >
+                          <div className="flex items-center">
+                            <AiOutlineBarChart className="mr-2" />
+                            <span className="text-xs">Column</span>
+                          </div>
+                        </button>
+                        <button
+                          onClick={() => handlePPMChartTypeChange("line")}
+                          className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
+                            ppmChartType === "line"
+                              ? "bg-gray-200 text-black"
+                              : ""
+                          }`}
+                        >
+                          <div className="flex items-center">
+                            <AiOutlineLineChart className="mr-2" />
+                            <span className="text-xs">Line</span>
+                          </div>
+                        </button>
+                        <button
+                          onClick={() => handlePPMChartTypeChange("area")}
+                          className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
+                            ppmChartType === "area"
+                              ? "bg-gray-200 text-black"
+                              : ""
+                          }`}
+                        >
+                          <div className="flex items-center">
+                            <AiOutlineAreaChart className="mr-2" />
+                            <span className="text-xs">Area</span>
+                          </div>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
             <HighchartsReact
@@ -760,12 +1155,84 @@ function AssetDashboard() {
                 >
                   <FaDownload />
                 </button>
+                <div className="relative inline-block text-left mx-1">
+                  <button
+                    onClick={toggleRoutineDropdown}
+                    className="bg-blue-200 text-blue-500 px-4 rounded-md py-1"
+                  >
+                    <span className="flex justify-center">
+                      {getChartTypeIcon(routineChartType)}
+                    </span>
+                  </button>
+
+
+                  {isRoutineDropdown && (
+                    <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-md shadow-lg z-10">
+                      <div className="py-1">
+                        <button
+                          onClick={() => handleRoutineChartTypeChange("pie")}
+                          className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
+                            routineChartType === "pie"
+                              ? "bg-gray-200 text-black"
+                              : ""
+                          }`}
+                        >
+                          <div className="flex items-center">
+                            <RiPieChartFill className="mr-2" />
+                            <span className="text-xs">Pie</span>
+                          </div>
+                        </button>
+                        <button
+                          onClick={() => handleRoutineChartTypeChange("column")}
+                          className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
+                            routineChartType === "column"
+                              ? "bg-gray-200 text-black"
+                              : ""
+                          }`}
+                        >
+                          <div className="flex items-center">
+                            <AiOutlineBarChart className="mr-2" />
+                            <span className="text-xs">Column</span>
+                          </div>
+                        </button>
+                        <button
+                          onClick={() => handleRoutineChartTypeChange("line")}
+                          className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
+                            routineChartType === "line"
+                              ? "bg-gray-200 text-black"
+                              : ""
+                          }`}
+                        >
+                          <div className="flex items-center">
+                            <AiOutlineLineChart className="mr-2" />
+                            <span className="text-xs">Line</span>
+                          </div>
+                        </button>
+                        <button
+                          onClick={() => handleRoutineChartTypeChange("area")}
+                          className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
+                            routineChartType === "area"
+                              ? "bg-gray-200 text-black"
+                              : ""
+                          }`}
+                        >
+                          <div className="flex items-center">
+                            <AiOutlineAreaChart className="mr-2" />
+                            <span className="text-xs">Area</span>
+                          </div>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-            <HighchartsReact
-              highcharts={Highcharts}
-              options={optionsRoutineSchedule}
-            />
+            <div className="mt-10">
+              <HighchartsReact
+                highcharts={Highcharts}
+                options={optionsRoutineSchedule}
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -773,4 +1240,8 @@ function AssetDashboard() {
   );
 }
 
+
 export default AssetDashboard;
+
+
+
