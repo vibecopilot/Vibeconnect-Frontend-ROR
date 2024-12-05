@@ -170,9 +170,7 @@ const PendingUniformRequest = () => {
       setFilteredRequests(requests);
     } else {
       const filteredResult = requests.filter((employee) =>
-        employee.employee_name
-          .toLowerCase()
-          .includes(searchValue.toLowerCase())
+        employee.employee_name.toLowerCase().includes(searchValue.toLowerCase())
       );
       setFilteredRequests(filteredResult);
     }
@@ -257,7 +255,7 @@ const PendingUniformRequest = () => {
                     <span className="text-gray-400 text-sm">(inches)</span>
                   </label>
                   <input
-                    type="text"
+                    type="number"
                     name="chest"
                     value={formData.chest}
                     onChange={handleChange}
@@ -272,13 +270,28 @@ const PendingUniformRequest = () => {
                     <span className="text-gray-400 text-sm">(inches)</span>
                   </label>
                   <input
-                    type="text"
+                    type="number"
                     name="waist"
                     value={formData.waist}
                     onChange={handleChange}
                     id=""
                     className="border border-gray-300 p-2 rounded-md w-full"
                     placeholder="Waist size"
+                  />
+                </div>
+                <div className="mt-2">
+                  <label className="block t font-medium text-gray-700">
+                    Shoes
+                    {/* <span className="text-gray-400 text-sm">(inches)</span> */}
+                  </label>
+                  <input
+                    type="number"
+                    name="waist"
+                    value={formData.shoes}
+                    onChange={handleChange}
+                    id=""
+                    className="border border-gray-300 p-2 rounded-md w-full"
+                    placeholder="Shoes size"
                   />
                 </div>
                 {/* <div className="mt-2">

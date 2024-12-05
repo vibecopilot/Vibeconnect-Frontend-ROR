@@ -37,7 +37,7 @@ const OnBoardingCompleted = () => {
       name: "View",
       selector: (row) => (
         <div>
-          <Link to={"/admin/edit-employee/basics"}>
+          <Link to={`/admin/employee-directory-Employment/${row.record_id}`}>
             <BsEye />
           </Link>
         </div>
@@ -45,7 +45,7 @@ const OnBoardingCompleted = () => {
     },
     {
       name: "Employee Id",
-      selector: (row) => row.id,
+      selector: (row) => row.record_id,
       sortable: true,
     },
     {

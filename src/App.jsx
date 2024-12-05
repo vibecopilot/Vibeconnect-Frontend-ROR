@@ -1509,7 +1509,7 @@ function App() {
             }
           />
           <Route
-            path="/admin/communication-group-details"
+            path="/admin/communication-group-details/:id"
             element={
               <ProtectedAdminRoutes>
                 <GroupJoinDetails />

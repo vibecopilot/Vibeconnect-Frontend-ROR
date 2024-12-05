@@ -140,7 +140,7 @@ const UserRoles = () => {
     const addApprover = new FormData();
     addApprover.append("organization_id", hrmsOrgId);
     addApprover.append("approver_id", selectedOptions.value);
-    addApprover.append("type_of_approver", approverType);
+    addApprover.append("type_of_approver", "Employee");
     try {
       const res = await postApprovalAuthorities(addApprover);
       setShowAddApprovalModal(false);
@@ -392,11 +392,11 @@ const UserRoles = () => {
       )}
       {showAddApprovalModal && (
         <div className="fixed inset-0 z-50 flex items-center overflow-y-auto justify-center bg-gray-500 bg-opacity-50">
-          <div className="max-h-screen min-h-60 bg-white p-2 px-3 w-[35rem] rounded-lg shadow-lg overflow-y-auto">
+          <div className="max-h-screen  bg-white p-2 px-3 w-[35rem] rounded-lg shadow-lg overflow-y-auto">
             <h2 className="flex items-center gap-2 font-medium border-b text-lg justify-center">
               <PiPlusCircleBold /> Add Approval Authority{" "}
             </h2>
-            <div className="grid gap-2 my-4">
+            <div className="grid gap-2 mt-4">
               <div className="flex flex-col gap-2">
                 <label htmlFor="" className="font-medium">
                   Select Approver
@@ -408,7 +408,7 @@ const UserRoles = () => {
                   maxMenuHeight={139}
                 />
               </div>
-              <div className="flex flex-col gap-1">
+              {/* <div className="flex flex-col gap-1">
                 <label htmlFor="" className="font-medium">
                   Type
                 </label>
@@ -419,9 +419,9 @@ const UserRoles = () => {
                   value={approverType}
                   onChange={(e) => setApproverType(e.target.value)}
                 />
-              </div>
+              </div> */}
             </div>
-            <div className="flex items-center justify-center gap-2 mt-18 border-t p-1">
+            <div className="flex items-end justify-center gap-2 mt-20  border-t p-1">
               <button
                 className="flex items-center gap-2 bg-green-400 text-white rounded-full p-2 px-4"
                 onClick={AddApprovalAuthority}

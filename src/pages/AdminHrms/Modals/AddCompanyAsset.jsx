@@ -29,7 +29,7 @@ const AddCompanyAsset = ({ setCompanyAssetModal, fetchCompanyAssets }) => {
     }
     const postData = new FormData();
     postData.append("asset_name", formData.laptopBrand);
-    postData.append("model_number", formData.mobile);
+    postData.append("asset_info", formData.mobile);
     postData.append("employee", id);
     try {
       await postCompanyAsset(postData);
@@ -41,7 +41,6 @@ const AddCompanyAsset = ({ setCompanyAssetModal, fetchCompanyAssets }) => {
     }
   };
 
- 
   return (
     <div className="fixed inset-0 z-50 flex items-center overflow-y-auto justify-center bg-gray-500 bg-opacity-50">
       <div class="max-h-screen bg-white p-4  w-[25rem] rounded-xl shadow-lg overflow-y-auto">
@@ -51,13 +50,13 @@ const AddCompanyAsset = ({ setCompanyAssetModal, fetchCompanyAssets }) => {
         <div className="flex flex-col ">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Which Company Laptop and Model Number?{" "}
+              Asset Name
               <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               className="p-2 w-full border rounded-md placeholder:text-sm "
-              placeholder="Enter laptop brand and Model Number"
+              placeholder="Enter Asset Name"
               value={formData.laptopBrand}
               onChange={handleChange}
               name="laptopBrand"
@@ -66,16 +65,24 @@ const AddCompanyAsset = ({ setCompanyAssetModal, fetchCompanyAssets }) => {
 
           <div className="mt-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Mobile Phone <span className="text-red-500">*</span>
+              Asset Info <span className="text-red-500">*</span>
             </label>
-            <input
+            <textarea
+             value={formData.mobile}
+             onChange={handleChange}
+             name="mobile"
+              id=""
+              cols="30"
+              rows="3"
+              className=" p-2 w-full border rounded-md placeholder:text-sm "
+placeholder="Describe assets"
+            ></textarea>
+            {/* <input
               type="email"
               className=" p-2 w-full border rounded-md placeholder:text-sm "
               placeholder="Enter mobile phone"
-              value={formData.mobile}
-              onChange={handleChange}
-              name="mobile"
-            />
+              
+            /> */}
           </div>
 
           <div className="flex mt-5 my-2 justify-center gap-2">
