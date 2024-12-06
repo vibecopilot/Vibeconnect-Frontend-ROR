@@ -12,26 +12,31 @@ const AddRegRequest = ({ setAddRegReq }) => {
     checkInTime: "",
     checkOutTime: "",
     reason: "",
+    requestDate: "",
   });
   const hrmsEmployeeId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
   const handleAddRegRequest = async () => {
     try {
       const todayDate = new Date().toISOString().split("T")[0];
-      const requestedCheckIn = regData.checkInTime
-        ? new Date(`${todayDate}T${regData.checkInTime}:00Z`).toISOString()
-        : "";
-      const requestedCheckOut = regData.checkOutTime
-        ? new Date(`${todayDate}T${regData.checkOutTime}:00Z`).toISOString()
-        : "";
+     
       const postData = new FormData();
-      postData.append("requested_check_in", requestedCheckIn);
-      postData.append("requested_check_out", requestedCheckOut);
+      postData.append(
+        "requested_check_in",
+        regData.checkInTime ? `${regData.checkInTime}:00` : ""
+      );
+      postData.append(
+        "requested_check_out",
+        regData.checkOutTime ? `${regData.checkOutTime}:00` : ""
+      );
+      // postData.append("requested_check_in", requestedCheckIn);
+      // postData.append("requested_check_out", requestedCheckOut);
       postData.append("request_type", regData.requestType);
+      postData.append("requested_date", regData.requestDate);
       postData.append("reason", regData.reason);
       postData.append("employee", hrmsEmployeeId);
       await postRegularizationRequest(postData);
       setAddRegReq(false);
-    //   setSelectedEmpAttendance(false);
+      //   setSelectedEmpAttendance(false);
       setRegData({
         ...regData,
         checkInTime: "",
@@ -67,6 +72,19 @@ const AddRegRequest = ({ setAddRegReq }) => {
         <div className="flex flex-col gap-2 my-2">
           <div className="w-full border-b flex justify-between items-center">
             <p className="font-medium">Regularization Details </p>
+          </div>
+          <div className=" flex flex-col gap-2">
+            <label htmlFor="" className="font-medium">
+              Select Date
+            </label>
+            <input
+              type="date"
+              name="requestDate"
+              id=""
+              className="border border-gray-300 rounded-md p-2"
+              value={regData.requestDate}
+              onChange={handleRegChanges}
+            />
           </div>
           <div className=" flex flex-col gap-2">
             <label htmlFor="" className="font-medium">

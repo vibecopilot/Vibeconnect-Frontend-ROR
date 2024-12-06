@@ -150,16 +150,16 @@ function Groups() {
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <Link
+                        {/* <Link
                           className="text-blue-600"
                           // onClick={() => handleGroupDetailModal(group.id)}
                           
                         >
                           <BiEdit size={18} />
-                        </Link>
-                        <button className="text-red-600">
+                        </Link> */}
+                        {/* <button className="text-red-600">
                           <FaTrash size={18} />
-                        </button>
+                        </button> */}
                       </div>
                     </div>
                   </div>

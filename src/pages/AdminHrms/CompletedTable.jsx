@@ -323,7 +323,7 @@ const CompletedTable = () => {
               </div> */}
               <div className="flex justify-between">
                 <span className="font-medium">Type of Request:</span>
-                {/* <span>Check In & Check Out Request</span> */}
+                {details?.request_type}
               </div>
               <div className="flex justify-between">
                 <span className="font-medium">Applied On:</span>
