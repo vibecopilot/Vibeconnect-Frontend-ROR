@@ -204,6 +204,12 @@ const FBRestaurtantEdit = () => {
   end_time: data.end_time
     ? new Date(data.end_time).toTimeString().substring(0, 5) // Extract HH:mm
     : "",
+    table_booking_start_time: data.table_booking_start_time
+    ? new Date(data.table_booking_start_time).toTimeString().substring(0, 5) // Extract HH:mm
+    : "",
+  table_booking_end_time: data.table_booking_end_time
+    ? new Date(data.table_booking_end_time).toTimeString().substring(0, 5) // Extract HH:mm
+    : "",
     last_booking_time: data.last_booking_time
     ? new Date(data.last_booking_time).toTimeString().substring(0, 5) // Extract HH:mm
     : ""
@@ -443,6 +449,8 @@ const FBRestaurtantEdit = () => {
     );
     postData.append("food_and_beverage[start_time]", formData.start_time);
     postData.append("food_and_beverage[end_time]", formData.end_time);
+    postData.append("food_and_beverage[table_booking_start_time]", formData.table_booking_start_time);
+    postData.append("food_and_beverage[table_booking_end_time]", formData.table_booking_end_time);
     postData.append("food_and_beverage[sun]", selectedDays['sunday'] ? "1" : "0");
 
     postData.append("food_and_beverage[mon]", selectedDays['monday'] ? "1" : "0");
@@ -650,15 +658,7 @@ const FBRestaurtantEdit = () => {
               >
                 Cuisines
               </label>
-              {/* <input
-                className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full"
-                id="delivery-time"
-                type="text"
-                name="cuisines"
-                value={formData.cuisines}
-                onChange={handleChange}
-                placeholder="Cuisines"
-              /> */}
+             
              <Select
         id="cuisines"
         isMulti
@@ -917,11 +917,21 @@ const FBRestaurtantEdit = () => {
   </div>
             <div className="col-span-1">
               <label htmlFor="" className="block  mb-2">Break Start Time</label>
-              <input type="time" className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="Start time"/>
+              <input type="time" 
+               value={formData.table_booking_start_time}
+               name="table_booking_start_time"
+               onChange={handleChange}
+              className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="Start time"/>
             </div>
             <div className="col-span-1">
-              <label htmlFor="" className="block  mb-2">Break End Time</label>
-              <input type="time" className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="End time"/>
+              <label htmlFor="" 
+              
+              className="block  mb-2">Break End Time</label>
+              <input type="time" 
+               value={formData.table_booking_end_time}
+               name="table_booking_end_time"
+               onChange={handleChange}
+              className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="End time"/>
             </div>
 
            

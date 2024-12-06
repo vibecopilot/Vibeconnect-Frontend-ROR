@@ -112,7 +112,7 @@ const FBRestaurtantDetails = () => {
           </div>
           <div className="grid grid-cols-2">
             <p className="">Cost for Two:</p>
-            <p>{formData.delivery_time}</p>
+            <p>{formData.cost_for_two}</p>
           </div>
           <div className="grid grid-cols-2">
             <p className="">Address:</p>
@@ -150,16 +150,16 @@ const FBRestaurtantDetails = () => {
 <div className="grid grid-cols-2">
   <p className="">Break Start Time:</p>
   <p>
-    {formData.break_start_time
-      ? new Date(formData.break_start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    {formData.table_booking_start_time
+      ? new Date(formData.table_booking_start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       : 'N/A'}
   </p>
 </div>
 <div className="grid grid-cols-2">
   <p className="">Break End Time:</p>
   <p>
-    {formData.break_end_time
-      ? new Date(formData.break_end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    {formData.table_booking_end_time
+      ? new Date(formData.table_booking_end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       : 'N/A'}
   </p>
 </div>
