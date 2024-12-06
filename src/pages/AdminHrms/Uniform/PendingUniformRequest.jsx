@@ -294,6 +294,11 @@ const PendingUniformRequest = () => {
                     placeholder="Shoes size"
                   />
                 </div>
+
+                <div className="flex items-end gap-2">
+                  <input type="checkbox" name="" id="" className="mb-1" />
+                  <label htmlFor="">ID Card Provided</label>
+                </div>
                 {/* <div className="mt-2">
               <label className="block text-sm font-medium text-gray-700">
                 Comment{" "}
