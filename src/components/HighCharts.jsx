@@ -221,8 +221,13 @@ const TicketHighCharts = () => {
   };
   const generateBarChartOptions = (title, data, order) => {
     const sortedData = sortData(data, order);
-
-
+  
+    // Prepare series data with labels
+    const categoryData = Object.keys(sortedData).map((key) => ({
+      name: key, // Label for the bar
+      y: sortedData[key], // Value for the bar
+    }));
+  
     return {
       chart: {
         type: categoryChartType,
@@ -230,8 +235,6 @@ const TicketHighCharts = () => {
       },
       title: {
         text: title,
-
-
       },
       xAxis: {
         categories: Object.keys(sortedData),
@@ -253,10 +256,12 @@ const TicketHighCharts = () => {
           dataLabels: {
             enabled: true,
             formatter: function () {
-              return this.y; // Display the y value (data value) on the bar
+              // Display label and value for each bar
+              return `${this.point.name}: ${this.y}`;
             },
             style: {
-              textOutline: false, // Remove text outline (optional)
+              textOutline: "none", // Remove text outline
+              fontSize: "12px", // Adjust font size
             },
           },
         },
@@ -284,23 +289,14 @@ const TicketHighCharts = () => {
       },
       series: [
         {
-          name: title,
-          data: Object.values(sortedData),
+          name: title, // Legend name
+          data: categoryData, // Data with labels
           color: themeColor,
-        },
-      ],
-      series: [
-        {
-          name: title,
-          colorByPoint: true,
-          data: Object.keys(sortedData).map((key) => ({
-            name: key,
-            y: sortedData[key],
-          })),
         },
       ],
     };
   };
+  
 
 
   const [isTicketTypeDropdown, setIsTicketTypeDropdown] = useState(false);
@@ -322,8 +318,13 @@ const TicketHighCharts = () => {
     const sortedData = sortData(data, order);
     const TicketsType = Object.keys(sortedData);
     const ticketValues = Object.values(sortedData);
-
-
+  
+    // Prepare the data with labels for each bar
+    const TypeData = TicketsType.map((type, index) => ({
+      name: type, // Label for the bar (Ticket Type)
+      y: ticketValues[index], // Value for the bar (Ticket count)
+    }));
+  
     return {
       chart: {
         type: ticketTypeChartType,
@@ -345,49 +346,41 @@ const TicketHighCharts = () => {
         },
       },
       plotOptions: {
+        pie: {
+          allowPointSelect: true,
+          cursor: 'pointer',
+          dataLabels: {
+            enabled: true,
+            format: '{point.name}: {point.percentage:.1f}%', // Show name and percentage
+          },
+          showInLegend: true, // Optional: show legend for pie chart
+        },
         column: {
           pointPadding: 0.2,
           borderWidth: 0,
-        },
-        line: {
           dataLabels: {
             enabled: true,
+            formatter: function () {
+              // Display both name (label) and value for each bar
+              return `${this.point.name}: ${this.y}`;
+            },
+            style: {
+              textOutline: "none", // Remove text outline
+              fontSize: "12px", // Adjust font size
+            },
           },
-        },
-        area: {
-          stacking: "normal",
-        },
-        pie: {
-          allowPointSelect: true,
-          cursor: "pointer",
-          dataLabels: {
-            enabled: true,
-            format: "{point.name}: {point.percentage:.1f}%",
-          },
-          showInLegend: true,
         },
       },
       series: [
         {
-          name: "Tickets",
-          data: ticketValues,
+          name: "Tickets", // Legend name
+          data: TypeData, // Data with labels
           color: themeColor,
-        },
-      ],
-      series: [
-        {
-          name: title,
-          colorByPoint: true,
-          data: Object.keys(sortedData).map((key) => ({
-            name: key,
-            y: sortedData[key],
-          })),
         },
       ],
     };
   };
-
-
+  
   const [isFloorDropdown, setIsFloorDropdown] = useState(false);
   const [floorChartType, setFloorChartType] = useState("column"); // State to store chart type
 
@@ -401,16 +394,17 @@ const TicketHighCharts = () => {
     setFloorChartType(type);
     setIsFloorDropdown(false); // Close the dropdown after selecting a chart type
   };
-  const generateFloorColumnChartOptions = (
-    title,
-    data,
-    order = "ascending"
-  ) => {
+  const generateFloorColumnChartOptions = (title, data, order = "ascending") => {
     const sortedData = sortData(data, order);
     const floorTickets = Object.keys(sortedData);
     const ticketValues = Object.values(sortedData);
-
-
+  
+    // Prepare the data with labels for each bar
+    const floorData = floorTickets.map((floor, index) => ({
+      name: floor, // Label for the specific bar
+      y: ticketValues[index], // Value for the bar
+    }));
+  
     return {
       chart: {
         type: floorChartType,
@@ -440,54 +434,39 @@ const TicketHighCharts = () => {
         },
       },
       plotOptions: {
+        pie: {
+          allowPointSelect: true,
+          cursor: 'pointer',
+          dataLabels: {
+            enabled: true,
+            format: '{point.name}: {point.percentage:.1f}%', // Show name and percentage
+          },
+          showInLegend: true, // Optional: show legend for pie chart
+        },
         column: {
           dataLabels: {
             enabled: true,
             formatter: function () {
-              return this.y; // Display the y value (data value) on the bar
+              // Display the label (name) and the value (y) for each bar
+              return `${this.point.name}: ${this.y}`;
             },
             style: {
               textOutline: false, // Remove text outline (optional)
+              fontSize: "12px", // Adjust font size for labels
             },
           },
-        },
-        line: {
-          dataLabels: {
-            enabled: true,
-          },
-        },
-        area: {
-          stacking: "normal",
-        },
-        pie: {
-          allowPointSelect: true,
-          cursor: "pointer",
-          dataLabels: {
-            enabled: true,
-            format: "{point.name}: {point.percentage:.1f}%", // Use custom names here
-          },
-          showInLegend: true,
         },
       },
       series: [
         {
           name: "Tickets By Floor",
-          data: ticketValues,
+          data: floorData, // Include the data with labels
           color: themeColor,
-        },
-      ],
-      series: [
-        {
-          name: title,
-          colorByPoint: true,
-          data: Object.keys(sortedData).map((key) => ({
-            name: key,
-            y: sortedData[key],
-          })),
         },
       ],
     };
   };
+  
   const [isUnitDropdown, setIsUnitDropdown] = useState(false);
   const [unitChartType, setUnitChartType] = useState("column"); // State to store chart type
 
@@ -505,8 +484,13 @@ const TicketHighCharts = () => {
     const sortedData = sortData(data, order);
     const unitTickets = Object.keys(sortedData);
     const ticketValues = Object.values(sortedData);
-
-
+  
+    // Prepare the data with labels for each bar
+    const unitData = unitTickets.map((unit, index) => ({
+      name: unit, // Name for the specific bar
+      y: ticketValues[index], // Value for the bar
+    }));
+  
     return {
       chart: {
         type: unitChartType,
@@ -526,64 +510,71 @@ const TicketHighCharts = () => {
       xAxis: {
         categories: unitTickets,
         title: {
-          text: " Units",
+          text: "Units",
+          style: {
+            color: "#333",
+            fontSize: "14px",
+            fontWeight: "bold",
+          },
+        },
+        labels: {
+          style: {
+            fontSize: "12px",
+            color: "#555",
+          },
         },
       },
       yAxis: {
         min: 0,
         title: {
           text: "Tickets",
+          style: {
+            color: "#333",
+            fontSize: "14px",
+            fontWeight: "bold",
+          },
+        },
+        labels: {
+          style: {
+            fontSize: "12px",
+            color: "#555",
+          },
         },
       },
       plotOptions: {
+        pie: {
+          allowPointSelect: true,
+          cursor: 'pointer',
+          dataLabels: {
+            enabled: true,
+            format: '{point.name}: {point.percentage:.1f}%', // Show name and percentage
+          },
+          showInLegend: true, // Optional: show legend for pie chart
+        },
         column: {
           dataLabels: {
             enabled: true,
             formatter: function () {
-              return this.y; // Display the y value (data value) on the bar
+              // Display the name of the series and the value
+              return `${this.point.name}: ${this.y}`;
             },
             style: {
-              textOutline: false, // Remove text outline (optional)
+              textOutline: "none", // Remove text outline
+              fontSize: "10px", // Adjust font size for labels
             },
           },
-        },
-        line: {
-          dataLabels: {
-            enabled: true,
-          },
-        },
-        area: {
-          stacking: "normal",
-        },
-        pie: {
-          allowPointSelect: true,
-          cursor: "pointer",
-          dataLabels: {
-            enabled: true,
-            format: "{point.name}: {point.percentage:.1f}%",
-          },
-          showInLegend: true,
         },
       },
       series: [
         {
           name: "Tickets by Units",
-          data: ticketValues,
+          data: unitData, // Include the data with labels
           color: themeColor,
-        },
-      ],
-      series: [
-        {
-          name: title,
-          colorByPoint: true,
-          data: Object.keys(sortedData).map((key) => ({
-            name: key,
-            y: sortedData[key],
-          })),
         },
       ],
     };
   };
+  
   return (
     <div>
       <div className="grid md:grid-cols-2 mr-2  gap-2">
