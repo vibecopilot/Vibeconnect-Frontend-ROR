@@ -105,7 +105,8 @@ const MyWorkSpace = () => {
           <button
             className="border p-1 px-2 rounded border-gray-300"
             title="Add Regularization"
-            onClick={() => setAddRegularization(true)}
+            // onClick={() => setAddRegularization(true)}
+            onClick={() => handleRegModal(row.date)}
           >
             <BiPlus size={15} />
           </button>
@@ -113,6 +114,11 @@ const MyWorkSpace = () => {
       ),
     },
   ];
+  const [regDate, setRegDate] = useState("");
+  const handleRegModal = (selectedDate) => {
+    setRegDate(selectedDate);
+    setAddRegularization(true);
+  };
 
   const data = [
     {
@@ -242,10 +248,7 @@ const MyWorkSpace = () => {
           date,
           attendanceDetails: records.map((record) => ({
             time: record.attendance_time
-              ? new Date(record.attendance_time).toLocaleTimeString("en-US", {
-                  timeZone: "UTC",
-                  hour12: true,
-                })
+              ? new Date(record.attendance_time).toLocaleTimeString()
               : "Invalid Time",
             checkIn: record.is_check_in ? "Check-In" : "Check-Out",
           })),
@@ -335,7 +338,7 @@ const MyWorkSpace = () => {
               <p className="">{absentCount}</p>
             </div>
           </div> */}
-          <div className="flex gap-2 items-center">
+          <div className="flex gap-2 items-center md:flex-row flex-col">
             {showCamera && (
               <div className="fixed inset-0 z-50 flex items-center overflow-y-auto justify-center bg-gray-500 bg-opacity-50">
                 <div className="max-h-screen bg-white  p-3 w-[32rem] rounded-lg shadow-lg overflow-y-auto">
@@ -398,7 +401,7 @@ const MyWorkSpace = () => {
         <Table columns={column} data={consolidatedData} />
       </div>
       {addRegularization && (
-        <AddRegularizationReq onclose={() => setAddRegularization(false)} />
+        <AddRegularizationReq onclose={() => setAddRegularization(false)} regDate={regDate} />
       )}
       {addRegReq && <AddRegRequest setAddRegReq={setAddRegReq} />}
     </section>

@@ -5,7 +5,10 @@ import { GrHelpBook } from "react-icons/gr";
 import { FaCheck } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 import { BiEdit } from "react-icons/bi";
-import { editAttendanceGeneralSetting, getAttendanceGeneralSetting } from "../../api";
+import {
+  editAttendanceGeneralSetting,
+  getAttendanceGeneralSetting,
+} from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import toast from "react-hot-toast";
 
@@ -17,7 +20,7 @@ const AttendanceGeneralSetting = () => {
     submitRegFutureDate: false,
     rosterApplicable: false,
     showApproveRejectBtn: false,
-    id: ""
+    id: "",
   });
 
   const listItemStyle = {
@@ -35,10 +38,10 @@ const AttendanceGeneralSetting = () => {
         ...formData,
         isRegReasonMandatory: data.is_reason_mandatory,
         rosterApplicable: data.is_roster_applicable,
-      selectRegularizationReason: data.can_select_regularization_reason,
-      showApproveRejectBtn: data.show_approve_reject_in_email,
-      submitRegFutureDate: data.allow_future_submission,
-      id:data.id
+        selectRegularizationReason: data.can_select_regularization_reason,
+        showApproveRejectBtn: data.show_approve_reject_in_email,
+        submitRegFutureDate: data.allow_future_submission,
+        id: data.id,
       });
     } catch (error) {
       console.log(error);
@@ -48,24 +51,30 @@ const AttendanceGeneralSetting = () => {
     fetchGeneralSetting();
   }, []);
 
-const handleEditGeneralSetting = async()=>{
-  const editData = new FormData()
-  editData.append("is_reason_mandatory", formData.isRegReasonMandatory)
-  editData.append("is_roster_applicable", formData.rosterApplicable)
-  editData.append("can_select_regularization_reason", formData.selectRegularizationReason)
-  editData.append("show_approve_reject_in_email", formData.showApproveRejectBtn)
-  editData.append("allow_future_submission", formData.submitRegFutureDate)
-  editData.append("organization", hrmsOrgId)
-  try {
-    const res = await editAttendanceGeneralSetting(formData.id, editData)
-    fetchGeneralSetting()
-    toast.success("General setting updated successfully")
-    setIsEditing(false)
-  } catch (error) {
-    console.log(error)
-    toast.error("Something went wrong")
-  }
-}
+  const handleEditGeneralSetting = async () => {
+    const editData = new FormData();
+    editData.append("is_reason_mandatory", formData.isRegReasonMandatory);
+    editData.append("is_roster_applicable", formData.rosterApplicable);
+    editData.append(
+      "can_select_regularization_reason",
+      formData.selectRegularizationReason
+    );
+    editData.append(
+      "show_approve_reject_in_email",
+      formData.showApproveRejectBtn
+    );
+    editData.append("allow_future_submission", formData.submitRegFutureDate);
+    editData.append("organization", hrmsOrgId);
+    try {
+      const res = await editAttendanceGeneralSetting(formData.id, editData);
+      fetchGeneralSetting();
+      toast.success("General setting updated successfully");
+      setIsEditing(false);
+    } catch (error) {
+      console.log(error);
+      toast.error("Something went wrong");
+    }
+  };
 
   return (
     <div className="flex gap-5 ml-20">
@@ -136,7 +145,7 @@ const handleEditGeneralSetting = async()=>{
                     setFormData({
                       ...formData,
                       selectRegularizationReason: false,
-                      isRegReasonMandatory: false, 
+                      isRegReasonMandatory: false,
                     })
                   }
                   disabled={!isEditing}
@@ -314,11 +323,9 @@ const handleEditGeneralSetting = async()=>{
                   </li>
                 </ul>
               </li>
-             
 
               <li>
                 <p>
-                  
                   You can automate the attendance process by automatically
                   capturing late marks, half-days, overtime and leave deductions
                   based on the template settings. You can also configure
