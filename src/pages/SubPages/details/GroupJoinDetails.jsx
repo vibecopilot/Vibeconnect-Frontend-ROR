@@ -36,16 +36,16 @@ function GroupJoinDetails() {
   }, []);
   const { id } = useParams();
   const [details, setDetails] = useState({});
+  const fetchGroupDetails = async () => {
+    try {
+      const res = await getGroupsDetails(id);
+      setDetails(res.data);
+      console.log(res.data.group_members);
+    } catch (error) {
+      console.log(res);
+    }
+  };
   useEffect(() => {
-    const fetchGroupDetails = async () => {
-      try {
-        const res = await getGroupsDetails(id);
-        setDetails(res.data);
-        console.log(res.data.group_members);
-      } catch (error) {
-        console.log(res);
-      }
-    };
     fetchGroupDetails();
   }, []);
   const colors = [
@@ -179,7 +179,7 @@ function GroupJoinDetails() {
             </div>
           </div>
         </div>
-        {editGroup && <EditGroupDetails onclose={()=> setEditGroup(false)} />}
+        {editGroup && <EditGroupDetails onclose={()=> setEditGroup(false)} fetchGroupDetails={fetchGroupDetails} />}
       </div>
     </section>
   );
