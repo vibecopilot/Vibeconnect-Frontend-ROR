@@ -58,6 +58,7 @@ const SetupNavbar = () => {
        {feat.includes("assets") && ( <Link to={"/admin/gdn-purpose-setup"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">GDN Purpose</Link>)}
 
         {feat.includes("assets") && ( <Link to={"/setup/meter-category-type"}  className="hover:bg-white hover:text-black  p-2 rounded-lg ">Meter Category Type</Link>)}
+        <Link to={"/admin/billing-setup"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">Billing</Link>
       </ul>
     </div>
   </div>
