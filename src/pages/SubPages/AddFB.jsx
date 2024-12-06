@@ -114,6 +114,8 @@ const AddFB = () => {
     closingMessage: "",
     start_time:"",
     end_time:"",
+    table_booking_start_time:"",
+    table_booking_end_time:"",
     booking_allowed:false,
     order_allowed:false,
     last_booking_time:"",
@@ -358,6 +360,8 @@ const AddFB = () => {
     );
     postData.append("food_and_beverage[start_time]", formData.start_time);
     postData.append("food_and_beverage[end_time]", formData.end_time);
+    postData.append("food_and_beverage[table_booking_start_time]", formData.table_booking_start_time);
+    postData.append("food_and_beverage[table_booking_end_time]", formData.table_booking_end_time);
 
     postData.append("food_and_beverage[sun]", selectedDays['sunday'] ? "1" : "0");
 
@@ -836,11 +840,21 @@ const AddFB = () => {
   </div>
             <div className="col-span-1">
               <label htmlFor="" className="block  mb-2">Break Start Time</label>
-              <input type="time" className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="Start time"/>
+              <input 
+              type="time" 
+              value={formData.table_booking_start_time}
+              name="table_booking_start_time"
+              onChange={handleChange}
+              className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="Start time"/>
             </div>
             <div className="col-span-1">
               <label htmlFor="" className="block  mb-2">Break End Time</label>
-              <input type="time" className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="End time"/>
+              <input 
+              type="time" 
+              value={formData.table_booking_end_time}
+              name="table_booking_end_time"
+              onChange={handleChange}
+              className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="End time"/>
             </div>
 
            

@@ -1373,6 +1373,12 @@ export const postServicePR = async (data) =>
 //       token: token,
 //     },
 //   });
+export const postDocumentCommon = async (data) =>
+  axiosInstance.post("/folders/create_common_folder.json", data, {
+    params: {
+      token: token,
+    },
+  });
 export const getServicesRoutineDetails = async (id) =>
   axiosInstance.get(`/checklists/${id}.json?q[ctype_eq]=routine`, {
     params: {

@@ -27,7 +27,7 @@ const f = ['IMG_1754.JPG']; // Files in the Root folder
 const SharedwithMe = () => {
   const [path, setPath] = useState([{ name: 'Root', subfolders: initialFolders, files: f }]);
   const [currentFiles, setCurrentFiles] = useState(f); // Show Root files by default
-  const [size, setSize] = useState('medium'); // Default folder/file size
+  const [size, setSize] = useState('small'); // Default folder/file size
 
   // Navigate to a folder in the breadcrumb
   const navigateTo = (index) => {
