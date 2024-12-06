@@ -5,6 +5,7 @@ import { useSelector } from "react-redux";
 import { PiPlusCircle } from "react-icons/pi";
 import MultiSelect from "../AdminHrms/Components/MultiSelect";
 import {
+  editGroups,
   getGroupsDetails,
   getMyHRMSEmployees,
   getSetupUsers,
@@ -17,7 +18,7 @@ import { MdClose } from "react-icons/md";
 import toast from "react-hot-toast";
 import { BiEditAlt } from "react-icons/bi";
 import { useParams } from "react-router-dom";
-function EditGroupDetails({ onclose }) {
+function EditGroupDetails({ onclose, fetchGroupDetails }) {
   const [formData, setFormData] = useState({
     groupName: "",
     groupDescription: "",
@@ -42,7 +43,7 @@ function EditGroupDetails({ onclose }) {
         });
 
         const selectedMembers = res.data.group_members.map((member) => ({
-            value: member.user_id, 
+            value: member.id, 
             label: `${member.user_name}`,
           }));
     
@@ -106,8 +107,9 @@ function EditGroupDetails({ onclose }) {
     });
 
     try {
-      const res = await postGroups(postData);
-      toast.success("Group created successfully");
+      const res = await editGroups(id, postData);
+      toast.success("Group updated successfully");
+      fetchGroupDetails()
       onclose();
       setFormData({
         groupName: "",
@@ -187,7 +189,7 @@ function EditGroupDetails({ onclose }) {
                 className="flex items-center gap-2 bg-green-400 text-white p-2 rounded-full px-4 my-2"
                 onClick={handleCreateGroup}
               >
-                <FaCheck /> Create
+                <FaCheck /> Save
               </button>
             </div>
           </div>

@@ -3,6 +3,8 @@ import AdminHRMS from "./AdminHrms";
 import { postLeaveCategory } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import { useNavigate, useNavigation } from "react-router-dom";
+import toast from "react-hot-toast";
+import { FaCheck } from "react-icons/fa";
 
 function AddLeaveCategory() {
   const [formData, setFormData] = useState({
@@ -44,15 +46,24 @@ function AddLeaveCategory() {
     consecutiveWithWeeklyOff: false,
     consecutiveWithHoliday: false,
     fixedCutoffDay: 15,
-    resignationCutoffDay:15
+    resignationCutoffDay: 15,
   });
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
   const handleSubmit = async () => {
+    if (
+      !formData.leaveType ||
+      formData.customLabel ||
+      formData.abbreviationLabel ||
+      formData.accrualPeriod ||
+      formData.prorationMethod
+    ) {
+      return toast.error("Please fill all the required fields");
+    }
     const postData = new FormData();
     postData.append("type_of_leave", formData.leaveType);
     postData.append("label", formData.customLabel);
@@ -114,18 +125,12 @@ function AddLeaveCategory() {
       "display_balance_in_payslip",
       formData.displayClosingBalance
     );
-    postData.append(
-      "fixed_cutoff_day",
-      formData.fixedCutoffDay
-    );
-    postData.append(
-      "resignation_cutoff_day",
-      formData.resignationCutoffDay
-    );
+    postData.append("fixed_cutoff_day", formData.fixedCutoffDay);
+    postData.append("resignation_cutoff_day", formData.resignationCutoffDay);
     postData.append("organization", hrmsOrgId);
     try {
       const res = await postLeaveCategory(postData);
-      navigate("/leave-categories")
+      navigate("/leave-categories");
     } catch (error) {
       console.log(error);
     }
@@ -337,7 +342,8 @@ function AddLeaveCategory() {
           </div>
           <div className="flex flex-col gap-2 justify-between">
             <label className="font-medium">
-              Pro-rate first month’s accrual for new joinees
+              Pro-rate first month’s accrual for new joinees{" "}
+              <span className="text-red-500">*</span>
             </label>
             <select
               name="prorationMethod"
@@ -980,13 +986,13 @@ function AddLeaveCategory() {
             </div>
           </div>
         </div>
-        <div className="flex justify-end">
+        <div className="flex justify-center border-t p-1 my-2">
           <button
             type="submit"
-            className="bg-blue-500 text-white p-2 rounded"
+            className="bg-green-500 px-4 text-white p-2 rounded-full flex items-center gap-2"
             onClick={handleSubmit}
           >
-            Submit
+            <FaCheck /> Submit
           </button>
         </div>
       </div>
