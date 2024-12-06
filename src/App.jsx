@@ -710,9 +710,6 @@ import UniformApplication from "./pages/AdminHrms/UniformApplication.jsx";
 import { setColor } from "./features/theme/themeSlice.js";
 import CopyChecklistPPM from "./pages/SubPages/CopyChecklistPPM.jsx";
 import CopyChecklistService from "./pages/SubPages/CopyChecklistService.jsx";
-import BillingSetup from "./pages/Setup/BillingSetup/BillingSetup.jsx";
-import AddCAMBillingSetup from "./pages/Setup/BillingSetup/AddCAMBillingSetup.jsx";
-import CAMBilling from "./pages/CAMBilling.jsx";
 // new admin hrms
 
 function App() {
@@ -6849,31 +6846,6 @@ function App() {
               <ProtectedRoute>
                 <AddEsic />
               </ProtectedRoute>
-            }
-          />
-           <Route
-            path="/admin/billing-setup"
-            element={
-              <ProtectedAdminRoutes>
-                <BillingSetup />
-              </ProtectedAdminRoutes>
-            }
-          />
-          <Route
-            path="/admin/add-cam-billing-setup"
-            element={
-              <ProtectedAdminRoutes>
-                <AddCAMBillingSetup />
-              </ProtectedAdminRoutes>
-            }
-          />
-          {/* CAM Billing */}
-          <Route
-            path="/admin/cam-billing"
-            element={
-              <ProtectedAdminRoutes>
-                <CAMBilling />
-              </ProtectedAdminRoutes>
             }
           />
         </Routes>

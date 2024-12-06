@@ -236,13 +236,8 @@ const SoftServiceHighCharts = () => {
   };
   const generateBarChartOptions = (title, data, order) => {
     const sortedData = sortData(data, order);
-  
-    // Prepare series data with labels
-    const seriesData = Object.keys(sortedData).map((key) => ({
-      name: key, // Label for the bar
-      y: sortedData[key], // Value for the bar
-    }));
-  
+
+
     return {
       chart: {
         type: buildingChartType,
@@ -252,7 +247,7 @@ const SoftServiceHighCharts = () => {
         text: title,
       },
       xAxis: {
-        categories: Object.keys(sortedData), // Use keys as categories
+        categories: Object.keys(sortedData),
         title: {
           text: null,
         },
@@ -271,12 +266,10 @@ const SoftServiceHighCharts = () => {
           dataLabels: {
             enabled: true,
             formatter: function () {
-              // Display series label (name) and value (y) for each bar
-              return `${this.point.name}: ${this.y}`;
+              return this.y; // Display the y value (data value) on the bar
             },
             style: {
-              textOutline: "none", // Remove text outline
-              fontSize: "12px", // Adjust font size
+              textOutline: false, // Remove text outline (optional)
             },
           },
         },
@@ -304,13 +297,24 @@ const SoftServiceHighCharts = () => {
       },
       series: [
         {
-          name: title, // Legend name
-          data: seriesData, // Data with labels
+          name: title,
+          data: Object.values(sortedData),
           color: themeColor,
         },
       ],
+      series: [
+        {
+          name: title,
+          colorByPoint: true,
+          data: Object.keys(sortedData).map((key) => ({
+            name: key,
+            y: sortedData[key],
+          })),
+        },
+      ],
     };
-  };  
+  };
+ 
   const generateColumnChartOptions = (title, data, order = "ascending") => {
     const sortedData = sortData(data, order);
     const TicketsType = Object.keys(sortedData);
@@ -380,6 +384,16 @@ const SoftServiceHighCharts = () => {
           color: themeColor,
         },
       ],
+      series: [
+        {
+          name: title,
+          colorByPoint: true,
+          data: Object.keys(ticketValues).map((key) => ({
+            name: key,
+            y: ticketValues[key],
+          })),
+        },
+      ],
     };
   };
 
@@ -403,17 +417,18 @@ const SoftServiceHighCharts = () => {
     order = "ascending"
   ) => {
     const sortedData = sortData(data, order);
-  
-    // Prepare series data with labels
-    const seriesData = Object.keys(sortedData).map((key) => ({
-      name: key, // Label for the bar
-      y: sortedData[key], // Value for the bar
-    }));
-  
+    const floorTickets = Object.keys(sortedData);
+    const ticketValues = Object.values(sortedData);
+
+
     return {
       chart: {
         type: floorChartType,
         borderRadius: 30,
+        // scrollablePlotArea: {
+        //   minWidth: 700,
+        //   scrollPositionX: 1
+        // }
       },
       title: {
         text: title,
@@ -423,14 +438,14 @@ const SoftServiceHighCharts = () => {
         enabled: true,
       },
       xAxis: {
-        categories: Object.keys(sortedData),
+        categories: floorTickets,
         title: {
           text: "Floors",
         },
         labels: {
           rotation: 0, // Ensures the text is straight (no rotation)
           style: {
-            fontSize: "12px", // Adjust font size for better readability
+            fontSize: "12px", // Adjust the font size for better readability
           },
         },
       },
@@ -441,38 +456,37 @@ const SoftServiceHighCharts = () => {
         },
       },
       plotOptions: {
-        pie: {
-          allowPointSelect: true,
-          cursor: "pointer",
-          dataLabels: {
-            enabled: true,
-            format: "{point.name}: {point.percentage:.1f}%",
-          },
-          showInLegend: true,
-        },
         column: {
           dataLabels: {
             enabled: true,
             formatter: function () {
-              // Display series label (name) and value (y) for each bar
-              return `${this.point.name}: ${this.y}`;
+              return this.y; // Display the y value (data value) on the bar
             },
             style: {
               textOutline: false, // Remove text outline (optional)
-              fontSize: "12px", // Adjust font size for better readability
             },
           },
         },
       },
       series: [
         {
-          name: "Soft Services By Floor", // Legend name
-          data: seriesData, // Data with labels
+          name: "Soft Services By Floor",
+          data: ticketValues,
           color: themeColor,
         },
       ],
+      series: [
+        {
+          name: title,
+          colorByPoint: true,
+          data: Object.keys(sortedData).map((key) => ({
+            name: key,
+            y: sortedData[key],
+          })),
+        },
+      ],
     };
-  };  
+  };
 
 
   const [isUnitDropdown, setIsUnitDropdown] = useState(false);
@@ -492,13 +506,8 @@ const SoftServiceHighCharts = () => {
     const sortedData = sortData(data, order); // Sort the data
     const unitTickets = Object.keys(sortedData);
     const ticketValues = Object.values(sortedData);
-  
-    // Prepare the data for series with labels
-    const seriesData = unitTickets.map((unit, index) => ({
-      name: unit, // Label for the bar (e.g., "Unit 1", "Unit 2")
-      y: ticketValues[index], // Value for the bar
-    }));
-  
+
+
     return {
       chart: {
         type: unitChartType,
@@ -533,39 +542,39 @@ const SoftServiceHighCharts = () => {
         },
       },
       plotOptions: {
-        pie: {
-          allowPointSelect: true,
-          cursor: "pointer",
-          dataLabels: {
-            enabled: true,
-            format: "{point.name}: {point.percentage:.1f}%",
-          },
-          showInLegend: true,
-        },
         column: {
           dataLabels: {
             enabled: true,
             formatter: function () {
-              // Display both the label (name) and value (y) for each bar
-              return `${this.point.name}: ${this.y}`;
+              return this.y; // Display the y value (data value) on the bar
             },
             style: {
               textOutline: false, // Remove text outline (optional)
-              fontSize: "12px", // Adjust font size for better readability
             },
           },
         },
       },
       series: [
         {
-          name: "Soft Services by Units", // Series label (name)
-          data: seriesData, // Data with labels and values
+          name: "Soft Services by Units",
+          data: ticketValues,
           color: themeColor,
+        },
+      ],
+      series: [
+        {
+          name: title,
+          colorByPoint: true,
+          data: Object.keys(sortedData).map((key) => ({
+            name: key,
+            y: sortedData[key],
+          })),
         },
       ],
     };
   };
-  
+
+
   return (
     <div>
       <div className="grid md:grid-cols-2 mr-2  gap-2">
@@ -928,7 +937,6 @@ const SoftServiceHighCharts = () => {
           </div>
         )}
       </div>
-      <div className="bg-white shadow-custom-all-sides rounded-md my-2 mr-2">
       <div className="flex justify-end p-3">
         <button
           className="rounded-md bg-gray-200 py-1 px-5"
@@ -1007,6 +1015,7 @@ const SoftServiceHighCharts = () => {
             )}
           </div>
       </div>
+      <div className="bg-white shadow-custom-all-sides rounded-md my-2 mr-2">
         {unitTickets ? (
           <HighchartsReact
             highcharts={Highcharts}
