@@ -235,6 +235,7 @@ const AttendanceRec = () => {
     const seconds = String(date.getSeconds()).padStart(2, "0");
     return `${hours}:${minutes}:${seconds}`;
   }
+  console.log(regData);
 
   const handleAddRegRequest = async () => {
     try {
@@ -332,7 +333,7 @@ const AttendanceRec = () => {
   const checkOutLogsColumn = [
     {
       name: "Particular",
-      selector: (row) => "Check out",
+      selector: (row) => (row.is_check_in ? "Check in" : "Check out"),
       sortable: true,
     },
     {
@@ -844,7 +845,7 @@ const AttendanceRec = () => {
                   </div>
                   <Accordion
                     icon={MdOutlinePunchClock}
-                    title={"Check out logs"}
+                    title={"Attendance logs"}
                     content={
                       <div>
                         <Table
@@ -863,7 +864,6 @@ const AttendanceRec = () => {
                     <p className="font-medium">Break Hrs :</p>
                     <p>-</p>
                   </div>
-
                   <div className=" flex justify-between">
                     <p className="font-medium">Deviation Hrs :</p>
                     <p>-</p>
@@ -876,8 +876,6 @@ const AttendanceRec = () => {
                     <p className="font-medium">Shift Time :</p>
                     {/* <p>{selectedRecord.schedule}</p> */}
                   </div>
-
-                  {/* Add more details here as needed */}
                   <div className="flex gap-2 justify-end border-t p-1 ">
                     <button
                       className=" bg-blue-500 text-white px-4 py-2 rounded-full"
