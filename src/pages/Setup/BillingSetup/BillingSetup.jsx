@@ -1,122 +1,82 @@
-import React from "react";
+import React, { useState } from "react";
 import Navbar from "../../../components/Navbar";
-import Table from "../../../components/table/Table";
-import { BiEdit } from "react-icons/bi";
-import { BsEye } from "react-icons/bs";
+import FileInputBox from "../../../containers/Inputs/FileInputBox";
 import { Switch } from "../../../Buttons";
-import { Link } from "react-router-dom";
 
 function BillingSetup() {
-  const columns = [
-    {
-      name: "Action",
-      cell: (row) => (
-        <div className="flex items-center gap-4">
-          <button>
-            <BsEye size={15} />
-          </button>
-          <button>
-            <BiEdit size={15} />
-          </button>
-        </div>
-      ),
-    },
-    {
-      name: "Id",
-      selector: (row, index) => row.Id,
-      sortable: true,
-    },
-    {
-      name: "Bill Cycle Name",
-      selector: (row) => row.bill_Cycle_Name,
-      sortable: true,
-    },
-    {
-      name: "Start Date",
-      selector: (row) => row.start_Date,
-      sortable: true,
-    },
-    {
-      name: "End Date",
-      selector: (row) => row.end_Date,
-      sortable: true,
-    },
-    {
-      name: "Frequency",
-      selector: (row) => row.frequency,
-      sortable: true,
-    },
-    {
-        name: "Charges",
-        selector: (row) => row.charges,
-        sortable: true,
-      },
-      {
-        name: "Payment Due In",
-        selector: (row) => row.payment_Due_In,
-        sortable: true,
-      },
-      {
-        name: "Interest",
-        selector: (row) => row.interest,
-        sortable: true,
-      },
-      {
-        name: "Fine",
-        selector: (row) => row.fine,
-        sortable: true,
-      },
-      {
-        name: "Created on",
-        selector: (row) => row.created_on,
-        sortable: true,
-      },
-      {
-        name: "Created by",
-        selector: (row) => row.created_by,
-        sortable: true,
-      },
-      {
-        name: "Status",
-        selector: (row) => (
-          <div>
-            <Switch
-            />
-          </div>
-        ),
-      },
-  ];
+  const [selectedOption, setSelectedOption] = useState("auto");
 
-  const data = [
-    {
-      Id: 1,
-      bill_Cycle_Name: "DG",
-      start_Date: "01/12/2024",
-      end_Date: "31/12/2024",
-      frequency: "Half Yearly",
-      charges: "Expense Based Charges",
-      payment_Due_In: "5",
-      interest: "500.0",
-      fine: "40.0",
-      created_on: "30/11/2024",
-      created_by: "Vinay Singh"
-    },
-  ];
+  const handleChange = (event) => {
+    setSelectedOption(event.target.value);
+  };
   return (
     <section className="flex">
       <Navbar />
       <div className="w-full flex mx-3 flex-col overflow-hidden">
-        <div className="flex justify-between my-3">
-          <input
-            type="text"
-            placeholder="search"
-            className="border-2 p-2 w-70 border-gray-300 rounded-lg"
-          />
-          <Link to={`/admin/add-cam-billing-setup`} className="font-semibold border-2 border-black px-4 p-1 flex gap-2 items-center rounded-md">
-            Configure
-          </Link>
+        <div className="border-b py-5 mx-5 border-black">
+          <p className="text-md font-semibold">Logo Setup</p>
         </div>
-        <Table columns={columns} data={data} />
+        <div className="my-5 mx-5">
+          <FileInputBox />
+          <div className="flex justify-end">
+            <button className="border border-gray-500 p-1 px-5 my-3 rounded-md">
+              Submit
+            </button>
+          </div>
+        </div>
+        <div className="flex gap-5 mx-4">
+          <h2>Online Payment Allowed </h2>
+          <Switch />
+        </div>
+        <div className="border-b py-5 mx-5 border-black">
+          <p className="text-md font-semibold">Invoice Number</p>
+        </div>
+        <div className="grid md:grid-cols-2">
+          <div className="space-y-5 my-5 mx-5">
+            <div className="flex items-center space-x-3">
+              <input
+                type="radio"
+                id="auto"
+                value="auto"
+                checked={selectedOption === "auto"}
+                onChange={handleChange}
+              />
+              <label htmlFor="auto" className="text-base text-gray-800">
+                Continue auto-generating invoice numbers
+              </label>
+              <div className="flex gap-2">
+                <div className="w-24">
+                  <input defaultValue="INV" />
+                </div>
+                <div className="w-24">
+                  <input defaultValue="4048" />
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center space-x-3">
+              <input
+                type="radio"
+                id="manual"
+                value="manual"
+                checked={selectedOption === "manual"}
+                onChange={handleChange}
+              />
+              <label htmlFor="manual" className="text-base text-gray-800">
+                I will add them manually each time
+              </label>
+            </div>
+          </div>
+        </div>
+        <h2 className="text-md font-semibold my-3 mx-5">Receipt Number</h2>
+        <div className="border-t py-5 mx-5 border-black">
+          <p className="text-md font-semibold">Invoice Setup</p>
+        </div>
+        <div className="border-t py-5 mx-5 border-black">
+          <p className="text-md font-semibold">Address</p>
+        </div>
+        <div className="border-t py-5 mx-5 border-black">
+          <p className="text-md font-semibold">Breakup Files</p>
+        </div>
       </div>
     </section>
   );
