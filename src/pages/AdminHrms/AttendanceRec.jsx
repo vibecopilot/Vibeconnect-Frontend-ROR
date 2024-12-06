@@ -19,10 +19,12 @@ import {
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import { Link } from "react-router-dom";
-import { MdClose } from "react-icons/md";
+import { MdClose, MdOutlinePunchClock } from "react-icons/md";
 import { DNA } from "react-loader-spinner";
 import toast from "react-hot-toast";
 import { Pagination } from "antd";
+import Accordion from "./Components/Accordion";
+import Table from "../../components/table/Table";
 
 const getDateRange = (startDate) => {
   const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -277,6 +279,7 @@ const AttendanceRec = () => {
   };
   const [checkInTime, setCheckInTime] = useState("");
   const [checkOutTime, setCheckOutTime] = useState("");
+  const [checkOutLogs, setCheckOutLogs] = useState([]);
   const [isPresent, setIsPresent] = useState(false);
   const [selectedAttendanceDate, setSelectedAttendanceDate] = useState("");
   const [empDesignation, setEmpDesignation] = useState("");
@@ -313,6 +316,8 @@ const AttendanceRec = () => {
           : null;
         setCheckInTime(checkInTime || "-");
         setCheckOutTime(checkOutTime || "-");
+        setCheckOutLogs(res);
+        console.log(res);
       } else {
         setCheckInTime("");
         setCheckOutTime("");
@@ -323,6 +328,19 @@ const AttendanceRec = () => {
       console.log("Error fetching attendance:", error);
     }
   };
+
+  const checkOutLogsColumn = [
+    {
+      name: "Particular",
+      selector: (row) => "Check out",
+      sortable: true,
+    },
+    {
+      name: "Check out time",
+      selector: (row) => new Date(row.attendance_time).toLocaleTimeString(),
+      sortable: true,
+    },
+  ];
 
   return (
     <div className="flex">
@@ -771,7 +789,7 @@ const AttendanceRec = () => {
       )}
       {selectedEmpAttendance && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white px-6 py-4 rounded-xl shadow-lg min-w-96">
+          <div className="bg-white px-6 py-4 rounded-xl shadow-lg min-w-96 max-h-[35rem] overflow-auto hide-scrollbar">
             <h2 className=" font-semibold mb-2 border-b">
               Selected Employee Details
             </h2>
@@ -779,12 +797,12 @@ const AttendanceRec = () => {
               <div>
                 <div
                   style={{ background: themeColor }}
-                  className="flex justify-between gap-2 bg-gray-100 items-center p-2 rounded-md w-[40rem]"
+                  className="flex justify-between gap-2 bg-gray-100 items-center p-2 rounded-md w-[40rem] "
                 >
                   <div className="flex gap-2 items-center">
                     <div className="bg-white rounded-full mr-2">
                       <div
-                        className=" text-white p-2 flex items-center justify-center rounded-full h-10 w-10 text-sm text-center border-2 border-white"
+                        className=" text-white p-2 flex items-center justify-center rounded-full h-10 w-10 text-sm text-center border-2 border-white font-medium"
                         style={{ background: themeColor }}
                       >
                         {selectedFirstName.charAt(0).toUpperCase()}
@@ -819,10 +837,24 @@ const AttendanceRec = () => {
                     <p className="font-medium">Check In :</p>
                     <p>{checkInTime}</p>
                   </div>
+
                   <div className=" flex justify-between">
                     <p className="font-medium">Check Out :</p>
                     <p>{checkOutTime}</p>
                   </div>
+                  <Accordion
+                    icon={MdOutlinePunchClock}
+                    title={"Check out logs"}
+                    content={
+                      <div>
+                        <Table
+                          columns={checkOutLogsColumn}
+                          data={checkOutLogs}
+                          isPagination={false}
+                        />
+                      </div>
+                    }
+                  />
                   <div className=" flex justify-between">
                     <p className="font-medium">Working Hrs :</p>
                     <p>-</p>
