@@ -80,8 +80,6 @@ const Login = () => {
           setItemInLocalStorage("APPROVERID", res.id);
         } catch (error) {
           console.error("Error getting employee ID:", error);
-          
-          
         }
       }
 
@@ -116,7 +114,7 @@ const Login = () => {
       setItemInLocalStorage("COMPANYID", CompanyId);
       // setItemInLocalStorage("HRMSORGID", 1);
       setItemInLocalStorage("HRMSORGID", response.data.user.organization_id);
-      
+
       // setItemInLocalStorage("HRMS_EMPLOYEE_ID", 22);
 
       // console.log(userType)
@@ -143,7 +141,7 @@ const Login = () => {
         );
       }
       toast.dismiss();
-      window.location.reload();
+      // window.location.reload();
     } catch (error) {
       console.error("Login failed:", error);
       toast.error("Login failed. Please check your credentials.");
