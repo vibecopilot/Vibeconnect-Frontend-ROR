@@ -21,11 +21,13 @@ function Groups() {
   const themeColor = useSelector((state) => state.theme.color);
   const [createModal, setCreateModal] = useState(false);
   const [groupData, setGroupData] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
   const fetchGroups = async () => {
     try {
       const res = await getGroups();
       console.log(res.data);
       setGroupData(res.data);
+      setFilteredData(res.data);
     } catch (error) {
       console.log(error);
     }
@@ -34,7 +36,7 @@ function Groups() {
   useEffect(() => {
     fetchGroups();
   }, []);
-  function truncateWithEllipses(text, maxLength = 200) {
+  function truncateWithEllipses(text, maxLength = 100) {
     if (!text) return "";
     return text.length > maxLength
       ? text.substring(0, maxLength) + "..."
@@ -53,6 +55,20 @@ function Groups() {
     setGroup(id);
     setShowGroup(true);
   };
+
+  const [searchText, setSearchText] = useState("");
+  const handleSearch = (e) => {
+    const searchValue = e.target.value;
+    setSearchText(searchValue);
+    if (searchValue.trim() === "") {
+      setFilteredData(groupData);
+    } else {
+      const filteredResult = groupData.filter((group) =>
+        group.group_name.toLowerCase().includes(searchValue.trim().toLowerCase())
+      );
+      setFilteredData(filteredResult);
+    }
+  };
   return (
     <section className="flex">
       <Navbar />
@@ -63,6 +79,8 @@ function Groups() {
             type="text"
             placeholder="Search by group name"
             className="border p-2 w-full border-gray-300 rounded-lg "
+            value={searchText}
+            onChange={handleSearch}
           />
           {/* <Link
           to={`/admin/communication-create-group`}
@@ -82,10 +100,13 @@ function Groups() {
         <div>
           <div className="flex items-center justify-center gap-4 flex-wrap">
             {/* <div className="md:grid grid-cols-4 mx-3 gap-5 my-3"> */}
-            {groupData?.map((group) => (
-              <Link to={`/admin/communication-group-details/${group?.id}`}>
+            {filteredData?.map((group) => (
+              <Link
+                to={`/admin/communication-group-details/${group?.id}`}
+                key={group?.id}
+              >
                 <div className="flex flex-col justify-between my-3 w-96 max-h-96 min-h-96">
-                  <div className="border flex flex-col justify-between border-gray-100 rounded-xl bg-blue-50 min-h-96">
+                  <div className="border flex flex-col justify-between border-gray-100 rounded-xl bg-blue-50 min-h-96 shadow-custom-all-sides">
                     <img
                       src={groupIcon}
                       className="rounded-t-xl h-52 w-full object-cover object-top"

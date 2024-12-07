@@ -304,7 +304,6 @@ const AttendanceRec = () => {
       const res = await getEmployeeAttendanceOfToday(empId, formattedDate);
       if (res.length > 0) {
         const checkInRecord = res.find((record) => record.is_check_in === true);
-        // console.log(checkInRecord.is_check_in)
         setIsPresent(checkInRecord.is_check_in);
         const checkOutRecord = res
           .reverse()
@@ -886,7 +885,7 @@ const AttendanceRec = () => {
 
                     <button
                       className=" bg-red-500 text-white px-4 py-2 rounded-full"
-                      onClick={() => setSelectedEmpAttendance(false)}
+                      onClick={() => {setSelectedEmpAttendance(false), setCheckOutLogs([])}}
                     >
                       Close
                     </button>
