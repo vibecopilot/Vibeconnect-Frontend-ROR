@@ -120,15 +120,7 @@ const SectionsPersonal = () => {
     },
   ];
 
-  const data = [
-    {
-      Payment_Type: "Salary",
-      mode: "Bank Transfer",
-      name: "State Bank of India",
-      account: "12356",
-      ifsc: "BK4568",
-    },
-  ];
+  
   const { id } = useParams();
   const [formData, setFormData] = useState({
     firstName: "",

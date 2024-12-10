@@ -3,7 +3,7 @@ import FileInput from "../../Buttons/FileInput";
 import { useSelector } from "react-redux";
 import ReactDatePicker from "react-datepicker";
 import Select from "react-select";
-import { getAssignedTo, postBroadCast } from "../../api";
+import { getAssignedTo, getGroups, postBroadCast } from "../../api";
 import FileInputBox from "../../containers/Inputs/FileInputBox";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import toast from "react-hot-toast";
@@ -24,7 +24,7 @@ const CreateBroadcast = () => {
     notice_image: [],
     shared: "",
     group_id: "",
-    important: "",
+    important: false,
     group_ids:""
   });
   console.log(formData);
@@ -37,6 +37,7 @@ const CreateBroadcast = () => {
   const handleExpiryDateChange = (date) => {
     setFormData({ ...formData, expiry_date: date });
   };
+  const [groups, setGroups] = useState([])
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -93,6 +94,7 @@ const CreateBroadcast = () => {
         formData.notice_discription
       );
       formDataSend.append("notice[expiry_date]", formData.expiry_date);
+      formDataSend.append("notice[important]", formData.important);
       formDataSend.append("notice[shared]", formData.expiry_date);
       formDataSend.append("notice[user_ids]", formData.user_ids);
       formDataSend.append("notice[group_id]", formData.group_ids);

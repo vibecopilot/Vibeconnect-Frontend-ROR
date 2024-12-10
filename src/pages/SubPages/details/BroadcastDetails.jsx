@@ -81,7 +81,7 @@ const BroadcastDetails = () => {
             <div className="grid grid-cols-2">
               <p className="font-medium ">Important:</p>
               <p className="">
-               
+               {broadcastDetails.important ? "Yes": "No"}
               </p>
             </div>
           </div>

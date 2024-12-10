@@ -74,8 +74,9 @@ const WorkspaceRoaster = () => {
             className="border rounded-md p-2 w-60"
           />
         </div>
-        <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-1">
-          {/* {rosterData.map((day, index) => (
+        {rosters.length !== 0 ? (
+          <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-1">
+            {/* {rosterData.map((day, index) => (
             <RosterCard
               key={index}
               date={day.date}
@@ -83,18 +84,23 @@ const WorkspaceRoaster = () => {
               isWeeklyOff={day.isWeeklyOff}
             />
           ))} */}
-          {rosters.map((roster, index) => (
-            <div
-              key={index} // Add a key for each mapped element
-              className={`p-1 border-green-400 rounded-lg border-2 text-black shadow-md my-2`}
-            >
-              <h3 className="font-semibold">{roster.date}</h3>
-              <p className="text-sm">
-                Shift Timing: {roster.start_time} - {roster.end_time}
-              </p>
-            </div>
-          ))}
-        </div>
+            {rosters.map((roster, index) => (
+              <div
+                key={index} // Add a key for each mapped element
+                className={`p-1 border-green-400 rounded-lg border-2 text-black shadow-md my-2`}
+              >
+                <h3 className="font-semibold">{roster.date}</h3>
+                <p className="text-sm">
+                  Shift Timing: {roster.start_time} - {roster.end_time}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center text-gray-500">
+            No Shift Assigned
+          </div>
+        )}
       </div>
     </section>
   );

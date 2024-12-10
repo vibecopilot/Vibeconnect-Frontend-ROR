@@ -127,7 +127,7 @@ const SeparationTable = () => {
     },
     {
       name: "Separation Status",
-      selector: (row) => row.Country,
+      selector: (row) => row.status,
       sortable: true,
     },
     {
