@@ -33,16 +33,16 @@ const CompletedUniformRequest = () => {
       sortable: true,
     },
     {
+      name: "Shoes",
+      selector: (row) => row.comment,
+      sortable: true,
+    },
+    {
       name: "Applied on",
       selector: (row) => dateFormatSTD(row.created_date),
       sortable: true,
     },
 
-    // {
-    //   name: "Comment",
-    //   selector: (row) => row.comment,
-    //   sortable: true,
-    // },
     {
       name: "Status",
       selector: (row) => (
@@ -132,14 +132,32 @@ const CompletedUniformRequest = () => {
       </div>
       {showDetails && (
         <div className="fixed inset-0 z-50 flex items-center overflow-y-auto justify-center bg-gray-500 bg-opacity-50">
-          <div className="max-h-screen bg-white p-2 px-3 w-[32rem] rounded-lg shadow-lg overflow-y-auto">
+          <div className="max-h-screen bg-white p-2 px-3 w-[32rem] rounded-xl shadow-lg overflow-y-auto">
             <div className="flex flex-col gap-4">
               <h2 className="text-xl font-semibold text-center border-b mb-4">
                 Uniform Request Details
               </h2>
               <div className="grid grid-cols-2">
+                <p className="font-medium">Applied on :</p>
+                <p className="text-right">
+                  {dateFormatSTD(details.created_date)}
+                </p>
+              </div>
+              <div className="grid grid-cols-2">
                 <p className="font-medium">Employee Name :</p>
                 <p className="text-right">{details.employee_name}</p>
+              </div>
+              <div className="grid grid-cols-2">
+                <p className="font-medium">Status :</p>
+                <p
+                  className={`text-right ${
+                    details.status === "Rejected"
+                      ? "text-red-500"
+                      : "text-green-500 font-medium"
+                  }`}
+                >
+                  {details.status}
+                </p>
               </div>
               <div className="grid grid-cols-2">
                 <p className="font-medium">Waist size :</p>
@@ -150,13 +168,15 @@ const CompletedUniformRequest = () => {
                 <p className="text-right">{details.chest} inches</p>
               </div>
               <div className="grid grid-cols-2">
-                <p className="font-medium">Applied on :</p>
-                <p className="text-right">
-                  {dateFormatSTD(details.created_date)}
-                </p>
+                <p className="font-medium">Shoe size :</p>
+                <p className="text-right"></p>
+              </div>
+              <div className="flex flex-col gap-2">
+                <p className="font-medium border-b">Attachment</p>
+                <div className="text-center">No Attachments</div>
               </div>
             </div>
-            <div className="flex justify-center my-2 border-t pt-1">
+            <div className="flex justify-center my-2 mt-3 border-t pt-1">
               <button
                 className="flex items-center gap-2 border-2 border-red-500 text-red-500 rounded-full p-1 px-4"
                 onClick={() => setShowDetails(false)}

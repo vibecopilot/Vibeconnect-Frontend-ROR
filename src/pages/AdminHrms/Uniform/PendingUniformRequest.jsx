@@ -43,6 +43,11 @@ const PendingUniformRequest = () => {
       sortable: true,
     },
     {
+      name: "Shoes",
+      selector: (row) => row.shoes,
+      sortable: true,
+    },
+    {
       name: "Applied on",
       selector: (row) => dateFormatSTD(row.created_date),
       sortable: true,

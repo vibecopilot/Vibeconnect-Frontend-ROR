@@ -1264,7 +1264,7 @@ export const getColorCode = async () =>
     },
   });
 export const editColorCode = async (id, data) =>
-  axiosInstance.put(`/color_codes/${id}.json`,data, {
+  axiosInstance.put(`/color_codes/${id}.json`, data, {
     params: {
       token: token,
     },

@@ -10,6 +10,7 @@ import {
   getAssignedTo,
   getEventsDetails,
   editEventDetails,
+  getGroups,
 } from "../../api";
 import Select from "react-select";
 import DatePicker from "react-datepicker";
@@ -31,8 +32,12 @@ const EditEvent = () => {
     description: "",
     start_date_time: "",
     end_date_time: "",
-    user_ids: "",
+    user_ids: [],
     event_image: [],
+    important: false,
+    sendMail: false,
+    group_ids: "",
+    rsvp_enabled: false,
   });
   console.log(formData);
   const fileInputRef = useRef(null);
@@ -71,6 +76,11 @@ const EditEvent = () => {
       try {
         const res = await getEventsDetails(id);
         const response = res.data;
+        const selectedUsers = response.users.map((user) => ({
+          value: user.user_id,
+          label: user.name,
+        }));
+        console.log(selectedUsers);
         setFormData({
           ...formData,
           event_name: response.event_name,
@@ -83,7 +93,21 @@ const EditEvent = () => {
             : null,
           event_image: response.event_image,
           venue: response.venue,
+          important: response.important,
+          sendMail: response.email_enabled,
+          rsvp_enabled: response.rsvp_enabled,
+          group_ids: response.group_id || "",
+          user_ids: selectedUsers,
         });
+        setShare(
+          `${
+            response.group_id
+              ? "groups"
+              : response.users.length !== 0
+              ? "individual"
+              : "all"
+          }`
+        );
       } catch (error) {
         console.log(error);
       }
@@ -118,6 +142,10 @@ const EditEvent = () => {
       );
       formDataSend.append("event[venue]", formData.venue);
       formDataSend.append("event[user_ids]", formData.user_ids);
+      formDataSend.append("event[group_id]", formData.group_ids);
+      formDataSend.append("event[important]", formData.important);
+      formDataSend.append("event[email_enabled]", formData.sendMail);
+      formDataSend.append("event[rsvp_enabled]", formData.rsvp_enabled);
 
       // formData.user_ids.forEach((user_id) => {
       //   formDataSend.append("event[user_ids]", user_id);
@@ -145,6 +173,7 @@ const EditEvent = () => {
     const userIdsString = selectedIds.join(",");
 
     setFormData({ ...formData, user_ids: userIdsString });
+    
   };
 
   const handleFileAttachment = (event) => {
@@ -178,6 +207,28 @@ const EditEvent = () => {
       [fieldName]: files,
     });
   };
+  const [groups, setGroups] = useState([]);
+
+  const fetchGroups = async () => {
+    try {
+      const res = await getGroups();
+      // const transformedUsers = res.data.map((user) => ({
+      //   value: user.id,
+      //   label: user.group_name,
+      // }));
+      setGroups(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleSelectGroupChange = (selectedOptions) => {
+    setFormData({ ...formData, group_ids: selectedOptions.value });
+  };
+
+  useEffect(() => {
+    fetchGroups();
+  }, []);
 
   return (
     <section className="flex">
@@ -270,16 +321,34 @@ const EditEvent = () => {
 
             <div className="flex gap-4 my-5">
               <div className="flex gap-2 items-center">
-                <input type="checkbox" name="" id="imp" />
-                <label htmlFor="imp" className="font-semibold">
-                  Important
-                </label>
+                <input
+                  type="checkbox"
+                  name=""
+                  id="imp"
+                  checked={formData.important === true}
+                  onChange={() =>
+                    setFormData({
+                      ...formData,
+                      important: !formData.important,
+                    })
+                  }
+                />
+                <label htmlFor="imp">Important</label>
               </div>
               <div className="flex gap-2 items-center">
-                <input type="checkbox" name="" id="email" />
-                <label htmlFor="email" className="font-semibold">
-                  Send Email
-                </label>
+                <input
+                  type="checkbox"
+                  name=""
+                  id="imp"
+                  checked={formData.important === true}
+                  onChange={() =>
+                    setFormData({
+                      ...formData,
+                      important: !formData.important,
+                    })
+                  }
+                />
+                <label htmlFor="imp">Send mail</label>
               </div>
             </div>
 
@@ -327,15 +396,39 @@ const EditEvent = () => {
                       options={users}
                       closeMenuOnSelect={false}
                       placeholder="Select User"
-                      value={users.filter((user) =>
-                        formData.user_ids.includes(user.value)
-                      )}
+                      // value={users.filter((user) =>
+                      //   formData.user_ids.includes(user.value)
+                      // )}
+                      value={formData.user_ids}
                       onChange={handleSelectChange}
                       isMulti
                       className="w-full"
                     />
                   )}
-                  {share === "groups" && <p>list of groups</p>}
+                  {share === "groups" && (
+                    // <Select
+                    //   options={groups}
+                    //   closeMenuOnSelect={false}
+                    //   placeholder="Select Group"
+                    //   value={formData.group_ids}
+                    //   onChange={handleSelectGroupChange}
+                    //   className="w-full"
+                    // />
+                    <select
+                      name="group_ids"
+                      id=""
+                      className="w-full border rounded-md p-2"
+                      onChange={handleChange}
+                      value={formData.group_ids}
+                    >
+                      <option value="">Select Group</option>
+                      {groups.map((group) => (
+                        <option value={group.id} key={group.id}>
+                          {group.group_name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
               </div>
             </div>
@@ -345,13 +438,29 @@ const EditEvent = () => {
               </h2>
               <div className="flex gap-4 mt-2">
                 <div className="flex gap-2 ">
-                  <input type="radio" name="RSVP" id="yes" />
+                  <input
+                    type="radio"
+                    name="RSVP"
+                    id="yes"
+                    checked={formData.rsvp_enabled === true}
+                    onChange={() =>
+                      setFormData({ ...formData, rsvp_enabled: true })
+                    }
+                  />
                   <label htmlFor="yes" className="text-lg">
                     Yes
                   </label>
                 </div>
                 <div className="flex gap-2">
-                  <input type="radio" name="RSVP" id="no" />
+                  <input
+                    type="radio"
+                    name="RSVP"
+                    id="no"
+                    checked={formData.rsvp_enabled === false}
+                    onChange={() =>
+                      setFormData({ ...formData, rsvp_enabled: false })
+                    }
+                  />
                   <label htmlFor="no" className="text-lg">
                     No
                   </label>

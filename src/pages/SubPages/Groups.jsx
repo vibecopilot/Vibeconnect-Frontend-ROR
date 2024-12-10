@@ -64,7 +64,9 @@ function Groups() {
       setFilteredData(groupData);
     } else {
       const filteredResult = groupData.filter((group) =>
-        group.group_name.toLowerCase().includes(searchValue.trim().toLowerCase())
+        group.group_name
+          .toLowerCase()
+          .includes(searchValue.trim().toLowerCase())
       );
       setFilteredData(filteredResult);
     }
@@ -82,13 +84,6 @@ function Groups() {
             value={searchText}
             onChange={handleSearch}
           />
-          {/* <Link
-          to={`/admin/communication-create-group`}
-          style={{background:themeColor}}
-          className=" font-semibold text-white px-4 p-1 flex gap-2 items-center justify-center rounded-md"
-        >
-          Create Group
-        </Link> */}
           <button
             onClick={() => setCreateModal(true)}
             style={{ background: themeColor }}
@@ -106,7 +101,7 @@ function Groups() {
                 key={group?.id}
               >
                 <div className="flex flex-col justify-between my-3 w-96 max-h-96 min-h-96">
-                  <div className="border flex flex-col justify-between border-gray-100 rounded-xl bg-blue-50 min-h-96 shadow-custom-all-sides">
+                  <div className="border flex flex-col justify-between border-gray-100 rounded-xl bg-blue-50 hover:bg-blue-100 min-h-96 shadow-custom-all-sides transition-all duration-200 ease-in-out">
                     <img
                       src={groupIcon}
                       className="rounded-t-xl h-52 w-full object-cover object-top"
