@@ -31,12 +31,17 @@ import {
   deleteEmployeeDocs,
   deleteEmployeeLetters,
   getEmployeeDocs,
+  getEmployeeEsic,
   getEmployeeLetters,
   hrmsDomain,
   postEmployeeDocs,
   postEmployeeLetters,
 } from "../../api";
-import { dateFormat, dateTimeFormat } from "../../utils/dateUtils";
+import {
+  dateFormat,
+  dateFormatSTD,
+  dateTimeFormat,
+} from "../../utils/dateUtils";
 import { IoDocument } from "react-icons/io5";
 import toast from "react-hot-toast";
 import PdfViewer from "./Components/PdfViewer";
@@ -227,6 +232,20 @@ const SectionDoc = () => {
   useEffect(() => {
     Modal.setAppElement("#root");
   }, []);
+  const [esic, setEsic] = useState([]);
+  const fetchEmployeeESICData = async () => {
+    try {
+      const res = await getEmployeeEsic(id);
+      console.log(res);
+      setEsic(res);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchEmployeeESICData();
+  }, []);
 
   return (
     <div className="flex flex-col ml-20">
@@ -339,6 +358,49 @@ const SectionDoc = () => {
                         >
                           <FaTrash />
                         </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            }
+          />
+          <Accordion
+            title="Employee ESIC Card"
+            icon={MdDescription}
+            content={
+              <div className="bg-green-100 p-4 rounded-lg mb-1">
+                {/* <div className="flex justify-end items-center mb-2">
+                 
+                  <button
+                    onClick={openLetter}
+                    className="text-green-500 px-2 border-2 rounded-full border-green-500 flex gap-2 items-center p-1 "
+                  >
+                    <AddCircleOutline /> Add
+                  </button>
+                </div> */}
+                <div className="flex justify-center ">
+                  {esic.map((letter, index) => (
+                    <div
+                      key={letter.id}
+                      className="flex flex-col justify-center gap-4 w-full p-4"
+                    >
+                      <div className="bg-white p-4 rounded-lg shadow-md border border-gray-200 flex  justify-between min-w-[30rem]">
+                        <div className="grid-cols-2 grid">
+                          <p>ESIC No. : </p>
+                          <p>{letter.esic_number}</p>
+                        </div>
+                        <div className="grid-cols-2 grid text-gray-500">
+                          <p>Updated at : </p>
+                          <p>{dateFormatSTD(letter.updated_at)}</p>
+                        </div>
+                      </div>
+                      <div>
+                      <img 
+          src={hrmsDomain + letter.photo} 
+          alt="" 
+          className="bg-white p-4 rounded-lg shadow-md border border-gray-200 flex flex-col items-center w-auto h-auto max-h-80 max-w-[20rem] object-cover" 
+        />
                       </div>
                     </div>
                   ))}
