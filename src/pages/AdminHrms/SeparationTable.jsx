@@ -157,15 +157,7 @@ const SeparationTable = () => {
     },
   ];
 
-  const data = [
-    {
-      Name: "person 1",
-      Label: "2/2/2023",
-      City: "2/2/2023",
-      State: "abc",
-      Country: "pending",
-    },
-  ];
+ 
 
   return (
     <section className="flex">

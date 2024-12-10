@@ -6823,6 +6823,23 @@ export const postUniformApproval = async (approvalId, data) => {
     throw error;
   }
 };
+export const getEmployeeEsic = async (empId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/esic/create/?employee_id=${empId}`,
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting Employee Esic card", error);
+    throw error;
+  }
+};
 
 // site id
 export const getSiteData = async () =>
