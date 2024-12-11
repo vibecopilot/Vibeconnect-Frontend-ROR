@@ -9,7 +9,7 @@ import { FaCheck, FaTrash } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 import { PiPlusCircle } from "react-icons/pi";
 
-const SubSubSubCategorySetup = () => {
+const SecondarySubSubCategorySetup = () => {
   const [modal, showModal] = useState(false);
   const column = [
     { name: "Category", selector: (row) => row.Category, sortable: true },
@@ -67,7 +67,7 @@ const SubSubSubCategorySetup = () => {
                   id=""
                   className="border p-2 px-4 border-gray-300 rounded-md w-full"
                 >
-                  <option value="">Select Category</option>
+                  <option value="">Select Secondary Category</option>
                   <option value="">Health and Safety</option>
                   <option value="">Fire</option>
                   <option value="">Near Miss/Good Catch</option>
@@ -77,46 +77,39 @@ const SubSubSubCategorySetup = () => {
                   id=""
                   className="border p-2 px-4 border-gray-300 rounded-md w-full"
                 >
-                  <option value="">Select Sub Category</option>
+                  <option value="">Select Secondary Sub Category</option>
                 </select>
-                <select
-                  name=""
-                  id=""
-                  className="border p-2 px-4 border-gray-300 rounded-md w-full"
-                >
-                  <option value="">Select Sub Sub Category</option>
-                </select>
+
                 <input
                   type="text"
-                  placeholder="Sub Sub Sub Category"
+                  placeholder="Secondary Sub Sub Category"
                   className="border p-2 px-4 border-gray-300 rounded-md w-full"
                 />
-              </div>
-              <div className="flex justify-center gap-2">
-                <button className="bg-green-500 text-white p-2 flex gap-2 items-center rounded-md">
-                  <FaCheck /> Submit
-                </button>
-                <button
-                  className="bg-red-400 text-white flex items-center gap-2 p-2 rounded-md"
-                  onClick={() => setAddSubSubSubCat(false)}
-                >
-                  <MdClose /> Cancel
-                </button>
+                <div className="flex justify-center gap-2">
+                  <button className="bg-green-500 text-white p-2 flex gap-2 items-center rounded-md">
+                    <FaCheck /> Submit
+                  </button>
+                  <button
+                    className="bg-red-400 text-white flex items-center gap-2 p-2 rounded-md"
+                    onClick={() => setAddSubSubSubCat(false)}
+                  >
+                    <MdClose /> Cancel
+                  </button>
+                </div>
               </div>
             </div>
           )}
         </div>
-          {!addSubSubSubCat && (
-            <div className="flex justify-end w-full">
-
+        {!addSubSubSubCat && (
+          <div className="flex justify-end w-full">
             <button
               className="bg-green-500 p-2 rounded-md text-white flex items-center gap-2"
               onClick={() => setAddSubSubSubCat(true)}
-              >
+            >
               <PiPlusCircle /> Add
             </button>
-              </div>
-          )}
+          </div>
+        )}
         <div>
           <Table columns={column} data={data} isPagination={true} />
         </div>
@@ -128,4 +121,4 @@ const SubSubSubCategorySetup = () => {
   );
 };
 
-export default SubSubSubCategorySetup;
+export default SecondarySubSubCategorySetup;

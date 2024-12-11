@@ -13,168 +13,168 @@ import SecondarySubCategorysetup from "./IncidentSecSubCatSetup";
 import InjurySetup from "./InjurySetup";
 import PropertyDamageCategorySetup from "./PropertyDamageCategory";
 import RCACategorySetup from "./RCACategorySetup";
+import SecondarySubCategorySetup from "./IncidentSecSubCatSetup";
+import SecondarySubSubCategorySetup from "./SecondarySubSubCategorySetup";
+import SecondarySubSubSubCat from "./SecondarySubSubSubCat";
 
-// import PropertyDamageCategorySetup from './PropertyDamageCategorySetup'
-// import RCACategorySetup from './RCACategorySetup'
-// import IncidentDisclaimerSetup from './IncidentDisclaimerSetup'
 const IncidentSetup = () => {
   const [page, setPage] = useState("category");
   return (
     <section className="flex">
       <div className="hidden md:block">
-      <Navbar />
+        <Navbar />
       </div>
-      <div className="w-full flex mx-3 flex-col overflow-hidden">
-        <div className="grid grid-cols-12">
-          <div className=" flex col-span-2 w-full gap-1 flex-col my-5 mx-1 ">
+      <div className="w-full flex mx-3 flex-col overflow-hidden h-full">
+        <div className="grid grid-cols-12 h-full">
+          <div className=" flex col-span-3 w-full gap-1 flex-col my-5 mx-1 h-full">
             <h2
-              className={`p-1 ${
+              className={`p-1 border-b ${
                 page === "category" &&
-                "bg-white font-medium  text-blue-500 shadow-custom-all-sides"
-              } rounded-full hover:text-blue-500 px-2 cursor-pointer  transition-all duration-300 ease-linear`}
+                "bg-blue-500 font-medium  text-white rounded-md"
+              }   px-2 cursor-pointer  transition-all duration-300 ease-linear`}
               onClick={() => setPage("category")}
             >
               Category
             </h2>
             <h2
-              className={`p-1 ${
+              className={`p-1 border-b ${
                 page === "subCategory1" &&
-                "bg-white font-medium text-blue-500 shadow-custom-all-sides"
-              } rounded-full hover:text-blue-500 px-2 cursor-pointer transition-all duration-300 ease-linear w-full`}
+                "bg-blue-500 font-medium  text-white rounded-md "
+              }  px-2 cursor-pointer transition-all duration-300 ease-linear w-full`}
               onClick={() => setPage("subCategory1")}
             >
               Sub Category
             </h2>
             <h2
-              className={`p-1 ${
+              className={`p-1 border-b ${
                 page === "subCategory2" &&
-                "bg-white font-medium text-blue-500 shadow-custom-all-sides"
-              } rounded-full hover:text-blue-500 px-2 cursor-pointer transition-all duration-300 ease-linear`}
+                "bg-blue-500 font-medium  text-white rounded-md "
+              }   px-2 cursor-pointer transition-all duration-300 ease-linear`}
               onClick={() => setPage("subCategory2")}
             >
               Sub Sub Category
             </h2>
             <h2
-              className={`p-1 ${
+              className={`p-1 border-b ${
                 page === "subCategory3" &&
-                "bg-white font-medium text-blue-500 shadow-custom-all-sides"
-              } rounded-full hover:text-blue-500 px-2 cursor-pointer transition-all duration-300 ease-linear`}
+                "bg-blue-500 font-medium  text-white rounded-md "
+              }   px-2 cursor-pointer transition-all duration-300 ease-linear`}
               onClick={() => setPage("subCategory3")}
             >
               Sub Sub Sub Category
             </h2>
             <h2
-              className={`p-1 ${
+              className={`p-1 border-b ${
                 page === "incidenceStatus" &&
-                "bg-white font-medium text-blue-500 shadow-custom-all-sides"
-              } rounded-full hover:text-blue-500 px-2 cursor-pointer transition-all duration-300 ease-linear`}
+                "bg-blue-500 font-medium  text-white rounded-md "
+              }  px-2 cursor-pointer transition-all duration-300 ease-linear`}
               onClick={() => setPage("incidenceStatus")}
             >
               Incidence status
             </h2>
             <h2
-              className={`p-1 ${
+              className={`p-1 border-b ${
                 page === "incidenceLevel" &&
-                "bg-white font-medium text-blue-500 shadow-custom-all-sides"
-              } rounded-full hover:text-blue-500 px-2 cursor-pointer transition-all duration-300 ease-linear`}
+                "bg-blue-500 font-medium  text-white rounded-md "
+              }  px-2 cursor-pointer transition-all duration-300 ease-linear`}
               onClick={() => setPage("incidenceLevel")}
             >
               Incidence level
             </h2>
             <h2
-              className={`p-1 ${
+              className={`p-1 border-b ${
                 page === "escalations" &&
-                "bg-white font-medium text-blue-500 shadow-custom-all-sides"
-              } rounded-full hover:text-blue-500 px-2 cursor-pointer transition-all duration-300 ease-linear`}
+                "bg-blue-500 font-medium  text-white rounded-md "
+              }   px-2 cursor-pointer transition-all duration-300 ease-linear`}
               onClick={() => setPage("escalations")}
             >
               Escalations
             </h2>
             <h2
-              className={`p-1 ${
+              className={`p-1 border-b ${
                 page === "approvalSetup" &&
-                "bg-white font-medium text-blue-500 shadow-custom-all-sides"
-              } rounded-full hover:text-blue-500 px-2 cursor-pointer transition-all duration-300 ease-linear`}
+                "bg-blue-500 font-medium  text-white rounded-md "
+              }  px-2 cursor-pointer transition-all duration-300 ease-linear`}
               onClick={() => setPage("approvalSetup")}
             >
               Approval Setup
             </h2>
             <h2
-              className={`p-1 ${
+              className={`p-1 border-b ${
                 page === "secondaryCategory" &&
-                "bg-white font-medium text-blue-500 shadow-custom-all-sides"
-              } rounded-full hover:text-blue-500 px-2 cursor-pointer transition-all duration-300 ease-linear`}
+                "bg-blue-500 font-medium  text-white  rounded-md"
+              }  px-2 cursor-pointer transition-all duration-300 ease-linear`}
               onClick={() => setPage("secondaryCategory")}
             >
               Secondary Category
             </h2>
 
             <h2
-              className={`p-1 ${
+              className={`p-1 border-b ${
                 page === "secondarySubCategory" &&
-                "bg-white font-medium text-blue-500 shadow-custom-all-sides"
-              } rounded-full hover:text-blue-500 px-2 cursor-pointer  transition-all duration-300 ease-linear`}
+                "bg-blue-500 font-medium  text-white rounded-md"
+              }   px-2 cursor-pointer  transition-all duration-300 ease-linear`}
               onClick={() => setPage("secondarySubCategory")}
             >
               Secondary Sub Category
             </h2>
-            {/* <h2
-                  className={`p-1 ${
-                  page === "secondarySubSubCategory" &&
-                  "bg-white font-medium text-blue-500 shadow-custom-all-sides"
-                  } rounded-full hover:text-blue-500 px-2 cursor-pointer text-sm transition-all duration-300 ease-linear`}
-                  onClick={() => setPage("secondarySubSubCategory")}
-                >
-                    Secondary Sub Sub Category
-                </h2>
-                <h2
-                  className={`p-1 ${
-                  page === "secondarySubSubSubCategory" &&
-                  "bg-white font-medium text-blue-500 shadow-custom-all-sides"
-                  } rounded-full hover:text-blue-500 px-2 cursor-pointer transition-all duration-300 ease-linear`}
-                  onClick={() => setPage("secondarySubSubSubCategory")}
-                >
-                    Secondary Sub Sub Sub Category
-                </h2> */}
+            <h2
+              className={`p-1 border-b ${
+                page === "secondarySubSubCategory" &&
+                "bg-blue-500 font-medium  text-white rounded-md "
+              }  px-2 cursor-pointer transition-all duration-300 ease-linear`}
+              onClick={() => setPage("secondarySubSubCategory")}
+            >
+              Secondary Sub Sub Category
+            </h2>
+            <h2
+              className={`p-1 border-b ${
+                page === "secondarySubSubSubCategory" &&
+                "bg-blue-500 font-medium  text-white rounded-md"
+              }   px-2 cursor-pointer transition-all duration-300 ease-linear`}
+              onClick={() => setPage("secondarySubSubSubCategory")}
+            >
+              Secondary Sub Sub Sub Category
+            </h2>
 
             <h2
-              className={`p-1 ${
+              className={`p-1 border-b ${
                 page === "injured" &&
-                "bg-white font-medium text-blue-500 shadow-custom-all-sides"
-              } rounded-full hover:text-blue-500 px-2 cursor-pointer transition-all duration-300 ease-linear`}
+                "bg-blue-500 font-medium  text-white rounded-md  "
+              }  px-2 cursor-pointer transition-all duration-300 ease-linear`}
               onClick={() => setPage("injured")}
             >
               Who got injured
             </h2>
             <h2
-              className={`p-1 ${
+              className={`p-1 border-b ${
                 page === "damageCategory" &&
-                "bg-white font-medium text-blue-500 shadow-custom-all-sides"
-              } rounded-full hover:text-blue-500 px-2 cursor-pointer transition-all duration-300 ease-linear`}
+                "bg-blue-500 font-medium  text-white rounded-md "
+              }  px-2 cursor-pointer transition-all duration-300 ease-linear`}
               onClick={() => setPage("damageCategory")}
             >
               Property Damage Category
             </h2>
             <h2
-              className={`p-1 ${
+              className={`p-1 border-b ${
                 page === "rcaCategory" &&
-                "bg-white font-medium text-blue-500 shadow-custom-all-sides"
-              } rounded-full hover:text-blue-500 px-2 cursor-pointer transition-all duration-300 ease-linear`}
+                "bg-blue-500 font-medium  text-white rounded-md "
+              }  px-2 cursor-pointer transition-all duration-300 ease-linear`}
               onClick={() => setPage("rcaCategory")}
             >
               RCA Category
             </h2>
-            <h2
-              className={`p-1 ${
+            {/* <h2
+              className={`p-1 border-b ${
                 page === "incidentDisclaimer" &&
-                "bg-white font-medium text-blue-500 shadow-custom-all-sides"
-              } rounded-full hover:text-blue-500 px-2 cursor-pointer transition-all duration-300 ease-linear`}
+                "bg-blue-500 font-medium  text-white rounded-md"
+              }   px-2 cursor-pointer transition-all duration-300 ease-linear`}
               onClick={() => setPage("incidentDisclaimer")}
             >
               Incident Disclaimer
-            </h2>
+            </h2> */}
           </div>
-          <div className=" border-l-2 border-gray-300 col-span-10 h-full m-2 w-full">
+          <div className=" border-l border-gray-300 col-span-9 h-full m-2 w-full">
             {page === "category" && (
               <div>
                 <IncidentCategorySetup />
@@ -222,19 +222,19 @@ const IncidentSetup = () => {
             )}
             {page === "secondarySubCategory" && (
               <div>
-                <SecondarySubCategorysetup />
+                <SecondarySubCategorySetup />
               </div>
             )}
-            {/* {page === "secondarySubSubCategory" && (
+            {page === "secondarySubSubCategory" && (
                 <div>
                   <SecondarySubSubCategorySetup />
                </div>
             )}
              {page === "secondarySubSubSubCategory" && (
                  <div>
-                  <SecondarySubSubSubCategorysetup />
+                  <SecondarySubSubSubCat />
                </div>
-            )} */}
+            )}
             {page === "injured" && (
               <div>
                 <InjurySetup />
@@ -246,9 +246,9 @@ const IncidentSetup = () => {
               </div>
             )}
             {page === "rcaCategory" && (
-                <div>
-                  <RCACategorySetup />
-               </div>
+              <div>
+                <RCACategorySetup />
+              </div>
             )}
             {/*
             {page === "incidentDisclaimer" && (
