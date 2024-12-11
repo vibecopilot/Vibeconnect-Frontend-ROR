@@ -26,7 +26,6 @@ import { MdClose } from "react-icons/md";
 const CreateTicket = () => {
   const navigate = useNavigate();
 
-
   const [behalf, setBehalf] = useState("self");
   const [ticketType, setTicketType] = useState("");
   //   const [selectedOption, setSelectedOption] = useState("");
@@ -63,25 +62,19 @@ const CreateTicket = () => {
     complaint_mode_id: "",
   });
 
-
   console.log(formData);
   // console.log(attachments);
-
 
   const categories = getItemInLocalStorage("categories");
   // console.log("Categories", categories)
 
-
   const userName = localStorage.getItem("Name");
-
 
   const siteID = getItemInLocalStorage("SITEID");
   // setSelectedSiteId(siteID)
 
-
   const building = getItemInLocalStorage("Building");
   // console.log("BB", building);
-
 
   useEffect(() => {
     const fetchData = async () => {
@@ -90,7 +83,6 @@ const CreateTicket = () => {
       const responce = await getComplaints();
       // console.log("complaints", responce)
     };
-
 
     const fetchAssignedTo = async () => {
       try {
@@ -101,7 +93,6 @@ const CreateTicket = () => {
         console.error("Error fetching assigned users:", error);
       }
     };
-
 
     const fetchFloor = async () => {
       try {
@@ -144,7 +135,6 @@ const CreateTicket = () => {
     fetchUsers();
     // fetchUnits();
   }, []);
-
 
   const handleOptionChange = (event, setState) => {
     setState(event.target.value);
@@ -210,7 +200,6 @@ const CreateTicket = () => {
       }
     }
 
-
     if (e.target.type === "select-one" && e.target.name === "categories") {
       const categoryId = Number(e.target.value);
       await fetchSubCategory(categoryId);
@@ -228,14 +217,12 @@ const CreateTicket = () => {
     }
   };
 
-
   const handleAssChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     });
   };
-
 
   const buildingChange = async (e) => {
     async function fetchFloor(floorID) {
@@ -248,7 +235,6 @@ const CreateTicket = () => {
       }
     }
 
-
     async function getUnit(UnitID) {
       try {
         const unit = await getUnits(UnitID);
@@ -260,11 +246,9 @@ const CreateTicket = () => {
       }
     }
 
-
     if (e.target.type === "select-one" && e.target.name === "building_name") {
       const BuildID = Number(e.target.value);
       await fetchFloor(BuildID);
-
 
       setFormData({
         ...formData,
@@ -359,7 +343,7 @@ const CreateTicket = () => {
 
     if ((formData.documents || []).length > 4) {
       return toast.error("You can upload maximum upto 4 images.");
-  } 
+    }
     try {
       toast.loading("Please wait generating ticket!");
       const sendData = new FormData();
@@ -380,7 +364,10 @@ const CreateTicket = () => {
       sendData.append("complaints[floor_name]", formData.floor_name);
       sendData.append("complaints[issue_type_id]", formData.issue_type_id);
       sendData.append("complaints[complaint_type]", formData.complaint_type);
-      sendData.append("complaints[complaint_mode_id]", formData.complaint_mode_id);
+      sendData.append(
+        "complaints[complaint_mode_id]",
+        formData.complaint_mode_id
+      );
 
       (formData.documents || []).forEach((file, index) => {
         sendData.append("documents[]", file);
@@ -398,7 +385,6 @@ const CreateTicket = () => {
     }
   };
 
-
   const handleReset = () => {
     setAttachments([]);
     setSelectedSubCategory("");
@@ -407,10 +393,8 @@ const CreateTicket = () => {
     setSelectedCategory("");
   };
 
-
   useEffect(() => {
     const footer = document.querySelector(".hideIt");
-
 
     const hideFooter = () => {
       if (window.innerWidth <= 786) {
@@ -418,13 +402,11 @@ const CreateTicket = () => {
       }
     };
 
-
     const handleMouseEnter = () => {
       if (window.innerWidth <= 786) {
         footer.classList.remove("hide-on-small-screen");
       }
     };
-
 
     const handleMouseLeave = () => {
       if (window.innerWidth <= 786) {
@@ -447,7 +429,7 @@ const CreateTicket = () => {
       <div className="fixed hidden md:block left-0 top-0 h-full md:static md:h-auto md:flex-shrink-0">
         <Navbar />
       </div>
-      <div className="flex justify-center  overflow-x-auto w-full  sm:w-full">
+      <div className="flex justify-center overflow-x-auto w-full sm:w-full">
         <div className="border border-gray-400 rounded-md">
           <h2
             style={{ background: themeColor }}
@@ -1450,9 +1432,4 @@ const CreateTicket = () => {
   );
 };
 
-
 export default CreateTicket;
-
-
-
-
