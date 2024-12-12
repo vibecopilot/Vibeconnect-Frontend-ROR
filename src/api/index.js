@@ -1264,7 +1264,7 @@ export const getColorCode = async () =>
     },
   });
 export const editColorCode = async (id, data) =>
-  axiosInstance.put(`/color_codes/${id}.json`,data, {
+  axiosInstance.put(`/color_codes/${id}.json`, data, {
     params: {
       token: token,
     },
@@ -6820,6 +6820,23 @@ export const postUniformApproval = async (approvalId, data) => {
     return response.data;
   } catch (error) {
     console.error("Error getting approvalId", error);
+    throw error;
+  }
+};
+export const getEmployeeEsic = async (empId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/esic/create/?employee_id=${empId}`,
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting Employee Esic card", error);
     throw error;
   }
 };

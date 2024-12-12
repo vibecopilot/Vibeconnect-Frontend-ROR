@@ -122,7 +122,7 @@ const CompletedTable = () => {
       selector: (row) => (
         <div
           className={`font-medium ${
-            row.status === "rejected" ? "text-red-400" : "text-green-400"
+            row.status === "Rejected" ? "text-red-400" : "text-green-400"
           }`}
         >
           {row.status}

@@ -43,6 +43,11 @@ const PendingUniformRequest = () => {
       sortable: true,
     },
     {
+      name: "Shoes",
+      selector: (row) => row.shoes,
+      sortable: true,
+    },
+    {
       name: "Applied on",
       selector: (row) => dateFormatSTD(row.created_date),
       sortable: true,
@@ -293,6 +298,11 @@ const PendingUniformRequest = () => {
                     className="border border-gray-300 p-2 rounded-md w-full"
                     placeholder="Shoes size"
                   />
+                </div>
+
+                <div className="flex items-end gap-2">
+                  <input type="checkbox" name="" id="" className="mb-1" />
+                  <label htmlFor="">ID Card Provided</label>
                 </div>
                 {/* <div className="mt-2">
               <label className="block text-sm font-medium text-gray-700">

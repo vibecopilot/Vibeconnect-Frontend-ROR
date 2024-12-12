@@ -8,8 +8,9 @@ import SubSubSubCategorySetupModal from "../../../containers/modals/IncidentSetu
 import { FaCheck, FaTrash } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 import { PiPlusCircle } from "react-icons/pi";
+import SecSubSubSubModal from "../../../containers/modals/IncidentSetupModal.jsx/SecSubSubSubModal";
 
-const SubSubSubCategorySetup = () => {
+const SecondarySubSubSubCat = () => {
   const [modal, showModal] = useState(false);
   const column = [
     { name: "Category", selector: (row) => row.Category, sortable: true },
@@ -57,8 +58,8 @@ const SubSubSubCategorySetup = () => {
   const [addSubSubSubCat, setAddSubSubSubCat] = useState(false);
   return (
     <section className="mx-2">
-      <div className="w-full flex flex-col gap-2 overflow-hidden">
-        <div className="flex justify-center">
+    <div className="w-full flex flex-col gap-2 overflow-hidden">
+      <div className="flex justify-end">
           {addSubSubSubCat && (
             <div className="flex flex-col gap-2">
               <div className="grid grid-cols-4 gap-2 w-full">
@@ -67,7 +68,7 @@ const SubSubSubCategorySetup = () => {
                   id=""
                   className="border p-2 px-4 border-gray-300 rounded-md w-full"
                 >
-                  <option value="">Select Category</option>
+                  <option value="">Select Secondary Category</option>
                   <option value="">Health and Safety</option>
                   <option value="">Fire</option>
                   <option value="">Near Miss/Good Catch</option>
@@ -77,18 +78,18 @@ const SubSubSubCategorySetup = () => {
                   id=""
                   className="border p-2 px-4 border-gray-300 rounded-md w-full"
                 >
-                  <option value="">Select Sub Category</option>
+                  <option value="">Select Secondary Sub Category</option>
                 </select>
                 <select
                   name=""
                   id=""
                   className="border p-2 px-4 border-gray-300 rounded-md w-full"
                 >
-                  <option value="">Select Sub Sub Category</option>
+                  <option value="">Select Secondary Sub Sub Category</option>
                 </select>
                 <input
                   type="text"
-                  placeholder="Sub Sub Sub Category"
+                  placeholder="Secondary Sub Sub Sub Category"
                   className="border p-2 px-4 border-gray-300 rounded-md w-full"
                 />
               </div>
@@ -106,26 +107,25 @@ const SubSubSubCategorySetup = () => {
             </div>
           )}
         </div>
-          {!addSubSubSubCat && (
-            <div className="flex justify-end w-full">
-
+        {!addSubSubSubCat && (
+          <div className="flex justify-end w-full">
             <button
               className="bg-green-500 p-2 rounded-md text-white flex items-center gap-2"
               onClick={() => setAddSubSubSubCat(true)}
-              >
+            >
               <PiPlusCircle /> Add
             </button>
-              </div>
-          )}
+          </div>
+        )}
         <div>
           <Table columns={column} data={data} isPagination={true} />
         </div>
         {modal && (
-          <SubSubSubCategorySetupModal onclose={() => showModal(false)} />
+          <SecSubSubSubModal onclose={() => showModal(false)} />
         )}
       </div>
     </section>
   );
 };
 
-export default SubSubSubCategorySetup;
+export default SecondarySubSubSubCat;

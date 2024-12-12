@@ -36,11 +36,15 @@ function GroupJoinDetails() {
   }, []);
   const { id } = useParams();
   const [details, setDetails] = useState({});
+  const [members, setMembers] = useState([]);
+  const [filteredMembers, setFilteredMembers] = useState([]);
   const fetchGroupDetails = async () => {
     try {
       const res = await getGroupsDetails(id);
       setDetails(res.data);
       console.log(res.data.group_members);
+      setFilteredMembers(res.data.group_members);
+      setMembers(res.data.group_members);
     } catch (error) {
       console.log(res);
     }
@@ -79,9 +83,23 @@ function GroupJoinDetails() {
     },
   ];
 
- 
+  const [searchText, setSearchText] = useState("");
+  const handleSearch = (e) => {
+    const searchValue = e.target.value;
+    setSearchText(searchValue);
+    if (searchValue.trim === "") {
+      setFilteredMembers(members);
+    } else {
+      const filteredResult = members.filter((member) =>
+        member.user_name
+          .toLowerCase()
+          .includes(searchValue.trim().toLowerCase())
+      );
+      setFilteredMembers(filteredResult);
+    }
+  };
 
-  const [editGroup, setEditGroup] = useState(false)
+  const [editGroup, setEditGroup] = useState(false);
 
   return (
     <section className="flex">
@@ -125,7 +143,7 @@ function GroupJoinDetails() {
                   </div> */}
 
                   <div className="">
-                    <button className="" onClick={()=>setEditGroup(true)}>
+                    <button className="" onClick={() => setEditGroup(true)}>
                       <BiEdit size={20} />
                     </button>
                   </div>
@@ -163,14 +181,16 @@ function GroupJoinDetails() {
                       <input
                         type="text"
                         name=""
+                        value={searchText}
                         id=""
                         className="border border-gray-400 rounded-md p-2 w-full "
                         placeholder="Search by name"
+                        onChange={handleSearch}
                       />
                     </div>
                     <Table
                       columns={columns}
-                      data={details?.group_members}
+                      data={filteredMembers}
                       isPagination={true}
                     />
                   </div>
@@ -179,7 +199,12 @@ function GroupJoinDetails() {
             </div>
           </div>
         </div>
-        {editGroup && <EditGroupDetails onclose={()=> setEditGroup(false)} fetchGroupDetails={fetchGroupDetails} />}
+        {editGroup && (
+          <EditGroupDetails
+            onclose={() => setEditGroup(false)}
+            fetchGroupDetails={fetchGroupDetails}
+          />
+        )}
       </div>
     </section>
   );

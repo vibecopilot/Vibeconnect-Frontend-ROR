@@ -52,6 +52,8 @@ const MultiSelect = ({
       setOptions(filteredResults);
     }
   };
+  console.log(selectedOptions)
+  console.log(options.value)
   return (
     <div className="mb-2" ref={dropdownRef}>
       <label className="block font-semibold">{title}</label>

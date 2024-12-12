@@ -127,7 +127,7 @@ const SeparationTable = () => {
     },
     {
       name: "Separation Status",
-      selector: (row) => row.Country,
+      selector: (row) => row.status,
       sortable: true,
     },
     {
@@ -157,15 +157,7 @@ const SeparationTable = () => {
     },
   ];
 
-  const data = [
-    {
-      Name: "person 1",
-      Label: "2/2/2023",
-      City: "2/2/2023",
-      State: "abc",
-      Country: "pending",
-    },
-  ];
+ 
 
   return (
     <section className="flex">

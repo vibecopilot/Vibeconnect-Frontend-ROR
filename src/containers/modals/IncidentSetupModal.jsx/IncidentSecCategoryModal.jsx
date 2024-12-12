@@ -1,27 +1,27 @@
 import React from "react";
 import ModalWrapper from "../ModalWrapper";
-import { BiEditAlt } from "react-icons/bi";
 import { MdClose } from "react-icons/md";
 import { FaCheck } from "react-icons/fa";
+import { BiEditAlt } from "react-icons/bi";
 
-const InjurySetupModal = ({ onclose }) => {
+const IncidentSecCategoryModal = ({ onclose }) => {
   return (
     <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-30 backdrop-blur-sm z-20">
       <div className="bg-white overflow-auto max-h-[70%] md:w-auto w-96 p-4 px-8 flex flex-col rounded-xl gap-5">
         <div className="flex flex-col w-64 justify-center">
           <h2 className="flex gap-2 items-center justify-center font-bold text-lg ">
-            <BiEditAlt /> Edit Who got injured
+            <BiEditAlt /> Edit Secondary Category
           </h2>
           <div className="border-t-2 border-black">
             <div className="flex flex-col my-2 gap-2">
               <label htmlFor="" className="font-medium">
-                Person Name
+               Secondary Category
               </label>
               <input
                 type="text"
                 name=""
                 id=""
-                placeholder="Person Name"
+                placeholder="Secondary Category"
                 className="border p-2 border-gray-500 rounded-md w-full"
               ></input>
             </div>
@@ -44,4 +44,4 @@ const InjurySetupModal = ({ onclose }) => {
   );
 };
 
-export default InjurySetupModal;
+export default IncidentSecCategoryModal;

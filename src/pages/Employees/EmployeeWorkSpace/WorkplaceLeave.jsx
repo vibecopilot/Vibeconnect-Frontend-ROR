@@ -10,11 +10,13 @@ import "react-datepicker/dist/react-datepicker.css";
 import Select from "react-select";
 import {
   getEmployeeLeave,
+  getLeaveApplicationDetails,
   getLeaveCategory,
   getMyHRMSEmployees,
   postSingleLeaveApplication,
 } from "../../../api";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
+import toast from "react-hot-toast";
 const WorkplaceLeave = () => {
   const [dateRange, setDateRange] = useState([null, null]);
   const [startDate, endDate] = dateRange;
@@ -24,7 +26,7 @@ const WorkplaceLeave = () => {
       name: "Action",
       cell: (row) => (
         <div className="flex items-center gap-4 cursor-pointer">
-          <BsEye onClick={openDetailAdd} />
+          <BsEye onClick={() => handleLeaveDetailsModal(row.id)} />
         </div>
       ),
     },
@@ -50,61 +52,27 @@ const WorkplaceLeave = () => {
     // },
     {
       name: "Leave Status",
-      selector: (row) => row.status,
+      selector: (row) =>
+        row.status === "rejected" ? (
+          <p className="font-medium text-red-400">Rejected</p>
+        ) : row.status === "approved" ? (
+          <p className="font-medium text-green-400">Approved</p>
+        ) : (
+          row.status
+        ),
       sortable: true,
     },
-    // {
-    //   name: "Leave Dates",
-    //   selector: (row) => row.leave_dates,
-    //   sortable: true,
-    //   minWidth: "13rem",
-    // },
   ];
 
-  const data = [
-    {
-      id: 1,
-      leave_category: "Sick Leave",
-      opening_balance: "10",
-      leave_taken: "2",
-      closing_balance: "8",
-      leave_status: "Approved",
-      leave_dates: "2024-08-21 to 2024-08-22",
-    },
-    {
-      id: 2,
-      leave_category: "Casual Leave",
-      opening_balance: "5",
-      leave_taken: "1",
-      closing_balance: "4",
-      leave_status: "Pending",
-      leave_dates: "2024-08-25",
-    },
-    {
-      id: 3,
-      leave_category: "Annual Leave",
-      opening_balance: "15",
-      leave_taken: "5",
-      closing_balance: "10",
-      leave_status: "Rejected",
-      leave_dates: "2024-08-10 to 2024-08-14",
-    },
-    // Add more data entries as needed
-  ];
   const themeColor = useSelector((state) => state.theme.color);
   const [addModal, setAddModal] = useState(false);
   const [detailModal, setDetailModal] = useState(false);
   const openAdd = () => {
     setAddModal(true);
   };
-  const openDetailAdd = () => {
-    setDetailModal(true);
-  };
+
   const closeDetailModal = () => {
     setDetailModal(false);
-  };
-  const close = () => {
-    setAddModal(false);
   };
 
   const [formData, setFormData] = useState({
@@ -167,7 +135,7 @@ const WorkplaceLeave = () => {
     try {
       const res = await postSingleLeaveApplication(postData);
       setAddModal(false);
-      fetchLeaveApplications();
+      fetchEmployeeLeaves();
       toast.success("Leave application added successfully");
     } catch (error) {
       console.log(error);
@@ -196,6 +164,16 @@ const WorkplaceLeave = () => {
   useEffect(() => {
     fetchEmployeeLeaves();
   }, []);
+  const [details, setDetails] = useState({});
+  const handleLeaveDetailsModal = async (id) => {
+    setDetailModal(true);
+    try {
+      const res = await getLeaveApplicationDetails(id);
+      setDetails(res);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <section className="flex">
@@ -242,7 +220,6 @@ const WorkplaceLeave = () => {
                     aria-modal="true"
                     aria-labelledby="modal-headline"
                   >
-                    
                     <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                       <div className="">
                         <div className="mt-3  sm:mt-0 sm:ml-4 ">
@@ -413,7 +390,7 @@ const WorkplaceLeave = () => {
             )}
             {detailModal && (
               <div className="fixed inset-0 flex justify-center items-center z-50 bg-black bg-opacity-30 backdrop-blur-sm">
-                <div className="bg-white mt-10   p-4 px-8 flex flex-col rounded-md gap-5">
+                <div className="bg-white mt-10   p-4 px-8 flex flex-col rounded-xl gap-5">
                   {/* <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full flex flex-col h-auto max-h-[80vh] overflow-y-auto z-50"> */}
                   <h2 className="text-2xl font-semibold "> Leave Details</h2>
 
@@ -422,29 +399,43 @@ const WorkplaceLeave = () => {
                       <label htmlFor="" className="font-medium">
                         Leave category :
                       </label>
-                      <p className="font-medium text-sm">Sick leave</p>
+                      <p className="font-medium text-sm">
+                        {details.category_label}
+                      </p>
                     </div>
                     <div className="grid grid-cols-2 gap-4 w-96">
                       <label htmlFor="" className="font-medium">
                         Leave Dates :
                       </label>
                       <p className="font-medium text-sm">
-                        2024-08-21 to 2024-08-22
+                        {details.start_date} to {details.end_date}
                       </p>
                     </div>
                     <div className="grid grid-cols-2 gap-4 w-96">
                       <label htmlFor="" className="font-medium">
-                        Half days :
+                        Half day :
                       </label>
-                      <p className="font-medium text-sm">No</p>
+                      <p className="font-medium text-sm">
+                        {details?.is_half_day ? "Yes" : "No"}
+                      </p>
                     </div>
+                    {details?.is_half_day && (
+                      <div className="grid grid-cols-2 gap-4 w-96">
+                        <label htmlFor="" className="font-medium">
+                          Half day Date :
+                        </label>
+                        <p className="font-medium text-sm">
+                          {details?.half_day_selection}
+                        </p>
+                      </div>
+                    )}
 
                     <div className="flex flex-col ">
                       <label htmlFor="" className="font-medium">
                         Reason for leave
                       </label>
                       <p className="border bg-gray-100 p-2 rounded-md">
-                        Not feeling well
+                        {details.reason}
                       </p>
                     </div>
                   </div>
