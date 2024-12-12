@@ -710,6 +710,14 @@ import UniformApplication from "./pages/AdminHrms/UniformApplication.jsx";
 import { setColor } from "./features/theme/themeSlice.js";
 import CopyChecklistPPM from "./pages/SubPages/CopyChecklistPPM.jsx";
 import CopyChecklistService from "./pages/SubPages/CopyChecklistService.jsx";
+import BillingSetup from "./pages/Setup/BillingSetup/BillingSetup.jsx";
+
+import CAMBilling from "./pages/CAMBilling.jsx";
+import BillingAddress from "./pages/Setup/BillingSetup/BillingAddress.jsx";
+import EditBillingAddress from "./pages/Setup/BillingSetup/EditBillingAddress.jsx";
+import AddCAMBilling from "./pages/SubPages/AddCAMBilling.jsx";
+import CAMBillingDetails from "./pages/SubPages/details/CAMBillingDetails.jsx";
+import CreateInvoiceReceipt from "./pages/SubPages/details/CreateInvoiceReceipt.jsx";
 // new admin hrms
 
 function App() {
@@ -3766,7 +3774,6 @@ function App() {
               </ProtectedAdminRoutes>
             }
           />
-
           <Route
             path="/admin/edit-addresses-setup/:id"
             element={
@@ -6848,7 +6855,64 @@ function App() {
               </ProtectedRoute>
             }
           />
-          
+           <Route
+            path="/admin/billing-setup"
+            element={
+              <ProtectedAdminRoutes>
+                <BillingSetup />
+              </ProtectedAdminRoutes>
+            }
+          />
+         
+          {/* CAM Billing */}
+          <Route
+            path="/admin/cam-billing"
+            element={
+              <ProtectedAdminRoutes>
+                <CAMBilling />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/add-cam-billing"
+            element={
+              <ProtectedAdminRoutes>
+                <AddCAMBilling />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/cam-billing-details/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <CAMBillingDetails />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/create-invoice-receipt"
+            element={
+              <ProtectedAdminRoutes>
+                <CreateInvoiceReceipt />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/billing-address"
+            element={
+              <ProtectedAdminRoutes>
+                <BillingAddress />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/edit-billing-address/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <EditBillingAddress />
+              </ProtectedAdminRoutes>
+            }
+          />
         </Routes>
         <Footer />
       </Router>
