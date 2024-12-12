@@ -54,13 +54,14 @@ function AddLeaveCategory() {
   };
   const navigate = useNavigate();
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
+  console.log(formData)
   const handleSubmit = async () => {
     if (
       !formData.leaveType ||
-      formData.customLabel ||
-      formData.abbreviationLabel ||
-      formData.accrualPeriod ||
-      formData.prorationMethod
+      !formData.customLabel ||
+      !formData.abbreviationLabel ||
+      !formData.accrualPeriod ||
+      !formData.prorationMethod
     ) {
       return toast.error("Please fill all the required fields");
     }

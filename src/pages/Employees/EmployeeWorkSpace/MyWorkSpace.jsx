@@ -220,6 +220,7 @@ const MyWorkSpace = () => {
       // alert("Attendance marked successfully!");
       toast.success("Attendance marked successfully!");
       setShowCamera(false);
+      fetchAttendance()
     } catch (error) {
       console.error("Error marking attendance:", error);
       toast.error(

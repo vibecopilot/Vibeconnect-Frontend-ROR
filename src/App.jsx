@@ -711,7 +711,7 @@ import { setColor } from "./features/theme/themeSlice.js";
 import CopyChecklistPPM from "./pages/SubPages/CopyChecklistPPM.jsx";
 import CopyChecklistService from "./pages/SubPages/CopyChecklistService.jsx";
 import BillingSetup from "./pages/Setup/BillingSetup/BillingSetup.jsx";
-import AddCAMBillingSetup from "./pages/Setup/BillingSetup/AddCAMBillingSetup.jsx";
+
 import CAMBilling from "./pages/CAMBilling.jsx";
 import BillingAddress from "./pages/Setup/BillingSetup/BillingAddress.jsx";
 import EditBillingAddress from "./pages/Setup/BillingSetup/EditBillingAddress.jsx";
@@ -6863,14 +6863,7 @@ function App() {
               </ProtectedAdminRoutes>
             }
           />
-          <Route
-            path="/admin/add-cam-billing-setup"
-            element={
-              <ProtectedAdminRoutes>
-                <AddCAMBillingSetup />
-              </ProtectedAdminRoutes>
-            }
-          />
+         
           {/* CAM Billing */}
           <Route
             path="/admin/cam-billing"

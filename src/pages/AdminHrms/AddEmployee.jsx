@@ -314,7 +314,7 @@ const AddEmployee = () => {
                   ? " text-white bg-blue-500 font-medium cursor-pointer"
                   : "text-white bg-gray-400 font-medium cursor-not-allowed"
               }`}
-              // disabled={steps !== "basic"}
+              disabled={steps !== "basic"}
               onClick={() => setSteps("basic")}
             >
               <div>{React.createElement(ImFileText2, { size: "20" })}</div>
@@ -328,7 +328,7 @@ const AddEmployee = () => {
                   : "text-white bg-gray-400 font-medium cursor-not-allowed"
               }`}
               onClick={() => setSteps("employment")}
-              // disabled={steps !== "employment"}
+              disabled={steps !== "employment"}
             >
               <div>{React.createElement(MdOutlineWork, { size: "20" })}</div>
               Employment
@@ -341,7 +341,7 @@ const AddEmployee = () => {
                   : "text-white bg-gray-400 font-medium cursor-not-allowed"
               }`}
               onClick={() => setSteps("salary")}
-              // disabled={steps !== "salary"}
+              disabled={steps !== "salary"}
             >
               <div>{React.createElement(FcMoneyTransfer, { size: "20" })}</div>
               Salary
@@ -353,7 +353,7 @@ const AddEmployee = () => {
                   ? " text-white bg-blue-500 font-medium cursor-pointer"
                   : "text-white bg-gray-400 font-medium cursor-not-allowed"
               }`}
-              // disabled={steps !== "statutory"}
+              disabled={steps !== "statutory"}
               onClick={() => setSteps("statutory")}
             >
               <div>{React.createElement(ImFileText2, { size: "20" })}</div>
@@ -493,8 +493,8 @@ const AddEmployee = () => {
                   name="gender"
                 >
                   <option value="">Select Gender</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
+                  <option value="MALE">Male</option>
+                  <option value="FEMALE">Female</option>
                 </select>
               </div>
               <div className="grid gap-2 items-center w-full">

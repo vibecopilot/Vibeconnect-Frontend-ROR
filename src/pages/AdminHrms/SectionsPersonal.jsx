@@ -120,15 +120,7 @@ const SectionsPersonal = () => {
     },
   ];
 
-  const data = [
-    {
-      Payment_Type: "Salary",
-      mode: "Bank Transfer",
-      name: "State Bank of India",
-      account: "12356",
-      ifsc: "BK4568",
-    },
-  ];
+  
   const { id } = useParams();
   const [formData, setFormData] = useState({
     firstName: "",
@@ -289,7 +281,7 @@ const SectionsPersonal = () => {
     editData.append("marital_status", formData.maritalStatus);
     editData.append("emergency_contact_name", formData.emergencyContactName);
     editData.append("emergency_contact_no", formData.emergencyContactNo);
-    editData.append("user_type", formData.userType);
+    editData.append("user_type", formData.userType ? formData.userType : "");
     editData.append("status", formData.status);
     editData.append("organization", hrmsOrgId);
     try {
@@ -897,11 +889,16 @@ const SectionsPersonal = () => {
             title={"Payment Information"}
             content={
               <div>
-               {paymentsData.length === 0 && <div className="flex justify-end">
-                  <button className="bg-blue-500 text-white mb-2 hover:bg-gray-700 font-semibold py-2 px-4 rounded-full flex items-center gap-2" onClick={()=> setAddPaymentInfoModal(true)}>
-                    <PiPlusCircle size={18} /> Add
-                  </button>
-                </div>}
+                {paymentsData.length === 0 && (
+                  <div className="flex justify-end">
+                    <button
+                      className="bg-blue-500 text-white mb-2 hover:bg-gray-700 font-semibold py-2 px-4 rounded-full flex items-center gap-2"
+                      onClick={() => setAddPaymentInfoModal(true)}
+                    >
+                      <PiPlusCircle size={18} /> Add
+                    </button>
+                  </div>
+                )}
                 <Table
                   columns={PaymentColumn}
                   data={paymentsData}
@@ -1112,7 +1109,7 @@ const SectionsPersonal = () => {
                   <div className="flex mt-2 justify-end gap-2">
                     <button
                       type="button"
-                      onClick={()=>setAddPaymentInfoModal(false)}
+                      onClick={() => setAddPaymentInfoModal(false)}
                       className="border-2 border-red-500 text-red-500 px-4 p-1 rounded-full"
                     >
                       Cancel

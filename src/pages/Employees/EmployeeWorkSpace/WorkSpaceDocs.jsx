@@ -18,7 +18,12 @@ import pancard from "/pan-card.jpg";
 import res from "/res.jpg";
 import { AddCircleOutline } from "react-ionicons";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
-import { getEmployeeDocs, postEmployeeDocs } from "../../../api";
+import {
+  getEmployeeDocs,
+  getEmployeeLetters,
+  hrmsDomain,
+  postEmployeeDocs,
+} from "../../../api";
 import toast from "react-hot-toast";
 import { dateFormat } from "highcharts";
 import { dateFormatSTD } from "../../../utils/dateUtils";
@@ -83,7 +88,7 @@ const WorkSpaceDocs = () => {
   const openModal = (item) => {
     setCurrentItem(item);
     setModalIsOpen(true);
-    console.log(item)
+    console.log(item);
   };
 
   const closeModal = () => {
@@ -126,6 +131,7 @@ const WorkSpaceDocs = () => {
       const res = await postEmployeeDocs(postData);
       setAddDoc(false);
       toast.success("Document added successfully");
+      fetchEmployeeDocs()
     } catch (error) {
       console.log(error);
     }
@@ -139,6 +145,7 @@ const WorkSpaceDocs = () => {
     }));
   };
   const [documentList, setDocumentList] = useState([]);
+  const [letterList, setLetterList] = useState([]);
   const fetchEmployeeDocs = async () => {
     try {
       const res = await getEmployeeDocs(hrmsEmployeeId);
@@ -148,8 +155,18 @@ const WorkSpaceDocs = () => {
     }
   };
 
+  const fetchEmployeeLetters = async () => {
+    try {
+      const res = await getEmployeeLetters(hrmsEmployeeId);
+      setLetterList(res);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   useEffect(() => {
     fetchEmployeeDocs();
+    fetchEmployeeLetters();
   }, []);
 
   return (
@@ -166,19 +183,27 @@ const WorkSpaceDocs = () => {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {documentList.map((doc, index) => (
-              <div
-                key={index}
-                className="bg-white p-4 rounded-lg shadow-md border border-gray-200 flex flex-col items-center cursor-pointer"
-                onClick={() => openModal(doc)}
+              <a
+                href={hrmsDomain + doc.document_file}
+                target="_blank"
+                rel="noopener noreferrer"
               >
-                {/* <div className="text-3xl mb-2 text-blue-600">{doc.icon}</div> */}
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                  {doc.document_name}
-                </h3>
-                <p className="text-sm text-gray-500">
-                  Updated On : {dateFormatSTD(doc.updated_date)}
-                </p>
-              </div>
+                <div
+                  key={index}
+                  className="bg-white p-4 rounded-lg shadow-md border border-gray-200 flex flex-col items-center cursor-pointer"
+                 
+                >
+                  <div className="text-3xl mb-2 text-blue-600">
+                    <FaFileContract />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                    {doc.document_name}
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    Updated On : {dateFormatSTD(doc.updated_date)}
+                  </p>
+                </div>
+              </a>
             ))}
           </div>
         </div>
@@ -190,22 +215,30 @@ const WorkSpaceDocs = () => {
             </button>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {lettersList.map((letter, index) => (
-              <div
-                key={index}
-                className="bg-white p-4 rounded-lg shadow-md border border-gray-200 flex flex-col items-center cursor-pointer"
-                onClick={() => openModal(letter)}
+            {/* <BsEye /> */}
+
+            {letterList.map((letter, index) => (
+              <a
+                href={hrmsDomain + letter.letter_file}
+                target="_blank"
+                rel="noopener noreferrer"
               >
-                <div className="text-3xl mb-2 text-green-600">
-                  {letter.icon}
+                <div
+                  key={index}
+                  className="bg-white p-4 rounded-lg shadow-md border border-gray-200 flex flex-col items-center cursor-pointer"
+                  // onClick={() => openModal(letter)}
+                >
+                  <div className="text-3xl mb-2 text-green-600">
+                    <FaFileAlt />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                    {letter.document_name}
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    Updated On: {dateFormatSTD(letter.updated_date)}
+                  </p>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                  {letter.name}
-                </h3>
-                <p className="text-sm text-gray-500">
-                  Updated On: {letter.updatedOn}
-                </p>
-              </div>
+              </a>
             ))}
           </div>
         </div>

@@ -43,14 +43,17 @@ function EditGroupDetails({ onclose, fetchGroupDetails }) {
         });
 
         const selectedMembers = res.data.group_members.map((member) => ({
-            value: member.id, 
-            label: `${member.user_name}`,
-          }));
-    
-          // Log for debugging
-          console.log("Selected Members:", selectedMembers);
-    
-          setSelectedOptions(selectedMembers); 
+          value: member.user_id,
+          label: `${member.user_name}`,
+        }));
+
+        // Log for debugging
+        console.log(
+          "Selected Members:",
+          selectedMembers.map((item) => item.value)
+        );
+
+        setSelectedOptions(selectedMembers.map((item) => item.value));
       } catch (error) {
         console.log(error);
       }
@@ -60,20 +63,12 @@ function EditGroupDetails({ onclose, fetchGroupDetails }) {
   }, []);
 
   const handleSelectEdit = (option) => {
-    const exists = selectedOptions.find(
-      (selected) => selected.value === option.value
-    );
-
-    if (exists) {
-      setSelectedOptions(
-        selectedOptions.filter((selected) => selected.value !== option.value)
-      );
+    if (selectedOptions.includes(option)) {
+      setSelectedOptions(selectedOptions.filter((item) => item !== option));
     } else {
       setSelectedOptions([...selectedOptions, option]);
     }
   };
-
-  console.log(selectedOptions);
 
   useEffect(() => {
     const fetchAllMembers = async () => {
@@ -109,7 +104,7 @@ function EditGroupDetails({ onclose, fetchGroupDetails }) {
     try {
       const res = await editGroups(id, postData);
       toast.success("Group updated successfully");
-      fetchGroupDetails()
+      fetchGroupDetails();
       onclose();
       setFormData({
         groupName: "",
@@ -121,15 +116,15 @@ function EditGroupDetails({ onclose, fetchGroupDetails }) {
       console.log(error);
     }
   };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center overflow-y-auto justify-center bg-gray-500 bg-opacity-50">
-      <div class="max-h-screen bg-white p-2 w-[40rem] rounded-xl shadow-lg overflow-y-auto">
+      <div className="max-h-screen bg-white p-2 w-[40rem] rounded-xl shadow-lg overflow-y-auto">
         <div className="flex flex-col justify-center">
           <div className=" ">
             <h2 className="flex items-center gap-2 justify-center border-b font-medium text-xl p-2 ">
               <BiEditAlt size={20} /> Edit Group
             </h2>
-
             <div className="md:grid grid-cols-2 gap-2 mt-2 mx-2">
               <div className="flex flex-col mt-2 ">
                 <label className=" font-medium ">Group name</label>
@@ -144,13 +139,13 @@ function EditGroupDetails({ onclose, fetchGroupDetails }) {
               </div>
               <div className="flex flex-col mt-2 ">
                 <MultiSelect
-                  options={members} 
+                  options={members}
                   title="Select members"
-                  handleSelect={handleSelectEdit} 
-                  selectedOptions={selectedOptions} 
+                  handleSelect={handleSelectEdit}
+                  selectedOptions={selectedOptions}
                   setSelectedOptions={setSelectedOptions}
-                  setOptions={setMembers} 
-                  searchOptions={filteredMembers} 
+                  setOptions={setMembers}
+                  searchOptions={filteredMembers}
                   compTitle="Select Group Members"
                 />
               </div>
