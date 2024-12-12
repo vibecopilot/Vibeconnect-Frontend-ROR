@@ -2,6 +2,8 @@ import React from "react";
 import FileInputBox from "../../containers/Inputs/FileInputBox";
 import Navbar from "../../components/Navbar";
 import { useSelector } from "react-redux";
+import { MdClose } from "react-icons/md";
+import { FaCheck } from "react-icons/fa";
 const AddIncident = () => {
   const themeColor = useSelector((state) => state.theme.color);
   return (
@@ -21,7 +23,7 @@ const AddIncident = () => {
             DETAILS
           </h2>
           <div className="flex  flex-col justify-around ">
-            <div className="grid md:grid-cols-3 item-start gap-x-4 gap-y-8 w-full">
+            <div className="grid md:grid-cols-3 item-start gap-x-4 gap-y-5 w-full">
               <div className="flex flex-col ">
                 <label htmlFor="" className="font-semibold">
                   Time & Date
@@ -187,7 +189,7 @@ const AddIncident = () => {
                 </select>
               </div>
             </div>
-            <div className="flex flex-col my-3">
+            <div className="flex flex-col mt-2">
               <label htmlFor="" className="font-semibold">
                 Description
               </label>
@@ -201,8 +203,8 @@ const AddIncident = () => {
               />
             </div>
           </div>
-        </div>
-        <div className="border-2 flex flex-col my-2 md:mx-10 p-4 gap- rounded-md border-gray-400">
+       
+        <div className=" flex flex-col gap-2 rounded-md ">
           <div className=" mt-3 mb-10 ">
             <div className="flex items-center gap-6">
               {/* <label htmlFor="meterApplicable">Support</label> */}
@@ -221,15 +223,20 @@ const AddIncident = () => {
             </div>
           </div>
         </div>
-        <div className="border-2 flex flex-col my-2 md:mx-10 p-4 gap-4 rounded-md border-gray-400 ">
+        
+        <div className=" flex flex-col gap-4 rounded-md ">
           <h2 className=" text-lg border-black border-b font-semibold ">
             ATTACHMENTS
           </h2>
           <FileInputBox />
         </div>
-        <div className="flex justify-center mb-20 my-3">
-          <button className="font-semibold border-2 border-black  p-1 flex gap-2 rounded-md">
-            Create Incident
+        </div>
+        <div className="flex justify-center gap-2 mb-20 my-3">
+          <button className="font-semibold bg-red-500 text-white  p-2 flex rounded-md items-center gap-2">
+            <MdClose /> Cancel
+          </button>
+          <button className="font-semibold bg-green-500 text-white p-2 flex rounded-md items-center gap-2">
+            <FaCheck /> Create Incident
           </button>
         </div>
       </div>
