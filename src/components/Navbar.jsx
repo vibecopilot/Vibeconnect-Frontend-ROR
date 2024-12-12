@@ -70,6 +70,7 @@ import { ImFileText2 } from "react-icons/im";
 import { FcMoneyTransfer } from "react-icons/fc";
 import { GrCertificate } from "react-icons/gr";
 import { persistor } from "../store/store";
+import { LiaMoneyBillWaveAltSolid } from "react-icons/lia";
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
@@ -1373,8 +1374,7 @@ const Navbar = () => {
                     </h2>
                   </NavLink>
                 )}
-
-                {feat.includes("CAMBilling") && (
+                {feat.includes("cam_bill") && (
                   <NavLink
                     to={"/admin/cam-billing"}
                     className={({ isActive }) =>
@@ -1949,7 +1949,7 @@ const Navbar = () => {
                     </h2>
                   </NavLink>
                 )}
-              {feat.includes("gatepass") && (
+              {feat.includes("document_pro") && (
                 <NavLink
                   to={"/documents"}
                   className={({ isActive }) =>
