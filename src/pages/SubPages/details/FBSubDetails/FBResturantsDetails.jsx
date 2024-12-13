@@ -5,10 +5,13 @@ import { domainPrefix, getFBDetails } from "../../../../api";
 import Table from "../../../../components/table/Table";
 import Navbar from "../../../../components/Navbar";
 import FBDetails from "../FBDetails";
+import { Clock, MapPin, Users } from "lucide-react";
+import { ArrowLeft } from 'lucide-react'; 
 
 const FBRestaurtantDetails = () => {
   const [formData, setFormData] = useState({
     minimum_person: "",
+    cuisines:"",
     mon: 0,
     tue: 1,
     wed: 1,
@@ -88,13 +91,28 @@ const FBRestaurtantDetails = () => {
       operational_days: "monday",
     }
   ]
+  const restaurantData = {
+    restaurant_name: "Gourmet Delight",
+    cuisines: "Italian, Mediterranean, Fusion",
+    delivery_time: "30-40 min",
+    cost_for_two: "1200",
+    address: "123 Foodie Lane, Culinary District, Flavortown 56789",
+    food_and_beverages_attachments: [
+      { document: "/placeholder.svg?height=400&width=600" },
+    ],
+  };
+
+  
   return (
     <div className="flex">
       
       <FBDetails/>
       <div className="overflow-hidden w-full my-8">
+      
+      
+     
       <div className=" mx-3 p-3" >
-        <h3 className="border-b text-left text-xl border-black mb-6 mt-2 font-bold">
+      <h3 className="border-b text-left text-xl border-black mb-6 font-bold">
           BASIC DETAILS
         </h3>
         <div className="grid md:grid-cols-3 gap-4">
@@ -104,6 +122,14 @@ const FBRestaurtantDetails = () => {
           </div>
           <div className="grid grid-cols-2">
             <p className="">Cuisines:</p>
+            {/* <p> {formData.cuisines.split(",").map((cuisine, index) => (
+              <span
+                key={index}
+                className="bg-white/20 text-white text-sm py-1 px-3 rounded-full"
+              >
+                {cuisine.trim()}
+              </span>
+            ))}</p> */}
             <p>{formData.cuisines}</p>
           </div>
           <div className="grid grid-cols-2">
@@ -120,8 +146,8 @@ const FBRestaurtantDetails = () => {
           </div>
         </div>
       </div>
-
-      <div className=" my-5 p-5 shadow-sm rounded-lg">
+   
+      <div className="  p-5 shadow-sm rounded-lg">
         <h3 className="border-b text-left text-xl border-black mb-6 font-bold">
           RESTAURTANT DETAILS
         </h3>
@@ -150,16 +176,16 @@ const FBRestaurtantDetails = () => {
 <div className="grid grid-cols-2">
   <p className="">Break Start Time:</p>
   <p>
-    {formData.table_booking_start_time
-      ? new Date(formData.table_booking_start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    {formData.break_start_time
+      ? new Date(formData.break_start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       : 'N/A'}
   </p>
 </div>
 <div className="grid grid-cols-2">
   <p className="">Break End Time:</p>
   <p>
-    {formData.table_booking_end_time
-      ? new Date(formData.table_booking_end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    {formData.break_end_time
+      ? new Date(formData.break_end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       : 'N/A'}
   </p>
 </div>
@@ -186,7 +212,7 @@ const FBRestaurtantDetails = () => {
             <p>{formData.booking_allowed?"Yes":"No"}</p>
           </div>
           <div className="grid grid-cols-2">
-            <p className="">Cancel Before Schedule:</p>
+            <p className="">Can Cancel Before:</p>
             <p>{formData.cancel_before}</p>
           </div>
           <div className="grid grid-cols-2">
@@ -196,49 +222,61 @@ const FBRestaurtantDetails = () => {
         </div>
       </div>
 
-      <div className="my-5 p-5">
+      
+      <div className=" my-5 p-5">
   <h3 className="border-b text-left text-xl border-black mb-6 font-bold">
-    COVER
+    Cover Image
   </h3>
   <div className="flex gap-4 flex-wrap my-4 items-center text-center">
-    {formData.food_and_beverages_attachments?.length > 0 && formData.food_and_beverages_attachments[0] ? (
-      <img
-        src={domainPrefix + formData.food_and_beverages_attachments[0].document}
-        alt="Cover Image"
-        className="w-64 h-64 object-cover rounded-md"
-        onClick={() =>
-          window.open(
-            domainPrefix + formData.food_and_beverages_attachments[0].document,
-            "_blank"
-          )
-        }
-      />
-    ) : (
-      <p>No Cover Image</p>
-    )}
+  
+  {formData.cover_images?.length > 0 ? (
+                                  formData.cover_images.map(
+                                    (attachment, i) => (
+                                      <img
+                                        key={i}
+                                        src={domainPrefix + attachment.image_url}
+                                        alt={`Attachment ${i + 1}`}
+                                        // className="w-40 h-28 object-cover rounded-md"
+                                        onClick={() =>
+                                          window.open(
+                                            domainPrefix + attachment.image_url,
+                                            "_blank"
+                                          )
+                                        }
+                                      />
+                                    )
+                                  )
+                                ) : (
+                                  <p>No Cover Image</p>
+                                )}
   </div>
 </div>
-
 <div className=" my-5 p-5">
   <h3 className="border-b text-left text-xl border-black mb-6 font-bold">
     MENU
   </h3>
   <div className="flex gap-4 flex-wrap my-4 items-center text-center">
-    {formData.food_and_beverages_attachments?.length > 1 && formData.food_and_beverages_attachments[1] ? (
-      <img
-        src={domainPrefix + formData.food_and_beverages_attachments[1].document}
-        alt="Menu Image"
-        className="w-64 h-64 object-cover rounded-md"
-        onClick={() =>
-          window.open(
-            domainPrefix + formData.food_and_beverages_attachments[1].document,
-            "_blank"
-          )
-        }
-      />
-    ) : (
-      <p>No Menu Image</p>
-    )}
+  
+    {formData.menu_images?.length > 0 ? (
+                                  formData.menu_images.map(
+                                    (attachment, i) => (
+                                      <img
+                                        key={i}
+                                        src={domainPrefix + attachment.image_url}
+                                        alt={`Attachment ${i + 1}`}
+                                        // className="w-40 h-28 object-cover rounded-md"
+                                        onClick={() =>
+                                          window.open(
+                                            domainPrefix + attachment.image_url,
+                                            "_blank"
+                                          )
+                                        }
+                                      />
+                                    )
+                                  )
+                                ) : (
+                                  <p>No Menu Image</p>
+                                )}
   </div>
 </div>
 
@@ -247,7 +285,7 @@ const FBRestaurtantDetails = () => {
     GALLERY
   </h3>
   <div className="flex gap-4 flex-wrap my-4 items-center text-center">
-    {formData.food_and_beverages_attachments?.length > 2 && formData.food_and_beverages_attachments[2] ? (
+    {/* {formData.food_and_beverages_attachments?.length > 2 && formData.food_and_beverages_attachments[2] ? (
       <img
         src={domainPrefix + formData.food_and_beverages_attachments[2].document}
         alt="Gallery Image"
@@ -261,7 +299,27 @@ const FBRestaurtantDetails = () => {
       />
     ) : (
       <p>No Gallery Image</p>
-    )}
+    )} */}
+    {formData.gallery_images?.length > 0 ? (
+                                  formData.gallery_images.map(
+                                    (attachment, i) => (
+                                      <img
+                                        key={i}
+                                        src={domainPrefix + attachment.image_url}
+                                        alt={`Attachment ${i + 1}`}
+                                        // className="w-40 h-28 object-cover rounded-md"
+                                        onClick={() =>
+                                          window.open(
+                                            domainPrefix + attachment.image_url,
+                                            "_blank"
+                                          )
+                                        }
+                                      />
+                                    )
+                                  )
+                                ) : (
+                                  <p>No Gallery Image</p>
+                                )}
   </div>
 </div>
 </div>

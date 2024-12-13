@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import { FaPhoneAlt } from "react-icons/fa";
 import { MdEmail } from "react-icons/md";
@@ -13,13 +13,28 @@ import { useSelector } from "react-redux";
 import { PiPlus, PiPlusCircle } from "react-icons/pi";
 import AddBusinesscardModal from "./AddBusinesscardModal";
 import html2canvas from "html2canvas";
-import { sendBusinessCard } from "../api";
+import { getBusinessCard, getSetupUsers, sendBusinessCard } from "../api";
 import businessCardTemplate from "/newCard.jpeg";
 // import businessCardTemplate from "/businessCardTemp.jpeg";
+
 import VCLogo from "./SVG/VCLogo.svg";
 const BusinessCard = () => {
   const user = getItemInLocalStorage("user");
   const [isQRVisible, setIsQRVisible] = useState(false);
+  const [details,setDetails]=useState("");
+  useEffect(() => {
+    const fetchCategory = async () => {
+      try {
+        const siteDetailsResp = await getBusinessCard();
+        console.log("business card",siteDetailsResp);
+        setDetails(siteDetailsResp.data[0]);
+        
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchCategory();
+  }, []);
   const Email = user.email;
   const handleEmailCopy = () => {
     navigator.clipboard
@@ -223,10 +238,11 @@ const BusinessCard = () => {
             <div className="flex flex-col justify-center my-2">
               <p className="text-center font-bold  mt-10 flex flex-col gap-10 text-lg">
                 {/* <p className="text-center font-bold  mt-10 text-lg"> */}
-                {user.firstname} {user.lastname}
+                {/* {user.firstname} {user.lastname} */}
+               {details.full_name}
               </p>
               <p className="text-center font-medium mt-1">
-                Social Media Marketing
+              {details.profession}
               </p>
             </div>
             {/* <div>

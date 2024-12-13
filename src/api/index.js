@@ -964,6 +964,12 @@ export const getAssetReadingDetails = async (assetId) =>
         token: token,
       },
     });
+    export const getBusinessCard = async () =>
+      axiosInstance.get("/business_cards.json", {
+        params: {
+          token: token,
+        },
+      });
   export const postHSNSetup = async (data) =>
     axiosInstance.post("/hsns.json", data, {
       params: {
@@ -1373,6 +1379,12 @@ export const postServicePR = async (data) =>
 //       token: token,
 //     },
 //   });
+export const getFolderDocumentCommon = async () =>
+  axiosInstance.get(`/folders/get_folders.json`, {
+    params: {
+      token: token,
+    },
+  });
 export const postFolderDocumentCommon = async (data) =>
   axiosInstance.post("/folders/create_common_folder.json", data, {
     params: {
@@ -1584,6 +1596,36 @@ export const getGenericCategory = async () =>
           token: token,
         },
       });
+      export const getFixedStatusSetup = async () =>
+        axiosInstance.get(`/generic_infos.json?q[info_type_eq]=FixedStatus`, {
+          params: {
+            token: token,
+          },
+        });
+        export const postStatusSetup = async (data) =>
+          axiosInstance.post(`/status_restaurants.json`, data, {
+            params: {
+              token: token,
+            },
+          });
+          export const getStatusSetupDetails = async (id) =>
+            axiosInstance.get(`/status_restaurants/${id}.json`, {
+              params: {
+                token: token,
+              },
+            });
+          export const editStatusSetup = async (id, data) =>
+            axiosInstance.put(`/status_restaurants/${id}.json`, data, {
+              params: {
+                token: token,
+              },
+            });
+          export const getStatusSetup = async () =>
+            axiosInstance.get(`/status_restaurants.json`, {
+              params: {
+                token: token,
+              },
+            });
 export const getGenericCategoryDetails = async (id) =>
   axiosInstance.get(`/generic_infos/${id}.json`, {
     params: {
@@ -1596,6 +1638,18 @@ export const editGenericCategoryDetails = async (id, data) =>
       token: token,
     },
   });
+  export const getGenericSubCategoryDetails = async (id) =>
+    axiosInstance.get(`/generic_sub_infos/${id}.json`, {
+      params: {
+        token: token,
+      },
+    });
+  export const editGenericSubCategoryDetails = async (id, data) =>
+    axiosInstance.put(`/generic_sub_infos/${id}.json`, data, {
+      params: {
+        token: token,
+      },
+    });
 export const postGenericCategory = async (data) =>
   axiosInstance.post(`/generic_infos.json`, data, {
     params: {
@@ -6288,14 +6342,51 @@ export const getComplaintMode = async () =>
       token: token,
     },
   });
+  export const getRestaurtantTableBookings = async () =>
+    axiosInstance.get(`/table_bookings.json`, {
+      params: {
+        token: token,
+      },
+    });
+    export const getRestaurtantOrderBookings = async () =>
+      axiosInstance.get(`/restaurant_orders.json`, {
+        params: {
+          token: token,
+        },
+      });
 
   //Food
+  export const downloadRestaurtantData = async () =>
+    axiosInstance.get(`/food_and_beverages/export.xlsx`, {
+      params: {
+        token: token,
+      },
+      responseType: "blob",
+    });
   export const postRestaurtantMenu = async (data) =>
     axiosInstance.post("/restaurant_menus.json", data, {
       params: {
         token: token,
       },
     });
+    export const getRestaurtantMenu = async (id) =>
+      axiosInstance.get(`/restaurant_menus.json?restaurant_id=${id}`, {
+        params: {
+          token: token,
+        },
+      });
+      export const getRestaurtantMenuDetails = async (id,resid) =>
+        axiosInstance.get(`/restaurant_menus/${id}.json?restaurant_id=${resid}`, {
+          params: {
+            token: token,
+          },
+        });
+        export const EditRestaurtantMenuDetails = async (id,resid,data) =>
+          axiosInstance.put(`/restaurant_menus/${id}.json?restaurant_id=${resid}`, data, {
+            params: {
+              token: token,
+            },
+          });
 export const postFB = async (data) =>
   axiosInstance.post("/food_and_beverages.json", data, {
     params: {
@@ -6322,6 +6413,12 @@ export const getFBDetails = async (id) =>
         token: token,
       },
     });
+    export const getFBSubCategories = async () =>
+      axiosInstance.get("/get_sub_categories.json", {
+        params: {
+          token: token,
+        },
+      });
     export const postPantry = async (data) =>
       axiosInstance.post("/pantries.json", data, {
         params: {

@@ -71,6 +71,8 @@ function CreatePolls() {
     description: "",
     start_date: "",
     end_date: "",
+    start_time: "",
+    end_time: "",
     visibility: "",
     target_groups: [], // Array to store selected target groups
     poll_options_attributes: {}, // Object to store poll options
@@ -81,11 +83,24 @@ function CreatePolls() {
   };
 
   const handleSubmit = async () => {
+    const currentDate = new Date();
+    currentDate.setHours(0, 0, 0, 0); // Set time to midnight for comparison
+  
+    // Parse the start_date from the formData to a Date object
+    const startDate = new Date(formData.start_date);
+  
+    // Check if start_date is valid and greater than or equal to the current date
+    if (startDate < currentDate) {
+      toast.error("Start date must be equal or greater than the current date.");
+      return; 
+    }
     const sendData = new FormData();
     sendData.append("poll[title]", formData.title);
     sendData.append("poll[description]", formData.description);
-    sendData.append("poll[start_date]", currentDate);
+    sendData.append("poll[start_date]", formData.start_date);
     sendData.append("poll[end_date]", formData.end_date);
+    sendData.append("poll[start_time]", formData.start_time);
+    sendData.append("poll[end_time]", formData.end_time);
     sendData.append("poll[visibility]", formData.visibility);
 
     // Append target groups (assumed to be single value for simplicity)
@@ -171,22 +186,42 @@ function CreatePolls() {
             </div>
 
             <div className="flex flex-col">
-              <label className="font-semibold my-2">Start Date/Time</label>
+              <label className="font-semibold my-2">Start Date</label>
               <input
                 type="date"
                 name="start_date"
-                value={currentDate}
-                readOnly
+                value={formData.start_date}
+                onChange={handleFormChange}
+                className="border p-2 px-4 border-gray-400 rounded-md"
+              />
+            </div>
+            <div className="flex flex-col">
+              <label className="font-semibold my-2">Start Time</label>
+              <input
+                type="time"
+                name="start_time"
+                value={formData.start_time}
+                onChange={handleFormChange}
                 className="border p-2 px-4 border-gray-400 rounded-md"
               />
             </div>
 
             <div className="flex flex-col">
-              <label className="font-semibold my-2">End Date/Time</label>
+              <label className="font-semibold my-2">End Date</label>
               <input
                 type="date"
                 name="end_date"
                 value={formData.end_date}
+                onChange={handleFormChange}
+                className="border p-2 px-4 border-gray-400 rounded-md"
+              />
+            </div>
+            <div className="flex flex-col">
+              <label className="font-semibold my-2">End Time</label>
+              <input
+                type="time"
+                name="end_time"
+                value={formData.end_time}
                 onChange={handleFormChange}
                 className="border p-2 px-4 border-gray-400 rounded-md"
               />

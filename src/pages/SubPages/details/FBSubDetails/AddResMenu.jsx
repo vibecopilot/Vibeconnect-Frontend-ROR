@@ -1,12 +1,19 @@
 import React, { useEffect, useState } from "react";
 import FileInputBox from '../../../../containers/Inputs/FileInputBox'
 import Navbar from '../../../../components/Navbar'
-import { postRestaurtantMenu,getGenericCategoryRestaurtant } from '../../../../api'
+import { postRestaurtantMenu,getGenericCategoryRestaurtant, getGenericSubGroup } from '../../../../api'
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import { useSelector } from "react-redux";
 
 const AddResMenu = () => {
+  const themeColor = useSelector((state) => state.theme.color);
+
+  const {id} = useParams();
   const [details, setDetails] = useState([]);
+  const [subcatdetails, setsubcatDetails] = useState([]);
+
   useEffect(() => {
     const fetchCategory = async () => {
       try {
@@ -20,9 +27,11 @@ const AddResMenu = () => {
     };
     fetchCategory();
   }, []);
+  
   const [formData, setFormData] = useState({
     name: "",
     sku: "",
+    master_price:"",
     price: "",
     active: true,
     category_id: "",
@@ -33,22 +42,49 @@ const AddResMenu = () => {
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
+  const fetchSubCategory = async (categoryId) => {
+    try {
+      const siteDetailsResp = await getGenericSubGroup(categoryId);
+      setsubcatDetails(siteDetailsResp.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    if (formData.category_id) {
+      fetchSubCategory(formData.category_id); // Pass formData.category_id to fetchSubCategory
+    }
+  }, [formData.category_id]);
+  const handleFileChange = (files, fieldName) => {
+    // Changed to receive 'files' directly
+    setFormData({
+      ...formData,
+      [fieldName]: files,
+    });
+    console.log(fieldName);
+  };
   const navigate = useNavigate()
   const handleCreateMenu = async () => {
     
    
     const sendData = new FormData();
+    sendData.append("restaurant_menu[restaurant_id]", id);
     sendData.append("restaurant_menu[sku]", formData.sku);
     sendData.append("restaurant_menu[name]", formData.name);
     sendData.append("restaurant_menu[price]", formData.price);
+    sendData.append("restaurant_menu[master_price]", formData.master_price);
     sendData.append("restaurant_menu[active]", formData.active);
     sendData.append("restaurant_menu[category_id]", formData.category_id);
     sendData.append("restaurant_menu[sub_category_id]", formData.sub_category_id);
     sendData.append("restaurant_menu[description]", formData.description);
+    formData.attachments.forEach((file)=>{
+      sendData.append("attachments[]", file)
+    })
     try {
       const resp = await postRestaurtantMenu(sendData);
       console.log(resp);
-      navigate("/admin/fb-details/");
+      navigate(`/fnb/restaurtant-menu/${id}`);
       toast.success("Restaurtant Menu added successfully");
     } catch (error) {
       console.log(error);
@@ -87,9 +123,14 @@ const AddResMenu = () => {
           />
       </div>
       <div className="grid gap-1">
-        <label className=" text-gray-700 font-bold " htmlFor="master-price">Master Price*</label>
+        <label 
+        
+        className=" text-gray-700 font-bold " htmlFor="master-price">Master Price*</label>
         <input 
 className="border p-1 px-4 border-gray-500 rounded-md"
+value={formData.master_price}
+onChange={handleChange}
+name='master_price'
         id="master-price" type="text" placeholder="Master Price" />
       </div>
       <div className="grid gap-1">
@@ -101,13 +142,13 @@ onChange={handleChange}
 name='price'
         id="display-price" type="text" placeholder="Display Price" />
       </div>
-      <div className="grid gap-1">
+      {/* <div className="grid gap-1">
         <label className=" text-gray-700 font-bold " htmlFor="stock">Stock</label>
         <input 
 className="border p-1 px-4 border-gray-500 rounded-md"    
 
 id="stock" type="text" placeholder="Stock" />
-      </div>
+      </div> */}
       <div className="grid gap-1">
         <label className="block text-gray-700 font-bold mb-2" htmlFor="active">Active</label>
         <select 
@@ -145,10 +186,14 @@ onChange={handleChange}
         name='sub_category_id'
         >
           <option value="">Select Subcategory</option>
-          {/* Subcategory options here */}
+          {subcatdetails.map((category) => (
+    <option key={category.id} value={category.id}>
+      {category.name}
+    </option>
+  ))}
         </select>
       </div>
-      <div className="grid gap-1">
+      {/* <div className="grid gap-1">
         <label className=" text-gray-700 font-bold " htmlFor="subcategory">Menu Type</label>
         <select 
 className="border p-1 px-4 border-gray-500 rounded-md"
@@ -164,8 +209,8 @@ className="border p-1 px-4 border-gray-500 rounded-md"
         <input 
 className="border p-1 px-4 border-gray-500 rounded-md"
 id="sgst-rate" type="text" placeholder="Discount" />
-      </div>
-      <div className="grid gap-1">
+      </div> */}
+      {/* <div className="grid gap-1">
         <label className=" text-gray-700 font-bold" htmlFor="sgst-rate">SGST Rate</label>
         <input 
 className="border p-1 px-4 border-gray-500 rounded-md"
@@ -200,7 +245,7 @@ id="igst-rate" type="text" placeholder="IGST Rate" />
         <input 
 className="border p-1 px-4 border-gray-500 rounded-md"
 id="igst-amount" type="text" placeholder="IGST Amount" />
-      </div>
+      </div> */}
      
     </div>
     <div className="grid gap-1 mb-2">
@@ -214,12 +259,19 @@ id="igst-amount" type="text" placeholder="IGST Amount" />
           name='description'
 />
       </div>
-    <label htmlFor="">Manual Upload</label>
-    <FileInputBox/>
+    <label htmlFor="">Attachment</label>
+    <FileInputBox
+              handleChange={(files) =>
+                handleFileChange(files, "attachments")
+              }
+              fieldName={"attachments"}
+              isMulti={true}
+            />
   </div>
   <div className="flex justify-center">
                 <button
-                  type="submit"
+                  onClick={handleCreateMenu}
+                  style={{ background: themeColor }}
                   className="bg-black text-white p-2 px-4 rounded-md font-medium"
                 >
                   Submit

@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { PiPlusCircle } from "react-icons/pi";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
-
 import { BsEye } from "react-icons/bs";
 import { BiEdit } from "react-icons/bi";
 import { TiTick } from "react-icons/ti";
@@ -11,7 +10,9 @@ import { useSelector } from "react-redux";
 import Table from "../components/table/Table";
 import ToggleSwitch from "../Buttons/ToggleSwitch";
 import Pantry from "./Pantry";
-import { getFB } from "../api";
+import { downloadRestaurtantData, getFB } from "../api";
+import toast from "react-hot-toast";
+
 const FoodsBeverage = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const themeColor = useSelector((state) => state.theme.color);
@@ -31,7 +32,33 @@ const FoodsBeverage = () => {
     };
     fetchFB();
   }, []);
-
+  const handleRestaurtantDownload = async () => {
+    toast.loading("Downloading Please Wait");
+    try {
+      const response = await downloadRestaurtantData();
+      // Check if the response headers contain the correct content type
+      console.log(response.headers["content-type"]);
+      // Create a URL for the blob data
+      const url = window.URL.createObjectURL(
+        new Blob([response.data], {
+          type: response.headers["content-type"], // Explicitly set the content type
+        })
+      );
+      // Create a link element to download the file
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "Restaurtants_Data.xlsx"); // Name the file
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success("Restaurtants Data downloaded successfully");
+      toast.dismiss();
+    } catch (error) {
+      toast.dismiss();
+      console.error("Error downloading Asset:", error);
+      toast.error("Something went wrong, please try again");
+    }
+  };
   const [searchText, setSearchText] = useState("");
   const handleSearch = (e) => {
     const searchValue = e.target.value;
@@ -113,7 +140,7 @@ const FoodsBeverage = () => {
       name: "Active",
       cell: (row) => (
         <div className="flex items-center gap-4">
-          <input type="checkbox" />
+          <input type="checkbox"  checked={row.status} />
         </div>
       ),
       sortable: true,
@@ -154,22 +181,7 @@ const FoodsBeverage = () => {
     console.log(`Updated ${field} for row ID ${id} to ${value}`);
   };
   
-  //custom style
-  const customStyle = {
-    headRow: {
-      style: {
-        backgroundColor: themeColor,
-        color: "white",
-
-        fontSize: "10px",
-      },
-    },
-    headCells: {
-      style: {
-        textTransform: "upperCase",
-      },
-    },
-  };
+ 
   const data = [
     {
       id: 1,
@@ -225,8 +237,8 @@ const FoodsBeverage = () => {
         </div>
         {page === "F&B" && (
           <>
-            <div className="flex md:flex-row flex-col gap-5 justify-between mt-10 my-2">
-              <div className="sm:flex grid grid-cols-2 items-center justify-center  gap-4 border border-gray-300 rounded-md px-3 p-2 w-auto">
+            <div className="flex md:flex-row flex-col gap-5 justify-end mt-10 my-2">
+              {/* <div className="sm:flex grid grid-cols-2 items-center justify-center  gap-4 border border-gray-300 rounded-md px-3 p-2 w-auto">
                 <div className="flex items-center gap-2">
                   <input
                     type="radio"
@@ -280,7 +292,7 @@ const FoodsBeverage = () => {
                     Cancelled
                   </label>
                 </div>
-              </div>
+              </div> */}
               <span className="flex gap-4">
                 <Link
                   to={"/admin/add-fb"}
@@ -300,7 +312,8 @@ const FoodsBeverage = () => {
                 />
                 <button
                   className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-                  // onClick={exportToExcel}
+                  
+                  onClick={handleRestaurtantDownload}
                 >
                   Export
                 </button>

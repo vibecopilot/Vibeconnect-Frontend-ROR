@@ -1,163 +1,145 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { IoMdPrint } from "react-icons/io";
 import { MdFeed } from "react-icons/md";
 import Table from "../../../../components/table/Table";
+import { domainPrefix, getRestaurtantMenuDetails } from "../../../../api";
+import { useParams } from "react-router-dom";
 
 const ResMenuDetails = () => {
   const themeColor = useSelector((state) => state.theme.color);
-  const column = [
-    { name: "SGST Rate", selector: (row) => row.SGST_Rate, sortable: true },
-    { name: "SGST Amount", selector: (row) => row.SGST_Rate, sortable: true },
-    { name: "CGST Rate", selector: (row) => row.SGST_Rate, sortable: true },
-    { name: "CGST Amount", selector: (row) => row.SGST_Rate, sortable: true },
-    { name: "IGST Rate", selector: (row) => row.SGST_Rate, sortable: true },
-    { name: "IGST Amount", selector: (row) => row.SGST_Rate, sortable: true },
-  ];
-  const data = [
-    {
-      id: 1,
+  const {resid,id} = useParams()
+  const [fbmenu, setFbmenu] = useState("");
 
-      SGST_Rate: "%",
-    },
-  ];
+  useEffect(() => {
+    const fetchFB = async () => {
+      try {
+        const fbRes = await getRestaurtantMenuDetails(id,resid);
+        console.log(fbRes.data);
+        setFbmenu(fbRes.data);
+        
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchFB();
+  }, [id]);
 
-  const customStyle = {
-    headRow: {
-      style: {
-        backgroundColor: themeColor,
-        color: "white",
-
-        fontSize: "14px",
-      },
-    },
-  };
+ 
   return (
     <div>
       <div className="md:mx-20 my-5 mb-10 sm:border border-gray-400 p-5 px-10 rounded-lg sm:shadow-xl">
         <h3 className="border-b text-center text-xl border-black mb-6 font-bold">
           PRODUCT SETUP DETAILS
         </h3>
-        <div className="w-full mx-3 my-5 p-5 shadow-lg rounded-lg border border-gray-300">
+        <div className="w-full mx-3 my-5 p-5 ">
           <h3 className="border-b text-center text-xl border-black mb-6 font-bold">
             OTHER INFO
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <div className="col-span-1">
+            <div className="flex gap-2">
               <label
-                className="block text-gray-700 font-bold mb-2"
+                className="block text-gray-700  mb-2"
                 htmlFor="product-name"
               >
-                Product Name:Upma With Chutney & Sambar
+                Product Name:
               </label>
-              {/* <input className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="product-name" type="text" placeholder="Product Name" value="Upma With Chutney & Sambar" /> */}
+              <p>{fbmenu.name}</p>
             </div>
-            <div className="col-span-1">
+            <div className="flex gap-2">
               <label
-                className="block text-gray-700 font-bold mb-2"
+                className="block text-gray-700  mb-2"
                 htmlFor="sku"
               >
-                SKU:Upma With Chutney & Sambar
+                SKU:
               </label>
-              {/* <input className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="sku" type="text" placeholder="SKU" value="Upma With Chutney & Sambar" /> */}
+              <p>{fbmenu.sku}</p>
             </div>
-            <div className="col-span-1">
+            <div className="flex gap-2">
               <label
-                className="block text-gray-700 font-bold mb-2"
+                className="block text-gray-700  mb-2"
                 htmlFor="master-price"
               >
-                Master Price:40
+                Master Price:
               </label>
-              {/* <input className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="master-price" type="text" placeholder="Master Price" value="40" /> */}
+              <p>{fbmenu.master_price}</p>
             </div>
-            <div className="col-span-1">
+            <div className="flex gap-2">
               <label
-                className="block text-gray-700 font-bold mb-2"
+                className="block text-gray-700  mb-2"
                 htmlFor="display-price"
               >
-                Display Price:40
+                Display Price:
               </label>
-              {/* <input className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="display-price" type="text" placeholder="Display Price" value="40" /> */}
+              <p>{fbmenu.price}</p>
             </div>
-            <div className="col-span-1">
+            
+            <div className="flex gap-2">
               <label
-                className="block text-gray-700 font-bold mb-2"
-                htmlFor="stock"
-              >
-                Stock:5
-              </label>
-              {/* <input className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="stock" type="text" placeholder="Stock" value="5" /> */}
-            </div>
-            <div className="col-span-1">
-              <label
-                className="block text-gray-700 font-bold mb-2"
+                className="block text-gray-700  mb-2"
                 htmlFor="active"
               >
-                Active:Yes
+                Active:
               </label>
-              {/* <select className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="active">
-          <option value="yes" selected>Yes</option>
-          <option value="no">No</option>
-        </select> */}
+             <p>{fbmenu.active?"Yes":"No"}</p>
             </div>
-            <div className="col-span-1">
+            <div className="flex gap-2">
               <label
-                className="block text-gray-700 font-bold mb-2"
+                className="block text-gray-700  mb-2"
                 htmlFor="category"
               >
-                Category:Breaskfast
+                Category:
               </label>
-              {/* <select className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="category">
-          <option value="breakfast" selected>Breakfast</option>
-        </select> */}
+              <p>{fbmenu.category_name}</p>
             </div>
-            <div className="col-span-1">
+            <div className="flex gap-2">
               <label
-                className="block text-gray-700 font-bold mb-2"
+                className="block text-gray-700  mb-2"
                 htmlFor="subcategory"
               >
-                Subcategory:Breaskfast
+                Subcategory:
               </label>
-              {/* <select className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="subcategory">
-          <option value="breakfast" selected>Breakfast</option>
-        </select> */}
+              <p>{fbmenu.sub_category_name}</p>
             </div>
-            <div className="col-span-1">
+            <div className="flex gap-2">
               <label
-                className="block text-gray-700 font-bold mb-2"
+                className="block text-gray-700  mb-2"
                 htmlFor="description"
               >
                 Description:
               </label>
-              {/* <textarea className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="description" placeholder="Description">Upma With Chutney & Sambar</textarea> */}
+              <p>{fbmenu.description}</p>
             </div>
           </div>
+          <h3 className="border-b text-center text-xl border-black mb-6 font-bold">
+          Images{" "}</h3>
+           {fbmenu.documents?.length > 0 ? (
+                                  fbmenu.documents.map(
+                                    (attachment, i) => (
+                                      <img
+                                        key={i}
+                                        src={domainPrefix + attachment.document}
+                                        alt={`Attachment ${i + 1}`}
+                                        // className="w-64 h-64  rounded-md"
+                                        onClick={() =>
+                                          window.open(
+                                            domainPrefix + attachment.document,
+                                            "_blank"
+                                          )
+                                        }
+                                      />
+                                    )
+                                  )
+                                ) : (
+                                  <p>No Menu Image</p>
+                                )}
+        
         </div>
       </div>
-
-      <div className="md:mx-20 my-5 mb-10 sm:border border-gray-400 p-5 px-10 rounded-lg sm:shadow-xl">
-        <h3 className="border-b text-center text-xl border-black mb-6 font-bold">
-          Images{" "}
-        </h3>
-      </div>
-      <div className="md:mx-20 my-5 mb-10 sm:border border-gray-400 p-5 px-10 rounded-lg sm:shadow-xl">
-        <h3 className="border-b text-center text-xl border-black mb-6 font-bold">
-          GST{" "}
-        </h3>
-        <Table
-          columns={column}
-          data={data}
-          customStyles={customStyle}
-          responsive
-          fixedHeader
-          fixedHeaderScrollHeight="500px"
-          pagination
-          selectableRowsHighlight
-          highlightOnHover
-          omitColumn={column}
-        />
-      </div>
+     
+     
+     
     </div>
   );
 };

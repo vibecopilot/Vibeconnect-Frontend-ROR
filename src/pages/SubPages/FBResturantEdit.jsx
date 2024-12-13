@@ -100,6 +100,7 @@ const FBRestaurtantEdit = () => {
   const themeColor = useSelector((state) => state.theme.color);
 
   const [formData, setFormData] = useState({
+    status:false,
     restaurantName: "",
     costForTwo: "",
     mobileNumber: "",
@@ -168,13 +169,14 @@ const FBRestaurtantEdit = () => {
         }));
         
       setFormData({
+        status:data.status || false,
         restaurantName: data.restaurant_name || "",
         costForTwo: data.cost_for_two || "",
         mobileNumber: data.mobile_number || "",
         anotherMobileNumber: data.alternate_mobile_number || "",
         landlineNumber: data.landline_number || "",
         deliveryTime: data.delivery_time || "",
-        cuisines: data.cuisines || "",
+        // cuisines: data.cuisines || "",
         servesAlcohol: data.serves_alcohols || "",
         wheelchairAccessible: data.wheelchair_accessible || "",
         cashOnDelivery: data.cash_on_delivery || "",
@@ -192,29 +194,36 @@ const FBRestaurtantEdit = () => {
         gst: data.gst || "",
         deliveryCharge: data.delivery_charges || "",
         minimumOrder: data.minimum_order || "",
-        orderNotAllowedText: data.order_not_available_text || "",
-        service_charge: data.serviceCharges || "",
-        cover_image: data.cover_image || [],
-        menu: data.menu || [],
-        gallery: data.gallery || [],
+        orderNotAllowedText: data.order_not_allowed_text || "",
+        serviceCharges: data.serviceCharges || "",
+        cover_image: data.cover_images || [],
+        menu: data.menu_images || [],
+        gallery: data.gallery_images || [],
         table_number:data.table_number || "",
+        option:data.restauranttype || "",
         start_time: data.start_time
     ? new Date(data.start_time).toTimeString().substring(0, 5) // Extract HH:mm
     : "",
   end_time: data.end_time
     ? new Date(data.end_time).toTimeString().substring(0, 5) // Extract HH:mm
     : "",
-    table_booking_start_time: data.table_booking_start_time
-    ? new Date(data.table_booking_start_time).toTimeString().substring(0, 5) // Extract HH:mm
+    break_start_time: data.break_start_time
+    ? new Date(data.break_start_time).toTimeString().substring(0, 5) // Extract HH:mm
     : "",
-  table_booking_end_time: data.table_booking_end_time
-    ? new Date(data.table_booking_end_time).toTimeString().substring(0, 5) // Extract HH:mm
+  break_end_time: data.break_end_time
+    ? new Date(data.break_end_time).toTimeString().substring(0, 5) // Extract HH:mm
     : "",
     last_booking_time: data.last_booking_time
     ? new Date(data.last_booking_time).toTimeString().substring(0, 5) // Extract HH:mm
     : ""
       });
-        
+      setSelectedOptions(
+        (data.cuisines?.split(",") || []).map((cuisine) => ({
+          value: cuisine.trim(), // Ensure no extra spaces
+          label: cuisine.trim(), // Ensure consistent labels
+        }))
+      );
+      
         setRows(blockedDays);
         
       } catch (error) {
@@ -375,8 +384,16 @@ const FBRestaurtantEdit = () => {
       saturday: "sat",
     };
     postData.append(
+      "food_and_beverage[status]",
+      formData.status
+    );
+    postData.append(
       "food_and_beverage[restaurant_name]",
       formData.restaurantName
+    );
+    postData.append(
+      "food_and_beverage[restauranttype]",
+      option
     );
     postData.append("food_and_beverage[created_by_id]", userId);
     postData.append("food_and_beverage[cost_for_two]", formData.costForTwo);
@@ -390,7 +407,9 @@ const FBRestaurtantEdit = () => {
       formData.landlineNumber
     );
     postData.append("food_and_beverage[delivery_time]", formData.deliveryTime);
-    postData.append("food_and_beverage[cuisines]", formData.cuisines);
+    selectedOptions.forEach((option) => {
+      postData.append(`food_and_beverage[cuisines][]`, option.value);
+    });
     postData.append(
       "food_and_beverage[serves_alcohols]",
       formData.servesAlcohol
@@ -442,15 +461,15 @@ const FBRestaurtantEdit = () => {
       formData.deliveryCharge
     );
     postData.append("food_and_beverage[minimum_order]", formData.minimumOrder);
-    postData.append("food_and_beverage[order_not_available_text]", formData.orderNotAllowedText);
+    postData.append("food_and_beverage[order_not_allowed_text]", formData.orderNotAllowedText);
     postData.append(
       "food_and_beverage[serviceCharges]",
       formData.ServiceCharges
     );
     postData.append("food_and_beverage[start_time]", formData.start_time);
     postData.append("food_and_beverage[end_time]", formData.end_time);
-    postData.append("food_and_beverage[table_booking_start_time]", formData.table_booking_start_time);
-    postData.append("food_and_beverage[table_booking_end_time]", formData.table_booking_end_time);
+    postData.append("food_and_beverage[break_start_time]", formData.break_start_time);
+    postData.append("food_and_beverage[break_end_time]", formData.break_end_time);
     postData.append("food_and_beverage[sun]", selectedDays['sunday'] ? "1" : "0");
 
     postData.append("food_and_beverage[mon]", selectedDays['monday'] ? "1" : "0");
@@ -466,13 +485,13 @@ const FBRestaurtantEdit = () => {
    
 
     formData.cover_image?.forEach((file, index) => {
-      postData.append(`attachfiles[]`, file);
+      postData.append(`cover_images[]`, file);
     });
     formData.menu?.forEach((file, index) => {
-      postData.append(`attachfiles[]`, file);
+      postData.append(`menu_images[]`, file);
     });
     formData.gallery?.forEach((file, index) => {
-      postData.append(`attachfiles[]`, file);
+      postData.append(`gallery_images[]`, file);
     });
     try {
       const postRes = await editFB(id,postData);
@@ -750,6 +769,26 @@ const FBRestaurtantEdit = () => {
                 <option value="No">No</option>
               </select>
             </div>
+            <div className="col-span-1">
+              <label
+                className="block  mb-2"
+                htmlFor="pure-veg"
+              >
+                Status 
+              </label>
+              <select
+                className="border border-gray-400  p-2 rounded-md placeholder:text-sm w-full"
+                id="status"
+                name="status"
+                value={formData.status}
+                onChange={handleChange}
+              >
+                {/* Options for pure vegetarian */}
+                <option value="">Select</option>
+                <option value="true">Active</option>
+                <option value="false">Inactive</option>
+              </select>
+            </div>
             <div className="col-span-3">
               <label
                 className="block  mb-2"
@@ -836,7 +875,7 @@ const FBRestaurtantEdit = () => {
       </label>
       <div className="flex flex-wrap gap-4">
         <div className="flex items-center gap-2">
-          <input
+          {/* <input
             id="all"
             type="checkbox"
             checked={selectedDays.all}
@@ -845,7 +884,7 @@ const FBRestaurtantEdit = () => {
           />
           <label htmlFor="all" className="text-gray-700">
             All
-          </label>
+          </label> */}
         </div>
         {[
           { id: "sunday", label: "S" },
@@ -918,8 +957,8 @@ const FBRestaurtantEdit = () => {
             <div className="col-span-1">
               <label htmlFor="" className="block  mb-2">Break Start Time</label>
               <input type="time" 
-               value={formData.table_booking_start_time}
-               name="table_booking_start_time"
+               value={formData.break_start_time}
+               name="break_start_time"
                onChange={handleChange}
               className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="Start time"/>
             </div>
@@ -928,8 +967,8 @@ const FBRestaurtantEdit = () => {
               
               className="block  mb-2">Break End Time</label>
               <input type="time" 
-               value={formData.table_booking_end_time}
-               name="table_booking_end_time"
+               value={formData.break_end_time}
+               name="break_end_time"
                onChange={handleChange}
               className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="End time"/>
             </div>

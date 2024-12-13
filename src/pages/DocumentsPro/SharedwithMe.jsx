@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaFolder, FaFileAlt } from 'react-icons/fa'; // Import icons from react-icons
+import { FaFolder, FaFileAlt, FaFile } from 'react-icons/fa'; // Import icons from react-icons
 
 const initialFolders = [
   {
@@ -50,9 +50,9 @@ const SharedwithMe = () => {
 
   // Dynamic class names based on size
   const sizeClasses = {
-    small: 'text-base p-1',
-    medium: 'text-lg p-2',
-    large: 'text-xl p-3'
+    small: 'text-sm p-1',
+    medium: 'text-base p-2',
+    large: 'text-lg p-3'
   };
 
   return (
@@ -77,8 +77,8 @@ const SharedwithMe = () => {
       )}
 
       {/* Size Selection */}
-      <div className="flex justify-end">
-        {/* <span className="font-semibold">Choose Folder/File Size: </span> */}
+      {/* <div className="flex justify-end">
+       
         <button
           onClick={() => handleSizeChange('small')}
           className={`px-3 py-1 rounded ${size === 'small' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
@@ -97,18 +97,18 @@ const SharedwithMe = () => {
         >
           Large
         </button>
-      </div>
+      </div> */}
 
       {/* Subfolders Section */}
       <div className="folders mb-4">
-        <h2 className=" text-lg mb-2">Folders</h2>
+        <h2 className=" text-xl font-semibold  text-gray-700 mb-4">Folders</h2>
         {path[path.length - 1].subfolders.length > 0 ? (
-          <ul className="list-disc grid grid-cols-6 gap-4   pl-6 ">
+          <ul className="list-disc grid grid-cols-6 gap-4   ">
            
             {path[path.length - 1].subfolders.map((subfolder, index) => (
-                 <div className=' border p-4 rounded shadow'>
+                 <div className=' flex flex-col items-center p-4 bg-gray-100 rounded-lg cursor-pointer transition duration-200 hover:bg-gray-200'>
               <li key={index} className={`mb-1 flex flex-col items-center space-x-2 ${sizeClasses[size]}`}>
-                <FaFolder className="text-yellow-500" size={40}/> {/* Folder icon */}
+                <FaFolder className="text-4xl text-yellow-400 mb-2"/> {/* Folder icon */}
                 <button
                   onClick={() => navigateToFolder(subfolder)}
                   className=""
@@ -127,13 +127,13 @@ const SharedwithMe = () => {
 
       {/* Files Section */}
       <div className="files">
-        <h2 className=" text-lg mb-2">Files</h2>
+        <h2 className=" text-xl font-semibold  text-gray-700 mb-4">Files</h2>
         {currentFiles.length > 0 ? (
-          <ul className="list-disc grid grid-cols-6 gap-4 pl-6">
+          <ul className="list-disc grid grid-cols-6 gap-4 ">
             {currentFiles.map((file, index) => (
-                 <div className=' border p-4 rounded shadow'>
+                 <div className=' flex flex-col items-center p-4 bg-gray-100 rounded-lg cursor-pointer transition duration-200 hover:bg-gray-200'>
               <li key={index} className={`mb-1 flex flex-col items-center space-x-2 ${sizeClasses[size]}`}>
-                <FaFileAlt className="text-gray-700" size={40}/> {/* File icon */}
+                <FaFile className="text-4xl text-blue-400 mb-2"/> {/* File icon */}
                 <span>{file}</span>
               </li>
               </div>
