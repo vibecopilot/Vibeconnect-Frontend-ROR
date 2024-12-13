@@ -61,31 +61,7 @@ const FBRestaurtantEdit = () => {
   const [options, setOptions] = useState([]);
   const [selectedOptions, setSelectedOptions] = useState([]);
 
-  // Fetch cuisines data
-  useEffect(() => {
-    const fetchCuisines = async () => {
-      try {
-        const siteDetailsResp = await getCuisinesFBSetup();
-        
-        // Transform data to react-select format
-        const formattedOptions = siteDetailsResp.data.map((item) => ({
-          value: item.id, // id as the value
-          label: item.name, // name as the label
-        }));
-        
-        setOptions(formattedOptions);
-      } catch (error) {
-        console.error("Error fetching cuisines:", error);
-      }
-    };
-    fetchCuisines();
-  }, []);
 
-  // Handle selection changes
-  const handleChange1 = (selected) => {
-    setSelectedOptions(selected);
-    console.log("Selected Cuisines:", selected);
-  };
   const [rows, setRows] = useState([{ id:"",order: false, booking: false, startDate: "", endDate: "" }]);
 
   const addRow = () => {
@@ -219,7 +195,7 @@ const FBRestaurtantEdit = () => {
       });
       setSelectedOptions(
         (data.cuisines?.split(",") || []).map((cuisine) => ({
-          value: cuisine.trim(), // Ensure no extra spaces
+          value: cuisine.trim(), 
           label: cuisine.trim(), // Ensure consistent labels
         }))
       );
@@ -317,7 +293,31 @@ const FBRestaurtantEdit = () => {
     });
     console.log(fieldName);
   };
+  // Fetch cuisines data
+  useEffect(() => {
+    const fetchCuisines = async () => {
+      try {
+        const siteDetailsResp = await getCuisinesFBSetup();
+        
+        // Transform data to react-select format
+        const formattedOptions = siteDetailsResp.data.map((item) => ({
+          value: item.id, // id as the value
+          label: item.name, // name as the label
+        }));
+        
+        setOptions(formattedOptions);
+      } catch (error) {
+        console.error("Error fetching cuisines:", error);
+      }
+    };
+    fetchCuisines();
+  }, []);
 
+  // Handle selection changes
+  const handleChange1 = (selected) => {
+    setSelectedOptions(selected);
+    console.log("Selected Cuisines:", selected);
+  };
   const userId = getItemInLocalStorage("UserId");
   const navigate = useNavigate()
   const handleSubmit = async () => {
