@@ -141,7 +141,7 @@ const FBCuisinesSetup = () => {
 
   return (
     <section className="flex">
-        <SetupNavbar/>
+        {/* <SetupNavbar/> */}
       <div className="w-full flex mx-3 flex-col overflow-hidden my-10">
         <div className="flex md:flex-row flex-col gap-5 justify-between  my-2">
           <div className="sm:flex grid grid-cols-2 items-center justify-center gap-4 border border-gray-300 rounded-md px-3 p-2 w-auto">

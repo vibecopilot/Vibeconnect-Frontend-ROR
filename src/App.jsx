@@ -701,6 +701,7 @@ import EditSubCategorySetup from "./pages/SubPages/EditSubCategorySetup.jsx";
 import FBRestaurtantMenu from "./pages/SubPages/details/FBSubDetails/FBResturantMenu.jsx";
 import EditRestaurtantBooking from "./pages/SubPages/EditResturantBooking.jsx";
 import EditRestaurtantOrders from "./pages/SubPages/EditResturantOrders.jsx";
+import FBMainPage from "./pages/Setup/FBMainPage.jsx";
 // new admin hrms
 
 function App() {
@@ -3138,7 +3139,7 @@ function App() {
             path="/setup/fnb/cuisines"
             element={
               <ProtectedAdminRoutes>
-                <FBCuisinesSetup/>
+                <FBMainPage/>
               </ProtectedAdminRoutes>
             }
           />
@@ -3396,7 +3397,7 @@ function App() {
             }
           />
           <Route
-            path="/admin/fb-res-menu/"
+            path="/admin/fb-res-menu/:id"
             element={
               <ProtectedAdminRoutes>
                 <AddResMenu />
@@ -3404,7 +3405,7 @@ function App() {
             }
           />
           <Route
-            path="/admin/edit-resmenu/:id"
+            path="/admin/edit-resmenu/:resid/:id"
             element={
               <ProtectedAdminRoutes>
                 <EditResMenu />
@@ -3412,7 +3413,7 @@ function App() {
             }
           />
           <Route
-            path="/admin/fb-resmenudetails/:id"
+            path="/admin/fb-resmenudetails/:resid/:id"
             element={
               <ProtectedAdminRoutes>
                 <ResMenuDetails />

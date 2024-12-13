@@ -97,13 +97,14 @@ const AddFB = () => {
   const themeColor = useSelector((state) => state.theme.color);
 
   const [formData, setFormData] = useState({
+    restaurtanttype:"",
     restaurantName: "",
     costForTwo: "",
     mobileNumber: "",
     anotherMobileNumber: "",
     landlineNumber: "",
     deliveryTime: "",
-    cuisines: "",
+    cuisines: [],
     servesAlcohol: "",
     wheelchairAccessible: "",
     cashOnDelivery: "",
@@ -129,6 +130,8 @@ const AddFB = () => {
     ServiceCharges:"",
     minimumOrder: "",
     orderNotAllowedText: "",
+    break_start_time:"",
+    break_end_time:"",
     cover_image: [],
     menu: [],
     gallery: [],
@@ -223,7 +226,7 @@ const AddFB = () => {
   const userId = getItemInLocalStorage("UserId");
   const navigate = useNavigate()
   const handleSubmit = async () => {
-    const selectedValues = selectedOptions.map(option => option.value);
+    // const ids = selectedOptions.map(option => option.value);     
     if (!formData.restaurantName) {
       return toast.error("Restaurant Name is required");
     }
@@ -287,9 +290,15 @@ const AddFB = () => {
       saturday: "sat",
     };
     postData.append(
+      "food_and_beverage[restauranttype]",
+      option
+    );
+    postData.append(
       "food_and_beverage[restaurant_name]",
       formData.restaurantName
     );
+    postData.append("food_and_beverage[status]", true);
+
     postData.append("food_and_beverage[created_by_id]", userId);
     postData.append("food_and_beverage[cost_for_two]", formData.costForTwo);
     postData.append("food_and_beverage[mobile_number]", formData.mobileNumber);
@@ -302,10 +311,16 @@ const AddFB = () => {
       formData.landlineNumber
     );
     postData.append("food_and_beverage[delivery_time]", formData.deliveryTime);
-    selectedValues.forEach(value => {
-      postData.append("food_and_beverage[cuisines]", value); // Append each selected value (id or value)
+    // selectedValues.forEach(value => {
+    //   postData.append("food_and_beverage[cuisines]", value); // Append each selected value (id or value)
+    // });
+    // ids.forEach(id => {
+    //   postData.append("food_and_beverage[cuisines][]", id);
+    // });
+    selectedOptions.forEach((option) => {
+      postData.append(`food_and_beverage[cuisines][]`, option.value);
     });
-    postData.append(
+        postData.append(
       "food_and_beverage[serves_alcohols]",
       formData.servesAlcohol
     );
@@ -353,15 +368,15 @@ const AddFB = () => {
       formData.deliveryCharge
     );
     postData.append("food_and_beverage[minimum_order]", formData.minimumOrder);
-    postData.append("food_and_beverage[order_not_available_text]", formData.orderNotAllowedText);
+    postData.append("food_and_beverage[order_not_allowed_text]", formData.orderNotAllowedText);
     postData.append(
       "food_and_beverage[serviceCharges]",
       formData.ServiceCharges
     );
     postData.append("food_and_beverage[start_time]", formData.start_time);
     postData.append("food_and_beverage[end_time]", formData.end_time);
-    postData.append("food_and_beverage[table_booking_start_time]", formData.table_booking_start_time);
-    postData.append("food_and_beverage[table_booking_end_time]", formData.table_booking_end_time);
+    postData.append("food_and_beverage[break_start_time]", formData.break_start_time);
+    postData.append("food_and_beverage[break_end_time]", formData.break_end_time);
 
     postData.append("food_and_beverage[sun]", selectedDays['sunday'] ? "1" : "0");
 
@@ -381,13 +396,13 @@ const AddFB = () => {
     
 
     formData.cover_image?.forEach((file, index) => {
-      postData.append(`attachfiles[]`, file);
+      postData.append(`cover_images[]`, file);
     });
     formData.menu?.forEach((file, index) => {
-      postData.append(`attachfiles[]`, file);
+      postData.append(`menu_images[]`, file);
     });
     formData.gallery?.forEach((file, index) => {
-      postData.append(`attachfiles[]`, file);
+      postData.append(`gallery_images[]`, file);
     });
     try {
       const postRes = await postFB(postData);
@@ -842,8 +857,8 @@ const AddFB = () => {
               <label htmlFor="" className="block  mb-2">Break Start Time</label>
               <input 
               type="time" 
-              value={formData.table_booking_start_time}
-              name="table_booking_start_time"
+              value={formData.break_start_time}
+              name="break_start_time"
               onChange={handleChange}
               className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="Start time"/>
             </div>
@@ -851,8 +866,8 @@ const AddFB = () => {
               <label htmlFor="" className="block  mb-2">Break End Time</label>
               <input 
               type="time" 
-              value={formData.table_booking_end_time}
-              name="table_booking_end_time"
+              value={formData.break_end_time}
+              name="break_end_time"
               onChange={handleChange}
               className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="End time"/>
             </div>
