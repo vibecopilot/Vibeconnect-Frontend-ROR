@@ -195,7 +195,7 @@ const FBRestaurtantEdit = () => {
         deliveryCharge: data.delivery_charges || "",
         minimumOrder: data.minimum_order || "",
         orderNotAllowedText: data.order_not_allowed_text || "",
-        serviceCharges: data.serviceCharges || "",
+        ServiceCharges: data.serviceCharges || "",
         cover_image: data.cover_images || [],
         menu: data.menu_images || [],
         gallery: data.gallery_images || [],
