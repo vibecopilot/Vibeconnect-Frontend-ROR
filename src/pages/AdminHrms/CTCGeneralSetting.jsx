@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import CTCDetailsList from "./CTCDetailsList";
 import { useSelector } from "react-redux";
 import AdminHRMS from "./AdminHrms";
@@ -13,7 +13,12 @@ import TemplateLabel from "./CTCTemplates/TemplateLabel";
 import ComponentCTCTemplate from "./CTCTemplates/ComponentCTCTemplate";
 import Restrictions from "./CTCTemplates/Restrictions";
 import { getItemInLocalStorage } from "../../utils/localStorage";
-import { postCTCTemplate } from "../../api";
+import {
+  createCTCTemplate,
+  getTaxAndStatSetting,
+  postCTCTemplate,
+  postTaxAndStatSetting,
+} from "../../api";
 import toast from "react-hot-toast";
 
 const CTCGeneralSetting = () => {
@@ -25,14 +30,14 @@ const CTCGeneralSetting = () => {
     { id: 0, title: "General Settings", icon: <FaWrench /> },
     {
       id: 1,
-      title: "Component & Hierarchy Selection",
+      title: "Tax and Statutory Setting",
       icon: <FaProjectDiagram />,
     },
-    {
-      id: 2,
-      title: "Restrictions on CTC Basket and Amount Allocation",
-      icon: <FaShoppingBasket />,
-    },
+    // {
+    //   id: 2,
+    //   title: "Restrictions on CTC Basket and Amount Allocation",
+    //   icon: <FaShoppingBasket />,
+    // },
   ];
   const [activePage, setActivePage] = useState(0);
 
@@ -41,6 +46,7 @@ const CTCGeneralSetting = () => {
     navigate("/admin/hrms/ctc/CTC-Template");
   };
   const [label, setLabel] = useState("");
+  const [ctcType, setCTCType] = useState("");
   const [templateId, setTemplateId] = useState("");
   const handleAddTemplate = async () => {
     if (!label) {
@@ -48,24 +54,27 @@ const CTCGeneralSetting = () => {
     }
 
     const postData = new FormData();
-    postData.append("label", label);
-    const selectedAllowances = selectedOptions.map((items) => items);
-    // postData.append("fixed_salary_allowance", selectedAllowances);
-    selectedAllowances.forEach((allowance) => {
-      postData.append("fixed_salary_allowance", allowance);
-    });
-    const selectedDeduction = selectedDeductions.map((items) => items);
-    selectedDeduction.forEach((allowance) => {
-      postData.append("fixed_salary_deductions", allowance);
-    });
+    postData.append("name", label);
+    postData.append("type", ctcType);
+    // const selectedAllowances = selectedOptions.map((items) => items);
+    // // postData.append("fixed_salary_allowance", selectedAllowances);
+    // selectedAllowances.forEach((allowance) => {
+    //   postData.append("fixed_salary_allowance", allowance);
+    // });
+    // const selectedDeduction = selectedDeductions.map((items) => items);
+    // selectedDeduction.forEach((allowance) => {
+    //   postData.append("fixed_salary_deductions", allowance);
+    // });
     // postData.append("fixed_salary_deductions", selectedDeduction);
     postData.append("organization", hrmsOrgId);
     try {
-      const res = await postCTCTemplate(postData);
-      setTemplateId(res.id);
+      const res = await createCTCTemplate(postData);
+      setTemplateId(res.data.id);
+      console.log(res);
+      handleNext();
       // setActivePage((prevPage) => Math.min(stepsData.length - 1, prevPage + 1));
-      toast.success("CTC Template created successfully");
-      navigate("/admin/hrms/ctc/CTC-Template");
+      // toast.success("CTC Template created successfully");
+      // navigate("/admin/hrms/ctc/CTC-Template");
     } catch (error) {
       console.log(error);
     }
@@ -80,6 +89,56 @@ const CTCGeneralSetting = () => {
 
   const handleNext = () => {
     setActivePage((prevPage) => Math.min(stepsData.length - 1, prevPage + 1));
+  };
+
+  const [taxStatFields, setTaxStatFields] = useState([]);
+  const [statData, setStatData] = useState({});
+
+  useEffect(() => {
+    const fetchTaxStat = async () => {
+      try {
+        const res = await getTaxAndStatSetting(hrmsOrgId);
+        setTaxStatFields(res);
+        const initialStatData = res.reduce((acc, field) => {
+          acc[field.id] =
+            field.value_type === "boolean"
+              ? field.default_value === "true"
+              : field.default_value;
+          return acc;
+        }, {});
+
+        setStatData(initialStatData);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchTaxStat();
+  }, []);
+  const handleStatChange = (id, event, valueType) => {
+    const updatedValue =
+      valueType === "boolean"
+        ? event.target.value === "true"
+        : event.target.value;
+    setStatData({
+      ...statData,
+      [id]: updatedValue,
+    });
+  };
+
+  console.log(statData);
+  const handlePostTaxStatutory = async () => {
+    const taxData = Object.entries(statData).map(([key, value]) => ({
+      template: templateId,
+      master_id: key,
+      value: String(value),
+    }));
+    try {
+      const res = await postTaxAndStatSetting(taxData);
+      // setPage("CTC Components");
+      navigate("/admin/hrms/ctc/CTC-Template");
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (
@@ -142,28 +201,126 @@ const CTCGeneralSetting = () => {
                 onChange={(e) => setLabel(e.target.value)}
               />
             </div>
+            <div className="flex flex-col w-96">
+              <label htmlFor="" className="font-medium">
+                Select Template Type
+                <span className="text-red-500">*</span>
+              </label>
+              <select
+                name=""
+                value={ctcType}
+                onChange={(e) => setCTCType(e.target.value)}
+                id=""
+                className="m-2 border p-2 border-gray-300 w-full rounded-md"
+              >
+                <option value="">Select Type</option>
+                <option value="ctc template">CTC Template</option>
+              </select>
+            </div>
+            <div className="flex justify-center gap-2">
+              <button
+                onClick={handleCancel}
+                className="bg-red-400 text-white hover:bg-gray-700 font-medium py-2 px-4 rounded-md"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddTemplate}
+                style={{ background: themeColor }}
+                className="bg-black text-white hover:bg-gray-700 font-medium py-2 px-4 rounded-md"
+              >
+                Next
+              </button>
+            </div>
           </div>
         )}
         {activePage === 1 && (
-          <ComponentCTCTemplate
-            onBack={handleBack}
-            onNext={handleNext}
-            tempId={templateId}
-            selectedDeductions={selectedDeductions}
-            selectedOptions={selectedOptions}
-            setSelectedDeductions={setSelectedDeductions}
-            setSelectedOptions={setSelectedOptions}
-          />
+          <div className="p-4 grid grid-cols-2">
+            {taxStatFields.map((field) => (
+              <div key={field.id} className="flex gap-2 flex-col my-2">
+                <label className="block text-gray-700 font-medium">
+                  {field.label}
+                </label>
+                {field.value_type === "boolean" && (
+                  <div className="flex gap-4 items-center">
+                    <label className="flex gap-2">
+                      <input
+                        type="radio"
+                        name={`boolean-${field.id}`}
+                        value="true" // String "true"
+                        checked={statData[field.id] === true} // Boolean check
+                        onChange={(e) =>
+                          handleStatChange(field.id, e, "boolean")
+                        }
+                      />
+                      Yes
+                    </label>
+                    <label className="flex gap-2">
+                      <input
+                        type="radio"
+                        name={`boolean-${field.id}`}
+                        value="false" // String "false"
+                        checked={statData[field.id] === false} // Boolean check
+                        onChange={(e) =>
+                          handleStatChange(field.id, e, "boolean")
+                        }
+                      />
+                      No
+                    </label>
+                  </div>
+                )}
+                {/* {field.value_type === "number" && (
+                  <input
+                    type="number"
+                    value={statData[field.id]}
+                    onChange={(e) => handleStatChange(field.id, e, "number")}
+                    placeholder="Enter PF wage"
+                    className="border w-full border-gray-500 p-2 rounded-md"
+                  />
+                )} */}
+                {field.value_type === "string" && (
+                  <input
+                    type="text"
+                    value={statData[field.id]}
+                    onChange={(e) => handleStatChange(field.id, e, "string")}
+                    placeholder="Enter text"
+                    className="border w-full border-gray-500 p-2 rounded-md"
+                  />
+                )}
+                {/* {field.value_type === "drop down" && (
+                  <select
+                    name=""
+                    id=""
+                    value={statData[field.id]}
+                    onChange={(e) => handleStatChange(field.id, e, "string")}
+                    className="border w-full border-gray-500 p-2 rounded-md"
+                  >
+                    <option value="">Select Template</option>
+                    <option value="temp">Template</option>
+                  </select>
+                )} */}
+              </div>
+            ))}
+            <div className="flex justify-center items-center mt-4">
+              <button
+                style={{ background: themeColor }}
+                className="text-white p-2 rounded-md"
+                onClick={handlePostTaxStatutory}
+              >
+                Save & Proceed
+              </button>
+            </div>
+          </div>
         )}
-        {activePage === 2 && <Restrictions tempId={templateId} />}
+
         <div className="flex justify-center m-4 gap-2">
-          <button
+          {/* <button
             onClick={handleCancel}
             className="bg-red-400 text-white hover:bg-gray-700 font-medium py-2 px-4 rounded-md"
           >
             Cancel
-          </button>
-          {activePage !== 0 && (
+          </button> */}
+          {/* {activePage !== 0 && (
             <button
               onClick={handleBack}
               className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
@@ -187,7 +344,7 @@ const CTCGeneralSetting = () => {
             >
               Proceed
             </button>
-          )}
+          )} */}
         </div>
       </div>
     </div>
@@ -195,3 +352,18 @@ const CTCGeneralSetting = () => {
 };
 
 export default CTCGeneralSetting;
+
+{
+  /* {activePage === 1 && (
+          <ComponentCTCTemplate
+            onBack={handleBack}
+            onNext={handleNext}
+            tempId={templateId}
+            selectedDeductions={selectedDeductions}
+            selectedOptions={selectedOptions}
+            setSelectedDeductions={setSelectedDeductions}
+            setSelectedOptions={setSelectedOptions}
+          />
+        )} */
+}
+// {activePage === 2 && <Restrictions tempId={templateId} />}

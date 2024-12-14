@@ -345,7 +345,7 @@ import GroupJoinDetails from "./pages/SubPages/details/GroupJoinDetails.jsx";
 import AdminHRMS from "./pages/AdminHrms/AdminHrms.jsx";
 import HRMSDashboard from "./pages/AdminHrms/HRMSDashboard.jsx";
 import { getItemInLocalStorage } from "./utils/localStorage.js";
-import { API_URL, getVibeBackground } from "./api/index.js";
+import { API_URL, getColorCode, getVibeBackground } from "./api/index.js";
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { setBackground } from "./features/theme/backgroundSlice.js";
@@ -685,12 +685,39 @@ import FlexiCategory from "./pages/AdminHrms/FlexiBenefits/FlexiSettings/FlexiCa
 import PerformanceSettings from "./pages/AdminHrms/Performance/PerformanceSettings.jsx";
 import MilestoneTypeSettings from "./pages/AdminHrms/MilestoneTypeSettings.jsx";
 import AddExistingPolicy from "./pages/SubPages/AddExistingPolicy.jsx";
+import AddMasters from "./pages/SubPages/AddMasters.jsx";
+import EditMasters from "./pages/SubPages/EditMasters.jsx";
+import MasterDetails from "./pages/SubPages/MasterDetails.jsx";
+import PPMCalendar from "./pages/PPMCalendar.jsx";
+import CopyChecklist from "./pages/SubPages/CopyChecklist.jsx";
+import SiteOwner from "./pages/Setup/SiteOwner.jsx";
+import ChecklistGroupReading from "./pages/Setup/ChecklistGroupReading.jsx";
+import GDNPurpose from "./pages/Setup/GDNPurpose.jsx";
+import EditMasterChecklistSetup from "./pages/Setup/EditMasterChecklistSetup.jsx";
+import EditPPMChecklist from "./pages/SubPages/EditPPMChecklist.jsx";
 import MeterCategoryType from "./pages/Setup/MeterCategoryType/MeterCategoryType.jsx";
 import EditEmployee from "./pages/AdminHrms/EditEmployee.jsx";
 import EditEvent from "./pages/SubPages/EditEvent.jsx";
 import EditBroadcast from "./pages/SubPages/EditBroadcast.jsx";
 import AssociatedSites from "./pages/AdminHrms/AssociatedSites/AssociatedSites.jsx";
 import SetupSeat from "./pages/Setup/SetupSeat.jsx";
+import UserRoles from "./pages/AdminHrms/UserRoles.jsx";
+import OrganizationChart from "./pages/AdminHrms/OrganizationTree/OrganizationChart.jsx";
+import CTCGeneralSettingEdit from "./pages/AdminHrms/CTCGeneralSettingEdit.jsx";
+import TimeSheetRecord from "./pages/AdminHrms/TimeSheet/TimeSheetRecord.jsx";
+import EmployeesSetup from "./pages/AdminHrms/EmployeesSetup.jsx";
+import UniformApplication from "./pages/AdminHrms/UniformApplication.jsx";
+import { setColor } from "./features/theme/themeSlice.js";
+import CopyChecklistPPM from "./pages/SubPages/CopyChecklistPPM.jsx";
+import CopyChecklistService from "./pages/SubPages/CopyChecklistService.jsx";
+import BillingSetup from "./pages/Setup/BillingSetup/BillingSetup.jsx";
+
+import CAMBilling from "./pages/CAMBilling.jsx";
+import BillingAddress from "./pages/Setup/BillingSetup/BillingAddress.jsx";
+import EditBillingAddress from "./pages/Setup/BillingSetup/EditBillingAddress.jsx";
+import AddCAMBilling from "./pages/SubPages/AddCAMBilling.jsx";
+import CAMBillingDetails from "./pages/SubPages/details/CAMBillingDetails.jsx";
+import CreateInvoiceReceipt from "./pages/SubPages/details/CreateInvoiceReceipt.jsx";
 import FBRestaurtantEdit from "./pages/SubPages/FBResturantEdit.jsx";
 import PantryDetails from "./pages/SubPages/details/PantryDetails.jsx";
 import FBCuisinesSetup from "./pages/Setup/FBCuisinesSetup.jsx";
@@ -738,6 +765,23 @@ function App() {
   useEffect(() => {
     Get_Background();
   }, [setBackground]);
+
+  // useEffect(() => {
+  //   // Fetch the color code when the component mounts
+  //   const fetchColorCode = async () => {
+  //     try {
+  //       const response = await getColorCode();
+  //       if (response && response.data && response.data.length > 0) {
+  //         // setColor(response.data[0]); // Keep only the first object
+  //         dispatch(setColor(response.data[0].code)); // Assuming the color code is in 'code' field
+  //       }
+  //     } catch (error) {
+  //       console.error("Failed to fetch color code:", error);
+  //     }
+  //   };
+  
+  //   fetchColorCode();
+  // }, []);
 
   return (
     <>
@@ -1000,6 +1044,22 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <AddPPMActivity />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/asset/edit-ppm/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <EditPPMChecklist/>
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/assets/ppm-calendar"
+            element={
+              <ProtectedAdminRoutes>
+                <PPMCalendar/>
               </ProtectedAdminRoutes>
             }
           />
@@ -1485,7 +1545,7 @@ function App() {
             }
           />
           <Route
-            path="/admin/communication-group-details"
+            path="/admin/communication-group-details/:id"
             element={
               <ProtectedAdminRoutes>
                 <GroupJoinDetails />
@@ -1739,6 +1799,30 @@ function App() {
             }
           />
           <Route
+            path="/admin/copy-checklist/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <CopyChecklist/>
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/copy-checklist/service/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <CopyChecklistService/>
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/copy-checklist/ppm/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <CopyChecklistPPM/>
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
             path="/services/edit-routine/:id"
             element={
               <ProtectedAdminRoutes>
@@ -1785,6 +1869,22 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <SupplierSetup />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/edit-master-checklist-setup/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <EditMasterChecklistSetup/>
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/gdn-purpose-setup"
+            element={
+              <ProtectedAdminRoutes>
+                <GDNPurpose/>
               </ProtectedAdminRoutes>
             }
           />
@@ -1903,6 +2003,22 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <AdminOutstationDetails />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/site-owner-setup"
+            element={
+              <ProtectedAdminRoutes>
+                <SiteOwner />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/checklist-group-reading-setup"
+            element={
+              <ProtectedAdminRoutes>
+                <ChecklistGroupReading />
               </ProtectedAdminRoutes>
             }
           />
@@ -2314,6 +2430,30 @@ function App() {
             }
           />
           {/* INventory */}
+          <Route
+            path="/admin/add-masters"
+            element={
+              <ProtectedAdminRoutes>
+                <AddMasters/>
+              </ProtectedAdminRoutes>
+            }
+          />
+           <Route
+            path="/admin/master-details/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <MasterDetails/>
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/edit-masters/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <EditMasters/>
+              </ProtectedAdminRoutes>
+            }
+          />
           <Route
             path="/admin/add-stock"
             element={
@@ -3725,7 +3865,6 @@ function App() {
               </ProtectedAdminRoutes>
             }
           />
-
           <Route
             path="/admin/edit-addresses-setup/:id"
             element={
@@ -5009,7 +5148,8 @@ function App() {
             path="/hrms/organization-tree-setting"
             element={
               <ProtectedAdminRoutes>
-                <OrganizationTree />
+                {/* <OrganizationTree /> */}
+                <OrganizationChart/>
               </ProtectedAdminRoutes>
             }
           />
@@ -5705,6 +5845,14 @@ function App() {
             }
           />
           <Route
+            path="/timesheet-record"
+            element={
+              <ProtectedAdminRoutes>
+                <TimeSheetRecord />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
             path="/admin/reports/form16"
             element={
               <ProtectedAdminRoutes>
@@ -6135,6 +6283,14 @@ function App() {
             }
           />
           <Route
+            path="/admin/employee-directory-setup/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <EmployeesSetup />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
             path="/admin/add-employee/Employment"
             element={
               <ProtectedAdminRoutes>
@@ -6214,6 +6370,22 @@ function App() {
               </ProtectedAdminRoutes>
             }
           />
+          <Route
+            path="/admin/uniform-applications/"
+            element={
+              <ProtectedAdminRoutes>
+                <UniformApplication />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/hrms/ctc/ctc-template/edit/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <CTCGeneralSettingEdit />
+              </ProtectedAdminRoutes>
+            }
+          />
 
           <Route
             path="/admin/details-payslip/:id"
@@ -6284,6 +6456,14 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <MilestoneTypeSettings />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/user-roles"
+            element={
+              <ProtectedAdminRoutes>
+                <UserRoles />
               </ProtectedAdminRoutes>
             }
           />
@@ -6764,6 +6944,64 @@ function App() {
               <ProtectedRoute>
                 <AddEsic />
               </ProtectedRoute>
+            }
+          />
+           <Route
+            path="/admin/billing-setup"
+            element={
+              <ProtectedAdminRoutes>
+                <BillingSetup />
+              </ProtectedAdminRoutes>
+            }
+          />
+         
+          {/* CAM Billing */}
+          <Route
+            path="/admin/cam-billing"
+            element={
+              <ProtectedAdminRoutes>
+                <CAMBilling />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/add-cam-billing"
+            element={
+              <ProtectedAdminRoutes>
+                <AddCAMBilling />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/cam-billing-details/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <CAMBillingDetails />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/create-invoice-receipt"
+            element={
+              <ProtectedAdminRoutes>
+                <CreateInvoiceReceipt />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/billing-address"
+            element={
+              <ProtectedAdminRoutes>
+                <BillingAddress />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/edit-billing-address/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <EditBillingAddress />
+              </ProtectedAdminRoutes>
             }
           />
         </Routes>

@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import Navbar from "../../components/Navbar";
 import { useSelector } from "react-redux";
 import FileInputBox from "../../containers/Inputs/FileInputBox";
+import { postForum } from "../../api";
+import toast from "react-hot-toast";
 
 function CreateForum() {
   const themeColor = useSelector((state) => state.theme.color);
@@ -13,8 +15,34 @@ function CreateForum() {
     attachments: "",
   });
 
+  const handleFileChange = (event) => {
+    const file = event.target.files[0]; // Get the first selected file
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      attachments: file,
+    }));
+  };
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleCreateForum = async () => {
+    const postData = new FormData();
+    postData.append("thread_title", formData.title);
+    postData.append("thread_category", formData.category);
+    postData.append("thread_tags", formData.tags);
+    postData.append("thread_description", formData.description);
+    postData.append("thread_description", formData.description);
+    if (formData.attachments) {
+      postData.append("forums_image", formData.attachments);
+    }
+    try {
+      const res = await postForum(postData)
+      toast.success("Forum created successfully")
+    } catch (error) {
+      console.log(error)
+    }
   };
   return (
     <section className="flex">
@@ -48,7 +76,12 @@ function CreateForum() {
                 <label htmlFor="" className="font-semibold my-2">
                   Category
                 </label>
-                <select className="border p-2 px-4 border-gray-400 rounded-md" name="">
+                <select
+                  className="border p-2 px-4 border-gray-400 rounded-md"
+                  name="category"
+                  value={formData.category}
+                  onChange={handleChange}
+                >
                   <option value="">Select Category </option>
                   <option value="General">General</option>
                   <option value="Discussion">Discussion</option>
@@ -65,6 +98,9 @@ function CreateForum() {
                   type="text"
                   placeholder="#tags"
                   className="border p-2 px-4 border-gray-400 rounded-md"
+                  value={formData.tags}
+                  name="tags"
+                  onChange={handleChange}
                 />
               </div>
             </div>
@@ -74,7 +110,9 @@ function CreateForum() {
                   Thread Description
                 </label>
                 <textarea
-                  name=""
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
                   id=""
                   cols="5"
                   rows="3"
@@ -89,13 +127,15 @@ function CreateForum() {
               </label>
               <input
                 type="file"
-                name=""
-                id=""
+
                 className="border p-2 rounded-md"
+                accept="image/*"
+                onChange={handleFileChange}
               />
             </div>
             <div className="flex justify-center my-4 gap-2">
               <button
+              onClick={handleCreateForum}
                 style={{ background: themeColor }}
                 className="bg-black text-white p-2 px-4 rounded-md font-medium"
               >

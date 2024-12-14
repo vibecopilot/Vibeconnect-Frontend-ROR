@@ -5,7 +5,7 @@ import FileInputBox from "../../containers/Inputs/FileInputBox";
 import { useSelector } from "react-redux";
 import Navbar from "../../components/Navbar";
 import { getItemInLocalStorage } from "../../utils/localStorage";
-import { postEvents, getAssignedTo } from "../../api";
+import { postEvents, getAssignedTo, getGroups, getSetupUsers } from "../../api";
 import Select from "react-select";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -28,6 +28,11 @@ const CreateEvent = () => {
     end_date_time: "",
     user_ids: "",
     event_image: [],
+    shared: "",
+    email_enabled: false,
+    rsvp_enabled: false,
+    important: false,
+    group_ids: "",
   });
   console.log(formData);
   const fileInputRef = useRef(null);
@@ -46,11 +51,11 @@ const CreateEvent = () => {
   const formatDateTime = (date) => {
     return format(date, "yyyy-MM-dd HH:mm:ss");
   };
-
+  const [groups, setGroups] = useState([]);
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await getAssignedTo();
+        const response = await getSetupUsers();
         const transformedUsers = response.data.map((user) => ({
           value: user.id,
           label: `${user.firstname} ${user.lastname}`,
@@ -61,7 +66,20 @@ const CreateEvent = () => {
         console.error("Error fetching assigned users:", error);
       }
     };
+    const fetchGroups = async () => {
+      try {
+        const res = await getGroups();
+        // const transformedUsers = res.data.map((user) => ({
+        //   value: user.id,
+        //   label: user.group_name,
+        // }));
+        setGroups(res.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
     fetchUsers();
+    fetchGroups();
   }, []);
 
   const handleChange = (e) => {
@@ -91,6 +109,12 @@ const CreateEvent = () => {
       );
       formDataSend.append("event[venue]", formData.venue);
       formDataSend.append("event[user_ids]", formData.user_ids);
+      formDataSend.append("event[group_id]", formData.group_ids);
+      formDataSend.append("event[shared]", share);
+      formDataSend.append("event[email_enabled]", formData.email_enabled);
+      formDataSend.append("event[rsvp_enabled]", formData.rsvp_enabled);
+      formDataSend.append("event[important]", formData.important);
+      // formDataSend.append("event[important]", formData.important);
 
       // formData.user_ids.forEach((user_id) => {
       //   formDataSend.append("event[user_ids]", user_id);
@@ -118,6 +142,15 @@ const CreateEvent = () => {
     const userIdsString = selectedIds.join(",");
 
     setFormData({ ...formData, user_ids: userIdsString });
+  };
+  const handleSelectGroupChange = (selectedOptions) => {
+    // const selectedIds = selectedOptions
+    //   ? selectedOptions.map((option) => option.value)
+    //   : [];
+    // const userIdsString = selectedIds.join(",");
+
+    // setFormData({ ...formData, group_ids: userIdsString });
+    setFormData({ ...formData, group_ids: selectedOptions.value });
   };
 
   const handleFileAttachment = (event) => {
@@ -151,7 +184,7 @@ const CreateEvent = () => {
       [fieldName]: files,
     });
   };
-
+console.log(groups)
   return (
     <section className="flex">
       <div className="hidden md:block">
@@ -199,8 +232,7 @@ const CreateEvent = () => {
                 />
               </div>
               <div className="flex items-center gap-2 w-full">
-                {/* <div > */}
-                {/* <p className="font-medium mb-2">Start Time:</p> */}
+                
                 <DatePicker
                   selected={formData.start_date_time}
                   onChange={handleStartDateChange}
@@ -243,26 +275,45 @@ const CreateEvent = () => {
 
             <div className="flex gap-4 my-5">
               <div className="flex gap-2 items-center">
-                <input type="checkbox" name="" id="imp" />
+                <input
+                  type="checkbox"
+                  name=""
+                  id="imp"
+                  checked={formData.important === true}
+                  onChange={() =>
+                    setFormData({ ...formData, important: !formData.important })
+                  }
+                />
                 <label htmlFor="imp" className="font-semibold">
                   Important
                 </label>
               </div>
               <div className="flex gap-2 items-center">
-                <input type="checkbox" name="" id="email" />
+                <input
+                  type="checkbox"
+                  name=""
+                  id="email"
+                  checked={formData.email_enabled === true}
+                  onChange={() =>
+                    setFormData({
+                      ...formData,
+                      email_enabled: !formData.email_enabled,
+                    })
+                  }
+                />
                 <label htmlFor="email" className="font-semibold">
                   Send Email
                 </label>
               </div>
             </div>
-           
+
             {/* <input
               ref={fileInputRef}
               type="file"
               multiple
               onChange={handleFileAttachment}
             /> */}
-           
+
             <div className="">
               <h2 className="border-b t border-black my-5 text-lg font-semibold">
                 Share With
@@ -304,11 +355,36 @@ const CreateEvent = () => {
                         formData.user_ids.includes(user.value)
                       )}
                       onChange={handleSelectChange}
-                      isMulti
                       className="w-full"
                     />
                   )}
-                  {share === "groups" && <p>list of groups</p>}
+                  {share === "groups" && (
+                    // <Select
+                    //   options={groups}
+                    //   closeMenuOnSelect={false}
+                    //   placeholder="Select Group"
+                    //   // value={groups.filter((user) =>
+                    //   //   formData.group_ids.includes(user.value)
+                    //   // )}
+                    //   onChange={handleSelectGroupChange}
+                    //   // isMulti
+                    //   className="w-full"
+                    // />
+                    <select
+                      name="group_ids"
+                      id=""
+                      className="w-full border rounded-md p-2"
+                      onChange={handleChange}
+                      value={formData.group_ids}
+                    >
+                      <option value="">Select Group</option>
+                      {groups.map((group) => (
+                        <option value={group.id} key={group.id}>
+                        {group.group_name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
               </div>
             </div>
@@ -318,13 +394,29 @@ const CreateEvent = () => {
               </h2>
               <div className="flex gap-4 mt-2">
                 <div className="flex gap-2 ">
-                  <input type="radio" name="RSVP" id="yes" />
+                  <input
+                    type="radio"
+                    name="RSVP"
+                    id="yes"
+                    checked={formData.rsvp_enabled === true}
+                    onChange={() =>
+                      setFormData({ ...formData, rsvp_enabled: true })
+                    }
+                  />
                   <label htmlFor="yes" className="text-lg">
                     Yes
                   </label>
                 </div>
                 <div className="flex gap-2">
-                  <input type="radio" name="RSVP" id="no" />
+                  <input
+                    type="radio"
+                    name="RSVP"
+                    id="no"
+                    checked={formData.rsvp_enabled === false}
+                    onChange={() =>
+                      setFormData({ ...formData, rsvp_enabled: false })
+                    }
+                  />
                   <label htmlFor="no" className="text-lg">
                     No
                   </label>
@@ -332,23 +424,22 @@ const CreateEvent = () => {
               </div>
             </div>
             <div>
-
-            <h2 className="border-b text-xl border-black my-5 font-semibold">
-              Upload Attachments
-            </h2>
-            <FileInputBox
-              fieldName={"event_image"}
-              handleChange={(files) => handleFileChange(files, "event_image")}
-              fileType="image/*"
+              <h2 className="border-b text-xl border-black my-5 font-semibold">
+                Upload Attachments
+              </h2>
+              <FileInputBox
+                fieldName={"event_image"}
+                handleChange={(files) => handleFileChange(files, "event_image")}
+                fileType="image/*"
               />
-              </div>
+            </div>
             <div className="flex justify-center mt-10 my-5">
               <button
-              style={{background: themeColor}}
+                style={{ background: themeColor }}
                 className="bg-black text-white p-2 rounded-md hover:bg-white  flex items-center gap-2 px-4"
                 onClick={handleCreateEvent}
               >
-              <FaCheck/>  Submit
+                <FaCheck /> Submit
               </button>
             </div>
           </div>

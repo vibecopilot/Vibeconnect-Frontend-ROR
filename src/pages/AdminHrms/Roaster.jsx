@@ -9,6 +9,8 @@ import RoasterShiftDetails from "./Components/RoasterShiftDetails";
 import { getRosterRecords } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import { formatShiftTime } from "../../utils/dateUtils";
+import AssignRosterShifts from "./Modals/AssignRosterShifts";
+import { Pagination } from "antd";
 
 const Roster = () => {
   const themeColor = useSelector((state) => state.theme.color);
@@ -22,20 +24,9 @@ const Roster = () => {
   const [selectedShift, setSelectedShift] = useState(null);
 
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
-  const fetchRosterRecords = async () => {
-    try {
-      const res = await getRosterRecords(hrmsOrgId);
-      setEmployees(res.results);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-  useEffect(() => {
-    fetchRosterRecords();
-  }, []);
 
   const handleShiftClick = (employee, date, schedule) => {
-    console.log(schedule)
+    console.log(schedule);
     setSelectedShift({ employee, date, schedule });
   };
 
@@ -97,24 +88,56 @@ const Roster = () => {
       (record) => record.date === date.toISOString().split("T")[0]
     );
   };
-console.log(currentMonth)
+  console.log(currentMonth);
+  const [assignShifts, setAssignShifts] = useState(false);
+  const [rosterCount, setRosterCount] = useState("");
+  const [pageNumber, setPageNumber] = useState(1);
+  const fetchRosterRecords = async (page) => {
+    try {
+      const res = await getRosterRecords(hrmsOrgId, page);
+      setEmployees(res.results);
+      setRosterCount(res.count);
+      setPageNumber(page);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(() => {
+    fetchRosterRecords(pageNumber);
+  }, []);
+
+  const handlePageChange = (page) => {
+    setPageNumber(page);
+    fetchRosterRecords(page);
+  };
+
+  const capitalize = (string) => {
+    if (!string) return ""; // Handle empty or undefined strings
+    return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+  };
   return (
     <div className="flex ">
       <AdminHRMS />
-      <div className="ml-20  bg-gray-100 p-2 w-full px-6">
+      <div className="ml-20  bg-gray-100 p-2 w-full px-4">
         <header
           style={{ background: themeColor }}
           className="bg-blue-500 p-4 text-white rounded-md flex justify-between items-center"
         >
           <h1 className="text-2xl font-medium">Roster Record</h1>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
             <input
               className="border p-2 w-64 px-4 text-black rounded-md"
               type="month"
               value={currentMonth}
               onChange={(e) => setCurrentMonth(e.target.value)}
             />
-            <button onClick={toggleModal} className="border p-2 rounded-md">
+            <button
+              className="bg-white p-2 rounded-md text-black font-medium"
+              onClick={() => setAssignShifts(true)}
+            >
+              Assign Shifts
+            </button>
+            {/* <button onClick={toggleModal} className="border p-2 rounded-md">
               Upload Records
             </button>
             <button className="border p-2 rounded" onClick={handleModalToggle}>
@@ -123,7 +146,7 @@ console.log(currentMonth)
             <label className="text-white" htmlFor="">
               Multiselect
             </label>
-            <ToggleSwitch />
+            <ToggleSwitch /> */}
           </div>
         </header>
 
@@ -218,25 +241,27 @@ console.log(currentMonth)
                       <div className="flex items-center space-x-2">
                         <div
                           style={{ background: themeColor }}
-                          className="w-10 h-10 rounded-full flex items-center justify-center text-white font-medium"
+                          className="min-w-10 min-h-10 rounded-full flex items-center justify-center text-white font-medium"
                         >
-                          {employee.first_name[0]}
-                          {employee.last_name[0]}
+                          {capitalize(employee.first_name[0])}
+                          {capitalize(employee.last_name[0])}
                         </div>
-                        <span>
+                        <span className="text-sm font-medium">
                           {employee.first_name} {employee.last_name}
                         </span>
                       </div>
                     </td>
-                    {weekDates.map((date, index) => {
+                    {weekDates?.map((date, index) => {
                       const shift = getShiftForDate(employee, date);
                       const isWeekend =
-                        date.getDay() === 0 || date.getDay() === 6;
+                        date?.getDay() === 0 || date?.getDay() === 6;
                       return (
                         <td key={index} className="border-none p-2 text-center">
                           {shift ? (
                             <div
-                              onClick={() => handleShiftClick(employee, shift, date)}
+                              onClick={() =>
+                                handleShiftClick(employee, shift, date)
+                              }
                               // title={isWeekend? "":""}
                               className={`rounded-md p-1 cursor-pointer transition duration-200 ${
                                 isWeekend
@@ -247,13 +272,18 @@ console.log(currentMonth)
                               <div>
                                 {/* {shift.shift_start_time} -{" "}
                                 {shift.shift_end_time} */}
-                                 {formatShiftTime(shift.shift_start_time, shift.shift_end_time)}
+                                {formatShiftTime(
+                                  shift?.shift_start_time,
+                                  shift?.shift_end_time
+                                )}
                               </div>
                             </div>
                           ) : (
                             <div
                               title="No Shift Assigned"
-                              onClick={() => handleShiftClick(employee, shift, date)}
+                              onClick={() =>
+                                handleShiftClick(employee, shift, date)
+                              }
                               className="bg-gray-100 cursor-pointer text-gray-500 rounded-md p-1 hover:bg-gray-200 transition duration-200"
                             >
                               NOT ASSIGNED
@@ -267,6 +297,15 @@ console.log(currentMonth)
               </tbody>
             </table>
           </div>
+        </div>
+        <div className="flex justify-end mb-10 my-4">
+          <Pagination
+            showSizeChanger={false}
+            current={pageNumber}
+            total={rosterCount}
+            pageSize={10}
+            onChange={handlePageChange}
+          />
         </div>
         {/* Modal */}
         {isModalOpen && (
@@ -384,7 +423,13 @@ console.log(currentMonth)
           date={selectedShift.date}
           schedule={selectedShift.schedule}
           onClose={() => setSelectedShift(null)}
-          fetchRosterRecords={fetchRosterRecords}
+          fetchRosterRecords={()=>fetchRosterRecords(pageNumber)}
+        />
+      )}
+      {assignShifts && (
+        <AssignRosterShifts
+          onClose={() => setAssignShifts(false)}
+          fetchRosterRecords={()=>fetchRosterRecords(pageNumber)}
         />
       )}
     </div>

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { HiMenuAlt3 } from "react-icons/hi";
 import { HiCheck } from "react-icons/hi";
-import { FaBuilding } from "react-icons/fa";
+import { FaBuilding, FaRegFileAlt, FaTasks, FaUserTie } from "react-icons/fa";
 import { useNavigate, NavLink, useLocation } from "react-router-dom";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import {
@@ -33,6 +33,7 @@ import { RiSettings3Line } from "react-icons/ri";
 import { FaMoneyBills, FaMoneyBillWheat } from "react-icons/fa6";
 import { BiSolidReport } from "react-icons/bi";
 import { GrDocumentPerformance } from "react-icons/gr";
+import { GiClothes } from "react-icons/gi";
 import { BsFillFileEarmarkSpreadsheetFill } from "react-icons/bs";
 import {
   TbAlertSquareFilled,
@@ -51,6 +52,7 @@ const AdminHRMS = () => {
   const [ispayOpen, setIspayOpen] = useState(false);
   const [isRosterOpen, setIsRosterOpen] = useState(false);
   const [isExpenseOpen, setIsExpenseOpen] = useState(false);
+  const [isTimeSheetOpen, setIsTimeSheetOpen] = useState(false);
   const navigate = useNavigate();
   const themeColor = useSelector((state) => state.theme.color);
 
@@ -66,6 +68,9 @@ const AdminHRMS = () => {
   };
   const toggleExpenseMenu = () => {
     setIsExpenseOpen(!isExpenseOpen);
+  };
+  const toggleTimeSheetMenu = () => {
+    setIsTimeSheetOpen(!isTimeSheetOpen);
   };
 
   useEffect(() => {
@@ -327,6 +332,7 @@ const AdminHRMS = () => {
     "/admin/employee-directory-Transaction",
     "/admin/employee-directory-Change-logs",
   ];
+  const routes10 = ["/user-roles"];
   return (
     <section className="flex gap-6 fixed top-0 left-0 bottom-0 h-screen z-30">
       <div
@@ -594,6 +600,32 @@ const AdminHRMS = () => {
                     </h2>
                   </NavLink>
                   <NavLink
+                    to="/user-roles"
+                    className={({ isActive }) =>
+                      `${
+                        isActiveLink(location, routes10)
+                          ? "text-black bg-white flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                          : "group flex items-center text-sm gap-3.5 font-medium p-2 "
+                      }`
+                    }
+                  >
+                    <div>{React.createElement(FaUserTie, { size: "20" })}</div>
+                    <h2
+                      className={`whitespace-pre duration-300 ${
+                        !open && "opacity-0 translate-x-28 overflow-hidden"
+                      }`}
+                    >
+                      User Roles
+                    </h2>
+                    <h2
+                      className={`${
+                        open && "hidden"
+                      } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+                    >
+                      User Roles
+                    </h2>
+                  </NavLink>
+                  <NavLink
                     to="/hrms/organization-tree-setting"
                     className={() =>
                       `${
@@ -619,7 +651,7 @@ const AdminHRMS = () => {
                       Organization Tree Setting
                     </h2>
                   </NavLink>
-                  <NavLink
+                  {/* <NavLink
                     to="/hrms/employee-transaction"
                     className={() =>
                       `${
@@ -646,8 +678,8 @@ const AdminHRMS = () => {
                     >
                       Employee Transaction
                     </h2>
-                  </NavLink>
-                  <NavLink
+                  </NavLink> */}
+                  {/* <NavLink
                     to="/hrms/investment"
                     className={({ isActive }) =>
                       `${
@@ -674,7 +706,7 @@ const AdminHRMS = () => {
                     >
                       Investment
                     </h2>
-                  </NavLink>
+                  </NavLink> */}
                   <NavLink
                     to="/admin/add-employee/"
                     className={({ isActive }) =>
@@ -702,6 +734,32 @@ const AdminHRMS = () => {
                     </h2>
                   </NavLink>
                   <NavLink
+                    to="/admin/uniform-applications/"
+                    className={({ isActive }) =>
+                      `${
+                        isActive
+                          ? "text-black bg-white flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                          : "group flex items-center text-sm gap-3.5 font-medium p-2 "
+                      }`
+                    }
+                  >
+                    <div>{React.createElement(GiClothes, { size: "20" })}</div>
+                    <h2
+                      className={`whitespace-pre duration-300 ${
+                        !open && "opacity-0 translate-x-28 overflow-hidden"
+                      }`}
+                    >
+                      Uniform Applications
+                    </h2>
+                    <h2
+                      className={`${
+                        open && "hidden"
+                      } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+                    >
+                      Uniform Applications
+                    </h2>
+                  </NavLink>
+                  {/* <NavLink
                     to="/hrms/pending-contract-renewal"
                     className={({ isActive }) =>
                       `${
@@ -728,7 +786,7 @@ const AdminHRMS = () => {
                     >
                       Pending Contract Renewal
                     </h2>
-                  </NavLink>
+                  </NavLink> */}
                   <NavLink
                     to="/hrms/separation/"
                     className={({ isActive }) =>
@@ -894,7 +952,7 @@ const AdminHRMS = () => {
                       Attendance Audit
                     </h2>
                   </NavLink>
-                  <NavLink
+                  {/* <NavLink
                     to="/admin/hrms/Attendance-Process"
                     className={({ isActive }) =>
                       `${
@@ -921,7 +979,7 @@ const AdminHRMS = () => {
                     >
                       Attendance Process
                     </h2>
-                  </NavLink>
+                  </NavLink> */}
                   <NavLink
                     to="/admin/hrms/setting"
                     className={() =>
@@ -961,7 +1019,9 @@ const AdminHRMS = () => {
                     }
                   >
                     <div>
-                      {React.createElement(HiOutlineDevicePhoneMobile, { size: "20" })}
+                      {React.createElement(HiOutlineDevicePhoneMobile, {
+                        size: "20",
+                      })}
                     </div>
                     <h2
                       className={`whitespace-pre duration-300 ${
@@ -1351,7 +1411,7 @@ const AdminHRMS = () => {
                 Expenses
               </h2>
               <div className="ml-auto">
-                {isEmpOpen
+                {isExpenseOpen
                   ? React.createElement(MdExpandLess, { size: "20" })
                   : React.createElement(MdExpandMore, { size: "20" })}
               </div>
@@ -1442,6 +1502,56 @@ const AdminHRMS = () => {
                 </NavLink>
               </div>
             )}
+            <div
+              onClick={toggleTimeSheetMenu}
+              className="cursor-pointer flex items-center text-sm gap-3 font-medium p-2 "
+            >
+              <div>{React.createElement(FaTasks, { size: "20" })}</div>
+              <h2
+                className={`whitespace-pre duration-300 ${
+                  !open && "opacity-0 translate-x-28 overflow-hidden"
+                }`}
+              >
+                Time Sheet
+              </h2>
+              <div className="ml-auto">
+                {isTimeSheetOpen
+                  ? React.createElement(MdExpandLess, { size: "20" })
+                  : React.createElement(MdExpandMore, { size: "20" })}
+              </div>
+            </div>
+            {isTimeSheetOpen && (
+              <div className="flex flex-col gap-2 ">
+                <NavLink
+                  to="/timesheet-record"
+                  className={({ isActive }) =>
+                    `${
+                      isActive
+                        ? "text-black bg-white flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                        : "group flex items-center text-sm gap-3.5 font-medium p-2 "
+                    }`
+                  }
+                >
+                  <div>
+                    {React.createElement(BiSolidReport, { size: "20" })}
+                  </div>
+                  <h2
+                    className={`whitespace-pre duration-300 ${
+                      !open && "opacity-0 translate-x-28 overflow-hidden"
+                    }`}
+                  >
+                    Records
+                  </h2>
+                  <h2
+                    className={`${
+                      open && "hidden"
+                    } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+                  >
+                    Records
+                  </h2>
+                </NavLink>
+              </div>
+            )}
 
             <div>
               <div
@@ -1477,7 +1587,7 @@ const AdminHRMS = () => {
                     }
                   >
                     <div>
-                      {React.createElement(IoSettingsOutline, { size: "20" })}
+                      {React.createElement(FaRegFileAlt, { size: "20" })}
                     </div>
                     <h2
                       className={`whitespace-pre duration-300 ${
@@ -1600,7 +1710,7 @@ const AdminHRMS = () => {
                 </div>
               </div>
               {ispayOpen && (
-                <div className="">
+                <div className="flex flex-col gap-2 mt-1">
                   <NavLink
                     to="/admin/hrms/run-payroll"
                     className={({ isActive }) =>
@@ -1694,7 +1804,7 @@ const AdminHRMS = () => {
                     }
                   >
                     <div>
-                      {React.createElement(ImFileText2, { size: "20" })}
+                      {React.createElement(IoSettingsOutline, { size: "20" })}
                     </div>
                     <h2
                       className={`whitespace-pre duration-300 ${

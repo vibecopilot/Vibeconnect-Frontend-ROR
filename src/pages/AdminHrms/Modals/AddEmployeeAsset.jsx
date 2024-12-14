@@ -24,8 +24,8 @@ const AddEmployeeAsset = ({ setAssetModal, fetchEmployeeAssets }) => {
       return toast.error("Please provide retrieval email");
     }
     const postData = new FormData();
-    postData.append("laptop_brand", formData.laptopBrand);
-    postData.append("email_id", formData.retrievalEmail);
+    postData.append("asset_name", formData.laptopBrand);
+    postData.append("asset_info", formData.retrievalEmail);
     postData.append("employee", id);
     try {
       await postEmployeeAsset(postData);
@@ -44,12 +44,12 @@ const AddEmployeeAsset = ({ setAssetModal, fetchEmployeeAssets }) => {
         <div className="flex flex-col ">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Which brand Laptop?
+              Asset Name <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               className="p-2 w-full border rounded-md placeholder:text-sm "
-              placeholder="Enter laptop brand"
+              placeholder="Enter asset name"
               value={formData.laptopBrand}
               onChange={handleChange}
               name="laptopBrand"
@@ -58,16 +58,22 @@ const AddEmployeeAsset = ({ setAssetModal, fetchEmployeeAssets }) => {
 
           <div className="mt-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Retrieve email ID <span className="text-red-500">*</span>
+              Asset Info <span className="text-red-500">*</span>
             </label>
-            <input
-              type="email"
+            <textarea
+              id=""
+              cols="30"
+              rows="3"
               className=" p-2 w-full border rounded-md placeholder:text-sm "
-              placeholder="Enter email ID"
               value={formData.retrievalEmail}
               onChange={handleChange}
+              placeholder="Describe asset"
               name="retrievalEmail"
-            />
+            ></textarea>
+            {/* <input
+              type="email"
+              placeholder="Enter email ID"
+            /> */}
           </div>
 
           <div className="flex mt-5 my-2 justify-center gap-2">

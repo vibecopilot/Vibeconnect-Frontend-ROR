@@ -7,7 +7,8 @@ import { dateTimeFormat } from "../../../../utils/dateUtils";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { FaRegFileAlt } from "react-icons/fa";
-import { HiArrowLeft, HiArrowRight } from "react-icons/hi";
+import { HiArrowLeft, HiArrowRight } from 'react-icons/hi';
+import toast from "react-hot-toast";
 
 const PPM = () => {
   const { id } = useParams();
@@ -22,8 +23,11 @@ const PPM = () => {
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const fetchPPMData = async () => {
+    toast.loading("Please wait");
     try {
       const ppmRes = await getAssetPPMs(id);
+      toast.dismiss()
+      toast.success("PPM Schedule  fetched successfully");
       setFilteredPPMData(ppmRes.data.activities);
       setPPMData(ppmRes.data.activities);
       console.log(ppmRes.data.activities);
@@ -33,7 +37,10 @@ const PPM = () => {
   };
 
   const fetchPPMDetails = async () => {
+    // toast.loading("Please wait");
     const PPMDetailsResp = await getAssetPPMs(id);
+    // toast.dismiss()
+    //   toast.success("Logs fetched successfully");
     const filteredData = PPMDetailsResp.data.activities.filter((activity) => {
       const activityDate = formatDate(activity.start_time); // Extract date from start_time
 
@@ -261,9 +268,17 @@ const PPM = () => {
                         (submission, subIndex) =>
                           submission && (
                             <div key={submission.id} className="my-2">
+                              <div className="flex gap-4 items-center bg-purple-100 mb-2 p-2 rounded-md">
+                                <p className="font-medium">
+                                  Group Name:
+                                </p>
+                                <p>
+                                  {submission.question?.group_name || "No Group"}
+                                </p>
+                              </div>
                               <div className="flex gap-4 items-center bg-green-100 mb-2 p-2 rounded-md">
                                 <p className="font-medium">
-                                  Question {subIndex + 1}:
+                                  Question :
                                 </p>
                                 <p>
                                   {submission.question?.name || "No Question"}

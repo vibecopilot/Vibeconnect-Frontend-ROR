@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import {
   Chart as ChartJS,
@@ -24,6 +24,8 @@ import { IoReload } from "react-icons/io5";
 import HighchartsReact from "highcharts-react-official";
 import EmployeeCount from "./HRMSHighChart/EmployeeCount";
 import DepartmentCount from "./HRMSHighChart/DepartmentCount";
+import { getMyOrganization } from "../../api";
+import { getItemInLocalStorage } from "../../utils/localStorage";
 
 ChartJS.register(
   ArcElement,
@@ -101,6 +103,20 @@ const HRMSDashboard = () => {
       },
     ],
   };
+  const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
+  const [orgName, setOrgName] = useState("");
+  const fetchMyOrganization = async () => {
+    try {
+      const res = await getMyOrganization(hrmsOrgId);
+      setOrgName(res.name);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchMyOrganization();
+  });
 
   return (
     <section className="flex ">
@@ -109,15 +125,15 @@ const HRMSDashboard = () => {
       <div className="p-2 w-full flex  overflow-hidden flex-col">
         <div className="bg-white flex justify-items-end  p-4 shadow-md absolute overflow-y-auto top-0 left-0 right-0">
           <h1 className="text-2xl font-bold pl-20 top-0 left-0 right-0">
-            Welcome, Mittu Panda
+            Welcome To <span>{orgName}</span>
           </h1>
-          <div
+          {/* <div
             className="bg-white mt-1 text-black text-center font-semibold absolute right-32 border-r-4"
             style={{ width: "130px", height: "30px", borderRadius: "5%" }}
           >
             Vibe CopilotAI
           </div>
-          &nbsp;
+          &nbsp; */}
         </div>
 
         <div className="mt-16 overflow-y-auto absolute top-1 left-20">
@@ -157,21 +173,21 @@ const HRMSDashboard = () => {
               />
             </div>  */}
           </div>
-          <div className="w-full flex flex-col overflow-hidden mt-5">
-            <div className="flex justify-start gap-4 my-5 flex-wrap ml-5">
-              <div className="shadow-xl rounded-full border-4 border-gray-400 w-60 px-6 flex flex-col items-center">
+          <div className="w-full flex flex-col overflow-hidden mt-3">
+            <div className="flex justify-start gap-2 my-5 flex-wrap ml-5">
+              <div className=" rounded-xl border-4 border-gray-400 h-24 w-60 bg-opacity-50 bg-gray-300 px-6 flex flex-col justify-center items-center">
                 <p className="font-semibold md:text-lg">Pending Requests</p>
                 <p className="text-center font-semibold md:text-lg">2</p>
               </div>
-              <div className="shadow-xl rounded-full border-4 border-green-400 w-60  px-6 flex flex-col items-center ml-5">
+              <div className=" rounded-xl border-4 border-green-400  h-24 w-60 bg-opacity-50 bg-green-300  px-6 flex flex-col justify-center items-center">
                 <p className="font-semibold md:text-lg">Process Alerts</p>
                 <p className="text-center font-semibold md:text-lg">1</p>
               </div>
-              <div className="shadow-xl rounded-full border-4 border-red-400 w-60 px-6 flex flex-col items-center ml-5">
+              <div className=" rounded-xl border-4 border-red-400 h-24 w-60 bg-opacity-50 bg-red-300 px-6 flex flex-col justify-center items-center">
                 <p className="font-semibold md:text-lg">Today's Events</p>
                 <p className="text-center font-semibold md:text-lg">0</p>
               </div>
-              <div className="shadow-xl rounded-full border-4 border-orange-400 w-60 px-6 flex flex-col items-center ml-5">
+              <div className="rounded-xl border-4 border-orange-400 h-24 w-60 bg-opacity-50 bg-orange-300 px-6 flex flex-col justify-center items-center">
                 <p className="font-semibold md:text-lg">Setup Issues</p>
                 <p className="text-center font-semibold md:text-lg">1</p>
               </div>
@@ -182,16 +198,16 @@ const HRMSDashboard = () => {
               </div>
 
               <div className="flex flex-col ">
-                <div className="font-medium mt-10 ml-5">
+                <div className="font-medium my-10 ml-5">
                   <h1 className="text-xl flex items-center gap-2">
                     Announcement <IoReload />{" "}
                   </h1>
                 </div>
-                <div className="font-medium text-2xl mb-10 mt-10 ml-5">
+                {/* <div className="font-medium text-2xl mb-10 mt-10 ml-5">
                   <h1 className="text-xl flex items-center gap-2">
                     Employee Feeds <IoReload />
                   </h1>
-                </div>
+                </div> */}
               </div>
             </div>
           </div>

@@ -266,12 +266,7 @@ const Asset = () => {
     setSearchText(searchValue);
 
     try {
-      const response = await getSiteSearchedAsset(
-        searchValue,
-        searchValue,
-        searchValue,
-        searchValue
-      );
+      const response = await getSiteSearchedAsset(searchValue);
 
       setFilteredData(response.data.site_assets);
       setTotal(response.data.total_count);
@@ -463,10 +458,10 @@ const Asset = () => {
     if (selectedRows.length === 0) {
       return toast.error("Please select at least one data.");
     }
-  
+
     console.log(selectedRows);
     toast.loading("Qr code downloading, please wait!");
-  
+
     try {
       const response = await downloadQrCode(selectedRows);
       const blob = new Blob([response.data], { type: "application/pdf" });
@@ -487,7 +482,7 @@ const Asset = () => {
       toast.error("Something went wrong, please try again");
     }
   };
-  
+
   return (
     <section
       className="flex"

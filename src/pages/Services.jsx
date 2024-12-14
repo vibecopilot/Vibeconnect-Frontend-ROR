@@ -76,11 +76,11 @@ const Services = () => {
       selector: (row) => row.user_id,
       sortable: true,
     },
-    {
-      name: "No. Of Questions",
-      selector: (row) => row.questions.length,
-      sortable: true,
-    },
+    // {
+    //   name: "No. Of Questions",
+    //   selector: (row) => row.questions.length,
+    //   sortable: true,
+    // },
   ];
 
   // useEffect(() => {

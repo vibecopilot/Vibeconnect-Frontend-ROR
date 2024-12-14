@@ -1,231 +1,3 @@
-// import React, { useState } from "react";
-// import Table from "../../components/table/Table";
-// import { BiEdit } from "react-icons/bi";
-// import { TiTick } from "react-icons/ti";
-// import { IoClose } from "react-icons/io5";
-// import { BsEye } from "react-icons/bs";
-
-// const CompletedTable = () => {
-//   const [showModal, setShowModal] = useState(false);
-//   const [showFilterModal, setShowFilterModal] = useState(false);
-//   const [modalData, setModalData] = useState({
-//     regularizationReason: "",
-//     regularizationRequestStatus: "",
-//     startDate: "",
-//     endDate: "",
-//     employeeDepartment: ""
-//   });
-
-//   const handleEditClick = (row) => {
-//     setModalData({
-//       regularizationReason: row.reason || "",
-//       regularizationRequestStatus: row.status || "",
-//       startDate: "",
-//       endDate: "",
-//       employeeDepartment: row.department || "",
-//       ...row,
-//     });
-//     setShowModal(true);
-//   };
-
-//   const handleChange = (e) => {
-//     const { name, value } = e.target;
-//     setModalData((prevData) => ({
-//       ...prevData,
-//       [name]: value,
-//     }));
-//   };
-
-//   const columns = [
-//     {
-//       name: "view",
-//       cell: (row) => (
-//         <div className="flex items-center gap-4">
-//           <button onClick={() => handleEditClick(row)}>
-//             <BsEye size={15} />
-//           </button>
-//         </div>
-//       ),
-//     },
-//     {
-//       name: "Employee Name",
-//       selector: (row) => row.Name,
-//       sortable: true,
-//     },
-//     {
-//       name: "Date",
-//       selector: (row) => row.Date,
-//       sortable: true,
-//     },
-//     {
-//       name: "Requested Timings",
-//       selector: (row) => row.time,
-//       sortable: true,
-//     },
-//     {
-//       name: "Actual Timings",
-//       selector: (row) => row.atime,
-//       sortable: true,
-//     },
-//     {
-//       name: "Reason",
-//       selector: (row) => row.reason,
-//       sortable: true,
-//     },
-//     {
-//       name: "Comment",
-//       selector: (row) => row.Comment,
-//       sortable: true,
-//     },
-//     {
-//       name: "Status",
-//       selector: (row) => row.status,
-//       sortable: true,
-//     },
-//     // {
-//     //   name: "Approval",
-//     //   selector: (row) => (
-//     //     <div className="flex justify-center gap-2">
-//     //       <button className="text-green-400 font-medium hover:bg-green-400 hover:text-white transition-all duration-200 p-1 rounded-full">
-//     //         <TiTick size={20} />
-//     //       </button>
-//     //       <button className="text-red-400 font-medium hover:bg-red-400 hover:text-white transition-all duration-200 p-1 rounded-full">
-//     //         <IoClose size={20} />
-//     //       </button>
-//     //     </div>
-//     //   ),
-//     //   sortable: true,
-//     // },
-//   ];
-
-//   const data = [
-//     {
-//       Name: "Mittu Panda",
-//       Date: "1/2/2023",
-//       time: "3:00pm",
-//       atime: "3:00pm",
-//       reason: "Miss punch",
-//       Comment: "miss punch in",
-//       status: "Approved",
-//     },
-//   ];
-
-//   return (
-//     <section className="flex">
-//       <div className="w-full flex m-3 flex-col overflow-hidden">
-//         <div className="flex justify-end gap-2 my-5">
-//           <input
-//             type="text"
-//             placeholder="Search by Employee name"
-//             className="border border-gray-400 w-96 placeholder:text-sm rounded-lg p-2"
-//           />
-//           <button className="px-4 py-2 bg-blue-600 text-white rounded-md" onClick={() => setShowFilterModal(true)}>
-//             Filter
-//           </button>
-//           <button className="px-4 py-2 bg-blue-600 text-white rounded-md">Actions</button>
-//         </div>
-//         <Table columns={columns} data={data} isPagination={true} />
-//       </div>
-
-//       {showModal && (
-//         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-//         <div className="bg-white p-6 rounded-lg shadow-lg w-3/4 max-w-lg">
-//           <h2 className="text-xl font-semibold mb-4">Regularization Request</h2>
-//           <div className="grid grid-cols-1 gap-4">
-//             <div className="flex justify-between">
-//               <span className="font-medium">Status:</span>
-//               <span>Approved</span>
-//             </div>
-//             <div className="flex justify-between">
-//               <span className="font-medium">Regularization Date:</span>
-//               <span>28-06-2024</span>
-//             </div>
-//             <div className="flex justify-between">
-//               <span className="font-medium">Attendance Template:</span>
-//               <span>Attendance Policy</span>
-//             </div>
-//             <div className="flex justify-between">
-//               <span className="font-medium">Type of Request:</span>
-//               <span>Check In & Check Out Request</span>
-//             </div>
-//             <div className="flex justify-between">
-//               <span className="font-medium">Applied On:</span>
-//               <span>28-06-2024</span>
-//             </div>
-//             <div className="flex justify-between">
-//               <span className="font-medium">Actual Check In:</span>
-//               <span>04:00 PM</span>
-//             </div>
-//             <div className="flex justify-between">
-//               <span className="font-medium">Actual Check Out:</span>
-//               <span>08:21 PM</span>
-//             </div>
-//             <div className="flex justify-between">
-//               <span className="font-medium">Requested Check In:</span>
-//               <span>04:00 PM</span>
-//             </div>
-//             <div className="flex justify-between">
-//               <span className="font-medium">Requested Check Out:</span>
-//               <span>08:21 PM</span>
-//             </div>
-//           </div>
-//           <div className="mt-4">
-//             <span className="font-medium">Comments and History</span>
-//           </div>
-//           <div className="flex justify-end mt-4">
-//             <button  onClick={() => setShowModal(false)} className="px-4 py-2 bg-red-500 text-white rounded-lg">Close</button>
-//           </div>
-//         </div>
-//       </div>
-//       )}
-
-//       {showFilterModal && (
-//         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-//           <div className="bg-white p-4 rounded-lg w-96">
-//             <h2 className="text-lg font-bold mb-4">Filter Requests</h2>
-//             <div className="grid md:grid-cols-1 gap-5 mt-5">
-//               <div className="grid gap-2 items-center w-full">
-//                 <label htmlFor="filterReason">Regularization Reason</label>
-//                 <input type="text" name="filterReason" value={modalData.regularizationReason} onChange={handleChange} className="border border-gray-400 p-2 rounded-md"/>
-//               </div>
-//               <div className="grid gap-2 items-center w-full">
-//                 <label htmlFor="filterStatus">Regularization Request Status</label>
-//                 <input type="text" name="filterStatus" value={modalData.regularizationRequestStatus} onChange={handleChange} className="border border-gray-400 p-2 rounded-md"/>
-//               </div>
-//               <div className="grid gap-2 items-center w-full">
-//                 <label htmlFor="filterStartDate">Start Date</label>
-//                 <input type="date" name="filterStartDate" value={modalData.startDate} onChange={handleChange} className="border border-gray-400 p-2 rounded-md"/>
-//               </div>
-//               <div className="grid gap-2 items-center w-full">
-//                 <label htmlFor="filterEndDate">End Date</label>
-//                 <input type="date" name="filterEndDate" value={modalData.endDate} onChange={handleChange} className="border border-gray-400 p-2 rounded-md"/>
-//               </div>
-//               <div className="grid gap-2 items-center w-full">
-//                 <label htmlFor="filterDepartment">Employee Department</label>
-//                 <input type="text" name="filterDepartment" value={modalData.employeeDepartment} onChange={handleChange} className="border border-gray-400 p-2 rounded-md"/>
-//               </div>
-//             </div>
-//             <button
-//               className="mt-4 bg-blue-500 text-white py-2 px-4 rounded-lg"
-//               onClick={() => setShowFilterModal(false)}
-//             >
-//               Close
-//             </button>
-//             &nbsp;<button
-//               className="mt-4 bg-blue-500 text-white py-2 px-4 rounded-lg"
-//               onClick={() => setShowFilterModal(false)}
-//             >
-//               Apply
-//             </button>
-//           </div>
-//         </div>
-//       )}
-//     </section>
-//   );
-// };
-
-// export default CompletedTable;
-
 import React, { useEffect, useState } from "react";
 import Table from "../../components/table/Table";
 import { BiEdit } from "react-icons/bi";
@@ -238,6 +10,8 @@ import {
   postRegularizationApproval,
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
+import { dateFormat, dateTimeFormat } from "../../utils/dateUtils";
+import { MdClose } from "react-icons/md";
 
 const CompletedTable = () => {
   const [showModal, setShowModal] = useState(false);
@@ -295,12 +69,37 @@ const CompletedTable = () => {
     },
     {
       name: "Date",
-      selector: (row) => row.date,
+      selector: (row) => (
+        <div>
+          {row.requested_check_in
+            ? formatDate(row.requested_check_in)
+            : formatDate(row.requested_check_out)}
+        </div>
+      ),
       sortable: true,
     },
     {
       name: "Requested Timings",
-      selector: (row) => row.requested_timing,
+      selector: (row) => {
+        const checkIn = row.requested_check_in
+          ? formatTimeToAmPm(row.requested_check_in)
+          : null;
+        const checkOut = row.requested_check_out
+          ? formatTimeToAmPm(row.requested_check_out)
+          : null;
+
+        return (
+          <div>
+            {checkIn && checkOut
+              ? `${checkIn} - ${checkOut}`
+              : checkIn
+              ? `Check-In: ${checkIn}`
+              : checkOut
+              ? `Check-Out: ${checkOut}`
+              : "No Timing Available"}
+          </div>
+        );
+      },
       sortable: true,
     },
     {
@@ -313,17 +112,17 @@ const CompletedTable = () => {
       selector: (row) => row.reason,
       sortable: true,
     },
-    {
-      name: "Comment",
-      selector: (row) => row.comment,
-      sortable: true,
-    },
+    // {
+    //   name: "Comment",
+    //   selector: (row) => row.comment,
+    //   sortable: true,
+    // },
     {
       name: "Status",
       selector: (row) => (
         <div
           className={`font-medium ${
-            row.status === "rejected" ? "text-red-400" : "text-green-400"
+            row.status === "Rejected" ? "text-red-400" : "text-green-400"
           }`}
         >
           {row.status}
@@ -332,7 +131,7 @@ const CompletedTable = () => {
       sortable: true,
     },
     {
-      name: "view",
+      name: "Action",
       cell: (row) => (
         <div className="flex items-center gap-4">
           <button onClick={() => handleShowDetails(row.id)}>
@@ -349,7 +148,7 @@ const CompletedTable = () => {
   const fetchRegularizationReq = async () => {
     try {
       const res = await getEmployeeRegularizationReq(hrmsOrgId);
-      const pendingReq = res.filter((req) => req.status !== "pending");
+      const pendingReq = res.filter((req) => req.status !== "Pending");
       setFilteredRequests(pendingReq);
       setRequests(pendingReq);
     } catch (error) {
@@ -365,31 +164,68 @@ const CompletedTable = () => {
   const [reason, setReason] = useState("");
   const [comment, setComment] = useState("");
   const [status, setStatus] = useState("");
+  const [details, setDetails] = useState({});
   const handleShowDetails = async (reqId) => {
     setshowDetailsModal(true);
     try {
       const res = await getRegularizationDetails(reqId);
-      setReqDate(res.date);
+      setDetails(res);
+      setReqDate(
+        res.requested_check_in
+          ? res.requested_check_in
+          : res.requested_check_out
+      );
       setRequestedTime(res.requested_timing);
       setActualTime(res.actual_timing);
       setReason(res.reason);
       setComment(res.comment);
-      setStatus(res.setStatus);
+      setStatus(res.status);
     } catch (error) {
       console.log(error);
     }
   };
-  const [searchText, setSearchText] = useState("")
-  const handleSearch = (e)=>{
-    const searchValue = e.target.value
-    setSearchText(searchValue)
-    if (searchValue.trim()=== "") {
-      setFilteredRequests(requests)
+
+  const formatTimeToAmPm = (timestamp) => {
+    const date = new Date(timestamp);
+    const hours = date.getUTCHours(); // Use UTC hours
+    const minutes = date.getUTCMinutes(); // Use UTC minutes
+    const amPm = hours >= 12 ? "PM" : "AM";
+    const formattedHours = hours % 12 || 12; // Convert 0-23 to 1-12, with 0 being 12 AM
+    const formattedMinutes = minutes.toString().padStart(2, "0"); // Ensure two digits for minutes
+
+    return `${formattedHours}:${formattedMinutes} ${amPm}`;
+  };
+  const formatDate = (isoString) => {
+    if (!isoString) return "";
+    const date = new Date(isoString);
+    return date.toLocaleDateString("en-GB", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+  };
+  const [searchText, setSearchText] = useState("");
+  const handleSearch = (e) => {
+    const searchValue = e.target.value;
+    setSearchText(searchValue);
+    if (searchValue.trim() === "") {
+      setFilteredRequests(requests);
     } else {
-      const filteredResult = requests.filter((employee)=> `${employee.first_name} ${employee.last_name}`.toLowerCase().includes(searchValue.toLowerCase()))
-      setFilteredRequests(filteredResult)
+      const filteredResult = requests.filter((employee) =>
+        `${employee.first_name} ${employee.last_name}`
+          .toLowerCase()
+          .includes(searchValue.toLowerCase())
+      );
+      setFilteredRequests(filteredResult);
     }
-  }
+  };
+
+  const formatDateFromTimestamp = (timestamp) => {
+    const date = new Date(timestamp);
+    const options = { year: "numeric", month: "long", day: "numeric" };
+    return date.toLocaleDateString("en-US", options);
+  };
+  
 
   return (
     <section className="flex">
@@ -398,25 +234,24 @@ const CompletedTable = () => {
           <input
             type="text"
             placeholder="Search by employee name"
-            className="border border-gray-400 w-96 placeholder:text-sm rounded-lg p-2"
+            className="border border-gray-400 w-full placeholder:text-sm rounded-lg p-2"
             value={searchText}
             onChange={handleSearch}
           />
           <div className="flex gap-2">
-
-          <button
+            {/* <button
             className="px-4 py-2 bg-blue-600 text-white rounded-md"
             onClick={() => setShowFilterModal(true)}
             >
             Filter
-          </button>
-          <button
-            onClick={() => setShowActionsDropdown(!showActionsDropdown)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md"
+          </button> */}
+            {/* <button
+              onClick={() => setShowActionsDropdown(!showActionsDropdown)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md"
             >
-            Actions
-          </button>
-            </div>
+              Actions
+            </button> */}
+          </div>
           {showActionsDropdown && (
             <div className="absolute top-35 right-2 mt-10 w-72 bg-white border border-gray-300 rounded-md shadow-lg z-10">
               <button
@@ -463,18 +298,24 @@ const CompletedTable = () => {
       </div>
       {showDetailsModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-3/4 max-w-lg">
-            <h2 className="text-xl font-semibold mb-4">
-              Regularization Request
+          <div className="bg-white p-4 rounded-lg shadow-lg w-3/4 max-w-lg">
+            <h2 className="text-xl font-semibold mb-4 text-center border-b">
+              Regularization Request Details
             </h2>
             <div className="grid grid-cols-1 gap-4">
               <div className="flex justify-between">
                 <span className="font-medium">Status:</span>
-                <span>{status}</span>
+                <span
+                  className={`font-medium ${
+                    status === "rejected" ? "text-red-400" : "text-green-400"
+                  }`}
+                >
+                  {status}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="font-medium">Regularization Date:</span>
-                <span>{regDate}</span>
+                <span>{formatDate(regDate)}</span>
               </div>
               {/* <div className="flex justify-between">
                 <span className="font-medium">Attendance Template:</span>
@@ -482,11 +323,11 @@ const CompletedTable = () => {
               </div> */}
               <div className="flex justify-between">
                 <span className="font-medium">Type of Request:</span>
-                {/* <span>Check In & Check Out Request</span> */}
+                {details?.request_type}
               </div>
               <div className="flex justify-between">
                 <span className="font-medium">Applied On:</span>
-                <span></span>
+                <span>{formatDateFromTimestamp(details.created_at)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="font-medium">Actual Check In:</span>
@@ -498,22 +339,30 @@ const CompletedTable = () => {
               </div>
               <div className="flex justify-between">
                 <span className="font-medium">Requested Check In:</span>
-                <span></span>
+                <span>
+                  {details.requested_check_in
+                    ? formatTimeToAmPm(details.requested_check_in)
+                    : ""}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="font-medium">Requested Check Out:</span>
-                <span></span>
+                <span>
+                  {details.requested_check_out
+                    ? formatTimeToAmPm(details.requested_check_out)
+                    : ""}
+                </span>
               </div>
             </div>
             {/* <div className="mt-4">
               <span className="font-medium">Comments and History</span>
             </div> */}
-            <div className="flex justify-end mt-4">
+            <div className="flex justify-center border-t p-1 mt-4">
               <button
                 onClick={() => setshowDetailsModal(false)}
-                className="px-4 py-2 bg-red-500 text-white rounded-lg"
+                className="px-4 py-1 border-red-500 border text-red-500 rounded-full flex items-center gap-2"
               >
-                Close
+                <MdClose /> Close
               </button>
             </div>
           </div>

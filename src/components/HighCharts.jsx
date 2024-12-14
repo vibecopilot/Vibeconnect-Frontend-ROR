@@ -14,6 +14,7 @@ import {
 } from "react-icons/ai";
 import { PiChartBarHorizontal } from "react-icons/pi";
 
+
 // import "react-loader-spinner/dist/loader/css/react-spinner-loader.css";
 const TicketHighCharts = () => {
   const [categoryData, setCategoryData] = useState({});
@@ -29,6 +30,7 @@ const TicketHighCharts = () => {
         setStatusData(ticketInfoResp.data.by_status);
         setCategoryData(ticketInfoResp.data.by_category);
 
+
         setTicketTypes(ticketInfoResp.data.by_type);
         setFloorTickets(ticketInfoResp.data.by_floor);
         setUnitTickets(ticketInfoResp.data.by_unit);
@@ -37,8 +39,10 @@ const TicketHighCharts = () => {
       }
     };
 
+
     fetchTicketInfo();
   }, []);
+
 
   // download section
   const handleTicketStatusDownload = async () => {
@@ -71,16 +75,20 @@ const TicketHighCharts = () => {
     return Object.fromEntries(sortedEntries);
   };
 
+
   const [isStatusDropdown, setIsStatusDropdown] = useState(false);
   const [statusChartType, setStatusChartType] = useState("pie"); // State to store chart type
 
+
   const toggleStatusDropdown = () => setIsStatusDropdown(!isStatusDropdown);
+
 
   // Change chart type based on dropdown selection
   const handleStatusChartTypeChange = (type) => {
     setStatusChartType(type);
     setIsStatusDropdown(false); // Close the dropdown after selecting a chart type
   };
+
 
   const getChartTypeIcon = (type) => {
     switch (type) {
@@ -98,6 +106,8 @@ const TicketHighCharts = () => {
         return null;
     }
   };
+
+
   const generatePieChartOptions = (title, data) => {
     return {
       chart: {
@@ -106,6 +116,18 @@ const TicketHighCharts = () => {
       },
       title: {
         text: title,
+      },
+      xAxis: {
+        title: {
+          text: null
+           // Set the label for the x-axis
+        },
+        categories: Object.keys(data), // Optional, if you want categories on the x-axis
+      },
+      yAxis: {
+        title: {
+          text: null
+        },
       },
       plotOptions: {
         column: {
@@ -142,6 +164,9 @@ const TicketHighCharts = () => {
       ],
     };
   };
+ 
+ 
+
 
   // const generateBarChartOptions = (title, data,order) => {
   //   const sortedData = sortData(data, order);
@@ -180,11 +205,14 @@ const TicketHighCharts = () => {
   //   };
   // };
 
+
   const [isCategoryDropdown, setIsCategoryDropdown] = useState(false);
   const [categoryChartType, setCategoryChartType] = useState("bar"); // State to store chart type
 
+
   const toggleCategoryDropdown = () =>
     setIsCategoryDropdown(!isCategoryDropdown);
+
 
   // Change chart type based on dropdown selection
   const handleCategoryChartTypeChange = (type) => {
@@ -193,7 +221,13 @@ const TicketHighCharts = () => {
   };
   const generateBarChartOptions = (title, data, order) => {
     const sortedData = sortData(data, order);
-
+  
+    // Prepare series data with labels
+    const categoryData = Object.keys(sortedData).map((key) => ({
+      name: key, // Label for the bar
+      y: sortedData[key], // Value for the bar
+    }));
+  
     return {
       chart: {
         type: categoryChartType,
@@ -222,10 +256,12 @@ const TicketHighCharts = () => {
           dataLabels: {
             enabled: true,
             formatter: function () {
-              return this.y; // Display the y value (data value) on the bar
+              // Display label and value for each bar
+              return `${this.point.name}: ${this.y}`;
             },
             style: {
-              textOutline: false, // Remove text outline (optional)
+              textOutline: "none", // Remove text outline
+              fontSize: "12px", // Adjust font size
             },
           },
         },
@@ -253,22 +289,45 @@ const TicketHighCharts = () => {
       },
       series: [
         {
-          name: title,
-          data: Object.values(sortedData),
+          name: title, // Legend name
+          data: categoryData, // Data with labels
           color: themeColor,
         },
       ],
     };
   };
+  
+
+
+  const [isTicketTypeDropdown, setIsTicketTypeDropdown] = useState(false);
+  const [ticketTypeChartType, setTicketTypeChartType] = useState("column"); // State to store chart type
+
+
+  const toggleTicketTypeDropdown = () =>
+    setIsTicketTypeDropdown(!isTicketTypeDropdown);
+
+
+  // Change chart type based on dropdown selection
+  const handleTicketTypeChartTypeChange = (type) => {
+    setTicketTypeChartType(type);
+    setIsTicketTypeDropdown(false); // Close the dropdown after selecting a chart type
+  };
+
 
   const generateColumnChartOptions = (title, data, order = "ascending") => {
     const sortedData = sortData(data, order);
     const TicketsType = Object.keys(sortedData);
     const ticketValues = Object.values(sortedData);
-
+  
+    // Prepare the data with labels for each bar
+    const TypeData = TicketsType.map((type, index) => ({
+      name: type, // Label for the bar (Ticket Type)
+      y: ticketValues[index], // Value for the bar (Ticket count)
+    }));
+  
     return {
       chart: {
-        type: "column",
+        type: ticketTypeChartType,
         borderRadius: 30,
       },
       title: {
@@ -287,39 +346,68 @@ const TicketHighCharts = () => {
         },
       },
       plotOptions: {
+        pie: {
+          allowPointSelect: true,
+          cursor: 'pointer',
+          dataLabels: {
+            enabled: true,
+            format: '{point.name}: {point.percentage:.1f}%', // Show name and percentage
+          },
+          showInLegend: true, // Optional: show legend for pie chart
+        },
         column: {
+          pointPadding: 0.2,
+          borderWidth: 0,
           dataLabels: {
             enabled: true,
             formatter: function () {
-              return this.y; // Display the y value (data value) on the bar
+              // Display both name (label) and value for each bar
+              return `${this.point.name}: ${this.y}`;
             },
             style: {
-              textOutline: false, // Remove text outline (optional)
+              textOutline: "none", // Remove text outline
+              fontSize: "12px", // Adjust font size
             },
           },
         },
       },
       series: [
         {
-          name: "Tickets",
-          data: ticketValues,
+          name: "Tickets", // Legend name
+          data: TypeData, // Data with labels
           color: themeColor,
         },
       ],
     };
   };
-  const generateFloorColumnChartOptions = (
-    title,
-    data,
-    order = "ascending"
-  ) => {
+  
+  const [isFloorDropdown, setIsFloorDropdown] = useState(false);
+  const [floorChartType, setFloorChartType] = useState("column"); // State to store chart type
+
+
+  const toggleFloorDropdown = () =>
+    setIsFloorDropdown(!isFloorDropdown);
+
+
+  // Change chart type based on dropdown selection
+  const handleFloorChartTypeChange = (type) => {
+    setFloorChartType(type);
+    setIsFloorDropdown(false); // Close the dropdown after selecting a chart type
+  };
+  const generateFloorColumnChartOptions = (title, data, order = "ascending") => {
     const sortedData = sortData(data, order);
     const floorTickets = Object.keys(sortedData);
     const ticketValues = Object.values(sortedData);
-
+  
+    // Prepare the data with labels for each bar
+    const floorData = floorTickets.map((floor, index) => ({
+      name: floor, // Label for the specific bar
+      y: ticketValues[index], // Value for the bar
+    }));
+  
     return {
       chart: {
-        type: "column",
+        type: floorChartType,
         borderRadius: 30,
         // scrollablePlotArea: {
         //   minWidth: 700,
@@ -346,14 +434,25 @@ const TicketHighCharts = () => {
         },
       },
       plotOptions: {
+        pie: {
+          allowPointSelect: true,
+          cursor: 'pointer',
+          dataLabels: {
+            enabled: true,
+            format: '{point.name}: {point.percentage:.1f}%', // Show name and percentage
+          },
+          showInLegend: true, // Optional: show legend for pie chart
+        },
         column: {
           dataLabels: {
             enabled: true,
             formatter: function () {
-              return this.y; // Display the y value (data value) on the bar
+              // Display the label (name) and the value (y) for each bar
+              return `${this.point.name}: ${this.y}`;
             },
             style: {
               textOutline: false, // Remove text outline (optional)
+              fontSize: "12px", // Adjust font size for labels
             },
           },
         },
@@ -361,20 +460,40 @@ const TicketHighCharts = () => {
       series: [
         {
           name: "Tickets By Floor",
-          data: ticketValues,
+          data: floorData, // Include the data with labels
           color: themeColor,
         },
       ],
     };
   };
+  
+  const [isUnitDropdown, setIsUnitDropdown] = useState(false);
+  const [unitChartType, setUnitChartType] = useState("column"); // State to store chart type
+
+
+  const toggleUnitDropdown = () =>
+    setIsUnitDropdown(!isFloorDropdown);
+
+
+  // Change chart type based on dropdown selection
+  const handleUnitChartTypeChange = (type) => {
+    setUnitChartType(type);
+    setIsUnitDropdown(false); // Close the dropdown after selecting a chart type
+  };
   const generateUnitColumnChartOptions = (title, data, order = "ascending") => {
     const sortedData = sortData(data, order);
     const unitTickets = Object.keys(sortedData);
     const ticketValues = Object.values(sortedData);
-
+  
+    // Prepare the data with labels for each bar
+    const unitData = unitTickets.map((unit, index) => ({
+      name: unit, // Name for the specific bar
+      y: ticketValues[index], // Value for the bar
+    }));
+  
     return {
       chart: {
-        type: "column",
+        type: unitChartType,
         borderRadius: 30,
         scrollablePlotArea: {
           minWidth: 700,
@@ -391,24 +510,57 @@ const TicketHighCharts = () => {
       xAxis: {
         categories: unitTickets,
         title: {
-          text: " Units",
+          text: "Units",
+          style: {
+            color: "#333",
+            fontSize: "14px",
+            fontWeight: "bold",
+          },
+        },
+        labels: {
+          style: {
+            fontSize: "12px",
+            color: "#555",
+          },
         },
       },
       yAxis: {
         min: 0,
         title: {
           text: "Tickets",
+          style: {
+            color: "#333",
+            fontSize: "14px",
+            fontWeight: "bold",
+          },
+        },
+        labels: {
+          style: {
+            fontSize: "12px",
+            color: "#555",
+          },
         },
       },
       plotOptions: {
+        pie: {
+          allowPointSelect: true,
+          cursor: 'pointer',
+          dataLabels: {
+            enabled: true,
+            format: '{point.name}: {point.percentage:.1f}%', // Show name and percentage
+          },
+          showInLegend: true, // Optional: show legend for pie chart
+        },
         column: {
           dataLabels: {
             enabled: true,
             formatter: function () {
-              return this.y; // Display the y value (data value) on the bar
+              // Display the name of the series and the value
+              return `${this.point.name}: ${this.y}`;
             },
             style: {
-              textOutline: false, // Remove text outline (optional)
+              textOutline: "none", // Remove text outline
+              fontSize: "10px", // Adjust font size for labels
             },
           },
         },
@@ -416,12 +568,13 @@ const TicketHighCharts = () => {
       series: [
         {
           name: "Tickets by Units",
-          data: ticketValues,
+          data: unitData, // Include the data with labels
           color: themeColor,
         },
       ],
     };
   };
+  
   return (
     <div>
       <div className="grid md:grid-cols-2 mr-2  gap-2">
@@ -442,6 +595,7 @@ const TicketHighCharts = () => {
                   {getChartTypeIcon(statusChartType)}
                 </span>
               </button>
+
 
               {isStatusDropdown && (
                 <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-md shadow-lg z-10">
@@ -522,6 +676,7 @@ const TicketHighCharts = () => {
           )}
         </div>
 
+
         <div className="bg-white shadow-custom-all-sides rounded-md">
           <div className="flex justify-end p-3">
             <button
@@ -540,6 +695,7 @@ const TicketHighCharts = () => {
                 </span>
               </button>
 
+
               {isCategoryDropdown && (
                 <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-md shadow-lg z-10">
                   <div className="py-1">
@@ -553,7 +709,7 @@ const TicketHighCharts = () => {
                     >
                       <div className="flex items-center">
                         <PiChartBarHorizontal className="mr-2" />
-                        <span className="text-xs">Area</span>
+                        <span className="text-xs">Bar</span>
                       </div>
                     </button>
                     <button
@@ -643,6 +799,76 @@ const TicketHighCharts = () => {
             >
               <FaDownload />
             </button>
+            <div className="relative inline-block text-left mx-1">
+              <button
+                onClick={toggleTicketTypeDropdown}
+                className="bg-blue-200 text-blue-500 px-4 rounded-md py-1"
+              >
+                <span className="flex justify-center">
+                  {getChartTypeIcon(ticketTypeChartType)}
+                </span>
+              </button>
+
+
+              {isTicketTypeDropdown && (
+                <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-md shadow-lg z-10">
+                  <div className="py-1">
+                    <button
+                      onClick={() => handleTicketTypeChartTypeChange("column")}
+                      className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
+                        ticketTypeChartType === "column"
+                          ? "bg-gray-200 text-black"
+                          : ""
+                      }`}
+                    >
+                      <div className="flex items-center">
+                        <AiOutlineBarChart className="mr-2" />
+                        <span className="text-xs">Column</span>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => handleTicketTypeChartTypeChange("line")}
+                      className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
+                        ticketTypeChartType === "line"
+                          ? "bg-gray-200 text-black"
+                          : ""
+                      }`}
+                    >
+                      <div className="flex items-center">
+                        <AiOutlineLineChart className="mr-2" />
+                        <span className="text-xs">Line</span>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => handleTicketTypeChartTypeChange("pie")}
+                      className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
+                        ticketTypeChartType === "pie"
+                          ? "bg-gray-200 text-black"
+                          : ""
+                      }`}
+                    >
+                      <div className="flex items-center">
+                        <RiPieChartFill className="mr-2" />
+                        <span className="text-xs">Pie</span>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => handleTicketTypeChartTypeChange("area")}
+                      className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
+                        ticketTypeChartType === "area"
+                          ? "bg-gray-200 text-black"
+                          : ""
+                      }`}
+                    >
+                      <div className="flex items-center">
+                        <AiOutlineAreaChart className="mr-2" />
+                        <span className="text-xs">Area</span>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
           {ticketTypes ? (
             <HighchartsReact
@@ -674,6 +900,76 @@ const TicketHighCharts = () => {
             >
               <FaDownload />
             </button>
+            <div className="relative inline-block text-left mx-1">
+            <button
+              onClick={toggleFloorDropdown}
+              className="bg-blue-200 text-blue-500 px-4 rounded-md py-1"
+            >
+              <span className="flex justify-center">
+                {getChartTypeIcon(floorChartType)}
+              </span>
+            </button>
+
+
+            {isFloorDropdown && (
+              <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-md shadow-lg z-10">
+                <div className="py-1">
+                  <button
+                    onClick={() => handleFloorChartTypeChange("column")}
+                    className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
+                      floorChartType === "column"
+                        ? "bg-gray-200 text-black"
+                        : ""
+                    }`}
+                  >
+                    <div className="flex items-center">
+                      <AiOutlineBarChart className="mr-2" />
+                      <span className="text-xs">Column</span>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => handleFloorChartTypeChange("line")}
+                    className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
+                      floorChartType === "line"
+                        ? "bg-gray-200 text-black"
+                        : ""
+                    }`}
+                  >
+                    <div className="flex items-center">
+                      <AiOutlineLineChart className="mr-2" />
+                      <span className="text-xs">Line</span>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => handleFloorChartTypeChange("pie")}
+                    className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
+                      floorChartType === "pie"
+                        ? "bg-gray-200 text-black"
+                        : ""
+                    }`}
+                  >
+                    <div className="flex items-center">
+                      <RiPieChartFill className="mr-2" />
+                      <span className="text-xs">Pie</span>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => handleFloorChartTypeChange("area")}
+                    className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
+                      floorChartType === "area"
+                        ? "bg-gray-200 text-black"
+                        : ""
+                    }`}
+                  >
+                    <div className="flex items-center">
+                      <AiOutlineAreaChart className="mr-2" />
+                      <span className="text-xs">Area</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
           </div>
           {floorTickets ? (
             <HighchartsReact
@@ -705,6 +1001,76 @@ const TicketHighCharts = () => {
           >
             <FaDownload />
           </button>
+          <div className="relative inline-block text-left mx-1">
+            <button
+              onClick={toggleUnitDropdown}
+              className="bg-blue-200 text-blue-500 px-4 rounded-md py-1"
+            >
+              <span className="flex justify-center">
+                {getChartTypeIcon(unitChartType)}
+              </span>
+            </button>
+
+
+            {isUnitDropdown && (
+              <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-md shadow-lg z-10">
+                <div className="py-1">
+                  <button
+                    onClick={() => handleUnitChartTypeChange("column")}
+                    className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
+                      unitChartType === "column"
+                        ? "bg-gray-200 text-black"
+                        : ""
+                    }`}
+                  >
+                    <div className="flex items-center">
+                      <AiOutlineBarChart className="mr-2" />
+                      <span className="text-xs">Column</span>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => handleUnitChartTypeChange("line")}
+                    className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
+                      unitChartType === "line"
+                        ? "bg-gray-200 text-black"
+                        : ""
+                    }`}
+                  >
+                    <div className="flex items-center">
+                      <AiOutlineLineChart className="mr-2" />
+                      <span className="text-xs">Line</span>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => handleUnitChartTypeChange("pie")}
+                    className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
+                      unitChartType === "pie"
+                        ? "bg-gray-200 text-black"
+                        : ""
+                    }`}
+                  >
+                    <div className="flex items-center">
+                      <RiPieChartFill className="mr-2" />
+                      <span className="text-xs">Pie</span>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => handleUnitChartTypeChange("area")}
+                    className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
+                      unitChartType === "area"
+                        ? "bg-gray-200 text-black"
+                        : ""
+                    }`}
+                  >
+                    <div className="flex items-center">
+                      <AiOutlineAreaChart className="mr-2" />
+                      <span className="text-xs">Area</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
         {unitTickets ? (
           <HighchartsReact
@@ -731,4 +1097,8 @@ const TicketHighCharts = () => {
   );
 };
 
+
 export default TicketHighCharts;
+
+
+

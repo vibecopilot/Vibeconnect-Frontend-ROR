@@ -3,6 +3,7 @@ import DocumentDetailsList from './DocumentDetailsList';
 import AdminHRMS from './AdminHrms';
 import FileInputBox from '../../containers/Inputs/FileInputBox';
 import Select from 'react-select';
+import { Link } from 'react-router-dom';
 
 const AddLetterTemplate = () => {
   const [documentName, setDocumentName] = useState('');
@@ -218,15 +219,16 @@ const AddLetterTemplate = () => {
         <p className='mt-2 '>Click here to Upload your document here .docx format {"<"} 15MB.You can insert dynamic placeholders into the document.
           To view the dynamic employee fields,click on the below button to copy/paste into your .docx file.
         </p>
-        <button             className="px-4 py-2 mt-2 bg-black text-white rounded-md"
-        >View Dynamic Employee Fields</button>
+        {/* <button             className="px-4 py-2 mt-2 bg-black text-white rounded-md"
+        >View Dynamic Employee Fields</button> */}
         <div className="flex gap-2 mt-4 mb-2 justify-center">
-        <button
+        <Link
+        to={"/admin/document/letter-template"}
             type="submit"
-            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-700"
+            className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-700"
           >
             Cancel
-          </button>
+          </Link>
           <button
             type="submit"
             className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-700"

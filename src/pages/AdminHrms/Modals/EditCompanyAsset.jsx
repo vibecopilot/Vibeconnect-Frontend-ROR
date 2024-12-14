@@ -2,10 +2,18 @@ import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { FaCheck } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
-import { editCompanyAssetDetails, getCompanyAssetDetails, postCompanyAsset,  } from "../../../api";
+import {
+  editCompanyAssetDetails,
+  getCompanyAssetDetails,
+  postCompanyAsset,
+} from "../../../api";
 import { useParams } from "react-router-dom";
 
-const EditCompanyAsset = ({ setCompanyAssetEditModal, fetchCompanyAssets, comAssetId }) => {
+const EditCompanyAsset = ({
+  setCompanyAssetEditModal,
+  fetchCompanyAssets,
+  comAssetId,
+}) => {
   const { id } = useParams();
   const [formData, setFormData] = useState({
     laptopBrand: "",
@@ -15,17 +23,17 @@ const EditCompanyAsset = ({ setCompanyAssetEditModal, fetchCompanyAssets, comAss
     const fetchCompanyAssets = async () => {
       try {
         const res = await getCompanyAssetDetails(comAssetId);
-        console.log(res)
+        console.log(res);
         setFormData({
           ...formData,
           laptopBrand: res.asset_name,
-          mobile: res.model_number,
+          mobile: res.asset_info,
         });
       } catch (error) {
         console.log(error);
       }
     };
-    fetchCompanyAssets()
+    fetchCompanyAssets();
   }, []);
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -40,7 +48,7 @@ const EditCompanyAsset = ({ setCompanyAssetEditModal, fetchCompanyAssets, comAss
     }
     const postData = new FormData();
     postData.append("asset_name", formData.laptopBrand);
-    postData.append("model_number", formData.mobile);
+    postData.append("asset_info", formData.mobile);
     postData.append("employee", id);
     try {
       await editCompanyAssetDetails(comAssetId, postData);
@@ -51,17 +59,17 @@ const EditCompanyAsset = ({ setCompanyAssetEditModal, fetchCompanyAssets, comAss
       console.log(error);
     }
   };
-  
-
 
   return (
     <div className="fixed inset-0 z-50 flex items-center overflow-y-auto justify-center bg-gray-500 bg-opacity-50">
       <div class="max-h-screen bg-white p-4  w-[25rem] rounded-xl shadow-lg overflow-y-auto">
-        <h2 className="text-xl font-medium mb-4 text-center border-b">Company Asset</h2>
+        <h2 className="text-xl font-medium mb-4 text-center border-b">
+          Company Asset
+        </h2>
         <div className="flex flex-col ">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-            Which Company Laptop and Model Number? <span className="text-red-500">*</span>
+              Asset Name <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -75,16 +83,18 @@ const EditCompanyAsset = ({ setCompanyAssetEditModal, fetchCompanyAssets, comAss
 
           <div className="mt-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-            Mobile Phone <span className="text-red-500">*</span>
+              Asset Info <span className="text-red-500">*</span>
             </label>
-            <input
-              type="email"
-              className=" p-2 w-full border rounded-md placeholder:text-sm "
-              placeholder="Enter mobile phone"
+            <textarea
               value={formData.mobile}
               onChange={handleChange}
               name="mobile"
-            />
+              id=""
+              cols="30"
+              rows="3"
+              className=" p-2 w-full border rounded-md placeholder:text-sm "
+              placeholder="Describe assets"
+            ></textarea>
           </div>
 
           <div className="flex mt-5 my-2 justify-center gap-2">
@@ -110,9 +120,4 @@ const EditCompanyAsset = ({ setCompanyAssetEditModal, fetchCompanyAssets, comAss
   );
 };
 
-
-
-
-
-
-export default EditCompanyAsset
+export default EditCompanyAsset;
