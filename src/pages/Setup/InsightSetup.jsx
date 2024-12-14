@@ -2,12 +2,13 @@ import React, { useState } from 'react'
 import Navbar from '../../components/Navbar'
 import InsightCategory from './SetupSubPages/InsightCategory'
 import InsightSubCategory from './SetupSubPages/InsightSubCategory'
+import SetupNavbar from '../../components/navbars/SetupNavbar'
 
 const InsightSetup = () => {
     const [page, setPage] = useState("category")
   return (
     <section className='flex'>
-        <Navbar/>
+        <SetupNavbar/>
         <div className="p-4 w-full my-2 flex mx-3 overflow-hidden flex-col">
         <div className=" flex gap-2 p-2 pb-0 border-b-2 border-gray-200 w-full">
           <h2

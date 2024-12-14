@@ -718,6 +718,17 @@ import EditBillingAddress from "./pages/Setup/BillingSetup/EditBillingAddress.js
 import AddCAMBilling from "./pages/SubPages/AddCAMBilling.jsx";
 import CAMBillingDetails from "./pages/SubPages/details/CAMBillingDetails.jsx";
 import CreateInvoiceReceipt from "./pages/SubPages/details/CreateInvoiceReceipt.jsx";
+import FBRestaurtantEdit from "./pages/SubPages/FBResturantEdit.jsx";
+import PantryDetails from "./pages/SubPages/details/PantryDetails.jsx";
+import FBCuisinesSetup from "./pages/Setup/FBCuisinesSetup.jsx";
+import FBRestaurtantDetails from "./pages/SubPages/details/FBSubDetails/FBResturantsDetails.jsx";
+import FBStatusSetup from "./pages/SubPages/details/FBStatusSetup.jsx";
+import EditCategorySetup from "./pages/SubPages/EditCategorySetup.jsx";
+import EditSubCategorySetup from "./pages/SubPages/EditSubCategorySetup.jsx";
+import FBRestaurtantMenu from "./pages/SubPages/details/FBSubDetails/FBResturantMenu.jsx";
+import EditRestaurtantBooking from "./pages/SubPages/EditResturantBooking.jsx";
+import EditRestaurtantOrders from "./pages/SubPages/EditResturantOrders.jsx";
+import FBMainPage from "./pages/Setup/FBMainPage.jsx";
 // new admin hrms
 
 function App() {
@@ -2118,6 +2129,14 @@ function App() {
             }
           />
           <Route
+            path="/admin/pantry-details/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <PantryDetails />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
             path="/admin/add-pantry"
             element={
               <ProtectedAdminRoutes>
@@ -3256,6 +3275,14 @@ function App() {
               </ProtectedAdminRoutes>
             }
           />
+          <Route
+            path="/setup/fnb/cuisines"
+            element={
+              <ProtectedAdminRoutes>
+                <FBMainPage/>
+              </ProtectedAdminRoutes>
+            }
+          />
 
           {/* permit */}
           {/* admin permit */}
@@ -3421,6 +3448,14 @@ function App() {
               </ProtectedAdminRoutes>
             }
           />
+          {/* <Route
+            path="/admin/fnb/restaurtant-details/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <FBRestaurtantDetails/>
+              </ProtectedAdminRoutes>
+            }
+          /> */}
           <Route
             path="/admin/add-fb"
             element={
@@ -3433,20 +3468,76 @@ function App() {
             path="/admin/fb-details/:id"
             element={
               <ProtectedAdminRoutes>
-                <FBDetails />
+                <FBRestaurtantDetails/>
               </ProtectedAdminRoutes>
             }
           />
-          <Route
+            <Route
             path="/admin/fb-edit/:id"
             element={
               <ProtectedAdminRoutes>
-                <FBEdit />
+                <FBRestaurtantEdit/>
               </ProtectedAdminRoutes>
             }
           />
           <Route
-            path="/admin/fb-res-menu/"
+            path="/fnb/status-setup/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <FBStatusSetup/>
+              </ProtectedAdminRoutes>
+            }
+          />
+           <Route
+            path="/fnb/status-setup/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <FBStatusSetup/>
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/fnb/category-setup/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <EditCategorySetup/>
+              </ProtectedAdminRoutes>
+            }
+          />
+           <Route
+            path="/fnb/sub-category-setup/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <EditSubCategorySetup/>
+              </ProtectedAdminRoutes>
+            }
+          />
+           <Route
+            path="/fnb/restaurtant-menu/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <FBRestaurtantMenu/>
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/restaurtant-bookings/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <EditRestaurtantBooking/>
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/restaurtant-orders/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <EditRestaurtantOrders/>
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/fb-res-menu/:id"
             element={
               <ProtectedAdminRoutes>
                 <AddResMenu />
@@ -3454,7 +3545,7 @@ function App() {
             }
           />
           <Route
-            path="/admin/edit-resmenu/:id"
+            path="/admin/edit-resmenu/:resid/:id"
             element={
               <ProtectedAdminRoutes>
                 <EditResMenu />
@@ -3462,7 +3553,7 @@ function App() {
             }
           />
           <Route
-            path="/admin/fb-resmenudetails/:id"
+            path="/admin/fb-resmenudetails/:resid/:id"
             element={
               <ProtectedAdminRoutes>
                 <ResMenuDetails />

@@ -59,20 +59,20 @@ const AdminOutStation = () => {
     //   selector: (row) => row.status,
     //   sortable: true,
     // },
-    {
-      name: "Approval",
-      selector: (row) => (
-        <div className="flex gap-4">
-          <button className="text-green-400 font-medium">
-            <TiTick size={25} />
-          </button>
-          <button className="text-red-400 font-medium">
-            <ImCross />
-          </button>
-        </div>
-      ),
-      sortable: true,
-    },
+    // {
+    //   name: "Approval",
+    //   selector: (row) => (
+    //     <div className="flex gap-4">
+    //       <button className="text-green-400 font-medium">
+    //         <TiTick size={25} />
+    //       </button>
+    //       <button className="text-red-400 font-medium">
+    //         <ImCross />
+    //       </button>
+    //     </div>
+    //   ),
+    //   sortable: true,
+    // },
   ];
 
   const filteredData = [

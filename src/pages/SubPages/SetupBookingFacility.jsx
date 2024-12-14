@@ -11,6 +11,7 @@ import { useSelector } from "react-redux";
 import { BsEye } from "react-icons/bs";
 import SeatBooking from "./SeatBooking";
 import SetupSeatBooking from "./SetupSeatBooking";
+import SetupNavbar from "../../components/navbars/SetupNavbar";
 
 const SetupBookingFacility = () => {
   const [searchText, setSearchText] = useState("");
@@ -108,7 +109,7 @@ const SetupBookingFacility = () => {
   const [page, setPage] = useState("facility");
   return (
     <div className="flex">
-      <Navbar />
+     <SetupNavbar/>
 
       <div className="w-full flex mx-3 flex-col overflow-hidden">
         <div className="flex justify-center my-2">

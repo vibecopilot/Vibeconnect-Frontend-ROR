@@ -1,16 +1,74 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import {  getSetupUsers, postDailyPickUpTransportation } from "../../api";
+import { useSelector } from "react-redux";
+import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 
 const AdminBookOutstation = () => {
-    const [formData, setFormData] = useState({
-        behalf: "self",
-      });
+  const [users, setUsers] = useState([]);
+  const themeColor = useSelector((state) => state.theme.color);
+  const [formData, setFormData] = useState({
+    behalf: "self",
+    pickup_location: "",
+    dropoff_location: "",
+    date: "",
+    time: "",
+    no_of_passengers: "",
+    additional_note: "",
+    transportation_type: ""
+  });
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+  const navigate = useNavigate()
+  
+  const handleSubmit = async () => {
+    
+   
+    const sendData = new FormData();
+    sendData.append("transportation[on_behalf_of]", formData.behalf);
+    sendData.append("transportation[pickup_location]", formData.pickup_location);
+    sendData.append("transportation[dropoff_location]", formData.dropoff_location);
+    sendData.append("transportation[date]", formData.date);
+    sendData.append("transportation[time]", formData.time);
+    sendData.append("transportation[no_of_passengers]", formData.no_of_passengers);
+    sendData.append("transportation[additional_note]", formData.additional_note);
+    sendData.append("transportation[transportation_type]","Outstation" );
+
+    try {
+      const resp = await postDailyPickUpTransportation(sendData);
+      console.log(resp);
+      
+      toast.success("Daily Pickup & Drop added successfully");
+      navigate("/admin/transportation");
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const setupUsers = await getSetupUsers(); // API call to fetch users
+        const formattedOptions = setupUsers.data.map((user) => ({
+          value: user.id,
+          label: user.firstname+" "+user.lastname,
+        }));
+
+        setUsers(setupUsers.data);
+        console.log("show user data",setupUsers.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchUsers();
+}, []);
   return (
     <div className="flex justify-center items-center my-5 w-full p-4">
-      <form
+      <div
         className="border  border-gray-300 rounded-lg p-4 w-full mx-4"
         // onSubmit={handleSubmit}
       >
-        <h2 className="text-center text-xl font-bold p-2 bg-black rounded-full text-white">
+        <h2 className="text-center text-xl font-bold p-2 bg-black rounded-full text-white" style={{ background: themeColor }}>
           Book New Outstation Ride
         </h2>
 
@@ -42,46 +100,58 @@ const AdminBookOutstation = () => {
                 <label htmlFor="other">Other User</label>
               </div>
             </div>
+         
+          </div>
           {formData.behalf === "other" && (
-            <div className="grid md:grid-cols-2">
+            <div className="grid md:grid-cols-1">
               <label htmlFor="" className="font-medium">Select User :</label>
-              <select className="border p-1 px-4 border-gray-500 rounded-md">
+              <select  
+              // onChange={handleChange}
+                  // value={formData.name}
+                  className="border p-2 px-4 w-full border-gray-500 rounded-md">
                 <option value="" className="text-gray-300">
                   Select User{" "}
                 </option>
-                <option value="unit1">User 1</option>
-                <option value="unit2">User 2</option>
-                <option value="unit2">User 3</option>
+                {users?.map((assign) => (
+                      <option key={assign.id} value={assign.id}>
+                        {assign.firstname} {assign.lastname} 
+                      </option>
+                    ))}
               </select>
             </div>
           )}
-          </div>
           <div className="flex flex-col justify-around">
-            <label htmlFor="" className="font-semibold">
+            <label htmlFor="" className="">
               Destination:
             </label>
             <textarea
-              name="heading"
+              name="dropoff_location"
               placeholder="Enter Destination"
               cols="15"
               rows="1"
-              //   value={formData.heading}
-              //   onChange={handleChange}
+                value={formData.dropoff_location}
+                onChange={handleChange}
               className="border p-2 rounded-md border-black"
             ></textarea>
           </div>
           <div className="grid md:grid-cols-2 gap-5">
             <div className="grid grid-cols-2 items-center">
                 <label htmlFor="" className="font-medium">Departure Date :</label>
-                <input type="date" name="" id="" className="w-40 border border-gray-500 px-4 rounded-md" />
+                <input type="date"  id="" name="date" 
+                value={formData.date}
+                onChange={handleChange}
+                className=" border p-2 border-gray-500 px-4 rounded-md" />
             </div>
             <div className="grid grid-cols-2 items-center">
                 <label htmlFor="" className="font-medium">Return Date :</label>
-                <input type="date" name="" id=""  className="w-40 border border-gray-500 px-4 rounded-md" />
+                <input type="date" name="" id=""  className=" border p-2 border-gray-500 px-4 rounded-md" />
             </div>
             <div className="grid grid-cols-2 items-center">
                 <label htmlFor="" className="font-medium">No. Of Passengers :</label>
-                <input type="number" placeholder="No. of Passengers" name="" id=""  className="w-40 border border-gray-500 p-1 placeholder:text-sm rounded-md" />
+                <input type="number" placeholder="No. of Passengers" name="no_of_passengers"
+                 value={formData.no_of_passengers}
+                 onChange={handleChange}
+                id=""  className=" border p-2 border-gray-500 p-1 placeholder:text-sm rounded-md" />
             </div>
           </div>
         </div>
@@ -90,26 +160,27 @@ const AdminBookOutstation = () => {
             Purpose :
           </label>
           <textarea
-            name="text"
+            name="additional_note"
             placeholder=" Purpose of Travel!"
             id=""
             cols="80"
             rows="3"
             className="border p-2 border-black rounded-md"
-            // value={formData.text}
-            // onChange={handleChange}
+            value={formData.additional_note}
+            onChange={handleChange}
           />
         </div>
 
         <div className="flex gap-5 justify-center items-center my-4">
           <button
-            type="submit"
-            className={`text-white bg-black hover:bg-white hover:text-black border-2 border-black font-semibold py-2 px-4 rounded transition-all duration-300 `}
+            onClick={handleSubmit}
+            className={`text-white bg-black hover:bg-white hover:text-black border-2 border-black font-semibold py-2 px-4 rounded-md transition-all duration-300 `}
+            style={{ background: themeColor }}
           >
             Submit
           </button>
         </div>
-      </form>
+      </div>
     </div>
   );
 };

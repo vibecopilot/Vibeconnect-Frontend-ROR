@@ -2381,7 +2381,7 @@ const Navbar = () => {
           )}
           {user === "pms_admin" && siteId !== 25 && (
             <NavLink
-              to={"/setup"}
+              to={"/setup/account/floor"}
               className={({ isActive }) =>
                 ` ${
                   isActive

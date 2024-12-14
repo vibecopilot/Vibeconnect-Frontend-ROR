@@ -3,6 +3,7 @@ import ParkingTag from "./ParkingSetupPages/ParkingTag";
 import ParkingCategoriesSetup from "./ParkingSetupPages/ParkingCategoriesSetup";
 import ParkingSlotSetup from "./ParkingSetupPages/ParkingSlotSetup";
 import ParkingConfigurationSetup from "./ParkingSetupPages/ParkingConfigurationSetup";
+import SetupNavbar from "../../components/navbars/SetupNavbar";
 
 // import PermitTypeTable from "./PermitTypeTable";
 // import PermitActivityTable from "./PermitActivityTable";
@@ -12,7 +13,9 @@ import ParkingConfigurationSetup from "./ParkingSetupPages/ParkingConfigurationS
 const ParkingSetup = () => {
     const [page, setPage] = useState("Tag");
   return (
-    <div className=" w-full my-2 flex  overflow-hidden flex-col">
+    <div className=" flex ">
+<SetupNavbar/>
+<div className=" w-full my-2 flex flex-col overflow-hidden ">
     <div className="flex w-full">
       <div className=" flex gap-2 p-2 pb-0 border-b-2 border-gray-200 w-full">
         <h2
@@ -54,12 +57,14 @@ const ParkingSetup = () => {
        
       </div>
     </div>
+    
     <div>
       {page === "Tag" && <div><ParkingTag/></div> }
       {page === "Parking Categories" && <div><ParkingCategoriesSetup/></div> }
       {page === "Parking Configurations" && <div><ParkingConfigurationSetup/></div> }
       {page === "Parking Slots" && <div><ParkingSlotSetup/></div> }
       
+    </div>
     </div>
   </div>
   )

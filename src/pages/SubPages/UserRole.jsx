@@ -6,6 +6,7 @@ import BackButton from "../../Buttons/BackButton";
 import { Link } from "react-router-dom";
 import Table from "../../components/table/Table";
 import ToggleSwitch from "../../Buttons/ToggleSwitch";
+import SetupNavbar from "../../components/navbars/SetupNavbar";
 
 const UserRole = () => {
   const [tab1, setTab1] = useState("user");
@@ -530,6 +531,8 @@ const UserRole = () => {
   };
 
   return (
+    <div className="flex">
+      <SetupNavbar/>
     <div className="flex justify-center w-full my-1 ">
       <div className="w-full mx-2 ">
         {/* <BackButton to={"/setup"} /> */}
@@ -697,6 +700,7 @@ const UserRole = () => {
                         Quickgate
                       </li>
                     </ul>
+                  
                     {tab === "all" && (
                       <Table
                         columns={columnsfunction}
@@ -752,6 +756,7 @@ const UserRole = () => {
           </div>
         )}
       </div>
+    </div>
     </div>
   );
 };

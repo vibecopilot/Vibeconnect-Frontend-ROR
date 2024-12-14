@@ -7,6 +7,7 @@ import Switch from '../../Buttons/Switch';
 import { BiEdit } from 'react-icons/bi';
 import MeterTypeSetupModal from '../../containers/modals/MeterTypeSetupModal';
 import AddMeterTypeSetupModal from '../../containers/modals/AddMeterTypeSetupModal';
+import SetupNavbar from '../../components/navbars/SetupNavbar';
 function MeterTypeSetup() {
   const [meter, showMeter] = useState(false);
   const [addMeter, showAddMeter] = useState(false);
@@ -58,7 +59,7 @@ function MeterTypeSetup() {
 
   return (
     <section className='flex'>
-      <Navbar/>
+      <SetupNavbar/>
       <div className="w-full flex mx-3 flex-col overflow-hidden">
         <h2 className="text-lg font-semibold my-5 ">
           Meter Types

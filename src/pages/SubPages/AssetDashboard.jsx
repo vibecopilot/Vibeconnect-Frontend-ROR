@@ -118,22 +118,6 @@ function AssetDashboard() {
           format: "<b>{point.name}</b>: {point.y}", // Updated data label format
         },
       },
-      column: {
-        pointPadding: 0.2,
-        borderWidth: 0,
-        dataLabels: {
-          enabled: true,
-          format: "{point.y}", // Display data values for columns
-        },
-      },
-      line: {
-        dataLabels: {
-          enabled: true,
-        },
-      },
-      area: {
-        stacking: "normal",
-      },
     },
     series: [
       {
@@ -204,22 +188,6 @@ function AssetDashboard() {
           enabled: true,
           format: "<b>{point.name}</b>: {point.y}", // Show name and value for pie chart slices
         },
-      },
-      column: {
-        pointPadding: 0.2,
-        borderWidth: 0,
-        dataLabels: {
-          enabled: true, // Enable data labels for column chart
-          format: "{point.y}", // Show only the value above the bars
-        },
-      },
-      line: {
-        dataLabels: {
-          enabled: true,
-        },
-      },
-      area: {
-        stacking: "normal",
       },
     },
     series: [
@@ -300,25 +268,6 @@ function AssetDashboard() {
           enabled: true,
           format: "<b>{point.name}</b>: {point.y}", // Labels for pie chart
         },
-      },
-      column: {
-        pointPadding: 0.2,
-        borderWidth: 0,
-        dataLabels: {
-          enabled: true, // Enable data labels for column chart
-          format: "{point.y}", // Show values on the bars
-        },
-      },
-      line: {
-        dataLabels: {
-          enabled: true,
-        },
-      },
-      area: {
-        stacking: "normal",
-      },
-      bar: {
-        stacking: "normal",
       },
     },
     series: [

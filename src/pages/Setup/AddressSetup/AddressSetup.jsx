@@ -6,6 +6,7 @@ import { BiEdit } from "react-icons/bi";
 import { Link } from "react-router-dom";
 import { getAllAddress } from "../../../api";
 import { IoAddCircleOutline } from "react-icons/io5";
+import SetupNavbar from "../../../components/navbars/SetupNavbar";
 function AddressesSetup() {
   const [filteredAddress, setFilteredAddress] = useState([]);
   const column = [
@@ -58,7 +59,7 @@ function AddressesSetup() {
  
   return (
     <section className="flex">
-      <Navbar />
+      <SetupNavbar/>
       <div className="w-full flex mx-3 flex-col overflow-hidden">
         <div className="flex flex-col sm:flex-row md:justify-between gap-3 mt-10 my-4">
           <input
