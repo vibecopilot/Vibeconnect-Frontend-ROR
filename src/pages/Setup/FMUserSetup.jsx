@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { BiEdit, BiFilterAlt } from 'react-icons/bi';
 import Table from '../../components/table/Table';
 import { Switch } from '../../Buttons';
+import SetupNavbar from '../../components/navbars/SetupNavbar';
 function FmUserSetup() {
   const [filter, setFilter] = useState(false);
     const column = [
@@ -59,7 +60,7 @@ function FmUserSetup() {
     ];
   return (
     <section className='flex'>
-        <Navbar/>
+        <SetupNavbar/>
         <div className="w-full flex mx-3 flex-col overflow-hidden">
             <h2 className="text-lg font-semibold my-5 ">
                 Fm User

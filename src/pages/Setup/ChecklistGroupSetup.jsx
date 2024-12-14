@@ -6,6 +6,7 @@ import Table from '../../components/table/Table';
 import Switch from '../../Buttons/Switch';
 import CheckListAddGroupModal from '../../containers/modals/ChecklistAddGroupModal';
 import AddSubGroupCheckListSetupModal from '../../containers/modals/export default AddSubGroupCheckListSetupModal';
+import SetupNavbar from '../../components/navbars/SetupNavbar';
 function CheckListGroupSetup() {
   const [addGroup, showAddGroup] = useState(false);
   const [addSubGroup, showSubAddGroup] = useState(false);
@@ -70,7 +71,7 @@ function CheckListGroupSetup() {
 
   return (
     <section className='flex'>
-      <Navbar/>
+      <SetupNavbar/>
       <div className="w-full flex mx-3 flex-col overflow-hidden">
         <h2 className="text-lg font-semibold my-5 ">
           Group CheckList

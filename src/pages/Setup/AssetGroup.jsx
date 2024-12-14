@@ -11,6 +11,7 @@ import { getAssetGroups, getAssetSubGroups, getStockGroupsList, getSubGroupsList
 import Table from "../../components/table/Table";
 import { BiEdit } from "react-icons/bi";
 import EditAssetGroup from "../../containers/modals/EditAssetGroup";
+import SetupNavbar from "../../components/navbars/SetupNavbar";
 
 const AssetGroup = () => {
   const [groupModal, setGroupModal] = useState(false);
@@ -138,7 +139,7 @@ const AssetGroup = () => {
   };
   return (
     <section className="flex">
-      <Navbar />
+      <SetupNavbar/>
       <div className="w-full flex mx-3 mb-5 flex-col overflow-hidden">
 
       <div className=" flex gap-2 p-2 pb-0 border-b-2 border-gray-200 w-full">

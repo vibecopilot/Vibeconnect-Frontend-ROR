@@ -19,6 +19,7 @@ import ModalWrapper from "../../containers/modals/ModalWrapper";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import { setId } from "@material-tailwind/react/components/Tabs/TabsContext";
 import ContactSetupModal from "../../containers/modals/ContactSetupModal";
+import SetupNavbar from "../../components/navbars/SetupNavbar";
 
 const BusinessSetup = () => {
   const [selectedFiled, setSelectedField] = useState("category");
@@ -147,7 +148,7 @@ const BusinessSetup = () => {
   ];
   return (
     <section className="flex">
-      <Navbar />
+     <SetupNavbar/>
       <div className="w-full flex mx-3 flex-col overflow-hidden">
         <div className="flex justify-center gap-5 flex-col w-full">
           <h2

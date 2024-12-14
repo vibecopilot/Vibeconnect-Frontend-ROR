@@ -5,9 +5,12 @@ import PermitSubActivityTable from "./SetupSubPages/PermitSubActivityTable";
 import PermitHazardCategoryTable from "./SetupSubPages/PermitHazardCategoryTable";
 
 import PermitRiskTable from "./SetupSubPages/PermitRiskTable";
+import SetupNavbar from "../../components/navbars/SetupNavbar";
 const PermitSetup = () => {
   const [page, setPage] = useState("Permit Type");
   return (
+    <div className="flex">
+      <SetupNavbar/>
     <div className=" w-full my-2 flex  overflow-hidden flex-col">
       <div className="flex w-full">
         <div className=" flex gap-2 p-2 pb-0 border-b-2 border-gray-200 w-full">
@@ -78,6 +81,7 @@ const PermitSetup = () => {
         {page === "Permit Hazard Category" && <PermitHazardCategoryTable />}
         {page === "Permit Risk" && <PermitRiskTable />}
       </div>
+    </div>
     </div>
   );
 };

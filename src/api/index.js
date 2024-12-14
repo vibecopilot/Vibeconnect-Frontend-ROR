@@ -1036,7 +1036,61 @@ export const getAssetReadingDetails = async (assetId) =>
       },
     }
   );
-
+  export const postBusinesscard = async (data) =>
+    axiosInstance.post("/business_cards.json", data, {
+      params: {
+        token: token,
+      },
+    });
+    export const getBusinessCard = async () =>
+      axiosInstance.get("/business_cards.json", {
+        params: {
+          token: token,
+        },
+      });
+  export const postHSNSetup = async (data) =>
+    axiosInstance.post("/hsns.json", data, {
+      params: {
+        token: token,
+      },
+    });
+    export const getHSNSetup = async () =>
+      axiosInstance.get("/hsns.json", {
+        params: {
+          token: token,
+        },
+      });
+      export const getHSNSetupDetails = async (id) =>
+        axiosInstance.get(
+          `/hsns/${id}.json`,
+          {
+            params: {
+              token: token,
+            },
+          }
+        );
+  export const postDailyPickUpTransportation = async (data) =>
+    axiosInstance.post("/transportations.json", data, {
+      params: {
+        token: token,
+      },
+    });
+    export const getDailyPickUpTransportationDetails = async (id) =>
+      axiosInstance.get(
+        `/transportations/${id}.json`,
+    
+        {
+          params: {
+            token: token,
+          },
+        }
+      );
+    export const getDailyPickUpTransportation = async () =>
+      axiosInstance.get("/transportations.json", {
+        params: {
+          token: token,
+        },
+      });
 export const getSetupUsers = async () =>
   axiosInstance.get("/users.json", {
     params: {
@@ -1522,6 +1576,24 @@ export const postServicePR = async (data) =>
 //       token: token,
 //     },
 //   });
+export const getFolderDocumentCommon = async () =>
+  axiosInstance.get(`/folders/get_folders.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const postFolderDocumentCommon = async (data) =>
+  axiosInstance.post("/folders/create_common_folder.json", data, {
+    params: {
+      token: token,
+    },
+  });
+  export const postFileDocumentCommon = async (data) =>
+    axiosInstance.post("/folder_documents/create_common_document.json", data, {
+      params: {
+        token: token,
+      },
+    });
 export const getServicesRoutineDetails = async (id) =>
   axiosInstance.get(`/checklists/${id}.json?q[ctype_eq]=routine`, {
     params: {
@@ -1709,6 +1781,48 @@ export const getGenericCategory = async () =>
       token: token,
     },
   });
+  export const getGenericCategoryRestaurtant = async () =>
+    axiosInstance.get(`/generic_infos.json?q[info_type_eq]=RestaurantCategory`, {
+      params: {
+        token: token,
+      },
+    });
+    export const getCuisinesFBSetup = async () =>
+      axiosInstance.get(`/generic_infos.json?q[info_type_eq]=Cuisins`, {
+        params: {
+          token: token,
+        },
+      });
+      export const getFixedStatusSetup = async () =>
+        axiosInstance.get(`/generic_infos.json?q[info_type_eq]=FixedStatus`, {
+          params: {
+            token: token,
+          },
+        });
+        export const postStatusSetup = async (data) =>
+          axiosInstance.post(`/status_restaurants.json`, data, {
+            params: {
+              token: token,
+            },
+          });
+          export const getStatusSetupDetails = async (id) =>
+            axiosInstance.get(`/status_restaurants/${id}.json`, {
+              params: {
+                token: token,
+              },
+            });
+          export const editStatusSetup = async (id, data) =>
+            axiosInstance.put(`/status_restaurants/${id}.json`, data, {
+              params: {
+                token: token,
+              },
+            });
+          export const getStatusSetup = async () =>
+            axiosInstance.get(`/status_restaurants.json`, {
+              params: {
+                token: token,
+              },
+            });
 export const getGenericCategoryDetails = async (id) =>
   axiosInstance.get(`/generic_infos/${id}.json`, {
     params: {
@@ -1721,6 +1835,18 @@ export const editGenericCategoryDetails = async (id, data) =>
       token: token,
     },
   });
+  export const getGenericSubCategoryDetails = async (id) =>
+    axiosInstance.get(`/generic_sub_infos/${id}.json`, {
+      params: {
+        token: token,
+      },
+    });
+  export const editGenericSubCategoryDetails = async (id, data) =>
+    axiosInstance.put(`/generic_sub_infos/${id}.json`, data, {
+      params: {
+        token: token,
+      },
+    });
 export const postGenericCategory = async (data) =>
   axiosInstance.post(`/generic_infos.json`, data, {
     params: {
@@ -7089,39 +7215,138 @@ export const getComplaintMode = async () =>
       token: token,
     },
   });
-export const postIncidentTags = async (data) =>
-  axiosInstance.post(`/incidence_tags.json`, data, {
+  export const getRestaurtantTableBookings = async () =>
+    axiosInstance.get(`/table_bookings.json`, {
+      params: {
+        token: token,
+      },
+    });
+    export const getRestaurtantOrderBookings = async () =>
+      axiosInstance.get(`/restaurant_orders.json`, {
+        params: {
+          token: token,
+        },
+      });
+
+  //Food
+  export const downloadRestaurtantData = async () =>
+    axiosInstance.get(`/food_and_beverages/export.xlsx`, {
+      params: {
+        token: token,
+      },
+      responseType: "blob",
+    });
+  export const postRestaurtantMenu = async (data) =>
+    axiosInstance.post("/restaurant_menus.json", data, {
+      params: {
+        token: token,
+      },
+    });
+    export const getRestaurtantMenu = async (id) =>
+      axiosInstance.get(`/restaurant_menus.json?restaurant_id=${id}`, {
+        params: {
+          token: token,
+        },
+      });
+      export const getRestaurtantMenuDetails = async (id,resid) =>
+        axiosInstance.get(`/restaurant_menus/${id}.json?restaurant_id=${resid}`, {
+          params: {
+            token: token,
+          },
+        });
+        export const EditRestaurtantMenuDetails = async (id,resid,data) =>
+          axiosInstance.put(`/restaurant_menus/${id}.json?restaurant_id=${resid}`, data, {
+            params: {
+              token: token,
+            },
+          });
+export const postFB = async (data) =>
+  axiosInstance.post("/food_and_beverages.json", data, {
     params: {
       token: token,
     },
   });
-export const getIncidentTags = async () =>
-  axiosInstance.get(`/incidence_tags.json`, {
+
+export const getFB = async () =>
+  axiosInstance.get("/food_and_beverages.json", {
     params: {
       token: token,
     },
   });
-export const deleteIncidentTags = async () =>
-  axiosInstance.delete(`/incidence_tags.json`, {
+
+export const getFBDetails = async (id) =>
+  axiosInstance.get(`/food_and_beverages/${id}.json`, {
     params: {
       token: token,
     },
   });
-export const getIncidentCatDetails = async (id) =>
-  axiosInstance.get(`/incidence_tags/${id}.json`, {
-    params: {
-      token: token,
-    },
-  });
-export const editIncidentCatDetails = async (id, data) =>
-  axiosInstance.put(`/incidence_tags/${id}.json`,data, {
-    params: {
-      token: token,
-    },
-  });
-export const getIncidents = async () =>
-  axiosInstance.get(`/incidents.json`, {
-    params: {
-      token: token,
-    },
-  });
+  export const editFB = async (id, data) =>
+    axiosInstance.put(`/food_and_beverages/${id}.json`, data, {
+      params: {
+        token: token,
+      },
+    });
+    export const getFBSubCategories = async () =>
+      axiosInstance.get("/get_sub_categories.json", {
+        params: {
+          token: token,
+        },
+      });
+    export const postPantry = async (data) =>
+      axiosInstance.post("/pantries.json", data, {
+        params: {
+          token: token,
+        },
+      });
+      export const getPantry = async () =>
+        axiosInstance.get("/pantries.json", {
+          params: {
+            token: token,
+          },
+        });
+        export const getPantryDetails = async (id) =>
+          axiosInstance.get(`/pantries/${id}.json`, {
+            params: {
+              token: token,
+            },
+          });
+          export const postIncidentTags = async (data) =>
+            axiosInstance.post(`/incidence_tags.json`, data, {
+              params: {
+                token: token,
+              },
+            });
+          export const getIncidentTags = async () =>
+            axiosInstance.get(`/incidence_tags.json`, {
+              params: {
+                token: token,
+              },
+            });
+          export const deleteIncidentTags = async () =>
+            axiosInstance.delete(`/incidence_tags.json`, {
+              params: {
+                token: token,
+              },
+            });
+          export const getIncidentCatDetails = async (id) =>
+            axiosInstance.get(`/incidence_tags/${id}.json`, {
+              params: {
+                token: token,
+              },
+            });
+          export const editIncidentCatDetails = async (id, data) =>
+            axiosInstance.put(`/incidence_tags/${id}.json`,data, {
+              params: {
+                token: token,
+              },
+            });
+          export const getIncidents = async () =>
+            axiosInstance.get(`/incidents.json`, {
+              params: {
+                token: token,
+              },
+            });
+          
+          
+          
+          
