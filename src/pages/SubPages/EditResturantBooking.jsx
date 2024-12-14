@@ -40,7 +40,7 @@ const EditRestaurtantBooking = () => {
     },
       {
         name: "Name",
-        selector: (row) => row.name,
+        selector: (row) => row.created_by,
         sortable: true,
       },
 
