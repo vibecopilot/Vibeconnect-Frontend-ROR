@@ -7,6 +7,7 @@ import {
   getReportingSupervisors,
   getUserDetails,
   postResignations,
+  putAdditionalResignationDetails,
 } from "../../api";
 import { useParams } from "react-router-dom";
 import { FaCheck } from "react-icons/fa";
@@ -33,17 +34,23 @@ const Resignation = () => {
     approvalAuthority: "",
     effectiveDateOfApprovalAuthority: "",
     transferReportingSupervisor: "",
-    EffectiveDateOfReportingSupervisor: "",
+    effectiveDateOfReportingSupervisor: "",
     holdSalary: false,
     accessAfterLastDay: "",
     totalEncashmentDay: "",
     totalEncashmentAmount: "",
+    overwriteEncashmentDays: "",
+    overwriteEncashmentAmount: "",
     calculateEncashExemption: "",
+    manualFnfAmount: "",
+    encashExemptionPaid: "",
     eligibleForGratuity: false,
     gratuityAmount: "",
+    overwriteGratuityAmount: "",
     servedNoticeDay: "",
     noticeRecoveryDay: "",
     noticeRecoveryAmount: "",
+    overwriteNoticeRecoveryAmount: "",
   });
   useEffect(() => {
     const fetchUserDetails = async () => {
@@ -86,14 +93,62 @@ const Resignation = () => {
     resignationData.append("comments", formData.comment);
     try {
       const res = await postResignations(resignationData);
-      console.log(res);
+      console.log(res.data.id);
+      if (res.data.id) {
+      
+        const additionalData = {
+          additional_details: {
+              approval_authority: addInfo.approvalAuthority,
+              effective_date_of_approval_authority: addInfo.effectiveDateOfApprovalAuthority,
+              transfer_reporting_supervisor_to: addInfo.transferReportingSupervisor,
+              effective_date_of_transfer_supervisor: addInfo.effectiveDateOfReportingSupervisor,
+              hold_salary: addInfo.holdSalary,
+              portal_access_after_last_working_day: addInfo.accessAfterLastDay,
+          },
+          leave_encashment_recovery: {
+              total_encashment_days: addInfo.totalEncashmentDay || 0,
+              total_encashment_amount: addInfo.totalEncashmentAmount || 0,
+              overwrite_encashment_days: addInfo.overwriteEncashmentDays,
+              overwrite_encashment_amount: addInfo.overwriteEncashmentAmount,
+              calculate_encash_exemption: addInfo.calculateEncashExemption,
+              manual_fnf_amount: addInfo.manualFnfAmount,
+              encash_exemption_paid: addInfo.encashExemptionPaid,
+          },
+          gratuity: {
+              eligible_for_gratuity: addInfo.eligibleForGratuity,
+              gratuity_amount: addInfo.gratuityAmount || 0,
+              overwrite_gratuity_amount: addInfo.overwriteGratuityAmount,
+          },
+          notice_period_recovery: {
+              served_notice_days: addInfo.servedNoticeDay ||0,
+              notice_recovery_days: addInfo.noticeRecoveryDay|| 0,
+              notice_recovery_amount: addInfo.noticeRecoveryAmount || 0,
+              overwrite_notice_recovery_amount: addInfo.overwriteNoticeRecoveryAmount || 0,
+          },
+          // approver_details: [
+          //     {
+          //         user: addInfo.approvalAuthority || 17,
+          //         hr_admin: "Admin 1",
+          //     }
+          // ],
+      };
+        try {
+          const resp = await putAdditionalResignationDetails(
+            res.data.id,
+            additionalData
+          );
+          console.log(resp);
+        } catch (error) {
+          console.log(error);
+        }
+      }
     } catch (error) {
       console.log(error);
     }
   };
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
   const [reportingSupervisor, setReportingSupervisor] = useState([]);
-
+  console.log(addInfo);
   const fetchReportingSupervisor = async (departmentId) => {
     try {
       const res = await getReportingSupervisors(departmentId, hrmsOrgId);
@@ -109,17 +164,23 @@ const Resignation = () => {
       console.log(error);
     }
   };
-  const [selectedOption, setSelectedOption] = useState([]);
+  const [selectedOption, setSelectedOption] = useState({});
   const handleChangeApprovalAuthority = (selectedOption) => {
     console.log(selectedOption);
     setSelectedOption(selectedOption);
   };
-  const [selectedReporting, setSelectedReporting] = useState("");
+  console.log(selectedOption);
+  const [selectedReporting, setSelectedReporting] = useState({});
+  console.log(selectedReporting);
   const handleChangeReportingSupervisorAuthority = (
     selectedReportingOption
   ) => {
     console.log(selectedReportingOption);
     setSelectedReporting(selectedReportingOption);
+  };
+
+  const handleAdditionalChange = (e) => {
+    setAddInfo({ ...addInfo, [e.target.name]: e.target.value });
   };
   return (
     <div className="flex justify-between">
@@ -397,7 +458,9 @@ const Resignation = () => {
               </label>
               <input
                 type="date"
-                value="2024-08-11"
+                value={addInfo.effectiveDateOfApprovalAuthority}
+                onChange={handleAdditionalChange}
+                name="effectiveDateOfApprovalAuthority"
                 className="border border-gray-400 p-2 rounded-md"
               />
             </div>
@@ -418,7 +481,9 @@ const Resignation = () => {
               </label>
               <input
                 type="date"
-                value="2024-08-11"
+                value={addInfo.effectiveDateOfReportingSupervisor}
+                onChange={handleAdditionalChange}
+                name="effectiveDateOfReportingSupervisor"
                 className="border border-gray-400 p-2 rounded-md"
               />
             </div>
@@ -431,7 +496,10 @@ const Resignation = () => {
                   <input
                     type="radio"
                     name="hold_salary"
-                    value="yes"
+                    checked={addInfo.holdSalary === true}
+                    onChange={() =>
+                      setAddInfo({ ...addInfo, holdSalary: true })
+                    }
                     className="mr-2"
                   />{" "}
                   Yes
@@ -440,7 +508,10 @@ const Resignation = () => {
                   <input
                     type="radio"
                     name="hold_salary"
-                    value="no"
+                    checked={addInfo.holdSalary === false}
+                    onChange={() =>
+                      setAddInfo({ ...addInfo, holdSalary: false })
+                    }
                     className="mr-2"
                   />{" "}
                   No
@@ -453,7 +524,9 @@ const Resignation = () => {
               </label>
               <input
                 type="number"
-                value="0"
+                value={addInfo.accessAfterLastDay}
+                name="accessAfterLastDay"
+                onChange={handleAdditionalChange}
                 className="border border-gray-400 p-2 w-full rounded-md"
               />
             </div>
@@ -465,47 +538,59 @@ const Resignation = () => {
             Leave Encashment/Recovery:
           </p>
           <div className="grid md:grid-cols-2 gap-2">
-            <div className="grid gap-2 items-center w-full">
+            {/* <div className="grid gap-2 items-center w-full">
               <label className="block font-medium">
                 Total Leave Encashment/Recovery Days (Calculated):
               </label>
               <input
                 type="number"
-                value="0"
+                value={addInfo.totalEncashmentDay}
+                onChange={handleAdditionalChange}
+                name="totalEncashmentDay"
                 readOnly
                 className="border border-gray-200 p-2 rounded-md bg-gray-200"
                 disabled
               />
-            </div>
-            <div className="grid gap-2 items-center w-full">
+            </div> */}
+            {/* <div className="grid gap-2 items-center w-full">
               <label className="block font-medium">
                 Total Leave Encashment/Recovery (Calculated):
               </label>
               <input
                 type="number"
-                value="0"
+                value={addInfo.totalEncashmentAmount}
+                onChange={handleAdditionalChange}
+                name="totalEncashmentAmount"
                 readOnly
                 className="border border-gray-200 p-2 rounded-md bg-gray-200"
               />
-            </div>
+            </div> */}
             <div className="grid gap-2 items-center w-full">
               <label className=" font-medium flex items-center gap-2 ">
-                Overwrite Leave Encashment/Recovery Days{" "}
+                Leave Encashment/Recovery Days{" "}
+                {/* Overwrite Leave Encashment/Recovery Days{" "} */}
                 <FaCircleInfo title="Enter the leave encashment days which you would like to show in F&F" />
               </label>
               <input
                 type="number"
                 className="border border-gray-400 p-2 rounded-md"
+                value={addInfo.overwriteEncashmentDays}
+                onChange={handleAdditionalChange}
+                name="overwriteEncashmentDays"
               />
             </div>
             <div className="grid gap-2 items-center w-full">
               <label className="font-medium flex items-center gap-2">
-                Overwrite Leave Encashment/Recovery Amount{" "}
+                Leave Encashment/Recovery Amount{" "}
+                {/* Overwrite Leave Encashment/Recovery Amount{" "} */}
                 <FaCircleInfo title="Enter the leave encashment amount you would like to pay in F&F" />
               </label>
               <input
                 type="number"
                 className="border border-gray-400 p-2 rounded-md"
+                value={addInfo.overwriteEncashmentAmount}
+                onChange={handleAdditionalChange}
+                name="overwriteEncashmentAmount"
               />
             </div>
             <div className="grid gap-2 items-center w-full">
@@ -513,28 +598,37 @@ const Resignation = () => {
                 How to calculate Leave encash exemption?
               </label>
               <select
-                name=""
+                name="calculateEncashExemption"
                 id=""
                 className="border border-gray-400 p-2 rounded-md"
+                value={addInfo.calculateEncashExemption}
+                onChange={handleAdditionalChange}
               >
-                <option value="Manually Enter the Amount while calculating the FNF">
+                <option value="Manually ">
                   Manually Enter the Amount while calculating the FNF
                 </option>
-                <option value="Automatically calculate as per Government's Limit (300000)F">
+                <option value="Automatically">
                   Automatically calculate as per Government's Limit (300000)
                 </option>
               </select>
             </div>
-            <div className="grid gap-2 items-center w-full">
-              <label className="block font-medium">
-                Leave Encashment Exemption to be paid
-              </label>
-              <input
-                type="number"
-                value="0"
-                className="border border-gray-400 p-2 rounded-md"
-              />
-            </div>
+            {addInfo.calculateEncashExemption === "Manually" && (
+              <div className="grid gap-2 items-center w-full">
+                <label className="block font-medium">
+                  Leave Encashment Exemption to be paid
+                </label>
+                <input
+                  type="number"
+                  value={addInfo.manualFnfAmount}
+                  onChange={handleAdditionalChange}
+                  name="manualFnfAmount"
+                  className="border border-gray-400 p-2 rounded-md"
+                />
+              </div>
+            )}
+          </div>
+          <h2 className="font-bold border-b">Gratuity</h2>
+          <div className="grid grid-cols-2 gap-2">
             <div className="grid grid-cols-2 gap-2 items-center w-full">
               <div className="grid gap-2 items-center">
                 <label className="block font-medium">
@@ -547,7 +641,10 @@ const Resignation = () => {
                       name="gratuity"
                       value="yes"
                       className="mr-2"
-                      checked
+                      checked={addInfo.eligibleForGratuity === true}
+                      onChange={() =>
+                        setAddInfo({ ...addInfo, eligibleForGratuity: true })
+                      }
                     />{" "}
                     Yes
                   </label>
@@ -557,30 +654,43 @@ const Resignation = () => {
                       name="gratuity"
                       value="no"
                       className="mr-2"
+                      checked={addInfo.eligibleForGratuity === false}
+                      onChange={() =>
+                        setAddInfo({ ...addInfo, eligibleForGratuity: false })
+                      }
                     />{" "}
                     No
                   </label>
                 </div>
               </div>
+              {addInfo.eligibleForGratuity && (
+                <div className="grid gap-2 items-center w-full">
+                  <label className="block font-medium">Gratuity Amount:</label>
+                  <input
+                    type="text"
+                    value={addInfo.gratuityAmount}
+                    onChange={handleAdditionalChange}
+                    name="gratuityAmount"
+                    className="border border-gray-200 p-2 rounded-md bg-gray-200"
+                  />
+                </div>
+              )}
+            </div>
+            {addInfo.eligibleForGratuity && (
               <div className="grid gap-2 items-center w-full">
-                <label className="block font-medium">Gratuity Amount:</label>
+                <label className=" font-medium flex items-center gap-2">
+                  Overwrite Gratuity Amount{" "}
+                  <FaCircleInfo title="Enter the Gratuity amount you would like to pay in F&F" />
+                </label>
                 <input
-                  type="text"
-                  value="0"
-                  className="border border-gray-200 p-2 rounded-md bg-gray-200"
+                  type="number"
+                  className="border border-gray-400 p-2 rounded-md"
+                  value={addInfo.overwriteGratuityAmount}
+                  onChange={handleAdditionalChange}
+                  name="overwriteGratuityAmount"
                 />
               </div>
-            </div>
-            <div className="grid gap-2 items-center w-full">
-              <label className=" font-medium flex items-center gap-2">
-                Overwrite Gratuity Amount{" "}
-                <FaCircleInfo title="Enter the Gratuity amount you would like to pay in F&F" />
-              </label>
-              <input
-                type="number"
-                className="border border-gray-400 p-2 rounded-md"
-              />
-            </div>
+            )}
           </div>
           <p className="font-medium bg-gray-400 p-1 rounded-md text-white">
             Notice Period Recovery
@@ -592,7 +702,9 @@ const Resignation = () => {
               </label>
               <input
                 type="number"
-                value="30"
+                value={addInfo.servedNoticeDay}
+                onChange={handleAdditionalChange}
+                name="servedNoticeDay"
                 readOnly
                 className="border border-gray-200 p-2 rounded-md bg-gray-200"
               />
@@ -603,8 +715,10 @@ const Resignation = () => {
               </label>
               <input
                 type="number"
-                value="0"
-                className="border border-gray-200 p-2 rounded-md bg-gray-200"
+                value={addInfo.noticeRecoveryDay}
+                onChange={handleAdditionalChange}
+                name="noticeRecoveryDay"
+                className="border border-gray-200 p-2 rounded-md "
               />
             </div>
             <div className="grid gap-2 items-center w-full">
@@ -613,8 +727,11 @@ const Resignation = () => {
               </label>
               <input
                 type="number"
-                value="0"
-                className="border border-gray-400 p-2 rounded-md"
+                value={addInfo.noticeRecoveryAmount}
+                name="noticeRecoveryAmount"
+                onChange={handleAdditionalChange}
+                readOnly
+                className="border p-2 rounded-md bg-gray-200"
               />
             </div>
             <div className="grid gap-2 items-center w-full">
@@ -625,6 +742,9 @@ const Resignation = () => {
               <input
                 type="number"
                 className="border border-gray-400 p-2 rounded-md"
+                value={addInfo.overwriteNoticeRecoveryAmount}
+                name="overwriteNoticeRecoveryAmount"
+                onChange={handleAdditionalChange}
               />
             </div>
           </div>

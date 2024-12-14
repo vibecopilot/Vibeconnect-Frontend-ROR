@@ -1,7 +1,14 @@
 import { useState, useRef, useEffect } from "react";
 import { MdExpandLess, MdExpandMore } from "react-icons/md";
 
-const SalaryAccordion = ({ title, items, totalMonthly, totalYearly, onMonthlyChange }) => {
+const SalaryAccordion = ({
+  title,
+  items,
+  totalMonthly,
+  totalYearly,
+  onMonthlyChange,
+  showInput = true,
+}) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const contentRef = useRef(null);
 
@@ -13,15 +20,15 @@ const SalaryAccordion = ({ title, items, totalMonthly, totalYearly, onMonthlyCha
     }
   }, [isExpanded]);
 
+  const inputShow = showInput;
+
   return (
     <div className="border-b border-gray-200">
       <button
         onClick={() => setIsExpanded(!isExpanded)}
         className="flex items-center justify-between w-full py-4 text-left focus:outline-none"
       >
-        <span className="text-lg font-medium text-blue-500 w-1/2">
-          {title}
-        </span>
+        <span className="text-lg font-medium text-blue-600 w-1/2">{title}</span>
         <div className="flex items-center w-1/2">
           <span className="text-lg font-medium text-green-500 w-1/3 text-center">
             ₹{totalMonthly.toLocaleString()}
@@ -44,26 +51,28 @@ const SalaryAccordion = ({ title, items, totalMonthly, totalYearly, onMonthlyCha
         }`}
         ref={contentRef}
       >
-        <div className="py-2">
+        <div className="">
           {items.map((item, index) => (
             <div key={index} className="flex items-center justify-between py-2">
               <span className="text-gray-700 w-1/2">{item.label}</span>
               <div className="flex items-center w-1/2">
                 <div className="w-1/3 flex justify-center">
-                  <div className="flex items-center">
-                    <span className="text-gray-500 mr-1">₹</span>
-                    <input
-                      type="number"
-                      value={item.monthly}
-                    //   onChange={() => {}}
-                      className="w-20 p-1 border rounded text-right"
-                      onChange={(e) => onMonthlyChange(index, e.target.value)}
-                    />
+                  <div className="flex items-center ">
+                    <span className="text-gray-500 mr-1 ">₹</span>
+                    {inputShow ? (
+                      <input
+                        type="number"
+                        value={item.monthly}
+                        //   onChange={() => {}}
+                        className="w-20 p-1 border rounded text-right"
+                        onChange={(e) => onMonthlyChange(index, e.target.value)}
+                      />
+                    ) : (
+                      <p>{item.monthly}</p>
+                    )}
                   </div>
                 </div>
-                <span className="w-1/3 text-right">
-                  ₹{item.yearly.toLocaleString()}
-                </span>
+                <span className="w-1/3 text-right">₹{item.yearly.toLocaleString()}</span>
                 <span className="w-1/3"></span>
               </div>
             </div>

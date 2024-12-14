@@ -62,6 +62,17 @@ const PendingTable = () => {
     }));
   };
 
+  const formatTimeToAmPm = (timestamp) => {
+    const date = new Date(timestamp); // Automatically considers the time zone offset
+    const hours = date.getHours(); // Local hours
+    const minutes = date.getMinutes(); // Local minutes
+    const amPm = hours >= 12 ? "PM" : "AM";
+    const formattedHours = hours % 12 || 12; // Convert 0-23 to 1-12, with 0 being 12 AM
+    const formattedMinutes = minutes.toString().padStart(2, "0"); // Ensure two digits for minutes
+
+    return `${formattedHours}:${formattedMinutes} ${amPm}`;
+  };
+
   const columns = [
     {
       name: "Employee Name",
@@ -70,12 +81,37 @@ const PendingTable = () => {
     },
     {
       name: "Date",
-      selector: (row) => row.date,
+      selector: (row) => (
+        <div>
+          {row.requested_check_in
+            ? formatDate(row.requested_check_in)
+            : formatDate(row.requested_check_out)}
+        </div>
+      ),
       sortable: true,
     },
     {
       name: "Requested Timings",
-      selector: (row) => row.requested_timing,
+      selector: (row) => {
+        const checkIn = row.requested_check_in
+          ? formatTimeToAmPm(row.requested_check_in)
+          : null;
+        const checkOut = row.requested_check_out
+          ? formatTimeToAmPm(row.requested_check_out)
+          : null;
+
+        return (
+          <div>
+            {checkIn && checkOut
+              ? `${checkIn} - ${checkOut}`
+              : checkIn
+              ? `Check-In : ${checkIn}`
+              : checkOut
+              ? `Check-Out : ${checkOut}`
+              : "No Timing Available"}
+          </div>
+        );
+      },
       sortable: true,
     },
     {
@@ -88,11 +124,11 @@ const PendingTable = () => {
       selector: (row) => row.reason,
       sortable: true,
     },
-    {
-      name: "Comment",
-      selector: (row) => row.comment,
-      sortable: true,
-    },
+    // {
+    //   name: "Comment",
+    //   selector: (row) => row.comment,
+    //   sortable: true,
+    // },
     {
       name: "Status",
       selector: (row) => row.status,
@@ -117,13 +153,13 @@ const PendingTable = () => {
         <div className="flex justify-center gap-2">
           <button
             className="text-green-400 font-medium hover:bg-green-400 hover:text-white transition-all duration-200 p-1 rounded-full"
-            onClick={() => handleReqApproval(row.id, "approved")}
+            onClick={() => handleReqApproval(row.id, "approve")}
           >
             <TiTick size={20} />
           </button>
           <button
             className="text-red-400 font-medium hover:bg-red-400 hover:text-white transition-all duration-200 p-1 rounded-full"
-            onClick={() => handleReqApproval(row.id, "rejected")}
+            onClick={() => handleReqApproval(row.id, "reject")}
           >
             <IoClose size={20} />
           </button>
@@ -139,7 +175,7 @@ const PendingTable = () => {
   const fetchRegularizationReq = async () => {
     try {
       const res = await getEmployeeRegularizationReq(hrmsOrgId);
-      const pendingReq = res.filter((req) => req.status === "pending");
+      const pendingReq = res.filter((req) => req.status === "Pending");
       setFilteredRequests(pendingReq);
       setRequests(pendingReq);
     } catch (error) {
@@ -152,7 +188,7 @@ const PendingTable = () => {
 
   const handleReqApproval = async (approvalId, approvalStatus) => {
     const postStatus = new FormData();
-    postStatus.append("status", approvalStatus);
+    postStatus.append("action", approvalStatus);
     try {
       await postRegularizationApproval(approvalId, postStatus);
       toast.success(`Regularization request ${approvalStatus}`);
@@ -241,6 +277,16 @@ const PendingTable = () => {
     };
   }, [setShowActionsDropdown]);
 
+  const formatDate = (isoString) => {
+    if (!isoString) return "";
+    const date = new Date(isoString);
+    return date.toLocaleDateString("en-GB", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+  };
+
   return (
     <section className="flex">
       <div className="w-full flex mx-2 flex-col overflow-hidden">
@@ -253,12 +299,12 @@ const PendingTable = () => {
             onChange={handleSearch}
           />
           <div className="flex gap-2">
-            <button
+            {/* <button
               className="px-4 py-2 bg-blue-600 text-white rounded-md"
               onClick={() => setShowFilterModal(true)}
             >
               Filter
-            </button>
+            </button> */}
             <button
               onClick={() => setShowActionsDropdown(!showActionsDropdown)}
               className="px-4 py-2 bg-blue-600 text-white rounded-md"

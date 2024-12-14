@@ -1,6 +1,6 @@
 import HighchartsReact from "highcharts-react-official";
 import React, { useEffect, useState } from "react";
-import Highcharts, { chart } from "highcharts";
+import Highcharts from "highcharts";
 import {
   getDepartmentCount,
   getGenderCount,
@@ -12,8 +12,9 @@ const DepartmentCount = () => {
   const [selectedOption, setSelectedOption] = useState("Department");
   const [departmentData, setDepartmentData] = useState([]);
   const [locationData, setLocationData] = useState([]);
-  const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
   const [genderData, setGenderData] = useState([]);
+  const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
+
   const fetchDepartmentData = async () => {
     try {
       const res = await getDepartmentCount(hrmsOrgId);
@@ -31,6 +32,7 @@ const DepartmentCount = () => {
       console.log(error);
     }
   };
+
   const fetchGenderData = async () => {
     try {
       const res = await getGenderCount(hrmsOrgId);
@@ -62,7 +64,6 @@ const DepartmentCount = () => {
 
   const departmentChartOptions = {
     chart: { type: "pie" },
-    // title: { text: "Employee Count by Department", style: { fontSize: "18px", fontWeight: "bold" } },
     title: "",
     tooltip: {
       pointFormat: "{series.name}: <b>{point.y}</b> ({point.percentage:.1f}%)",
@@ -71,8 +72,6 @@ const DepartmentCount = () => {
       pie: {
         allowPointSelect: true,
         cursor: "pointer",
-        // dataLabels: { enabled: true, format: "<b>{point.name}</b>: {point.y} employees" },
-        // dataLabels: { enabled: false },
         dataLabels: {
           enabled: true,
           format: "{point.y}",
@@ -82,6 +81,15 @@ const DepartmentCount = () => {
           },
         },
         showInLegend: true,
+      },
+    },
+    legend: {
+      align: "center",
+      verticalAlign: "bottom",
+      layout: "horizontal", // Horizontal layout for the legend
+      itemMarginRight: 10,
+      itemStyle: {
+        fontSize: "10px",
       },
     },
     series: [
@@ -105,23 +113,30 @@ const DepartmentCount = () => {
 
   const locationChartOptions = {
     chart: { type: "pie" },
-    // title: { text: "Employee Count by Location", style: { fontSize: "18px", fontWeight: "bold" } },
     title: "",
     tooltip: { pointFormat: "{series.name}: <b>{point.y}</b> employees" },
     plotOptions: {
       pie: {
         allowPointSelect: true,
         cursor: "pointer",
-        // dataLabels: { enabled: true, format: "<b>{point.name}</b>: {point.y} employees" },
         showInLegend: true,
         dataLabels: {
           enabled: true,
           format: "{point.y}",
           style: {
             fontSize: "10px",
-            color: "#000", // Adjust color as needed
+            color: "#000",
           },
         },
+      },
+    },
+    legend: {
+      align: "center",
+      verticalAlign: "bottom",
+      layout: "horizontal",
+      itemMarginRight: 10,
+      itemStyle: {
+        fontSize: "10px",
       },
     },
     series: [
@@ -134,12 +149,13 @@ const DepartmentCount = () => {
     credits: { enabled: false },
   };
 
+  // Prepare data for Gender chart
   const genderChartData = genderData.map((item) => ({
     name: item.gender,
     y: item.employee_count,
   }));
 
-  const genderChartOption = {
+  const genderChartOptions = {
     chart: { type: "pie" },
     title: "",
     tooltip: { pointFormat: "{series.name}: <b>{point.y}</b> employees" },
@@ -148,6 +164,15 @@ const DepartmentCount = () => {
         allowPointSelect: true,
         cursor: "pointer",
         showInLegend: true,
+      },
+    },
+    legend: {
+      align: "center",
+      verticalAlign: "bottom",
+      layout: "horizontal",
+      itemMarginRight: 10,
+      itemStyle: {
+        fontSize: "10px",
       },
     },
     series: [
@@ -169,7 +194,7 @@ const DepartmentCount = () => {
         <select
           value={selectedOption}
           onChange={(e) => setSelectedOption(e.target.value)}
-          // className="border border-gray-300 rounded p-1"
+          className="border border-gray-300 rounded p-1"
         >
           <option value="Department">Department</option>
           <option value="Location">Location</option>
@@ -177,24 +202,37 @@ const DepartmentCount = () => {
         </select>
       </div>
 
-      {/* Conditionally render the chart based on the selected option */}
-      {selectedOption === "Department" ? (
-        <>
+      <div>
+        {selectedOption === "Department" ? (
+          <div className="relative">
+            <HighchartsReact
+              highcharts={Highcharts}
+              options={departmentChartOptions}
+            />
+            {/* Legend Wrapper for Horizontal Scroll */}
+            {/* <div className="mt-4 overflow-x-auto scrollbar-hide">
+              <div className="inline-block whitespace-nowrap">
+                {departmentChartOptions.series[0].data.map((item, index) => (
+                  <span
+                    key={index}
+                    className="mr-4 text-gray-700 text-sm"
+                  >{`${item.name}: ${item.y}`}</span>
+                ))}
+              </div>
+            </div> */}
+          </div>
+        ) : selectedOption === "Gender" ? (
+          <HighchartsReact highcharts={Highcharts} options={genderChartOptions} />
+        ) : (
           <HighchartsReact
             highcharts={Highcharts}
-            options={departmentChartOptions}
+            options={locationChartOptions}
           />
-        </>
-      ) : selectedOption === "Gender" ? (
-        <HighchartsReact highcharts={Highcharts} options={genderChartOption} />
-      ) : (
-        <HighchartsReact
-          highcharts={Highcharts}
-          options={locationChartOptions}
-        />
-      )}
+        )}
+      </div>
     </div>
   );
 };
+
 
 export default DepartmentCount;

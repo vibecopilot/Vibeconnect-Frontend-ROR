@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { domainPrefix, getBroadcastDetails } from "../../../api";
 import { useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
+import { FaRegFileAlt } from "react-icons/fa";
 
 const BroadcastDetails = () => {
   const [broadcastDetails, setBroadcastDetails] = useState([]);
@@ -80,7 +81,7 @@ const BroadcastDetails = () => {
             <div className="grid grid-cols-2">
               <p className="font-medium ">Important:</p>
               <p className="">
-               
+               {broadcastDetails.important ? "Yes": "No"}
               </p>
             </div>
           </div>

@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import AdminHRMS from "./AdminHrms";
 import LeaveSetting from "./LeaveSetting";
 import { GrHelpBook } from "react-icons/gr";
-import { editLeaveSetting, getLeaveSetting } from "../../api";
+import { editLeaveSetting, getLeaveSetting, postLeaveSetting } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import toast from "react-hot-toast";
 
@@ -55,9 +55,15 @@ const GeneralSettings = () => {
     editData.append("daily_leave_accrual", formData.runDailyLeaveAccruals);
     editData.append("organization", hrmsOrgId);
     try {
-      const res = await editLeaveSetting(formData.id, editData);
-      toast.success("Leave setting updated successfully");
-      setIsEditing(false);
+      if (formData.id) {
+        const res = await editLeaveSetting(formData.id, editData);
+        toast.success("Leave setting updated successfully");
+        setIsEditing(false); 
+      }else{
+        const res = await postLeaveSetting(editData)
+        toast.success("Leave setting updated successfully");
+        setIsEditing(false); 
+      }
     } catch (error) {
       console.log(error);
     }

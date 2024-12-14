@@ -30,7 +30,7 @@ const AssetQrCode = ({ onClose, QR, assetId }) => {
 
   return (
     <ModalWrapper onclose={onClose}>
-      <div className="mx-4 flex flex-col justify-between items-center gap-10">
+      <div className="mx-4 flex flex-col justify-between items-center gap-10 z-50">
         <img
           src={QR}
           alt="qr"

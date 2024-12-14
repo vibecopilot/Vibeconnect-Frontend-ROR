@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import Table from "../../components/table/Table";
 import { Link } from "react-router-dom";
@@ -7,57 +7,92 @@ import { FaCheck } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 import { useSelector } from "react-redux";
 import { BsEye } from "react-icons/bs";
+import {
+  getApprovalNotifications,
+  getEmployeeDetails,
+  postApproveOrRejectEmployee,
+} from "../../api";
+import { getItemInLocalStorage } from "../../utils/localStorage";
+import { dateFormat, dateFormatSTD } from "../../utils/dateUtils";
+import OnboardingEmployeeDetail from "./Onbording/OnboardingEmployeeDetail";
 
 const OnBoardingTable = () => {
+  const [notifications, setNotifications] = useState([]);
+  const [filteredNotifications, setFilteredNotifications] = useState([]);
+  const approverID = getItemInLocalStorage("APPROVERID");
+  const fetchApprovalNotification = async () => {
+    try {
+      const res = await getApprovalNotifications(approverID);
+      setNotifications(res.data);
+      setFilteredNotifications(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(() => {
+    fetchApprovalNotification();
+  }, []);
+ 
+  const handleGrantApproval = async (notiId, decision) => {
+    setGrantId(notiId);
+    try {
+      const payload = {
+        approver_id: approverID,
+        action: decision,
+      };
+      await postApproveOrRejectEmployee(notiId, payload);
+      fetchApprovalNotification();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const columns = [
     {
       name: "View",
       selector: (row) => (
         <div>
-          <Link to={"/admin/edit-employee/basics"}>
+          <button onClick={() => handleEmployeeDetailsModal(row.record_id, row.id)}>
             <BsEye />
-          </Link>
+          </button>
         </div>
       ),
     },
     {
+      name: "Employee Id",
+      selector: (row) => row.record_id,
+      sortable: true,
+    },
+    {
       name: "Employee Name",
-      selector: (row) => row.Location,
+      selector: (row) => row.employee_name,
       sortable: true,
     },
     {
-      name: "Joining Date",
-      selector: (row) => row.Label,
+      name: "Status",
+      selector: (row) => row.approval_status,
       sortable: true,
     },
     {
-      name: "Onboarding Status",
-      selector: (row) => row.City,
+      name: "Registered on",
+      selector: (row) => dateFormatSTD(row.created_date),
       sortable: true,
     },
-    {
-      name: "Onboarding Checklist",
-      selector: (row) => row.State,
-      sortable: true,
-    },
-    {
-      name: "Portal Activation",
-      selector: (row) => row.Country,
-      sortable: true,
-    },
-    {
-      name: "Pending Letters Awaiting Signatures	",
-      selector: (row) => row.Leave_Days,
-      sortable: true,
-    },
+
     {
       name: "Action",
       selector: (row) => (
         <div className="flex gap-2">
-          <button className="bg-green-400 text-white rounded-full p-1 px-4">
+          <button
+            className="bg-green-400 text-white rounded-full p-1 px-4"
+            onClick={() => handleEmployeeDetailsModal(row.record_id, row.id)}
+          >
             <FaCheck />
           </button>
-          <button className="bg-red-400 text-white rounded-full p-1 px-4">
+          <button
+            className="bg-red-400 text-white rounded-full p-1 px-4"
+            onClick={() => handleGrantApproval(row.id, "reject")}
+          >
             <MdClose size={20} />
           </button>
         </div>
@@ -66,17 +101,17 @@ const OnBoardingTable = () => {
     },
   ];
 
-  const data = [
-    {
-      Name: "person 1",
-      Location: "Mittu Panda",
-      City: "pending",
-      State: "abc",
-      Label: "5/5/2024",
-      Country: "yes",
-    },
-  ];
   const themeColor = useSelector((state) => state.theme.color);
+  const [openDetailsModal, setDetailsModal] = useState(false);
+  const [emplId, setEmplId] = useState("");
+  const [grantId, setGrantId] = useState("");
+  const handleEmployeeDetailsModal = async (id, grant) => {
+    setGrantId(grant)
+    setEmplId(id);
+    setDetailsModal(true);
+    // fetchEmployeeDetails(id);
+  };
+
   return (
     <section className="flex">
       <div className=" w-full flex  flex-col overflow-hidden">
@@ -99,8 +134,20 @@ const OnBoardingTable = () => {
             </Link>
           </div>
         </div>
-        <Table columns={columns} data={data} isPagination={true} />
+        <Table
+          columns={columns}
+          data={filteredNotifications}
+          isPagination={true}
+        />
       </div>
+      {openDetailsModal && (
+        <OnboardingEmployeeDetail
+          setDetailsModal={() => setDetailsModal(false)}
+          empId={emplId}
+          grantId={grantId}
+          fetchApprovalNotification={fetchApprovalNotification}
+        />
+      )}
     </section>
   );
 };

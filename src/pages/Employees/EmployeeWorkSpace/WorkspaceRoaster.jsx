@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import Navbar from '../../../components/Navbar';
-import EmployeePortal from '../../../components/navbars/EmployeePortal';
-import RosterCard from './RoasterCard';
+import React, { useState, useEffect } from "react";
+import Navbar from "../../../components/Navbar";
+import EmployeePortal from "../../../components/navbars/EmployeePortal";
+import RosterCard from "./RoasterCard";
+import { getEmployeeRoster } from "../../../api";
+import { getItemInLocalStorage } from "../../../utils/localStorage";
 
 // Function to generate roster data for a month
 const generateMonthlyRoster = (month, year) => {
@@ -11,8 +13,12 @@ const generateMonthlyRoster = (month, year) => {
   for (let day = 1; day <= daysInMonth; day++) {
     const date = new Date(year, month - 1, day);
     const dayOfWeek = date.getDay();
-    const formattedDate = date.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short' });
-    const shiftTiming = dayOfWeek === 0 ? 'Weekly Off' : '9 AM - 5 PM'; // Set 'Weekly Off' for Sundays
+    const formattedDate = date.toLocaleDateString("en-GB", {
+      weekday: "short",
+      day: "2-digit",
+      month: "short",
+    });
+    const shiftTiming = dayOfWeek === 0 ? "Weekly Off" : "9 AM - 5 PM"; // Set 'Weekly Off' for Sundays
     const isWeeklyOff = dayOfWeek === 0; // Sunday is a weekly off day
 
     roster.push({
@@ -26,11 +32,13 @@ const generateMonthlyRoster = (month, year) => {
 };
 
 const WorkspaceRoaster = () => {
-  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7)); // Default to current month
+  const [selectedMonth, setSelectedMonth] = useState(
+    new Date().toISOString().slice(0, 7)
+  ); // Default to current month
   const [rosterData, setRosterData] = useState([]);
 
   useEffect(() => {
-    const [year, month] = selectedMonth.split('-').map(Number);
+    const [year, month] = selectedMonth.split("-").map(Number);
     const generatedRosterData = generateMonthlyRoster(month, year);
     setRosterData(generatedRosterData);
   }, [selectedMonth]);
@@ -38,6 +46,20 @@ const WorkspaceRoaster = () => {
   const handleMonthChange = (event) => {
     setSelectedMonth(event.target.value);
   };
+  const hrmsEmployeeId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
+  const [rosters, setRosters] = useState([]);
+  const fetchEmployeeRoster = async () => {
+    try {
+      const res = await getEmployeeRoster(hrmsEmployeeId);
+      console.log(res);
+      setRosters(res);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(() => {
+    fetchEmployeeRoster();
+  }, []);
 
   return (
     <section className="flex">
@@ -52,16 +74,33 @@ const WorkspaceRoaster = () => {
             className="border rounded-md p-2 w-60"
           />
         </div>
-        <div className="grid grid-cols-6 gap-1">
-          {rosterData.map((day, index) => (
+        {rosters.length !== 0 ? (
+          <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-1">
+            {/* {rosterData.map((day, index) => (
             <RosterCard
               key={index}
               date={day.date}
               shiftTiming={day.shiftTiming}
               isWeeklyOff={day.isWeeklyOff}
             />
-          ))}
-        </div>
+          ))} */}
+            {rosters.map((roster, index) => (
+              <div
+                key={index} // Add a key for each mapped element
+                className={`p-1 border-green-400 rounded-lg border-2 text-black shadow-md my-2`}
+              >
+                <h3 className="font-semibold">{roster.date}</h3>
+                <p className="text-sm">
+                  Shift Timing: {roster.start_time} - {roster.end_time}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center text-gray-500">
+            No Shift Assigned
+          </div>
+        )}
       </div>
     </section>
   );

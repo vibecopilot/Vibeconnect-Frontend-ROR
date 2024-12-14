@@ -1,14 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { getRoutineTaskDetails } from "../../../api";
+import { domainPrefix, getRoutineTaskDetails } from "../../../api";
 import { useParams } from "react-router-dom";
+import toast from "react-hot-toast";
 
 const AssetRoutineDetails = () => {
   const { assetId, activityId } = useParams();
   const [taskDetails, setTaskDetails] = useState([]);
 
   useEffect(() => {
+    toast.loading("Please wait");
     const fetchTaskDetails = async () => {
       const detailsResp = await getRoutineTaskDetails(assetId, activityId);
+      toast.dismiss()
+      toast.success("Schedule Details fetched successfully");
       console.log(detailsResp.data);
       setTaskDetails(detailsResp.data);
     };
@@ -65,6 +69,31 @@ const AssetRoutineDetails = () => {
                   <p className="font-medium">Answer :</p>
                   <p>{task.value}</p>
               </div>
+              <span className="font-medium text-gray-500">
+                                Attachments :
+                              </span>
+                              <div className="flex gap-4 flex-wrap my-4 items-center text-center">
+                                {task.question_attachments?.length > 0 ? (
+                                  task.question_attachments.map(
+                                    (attachment, i) => (
+                                      <img
+                                        key={i}
+                                        src={domainPrefix + attachment.document}
+                                        alt={`Attachment ${i + 1}`}
+                                        className="w-40 h-28 object-cover rounded-md"
+                                        onClick={() =>
+                                          window.open(
+                                            domainPrefix + attachment.document,
+                                            "_blank"
+                                          )
+                                        }
+                                      />
+                                    )
+                                  )
+                                ) : (
+                                  <p>No Attachments</p>
+                                )}
+                              </div>
                 </div>
               </>
             {/* )} */}

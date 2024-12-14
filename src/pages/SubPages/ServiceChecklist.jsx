@@ -10,6 +10,8 @@ import * as XLSX from "xlsx";
 import { DNA } from "react-loader-spinner";
 import { useSelector } from "react-redux";
 import { BsEye } from "react-icons/bs";
+import { FaCopy, FaDownload } from "react-icons/fa";
+
 const ServiceChecklist = () => {
   const [searchChecklistText, setSearchChecklistCheck] = useState("");
   const [filteredChecklistData, setFilteredChecklistData] = useState([]);
@@ -25,6 +27,9 @@ const ServiceChecklist = () => {
               </Link> */}
           <Link to={`/services/edit-service-checklist/${row.id}`}>
             <BsEye size={15} />
+          </Link>
+          <Link to={`/admin/copy-checklist/service/${row.id}`}>
+          <FaCopy size={15}/>
           </Link>
         </div>
       ),
@@ -56,8 +61,8 @@ const ServiceChecklist = () => {
       sortable: true,
     },
     {
-      name: "No. Of Questions",
-      selector: (row) => row.questions.length,
+      name: "No. Of Groups",
+      selector: (row) => row.groups.length,
       sortable: true,
     },
     {

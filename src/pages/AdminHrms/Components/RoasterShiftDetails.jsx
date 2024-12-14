@@ -60,7 +60,6 @@ function RoasterShiftDetails({
       }
     };
     if (date?.id) {
-      
       fetchRosterRecordDetails();
     }
     fetchRosterShifts();
@@ -70,26 +69,58 @@ function RoasterShiftDetails({
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // const handleEditRosterShift = async () => {
+  //   const editData = new FormData();
+  //   editData.append(
+  //     "date",
+  //     date?.date ? date?.date : new Date(schedule).toISOString().slice(0, 10)
+  //   );
+  //   editData.append("shift", formData.selectedShift);
+  //   editData.append("employee", employee.id);
+  //   try {
+  //     if (date?.date) {
+  //       const res = await editRosterRecord(date.id, editData);
+  //     } else {
+  //       const res = await postRosterRecord(editData);
+  //     }
+  //     fetchRosterRecords();
+  //     toast.success("Roster record updated successfully");
+  //     onClose();
+  //   } catch (error) {
+  //     console.log(error);
+  //     toast.error("Something went wrong");
+  //   }
+  // };
+
   const handleEditRosterShift = async () => {
-    const editData = new FormData();
-    editData.append(
-      "date",
-      date?.date ? date?.date : new Date(schedule).toISOString().slice(0, 10)
-    );
-    editData.append("shift", formData.selectedShift);
-    editData.append("employee", employee.id);
     try {
-      if (date?.date) {
-        const res = await editRosterRecord(date.id, editData);
-      } else {
-        const res = await postRosterRecord(editData);
+      // Validate required fields
+      if (!formData.selectedShift) {
+        return toast.error("Please select a shift.");
       }
+
+      const payload = {
+        employee_ids: [employee.id],
+        shift_id: formData.selectedShift,
+        date_range: [
+          date?.date
+            ? date.date
+            : new Date(schedule).toISOString().slice(0, 10),
+        ], // Single date
+      };
+
+      if (date?.date) {
+        const res = await editRosterRecord(payload);
+      } else {
+        const res = await postRosterRecord(payload);
+      }
+
       fetchRosterRecords();
-      toast.success("Roster record updated successfully");
+      toast.success("Roster record updated successfully.");
       onClose();
     } catch (error) {
-      console.log(error);
-      toast.error("Something went wrong");
+      console.error("Error updating roster:", error);
+      toast.error("Something went wrong. Please try again.");
     }
   };
 
@@ -141,7 +172,7 @@ function RoasterShiftDetails({
             {/* <p>{employee.date}</p> */}
           </div>
 
-          <div className="mb-4">
+          {/* <div className="mb-4">
             <label className="block mb-2 font-medium">Select Type</label>
             <select
               className="w-full p-2 border rounded-md"
@@ -153,7 +184,7 @@ function RoasterShiftDetails({
               <option value="full_day_weekly_off">Full Day Weekly Off</option>
               <option value="half_day_weekly_off">Half Day Weekly Off</option>
             </select>
-          </div>
+          </div> */}
 
           <div className="mb-4">
             <label className="block mb-2 font-medium">Select Shift</label>
@@ -172,7 +203,7 @@ function RoasterShiftDetails({
             </select>
           </div>
 
-          <div className="mb-4">
+          {/* <div className="mb-4">
             <label className="block mb-2">Branch Location</label>
             <input
               type="text"
@@ -193,7 +224,7 @@ function RoasterShiftDetails({
               />
               Repeat?
             </label>
-          </div>
+          </div> */}
           {repeat && (
             <div>
               <div className="flex flex-col">

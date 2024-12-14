@@ -22,6 +22,7 @@ const EditBroadcast = () => {
     expiry_date: "",
     user_ids: "",
     notice_image: [],
+    important: false
   });
   console.log(formData);
   const datePickerRef = useRef(null);
@@ -61,6 +62,7 @@ const EditBroadcast = () => {
             : null,
           // user_ids:
           notice_image: response.notice_image,
+          important: response.important
         });
       } catch (error) {
         console.log(error);
@@ -96,6 +98,7 @@ const EditBroadcast = () => {
         formData.notice_discription
       );
       formDataSend.append("notice[expiry_date]", formData.expiry_date);
+      formDataSend.append("notice[important]", formData.important);
       formDataSend.append("notice[user_ids]", formData.user_ids);
 
       formData.notice_image.forEach((file) => {
@@ -182,7 +185,18 @@ const EditBroadcast = () => {
                   />
                 </div>
                 <div className="flex gap-2 items-center">
-                  <input type="checkbox" name="" id="imp" />
+                  <input
+                    type="checkbox"
+                    name=""
+                    id="imp"
+                    checked={formData.important === true}
+                    onChange={() =>
+                      setFormData({
+                        ...formData,
+                        important: !formData.important,
+                      })
+                    }
+                  />
                   <label htmlFor="imp">Mark as Important</label>
                 </div>
               </div>
