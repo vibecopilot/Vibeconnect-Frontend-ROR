@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { BiEdit } from "react-icons/bi";
 import { BsEye } from "react-icons/bs";
 import { RiDeleteBinLine } from "react-icons/ri";
@@ -8,6 +8,7 @@ import SubCategorySetupModal from "../../../containers/modals/IncidentSetupModal
 import { MdClose } from "react-icons/md";
 import { FaCheck, FaTrash } from "react-icons/fa";
 import { PiPlusCircle } from "react-icons/pi";
+import { getIncidentTags } from "../../../api";
 
 const IncidentSubCategorySetup = () => {
   const [modal, showModal] = useState(false);
@@ -23,7 +24,7 @@ const IncidentSubCategorySetup = () => {
 
       cell: (row) => (
         <div className="flex items-center gap-4">
-          <button  onClick={() => showModal(true)} className="text-blue-500">
+          <button onClick={() => showModal(true)} className="text-blue-500">
             <BiEdit size={15} />
           </button>
 
@@ -45,6 +46,18 @@ const IncidentSubCategorySetup = () => {
   ];
 
   const [addSubCat, setAddSubCat] = useState(false);
+  const [categories, setCategories] = useState([]);
+  useEffect(() => {
+    const fetchIncidentCategory = async () => {
+      try {
+        const res = await getIncidentTags();
+        setCategories(res.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchIncidentCategory();
+  }, []);
 
   return (
     <section className="mx-2">
@@ -58,9 +71,11 @@ const IncidentSubCategorySetup = () => {
                 className="border p-2 px-4 border-gray-300 rounded-md w-full"
               >
                 <option value="">Select Category</option>
-                <option value="">Health and Safety</option>
-                <option value="">Fire</option>
-                <option value="">Near Miss/Good Catch</option>
+                {categories.map((category) => (
+                  <option value={category.id} key={category.id}>
+                    {category.name}
+                  </option>
+                ))}
               </select>
               <input
                 type="text"

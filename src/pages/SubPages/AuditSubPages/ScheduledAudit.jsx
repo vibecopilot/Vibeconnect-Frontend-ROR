@@ -126,9 +126,7 @@ const ScheduledAudit = () => {
         <div className="flex gap-2">
           <Link
             to={"/admin/audit/schedule-audit"}
-            style={{
-                
-            }}
+            style={{}}
             className="border-2 font-semibold hover:bg-black hover:text-white duration-300 transition-all border-black p-2 rounded-md text-black cursor-pointer text-center flex items-center gap-2 justify-center"
             // onClick={() => setShowCountry(!showCountry)}
           >
@@ -142,13 +140,13 @@ const ScheduledAudit = () => {
             //   value={searchText}
             //   onChange={handleSearch}
           />
-        <button
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-          // onClick={exportToExcel}
+          <button
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            // onClick={exportToExcel}
           >
-          Export
-        </button>
-            </div>
+            Export
+          </button>
+        </div>
       </div>
       <Table columns={columns} data={data} isPagination={true} />
     </div>

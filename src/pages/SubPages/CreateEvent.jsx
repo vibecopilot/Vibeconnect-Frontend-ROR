@@ -232,8 +232,7 @@ console.log(groups)
                 />
               </div>
               <div className="flex items-center gap-2 w-full">
-                {/* <div > */}
-                {/* <p className="font-medium mb-2">Start Time:</p> */}
+                
                 <DatePicker
                   selected={formData.start_date_time}
                   onChange={handleStartDateChange}
