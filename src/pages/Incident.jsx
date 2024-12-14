@@ -8,6 +8,7 @@ import { BiEdit } from "react-icons/bi";
 import { PiPlusCircle } from "react-icons/pi";
 import { useSelector } from "react-redux";
 import { getIncidents } from "../api";
+import { dateFormatSTD } from "../utils/dateUtils";
 
 const Incidents = () => {
   const column = [
@@ -26,14 +27,14 @@ const Incidents = () => {
       ),
     },
 
-    { name: "ID", selector: (row) => row.ID, sortable: true },
+    { name: "ID", selector: (row) => row.id, sortable: true },
     { name: "Description", selector: (row) => row.Description, sortable: true },
     // { name: "Site", selector: (row) => row.Site, sortable: true },
     // { name: "Region", selector: (row) => row.Region, sortable: true },
     // { name: "Tower", selector: (row) => row.Tower, sortable: true },
     {
       name: "Incident Time",
-      selector: (row) => row.IncidentTime,
+      selector: (row) => dateFormatSTD(row.time_and_date),
       sortable: true,
     },
     { name: "Level", selector: (row) => row.Level, sortable: true },
