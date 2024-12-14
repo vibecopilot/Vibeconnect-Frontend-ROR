@@ -7089,3 +7089,39 @@ export const getComplaintMode = async () =>
       token: token,
     },
   });
+export const postIncidentTags = async (data) =>
+  axiosInstance.post(`/incidence_tags.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const getIncidentTags = async () =>
+  axiosInstance.get(`/incidence_tags.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const deleteIncidentTags = async () =>
+  axiosInstance.delete(`/incidence_tags.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const getIncidentCatDetails = async (id) =>
+  axiosInstance.get(`/incidence_tags/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const editIncidentCatDetails = async (id, data) =>
+  axiosInstance.put(`/incidence_tags/${id}.json`,data, {
+    params: {
+      token: token,
+    },
+  });
+export const getIncidents = async () =>
+  axiosInstance.get(`/incidents.json`, {
+    params: {
+      token: token,
+    },
+  });

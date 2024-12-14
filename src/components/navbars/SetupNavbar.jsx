@@ -47,7 +47,7 @@ const SetupNavbar = () => {
         {feat.includes("purchase_order") && ( <Link  to={"/admin/addresses-setup"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">Addresses</Link>)}
         {/* <Link className="hover:bg-white hover:text-black  p-2 rounded-lg ">Export</Link> */}
         {/* <Link to={"/setup/insights/"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">Insights</Link> */}
-        {/* <Link to={"/setup/permit-setup"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">Permit</Link> */}
+        {feat.includes("permits") &&<Link to={"/setup/permit-setup"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">Permit</Link>}
         {/* <Link to={"/setup/parking-setup"} className="hover:bg-white hover:text-black  p-2 rounded-lg ">Parking</Link> */}
         {feat.includes("incidents") &&(<Link to={"/admin/setup-incidents"}className="hover:bg-white hover:text-black  p-2 rounded-lg ">Incidents Setup</Link>)}
         {feat.includes("communication") && ( <Link to={"/admin/communication-access-control"}className="hover:bg-white hover:text-black  p-2 rounded-lg ">Communication Setup Control</Link>)}
