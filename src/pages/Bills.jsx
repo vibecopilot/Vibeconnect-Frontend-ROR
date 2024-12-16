@@ -40,7 +40,7 @@ function Bills() {
     },
     { name: "Id", selector: (row) => row.id, sortable: true },
     { name: "Description", selector: (row) => row.description, sortable: true },
-    { name: "Supplier", selector: (row) => row.vendor_name, sortable: true },
+    { name: "Supplier", selector: (row) => row.suplier_name, sortable: true },
     { name: "Last Approved By", selector: (row) => row.LastApprovedBy, sortable: true },
     { name: "Total Amount", selector: (row) => row.total_amount, sortable: true },
     { name: "Deduction", selector: (row) => row.Deduction, sortable: true },

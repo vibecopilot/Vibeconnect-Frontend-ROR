@@ -56,14 +56,19 @@ const HotelRequest = () => {
         </div>
       ),
     },
-    {
-      name: "Employee ID",
-      selector: (row) => row.employee_id,
-      sortable: true,
-    },
+    // {
+    //   name: "Employee ID",
+    //   selector: (row) => row.employee_id,
+    //   sortable: true,
+    // },
     {
       name: "Employee Name",
       selector: (row) => row.employee_name,
+      sortable: true,
+    },
+    {
+      name: "Mobile No",
+      selector: (row) => row.booking_confirmation_number,
       sortable: true,
     },
     {
@@ -102,16 +107,16 @@ const HotelRequest = () => {
       selector: (row) => row.room_type,
       sortable: true,
     },
-    // {
-    //   name: "Manager Approval ",
-    //   selector: (row) => (row.manager_approval ? "Approved" : "Not Approved"),
-    //   sortable: true,
-    // },
     {
-      name: "Booking Status ",
-      selector: (row) => row.booking_status,
+      name: "Manager Approval ",
+      selector: (row) => (row.manager_approval ? "Approved" : "Not Approved"),
       sortable: true,
     },
+    // {
+    //   name: "Booking Status ",
+    //   selector: (row) => row.booking_status,
+    //   sortable: true,
+    // },
 
     {
       name: "Approval",
@@ -160,7 +165,7 @@ const HotelRequest = () => {
                 onChange={() => setSelectedStatus("upcoming")}
               />
               <label htmlFor="upcoming" className="text-sm">
-                Upcoming
+                Approved
               </label>
             </div>
             <div className="flex items-center gap-2">
@@ -172,10 +177,10 @@ const HotelRequest = () => {
                 onChange={() => setSelectedStatus("completed")}
               />
               <label htmlFor="completed" className="text-sm">
-                Completed
+                Rejected
               </label>
             </div>
-            <div className="flex items-center gap-2">
+            {/* <div className="flex items-center gap-2">
               <input
                 type="radio"
                 id="cancelled"
@@ -186,7 +191,7 @@ const HotelRequest = () => {
               <label htmlFor="cancelled" className="text-sm">
                 Cancelled
               </label>
-            </div>
+            </div> */}
           </div>
           <span className="flex gap-4">
             <Link

@@ -55,11 +55,11 @@ const FlightRequest = () => {
         </div>
       ),
     },
-    {
-      name: "Employee ID",
-      selector: (row) => row.employee_id,
-      sortable: true,
-    },
+    // {
+    //   name: "Employee ID",
+    //   selector: (row) => row.employee_id,
+    //   sortable: true,
+    // },
     {
       name: "Employee Name",
       selector: (row) => row.employee_name,
@@ -91,12 +91,12 @@ const FlightRequest = () => {
       sortable: true,
     },
     {
-      name: "Ticket Confirmation Number",
-      selector: (row) => row.ticket_confirmation_number,
+      name: "Mobile Number",
+      selector: (row) => row.mobile_no,
       sortable: true,
     },
     {
-      name: "Booking Confirmation Email",
+      name: "Email",
       selector: (row) => row.booking_confirmation_email,
       sortable: true,
     },
@@ -106,9 +106,12 @@ const FlightRequest = () => {
       sortable: true,
     },
     {
-      name: "Passenger Name",
-      selector: (row) => row.passenger_name,
-      sortable: true,
+      name: "Additional Passengers",
+      selector: (row) =>
+        row.additional_passengers
+          ?.map((passenger) => passenger.name)
+          .join(", ") || "No Passengers",
+      sortable: false, // Sorting might not be straightforward for multiple names
     },
     {
       name: "Passport Information",
@@ -121,27 +124,27 @@ const FlightRequest = () => {
       sortable: true,
     },
 
-    {
-      name: "Booking Status",
-      selector: (row) => row.booking_status,
-      sortable: true,
-    },
-
     // {
-    //   name: "Approval",
-    //   selector: (row) =>
-
-    //       <div className="flex justify-center gap-2">
-    //         <button className="text-green-400 font-medium hover:bg-green-400 hover:text-white transition-all duration-200 p-1 rounded-full">
-    //           <TiTick size={20} />
-    //         </button>
-    //         <button className="text-red-400 font-medium hover:bg-red-400 hover:text-white transition-all duration-200 p-1 rounded-full">
-    //           <IoClose size={20} />
-    //         </button>
-    //       </div>
-    //     ,
+    //   name: "Booking Status",
+    //   selector: (row) => row.booking_status,
     //   sortable: true,
     // },
+
+    {
+      name: "Approval",
+      selector: (row) =>
+
+          <div className="flex justify-center gap-2">
+            <button className="text-green-400 font-medium hover:bg-green-400 hover:text-white transition-all duration-200 p-1 rounded-full">
+              <TiTick size={20} />
+            </button>
+            <button className="text-red-400 font-medium hover:bg-red-400 hover:text-white transition-all duration-200 p-1 rounded-full">
+              <IoClose size={20} />
+            </button>
+          </div>
+        ,
+      sortable: true,
+    },
   ];
 
   return (
@@ -167,28 +170,28 @@ const FlightRequest = () => {
               <div className="flex items-center gap-2">
                 <input
                   type="radio"
-                  id="upcoming"
+                  id="Approved"
                   name="status"
-                  checked={selectedStatus === "upcoming"}
-                  onChange={() => handleStatusChange("upcoming")}
+                  checked={selectedStatus === "Approved"}
+                  onChange={() => handleStatusChange("Approved")}
                 />
-                <label htmlFor="upcoming" className="text-sm">
-                  Upcoming
+                <label htmlFor="Approved" className="text-sm">
+                  Approved
                 </label>
               </div>
               <div className="flex items-center gap-2">
                 <input
                   type="radio"
-                  id="completed"
+                  id="Rejected"
                   name="status"
-                  checked={selectedStatus === "completed"}
-                  onChange={() => handleStatusChange("completed")}
+                  checked={selectedStatus === "Rejected"}
+                  onChange={() => handleStatusChange("Rejected")}
                 />
-                <label htmlFor="completed" className="text-sm">
-                  Completed
+                <label htmlFor="Rejected" className="text-sm">
+                  Rejected
                 </label>
               </div>
-              <div className="flex items-center gap-2">
+              {/* <div className="flex items-center gap-2">
                 <input
                   type="radio"
                   id="cancelled"
@@ -199,7 +202,7 @@ const FlightRequest = () => {
                 <label htmlFor="cancelled" className="text-sm">
                   Cancelled
                 </label>
-              </div>
+              </div> */}
             </div>
             <span className="mr-4">
               <Link

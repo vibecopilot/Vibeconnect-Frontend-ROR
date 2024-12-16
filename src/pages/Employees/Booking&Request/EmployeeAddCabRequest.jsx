@@ -116,7 +116,6 @@ const EmployeeAddCabRequest = () => {
               <option value="bus">Bus</option>
             </select>
           </div>
-
           <div className="grid gap-2 items-center w-full">
             <label
               htmlFor="bookingConfirmationNumber"
@@ -131,6 +130,21 @@ const EmployeeAddCabRequest = () => {
               placeholder="Mobile Number"
             />
           </div>
+        </div>
+        <div className="grid gap-2 items-center w-full my-4">
+          <label htmlFor="specialRequirements" className="font-semibold">
+            Special Requirements:
+          </label>
+          <textarea
+            id="specialRequirements"
+            name="special_requirements"
+            // value={formData.special_requirements}
+            // onChange={handleChange}
+            cols="25"
+              rows="3"
+            className="border p-1 px-4 border-gray-500 rounded-md"
+            placeholder="Enter Special Requirements"
+          ></textarea>
         </div>
         <div className="flex gap-5 justify-center items-center my-4">
           <button

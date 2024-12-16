@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-import { postTravellingAllowanceRequest } from '../../../api';
+import { postTravellingAllowanceRequest, getSetupUsers} from '../../../api';
 import FileInputBox from '../../../containers/Inputs/FileInputBox';
 import { useSelector } from "react-redux";
+import Select from "react-select";
 const AddTravellingAllowanceRequest = () => {
+  const [users, setUsers] = useState([]);
+  const [selectedUser, setSelectedUser] = useState(null);
   const themeColor = useSelector((state) => state.theme.color);
   const [formData, setFormData] = useState({
     employee_name: "",
@@ -17,7 +20,8 @@ const AddTravellingAllowanceRequest = () => {
     reimbursement_amount: "",
     reimbursement_method: "",
     manager_approval: false,
-    reimbursement_confirmation_email: ""
+    reimbursement_confirmation_email: "",
+    mobileNo:"",
 });
 const handleChange = (e) => {
   setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -25,8 +29,9 @@ const handleChange = (e) => {
 const navigate = useNavigate()
 const handleTravelAllowanceRequest = async() => {
   const sendData = new FormData();
-  sendData.append("transportation_allowance_request[employee_id]", formData.employee_id);
-  sendData.append("transportation_allowance_request[employee_name]", formData.employee_name);
+  // sendData.append("transportation_allowance_request[employee_id]", formData.employee_id);
+  // sendData.append("transportation_allowance_request[employee_name]", formData.employee_name);
+  sendData.append("transportation_allowance_request[employee_name]", selectedUser.label);
   sendData.append("transportation_allowance_request[expense_category]", formData.expense_category);
   sendData.append("transportation_allowance_request[date_of_expense]", formData.date_of_expense);
   sendData.append("transportation_allowance_request[description_of_expense]", formData.description_of_expense);
@@ -48,6 +53,29 @@ const handleTravelAllowanceRequest = async() => {
       console.log(error)
   }
 };
+
+const handleUserChange = (selectedOption) => {
+  setSelectedUser(selectedOption); // Update selected user state
+  console.log("Selected user:", selectedOption);
+};
+
+useEffect(() => {
+  const fetchUsers = async () => {
+    try {
+      const setupUsers = await getSetupUsers(); // API call to fetch users
+      const formattedOptions = setupUsers.data.map((user) => ({
+        value: user.id,
+        label: user.firstname,
+      }));
+      setUsers(formattedOptions);
+      console.log(formattedOptions);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  fetchUsers();
+}, []);
+
   return(
   <div className="flex justify-center items-center my-5 w-full p-4">
     <div className="border border-gray-300 rounded-lg p-4 w-full mx-4  ">
@@ -55,7 +83,7 @@ const handleTravelAllowanceRequest = async() => {
         Travel Allowance Request
       </h2>
       <div className="grid md:grid-cols-3 gap-5 mt-5">
-        <div className="grid gap-2 items-center w-full">
+        {/* <div className="grid gap-2 items-center w-full">
           <label htmlFor="employeeId" className="font-semibold">
             Employee ID:
           </label>
@@ -83,8 +111,47 @@ const handleTravelAllowanceRequest = async() => {
              className="border p-1 px-4 border-gray-500 rounded-md"
             placeholder="Enter Employee Name"
           />
+        </div> */}
+        <div className="grid gap-2 items-center w-full">
+            <label className="font-medium">Employee Name:</label>
+            <Select
+              name="user"
+              options={users}
+              className="basic-single-select pr-5 text-black"
+              classNamePrefix="select"
+              placeholder="Select a Employee..."
+              value={selectedUser} // Set the value from state
+              onChange={handleUserChange} // Update selected value on change
+            />
+          </div>
+          <div className="grid gap-2 items-center w-full">
+          <label htmlFor="reimbursementConfirmationEmail" className="font-semibold">
+             Mobile Number:
+          </label>
+          <input
+            type="number"
+            name="mobileNo"
+            value={formData.mobileNo}
+            onChange={handleChange}
+            id="reimbursementConfirmationEmail"
+            className="border p-1 px-4 border-gray-500 rounded-md"
+            placeholder="Enter Mobile Number"
+          />
         </div>
-
+        <div className="grid gap-2 items-center w-full">
+          <label htmlFor="reimbursementConfirmationEmail" className="font-semibold">
+             Email:
+          </label>
+          <input
+            type="email"
+            name="reimbursement_confirmation_email"
+            value={formData.reimbursement_confirmation_email}
+            onChange={handleChange}
+            id="reimbursementConfirmationEmail"
+            className="border p-1 px-4 border-gray-500 rounded-md"
+            placeholder="Enter Email"
+          />
+        </div>
         <div className="grid gap-2 items-center w-full">
           <label htmlFor="expenseCategory" className="font-semibold">
             Expense Category:
@@ -135,7 +202,7 @@ const handleTravelAllowanceRequest = async() => {
 
         
 
-        <div className="grid gap-2 items-center w-full">
+        {/* <div className="grid gap-2 items-center w-full">
           <label htmlFor="approvalStatus" className="font-semibold">
             Approval Status:
           </label>
@@ -149,7 +216,7 @@ const handleTravelAllowanceRequest = async() => {
             <option value="approved">Approved</option>
             <option value="denied">Denied</option>
           </select>
-        </div>
+        </div> */}
 
         <div className="grid gap-2 items-center w-full">
           <label htmlFor="reimbursementAmount" className="font-semibold">
@@ -183,7 +250,7 @@ const handleTravelAllowanceRequest = async() => {
 
         <div className="grid gap-2 items-center w-full">
           <label htmlFor="managerApproval" className="font-semibold">
-            Manager Approval:
+          Manager Approval (If Required):
           </label>
           <select id="managerApproval" 
           name="manager_approval"
@@ -194,21 +261,6 @@ const handleTravelAllowanceRequest = async() => {
             <option value="true">Yes</option>
             <option value="false">No</option>
           </select>
-        </div>
-
-        <div className="grid gap-2 items-center w-full">
-          <label htmlFor="reimbursementConfirmationEmail" className="font-semibold">
-            Reimbursement Confirmation Email:
-          </label>
-          <input
-            type="email"
-            name="reimbursement_confirmation_email"
-            value={formData.reimbursement_confirmation_email}
-            onChange={handleChange}
-            id="reimbursementConfirmationEmail"
-            className="border p-1 px-4 border-gray-500 rounded-md"
-            placeholder="Enter Reimbursement Confirmation Email"
-          />
         </div>
       </div>
       <div className="grid gap-2 items-center w-full my-4">

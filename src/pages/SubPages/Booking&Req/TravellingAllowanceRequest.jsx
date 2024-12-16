@@ -51,11 +51,11 @@ const TravellingAllowanceRequest = () => {
         </div>
       ),
     },
-    {
-      name: "Employee ID",
-      selector: (row) => row.employee_id,
-      sortable: true,
-    },
+    // {
+    //   name: "Employee ID",
+    //   selector: (row) => row.employee_id,
+    //   sortable: true,
+    // },
     {
       name: "Employee Name",
       selector: (row) => row.employee_name,
@@ -101,11 +101,11 @@ const TravellingAllowanceRequest = () => {
       selector: (row) => row.manager_approval ? "Approved" : "Not Approved",
       sortable: true,
     },
-    {
-      name: "Booking Status",
-      selector: (row) => row.approval_status,
-      sortable: true,
-    },
+    // {
+    //   name: "Booking Status",
+    //   selector: (row) => row.approval_status,
+    //   sortable: true,
+    // },
     {
       name: "Reimbursement Confirmation Email",
       selector: (row) => row.reimbursement_confirmation_email,
@@ -161,28 +161,28 @@ const TravellingAllowanceRequest = () => {
             <div className="flex items-center gap-2">
               <input
                 type="radio"
-                id="upcoming"
+                id="Approved"
                 name="status"
-                checked={selectedStatus === "upcoming"}
-                onChange={() => handleStatusChange("upcoming")}
+                checked={selectedStatus === "Approved"}
+                onChange={() => handleStatusChange("Approved")}
               />
-              <label htmlFor="upcoming" className="text-sm">
-                Upcoming
+              <label htmlFor="Approved" className="text-sm">
+                Approved
               </label>
             </div>
             <div className="flex items-center gap-2">
               <input
                 type="radio"
-                id="completed"
+                id="Rejected"
                 name="status"
-                checked={selectedStatus === "completed"}
-                onChange={() => handleStatusChange("completed")}
+                checked={selectedStatus === "Rejected"}
+                onChange={() => handleStatusChange("Rejected")}
               />
-              <label htmlFor="completed" className="text-sm">
-                Completed
+              <label htmlFor="Rejected" className="text-sm">
+                Rejected
               </label>
             </div>
-            <div className="flex items-center gap-2">
+            {/* <div className="flex items-center gap-2">
               <input
                 type="radio"
                 id="cancelled"
@@ -193,7 +193,7 @@ const TravellingAllowanceRequest = () => {
               <label htmlFor="cancelled" className="text-sm">
                 Cancelled
               </label>
-            </div>
+            </div> */}
           </div>
           {/* Add button */}
           <span className="flex gap-4">

@@ -79,29 +79,44 @@ const TransportationRequest = () => {
         </div>
       ),
     },
-    {
-      name: "Employee ID",
-      selector: (row) => row.employee_id,
-      sortable: true,
-    },
+    // {
+    //   name: "Employee ID",
+    //   selector: (row) => row.employee_id,
+    //   sortable: true,
+    // },
     {
       name: "Employee Name",
       selector: (row) => row.employee_name,
       sortable: true,
     },
     {
-      name: "Destination",
+      name: "Mobile Number",
+      selector: (row) => row.mobile_no,
+      sortable: true,
+    },
+    {
+      name: "Email",
+      selector: (row) => row.booking_confirmation_email,
+      sortable: true,
+    },
+    {
+      name: "Pickup Location",
       selector: (row) => row.pickup_location,
       sortable: true,
     },
     {
-      name: "Date",
-      selector: (row) => row.date,
+      name: "Pickup Location",
+      selector: (row) => row.drop_off_location,
       sortable: true,
     },
     {
-      name: "Time",
-      selector: (row) => row.time,
+      name: "Date Date",
+      selector: (row) => row.start_date,
+      sortable: true,
+    },
+    {
+      name: "End Date",
+      selector: (row) => row.end_date,
       sortable: true,
     },
     {
@@ -109,8 +124,6 @@ const TransportationRequest = () => {
       selector: (row) => row.driver_contact_information,
       sortable: true,
     },
-   
-   
     {
       name: "Special Requirements",
       selector: (row) => row.special_requirements,
@@ -126,16 +139,11 @@ const TransportationRequest = () => {
       selector: (row) => row.manager_approval ? "Approved" : "Not Approved",
       sortable: true,
     },
-    {
-      name: "Booking Status",
-      selector: (row) => row.booking_status,
-      sortable: true,
-    },
-    {
-      name: "Confirmation Email",
-      selector: (row) => row.booking_confirmation_email,
-      sortable: true,
-    },
+    // {
+    //   name: "Booking Status",
+    //   selector: (row) => row.booking_status,
+    //   sortable: true,
+    // },
     {
       name: "Approval",
       selector: (row) =>
@@ -183,28 +191,28 @@ const TransportationRequest = () => {
             <div className="flex items-center gap-2">
               <input
                 type="radio"
-                id="upcoming"
+                id="Approved"
                 name="status"
-                checked={selectedStatus === "upcoming"}
-                onChange={() => handleStatusChange("upcoming")}
+                checked={selectedStatus === "Approved"}
+                onChange={() => handleStatusChange("Approved")}
               />
-              <label htmlFor="upcoming" className="text-sm">
-                Upcoming
+              <label htmlFor="Approved" className="text-sm">
+                Approved
               </label>
             </div>
             <div className="flex items-center gap-2">
               <input
                 type="radio"
-                id="completed"
+                id="Rejected"
                 name="status"
-                checked={selectedStatus === "completed"}
-                onChange={() => handleStatusChange("completed")}
+                checked={selectedStatus === "Rejected"}
+                onChange={() => handleStatusChange("Rejected")}
               />
-              <label htmlFor="completed" className="text-sm">
-                Completed
+              <label htmlFor="Rejected" className="text-sm">
+                Rejected
               </label>
             </div>
-            <div className="flex items-center gap-2">
+            {/* <div className="flex items-center gap-2">
               <input
                 type="radio"
                 id="cancelled"
@@ -215,7 +223,7 @@ const TransportationRequest = () => {
               <label htmlFor="cancelled" className="text-sm">
                 Cancelled
               </label>
-            </div>
+            </div> */}
           </div>
           <span className="flex gap-4">
             <Link

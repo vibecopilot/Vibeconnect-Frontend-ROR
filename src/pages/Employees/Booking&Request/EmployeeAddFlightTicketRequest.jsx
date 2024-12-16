@@ -154,7 +154,7 @@ const EmployeeAddFlightRequest = () => {
 
             <div className="grid gap-2 items-center w-full">
               <label htmlFor="managerApproval" className="font-semibold">
-                Manager Approval Required :
+                Manager Approval (If Required):
               </label>
               <select
                 id="managerApproval"
