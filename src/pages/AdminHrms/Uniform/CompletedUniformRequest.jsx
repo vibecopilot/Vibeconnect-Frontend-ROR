@@ -32,14 +32,20 @@ const CompletedUniformRequest = () => {
 
       sortable: true,
     },
-    {
-      name: "Shoes",
-      selector: (row) => row.comment,
-      sortable: true,
-    },
+    // {
+    //   name: "Shoes",
+    //   selector: (row) => row.comment,
+    //   sortable: true,
+    // },
     {
       name: "Applied on",
       selector: (row) => dateFormatSTD(row.created_date),
+      sortable: true,
+    },
+    {
+      name: "Received on",
+      selector: (row) =>
+        row.received_date ? dateFormatSTD(row.received_date) : "",
       sortable: true,
     },
 
@@ -168,8 +174,8 @@ const CompletedUniformRequest = () => {
                 <p className="text-right">{details.chest} inches</p>
               </div>
               <div className="grid grid-cols-2">
-                <p className="font-medium">Shoe size :</p>
-                <p className="text-right"></p>
+                <p className="font-medium">Received on :</p>
+                <p className="text-right">{details.received_date? dateFormatSTD(details.received_date):""}</p>
               </div>
               <div className="flex flex-col gap-2">
                 <p className="font-medium border-b">Attachment</p>
