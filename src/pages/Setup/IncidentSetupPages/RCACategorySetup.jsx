@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { BsEye } from "react-icons/bs";
 import { BiEdit } from "react-icons/bi";
 import { Link } from "react-router-dom";
@@ -8,11 +8,14 @@ import RCACatagorySetModal from "../../../containers/modals/IncidentSetupModal.j
 import { FaCheck, FaTrash } from "react-icons/fa";
 import { PiPlusCircle } from "react-icons/pi";
 import { MdClose } from "react-icons/md";
+import { getItemInLocalStorage } from "../../../utils/localStorage";
+import toast from "react-hot-toast";
+import { getIncidentTags, postIncidentTags } from "../../../api";
 
 const RCACategorySetup = () => {
   const [modal, showModal] = useState(false);
   const column = [
-    { name: "Category", selector: (row) => row.Name, sortable: true },
+    { name: "Category", selector: (row) => row.name, sortable: true },
     {
       name: "action",
 
@@ -29,14 +32,41 @@ const RCACategorySetup = () => {
     },
   ];
 
-  const data = [
-    {
-      id: 1,
-      Name: "Technology",
-      action: <BsEye />,
-    },
-  ];
   const [addCategory, setAddCategory] = useState(false);
+  const [cat, SetCat] = useState("");
+  const companyId = getItemInLocalStorage("COMPANYID");
+  const handleAddCategory = async () => {
+    const payload = {
+      name: cat,
+      active: true,
+      // "parent_id": null,
+      tag_type: "IncidentRCACategory",
+      resource_id: companyId,
+      resource_type: "Pms::CompanySetup",
+      // "comment": "Covers all types of plumbing problems."
+    };
+    try {
+      const res = await postIncidentTags(payload);
+      toast.success("Root Cause Analysis Category Created successfully!");
+      fetchIncidentCategory();
+      SetCat("");
+      setAddCategory(false);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const [categories, setCategories] = useState([]);
+  const fetchIncidentCategory = async () => {
+    try {
+      const res = await getIncidentTags("IncidentRCACategory");
+      setCategories(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(() => {
+    fetchIncidentCategory();
+  }, []);
   return (
     <section className="mx-2">
       <div className="w-full flex flex-col gap-2 overflow-hidden">
@@ -45,10 +75,15 @@ const RCACategorySetup = () => {
             <div className="flex items-center gap-2 w-full">
               <input
                 type="text"
-                placeholder="Category"
+                placeholder="Root Cause Analysis Category"
                 className="border p-2 w-full border-gray-300 rounded-lg"
+                value={cat}
+                onChange={(e) => SetCat(e.target.value)}
               />
-              <button className="bg-green-500 text-white p-2 flex gap-2 items-center rounded-md">
+              <button
+                className="bg-green-500 text-white p-2 flex gap-2 items-center rounded-md"
+                onClick={handleAddCategory}
+              >
                 <FaCheck /> Submit
               </button>
               <button
@@ -69,7 +104,7 @@ const RCACategorySetup = () => {
           )}
         </div>
         <div>
-          <Table columns={column} data={data} isPagination={true} />
+          <Table columns={column} data={categories} isPagination={true} />
         </div>
       </div>
       {modal && <RCACatagorySetModal onclose={() => showModal(false)} />}
