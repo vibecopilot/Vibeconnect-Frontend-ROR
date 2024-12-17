@@ -7,6 +7,7 @@ import {
   getMyOrganizationLocations,
   getMyOrgDepartments,
   getReportingSupervisors,
+  hrmsDomain,
   postApproveOrRejectEmployee,
   postEmployeeEmploymentInfo,
 } from "../../../api";
@@ -157,6 +158,13 @@ const OnboardingEmployeeDetail = ({
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
       <div class="max-h-screen bg-white p-4  rounded-xl shadow-lg overflow-y-auto">
+        <div className="flex justify-center mb-2">
+      <img
+          src={hrmsDomain + details.profile_photo}
+          alt={details?.employee?.first_name}
+          className="border-4 border-gray-300 rounded-full w-28 h-28 object-cover"
+          />
+          </div>
         <div className="grid md:grid-cols-3 gap-2 border bg-blue-50 rounded-md p-2">
           <div className="grid grid-cols-2 gap-2">
             <label htmlFor="" className="font-medium">
