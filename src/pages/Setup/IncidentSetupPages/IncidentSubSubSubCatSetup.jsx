@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { BiEdit } from "react-icons/bi";
 import { BsEye } from "react-icons/bs";
 import { RiDeleteBinLine } from "react-icons/ri";
@@ -8,9 +8,22 @@ import SubSubSubCategorySetupModal from "../../../containers/modals/IncidentSetu
 import { FaCheck, FaTrash } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 import { PiPlusCircle } from "react-icons/pi";
+import {
+  getIncidentSubTags,
+  getIncidentTags,
+  postIncidentTags,
+} from "../../../api";
+import { getItemInLocalStorage } from "../../../utils/localStorage";
+import toast from "react-hot-toast";
 
 const SubSubSubCategorySetup = () => {
   const [modal, showModal] = useState(false);
+  const [formData, setFormData] = useState({
+    categoryId: "",
+    SubCategoryId: "",
+    subSubCategoryId: "",
+    subSubSubCategory: "",
+  });
   const column = [
     { name: "Category", selector: (row) => row.Category, sortable: true },
     {
@@ -25,7 +38,7 @@ const SubSubSubCategorySetup = () => {
     },
     {
       name: "Sub Sub Sub Category",
-      selector: (row) => row.SubSubSubCategory,
+      selector: (row) => row.name,
       sortable: true,
     },
     {
@@ -55,6 +68,103 @@ const SubSubSubCategorySetup = () => {
     },
   ];
   const [addSubSubSubCat, setAddSubSubSubCat] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [subCategories, setSubCategories] = useState([]);
+  const [subSubCategories, setSubSubCategories] = useState([]);
+  useEffect(() => {
+    const fetchIncidentCategory = async () => {
+      try {
+        const res = await getIncidentTags("IncidentCategory");
+        setCategories(res.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    fetchIncidentCategory();
+  }, []);
+
+  const handleChange = async (e) => {
+    const fetchIncidentSubCategory = async (parentId) => {
+      try {
+        const res = await getIncidentSubTags("IncidentSubCategory", parentId);
+        setSubCategories(res.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    const fetchIncidentSubSubCategory = async (parentId) => {
+      try {
+        const res = await getIncidentSubTags(
+          "IncidentSubSubCategory",
+          parentId
+        );
+        setSubSubCategories(res.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    if (e.target.type === "select-one" && e.target.name === "categoryId") {
+      const catId = Number(e.target.value);
+      await fetchIncidentSubCategory(catId);
+      setFormData({ ...formData, categoryId: catId });
+    } else if (
+      e.target.type === "select-one" &&
+      e.target.name === "SubCategoryId"
+    ) {
+      const subCatId = Number(e.target.value);
+      await fetchIncidentSubSubCategory(subCatId);
+      setFormData({ ...formData, SubCategoryId: subCatId });
+    } else {
+      setFormData({ ...formData, [e.target.name]: e.target.value });
+    }
+  };
+  console.log(formData);
+  const companyId = getItemInLocalStorage("COMPANYID");
+  const handleAddSubSubSubCategory = async () => {
+    const payload = {
+      name: formData.subSubSubCategory,
+      active: true,
+      parent_id: formData.subSubCategoryId,
+      tag_type: "IncidentSubSubSubCategory",
+      resource_id: companyId,
+      resource_type: "Pms::CompanySetup",
+    };
+    try {
+      const res = await postIncidentTags(payload);
+      toast.success("Incident Sub Sub Sub Category Created successfully!");
+      // fetchIncidentCategory();
+      setFormData({
+        ...formData,
+        categoryId: "",
+        SubCategoryId: "",
+        subSubCategoryId: "",
+        subSubSubCategory: "",
+      });
+      setAddSubSubSubCat(false);
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.name?.[0] ||
+        error.response?.data?.message ||
+        "An error occurred. Please try again.";
+
+      console.error("Error:", error);
+
+      toast.error(`Sub Sub Sub Category ${errorMessage}`);
+    }
+  };
+  const [subSubSubCategories, setSubSubSubCategories] = useState([]);
+  const fetchIncidentSubCategory = async () => {
+    try {
+      const res = await getIncidentTags("IncidentSubSubSubCategory");
+      setSubSubSubCategories(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(() => {
+    fetchIncidentSubCategory();
+  }, []);
   return (
     <section className="mx-2">
       <div className="w-full flex flex-col gap-2 overflow-hidden">
@@ -63,37 +173,61 @@ const SubSubSubCategorySetup = () => {
             <div className="flex flex-col gap-2">
               <div className="grid grid-cols-4 gap-2 w-full">
                 <select
-                  name=""
+                  name="categoryId"
                   id=""
+                  value={formData.categoryId}
+                  onChange={handleChange}
                   className="border p-2 px-4 border-gray-300 rounded-md w-full"
                 >
                   <option value="">Select Category</option>
-                  <option value="">Health and Safety</option>
-                  <option value="">Fire</option>
-                  <option value="">Near Miss/Good Catch</option>
+                  {categories.map((category) => (
+                    <option value={category.id} key={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
                 </select>
                 <select
-                  name=""
+                  name="SubCategoryId"
+                  value={formData.SubCategoryId}
                   id=""
-                  className="border p-2 px-4 border-gray-300 rounded-md w-full"
+                  className="border p-2 w-full border-gray-300 rounded-lg"
+                  onChange={handleChange}
                 >
                   <option value="">Select Sub Category</option>
+                  {subCategories.map((subCategory) => (
+                    <option value={subCategory.id} key={subCategory.id}>
+                      {subCategory.name}
+                    </option>
+                  ))}
                 </select>
                 <select
-                  name=""
+                  name="subSubCategoryId"
+                  value={formData.subSubCategoryId}
+                  onChange={handleChange}
                   id=""
                   className="border p-2 px-4 border-gray-300 rounded-md w-full"
                 >
                   <option value="">Select Sub Sub Category</option>
+                  {subSubCategories.map((subSubCat) => (
+                    <option value={subSubCat.id} key={subSubCat.id}>
+                      {subSubCat.name}
+                    </option>
+                  ))}
                 </select>
                 <input
                   type="text"
+                  value={formData.subSubSubCategory}
+                  name="subSubSubCategory"
+                  onChange={handleChange}
                   placeholder="Sub Sub Sub Category"
                   className="border p-2 px-4 border-gray-300 rounded-md w-full"
                 />
               </div>
               <div className="flex justify-center gap-2">
-                <button className="bg-green-500 text-white p-2 flex gap-2 items-center rounded-md">
+                <button
+                  className="bg-green-500 text-white p-2 flex gap-2 items-center rounded-md"
+                  onClick={handleAddSubSubSubCategory}
+                >
                   <FaCheck /> Submit
                 </button>
                 <button
@@ -106,19 +240,18 @@ const SubSubSubCategorySetup = () => {
             </div>
           )}
         </div>
-          {!addSubSubSubCat && (
-            <div className="flex justify-end w-full">
-
+        {!addSubSubSubCat && (
+          <div className="flex justify-end w-full">
             <button
               className="bg-green-500 p-2 rounded-md text-white flex items-center gap-2"
               onClick={() => setAddSubSubSubCat(true)}
-              >
+            >
               <PiPlusCircle /> Add
             </button>
-              </div>
-          )}
+          </div>
+        )}
         <div>
-          <Table columns={column} data={data} isPagination={true} />
+          <Table columns={column} data={subSubSubCategories} isPagination={true} />
         </div>
         {modal && (
           <SubSubSubCategorySetupModal onclose={() => showModal(false)} />

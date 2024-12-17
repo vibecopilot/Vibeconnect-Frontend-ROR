@@ -65,7 +65,7 @@ const IncidentCategorySetup = () => {
       name: cat,
       active: true,
       // "parent_id": null,
-      tag_type: "incidentCategory",
+      tag_type: "IncidentCategory",
       resource_id: companyId,
       resource_type: "Pms::CompanySetup",
       // "comment": "Covers all types of plumbing problems."
@@ -83,7 +83,7 @@ const IncidentCategorySetup = () => {
   const [categories, setCategories] = useState([]);
   const fetchIncidentCategory = async () => {
     try {
-      const res = await getIncidentTags();
+      const res = await getIncidentTags("IncidentCategory");
       setCategories(res.data);
     } catch (error) {
       console.log(error);

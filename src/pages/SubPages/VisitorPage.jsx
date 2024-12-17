@@ -32,6 +32,10 @@ const VisitorPage = () => {
   const [FilteredUnexpectedVisitor, setFilteredUnexpectedVisitor] = useState(
     []
   );
+  const [expectedVisitor, setExpectedVisitor] = useState([]);
+  const [FilteredExpectedVisitor, setFilteredExpectedVisitor] = useState(
+    []
+  );
   const [FilteredApproval, setFilteredApproval] = useState([]);
   const [approvals, setApprovals] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
@@ -60,6 +64,9 @@ const VisitorPage = () => {
         const filteredUnexpectedVisitor = sortedVisitor.filter(
           (visit) => visit.user_type === "security_guard"
         );
+        const filteredExpectedVisitor = sortedVisitor.filter(
+          (visit) => visit.user_type !== "security_guard"
+        );
         const filteredVisitorIn = sortedVisitor.filter(
           (visit) => visit.visitor_in_out === "IN"
         );
@@ -74,6 +81,8 @@ const VisitorPage = () => {
         setFilteredData(sortedVisitor);
         setUnexpectedVisitor(filteredUnexpectedVisitor);
         setFilteredUnexpectedVisitor(filteredUnexpectedVisitor);
+        setExpectedVisitor(filteredExpectedVisitor)
+        setFilteredExpectedVisitor(filteredExpectedVisitor)
         console.log(sortedVisitor);
       } catch (error) {
         console.log(error);
@@ -647,7 +656,7 @@ const VisitorPage = () => {
             {/* all */}
             <div className="">
               {selectedVisitor === "expected" && page === "all" && (
-                <Table columns={VisitorColumns} data={all} />
+                <Table columns={VisitorColumns} data={FilteredExpectedVisitor} />
               )}
               {selectedVisitor === "unexpected" && page === "all" && (
                 <Table
