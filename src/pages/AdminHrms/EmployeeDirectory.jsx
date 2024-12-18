@@ -1192,11 +1192,11 @@ function EmployeeDirectory() {
                     <Link
                       to={`/hrms/separation/separate-application/resignation/${selectedEmployee?.employee?.id}`}
                       style={{ background: themeColor }}
-                      className="bg-black text-white hover:bg-gray-700 py-2 px-4 rounded-full"
+                      className="bg-black text-white hover:bg-gray-700 w-full text-center py-2 px-4 rounded-full"
                     >
                       Separate
                     </Link>
-                    <button
+                    {/* <button
                       type="submit"
                       className="bg-yellow-500 text-white hover:bg-gray-700  py-2 px-5 rounded-full"
                     >
@@ -1216,7 +1216,7 @@ function EmployeeDirectory() {
                       >
                         Activate
                       </button>
-                    )}
+                    )} */}
                   </div>
                 </div>
               </div>

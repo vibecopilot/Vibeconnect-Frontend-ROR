@@ -9,27 +9,6 @@ import SeparationCompleted from "./SeparationCompleted";
 const SeparationApplication = () => {
   const [page, setPage] = useState("Pending");
 
-  const data = {
-    labels: ["Jan24", "Feb24", "Mar24", "Apr24", "May24", "Jun24"],
-    datasets: [
-      {
-        label: "Employee Count",
-        data: [1, 0, 1, 2, 2, 4],
-        backgroundColor: "rgba(75, 192, 192, 0.6)",
-        borderColor: "rgba(75, 192, 192, 1)",
-        borderWidth: 1,
-      },
-    ],
-  };
-
-  const options = {
-    scales: {
-      y: {
-        beginAtZero: true,
-      },
-    },
-  };
-
   return (
     <div className="flex ml-20">
       <AdminHRMS />

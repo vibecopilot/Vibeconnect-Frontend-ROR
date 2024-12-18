@@ -6401,6 +6401,19 @@ export const getResignations = async (orgId) => {
     throw error;
   }
 };
+export const getResignationsDetails = async (regId) => {
+  try {
+    const response = await HrmsAuth.get(`/api/employee/resignation/${regId}`, {
+      // headers: {
+      //   "Content-Type": "multipart/form-data/",
+      // },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error getting resignation :", error);
+    throw error;
+  }
+};
 export const postResignations = async (data) => {
   try {
     const response = await HrmsAuth.post(`/api/employee/resignation/`, data, {
@@ -6411,6 +6424,23 @@ export const postResignations = async (data) => {
     return response.data;
   } catch (error) {
     console.error("Error posting resignation :", error);
+    throw error;
+  }
+};
+export const ResignationApproval = async (regId, data) => {
+  try {
+    const response = await HrmsAuth.patch(
+      `/api/employee/resignation/${regId}/`,
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error Posting resignation approval:", error);
     throw error;
   }
 };
@@ -6452,6 +6482,24 @@ export const postAssociatedSites = async (data) => {
   try {
     const response = await HrmsAuth.post(
       `/associated/`,
+      data,
+
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting associated sites :", error);
+    throw error;
+  }
+};
+export const getEmployeeAssociatedSites = async (empId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/associated/?employee_id=${empId}`,
       data,
 
       {
