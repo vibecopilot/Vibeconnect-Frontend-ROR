@@ -7,7 +7,7 @@ import {
 import { FaBan, FaCheck } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 
-const SeparationDetails = ({ empId, regId, onClose, page }) => {
+const SeparationDetails = ({ empId, regId, onClose }) => {
   const [details, setDetails] = useState({});
   const [regDetails, setRegDetails] = useState({});
 
@@ -128,22 +128,18 @@ const SeparationDetails = ({ empId, regId, onClose, page }) => {
           </div>
         )}
         <div className="flex justify-center gap-2 mt-1 border-t p-2">
-          {page === "pending" && (
-            <button
-              className="flex items-center gap-2 bg-green-400 p-2 px-4 rounded-full text-white"
-              // onClick={handleAddEmployment}
-            >
-              <FaCheck /> Approve
-            </button>
-          )}
-          {page === "pending" && (
-            <button
-              className="flex items-center gap-2 bg-red-500 p-2 px-4 rounded-full text-white"
-              // onClick={handleAddEmployment}
-            >
-              <FaBan /> Reject
-            </button>
-          )}
+          {/* <button
+            className="flex items-center gap-2 bg-green-400 p-2 px-4 rounded-full text-white"
+            // onClick={handleAddEmployment}
+          >
+            <FaCheck /> Approve
+          </button>
+          <button
+            className="flex items-center gap-2 bg-red-500 p-2 px-4 rounded-full text-white"
+            // onClick={handleAddEmployment}
+          >
+            <FaBan /> Reject
+          </button> */}
           <button
             onClick={onClose}
             className="flex items-center gap-2 bg-red-400 p-2 rounded-full text-white px-4"
