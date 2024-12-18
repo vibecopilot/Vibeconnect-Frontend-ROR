@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { FaCheck } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 import {
+  getEmployeeAssociatedSites,
   getEmployeeDetails,
   getMyHRMSEmployees,
   getMyOrganizationLocations,
@@ -21,6 +22,7 @@ const OnboardingEmployeeDetail = ({
   fetchApprovalNotification,
 }) => {
   const [details, setDetails] = useState({});
+  const [siteDetails, setSiteDetails] = useState({});
   const fetchEmployeeDetails = async () => {
     try {
       const res = await getEmployeeDetails(empId);
@@ -29,8 +31,17 @@ const OnboardingEmployeeDetail = ({
       console.log(error);
     }
   };
+  const fetchEmployeeSiteDetails = async () => {
+    try {
+      const res = await getEmployeeAssociatedSites(empId);
+      setSiteDetails(res[0]);
+    } catch (error) {
+      console.log(error);
+    }
+  };
   useEffect(() => {
     fetchEmployeeDetails();
+    fetchEmployeeSiteDetails()
   }, []);
 
   const [formData, setFormData] = useState({
@@ -63,7 +74,7 @@ const OnboardingEmployeeDetail = ({
   };
 
   const [reportSupervisors, setReportSupervisors] = useState([]);
-  console.log(reportSupervisors);
+ 
   const handleDepartmentChange = async (e) => {
     const fetchReportingSupervisors = async (deptId) => {
       const reportingSupervisors = await getReportingSupervisors(
@@ -155,12 +166,13 @@ const OnboardingEmployeeDetail = ({
       console.log(error);
     }
   };
+  console.log(details)
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
       <div class="max-h-screen bg-white p-4  rounded-xl shadow-lg overflow-y-auto">
         <div className="flex justify-center mb-2">
           <img
-            src={hrmsDomain + details.profile_photo}
+            src={hrmsDomain + details?.profile_photo}
             alt={details?.employee?.first_name}
             className="border-4 border-gray-300 rounded-full w-28 h-28 object-cover"
           />
@@ -171,44 +183,57 @@ const OnboardingEmployeeDetail = ({
               Name :{" "}
             </label>
             <p>
-              {details.first_name} {details.last_name}
+              {details?.first_name} {details?.last_name}
             </p>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <label htmlFor="" className="font-medium">
               DOB :{" "}
             </label>
-            <p>{details.date_of_birth}</p>
+            <p>{details?.date_of_birth}</p>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <label htmlFor="" className="font-medium">
               Gender :{" "}
             </label>
-            <p>{details.gender}</p>
+            <p>{details?.gender}</p>
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            <label htmlFor="" className="font-medium">
-              Email :{" "}
-            </label>
-            <p>{details.email_id}</p>
-          </div>
+         
           <div className="grid grid-cols-2 gap-2">
             <label htmlFor="" className="font-medium">
               Mobile :{" "}
             </label>
-            <p>{details.mobile}</p>
+            <p>{details?.mobile}</p>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <label htmlFor="" className="font-medium">
               Aadhar :{" "}
             </label>
-            <p>{details.aadhar_number}</p>
+            <p>{details?.aadhar_number}</p>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <label htmlFor="" className="font-medium">
               Pan :{" "}
             </label>
-            <p>{details.pan}</p>
+            <p>{details?.pan}</p>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <label htmlFor="" className="font-medium">
+              Site :{" "}
+            </label>
+            <p>{siteDetails?.associated_organization_name}</p>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <label htmlFor="" className="font-medium">
+              Site ID :{" "}
+            </label>
+            <p>{siteDetails?.associated_organization}</p>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <label htmlFor="" className="font-medium">
+              Email :{" "}
+            </label>
+            <p>{details?.email_id}</p>
           </div>
         </div>
         <div className="w-full p-2 bg-white rounded-lg ">
