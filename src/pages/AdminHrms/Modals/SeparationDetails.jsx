@@ -7,7 +7,7 @@ import {
 import { FaBan, FaCheck } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 
-const SeparationDetails = ({ empId, regId, onClose }) => {
+const SeparationDetails = ({ empId, regId, onClose, page }) => {
   const [details, setDetails] = useState({});
   const [regDetails, setRegDetails] = useState({});
 
@@ -34,7 +34,7 @@ const SeparationDetails = ({ empId, regId, onClose }) => {
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
       <div className="max-h-screen bg-white p-4 max-w-[60rem]  rounded-xl shadow-lg overflow-y-auto">
-        <div className="flex justify-center mb-2">
+        <div className="flex justify-center">
           <img
             src={hrmsDomain + details.profile_photo}
             alt={details?.employee?.first_name}
@@ -126,6 +126,12 @@ const SeparationDetails = ({ empId, regId, onClose }) => {
             <p className="font-medium">Comment</p>
             <p className="bg-blue-50 p-2 rounded-md">{regDetails.comments}</p>
           </div>
+        )}
+        {page="completed" && (
+             <div className="flex flex-col">
+             <p className="font-medium">Approver Comment</p>
+             <p className="bg-green-50 p-2 rounded-md">{regDetails.action_comments}</p>
+           </div>
         )}
         <div className="flex justify-center gap-2 mt-1 border-t p-2">
           {/* <button

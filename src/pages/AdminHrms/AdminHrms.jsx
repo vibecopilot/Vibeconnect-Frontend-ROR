@@ -1038,7 +1038,7 @@ const AdminHRMS = () => {
                       Device Registration Request
                     </h2>
                   </NavLink>
-                  <NavLink
+                  {/* <NavLink
                     to="/admin/hrms/Attendance-Validation"
                     className={({ isActive }) =>
                       `${
@@ -1093,7 +1093,7 @@ const AdminHRMS = () => {
                     >
                       Attendance Log
                     </h2>
-                  </NavLink>
+                  </NavLink> */}
                 </div>
               )}
             </div>
