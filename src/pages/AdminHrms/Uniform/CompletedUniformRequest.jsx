@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import Table from "../../../components/table/Table";
-import { getUniformRequest, getUniformRequestDetails } from "../../../api";
+import { getEmployeeAssociatedSites, getEmployeeDetails, getUniformRequest, getUniformRequestDetails, hrmsDomain } from "../../../api";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
 import { dateFormatSTD } from "../../../utils/dateUtils";
 import { BsEye } from "react-icons/bs";
 import { MdClose } from "react-icons/md";
+import Accordion from "../Components/Accordion";
+import { FaRegAddressCard } from "react-icons/fa";
 
 const CompletedUniformRequest = () => {
   const columns = [
@@ -67,7 +69,7 @@ const CompletedUniformRequest = () => {
       cell: (row) => (
         <div
           className="flex items-center gap-4"
-          onClick={() => handleDetails(row.id)}
+          onClick={() => handleDetails(row.id, row.employee)}
         >
           <button>
             <BsEye size={15} />
@@ -94,8 +96,10 @@ const CompletedUniformRequest = () => {
   }, []);
   const [showDetails, setShowDetails] = useState(false);
   const [details, setDetails] = useState({});
-  const handleDetails = async (id) => {
+  const handleDetails = async (id, empID) => {
     setShowDetails(true);
+    fetchEmployeeDetails(empID)
+    fetchEmployeeAssociatedSite(empID)
     try {
       const res = await getUniformRequestDetails(id);
       setDetails(res);
@@ -117,6 +121,27 @@ const CompletedUniformRequest = () => {
       setFilteredRequests(filteredResult);
     }
   };
+
+  const [empDetails, setEmpDetails] = useState({});
+  const [empSiteDetails, setEmpSiteDetails] = useState({});
+  const fetchEmployeeDetails = async (employeeId) => {
+    try {
+      const res = await getEmployeeDetails(employeeId);
+      setEmpDetails(res);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  // const fetchEmployeeAssociatedSite = async (employeeId) => {
+  //   try {
+  //     const res = await getEmployeeAssociatedSites(employeeId);
+  //     setEmpSiteDetails(res[0]);
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // };
+  
   return (
     <section className="flex">
       <div className="w-full flex mx-2 flex-col overflow-hidden">
@@ -138,25 +163,101 @@ const CompletedUniformRequest = () => {
       </div>
       {showDetails && (
         <div className="fixed inset-0 z-50 flex items-center overflow-y-auto justify-center bg-gray-500 bg-opacity-50">
-          <div className="max-h-screen bg-white p-2 px-3 w-[32rem] rounded-xl shadow-lg overflow-y-auto">
-            <div className="flex flex-col gap-4">
-              <h2 className="text-xl font-semibold text-center border-b mb-4">
+          <div className="max-h-screen bg-white p-2 px-3 w-[55rem] rounded-xl shadow-lg overflow-y-auto">
+            <div className="flex flex-col gap-2">
+              <h2 className="text-xl font-semibold text-center border-b mt-1">
                 Uniform Request Details
               </h2>
+              <Accordion
+                title={"Requestor Details"}
+                icon={FaRegAddressCard}
+                content={
+                  <>
+                    <div className="grid  gap-2 border bg-blue-50 rounded-md p-2">
+                      <div className="flex items-center gap-2">
+                        <img
+                          src={hrmsDomain + empDetails.profile_photo}
+                          alt={empDetails?.employee?.first_name}
+                          className="border border-gray-300 rounded-full h-10 w-10 object-cover"
+                        />
+                        <p className="font-medium">
+                          {empDetails.first_name} {empDetails.last_name}
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-2">
+                          <label htmlFor="" className="font-medium">
+                            DOB :{" "}
+                          </label>
+                          <p>{empDetails.date_of_birth}</p>
+                        </div>
+                        <div className="grid grid-cols-2">
+                          <label htmlFor="" className="font-medium">
+                            Gender :{" "}
+                          </label>
+                          <p>{empDetails.gender}</p>
+                        </div>
+
+                        <div className="grid grid-cols-2">
+                          <label htmlFor="" className="font-medium">
+                            Mobile :{" "}
+                          </label>
+                          <p>{empDetails.mobile}</p>
+                        </div>
+                        <div className="grid grid-cols-2 ">
+                          <label htmlFor="" className="font-medium">
+                            Aadhar :{" "}
+                          </label>
+                          <p>{empDetails.aadhar_number}</p>
+                        </div>
+                        <div className="grid grid-cols-2">
+                          <label htmlFor="" className="font-medium">
+                            Pan :{" "}
+                          </label>
+                          <p>{empDetails.pan}</p>
+                        </div>
+                        <div className="grid grid-cols-2">
+                          <label htmlFor="" className="font-medium">
+                            Site :{" "}
+                          </label>
+                          <p>{empSiteDetails.associated_organization_name? empSiteDetails.associated_organization_name: "Not Associated"}</p>
+                        </div>
+                        <div className="grid grid-cols-2">
+                          <label htmlFor="" className="font-medium">
+                            Site ID :{" "}
+                          </label>
+                          <p>{empSiteDetails.associated_organization? empSiteDetails.associated_organization: "Not Associated"}</p>
+                        </div>
+                        <div className="grid grid-cols-2 ">
+                          <label htmlFor="" className="font-medium">
+                            Email :{" "}
+                          </label>
+                          <p className="text-wrap max-w-20">
+                            {empDetails.email_id}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                }
+              />
+              <div className="grid grid-cols-2 gap-2">
+
+              
               <div className="grid grid-cols-2">
                 <p className="font-medium">Applied on :</p>
-                <p className="text-right">
+                <p className="">
                   {dateFormatSTD(details.created_date)}
                 </p>
               </div>
               <div className="grid grid-cols-2">
                 <p className="font-medium">Employee Name :</p>
-                <p className="text-right">{details.employee_name}</p>
+                <p className="">{details.employee_name}</p>
               </div>
               <div className="grid grid-cols-2">
                 <p className="font-medium">Status :</p>
                 <p
-                  className={`text-right ${
+                  className={`${
                     details.status === "Rejected"
                       ? "text-red-500"
                       : "text-green-500 font-medium"
@@ -167,15 +268,12 @@ const CompletedUniformRequest = () => {
               </div>
               <div className="grid grid-cols-2">
                 <p className="font-medium">Waist size :</p>
-                <p className="text-right">{details.waist} inches</p>
+                <p className="">{details.waist} inches</p>
               </div>
               <div className="grid grid-cols-2">
                 <p className="font-medium">Chest size :</p>
-                <p className="text-right">{details.chest} inches</p>
+                <p className="">{details.chest} inches</p>
               </div>
-              <div className="grid grid-cols-2">
-                <p className="font-medium">Received on :</p>
-                <p className="text-right">{details.received_date? dateFormatSTD(details.received_date):""}</p>
               </div>
               <div className="flex flex-col gap-2">
                 <p className="font-medium border-b">Attachment</p>

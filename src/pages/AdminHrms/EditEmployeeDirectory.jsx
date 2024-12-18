@@ -145,7 +145,7 @@ const EditEmployeeDirectory = () => {
                 <h1 className="text-xl font-semibold mb-4 border-b pb-2 w-full">
                   {empDetails?.first_name} {empDetails?.last_name}
                 </h1>
-                <div className="relative inline-block text-left mb-2">
+                {/* <div className="relative inline-block text-left mb-2">
                   <button
                     onClick={toggleDropdown}
                     className="flex items-end gap-2 justify-center w-full rounded-md border border-gray-300 px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 "
@@ -153,7 +153,7 @@ const EditEmployeeDirectory = () => {
                     Actions
                     <FaChevronDown />
                   </button>
-                </div>{" "}
+                </div>{" "} */}
               </div>
               {isOpen && (
                 <div className="origin-top-right absolute right-2 mt-1 w-36 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
