@@ -10,7 +10,7 @@ import { MdClose } from "react-icons/md";
 const SeparationDetails = ({ empId, regId, onClose, page }) => {
   const [details, setDetails] = useState({});
   const [regDetails, setRegDetails] = useState({});
-
+console.log(page)
   useEffect(() => {
     const fetchEmployeeDetails = async () => {
       try {
@@ -127,7 +127,7 @@ const SeparationDetails = ({ empId, regId, onClose, page }) => {
             <p className="bg-blue-50 p-2 rounded-md">{regDetails.comments}</p>
           </div>
         )}
-        {page="completed" && (
+        {page==="completed" && (
              <div className="flex flex-col">
              <p className="font-medium">Approver Comment</p>
              <p className="bg-green-50 p-2 rounded-md">{regDetails.action_comments}</p>

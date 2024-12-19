@@ -41,7 +41,7 @@ const OnboardingEmployeeDetail = ({
   };
   useEffect(() => {
     fetchEmployeeDetails();
-    fetchEmployeeSiteDetails()
+    fetchEmployeeSiteDetails();
   }, []);
 
   const [formData, setFormData] = useState({
@@ -74,7 +74,7 @@ const OnboardingEmployeeDetail = ({
   };
 
   const [reportSupervisors, setReportSupervisors] = useState([]);
- 
+
   const handleDepartmentChange = async (e) => {
     const fetchReportingSupervisors = async (deptId) => {
       const reportingSupervisors = await getReportingSupervisors(
@@ -161,12 +161,13 @@ const OnboardingEmployeeDetail = ({
       const res = await postEmployeeEmploymentInfo(postData);
       console.log(res);
       handleGrantApproval(grantId, "approve");
+      toast.success("Employee Onboarded successfully");
       setDetailsModal();
     } catch (error) {
       console.log(error);
     }
   };
-  console.log(details)
+
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
       <div class="max-h-screen bg-white p-4  rounded-xl shadow-lg overflow-y-auto">
@@ -198,7 +199,7 @@ const OnboardingEmployeeDetail = ({
             </label>
             <p>{details?.gender}</p>
           </div>
-         
+
           <div className="grid grid-cols-2 gap-2">
             <label htmlFor="" className="font-medium">
               Mobile :{" "}
@@ -379,31 +380,6 @@ const OnboardingEmployeeDetail = ({
               />
             </div>
           </div>
-          {/* <div className="flex gap-5 justify-end items-center my-4">
-          <button
-            type="submit"
-            // style={{ background: themeColor }}
-            onClick={handleAddEmployment}
-            // onClick={() => setDisableNext(false)}
-            className={`px-4 py-2  text-white font-medium rounded-md flex items-center gap-2 ${
-              disableSave ? "bg-gray-400 cursor-not-allowed" : "bg-green-400"
-            }`}
-            disabled={disableSave}
-          >
-            Save
-          </button>
-          <button
-            type="submit"
-            // onClick={()=> setSteps("employment")}
-            onClick={() => setSteps("salary")}
-            className={`px-4 py-2  text-white font-medium  rounded-md flex items-center gap-2 ${
-              disableNext ? "bg-gray-400 cursor-not-allowed" : "bg-green-400"
-            }`}
-            disabled={disableNext}
-          >
-            Next <FaArrowRight />
-          </button>
-        </div> */}
         </div>
         <div className="flex justify-center gap-2 border-t p-2">
           <button

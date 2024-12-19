@@ -204,13 +204,13 @@ function EmployeeDirectory() {
 
                 <div className="flex gap-3">
                   <div className="relative inline-block text-left">
-                    <button
+                    {/* <button
                       onClick={toggleDropdown}
                       className=" justify-center w-full flex items-center gap-2 rounded-md border border-gray-300 shadow-sm px-4 py-3 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500"
                     >
                       Actions
                       <FaChevronDown />
-                    </button>
+                    </button> */}
 
                     {isOpen && (
                       <div
@@ -1189,13 +1189,13 @@ function EmployeeDirectory() {
                     <FaUserEdit /> View Profile
                   </Link>
                   <div className="flex justify-center gap-3">
-                    <Link
+                  {selectedEmployee?.employee?.status &&  <Link
                       to={`/hrms/separation/separate-application/resignation/${selectedEmployee?.employee?.id}`}
                       style={{ background: themeColor }}
                       className="bg-black text-white hover:bg-gray-700 w-full text-center py-2 px-4 rounded-full"
                     >
                       Separate
-                    </Link>
+                    </Link>}
                     {/* <button
                       type="submit"
                       className="bg-yellow-500 text-white hover:bg-gray-700  py-2 px-5 rounded-full"

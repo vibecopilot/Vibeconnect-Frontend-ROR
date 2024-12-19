@@ -80,10 +80,10 @@ const SeparationAction = ({ regId, action, onClose, fetchResignations }) => {
               </label>
               <p className="font-medium">{regDetails.status}</p>
             </div>
-            <div></div>
-           {action === "approve" && <div className="grid  items-center gap-2">
+            
+           {action === "approve" && <div className="grid col-span-2 items-center gap-2">
               <label htmlFor="" className="font-medium">
-                Requested Last working day :{" "}
+                Requested Last working day : <span className="text-gray-400 text-xs">(Portal access will be removed on this date)</span>
               </label>
               <input
                 type="date"

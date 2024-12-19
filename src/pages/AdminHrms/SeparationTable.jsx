@@ -304,7 +304,7 @@ const SeparationTable = () => {
             empId={empId}
             regId={regId}
             onClose={() => setShowRegModal(false)}
-            
+            page={"pending"}
           />
         )}
         {showApprovalModal && (
