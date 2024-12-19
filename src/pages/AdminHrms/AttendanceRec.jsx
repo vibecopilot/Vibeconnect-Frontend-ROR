@@ -319,12 +319,12 @@ const AttendanceRec = () => {
         const checkOutRecord = res
           .reverse()
           .find((record) => record.is_check_in === false);
-        const checkInTime = checkInRecord
-          ? formatTimeToAmPmUTC(checkInRecord.attendance_time)
-          : null;
         // const checkInTime = checkInRecord
-        //   ? new Date(checkInRecord.attendance_time).toLocaleTimeString()
+        //   ? formatTimeToAmPmUTC(checkInRecord.attendance_time)
         //   : null;
+        const checkInTime = checkInRecord
+          ? new Date(checkInRecord.attendance_time).toLocaleTimeString()
+          : null;
         // const checkOutTime = checkOutRecord
         //   ? formatTimeToAmPmUTC(checkInRecord.attendance_time)
         //   : null;

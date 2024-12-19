@@ -151,12 +151,16 @@ const PendingUniformRequest = () => {
     size: "",
     waist: "",
     chest: "",
+    shoes: "",
+    ID: "",
   });
   const handleAddUniformRequest = async () => {
     const postData = new FormData();
     postData.append("select_size", formData.size);
     postData.append("chest", formData.chest);
+    postData.append("id_card", formData.ID);
     postData.append("waist", formData.waist);
+    postData.append("shoes_size", formData.shoes);
     postData.append("status", "Approved");
     postData.append("employee", selectedOption.value);
     try {
@@ -208,7 +212,7 @@ const PendingUniformRequest = () => {
     setShowDetails(true);
     setEmpId(empID);
     fetchEmployeeDetails(empID);
-    fetchEmployeeAssociatedSite(empID)
+    fetchEmployeeAssociatedSite(empID);
     try {
       const res = await getUniformRequestDetails(id);
       setDetails(res);
@@ -340,22 +344,41 @@ const PendingUniformRequest = () => {
                 </div>
                 <div className="mt-2">
                   <label className="block t font-medium text-gray-700">
-                    Shoes
+                    Select Shoe size
                   </label>
-                  <input
-                    type="number"
+
+                  <select
+                    id="shoeSize"
                     name="shoes"
+                    className="border border-gray-300 p-2 rounded-md w-full"
                     value={formData.shoes}
                     onChange={handleChange}
-                    id=""
-                    className="border border-gray-300 p-2 rounded-md w-full"
-                    placeholder="Shoes size"
-                  />
+                  >
+                    <option value="">Select shoe size</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                    <option value="11">11</option>
+                    <option value="12">12</option>
+                  </select>
                 </div>
 
                 <div className="flex items-end gap-2">
-                  <input type="checkbox" name="" id="" className="mb-1" />
-                  <label htmlFor="">ID Card Provided</label>
+                  <input
+                    type="checkbox"
+                    name=""
+                    id=""
+                    className="mb-1"
+                    value={formData.ID}
+                    onChange={(e) =>
+                      setFormData({ ...formData, ID: e.target.value })
+                    }
+                  />
+                  <label htmlFor="">ID Card Required</label>
                 </div>
                 {/* <div className="mt-2">
               <label className="block text-sm font-medium text-gray-700">
@@ -450,13 +473,21 @@ const PendingUniformRequest = () => {
                           <label htmlFor="" className="font-medium">
                             Site :{" "}
                           </label>
-                          <p>{empSiteDetails.associated_organization_name? empSiteDetails.associated_organization_name: "Not Associated"}</p>
+                          <p>
+                            {empSiteDetails.associated_organization_name
+                              ? empSiteDetails.associated_organization_name
+                              : "Not Associated"}
+                          </p>
                         </div>
                         <div className="grid grid-cols-2">
                           <label htmlFor="" className="font-medium">
                             Site ID :{" "}
                           </label>
-                          <p>{empSiteDetails.associated_organization? empSiteDetails.associated_organization: "Not Associated"}</p>
+                          <p>
+                            {empSiteDetails.associated_organization
+                              ? empSiteDetails.associated_organization
+                              : "Not Associated"}
+                          </p>
                         </div>
                         <div className="grid grid-cols-2 ">
                           <label htmlFor="" className="font-medium">
@@ -493,6 +524,10 @@ const PendingUniformRequest = () => {
                   </p>
                 </div>
                 <div className="grid grid-cols-2">
+                  <p className="font-medium"> Size :</p>
+                  <p className="">{details.select_size} </p>
+                </div>
+                <div className="grid grid-cols-2">
                   <p className="font-medium">Waist size :</p>
                   <p className="">{details.waist} inches</p>
                 </div>
@@ -500,10 +535,16 @@ const PendingUniformRequest = () => {
                   <p className="font-medium">Chest size :</p>
                   <p className="">{details.chest} inches</p>
                 </div>
-              </div>
-              <div className="flex flex-col gap-2">
-                <p className="font-medium border-b">Attachment</p>
-                <div className="text-center">No Attachments</div>
+                <div className="grid grid-cols-2">
+                  <p className="font-medium">Shoe size :</p>
+                  <p className="">{details.shoes_size}</p>
+                </div>
+                {details.id_card !== null && (
+                  <div className="grid grid-cols-2">
+                    <p className="font-medium">ID Card:</p>
+                    <p className="">Required</p>
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex justify-center my-2 mt-3 border-t pt-1">

@@ -1,6 +1,12 @@
 import React, { useEffect, useState } from "react";
 import Table from "../../../components/table/Table";
-import { getEmployeeAssociatedSites, getEmployeeDetails, getUniformRequest, getUniformRequestDetails, hrmsDomain } from "../../../api";
+import {
+  getEmployeeAssociatedSites,
+  getEmployeeDetails,
+  getUniformRequest,
+  getUniformRequestDetails,
+  hrmsDomain,
+} from "../../../api";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
 import { dateFormatSTD } from "../../../utils/dateUtils";
 import { BsEye } from "react-icons/bs";
@@ -98,8 +104,8 @@ const CompletedUniformRequest = () => {
   const [details, setDetails] = useState({});
   const handleDetails = async (id, empID) => {
     setShowDetails(true);
-    fetchEmployeeDetails(empID)
-    fetchEmployeeAssociatedSite(empID)
+    fetchEmployeeDetails(empID);
+    fetchEmployeeAssociatedSite(empID);
     try {
       const res = await getUniformRequestDetails(id);
       setDetails(res);
@@ -133,15 +139,15 @@ const CompletedUniformRequest = () => {
     }
   };
 
-  // const fetchEmployeeAssociatedSite = async (employeeId) => {
-  //   try {
-  //     const res = await getEmployeeAssociatedSites(employeeId);
-  //     setEmpSiteDetails(res[0]);
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  // };
-  
+  const fetchEmployeeAssociatedSite = async (employeeId) => {
+    try {
+      const res = await getEmployeeAssociatedSites(employeeId);
+      setEmpSiteDetails(res[0]);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <section className="flex">
       <div className="w-full flex mx-2 flex-col overflow-hidden">
@@ -220,13 +226,21 @@ const CompletedUniformRequest = () => {
                           <label htmlFor="" className="font-medium">
                             Site :{" "}
                           </label>
-                          <p>{empSiteDetails.associated_organization_name? empSiteDetails.associated_organization_name: "Not Associated"}</p>
+                          <p>
+                            {empSiteDetails.associated_organization_name
+                              ? empSiteDetails.associated_organization_name
+                              : "Not Associated"}
+                          </p>
                         </div>
                         <div className="grid grid-cols-2">
                           <label htmlFor="" className="font-medium">
                             Site ID :{" "}
                           </label>
-                          <p>{empSiteDetails.associated_organization? empSiteDetails.associated_organization: "Not Associated"}</p>
+                          <p>
+                            {empSiteDetails.associated_organization
+                              ? empSiteDetails.associated_organization
+                              : "Not Associated"}
+                          </p>
                         </div>
                         <div className="grid grid-cols-2 ">
                           <label htmlFor="" className="font-medium">
@@ -242,43 +256,95 @@ const CompletedUniformRequest = () => {
                 }
               />
               <div className="grid grid-cols-2 gap-2">
-
-              
-              <div className="grid grid-cols-2">
-                <p className="font-medium">Applied on :</p>
-                <p className="">
-                  {dateFormatSTD(details.created_date)}
-                </p>
+                <div className="grid grid-cols-2">
+                  <p className="font-medium">Applied on :</p>
+                  <p className="">{dateFormatSTD(details.created_date)}</p>
+                </div>
+                {details.received_date && (
+                  <div className="grid grid-cols-2">
+                    <p className="font-medium">Received on :</p>
+                    <p className="">{dateFormatSTD(details.received_date)}</p>
+                  </div>
+                )}
+                <div className="grid grid-cols-2">
+                  <p className="font-medium">Employee Name :</p>
+                  <p className="">{details.employee_name}</p>
+                </div>
+                <div className="grid grid-cols-2">
+                  <p className="font-medium">Status :</p>
+                  <p
+                    className={`${
+                      details.status === "Rejected"
+                        ? "text-red-500"
+                        : "text-green-500 font-medium"
+                    }`}
+                  >
+                    {details.status}
+                  </p>
+                </div>
+                <div className="grid grid-cols-2">
+                  <p className="font-medium">Waist size :</p>
+                  <p className="">{details.waist} inches</p>
+                </div>
+                <div className="grid grid-cols-2">
+                  <p className="font-medium">Chest size :</p>
+                  <p className="">{details.chest} inches</p>
+                </div>
+                <div className="grid grid-cols-2">
+                  <p className="font-medium">Shoe size :</p>
+                  <p className="">{details.shoes_size? details.shoes_size: "-"} </p>
+                </div>
+                {details.id_card !== null && (
+                  <div className="grid grid-cols-2">
+                    <p className="font-medium">ID Card:</p>
+                    <p className="">Required</p>
+                  </div>
+                )}
               </div>
-              <div className="grid grid-cols-2">
-                <p className="font-medium">Employee Name :</p>
-                <p className="">{details.employee_name}</p>
-              </div>
-              <div className="grid grid-cols-2">
-                <p className="font-medium">Status :</p>
-                <p
-                  className={`${
-                    details.status === "Rejected"
-                      ? "text-red-500"
-                      : "text-green-500 font-medium"
-                  }`}
-                >
-                  {details.status}
-                </p>
-              </div>
-              <div className="grid grid-cols-2">
-                <p className="font-medium">Waist size :</p>
-                <p className="">{details.waist} inches</p>
-              </div>
-              <div className="grid grid-cols-2">
-                <p className="font-medium">Chest size :</p>
-                <p className="">{details.chest} inches</p>
-              </div>
-              </div>
+              {details.received_date && (
+                <div className="bg-blue-50 grid grid-cols-2 p-2 rounded-md my-1">
+                  <div className="grid grid-cols-2">
+                    <p className="font-medium">Uniform :</p>
+                    {details.received_uniform ? (
+                      <p className="text-green-400 font-medium">Received</p>
+                    ) : (
+                      <p className="text-red-400 font-medium">Not Received</p>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2">
+                    <p className="font-medium">Shoe :</p>
+                    {details.received_shoes ? (
+                      <p className="text-green-400 font-medium">Received</p>
+                    ) : (
+                      <p className="text-red-400 font-medium">Not Received</p>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2">
+                    <p className="font-medium">ID Card :</p>
+                    {details.received_idcard ? (
+                      <p className="text-green-400 font-medium">Received</p>
+                    ) : (
+                      <p className="text-red-400 font-medium">Not Received</p>
+                    )}
+                  </div>
+                </div>
+              )}
+              {details.received_date && (
               <div className="flex flex-col gap-2">
                 <p className="font-medium border-b">Attachment</p>
-                <div className="text-center">No Attachments</div>
+                {details?.photo !== null ? (
+                  <a href={hrmsDomain + details?.photo} target="_blank" className="h-40 w-40 rounded-md">
+                    <img
+                      src={hrmsDomain + details?.photo}
+                      alt=""
+                      className="h-40 w-40 rounded-md"
+                    />
+                  </a>
+                ) : (
+                  <p className="text-center">No Attachments</p>
+                )}
               </div>
+             )} 
             </div>
             <div className="flex justify-center my-2 mt-3 border-t pt-1">
               <button
