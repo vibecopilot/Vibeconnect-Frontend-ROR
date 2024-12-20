@@ -127,6 +127,7 @@ const SetupNavbar = () => {
               </NavLink>
             </li>
           )}
+           {siteId === 10 && (
           <li>
             <NavLink
               to={`/admin/fm-user`}
@@ -155,6 +156,7 @@ const SetupNavbar = () => {
               </h2>
             </NavLink>
           </li>
+           )}
           {/* <li>
             <NavLink
               to={`/admin/occupant-user-setup`}
@@ -515,6 +517,7 @@ const SetupNavbar = () => {
               </NavLink>
             </li>
           )}
+          {feat.includes("purchase_order") && (
           <li>
             <NavLink
               to={`/admin/addresses-setup`}
@@ -543,7 +546,8 @@ const SetupNavbar = () => {
               </h2>
             </NavLink>
           </li>
-          <li>
+          )}
+          {/* <li>
             <NavLink
               to={`/setup/insights/`}
               className={({ isActive }) =>
@@ -570,7 +574,9 @@ const SetupNavbar = () => {
                 Insights
               </h2>
             </NavLink>
-          </li>
+          </li> */}
+          
+          {feat.includes("permits") && (
           <li>
             <NavLink
               to={`/setup/permit-setup`}
@@ -599,6 +605,8 @@ const SetupNavbar = () => {
               </h2>
             </NavLink>
           </li>
+          )}
+          {feat.includes("purchase_order") && (
           <li>
             <NavLink
               to={`/admin/sac-hsn-setup`}
@@ -627,6 +635,8 @@ const SetupNavbar = () => {
               </h2>
             </NavLink>
           </li>
+          )}
+          {feat.includes("incidents") && (
           <li>
             <NavLink
               to={`/admin/setup-incidents`}
@@ -655,6 +665,9 @@ const SetupNavbar = () => {
               </h2>
             </NavLink>
           </li>
+          )}
+          
+          {feat.includes("communication") && (
           <li>
             <NavLink
               to={`/admin/communication-access-control`}
@@ -683,6 +696,8 @@ const SetupNavbar = () => {
               </h2>
             </NavLink>
           </li>
+          )}
+          {feat.includes("vendors") && (
           <li>
             <NavLink
               to={`/setup/supplier-setup`}
@@ -711,6 +726,7 @@ const SetupNavbar = () => {
               </h2>
             </NavLink>
           </li>
+          )}
           {feat.includes("gatepass") && (
             <li>
               <NavLink
