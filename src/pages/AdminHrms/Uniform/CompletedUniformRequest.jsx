@@ -292,12 +292,16 @@ const CompletedUniformRequest = () => {
                 </div>
                 <div className="grid grid-cols-2">
                   <p className="font-medium">Shoe size :</p>
-                  <p className="">{details.shoes_size? details.shoes_size: "-"} </p>
+                  <p className="">
+                    {details.shoes_size ? details.shoes_size : "-"}{" "}
+                  </p>
                 </div>
-                {details.id_card !== null && (
+                {details?.id_card !== null && (
                   <div className="grid grid-cols-2">
                     <p className="font-medium">ID Card:</p>
-                    <p className="">Required</p>
+                    <p className="">
+                      {details?.id_card === "Yes" ? "Required" : "Not Required"}
+                    </p>
                   </div>
                 )}
               </div>
@@ -330,21 +334,25 @@ const CompletedUniformRequest = () => {
                 </div>
               )}
               {details.received_date && (
-              <div className="flex flex-col gap-2">
-                <p className="font-medium border-b">Attachment</p>
-                {details?.photo !== null ? (
-                  <a href={hrmsDomain + details?.photo} target="_blank" className="h-40 w-40 rounded-md">
-                    <img
-                      src={hrmsDomain + details?.photo}
-                      alt=""
-                      className="h-40 w-40 rounded-md"
-                    />
-                  </a>
-                ) : (
-                  <p className="text-center">No Attachments</p>
-                )}
-              </div>
-             )} 
+                <div className="flex flex-col gap-2">
+                  <p className="font-medium border-b">Attachment</p>
+                  {details?.photo !== null ? (
+                    <a
+                      href={hrmsDomain + details?.photo}
+                      target="_blank"
+                      className="h-32 w-36 rounded-md"
+                    >
+                      <img
+                        src={hrmsDomain + details?.photo}
+                        alt=""
+                        className="h-40 w-40 rounded-md"
+                      />
+                    </a>
+                  ) : (
+                    <p className="text-center">No Attachments</p>
+                  )}
+                </div>
+              )}
             </div>
             <div className="flex justify-center my-2 mt-3 border-t pt-1">
               <button

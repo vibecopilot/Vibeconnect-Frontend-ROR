@@ -542,7 +542,7 @@ const PendingUniformRequest = () => {
                 {details.id_card !== null && (
                   <div className="grid grid-cols-2">
                     <p className="font-medium">ID Card:</p>
-                    <p className="">Required</p>
+                    <p className="">{details.id_card === "Yes"? "Required": "Not Required"}</p>
                   </div>
                 )}
               </div>
