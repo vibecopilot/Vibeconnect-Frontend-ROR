@@ -9,6 +9,10 @@ import { getExpectedVisitor } from "../../../api";
 import { BsEye } from "react-icons/bs";
 import { BiEdit } from "react-icons/bi";
 import EmployeePasses from "../EmployeePasses";
+import { IoMdCall } from "react-icons/io";
+import { MdClose } from "react-icons/md";
+import { FaCheck } from "react-icons/fa";
+import { getItemInLocalStorage } from "../../../utils/localStorage";
 
 const EmployeeVisitor = () => {
   const [page, setPage] = useState("Visitor In");
@@ -16,6 +20,7 @@ const EmployeeVisitor = () => {
   const [selectedVisitor, setSelectedVisitor] = useState("expected");
   const [visitor, setVisitor] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
+  const [otpModal, setOTPModal] = useState(false);
   const handleClick = (visitorType) => {
     setSelectedVisitor(visitorType);
   };
@@ -155,46 +160,48 @@ const EmployeeVisitor = () => {
       setFilteredData(filteredResults);
     }
   };
+  const [otp, setOtp] = useState(Array(5).fill(""));
+  console.log(otp.join(""))
+  const handleChange = (value, index) => {
+    // Only accept digits
+    if (/^\d?$/.test(value)) {
+      const newOtp = [...otp];
+      newOtp[index] = value;
+      setOtp(newOtp);
+
+      // Focus next input field
+      if (value && index < otp.length - 1) {
+        document.getElementById(`otp-input-${index + 1}`).focus();
+      }
+    }
+  };
+  const handleKeyDown = (e, index) => {
+    // Handle backspace
+    if (e.key === "Backspace" && !otp[index] && index > 0) {
+      document.getElementById(`otp-input-${index - 1}`).focus();
+    }
+  };
+
+  const handlePaste = (e) => {
+    const pastedData = e.clipboardData.getData("text").slice(0, 5);
+    if (/^\d+$/.test(pastedData)) {
+      const newOtp = Array(5).fill("");
+      pastedData.split("").forEach((char, index) => {
+        if (index < 5) newOtp[index] = char;
+      });
+      setOtp(newOtp);
+    }
+    e.preventDefault();
+  };
+
+  const userType = getItemInLocalStorage("USERTYPE");
+
   return (
     <div className="visitors-page">
       <section className="flex">
         <Navbar />
-        <div className=" w-full flex mx-3  flex-col overflow-hidden">
+        <div className=" w-full flex m-3  flex-col overflow-hidden">
           {/* <EmployeePasses/> */}
-          <div className="flex w-full  m-2">
-            {/* <div className="flex w-full md:flex-row flex-col space-x-4  border-b border-gray-400">
-              <h2
-                className={`p-2 ${
-                  page === "Visitor In"
-                    ? "text-blue-500 font-medium  shadow-custom-all-sides"
-                    : "text-black"
-                } rounded-t-md  cursor-pointer text-center text-sm flex items-center justify-center transition-all duration-300`}
-                onClick={() => setPage("Visitor In")}
-              >
-                Visitor In
-              </h2>
-              <h2
-                className={`p-2 ${
-                  page === "Visitor Out"
-                    ? "text-blue-500 font-medium  shadow-custom-all-sides"
-                    : "text-black"
-                }  rounded-t-md  rounded-sm cursor-pointer text-center text-sm flex items-center justify-center transition-all duration-300`}
-                onClick={() => setPage("Visitor Out")}
-              >
-                Visitor Out
-              </h2>
-              <h2
-                className={`p-2 ${
-                  page === "History"
-                    ? "text-blue-500 font-medium  shadow-custom-all-sides"
-                    : "text-black"
-                }  rounded-t-md rounded-sm cursor-pointer text-center text-sm flex items-center justify-center transition-all duration-300`}
-                onClick={() => setPage("History")}
-              >
-                History
-              </h2>
-            </div> */}
-          </div>
 
           {page === "Visitor In" && (
             <div className="grid md:grid-cols-3 gap-2 items-center">
@@ -228,7 +235,14 @@ const EmployeeVisitor = () => {
                   &nbsp; <span>Unexpected visitor</span>
                 </span>
               </div>
-              <div className="flex justify-end">
+              <div className="flex justify-end gap-2">
+              {userType === "security_guard" && (
+                  <button
+                  className="bg-green-400 text-white rounded-md p-2 font-medium flex items-center gap-2"
+                  onClick={() => setOTPModal(true)}
+                >
+                  <IoMdCall size={20} /> Verify OTP
+                </button>)}
                 <Link
                   to={"/employee/add-new-visitor"}
                   style={{ background: themeColor }}
@@ -291,6 +305,42 @@ const EmployeeVisitor = () => {
           </div>
         </div>
       </section>
+      {otpModal && (
+        <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-30 backdrop-blur-sm z-20">
+          <div className="bg-white overflow-auto max-h-[70%] min-h-48 md:w-auto min-w-96 p-4 px-8 flex flex-col rounded-xl gap-2 justify-between">
+            <h2 className="border-b font-medium">Verify OTP</h2>
+            <div className="flex flex-col gap-1">
+              <label htmlFor="" className="font-medium">
+                Enter OTP
+              </label>
+
+              <div className="flex  gap-2">
+                {otp.map((digit, index) => (
+                  <input
+                    key={index}
+                    id={`otp-input-${index}`}
+                    type="text"
+                    maxLength={1}
+                    value={digit}
+                    onChange={(e) => handleChange(e.target.value, index)}
+                    onKeyDown={(e) => handleKeyDown(e, index)}
+                    onPaste={handlePaste}
+                    className="w-12 h-12 text-center text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                ))}
+              </div>
+            </div>
+            <div className="border-t p-1 flex items-center justify-center gap-2">
+              <button className="bg-red-400 text-white p-1 px-4 rounded-full flex items-center gap-2" onClick={()=>setOTPModal(false)}>
+                <MdClose /> Cancel
+              </button>
+              <button className="bg-green-400 text-white p-1 px-4 rounded-full flex items-center gap-2">
+                <FaCheck /> Verify
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
