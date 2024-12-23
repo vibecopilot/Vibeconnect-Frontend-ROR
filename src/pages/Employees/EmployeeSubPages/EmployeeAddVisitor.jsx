@@ -41,6 +41,11 @@ const EmployeeAddVisitor = () => {
     goodsInward: false,
     host: "",
     supportCategory: "",
+    passNumber: "",
+    noOfGoods: "",
+    goodsDescription: "",
+    goodsAttachments: [],
+    slotNumber: "",
   });
   console.log(formData);
   const themeColor = useSelector((state) => state.theme.color);
@@ -112,15 +117,21 @@ const EmployeeAddVisitor = () => {
     // if (capturedImage) {
     //   const response = await fetch(capturedImage);
     //   const blob = await response.blob();
-    postData.append("visitor[profile_pic]", imageFile, "visitor_image.jpg");
     // }
-    if (capturedImage) {
-      const response = await fetch(capturedImage);
-      const blob = await response.blob();
-      postData.append("visitor[profile_pic]", blob, "visitor_image.jpg");
+    if (userType === "security_guard") {
+      if (capturedImage) {
+        const response = await fetch(capturedImage);
+        const blob = await response.blob();
+        postData.append("visitor[profile_pic]", blob, "visitor_image.jpg");
+      }
+    } else {
+      if (imageFile) {
+        postData.append("visitor[profile_pic]", imageFile, "visitor_image");
+      }
     }
     postData.append("visitor[contact_no]", formData.mobile);
     postData.append("visitor[purpose]", formData.purpose);
+    postData.append("visitor[vhost_id]", formData.host);
     postData.append("visitor[start_pass]", passStartDate);
     postData.append("visitor[end_pass]", passEndDate);
     postData.append("visitor[coming_from]", formData.comingFrom);
@@ -146,6 +157,23 @@ const EmployeeAddVisitor = () => {
     });
     try {
       const visitResp = await postNewVisitor(postData);
+      const postGoods = new FormData();
+      formData.goodsAttachments.forEach((docs) => {
+        postGoods.append("goods_files[]", docs);
+      });
+      postGoods.append("goods_in_out[visitor_id]", visitResp.data.id);
+      postGoods.append("goods_in_out[no_of_goods]", formData.noOfGoods);
+      postGoods.append("goods_in_out[description]", formData.goodsDescription);
+      postGoods.append("goods_in_out[ward_type]", "in");
+      postGoods.append("goods_in_out[vehicle_no]", formData.vehicleNumber);
+      postGoods.append("goods_in_out[person_name]", formData.visitorName);
+      postGoods.append("goods_in_out[created_by_id]", userId);
+      try {
+        const goodsRes = await postNewGoods(postGoods);
+        console.log(goodsRes);
+      } catch (error) {
+        console.log(error);
+      }
       console.log(visitResp);
       navigate("/employee/passes/visitors");
       toast.success("Visitor Added Successfully");
@@ -216,6 +244,7 @@ const EmployeeAddVisitor = () => {
       }
     };
     fetchUsers();
+    fetchVisitorCategory();
   }, []);
   const handleHostChange = (selectedOption) => {
     setFormData({ ...formData, host: selectedOption?.value || "" });
@@ -277,42 +306,42 @@ const EmployeeAddVisitor = () => {
           </div>
         )}
         {userType === "security_guard" && (
-           <div className="flex justify-center">
-           {!showWebcam ? (
-             <button onClick={handleOpenCamera}>
-               <img
-                 src={capturedImage || image}
-                 alt="Uploaded"
-                 className="border-4 border-gray-300 rounded-full w-40 h-40 object-cover"
-               />
-             </button>
-           ) : (
-             <div>
-               <div className="rounded-full">
-                 <Webcam
-                   audio={false}
-                   ref={webcamRef}
-                   screenshotFormat="image/jpeg"
-                   className="rounded-full w-60 h-60 object-cover"
-                 />
-               </div>
-               <div className="flex gap-2 justify-center my-2 items-center">
-                 <button
-                   onClick={capture}
-                   className="bg-green-400 rounded-md text-white p-1 px-4"
-                 >
-                   Capture
-                 </button>
-                 <button
-                   onClick={handleCloseCamera}
-                   className="bg-red-400 rounded-md text-white p-1 px-4"
-                 >
-                   Close
-                 </button>
-               </div>
-             </div>
-           )}
-         </div>
+          <div className="flex justify-center">
+            {!showWebcam ? (
+              <button onClick={handleOpenCamera}>
+                <img
+                  src={capturedImage || image}
+                  alt="Uploaded"
+                  className="border-4 border-gray-300 rounded-full w-40 h-40 object-cover"
+                />
+              </button>
+            ) : (
+              <div>
+                <div className="rounded-full">
+                  <Webcam
+                    audio={false}
+                    ref={webcamRef}
+                    screenshotFormat="image/jpeg"
+                    className="rounded-full w-60 h-60 object-cover"
+                  />
+                </div>
+                <div className="flex gap-2 justify-center my-2 items-center">
+                  <button
+                    onClick={capture}
+                    className="bg-green-400 rounded-md text-white p-1 px-4"
+                  >
+                    Capture
+                  </button>
+                  <button
+                    onClick={handleCloseCamera}
+                    className="bg-red-400 rounded-md text-white p-1 px-4"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         )}
         <div className="flex md:flex-row flex-col  my-5 gap-10">
           <div className="flex gap-2 flex-col">
@@ -346,37 +375,39 @@ const EmployeeAddVisitor = () => {
               </div>
             </div>
           </div>
-          <div className="flex gap-2 flex-col">
-            <h2 className="font-semibold">Visiting Frequency :</h2>
-            <div className="flex items-center gap-4 ">
-              <div className="flex items-center gap-2 ">
-                <input
-                  type="radio"
-                  id="Once"
-                  name="frequency"
-                  value="Once"
-                  checked={selectedFrequency === "Once"}
-                  onChange={handleFrequencyChange}
-                />
-                <label htmlFor="Once" className="font-semibold">
-                  Once
-                </label>
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  id="Frequently"
-                  name="frequency"
-                  value="Frequently"
-                  checked={selectedFrequency === "Frequently"}
-                  onChange={handleFrequencyChange}
-                />
-                <label htmlFor="Frequently" className="font-semibold ">
-                  Frequently
-                </label>
+          {userType !== "security_guard" && (
+            <div className="flex gap-2 flex-col">
+              <h2 className="font-semibold">Visiting Frequency :</h2>
+              <div className="flex items-center gap-4 ">
+                <div className="flex items-center gap-2 ">
+                  <input
+                    type="radio"
+                    id="Once"
+                    name="frequency"
+                    value="Once"
+                    checked={selectedFrequency === "Once"}
+                    onChange={handleFrequencyChange}
+                  />
+                  <label htmlFor="Once" className="font-semibold">
+                    Once
+                  </label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    id="Frequently"
+                    name="frequency"
+                    value="Frequently"
+                    checked={selectedFrequency === "Frequently"}
+                    onChange={handleFrequencyChange}
+                  />
+                  <label htmlFor="Frequently" className="font-semibold ">
+                    Frequently
+                  </label>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
 
         <div className="grid md:grid-cols-3 gap-5">

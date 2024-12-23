@@ -221,6 +221,15 @@ const VisitorDetails = () => {
               )}
             </div>
             <div className="grid grid-cols-2 ">
+              <p className="font-semibold text-sm">Created by : </p>
+              {details.created_by_name && (
+                <p className="">
+                  {details.created_by_name.firstname}{" "}
+                  {details.created_by_name.lastname}
+                </p>
+              )}
+            </div>
+            <div className="grid grid-cols-2 ">
               <p className="font-semibold text-sm">Created On : </p>
               <p className="">{dateFormat(details.created_at)}</p>
             </div>
