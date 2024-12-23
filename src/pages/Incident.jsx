@@ -20,7 +20,7 @@ const Incidents = () => {
           <Link to={`/admin/incidents-details/${row.id}`}>
             <BsEye size={15} />
           </Link>
-          <Link to={`/admin/edit-incidents`}>
+          <Link to={`/admin/edit-incidents/${row.id}`}>
             <BiEdit size={15} />
           </Link>
         </div>
@@ -28,16 +28,16 @@ const Incidents = () => {
     },
 
     { name: "ID", selector: (row) => row.id, sortable: true },
-    { name: "Description", selector: (row) => row.Description, sortable: true },
+    // { name: "Description", selector: (row) => row.Description, sortable: true },
     // { name: "Site", selector: (row) => row.Site, sortable: true },
     // { name: "Region", selector: (row) => row.Region, sortable: true },
-    // { name: "Tower", selector: (row) => row.Tower, sortable: true },
+    { name: "Building ", selector: (row) => row.Tower, sortable: true },
     {
       name: "Incident Time",
       selector: (row) => dateFormatSTD(row.time_and_date),
       sortable: true,
     },
-    { name: "Level", selector: (row) => row.Level, sortable: true },
+    { name: "Level", selector: (row) => row.incident_level, sortable: true },
     { name: "Category", selector: (row) => row.Category, sortable: true },
     {
       name: "Sub Category",
@@ -62,23 +62,6 @@ const Incidents = () => {
     },
   ];
 
-  const data = [
-    {
-      id: 1,
-      ID: 1079,
-      Description: "Accident near Main Gate",
-      Site: "Time square",
-      Region: "",
-      IncidentTime: "18/03/2024 3:12 PM",
-      Level: "L1",
-      Category: "Health and Safety",
-      SubCategory: "Injury / Illness",
-      SupportRequired: "Yes ",
-      AssignedTo: "",
-      CurrentStatus: "Pending",
-      action: <BsEye />,
-    },
-  ];
   const themeColor = useSelector((state) => state.theme.color);
   const [incidents, setIncidents] = useState([]);
   const [filteredIncidents, setFilteredIncidents] = useState([]);
@@ -94,6 +77,8 @@ const Incidents = () => {
   useEffect(() => {
     fetchIncidents();
   }, []);
+
+  document.title = "VC - Incident "
   return (
     <section className="flex">
       <Navbar />
