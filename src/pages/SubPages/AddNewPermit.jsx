@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import FileInputBox from "../../containers/Inputs/FileInputBox";
-import { getFloors, getUnits,getVendors, postNewPermit } from "../../api";
+import { getFloors, getUnits, getVendors, postNewPermit } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
+import { RiContactsBook2Line } from "react-icons/ri";
+import Accordion from "../AdminHrms/Components/Accordion";
 
 const AddNewPermit = () => {
   const buildings = getItemInLocalStorage("Building");
@@ -16,16 +18,14 @@ const AddNewPermit = () => {
   const [activities, setActivities] = useState([
     { activity: "", sub_activity: "", category_of_hazards: "", risks: "" },
   ]);
- 
+
   useEffect(() => {
     const fetchVendors = async () => {
       const vendorResp = await getVendors();
       setVendors(vendorResp.data);
     };
 
-   
     fetchVendors();
-    
   }, []);
   const [formData, setFormData] = useState({
     name: "",
@@ -47,9 +47,9 @@ const AddNewPermit = () => {
     permit_status: "",
     extention_status: true,
     created_by_id: "",
-    permit_activities: []
+    permit_activities: [],
   });
-  const handleNewPermit = async() => {
+  const handleNewPermit = async () => {
     const sendData = new FormData();
     sendData.append("permit[name]", formData.name);
     sendData.append("permit[contact_number]", formData.contact_number);
@@ -65,16 +65,28 @@ const AddNewPermit = () => {
     sendData.append("permit[permit_type]", formData.permit_type);
     sendData.append("permit[vendor_id]", formData.vendor_id);
     // sendData.append("permit[issue_date_and_time]", formData.issue_date_and_time);
-    sendData.append("permit[expiry_date_and_time]", formData.expiry_date_and_time);
+    sendData.append(
+      "permit[expiry_date_and_time]",
+      formData.expiry_date_and_time
+    );
     sendData.append("permit[comment]", formData.comment);
     // sendData.append("permit[permit_status]", formData.permit_status);
     // sendData.append("permit[extention_status]", formData.extention_status);
     sendData.append("permit[created_by_id]", userId);
-    
+
     activities.forEach((activity) => {
-      sendData.append(`permit[permit_activities][][activity]`, activity.activity);
-      sendData.append(`permit[permit_activities][][sub_activity]`, activity.sub_activity);
-      sendData.append(`permit[permit_activities][][category_of_hazards]`, activity.category_of_hazards);
+      sendData.append(
+        `permit[permit_activities][][activity]`,
+        activity.activity
+      );
+      sendData.append(
+        `permit[permit_activities][][sub_activity]`,
+        activity.sub_activity
+      );
+      sendData.append(
+        `permit[permit_activities][][category_of_hazards]`,
+        activity.category_of_hazards
+      );
       sendData.append(`permit[permit_activities][][risks]`, activity.risks);
     });
 
@@ -82,17 +94,17 @@ const AddNewPermit = () => {
     //     sendData.append("attachfiles[]", file)
     // });
     try {
-        const billResp = await postNewPermit(sendData)
-        toast.success("Permit Added Successfully")
-        navigate("/admin/permit")
-        console.log("Permit response",billResp)
+      const billResp = await postNewPermit(sendData);
+      toast.success("Permit Added Successfully");
+      navigate("/admin/permit");
+      console.log("Permit response", billResp);
     } catch (error) {
-        console.log(error)
+      console.log(error);
     }
   };
   const handleChange = async (e) => {
     async function fetchFloor(floorID) {
-      console.log(floorID)
+      console.log(floorID);
       try {
         const build = await getFloors(floorID);
         setFloors(build.data.map((item) => ({ name: item.name, id: item.id })));
@@ -118,22 +130,17 @@ const AddNewPermit = () => {
         ...formData,
         building_id: BuildID,
       });
-    } 
-    else if (
+    } else if (
       e.target.type === "select-one" &&
       e.target.name === "floor_name"
-    ) 
-    {
+    ) {
       const UnitID = Number(e.target.value);
       await getUnit(UnitID);
       setFormData({
         ...formData,
         floor_id: UnitID,
       });
-    }
-    
-    
-    else {
+    } else {
       setFormData({
         ...formData,
         [e.target.name]: e.target.value,
@@ -151,14 +158,12 @@ const AddNewPermit = () => {
     setActivities([
       ...activities,
       {
-        
         activity: "",
         subActivity: "",
         hazardCategory: "",
         risks: "",
       },
     ]);
-    
   };
 
   const handleDeleteActivity = (index) => {
@@ -170,14 +175,17 @@ const AddNewPermit = () => {
   const handleRadioChange = (event) => {
     const value = event.target.value;
     setShowEntityList(value === "client");
-    
+
     // Update formData with the selected value
     setFormData((prevData) => ({
       ...prevData,
       client_specific: value,
     }));
   };
-
+  const firstName = getItemInLocalStorage("Name");
+  const lastName = getItemInLocalStorage("LASTNAME");
+  const email = getItemInLocalStorage("USEREMAIL");
+  const siteName = getItemInLocalStorage("SITENAME");
   return (
     <section>
       <div className="m-2">
@@ -188,108 +196,59 @@ const AddNewPermit = () => {
           New Permit
         </h2>
         <div className="md:mx-20 my-5 mb-10 sm:border border-gray-400 p-5 px-10 rounded-lg sm:shadow-xl">
-          <h2 className="border-b text-center text-xl border-black mb-6 font-bold">
+          <h2 className="border-b text-center text-xl border-black  font-bold">
             PERMIT REQUESTOR DETAILS
           </h2>
-          <h1 className="font-semibold">Requestor Details :</h1>
+          <Accordion
+            icon={RiContactsBook2Line}
+            title={"Requestor Details"}
+            content={
+              <>
+                <div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div className="grid grid-cols-2 items-center">
+                      <label
+                        className="block text-gray-700 font-medium "
+                        htmlFor="name"
+                      >
+                        Name :
+                      </label>
+                      <p>{`${firstName} ${lastName}`}</p>
+                    </div>
+                    <div className="grid grid-cols-2 items-center">
+                      <label
+                        className="block text-gray-700 font-medium "
+                        htmlFor="name"
+                      >
+                        Email :
+                      </label>
+                      <p>{email}</p>
+                    </div>
+                    <div className="grid grid-cols-2 items-center">
+                      <label
+                        className="block text-gray-700 font-medium  text-center"
+                        htmlFor="name"
+                      >
+                        Site :
+                      </label>
+                      <p>{siteName}</p>
+                    </div>
+                    {/* <div className="grid grid-cols-2 items-center">
+                      <label
+                        className="block text-gray-700 font-medium "
+                        htmlFor="name"
+                      >
+                        Unit :
+                      </label>
+                      <p>{siteName}</p>
+                    </div> */}
+                  </div>
+                </div>
+              </>
+            }
+          />
 
-          <div className="w-full mx-3 my-5 p-5 shadow-lg rounded-lg border border-gray-300">
-            {/* Requestor details input fields */}
-            <div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <div className="col-span-1">
-                  <label
-                    className="block text-gray-700 font-bold mb-2"
-                    htmlFor="name"
-                  >
-                    Name
-                  </label>
-                  <input
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    id="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    name="name"
-                    type="text"
-                    placeholder="Enter Name"
-                  />
-                </div>
-                <div className="col-span-1">
-                  <label
-                    className="block text-gray-700 font-bold mb-2"
-                    htmlFor="contact-number"
-                  >
-                    Contact Number
-                  </label>
-                  <input
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    id="contact-number"
-                    value={formData.contact_number}
-                    onChange={handleChange}
-                    name="contact_number"
-                    type="text"
-                    placeholder="Enter Contact Number"
-                  />
-                </div>
-                <div className="col-span-1">
-                  <label
-                    className="block text-gray-700 font-bold mb-2"
-                    htmlFor="site"
-                  >
-                    Site
-                  </label>
-                  <input
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    id="site"
-                    type="text"
-                    placeholder="Business Bay"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <div className="col-span-1">
-                  <label
-                    className="block text-gray-700 font-bold mb-2"
-                    htmlFor="department"
-                  >
-                    Department
-                  </label>
-                  <input
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    id="department"
-                    type="text"
-                    placeholder="Department"
-                  />
-                </div>
-                <div className="col-span-1">
-                  <label
-                    className="block text-gray-700 font-bold mb-2"
-                    htmlFor="unit"
-                  >
-                    Unit
-                  </label>
-                  <select
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    id="unit"
-                    type="text"
-                    placeholder="Unit"
-                    name="unit_id"
-                    value={formData.unit_id}
-                    onChange={handleChange}>
-                    <option value="">Select Unit</option>
-                    {units?.map((unit) => (
-                      <option value={unit.id} key={unit.id}>
-                        {unit.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-               
-              </div>
-            </div>
-          </div>
-
-          <h2 className="border-b text-center text-xl border-black mb-6 font-bold">
+          <h2 className="border-b  text-xl border-black font-medium">
             BASIC DETAILS
           </h2>
 
@@ -325,15 +284,15 @@ const AddNewPermit = () => {
                     className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                     id="building"
                     onChange={handleChange}
-                  value={formData.building_id}
-                  name="building_id"
+                    value={formData.building_id}
+                    name="building_id"
                   >
                     <option value="">Select Building</option>
-                  {buildings?.map((building) => (
-                    <option key={building.id} value={building.id}>
-                      {building.name}
-                    </option>
-                  ))}
+                    {buildings?.map((building) => (
+                      <option key={building.id} value={building.id}>
+                        {building.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div className="col-span-1">
@@ -381,11 +340,11 @@ const AddNewPermit = () => {
                     name="floor_id"
                   >
                     <option value="">Select Floor</option>
-                  {floors?.map((floor) => (
-                    <option value={floor.id} key={floor.id}>
-                      {floor.name}
-                    </option>
-                  ))}
+                    {floors?.map((floor) => (
+                      <option value={floor.id} key={floor.id}>
+                        {floor.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div className="col-span-1">
@@ -455,12 +414,17 @@ const AddNewPermit = () => {
                       onChange={handleChange}
                       value={formData.entity}
                       name="entity"
-                      
                     >
                       <option value="">Select Entity</option>
-                      <option value="RISING ASSOSIATES">RISING ASSOSIATES</option>
-                      <option value="ABS Professional Services">ABS Professional Services</option>
-                      <option value="Apex Fund Services LLP">Apex Fund Services LLP</option>
+                      <option value="RISING ASSOSIATES">
+                        RISING ASSOSIATES
+                      </option>
+                      <option value="ABS Professional Services">
+                        ABS Professional Services
+                      </option>
+                      <option value="Apex Fund Services LLP">
+                        Apex Fund Services LLP
+                      </option>
                     </select>
                   </div>
                 )}
@@ -500,7 +464,9 @@ const AddNewPermit = () => {
                   name="permit_type"
                   value="Cold Work"
                   checked={formData.permit_type === "Cold Work"}
-        onChange={(e) => setFormData({ ...formData, permit_type: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, permit_type: e.target.value })
+                  }
                 />
                 <label
                   className="text-gray-700 font-bold ml-2"
@@ -516,7 +482,9 @@ const AddNewPermit = () => {
                   name="permit_type"
                   value="Confined Space Work"
                   checked={formData.permit_type === "Confined Space Work"}
-        onChange={(e) => setFormData({ ...formData, permit_type: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, permit_type: e.target.value })
+                  }
                 />
                 <label
                   className="text-gray-700 font-bold ml-2"
@@ -532,7 +500,9 @@ const AddNewPermit = () => {
                   name="permit-type"
                   value="Electrical Work"
                   checked={formData.permit_type === "Electrical Work"}
-        onChange={(e) => setFormData({ ...formData, permit_type: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, permit_type: e.target.value })
+                  }
                 />
                 <label
                   className="text-gray-700 font-bold ml-2"
@@ -548,7 +518,9 @@ const AddNewPermit = () => {
                   name="permit_type"
                   value="Excavation Work"
                   checked={formData.permit_type === "Excavation Work"}
-        onChange={(e) => setFormData({ ...formData, permit_type: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, permit_type: e.target.value })
+                  }
                 />
                 <label
                   className="text-gray-700 font-bold ml-2"
@@ -566,7 +538,9 @@ const AddNewPermit = () => {
                   name="permit_type"
                   value="Height Work"
                   checked={formData.permit_type === "Height Work"}
-        onChange={(e) => setFormData({ ...formData, permit_type: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, permit_type: e.target.value })
+                  }
                 />
                 <label
                   className="text-gray-700 font-bold ml-2"
@@ -582,7 +556,9 @@ const AddNewPermit = () => {
                   name="permit_type"
                   value="Hot Work"
                   checked={formData.permit_type === "Hot Work"}
-        onChange={(e) => setFormData({ ...formData, permit_type: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, permit_type: e.target.value })
+                  }
                 />
                 <label
                   className="text-gray-700 font-bold ml-2"
@@ -598,7 +574,9 @@ const AddNewPermit = () => {
                   name="permit_type"
                   value="Radiology Work"
                   checked={formData.permit_type === "Radiology Work"}
-        onChange={(e) => setFormData({ ...formData, permit_type: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, permit_type: e.target.value })
+                  }
                 />
                 <label
                   className="text-gray-700 font-bold ml-2"
@@ -613,8 +591,13 @@ const AddNewPermit = () => {
                   id="loading-unloading-work"
                   name="permit_type"
                   value="Loading, Unloading Hazardous Material Work"
-                  checked={formData.permit_type === "Loading, Unloading Hazardous Material Work"}
-        onChange={(e) => setFormData({ ...formData, permit_type: e.target.value })}
+                  checked={
+                    formData.permit_type ===
+                    "Loading, Unloading Hazardous Material Work"
+                  }
+                  onChange={(e) =>
+                    setFormData({ ...formData, permit_type: e.target.value })
+                  }
                 />
                 <label
                   className="text-gray-700 font-bold ml-2"
@@ -741,34 +724,33 @@ const AddNewPermit = () => {
                     value={formData.vendor_id}
                     onChange={handleChange}
                     name="vendor_id"
-                    placeholder="Enter Vendor">
-                        <option value="">Select Vendor</option>
-                     {vendors.map((vendor) => (
+                    placeholder="Enter Vendor"
+                  >
+                    <option value="">Select Vendor</option>
+                    {vendors.map((vendor) => (
                       <option value={vendor.id} key={vendor.id}>
                         {vendor.vendor_name}
                       </option>
                     ))}
-                    </select>
-                 
+                  </select>
                 </div>
                 <div className="col-span-1">
-  <label
-    className="block text-gray-700 font-bold mb-2"
-    htmlFor="expiryDateTime"
-  >
-    Expiry Date&Time*
-  </label>
-  <input
-    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-    id="expiryDateTime"
-    value={formData.expiry_date_and_time}
-    onChange={handleChange}
-    name="expiry_date_and_time"
-    type="datetime-local"
-    placeholder="dd-mm-yyyy --:--"
-  />
-</div>
-
+                  <label
+                    className="block text-gray-700 font-bold mb-2"
+                    htmlFor="expiryDateTime"
+                  >
+                    Expiry Date&Time*
+                  </label>
+                  <input
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    id="expiryDateTime"
+                    value={formData.expiry_date_and_time}
+                    onChange={handleChange}
+                    name="expiry_date_and_time"
+                    type="datetime-local"
+                    placeholder="dd-mm-yyyy --:--"
+                  />
+                </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div className="col-span-2">
@@ -801,7 +783,7 @@ const AddNewPermit = () => {
           <div className="sm:flex justify-center grid gap-2 my-5 ">
             <button
               className="bg-black text-white p-2 px-4 rounded-md font-medium"
-                onClick={handleNewPermit}
+              onClick={handleNewPermit}
             >
               Submit
             </button>

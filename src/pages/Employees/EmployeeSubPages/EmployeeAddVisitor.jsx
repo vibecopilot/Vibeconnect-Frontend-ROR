@@ -1,13 +1,19 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import image from "/profile.png";
 import { FaTrash } from "react-icons/fa";
 import { useSelector } from "react-redux";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
 import toast from "react-hot-toast";
-import { getSetupUsers, postNewVisitor } from "../../../api";
+import {
+  getHostList,
+  getSetupUsers,
+  getVisitorStaffCategory,
+  postNewVisitor,
+} from "../../../api";
 import { useNavigate } from "react-router-dom";
 import FileInputBox from "../../../containers/Inputs/FileInputBox";
-
+import Select from "react-select";
+import Webcam from "react-webcam";
 const EmployeeAddVisitor = () => {
   const siteId = getItemInLocalStorage("SITEID");
   const userId = getItemInLocalStorage("UserId");
@@ -19,7 +25,10 @@ const EmployeeAddVisitor = () => {
   const [selectedVisitorType, setSelectedVisitorType] = useState("Guest");
   const [passStartDate, setPassStartDate] = useState("");
   const [passEndDate, setPassEndDate] = useState("");
-
+  const [hosts, setHosts] = useState([]);
+  const [staffCategories, setStaffCategories] = useState([]);
+  const [showWebcam, setShowWebcam] = useState(false);
+  const [capturedImage, setCapturedImage] = useState(null);
   const [formData, setFormData] = useState({
     visitorName: "",
     mobile: "",
@@ -30,6 +39,8 @@ const EmployeeAddVisitor = () => {
     expectedTime: "",
     hostApproval: false,
     goodsInward: false,
+    host: "",
+    supportCategory: "",
   });
   console.log(formData);
   const themeColor = useSelector((state) => state.theme.color);
@@ -103,6 +114,11 @@ const EmployeeAddVisitor = () => {
     //   const blob = await response.blob();
     postData.append("visitor[profile_pic]", imageFile, "visitor_image.jpg");
     // }
+    if (capturedImage) {
+      const response = await fetch(capturedImage);
+      const blob = await response.blob();
+      postData.append("visitor[profile_pic]", blob, "visitor_image.jpg");
+    }
     postData.append("visitor[contact_no]", formData.mobile);
     postData.append("visitor[purpose]", formData.purpose);
     postData.append("visitor[start_pass]", passStartDate);
@@ -176,6 +192,48 @@ const EmployeeAddVisitor = () => {
     }
   };
   const userType = getItemInLocalStorage("USERTYPE");
+  console.log(userType);
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const usersResp = await getHostList(siteId);
+        const hostOptions = usersResp.data.hosts.map((host) => ({
+          value: host.id,
+          label: host.name,
+        }));
+        setHosts(hostOptions);
+        console.log(usersResp);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    const fetchVisitorCategory = async () => {
+      try {
+        const visitorCat = await getVisitorStaffCategory();
+        setStaffCategories(visitorCat.data.categories);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchUsers();
+  }, []);
+  const handleHostChange = (selectedOption) => {
+    setFormData({ ...formData, host: selectedOption?.value || "" });
+  };
+  const handleOpenCamera = () => {
+    setShowWebcam(true);
+  };
+
+  const handleCloseCamera = () => {
+    setShowWebcam(false);
+  };
+  const webcamRef = useRef(null);
+  const capture = useCallback(() => {
+    const imageSrc = webcamRef.current.getScreenshot();
+    console.log(imageSrc);
+    setShowWebcam(false);
+    setCapturedImage(imageSrc);
+  }, [webcamRef]);
   return (
     <div className="flex justify-center items-center  w-full p-4">
       <div className="md:border border-gray-300 rounded-lg md:p-4 w-full md:mx-4 ">
@@ -186,34 +244,75 @@ const EmployeeAddVisitor = () => {
           {getHeadingText()}
         </h2>
         <br />
-
-        {behalf !== "Cab" && behalf !== "Delivery" && (
-          <div
-            onClick={handleImageClick}
-            className="cursor-pointer flex justify-center items-center my-4"
-          >
-            {imageFile ? (
-              <img
-                src={URL.createObjectURL(imageFile)}
-                // src={imageFile || image}
-                alt="Uploaded"
-                className="border-4 border-gray-300 rounded-full w-40 h-40 object-cover"
-              />
-            ) : (
-              <img
-                src={image}
-                alt="Default"
-                className="border-4 border-gray-300 rounded-full w-40 h-40 object-cover"
-              />
+        {userType !== "security_guard" && (
+          <div>
+            {behalf !== "Cab" && behalf !== "Delivery" && (
+              <div
+                onClick={handleImageClick}
+                className="cursor-pointer flex justify-center items-center my-4"
+              >
+                {imageFile ? (
+                  <img
+                    src={URL.createObjectURL(imageFile)}
+                    // src={imageFile || image}
+                    alt="Uploaded"
+                    className="border-4 border-gray-300 rounded-full w-40 h-40 object-cover"
+                  />
+                ) : (
+                  <img
+                    src={image}
+                    alt="Default"
+                    className="border-4 border-gray-300 rounded-full w-40 h-40 object-cover"
+                  />
+                )}
+                <input
+                  type="file"
+                  ref={inputRef}
+                  onChange={handleImageChange}
+                  style={{ display: "none" }}
+                  accept=".jpg, .jpeg, .png"
+                />
+              </div>
             )}
-            <input
-              type="file"
-              ref={inputRef}
-              onChange={handleImageChange}
-              style={{ display: "none" }}
-              accept=".jpg, .jpeg, .png"
-            />
           </div>
+        )}
+        {userType === "security_guard" && (
+           <div className="flex justify-center">
+           {!showWebcam ? (
+             <button onClick={handleOpenCamera}>
+               <img
+                 src={capturedImage || image}
+                 alt="Uploaded"
+                 className="border-4 border-gray-300 rounded-full w-40 h-40 object-cover"
+               />
+             </button>
+           ) : (
+             <div>
+               <div className="rounded-full">
+                 <Webcam
+                   audio={false}
+                   ref={webcamRef}
+                   screenshotFormat="image/jpeg"
+                   className="rounded-full w-60 h-60 object-cover"
+                 />
+               </div>
+               <div className="flex gap-2 justify-center my-2 items-center">
+                 <button
+                   onClick={capture}
+                   className="bg-green-400 rounded-md text-white p-1 px-4"
+                 >
+                   Capture
+                 </button>
+                 <button
+                   onClick={handleCloseCamera}
+                   className="bg-red-400 rounded-md text-white p-1 px-4"
+                 >
+                   Close
+                 </button>
+               </div>
+             </div>
+           )}
+         </div>
         )}
         <div className="flex md:flex-row flex-col  my-5 gap-10">
           <div className="flex gap-2 flex-col">
@@ -286,11 +385,18 @@ const EmployeeAddVisitor = () => {
               <label htmlFor="" className="font-medium">
                 Support Category :
               </label>
-              <select className="border border-gray-400 p-2 rounded-md">
+              <select
+                className="border border-gray-400 p-2 rounded-md"
+                value={formData.supportCategory}
+                onChange={handleChange}
+                name="supportCategory"
+              >
                 <option value="">Select Support Staff Category</option>
-                <option value="">Test Category</option>
-                <option value="">Test Category - 2</option>
-                <option value="">Test Category - 3</option>
+                {staffCategories.map((staffCat) => (
+                  <option value={staffCat.id} key={staffCat.id}>
+                    {staffCat.name}
+                  </option>
+                ))}
               </select>
             </div>
           )}
@@ -311,20 +417,37 @@ const EmployeeAddVisitor = () => {
             </div>
           )}
           {behalf !== "Cab" && (
-            <div className="grid gap-2 items-center w-full">
-              <label htmlFor="mobileNumber" className="font-semibold">
-                Mobile Number:
-              </label>
-              <input
-                type="number"
-                value={formData.mobile}
-                onChange={handleChange}
-                name="mobile"
-                id="mobileNumber"
-                className="border border-gray-400 p-2 rounded-md"
-                placeholder="Enter Mobile Number"
-              />
-            </div>
+            <>
+              <div className="grid gap-2 items-center w-full">
+                <label htmlFor="mobileNumber" className="font-semibold">
+                  Mobile Number:
+                </label>
+                <input
+                  type="number"
+                  value={formData.mobile}
+                  onChange={handleChange}
+                  name="mobile"
+                  id="mobileNumber"
+                  className="border border-gray-400 p-2 rounded-md"
+                  placeholder="Enter Mobile Number"
+                />
+              </div>
+              {userType === "security_guard" && (
+                <div className="grid gap-2 items-center w-full">
+                  <label htmlFor="" className="font-medium">
+                    Host :
+                  </label>
+                  <Select
+                    options={hosts}
+                    // value={hostOptions.find((option) => option.value === formData.host)}
+                    onChange={handleHostChange}
+                    placeholder="Select Person to meet"
+                    isClearable
+                    classNamePrefix="react-select"
+                  />
+                </div>
+              )}
+            </>
           )}
 
           {/* <div className="grid gap-2 items-center w-full">
