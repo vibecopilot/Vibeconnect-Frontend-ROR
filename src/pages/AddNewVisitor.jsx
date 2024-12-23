@@ -174,7 +174,8 @@ const AddNewVisitor = () => {
 
     const postData = new FormData();
     postData.append("visitor[site_id]", siteId);
-    postData.append("visitor[created_by_id]", formData.host);
+    postData.append("visitor[created_by_id]", userId);
+    postData.append("visitor[vhost_id]", formData.host);
     postData.append("visitor[name]", formData.visitorName);
     postData.append("visitor[visitor_staff_category_id]", formData.supportCategory);
     postData.append("visitor[contact_no]", formData.mobile);
@@ -219,7 +220,7 @@ const AddNewVisitor = () => {
       });
       postGoods.append("goods_in_out[visitor_id]", visitResp.data.id);
       postGoods.append("goods_in_out[no_of_goods]", formData.noOfGoods);
-      postGoods.append("goods_in_out[description]", formData.noOfGoods);
+      postGoods.append("goods_in_out[description]", formData.goodsDescription);
       postGoods.append("goods_in_out[ward_type]", "in");
       postGoods.append("goods_in_out[vehicle_no]", formData.vehicleNumber);
       postGoods.append("goods_in_out[person_name]", formData.visitorName);
