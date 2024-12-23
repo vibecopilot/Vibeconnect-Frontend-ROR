@@ -3587,7 +3587,7 @@ function App() {
             }
           />
           <Route
-            path="/admin/edit-incidents"
+            path="/admin/edit-incidents/:id"
             element={
               <ProtectedAdminRoutes>
                 <EditIncident />

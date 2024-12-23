@@ -7404,3 +7404,15 @@ export const getIncidents = async () =>
       token: token,
     },
   });
+export const getIncidentDetails = async (incidentId) =>
+  axiosInstance.get(`/incidents/${incidentId}.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const postIncidents = async (data) =>
+  axiosInstance.post(`/incidents.json`,data, {
+    params: {
+      token: token,
+    },
+  });
