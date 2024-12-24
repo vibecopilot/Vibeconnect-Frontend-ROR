@@ -213,12 +213,9 @@ const VisitorDetails = () => {
 
             <div className="grid grid-cols-2 ">
               <p className="font-semibold text-sm">Host : </p>
-              {details.created_by_name && (
-                <p className="">
-                  {details.created_by_name.firstname}{" "}
-                  {details.created_by_name.lastname}
-                </p>
-              )}
+              {details?.hosts?.map((host) => (
+                <p>{host?.full_name}</p>
+              ))}
             </div>
             <div className="grid grid-cols-2 ">
               <p className="font-semibold text-sm">Created by : </p>

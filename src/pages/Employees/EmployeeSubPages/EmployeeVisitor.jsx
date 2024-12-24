@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 //import Navbar from '../../components/Navbar'
 import { PiPlusCircle } from "react-icons/pi";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../../../components/Navbar";
 import { useSelector } from "react-redux";
 import Table from "../../../components/table/Table";
-import { getExpectedVisitor } from "../../../api";
+import { getExpectedVisitor, postOTPVerification } from "../../../api";
 import { BsEye } from "react-icons/bs";
 import { BiEdit } from "react-icons/bi";
 import EmployeePasses from "../EmployeePasses";
@@ -13,6 +13,8 @@ import { IoMdCall } from "react-icons/io";
 import { MdClose } from "react-icons/md";
 import { FaCheck } from "react-icons/fa";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
+import toast from "react-hot-toast";
+import { FaPersonWalkingArrowRight } from "react-icons/fa6";
 
 const EmployeeVisitor = () => {
   const [page, setPage] = useState("Visitor In");
@@ -104,7 +106,11 @@ const EmployeeVisitor = () => {
       selector: (row) => row.vehicle_number,
       sortable: true,
     },
-
+    {
+      name: "Host",
+      selector: (row) => row.hosts.map((host) => <p>{host.full_name}</p>),
+      sortable: true,
+    },
     {
       name: "Host Approval",
       selector: (row) => (row.skip_host_approval ? "Not Required" : "Required"),
@@ -131,16 +137,23 @@ const EmployeeVisitor = () => {
     //   selector: (row) => (row.check_out ? dateTimeFormat(row.check_out) : ""),
     //   sortable: true,
     // },
-    // {
-    //   name: "Status",
-    //   selector: (row) => row.status,
-    //   sortable: true,
-    // },
-    // {
-    //   name: "Host",
-    //   selector: (row) => row.created_by,
-    //   sortable: true,
-    // },
+    {
+      name: "Created by",
+      selector: (row) => row.created_by_name.firstname,
+      sortable: true,
+    },
+    {
+      name: "Action",
+      cell: (row) => (
+        <div className="flex items-center">
+          {row.verified && (
+            <button className="font-medium flex items-center gap-2 bg-green-400 text-white rounded-full p-1 shadow-custom-all-sides border-2 border-white px-4">
+              <FaPersonWalkingArrowRight size={20} /> IN
+            </button>
+          )}
+        </div>
+      ),
+    },
   ];
   const [searchText, setSearchText] = useState("");
   const handleSearch = (e) => {
@@ -161,7 +174,7 @@ const EmployeeVisitor = () => {
     }
   };
   const [otp, setOtp] = useState(Array(5).fill(""));
-  console.log(otp.join(""))
+  console.log(otp.join(""));
   const handleChange = (value, index) => {
     // Only accept digits
     if (/^\d?$/.test(value)) {
@@ -193,8 +206,25 @@ const EmployeeVisitor = () => {
     }
     e.preventDefault();
   };
-
+  const navigate = useNavigate();
   const userType = getItemInLocalStorage("USERTYPE");
+  const [visitorId, setVisitorId] = useState("");
+  const handleVerifyOTP = async () => {
+    const postOTP = new FormData();
+    postOTP.append("otp", otp.join(""));
+    try {
+      const res = await postOTPVerification(postOTP);
+      toast.success(res.data.message);
+      setVisitorId(res.data.vid);
+      setOTPModal(false);
+      // console.log(res.data)
+      navigate(`/employee/passes/visitors/visitor-details/${res.data.vid}`);
+    } catch (error) {
+      console.log(error);
+      toast.error(error.response.data.error);
+    }
+  };
+  console.log(visitorId);
 
   return (
     <div className="visitors-page">
@@ -236,13 +266,14 @@ const EmployeeVisitor = () => {
                 </span>
               </div>
               <div className="flex justify-end gap-2">
-              {userType === "security_guard" && (
+                {userType === "security_guard" && (
                   <button
-                  className="bg-green-400 text-white rounded-md p-2 font-medium flex items-center gap-2"
-                  onClick={() => setOTPModal(true)}
-                >
-                  <IoMdCall size={20} /> Verify OTP
-                </button>)}
+                    className="bg-green-400 text-white rounded-md p-2 font-medium flex items-center gap-2"
+                    onClick={() => setOTPModal(true)}
+                  >
+                    <IoMdCall size={20} /> Verify OTP
+                  </button>
+                )}
                 <Link
                   to={"/employee/add-new-visitor"}
                   style={{ background: themeColor }}
@@ -331,10 +362,16 @@ const EmployeeVisitor = () => {
               </div>
             </div>
             <div className="border-t p-1 flex items-center justify-center gap-2">
-              <button className="bg-red-400 text-white p-1 px-4 rounded-full flex items-center gap-2" onClick={()=>setOTPModal(false)}>
+              <button
+                className="bg-red-400 text-white p-1 px-4 rounded-full flex items-center gap-2"
+                onClick={() => setOTPModal(false)}
+              >
                 <MdClose /> Cancel
               </button>
-              <button className="bg-green-400 text-white p-1 px-4 rounded-full flex items-center gap-2">
+              <button
+                className="bg-green-400 text-white p-1 px-4 rounded-full flex items-center gap-2"
+                onClick={handleVerifyOTP}
+              >
                 <FaCheck /> Verify
               </button>
             </div>
