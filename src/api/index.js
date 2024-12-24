@@ -1232,6 +1232,22 @@ export const postStaff = async (data) =>
       token: token,
     },
   });
+export const postOTPVerification = async (data) =>
+  axiosInstance.post("/visitors/verify_votp.json", data, {
+    params: {
+      token: token,
+    },
+  });
+export const postVisitorCheckInCheckOut = async (visitorId, data) =>
+  axiosInstance.post(
+    `/visitors/${visitorId}/visitor_visits/check_visitor.json`,
+    data,
+    {
+      params: {
+        token: token,
+      },
+    }
+  );
 
 export const sendMailToUsers = async (userId) =>
   axiosInstance.get(`/users/send_welcome_email.json?id=${userId}`, {
@@ -7411,7 +7427,7 @@ export const getIncidentDetails = async (incidentId) =>
     },
   });
 export const postIncidents = async (data) =>
-  axiosInstance.post(`/incidents.json`,data, {
+  axiosInstance.post(`/incidents.json`, data, {
     params: {
       token: token,
     },

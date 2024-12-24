@@ -8,6 +8,7 @@ import {
   getHostList,
   getSetupUsers,
   getVisitorStaffCategory,
+  postNewGoods,
   postNewVisitor,
 } from "../../../api";
 import { useNavigate } from "react-router-dom";
@@ -98,12 +99,16 @@ const EmployeeAddVisitor = () => {
   };
   const navigate = useNavigate();
   const createNewVisitor = async () => {
-    if (
-      formData.visitorName === "" ||
-      formData.purpose === "" ||
-      formData.mobile === ""
-    ) {
-      return toast.error("All fields are Required");
+   
+
+    if(formData.visitorName === ""){
+      return toast.error("Provide Visitor name");
+    }
+    if(formData.purpose === ""){
+      return toast.error("Provide Purpose");
+    }
+    if(formData.mobile === ""){
+      return toast.error("Provide Visitor Mobile Number");
     }
     const mobilePattern = /^\d{10}$/;
     if (!mobilePattern.test(formData.mobile)) {
@@ -263,6 +268,15 @@ const EmployeeAddVisitor = () => {
     setShowWebcam(false);
     setCapturedImage(imageSrc);
   }, [webcamRef]);
+
+  const handleFileChange = (files, fieldName) => {
+    // Changed to receive 'files' directly
+    setFormData({
+      ...formData,
+      [fieldName]: files,
+    });
+    console.log(fieldName);
+  };
   return (
     <div className="flex justify-center items-center  w-full p-4">
       <div className="md:border border-gray-300 rounded-lg md:p-4 w-full md:mx-4 ">
@@ -624,7 +638,9 @@ const EmployeeAddVisitor = () => {
                 <p className="font-medium">No. of Goods :</p>
                 <input
                   type="number"
-                  name=""
+                  name="noOfGoods"
+                  value={formData.noOfGoods}
+                  onChange={handleChange}
                   id=""
                   className="border border-gray-400 p-2 rounded-md w-full"
                   placeholder="Enter Number "
@@ -633,7 +649,9 @@ const EmployeeAddVisitor = () => {
               <div className="col-span-2 flex flex-col gap-2">
                 <p className="font-medium ">Description :</p>
                 <textarea
-                  name=""
+                  name="goodsDescription"
+                  value={formData.goodsDescription}
+                  onChange={handleChange}
                   id=""
                   className="border border-gray-400 p-2 rounded-md w-full"
                   rows={1}
@@ -643,7 +661,7 @@ const EmployeeAddVisitor = () => {
             </div>
             <div className="flex flex-col gap-2">
               <p className="font-medium">Attachments Related to goods </p>
-              <FileInputBox />
+              <FileInputBox handleChange={(files)=> handleFileChange(files, "goodsAttachments")}  fieldName={"goodsAttachments"} />
             </div>
           </>
         )}
