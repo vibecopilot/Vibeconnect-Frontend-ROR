@@ -9,7 +9,8 @@ const CabRequestDetails = () => {
   const themeColor = useSelector((state) => state.theme.color);
   const [formData, setFormData] = useState({
         employee_name: "",
-        employee_id: "",
+        // employee_id: "",
+        mobileNo:"",
         pickup_location: "",
         drop_off_location: "",
         date_and_time: "",
@@ -47,7 +48,7 @@ const CabRequestDetails = () => {
         special_requirements: data.special_requirements,
         driver_contact_information: data.driver_contact_information,
         vehicle_details: data.vehicle_details,
-        booking_confirmation_number: data.booking_confirmation_number,
+        mobileNo: data.mobile_no,
         booking_status: data.booking_status,
         manager_approval: data.manager_approval,
         booking_confirmation_email: data.booking_confirmation_email
@@ -71,11 +72,18 @@ const CabRequestDetails = () => {
     <p>{formData.employee_name}</p>
   </div>
 
-  <div className="flex gap-2 items-center w-full">
+  {/* <div className="flex gap-2 items-center w-full">
     <label className="font-semibold">Employee ID:</label>
     <p>{formData.employee_id}</p>
+  </div> */}
+  <div className="flex gap-2 items-center w-full">
+    <label className="font-semibold">Mobile Number:</label>
+    <p>{formData.mobileNo}</p>
   </div>
-
+  <div className="flex gap-2 items-center w-full">
+    <label className="font-semibold"> Email:</label>
+    <p>{formData.booking_confirmation_email}</p>
+  </div>
   <div className="flex gap-2 items-center w-full">
     <label className="font-semibold">Pickup Location:</label>
     <p>{formData.pickup_location}</p>
@@ -105,41 +113,39 @@ const CabRequestDetails = () => {
     <label className="font-semibold">Transportation Type:</label>
     <p>{formData.transportation_type}</p>
   </div>
-
-  <div className="flex gap-2 items-center w-full">
-    <label className="font-semibold">Special Requirements:</label>
-    <p>{formData.special_requirements}</p>
-  </div>
-
-  <div className="flex gap-2 items-center w-full">
-    <label className="font-semibold">Driver/Contact Information:</label>
-    <p>{formData.driver_contact_information}</p>
-  </div>
-
-  <div className="flex gap-2 items-center w-full">
-    <label className="font-semibold">Vehicle Details:</label>
-    <p>{formData.vehicle_details}</p>
-  </div>
-
-  <div className="flex gap-2 items-center w-full">
-    <label className="font-semibold">Booking Confirmation Number:</label>
-    <p>{formData.booking_confirmation_number}</p>
-  </div>
-
-  <div className="flex gap-2 items-center w-full">
-    <label className="font-semibold">Booking Status:</label>
-    <p>{formData.booking_status}</p>
-  </div>
-
   <div className="flex gap-2 items-center w-full">
     <label className="font-semibold">Manager Approval (If Required):</label>
     <p>{formData.manager_approval?'Yes':"No"}</p>
   </div>
+  <div className="flex flex-col gap-2  w-full col-span-3">
+    <label className="font-semibold">Special Requirements:</label>
+    <p>{formData.special_requirements}</p>
+  </div>
 
-  <div className="flex gap-2 items-center w-full">
+  <div className="flex flex-col gap-2  w-full col-span-3">
+    <label className="font-semibold">Driver/Contact Information:</label>
+    <p>{formData.driver_contact_information}</p>
+  </div>
+
+  <div className="flex flex-col gap-2  w-full col-span-3">
+    <label className="font-semibold">Vehicle Details:</label>
+    <p>{formData.vehicle_details}</p>
+  </div>
+
+  {/* <div className="flex gap-2 items-center w-full">
+    <label className="font-semibold">Booking Confirmation Number:</label>
+    <p>{formData.booking_confirmation_number}</p>
+  </div> */}
+
+  {/* <div className="flex gap-2 items-center w-full">
+    <label className="font-semibold">Booking Status:</label>
+    <p>{formData.booking_status}</p>
+  </div> */}
+
+  {/* <div className="flex gap-2 items-center w-full">
     <label className="font-semibold">Confirmation Email:</label>
     <p>{formData.booking_confirmation_email}</p>
-  </div>
+  </div> */}
 </div>
 
       </div>

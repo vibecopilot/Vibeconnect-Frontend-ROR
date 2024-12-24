@@ -16,7 +16,7 @@ const EditFlightRequest = () => {
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [additionalPassenger, setAdditionalPassenger] = useState([
-    { name: "", gender: "" },
+    { name: "", gender: "", class_type: "", id: null, _destroy: false },
   ]);
   const themeColor = useSelector((state) => state.theme.color);
   const { id } = useParams();
@@ -110,8 +110,49 @@ const EditFlightRequest = () => {
       formData.booking_confirmation_email
     );
     additionalPassenger.forEach((item) => {
-      sendData.append("additional_passengers[][name]", item.name);
-      sendData.append("additional_passengers[][gender]", item.gender);
+      if (item._destroy) {
+        // For removed passengers, include id and _destroy flag
+        sendData.append(
+          "flight_request[additional_passengers_attributes][][id]",
+          item.id
+        );
+        sendData.append(
+          "flight_request[additional_passengers_attributes][][_destroy]",
+          true
+        );
+      } else if (item.id) {
+        // For existing passengers, include regular details
+        sendData.append(
+          "flight_request[additional_passengers_attributes][][id]",
+          item.id
+        );
+        sendData.append(
+          "flight_request[additional_passengers_attributes][][name]",
+          item.name
+        );
+        sendData.append(
+          "flight_request[additional_passengers_attributes][][gender]",
+          item.gender
+        );
+        sendData.append(
+          "flight_request[additional_passengers_attributes][][class_type]",
+          item.class_type
+        );
+      } else {
+        // For new passengers, without an id yet
+        sendData.append(
+          "flight_request[additional_passengers_attributes][][name]",
+          item.name
+        );
+        sendData.append(
+          "flight_request[additional_passengers_attributes][][gender]",
+          item.gender
+        );
+        sendData.append(
+          "flight_request[additional_passengers_attributes][][class_type]",
+          item.class_type
+        );
+      }
     });
     try {
       const FlightreqResp = await UpdateFlightRequest(sendData, id);
@@ -124,21 +165,30 @@ const EditFlightRequest = () => {
   };
 
   const handleAddAdditionalPassenger = () => {
-    setAdditionalPassenger([...additionalPassenger, { name: "", gender: "" }]);
+    setAdditionalPassenger([
+      ...additionalPassenger,
+      { name: "", gender: "", class_type: "", id: null, _destroy: false },
+    ]);
   };
-  
-  // Function to remove a passenger at a specific index
+
+  // Mark a passenger for removal (setting _destroy: true instead of deleting)
   const handleRemoveAdditionalPassenger = (index) => {
-    setAdditionalPassenger(additionalPassenger.filter((_, i) => i !== index));
+    const updatedPassengers = additionalPassenger.map((passenger, i) =>
+      i === index
+        ? { ...passenger, _destroy: true } // Mark passenger as destroyed
+        : passenger
+    );
+    setAdditionalPassenger(updatedPassengers);
   };
-  
-  // Function to handle changes in the passenger input fields
+
+  // Update passenger data on change
   const handlePassengerChange = (index, field, value) => {
     const updatedPassengers = additionalPassenger.map((passenger, i) =>
       i === index ? { ...passenger, [field]: value } : passenger
     );
     setAdditionalPassenger(updatedPassengers);
   };
+
   const handleUserChange = (selectedOption) => {
     setSelectedUser(selectedOption); // Update selected user state
     console.log("Selected user:", selectedOption);
@@ -393,37 +443,62 @@ const EditFlightRequest = () => {
                 Additional passengers
               </h2>
               <div className="grid md:grid-cols-3 gap-2">
-                {additionalPassenger.map((passenger, index) => (
-                  <div key={index} className="flex gap-2 mb-2">
-                    <input
-                      type="text"
-                      value={passenger.name}
-                      onChange={(e) =>
-                        handlePassengerChange(index, "name", e.target.value)
-                      }
-                      className="border border-gray-400 rounded-md p-1 px-2 w-full"
-                      placeholder="Passenger name"
-                    />
-                    <select
-                      value={passenger.gender}
-                      onChange={(e) =>
-                        handlePassengerChange(index, "gender", e.target.value)
-                      }
-                      className="border border-gray-400 rounded-md p-1 px-2 w-full"
-                    >
-                      <option value="">Select gender</option>
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
-                    </select>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveAdditionalPassenger(index)}
-                      className="text-white bg-red-500 rounded-md p-2"
-                    >
-                      <FaTrash />
-                    </button>
-                  </div>
-                ))}
+                {additionalPassenger.map(
+                  (passenger, index) =>
+                    !passenger._destroy && ( // Only render passengers not marked for destruction
+                      <div key={index} className="flex gap-2 mb-2">
+                        <input
+                          type="text"
+                          value={passenger.name}
+                          onChange={(e) =>
+                            handlePassengerChange(index, "name", e.target.value)
+                          }
+                          className="border border-gray-400 rounded-md p-1 px-2 w-full"
+                          placeholder="Passenger name"
+                        />
+                        <select
+                          value={passenger.gender}
+                          onChange={(e) =>
+                            handlePassengerChange(
+                              index,
+                              "gender",
+                              e.target.value
+                            )
+                          }
+                          className="border border-gray-400 rounded-md p-1 px-2 w-full"
+                        >
+                          <option value="">Select gender</option>
+                          <option value="Male">Male</option>
+                          <option value="Female">Female</option>
+                        </select>
+                        <select
+                          id="class"
+                          name="class_type"
+                          value={passenger.class_type}
+                          onChange={(e) =>
+                            handlePassengerChange(
+                              index,
+                              "class_type",
+                              e.target.value
+                            )
+                          }
+                          className="border p-1 px-4 border-gray-500 rounded-md"
+                        >
+                          <option value="">Select Class</option>
+                          <option value="Economy">Economy</option>
+                          <option value="Business">Business</option>
+                          <option value="First">First</option>
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveAdditionalPassenger(index)}
+                          className="text-white bg-red-500 rounded-md p-2"
+                        >
+                          <FaTrash />
+                        </button>
+                      </div>
+                    )
+                )}
               </div>
               <div className="flex justify-start">
                 <button

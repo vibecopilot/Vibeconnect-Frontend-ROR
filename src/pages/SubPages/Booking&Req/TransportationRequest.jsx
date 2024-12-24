@@ -1,7 +1,7 @@
-import React, { useState ,useEffect} from "react";
+import React, { useState, useEffect } from "react";
 import { PiPlusCircle } from "react-icons/pi";
 import { Link } from "react-router-dom";
-import { NavLink } from 'react-router-dom';
+import { NavLink } from "react-router-dom";
 import Table from "../../../components/table/Table";
 import { useSelector } from "react-redux";
 import { BsEye } from "react-icons/bs";
@@ -9,54 +9,66 @@ import Navbar from "../../../components/Navbar";
 import { BiEdit } from "react-icons/bi";
 import { TiTick } from "react-icons/ti";
 import { IoAddCircleOutline, IoClose } from "react-icons/io5";
-import { gettransportRequest } from "../../../api";
+import { gettransportRequest, getFilterTransportRequest} from "../../../api";
 import BookingRequestNav from "./BookingRequestnav";
 
 const TransportationRequest = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [TransportrequestsData, setTransportrequestsData] = useState([]);
+  const [approved, setApproved] = useState(true);
   const themeColor = useSelector((state) => state.theme.color);
   useEffect(() => {
     const fetchTransportRequest = async () => {
       try {
-        const response = await gettransportRequest();
-        const transportreqresp = response.data
+        let transportreqresp;
+
+        if (selectedStatus === "all") {
+          const response = await gettransportRequest();
+          transportreqresp = response.data;
+        } else {
+          const response = await getFilterTransportRequest(approved); // Use a filter API
+          transportreqresp = response.data;
+        }
+
+        const processedData = transportreqresp
           .map((request) => {
             let date = "";
             let time = "";
-  
+
             if (request.date_and_time) {
               const dateTime = new Date(request.date_and_time);
-              date = dateTime.toISOString().split('T')[0]; // Extract the date
-              time = dateTime.toTimeString().split(' ')[0]; // Extract the time
+              date = dateTime.toISOString().split("T")[0]; // Extract the date
+              time = dateTime.toTimeString().split(" ")[0]; // Extract the time
             }
-  
+
             return {
               ...request,
               date,
               time,
             };
           })
-          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-  
-        console.log("response from api", transportreqresp);
-  
-        setTransportrequestsData(transportreqresp);
+          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)); // Sort by created_at in descending order
+
+        console.log("response from API:", processedData);
+
+        setTransportrequestsData(processedData);
       } catch (err) {
         console.error("Failed to fetch Transport request data:", err);
       }
     };
-  
+
     fetchTransportRequest();
-  }, []);
-  
+  }, [selectedStatus, approved]);
+
   const CustomNavLink = ({ to, children }) => {
     return (
       <NavLink
         to={to}
         className={({ isActive }) =>
           `p-1 rounded-full px-4 cursor-pointer text-center transition-all duration-300 ease-linear ${
-            isActive ? 'bg-white text-blue-500 shadow-custom-all-sides' : 'hover:text-blue-400'
+            isActive
+              ? "bg-white text-blue-500 shadow-custom-all-sides"
+              : "hover:text-blue-400"
           }`
         }
       >
@@ -136,7 +148,7 @@ const TransportationRequest = () => {
     },
     {
       name: "Manager Approval",
-      selector: (row) => row.manager_approval ? "Approved" : "Not Approved",
+      selector: (row) => (row.manager_approval ? "Approved" : "Not Approved"),
       sortable: true,
     },
     // {
@@ -146,23 +158,19 @@ const TransportationRequest = () => {
     // },
     {
       name: "Approval",
-      selector: (row) =>
-        (
-          <div className="flex justify-center gap-2">
-            <button className="text-green-400 font-medium hover:bg-green-400 hover:text-white transition-all duration-200 p-1 rounded-full">
-              <TiTick size={20} />
-            </button>
-            <button className="text-red-400 font-medium hover:bg-red-400 hover:text-white transition-all duration-200 p-1 rounded-full">
-              <IoClose size={20} />
-            </button>
-          </div>
-        ),
+      selector: (row) => (
+        <div className="flex justify-center gap-2">
+          <button className="text-green-400 font-medium hover:bg-green-400 hover:text-white transition-all duration-200 p-1 rounded-full">
+            <TiTick size={20} />
+          </button>
+          <button className="text-red-400 font-medium hover:bg-red-400 hover:text-white transition-all duration-200 p-1 rounded-full">
+            <IoClose size={20} />
+          </button>
+        </div>
+      ),
       sortable: true,
     },
   ];
-
-  
- 
 
   const handleStatusChange = (status) => {
     setSelectedStatus(status);
@@ -173,16 +181,18 @@ const TransportationRequest = () => {
     <section className="flex">
       <Navbar />
       <div className="p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
-        <BookingRequestNav/>
+        <BookingRequestNav />
         <div className="w-full flex md:flex-row flex-col gap-5 justify-between mt-10 my-2">
-          <div className="sm:flex grid grid-cols-2 items-center justify-center  gap-4 border border-gray-300 rounded-md px-3 p-2 w-auto">
+          <div className="sm:flex grid grid-cols-2 items-center justify-center gap-4 border border-gray-300 rounded-md px-3 p-2 w-auto">
             <div className="flex items-center gap-2">
               <input
                 type="radio"
                 id="all"
                 name="status"
                 checked={selectedStatus === "all"}
-                onChange={() => handleStatusChange("all")}
+                onChange={() => {
+                  setSelectedStatus("all");
+                }}
               />
               <label htmlFor="all" className="text-sm">
                 All
@@ -194,7 +204,10 @@ const TransportationRequest = () => {
                 id="Approved"
                 name="status"
                 checked={selectedStatus === "Approved"}
-                onChange={() => handleStatusChange("Approved")}
+                onChange={() => {
+                  setSelectedStatus("Approved");
+                  setApproved(true);
+                }}
               />
               <label htmlFor="Approved" className="text-sm">
                 Approved
@@ -206,7 +219,10 @@ const TransportationRequest = () => {
                 id="Rejected"
                 name="status"
                 checked={selectedStatus === "Rejected"}
-                onChange={() => handleStatusChange("Rejected")}
+                onChange={() => {
+                  setSelectedStatus("Rejected");
+                  setApproved(false);
+                }}
               />
               <label htmlFor="Rejected" className="text-sm">
                 Rejected
@@ -218,7 +234,7 @@ const TransportationRequest = () => {
                 id="cancelled"
                 name="status"
                 checked={selectedStatus === "cancelled"}
-                onChange={() => handleStatusChange("cancelled")}
+                onChange={() => setSelectedStatus("cancelled")}
               />
               <label htmlFor="cancelled" className="text-sm">
                 Cancelled
@@ -229,7 +245,7 @@ const TransportationRequest = () => {
             <Link
               to={"/admin/add-transport-request"}
               style={{ background: themeColor }}
-              className="px-4 py-2  font-medium text-white rounded-md flex gap-2 items-center justify-center"  
+              className="px-4 py-2  font-medium text-white rounded-md flex gap-2 items-center justify-center"
             >
               <IoAddCircleOutline size={20} />
               Add

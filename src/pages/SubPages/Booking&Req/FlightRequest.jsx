@@ -9,30 +9,61 @@ import Navbar from "../../../components/Navbar";
 import { BiEdit } from "react-icons/bi";
 import { TiTick } from "react-icons/ti";
 import { IoAddCircleOutline, IoClose } from "react-icons/io5";
-import { getFlightTicketRequest } from "../../../api";
+import { getFlightTicketRequest, getFilterFlightTicketRequest} from "../../../api";
 import BookingRequestNav from "./BookingRequestnav";
 
 const FlightRequest = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [FlightrequestsData, setFlightrequestsData] = useState([]);
+  const [approved, setApproved] = useState(true)
   const themeColor = useSelector((state) => state.theme.color);
+
   useEffect(() => {
     const fetchFlightRequest = async () => {
       try {
-        const response = await getFlightTicketRequest();
-        const flightreqresp = response.data.sort((a, b) => {
+        let flightreqresp;
+        if (selectedStatus === "all") {
+          const response = await getFlightTicketRequest();
+          flightreqresp = response.data;
+        } else {
+          const response = await getFilterFlightTicketRequest(approved);
+          flightreqresp = response.data;
+        }
+  
+        // Sorting flightreqresp by created_at in descending order
+        flightreqresp = flightreqresp.sort((a, b) => {
           return new Date(b.created_at) - new Date(a.created_at);
         });
-        console.log("response from api", flightreqresp);
-
+  
+        console.log("response from API", flightreqresp);
+  
+        // Assuming you want to set the sorted flight request data
         setFlightrequestsData(flightreqresp);
       } catch (err) {
         console.error("Failed to fetch flight request data:", err);
       }
     };
+  
+    fetchFlightRequest();
+  }, [selectedStatus, approved]);
 
-    fetchFlightRequest(); // Call the API
-  }, []);
+  // useEffect(() => {
+  //   const fetchFlightRequest = async () => {
+  //     try {
+  //       const response = await getFlightTicketRequest();
+  //       const flightreqresp = response.data.sort((a, b) => {
+  //         return new Date(b.created_at) - new Date(a.created_at);
+  //       });
+  //       console.log("response from api", flightreqresp);
+
+  //       setFlightrequestsData(flightreqresp);
+  //     } catch (err) {
+  //       console.error("Failed to fetch flight request data:", err);
+  //     }
+  //   };
+
+  //   fetchFlightRequest(); // Call the API
+  // }, []);
 
   // Handle status change function
   const handleStatusChange = (status) => {
@@ -173,19 +204,21 @@ const FlightRequest = () => {
                   id="Approved"
                   name="status"
                   checked={selectedStatus === "Approved"}
-                  onChange={() => handleStatusChange("Approved")}
+                  onChange={() => {handleStatusChange("Approved");
+                    setApproved(true)
+                  }}
                 />
                 <label htmlFor="Approved" className="text-sm">
                   Approved
                 </label>
-              </div>
+              </div> 
               <div className="flex items-center gap-2">
                 <input
                   type="radio"
                   id="Rejected"
                   name="status"
                   checked={selectedStatus === "Rejected"}
-                  onChange={() => handleStatusChange("Rejected")}
+                  onChange={() => {handleStatusChange("Rejected"); setApproved(false)}}
                 />
                 <label htmlFor="Rejected" className="text-sm">
                   Rejected

@@ -1,15 +1,66 @@
-import React from "react";
+import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
 import Accordion from "../../AdminHrms/Components/Accordion";
 import { FaCheck } from "react-icons/fa";
-
+import { useNavigate } from "react-router-dom";
+import { postCabRequest } from "../../../api";
+import toast from "react-hot-toast";
 const EmployeeAddCabRequest = () => {
   const themeColor = useSelector((state) => state.theme.color);
 
   const first_name = getItemInLocalStorage("Name");
   const last_name = getItemInLocalStorage("LASTNAME");
   const user_email = getItemInLocalStorage("USEREMAIL");
+  const [formData, setFormData] = useState({
+    pickup_location: "",
+    drop_off_location: "",
+    dateTime: "",
+    number_of_passengers: "",
+    transportation_type: "",
+    special_requirements: "",
+  });
+  const handleChange = (e) => {
+    const { name, value } = e.target; // Extract name and value from e.target
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: value, // Dynamically update the property in formData
+    }));
+  };
+  const navigate = useNavigate();
+  const handleCabRequest = async () => {
+    const sendData = new FormData();
+    sendData.append(
+      "cab_and_bus_request[pickup_location]",
+      formData.pickup_location
+    );
+    sendData.append(
+      "cab_and_bus_request[drop_off_location]",
+      formData.drop_off_location
+    );
+
+    sendData.append("cab_and_bus_request[date_and_time]", formData.dateTime);
+    sendData.append(
+      "cab_and_bus_request[number_of_passengers]",
+      formData.number_of_passengers
+    );
+    sendData.append(
+      "cab_and_bus_request[transportation_type]",
+      formData.transportation_type
+    );
+    sendData.append(
+      "cab_and_bus_request[special_requirements]",
+      formData.special_requirements
+    );
+    try {
+      const CabreqResp = await postCabRequest(sendData);
+      toast.success("Cab Request Added");
+      navigate("/employee/booking-request/cab-bus-request");
+      console.log("Cab request Response", CabreqResp);
+    } catch (error) {
+      console.log(error);
+    }
+  };
   return (
     <div className="flex justify-center items-center my-5 w-full p-4">
       <div className="border border-gray-300 rounded-lg p-4 w-full mx-4 ">
@@ -51,6 +102,9 @@ const EmployeeAddCabRequest = () => {
             <input
               type="text"
               id="pickupLocation"
+              name="pickup_location"
+              value={formData.pickup_location}
+              onChange={handleChange}
               className="border border-gray-400 p-2 rounded-md"
               placeholder="Enter Pickup Location"
             />
@@ -62,6 +116,9 @@ const EmployeeAddCabRequest = () => {
             </label>
             <input
               type="text"
+              name="drop_off_location"
+              value={formData.drop_off_location}
+              onChange={handleChange}
               id="dropoffLocation"
               className="border border-gray-400 p-2 rounded-md"
               placeholder="Enter Drop-off Location"
@@ -69,24 +126,17 @@ const EmployeeAddCabRequest = () => {
           </div>
 
           <div className="grid gap-2 items-center w-full">
-            <label htmlFor="date" className="font-semibold">
-              Date:
+            <label htmlFor="destination" className="font-semibold">
+              Date & Time:
             </label>
             <input
-              type="date"
-              id="date"
-              className="border border-gray-400 p-2 rounded-md"
-            />
-          </div>
-
-          <div className="grid gap-2 items-center w-full">
-            <label htmlFor="time" className="font-semibold">
-              Time:
-            </label>
-            <input
-              type="time"
-              id="time"
-              className="border border-gray-400 p-2 rounded-md"
+              type="datetime-local"
+              id="dateTime"
+              name="dateTime"
+              value={formData.dateTime}
+              onChange={handleChange}
+              className="border p-1 px-4 border-gray-500 rounded-md"
+              placeholder="Enter Date & Time"
             />
           </div>
 
@@ -97,6 +147,9 @@ const EmployeeAddCabRequest = () => {
             <input
               type="number"
               id="numberOfPassengers"
+              name="number_of_passengers"
+              value={formData.number_of_passengers}
+              onChange={handleChange}
               className="border border-gray-400 p-2 rounded-md"
               placeholder="Enter Number of Passengers"
             />
@@ -108,6 +161,9 @@ const EmployeeAddCabRequest = () => {
             </label>
             <select
               id="transportationType"
+              name="transportation_type"
+              value={formData.transportation_type}
+              onChange={handleChange}
               className="border border-gray-400 p-2 rounded-md"
             >
               <option value="">Select Transport type</option>
@@ -116,7 +172,7 @@ const EmployeeAddCabRequest = () => {
               <option value="bus">Bus</option>
             </select>
           </div>
-          <div className="grid gap-2 items-center w-full">
+          {/* <div className="grid gap-2 items-center w-full">
             <label
               htmlFor="bookingConfirmationNumber"
               className="font-semibold"
@@ -129,7 +185,7 @@ const EmployeeAddCabRequest = () => {
               className="border border-gray-400 p-2 rounded-md"
               placeholder="Mobile Number"
             />
-          </div>
+          </div> */}
         </div>
         <div className="grid gap-2 items-center w-full my-4">
           <label htmlFor="specialRequirements" className="font-semibold">
@@ -138,16 +194,16 @@ const EmployeeAddCabRequest = () => {
           <textarea
             id="specialRequirements"
             name="special_requirements"
-            // value={formData.special_requirements}
-            // onChange={handleChange}
+            value={formData.special_requirements}
+            onChange={handleChange}
             cols="25"
-              rows="3"
+            rows="3"
             className="border p-1 px-4 border-gray-500 rounded-md"
             placeholder="Enter Special Requirements"
           ></textarea>
         </div>
         <div className="flex gap-5 justify-center items-center my-4">
-          <button
+          <button onClick={handleCabRequest}
             type="submit"
             className="bg-green-500 text-white  font-semibold py-2 px-4 rounded-md flex items-center gap-2"
           >

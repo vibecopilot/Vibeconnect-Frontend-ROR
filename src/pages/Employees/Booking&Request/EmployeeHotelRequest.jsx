@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { PiPlusCircle } from "react-icons/pi";
 import { Link } from "react-router-dom";
 import { NavLink } from "react-router-dom";
@@ -7,19 +7,19 @@ import Table from "../../../components/table/Table";
 import { useSelector } from "react-redux";
 import { BsEye } from "react-icons/bs";
 import Navbar from "../../../components/Navbar";
-
+import { getHotelRequest, getFilterHotelRequest} from "../../../api";
 const EmployeeHotelRequest = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const themeColor = useSelector((state) => state.theme.color);
+  const [HotelrequestsData, setHotelrequestsData] = useState([]);
+  const [approved, setApproved] = useState(true)
   const CustomNavLink = ({ to, children }) => {
     return (
       <NavLink
         to={to}
         className={({ isActive }) =>
           `p-1 rounded-full px-4 cursor-pointer text-center transition-all duration-300 ease-linear ${
-            isActive
-              && "bg-white text-blue-500 shadow-custom-all-sides"
-              
+            isActive && "bg-white text-blue-500 shadow-custom-all-sides"
           }`
         }
       >
@@ -28,6 +28,62 @@ const EmployeeHotelRequest = () => {
     );
   };
 
+  const dateFormat = (dateString) => {
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are zero-indexed
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+  };
+
+  // useEffect(() => {
+  //   const fetchFlightRequest = async () => {
+  //     try {
+  //       const response = await getHotelRequest();
+  //       const hotelreqresp = response.data.sort((a, b) => {
+  //         return new Date(b.created_at) - new Date(a.created_at);
+  //       });
+  //       console.log("response from api", hotelreqresp);
+
+  //       setHotelrequestsData(hotelreqresp);
+  //     } catch (err) {
+  //       console.error("Failed to fetch hotel request data:", err);
+  //     }
+  //   };
+
+  //   fetchFlightRequest(); // Call the API
+  // }, []);
+
+   useEffect(() => {
+      const fetchRequests = async () => {
+        try {
+          let hotelreqresp;
+    
+          if (selectedStatus === "all") {
+            // Fetch all requests
+            const response = await getHotelRequest();
+            hotelreqresp = response.data;
+          } else {
+            // Fetch filtered requests
+            const response = await getFilterHotelRequest(approved);
+            hotelreqresp = response.data;
+          }
+    
+          // Sort the requests by date
+          hotelreqresp = hotelreqresp.sort((a, b) => {
+            return new Date(b.created_at) - new Date(a.created_at);
+          });
+    
+          console.log("response from api", hotelreqresp);
+          setHotelrequestsData(hotelreqresp);
+        } catch (err) {
+          console.error("Failed to fetch hotel request data:", err);
+        }
+      };
+    
+      fetchRequests(); // Call the API function
+    }, [approved, selectedStatus]);
+    
   const columns = [
     {
       name: "Action",
@@ -42,23 +98,22 @@ const EmployeeHotelRequest = () => {
 
     {
       name: "Destination",
-      selector: (row) => row.Destination,
+      selector: (row) => row.destination,
       sortable: true,
     },
     {
       name: "Check-in Date",
-      selector: (row) => row.Checkin,
+      selector: (row) => dateFormat(row.check_in_date),
       sortable: true,
     },
     {
       name: "Check-out Date",
-      selector: (row) => row.Checkout,
+      selector: (row) => dateFormat(row.check_out_date),
       sortable: true,
     },
-
     {
       name: "Number of Rooms",
-      selector: (row) => row.noofrooms,
+      selector: (row) => row.number_of_rooms,
       sortable: true,
     },
     {
@@ -66,12 +121,22 @@ const EmployeeHotelRequest = () => {
       selector: (row) => row.room_type,
       sortable: true,
     },
-
     {
-      name: "Booking Status ",
-      selector: (row) => row.status,
+      name: "Special Requests:",
+      selector: (row) => row.Special_Requests,
       sortable: true,
     },
+    {
+      name: "Hotel Preferences",
+      selector: (row) => row.hotel_preferences,
+      sortable: true,
+    },
+
+    // {
+    //   name: "Booking Status ",
+    //   selector: (row) => row.status,
+    //   sortable: true,
+    // },
     {
       name: "Cancellation",
       selector: (row) =>
@@ -99,24 +164,24 @@ const EmployeeHotelRequest = () => {
   // };
 
   // Sample data for the table
-  const data = [
-    {
-      id: 1,
-      Id: "55",
-      name: "Mi",
-      Destination: "Mumbai",
-      Checkin: "23/01/2024",
-      Checkout: "15/02/2024",
-      Hotel_Preferences: "456",
-      Booking_Number: "89",
-      booking_email: "jkl",
-      noofrooms: "3",
-      room_type: "single",
-      Special_Requests: "ab",
-      Manager_Approval: "Upcoming",
-      status: "Upcoming",
-    },
-  ];
+  // const data = [
+  //   {
+  //     id: 1,
+  //     Id: "55",
+  //     name: "Mi",
+  //     Destination: "Mumbai",
+  //     Checkin: "23/01/2024",
+  //     Checkout: "15/02/2024",
+  //     Hotel_Preferences: "456",
+  //     Booking_Number: "89",
+  //     booking_email: "jkl",
+  //     noofrooms: "3",
+  //     room_type: "single",
+  //     Special_Requests: "ab",
+  //     Manager_Approval: "Upcoming",
+  //     status: "Upcoming",
+  //   },
+  // ];
 
   return (
     <section className="flex">
@@ -153,7 +218,9 @@ const EmployeeHotelRequest = () => {
                 id="all"
                 name="status"
                 checked={selectedStatus === "all"}
-                onChange={() => setSelectedStatus("all")}
+                onChange={() => {
+                  setSelectedStatus("all");
+                }}
               />
               <label htmlFor="all" className="text-sm">
                 All
@@ -162,28 +229,34 @@ const EmployeeHotelRequest = () => {
             <div className="flex items-center gap-2">
               <input
                 type="radio"
-                id="upcoming"
+                id="Approved"
                 name="status"
-                checked={selectedStatus === "upcoming"}
-                onChange={() => setSelectedStatus("upcoming")}
+                checked={selectedStatus === "Approved"}
+                onChange={() => {
+                  setSelectedStatus("Approved");
+                  setApproved(true);
+                }}
               />
-              <label htmlFor="upcoming" className="text-sm">
-                Upcoming
+              <label htmlFor="Approved" className="text-sm">
+                Approved
               </label>
             </div>
             <div className="flex items-center gap-2">
               <input
                 type="radio"
-                id="completed"
+                id="Rejected"
                 name="status"
-                checked={selectedStatus === "completed"}
-                onChange={() => setSelectedStatus("completed")}
+                checked={selectedStatus === "Rejected"}
+                onChange={() => {
+                  setSelectedStatus("Rejected");
+                  setApproved(false);
+                }}
               />
-              <label htmlFor="completed" className="text-sm">
-                Completed
+              <label htmlFor="Rejected" className="text-sm">
+                Rejected
               </label>
             </div>
-            <div className="flex items-center gap-2">
+            {/* <div className="flex items-center gap-2">
               <input
                 type="radio"
                 id="cancelled"
@@ -194,7 +267,7 @@ const EmployeeHotelRequest = () => {
               <label htmlFor="cancelled" className="text-sm">
                 Cancelled
               </label>
-            </div>
+            </div> */}
           </div>
           <span className="flex gap-4">
             <Link
@@ -212,8 +285,8 @@ const EmployeeHotelRequest = () => {
         <Table
           responsive
           columns={columns}
-          data={data}
-          // customStyles={customStyle}
+          data={HotelrequestsData}
+          //   customStyles={customStyle}
           pagination
           fixedHeader
           selectableRowsHighlight

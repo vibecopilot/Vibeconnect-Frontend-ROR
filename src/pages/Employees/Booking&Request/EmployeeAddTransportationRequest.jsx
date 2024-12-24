@@ -1,158 +1,143 @@
-import React from 'react';
+import React, { useState } from "react";
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { postTransportRequest } from "../../../api";
+import toast from "react-hot-toast";
 
-const EmployeeAddTransportRequest = () => (
-  <div className="flex flex-col justify-center items-center my-5 w-full p-4">
-    <form className="border border-gray-300 rounded-lg p-4 w-full mx-4 max-h-screen overflow-y-auto">
-      <h2 className="text-center md:text-xl font-bold p-2 bg-black rounded-full text-white">
-        Transport Request
-      </h2>
-      <div className="grid md:grid-cols-3 gap-5 mt-5">
-        <div className="grid gap-2 items-center w-full">
-          <label htmlFor="employeeId" className="font-semibold">
-            Employee ID:
-          </label>
-          <input
-            type="number"
-            id="employeeId"
-            className="border border-gray-400 p-2 rounded-md"
-            placeholder="Enter Employee ID"
-          />
-        </div>
+const EmployeeAddTransportRequest = () => {
+  const themeColor = useSelector((state) => state.theme.color);
+  const [formData, setFormData] = useState({
+    pickup_location: "",
+    special_requirements: "",
+    startDate: "",
+    endDate: "",
+    drop_off_location: "",
+  });
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+  const navigate = useNavigate();
+  const handleTransportRequest = async () => {
+    const sendData = new FormData();
+    sendData.append(
+      "transport_request[pickup_location]",
+      formData.pickup_location
+    );
+    sendData.append("transport_request[start_date]", formData.startDate);
+    sendData.append("transport_request[end_date]", formData.endDate);
+    sendData.append(
+      "transport_request[drop_off_location]",
+      formData.drop_off_location
+    );
 
-        <div className="grid gap-2 items-center w-full">
-          <label htmlFor="employeeName" className="font-semibold">
-            Employee Name:
-          </label>
-          <input
-            type="text"
-            id="employeeName"
-            className="border border-gray-400 p-2 rounded-md"
-            placeholder="Enter Employee Name"
-          />
-        </div>
+    sendData.append(
+      "transport_request[special_requirements]",
+      formData.special_requirements
+    );
+    try {
+      const TransportreqResp = await postTransportRequest(sendData);
+      toast.success("Transport Request Added");
+      navigate("/employee/booking-request/transportation-request");
+      console.log("Transport request Response", TransportreqResp);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
-        <div className="grid gap-2 items-center w-full">
-          <label htmlFor="destination" className="font-semibold">
-            Destination:
-          </label>
-          <input
-            type="text"
-            id="destination"
-            className="border border-gray-400 p-2 rounded-md"
-            placeholder="Enter Destination"
-          />
-        </div>
+  return (
+    <div className="flex flex-col justify-center items-center my-5 w-full p-4">
+      <form className="border border-gray-300 rounded-lg p-4 w-full max-w-7xl mx-auto max-h-screen overflow-y-auto">
+        <h2
+          className="text-center text-lg md:text-xl font-bold p-2 rounded-full text-white"
+          style={{ background: themeColor }}
+        >
+          Transport Request
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-5">
+          <div className="grid gap-2 items-center w-full">
+            <label htmlFor="pickupLocation" className="font-semibold">
+              Pickup Location:
+            </label>
+            <input
+              type="text"
+              id="pickupLocation"
+              name="pickup_location"
+              value={formData.pickup_location}
+              onChange={handleChange}
+              className="border p-2 border-gray-500 rounded-md focus:ring focus:ring-blue-300"
+              placeholder="Enter Pickup Location"
+            />
+          </div>
 
-        <div className="grid gap-2 items-center w-full">
-          <label htmlFor="date" className="font-semibold">
-            Date:
-          </label>
-          <input
-            type="date"
-            id="date"
-            className="border border-gray-400 p-2 rounded-md"
-          />
-        </div>
+          <div className="grid gap-2 items-center w-full">
+            <label htmlFor="dropoffLocation" className="font-semibold">
+              Drop-off Location:
+            </label>
+            <input
+              type="text"
+              id="dropoffLocation"
+              name="drop_off_location"
+              value={formData.drop_off_location}
+              onChange={handleChange}
+              className="border p-2 border-gray-500 rounded-md focus:ring focus:ring-blue-300"
+              placeholder="Enter Drop-off Location"
+            />
+          </div>
 
-        <div className="grid gap-2 items-center w-full">
-          <label htmlFor="time" className="font-semibold">
-            Time:
-          </label>
-          <input
-            type="time"
-            id="time"
-            className="border border-gray-400 p-2 rounded-md"
-          />
+          <div className="grid gap-2 items-center w-full">
+            <label htmlFor="destination" className="font-semibold">
+              Start Date
+            </label>
+            <input
+              type="date"
+              id="startDate"
+              name="startDate"
+              value={formData.startDate}
+              onChange={handleChange}
+              className="border p-2 border-gray-500 rounded-md focus:ring focus:ring-blue-300"
+              placeholder="Start Date"
+            />
+          </div>
+          <div className="grid gap-2 items-center w-full">
+            <label htmlFor="dateRange" className="font-semibold">
+              End Date:
+            </label>
+            <input
+              type="date"
+              id="endDate"
+              name="endDate"
+              value={formData.endDate}
+              onChange={handleChange}
+              className="border p-2 border-gray-500 rounded-md focus:ring focus:ring-blue-300"
+              placeholder="End Date"
+            />
+          </div>
+          <div className="grid gap-2 col-span-1 sm:col-span-2 lg:col-span-3 items-center w-full">
+            <label htmlFor="specialRequirements" className="font-semibold">
+              Special Requirements:
+            </label>
+            <textarea
+              id="specialRequirements"
+              name="special_requirements"
+              value={formData.special_requirements}
+              onChange={handleChange}
+              className="border border-gray-400 p-2 rounded-md focus:ring focus:ring-blue-300"
+              placeholder="Enter Special Requirements"
+            ></textarea>
+          </div>
         </div>
-
-        <div className="grid gap-2 items-center w-full">
-          <label htmlFor="specialRequirements" className="font-semibold">
-            Special Requirements:
-          </label>
-          <textarea
-            id="specialRequirements"
-            className="border border-gray-400 p-2 rounded-md"
-            placeholder="Enter Special Requirements"
-          ></textarea>
-        </div>
-
-        <div className="grid gap-2 items-center w-full">
-          <label htmlFor="driverContactInfo" className="font-semibold">
-            Driver/Contact Information:
-          </label>
-          <textarea
-            id="driverContactInfo"
-            className="border border-gray-400 p-2 rounded-md"
-            placeholder="Enter Driver/Contact Information"
-          ></textarea>
-        </div>
-
-        <div className="grid gap-2 items-center w-full">
-          <label htmlFor="vehicleDetails" className="font-semibold">
-            Vehicle Details:
-          </label>
-          <textarea
-            id="vehicleDetails"
-            className="border border-gray-400 p-2 rounded-md"
-            placeholder="Enter Vehicle Details"
-          ></textarea>
-        </div>
-
-        <div className="grid gap-2 items-center w-full">
-          <label htmlFor="bookingConfirmationNumber" className="font-semibold">
-            Booking Confirmation Number:
-          </label>
-          <input
-            type="text"
-            id="bookingConfirmationNumber"
-            className="border border-gray-400 p-2 rounded-md"
-            placeholder="Enter Booking Confirmation Number"
-          />
-        </div>
-
-        <div className="grid gap-2 items-center w-full">
-          <label htmlFor="bookingStatus" className="font-semibold">
-            Booking Status:
-          </label>
-          <select id="bookingStatus" className="border border-gray-400 p-2 rounded-md">
-            <option value="pending">Pending</option>
-            <option value="confirmed">Confirmed</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
-        </div>
-
-        <div className="grid gap-2 items-center w-full">
-          <label htmlFor="managerApproval" className="font-semibold">
-            Manager Approval :
-          </label>
-          <select id="managerApproval" className="border border-gray-400 p-2 rounded-md">
-            <option value="yes">Yes</option>
-            <option value="no">No</option>
-          </select>
-        </div>
-
-        <div className="grid gap-2 items-center w-full">
-          <label htmlFor="confirmationEmail" className="font-semibold">
-            Confirmation Email:
-          </label>
-          <input
-            type="email"
-            id="confirmationEmail"
-            className="border border-gray-400 p-2 rounded-md"
-            placeholder="Enter Confirmation Email"
-          />
-        </div>
+      </form>
+      <div className="flex justify-center mt-4">
+        <button
+          onClick={handleTransportRequest}
+          type="submit"
+          className="bg-black text-white hover:bg-gray-700 font-semibold py-2 px-4 rounded w-full max-w-xs"
+        >
+          Submit
+        </button>
       </div>
-    </form>
-    <div className="flex flex-col gap-5 justify-center items-center my-4">
-          <button
-            type="submit"
-            className="bg-black text-white hover:bg-gray-700 font-semibold py-2 px-4 rounded"
-          >
-            Submit
-          </button>
-        </div>
-  </div>
-);
+    </div>
+  );
+};
 
 export default EmployeeAddTransportRequest;

@@ -22,6 +22,7 @@ const AddTravellingAllowanceRequest = () => {
     manager_approval: false,
     reimbursement_confirmation_email: "",
     mobileNo:"",
+    attachments : [],
 });
 const handleChange = (e) => {
   setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -41,8 +42,10 @@ const handleTravelAllowanceRequest = async() => {
   sendData.append("transportation_allowance_request[reimbursement_method]", formData.reimbursement_method);
   sendData.append("transportation_allowance_request[manager_approval]", formData.manager_approval);
   sendData.append("transportation_allowance_request[reimbursement_confirmation_email]", formData.reimbursement_confirmation_email);
- 
-  
+  sendData.append("transportation_allowance_request[mobile_no]", formData.mobileNo);
+  formData.attachments.forEach((file, index) => {
+    sendData.append(`attachments[]`, file);
+  });
   
   try {
       const TravelAllowancereqResp = await postTravellingAllowanceRequest(sendData)
@@ -75,6 +78,14 @@ useEffect(() => {
   };
   fetchUsers();
 }, []);
+
+const handleFileChange = (files, fieldName) => {
+  setFormData({
+    ...formData,
+    [fieldName]: files,
+  });
+  console.log(fieldName);
+};
 
   return(
   <div className="flex justify-center items-center my-5 w-full p-4">
@@ -282,7 +293,11 @@ useEffect(() => {
           <label htmlFor="supportingDocuments" className="font-semibold">
             Supporting Documents:
           </label>
-         <FileInputBox/>
+         <FileInputBox
+          handleChange={(files) => handleFileChange(files, "attachments")}
+          fieldName={"attachments"}
+          isMulti={true}
+         />
         </div>
       <div className="flex gap-5 justify-center items-center my-4">
           <button

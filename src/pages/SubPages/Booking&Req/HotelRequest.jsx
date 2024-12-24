@@ -11,11 +11,12 @@ import { BiEdit } from "react-icons/bi";
 
 import Navbar from "../../../components/Navbar";
 import BookingRequestNav from "./BookingRequestnav";
-import { getHotelRequest } from "../../../api";
+import { getHotelRequest, getFilterHotelRequest} from "../../../api";
 
 const HotelRequest = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [HotelrequestsData, setHotelrequestsData] = useState([]);
+  const [approved, setApproved] = useState(true)
   const themeColor = useSelector((state) => state.theme.color);
   const dateFormat = (dateString) => {
     const date = new Date(dateString);
@@ -26,22 +27,34 @@ const HotelRequest = () => {
   };
 
   useEffect(() => {
-    const fetchFlightRequest = async () => {
+    const fetchRequests = async () => {
       try {
-        const response = await getHotelRequest();
-        const hotelreqresp = response.data.sort((a, b) => {
+        let hotelreqresp;
+  
+        if (selectedStatus === "all") {
+          // Fetch all requests
+          const response = await getHotelRequest();
+          hotelreqresp = response.data;
+        } else {
+          // Fetch filtered requests
+          const response = await getFilterHotelRequest(approved);
+          hotelreqresp = response.data;
+        }
+  
+        // Sort the requests by date
+        hotelreqresp = hotelreqresp.sort((a, b) => {
           return new Date(b.created_at) - new Date(a.created_at);
         });
+  
         console.log("response from api", hotelreqresp);
-
         setHotelrequestsData(hotelreqresp);
       } catch (err) {
         console.error("Failed to fetch hotel request data:", err);
       }
     };
-
-    fetchFlightRequest(); // Call the API
-  }, []);
+  
+    fetchRequests(); // Call the API function
+  }, [approved, selectedStatus]);
   const columns = [
     {
       name: "Action",
@@ -109,7 +122,12 @@ const HotelRequest = () => {
     },
     {
       name: "Manager Approval ",
-      selector: (row) => (row.manager_approval ? "Approved" : "Not Approved"),
+      selector: (row) => (row.manager_approval ? "Required" : "Not Required"),
+      sortable: true,
+    },
+    {
+      name: "Status",
+      selector: (row) => (row.booking_status),
       sortable: true,
     },
     // {
@@ -150,7 +168,9 @@ const HotelRequest = () => {
                 id="all"
                 name="status"
                 checked={selectedStatus === "all"}
-                onChange={() => setSelectedStatus("all")}
+                onChange={() => {
+                  setSelectedStatus("all");
+                }}
               />
               <label htmlFor="all" className="text-sm">
                 All
@@ -159,24 +179,32 @@ const HotelRequest = () => {
             <div className="flex items-center gap-2">
               <input
                 type="radio"
-                id="upcoming"
+                id="Approved"
                 name="status"
-                checked={selectedStatus === "upcoming"}
-                onChange={() => setSelectedStatus("upcoming")}
+                checked={selectedStatus === "Approved"}
+                onChange={() => {
+                  setSelectedStatus("Approved");
+                  setApproved(true);
+                  
+                }}
               />
-              <label htmlFor="upcoming" className="text-sm">
+              <label htmlFor="Approved" className="text-sm">
                 Approved
               </label>
             </div>
             <div className="flex items-center gap-2">
               <input
                 type="radio"
-                id="completed"
+                id="Rejected"
                 name="status"
-                checked={selectedStatus === "completed"}
-                onChange={() => setSelectedStatus("completed")}
+                checked={selectedStatus === "Rejected"}
+                onChange={() => {
+                  setSelectedStatus("Rejected");
+                  setApproved(false);
+                  
+                }}
               />
-              <label htmlFor="completed" className="text-sm">
+              <label htmlFor="Rejected" className="text-sm">
                 Rejected
               </label>
             </div>

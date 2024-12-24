@@ -11,7 +11,7 @@ const AddFlightRequest = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const themeColor = useSelector((state) => state.theme.color);
   const [additionalPassenger, setAdditionalPassenger] = useState([
-    { name: "", gender: "" },
+    { name: "", gender: "", class_type: ""},
   ]);
   const [formData, setFormData] = useState({
     employee_name: "",
@@ -46,7 +46,6 @@ const AddFlightRequest = () => {
       formData.preferred_airlines
     );
     sendData.append("flight_request[flight_class]", formData.flight_class);
-    sendData.append("flight_request[passenger_name]", formData.passenger_name);
     sendData.append(
       "flight_request[passport_information]",
       formData.passport_information
@@ -55,7 +54,6 @@ const AddFlightRequest = () => {
       "flight_request[mobile_no]",
       formData.ticket_confirmation_number
     );
-    sendData.append("flight_request[booking_status]", formData.booking_status);
     sendData.append(
       "flight_request[manager_approval]",
       formData.manager_approval
@@ -65,8 +63,9 @@ const AddFlightRequest = () => {
       formData.booking_confirmation_email
     );
     additionalPassenger.forEach((item) => {
-      sendData.append("additional_passengers[][name]", item.name);
-      sendData.append("additional_passengers[][gender]", item.gender);
+      sendData.append("flight_request[additional_passengers_attributes][][name]", item.name);
+      sendData.append("flight_request[additional_passengers_attributes][][gender]", item.gender);
+      sendData.append("flight_request[additional_passengers_attributes][][class_type]", item.class_type);
     });
 
     try {
@@ -79,7 +78,7 @@ const AddFlightRequest = () => {
     }
   };
   const handleAddAdditionalPassenger = () => {
-    setAdditionalPassenger([...additionalPassenger, { name: "", gender: "" }]);
+    setAdditionalPassenger([...additionalPassenger, { name: "", gender: "", class_type: "" }]);
   };
   const handleRemoveAdditionalPassenger = (index) => {
     setAdditionalPassenger(additionalPassenger.filter((_, i) => i !== index));
@@ -340,9 +339,11 @@ const AddFlightRequest = () => {
                     </select>
                     <select
                       id="class"
-                      name="flight_class"
-                      value={formData.flight_class}
-                      onChange={handleChange}
+                      name="class_type"
+                      value={passenger.class_type}
+                      onChange={(e) =>
+                        handlePassengerChange(index, "class_type", e.target.value)
+                      }
                       className="border p-1 px-4 border-gray-500 rounded-md"
                     >
                       <option value="">Select Class</option>

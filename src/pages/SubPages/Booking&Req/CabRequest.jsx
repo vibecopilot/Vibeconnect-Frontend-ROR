@@ -9,26 +9,72 @@ import Navbar from "../../../components/Navbar";
 import { BiEdit } from "react-icons/bi";
 import { TiTick } from "react-icons/ti";
 import { IoAddCircleOutline, IoClose } from "react-icons/io5";
-import { getcabRequest } from '../../../api';
+import { getcabRequest, getFilterCabRequest} from '../../../api';
 import BookingRequestNav from './BookingRequestnav';
 
 const CabRequest = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [CabrequestsData, setCabrequestsData] = useState([]);
+  const [approved, setApproved] = useState(true)
   const themeColor = useSelector((state) => state.theme.color);
+  // useEffect(() => {
+  //   const fetchCabRequest = async () => {
+  //     try {
+  //       const response = await getcabRequest();
+  //       const cabreqresp = response.data
+  //         .map((request) => {
+  //           let date = "";
+  //           let time = "";
+  
+  //           if (request.date_and_time) {
+  //             const dateTime = new Date(request.date_and_time);
+  //             date = dateTime.toISOString().split('T')[0]; // Extract the date
+  //             time = dateTime.toTimeString().split(' ')[0]; // Extract the time
+  //           }
+  
+  //           return {
+  //             ...request,
+  //             date,
+  //             time,
+  //           };
+  //         })
+  //         .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  
+  //       console.log("response from api", cabreqresp);
+  
+  //       setCabrequestsData(cabreqresp);
+  //     } catch (err) {
+  //       console.error("Failed to fetch Cab request data:", err);
+  //     }
+  //   };
+  
+  //   fetchCabRequest(); // Call the API
+  // }, []);
+  
+  
   useEffect(() => {
     const fetchCabRequest = async () => {
       try {
-        const response = await getcabRequest();
-        const cabreqresp = response.data
+        let cabreqresp;
+  
+        if (selectedStatus === "all") {
+          const response = await getcabRequest();
+          cabreqresp = response.data;
+        } else {
+          const response = await getFilterCabRequest(approved); // Use a filter API
+          cabreqresp = response.data;
+        }
+  
+        // Map through the data to add `date` and `time` fields
+        cabreqresp = cabreqresp
           .map((request) => {
             let date = "";
             let time = "";
   
             if (request.date_and_time) {
               const dateTime = new Date(request.date_and_time);
-              date = dateTime.toISOString().split('T')[0]; // Extract the date
-              time = dateTime.toTimeString().split(' ')[0]; // Extract the time
+              date = dateTime.toISOString().split("T")[0]; // Extract the date
+              time = dateTime.toTimeString().split(" ")[0]; // Extract the time
             }
   
             return {
@@ -37,21 +83,20 @@ const CabRequest = () => {
               time,
             };
           })
-          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)); // Sort by created_at in descending order
   
-        console.log("response from api", cabreqresp);
+        console.log("response from API", cabreqresp);
   
+        // Update the state with the transformed and sorted data
         setCabrequestsData(cabreqresp);
       } catch (err) {
-        console.error("Failed to fetch Cab request data:", err);
+        console.error("Failed to fetch cab request data:", err);
       }
     };
   
-    fetchCabRequest(); // Call the API
-  }, []);
+    fetchCabRequest(); // Trigger the fetch function
+  }, [selectedStatus, approved]); // Re-run when `selectedStatus` changes
   
-  
-
   const CustomNavLink = ({ to, children }) => {
     return (
       <NavLink
@@ -211,7 +256,7 @@ const CabRequest = () => {
                 id="Approved"
                 name="status"
                 checked={selectedStatus === "Approved"}
-                onChange={() => setSelectedStatus("Approved")}
+                onChange={() => {setSelectedStatus("Approved"); setApproved(true);}}
               />
               <label htmlFor="Approved" className="text-sm">
                 Approved
@@ -223,7 +268,7 @@ const CabRequest = () => {
                 id="Rejected"
                 name="status"
                 checked={selectedStatus === "Rejected"}
-                onChange={() => setSelectedStatus("Rejected")}
+                onChange={() => {setSelectedStatus("Rejected"); setApproved(false);}}
               />
               <label htmlFor="Rejected" className="text-sm">
                 Rejected

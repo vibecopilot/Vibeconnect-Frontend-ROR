@@ -916,6 +916,13 @@ export const getHotelRequest = async () =>
       token: token,
     },
   });
+
+  export const getFilterHotelRequest = async (approve) =>
+    axiosInstance.get(`/hotels.json?q[manager_approval_eq]=${approve}`, {
+      params: {
+        token: token,
+      },
+    });
 export const postHotelRequest = async (data) =>
   axiosInstance.post(`/hotels.json`, data, {
     params: {
@@ -953,6 +960,14 @@ export const getFlightTicketRequest = async () =>
       token: token,
     },
   });
+
+  export const getFilterFlightTicketRequest = async (approve) =>
+    axiosInstance.get(`/flight_requests.json?q[manager_approval_eq]=${approve}`, {
+      params: {
+        token: token,
+      },
+    });
+
 export const UpdateCabRequest = async (data, id) =>
   axiosInstance.put(`/cab_and_bus_requests/${id}.json`, data, {
     params: {
@@ -971,6 +986,12 @@ export const getcabRequest = async () =>
       token: token,
     },
   });
+  export const getFilterCabRequest = async (approve) =>
+    axiosInstance.get(`/cab_and_bus_requests.json?q[manager_approval_eq]=${approve}`, {
+      params: {
+        token: token,
+      },
+    });
 export const postCabRequest = async (data) =>
   axiosInstance.post(`/cab_and_bus_requests.json`, data, {
     params: {
@@ -995,6 +1016,12 @@ export const gettransportRequest = async () =>
       token: token,
     },
   });
+  export const getFilterTransportRequest = async (approve) =>
+    axiosInstance.get(`/transport_requests.json?q[manager_approval_eq]=${approve}`, {
+      params: {
+        token: token,
+      },
+    });
 export const postTransportRequest = async (data) =>
   axiosInstance.post(`/transport_requests.json`, data, {
     params: {
@@ -1007,6 +1034,12 @@ export const getTravellingAllowanceRequest = async () =>
       token: token,
     },
   });
+  export const getFilterTravellingAllowanceRequest = async (approve) =>
+    axiosInstance.get(`/transportation_allowance_requests.json?q[manager_approval_eq]=${approve}`, {
+      params: {
+        token: token,
+      },
+    });
 export const postTravellingAllowanceRequest = async (data) =>
   axiosInstance.post(`/transportation_allowance_requests.json`, data, {
     params: {
