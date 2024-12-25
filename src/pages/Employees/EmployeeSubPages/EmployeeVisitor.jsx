@@ -5,7 +5,11 @@ import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../../../components/Navbar";
 import { useSelector } from "react-redux";
 import Table from "../../../components/table/Table";
-import { getExpectedVisitor, postOTPVerification } from "../../../api";
+import {
+  getExpectedVisitor,
+  postOTPVerification,
+  postVisitorCheckInCheckOut,
+} from "../../../api";
 import { BsEye } from "react-icons/bs";
 import { BiEdit } from "react-icons/bi";
 import EmployeePasses from "../EmployeePasses";
@@ -14,7 +18,10 @@ import { MdClose } from "react-icons/md";
 import { FaCheck } from "react-icons/fa";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
 import toast from "react-hot-toast";
-import { FaPersonWalkingArrowRight } from "react-icons/fa6";
+import {
+  FaPersonWalkingArrowLoopLeft,
+  FaPersonWalkingArrowRight,
+} from "react-icons/fa6";
 
 const EmployeeVisitor = () => {
   const [page, setPage] = useState("Visitor In");
@@ -34,22 +41,61 @@ const EmployeeVisitor = () => {
     const date = new Date(dateString);
     return date.toLocaleString();
   };
+  const fetchExpectedVisitor = async () => {
+    try {
+      const visitorResp = await getExpectedVisitor();
+      const sortedVisitor = visitorResp.data.sort((a, b) => {
+        return new Date(b.created_at) - new Date(a.created_at);
+      });
+      setVisitor(sortedVisitor);
+      setFilteredData(sortedVisitor);
+    } catch (error) {
+      console.log(error);
+    }
+  };
   useEffect(() => {
-    const fetchExpectedVisitor = async () => {
-      try {
-        const visitorResp = await getExpectedVisitor();
-        const sortedVisitor = visitorResp.data.sort((a, b) => {
-          return new Date(b.created_at) - new Date(a.created_at);
-        });
-        setVisitor(sortedVisitor);
-        setFilteredData(sortedVisitor);
-        console.log(sortedVisitor);
-      } catch (error) {
-        console.log(error);
-      }
-    };
     fetchExpectedVisitor();
   }, []);
+  const getLocalDateTime = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0"); // Months are 0-indexed
+    const day = String(now.getDate()).padStart(2, "0");
+    const hours = String(now.getHours()).padStart(2, "0");
+    const minutes = String(now.getMinutes()).padStart(2, "0");
+    const seconds = String(now.getSeconds()).padStart(2, "0");
+
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+  };
+  const handleCheckIn = async (id) => {
+    const currentDateTime = getLocalDateTime();
+    const payload = {
+      visitor_id: id,
+      check_in: currentDateTime,
+    };
+    try {
+      const res = await postVisitorCheckInCheckOut(id, payload);
+      fetchExpectedVisitor();
+      toast.success("Visitor marked IN successfully");
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const handleCheckOut = async (id) => {
+    const currentDateTime = getLocalDateTime();
+    const payload = {
+      visitor_id: id,
+
+      check_out: currentDateTime,
+    };
+    try {
+      const res = await postVisitorCheckInCheckOut(id, payload);
+      fetchExpectedVisitor();
+      toast.success("Visitor marked OUT successfully");
+    } catch (error) {
+      console.log(error);
+    }
+  };
   const VisitorColumns = [
     {
       name: "Action",
@@ -139,20 +185,42 @@ const EmployeeVisitor = () => {
     // },
     {
       name: "Created by",
-      selector: (row) => row.created_by_name.firstname,
+      selector: (row) =>
+        `${row?.created_by_name?.firstname} ${row?.created_by_name?.lastname}`,
       sortable: true,
     },
     {
       name: "Action",
-      cell: (row) => (
-        <div className="flex items-center">
-          {row.verified && (
-            <button className="font-medium flex items-center gap-2 bg-green-400 text-white rounded-full p-1 shadow-custom-all-sides border-2 border-white px-4">
-              <FaPersonWalkingArrowRight size={20} /> IN
-            </button>
-          )}
-        </div>
-      ),
+      cell: (row) => {
+        if (userType === "security_guard") {
+          return (
+            <div className="flex items-center">
+              {row.verified && row?.visitor_in_out === null && (
+                <button
+                  className="font-medium flex items-center gap-2 bg-green-400 text-white rounded-full p-1 shadow-custom-all-sides border-2 border-white px-4"
+                  onClick={() => handleCheckIn(row.id)}
+                >
+                  <FaPersonWalkingArrowRight size={20} /> IN
+                </button>
+              )}
+              {row.verified && row?.visitor_in_out === "IN" && (
+                <button
+                  className="font-medium flex items-center gap-2 bg-red-400 text-white rounded-full p-1 shadow-custom-all-sides border-2 border-white px-4"
+                  onClick={() => handleCheckOut(row.id)}
+                >
+                  <FaPersonWalkingArrowLoopLeft size={20} /> OUT
+                </button>
+              )}
+              {row?.verified && row?.visitor_in_out === "OUT" && (
+                <p className="font-medium text-green-500 flex items-center gap-2">
+                  <FaCheck /> Visit Completed
+                </p>
+              )}
+            </div>
+          );
+        }
+        return null;
+      },
     },
   ];
   const [searchText, setSearchText] = useState("");
@@ -234,16 +302,16 @@ const EmployeeVisitor = () => {
           {/* <EmployeePasses/> */}
 
           {page === "Visitor In" && (
-            <div className="grid md:grid-cols-3 gap-2 items-center">
+            <div className="grid md:grid-cols-2 gap-2 items-center">
               <input
                 type="text"
-                className="border border-black p-2 rounded-md placeholder:text-sm"
+                className="border border-gray-300 p-2 w-full rounded-md placeholder:text-sm"
                 value={searchText}
                 onChange={handleSearch}
                 placeholder="Search using Visitor name, Host, vehicle number"
               />
 
-              <div className="border md:flex-row flex-col flex p-2 rounded-md text-center border-black">
+              {userType !== "security_guard" &&<div className="border md:flex-row flex-col flex p-2 rounded-md text-center border-black">
                 <span
                   className={` md:border-r px-2 border-black cursor-pointer hover:underline ${
                     selectedVisitor === "expected"
@@ -264,11 +332,11 @@ const EmployeeVisitor = () => {
                 >
                   &nbsp; <span>Unexpected visitor</span>
                 </span>
-              </div>
-              <div className="flex justify-end gap-2">
+              </div>}
+              <div className="flex justify-end md:flex-row flex-col gap-2">
                 {userType === "security_guard" && (
                   <button
-                    className="bg-green-400 text-white rounded-md p-2 font-medium flex items-center gap-2"
+                    className="bg-green-400 text-white rounded-md p-2 font-medium flex items-center justify-center gap-2"
                     onClick={() => setOTPModal(true)}
                   >
                     <IoMdCall size={20} /> Verify OTP
@@ -292,28 +360,30 @@ const EmployeeVisitor = () => {
                 <option>abc</option>
               </select>
 
-              <div className="border md:flex-row flex-col flex p-2 rounded-md text-center border-black">
-                <span
-                  className={` md:border-r px-2 border-black cursor-pointer hover:underline ${
-                    selectedVisitor === "expected"
-                      ? "text-blue-600 underline"
-                      : ""
-                  } text-center`}
-                  onClick={() => handleClick("expected")}
-                >
-                  <span>Expected visitor</span>
-                </span>
-                <span
-                  className={`cursor-pointer hover:underline ${
-                    selectedVisitor === "unexpected"
-                      ? "text-blue-600 underline"
-                      : ""
-                  } text-center`}
-                  onClick={() => handleClick("unexpected")}
-                >
-                  &nbsp; <span>Unexpected visitor</span>
-                </span>
-              </div>
+              {userType !== "security_guard" && (
+                <div className="border md:flex-row flex-col flex p-2 rounded-md text-center border-black">
+                  <span
+                    className={` md:border-r px-2 border-black cursor-pointer hover:underline ${
+                      selectedVisitor === "expected"
+                        ? "text-blue-600 underline"
+                        : ""
+                    } text-center`}
+                    onClick={() => handleClick("expected")}
+                  >
+                    <span>Expected visitor</span>
+                  </span>
+                  <span
+                    className={`cursor-pointer hover:underline ${
+                      selectedVisitor === "unexpected"
+                        ? "text-blue-600 underline"
+                        : ""
+                    } text-center`}
+                    onClick={() => handleClick("unexpected")}
+                  >
+                    &nbsp; <span>Unexpected visitor</span>
+                  </span>
+                </div>
+              )}
             </div>
           )}
           {page === "History" && (

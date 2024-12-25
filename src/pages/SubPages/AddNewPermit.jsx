@@ -7,6 +7,7 @@ import { RiContactsBook2Line } from "react-icons/ri";
 import Accordion from "../AdminHrms/Components/Accordion";
 import { FaCheck, FaTrash } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
+import { useNavigate } from "react-router-dom";
 
 const AddNewPermit = () => {
   const buildings = getItemInLocalStorage("Building");
@@ -51,6 +52,7 @@ const AddNewPermit = () => {
     created_by_id: "",
     permit_activities: [],
   });
+  const navigate = useNavigate()
   const handleNewPermit = async () => {
     const sendData = new FormData();
     sendData.append("permit[name]", formData.name);
@@ -768,7 +770,7 @@ const AddNewPermit = () => {
           <div className="sm:flex justify-center grid gap-2 mt-5 border-t p-1">
             <button
               className="bg-red-400 text-white p-2 px-4 rounded-md font-medium flex items-center gap-2"
-              onClick={handleNewPermit}
+              onClick={()=>navigate("/admin/permit")}
             >
               <MdClose size={20} /> Cancel
             </button>

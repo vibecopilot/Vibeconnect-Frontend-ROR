@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from "react";
 // import Detail from "../../../containers/Detail";
 import image from "/profile.png";
-import { domainPrefix, getVisitorDetails, postVisitorCheckInCheckOut } from "../../../api";
+import {
+  domainPrefix,
+  getVisitorDetails,
+  postVisitorCheckInCheckOut,
+} from "../../../api";
 import { Link, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import Table from "../../../components/table/Table";
@@ -12,19 +16,21 @@ import {
   FaPersonWalkingArrowRight,
 } from "react-icons/fa6";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
+import toast from "react-hot-toast";
+import { FaCheck } from "react-icons/fa";
 const EmployeeVisitorDetails = () => {
   const [details, setDetails] = useState({});
   const { id } = useParams();
+  const fetchVisitorDetails = async () => {
+    try {
+      const detailsResp = await getVisitorDetails(id);
+      setDetails(detailsResp.data);
+      console.log(detailsResp.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
   useEffect(() => {
-    const fetchVisitorDetails = async () => {
-      try {
-        const detailsResp = await getVisitorDetails(id);
-        setDetails(detailsResp.data);
-        console.log(detailsResp.data);
-      } catch (error) {
-        console.log(error);
-      }
-    };
     fetchVisitorDetails();
   }, [id]);
 
@@ -65,23 +71,7 @@ const EmployeeVisitorDetails = () => {
   ];
 
   const [qrModal, setQrmodal] = useState(false);
-  const handleCheckIn = async () => {
-    const currentDateTime = getLocalDateTime()
-    // const postData = new FormData();
-    // postData.append("visitor_visit[check_in]", currentDateTime);
-    // postData.append("visitor_visit[visitor_id]", id);
-    const payload = {
-      visitor_id: id,
-      // visitor_visit: {
-        check_in: currentDateTime,
-      // },
-    };
-    try {
-      const res = await postVisitorCheckInCheckOut(id, payload);
-    } catch (error) {
-      console.log(error);
-    }
-  };
+
   const getLocalDateTime = () => {
     const now = new Date();
     const year = now.getFullYear();
@@ -90,49 +80,85 @@ const EmployeeVisitorDetails = () => {
     const hours = String(now.getHours()).padStart(2, "0");
     const minutes = String(now.getMinutes()).padStart(2, "0");
     const seconds = String(now.getSeconds()).padStart(2, "0");
-  
+
     return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
   };
-  const handleCheckOut = async () => {
-    const currentDateTime = getLocalDateTime()
-    // const postData = new FormData();
-    // postData.append("visitor_visit[check_out]", currentDateTime);
-    // postData.append("visitor_visit[visitor_id]", id);
+  const handleCheckIn = async () => {
+    const currentDateTime = getLocalDateTime();
     const payload = {
       visitor_id: id,
-      // visitor_visit: {
-        check_out: currentDateTime,
-      // },
+      check_in: currentDateTime,
     };
     try {
       const res = await postVisitorCheckInCheckOut(id, payload);
+      fetchVisitorDetails();
+      toast.success("Visitor marked IN successfully");
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const handleCheckOut = async () => {
+    const currentDateTime = getLocalDateTime();
+    const payload = {
+      visitor_id: id,
+
+      check_out: currentDateTime,
+    };
+    try {
+      const res = await postVisitorCheckInCheckOut(id, payload);
+      fetchVisitorDetails();
+      toast.success("Visitor marked OUT successfully");
     } catch (error) {
       console.log(error);
     }
   };
   const userType = getItemInLocalStorage("USERTYPE");
+  const visitorLogColumn = [
+    {
+      name: "Sr. no.",
+      selector: (row, index) => index + 1,
+      sortable: true,
+    },
+    {
+      name: " Check in",
+      selector: (row) => (row.check_in ? dateTimeFormat(row.check_in) : ""),
+      sortable: true,
+    },
+    {
+      name: " Check out",
+      selector: (row) => (row.check_in ? dateTimeFormat(row.check_out) : null),
+      sortable: true,
+    },
+  ];
   return (
-    <div className="w-screen">
+    <div className="w-screen mb-4">
       <div className="flex flex-col gap-2">
         <div className="flex justify-end mx-4 gap-2 mt-1">
-         {userType === "security_guard" && <>
-          {details?.verified && (
-            <button
-            className="bg-green-400 text-white p-2 px-4 rounded-full font-medium flex items-center gap-2"
-            onClick={handleCheckIn}
-            >
-              <FaPersonWalkingArrowRight size={20} /> IN
-            </button>
+          {userType === "security_guard" && (
+            <>
+              {details?.verified && details?.visitor_in_out === null && (
+                <button
+                  className="bg-green-400 text-white p-2 px-4 rounded-full font-medium flex items-center gap-2"
+                  onClick={handleCheckIn}
+                >
+                  <FaPersonWalkingArrowRight size={20} /> IN
+                </button>
+              )}
+              {details?.verified && details?.visitor_in_out === "IN" && (
+                <button
+                  className="bg-red-400 text-white p-2 px-4 rounded-full font-medium flex items-center gap-2"
+                  onClick={handleCheckOut}
+                >
+                  <FaPersonWalkingArrowLoopLeft size={20} /> OUT
+                </button>
+              )}
+              {details?.verified && details?.visitor_in_out === "OUT" && (
+                <p className="font-medium text-green-500 flex items-center gap-2 ">
+                  <FaCheck /> Visit Completed{" "}
+                </p>
+              )}
+            </>
           )}
-          {details?.verified && (
-            <button
-              className="bg-red-400 text-white p-2 px-4 rounded-full font-medium flex items-center gap-2"
-              onClick={handleCheckOut}
-              >
-              <FaPersonWalkingArrowLoopLeft size={20} /> Out
-            </button>
-          )}
-          </>}
           <button
             onClick={() => setQrmodal(true)}
             className="border-2 border-black rounded-full px-2 p-1 flex items-center gap-2"
@@ -233,18 +259,7 @@ const EmployeeVisitorDetails = () => {
               </p>
             </div>
           )}
-          <div className="grid grid-cols-2 ">
-            <p className="font-semibold text-sm">Check In : </p>
-            <p className="">
-              {details.check_in ? dateTimeFormat(details.check_in) : "-"}
-            </p>
-          </div>
-          <div className="grid grid-cols-2 ">
-            <p className="font-semibold text-sm">Check Out : </p>
-            <p className="">
-              {details.check_out ? dateFormat(details.check_out) : "-"}
-            </p>
-          </div>
+
           <div className="grid grid-cols-2 ">
             <p className="font-semibold text-sm">Host : </p>
             {details?.hosts?.map((host) => (
@@ -276,7 +291,7 @@ const EmployeeVisitorDetails = () => {
             <h2 className="font-medium border-b-2 text-lg border-black px-4 ">
               Goods Info
             </h2>
-            <div className="border rounded-xl border-gray-300 m-2 p-2">
+            <div className="border rounded-xl border-gray-500 m-2 p-2">
               <div className=" grid grid-cols-2">
                 <div className="grid grid-cols-2 items-center">
                   <p className="font-medium">No. of goods :</p>
@@ -305,11 +320,11 @@ const EmployeeVisitorDetails = () => {
           </div>
         )}
         {details?.extra_visitors?.length !== 0 && (
-          <div className="my-4 ">
-            <h2 className="font-medium border-b-2 text-lg border-black px-4 ">
+          <div className=" ">
+            <h2 className="font-medium border-b-2 text-lg border-black px-4 mb-2">
               Additional Visitors Info
             </h2>
-            <div className="m-4 lg:mx-20 ">
+            <div className="mx-4  ">
               {details.extra_visitors && details.extra_visitors.length !== 0 ? (
                 <Table columns={VisitorColumns} data={details.extra_visitors} />
               ) : (
@@ -319,9 +334,21 @@ const EmployeeVisitorDetails = () => {
           </div>
         )}
       </div>
+      <div className="mb-10">
+        <h2 className="font-medium border-b-2 text-lg border-black px-2 mb-2">
+          Visitor Log
+        </h2>
+        <div className="mx-4">
+          {details?.visits_log && details?.visits_log?.length !== 0 ? (
+            <Table columns={visitorLogColumn} data={details?.visits_log} />
+          ) : (
+            <p className="text-center">No Log Yet</p>
+          )}
+        </div>
+      </div>
       {qrModal && (
         <VisitorQRCode
-          QR={domainPrefix + details.qr_code_image_url}
+          QR={domainPrefix + details?.qr_code_image_url}
           onClose={() => setQrmodal(false)}
         />
       )}
