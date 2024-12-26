@@ -763,7 +763,7 @@ const AddNewPermit = () => {
           <h3 className="border-b text-xl border-black mb-2 font-medium">
             ATTACHMENTS
           </h3>
-          {/* <input type="file" /> */}
+          
           <FileInputBox />
 
           {/* Submit button */}

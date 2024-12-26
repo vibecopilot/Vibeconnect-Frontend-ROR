@@ -2,6 +2,8 @@ import React from "react";
 import { IoMdPrint } from "react-icons/io";
 import { MdFeed } from "react-icons/md";
 import Table from "../../../components/table/Table";
+import { useSelector } from "react-redux";
+import FileInputBox from "../../../containers/Inputs/FileInputBox";
 
 const PermitListDetails = () => {
   const column = [
@@ -211,33 +213,29 @@ const PermitListDetails = () => {
       Actions: "",
     },
   ];
+  const themeColor = useSelector((state) => state.theme.color);
   return (
-    <section>
-      <div className="flex flex-col md:flex-row md:justify-between my-5 w-full">
-        <h2 className="text-xl font-semibold mx-5">PermitList DETAILS</h2>
-        <div className="flex mr-5">
-          {/* <button className='font-semibold border-2 border-black px-4 p-1 flex gap-2 items-center rounded-md mx-3'>
-                    <MdFeed/>
-                    feeds
-                </button> 
-                <button className='font-semibold border-2 border-black px-4 p-1 flex gap-2 items-center rounded-md'>
-                    <IoMdPrint />
-                    Print
-                </button> */}
-        </div>
+    <section className="mb-20">
+      <div
+        className="flex flex-col md:flex-row md:justify-center  w-full p-2 text-white "
+        style={{ background: themeColor }}
+      >
+        <h2 className="text-xl font-semibold mx-5 text-center">
+          PermitList DETAILS
+        </h2>
       </div>
-      <div className="flex gap-3 item-center my-3 mx-5 flex-wrap">
+      <div className="flex gap-3 item-center my-2 mx-5 flex-wrap">
         <p className="text-sm font-bold">Safety Officer Approval:</p>
         <button className="bg-orange-400 px-2 py-1 rounded-md text-white text-sm">
-          pending
+          Pending
         </button>
         <p className="text-sm font-bold">Site Technical-in-Charge Approval:</p>
         <button className="bg-green-400 px-2 py-1 rounded-md text-white text-sm">
           Approved
         </button>
       </div>
-      <div className="border-2 flex flex-col my-5 mx-3 p-4 gap-4 rounded-md border-gray-400">
-        <h2 className=" text-lg border-black font-semibold text-center">
+      <div className="border flex flex-col my-5 mx-3 p-2 gap-4 rounded-md border-gray-300">
+        <h2 className=" text-lg border-black font-semibold border-b">
           Permit Details
         </h2>
         <div className="my-5 md:px-10 text-sm items-center font-medium grid gap-4 md:grid-cols-2">
@@ -295,7 +293,7 @@ const PermitListDetails = () => {
             </p>
           </div>
         </div>
-        <h2 className="border-t text-lg py-5 border-black font-semibold text-center">
+        <h2 className="border-b text-lg border-black font-semibold">
           REQUESTOR’S INFORMATION
         </h2>
         <div className="my-5 md:px-10 text-sm items-center font-medium grid gap-4 md:grid-cols-2">
@@ -313,10 +311,10 @@ const PermitListDetails = () => {
           </div>
         </div>
 
-        <h2 className="border-t text-lg py-5 border-black font-semibold text-center">
+        <h2 className="border-b text-lg  border-black font-semibold ">
           ACTIVITY DETAILS
         </h2>
-        <div className="my-5 md:px-10 text-sm items-center font-medium grid gap-4 md:grid-cols-2">
+        <div className="my-2 md:px-10 text-sm items-center font-medium grid gap-2 md:grid-cols-3 bg-red-50 rounded-md p-2">
           <div className="grid grid-cols-2 items-center">
             <p>Activity</p>
             <p className="text-sm font-normal ">: Cable Laying Work</p>
@@ -332,121 +330,106 @@ const PermitListDetails = () => {
             <p className="text-sm font-normal ">
               : Slips & Trips (while carrying material)
             </p>
-          </div>
-
-          <div className="grid grid-cols-2 items-center"></div>
-          <div className="col-span-2 grid grid-cols-1">
-            <div className="grid grid-cols-2 items-center">
-              <p>Physical Injury</p>
-            </div>
-            <div className="grid grid-cols-2 items-center">
-              <p className="pl-4">Safety Equipment Required</p>
-            </div>
-            <div className="grid grid-cols-2 items-center">
-              <p className="pl-4">Use Safety Shoes (EN-345/ IS-15298)</p>
-            </div>
-            <div className="grid grid-cols-2 items-center">
-              <p className="pl-4">Safety Helmet (IS-2925:1984)</p>
-            </div>
-            <div className="grid grid-cols-2 items-center">
-              <p className="pl-4">Reflective Jacket (EN-20471:2013)</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 items-center">
-            <p>Activity</p>
-            <p className="text-sm font-normal ">: Cable Laying Work</p>
-          </div>
-          <div className="grid grid-cols-2 items-center">
-            <p>Sub Activity</p>
-            <p className="text-sm font-normal ">
-              : Carrying All materials such as Ladder & tools etc.
-            </p>
-          </div>
-          <div className="grid grid-cols-2 items-center">
-            <p>Category of Hazard</p>
-            <p className="text-sm font-normal ">
-              : Slips & Trips (while carrying material)
-            </p>
-          </div>
-
-          <div className="col-span-2 grid grid-cols-1">
-            <div className="grid grid-cols-2 items-center">
-              <p>Physical Injury</p>
-            </div>
-            <div className="grid grid-cols-2 items-center">
-              <p className="pl-4">Safety Equipment Required</p>
-            </div>
-            <div className="grid grid-cols-2 items-center">
-              <p className="pl-4">Use Safety Shoes (EN-345/ IS-15298)</p>
-            </div>
-            <div className="grid grid-cols-2 items-center">
-              <p className="pl-4">Safety Helmet (IS-2925:1984)</p>
-            </div>
-            <div className="grid grid-cols-2 items-center">
-              <p className="pl-4">Reflective Jacket (EN-20471:2013)</p>
-            </div>
           </div>
         </div>
-        <div className="border-black border-t mt-5"></div>
-        {/* <Table
-                 columns={column}
-                 data={data}
-            /> */}
-        {/* <div className="my-5 md:px-2 text-sm items-center font-medium grid gap-1 ">
-            <div className="flex justify-between items-center">
-              <p>Other Expense:</p>
-              <p className="text-sm font-bold "></p>
+        <h2 className="border-b text-lg  border-black font-semibold ">
+          MANPOWER DETAILS
+        </h2>
+        <div className="my-2 md:px-10 text-sm items-center font-medium grid gap-2 md:grid-cols-3 bg-red-50 rounded-md p-2">
+          <div className="grid grid-cols-2 items-center">
+            <p>Name</p>
+            <p className="text-sm font-normal ">: Ravindar Sahani</p>
+          </div>
+          <div className="grid grid-cols-2 items-center">
+            <p>Designation</p>
+            <p className="text-sm font-normal ">: SUPERVISOR</p>
+          </div>
+          <div className="grid grid-cols-2 items-center">
+            <p>Contact No.</p>
+            <p className="text-sm font-normal ">: 7709079207</p>
+          </div>
+        </div>
+        <div className="border p-2 rounded-md">
+          <h2 className="border-b text-lg  border-black font-semibold ">
+            PERMIT EXTENSION
+          </h2>
+          <div className="my-2  text-sm items-center font-medium grid gap-2 md:grid-cols-3  rounded-md p-2">
+            <div className="flex flex-col gap-2">
+              <label htmlFor="">
+                Reason for Extension <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="text"
+                name=""
+                id=""
+                className="border rounded-md p-2 border-gray-300"
+                placeholder="Enter Reason"
+              />
             </div>
-            <div className="flex justify-between items-center">
-              <p>Loading Expense:</p>
-              <p className="text-sm font-bold"></p>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="">
+                Assignees <span className="text-red-400">*</span>
+              </label>
+              <select
+                name=""
+                id=""
+                className="border rounded-md p-2 border-gray-300"
+              >
+                <option value="">Select</option>
+              </select>
             </div>
-            <div className="flex justify-between items-center">
-              <p>Adjustment Amount</p>
-              <p className="text-sm font-bold"></p>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="">
+                Extension Date&Time* <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="date"
+                name=""
+                id=""
+                className="border rounded-md p-2 border-gray-300"
+              />
             </div>
-          </div> */}
+          </div>
+
+          <FileInputBox />
+          <div className="flex items-center gap-2">
+            <input type="checkbox" name="" id="policy" />
+            <label htmlFor="" className="text-sm">
+              I have understood all the hazard and risk associated in the
+              activity I pledge to implement on the control measure identified
+              in the activity through risk analyses JSA and SOP. I Hereby
+              declare that the details given above are correct and also I have
+              been trained by our company for the above mentioned work & I am
+              mentally and physically fit, Alcohol/drugs free to perform it,
+              will be performed with appropriate safety and supervision as per
+              Vibecopilot & Norms.
+            </label>
+          </div>
+          <div className="flex justify-center">
+            <button className="bg-green-500 text-white p-2 rounded-md">
+              Extend Permit
+            </button>
+          </div>
+        </div>
       </div>
-      <h2 className="text-md font-semibold my-3 mx-5">Attachments</h2>
-      <div className="border-t py-5 mx-5 border-black">
-        <p className="text-md font-semibold">Attachments</p>
-        <p className="text-sm">No attachments</p>
+      <div className=" ">
+        <h2 className="text-md font-semibold my-3 mx-5 border-b border-black">
+          Attachments
+        </h2>
+        <p className="text-sm text-center">No attachments</p>
       </div>
-      <h2 className="text-md font-semibold my-3 mx-5">Comment log</h2>
-      <div className="border-t py-5 mx-5 border-black">
-        <button>Add Comment</button>
+      <div className=" ">
+        <h2 className="text-md font-semibold my-3 mx-5 border-b border-black">
+          Vendor Attachments
+        </h2>
+        <p className="text-sm text-center">No attachments</p>
       </div>
-      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-      <div></div>
-      {/* <div className='border-t py-2 mx-5 border-black'>
-            <h3 className='text-md font-semibold my-3'>Debit Note Details</h3>
-            <Table
-            columns={columnDebitNote}
-            data={dataDebitNote}
-            />
-        </div> */}
-      {/* <div className='border-t py-2 mx-5 border-black'>
-            <h3 className='text-md font-semibold my-3'>Payment Details</h3>
-            <Table
-            columns={columnPayment}
-            data={dataPayment}
-            />
-        </div> */}
-      {/* <div className='border-t py-2 mx-5 border-black'>
-            <h3 className='text-md font-semibold my-3'>Retention Payment Details</h3>
-            <Table
-            columns={columnRetentionPayment}
-            data={dataRetentionPayment}
-            />
-        </div> */}
-      {/* <div className='border-t py-2 mx-5 border-black'>
-            <h3 className='text-md font-semibold my-3'>QC Payment Details</h3>
-            <Table
-            columns={columnQCPayment}
-            data={dataQCPayment}
-            />
-        </div> */}
+      <div className="border-b flex items-center justify-between mx-5">
+        <h2 className="text-md font-semibold   ">Comment log</h2>
+        <button className="bg-green-600 p-2 rounded-md text-white">
+          Comment
+        </button>
+      </div>
     </section>
   );
 };
