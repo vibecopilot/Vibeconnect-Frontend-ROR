@@ -7,7 +7,7 @@ import { useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import Select from "react-select";
 
-const SharedwithMe = () => {
+const EmployeeSharedwithMe = () => {
   const userID = getItemInLocalStorage("UserId");
   const siteID = getItemInLocalStorage("SITEID");
   const themeColor = useSelector((state) => state.theme.color);
@@ -382,12 +382,12 @@ const openFolder = async (folder) => {
           >
             Share
           </button>
-          <button
+          {/* <button
             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
             onClick={() => handleDelete(folder.id)}
           >
             Delete
-          </button>
+          </button> */}
         </div>
       )}
     </div>
@@ -430,12 +430,12 @@ const openFolder = async (folder) => {
           >
             Share
           </button>
-          <button
+          {/* <button
             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
             onClick={() => handleDeleteFile(file.id)}
           >
             Delete
-          </button>
+          </button> */}
         </div>
       )}
     </div>
@@ -485,4 +485,4 @@ const openFolder = async (folder) => {
   );
 };
 
-export default SharedwithMe;
+export default EmployeeSharedwithMe;
