@@ -7,7 +7,7 @@ import { useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import Select from "react-select";
 
-const DocumentPro = () => {
+const EmployeeDocumentCommon = () => {
   const userID = getItemInLocalStorage("UserId");
   const siteID = getItemInLocalStorage("SITEID");
   const themeColor = useSelector((state) => state.theme.color);
@@ -94,31 +94,31 @@ const handleDelete = async (id) => {
     // if (response.data.success) {
       toast.success(`Folder deleted successfully`);
       if (parentID) {
-        const response = await getSubFolderDocumentCommon(parentID);
-        if (response.data.success) {
-          const { folders, documents } = response.data;
-          setFolders(
-            folders.map((folder) => ({
-              id: folder.id,
-              name: folder.name,
-              type: "folder",
-            }))
-          );
-          setFiles(
-            documents.map((file) => ({
-              id: file.id,
-              name: file.image_file_name,
-              type: "file",
-              document_url:file.document_url,
-            }))
-          );
-        }
-      } else {
-        const data = await fetchFolderDocumentCommon();
-        setFolders(data.folders);
-        setFiles(data.files);
-      }
-      fetchFolderContents(parentID);
+              const response = await getSubFolderDocumentCommon(parentID);
+              if (response.data.success) {
+                const { folders, documents } = response.data;
+                setFolders(
+                  folders.map((folder) => ({
+                    id: folder.id,
+                    name: folder.name,
+                    type: "folder",
+                  }))
+                );
+                setFiles(
+                  documents.map((file) => ({
+                    id: file.id,
+                    name: file.image_file_name,
+                    type: "file",
+                    document_url:file.document_url,
+                  }))
+                );
+              }
+            } else {
+              const data = await fetchFolderDocumentCommon();
+              setFolders(data.folders);
+              setFiles(data.files);
+            }
+      fetchFolderContents(parentID); // Refresh folder contents
     // } else {
     //   throw new Error(response.data.message || "Failed to delete item");
     // }
@@ -134,31 +134,31 @@ const handleDeleteFile = async (id) => {
     // if (response.data.success) {
       toast.success(`File deleted successfully`);
       if (parentID) {
-        const response = await getSubFolderDocumentCommon(parentID);
-        if (response.data.success) {
-          const { folders, documents } = response.data;
-          setFolders(
-            folders.map((folder) => ({
-              id: folder.id,
-              name: folder.name,
-              type: "folder",
-            }))
-          );
-          setFiles(
-            documents.map((file) => ({
-              id: file.id,
-              name: file.image_file_name,
-              type: "file",
-              document_url:file.document_url,
-            }))
-          );
-        }
-      } else {
-        const data = await fetchFolderDocumentCommon();
-        setFolders(data.folders);
-        setFiles(data.files);
-      }
-      // fetchFolderContents(parentID); 
+              const response = await getSubFolderDocumentCommon(parentID);
+              if (response.data.success) {
+                const { folders, documents } = response.data;
+                setFolders(
+                  folders.map((folder) => ({
+                    id: folder.id,
+                    name: folder.name,
+                    type: "folder",
+                  }))
+                );
+                setFiles(
+                  documents.map((file) => ({
+                    id: file.id,
+                    name: file.image_file_name,
+                    type: "file",
+                    document_url:file.document_url,
+                  }))
+                );
+              }
+            } else {
+              const data = await fetchFolderDocumentCommon();
+              setFolders(data.folders);
+              setFiles(data.files);
+            }
+      fetchFolderContents(parentID); // Refresh folder contents
     // } else {
     //   throw new Error(response.data.message || "Failed to delete item");
     // }
@@ -171,7 +171,7 @@ const handleDeleteFile = async (id) => {
   const fetchFolderDocumentCommon = async () => {
     try {
       // Perform the API request using the predefined method
-      const response = await getFolderDocumentPersonal();
+      const response = await getFolderDocumentCommon();
   
       // Check if the response is successful
       if (response.data.success) {
@@ -196,7 +196,7 @@ const handleDeleteFile = async (id) => {
   
         const fileData = documents.map((file) => ({
           id: file.id,
-          name: file.file_name,
+          name: file.image_file_name,
           type: 'file',
           document_url:file.document_url,
         }));
@@ -339,7 +339,7 @@ const openFolder = async (folder) => {
     const sendData = new FormData();
     sendData.append("folder[name]", formData.name);
     sendData.append("folder[structure]", "folder");
-    sendData.append("folder[folder_type]", "personal");
+    sendData.append("folder[folder_type]", "common");
     
     // Only set the parent_id if not in the root (i.e., parentID is not null)
     if (parentID) {
@@ -406,7 +406,7 @@ const openFolder = async (folder) => {
     const sendData = new FormData();
     // sendData.append("folder_document[folder_id]", 12);
     sendData.append("folder_document[content]", "file");
-    sendData.append("folder_document[document_type]", "personal");
+    sendData.append("folder_document[document_type]", "common");
 
     if (parentID) {
       sendData.append("folder_document[parent_id]", parentID);
@@ -476,22 +476,22 @@ const openFolder = async (folder) => {
 
 <div className="flex justify-end gap-2 mb-2">
    {/* Create Folder Button */}
-   <button
+   {/* <button
         onClick={() => setIsModalOpen(true)}
         className="bg-blue-500 flex items-center gap-2 text-white py-2 px-4 rounded-md " style={{ background: themeColor }}
       >
         <FaPlus/>
         Create Folder
-      </button>
+      </button> */}
 
       {/* Upload File Button */}
-      <button
+      {/* <button
         onClick={() => setIsUploadFileModalOpen(true)}
         className="bg-blue-500 flex items-center gap-2 text-white py-2 px-4 rounded-md" style={{ background: themeColor }}
       >
         <FaUpload/>
         Upload File
-      </button>
+      </button> */}
 </div>
       {/* Folder and File List */}
       <div className="bg-white  rounded-lg   ">
@@ -509,7 +509,7 @@ const openFolder = async (folder) => {
     <FaFolder className="text-4xl text-yellow-400 mb-2" />
     <button onClick={() => openFolder(folder)} className="text-sm font-medium text-gray-800 text-center">{folder.name}</button>
     {/* Three-dot menu */}
-    <div className="absolute top-2 right-2">
+    {/* <div className="absolute top-2 right-2">
       <button className="text-gray-500 hover:text-gray-800"  onClick={() => setMenuOpen(menuOpen === folder.id ? null : folder.id)} >
        <FaEllipsisV/>
       </button>
@@ -529,7 +529,7 @@ const openFolder = async (folder) => {
           </button>
         </div>
       )}
-    </div>
+    </div> */}
   </div>
 ))}
           </div>
@@ -557,7 +557,7 @@ const openFolder = async (folder) => {
            <span>Document URL not available</span>
          )}
     {/* Three-dot menu */}
-    <div className="absolute top-2 right-2">
+    {/* <div className="absolute top-2 right-2">
       <button className="text-gray-500 hover:text-gray-800" onClick={() => setMenuOpen(menuOpen === file.id ? null : file.id)}>
       <FaEllipsisV/>
       </button>
@@ -577,7 +577,7 @@ const openFolder = async (folder) => {
           </button>
         </div>
       )}
-    </div>
+    </div> */}
   </div>
 ))}
           </div>
@@ -696,4 +696,4 @@ const openFolder = async (folder) => {
   );
 };
 
-export default DocumentPro;
+export default EmployeeDocumentCommon;
