@@ -7,7 +7,7 @@ import { useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import Select from "react-select";
 
-const DocumentPro = () => {
+const EmployeeDocumentPro = () => {
   const userID = getItemInLocalStorage("UserId");
   const siteID = getItemInLocalStorage("SITEID");
   const themeColor = useSelector((state) => state.theme.color);
@@ -696,4 +696,4 @@ const openFolder = async (folder) => {
   );
 };
 
-export default DocumentPro;
+export default EmployeeDocumentPro;
