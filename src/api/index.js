@@ -121,19 +121,19 @@ export const editOtherBillsDetails = async (id, data) =>
 export const postPolls = async (data) =>
   axiosInstance.post("/polls.json", data, {
     params: {
-      token: "775d6ae27272741669a65456ea10cc56cd4cce2bb99287b6",
+      token: token,
     },
   });
 export const postPollVote = async (id, data) =>
   axiosInstance.post(`/polls/${id}/poll_votes.json`, data, {
     params: {
-      token: "775d6ae27272741669a65456ea10cc56cd4cce2bb99287b6",
+      token: token,
     },
   });
 export const getPolls = async () =>
   axiosInstance.get("/polls.json", {
     params: {
-      token: "775d6ae27272741669a65456ea10cc56cd4cce2bb99287b6",
+      token: token,
     },
   });
 
