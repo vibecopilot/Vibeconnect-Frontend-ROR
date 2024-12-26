@@ -1,54 +1,80 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import ModalWrapper from "./ModalWrapper";
 import { IoAddCircle } from "react-icons/io5";
+import { MdClose } from "react-icons/md";
+import { FaCheck } from "react-icons/fa";
+import { BiSolidEditAlt } from "react-icons/bi";
+import { getIncidentTags } from "../../api";
 
-const IncidentUpdateModal = ({ onclose} ) => {
+const IncidentUpdateModal = ({ onclose }) => {
+  const [statuses, setStatuses] = useState([]);
+  useEffect(() => {
+    const fetchIncidentsCategory = async () => {
+      try {
+        const res = await getIncidentTags("IncidentStatus");
+        setStatuses(res.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchIncidentsCategory();
+  }, []);
   return (
-    <ModalWrapper onclose={onclose}>
-      <div className="flex flex-col w-64 justify-center">
-        <h2 className="flex gap-4 items-center justify-center font-bold text-lg my-2">
-            Status Update
-        </h2>
-        <div className="border-t-2 border-black">
+    <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-30 backdrop-blur-sm z-20">
+      <div className="bg-white overflow-auto max-h-[70%]  md:w-auto w-96 p-4 px-8 flex flex-col rounded-md gap-5">
+        <div className="flex flex-col w-96 justify-center">
+          <h2 className=" font-medium text-lg border-b flex items-center gap-2">
+            <BiSolidEditAlt /> Update Status
+          </h2>
+          <div className="">
             <div className="flex flex-col my-2">
-                <label htmlFor="" className="font-semibold">
-                    Status
-                </label>
-                <select
-                    text="time"
-                    name=""
-                    id=""
-                    className="border p-1 px-4 border-gray-500 rounded-md w-full"
-                >
-                    <option value="">Select </option>
-                </select>
+              <label htmlFor="" className="font-semibold">
+                Status
+              </label>
+              <select
+                text="time"
+                name=""
+                id=""
+                className="border p-2 border-gray-400 rounded-md w-full"
+              >
+                <option value="">Select </option>
+                {statuses.map((status) => (
+                  <option value={status.id} key={status.id}>
+                    {status.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="flex flex-col">
-                <label htmlFor="" className="font-semibold">
-                    Comment
-                </label>
-                <textarea
-                    name=""
-                    id=""
-                    cols="5"
-                    rows="4"
-                    placeholder="Message"
-                    className="border p-1 px-4 border-gray-500 rounded-md"
-                />
+              <label htmlFor="" className="font-semibold">
+                Comment
+              </label>
+              <textarea
+                name=""
+                id=""
+                cols="5"
+                rows="3"
+                placeholder="Message"
+                className="border p-2 border-gray-400 rounded-md"
+              />
             </div>
-        </div>
-        <div className="border-t-2 border-black my-4"></div>
-        <div className="flex justify-end">
-          <button className="bg-black p-1 px-4 border-2 rounded-md text-white font-medium border-black hover:bg-white hover:text-black transition-all duration-300">
-            Submit
-          </button>
+          </div>
+
+          <div className="flex justify-center border-t mt-1 p-1 gap-2">
+            <button
+              className="bg-red-400 text-white rounded-full p-2 px-4 flex items-center gap-2"
+              onClick={() => onclose()}
+            >
+              <MdClose /> Cancel
+            </button>
+            <button className="bg-green-400 text-white rounded-full p-2 px-4 flex items-center gap-2">
+              <FaCheck /> Submit
+            </button>
+          </div>
         </div>
       </div>
-    </ModalWrapper>
+    </div>
   );
 };
 
-
-
-
-export default IncidentUpdateModal
+export default IncidentUpdateModal;

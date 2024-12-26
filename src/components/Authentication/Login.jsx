@@ -48,6 +48,8 @@ const Login = () => {
       const selectedSiteId = response.data.user.selected_site_id;
       const userName = response.data.user.firstname;
       const userEmail = response.data?.user?.email;
+      const siteName = response.data?.site?.name;
+      setItemInLocalStorage("SITENAME", siteName);
       setItemInLocalStorage("USEREMAIL", userEmail);
       setItemInLocalStorage("SITEID", selectedSiteId);
       setItemInLocalStorage("Name", userName);

@@ -2,11 +2,13 @@ import React, { useEffect, useState } from "react";
 import { FaCheck } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 import {
+  getEmployeeAssociatedSites,
   getEmployeeDetails,
   getMyHRMSEmployees,
   getMyOrganizationLocations,
   getMyOrgDepartments,
   getReportingSupervisors,
+  hrmsDomain,
   postApproveOrRejectEmployee,
   postEmployeeEmploymentInfo,
 } from "../../../api";
@@ -20,6 +22,7 @@ const OnboardingEmployeeDetail = ({
   fetchApprovalNotification,
 }) => {
   const [details, setDetails] = useState({});
+  const [siteDetails, setSiteDetails] = useState({});
   const fetchEmployeeDetails = async () => {
     try {
       const res = await getEmployeeDetails(empId);
@@ -28,8 +31,17 @@ const OnboardingEmployeeDetail = ({
       console.log(error);
     }
   };
+  const fetchEmployeeSiteDetails = async () => {
+    try {
+      const res = await getEmployeeAssociatedSites(empId);
+      setSiteDetails(res[0]);
+    } catch (error) {
+      console.log(error);
+    }
+  };
   useEffect(() => {
     fetchEmployeeDetails();
+    fetchEmployeeSiteDetails();
   }, []);
 
   const [formData, setFormData] = useState({
@@ -62,7 +74,7 @@ const OnboardingEmployeeDetail = ({
   };
 
   const [reportSupervisors, setReportSupervisors] = useState([]);
-  console.log(reportSupervisors);
+
   const handleDepartmentChange = async (e) => {
     const fetchReportingSupervisors = async (deptId) => {
       const reportingSupervisors = await getReportingSupervisors(
@@ -149,58 +161,80 @@ const OnboardingEmployeeDetail = ({
       const res = await postEmployeeEmploymentInfo(postData);
       console.log(res);
       handleGrantApproval(grantId, "approve");
+      toast.success("Employee Onboarded successfully");
       setDetailsModal();
     } catch (error) {
       console.log(error);
     }
   };
+
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
       <div class="max-h-screen bg-white p-4  rounded-xl shadow-lg overflow-y-auto">
+        <div className="flex justify-center mb-2">
+          <img
+            src={hrmsDomain + details?.profile_photo}
+            alt={details?.employee?.first_name}
+            className="border-4 border-gray-300 rounded-full w-28 h-28 object-cover"
+          />
+        </div>
         <div className="grid md:grid-cols-3 gap-2 border bg-blue-50 rounded-md p-2">
           <div className="grid grid-cols-2 gap-2">
             <label htmlFor="" className="font-medium">
               Name :{" "}
             </label>
             <p>
-              {details.first_name} {details.last_name}
+              {details?.first_name} {details?.last_name}
             </p>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <label htmlFor="" className="font-medium">
               DOB :{" "}
             </label>
-            <p>{details.date_of_birth}</p>
+            <p>{details?.date_of_birth}</p>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <label htmlFor="" className="font-medium">
               Gender :{" "}
             </label>
-            <p>{details.gender}</p>
+            <p>{details?.gender}</p>
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            <label htmlFor="" className="font-medium">
-              Email :{" "}
-            </label>
-            <p>{details.email_id}</p>
-          </div>
+
           <div className="grid grid-cols-2 gap-2">
             <label htmlFor="" className="font-medium">
               Mobile :{" "}
             </label>
-            <p>{details.mobile}</p>
+            <p>{details?.mobile}</p>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <label htmlFor="" className="font-medium">
               Aadhar :{" "}
             </label>
-            <p>{details.aadhar_number}</p>
+            <p>{details?.aadhar_number}</p>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <label htmlFor="" className="font-medium">
               Pan :{" "}
             </label>
-            <p>{details.pan}</p>
+            <p>{details?.pan}</p>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <label htmlFor="" className="font-medium">
+              Site :{" "}
+            </label>
+            <p>{siteDetails?.associated_organization_name}</p>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <label htmlFor="" className="font-medium">
+              Site ID :{" "}
+            </label>
+            <p>{siteDetails?.associated_organization}</p>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <label htmlFor="" className="font-medium">
+              Email :{" "}
+            </label>
+            <p>{details?.email_id}</p>
           </div>
         </div>
         <div className="w-full p-2 bg-white rounded-lg ">
@@ -346,31 +380,6 @@ const OnboardingEmployeeDetail = ({
               />
             </div>
           </div>
-          {/* <div className="flex gap-5 justify-end items-center my-4">
-          <button
-            type="submit"
-            // style={{ background: themeColor }}
-            onClick={handleAddEmployment}
-            // onClick={() => setDisableNext(false)}
-            className={`px-4 py-2  text-white font-medium rounded-md flex items-center gap-2 ${
-              disableSave ? "bg-gray-400 cursor-not-allowed" : "bg-green-400"
-            }`}
-            disabled={disableSave}
-          >
-            Save
-          </button>
-          <button
-            type="submit"
-            // onClick={()=> setSteps("employment")}
-            onClick={() => setSteps("salary")}
-            className={`px-4 py-2  text-white font-medium  rounded-md flex items-center gap-2 ${
-              disableNext ? "bg-gray-400 cursor-not-allowed" : "bg-green-400"
-            }`}
-            disabled={disableNext}
-          >
-            Next <FaArrowRight />
-          </button>
-        </div> */}
         </div>
         <div className="flex justify-center gap-2 border-t p-2">
           <button

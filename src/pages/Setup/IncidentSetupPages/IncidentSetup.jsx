@@ -54,7 +54,7 @@ const IncidentSetup = () => {
             >
               Sub Sub Category
             </h2>
-            <h2
+            {/* <h2
               className={`p-1 border-b ${
                 page === "subCategory3" &&
                 "bg-blue-500 font-medium  text-white rounded-md "
@@ -62,7 +62,7 @@ const IncidentSetup = () => {
               onClick={() => setPage("subCategory3")}
             >
               Sub Sub Sub Category
-            </h2>
+            </h2> */}
             <h2
               className={`p-1 border-b ${
                 page === "incidenceStatus" &&
@@ -127,7 +127,7 @@ const IncidentSetup = () => {
             >
               Secondary Sub Sub Category
             </h2>
-            <h2
+            {/* <h2
               className={`p-1 border-b ${
                 page === "secondarySubSubSubCategory" &&
                 "bg-blue-500 font-medium  text-white rounded-md"
@@ -135,7 +135,7 @@ const IncidentSetup = () => {
               onClick={() => setPage("secondarySubSubSubCategory")}
             >
               Secondary Sub Sub Sub Category
-            </h2>
+            </h2> */}
 
             <h2
               className={`p-1 border-b ${

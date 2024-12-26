@@ -148,7 +148,7 @@ const SectionsEmployment = () => {
 
     {
       name: "Effective From",
-      selector: (row) => dateFormat(row.start_date),
+      selector: (row) =>row.start_date? dateFormat(row.start_date):"",
       sortable: true,
     },
     {

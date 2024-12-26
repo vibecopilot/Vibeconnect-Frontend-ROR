@@ -4,7 +4,7 @@ import PendingUniformRequest from "./Uniform/PendingUniformRequest";
 import CompletedUniformRequest from "./Uniform/CompletedUniformRequest";
 
 const UniformApplication = () => {
-    const [page, setPage] = useState("Pending")
+  const [page, setPage] = useState("Pending");
   return (
     <div className="flex ml-20">
       <AdminHRMS />

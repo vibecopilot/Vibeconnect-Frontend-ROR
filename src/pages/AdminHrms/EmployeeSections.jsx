@@ -128,6 +128,34 @@ console.log(empId)
           </li>
           <li>
             <NavLink
+              to={`/admin/employee-directory-Documents/${empId}`}
+              className={({ isActive }) =>
+                `${
+                  isActive
+                    ? "text-white bg-blue-500 flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                    : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-100 rounded-md"
+                }`
+              }
+            >
+              <div>{React.createElement(ImFileText2, { size: "20" })}</div>
+              <h2
+                className={`whitespace-pre duration-300 ${
+                  !open && "opacity-0 translate-x-28 overflow-hidden"
+                }`}
+              >
+                Documents
+              </h2>
+              <h2
+                className={`${
+                  open && "hidden"
+                } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+              >
+                Documents
+              </h2>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
               to={`/admin/employee-directory-Statutory/${empId}`}
               className={({ isActive }) =>
                 `${
@@ -182,7 +210,7 @@ console.log(empId)
               </h2>
             </NavLink>
           </li>
-          <li>
+          {/* <li>
             <NavLink
               to={`/admin/employee-directory-Tax/${empId}`}
               className={({ isActive }) =>
@@ -209,35 +237,8 @@ console.log(empId)
                 Tax
               </h2>
             </NavLink>
-          </li>
-          <li>
-            <NavLink
-              to={`/admin/employee-directory-Documents/${empId}`}
-              className={({ isActive }) =>
-                `${
-                  isActive
-                    ? "text-white bg-blue-500 flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
-                    : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-100 rounded-md"
-                }`
-              }
-            >
-              <div>{React.createElement(ImFileText2, { size: "20" })}</div>
-              <h2
-                className={`whitespace-pre duration-300 ${
-                  !open && "opacity-0 translate-x-28 overflow-hidden"
-                }`}
-              >
-                Documents
-              </h2>
-              <h2
-                className={`${
-                  open && "hidden"
-                } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
-              >
-                Documents
-              </h2>
-            </NavLink>
-          </li>
+          </li> */}
+         
           {/* <li>
             <NavLink
               to={`/admin/OtherDetails/${empId}`}
@@ -266,7 +267,7 @@ console.log(empId)
               </h2>
             </NavLink>
           </li> */}
-          <li>
+          {/* <li>
             <NavLink
               to={`/admin/employee-directory-LoansAdvances/${empId}`}
               className={({ isActive }) =>
@@ -377,7 +378,7 @@ console.log(empId)
                 Setup
               </h2>
             </NavLink>
-          </li>
+          </li> */}
 
           <li>
             {dropdownOpen1 && (

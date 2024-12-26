@@ -396,7 +396,7 @@ const UserRoles = () => {
             <h2 className="flex items-center gap-2 font-medium border-b text-lg justify-center">
               <PiPlusCircleBold /> Add Approval Authority{" "}
             </h2>
-            <div className="grid gap-2 mt-4">
+            <div className="grid gap-2 mt-3">
               <div className="flex flex-col gap-2">
                 <label htmlFor="" className="font-medium">
                   Select Approver
@@ -407,6 +407,12 @@ const UserRoles = () => {
                   noOptionsMessage={() => "Select Approver"}
                   maxMenuHeight={139}
                 />
+              </div>
+              <div>
+                <p className="font-medium text-gray-500 my-5">
+                  (The selected person will be able to approve or reject new
+                  onboarding requests.){" "}
+                </p>
               </div>
               {/* <div className="flex flex-col gap-1">
                 <label htmlFor="" className="font-medium">
@@ -421,7 +427,7 @@ const UserRoles = () => {
                 />
               </div> */}
             </div>
-            <div className="flex items-end justify-center gap-2 mt-20  border-t p-1">
+            <div className="flex items-end justify-center gap-2 mt-12 border-t p-1">
               <button
                 className="flex items-center gap-2 bg-green-400 text-white rounded-full p-2 px-4"
                 onClick={AddApprovalAuthority}
