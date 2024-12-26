@@ -780,7 +780,7 @@ function App() {
   //       console.error("Failed to fetch color code:", error);
   //     }
   //   };
-  
+
   //   fetchColorCode();
   // }, []);
 
@@ -1052,7 +1052,7 @@ function App() {
             path="/asset/edit-ppm/:id"
             element={
               <ProtectedAdminRoutes>
-                <EditPPMChecklist/>
+                <EditPPMChecklist />
               </ProtectedAdminRoutes>
             }
           />
@@ -1060,7 +1060,7 @@ function App() {
             path="/assets/ppm-calendar"
             element={
               <ProtectedAdminRoutes>
-                <PPMCalendar/>
+                <PPMCalendar />
               </ProtectedAdminRoutes>
             }
           />
@@ -1803,7 +1803,7 @@ function App() {
             path="/admin/copy-checklist/:id"
             element={
               <ProtectedAdminRoutes>
-                <CopyChecklist/>
+                <CopyChecklist />
               </ProtectedAdminRoutes>
             }
           />
@@ -1811,7 +1811,7 @@ function App() {
             path="/admin/copy-checklist/service/:id"
             element={
               <ProtectedAdminRoutes>
-                <CopyChecklistService/>
+                <CopyChecklistService />
               </ProtectedAdminRoutes>
             }
           />
@@ -1819,7 +1819,7 @@ function App() {
             path="/admin/copy-checklist/ppm/:id"
             element={
               <ProtectedAdminRoutes>
-                <CopyChecklistPPM/>
+                <CopyChecklistPPM />
               </ProtectedAdminRoutes>
             }
           />
@@ -1877,7 +1877,7 @@ function App() {
             path="/edit-master-checklist-setup/:id"
             element={
               <ProtectedAdminRoutes>
-                <EditMasterChecklistSetup/>
+                <EditMasterChecklistSetup />
               </ProtectedAdminRoutes>
             }
           />
@@ -1885,7 +1885,7 @@ function App() {
             path="/admin/gdn-purpose-setup"
             element={
               <ProtectedAdminRoutes>
-                <GDNPurpose/>
+                <GDNPurpose />
               </ProtectedAdminRoutes>
             }
           />
@@ -1976,7 +1976,8 @@ function App() {
             }
           />
           <Route
-            path="/admin/book-pickup"
+            path="/admin/transportation/book-pickup"
+            // path="/admin/book-pickup"
             element={
               <ProtectedAdminRoutes>
                 <AdminBookDailypickup />
@@ -2435,15 +2436,15 @@ function App() {
             path="/admin/add-masters"
             element={
               <ProtectedAdminRoutes>
-                <AddMasters/>
+                <AddMasters />
               </ProtectedAdminRoutes>
             }
           />
-           <Route
+          <Route
             path="/admin/master-details/:id"
             element={
               <ProtectedAdminRoutes>
-                <MasterDetails/>
+                <MasterDetails />
               </ProtectedAdminRoutes>
             }
           />
@@ -2451,7 +2452,7 @@ function App() {
             path="/admin/edit-masters/:id"
             element={
               <ProtectedAdminRoutes>
-                <EditMasters/>
+                <EditMasters />
               </ProtectedAdminRoutes>
             }
           />
@@ -3280,7 +3281,7 @@ function App() {
             path="/setup/fnb/cuisines"
             element={
               <ProtectedAdminRoutes>
-                <FBMainPage/>
+                <FBMainPage />
               </ProtectedAdminRoutes>
             }
           />
@@ -3469,15 +3470,15 @@ function App() {
             path="/admin/fb-details/:id"
             element={
               <ProtectedAdminRoutes>
-                <FBRestaurtantDetails/>
+                <FBRestaurtantDetails />
               </ProtectedAdminRoutes>
             }
           />
-            <Route
+          <Route
             path="/admin/fb-edit/:id"
             element={
               <ProtectedAdminRoutes>
-                <FBRestaurtantEdit/>
+                <FBRestaurtantEdit />
               </ProtectedAdminRoutes>
             }
           />
@@ -3485,15 +3486,15 @@ function App() {
             path="/fnb/status-setup/:id"
             element={
               <ProtectedAdminRoutes>
-                <FBStatusSetup/>
+                <FBStatusSetup />
               </ProtectedAdminRoutes>
             }
           />
-           <Route
+          <Route
             path="/fnb/status-setup/:id"
             element={
               <ProtectedAdminRoutes>
-                <FBStatusSetup/>
+                <FBStatusSetup />
               </ProtectedAdminRoutes>
             }
           />
@@ -3501,23 +3502,23 @@ function App() {
             path="/fnb/category-setup/:id"
             element={
               <ProtectedAdminRoutes>
-                <EditCategorySetup/>
+                <EditCategorySetup />
               </ProtectedAdminRoutes>
             }
           />
-           <Route
+          <Route
             path="/fnb/sub-category-setup/:id"
             element={
               <ProtectedAdminRoutes>
-                <EditSubCategorySetup/>
+                <EditSubCategorySetup />
               </ProtectedAdminRoutes>
             }
           />
-           <Route
+          <Route
             path="/fnb/restaurtant-menu/:id"
             element={
               <ProtectedAdminRoutes>
-                <FBRestaurtantMenu/>
+                <FBRestaurtantMenu />
               </ProtectedAdminRoutes>
             }
           />
@@ -3525,7 +3526,7 @@ function App() {
             path="/admin/restaurtant-bookings/:id"
             element={
               <ProtectedAdminRoutes>
-                <EditRestaurtantBooking/>
+                <EditRestaurtantBooking />
               </ProtectedAdminRoutes>
             }
           />
@@ -3533,7 +3534,7 @@ function App() {
             path="/admin/restaurtant-orders/:id"
             element={
               <ProtectedAdminRoutes>
-                <EditRestaurtantOrders/>
+                <EditRestaurtantOrders />
               </ProtectedAdminRoutes>
             }
           />
@@ -5150,7 +5151,7 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 {/* <OrganizationTree /> */}
-                <OrganizationChart/>
+                <OrganizationChart />
               </ProtectedAdminRoutes>
             }
           />
@@ -6947,7 +6948,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-           <Route
+          <Route
             path="/admin/billing-setup"
             element={
               <ProtectedAdminRoutes>
@@ -6955,7 +6956,7 @@ function App() {
               </ProtectedAdminRoutes>
             }
           />
-         
+
           {/* CAM Billing */}
           <Route
             path="/admin/cam-billing"
@@ -7009,7 +7010,7 @@ function App() {
             path="/employee/documents"
             element={
               <ProtectedRoute>
-                <EmployeeDocumentMain/>
+                <EmployeeDocumentMain />
               </ProtectedRoute>
             }
           />

@@ -6,6 +6,7 @@ import Navbar from "../../../components/Navbar";
 import { useSelector } from "react-redux";
 import Table from "../../../components/table/Table";
 import {
+  getExpectedUserVisitor,
   getExpectedVisitor,
   postOTPVerification,
   postVisitorCheckInCheckOut,
@@ -53,8 +54,23 @@ const EmployeeVisitor = () => {
       console.log(error);
     }
   };
+  const [userVisitors, setUserVisitors] = useState([]);
+  const [FilteredUserVisitors, setFilteredUserVisitors] = useState([]);
+  const fetchUserVisitors = async () => {
+    try {
+      const visitorResp = await getExpectedUserVisitor();
+      const sortedVisitor = visitorResp.data.sort((a, b) => {
+        return new Date(b.created_at) - new Date(a.created_at);
+      });
+      setUserVisitors(sortedVisitor);
+      setFilteredUserVisitors(sortedVisitor);
+    } catch (error) {
+      console.log(error);
+    }
+  };
   useEffect(() => {
     fetchExpectedVisitor();
+    fetchUserVisitors();
   }, []);
   const getLocalDateTime = () => {
     const now = new Date();
@@ -154,7 +170,7 @@ const EmployeeVisitor = () => {
     },
     {
       name: "Host",
-      selector: (row) => row.hosts.map((host) => <p>{host.full_name}</p>),
+      selector: (row) => row?.hosts?.map((host) => <p>{host?.full_name}</p>),
       sortable: true,
     },
     {
@@ -302,38 +318,40 @@ const EmployeeVisitor = () => {
           {/* <EmployeePasses/> */}
 
           {page === "Visitor In" && (
-            <div className="grid md:grid-cols-2 gap-2 items-center">
+            <div className="flex  gap-2 justify-between items-center">
               <input
                 type="text"
-                className="border border-gray-300 p-2 w-full rounded-md placeholder:text-sm"
+                className="border border-gray-300 p-2  rounded-md placeholder:text-sm w-96"
                 value={searchText}
                 onChange={handleSearch}
-                placeholder="Search using Visitor name, Host, vehicle number"
+                placeholder="Search using Visitor name, Host, vehicle number "
               />
 
-              {userType !== "security_guard" &&<div className="border md:flex-row flex-col flex p-2 rounded-md text-center border-black">
-                <span
-                  className={` md:border-r px-2 border-black cursor-pointer hover:underline ${
-                    selectedVisitor === "expected"
-                      ? "text-blue-600 underline"
-                      : ""
-                  } text-center`}
-                  onClick={() => handleClick("expected")}
-                >
-                  <span>Expected visitor</span>
-                </span>
-                <span
-                  className={`cursor-pointer hover:underline ${
-                    selectedVisitor === "unexpected"
-                      ? "text-blue-600 underline"
-                      : ""
-                  } text-center`}
-                  onClick={() => handleClick("unexpected")}
-                >
-                  &nbsp; <span>Unexpected visitor</span>
-                </span>
-              </div>}
               <div className="flex justify-end md:flex-row flex-col gap-2">
+                {userType !== "security_guard" && (
+                  <div className="border md:flex-row flex-col flex p-2 rounded-md text-center border-black">
+                    <span
+                      className={` md:border-r px-2 border-black cursor-pointer hover:underline ${
+                        selectedVisitor === "expected"
+                          ? "text-blue-600 underline"
+                          : ""
+                      } text-center`}
+                      onClick={() => handleClick("expected")}
+                    >
+                      <span>Expected visitor</span>
+                    </span>
+                    <span
+                      className={`cursor-pointer hover:underline ${
+                        selectedVisitor === "unexpected"
+                          ? "text-blue-600 underline"
+                          : ""
+                      } text-center`}
+                      onClick={() => handleClick("unexpected")}
+                    >
+                      &nbsp; <span>Unexpected visitor</span>
+                    </span>
+                  </div>
+                )}
                 {userType === "security_guard" && (
                   <button
                     className="bg-green-400 text-white rounded-md p-2 font-medium flex items-center justify-center gap-2"
@@ -395,15 +413,28 @@ const EmployeeVisitor = () => {
               />
             </div>
           )}
-          <div className="my-4">
-            {selectedVisitor === "expected" && page === "Visitor In" && (
-              <Table columns={VisitorColumns} data={filteredData} />
-            )}
-            {selectedVisitor === "unexpected" && (
-              // <Table columns={VisitorColumns} data={visitor} />
-              <p className="font-medium text-center">No Records</p>
-            )}
-          </div>
+          {userType === "security_guard" && (
+            <div className="my-4">
+              {selectedVisitor === "expected" && page === "Visitor In" && (
+                <Table columns={VisitorColumns} data={filteredData} />
+              )}
+              {selectedVisitor === "unexpected" && (
+                // <Table columns={VisitorColumns} data={visitor} />
+                <p className="font-medium text-center">No Records</p>
+              )}
+            </div>
+          )}
+          {userType !== "security_guard" && (
+            <div className="my-4">
+              {selectedVisitor === "expected" && page === "Visitor In" && (
+                <Table columns={VisitorColumns} data={FilteredUserVisitors} />
+              )}
+              {selectedVisitor === "unexpected" && (
+                // <Table columns={VisitorColumns} data={visitor} />
+                <p className="font-medium text-center">No Records</p>
+              )}
+            </div>
+          )}
         </div>
       </section>
       {otpModal && (
