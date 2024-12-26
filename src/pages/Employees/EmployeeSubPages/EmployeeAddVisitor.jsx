@@ -99,15 +99,13 @@ const EmployeeAddVisitor = () => {
   };
   const navigate = useNavigate();
   const createNewVisitor = async () => {
-   
-
-    if(formData.visitorName === ""){
+    if (formData.visitorName === "") {
       return toast.error("Provide Visitor name");
     }
-    if(formData.purpose === ""){
+    if (formData.purpose === "") {
       return toast.error("Provide Purpose");
     }
-    if(formData.mobile === ""){
+    if (formData.mobile === "") {
       return toast.error("Provide Visitor Mobile Number");
     }
     const mobilePattern = /^\d{10}$/;
@@ -136,7 +134,10 @@ const EmployeeAddVisitor = () => {
     }
     postData.append("visitor[contact_no]", formData.mobile);
     postData.append("visitor[purpose]", formData.purpose);
-    postData.append("visitor[vhost_id]", formData.host);
+    postData.append(
+      "visitor[vhost_id]",
+      userType === "security_guard" ? formData.host : userId
+    );
     postData.append("visitor[start_pass]", passStartDate);
     postData.append("visitor[end_pass]", passEndDate);
     postData.append("visitor[coming_from]", formData.comingFrom);
@@ -661,7 +662,12 @@ const EmployeeAddVisitor = () => {
             </div>
             <div className="flex flex-col gap-2">
               <p className="font-medium">Attachments Related to goods </p>
-              <FileInputBox handleChange={(files)=> handleFileChange(files, "goodsAttachments")}  fieldName={"goodsAttachments"} />
+              <FileInputBox
+                handleChange={(files) =>
+                  handleFileChange(files, "goodsAttachments")
+                }
+                fieldName={"goodsAttachments"}
+              />
             </div>
           </>
         )}

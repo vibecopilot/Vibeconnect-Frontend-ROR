@@ -1673,6 +1673,12 @@ export const getExpectedVisitor = async () =>
       token: token,
     },
   });
+export const getExpectedUserVisitor = async () =>
+  axiosInstance.get(`/visitors/user.json`, {
+    params: {
+      token: token,
+    },
+  });
 export const getRegisteredVehicle = async () =>
   axiosInstance.get(`/registered_vehicles.json`, {
     params: {
