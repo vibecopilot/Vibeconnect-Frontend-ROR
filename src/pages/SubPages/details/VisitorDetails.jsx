@@ -148,19 +148,19 @@ const VisitorDetails = () => {
               <p className="font-semibold text-sm">Visitor Type : </p>
               <p className="">{details.visit_type}</p>
             </div>
-            {details.visit_type === "Support Staff" && (
+            {details?.visit_type === "Support Staff" && (
               <div className="grid grid-cols-2 ">
                 <p className="font-semibold text-sm">Staff Category : </p>
-                <p className="">{details.visitor_staff_category.name}</p>
+                <p className="">{details?.visitor_staff_category?.name}</p>
               </div>
             )}
             <div className="grid grid-cols-2 ">
               <p className="font-semibold text-sm">Visitor's Name : </p>
-              <p className="">{details.name}</p>
+              <p className="">{details?.name}</p>
             </div>
             <div className="grid grid-cols-2 ">
               <p className="font-semibold text-sm">Mobile No. : </p>
-              <p className="">{details.contact_no}</p>
+              <p className="">{details?.contact_no}</p>
             </div>
             {/* <div className="grid grid-cols-2 ">
             <p className="font-semibold text-sm">OTP : </p>
@@ -168,37 +168,37 @@ const VisitorDetails = () => {
           </div> */}
             <div className="grid grid-cols-2 ">
               <p className="font-semibold text-sm">Purpose : </p>
-              <p className="">{details.purpose}</p>
+              <p className="">{details?.purpose}</p>
             </div>
             <div className="grid grid-cols-2 ">
               <p className="font-semibold text-sm">Coming From : </p>
-              <p className="">{details.coming_from}</p>
+              <p className="">{details?.coming_from}</p>
             </div>
             <div className="grid grid-cols-2 ">
               <p className="font-semibold text-sm">Vehicle No. : </p>
-              <p className="">{details.vehicle_number}</p>
+              <p className="">{details?.vehicle_number}</p>
             </div>
             <div className="grid grid-cols-2 ">
               <p className="font-semibold text-sm">Expected Date : </p>
-              <p className="">{details.expected_date}</p>
+              <p className="">{details?.expected_date}</p>
             </div>
             <div className="grid grid-cols-2 ">
               <p className="font-semibold text-sm">Expected Time : </p>
-              <p className="">{details.expected_time}</p>
+              <p className="">{details?.expected_time}</p>
             </div>
             <div className="grid grid-cols-2 ">
               <p className="font-semibold text-sm">Goods Inward : </p>
-              <p className="">{details.goods_inwards ? "Yes" : "No"}</p>
+              <p className="">{details?.goods_inwards ? "Yes" : "No"}</p>
             </div>
             <div className="grid grid-cols-2 ">
               <p className="font-semibold text-sm">Host Approval Needed ? : </p>
-              <p className="">{details.skip_host_approval ? "No" : "Yes"}</p>
+              <p className="">{details?.skip_host_approval ? "No" : "Yes"}</p>
             </div>
             {details.frequency === "Frequently" && (
               <div className="grid grid-cols-2 ">
                 <p className="font-semibold text-sm">Pass Start Date : </p>
                 <p className="">
-                  {details.start_pass ? dateFormat(details.start_pass) : "-"}
+                  {details.start_pass ? dateFormat(details?.start_pass) : "-"}
                 </p>
               </div>
             )}
@@ -206,17 +206,23 @@ const VisitorDetails = () => {
               <div className="grid grid-cols-2 ">
                 <p className="font-semibold text-sm">Pass End Date : </p>
                 <p className="">
-                  {details.end_pass ? dateFormat(details.end_pass) : "-"}
+                  {details.end_pass ? dateFormat(details?.end_pass) : "-"}
                 </p>
               </div>
             )}
 
             <div className="grid grid-cols-2 ">
               <p className="font-semibold text-sm">Host : </p>
+              {details?.hosts?.map((host) => (
+                <p>{host?.full_name}</p>
+              ))}
+            </div>
+            <div className="grid grid-cols-2 ">
+              <p className="font-semibold text-sm">Created by : </p>
               {details.created_by_name && (
                 <p className="">
-                  {details.created_by_name.firstname}{" "}
-                  {details.created_by_name.lastname}
+                  {details?.created_by_name.firstname}{" "}
+                  {details?.created_by_name.lastname}
                 </p>
               )}
             </div>

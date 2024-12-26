@@ -4,10 +4,14 @@ import Table from "../../../components/table/Table";
 import { useSelector } from "react-redux";
 import { PiPlusCircle } from "react-icons/pi";
 import { MdClose } from "react-icons/md";
-import { FaCheck } from "react-icons/fa";
+import { FaCheck, FaRegAddressCard } from "react-icons/fa";
 import {
+  getEmployeeAssociatedSites,
+  getEmployeeDetails,
   getMyHRMSEmployees,
   getUniformRequest,
+  getUniformRequestDetails,
+  hrmsDomain,
   postUniformApproval,
   postUniformRequest,
 } from "../../../api";
@@ -15,9 +19,23 @@ import Select from "react-select";
 import toast from "react-hot-toast";
 import { BsEye } from "react-icons/bs";
 import { dateFormatSTD } from "../../../utils/dateUtils";
+import Accordion from "../Components/Accordion";
 const PendingUniformRequest = () => {
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
   const columns = [
+    {
+      name: "Action",
+      cell: (row) => (
+        <div
+          className="flex items-center gap-4"
+          onClick={() => handleDetails(row.id, row.employee)}
+        >
+          <button>
+            <BsEye size={15} />
+          </button>
+        </div>
+      ),
+    },
     {
       name: "Employee Name",
       selector: (row) => row.employee_name,
@@ -42,11 +60,11 @@ const PendingUniformRequest = () => {
 
       sortable: true,
     },
-    {
-      name: "Shoes",
-      selector: (row) => row.shoes,
-      sortable: true,
-    },
+    // {
+    //   name: "Shoes",
+    //   selector: (row) => row.shoes,
+    //   sortable: true,
+    // },
     {
       name: "Applied on",
       selector: (row) => dateFormatSTD(row.created_date),
@@ -124,6 +142,7 @@ const PendingUniformRequest = () => {
     };
     fetchAllEmployees();
   }, []);
+
   const [selectedOption, setSelectedOption] = useState({});
   const handleEmployeeChange = (option) => {
     setSelectedOption(option);
@@ -132,17 +151,22 @@ const PendingUniformRequest = () => {
     size: "",
     waist: "",
     chest: "",
+    shoes: "",
+    ID: "",
   });
   const handleAddUniformRequest = async () => {
     const postData = new FormData();
     postData.append("select_size", formData.size);
     postData.append("chest", formData.chest);
+    postData.append("id_card", formData.ID);
     postData.append("waist", formData.waist);
+    postData.append("shoes_size", formData.shoes);
     postData.append("status", "Approved");
     postData.append("employee", selectedOption.value);
     try {
       const res = await postUniformRequest(postData);
       setAddRequest(false);
+      fetchUniformRequests();
       toast.success("Uniform request added successfully");
     } catch (error) {
       console.log(error);
@@ -181,6 +205,40 @@ const PendingUniformRequest = () => {
     }
   };
 
+  const [showDetails, setShowDetails] = useState(false);
+  const [details, setDetails] = useState({});
+  const [empId, setEmpId] = useState("");
+  const handleDetails = async (id, empID) => {
+    setShowDetails(true);
+    setEmpId(empID);
+    fetchEmployeeDetails(empID);
+    fetchEmployeeAssociatedSite(empID);
+    try {
+      const res = await getUniformRequestDetails(id);
+      setDetails(res);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const [empDetails, setEmpDetails] = useState({});
+  const [empSiteDetails, setEmpSiteDetails] = useState({});
+  const fetchEmployeeDetails = async (employeeId) => {
+    try {
+      const res = await getEmployeeDetails(employeeId);
+      setEmpDetails(res);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const fetchEmployeeAssociatedSite = async (employeeId) => {
+    try {
+      const res = await getEmployeeAssociatedSites(employeeId);
+      setEmpSiteDetails(res);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <section className="flex">
       <div className="w-full flex mx-2 flex-col overflow-hidden">
@@ -211,7 +269,7 @@ const PendingUniformRequest = () => {
         <Table
           columns={columns}
           data={filteredRequests}
-          selectableRow={true}
+          // selectableRow={true}
           isPagination={true}
           //   onSelectedRows={handleSelectedRows}
         />
@@ -286,23 +344,41 @@ const PendingUniformRequest = () => {
                 </div>
                 <div className="mt-2">
                   <label className="block t font-medium text-gray-700">
-                    Shoes
-                    {/* <span className="text-gray-400 text-sm">(inches)</span> */}
+                    Select Shoe size
                   </label>
-                  <input
-                    type="number"
-                    name="waist"
+
+                  <select
+                    id="shoeSize"
+                    name="shoes"
+                    className="border border-gray-300 p-2 rounded-md w-full"
                     value={formData.shoes}
                     onChange={handleChange}
-                    id=""
-                    className="border border-gray-300 p-2 rounded-md w-full"
-                    placeholder="Shoes size"
-                  />
+                  >
+                    <option value="">Select shoe size</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                    <option value="11">11</option>
+                    <option value="12">12</option>
+                  </select>
                 </div>
 
                 <div className="flex items-end gap-2">
-                  <input type="checkbox" name="" id="" className="mb-1" />
-                  <label htmlFor="">ID Card Provided</label>
+                  <input
+                    type="checkbox"
+                    name=""
+                    id=""
+                    className="mb-1"
+                    value={formData.ID}
+                    onChange={(e) =>
+                      setFormData({ ...formData, ID: e.target.value })
+                    }
+                  />
+                  <label htmlFor="">ID Card Required</label>
                 </div>
                 {/* <div className="mt-2">
               <label className="block text-sm font-medium text-gray-700">
@@ -334,6 +410,150 @@ const PendingUniformRequest = () => {
                   <FaCheck /> Submit
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {showDetails && (
+        <div className="fixed inset-0 z-50 flex items-center overflow-y-auto justify-center bg-gray-500 bg-opacity-50">
+          <div className="max-h-screen bg-white p-2 px-3 w-[55rem] rounded-xl shadow-lg overflow-y-auto">
+            <div className="flex flex-col gap-2">
+              <h2 className="text-xl font-semibold text-center border-b mt-1">
+                Uniform Request Details
+              </h2>
+              <Accordion
+                title={"Requestor Details"}
+                icon={FaRegAddressCard}
+                content={
+                  <>
+                    <div className="grid  gap-2 border bg-blue-50 rounded-md p-2">
+                      <div className="flex items-center gap-2">
+                        <img
+                          src={hrmsDomain + empDetails.profile_photo}
+                          alt={empDetails?.employee?.first_name}
+                          className="border border-gray-300 rounded-full h-10 w-10 object-cover"
+                        />
+                        <p className="font-medium">
+                          {empDetails.first_name} {empDetails.last_name}
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-2">
+                          <label htmlFor="" className="font-medium">
+                            DOB :{" "}
+                          </label>
+                          <p>{empDetails.date_of_birth}</p>
+                        </div>
+                        <div className="grid grid-cols-2">
+                          <label htmlFor="" className="font-medium">
+                            Gender :{" "}
+                          </label>
+                          <p>{empDetails.gender}</p>
+                        </div>
+
+                        <div className="grid grid-cols-2">
+                          <label htmlFor="" className="font-medium">
+                            Mobile :{" "}
+                          </label>
+                          <p>{empDetails.mobile}</p>
+                        </div>
+                        <div className="grid grid-cols-2 ">
+                          <label htmlFor="" className="font-medium">
+                            Aadhar :{" "}
+                          </label>
+                          <p>{empDetails.aadhar_number}</p>
+                        </div>
+                        <div className="grid grid-cols-2">
+                          <label htmlFor="" className="font-medium">
+                            Pan :{" "}
+                          </label>
+                          <p>{empDetails.pan}</p>
+                        </div>
+                        <div className="grid grid-cols-2">
+                          <label htmlFor="" className="font-medium">
+                            Site :{" "}
+                          </label>
+                          <p>
+                            {empSiteDetails.associated_organization_name
+                              ? empSiteDetails.associated_organization_name
+                              : "Not Associated"}
+                          </p>
+                        </div>
+                        <div className="grid grid-cols-2">
+                          <label htmlFor="" className="font-medium">
+                            Site ID :{" "}
+                          </label>
+                          <p>
+                            {empSiteDetails.associated_organization
+                              ? empSiteDetails.associated_organization
+                              : "Not Associated"}
+                          </p>
+                        </div>
+                        <div className="grid grid-cols-2 ">
+                          <label htmlFor="" className="font-medium">
+                            Email :{" "}
+                          </label>
+                          <p className="text-wrap max-w-20">
+                            {empDetails.email_id}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                }
+              />
+              <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2">
+                  <p className="font-medium">Applied on :</p>
+                  <p className="">{dateFormatSTD(details.created_date)}</p>
+                </div>
+                <div className="grid grid-cols-2">
+                  <p className="font-medium">Employee Name :</p>
+                  <p className="">{details.employee_name}</p>
+                </div>
+                <div className="grid grid-cols-2">
+                  <p className="font-medium">Status :</p>
+                  <p
+                    className={`${
+                      details.status === "Rejected"
+                        ? "text-red-500"
+                        : "text-green-500 font-medium"
+                    }`}
+                  >
+                    {details.status}
+                  </p>
+                </div>
+                <div className="grid grid-cols-2">
+                  <p className="font-medium"> Size :</p>
+                  <p className="">{details.select_size} </p>
+                </div>
+                <div className="grid grid-cols-2">
+                  <p className="font-medium">Waist size :</p>
+                  <p className="">{details.waist} inches</p>
+                </div>
+                <div className="grid grid-cols-2">
+                  <p className="font-medium">Chest size :</p>
+                  <p className="">{details.chest} inches</p>
+                </div>
+                <div className="grid grid-cols-2">
+                  <p className="font-medium">Shoe size :</p>
+                  <p className="">{details.shoes_size}</p>
+                </div>
+                {details.id_card !== null && (
+                  <div className="grid grid-cols-2">
+                    <p className="font-medium">ID Card:</p>
+                    <p className="">{details.id_card === "Yes"? "Required": "Not Required"}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="flex justify-center my-2 mt-3 border-t pt-1">
+              <button
+                className="flex items-center gap-2 border-2 border-red-500 text-red-500 rounded-full p-1 px-4"
+                onClick={() => setShowDetails(false)}
+              >
+                <MdClose /> Close
+              </button>
             </div>
           </div>
         </div>

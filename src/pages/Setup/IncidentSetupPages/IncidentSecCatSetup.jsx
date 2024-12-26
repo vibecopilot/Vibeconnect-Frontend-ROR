@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { BsEye } from "react-icons/bs";
 import { BiEdit } from "react-icons/bi";
 import { Link } from "react-router-dom";
@@ -9,14 +9,16 @@ import { PiPlusCircle } from "react-icons/pi";
 import { MdClose } from "react-icons/md";
 import { FaCheck, FaTrash } from "react-icons/fa";
 import IncidentSecCategoryModal from "../../../containers/modals/IncidentSetupModal.jsx/IncidentSecCategoryModal";
+import { getItemInLocalStorage } from "../../../utils/localStorage";
+import { getIncidentTags, postIncidentTags } from "../../../api";
+import toast from "react-hot-toast";
 
 const IncidentSecondaryCategorySetup = () => {
   const [modal, showModal] = useState(false);
   const column = [
-    { name: "Name", selector: (row) => row.Name, sortable: true },
+    { name: "Secondary category", selector: (row) => row.name, sortable: true },
     {
       name: "action",
-
       cell: (row) => (
         <div className="flex items-center gap-2">
           <button onClick={() => showModal(true)} className="text-blue-500">
@@ -38,7 +40,42 @@ const IncidentSecondaryCategorySetup = () => {
       action: <BsEye />,
     },
   ];
+  
   const [addCategory, setAddCategory] = useState(false);
+  const [cat, SetCat] = useState("");
+  const companyId = getItemInLocalStorage("COMPANYID");
+  const handleAddCategory = async () => {
+    const payload = {
+      name: cat,
+      active: true,
+      // "parent_id": null,
+      tag_type: "IncidentSecondaryCategory",
+      resource_id: companyId,
+      resource_type: "Pms::CompanySetup",
+      // "comment": "Covers all types of plumbing problems."
+    };
+    try {
+      const res = await postIncidentTags(payload);
+      toast.success("Incident Secondary Category Created successfully!");
+      fetchIncidentSecondaryCategory();
+      SetCat("");
+      setAddCategory(false);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const [categories, setCategories] = useState([]);
+  const fetchIncidentSecondaryCategory = async () => {
+    try {
+      const res = await getIncidentTags("IncidentSecondaryCategory");
+      setCategories(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(() => {
+    fetchIncidentSecondaryCategory();
+  }, []);
   return (
     <section className="mx-2">
       <div className="w-full flex flex-col gap-2 overflow-hidden">
@@ -49,8 +86,10 @@ const IncidentSecondaryCategorySetup = () => {
                 type="text"
                 placeholder="Secondary Category"
                 className="border p-2 w-full border-gray-300 rounded-lg"
+                value={cat}
+                onChange={(e) => SetCat(e.target.value)}
               />
-              <button className="bg-green-500 text-white p-2 flex gap-2 items-center rounded-md">
+              <button className="bg-green-500 text-white p-2 flex gap-2 items-center rounded-md" onClick={handleAddCategory}>
                 <FaCheck /> Submit
               </button>
               <button
@@ -71,15 +110,12 @@ const IncidentSecondaryCategorySetup = () => {
           )}
         </div>
         <div>
-          <Table columns={column} data={data} isPagination={true} />
+          <Table columns={column} data={categories} isPagination={true} />
         </div>
       </div>
       {modal && <IncidentSecCategoryModal onclose={() => showModal(false)} />}
     </section>
   );
 };
-
-
-
 
 export default IncidentSecondaryCategorySetup;

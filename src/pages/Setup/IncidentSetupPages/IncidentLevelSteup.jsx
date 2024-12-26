@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { BsEye } from "react-icons/bs";
 import { BiEdit } from "react-icons/bi";
 import { Link } from "react-router-dom";
@@ -8,11 +8,14 @@ import IncidenceLevelSetupModal from "../../../containers/modals/IncidentSetupMo
 import { FaCheck, FaTrash } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 import { PiPlusCircle } from "react-icons/pi";
+import { getItemInLocalStorage } from "../../../utils/localStorage";
+import { getIncidentTags, postIncidentTags } from "../../../api";
+import toast from "react-hot-toast";
 
 const IncidenceLevelSetup = () => {
   const [modal, showModal] = useState(false);
   const column = [
-    { name: "Name", selector: (row) => row.Name, sortable: true },
+    { name: "Levels", selector: (row) => row.name, sortable: true },
     {
       name: "action",
 
@@ -29,14 +32,42 @@ const IncidenceLevelSetup = () => {
       ),
     },
   ];
-  const data = [
-    {
-      id: 1,
-      Name: "L1",
-      action: <BsEye />,
-    },
-  ];
+
   const [addLevel, setAddLevel] = useState(false);
+  const [level, setLevel] = useState("");
+  const companyId = getItemInLocalStorage("COMPANYID");
+  const handleAddLevel = async () => {
+    const payload = {
+      name: level,
+      active: true,
+      // "parent_id": null,
+      tag_type: "IncidentLevel",
+      resource_id: companyId,
+      resource_type: "Pms::CompanySetup",
+      // "comment": "Covers all types of plumbing problems."
+    };
+    try {
+      const res = await postIncidentTags(payload);
+      toast.success("Incident Level Created successfully!");
+      fetchIncidentLevels();
+      setLevel("");
+      setAddLevel(false);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const [levels, setLevels] = useState([]);
+  const fetchIncidentLevels = async () => {
+    try {
+      const res = await getIncidentTags("IncidentLevel");
+      setLevels(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(() => {
+    fetchIncidentLevels();
+  }, []);
   return (
     <section className="mx-2">
       <div className="w-full flex flex-col gap-2 overflow-hidden">
@@ -45,10 +76,15 @@ const IncidenceLevelSetup = () => {
             <div className="flex items-center gap-2 w-full">
               <input
                 type="text"
-                placeholder="Status"
+                placeholder="Level"
                 className="border p-2 w-full border-gray-300 rounded-lg"
+                value={level}
+                onChange={(e) => setLevel(e.target.value)}
               />
-              <button className="bg-green-500 text-white p-2 flex gap-2 items-center rounded-md">
+              <button
+                className="bg-green-500 text-white p-2 flex gap-2 items-center rounded-md"
+                onClick={handleAddLevel}
+              >
                 <FaCheck /> Submit
               </button>
               <button
@@ -70,7 +106,7 @@ const IncidenceLevelSetup = () => {
         </div>
         {/* </div> */}
         <div>
-          <Table columns={column} data={data} isPagination={true} />
+          <Table columns={column} data={levels} isPagination={true} />
         </div>
       </div>
       {modal && <IncidenceLevelSetupModal onclose={() => showModal(false)} />}

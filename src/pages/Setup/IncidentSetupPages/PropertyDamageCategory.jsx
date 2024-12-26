@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { BsEye } from "react-icons/bs";
 import { BiEdit } from "react-icons/bi";
 import { Link } from "react-router-dom";
@@ -8,11 +8,14 @@ import PropertyDamageCategorySetupModal from "../../../containers/modals/Inciden
 import { FaCheck, FaTrash } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 import { PiPlusCircle } from "react-icons/pi";
+import { getItemInLocalStorage } from "../../../utils/localStorage";
+import { getIncidentTags, postIncidentTags } from "../../../api";
+import toast from "react-hot-toast";
 
 const PropertyDamageCategorySetup = () => {
   const [modal, showModal] = useState(false);
   const column = [
-    { name: "Name", selector: (row) => row.Name, sortable: true },
+    { name: "Name", selector: (row) => row.name, sortable: true },
     {
       name: "action",
 
@@ -30,14 +33,41 @@ const PropertyDamageCategorySetup = () => {
     },
   ];
 
-  const data = [
-    {
-      id: 1,
-      Name: "Technology and Data Security",
-      action: <BsEye />,
-    },
-  ];
   const [addDamage, setAddDamage] = useState(false);
+  const [damageCategory, setDamageCategory] = useState("");
+  const companyId = getItemInLocalStorage("COMPANYID");
+  const handleAddDamage = async () => {
+    const payload = {
+      name: damageCategory,
+      active: true,
+      // "parent_id": null,
+      tag_type: "IncidentDamageCategory",
+      resource_id: companyId,
+      resource_type: "Pms::CompanySetup",
+      // "comment": "Covers all types of plumbing problems."
+    };
+    try {
+      const res = await postIncidentTags(payload);
+      toast.success("Property Damage Category Created successfully!");
+      fetchIncidentDamageCategory();
+      setDamageCategory("");
+      setAddDamage(false);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const [categories, setCategories] = useState([]);
+  const fetchIncidentDamageCategory = async () => {
+    try {
+      const res = await getIncidentTags("IncidentDamageCategory");
+      setCategories(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(() => {
+    fetchIncidentDamageCategory();
+  }, []);
   return (
     <section className="mx-2">
       <div className="w-full flex flex-col gap-2 overflow-hidden">
@@ -48,8 +78,13 @@ const PropertyDamageCategorySetup = () => {
                 type="text"
                 placeholder="Category"
                 className="border p-2 w-full border-gray-300 rounded-lg"
+                value={damageCategory}
+                onChange={(e) => setDamageCategory(e.target.value)}
               />
-              <button className="bg-green-500 text-white p-2 flex gap-2 items-center rounded-md">
+              <button
+                className="bg-green-500 text-white p-2 flex gap-2 items-center rounded-md"
+                onClick={handleAddDamage}
+              >
                 <FaCheck /> Submit
               </button>
               <button
@@ -70,7 +105,7 @@ const PropertyDamageCategorySetup = () => {
           )}
         </div>
         <div>
-          <Table columns={column} data={data} isPagination={true} />
+          <Table columns={column} data={categories} isPagination={true} />
         </div>
       </div>
       {modal && (
