@@ -1595,12 +1595,66 @@ export const getFolderDocumentCommon = async () =>
       token: token,
     },
   });
+  export const getFolderDocumentPersonal = async () =>
+    axiosInstance.get(`/folders/get_personal_folders.json`, {
+      params: {
+        token: token,
+      },
+    });
+    export const getSharedwith = async () =>
+      axiosInstance.get(`/folders/get_share_with.json`, {
+        params: {
+          token: token,
+        },
+      });
+  export const getSubFolderDocumentCommon = async (id) =>
+    axiosInstance.get(`/folders/get_folders.json?parent_id=${id}`, {
+      params: {
+        token: token,
+      },
+    });
+    export const postSharePersonal = async (data) =>
+      axiosInstance.post("/share_withs.json", data, {
+        params: {
+          token: token,
+        },
+      });
+      export const deleteFolderPersonal = async (id) =>
+        axiosInstance.delete(`/destroy_folder/${id}.json`, {
+          params: {
+            token: token,
+          },
+        });
+        export const deleteFilePersonal = async (id) =>
+          axiosInstance.delete(`/folder_documents/${id}.json`, {
+            params: {
+              token: token,
+            },
+          });
+          export const deleteShareFolder = async (id) =>
+            axiosInstance.delete(`/share_withs/${id}.json`, {
+              params: {
+                token: token,
+              },
+            });
+            export const deleteShareFile = async (id) =>
+              axiosInstance.delete(`/share_withs/${id}.json`, {
+                params: {
+                  token: token,
+                },
+              });
 export const postFolderDocumentCommon = async (data) =>
   axiosInstance.post("/folders/create_common_folder.json", data, {
     params: {
       token: token,
     },
   });
+  export const postFolderDocumentPersonal = async (data) =>
+    axiosInstance.post("/folders/share_personal_documents.json", data, {
+      params: {
+        token: token,
+      },
+    });
 export const postFileDocumentCommon = async (data) =>
   axiosInstance.post("/folder_documents/create_common_document.json", data, {
     params: {

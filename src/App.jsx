@@ -729,6 +729,7 @@ import FBRestaurtantMenu from "./pages/SubPages/details/FBSubDetails/FBResturant
 import EditRestaurtantBooking from "./pages/SubPages/EditResturantBooking.jsx";
 import EditRestaurtantOrders from "./pages/SubPages/EditResturantOrders.jsx";
 import FBMainPage from "./pages/Setup/FBMainPage.jsx";
+import EmployeeDocumentMain from "./pages/Employees/EmployeeDocumentMain.jsx";
 // new admin hrms
 
 function App() {
@@ -7002,6 +7003,14 @@ function App() {
               <ProtectedAdminRoutes>
                 <EditBillingAddress />
               </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/employee/documents"
+            element={
+              <ProtectedRoute>
+                <EmployeeDocumentMain/>
+              </ProtectedRoute>
             }
           />
         </Routes>
