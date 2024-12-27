@@ -10,11 +10,13 @@ import {
   getVisitorStaffCategory,
   postNewGoods,
   postNewVisitor,
+  postVisitorInDevice,
 } from "../../../api";
 import { useNavigate } from "react-router-dom";
 import FileInputBox from "../../../containers/Inputs/FileInputBox";
 import Select from "react-select";
 import Webcam from "react-webcam";
+import  AxiosDigestAuth  from '@mhoc/axios-digest-auth';
 const EmployeeAddVisitor = () => {
   const siteId = getItemInLocalStorage("SITEID");
   const userId = getItemInLocalStorage("UserId");
@@ -180,8 +182,26 @@ const EmployeeAddVisitor = () => {
       } catch (error) {
         console.log(error);
       }
-      console.log(visitResp);
-      navigate("/employee/passes/visitors");
+      try {
+        const payload = {
+          UserInfo: {
+            employeeNo: visitResp.data.id,
+            name: formData.visitorName,
+            userType: "visitor",
+            Valid: {
+              enable: true,
+              beginTime: passStartDate,
+              endTime: passEndDate,
+            },
+          },
+        };
+        const deviceRes = await postVisitorInDevice(payload);
+        console.log(deviceRes);
+      } catch (error) {
+        console.log(error);
+      }
+      
+      // navigate("/employee/passes/visitors");
       toast.success("Visitor Added Successfully");
     } catch (error) {
       console.log(error);
@@ -278,8 +298,49 @@ const EmployeeAddVisitor = () => {
     });
     console.log(fieldName);
   };
+
+
+  const createUser = async () => {
+    const digestAuth = new AxiosDigestAuth({
+      username: 'admin',
+      password: '1234567a',
+    });
+  
+    try {
+      const response = await digestAuth.request({
+        method: 'POST',
+        url: 'http://192.168.1.22/ISAPI/AccessControl/UserInfo/Record?format=json',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        data: {
+          UserInfo: {
+            employeeNo: '0822',
+            name: 'ase',
+            userType: 'normal',
+            Valid: {
+              enable: true,
+              beginTime: '2024-12-26T17:30:08',
+              endTime: '2025-08-01T17:30:08',
+            },
+          },
+        },
+      });
+  
+      console.log('Response:', response.data);
+    } catch (error) {
+      if (error.response) {
+        console.error('Response Error:', error.response.data);
+      } else if (error.request) {
+        console.error('Request Error:', error.request);
+      } else {
+        console.error('Error:', error.message);
+      }
+    }
+  };
+  createUser();
   return (
-    <div className="flex justify-center items-center  w-full p-4">
+    <div className="flex justify-center items-center  w-full p-4 mb-10">
       <div className="md:border border-gray-300 rounded-lg md:p-4 w-full md:mx-4 ">
         <h2
           style={{ background: themeColor }}
@@ -390,39 +451,39 @@ const EmployeeAddVisitor = () => {
               </div>
             </div>
           </div>
-          {userType !== "security_guard" && (
-            <div className="flex gap-2 flex-col">
-              <h2 className="font-semibold">Visiting Frequency :</h2>
-              <div className="flex items-center gap-4 ">
-                <div className="flex items-center gap-2 ">
-                  <input
-                    type="radio"
-                    id="Once"
-                    name="frequency"
-                    value="Once"
-                    checked={selectedFrequency === "Once"}
-                    onChange={handleFrequencyChange}
-                  />
-                  <label htmlFor="Once" className="font-semibold">
-                    Once
-                  </label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    id="Frequently"
-                    name="frequency"
-                    value="Frequently"
-                    checked={selectedFrequency === "Frequently"}
-                    onChange={handleFrequencyChange}
-                  />
-                  <label htmlFor="Frequently" className="font-semibold ">
-                    Frequently
-                  </label>
-                </div>
+          {/* {userType !== "security_guard" && ( */}
+          <div className="flex gap-2 flex-col">
+            <h2 className="font-semibold">Visiting Frequency :</h2>
+            <div className="flex items-center gap-4 ">
+              <div className="flex items-center gap-2 ">
+                <input
+                  type="radio"
+                  id="Once"
+                  name="frequency"
+                  value="Once"
+                  checked={selectedFrequency === "Once"}
+                  onChange={handleFrequencyChange}
+                />
+                <label htmlFor="Once" className="font-semibold">
+                  Once
+                </label>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  id="Frequently"
+                  name="frequency"
+                  value="Frequently"
+                  checked={selectedFrequency === "Frequently"}
+                  onChange={handleFrequencyChange}
+                />
+                <label htmlFor="Frequently" className="font-semibold ">
+                  Frequently
+                </label>
               </div>
             </div>
-          )}
+          </div>
+          {/* )} */}
         </div>
 
         <div className="grid md:grid-cols-3 gap-5">
@@ -720,30 +781,30 @@ const EmployeeAddVisitor = () => {
             </button>
           </div>
         </div>
+        <div className="grid md:grid-cols-3 gap-4 ">
+          <div className="flex flex-col">
+            <p className="font-medium"> Pass Valid From :</p>
+            <input
+              type="datetime-local"
+              min={todayDate}
+              value={passStartDate}
+              onChange={(event) => setPassStartDate(event.target.value)}
+              className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full"
+            />
+          </div>
+          <div className="flex flex-col">
+            <p className="font-medium">Pass Valid To :</p>
+            <input
+              type="datetime-local"
+              min={todayDate}
+              value={passEndDate}
+              onChange={(event) => setPassEndDate(event.target.value)}
+              className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full"
+            />
+          </div>
+        </div>
         {selectedFrequency === "Frequently" && (
           <div className="flex flex-col gap-2 my-2">
-            <div className="grid md:grid-cols-3 gap-4 ">
-              <div className="flex flex-col">
-                <p className="font-medium"> Pass Valid From :</p>
-                <input
-                  type="date"
-                  min={todayDate}
-                  value={passStartDate}
-                  onChange={(event) => setPassStartDate(event.target.value)}
-                  className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full"
-                />
-              </div>
-              <div className="flex flex-col">
-                <p className="font-medium">Pass Valid To :</p>
-                <input
-                  type="date"
-                  min={todayDate}
-                  value={passEndDate}
-                  onChange={(event) => setPassEndDate(event.target.value)}
-                  className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full"
-                />
-              </div>
-            </div>
             <p className="font-medium">Select Permitted Days:</p>
 
             <div className="flex gap-4 flex-wrap ">

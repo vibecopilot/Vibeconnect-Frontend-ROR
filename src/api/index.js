@@ -3,9 +3,12 @@ import { getItemInLocalStorage } from "../utils/localStorage";
 import axiosInstance from "./axiosInstance";
 import HrmsAuth from "./HrmsAuth";
 import vibeAuth from "./vibeAuth";
+import axios from "axios";
 export const API_URL = "https://vibecopilot.ai";
 export const vibeMedia = "https://vibecopilot.ai/api/media/";
 export const hrmsDomain = "https://api.hrms.vibecopilot.ai/";
+// import DigestAuth from "@mhoc/axios-digest-auth";
+import AxiosDigestAuth from "@mhoc/axios-digest-auth";
 // export const hrmsDomain = "http://13.126.205.205";
 const token = getItemInLocalStorage("TOKEN");
 export const domainPrefix = "https://admin.vibecopilot.ai";
@@ -1595,66 +1598,66 @@ export const getFolderDocumentCommon = async () =>
       token: token,
     },
   });
-  export const getFolderDocumentPersonal = async () =>
-    axiosInstance.get(`/folders/get_personal_folders.json`, {
-      params: {
-        token: token,
-      },
-    });
-    export const getSharedwith = async () =>
-      axiosInstance.get(`/folders/get_share_with.json`, {
-        params: {
-          token: token,
-        },
-      });
-  export const getSubFolderDocumentCommon = async (id) =>
-    axiosInstance.get(`/folders/get_folders.json?parent_id=${id}`, {
-      params: {
-        token: token,
-      },
-    });
-    export const postSharePersonal = async (data) =>
-      axiosInstance.post("/share_withs.json", data, {
-        params: {
-          token: token,
-        },
-      });
-      export const deleteFolderPersonal = async (id) =>
-        axiosInstance.delete(`/destroy_folder/${id}.json`, {
-          params: {
-            token: token,
-          },
-        });
-        export const deleteFilePersonal = async (id) =>
-          axiosInstance.delete(`/folder_documents/${id}.json`, {
-            params: {
-              token: token,
-            },
-          });
-          export const deleteShareFolder = async (id) =>
-            axiosInstance.delete(`/share_withs/${id}.json`, {
-              params: {
-                token: token,
-              },
-            });
-            export const deleteShareFile = async (id) =>
-              axiosInstance.delete(`/share_withs/${id}.json`, {
-                params: {
-                  token: token,
-                },
-              });
+export const getFolderDocumentPersonal = async () =>
+  axiosInstance.get(`/folders/get_personal_folders.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const getSharedwith = async () =>
+  axiosInstance.get(`/folders/get_share_with.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const getSubFolderDocumentCommon = async (id) =>
+  axiosInstance.get(`/folders/get_folders.json?parent_id=${id}`, {
+    params: {
+      token: token,
+    },
+  });
+export const postSharePersonal = async (data) =>
+  axiosInstance.post("/share_withs.json", data, {
+    params: {
+      token: token,
+    },
+  });
+export const deleteFolderPersonal = async (id) =>
+  axiosInstance.delete(`/destroy_folder/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const deleteFilePersonal = async (id) =>
+  axiosInstance.delete(`/folder_documents/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const deleteShareFolder = async (id) =>
+  axiosInstance.delete(`/share_withs/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const deleteShareFile = async (id) =>
+  axiosInstance.delete(`/share_withs/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
 export const postFolderDocumentCommon = async (data) =>
   axiosInstance.post("/folders/create_common_folder.json", data, {
     params: {
       token: token,
     },
   });
-  export const postFolderDocumentPersonal = async (data) =>
-    axiosInstance.post("/folders/share_personal_documents.json", data, {
-      params: {
-        token: token,
-      },
-    });
+export const postFolderDocumentPersonal = async (data) =>
+  axiosInstance.post("/folders/share_personal_documents.json", data, {
+    params: {
+      token: token,
+    },
+  });
 export const postFileDocumentCommon = async (data) =>
   axiosInstance.post("/folder_documents/create_common_document.json", data, {
     params: {
@@ -7492,3 +7495,45 @@ export const postIncidents = async (data) =>
       token: token,
     },
   });
+// export const postVisitorInDevice = async (data) => {
+//   return axios.post(
+//     `http://192.168.1.22/ISAPI/AccessControl/UserInfo/Record?format=json`,
+//     data,
+//     {
+//       auth: {
+//         username: "admin",
+//         password: "1234567a",
+//       },
+//       referrerPolicy: "strict-origin-when-cross-origin",
+//     }
+//   );
+// };
+
+const digestAuth = new AxiosDigestAuth({
+  username: "admin",
+  password: "1234567a",
+});
+
+export const postVisitorInDevice = async (data) => {
+  const url =
+    "http://192.168.1.22/ISAPI/AccessControl/UserInfo/Record?format=json";
+
+  try {
+    const response = await digestAuth.request({
+      method: "POST",
+      url: url,
+      data: data,
+      headers: {
+        // Accept: "*/*",
+        "Content-Type": "application/json"
+      },
+    });
+    console.log(response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Error occurred during request:", error);
+    throw error;
+  }
+};
+
+
