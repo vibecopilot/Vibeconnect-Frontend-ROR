@@ -3297,7 +3297,7 @@ function App() {
             }
           />
           <Route
-            path="/admin/add-new-permit"
+            path="/admin/permit/add-new-permit"
             element={
               <ProtectedAdminRoutes>
                 <AddNewPermit />

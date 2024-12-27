@@ -6,6 +6,7 @@ import { PiPlusCircle } from "react-icons/pi";
 import { TiTick } from "react-icons/ti";
 import { Link } from "react-router-dom";
 import Table from "../../components/table/Table";
+import { useSelector } from "react-redux";
 
 const AdminOutStation = () => {
   const columns = [
@@ -98,52 +99,7 @@ const AdminOutStation = () => {
     },
   ];
 
-  const customStyle = {
-    headRow: {
-      style: {
-        backgroundColor: "black",
-        color: "white",
-
-        fontSize: "10px",
-      },
-    },
-    headCells: {
-      style: {
-        textTransform: "upperCase",
-      },
-    },
-  };
-
-  // const handleSearch = (e) => {
-  //     const searchValue = e.target.value;
-  //     setSearchText(searchValue);
-
-  //     if (searchValue.trim() === "") {
-  //       // If search input is empty, reset to show all data
-  //       setFilteredData(complaints);
-  //     } else {
-  //       // Filter the data based on search input and selected status
-  //       const filteredResults = complaints.filter(
-  //         (item) =>
-  //           ((selectedStatus === "all" ||
-  //             item.issue_status.toLowerCase() === selectedStatus.toLowerCase()) &&
-  //             (item.ticket_number
-  //               .toLowerCase()
-  //               .includes(searchValue.toLowerCase()) ||
-  //               item.category_type
-  //                 .toLowerCase()
-  //                 .includes(searchValue.toLowerCase()))) ||
-  //           item.issue_type.toLowerCase().includes(searchValue.toLowerCase()) ||
-  //           item.heading.toLowerCase().includes(searchValue.toLowerCase()) ||
-  //           item.priority.toLowerCase().includes(searchValue.toLowerCase()) ||
-  //           (item.unit && item.unit.toLowerCase().includes(searchValue.toLowerCase()))
-  //         // ||
-  //         // item.assigned_to.toLowerCase().includes(searchValue.toLowerCase())
-  //       );
-  //       setFilteredData(filteredResults);
-  //     }
-  //   };
-
+  const themeColor = useSelector((state) => state.theme.color);
   return (
     <section className="my-5">
       <div className="flex md:flex-row flex-col justify-between gap-2 my-2">
@@ -157,18 +113,13 @@ const AdminOutStation = () => {
         <div className="flex gap-4">
           <Link
             to={"/admin/book-outstation"}
-            className="border-2 font-semibold hover:bg-black hover:text-white duration-300 transition-all border-black p-2 rounded-md text-black cursor-pointer text-center flex items-center gap-2 justify-center"
+            style={{ background: themeColor }}
+            className="border-2 font-semibold hover:bg-black hover:text-white duration-300 transition-all  p-2 rounded-md text-white cursor-pointer text-center flex items-center  gap-2 justify-center"
             // onClick={() => setShowCountry(!showCountry)}
           >
             <PiPlusCircle size={20} />
             Book
           </Link>
-          <button
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-            // onClick={exportToExcel}
-          >
-            Export
-          </button>
         </div>
       </div>
       <Table
