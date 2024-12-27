@@ -8,6 +8,8 @@ import Accordion from "../AdminHrms/Components/Accordion";
 import { FaCheck, FaTrash } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
+import Navbar from "../../components/Navbar";
+import { PiPlusCircleBold } from "react-icons/pi";
 
 const AddNewPermit = () => {
   const buildings = getItemInLocalStorage("Building");
@@ -39,7 +41,7 @@ const AddNewPermit = () => {
     building_id: "",
     floor_id: "",
     room_id: "",
-    client_specific: "",
+    client_specific: "internal",
     entity: "",
     copy_to_string: "",
     permit_type: "",
@@ -52,17 +54,17 @@ const AddNewPermit = () => {
     created_by_id: "",
     permit_activities: [],
   });
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   const handleNewPermit = async () => {
     const sendData = new FormData();
-    sendData.append("permit[name]", formData.name);
-    sendData.append("permit[contact_number]", formData.contact_number);
-    // sendData.append("permit[site_id]", formData.site_id);
+    sendData.append("permit[name]", `${firstName} ${lastName}`);
+    sendData.append("permit[contact_number]", mobileNumber);
+    sendData.append("permit[site_id]", SITEID);
     // sendData.append("permit[unit_id]", formData.unit_id);
     sendData.append("permit[permit_for]", formData.permit_for);
     sendData.append("permit[building_id]", formData.building_id);
     sendData.append("permit[floor_id]", formData.floor_id);
-    // sendData.append("permit[room_id]", formData.room_id);
+    sendData.append("permit[room_id]", formData.room_id);
     sendData.append("permit[client_specific]", formData.client_specific);
     sendData.append("permit[entity]", formData.entity);
     sendData.append("permit[copy_to_string]", formData.copy_to_string);
@@ -190,25 +192,25 @@ const AddNewPermit = () => {
   const lastName = getItemInLocalStorage("LASTNAME");
   const email = getItemInLocalStorage("USEREMAIL");
   const siteName = getItemInLocalStorage("SITENAME");
+  const mobileNumber = getItemInLocalStorage("Mobile");
   return (
-    <section>
+    <section className="flex">
+      <Navbar />
       <div className="m-2">
-        <h2
-          style={{ background: themeColor }}
-          className="text-center text-xl font-bold p-2 rounded-full text-white"
-        >
-          New Permit
-        </h2>
-        <div className="md:mx-20 my-5 mb-10 sm:border border-gray-300 p-5 px-10 rounded-lg ">
-          <h2 className="border-b text-center text-xl border-black  font-bold">
-            PERMIT REQUESTOR DETAILS
+        <div className="md:mx-20 my-5 mb-10 sm:border border-gray-300 p-2 rounded-lg ">
+          <h2
+            style={{ background: themeColor }}
+            className="text-center text-xl font-bold p-2 rounded-md text-white"
+          >
+            New Permit
           </h2>
+
           <Accordion
             icon={RiContactsBook2Line}
             title={"Requestor Details"}
             content={
               <>
-                <div>
+                <div className="bg-green-50 p-2 rounded-md">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     <div className="grid grid-cols-2 items-center">
                       <label
@@ -228,6 +230,7 @@ const AddNewPermit = () => {
                       </label>
                       <p>{email}</p>
                     </div>
+
                     <div className="grid grid-cols-2 items-center">
                       <label
                         className="block text-gray-700 font-medium  text-center"
@@ -236,6 +239,15 @@ const AddNewPermit = () => {
                         Site :
                       </label>
                       <p>{siteName}</p>
+                    </div>
+                    <div className="grid grid-cols-2 items-center">
+                      <label
+                        className="block text-gray-700 font-medium "
+                        htmlFor="name"
+                      >
+                        Contact number :
+                      </label>
+                      <p>{mobileNumber}</p>
                     </div>
                     {/* <div className="grid grid-cols-2 items-center">
                       <label
@@ -259,10 +271,10 @@ const AddNewPermit = () => {
           <div className="w-full  my-5 p-5 rounded-lg border border-gray-300">
             {/* Basic details input fields */}
             <div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 gap-y-4 mb-4">
                 <div className="col-span-1">
                   <label
-                    className="block text-gray-700 font-bold mb-2"
+                    className="block text-gray-700 font-medium"
                     htmlFor="permit-for"
                   >
                     Permit For
@@ -279,7 +291,7 @@ const AddNewPermit = () => {
                 </div>
                 <div className="col-span-1">
                   <label
-                    className="block text-gray-700 font-bold mb-2"
+                    className="block text-gray-700 font-medium "
                     htmlFor="building"
                   >
                     Building
@@ -301,7 +313,7 @@ const AddNewPermit = () => {
                 </div>
                 <div className="col-span-1">
                   <label
-                    className="block text-gray-700 font-bold mb-2"
+                    className="block text-gray-700 font-medium"
                     htmlFor="floor"
                   >
                     Floor
@@ -323,7 +335,7 @@ const AddNewPermit = () => {
                 </div>
                 <div className="col-span-1">
                   <label
-                    className="block text-gray-700 font-bold mb-2"
+                    className="block text-gray-700 font-medium "
                     htmlFor="room"
                   >
                     Unit
@@ -337,7 +349,7 @@ const AddNewPermit = () => {
                 </div>
                 <div className="col-span-1">
                   <label
-                    className="block text-gray-700 font-bold mb-2"
+                    className="block text-gray-700 font-medium"
                     htmlFor="type"
                   >
                     Client Specific
@@ -353,7 +365,7 @@ const AddNewPermit = () => {
                       onChange={handleRadioChange}
                     />
                     <label
-                      className="text-gray-700 font-bold mr-4"
+                      className="text-gray-700 font-medium mr-4"
                       htmlFor="internal"
                     >
                       Internal
@@ -367,7 +379,10 @@ const AddNewPermit = () => {
                       checked={formData.client_specific === "client"}
                       onChange={handleRadioChange}
                     />
-                    <label className="text-gray-700 font-bold" htmlFor="client">
+                    <label
+                      className="text-gray-700 font-medium"
+                      htmlFor="client"
+                    >
                       Client
                     </label>
                   </div>
@@ -375,7 +390,7 @@ const AddNewPermit = () => {
                 {showEntityList && (
                   <div className="col-span-2 md:col-span-1">
                     <label
-                      className="block text-gray-700 font-bold mb-2"
+                      className="block text-gray-700 font-medium"
                       htmlFor="entity-list"
                     >
                       List of Entity
@@ -402,7 +417,7 @@ const AddNewPermit = () => {
                 )}
                 <div className="col-span-1">
                   <label
-                    className="block text-gray-700 font-bold mb-2"
+                    className="block text-gray-700 font-medium "
                     htmlFor="copy-to"
                   >
                     Copy To
@@ -601,7 +616,7 @@ const AddNewPermit = () => {
                         className="block text-gray-700 font-medium mb-2"
                         htmlFor={`activity-${index}`}
                       >
-                        Activity*
+                        Activity <span className="text-red-400">*</span>
                       </label>
                       <select
                         id={`activity-${index}`}
@@ -619,7 +634,7 @@ const AddNewPermit = () => {
                         className="block text-gray-700 font-medium mb-2"
                         htmlFor={`sub-activity-${index}`}
                       >
-                        Sub Activity*
+                        Sub Activity<span className="text-red-400">*</span>
                       </label>
                       <select
                         className="border border-gray-300 rounded-md p-2 w-full"
@@ -640,7 +655,8 @@ const AddNewPermit = () => {
                         className="block text-gray-700 font-medium mb-2"
                         htmlFor={`hazard-category-${index}`}
                       >
-                        Category of Hazards*
+                        Category of Hazards
+                        <span className="text-red-400">*</span>
                       </label>
                       <select
                         className="border border-gray-300 rounded-md p-2 w-full"
@@ -661,7 +677,7 @@ const AddNewPermit = () => {
                       className="block text-gray-700 font-medium mb-2"
                       htmlFor={`risks-${index}`}
                     >
-                      Risks*
+                      Risks<span className="text-red-400">*</span>
                     </label>
                     <input
                       className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
@@ -686,11 +702,11 @@ const AddNewPermit = () => {
               ))}
               <div className="flex items-center justify-between">
                 <button
-                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                  className="bg-green-500 hover:bg-green-700 text-white font-bold flex items-center gap-2 py-2 px-4 rounded focus:outline-none focus:shadow-outline"
                   type="button"
                   onClick={handleAddActivity}
                 >
-                  Add Activity
+                  <PiPlusCircleBold /> Add Activity
                 </button>
               </div>
             </div>
@@ -699,7 +715,7 @@ const AddNewPermit = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div className="col-span-1">
                   <label
-                    className="block text-gray-700 font-bold mb-2"
+                    className="block text-gray-700 font-medium mb-2"
                     htmlFor="vendor"
                   >
                     Vendor
@@ -723,7 +739,7 @@ const AddNewPermit = () => {
                 </div>
                 <div className="col-span-1">
                   <label
-                    className="block text-gray-700 font-bold mb-2"
+                    className="block text-gray-700 font-medium mb-2"
                     htmlFor="expiryDateTime"
                   >
                     Expiry Date&Time*
@@ -742,7 +758,7 @@ const AddNewPermit = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div className="col-span-2">
                   <label
-                    className="block text-gray-700 font-bold mb-2"
+                    className="block text-gray-700 font-medium mb-2"
                     htmlFor="comment"
                   >
                     Comment (Optional)
@@ -763,14 +779,14 @@ const AddNewPermit = () => {
           <h3 className="border-b text-xl border-black mb-2 font-medium">
             ATTACHMENTS
           </h3>
-          
+
           <FileInputBox />
 
           {/* Submit button */}
           <div className="sm:flex justify-center grid gap-2 mt-5 border-t p-1">
             <button
               className="bg-red-400 text-white p-2 px-4 rounded-md font-medium flex items-center gap-2"
-              onClick={()=>navigate("/admin/permit")}
+              onClick={() => navigate("/admin/permit")}
             >
               <MdClose size={20} /> Cancel
             </button>

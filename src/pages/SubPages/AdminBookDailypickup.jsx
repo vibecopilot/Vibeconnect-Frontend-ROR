@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import { MdClose } from "react-icons/md";
 import { FaCheck } from "react-icons/fa";
+import { getItemInLocalStorage } from "../../utils/localStorage";
 
 const AdminBookDailypickup = () => {
   const [users, setUsers] = useState([]);
@@ -19,15 +20,42 @@ const AdminBookDailypickup = () => {
     no_of_passengers: "",
     additional_note: "",
     transportation_type: "",
+    userId: "",
   });
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
   const navigate = useNavigate();
-
+  const createdByUserId = getItemInLocalStorage("UserId");
   const handleSubmit = async () => {
+   
+   
+    if (!formData.pickup_location) {
+      toast.error("Pickup location is required.");
+      return;
+    }
+    if (!formData.dropoff_location) {
+      toast.error("Dropoff location is required.");
+      return;
+    }
+    if (!formData.date) {
+      toast.error("Date is required.");
+      return;
+    }
+    if (!formData.time) {
+      toast.error("Time is required.");
+      return;
+    }
+    if (!formData.no_of_passengers || formData.no_of_passengers <= 0) {
+      toast.error("Please enter a valid number of passengers.");
+      return;
+    }
+  
+  
     const sendData = new FormData();
     sendData.append("transportation[on_behalf_of]", formData.behalf);
+    sendData.append("transportation[user_id]", formData.userId);
+    sendData.append("transportation[created_by_id]", createdByUserId);
     sendData.append(
       "transportation[pickup_location]",
       formData.pickup_location
@@ -44,18 +72,20 @@ const AdminBookDailypickup = () => {
     );
     sendData.append(
       "transportation[additional_note]",
-      formData.additional_note
+      formData.additional_note || ""
     );
     sendData.append("transportation[transportation_type]", "Daily_Pickup");
-
+  
     try {
       const resp = await postDailyPickUpTransportation(sendData);
       toast.success("Daily Pickup & Drop added successfully");
       navigate("/admin/transportation");
     } catch (error) {
-      console.log(error);
+      console.error(error);
+      toast.error("Failed to add Daily Pickup & Drop. Please try again.");
     }
   };
+  
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -130,7 +160,8 @@ const AdminBookDailypickup = () => {
                   </label>
                   <select
                     onChange={handleChange}
-                    value={formData.name}
+                    value={formData.userId}
+                    name="userId"
                     className="border p-2 px-4 w-full border-gray-400 rounded-md"
                   >
                     <option value="" className="text-gray-300">
@@ -155,7 +186,6 @@ const AdminBookDailypickup = () => {
                   value={formData.pickup_location}
                   cols="15"
                   rows="1"
-                  
                   className="border p-2 rounded-md border-gray-400"
                 ></textarea>
               </div>

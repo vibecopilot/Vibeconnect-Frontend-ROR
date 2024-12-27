@@ -12,7 +12,7 @@ import { useSelector } from "react-redux";
 
 const AdminDailyPickup = () => {
   const [details, setDetails] = useState([]);
-const themeColor = useSelector((state)=> state.theme.color)
+  const themeColor = useSelector((state) => state.theme.color);
   useEffect(() => {
     const fetchCategory = async () => {
       try {
@@ -99,7 +99,7 @@ const themeColor = useSelector((state)=> state.theme.color)
         <div className="flex gap-4">
           <Link
             to={"/admin/transportation/book-pickup"}
-            style={{background: themeColor}}
+            style={{ background: themeColor }}
             className="border-2 font-semibold hover:bg-black hover:text-white duration-300 transition-all  p-2 rounded-md text-white cursor-pointer text-center flex items-center  gap-2 justify-center"
             // onClick={() => setShowCountry(!showCountry)}
           >

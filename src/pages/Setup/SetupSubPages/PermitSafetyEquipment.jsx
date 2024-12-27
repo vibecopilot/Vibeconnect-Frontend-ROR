@@ -13,10 +13,11 @@ import { IoClose } from "react-icons/io5";
 import { Link } from "react-router-dom";
 import { MdClose } from "react-icons/md";
 //import Modal from "../containers/modals/Modal";
-const PermitHazardCategoryTable = () => {
+const PermitSafetyEquipment = () => {
   const themeColor = useSelector((state) => state.theme.color);
   const column = [
-    
+   
+
     { name: "Permit Type", selector: (row) => row.type, sortable: true },
     { name: "Permit Activity", selector: (row) => row.type, sortable: true },
     {
@@ -29,19 +30,20 @@ const PermitHazardCategoryTable = () => {
       selector: (row) => row.type,
       sortable: true,
     },
+    { name: "Permit Risk", selector: (row) => row.type, sortable: true },
     {
-      name: "Actions",
-      cell: (row) => (
-        <div className="flex items-center gap-4">
-          <Link>
-            <BiTrash size={15} />
-          </Link>
-          <Link>
-            <BiEdit size={15} />
-          </Link>
-        </div>
-      ),
-    },
+        name: "Actions",
+        cell: (row) => (
+          <div className="flex items-center gap-4">
+            <Link>
+              <BiTrash size={15} />
+            </Link>
+            <Link>
+              <BiEdit size={15} />
+            </Link>
+          </div>
+        ),
+      },
   ];
   const data = [
     {
@@ -66,7 +68,7 @@ const PermitHazardCategoryTable = () => {
     },
   ];
 
- 
+  
   document.title = `Permit Setup - Vibe Connect`;
   const [showAdd, setShowAdd] = useState(false);
   return (
@@ -96,26 +98,39 @@ const PermitHazardCategoryTable = () => {
             >
               <option value="">Select Sub Activity</option>
             </select>
+            <select
+              name=""
+              id=""
+              className="border p-2 border-gray-300 rounded-md w-full"
+            >
+              <option value="">Select Hazard Category</option>
+            </select>
+            <select
+              name=""
+              id=""
+              className="border p-2 border-gray-300 rounded-md w-full"
+            >
+              <option value="">Select Permit Risk</option>
+            </select>
 
             <input
               type="text"
-              placeholder="Enter Hazard Category "
+              placeholder="Enter Safety equipment name "
               className="border p-2 border-gray-300 rounded-md w-full"
             />
             <div className="flex items-center gap-2">
-
-            <button className="bg-green-400 text-white rounded-md flex items-center justify-center gap-2 p-2 font-medium w-full">
-              <PiPlusCircle size={20} />
-              Submit
-            </button>
-            <button
-              className="bg-red-400 text-white rounded-md flex items-center justify-center gap-2 p-2 font-medium w-full"
-              onClick={() => setShowAdd(false)}
+              <button className="bg-green-400 text-white rounded-md flex items-center justify-center gap-2 p-2 font-medium w-full">
+                <PiPlusCircle size={20} />
+                Submit
+              </button>
+              <button
+                className="bg-red-400 text-white rounded-md flex items-center justify-center gap-2 p-2 font-medium w-full"
+                onClick={() => setShowAdd(false)}
               >
-              <MdClose size={20} />
-              Cancel
-            </button>
-              </div>
+                <MdClose size={20} />
+                Cancel
+              </button>
+            </div>
           </div>
         )}
         {!showAdd && (
@@ -129,6 +144,7 @@ const PermitHazardCategoryTable = () => {
             </button>
           </div>
         )}
+
         <Table
           columns={column}
           data={data}
@@ -146,4 +162,7 @@ const PermitHazardCategoryTable = () => {
   );
 };
 
-export default PermitHazardCategoryTable;
+
+
+
+export default PermitSafetyEquipment

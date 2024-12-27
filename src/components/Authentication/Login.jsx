@@ -49,10 +49,12 @@ const Login = () => {
       const userName = response.data.user.firstname;
       const userEmail = response.data?.user?.email;
       const siteName = response.data?.site?.name;
+      const mobileNumber = response.data?.user?.mobile;
       setItemInLocalStorage("SITENAME", siteName);
       setItemInLocalStorage("USEREMAIL", userEmail);
       setItemInLocalStorage("SITEID", selectedSiteId);
       setItemInLocalStorage("Name", userName);
+      setItemInLocalStorage("Mobile", mobileNumber);
       const features = response.data.features;
       setItemInLocalStorage("FEATURES", features);
 

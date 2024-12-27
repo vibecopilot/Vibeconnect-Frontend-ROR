@@ -114,7 +114,7 @@ const EmployeeVisitor = () => {
   };
   const VisitorColumns = [
     {
-      name: "Action",
+      name: "View",
       cell: (row) => (
         <div className="flex items-center gap-4">
           <Link to={`/employee/passes/visitors/visitor-details/${row.id}`}>
@@ -237,6 +237,100 @@ const EmployeeVisitor = () => {
         }
         return null;
       },
+    },
+  ];
+  const EmployeeVisitorColumns = [
+    {
+      name: "Action",
+      cell: (row) => (
+        <div className="flex items-center gap-4">
+          <Link to={`/employee/passes/visitors/visitor-details/${row.id}`}>
+            <BsEye size={15} />
+          </Link>
+          {/* <Link to={`/employee/passes/visitors/edit-visitor/${row.id}`}>
+            <BiEdit size={15} />
+          </Link> */}
+        </div>
+      ),
+    },
+
+    {
+      name: "Visitor Type",
+      selector: (row) => row.visit_type,
+      sortable: true,
+    },
+    {
+      name: " Name",
+      selector: (row) => row.name,
+      sortable: true,
+    },
+    {
+      name: "Contact No.",
+      selector: (row) => row.contact_no,
+      sortable: true,
+    },
+
+    {
+      name: "Purpose",
+      selector: (row) => row.purpose,
+      sortable: true,
+    },
+    {
+      name: "Coming from",
+      selector: (row) => row.coming_from,
+      sortable: true,
+    },
+    {
+      name: "Expected Date",
+      selector: (row) => row.expected_date,
+      sortable: true,
+    },
+    {
+      name: "Expected Time",
+      selector: (row) => row.expected_time,
+      sortable: true,
+    },
+    {
+      name: "Vehicle No.",
+      selector: (row) => row.vehicle_number,
+      sortable: true,
+    },
+    {
+      name: "Host",
+      selector: (row) =>
+        row?.hosts?.map((host) => <p>{host?.host_details?.user_name}</p>),
+      sortable: true,
+    },
+    {
+      name: "Host Approval",
+      selector: (row) => (row.skip_host_approval ? "Not Required" : "Required"),
+      sortable: true,
+    },
+
+    {
+      name: "Pass Start",
+      selector: (row) => (row.start_pass ? dateFormat(row.start_pass) : ""),
+      sortable: true,
+    },
+    {
+      name: "Pass End",
+      selector: (row) => (row.end_pass ? dateFormat(row.end_pass) : ""),
+      sortable: true,
+    },
+    // {
+    //   name: "Check In",
+    //   selector: (row) => (row.check_in ? dateTimeFormat(row.check_in) : ""),
+    //   sortable: true,
+    // },
+    // {
+    //   name: "Check Out",
+    //   selector: (row) => (row.check_out ? dateTimeFormat(row.check_out) : ""),
+    //   sortable: true,
+    // },
+    {
+      name: "Created by",
+      selector: (row) => `${row?.created_by_name} `,
+      sortable: true,
     },
   ];
   const [searchText, setSearchText] = useState("");
@@ -427,7 +521,10 @@ const EmployeeVisitor = () => {
           {userType !== "security_guard" && (
             <div className="my-4">
               {selectedVisitor === "expected" && page === "Visitor In" && (
-                <Table columns={VisitorColumns} data={FilteredUserVisitors} />
+                <Table
+                  columns={EmployeeVisitorColumns}
+                  data={FilteredUserVisitors}
+                />
               )}
               {selectedVisitor === "unexpected" && (
                 // <Table columns={VisitorColumns} data={visitor} />
