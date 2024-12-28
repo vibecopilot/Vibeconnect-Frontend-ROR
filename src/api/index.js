@@ -4,9 +4,11 @@ import axiosInstance from "./axiosInstance";
 import HrmsAuth from "./HrmsAuth";
 import vibeAuth from "./vibeAuth";
 import axios from "axios";
+// import DigestFetch from "digest-fetch";
 export const API_URL = "https://vibecopilot.ai";
 export const vibeMedia = "https://vibecopilot.ai/api/media/";
 export const hrmsDomain = "https://api.hrms.vibecopilot.ai/";
+import DigestFetch from "digest-fetch";
 // import DigestAuth from "@mhoc/axios-digest-auth";
 import AxiosDigestAuth from "@mhoc/axios-digest-auth";
 // export const hrmsDomain = "http://13.126.205.205";
@@ -7402,6 +7404,8 @@ export const getFB = async () =>
     },
   });
 
+ 
+
 export const getFBDetails = async (id) =>
   axiosInstance.get(`/food_and_beverages/${id}.json`, {
     params: {
@@ -7495,45 +7499,52 @@ export const postIncidents = async (data) =>
       token: token,
     },
   });
-// export const postVisitorInDevice = async (data) => {
-//   return axios.post(
-//     `http://192.168.1.22/ISAPI/AccessControl/UserInfo/Record?format=json`,
-//     data,
-//     {
-//       auth: {
-//         username: "admin",
-//         password: "1234567a",
-//       },
-//       referrerPolicy: "strict-origin-when-cross-origin",
-//     }
-//   );
-// };
 
-const digestAuth = new AxiosDigestAuth({
-  username: "admin",
-  password: "1234567a",
-});
-
-export const postVisitorInDevice = async (data) => {
+export const postVisitorInDevice = async (data) => 
+  {
+    const defaultIp = getItemInLocalStorage("DEFAULT")
+    console.log(defaultIp)
+    // http://localhost:8080/
   const url =
-    "http://192.168.1.22/ISAPI/AccessControl/UserInfo/Record?format=json";
+   `http://${defaultIp}/ISAPI/AccessControl/UserInfo/Record?format=json`;
+  // const url = "http://192.168.1.22/ISAPI/AccessControl/UserInfo/Record?format=json";
+  const username = "admin";
+  const password = "1234567a";
+
+  const client = new DigestFetch(username, password);
 
   try {
-    const response = await digestAuth.request({
+    const response = await client.fetch(url, {
       method: "POST",
-      url: url,
-      data: data,
-      headers: {
-        // Accept: "*/*",
-        "Content-Type": "application/json"
-      },
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
     });
-    console.log(response.data);
-    return response.data;
+
+    if (!response.ok) {
+      throw new Error(
+        `POST request failed: ${response.status} ${response.statusText}`
+      );
+    }
+
+    const result = await response.json();
+    console.log(result);
+    return result;
   } catch (error) {
-    console.error("Error occurred during request:", error);
+    console.error("Error:", error);
     throw error;
   }
 };
 
-
+// 
+export const postDeviceConfiguration = async (data) =>
+  axiosInstance.post(`/hik_devices.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const getDeviceConfiguration = async (siteId) =>
+  axiosInstance.get(`/hik_devices/find_by_site/${siteId}.json`, {
+    params: {
+      token: token,
+    },
+  });

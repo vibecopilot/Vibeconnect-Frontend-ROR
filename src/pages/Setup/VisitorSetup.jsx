@@ -12,9 +12,10 @@ import toast from "react-hot-toast";
 import VehicleParkingSetup from "./VehicleParkingSetupModal/VehicleParkingSetup";
 import { Link } from "react-router-dom";
 import SetupNavbar from "../../components/navbars/SetupNavbar";
+import DeviceConfiguration from "./VehicleParkingSetupModal/DeviceConfiguration";
 function VisitorSetup() {
   const themeColor = useSelector((state) => state.theme.color);
-  const [page, setPage] = useState("visitor");
+  const [page, setPage] = useState("deviceConfig");
   const [searchText, setSearchText] = useState("");
   const [visitorSetupModal, setVisitorSetupModal] = useState(false);
   const [editVisitorSetupModal, setEditVisitorSetupModal] = useState(false);
@@ -101,6 +102,15 @@ function VisitorSetup() {
         <div className=" flex gap-2 p-2 pb-0 border-b-2 border-gray-200 w-full">
           <h2
             className={`p-1 ${
+              page === "deviceConfig" &&
+              `bg-white font-medium text-blue-500 shadow-custom-all-sides`
+            } rounded-t-md px-4 cursor-pointer text-center transition-all duration-300 ease-linear`}
+            onClick={() => setPage("deviceConfig")}
+          >
+            Device Configuration
+          </h2>
+          <h2
+            className={`p-1 ${
               page === "visitor" &&
               `bg-white font-medium text-blue-500 shadow-custom-all-sides`
             } rounded-t-md px-4 cursor-pointer text-center transition-all duration-300 ease-linear`}
@@ -167,10 +177,12 @@ function VisitorSetup() {
               />
             )}
           </div>
-        ) : (
+        ) : page === "vehicleParking"? (
           <div>
             <VehicleParkingSetup />
           </div>
+        ) : (
+          <DeviceConfiguration/>
         )}
       </div>
     </section>

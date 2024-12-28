@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import image from "/profile.png";
-import { FaTrash } from "react-icons/fa";
+import { FaCheck, FaTrash } from "react-icons/fa";
+import { MdClose } from "react-icons/md";
 import { useSelector } from "react-redux";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
 import toast from "react-hot-toast";
@@ -100,6 +101,18 @@ const EmployeeAddVisitor = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
   const navigate = useNavigate();
+  const formatDateWithSeconds = (dateStr) => {
+    const date = new Date(dateStr);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // 0-indexed month
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+  };
+
   const createNewVisitor = async () => {
     if (formData.visitorName === "") {
       return toast.error("Provide Visitor name");
@@ -185,13 +198,16 @@ const EmployeeAddVisitor = () => {
       try {
         const payload = {
           UserInfo: {
-            employeeNo: visitResp.data.id,
+            // employeeNo: "08035",
+            employeeNo: visitResp.data.id.toString(),
             name: formData.visitorName,
             userType: "visitor",
             Valid: {
               enable: true,
-              beginTime: passStartDate,
-              endTime: passEndDate,
+              // beginTime: "2024-12-27T17:30:08",
+              beginTime: formatDateWithSeconds(passStartDate),
+              endTime: formatDateWithSeconds(passEndDate),
+              // endTime: "2024-12-29T18:30:08",
             },
           },
         };
@@ -300,51 +316,13 @@ const EmployeeAddVisitor = () => {
   };
 
 
-  const createUser = async () => {
-    const digestAuth = new AxiosDigestAuth({
-      username: 'admin',
-      password: '1234567a',
-    });
-  
-    try {
-      const response = await digestAuth.request({
-        method: 'POST',
-        url: 'http://192.168.1.22/ISAPI/AccessControl/UserInfo/Record?format=json',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        data: {
-          UserInfo: {
-            employeeNo: '0822',
-            name: 'ase',
-            userType: 'normal',
-            Valid: {
-              enable: true,
-              beginTime: '2024-12-26T17:30:08',
-              endTime: '2025-08-01T17:30:08',
-            },
-          },
-        },
-      });
-  
-      console.log('Response:', response.data);
-    } catch (error) {
-      if (error.response) {
-        console.error('Response Error:', error.response.data);
-      } else if (error.request) {
-        console.error('Request Error:', error.request);
-      } else {
-        console.error('Error:', error.message);
-      }
-    }
-  };
-  createUser();
+
   return (
     <div className="flex justify-center items-center  w-full p-4 mb-10">
       <div className="md:border border-gray-300 rounded-lg md:p-4 w-full md:mx-4 ">
         <h2
           style={{ background: themeColor }}
-          className="text-center md:text-xl font-bold p-2 bg-black rounded-full text-white"
+          className="text-center md:text-xl font-bold p-2 bg-black rounded-md text-white"
         >
           {getHeadingText()}
         </h2>
@@ -775,9 +753,9 @@ const EmployeeAddVisitor = () => {
           <div>
             <button
               onClick={handleAddVisitor}
-              className="bg-black text-white hover:bg-gray-700 font-semibold py-2 px-4 rounded"
+              className="bg-green-500 text-white hover:bg-gray-700 font-semibold py-2 px-4 rounded"
             >
-              Add Additional Visitor
+            Add Additional Visitor
             </button>
           </div>
         </div>
@@ -829,12 +807,18 @@ const EmployeeAddVisitor = () => {
             </div>
           </div>
         )}
-        <div className="flex gap-5 justify-center items-center my-4">
+        <div className="flex gap-5 justify-center items-center my-4 border-t p-1">
           <button
             onClick={createNewVisitor}
-            className="bg-black text-white hover:bg-gray-700 font-semibold py-2 px-4 rounded"
+            className="bg-red-400 text-white  font-semibold py-2 px-4 rounded-full flex items-center gap-2"
           >
-            Submit
+          <MdClose/>  Cancel
+          </button>
+          <button
+            onClick={createNewVisitor}
+            className="bg-green-400 text-white font-semibold py-2 px-4 rounded-full flex items-center gap-2"
+          >
+            <FaCheck/> Submit
           </button>
         </div>
       </div>
