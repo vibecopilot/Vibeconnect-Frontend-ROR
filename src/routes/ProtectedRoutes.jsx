@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 const ProtectedRoute = ({ children }) => {
   const token = getItemInLocalStorage('TOKEN') || null;
   if (!token) {
-    toast.error('Please Login first!', );
+    toast.error('Please Login first!');
     return <Navigate to={'/login'} />;
   }
 

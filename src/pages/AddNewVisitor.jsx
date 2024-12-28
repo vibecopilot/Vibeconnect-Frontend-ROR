@@ -4,7 +4,7 @@ import { FaTrash } from "react-icons/fa";
 import { useSelector } from "react-redux";
 import { getItemInLocalStorage } from "../utils/localStorage";
 import toast from "react-hot-toast";
-import { getHostList, getParkingConfig, getSetupUsers, getVisitorStaffCategory, postNewGoods, postNewVisitor, postVisitorOTPApi } from "../api";
+import { getHostList, getParkingConfig, getSetupUsers, getVisitorStaffCategory, postNewGoods, postNewVisitor, postVisitorInDevice, postVisitorOTPApi } from "../api";
 import { useNavigate } from "react-router-dom";
 import Webcam from "react-webcam";
 import FileInputBox from "../containers/Inputs/FileInputBox";
@@ -157,6 +157,17 @@ const AddNewVisitor = () => {
     });
     console.log(fieldName);
   };
+  const formatDateWithSeconds = (dateStr) => {
+    const date = new Date(dateStr);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // 0-indexed month
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+  };
   const navigate = useNavigate();
   const createNewVisitor = async () => {
     if (
@@ -231,6 +242,27 @@ const AddNewVisitor = () => {
       } catch (error) {
         console.log(error)
       }
+       try {
+              const payload = {
+                UserInfo: {
+                  // employeeNo: "08035",
+                  employeeNo: visitResp.data.id.toString(),
+                  name: formData.visitorName,
+                  userType: "visitor",
+                  Valid: {
+                    enable: true,
+                    // beginTime: "2024-12-27T17:30:08",
+                    beginTime: formatDateWithSeconds(passStartDate),
+                    endTime: formatDateWithSeconds(passEndDate),
+                    // endTime: "2024-12-29T18:30:08",
+                  },
+                },
+              };
+              const deviceRes = await postVisitorInDevice(payload);
+              console.log(deviceRes);
+            } catch (error) {
+              console.log(error);
+            }
       console.log(visitResp);
       navigate("/admin/passes/visitors");
       toast.dismiss();
@@ -684,13 +716,11 @@ const AddNewVisitor = () => {
             </button>
           </div>
         </div>
-        {selectedFrequency === "Frequently" && (
-          <div className="flex flex-col gap-2 my-2">
             <div className="grid md:grid-cols-3 gap-4 ">
               <div className="flex flex-col">
                 <p className="font-medium"> Pass Valid From :</p>
                 <input
-                  type="date"
+                  type="datetime-local"
                   min={todayDate}
                   value={passStartDate}
                   onChange={(event) => setPassStartDate(event.target.value)}
@@ -700,7 +730,7 @@ const AddNewVisitor = () => {
               <div className="flex flex-col">
                 <p className="font-medium">Pass Valid To :</p>
                 <input
-                  type="date"
+                  type="datetime-local"
                   min={todayDate}
                   value={passEndDate}
                   onChange={(event) => setPassEndDate(event.target.value)}
@@ -708,6 +738,8 @@ const AddNewVisitor = () => {
                 />
               </div>
             </div>
+        {selectedFrequency === "Frequently" && (
+          <div className="flex flex-col gap-2 my-2">
             <p className="font-medium">Select Permitted Days:</p>
 
             <div className="flex gap-4 flex-wrap ">

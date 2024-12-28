@@ -1107,7 +1107,14 @@ function App() {
             }
           />
           {/* tickets -Admin*/}
-          <Route path="/tickets" element={<Ticket />} />
+          <Route
+            path="/tickets"
+            element={
+              <ProtectedAdminRoutes>
+                <Ticket />
+              </ProtectedAdminRoutes>
+            }
+          />
           <Route
             path="/tickets/details/:id"
             element={
