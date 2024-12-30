@@ -2,14 +2,15 @@ import React, { useEffect, useState } from "react";
 import DataTable from "react-data-table-component";
 import { BsEye } from "react-icons/bs";
 import { ImCross } from "react-icons/im";
-import { MdApproval, MdCancel } from "react-icons/md";
+import { MdApproval, MdCancel, MdClose } from "react-icons/md";
 import { PiPlusCircle } from "react-icons/pi";
 import { TiTick } from "react-icons/ti";
 import { Link } from "react-router-dom";
 import Table from "../../components/table/Table";
-import { getDailyPickUpTransportation } from "../../api";
+import { getTransportation } from "../../api";
 import { useSelector } from "react-redux";
 import { BiEdit } from "react-icons/bi";
+import { FaCheck } from "react-icons/fa";
 
 const AdminDailyPickup = () => {
   const [details, setDetails] = useState([]);
@@ -17,7 +18,7 @@ const AdminDailyPickup = () => {
   useEffect(() => {
     const fetchCategory = async () => {
       try {
-        const siteDetailsResp = await getDailyPickUpTransportation();
+        const siteDetailsResp = await getTransportation("Daily_Pickup");
 
         setDetails(siteDetailsResp.data);
       } catch (error) {
@@ -46,11 +47,11 @@ const AdminDailyPickup = () => {
       selector: (row) => row.id,
       sortable: true,
     },
-    // {
-    //   name: "Employee",
-    //   selector: (row) => row.employee,
-    //   sortable: true,
-    // },
+    {
+      name: "Booked For/by",
+      selector: (row) => (row?.user_full_name? row?.user_full_name: "Self"),
+      sortable: true,
+    },
     // {
     //   name: "Department",
     //   selector: (row) => row.department,
@@ -86,6 +87,25 @@ const AdminDailyPickup = () => {
     {
       name: "Passengers",
       selector: (row) => row.no_of_passengers,
+      sortable: true,
+    },
+    {
+      name: "Status",
+      selector: (row) => row.status,
+      sortable: true,
+    },
+    {
+      name: "Approval",
+      selector: (row) => (
+        <div className="flex gap-2">
+          <button className="bg-green-400 text-white p-2 rounded-full">
+            <FaCheck />
+          </button>
+          <button className="bg-red-400 text-white p-2 rounded-full">
+            <MdClose />
+          </button>
+        </div>
+      ),
       sortable: true,
     },
   ];

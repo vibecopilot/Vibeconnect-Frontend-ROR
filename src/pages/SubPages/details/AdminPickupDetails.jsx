@@ -38,7 +38,7 @@ const AdminPickupDetails = () => {
           </div>
           <div className="grid grid-cols-2">
             <p className="font-medium">Booked by/For :</p>
-            <p>{details?.user_full_name}</p>
+            <p>{details?.user_full_name? details?.user_full_name: "Self"}</p>
           </div>
 
           <div className="grid grid-cols-2">

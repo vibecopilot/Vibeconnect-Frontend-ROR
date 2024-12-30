@@ -1093,12 +1093,15 @@ export const editDailyPickUpTransportationDetails = async (id, data) =>
       token: token,
     },
   });
-export const getDailyPickUpTransportation = async () =>
-  axiosInstance.get("/transportations.json", {
-    params: {
-      token: token,
-    },
-  });
+export const getTransportation = async (transportationType) =>
+  axiosInstance.get(
+    `/transportations.json?q[transportation_type_eq]=${transportationType}`,
+    {
+      params: {
+        token: token,
+      },
+    }
+  );
 export const getSetupUsers = async () =>
   axiosInstance.get("/users.json", {
     params: {
@@ -7551,7 +7554,7 @@ export const editDeviceConfiguration = async (id, data) =>
     },
   });
 export const getDeviceConfigurationDetails = async (id) =>
-  axiosInstance.get(`/hik_devices/${id}.json`,  {
+  axiosInstance.get(`/hik_devices/${id}.json`, {
     params: {
       token: token,
     },

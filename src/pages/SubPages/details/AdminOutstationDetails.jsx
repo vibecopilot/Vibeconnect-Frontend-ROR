@@ -1,53 +1,75 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
+import Navbar from "../../../components/Navbar";
+import { dateFormatSTD } from "../../../utils/dateUtils";
+import { getDailyPickUpTransportationDetails } from "../../../api";
+import { useParams } from "react-router-dom";
 
 const AdminOutstationDetails = () => {
+  const themeColor = useSelector((state) => state.theme.color);
+  const [details, setDetails] = useState("");
+  const { id } = useParams();
+  useEffect(() => {
+    const fetchCategoryDetails = async () => {
+      try {
+        const categoryDetails = await getDailyPickUpTransportationDetails(id);
+        setDetails(categoryDetails.data);
+      } catch (error) {
+        console.error("Error fetching category details:", error);
+      }
+    };
+    fetchCategoryDetails();
+  }, []);
   return (
-    <section>
-      <div>
-        <h2 className="text-center w-screen bg-black text-white my-1 font-semibold  text-lg p-2 px-4 ">
-         Outstation Details
+    <section className="flex ">
+      <Navbar />
+      <div className="w-full flex flex-col overflow-hidden mx-2 p-2">
+        <h2
+          className="text-center text-white my-1 font-semibold text-lg p-2 rounded-md "
+          style={{ background: themeColor }}
+        >
+          Outstation Details
         </h2>
-        <div className="grid grid-cols-3 gap-5 my-5 px-5">
+        <div className="grid grid-cols-3 gap-2 gap-y-4 my-2 p-5 border rounded-xl bg-blue-50">
           <div className="grid grid-cols-2">
             <p className="font-medium">Booking ID :</p>
-            <p>1234</p>
+            <p>{details.id}</p>
           </div>
           <div className="grid grid-cols-2">
-            <p className="font-medium">Employee :</p>
-            <p>emp</p>
+            <p className="font-medium">Booked by/For :</p>
+            <p>{details?.user_full_name? details?.user_full_name: "Self"}</p>
           </div>
+
           <div className="grid grid-cols-2">
-            <p className="font-medium">Department :</p>
-            <p>IT</p>
+            <p className="font-medium">Departure :</p>
+            <p>{details?.pickup_location}</p>
           </div>
           <div className="grid grid-cols-2">
             <p className="font-medium">Destination :</p>
-            <p>Mumbai</p>
+            <p>{details?.dropoff_location}</p>
           </div>
           <div className="grid grid-cols-2">
             <p className="font-medium">Departure Date :</p>
-            <p>10/05/2024</p>
+            <p>{dateFormatSTD(details?.date)}</p>
           </div>
           <div className="grid grid-cols-2">
             <p className="font-medium">Return Date :</p>
-            <p>23/05/2024</p>
-          </div>
-          <div className="grid grid-cols-2">
-            <p className="font-medium">No. of passengers :</p>
-            <p>1</p>
+            <p></p>
           </div>
           <div className="grid grid-cols-2">
             <p className="font-medium">Passengers :</p>
-            <p>1</p>
+            <p>{details?.no_of_passengers}</p>
           </div>
         </div>
         <div className="px-4 my-5">
-            <p className="font-medium my-1">Purpose :</p>
-            <p className="bg-gray-300 p-2 rounded-md">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus vitae ullamcorper odio. Quisque ac scelerisque erat. Cras sed enim sit amet urna luctus maximus at non erat. Pellentesque interdum leo vestibulum volutpat pellentesque. Curabitur nec tortor ac nulla aliquam mattis. Etiam malesuada ligula ac nibh efficitur, non ornare orci porttitor. Praesent imperdiet sapien nec quam imperdiet, ac rutrum mi porttitor. Etiam in odio lectus. Nam at vestibulum neque.</p>
-        </div>
-        <div className="px-4">
-            <p className="font-medium my-1">Additional Note :</p>
-            <p className="bg-gray-300 p-2 rounded-md">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus vitae ullamcorper odio. Quisque ac scelerisque erat. Cras sed enim sit amet urna luctus maximus at non erat. Pellentesque interdum leo vestibulum volutpat pellentesque. Curabitur nec tortor ac nulla aliquam mattis. Etiam malesuada ligula ac nibh efficitur, non ornare orci porttitor. Praesent imperdiet sapien nec quam imperdiet, ac rutrum mi porttitor. Etiam in odio lectus. Nam at vestibulum neque.</p>
+          <p className="font-medium my-1">Purpose :</p>
+          <p className="bg-gray-50 rounded-md p-2">
+            {details.additional_note ? (
+              details.additional_note
+            ) : (
+              <p className="text-center">No Additional info</p>
+            )}
+          </p>
         </div>
       </div>
     </section>
@@ -55,6 +77,3 @@ const AdminOutstationDetails = () => {
 };
 
 export default AdminOutstationDetails;
-
-
-

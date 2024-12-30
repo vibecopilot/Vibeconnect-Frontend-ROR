@@ -10,7 +10,7 @@ const EmployeeTransportation = () => {
     <Navbar />
     <div className=" w-full flex mx-3 flex-col overflow-hidden">
     <div className="flex justify-center my-2">
-          <div className="flex flex-row gap-5 text-lg font-semibold p-1 rounded-full bg-gray-400">
+          <div className="flex flex-row gap-5 text-lg font-semibold p-1 rounded-full bg-gray-100">
             <h2
               className={`p-1 ${
                 page === "daily" && "bg-white text-blue-500"
