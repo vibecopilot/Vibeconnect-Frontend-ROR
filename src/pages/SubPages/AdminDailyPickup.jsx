@@ -9,6 +9,7 @@ import { Link } from "react-router-dom";
 import Table from "../../components/table/Table";
 import { getDailyPickUpTransportation } from "../../api";
 import { useSelector } from "react-redux";
+import { BiEdit } from "react-icons/bi";
 
 const AdminDailyPickup = () => {
   const [details, setDetails] = useState([]);
@@ -33,6 +34,9 @@ const AdminDailyPickup = () => {
         <div className="flex items-center gap-4">
           <Link to={`/admin/pickup-details/${row.id}`}>
             <BsEye size={15} />
+          </Link>
+          <Link to={`/admin/transportation/edit-pickup/${row.id}`}>
+            <BiEdit size={15} />
           </Link>
         </div>
       ),

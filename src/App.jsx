@@ -730,6 +730,7 @@ import EditRestaurtantBooking from "./pages/SubPages/EditResturantBooking.jsx";
 import EditRestaurtantOrders from "./pages/SubPages/EditResturantOrders.jsx";
 import FBMainPage from "./pages/Setup/FBMainPage.jsx";
 import EmployeeDocumentMain from "./pages/Employees/EmployeeDocumentMain.jsx";
+import EditDailyPickup from "./pages/SubPages/Transportation/EditDailyPickup.jsx";
 // new admin hrms
 
 function App() {
@@ -1988,6 +1989,15 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <AdminBookDailypickup />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/transportation/edit-pickup/:id"
+            // path="/admin/book-pickup"
+            element={
+              <ProtectedAdminRoutes>
+                <EditDailyPickup />
               </ProtectedAdminRoutes>
             }
           />

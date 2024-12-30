@@ -412,7 +412,7 @@ const EmployeeVisitor = () => {
           {/* <EmployeePasses/> */}
 
           {page === "Visitor In" && (
-            <div className="flex  gap-2 justify-between items-center">
+            <div className="flex  gap-2 justify-between flex-col md:flex-row items-center">
               <input
                 type="text"
                 className="border border-gray-300 p-2  rounded-md placeholder:text-sm w-96"

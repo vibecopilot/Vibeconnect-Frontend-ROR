@@ -1087,6 +1087,12 @@ export const getDailyPickUpTransportationDetails = async (id) =>
       },
     }
   );
+export const editDailyPickUpTransportationDetails = async (id, data) =>
+  axiosInstance.put(`/transportations/${id}.json`, data, {
+    params: {
+      token: token,
+    },
+  });
 export const getDailyPickUpTransportation = async () =>
   axiosInstance.get("/transportations.json", {
     params: {
@@ -7404,8 +7410,6 @@ export const getFB = async () =>
     },
   });
 
- 
-
 export const getFBDetails = async (id) =>
   axiosInstance.get(`/food_and_beverages/${id}.json`, {
     params: {
@@ -7500,13 +7504,11 @@ export const postIncidents = async (data) =>
     },
   });
 
-export const postVisitorInDevice = async (data) => 
-  {
-    const defaultIp = getItemInLocalStorage("DEFAULT")
-    console.log(defaultIp)
-    // http://localhost:8080/
-  const url =
-   `http://${defaultIp}/ISAPI/AccessControl/UserInfo/Record?format=json`;
+export const postVisitorInDevice = async (data) => {
+  const defaultIp = getItemInLocalStorage("DEFAULT");
+  console.log(defaultIp);
+  // http://localhost:8080/
+  const url = `https://${defaultIp}/ISAPI/AccessControl/UserInfo/Record?format=json`;
   // const url = "http://192.168.1.22/ISAPI/AccessControl/UserInfo/Record?format=json";
   const username = "admin";
   const password = "1234567a";
@@ -7535,9 +7537,21 @@ export const postVisitorInDevice = async (data) =>
   }
 };
 
-// 
+//
 export const postDeviceConfiguration = async (data) =>
   axiosInstance.post(`/hik_devices.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const editDeviceConfiguration = async (id, data) =>
+  axiosInstance.put(`/hik_devices/${id}.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const getDeviceConfigurationDetails = async (id) =>
+  axiosInstance.get(`/hik_devices/${id}.json`,  {
     params: {
       token: token,
     },

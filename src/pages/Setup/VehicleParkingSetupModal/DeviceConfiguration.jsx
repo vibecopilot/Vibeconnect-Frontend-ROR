@@ -15,14 +15,16 @@ import {
 import toast from "react-hot-toast";
 import AddDeviceModal from "./AddDeviceModal";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
+import EditDeviceModal from "./EditDeviceModal";
 function DeviceConfiguration() {
   const themeColor = useSelector((state) => state.theme.color);
   const [addDevice, setAddDevice] = useState(false);
   const [editVehicleModal, setEditVehicleModal] = useState(false);
   const [configuredDevice, setConfiguredDevice] = useState([]);
   const [added, setAdded] = useState(false);
-  const [vehId, setVehId] = useState("");
+  const [deviceId, setDeviceId] = useState("");
   const [searchText, setSearchText] = useState("");
+  const [editModal, setEditModal] = useState(false);
   const column = [
     {
       name: "Sr. no.",
@@ -49,9 +51,9 @@ function DeviceConfiguration() {
       name: "Action",
       selector: (row) => (
         <div className="flex items-center gap-4">
-          {/* <button>
-            <BiEdit size={15} onClick={() => editVehicleParking(row.id)} />
-          </button> */}
+          <button onClick={() => editDeviceConfiguration(row.id)}>
+            <BiEdit size={15} />
+          </button>
           {/* <button>
             <RiDeleteBin5Line size={15} onClick={() => deleteVehicle(row.id)} />
           </button> */}
@@ -89,9 +91,9 @@ function DeviceConfiguration() {
     }
   };
 
-  const editVehicleParking = (id) => {
-    setEditVehicleModal(true);
-    setVehId(id);
+  const editDeviceConfiguration = (id) => {
+    setEditModal(true);
+    setDeviceId(id);
   };
 
   const [filteredData, setFilteredData] = useState([]);
@@ -137,11 +139,10 @@ function DeviceConfiguration() {
           <Table columns={column} data={filteredData} isPagination={true} />
         </div>
         {addDevice && <AddDeviceModal setAddDevice={setAddDevice} />}
-        {editVehicleModal && (
-          <EditVehicleParkingModal
-            vehId={vehId}
-            setAdded={setAdded}
-            onclose={() => setEditVehicleModal(false)}
+        {editModal && (
+          <EditDeviceModal
+            deviceId={deviceId}
+            onclose={() => setEditModal(false)}
           />
         )}
       </div>
