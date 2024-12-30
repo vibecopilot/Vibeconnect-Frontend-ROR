@@ -1,14 +1,18 @@
 import React, { useState } from "react";
+import { useSelector } from "react-redux";
 
 const EmployeePickupDetails = () => {
-   
+  const themeColor = useSelector((state) => state.theme.color);
   return (
     <section>
       <div>
-        <h2 className="text-center w-screen bg-black text-white my-1 font-semibold  text-lg p-2 px-4 ">
+        <h2
+          style={{ background: themeColor }}
+          className="text-center w-screen bg-black text-white my-1 font-semibold  text-lg p-2 px-4 "
+        >
           Daily Pickup & Drop Details
         </h2>
-        <div className="grid grid-cols-3 gap-5 my-5 px-5">
+        <div className="grid grid-cols-3 gap-5 m-2 border bg-blue-50 rounded-md p-2">
           <div className="grid grid-cols-2">
             <p className="font-medium">Booking ID :</p>
             <p>1234</p>
@@ -17,10 +21,7 @@ const EmployeePickupDetails = () => {
             <p className="font-medium">Employee :</p>
             <p>emp</p>
           </div>
-          <div className="grid grid-cols-2">
-            <p className="font-medium">Department :</p>
-            <p>IT</p>
-          </div>
+
           <div className="grid grid-cols-2">
             <p className="font-medium">Pickup Location :</p>
             <p>Home</p>
@@ -42,12 +43,14 @@ const EmployeePickupDetails = () => {
             <p>1</p>
           </div>
         </div>
-        <h2 className="text-center w-screen bg-black text-white my-1 font-semibold  text-lg p-2 px-4 ">
+        <h2
+          style={{ background: themeColor }}
+          className="text-center w-screen bg-black text-white my-1 font-semibold  text-lg p-2 px-4 "
+        >
           Additional Info
         </h2>
-        <div className="px-4">
-          <p className="font-medium">Additional Note :</p>
-          <p className="bg-gray-300 rounded-md p-2">
+        <div className="">
+          <p className="bg-gray-50 rounded-md p-2">
             Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus
             vitae ullamcorper odio. Quisque ac scelerisque erat. Cras sed enim
             sit amet urna luctus maximus at non erat. Pellentesque interdum leo
@@ -57,10 +60,7 @@ const EmployeePickupDetails = () => {
             rutrum mi porttitor. Etiam in odio lectus. Nam at vestibulum neque.
           </p>
         </div>
-     
       </div>
-
-      
     </section>
   );
 };

@@ -1942,7 +1942,7 @@ function App() {
             }
           />
           <Route
-            path="/employees/book-outstation"
+            path="/employees/transportation/book-outstation"
             element={
               <ProtectedRoute>
                 <BookOutstation />
@@ -1950,7 +1950,7 @@ function App() {
             }
           />
           <Route
-            path="/employees/book-pickup"
+            path="/employees/transportation/book-pickup"
             element={
               <ProtectedRoute>
                 <BookPickup />

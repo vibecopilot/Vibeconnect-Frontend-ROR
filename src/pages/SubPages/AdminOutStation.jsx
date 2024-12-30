@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import DataTable from "react-data-table-component";
 import { BsEye } from "react-icons/bs";
 import { ImCross } from "react-icons/im";
@@ -7,6 +7,9 @@ import { TiTick } from "react-icons/ti";
 import { Link } from "react-router-dom";
 import Table from "../../components/table/Table";
 import { useSelector } from "react-redux";
+import { getTransportation } from "../../api";
+import { FaCheck } from "react-icons/fa";
+import { MdClose } from "react-icons/md";
 
 const AdminOutStation = () => {
   const columns = [
@@ -26,54 +29,59 @@ const AdminOutStation = () => {
       sortable: true,
     },
     {
-      name: "Employee",
-      selector: (row) => row.employee,
+      name: "Booked For/by",
+      selector: (row) => (row?.user_full_name? row?.user_full_name: "Self"),
       sortable: true,
     },
+    // {
+    //   name: "Department",
+    //   selector: (row) => row.department,
+    //   sortable: true,
+    // },
     {
-      name: "Department",
-      selector: (row) => row.department,
+      name: "Departure From",
+      selector: (row) => row.pickup_location,
       sortable: true,
     },
     {
       name: "Destination",
-      selector: (row) => row.destination,
+      selector: (row) => row.dropoff_location,
       sortable: true,
     },
     {
       name: "Departure Date",
-      selector: (row) => row.departure_date,
+      selector: (row) => row.date,
       sortable: true,
     },
-    {
-      name: "Return Date",
-      selector: (row) => row.return_date,
-      sortable: true,
-    },
+    // {
+    //   name: "Return Date",
+    //   selector: (row) => row.return_date,
+    //   sortable: true,
+    // },
     {
       name: "Passengers",
-      selector: (row) => row.passengers,
+      selector: (row) => row.no_of_passengers,
       sortable: true,
     },
-    // {
-    //   name: "Status",
-    //   selector: (row) => row.status,
-    //   sortable: true,
-    // },
-    // {
-    //   name: "Approval",
-    //   selector: (row) => (
-    //     <div className="flex gap-4">
-    //       <button className="text-green-400 font-medium">
-    //         <TiTick size={25} />
-    //       </button>
-    //       <button className="text-red-400 font-medium">
-    //         <ImCross />
-    //       </button>
-    //     </div>
-    //   ),
-    //   sortable: true,
-    // },
+    {
+      name: "Status",
+      selector: (row) => row.status,
+      sortable: true,
+    },
+      {
+          name: "Approval",
+          selector: (row) => (
+            <div className="flex gap-2">
+              <button className="bg-green-400 text-white p-2 rounded-full">
+                <FaCheck />
+              </button>
+              <button className="bg-red-400 text-white p-2 rounded-full">
+                <MdClose />
+              </button>
+            </div>
+          ),
+          sortable: true,
+        },
   ];
 
   const filteredData = [
@@ -98,6 +106,20 @@ const AdminOutStation = () => {
       status: "Completed",
     },
   ];
+  const [outstationData, setOutStationData] = useState([]);
+  const [filteredOutstationData, setFilteredOutStationData] = useState([]);
+  const fetchOutStation = async () => {
+    try {
+      const res = await getTransportation("Outstation");
+      setOutStationData(res.data);
+      setFilteredOutStationData(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(() => {
+    fetchOutStation();
+  }, []);
 
   const themeColor = useSelector((state) => state.theme.color);
   return (
@@ -126,7 +148,7 @@ const AdminOutStation = () => {
         responsive
         // selectableRows
         columns={columns}
-        data={filteredData}
+        data={filteredOutstationData}
         // customStyles={customStyle}
         // pagination
         // fixedHeader

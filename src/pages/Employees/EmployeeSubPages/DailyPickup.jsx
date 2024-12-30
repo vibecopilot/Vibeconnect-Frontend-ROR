@@ -4,6 +4,7 @@ import { BsEye } from "react-icons/bs";
 import { PiPlusCircle } from "react-icons/pi";
 import { Link } from "react-router-dom";
 import Table from "../../../components/table/Table";
+import { useSelector } from "react-redux";
 
 const DailyPickup = () => {
   const columns = [
@@ -47,19 +48,19 @@ const DailyPickup = () => {
       selector: (row) => row.passengers,
       sortable: true,
     },
-   
+
     {
       name: "Status",
-      selector: (row) => row.approval === "Approved"?  row.status: "",
+      selector: (row) => (row.approval === "Approved" ? row.status : ""),
       sortable: true,
     },
     {
       name: "Cancellation",
       selector: (row) =>
         row.approval === "Approved" && row.status === "Upcoming" ? (
-          
-            <button className="text-red-400 font-medium">Cancel</button>
-        ) : (""
+          <button className="text-red-400 font-medium">Cancel</button>
+        ) : (
+          ""
         ),
       sortable: true,
     },
@@ -74,7 +75,7 @@ const DailyPickup = () => {
       time: "08:00 AM",
       passengers: 2,
       status: "Upcoming",
-      approval: "Approved"
+      approval: "Approved",
     },
     {
       id: 2,
@@ -84,7 +85,7 @@ const DailyPickup = () => {
       time: "08:00 AM",
       passengers: 2,
       status: "",
-      approval: "Rejected"
+      approval: "Rejected",
     },
     {
       id: 2,
@@ -94,25 +95,11 @@ const DailyPickup = () => {
       time: "08:00 AM",
       passengers: 2,
       status: "Completed",
-      approval: "Approved"
+      approval: "Approved",
     },
   ];
 
-  const customStyle = {
-    headRow: {
-      style: {
-        backgroundColor: "black",
-        color: "white",
-
-        fontSize: "10px",
-      },
-    },
-    headCells: {
-      style: {
-        textTransform: "upperCase",
-      },
-    },
-  };
+  
 
   // const handleSearch = (e) => {
   //     const searchValue = e.target.value;
@@ -143,6 +130,7 @@ const DailyPickup = () => {
   //       setFilteredData(filteredResults);
   //     }
   //   };
+  const themeColor = useSelector((state) => state.theme.color);
 
   return (
     <section className="my-5">
@@ -154,11 +142,10 @@ const DailyPickup = () => {
           //   value={searchText}
           //   onChange={handleSearch}
         />
-
         <Link
-          to={"/employees/book-pickup"}
-          className="border-2 font-semibold hover:bg-black hover:text-white duration-300 transition-all border-black p-2 rounded-md text-black cursor-pointer text-center flex items-center w-44 gap-2 justify-center"
-          // onClick={() => setShowCountry(!showCountry)}
+          to={"/employees/transportation/book-pickup"}
+          className="rounded-md p-2 flex items-center gap-2 text-white font-medium"
+          style={{ background: themeColor }}
         >
           <PiPlusCircle size={20} />
           Book
@@ -180,7 +167,4 @@ const DailyPickup = () => {
   );
 };
 
-
-
-
-export default DailyPickup
+export default DailyPickup;

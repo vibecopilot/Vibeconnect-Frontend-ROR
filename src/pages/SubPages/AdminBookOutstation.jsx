@@ -19,6 +19,7 @@ const AdminBookOutstation = () => {
     no_of_passengers: "",
     additional_note: "",
     transportation_type: "",
+    userId: "",
   });
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -28,6 +29,8 @@ const AdminBookOutstation = () => {
   const handleSubmit = async () => {
     const sendData = new FormData();
     sendData.append("transportation[on_behalf_of]", formData.behalf);
+    sendData.append("transportation[user_id]", formData.userId);
+    sendData.append("transportation[created_by_id]", createdByUserId);
     sendData.append(
       "transportation[pickup_location]",
       formData.pickup_location
@@ -130,8 +133,8 @@ const AdminBookOutstation = () => {
                     Select User :
                   </label>
                   <select
-                    // onChange={handleChange}
-                    // value={formData.name}
+                    onChange={handleChange}
+                    value={formData.name}
                     className="border p-2 px-4 w-full border-gray-400 rounded-md"
                   >
                     <option value="" className="text-gray-300">
@@ -145,6 +148,20 @@ const AdminBookOutstation = () => {
                   </select>
                 </div>
               )}
+              <div className="flex flex-col gap-2">
+                <label htmlFor="" className="font-medium">
+                  Departure from:
+                </label>
+                <textarea
+                  name="pickup_location"
+                  placeholder="Departure From"
+                  cols="15"
+                  rows="1"
+                  value={formData.pickup_location}
+                  onChange={handleChange}
+                  className="border p-2 rounded-md border-gray-400"
+                ></textarea>
+              </div>
               <div className="flex flex-col gap-2">
                 <label htmlFor="" className="font-medium">
                   Destination:
