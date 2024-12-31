@@ -217,7 +217,7 @@ const EmployeeAddVisitor = () => {
         console.log(error);
       }
       
-      // navigate("/employee/passes/visitors");
+      navigate("/employee/passes/visitors");
       toast.success("Visitor Added Successfully");
     } catch (error) {
       console.log(error);

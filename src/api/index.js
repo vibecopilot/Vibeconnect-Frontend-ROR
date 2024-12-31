@@ -7519,13 +7519,13 @@ export const postIncidents = async (data) =>
     },
   });
 
+const defaultIp = getItemInLocalStorage("DEFAULT");
+const defaultUsername = getItemInLocalStorage("DeviceUsername");
+const defaultPassword = getItemInLocalStorage("DevicePassword");
 export const postVisitorInDevice = async (data) => {
-  const defaultIp = getItemInLocalStorage("DEFAULT");
-  const defaultUsername = getItemInLocalStorage("DeviceUsername");
-  const defaultPassword = getItemInLocalStorage("DevicePassword");
   console.log(defaultIp);
   // http://localhost:8080/
-  const url = `https://${defaultIp}/ISAPI/AccessControl/UserInfo/Record?format=json`;
+  const url = `https//${defaultIp}/ISAPI/AccessControl/UserInfo/Record?format=json`;
   // const url = "http://192.168.1.22/ISAPI/AccessControl/UserInfo/Record?format=json";
   const username = defaultUsername;
   const password = defaultPassword;
@@ -7553,6 +7553,58 @@ export const postVisitorInDevice = async (data) => {
     throw error;
   }
 };
+export const postVisitorLogFromDevice = async (data) => {
+  console.log(defaultIp);
+  // http://localhost:8080/
+  const url = `https://${defaultIp}/ISAPI/AccessControl/AcsEvent?format=json`;
+  // const url = "http://192.168.1.22/ISAPI/AccessControl/UserInfo/Record?format=json";
+  const username = defaultUsername;
+  const password = defaultPassword;
+  console.log(username);
+  console.log(password);
+
+  const client = new DigestFetch(username, password);
+
+  try {
+    const response = await client.fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `POST request failed: ${response.status} ${response.statusText}`
+      );
+    }
+
+    const result = await response.json();
+    console.log(result);
+    return result;
+  } catch (error) {
+    console.error("Error:", error);
+    throw error;
+  }
+};
+
+export const postVisitorLogToBackend = async (data) =>
+  axiosInstance.post(`/visitor_device_logs.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const getVisitorLogs = async (visitorId) =>
+  axiosInstance.get(`/visitor_device_logs/${visitorId}.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const getAllVisitorLogs = async () =>
+  axiosInstance.get(`/visitor_device_logs.json`, {
+    params: {
+      token: token,
+    },
+  });
 
 //
 export const postDeviceConfiguration = async (data) =>

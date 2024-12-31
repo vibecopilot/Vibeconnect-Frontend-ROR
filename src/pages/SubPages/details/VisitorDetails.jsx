@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Detail from "../../../containers/Detail";
 import image from "/profile.png";
-import { domainPrefix, getVisitorDetails } from "../../../api";
+import { domainPrefix, getVisitorDetails, getVisitorLogs } from "../../../api";
 import { Link, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import Table from "../../../components/table/Table";
@@ -11,6 +11,7 @@ import VisitorQRCode from "../../../containers/modals/VisitorQRCode";
 
 const VisitorDetails = () => {
   const [details, setDetails] = useState({});
+  const [logs, setLogs] = useState([]);
   const { id } = useParams();
   useEffect(() => {
     const fetchVisitorDetails = async () => {
@@ -22,7 +23,17 @@ const VisitorDetails = () => {
         console.log(error);
       }
     };
+    const fetchVisitorDeviceLogs = async () => {
+      try {
+        const logsResp = await getVisitorLogs(id);
+        setLogs(logsResp?.data?.data);
+        console.log(logsResp.data.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
     fetchVisitorDetails();
+    fetchVisitorDeviceLogs();
   }, [id]);
 
   const themeColor = useSelector((state) => state.theme.color);
@@ -89,6 +100,23 @@ const VisitorDetails = () => {
     {
       name: " Check out",
       selector: (row) => (row.check_in ? dateTimeFormat(row.check_out) : null),
+      sortable: true,
+    },
+  ];
+  const visitorDeviceLogColumn = [
+    {
+      name: "Sr. no.",
+      selector: (row, index) => index + 1,
+      sortable: true,
+    },
+    {
+      name: " Check in",
+      selector: (row) => (row.in_time ? dateTimeFormat(row.in_time) : ""),
+      sortable: true,
+    },
+    {
+      name: " Check out",
+      selector: (row) => (row.out_time ? dateTimeFormat(row.out_time) : null),
       sortable: true,
     },
   ];
@@ -256,6 +284,18 @@ const VisitorDetails = () => {
           </div>
           <div className="my-4">
             <h2 className="font-medium border-b text-lg border-gray-400 px-2 ">
+              Visitor Device Log
+            </h2>
+            <div className="m-4">
+              {/* {details.visits_log && details.visits_log.length !== 0 ? ( */}
+                <Table columns={visitorDeviceLogColumn} data={logs} />
+              {/* ) : (
+                <p className="text-center">No Log Yet</p>
+              )} */}
+            </div>
+          </div>
+          <div className="my-4">
+            <h2 className="font-medium border-b text-lg border-gray-400 px-2 ">
               Visitor Log
             </h2>
             <div className="m-4">
@@ -266,6 +306,7 @@ const VisitorDetails = () => {
               )}
             </div>
           </div>
+         
         </div>
       </div>
       {qrModal && (
