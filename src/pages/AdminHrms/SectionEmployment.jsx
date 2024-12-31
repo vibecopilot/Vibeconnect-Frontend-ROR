@@ -68,6 +68,7 @@ const SectionsEmployment = () => {
     designation: "",
     supervisor: "",
     id: "",
+    monthlyCTC:""
   });
 
   const handleChange = (e) => {
@@ -309,6 +310,7 @@ const SectionsEmployment = () => {
         probationDueDate: res.probation_due_date,
         supervisor: res.reporting_supervisor,
         id: res.id,
+        monthlyCTC: res.ctc_months
       });
     } catch (error) {
       console.log(error);
@@ -357,6 +359,7 @@ const SectionsEmployment = () => {
     postData.append("department", formData.department);
     postData.append("reporting_supervisor", formData.supervisor);
     postData.append("designation", formData.designation);
+    postData.append("ctc_months", formData.monthlyCTC);
     postData.append("employee", id);
     try {
       if (formData.id) {
@@ -597,6 +600,22 @@ const SectionsEmployment = () => {
                       ))}
                     </select>
                   </div>
+                  <div className="grid gap-2 items-center w-full">
+              <label htmlFor="CTC" className="font-semibold">
+                Enter Monthly CTC:
+              </label>
+              <input
+                type="text"
+                name="monthlyCTC"
+                value={formData.monthlyCTC}
+                onChange={handleChange}
+                id="CTC"
+                placeholder="Enter Monthly CTC"
+                className={`mt-1 p-2  border rounded-md ${
+                  !isEditing ? "bg-gray-200 text-gray-500" : ""
+                }`}
+              />
+            </div>
                 </div>
               </>
             }

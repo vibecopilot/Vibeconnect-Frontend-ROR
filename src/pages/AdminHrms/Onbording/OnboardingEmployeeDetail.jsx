@@ -53,8 +53,9 @@ const OnboardingEmployeeDetail = ({
     department: "",
     designation: "",
     supervisor: "",
+    monthlyCTC:""
   });
-
+console.log(formData)
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -156,6 +157,7 @@ const OnboardingEmployeeDetail = ({
     postData.append("department", formData.department);
     postData.append("reporting_supervisor", formData.supervisor);
     postData.append("designation", formData.designation);
+    postData.append("ctc_months", formData.monthlyCTC);
     postData.append("employee", empId);
     try {
       const res = await postEmployeeEmploymentInfo(postData);
@@ -368,14 +370,16 @@ const OnboardingEmployeeDetail = ({
               </select>
             </div>
             <div className="grid gap-2 items-center w-full">
-              <label htmlFor="designation" className="font-semibold">
+              <label htmlFor="CTC" className="font-semibold">
                 Enter Monthly CTC:
               </label>
               <input
                 type="text"
-                name=""
-                id=""
-                placeholder="Enter Monthly"
+                name="monthlyCTC"
+                value={formData.monthlyCTC}
+                onChange={handleChange}
+                id="CTC"
+                placeholder="Enter Monthly CTC"
                 className="border border-gray-400 p-2 rounded-md"
               />
             </div>

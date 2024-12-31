@@ -458,19 +458,7 @@ const VisitorPage = () => {
     };
   };
 
-  // useEffect(() => {
-  //   const intervalId = setInterval(() => {
-  //     const visitorLogData = getVisitorLogData();
-  //     postVisitorLogFromDevice(visitorLogData);
-  //   }, 15 * 60 * 1000);
-
-  //   const visitorLogData = getVisitorLogData();
-  //   console.log("visLog", visitorLogData)
-  //   postVisitorLogFromDevice(visitorLogData);
-  //   postVisitorLogToBackend(visitorLogData)
-
-  //   return () => clearInterval(intervalId);
-  // }, []);
+ 
   useEffect(() => {
     const postLogs = async () => {
       const visitorLogData = getVisitorLogData();
