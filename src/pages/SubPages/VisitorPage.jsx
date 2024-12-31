@@ -759,7 +759,7 @@ const VisitorPage = () => {
             <div className="">
               <input
                 type="text"
-                placeholder="Search using Name or Mobile Number"
+                placeholder="Search using Name "
                 className="border p-2 rounded-md border-gray-300 w-full mb-2 placeholder:text-sm"
                 value={logSearchText}
                 onChange={handleLogSearch}
