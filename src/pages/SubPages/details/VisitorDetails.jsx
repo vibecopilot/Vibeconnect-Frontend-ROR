@@ -110,6 +110,11 @@ const VisitorDetails = () => {
       sortable: true,
     },
     {
+      name: "Name",
+      selector: (row, index) => row.name,
+      sortable: true,
+    },
+    {
       name: " Check in",
       selector: (row) => (row.in_time ? dateTimeFormat(row.in_time) : ""),
       sortable: true,
