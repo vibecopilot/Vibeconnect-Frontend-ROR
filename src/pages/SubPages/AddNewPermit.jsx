@@ -40,7 +40,6 @@ const AddNewPermit = () => {
     permit_for: "",
     building_id: "",
     floor_id: "",
-    room_id: "",
     client_specific: "internal",
     entity: "",
     copy_to_string: "",
@@ -55,16 +54,17 @@ const AddNewPermit = () => {
     permit_activities: [],
   });
   const navigate = useNavigate();
+  const siteId = getItemInLocalStorage("SITEID");
   const handleNewPermit = async () => {
     const sendData = new FormData();
     sendData.append("permit[name]", `${firstName} ${lastName}`);
     sendData.append("permit[contact_number]", mobileNumber);
-    sendData.append("permit[site_id]", SITEID);
+    sendData.append("permit[site_id]", siteId);
     // sendData.append("permit[unit_id]", formData.unit_id);
     sendData.append("permit[permit_for]", formData.permit_for);
     sendData.append("permit[building_id]", formData.building_id);
     sendData.append("permit[floor_id]", formData.floor_id);
-    sendData.append("permit[room_id]", formData.room_id);
+    sendData.append("permit[room_id]", formData.unit_id);
     sendData.append("permit[client_specific]", formData.client_specific);
     sendData.append("permit[entity]", formData.entity);
     sendData.append("permit[copy_to_string]", formData.copy_to_string);
@@ -136,15 +136,12 @@ const AddNewPermit = () => {
         ...formData,
         building_id: BuildID,
       });
-    } else if (
-      e.target.type === "select-one" &&
-      e.target.name === "floor_name"
-    ) {
-      const UnitID = Number(e.target.value);
-      await getUnit(UnitID);
+    } else if (e.target.type === "select-one" && e.target.name === "floor_id") {
+      const floorId = Number(e.target.value);
+      await getUnit(floorId);
       setFormData({
         ...formData,
-        floor_id: UnitID,
+        floor_id: floorId,
       });
     } else {
       setFormData({
@@ -197,7 +194,7 @@ const AddNewPermit = () => {
     <section className="flex">
       <Navbar />
       <div className="m-2">
-        <div className="md:mx-20 my-5 mb-10 sm:border border-gray-300 p-2 rounded-lg ">
+        <div className=" my-5 mb-10 sm:border border-gray-300 p-2 rounded-lg ">
           <h2
             style={{ background: themeColor }}
             className="text-center text-xl font-bold p-2 rounded-md text-white"
@@ -221,15 +218,6 @@ const AddNewPermit = () => {
                       </label>
                       <p>{`${firstName} ${lastName}`}</p>
                     </div>
-                    <div className="grid grid-cols-2 items-center">
-                      <label
-                        className="block text-gray-700 font-medium "
-                        htmlFor="name"
-                      >
-                        Email :
-                      </label>
-                      <p>{email}</p>
-                    </div>
 
                     <div className="grid grid-cols-2 items-center">
                       <label
@@ -247,7 +235,7 @@ const AddNewPermit = () => {
                       >
                         Contact number :
                       </label>
-                      <p>{mobileNumber}</p>
+                      <p>{formData?.contact_number}</p>
                     </div>
                     {/* <div className="grid grid-cols-2 items-center">
                       <label
@@ -280,7 +268,7 @@ const AddNewPermit = () => {
                     Permit For
                   </label>
                   <input
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    className="border border-gray-300 rounded-md p-2 w-full"
                     id="permit-for"
                     type="text"
                     onChange={handleChange}
@@ -297,7 +285,7 @@ const AddNewPermit = () => {
                     Building
                   </label>
                   <select
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    className="border border-gray-300 rounded-md p-2 w-full"
                     id="building"
                     onChange={handleChange}
                     value={formData.building_id}
@@ -319,7 +307,7 @@ const AddNewPermit = () => {
                     Floor
                   </label>
                   <select
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    className="border border-gray-300 rounded-md p-2 w-full"
                     id="floor"
                     onChange={handleChange}
                     value={formData.floor_id}
@@ -341,10 +329,18 @@ const AddNewPermit = () => {
                     Unit
                   </label>
                   <select
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    className="border border-gray-300 rounded-md p-2 w-full"
                     id="room"
+                    value={formData.unit_id}
+                    name="unit_id"
+                    onChange={handleChange}
                   >
                     <option>Select Unit</option>
+                    {units.map((unit) => (
+                      <option value={unit.id} key={unit.id}>
+                        {unit.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div className="col-span-1">
@@ -354,7 +350,7 @@ const AddNewPermit = () => {
                   >
                     Client Specific
                   </label>
-                  <div className="flex items-center justify-center shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                  <div className="border border-gray-300 rounded-md p-2 w-full">
                     <input
                       className="mr-2 leading-tight"
                       type="radio"
@@ -396,7 +392,7 @@ const AddNewPermit = () => {
                       List of Entity
                     </label>
                     <select
-                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      className="border border-gray-300 rounded-md p-2 w-full"
                       id="entity-list"
                       onChange={handleChange}
                       value={formData.entity}
@@ -426,7 +422,7 @@ const AddNewPermit = () => {
                     name="copy_to_string"
                     onChange={handleChange}
                     value={formData.copy_to_string}
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    className="border border-gray-300 rounded-md p-2 w-full"
                     id="copy-to"
                   >
                     <option value="">Select</option>
@@ -603,7 +599,6 @@ const AddNewPermit = () => {
           </h3>
 
           <div className="w-full ">
-            {/* Permit details input fields */}
             <div className="w-full   rounded-lg ">
               {activities.map((activity, index) => (
                 <div
@@ -680,7 +675,7 @@ const AddNewPermit = () => {
                       Risks<span className="text-red-400">*</span>
                     </label>
                     <input
-                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      className="border border-gray-300 rounded-md p-2 w-full"
                       id={`risks-${index}`}
                       type="text"
                       placeholder="Enter Risks"
@@ -721,7 +716,7 @@ const AddNewPermit = () => {
                     Vendor
                   </label>
                   <select
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    className="border border-gray-300 rounded-md p-2 w-full"
                     id="vendor"
                     type="text"
                     value={formData.vendor_id}
@@ -745,7 +740,7 @@ const AddNewPermit = () => {
                     Expiry Date&Time*
                   </label>
                   <input
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    className="border border-gray-300 rounded-md p-2 w-full"
                     id="expiryDateTime"
                     value={formData.expiry_date_and_time}
                     onChange={handleChange}
@@ -764,7 +759,7 @@ const AddNewPermit = () => {
                     Comment (Optional)
                   </label>
                   <textarea
-                    className="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    className="border border-gray-300 rounded-md p-2 w-full"
                     id="comment"
                     value={formData.comment}
                     onChange={handleChange}

@@ -4,10 +4,10 @@ import FileInputBox from "../../containers/Inputs/FileInputBox";
 import { RiContactsBook2Line } from "react-icons/ri";
 import Accordion from "../AdminHrms/Components/Accordion";
 import { getItemInLocalStorage } from "../../utils/localStorage";
-import { getFloors, getUnits, getVendors } from "../../api";
+import { getFloors, getPermitDetails, getUnits, getVendors } from "../../api";
 import { MdClose } from "react-icons/md";
 import { FaCheck, FaTrash } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 const PermitListEdit = () => {
   const themeColor = useSelector((state) => state.theme.color);
@@ -50,11 +50,12 @@ const PermitListEdit = () => {
   const lastName = getItemInLocalStorage("LASTNAME");
   const email = getItemInLocalStorage("USEREMAIL");
   const siteName = getItemInLocalStorage("SITENAME");
+  const mobileNumber = getItemInLocalStorage("Mobile");
   const [floors, setFloors] = useState([]);
   const [units, setUnits] = useState([]);
   const buildings = getItemInLocalStorage("Building");
   const userId = getItemInLocalStorage("UserId");
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: "",
     contact_number: "",
@@ -88,7 +89,6 @@ const PermitListEdit = () => {
   }, []);
   const handleChange = async (e) => {
     async function fetchFloor(floorID) {
-      console.log(floorID);
       try {
         const build = await getFloors(floorID);
         setFloors(build.data.map((item) => ({ name: item.name, id: item.id })));
@@ -131,26 +131,62 @@ const PermitListEdit = () => {
       });
     }
   };
+  const { id } = useParams();
+  const fetchPermitsDetails = async () => {
+    try {
+      const res = await getPermitDetails(id);
+      setFormData({
+        ...formData,
+        name: res?.data?.name,
+        contact_number: res?.data?.contact_number,
+        permit_for: res?.data?.permit_for,
+        building_id: res?.data?.building_id,
+        floor_id: res?.data?.floor_id,
+        unit_id: res?.data?.unit_id,
+        client_specific: res?.data?.client_specific
+      });
+      fetchFloors(res?.data?.building_id);
+      fetchUnits(res?.data?.floor_id);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const fetchFloors = async (buildingId) => {
+    try {
+      const res = await getFloors(buildingId);
+      setFloors(res.data.map((item) => ({ name: item.name, id: item.id })));
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const fetchUnits = async (floorId) => {
+    try {
+      const res = await getUnits(floorId);
+      setUnits(res.data.map((item) => ({ name: item.name, id: item.id })));
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(() => {
+    fetchPermitsDetails();
+  }, []);
 
   return (
     <section>
       <div className="m-2">
-        <h2
-          style={{ background: themeColor }}
-          className="text-center text-xl font-bold p-2 rounded-full text-white"
-        >
-          Edit Permit
-        </h2>
-        <div className="md:mx-20 my-5 mb-10 sm:border border-gray-400 p-5 px-10 rounded-lg sm:shadow-xl">
-          <h2 className="border-b text-center text-xl border-black mb-6 font-bold">
-            PERMIT REQUESTOR DETAILS
+        <div className=" my-5 mb-10 sm:border border-gray-400 p-2 rounded-lg ">
+          <h2
+            style={{ background: themeColor }}
+            className="text-center text-xl font-bold p-2 rounded-md text-white"
+          >
+            Edit Permit
           </h2>
           <Accordion
             icon={RiContactsBook2Line}
             title={"Requestor Details"}
             content={
               <>
-                <div>
+                <div className="bg-green-50 p-2 rounded-md">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     <div className="grid grid-cols-2 items-center">
                       <label
@@ -159,17 +195,9 @@ const PermitListEdit = () => {
                       >
                         Name :
                       </label>
-                      <p>{`${firstName} ${lastName}`}</p>
+                      <p>{formData?.name}</p>
                     </div>
-                    <div className="grid grid-cols-2 items-center">
-                      <label
-                        className="block text-gray-700 font-medium "
-                        htmlFor="name"
-                      >
-                        Email :
-                      </label>
-                      <p>{email}</p>
-                    </div>
+
                     <div className="grid grid-cols-2 items-center">
                       <label
                         className="block text-gray-700 font-medium  text-center"
@@ -178,6 +206,15 @@ const PermitListEdit = () => {
                         Site :
                       </label>
                       <p>{siteName}</p>
+                    </div>
+                    <div className="grid grid-cols-2 items-center">
+                      <label
+                        className="block text-gray-700 font-medium "
+                        htmlFor="name"
+                      >
+                        Contact number :
+                      </label>
+                      <p>{mobileNumber}</p>
                     </div>
                     {/* <div className="grid grid-cols-2 items-center">
                       <label
@@ -208,7 +245,7 @@ const PermitListEdit = () => {
                     Permit For
                   </label>
                   <input
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    className="border border-gray-300 rounded-md p-2 w-full"
                     id="permit-for"
                     type="text"
                     onChange={handleChange}
@@ -225,7 +262,7 @@ const PermitListEdit = () => {
                     Building
                   </label>
                   <select
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    className="border border-gray-300 rounded-md p-2 w-full"
                     id="building"
                     onChange={handleChange}
                     value={formData.building_id}
@@ -247,7 +284,7 @@ const PermitListEdit = () => {
                     Floor
                   </label>
                   <select
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    className="border border-gray-300 rounded-md p-2 w-full"
                     id="floor"
                     onChange={handleChange}
                     value={formData.floor_id}
@@ -269,7 +306,7 @@ const PermitListEdit = () => {
                     Unit
                   </label>
                   <select
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    className="border border-gray-300 rounded-md p-2 w-full"
                     id="room"
                   >
                     <option>Select Unit</option>
@@ -282,7 +319,7 @@ const PermitListEdit = () => {
                   >
                     Client Specific
                   </label>
-                  <div className="flex items-center justify-center shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                  <div className="border border-gray-300 rounded-md p-2 w-full">
                     <input
                       className="mr-2 leading-tight"
                       type="radio"
@@ -321,7 +358,7 @@ const PermitListEdit = () => {
                       List of Entity
                     </label>
                     <select
-                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      className="border border-gray-300 rounded-md p-2 w-full"
                       id="entity-list"
                       onChange={handleChange}
                       value={formData.entity}
@@ -351,7 +388,7 @@ const PermitListEdit = () => {
                     name="copy_to_string"
                     onChange={handleChange}
                     value={formData.copy_to_string}
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    className="border border-gray-300 rounded-md p-2 w-full"
                     id="copy-to"
                   >
                     <option value="">Select</option>
@@ -365,7 +402,6 @@ const PermitListEdit = () => {
             PERMIT DETAILS
           </h2>
 
-         
           {/* Permit details input fields */}
           <div className="w-full my-2">
             <h3 className="font-semibold">Select Permit Type</h3>
@@ -647,7 +683,7 @@ const PermitListEdit = () => {
                     Vendor
                   </label>
                   <select
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    className="border border-gray-300 rounded-md p-2 w-full"
                     id="vendor"
                     type="text"
                     value={formData.vendor_id}
@@ -671,7 +707,7 @@ const PermitListEdit = () => {
                     Expiry Date&Time*
                   </label>
                   <input
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    className="border border-gray-300 rounded-md p-2 w-full"
                     id="expiryDateTime"
                     value={formData.expiry_date_and_time}
                     onChange={handleChange}
@@ -690,7 +726,7 @@ const PermitListEdit = () => {
                     Comment (Optional)
                   </label>
                   <textarea
-                    className="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    className="border border-gray-300 rounded-md p-2 w-full"
                     id="comment"
                     value={formData.comment}
                     onChange={handleChange}
@@ -711,7 +747,7 @@ const PermitListEdit = () => {
           <div className="sm:flex justify-center grid gap-2 mt-5 border-t p-1">
             <button
               className="bg-red-400 text-white p-2 px-4 rounded-md font-medium flex items-center gap-2"
-              onClick={()=>navigate("/admin/permit")}
+              onClick={() => navigate("/admin/permit")}
             >
               <MdClose size={20} /> Cancel
             </button>
