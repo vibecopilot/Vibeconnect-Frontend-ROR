@@ -3,9 +3,6 @@ import Navbar from "../components/Navbar";
 import PermitList from "./SubPages/PermitList";
 import PermitPendingApproval from "./PermitPendingApproval";
 
-
-
-
 const Permit = () => {
   const [page, setPage] = useState("permit");
   return (
@@ -13,7 +10,7 @@ const Permit = () => {
       <Navbar />
       <div className="p-2 w-full flex  overflow-hidden flex-col">
         <div className="flex justify-center w-full">
-        <div className="sm:flex grid grid-cols-2 sm:flex-row gap-5 font-medium p-1 sm:rounded-full rounded-md bg-gray-200">
+          <div className="sm:flex grid grid-cols-2 sm:flex-row gap-5 font-medium p-1 sm:rounded-full rounded-md bg-gray-200">
             <h2
               className={`p-1 ${
                 page === "permit" &&
@@ -35,15 +32,15 @@ const Permit = () => {
           </div>
         </div>
         {page === "permit" && (
-        <div className="transition-all duration-300 ease-linear">
-            <PermitList/>
-            </div>
-        )} 
+          <div className="transition-all duration-300 ease-linear">
+            <PermitList />
+          </div>
+        )}
         {page === "Pending Approvals" && (
-        <div className="transition-all duration-300 ease-linear">
-           <PermitPendingApproval/>
-            </div>
-        )} 
+          <div className="transition-all duration-300 ease-linear">
+            <PermitPendingApproval />
+          </div>
+        )}
       </div>
     </section>
   );

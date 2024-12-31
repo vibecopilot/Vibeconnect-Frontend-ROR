@@ -1385,6 +1385,18 @@ export const postNewPermit = async (data) =>
       token: token,
     },
   });
+export const getPermits = async () =>
+  axiosInstance.get("/permits.json", {
+    params: {
+      token: token,
+    },
+  });
+export const getPermitDetails = async (permitId) =>
+  axiosInstance.get(`/permits/${permitId}.json`, {
+    params: {
+      token: token,
+    },
+  });
 //services
 export const getServicesTaskDetails = async (serviceId, activityId) =>
   axiosInstance.get(
@@ -7509,12 +7521,14 @@ export const postIncidents = async (data) =>
 
 export const postVisitorInDevice = async (data) => {
   const defaultIp = getItemInLocalStorage("DEFAULT");
+  const defaultUsername = getItemInLocalStorage("DeviceUsername");
+  const defaultPassword = getItemInLocalStorage("DevicePassword");
   console.log(defaultIp);
   // http://localhost:8080/
   const url = `https://${defaultIp}/ISAPI/AccessControl/UserInfo/Record?format=json`;
   // const url = "http://192.168.1.22/ISAPI/AccessControl/UserInfo/Record?format=json";
-  const username = "admin";
-  const password = "1234567a";
+  const username = defaultUsername;
+  const password = defaultPassword;
 
   const client = new DigestFetch(username, password);
 

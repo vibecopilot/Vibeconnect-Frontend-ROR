@@ -59,6 +59,8 @@ const EditDeviceModal = ({ deviceId, onclose }) => {
       toast.success("Device Configured successfully");
       if (formData.default) {
         setItemInLocalStorage("DEFAULT", formData.ipAddress);
+      setItemInLocalStorage("DeviceUsername", formData.username);
+             setItemInLocalStorage("DevicePassword", formData.password);
       }
 
       onclose();

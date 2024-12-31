@@ -35,6 +35,9 @@ const AddDeviceModal = ({ setAddDevice }) => {
       toast.success("Device Configured successfully");
       if (formData.default) {
         setItemInLocalStorage("DEFAULT", formData.ipAddress);
+        setItemInLocalStorage("DeviceUsername", formData.username);
+        setItemInLocalStorage("DevicePassword", formData.password);
+
       }
       setAddDevice(false);
     } catch (error) {
