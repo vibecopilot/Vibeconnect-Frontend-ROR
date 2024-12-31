@@ -4,7 +4,7 @@ import { FaTrash } from "react-icons/fa";
 import { useSelector } from "react-redux";
 import { getItemInLocalStorage } from "../utils/localStorage";
 import toast from "react-hot-toast";
-import { getHostList, getParkingConfig, getSetupUsers, getVisitorStaffCategory, postNewGoods, postNewVisitor, postVisitorInDevice, postVisitorOTPApi } from "../api";
+import { getHostList, getParkingConfig, getSetupUsers, getVisitorStaffCategory, postNewGoods, postNewVisitor, postVisitorInDevice, postVisitorLogFromDevice, postVisitorOTPApi } from "../api";
 import { useNavigate } from "react-router-dom";
 import Webcam from "react-webcam";
 import FileInputBox from "../containers/Inputs/FileInputBox";
@@ -304,6 +304,7 @@ const AddNewVisitor = () => {
     fetchVisitorCategory()
     fetchParkingConfig()
   }, []);
+
 
   return (
     <div className="flex justify-center items-center  w-full p-4">
