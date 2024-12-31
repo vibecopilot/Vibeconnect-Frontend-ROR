@@ -10,6 +10,8 @@ import {
   getExpectedVisitor,
   postOTPVerification,
   postVisitorCheckInCheckOut,
+  postVisitorLogFromDevice,
+  postVisitorLogToBackend,
 } from "../../../api";
 import { BsEye } from "react-icons/bs";
 import { BiEdit } from "react-icons/bi";
@@ -403,6 +405,47 @@ const EmployeeVisitor = () => {
     }
   };
   console.log(visitorId);
+
+    const getVisitorLogData = () => {
+      const now = new Date();
+      const offsetMinutes = now.getTimezoneOffset(); // Timezone offset in minutes
+      const localNow = new Date(now.getTime() - offsetMinutes * 60 * 1000);
+  
+      const startTime = new Date(localNow.getTime() - 15 * 60 * 1000); // 15 minutes ago
+      const endTime = localNow;
+  
+      const formatTime = (date) => date.toISOString().slice(0, 19); // Remove milliseconds and 'Z'
+  
+      return {
+        AcsEventCond: {
+          searchID: "3166590d-cdb3-43f3-fvdvfdvdb25e-f6e98a05d359",
+          searchResultPosition: 0,
+          maxResults: 50,
+          major: 0,
+          minor: 0,
+          // startTime: "2024-12-29T11:08:28",
+          startTime: formatTime(startTime),
+          endTime: formatTime(endTime), // Adjusted endTime
+        },
+      };
+    };
+  
+   
+    useEffect(() => {
+      const postLogs = async () => {
+        const visitorLogData = getVisitorLogData();
+        // if (visitorLogData?.InfoList?.length > 0) {
+        const data = await postVisitorLogFromDevice(visitorLogData);
+        await postVisitorLogToBackend(data);
+        // } else {
+        //   console.warn("No valid visitor log data to send.");
+        // }
+      };
+      const intervalId = setInterval(postLogs, 15 * 60 * 1000);
+      postLogs();
+  
+      return () => clearInterval(intervalId);
+    }, []);
 
   return (
     <div className="visitors-page">
