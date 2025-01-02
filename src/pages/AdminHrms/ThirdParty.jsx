@@ -9,12 +9,15 @@ import { GrHelpBook } from "react-icons/gr";
 
 import UserDetailsList from "./UserDetailsList";
 import { FaAngleRight, FaChevronDown, FaTrash } from "react-icons/fa";
+import AddThirdPartyUser from "./ThirdParty/AddThirdPartyUser";
+import EditThirdPartyUser from "./ThirdParty/EditThirdPartyUser";
 
 const ThirdParty = () => {
   const [showModal, setShowModal] = useState(false);
   const [showModal1, setShowModal1] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
-
+const [newAddModal, setNewAddModal] = useState(false)
+const [newEditModal, setNewEditModal] = useState(false)
   const listItemStyle = {
     listStyleType: "disc",
     color: "gray",
@@ -47,11 +50,7 @@ const ThirdParty = () => {
       selector: (row) => row.gender,
       sortable: true,
     },
-    {
-      name: "Approval",
-      selector: (row) => <div className="text-red-400">{row.approval}</div>,
-      sortable: true,
-    },
+    
     {
       name: "Action",
 
@@ -64,7 +63,7 @@ const ThirdParty = () => {
             <BsEye size={15} />
           </button>
           <button
-            onClick={() => setShowModal1(true)}
+            onClick={() => setNewEditModal(true)}
             //   to={`/admin/edit-templates/${row.id}`}
           >
             <BiEdit size={15} />
@@ -135,7 +134,7 @@ const ThirdParty = () => {
             //   onChange={handleSearch}
           />
           <button
-            onClick={() => setShowModal(true)}
+            onClick={() => setNewAddModal(true)}
             className="border-2 font-semibold hover:bg-black hover:text-white duration-150 transition-all border-black p-2 rounded-md text-black cursor-pointer text-center flex items-center  gap-2 justify-center"
           >
             <PiPlusCircle size={20} />
@@ -1839,7 +1838,7 @@ const ThirdParty = () => {
               >
                 {currentForm === "userDetails" && (
                   <div>
-                    <div className="bg-gray-200  p-2 px-4 rounded-md flex justify-between">
+                    {/* <div className="bg-gray-200  p-2 px-4 rounded-md flex justify-between">
                       <div className=" flex gap-2 items-center">
                         <h2 className="font-medium">HR Approval :</h2>
                         <p className="bg-red-400 text-white p-1 px-4 rounded-full">
@@ -1847,7 +1846,7 @@ const ThirdParty = () => {
                         </p>
                       </div>
                       <h2 className="font-medium">Created on : 28/08/2024</h2>
-                    </div>
+                    </div> */}
 
                     <div className="grid grid-cols-2 gap-2 my-3">
                       <div className="grid grid-cols-2">
@@ -1907,12 +1906,12 @@ const ThirdParty = () => {
                       >
                         Close
                       </button>
-                      <button
+                      {/* <button
                         className="mt-2 ml-2 bg-blue-500 text-white py-2 px-4 rounded-md"
                         onClick={handleNext}
                       >
                         Next
-                      </button>
+                      </button> */}
                     </div>
                   </div>
                 )}
@@ -2689,6 +2688,9 @@ const ThirdParty = () => {
           </div>
         </div>
       </div>
+      {newAddModal && <AddThirdPartyUser onclose={()=>setNewAddModal(false)}/>}
+      {newEditModal && <EditThirdPartyUser onclose={()=>setNewEditModal(false)}/>}
+
     </section>
   );
 };
