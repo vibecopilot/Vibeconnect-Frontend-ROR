@@ -7497,6 +7497,15 @@ export const getIncidentSubTag = async ( parentId) =>
       },
     }
   );
+export const getIncidentTreeNode = async (tagType) =>
+  axiosInstance.get(
+    `/incidence_tags/tree_structure.json?tag_type=${tagType}`,
+    {
+      params: {
+        token: token,
+      },
+    }
+  );
 export const deleteIncidentTags = async () =>
   axiosInstance.delete(`/incidence_tags.json`, {
     params: {
@@ -7540,7 +7549,7 @@ const defaultPassword = getItemInLocalStorage("DevicePassword");
 export const postVisitorInDevice = async (data) => {
   console.log(defaultIp);
   // http://localhost:8080/
-  const url = `https//${defaultIp}/ISAPI/AccessControl/UserInfo/Record?format=json`;
+  const url = ` http://localhost:8080/${defaultIp}/ISAPI/AccessControl/UserInfo/Record?format=json`;
   // const url = "http://192.168.1.22/ISAPI/AccessControl/UserInfo/Record?format=json";
   const username = defaultUsername;
   const password = defaultPassword;
@@ -7571,7 +7580,7 @@ export const postVisitorInDevice = async (data) => {
 export const postVisitorLogFromDevice = async (data) => {
   console.log(defaultIp);
   // http://localhost:8080/
-  const url = `https://${defaultIp}/ISAPI/AccessControl/AcsEvent?format=json`;
+  const url = ` http://localhost:8080/${defaultIp}/ISAPI/AccessControl/AcsEvent?format=json`;
   // const url = "http://192.168.1.22/ISAPI/AccessControl/UserInfo/Record?format=json";
   const username = defaultUsername;
   const password = defaultPassword;

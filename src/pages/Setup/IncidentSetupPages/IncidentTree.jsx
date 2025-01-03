@@ -1,158 +1,125 @@
-// import React, { useState, useEffect } from "react";
-// import { getIncidentSubTag, gettIncidentTags } from "../../../api";
+import React, { useState } from "react";
+import { BiEdit } from "react-icons/bi";
+import {
+  IoMdArrowDropdownCircle,
+  IoMdArrowDroprightCircle,
+} from "react-icons/io";
+import { getIncidentCatDetails, getIncidentTags } from "../../../api";
+import SubSubCategorySetupModal from "../../../containers/modals/IncidentSetupModal.jsx/IncidentSetupSubSubCatModal";
+import IncidentSetCategoryModal from "../../../containers/modals/IncidentSetupModal.jsx/IncidentSetupCatModal";
+import SubCategorySetupModal from "../../../containers/modals/IncidentSetupModal.jsx/IncidentSetupSubCatModal";
+import IncidentSecCategoryModal from "../../../containers/modals/IncidentSetupModal.jsx/IncidentSecCategoryModal";
 
-// const TreeNode = ({ node }) => {
-//   const [children, setChildren] = useState([]);
-//   const [isExpanded, setIsExpanded] = useState(false);
-
-//   const fetchChildren = async (parentId) => {
-//     try {
-//       const response = await getIncidentSubTag(parentId);
-//       const data =  response.data
-//       setChildren(data); // Assuming the API returns an array of child nodes
-//     } catch (error) {
-//       console.error("Error fetching child nodes:", error);
-//     }
-//   };
-
-//   const toggleExpand = () => {
-//     if (!isExpanded && children.length === 0) {
-//       fetchChildren(node.id);
-//     }
-//     setIsExpanded(!isExpanded);
-//   };
-
-//   return (
-//     <div className="pl-4 border-l-2 border-gray-300">
-//       <div
-//         className="flex items-center cursor-pointer hover:bg-gray-100 p-2 rounded"
-//         onClick={toggleExpand}
-//       >
-//         {isExpanded ? "▼" : "▶"} {/* Expand/Collapse Icon */}
-//         <span className="ml-2">{node.name}</span>
-//       </div>
-//       {isExpanded && children.length > 0 && (
-//         <div className="pl-4">
-//           {children.map((child) => (
-//             <TreeNode key={child.id} node={child} />
-//           ))}
-//         </div>
-//       )}
-//     </div>
-//   );
-// };
-
-// const Tree = () => {
-//   const [rootNodes, setRootNodes] = useState([]);
-
-//   useEffect(() => {
-//     const fetchRootNodes = async () => {
-//       try {
-//         const response = await gettIncidentTags();
-//         const data =  response.data;
-//         setRootNodes(data);
-//       } catch (error) {
-//         console.error("Error fetching root nodes:", error);
-//       }
-//     };
-
-//     fetchRootNodes();
-//   }, []);
-
-//   return (
-//     <div className="p-4">
-//       {rootNodes.map((node) => (
-//         <TreeNode key={node.id} node={node} />
-//       ))}
-//     </div>
-//   );
-// };
-
-// export default Tree;
-
-import React, { useState, useEffect } from "react";
-import { getIncidentSubTags, getIncidentTags } from "../../../api";
-
-const TreeNode = ({ node, childrenFetcher }) => {
-  const [children, setChildren] = useState([]);
+const TreeNode = ({ node, fetchIncidentTree }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-
-  const toggleExpand = async () => {
-    if (!isExpanded && children.length === 0) {
-      const childNodes = await childrenFetcher(node.id, node.tag_type);
-      setChildren(childNodes);
-    }
-    setIsExpanded(!isExpanded);
+  const [modal, showModal] = useState(false);
+  const toggleExpand = () => {
+    setIsExpanded((prev) => !prev);
   };
-
+  const [catId, setCatId] = useState("");
+  const [tagType, setTagType] = useState("");
+  const handleEdit = async (id) => {
+    try {
+      const res = await getIncidentCatDetails(id);
+      setCatId(res.data.id);
+      setTagType(res.data.tag_type);
+      showModal(true);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  console.log(typeof fetchIncidentTree);
   return (
-    <div className="pl-4 border-l-2 border-gray-300">
-      <div
-        className="flex items-center cursor-pointer hover:bg-gray-100 p-2 rounded"
-        onClick={toggleExpand}
-      >
-        {isExpanded ? "▼" : "▶"} {/* Expand/Collapse Icon */}
-        <span className="ml-2">{node.name}</span>
+    <div className="pl-2 border-l border-gray-300 ">
+      <div className="grid grid-cols-2 items-center space-x-2 border-b p-2">
+        <div className="flex items-center">
+          {node.children && node.children.length > 0 && (
+            <button
+              onClick={toggleExpand}
+              className="text-sm text-green-600 focus:outline-none"
+            >
+              {isExpanded ? (
+                <IoMdArrowDropdownCircle size={20} className="text-red-400" />
+              ) : (
+                <IoMdArrowDroprightCircle size={20} />
+              )}
+            </button>
+          )}
+          {/* IncidentSubSubCategory */}
+          <span className="font-medium mx-1">{node.name}</span>
+          {node.tag_type === "IncidentCategory" ? (
+            <span className="text-gray-400 text-xs">(Category)</span>
+          ) : node.tag_type === "incidentCategory" ? (
+            <span className="text-gray-400 text-xs">(Category)</span>
+          ) : node.tag_type === "IncidentSubCategory" ? (
+            <span className="text-gray-400 text-xs">(Sub Category)</span>
+          ) : node.tag_type === "IncidentSubSubCategory" ? (
+            <span className="text-gray-400 text-xs">(Sub Sub Category)</span>
+          ) : node.tag_type === "IncidentSecondaryCategory" ? (
+            <span className="text-gray-400 text-xs">(Secondary Category)</span>
+          ) : node.tag_type === "IncidentSecondarySubCategory" ? (
+            <span className="text-gray-400 text-xs">
+              (Secondary Sub Category)
+            </span>
+          ) : node.tag_type === "IncidentSecondarySubSubCategory" ? (
+            <span className="text-gray-400 text-xs">
+              (Secondary Sub Sub Category)
+            </span>
+          ) : (
+            ""
+          )}
+        </div>
+        <div className="flex justify-end">
+          <button
+            onClick={() => handleEdit(node.id)}
+            className="ml-auto text-blue-600 hover:text-blue-800 focus:outline-none"
+          >
+            <BiEdit size={15} />
+          </button>
+        </div>
       </div>
-      {isExpanded && children.length > 0 && (
-        <div className="pl-4">
-          {children.map((child) => (
-            <TreeNode
-              key={child.id}
-              node={child}
-              childrenFetcher={childrenFetcher}
-            />
+
+      {isExpanded && node.children && node.children.length > 0 && (
+        <div className="mt-2">
+          {node.children.map((child) => (
+            <TreeNode key={child.id} node={child} />
           ))}
         </div>
       )}
+
+      {modal &&
+        (tagType === "incidentCategory" || tagType === "IncidentCategory") && (
+          <IncidentSetCategoryModal
+            onclose={() => showModal(false)}
+            catId={catId}
+            fetchIncidentCategory={fetchIncidentTree}
+          />
+        )}
+      {modal &&
+        (tagType === "IncidentSubCategory" ||
+          tagType === "incidentSubCategory") && (
+          <SubCategorySetupModal
+            onclose={() => showModal(false)}
+            fetchIncidentSubCategory={fetchIncidentTree}
+            subCatId={catId}
+          />
+        )}
+      {modal && tagType === "IncidentSubSubCategory" && (
+        <SubSubCategorySetupModal
+          onclose={() => showModal(false)}
+          fetchIncidentSubSubCategory={fetchIncidentTree}
+          subSubCatId={catId}
+        />
+      )}
+      {modal &&
+        tagType=== "IncidentSecondaryCategory" && (
+          <IncidentSecCategoryModal
+            onclose={() => showModal(false)}
+            catId={catId}
+            fetchIncidentCategory={fetchIncidentTree}
+          />
+        )}
     </div>
   );
 };
-
-const Tree = () => {
-  const [rootNodes, setRootNodes] = useState([]);
-
-  const fetchData = async (tagType, parentId = null) => {
-    try {
-      const query = `q[tag_type_cont]=${tagType}`;
-      const url = parentId
-        ? await getIncidentSubTags(tagType, parentId)
-        : await getIncidentTags(tagType);
-    //   const response = await fetch(url);
-    console.log(url)
-      const data = url.data
-      return data;
-    } catch (error) {
-      console.error("Error fetching data:", error);
-      return [];
-    }
-  };
-
-  const fetchChildren = async (parentId, tagType) => {
-    if (tagType === "IncidentCategory") {
-      return fetchData("IncidentSubCategory", parentId);
-    } else if (tagType === "IncidentSubCategory") {
-      return fetchData("IncidentSubSubCategory", parentId);
-    }
-    return [];
-  };
-
-  useEffect(() => {
-    const fetchRootNodes = async () => {
-      const data = await fetchData("IncidentCategory");
-      setRootNodes(data);
-      console.log(data)
-    };
-    fetchRootNodes();
-  }, []);
-
-  return (
-    <div className="p-4">
-      {rootNodes.map((node) => (
-        <TreeNode key={node.id} node={node} childrenFetcher={fetchChildren} />
-      ))}
-    </div>
-  );
-};
-
-export default Tree;
+export default TreeNode;

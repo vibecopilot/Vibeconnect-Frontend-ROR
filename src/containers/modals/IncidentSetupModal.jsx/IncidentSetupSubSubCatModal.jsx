@@ -1,10 +1,73 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import ModalWrapper from "../ModalWrapper";
 import { BiEditAlt } from "react-icons/bi";
 import { MdClose } from "react-icons/md";
 import { FaCheck } from "react-icons/fa";
+import { getItemInLocalStorage } from "../../../utils/localStorage";
+import { editIncidentCatDetails, getIncidentCatDetails, getIncidentTags } from "../../../api";
 
-const SubSubCategorySetupModal = ({ onclose }) => {
+const SubSubCategorySetupModal = ({
+  onclose,
+  subSubCatId,
+  fetchIncidentSubSubCategory,
+}) => {
+  const [formData, setFormData] = useState({
+    categoryId: "",
+    subCategoryId: "",
+    subSubCategoryId:""
+  });
+  const [categories, setCategories] = useState([]);
+  useEffect(() => {
+    const fetchIncidentCategory = async () => {
+      try {
+        const res = await getIncidentTags("IncidentCategory");
+        setCategories(res.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    const fetchSubCatDetails = async () => {
+      try {
+        const res = await getIncidentCatDetails(subSubCatId);
+        const data = res.data;
+        setFormData({
+          ...formData,
+          categoryId: data.root_id,
+          subCategoryId: data.parent_id,
+          subSubCategoryId: data.name
+        });
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchSubCatDetails();
+    fetchIncidentCategory();
+  }, []);
+
+  const handleChange = async (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+  const companyId = getItemInLocalStorage("COMPANYID");
+  const handleEditSubCategory = async () => {
+    const payload = {
+      name: formData.subCategory,
+      active: true,
+      parent_id: formData.categoryId,
+      tag_type: "incidentSubCategory",
+      resource_id: companyId,
+      resource_type: "Pms::CompanySetup",
+      // "comment": "Covers all types of plumbing problems."
+    };
+    try {
+      const res = await editIncidentCatDetails(subSubCatId, payload);
+      toast.success("Incident Sub Category Updated successfully!");
+      console.log("tree called");
+      fetchIncidentSubSubCategory();
+      onclose();
+    } catch (error) {
+      console.log(error);
+    }
+  };
   return (
     <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-30 backdrop-blur-sm z-20">
       <div className="bg-white overflow-auto max-h-[70%] md:w-auto min-w-96 p-4 flex flex-col rounded-xl gap-5">
@@ -19,14 +82,17 @@ const SubSubCategorySetupModal = ({ onclose }) => {
                   Select Category
                 </label>
                 <select
-                  name=""
+                  name="categoryId"
+                  value={formData.categoryId}
+                  onChange={handleChange}
                   id=""
                   className="border p-2 border-gray-500 rounded-md w-full"
                 >
-                  <option value="">Select Category</option>
-                  <option value="">Health and Safety</option>
-                  <option value="">Fire</option>
-                  <option value="">Near Miss/Good Catch</option>
+                  {categories.map((category) => (
+                    <option value={category.id} key={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div className="flex flex-col gap-2">
