@@ -15,6 +15,7 @@ import {
   postIncidentTags,
 } from "../../../api";
 import toast from "react-hot-toast";
+import Tree from "./IncidentTree";
 
 const IncidentCategorySetup = () => {
   const [modal, showModal] = useState(false);
@@ -139,6 +140,7 @@ const IncidentCategorySetup = () => {
           fetchIncidentCategory={fetchIncidentCategory}
         />
       )}
+      {/* <Tree/> */}
     </section>
   );
 };
