@@ -8,6 +8,8 @@ import {
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import { useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
+import { MdClose } from "react-icons/md";
+import { FaCheck } from "react-icons/fa";
 
 function AddLeaveCategory() {
   const { id } = useParams();
@@ -50,7 +52,7 @@ function AddLeaveCategory() {
     consecutiveWithWeeklyOff: false,
     consecutiveWithHoliday: false,
     fixedCutoffDay: 15,
-    resignationCutoffDay:15
+    resignationCutoffDay: 15,
   });
 
   const handleChange = (e) => {
@@ -93,7 +95,7 @@ function AddLeaveCategory() {
           documentRequired: res.document_required,
           dateRestriction: res.date_restriction,
           fixedCutoffDay: res.fixed_cutoff_day,
-          resignationCutoffDay: res.resignation_cutoff_day
+          resignationCutoffDay: res.resignation_cutoff_day,
         });
       } catch (error) {
         console.log(error);
@@ -168,7 +170,7 @@ function AddLeaveCategory() {
     postData.append("organization", hrmsOrgId);
     try {
       const res = await editLeaveCategoryDetails(id, postData);
-      toast.success("Leave category updated successfully")
+      toast.success("Leave category updated successfully");
       navigate("/leave-categories");
     } catch (error) {
       console.log(error);
@@ -182,7 +184,9 @@ function AddLeaveCategory() {
         <h2 className="text-2xl mb-4">Edit Leave Category</h2>
         <div className="grid gap-4 lg:grid-cols-3 ml-5">
           <div className="flex flex-col gap-2  justify-between">
-            <label className="font-medium">Type of Leave <span className="text-red-500">*</span></label>
+            <label className="font-medium">
+              Type of Leave <span className="text-red-500">*</span>
+            </label>
             <select
               name="leaveType"
               value={formData.leaveType}
@@ -199,7 +203,9 @@ function AddLeaveCategory() {
             </select>
           </div>
           <div className="flex flex-col gap-2 justify-between">
-            <label className="font-medium">Label for this leave <span className="text-red-500">*</span></label>
+            <label className="font-medium">
+              Label for this leave <span className="text-red-500">*</span>
+            </label>
             <input
               type="text"
               name="customLabel"
@@ -210,7 +216,9 @@ function AddLeaveCategory() {
             />
           </div>
           <div className="flex flex-col gap-2 justify-between">
-            <label className="font-medium">Abbreviation Label <span className="text-red-500">*</span></label>
+            <label className="font-medium">
+              Abbreviation Label <span className="text-red-500">*</span>
+            </label>
             <input
               type="text"
               name="abbreviationLabel"
@@ -221,7 +229,9 @@ function AddLeaveCategory() {
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label className="font-medium">Leave Accrual Period <span className="text-red-500">*</span></label>
+            <label className="font-medium">
+              Leave Accrual Period <span className="text-red-500">*</span>
+            </label>
             <select
               name="accrualPeriod"
               value={formData.accrualPeriod}
@@ -236,7 +246,7 @@ function AddLeaveCategory() {
               <option value="Monthly">Monthly</option>
             </select>
           </div>
-          <div className="flex flex-col gap-2  justify-between">
+          {/* <div className="flex flex-col gap-2  justify-between">
             <label className="font-medium">Accrue leave in advance?</label>
             <div>
               <label className="mr-4">
@@ -389,7 +399,7 @@ function AddLeaveCategory() {
                 Pro-ration by joining date in the calendar month
               </option>
             </select>
-          </div>
+          </div> */}
 
           {formData.prorationMethod === "Fixed cut-off" && (
             <div className="flex flex-col gap-2">
@@ -425,7 +435,7 @@ function AddLeaveCategory() {
               />
             </div>
           )}
-          <div className="flex flex-col gap-2  justify-between">
+          {/* <div className="flex flex-col gap-2  justify-between">
             <label className="font-medium">
               Allow application on Weekly offs and Holidays?
             </label>
@@ -1010,15 +1020,22 @@ function AddLeaveCategory() {
                 No
               </label>
             </div>
-          </div>
+          </div> */}
         </div>
-        <div className="flex justify-end">
+        <div className="flex justify-center gap-2">
           <button
             type="submit"
-            className="bg-blue-500 text-white p-2 rounded"
+            className="bg-red-500 text-white p-2  flex items-center gap-2 rounded-full px-4"
+            onClick={() => navigate("/leave-categories")}
+          >
+          <MdClose/>  Cancel
+          </button>
+          <button
+            type="submit"
+            className="bg-green-500 text-white p-2 rounded-full flex items-center gap-2 px-4"
             onClick={handleSubmit}
           >
-            Update Leave Type
+           <FaCheck/> Submit
           </button>
         </div>
       </div>
