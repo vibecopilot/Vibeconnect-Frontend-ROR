@@ -7467,6 +7467,12 @@ export const postIncidentTags = async (data) =>
       token: token,
     },
   });
+export const gettIncidentTags = async () =>
+  axiosInstance.get(`/incidence_tags.json`, {
+    params: {
+      token: token,
+    },
+  });
 export const getIncidentTags = async (tagType) =>
   axiosInstance.get(`/incidence_tags.json?q[tag_type_cont]=${tagType}`, {
     params: {
@@ -7476,6 +7482,15 @@ export const getIncidentTags = async (tagType) =>
 export const getIncidentSubTags = async (tagType, parentId) =>
   axiosInstance.get(
     `/incidence_tags.json?q[tag_type_cont]=${tagType}&q[parent_id_eq]=${parentId}`,
+    {
+      params: {
+        token: token,
+      },
+    }
+  );
+export const getIncidentSubTag = async ( parentId) =>
+  axiosInstance.get(
+    `/incidence_tags.json?q[parent_id_eq]=${parentId}`,
     {
       params: {
         token: token,
