@@ -9,6 +9,8 @@ import SubSubCategorySetupModal from "../../../containers/modals/IncidentSetupMo
 import IncidentSetCategoryModal from "../../../containers/modals/IncidentSetupModal.jsx/IncidentSetupCatModal";
 import SubCategorySetupModal from "../../../containers/modals/IncidentSetupModal.jsx/IncidentSetupSubCatModal";
 import IncidentSecCategoryModal from "../../../containers/modals/IncidentSetupModal.jsx/IncidentSecCategoryModal";
+import SecondarySubCategorySetupModal from "../../../containers/modals/IncidentSetupModal.jsx/IncidentSecSubCatModal";
+import SecSubSubSubModal from "../../../containers/modals/IncidentSetupModal.jsx/SecSubSubSubModal";
 
 const TreeNode = ({ node, fetchIncidentTree }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -29,8 +31,9 @@ const TreeNode = ({ node, fetchIncidentTree }) => {
     }
   };
   console.log(typeof fetchIncidentTree);
+  console.log("Parent fetchIncidentTree:", fetchIncidentTree);
   return (
-    <div className="pl-2 border-l border-gray-300 ">
+    <div className="pl-2 border-l-2 border-gray-300 ">
       <div className="grid grid-cols-2 items-center space-x-2 border-b p-2">
         <div className="flex items-center">
           {node.children && node.children.length > 0 && (
@@ -52,6 +55,8 @@ const TreeNode = ({ node, fetchIncidentTree }) => {
           ) : node.tag_type === "incidentCategory" ? (
             <span className="text-gray-400 text-xs">(Category)</span>
           ) : node.tag_type === "IncidentSubCategory" ? (
+            <span className="text-gray-400 text-xs">(Sub Category)</span>
+          ) : node.tag_type === "incidentSubCategory" ? (
             <span className="text-gray-400 text-xs">(Sub Category)</span>
           ) : node.tag_type === "IncidentSubSubCategory" ? (
             <span className="text-gray-400 text-xs">(Sub Sub Category)</span>
@@ -104,21 +109,36 @@ const TreeNode = ({ node, fetchIncidentTree }) => {
             subCatId={catId}
           />
         )}
-      {modal && tagType === "IncidentSubSubCategory" && (
-        <SubSubCategorySetupModal
-          onclose={() => showModal(false)}
-          fetchIncidentSubSubCategory={fetchIncidentTree}
-          subSubCatId={catId}
-        />
-      )}
       {modal &&
-        tagType=== "IncidentSecondaryCategory" && (
-          <IncidentSecCategoryModal
+        (tagType === "IncidentSubSubCategory" ||
+          tagType === "incidentSubSubCategory") && (
+          <SubSubCategorySetupModal
             onclose={() => showModal(false)}
-            catId={catId}
-            fetchIncidentCategory={fetchIncidentTree}
+            subSubCatId={catId}
+            fetchIncidentSubSubCategoryTree={fetchIncidentTree}
           />
         )}
+      {modal && tagType === "IncidentSecondaryCategory" && (
+        <IncidentSecCategoryModal
+          onclose={() => showModal(false)}
+          catId={catId}
+          fetchIncidentCategory={fetchIncidentTree}
+        />
+      )}
+      {modal && tagType === "IncidentSecondarySubCategory" && (
+        <SecondarySubCategorySetupModal
+          onclose={() => showModal(false)}
+          catId={catId}
+          fetchIncidentCategory={fetchIncidentTree}
+        />
+      )}
+      {modal && tagType === "IncidentSecondarySubSubCategory" && (
+        <SecSubSubSubModal
+          onclose={() => showModal(false)}
+          catId={catId}
+          fetchIncidentCategory={fetchIncidentTree}
+        />
+      )}
     </div>
   );
 };

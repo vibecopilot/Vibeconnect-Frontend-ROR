@@ -4,19 +4,44 @@ import { BiEditAlt } from "react-icons/bi";
 import { MdClose } from "react-icons/md";
 import { FaCheck } from "react-icons/fa";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
-import { editIncidentCatDetails, getIncidentCatDetails, getIncidentTags } from "../../../api";
+import {
+  editIncidentCatDetails,
+  getIncidentCatDetails,
+  getIncidentSubTags,
+  getIncidentTags,
+} from "../../../api";
+import toast from "react-hot-toast";
 
 const SubSubCategorySetupModal = ({
   onclose,
   subSubCatId,
-  fetchIncidentSubSubCategory,
+  fetchIncidentSubSubCategoryTree,
 }) => {
   const [formData, setFormData] = useState({
     categoryId: "",
     subCategoryId: "",
-    subSubCategoryId:""
+    subSubCategory: "",
   });
+  console.log(typeof fetchIncidentSubSubCategoryTree);
   const [categories, setCategories] = useState([]);
+  const [subCategories, setSubCategories] = useState([]);
+  const fetchIncidentSubCategory = async (parentId) => {
+    try {
+      const res = await getIncidentSubTags("IncidentSubCategory", parentId);
+      setSubCategories(res.data);
+      console.log(res);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  // const fetchFloor = async (floorID) => {
+  //       try {
+  //         const build = await getFloors(floorID);
+  //         setFloors(build.data.map((item) => ({ name: item.name, id: item.id })));
+  //       } catch (e) {
+  //         console.log(e);
+  //       }
+  //     };
   useEffect(() => {
     const fetchIncidentCategory = async () => {
       try {
@@ -34,36 +59,38 @@ const SubSubCategorySetupModal = ({
           ...formData,
           categoryId: data.root_id,
           subCategoryId: data.parent_id,
-          subSubCategoryId: data.name
+          subSubCategory: data.name,
         });
+        fetchIncidentSubCategory(data.root_id);
       } catch (error) {
         console.log(error);
       }
     };
     fetchSubCatDetails();
     fetchIncidentCategory();
+    fetchIncidentSubCategory();
   }, []);
-
+  console.log(formData);
   const handleChange = async (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
   const companyId = getItemInLocalStorage("COMPANYID");
   const handleEditSubCategory = async () => {
     const payload = {
-      name: formData.subCategory,
+      name: formData.subSubCategory,
       active: true,
-      parent_id: formData.categoryId,
-      tag_type: "incidentSubCategory",
+      parent_id: formData.subCategoryId,
+      tag_type: "incidentSubSubCategory",
       resource_id: companyId,
       resource_type: "Pms::CompanySetup",
       // "comment": "Covers all types of plumbing problems."
     };
     try {
       const res = await editIncidentCatDetails(subSubCatId, payload);
-      toast.success("Incident Sub Category Updated successfully!");
-      console.log("tree called");
-      fetchIncidentSubSubCategory();
+      toast.success("Incident Sub Sub Category Updated successfully!");
+     
       onclose();
+      fetchIncidentSubSubCategoryTree();
     } catch (error) {
       console.log(error);
     }
@@ -100,11 +127,18 @@ const SubSubCategorySetupModal = ({
                   Select Sub Category
                 </label>
                 <select
-                  name=""
+                  name="subCategoryId"
+                  value={formData.subCategoryId}
+                  onChange={handleChange}
                   id=""
                   className="border p-2 border-gray-500 rounded-md w-full"
                 >
                   <option value="">Select Sub Category</option>
+                  {subCategories.map((subCat) => (
+                    <option value={subCat.id} key={subCat.id}>
+                      {subCat.name}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div className="flex flex-col gap-2">
@@ -113,7 +147,9 @@ const SubSubCategorySetupModal = ({
                 </label>
                 <input
                   type="text"
-                  name=""
+                  name="subSubCategory"
+                  value={formData.subSubCategory}
+                  onChange={handleChange}
                   id=""
                   placeholder="Sub Sub Category"
                   className="border p-2 border-gray-500 rounded-md w-full"
@@ -128,7 +164,7 @@ const SubSubCategorySetupModal = ({
             >
               <MdClose /> Cancel
             </button>
-            <button className="bg-green-500 flex items-center gap-2 font-medium text-white rounded-md px-4 p-2 ">
+            <button className="bg-green-500 flex items-center gap-2 font-medium text-white rounded-md px-4 p-2 " onClick={handleEditSubCategory}>
               <FaCheck /> Submit
             </button>
           </div>
