@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { BsEye } from "react-icons/bs";
 import { BiEdit } from "react-icons/bi";
 import { Link } from "react-router-dom";
@@ -22,7 +22,7 @@ import TreeNode from "./IncidentTree";
 
 const IncidentCategorySetup = () => {
   const [modal, showModal] = useState(false);
-  
+
   const [CatId, setCatId] = useState("");
   const handleDeleteCategory = async (id) => {
     try {
@@ -59,14 +59,14 @@ const IncidentCategorySetup = () => {
     }
   };
   const [categories, setCategories] = useState([]);
-  const fetchIncidentCategory = async () => {
+  const fetchIncidentCategory = useCallback(async () => {
     try {
       const res = await getIncidentTags("IncidentCategory");
       setCategories(res.data);
     } catch (error) {
       console.log(error);
     }
-  };
+  }, [])
   const [treeData, setTreeData] = useState([]);
   const fetchCategoryTree = async () => {
     try {

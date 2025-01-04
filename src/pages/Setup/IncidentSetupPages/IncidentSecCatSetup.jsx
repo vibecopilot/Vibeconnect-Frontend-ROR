@@ -178,7 +178,7 @@ const IncidentSecondaryCategorySetup = () => {
         SubCategoryId: "",
         subSubCategory: "",
       });
-      setAddSubSubSubCat(false);
+      setAddSubSubCat(false);
     } catch (error) {
       console.log(error);
     }
@@ -253,7 +253,7 @@ const IncidentSecondaryCategorySetup = () => {
           )}
         </div>
         <div className="flex justify-center">
-          {addSubSubSubCat && (
+          {addSubSubCat && (
             <div className="flex flex-col gap-2">
               <div className="grid grid-cols-4 gap-2 w-full">
                 <select
@@ -302,7 +302,7 @@ const IncidentSecondaryCategorySetup = () => {
                   </button>
                   <button
                     className="bg-red-400 text-white flex items-center gap-2 p-2 rounded-md"
-                    onClick={() => setAddSubSubSubCat(false)}
+                    onClick={() => setAddSubSubCat(false)}
                   >
                     <MdClose /> Cancel
                   </button>

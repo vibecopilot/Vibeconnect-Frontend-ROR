@@ -8,7 +8,11 @@ import SubSubSubCategorySetupModal from "../../../containers/modals/IncidentSetu
 import { FaCheck, FaTrash } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 import { PiPlusCircle } from "react-icons/pi";
-import { getIncidentSubTags, getIncidentTags, postIncidentTags } from "../../../api";
+import {
+  getIncidentSubTags,
+  getIncidentTags,
+  postIncidentTags,
+} from "../../../api";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
 import toast from "react-hot-toast";
 
@@ -26,7 +30,7 @@ const SecondarySubSubCategorySetup = () => {
       selector: (row) => row.name,
       sortable: true,
     },
-    
+
     {
       name: "action",
 
@@ -63,12 +67,14 @@ const SecondarySubSubCategorySetup = () => {
     };
 
     fetchIncidentCategory();
-  
   }, []);
   const handleChange = async (e) => {
     const fetchIncidentSubCategory = async (parentId) => {
       try {
-        const res = await getIncidentSubTags("IncidentSecondarySubCategory", parentId);
+        const res = await getIncidentSubTags(
+          "IncidentSecondarySubCategory",
+          parentId
+        );
         setSubCategories(res.data);
       } catch (error) {
         console.log(error);
@@ -95,8 +101,10 @@ const SecondarySubSubCategorySetup = () => {
     };
     try {
       const res = await postIncidentTags(payload);
-      toast.success("Incident Secondary Sub Sub Category Created successfully!");
-      fetchIncidentSubCategory()
+      toast.success(
+        "Incident Secondary Sub Sub Category Created successfully!"
+      );
+      fetchIncidentSubCategory();
       setFormData({
         ...formData,
         categoryId: "",
@@ -127,34 +135,34 @@ const SecondarySubSubCategorySetup = () => {
           {addSubSubSubCat && (
             <div className="flex flex-col gap-2">
               <div className="grid grid-cols-4 gap-2 w-full">
-              <select
-                name="categoryId"
-                id=""
-                value={formData.categoryId}
-                onChange={handleChange}
-                className="border p-2 px-4 border-gray-300 rounded-md w-full"
-              >
-                <option value="">Select Secondary Category</option>
-                {categories.map((category) => (
-                  <option value={category.id} key={category.id}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-              <select
-                name="SubCategoryId"
-                value={formData.SubCategoryId}
-                id=""
-                className="border p-2 w-full border-gray-300 rounded-lg"
-                onChange={handleChange}
-              >
-                <option value="">Select Secondary Sub Category</option>
-                {subCategories.map((subCategory) => (
-                  <option value={subCategory.id} key={subCategory.id}>
-                    {subCategory.name}
-                  </option>
-                ))}
-              </select>
+                <select
+                  name="categoryId"
+                  id=""
+                  value={formData.categoryId}
+                  onChange={handleChange}
+                  className="border p-2 px-4 border-gray-300 rounded-md w-full"
+                >
+                  <option value="">Select Secondary Category</option>
+                  {categories.map((category) => (
+                    <option value={category.id} key={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  name="SubCategoryId"
+                  value={formData.SubCategoryId}
+                  id=""
+                  className="border p-2 w-full border-gray-300 rounded-lg"
+                  onChange={handleChange}
+                >
+                  <option value="">Select Secondary Sub Category</option>
+                  {subCategories.map((subCategory) => (
+                    <option value={subCategory.id} key={subCategory.id}>
+                      {subCategory.name}
+                    </option>
+                  ))}
+                </select>
 
                 <input
                   type="text"
@@ -165,7 +173,10 @@ const SecondarySubSubCategorySetup = () => {
                   name="subSubCategory"
                 />
                 <div className="flex justify-center gap-2">
-                  <button className="bg-green-500 text-white p-2 flex gap-2 items-center rounded-md" onClick={handleAddSubSubCategory}>
+                  <button
+                    className="bg-green-500 text-white p-2 flex gap-2 items-center rounded-md"
+                    onClick={handleAddSubSubCategory}
+                  >
                     <FaCheck /> Submit
                   </button>
                   <button
