@@ -7549,7 +7549,7 @@ const defaultPassword = getItemInLocalStorage("DevicePassword");
 export const postVisitorInDevice = async (data) => {
   console.log(defaultIp);
   // http://localhost:8080/
-  const url = ` http://localhost:8080/${defaultIp}/ISAPI/AccessControl/UserInfo/Record?format=json`;
+  const url = ` http://${defaultIp}/ISAPI/AccessControl/UserInfo/Record?format=json`;
   // const url = "http://192.168.1.22/ISAPI/AccessControl/UserInfo/Record?format=json";
   const username = defaultUsername;
   const password = defaultPassword;
@@ -7580,7 +7580,7 @@ export const postVisitorInDevice = async (data) => {
 export const postVisitorLogFromDevice = async (data) => {
   console.log(defaultIp);
   // http://localhost:8080/
-  const url = ` http://localhost:8080/${defaultIp}/ISAPI/AccessControl/AcsEvent?format=json`;
+  const url = ` http://${defaultIp}/ISAPI/AccessControl/AcsEvent?format=json`;
   // const url = "http://192.168.1.22/ISAPI/AccessControl/UserInfo/Record?format=json";
   const username = defaultUsername;
   const password = defaultPassword;
