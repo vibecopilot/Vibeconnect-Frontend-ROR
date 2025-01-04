@@ -17,7 +17,7 @@ import { useNavigate } from "react-router-dom";
 import FileInputBox from "../../../containers/Inputs/FileInputBox";
 import Select from "react-select";
 import Webcam from "react-webcam";
-import  AxiosDigestAuth  from '@mhoc/axios-digest-auth';
+import AxiosDigestAuth from "@mhoc/axios-digest-auth";
 const EmployeeAddVisitor = () => {
   const siteId = getItemInLocalStorage("SITEID");
   const userId = getItemInLocalStorage("UserId");
@@ -104,11 +104,11 @@ const EmployeeAddVisitor = () => {
   const formatDateWithSeconds = (dateStr) => {
     const date = new Date(dateStr);
     const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0'); // 0-indexed month
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const seconds = String(date.getSeconds()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, "0"); // 0-indexed month
+    const day = String(date.getDate()).padStart(2, "0");
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    const seconds = String(date.getSeconds()).padStart(2, "0");
 
     return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
   };
@@ -178,6 +178,23 @@ const EmployeeAddVisitor = () => {
     });
     try {
       const visitResp = await postNewVisitor(postData);
+      const dataToSave = {
+        visitorName: formData.visitorName,
+        visitorId: visitResp.data.id,
+        purpose: formData.purpose,
+        mobile: formData.mobile,
+        passStartDate,
+        passEndDate,
+      };
+      console.log("making json file");
+      const blob = new Blob([JSON.stringify(dataToSave, null, 2)], {
+        type: "application/json",
+      });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `visitor_data_${visitResp.data.id}.json`;
+      a.click();
+      console.log("json file created successfully");
       const postGoods = new FormData();
       formData.goodsAttachments.forEach((docs) => {
         postGoods.append("goods_files[]", docs);
@@ -216,7 +233,7 @@ const EmployeeAddVisitor = () => {
       } catch (error) {
         console.log(error);
       }
-      
+
       navigate("/employee/passes/visitors");
       toast.success("Visitor Added Successfully");
     } catch (error) {
@@ -314,8 +331,6 @@ const EmployeeAddVisitor = () => {
     });
     console.log(fieldName);
   };
-
-
 
   return (
     <div className="flex justify-center items-center  w-full p-4 mb-10">
@@ -755,7 +770,7 @@ const EmployeeAddVisitor = () => {
               onClick={handleAddVisitor}
               className="bg-green-500 text-white hover:bg-gray-700 font-semibold py-2 px-4 rounded"
             >
-            Add Additional Visitor
+              Add Additional Visitor
             </button>
           </div>
         </div>
@@ -812,13 +827,13 @@ const EmployeeAddVisitor = () => {
             onClick={createNewVisitor}
             className="bg-red-400 text-white  font-semibold py-2 px-4 rounded-full flex items-center gap-2"
           >
-          <MdClose/>  Cancel
+            <MdClose /> Cancel
           </button>
           <button
             onClick={createNewVisitor}
             className="bg-green-400 text-white font-semibold py-2 px-4 rounded-full flex items-center gap-2"
           >
-            <FaCheck/> Submit
+            <FaCheck /> Submit
           </button>
         </div>
       </div>

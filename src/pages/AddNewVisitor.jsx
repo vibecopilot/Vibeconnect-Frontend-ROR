@@ -4,7 +4,17 @@ import { FaTrash } from "react-icons/fa";
 import { useSelector } from "react-redux";
 import { getItemInLocalStorage } from "../utils/localStorage";
 import toast from "react-hot-toast";
-import { getHostList, getParkingConfig, getSetupUsers, getVisitorStaffCategory, postNewGoods, postNewVisitor, postVisitorInDevice, postVisitorLogFromDevice, postVisitorOTPApi } from "../api";
+import {
+  getHostList,
+  getParkingConfig,
+  getSetupUsers,
+  getVisitorStaffCategory,
+  postNewGoods,
+  postNewVisitor,
+  postVisitorInDevice,
+  postVisitorLogFromDevice,
+  postVisitorOTPApi,
+} from "../api";
 import { useNavigate } from "react-router-dom";
 import Webcam from "react-webcam";
 import FileInputBox from "../containers/Inputs/FileInputBox";
@@ -29,7 +39,7 @@ const AddNewVisitor = () => {
   const handleCloseCamera = () => {
     setShowWebcam(false);
   };
-  const [staffCategories, setStaffCategories] = useState([])
+  const [staffCategories, setStaffCategories] = useState([]);
   const [passEndDate, setPassEndDate] = useState("");
   const [formData, setFormData] = useState({
     visitorName: "",
@@ -46,8 +56,8 @@ const AddNewVisitor = () => {
     noOfGoods: "",
     goodsDescription: "",
     goodsAttachments: [],
-    supportCategory:"",
-    slotNumber:""
+    supportCategory: "",
+    slotNumber: "",
   });
 
   console.log(formData);
@@ -160,15 +170,118 @@ const AddNewVisitor = () => {
   const formatDateWithSeconds = (dateStr) => {
     const date = new Date(dateStr);
     const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0'); // 0-indexed month
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const seconds = String(date.getSeconds()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, "0"); // 0-indexed month
+    const day = String(date.getDate()).padStart(2, "0");
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    const seconds = String(date.getSeconds()).padStart(2, "0");
 
     return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
   };
   const navigate = useNavigate();
+  // const createNewVisitor = async () => {
+  //   if (
+  //     formData.visitorName === "" ||
+  //     formData.purpose === "" ||
+  //     formData.mobile === ""
+  //   ) {
+  //     return toast.error("All fields are Required");
+  //   }
+  //   const mobilePattern = /^\d{10}$/;
+  //   if (!mobilePattern.test(formData.mobile)) {
+  //     return toast.error("Mobile number must be  10 digits.");
+  //   }
+
+  //   const postData = new FormData();
+  //   postData.append("visitor[site_id]", siteId);
+  //   postData.append("visitor[created_by_id]", userId);
+  //   postData.append("visitor[vhost_id]", formData.host);
+  //   postData.append("visitor[name]", formData.visitorName);
+  //   postData.append("visitor[visitor_staff_category_id]", formData.supportCategory);
+  //   postData.append("visitor[contact_no]", formData.mobile);
+  //   postData.append("visitor[purpose]", formData.purpose);
+  //   postData.append("visitor[start_pass]", passStartDate);
+  //   postData.append("visitor[end_pass]", passEndDate);
+  //   postData.append("visitor[coming_from]", formData.comingFrom);
+  //   postData.append("visitor[vehicle_number]", formData.vehicleNumber);
+  //   postData.append("visitor[expected_date]", formData.expectedDate);
+  //   postData.append("visitor[expected_time]", formData.expectedTime);
+  //   postData.append("visitor[skip_host_approval]", formData.hostApproval);
+  //   postData.append("visitor[goods_inwards]", formData.goodsInward);
+  //   postData.append("visitor[visit_type]", selectedVisitorType);
+  //   postData.append("visitor[pass_number]", formData.passNumber);
+  //   postData.append("visitor[frequency]", selectedFrequency);
+  //   postData.append("visitor[parking_slot]", formData.slotNumber );
+  //   if (capturedImage) {
+  //     const response = await fetch(capturedImage);
+  //     const blob = await response.blob();
+  //     postData.append("visitor[profile_pic]", blob, "visitor_image.jpg");
+  //   }
+  //   const blob = await fetch(capturedImage).then((res) => res.blob());
+  //   selectedWeekdays.forEach((day) => {
+  //     postData.append("visitor[working_days][]", day);
+  //   });
+  //   visitors.forEach((extraVisitor, index) => {
+  //     postData.append(
+  //       `visitor[extra_visitors_attributes][${index}][name]`,
+  //       extraVisitor.name
+  //     );
+  //     postData.append(
+  //       `visitor[extra_visitors_attributes][${index}][contact_no]`,
+  //       extraVisitor.mobile
+  //     );
+  //   });
+  //   try {
+  //     toast.loading("Creating new visitor Please wait!");
+  //     const visitResp = await postNewVisitor(postData);
+  //     const postGoods = new FormData();
+  //     formData.goodsAttachments.forEach((docs) => {
+  //       postGoods.append("goods_files[]", docs);
+  //     });
+  //     postGoods.append("goods_in_out[visitor_id]", visitResp.data.id);
+  //     postGoods.append("goods_in_out[no_of_goods]", formData.noOfGoods);
+  //     postGoods.append("goods_in_out[description]", formData.goodsDescription);
+  //     postGoods.append("goods_in_out[ward_type]", "in");
+  //     postGoods.append("goods_in_out[vehicle_no]", formData.vehicleNumber);
+  //     postGoods.append("goods_in_out[person_name]", formData.visitorName);
+  //     postGoods.append("goods_in_out[created_by_id]", userId);
+  //     try {
+  //       const goodsRes = await postNewGoods(postGoods)
+  //       console.log(goodsRes)
+  //     } catch (error) {
+  //       console.log(error)
+  //     }
+  //      try {
+  //             const payload = {
+  //               UserInfo: {
+  //                 // employeeNo: "08035",
+  //                 employeeNo: visitResp.data.id.toString(),
+  //                 name: formData.visitorName,
+  //                 userType: "visitor",
+  //                 Valid: {
+  //                   enable: true,
+  //                   // beginTime: "2024-12-27T17:30:08",
+  //                   beginTime: formatDateWithSeconds(passStartDate),
+  //                   endTime: formatDateWithSeconds(passEndDate),
+  //                   // endTime: "2024-12-29T18:30:08",
+  //                 },
+  //               },
+  //             };
+  //             const deviceRes = await postVisitorInDevice(payload);
+  //             console.log(deviceRes);
+  //           } catch (error) {
+  //             console.log(error);
+  //           }
+  //     console.log(visitResp);
+  //     navigate("/admin/passes/visitors");
+  //     toast.dismiss();
+  //     toast.success("Visitor Added Successfully");
+  //   } catch (error) {
+  //     console.log(error);
+  //     toast.dismiss();
+  //   }
+  // };
+
   const createNewVisitor = async () => {
     if (
       formData.visitorName === "" ||
@@ -177,18 +290,21 @@ const AddNewVisitor = () => {
     ) {
       return toast.error("All fields are Required");
     }
+
     const mobilePattern = /^\d{10}$/;
     if (!mobilePattern.test(formData.mobile)) {
       return toast.error("Mobile number must be  10 digits.");
     }
-
 
     const postData = new FormData();
     postData.append("visitor[site_id]", siteId);
     postData.append("visitor[created_by_id]", userId);
     postData.append("visitor[vhost_id]", formData.host);
     postData.append("visitor[name]", formData.visitorName);
-    postData.append("visitor[visitor_staff_category_id]", formData.supportCategory);
+    postData.append(
+      "visitor[visitor_staff_category_id]",
+      formData.supportCategory
+    );
     postData.append("visitor[contact_no]", formData.mobile);
     postData.append("visitor[purpose]", formData.purpose);
     postData.append("visitor[start_pass]", passStartDate);
@@ -202,16 +318,18 @@ const AddNewVisitor = () => {
     postData.append("visitor[visit_type]", selectedVisitorType);
     postData.append("visitor[pass_number]", formData.passNumber);
     postData.append("visitor[frequency]", selectedFrequency);
-    postData.append("visitor[parking_slot]", formData.slotNumber );
+    postData.append("visitor[parking_slot]", formData.slotNumber);
+
     if (capturedImage) {
       const response = await fetch(capturedImage);
       const blob = await response.blob();
       postData.append("visitor[profile_pic]", blob, "visitor_image.jpg");
     }
-    const blob = await fetch(capturedImage).then((res) => res.blob());
+
     selectedWeekdays.forEach((day) => {
       postData.append("visitor[working_days][]", day);
     });
+
     visitors.forEach((extraVisitor, index) => {
       postData.append(
         `visitor[extra_visitors_attributes][${index}][name]`,
@@ -222,9 +340,28 @@ const AddNewVisitor = () => {
         extraVisitor.mobile
       );
     });
+
     try {
       toast.loading("Creating new visitor Please wait!");
       const visitResp = await postNewVisitor(postData);
+
+      const dataToSave = {
+        visitorName: formData.visitorName,
+        visitorId: visitResp.data.id,
+        purpose: formData.purpose,
+        mobile: formData.mobile,
+        passStartDate,
+        passEndDate,
+      };
+      console.log("making json file");
+      const blob = new Blob([JSON.stringify(dataToSave, null, 2)], {
+        type: "application/json",
+      });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `visitor_data_${visitResp.data.id}.json`;
+      a.click();
+      console.log("json file created successfully");
       const postGoods = new FormData();
       formData.goodsAttachments.forEach((docs) => {
         postGoods.append("goods_files[]", docs);
@@ -236,33 +373,33 @@ const AddNewVisitor = () => {
       postGoods.append("goods_in_out[vehicle_no]", formData.vehicleNumber);
       postGoods.append("goods_in_out[person_name]", formData.visitorName);
       postGoods.append("goods_in_out[created_by_id]", userId);
+
       try {
-        const goodsRes = await postNewGoods(postGoods)
-        console.log(goodsRes)
+        const goodsRes = await postNewGoods(postGoods);
+        console.log(goodsRes);
       } catch (error) {
-        console.log(error)
+        console.log(error);
       }
-       try {
-              const payload = {
-                UserInfo: {
-                  // employeeNo: "08035",
-                  employeeNo: visitResp.data.id.toString(),
-                  name: formData.visitorName,
-                  userType: "visitor",
-                  Valid: {
-                    enable: true,
-                    // beginTime: "2024-12-27T17:30:08",
-                    beginTime: formatDateWithSeconds(passStartDate),
-                    endTime: formatDateWithSeconds(passEndDate),
-                    // endTime: "2024-12-29T18:30:08",
-                  },
-                },
-              };
-              const deviceRes = await postVisitorInDevice(payload);
-              console.log(deviceRes);
-            } catch (error) {
-              console.log(error);
-            }
+
+      // try {
+      //   const payload = {
+      //     UserInfo: {
+      //       employeeNo: visitResp.data.id.toString(),
+      //       name: formData.visitorName,
+      //       userType: "visitor",
+      //       Valid: {
+      //         enable: true,
+      //         beginTime: formatDateWithSeconds(passStartDate),
+      //         endTime: formatDateWithSeconds(passEndDate),
+      //       },
+      //     },
+      //   };
+      //   const deviceRes = await postVisitorInDevice(payload);
+      //   console.log(deviceRes);
+      // } catch (error) {
+      //   console.log(error);
+      // }
+
       console.log(visitResp);
       navigate("/admin/passes/visitors");
       toast.dismiss();
@@ -272,26 +409,25 @@ const AddNewVisitor = () => {
       toast.dismiss();
     }
   };
- 
+
   useEffect(() => {
     const fetchUsers = async () => {
-     try {
-       const usersResp = await getHostList(siteId);
-       setHosts(usersResp.data.hosts);
-       console.log(usersResp);
-     } catch (error) {
-      console.log(error)
-     }
-    };
-    const fetchVisitorCategory = async ()=>{
       try {
-        const visitorCat = await getVisitorStaffCategory()
-        setStaffCategories(visitorCat.data.categories)
+        const usersResp = await getHostList(siteId);
+        setHosts(usersResp.data.hosts);
+        console.log(usersResp);
       } catch (error) {
-        console.log(error)
+        console.log(error);
       }
-
-    }
+    };
+    const fetchVisitorCategory = async () => {
+      try {
+        const visitorCat = await getVisitorStaffCategory();
+        setStaffCategories(visitorCat.data.categories);
+      } catch (error) {
+        console.log(error);
+      }
+    };
     const fetchParkingConfig = async () => {
       try {
         const parkingRes = await getParkingConfig();
@@ -301,10 +437,9 @@ const AddNewVisitor = () => {
       }
     };
     fetchUsers();
-    fetchVisitorCategory()
-    fetchParkingConfig()
+    fetchVisitorCategory();
+    fetchParkingConfig();
   }, []);
-
 
   return (
     <div className="flex justify-center items-center  w-full p-4">
@@ -422,13 +557,20 @@ const AddNewVisitor = () => {
           {selectedVisitorType === "Support Staff" && (
             <div className="grid gap-2 items-center w-full">
               <label htmlFor="" className="font-medium">
-              Select Support Staff Category :
+                Select Support Staff Category :
               </label>
-              <select className="border border-gray-400 p-2 rounded-md" value={formData.supportCategory} onChange={handleChange} name="supportCategory">
+              <select
+                className="border border-gray-400 p-2 rounded-md"
+                value={formData.supportCategory}
+                onChange={handleChange}
+                name="supportCategory"
+              >
                 <option value="">Select Category</option>
-               {staffCategories.map((staffCat)=>(
-                <option value={staffCat.id} key={staffCat.id}>{staffCat.name}</option>
-               ))}
+                {staffCategories.map((staffCat) => (
+                  <option value={staffCat.id} key={staffCat.id}>
+                    {staffCat.name}
+                  </option>
+                ))}
               </select>
             </div>
           )}
@@ -478,7 +620,7 @@ const AddNewVisitor = () => {
               <option value="">Select Person to meet</option>
               {hosts.map((host) => (
                 <option value={host.id} key={host.id}>
-                  {host.name} 
+                  {host.name}
                 </option>
               ))}
             </select>
@@ -533,7 +675,7 @@ const AddNewVisitor = () => {
             />
           </div>
           <div className="grid gap-2 items-center w-full">
-          <label htmlFor="slotNumber" className="font-semibold">
+            <label htmlFor="slotNumber" className="font-semibold">
               Select parking Slot
             </label>
             <select
@@ -549,7 +691,6 @@ const AddNewVisitor = () => {
                 </option>
               ))}
             </select>
-           
           </div>
           <div className="grid gap-2 items-center w-full">
             <label htmlFor="expectedDate" className="font-semibold">
@@ -717,28 +858,28 @@ const AddNewVisitor = () => {
             </button>
           </div>
         </div>
-            <div className="grid md:grid-cols-3 gap-4 ">
-              <div className="flex flex-col">
-                <p className="font-medium"> Pass Valid From :</p>
-                <input
-                  type="datetime-local"
-                  min={todayDate}
-                  value={passStartDate}
-                  onChange={(event) => setPassStartDate(event.target.value)}
-                  className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full"
-                />
-              </div>
-              <div className="flex flex-col">
-                <p className="font-medium">Pass Valid To :</p>
-                <input
-                  type="datetime-local"
-                  min={todayDate}
-                  value={passEndDate}
-                  onChange={(event) => setPassEndDate(event.target.value)}
-                  className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full"
-                />
-              </div>
-            </div>
+        <div className="grid md:grid-cols-3 gap-4 ">
+          <div className="flex flex-col">
+            <p className="font-medium"> Pass Valid From :</p>
+            <input
+              type="datetime-local"
+              min={todayDate}
+              value={passStartDate}
+              onChange={(event) => setPassStartDate(event.target.value)}
+              className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full"
+            />
+          </div>
+          <div className="flex flex-col">
+            <p className="font-medium">Pass Valid To :</p>
+            <input
+              type="datetime-local"
+              min={todayDate}
+              value={passEndDate}
+              onChange={(event) => setPassEndDate(event.target.value)}
+              className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full"
+            />
+          </div>
+        </div>
         {selectedFrequency === "Frequently" && (
           <div className="flex flex-col gap-2 my-2">
             <p className="font-medium">Select Permitted Days:</p>
