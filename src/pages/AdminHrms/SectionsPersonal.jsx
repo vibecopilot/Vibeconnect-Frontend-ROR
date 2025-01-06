@@ -634,7 +634,7 @@ const SectionsPersonal = () => {
                       <option value="married">Married</option>
                     </select>
                   </div>
-                  <div>
+                  {/* <div>
                     <label className="block text-sm font-medium text-gray-700">
                       Role
                     </label>
@@ -654,7 +654,7 @@ const SectionsPersonal = () => {
                         </option>
                       ))}
                     </select>
-                  </div>
+                  </div> */}
                 </div>
               </>
             }

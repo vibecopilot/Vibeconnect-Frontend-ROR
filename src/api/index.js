@@ -4002,6 +4002,19 @@ export const getMyHRMSEmployees = async (orgId) => {
     throw error;
   }
 };
+export const getMyHRMSAdmins = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(`/employee/?organization_id=${orgId}&user_type=pms_admin`, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error getting employee :", error);
+    throw error;
+  }
+};
 export const getMyHRMSEmployeesAllData = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
@@ -4206,6 +4219,23 @@ export const getManageAdmin = async (orgId) => {
     return response.data;
   } catch (error) {
     console.error("Error getting Admins:", error);
+    throw error;
+  }
+};
+export const getAdminAccess = async (orgId, empId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/organization/user-setting/administrator-setting/?organization_id=${orgId}&employee_id=${empId}`,
+
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting Admin access:", error);
     throw error;
   }
 };

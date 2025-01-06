@@ -216,27 +216,27 @@ const EmployeeAddVisitor = () => {
       } catch (error) {
         console.log(error);
       }
-      try {
-        const payload = {
-          UserInfo: {
-            // employeeNo: "08035",
-            employeeNo: visitResp.data.id.toString(),
-            name: formData.visitorName,
-            userType: "visitor",
-            Valid: {
-              enable: true,
-              // beginTime: "2024-12-27T17:30:08",
-              beginTime: formatDateWithSeconds(passStartDate),
-              endTime: formatDateWithSeconds(passEndDate),
-              // endTime: "2024-12-29T18:30:08",
-            },
-          },
-        };
-        const deviceRes = await postVisitorInDevice(payload);
-        console.log(deviceRes);
-      } catch (error) {
-        console.log(error);
-      }
+      // try {
+      //   const payload = {
+      //     UserInfo: {
+      //       // employeeNo: "08035",
+      //       employeeNo: visitResp.data.id.toString(),
+      //       name: formData.visitorName,
+      //       userType: "visitor",
+      //       Valid: {
+      //         enable: true,
+      //         // beginTime: "2024-12-27T17:30:08",
+      //         beginTime: formatDateWithSeconds(passStartDate),
+      //         endTime: formatDateWithSeconds(passEndDate),
+      //         // endTime: "2024-12-29T18:30:08",
+      //       },
+      //     },
+      //   };
+      //   const deviceRes = await postVisitorInDevice(payload);
+      //   console.log(deviceRes);
+      // } catch (error) {
+      //   console.log(error);
+      // }
 
       navigate("/employee/passes/visitors");
       toast.success("Visitor Added Successfully");
