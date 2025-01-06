@@ -32,6 +32,7 @@ const AddNewVisitor = () => {
   const [showWebcam, setShowWebcam] = useState(false);
   const [capturedImage, setCapturedImage] = useState(null);
   const [slots, setSlots] = useState([]);
+
   const handleOpenCamera = () => {
     setShowWebcam(true);
   };
@@ -41,6 +42,8 @@ const AddNewVisitor = () => {
   };
   const [staffCategories, setStaffCategories] = useState([]);
   const [passEndDate, setPassEndDate] = useState("");
+  console.log("pass start", passStartDate)
+  console.log("pass end", passEndDate)
   const [formData, setFormData] = useState({
     visitorName: "",
     mobile: "",
@@ -445,6 +448,20 @@ const AddNewVisitor = () => {
     fetchVisitorCategory();
     fetchParkingConfig();
   }, []);
+
+  const handlePassStartDateChange = (event) => {
+    const selectedDateTime = new Date(event.target.value);
+    const formattedDateTime = selectedDateTime.toISOString().slice(0, 19);
+    setPassStartDate(formattedDateTime);
+  };
+  
+  const handlePassEndDateChange = (event) => {
+    const selectedDateTime = new Date(event.target.value);
+    const formattedDateTime = selectedDateTime.toISOString().slice(0, 19);
+    setPassEndDate(formattedDateTime);
+  };
+  
+  
 
   return (
     <div className="flex justify-center items-center  w-full p-4">
@@ -870,7 +887,8 @@ const AddNewVisitor = () => {
               type="datetime-local"
               min={todayDate}
               value={passStartDate}
-              onChange={(event) => setPassStartDate(event.target.value)}
+              // onChange={(event) => setPassStartDate(event.target.value)}
+              onChange={handlePassStartDateChange}
               className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full"
             />
           </div>
@@ -880,7 +898,8 @@ const AddNewVisitor = () => {
               type="datetime-local"
               min={todayDate}
               value={passEndDate}
-              onChange={(event) => setPassEndDate(event.target.value)}
+              // onChange={(event) => setPassEndDate(event.target.value)}
+              onChange={handlePassEndDateChange}
               className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full"
             />
           </div>

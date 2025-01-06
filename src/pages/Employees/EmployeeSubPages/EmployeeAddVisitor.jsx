@@ -336,6 +336,18 @@ const EmployeeAddVisitor = () => {
     console.log(fieldName);
   };
 
+  const handlePassStartDateChange = (event) => {
+    const selectedDateTime = new Date(event.target.value);
+    const formattedDateTime = selectedDateTime.toISOString().slice(0, 19);
+    setPassStartDate(formattedDateTime);
+  };
+  
+  const handlePassEndDateChange = (event) => {
+    const selectedDateTime = new Date(event.target.value);
+    const formattedDateTime = selectedDateTime.toISOString().slice(0, 19);
+    setPassEndDate(formattedDateTime);
+  };
+
   return (
     <div className="flex justify-center items-center  w-full p-4 mb-10">
       <div className="md:border border-gray-300 rounded-lg md:p-4 w-full md:mx-4 ">
@@ -785,7 +797,8 @@ const EmployeeAddVisitor = () => {
               type="datetime-local"
               min={todayDate}
               value={passStartDate}
-              onChange={(event) => setPassStartDate(event.target.value)}
+              // onChange={(event) => setPassStartDate(event.target.value)}
+              onChange={handlePassStartDateChange}
               className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full"
             />
           </div>
@@ -795,7 +808,8 @@ const EmployeeAddVisitor = () => {
               type="datetime-local"
               min={todayDate}
               value={passEndDate}
-              onChange={(event) => setPassEndDate(event.target.value)}
+              // onChange={(event) => setPassEndDate(event.target.value)}
+              onChange={handlePassEndDateChange}
               className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full"
             />
           </div>
