@@ -40,6 +40,7 @@ import {
   TbAlertSquareRoundedFilled,
 } from "react-icons/tb";
 import { HiOutlineDevicePhoneMobile } from "react-icons/hi2";
+import { getAdminAccess } from "../../api";
 const AdminHRMS = () => {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState("");
@@ -333,6 +334,20 @@ const AdminHRMS = () => {
     "/admin/employee-directory-Change-logs",
   ];
   const routes10 = ["/user-roles"];
+  const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
+  const orgId = getItemInLocalStorage("HRMSORGID");
+  useEffect(() => {
+    const fetchRoleAccess = async () => {
+      try {
+        const res = await getAdminAccess(orgId, empId);
+        console.log(res)
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchRoleAccess();
+  }, []);
+
   return (
     <section className="flex gap-6 fixed top-0 left-0 bottom-0 h-screen z-30">
       <div
@@ -625,7 +640,7 @@ const AdminHRMS = () => {
                       User Roles
                     </h2>
                   </NavLink>
-                  <NavLink
+                  {/* <NavLink
                     to="/hrms/organization-tree-setting"
                     className={() =>
                       `${
@@ -650,7 +665,7 @@ const AdminHRMS = () => {
                     >
                       Organization Tree Setting
                     </h2>
-                  </NavLink>
+                  </NavLink> */}
                   {/* <NavLink
                     to="/hrms/employee-transaction"
                     className={() =>

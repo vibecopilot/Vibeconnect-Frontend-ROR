@@ -8,6 +8,7 @@ import Table from "../../../components/table/Table";
 import { BiEdit, BiQr } from "react-icons/bi";
 import Navbar from "../../../components/Navbar";
 import VisitorQRCode from "../../../containers/modals/VisitorQRCode";
+import { dateFormatSTD } from "../../../utils/dateUtils";
 
 const VisitorDetails = () => {
   const [details, setDetails] = useState({});
@@ -227,22 +228,22 @@ const VisitorDetails = () => {
               <p className="font-semibold text-sm">Host Approval Needed ? : </p>
               <p className="">{details?.skip_host_approval ? "No" : "Yes"}</p>
             </div>
-            {details.frequency === "Frequently" && (
+            {/* {details.frequency === "Frequently" && ( */}
               <div className="grid grid-cols-2 ">
                 <p className="font-semibold text-sm">Pass Start Date : </p>
                 <p className="">
-                  {details.start_pass ? dateFormat(details?.start_pass) : "-"}
+                  {details.start_pass ? dateTimeFormat(details?.start_pass) : "-"}
                 </p>
               </div>
-            )}
-            {details.frequency === "Frequently" && (
+            {/* )} */}
+            {/* {details.frequency === "Frequently" && ( */}
               <div className="grid grid-cols-2 ">
                 <p className="font-semibold text-sm">Pass End Date : </p>
                 <p className="">
-                  {details.end_pass ? dateFormat(details?.end_pass) : "-"}
+                  {details.end_pass ? dateTimeFormat(details?.end_pass) : "-"}
                 </p>
               </div>
-            )}
+            {/* )} */}
 
             <div className="grid grid-cols-2 ">
               <p className="font-semibold text-sm">Host : </p>
