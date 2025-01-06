@@ -9,6 +9,7 @@ import {
   getIncidentCatDetails,
   getIncidentTags,
 } from "../../../api";
+import toast from "react-hot-toast";
 
 const SecSubSubSubModal = ({ onclose, catId, fetchIncidentCategory }) => {
   const [formData, setFormData] = useState({
@@ -56,17 +57,19 @@ const SecSubSubSubModal = ({ onclose, catId, fetchIncidentCategory }) => {
   }, []);
   const handleEditCategory = async () => {
     const payload = {
-      name: formData.subCategory,
+      name: formData.subSubCategory,
       active: true,
-      parent_id: formData.categoryId,
-      tag_type: "IncidentSecondarySubCategory",
+      parent_id: formData.subCategoryId,
+      tag_type: "IncidentSecondarySubSubCategory",
       resource_id: companyId,
       resource_type: "Pms::CompanySetup",
       // "comment": "Covers all types of plumbing problems."
     };
     try {
       const res = await editIncidentCatDetails(catId, payload);
-      toast.success("Incident Secondary Sub Category Updated successfully!");
+      toast.success(
+        "Incident Secondary Sub Sub Category Updated successfully!"
+      );
       onclose();
       fetchIncidentCategory();
     } catch (error) {
@@ -81,7 +84,7 @@ const SecSubSubSubModal = ({ onclose, catId, fetchIncidentCategory }) => {
       <div className="bg-white overflow-auto max-h-[70%] md:w-auto min-w-96 p-4 flex flex-col rounded-xl gap-5">
         <div className="flex flex-col w-full justify-center">
           <h2 className="flex gap-2 items-center justify-center font-bold text-lg ">
-            <BiEditAlt /> Edit Secondary Sub Sub Sub Categ
+            <BiEditAlt /> Edit Secondary Sub Sub Sub Category
           </h2>
           <div className="border-t-2 border-black">
             <div className="grid grid-cols-2 gap-2 my-2">
@@ -113,7 +116,6 @@ const SecSubSubSubModal = ({ onclose, catId, fetchIncidentCategory }) => {
                   </option>
                 ))}
               </select>
-
               <input
                 type="text"
                 name="subSubCategory"
@@ -132,7 +134,10 @@ const SecSubSubSubModal = ({ onclose, catId, fetchIncidentCategory }) => {
             >
               <MdClose /> Cancel
             </button>
-            <button className="bg-green-500 flex items-center gap-2 font-medium text-white rounded-md px-4 p-2 " onClick={handleEditCategory}>
+            <button
+              className="bg-green-500 flex items-center gap-2 font-medium text-white rounded-md px-4 p-2 "
+              onClick={handleEditCategory}
+            >
               <FaCheck /> Submit
             </button>
           </div>
