@@ -8,6 +8,7 @@ import { useSelector } from "react-redux";
 import { FaTrash } from "react-icons/fa";
 import {
   deleteLeaveApplication,
+  getAdminAccess,
   getLeaveApplications,
   postLeaveApplicationApproval,
 } from "../../api";
@@ -94,21 +95,27 @@ const LeaveCompleted = () => {
           </button>
 
           {row.status === "approved" && (
+            <>
+              {roleAccess.can_approve_reject_leave && (
+                <button
+                  className="text-red-400 font-medium hover:bg-red-400 hover:text-white transition-all duration-200 p-1 rounded-full"
+                  onClick={() => {
+                    handleLeaveApplicationApproval(row.id, "rejected");
+                  }}
+                >
+                  <IoClose size={20} title="Cancel Leave Application" />
+                </button>
+              )}
+            </>
+          )}
+          {roleAccess.can_add_leave_on_behalf_of_employee && (
             <button
-              className="text-red-400 font-medium hover:bg-red-400 hover:text-white transition-all duration-200 p-1 rounded-full"
-              onClick={() => {
-                handleLeaveApplicationApproval(row.id, "rejected");
-              }}
+              onClick={() => handleDeleteLeave(row.id)}
+              className="text-red-400"
             >
-              <IoClose size={20} title="Cancel Leave Application" />
+              <FaTrash size={15} />
             </button>
           )}
-          <button
-            onClick={() => handleDeleteLeave(row.id)}
-            className="text-red-400"
-          >
-            <FaTrash size={15} />
-          </button>
         </div>
       ),
       sortable: true,
@@ -119,7 +126,7 @@ const LeaveCompleted = () => {
     try {
       await deleteLeaveApplication(applicationId);
       toast.success("Leave application deleted successfully");
-      fetchLeaveApplications()
+      fetchLeaveApplications();
     } catch (error) {
       console.log(error);
     }
@@ -195,6 +202,22 @@ const LeaveCompleted = () => {
     }
   };
 
+  const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
+  const orgId = getItemInLocalStorage("HRMSORGID");
+  const [roleAccess, setRoleAccess] = useState({});
+  useEffect(() => {
+    const fetchRoleAccess = async () => {
+      try {
+        const res = await getAdminAccess(orgId, empId);
+
+        setRoleAccess(res[0]);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchRoleAccess();
+  }, []);
+
   return (
     <section className="flex">
       <div className="w-full flex mx-3 flex-col overflow-hidden">
@@ -221,14 +244,14 @@ const LeaveCompleted = () => {
               onChange={handleSearch}
               className="border border-gray-400 w-96 placeholder:text-sm rounded-lg p-2"
             />
-            <button
+            {/* <button
               onClick={() => setIsModalOpen(true)}
               style={{ background: themeColor }}
               className="bg-black text-white hover:bg-gray-700 font-semibold py-2 px-4 rounded"
             >
               Filter
-            </button>
-            <div className="relative inline-block text-left">
+            </button> */}
+            {/* <div className="relative inline-block text-left">
               <button
                 onClick={toggleDropdown}
                 className="inline-flex items-center justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500"
@@ -236,7 +259,7 @@ const LeaveCompleted = () => {
                 Actions
                 <MdKeyboardArrowDown size={20} />
               </button>
-            </div>
+            </div> */}
           </div>
         </div>
         <Table

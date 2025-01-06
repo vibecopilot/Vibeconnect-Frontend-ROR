@@ -14,6 +14,7 @@ import { getItemInLocalStorage } from "../../../utils/localStorage";
 import { FaCheck } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 import {
+  getAdminAccess,
   getAssociatedSiteDetails,
   getAssociatedSites,
   postAssociatedSites,
@@ -91,9 +92,11 @@ const AssociatedSites = () => {
       name: "Action",
       cell: (row) => (
         <div className="flex items-center gap-4">
-          <button onClick={() => handleEditModal(row.id)}>
-            <BiEdit size={15} />
-          </button>
+          {roleAccess.can_add_edit_associated_sites && (
+            <button onClick={() => handleEditModal(row.id)}>
+              <BiEdit size={15} />
+            </button>
+          )}
           {/* <button
             onClick={() => handleDeleteDepartment(row.id)}
             className="text-red-400"
@@ -308,6 +311,22 @@ const AssociatedSites = () => {
       setFilteredSites(filteredResults);
     }
   };
+  // can_add_edit_associated_sites
+  const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
+  const orgId = getItemInLocalStorage("HRMSORGID");
+  const [roleAccess, setRoleAccess] = useState({});
+  useEffect(() => {
+    const fetchRoleAccess = async () => {
+      try {
+        const res = await getAdminAccess(orgId, empId);
+
+        setRoleAccess(res[0]);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchRoleAccess();
+  }, []);
 
   return (
     <section className="flex ml-20">
@@ -321,14 +340,16 @@ const AssociatedSites = () => {
             value={searchText}
             onChange={handleSearch}
           />
-          <button
-            onClick={() => setIsModalOpen1(true)}
-            style={{ background: themeColor }}
-            className="border-2 font-medium hover:text-white duration-150 transition-all  p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
-          >
-            <PiPlusCircle size={20} />
-            Add
-          </button>
+          {roleAccess?.can_add_edit_associated_sites && (
+            <button
+              onClick={() => setIsModalOpen1(true)}
+              style={{ background: themeColor }}
+              className="border-2 font-medium hover:text-white duration-150 transition-all  p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
+            >
+              <PiPlusCircle size={20} />
+              Add
+            </button>
+          )}
         </div>
         <Table columns={columns} data={filteredSites} isPagination={true} />
       </div>
@@ -533,7 +554,10 @@ const AssociatedSites = () => {
                       id=""
                       checked={siteDetails.pan === true}
                       onChange={() =>
-                        setSiteDetails({ ...siteDetails, pan: !siteDetails.pan })
+                        setSiteDetails({
+                          ...siteDetails,
+                          pan: !siteDetails.pan,
+                        })
                       }
                     />
                     <label htmlFor="">Pan </label>
@@ -545,7 +569,10 @@ const AssociatedSites = () => {
                       id=""
                       checked={siteDetails.esic === true}
                       onChange={() =>
-                        setSiteDetails({ ...siteDetails, esic: !siteDetails.esic })
+                        setSiteDetails({
+                          ...siteDetails,
+                          esic: !siteDetails.esic,
+                        })
                       }
                     />
                     <label htmlFor="">ESIC </label>
@@ -557,7 +584,10 @@ const AssociatedSites = () => {
                       id=""
                       checked={siteDetails.BVG === true}
                       onChange={() =>
-                        setSiteDetails({ ...siteDetails, BVG: !siteDetails.BVG })
+                        setSiteDetails({
+                          ...siteDetails,
+                          BVG: !siteDetails.BVG,
+                        })
                       }
                     />
                     <label htmlFor="" title="Background verification">

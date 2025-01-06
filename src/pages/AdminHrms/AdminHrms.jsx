@@ -334,19 +334,25 @@ const AdminHRMS = () => {
     "/admin/employee-directory-Change-logs",
   ];
   const routes10 = ["/user-roles"];
+
   const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
   const orgId = getItemInLocalStorage("HRMSORGID");
+  const [roleAccess, setRoleAccess] = useState({
+
+  })
   useEffect(() => {
     const fetchRoleAccess = async () => {
       try {
         const res = await getAdminAccess(orgId, empId);
-        console.log(res)
+
+        setRoleAccess(res[0])
       } catch (error) {
         console.log(error);
       }
     };
     fetchRoleAccess();
   }, []);
+
 
   return (
     <section className="flex gap-6 fixed top-0 left-0 bottom-0 h-screen z-30">
@@ -425,7 +431,7 @@ const AdminHRMS = () => {
                 Alerts
               </h2>
             </NavLink> */}
-            <div>
+           {(Object.keys(roleAccess).length === 0 ||roleAccess.organization_permissions) && <div>
               <div
                 onClick={toggleOrgMenu}
                 className="cursor-pointer flex items-center text-sm gap-3.5 font-medium p-2 "
@@ -561,9 +567,9 @@ const AdminHRMS = () => {
                   </NavLink>
                 </div>
               )}
-            </div>
+            </div>}
 
-            <div>
+            {(Object.keys(roleAccess).length === 0 ||roleAccess.employee_permissions) &&<div>
               <div
                 onClick={toggleEmpMenu}
                 className="cursor-pointer flex items-center text-sm gap-3.5 font-medium p-2  rounded-md"
@@ -614,7 +620,7 @@ const AdminHRMS = () => {
                       Employee Directory
                     </h2>
                   </NavLink>
-                  <NavLink
+                  {/* <NavLink
                     to="/user-roles"
                     className={({ isActive }) =>
                       `${
@@ -639,7 +645,7 @@ const AdminHRMS = () => {
                     >
                       User Roles
                     </h2>
-                  </NavLink>
+                  </NavLink> */}
                   {/* <NavLink
                     to="/hrms/organization-tree-setting"
                     className={() =>
@@ -860,9 +866,9 @@ const AdminHRMS = () => {
                   </NavLink>
                 </div>
               )}
-            </div>
+            </div>}
 
-            <div>
+            {(Object.keys(roleAccess).length === 0 || roleAccess.attendance_permissions) &&<div>
               <div
                 onClick={toggleAttMenu}
                 className="cursor-pointer flex items-center text-sm gap-3.5 font-medium p-2 "
@@ -1023,7 +1029,7 @@ const AdminHRMS = () => {
                       Setting
                     </h2>
                   </NavLink>
-                  <NavLink
+                  {/* <NavLink
                     to="/admin/hrms/Device-Request"
                     className={({ isActive }) =>
                       `${
@@ -1052,7 +1058,7 @@ const AdminHRMS = () => {
                     >
                       Device Registration Request
                     </h2>
-                  </NavLink>
+                  </NavLink> */}
                   {/* <NavLink
                     to="/admin/hrms/Attendance-Validation"
                     className={({ isActive }) =>
@@ -1111,7 +1117,7 @@ const AdminHRMS = () => {
                   </NavLink> */}
                 </div>
               )}
-            </div>
+            </div>}
             {/* <div>
               <div
                 onClick={toggleFlexiMenu}
@@ -1337,7 +1343,7 @@ const AdminHRMS = () => {
                 </div>
               )}
             </div> */}
-            <div
+            {(Object.keys(roleAccess).length === 0 ||roleAccess.roster_permissions) &&<div
               onClick={toggleRosterMenu}
               className="cursor-pointer flex items-center text-sm gap-3 font-medium p-2 "
             >
@@ -1354,7 +1360,7 @@ const AdminHRMS = () => {
                   ? React.createElement(MdExpandLess, { size: "20" })
                   : React.createElement(MdExpandMore, { size: "20" })}
               </div>
-            </div>
+            </div>}
             {isRosterOpen && (
               <div className="">
                 <NavLink
@@ -1413,7 +1419,7 @@ const AdminHRMS = () => {
                 </NavLink>
               </div>
             )}
-            <div
+            {/* <div
               onClick={toggleExpenseMenu}
               className="cursor-pointer flex items-center text-sm gap-3 font-medium p-2 "
             >
@@ -1430,7 +1436,7 @@ const AdminHRMS = () => {
                   ? React.createElement(MdExpandLess, { size: "20" })
                   : React.createElement(MdExpandMore, { size: "20" })}
               </div>
-            </div>
+            </div> */}
             {isExpenseOpen && (
               <div className="flex flex-col gap-2 ">
                 <NavLink
@@ -1517,7 +1523,7 @@ const AdminHRMS = () => {
                 </NavLink>
               </div>
             )}
-            <div
+            {/* <div
               onClick={toggleTimeSheetMenu}
               className="cursor-pointer flex items-center text-sm gap-3 font-medium p-2 "
             >
@@ -1534,7 +1540,7 @@ const AdminHRMS = () => {
                   ? React.createElement(MdExpandLess, { size: "20" })
                   : React.createElement(MdExpandMore, { size: "20" })}
               </div>
-            </div>
+            </div> */}
             {isTimeSheetOpen && (
               <div className="flex flex-col gap-2 ">
                 <NavLink
@@ -1568,7 +1574,7 @@ const AdminHRMS = () => {
               </div>
             )}
 
-            <div>
+{(Object.keys(roleAccess).length === 0 ||roleAccess.leave_permissions) && <div>
               <div
                 onClick={toggleLeaveMenu}
                 className="cursor-pointer flex items-center text-sm gap-3.5 font-medium p-2 "
@@ -1703,7 +1709,7 @@ const AdminHRMS = () => {
                   </NavLink>
                 </div>
               )}
-            </div>
+            </div>}
 
             <div>
               <div
@@ -1868,7 +1874,7 @@ const AdminHRMS = () => {
               )}
             </div>
 
-            <NavLink
+            {/* <NavLink
               to="/admin/reports/"
               className={({ isActive }) =>
                 `${
@@ -1893,7 +1899,7 @@ const AdminHRMS = () => {
               >
                 Reports
               </h2>
-            </NavLink>
+            </NavLink> */}
           </>
         </div>
       </div>

@@ -186,6 +186,8 @@ const Resignation = () => {
   const handleAdditionalChange = (e) => {
     setAddInfo({ ...addInfo, [e.target.name]: e.target.value });
   };
+
+  
   return (
     <div className="flex justify-between">
       <AdminHRMS />

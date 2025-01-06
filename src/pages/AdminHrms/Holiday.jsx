@@ -5,8 +5,9 @@ import Table from "../../components/table/Table";
 import OrganisationSetting from "./OrganisationSetting";
 import HRMSHelpCenter from "./HRMSHelpCenter";
 import { useSelector } from "react-redux";
-import { getMyHRMSEmployees } from "../../api";
+import { getAdminAccess, getMyHRMSEmployees } from "../../api";
 import HolidayModal from "./HolidayModal";
+import { getItemInLocalStorage } from "../../utils/localStorage";
 
 const Holiday = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -48,9 +49,11 @@ const Holiday = () => {
       name: "Action",
       cell: (row) => (
         <div className="flex items-center gap-4">
-          <button onClick={() => setIsModalOpen1(true)}>
-            <BiEdit size={15} />
-          </button>
+          {roleAccess?.can_add_edit_company_holiday && (
+            <button onClick={() => setIsModalOpen1(true)}>
+              <BiEdit size={15} />
+            </button>
+          )}
         </div>
       ),
     },
@@ -61,6 +64,22 @@ const Holiday = () => {
     setData([...data, newHoliday]);
     closeModal();
   };
+
+  const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
+  const orgId = getItemInLocalStorage("HRMSORGID");
+  const [roleAccess, setRoleAccess] = useState({});
+  useEffect(() => {
+    const fetchRoleAccess = async () => {
+      try {
+        const res = await getAdminAccess(orgId, empId);
+
+        setRoleAccess(res[0]);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchRoleAccess();
+  }, []);
 
   return (
     <section className="flex ml-20">
@@ -79,13 +98,15 @@ const Holiday = () => {
           >
             Download Report
           </button>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="border-2 font-semibold hover:bg-black hover:text-white duration-150 transition-all border-black p-2 rounded-md text-black cursor-pointer text-center flex items-center gap-2 justify-center"
-          >
-            <PiPlusCircle size={20} />
-            Add
-          </button>
+          {roleAccess?.can_add_edit_company_holiday && (
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="border-2 font-semibold hover:bg-black hover:text-white duration-150 transition-all border-black p-2 rounded-md text-black cursor-pointer text-center flex items-center gap-2 justify-center"
+            >
+              <PiPlusCircle size={20} />
+              Add
+            </button>
+          )}
         </div>
         <Table columns={columns} data={data} isPagination={true} />
       </div>

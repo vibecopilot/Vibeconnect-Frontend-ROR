@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { FaCheck } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 import {
+  getAdminAccess,
   getEmployeeAssociatedSites,
   getEmployeeDetails,
   getMyHRMSEmployees,
@@ -169,6 +170,22 @@ console.log(formData)
       console.log(error);
     }
   };
+
+  const employeeId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
+    const orgId = getItemInLocalStorage("HRMSORGID");
+    const [roleAccess, setRoleAccess] = useState({});
+    useEffect(() => {
+      const fetchRoleAccess = async () => {
+        try {
+          const res = await getAdminAccess(orgId, employeeId);
+  
+          setRoleAccess(res[0]);
+        } catch (error) {
+          console.log(error);
+        }
+      };
+      fetchRoleAccess();
+    }, []);
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
@@ -386,12 +403,12 @@ console.log(formData)
           </div>
         </div>
         <div className="flex justify-center gap-2 border-t p-2">
-          <button
+         {roleAccess?.can_approve_reject_onboarding_request && <button
             className="flex items-center gap-2 bg-green-400 p-2 px-4 rounded-full text-white"
             onClick={handleAddEmployment}
           >
             <FaCheck /> Submit & Approve
-          </button>
+          </button>}
           <button
             onClick={setDetailsModal}
             className="flex items-center gap-2 bg-red-400 p-2 rounded-full text-white px-4"

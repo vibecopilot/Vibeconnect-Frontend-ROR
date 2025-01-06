@@ -6,7 +6,7 @@ import { FaArrowLeft, FaArrowRight } from "react-icons/fa";
 import { useSelector } from "react-redux";
 import { BiChevronLeft, BiChevronRight } from "react-icons/bi";
 import RoasterShiftDetails from "./Components/RoasterShiftDetails";
-import { getRosterRecords } from "../../api";
+import { getAdminAccess, getRosterRecords } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import { formatShiftTime } from "../../utils/dateUtils";
 import AssignRosterShifts from "./Modals/AssignRosterShifts";
@@ -115,6 +115,22 @@ const Roster = () => {
     if (!string) return ""; // Handle empty or undefined strings
     return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
   };
+
+  const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
+  const orgId = getItemInLocalStorage("HRMSORGID");
+  const [roleAccess, setRoleAccess] = useState({});
+  useEffect(() => {
+    const fetchRoleAccess = async () => {
+      try {
+        const res = await getAdminAccess(orgId, empId);
+
+        setRoleAccess(res[0]);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchRoleAccess();
+  }, []);
   return (
     <div className="flex ">
       <AdminHRMS />
@@ -131,12 +147,14 @@ const Roster = () => {
               value={currentMonth}
               onChange={(e) => setCurrentMonth(e.target.value)}
             />
-            <button
-              className="bg-white p-2 rounded-md text-black font-medium"
-              onClick={() => setAssignShifts(true)}
-            >
-              Assign Shifts
-            </button>
+            {roleAccess?.can_assign_edit_delete_shifts && (
+              <button
+                className="bg-white p-2 rounded-md text-black font-medium"
+                onClick={() => setAssignShifts(true)}
+              >
+                Assign Shifts
+              </button>
+            )}
             {/* <button onClick={toggleModal} className="border p-2 rounded-md">
               Upload Records
             </button>
@@ -423,13 +441,13 @@ const Roster = () => {
           date={selectedShift.date}
           schedule={selectedShift.schedule}
           onClose={() => setSelectedShift(null)}
-          fetchRosterRecords={()=>fetchRosterRecords(pageNumber)}
+          fetchRosterRecords={() => fetchRosterRecords(pageNumber)}
         />
       )}
       {assignShifts && (
         <AssignRosterShifts
           onClose={() => setAssignShifts(false)}
-          fetchRosterRecords={()=>fetchRosterRecords(pageNumber)}
+          fetchRosterRecords={() => fetchRosterRecords(pageNumber)}
         />
       )}
     </div>
