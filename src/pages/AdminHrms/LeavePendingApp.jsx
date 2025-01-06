@@ -21,6 +21,8 @@ import SingleLeaveApplication from "./LeaveApplicationModal/SingleLeaveApplicati
 import MultipleLeaveApplication from "./LeaveApplicationModal/MultipleLeaveApplication";
 import toast from "react-hot-toast";
 import EditLeaveApplication from "./LeaveApplicationModal/EditLeaveApplication";
+import LeaveApplicationDetails from "./LeaveApplicationModal/LeaveApplicationDetails";
+import { BsEye } from "react-icons/bs";
 const LeavePendingApp = () => {
   const themeColor = useSelector((state) => state.theme.color);
 
@@ -55,6 +57,22 @@ const LeavePendingApp = () => {
   };
 
   const columns = [
+     {
+          name: "View",
+          selector: (row) => (
+            <div className="flex justify-center gap-2">
+              <button
+                onClick={() => handleDetailsModal(row.id)}
+                className="text-blue-500 hover:text-blue-700 focus:outline-none"
+              >
+                <BsEye size={15} />
+              </button>
+    
+              
+            </div>
+          ),
+          sortable: true,
+        },
     {
       name: "Employee Name",
       selector: (row) => `${row.first_name} ${row.last_name}`,
@@ -254,6 +272,13 @@ const LeavePendingApp = () => {
     };
     fetchRoleAccess();
   }, []);
+
+   const [detailsModal, setDetailsModal] = useState(false);
+
+   const handleDetailsModal = (id) => {
+    setApplicationId(id);
+    setDetailsModal(true);
+  };
 
   return (
     <section className="flex">
@@ -1045,6 +1070,12 @@ const LeavePendingApp = () => {
             </div>
           </div>
         </div>
+      )}
+       {detailsModal && (
+        <LeaveApplicationDetails
+          setDetailsModal={setDetailsModal}
+          applicationId={applicationId}
+        />
       )}
     </section>
   );

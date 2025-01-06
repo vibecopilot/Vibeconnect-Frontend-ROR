@@ -169,20 +169,22 @@ const PendingTable = () => {
       name: "Approval",
       selector: (row) => (
         <div className="flex justify-center gap-2">
-          {roleAccess?.can_approve_reject_regularisation &&<>
-          <button
-            className="text-green-400 font-medium hover:bg-green-400 hover:text-white transition-all duration-200 p-1 rounded-full"
-            onClick={() => handleReqApproval(row.id, "approve")}
-            >
-            <TiTick size={20} />
-          </button>
-          <button
-            className="text-red-400 font-medium hover:bg-red-400 hover:text-white transition-all duration-200 p-1 rounded-full"
-            onClick={() => handleReqApproval(row.id, "reject")}
-          >
-            <IoClose size={20} />
-          </button>
-            </>}
+          {roleAccess?.can_approve_reject_regularisation && (
+            <>
+              <button
+                className="text-green-400 font-medium hover:bg-green-400 hover:text-white transition-all duration-200 p-1 rounded-full"
+                onClick={() => handleReqApproval(row.id, "approve")}
+              >
+                <TiTick size={20} />
+              </button>
+              <button
+                className="text-red-400 font-medium hover:bg-red-400 hover:text-white transition-all duration-200 p-1 rounded-full"
+                onClick={() => handleReqApproval(row.id, "reject")}
+              >
+                <IoClose size={20} />
+              </button>
+            </>
+          )}
         </div>
       ),
       sortable: true,
@@ -320,8 +322,8 @@ const PendingTable = () => {
   const [details, setDetails] = useState({});
   const [showDetailsModal, setshowDetailsModal] = useState(false);
   const handleShowDetails = async (reqId, empId) => {
-    fetchEmployeeDetails(empId)
-    fetchEmployeeAssociatedSite(empId)
+    fetchEmployeeDetails(empId);
+    fetchEmployeeAssociatedSite(empId);
     setshowDetailsModal(true);
     try {
       const res = await getRegularizationDetails(reqId);
@@ -372,21 +374,21 @@ const PendingTable = () => {
     }
   };
 
-     const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
-          const orgId = getItemInLocalStorage("HRMSORGID");
-          const [roleAccess, setRoleAccess] = useState({});
-          useEffect(() => {
-            const fetchRoleAccess = async () => {
-              try {
-                const res = await getAdminAccess(orgId, empId);
-        
-                setRoleAccess(res[0]);
-              } catch (error) {
-                console.log(error);
-              }
-            };
-            fetchRoleAccess();
-          }, []);
+  const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
+  const orgId = getItemInLocalStorage("HRMSORGID");
+  const [roleAccess, setRoleAccess] = useState({});
+  useEffect(() => {
+    const fetchRoleAccess = async () => {
+      try {
+        const res = await getAdminAccess(orgId, empId);
+
+        setRoleAccess(res[0]);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchRoleAccess();
+  }, []);
 
   return (
     <section className="flex">
@@ -399,20 +401,22 @@ const PendingTable = () => {
             value={searchText}
             onChange={handleSearch}
           />
-         {roleAccess?.can_approve_reject_regularisation && <div className="flex gap-2">
-            {/* <button
+          {roleAccess?.can_approve_reject_regularisation && (
+            <div className="flex gap-2">
+              {/* <button
               className="px-4 py-2 bg-blue-600 text-white rounded-md"
               onClick={() => setShowFilterModal(true)}
             >
               Filter
             </button> */}
-            <button
-              onClick={() => setShowActionsDropdown(!showActionsDropdown)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md"
-            >
-              Actions
-            </button>
-          </div>}
+              <button
+                onClick={() => setShowActionsDropdown(!showActionsDropdown)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md"
+              >
+                Actions
+              </button>
+            </div>
+          )}
           {showActionsDropdown && (
             <div
               className="absolute top-35 right-2 mt-11 w-60 bg-white border border-gray-300 rounded-md shadow-lg z-10"
@@ -964,86 +968,86 @@ const PendingTable = () => {
               Regularization Request Details
             </h2>
             <Accordion
-                title={"Requestor Details"}
-                icon={FaRegAddressCard}
-                content={
-                  <>
-                    <div className="grid  gap-2 border bg-blue-50 rounded-md p-2">
-                      <div className="flex items-center gap-2">
-                        <img
-                          src={hrmsDomain + empDetails.profile_photo}
-                          alt={empDetails?.employee?.first_name}
-                          className="border border-gray-300 rounded-full h-10 w-10 object-cover"
-                        />
-                        <p className="font-medium">
-                          {empDetails.first_name} {empDetails.last_name}
+              title={"Requestor Details"}
+              icon={FaRegAddressCard}
+              content={
+                <>
+                  <div className="grid  gap-2 border bg-blue-50 rounded-md p-2">
+                    <div className="flex items-center gap-2">
+                      <img
+                        src={hrmsDomain + empDetails.profile_photo}
+                        alt={empDetails?.employee?.first_name}
+                        className="border border-gray-300 rounded-full h-10 w-10 object-cover"
+                      />
+                      <p className="font-medium">
+                        {empDetails.first_name} {empDetails.last_name}
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-2">
+                        <label htmlFor="" className="font-medium">
+                          DOB :{" "}
+                        </label>
+                        <p>{empDetails.date_of_birth}</p>
+                      </div>
+                      <div className="grid grid-cols-2">
+                        <label htmlFor="" className="font-medium">
+                          Gender :{" "}
+                        </label>
+                        <p>{empDetails.gender}</p>
+                      </div>
+
+                      <div className="grid grid-cols-2">
+                        <label htmlFor="" className="font-medium">
+                          Mobile :{" "}
+                        </label>
+                        <p>{empDetails.mobile}</p>
+                      </div>
+                      <div className="grid grid-cols-2 ">
+                        <label htmlFor="" className="font-medium">
+                          Aadhar :{" "}
+                        </label>
+                        <p>{empDetails.aadhar_number}</p>
+                      </div>
+                      <div className="grid grid-cols-2">
+                        <label htmlFor="" className="font-medium">
+                          Pan :{" "}
+                        </label>
+                        <p>{empDetails.pan}</p>
+                      </div>
+                      <div className="grid grid-cols-2">
+                        <label htmlFor="" className="font-medium">
+                          Site :{" "}
+                        </label>
+                        <p>
+                          {empSiteDetails.associated_organization_name
+                            ? empSiteDetails.associated_organization_name
+                            : "Not Associated"}
                         </p>
                       </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="grid grid-cols-2">
-                          <label htmlFor="" className="font-medium">
-                            DOB :{" "}
-                          </label>
-                          <p>{empDetails.date_of_birth}</p>
-                        </div>
-                        <div className="grid grid-cols-2">
-                          <label htmlFor="" className="font-medium">
-                            Gender :{" "}
-                          </label>
-                          <p>{empDetails.gender}</p>
-                        </div>
-
-                        <div className="grid grid-cols-2">
-                          <label htmlFor="" className="font-medium">
-                            Mobile :{" "}
-                          </label>
-                          <p>{empDetails.mobile}</p>
-                        </div>
-                        <div className="grid grid-cols-2 ">
-                          <label htmlFor="" className="font-medium">
-                            Aadhar :{" "}
-                          </label>
-                          <p>{empDetails.aadhar_number}</p>
-                        </div>
-                        <div className="grid grid-cols-2">
-                          <label htmlFor="" className="font-medium">
-                            Pan :{" "}
-                          </label>
-                          <p>{empDetails.pan}</p>
-                        </div>
-                        <div className="grid grid-cols-2">
-                          <label htmlFor="" className="font-medium">
-                            Site :{" "}
-                          </label>
-                          <p>
-                            {empSiteDetails.associated_organization_name
-                              ? empSiteDetails.associated_organization_name
-                              : "Not Associated"}
-                          </p>
-                        </div>
-                        <div className="grid grid-cols-2">
-                          <label htmlFor="" className="font-medium">
-                            Site ID :{" "}
-                          </label>
-                          <p>
-                            {empSiteDetails.associated_organization
-                              ? empSiteDetails.associated_organization
-                              : "Not Associated"}
-                          </p>
-                        </div>
-                        <div className="grid grid-cols-2 ">
-                          <label htmlFor="" className="font-medium">
-                            Email :{" "}
-                          </label>
-                          <p className="text-wrap max-w-20">
-                            {empDetails.email_id}
-                          </p>
-                        </div>
+                      <div className="grid grid-cols-2">
+                        <label htmlFor="" className="font-medium">
+                          Site ID :{" "}
+                        </label>
+                        <p>
+                          {empSiteDetails.associated_organization
+                            ? empSiteDetails.associated_organization
+                            : "Not Associated"}
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-2 ">
+                        <label htmlFor="" className="font-medium">
+                          Email :{" "}
+                        </label>
+                        <p className="text-wrap max-w-20">
+                          {empDetails.email_id}
+                        </p>
                       </div>
                     </div>
-                  </>
-                }
-              />
+                  </div>
+                </>
+              }
+            />
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div className="flex justify-between">
                 <span className="font-medium">Status:</span>
