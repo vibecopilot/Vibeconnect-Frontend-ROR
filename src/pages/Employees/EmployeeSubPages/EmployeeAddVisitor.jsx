@@ -179,12 +179,16 @@ const EmployeeAddVisitor = () => {
     try {
       const visitResp = await postNewVisitor(postData);
       const dataToSave = {
-        visitorName: formData.visitorName,
-        visitorId: visitResp.data.id,
-        purpose: formData.purpose,
-        mobile: formData.mobile,
-        passStartDate,
-        passEndDate,
+        UserInfo: {
+          employeeNo: visitResp.data.id,
+          name: formData.visitorName,
+          userType: "visitor",
+          Valid: {
+            enable: true,
+            beginTime: passStartDate,
+            endTime: passEndDate,
+          },
+        },
       };
       console.log("making json file");
       const blob = new Blob([JSON.stringify(dataToSave, null, 2)], {
