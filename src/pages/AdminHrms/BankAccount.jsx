@@ -12,6 +12,7 @@ import { FaTrash } from "react-icons/fa";
 import {
   deleteMyBankDetails,
   editMyBankAccount,
+  getAdminAccess,
   getMyBankAccounts,
   getMyBankDetails,
   postMyBankAccounts,
@@ -52,12 +53,14 @@ const BankAccount = () => {
 
       cell: (row) => (
         <div className="flex items-center gap-4">
+         {roleAccess?.can_add_edit_bank_account && <>
           <button onClick={() => handleEditModal(row.id)}>
             <BiEdit size={15} />
           </button>
           <button onClick={() => handleDeleteBank(row.id)}>
             <FaTrash size={15} />
           </button>
+          </>}
         </div>
       ),
     },
@@ -76,7 +79,7 @@ const BankAccount = () => {
     try {
       const bankRes = await getMyBankAccounts(hrmsOrgId);
       setBankAccounts(bankRes);
-      setFilteredAccounts(bankRes)
+      setFilteredAccounts(bankRes);
     } catch (error) {
       console.log(error);
     }
@@ -91,9 +94,14 @@ const BankAccount = () => {
     if (searchValue.trim() === "") {
       setFilteredAccounts(bankAccounts);
     } else {
-      const filteredResult = bankAccounts.filter((accounts) =>
-        accounts.bank_name.toLowerCase().includes(searchValue.toLowerCase()) ||
-      accounts.account_number.toLowerCase().includes(searchValue.toLowerCase())
+      const filteredResult = bankAccounts.filter(
+        (accounts) =>
+          accounts.bank_name
+            .toLowerCase()
+            .includes(searchValue.toLowerCase()) ||
+          accounts.account_number
+            .toLowerCase()
+            .includes(searchValue.toLowerCase())
       );
       setFilteredAccounts(filteredResult);
     }
@@ -183,6 +191,22 @@ const BankAccount = () => {
     }
   };
   const themeColor = useSelector((state) => state.theme.color);
+
+  const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
+  const orgId = getItemInLocalStorage("HRMSORGID");
+  const [roleAccess, setRoleAccess] = useState({});
+  useEffect(() => {
+    const fetchRoleAccess = async () => {
+      try {
+        const res = await getAdminAccess(orgId, empId);
+
+        setRoleAccess(res[0]);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchRoleAccess();
+  }, []);
   return (
     <section className="flex ml-20">
       <OrganisationSetting />
@@ -195,14 +219,16 @@ const BankAccount = () => {
             value={searchText}
             onChange={handleSearch}
           />
-          <button
-            onClick={() => setShowAddModal(true)}
-            style={{ background: themeColor }}
-            className="border-2 font-semibold  hover:text-white duration-150 transition-all  p-2 rounded-lg text-white cursor-pointer text-center flex items-center  gap-2 justify-center"
-          >
-            <PiPlusCircle size={20} />
-            Add
-          </button>
+          {roleAccess?.can_add_edit_bank_account && (
+            <button
+              onClick={() => setShowAddModal(true)}
+              style={{ background: themeColor }}
+              className="border-2 font-semibold  hover:text-white duration-150 transition-all  p-2 rounded-lg text-white cursor-pointer text-center flex items-center  gap-2 justify-center"
+            >
+              <PiPlusCircle size={20} />
+              Add
+            </button>
+          )}
         </div>
         {showAddModal && (
           <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">

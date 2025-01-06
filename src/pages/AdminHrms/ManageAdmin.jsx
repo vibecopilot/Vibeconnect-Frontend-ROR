@@ -8,10 +8,12 @@ import { FaCheck, FaTrash } from "react-icons/fa";
 import {
   deleteManageAdmin,
   editManageAdminDetails,
+  getAdminAccess,
   getManageAdmin,
   getManageAdminDetails,
   getMyHRMSAdmins,
   getMyHRMSEmployees,
+  postApprovalAuthorities,
   postManageAdmin,
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
@@ -61,16 +63,19 @@ const ManageAdmin = () => {
 
       cell: (row) => (
         <div className="flex items-center gap-4">
-          <button onClick={() => handleEditModal(row.id)}>
-            <BiEdit size={15} />
-          </button>
-          <button
-            //to={`/admin/edit-templates/${row.id}`}
-            onClick={() => handleDeleteAdmin(row.id)}
-            className="text-red-400"
-          >
-            <FaTrash size={15} />
-          </button>
+          {roleAccess?.can_add_edit_admins && (
+            <>
+              <button onClick={() => handleEditModal(row.id)}>
+                <BiEdit size={15} />
+              </button>
+              <button
+                onClick={() => handleDeleteAdmin(row.id)}
+                className="text-red-400"
+              >
+                <FaTrash size={15} />
+              </button>
+            </>
+          )}
         </div>
       ),
     },
@@ -175,6 +180,17 @@ const ManageAdmin = () => {
     }
     try {
       const res = await postManageAdmin(postData);
+      if (employeePermission.can_approve_reject_onboarding_request) {
+        const addApprover = new FormData();
+        addApprover.append("organization_id", hrmsOrgId);
+        addApprover.append("approver_id", selectedUserOption.value);
+        addApprover.append("type_of_approver", "Employee");
+        try {
+          const res = await postApprovalAuthorities(addApprover);
+        } catch (error) {
+          console.log(error);
+        }
+      }
       setShowModal(false);
       fetchAllAdmin();
       toast.success("Admin access right added successfully");
@@ -244,15 +260,76 @@ const ManageAdmin = () => {
 
   const handleEditAdmin = async () => {
     const editData = new FormData();
-    editData.append("name", selectedUserOption.value);
-    editData.append("role", role);
-    editData.append("access", access);
     editData.append("organization", hrmsOrgId);
+    editData.append("access", access);
+    editData.append("role", role);
+    if (access === "Full Access") {
+      Object.keys(permissionAllowed).forEach((key) => {
+        editData.append(key, true);
+      });
+    } else {
+      Object.keys(permissionAllowed).forEach((key) => {
+        editData.append(key, permissionAllowed[key]);
+      });
+    }
+    if (access === "Full Access") {
+      Object.keys(employeePermission).forEach((key) => {
+        editData.append(key, true);
+      });
+    } else {
+      Object.keys(employeePermission).forEach((key) => {
+        editData.append(key, employeePermission[key]);
+      });
+    }
+    if (access === "Full Access") {
+      Object.keys(attendancePermission).forEach((key) => {
+        editData.append(key, true);
+      });
+    } else {
+      Object.keys(attendancePermission).forEach((key) => {
+        editData.append(key, attendancePermission[key]);
+      });
+    }
+    if (access === "Full Access") {
+      Object.keys(rosterPermission).forEach((key) => {
+        editData.append(key, true);
+      });
+    } else {
+      Object.keys(rosterPermission).forEach((key) => {
+        editData.append(key, rosterPermission[key]);
+      });
+    }
+    if (access === "Full Access") {
+      Object.keys(leavePermission).forEach((key) => {
+        editData.append(key, true);
+      });
+    } else {
+      Object.keys(leavePermission).forEach((key) => {
+        editData.append(key, leavePermission[key]);
+      });
+    }
+    //
+    if (selectedUserOption && selectedUserOption.value) {
+      editData.append("name", selectedUserOption.value);
+    } else {
+      toast.error("No user selected.");
+    }
     try {
       const res = await editManageAdminDetails(adminId, editData);
-      toast.success("Admin access updated successfully");
+      if (employeePermission.can_approve_reject_onboarding_request) {
+        const addApprover = new FormData();
+        addApprover.append("organization_id", hrmsOrgId);
+        addApprover.append("approver_id", selectedUserOption.value);
+        addApprover.append("type_of_approver", "Employee");
+        try {
+          const res = await postApprovalAuthorities(addApprover);
+        } catch (error) {
+          console.log(error);
+        }
+      }
       setShowModal1(false);
       fetchAllAdmin();
+      toast.success("Admin access right updated successfully");
     } catch (error) {
       console.log(error);
     }
@@ -275,7 +352,7 @@ const ManageAdmin = () => {
   const themeColor = useSelector((state) => state.theme.color);
   const [permissionAllowed, setPermissionAllowed] = useState({
     organization_permissions: false,
-    can_edit_organization_details: false,
+    can_edit_basic_info: false,
     can_edit_address_info: false,
     can_add_edit_locations: false,
     can_add_edit_department: false,
@@ -386,6 +463,22 @@ const ManageAdmin = () => {
     },
   ];
   console.log(permissionAllowed);
+  // can_add_edit_admins
+  const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
+  const orgId = getItemInLocalStorage("HRMSORGID");
+  const [roleAccess, setRoleAccess] = useState({});
+  useEffect(() => {
+    const fetchRoleAccess = async () => {
+      try {
+        const res = await getAdminAccess(orgId, empId);
+
+        setRoleAccess(res[0]);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchRoleAccess();
+  }, []);
   return (
     <section className="flex gap-1 ml-20">
       <UserDetailsList />
@@ -398,14 +491,16 @@ const ManageAdmin = () => {
             value={searchText}
             onChange={handleSearch}
           />
-          <button
-            onClick={() => setShowModal(true)}
-            style={{ background: themeColor }}
-            className="border-2 font-semibold hover:bg-black hover:text-white duration-150 transition-all p-2 rounded-lg text-white cursor-pointer text-center flex items-center gap-2 justify-center"
-          >
-            <PiPlusCircle size={20} />
-            Add
-          </button>
+          {roleAccess?.can_add_edit_admins && (
+            <button
+              onClick={() => setShowModal(true)}
+              style={{ background: themeColor }}
+              className="border-2 font-semibold hover:bg-black hover:text-white duration-150 transition-all p-2 rounded-lg text-white cursor-pointer text-center flex items-center gap-2 justify-center"
+            >
+              <PiPlusCircle size={20} />
+              Add
+            </button>
+          )}
         </div>
         {showModal && (
           <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
@@ -952,7 +1047,7 @@ const ManageAdmin = () => {
                 </button>
                 <button
                   className=" bg-green-500 text-white py-2 px-4 rounded-full flex items-center gap-2"
-                  onClick={handleAddAdminAccess}
+                  onClick={handleEditAdmin}
                 >
                   <FaCheck /> Submit
                 </button>

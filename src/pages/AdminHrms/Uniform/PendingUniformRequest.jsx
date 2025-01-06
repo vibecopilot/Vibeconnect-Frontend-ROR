@@ -6,6 +6,7 @@ import { PiPlusCircle } from "react-icons/pi";
 import { MdClose } from "react-icons/md";
 import { FaCheck, FaRegAddressCard } from "react-icons/fa";
 import {
+  getAdminAccess,
   getEmployeeAssociatedSites,
   getEmployeeDetails,
   getMyHRMSEmployees,
@@ -93,18 +94,20 @@ const PendingUniformRequest = () => {
       name: "Action",
       cell: (row) => (
         <div className="flex items-center gap-4">
+          {roleAccess?.can_approve_reject_uniform_request && <>
           <button
             className="bg-green-400 text-white p-2 rounded-full"
             onClick={() => handleUniformApproval(row.id, "Approved")}
-          >
+            >
             <FaCheck title="Approve uniform" />
           </button>
           <button
             className="bg-red-400 text-white p-2 rounded-full"
             onClick={() => handleUniformApproval(row.id, "Rejected")}
-          >
+            >
             <MdClose title="Reject uniform" size={15} />
           </button>
+            </>}
         </div>
       ),
     },
@@ -161,7 +164,7 @@ const PendingUniformRequest = () => {
     postData.append("id_card", formData.ID);
     postData.append("waist", formData.waist);
     postData.append("shoes_size", formData.shoes);
-    postData.append("status", "Approved");
+    // postData.append("status", "Approved");
     postData.append("employee", selectedOption.value);
     try {
       const res = await postUniformRequest(postData);
@@ -238,6 +241,24 @@ const PendingUniformRequest = () => {
       console.log(error);
     }
   };
+
+
+  // can_approve_reject_uniform_request
+  const employeeId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
+    const orgId = getItemInLocalStorage("HRMSORGID");
+    const [roleAccess, setRoleAccess] = useState({});
+    useEffect(() => {
+      const fetchRoleAccess = async () => {
+        try {
+          const res = await getAdminAccess(orgId, employeeId);
+  
+          setRoleAccess(res[0]);
+        } catch (error) {
+          console.log(error);
+        }
+      };
+      fetchRoleAccess();
+    }, []);
 
   return (
     <section className="flex">

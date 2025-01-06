@@ -3,6 +3,7 @@ import OrganisationSetting from "./OrganisationSetting";
 import HRMSHelpCenter from "./HRMSHelpCenter";
 import {
   editMyOrganization,
+  getAdminAccess,
   getAllHrmsOrganisation,
   getMyOrganization,
 } from "../../api";
@@ -34,6 +35,24 @@ const BasicInformation = () => {
       [name]: value,
     });
   };
+
+  const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
+  const orgId = getItemInLocalStorage("HRMSORGID");
+  const [roleAccess, setRoleAccess] = useState({
+
+  })
+  useEffect(() => {
+    const fetchRoleAccess = async () => {
+      try {
+        const res = await getAdminAccess(orgId, empId);
+
+        setRoleAccess(res[0])
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchRoleAccess();
+  }, []);
   useEffect(() => {
     const fetchAllOrganization = async () => {
       try {
@@ -116,6 +135,8 @@ const BasicInformation = () => {
     }
   };
 
+   
+
   return (
     <div className="flex ml-20 justify-between">
       <OrganisationSetting />
@@ -123,10 +144,11 @@ const BasicInformation = () => {
       <div className="p-6 bg-white rounded-lg w-full">
         <div className="flex justify-between">
           <h2 className="text-2xl font-bold mb-6">Basic Information</h2>
+        {roleAccess?.can_edit_basic_info &&  <>
           {!isEditing ? (
             <button
-              onClick={() => setIsEditing(!isEditing)}
-              className="mb-4 px-4 py-1 bg-blue-500 text-white rounded-full flex items-center gap-2"
+            onClick={() => setIsEditing(!isEditing)}
+            className="mb-4 px-4 py-1 bg-blue-500 text-white rounded-full flex items-center gap-2"
             >
               <BiEdit /> Edit
             </button>
@@ -135,7 +157,7 @@ const BasicInformation = () => {
               <button
                 onClick={HandleEditMyOrganization}
                 className="mb-4 px-4 py-1 bg-green-500 text-white rounded-full flex items-center gap-2"
-              >
+                >
                 <FaCheck /> Save
               </button>
               <button
@@ -146,6 +168,7 @@ const BasicInformation = () => {
               </button>
             </div>
           )}
+          </>}
         </div>
         <div>
           <div className="grid w-full gap-2">

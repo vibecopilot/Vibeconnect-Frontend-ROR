@@ -8,6 +8,7 @@ import CustomTrigger from "../../containers/CustomTrigger";
 import { FaRegAddressCard, FaTrash } from "react-icons/fa";
 import {
   approveRejectMultipleRegRequest,
+  getAdminAccess,
   getEmployeeAssociatedSites,
   getEmployeeDetails,
   getEmployeeRegularizationReq,
@@ -168,10 +169,11 @@ const PendingTable = () => {
       name: "Approval",
       selector: (row) => (
         <div className="flex justify-center gap-2">
+          {roleAccess?.can_approve_reject_regularisation &&<>
           <button
             className="text-green-400 font-medium hover:bg-green-400 hover:text-white transition-all duration-200 p-1 rounded-full"
             onClick={() => handleReqApproval(row.id, "approve")}
-          >
+            >
             <TiTick size={20} />
           </button>
           <button
@@ -180,6 +182,7 @@ const PendingTable = () => {
           >
             <IoClose size={20} />
           </button>
+            </>}
         </div>
       ),
       sortable: true,
@@ -369,6 +372,22 @@ const PendingTable = () => {
     }
   };
 
+     const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
+          const orgId = getItemInLocalStorage("HRMSORGID");
+          const [roleAccess, setRoleAccess] = useState({});
+          useEffect(() => {
+            const fetchRoleAccess = async () => {
+              try {
+                const res = await getAdminAccess(orgId, empId);
+        
+                setRoleAccess(res[0]);
+              } catch (error) {
+                console.log(error);
+              }
+            };
+            fetchRoleAccess();
+          }, []);
+
   return (
     <section className="flex">
       <div className="w-full flex mx-2 flex-col overflow-hidden">
@@ -380,7 +399,7 @@ const PendingTable = () => {
             value={searchText}
             onChange={handleSearch}
           />
-          <div className="flex gap-2">
+         {roleAccess?.can_approve_reject_regularisation && <div className="flex gap-2">
             {/* <button
               className="px-4 py-2 bg-blue-600 text-white rounded-md"
               onClick={() => setShowFilterModal(true)}
@@ -393,7 +412,7 @@ const PendingTable = () => {
             >
               Actions
             </button>
-          </div>
+          </div>}
           {showActionsDropdown && (
             <div
               className="absolute top-35 right-2 mt-11 w-60 bg-white border border-gray-300 rounded-md shadow-lg z-10"

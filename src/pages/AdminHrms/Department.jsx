@@ -14,6 +14,7 @@ import {
   getHrmsDepartmentDetails,
   editHrmsOrganizationDepartment,
   deleteHrmsDepartment,
+  getAdminAccess,
 } from "../../api";
 import Select from "react-select";
 import { getItemInLocalStorage } from "../../utils/localStorage";
@@ -52,9 +53,9 @@ const Department = () => {
 
       cell: (row) => (
         <div className="flex items-center gap-4">
-          <button onClick={() => handleEditModal(row.id)}>
+         {roleAccess?.can_add_edit_department &&  <button onClick={() => handleEditModal(row.id)}>
             <BiEdit size={15} />
-          </button>
+          </button>}
           {/* <button
             onClick={() => handleDeleteDepartment(row.id)}
             className="text-red-400"
@@ -225,6 +226,24 @@ const Department = () => {
     }
   };
 
+  const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
+          const orgId = getItemInLocalStorage("HRMSORGID");
+          const [roleAccess, setRoleAccess] = useState({
+        
+          })
+          useEffect(() => {
+            const fetchRoleAccess = async () => {
+              try {
+                const res = await getAdminAccess(orgId, empId);
+        
+                setRoleAccess(res[0])
+              } catch (error) {
+                console.log(error);
+              }
+            };
+            fetchRoleAccess();
+          }, []);
+
   return (
     <section className="flex ml-20">
       <OrganisationSetting />
@@ -237,14 +256,14 @@ const Department = () => {
             value={searchText}
             onChange={handleSearch}
           />
-          <button
+         {roleAccess?.can_add_edit_department && <button
             onClick={() => setIsModalOpen(true)}
             style={{ background: themeColor }}
             className="border-2 font-medium hover:bg-black hover:text-white duration-150 transition-all  p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
           >
             <PiPlusCircle size={20} />
             Add
-          </button>
+          </button>}
         </div>
         <Table
           columns={columns}

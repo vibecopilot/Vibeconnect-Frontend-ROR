@@ -3,6 +3,7 @@ import OrganisationSetting from "./OrganisationSetting";
 import HRMSHelpCenter from "./HRMSHelpCenter";
 import {
   editOrganizationAddress,
+  getAdminAccess,
   getAllOrganizationAddress,
   getMyOrganizationAddress,
   getOrganizationAddress,
@@ -111,35 +112,53 @@ const AddressInformation = () => {
       console.log(error);
     }
   };
+  const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
+  const orgId = getItemInLocalStorage("HRMSORGID");
+  const [roleAccess, setRoleAccess] = useState({});
+  useEffect(() => {
+    const fetchRoleAccess = async () => {
+      try {
+        const res = await getAdminAccess(orgId, empId);
 
+        setRoleAccess(res[0]);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchRoleAccess();
+  }, []);
   return (
     <div className="flex gap-2 justify-between ml-20">
       <OrganisationSetting />
       <div className=" py-6 bg-white rounded-lg w-full">
         <div className="flex justify-between">
           <h2 className="text-2xl font-bold mb-6">Address Information</h2>
-          {!isEditing ? (
-            <button
-              onClick={() => setIsEditing(!isEditing)}
-              className="mb-4 px-4 py-2 bg-blue-500 text-white rounded-md flex items-center gap-2"
-            >
-              <BiEdit /> Edit
-            </button>
-          ) : (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleEditAddress}
-                className="mb-4 px-4 py-2 bg-green-500 text-white rounded-full flex items-center gap-2"
-              >
-                <FaCheck /> Save
-              </button>
-              <button
-                onClick={() => setIsEditing(!isEditing)}
-                className="mb-4 px-4 py-2 border-2 border-red-500 text-red-400 rounded-full flex items-center gap-2"
-              >
-                <MdClose /> Cancel
-              </button>
-            </div>
+          {roleAccess.can_edit_address_info && (
+            <>
+              {!isEditing ? (
+                <button
+                  onClick={() => setIsEditing(!isEditing)}
+                  className="mb-4 px-4 py-2 bg-blue-500 text-white rounded-md flex items-center gap-2"
+                >
+                  <BiEdit /> Edit
+                </button>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleEditAddress}
+                    className="mb-4 px-4 py-2 bg-green-500 text-white rounded-full flex items-center gap-2"
+                  >
+                    <FaCheck /> Save
+                  </button>
+                  <button
+                    onClick={() => setIsEditing(!isEditing)}
+                    className="mb-4 px-4 py-2 border-2 border-red-500 text-red-400 rounded-full flex items-center gap-2"
+                  >
+                    <MdClose /> Cancel
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
         <div>
