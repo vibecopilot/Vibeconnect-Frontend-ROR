@@ -337,15 +337,24 @@ const EmployeeAddVisitor = () => {
   };
 
   const handlePassStartDateChange = (event) => {
-    const selectedDateTime = new Date(event.target.value);
-    const formattedDateTime = selectedDateTime.toISOString().slice(0, 19);
-    setPassStartDate(formattedDateTime);
+    const selectedDateTime = event.target.value + ":00";
+    setPassStartDate(selectedDateTime);
+
+    if (passEndDate && selectedDateTime > passEndDate) {
+      setPassEndDate("");
+      toast.error("End date cannot be earlier than the start date.");
+    }
   };
-  
+
   const handlePassEndDateChange = (event) => {
-    const selectedDateTime = new Date(event.target.value);
-    const formattedDateTime = selectedDateTime.toISOString().slice(0, 19);
-    setPassEndDate(formattedDateTime);
+    const selectedDateTime = event.target.value + ":00";
+
+    if (passStartDate && selectedDateTime < passStartDate) {
+      toast.error("End date cannot be earlier than the start date.");
+      return;
+    }
+
+    setPassEndDate(selectedDateTime);
   };
 
   return (
