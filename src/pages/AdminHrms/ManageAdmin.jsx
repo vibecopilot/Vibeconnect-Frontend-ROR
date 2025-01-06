@@ -48,8 +48,8 @@ const ManageAdmin = () => {
       sortable: true,
     },
     {
-      name: "Email",
-      selector: (row) => row.email_id,
+      name: "Role",
+      selector: (row) => row.role,
       sortable: true,
       width: "250px",
     },
@@ -504,12 +504,12 @@ const ManageAdmin = () => {
         </div>
         {showModal && (
           <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-            <div className="bg-white p-4 rounded-xl">
+            <div className="bg-white p-4 rounded-xl ">
               <h1 className="text-lg font-semibold border-b flex items-center gap-2 justify-center">
                 <PiPlusCircle /> Add Manage Administrator
               </h1>
-              <div className="grid grid-cols-3 gap-2 max-h-96 overflow-y-auto hide-scrollbar">
-                <div className="flex flex-col col-span-3">
+              <div className="grid grid-cols-3 gap-2 max-h-96 min-h-52 overflow-y-auto hide-scrollbar">
+                <div className="flex flex-col col-span-3 justify-center">
                   <label className="block text-gray-700 font-medium ">
                     Select Admin :
                   </label>
@@ -780,7 +780,7 @@ const ManageAdmin = () => {
         )}
         {showModal1 && (
           <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-            <div className="bg-white p-4 rounded-xl">
+            <div className="bg-white p-4 rounded-xl min-h-52">
               <h1 className="text-lg font-semibold border-b flex items-center gap-2 justify-center">
                 <BiEdit /> Edit Manage Administrator
               </h1>
