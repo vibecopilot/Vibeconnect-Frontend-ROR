@@ -30,6 +30,7 @@ import Accordion from "./Components/Accordion";
 import {
   deleteEmployeeDocs,
   deleteEmployeeLetters,
+  getAdminAccess,
   getEmployeeDocs,
   getEmployeeEsic,
   getEmployeeLetters,
@@ -45,6 +46,7 @@ import {
 import { IoDocument } from "react-icons/io5";
 import toast from "react-hot-toast";
 import PdfViewer from "./Components/PdfViewer";
+import { getItemInLocalStorage } from "../../utils/localStorage";
 
 const lettersList = [
   {
@@ -247,6 +249,22 @@ const SectionDoc = () => {
     fetchEmployeeESICData();
   }, []);
 
+  const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
+  const orgId = getItemInLocalStorage("HRMSORGID");
+  const [roleAccess, setRoleAccess] = useState({});
+  useEffect(() => {
+    const fetchRoleAccess = async () => {
+      try {
+        const res = await getAdminAccess(orgId, empId);
+
+        setRoleAccess(res[0]);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchRoleAccess();
+  }, []);
+
   return (
     <div className="flex flex-col ml-20">
       <EditEmployeeDirectory />
@@ -261,14 +279,16 @@ const SectionDoc = () => {
             content={
               <div className="border-b border-gray-200 mb-1">
                 <div className="bg-blue-100 p-4 rounded-lg">
-                  <div className="flex justify-end items-center mb-2">
-                    <button
-                      onClick={openDocs}
-                      className="text-blue-500 px-2 border-2 rounded-full border-blue-500 flex gap-2 items-center p-1 "
-                    >
-                      <AddCircleOutline /> Add
-                    </button>
-                  </div>
+                  {roleAccess?.can_edit_employee && (
+                    <div className="flex justify-end items-center mb-2">
+                      <button
+                        onClick={openDocs}
+                        className="text-blue-500 px-2 border-2 rounded-full border-blue-500 flex gap-2 items-center p-1 "
+                      >
+                        <AddCircleOutline /> Add
+                      </button>
+                    </div>
+                  )}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {documentList.map((doc, index) => (
                       <div
@@ -314,12 +334,12 @@ const SectionDoc = () => {
               <div className="bg-green-100 p-4 rounded-lg mb-1">
                 <div className="flex justify-end items-center mb-2">
                   {/* <h2 className="text-xl font-semibold">Employee Letters</h2> */}
-                  <button
+                  {roleAccess?.can_edit_employee && (<button
                     onClick={openLetter}
                     className="text-green-500 px-2 border-2 rounded-full border-green-500 flex gap-2 items-center p-1 "
                   >
                     <AddCircleOutline /> Add
-                  </button>
+                  </button>)}
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {lettersList.map((letter, index) => (
@@ -396,11 +416,11 @@ const SectionDoc = () => {
                         </div>
                       </div>
                       <div>
-                      <img 
-          src={hrmsDomain + letter.photo} 
-          alt="" 
-          className="bg-white p-4 rounded-lg shadow-md border border-gray-200 flex flex-col items-center w-auto h-auto max-h-80 max-w-[20rem] object-cover" 
-        />
+                        <img
+                          src={hrmsDomain + letter.photo}
+                          alt=""
+                          className="bg-white p-4 rounded-lg shadow-md border border-gray-200 flex flex-col items-center w-auto h-auto max-h-80 max-w-[20rem] object-cover"
+                        />
                       </div>
                     </div>
                   ))}

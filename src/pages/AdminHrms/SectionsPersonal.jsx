@@ -11,6 +11,7 @@ import {
   editEmployeeDetails,
   editEmployeeFamilyDetails,
   editPaymentInfoDetails,
+  getAdminAccess,
   getEmployeeAddressDetails,
   getEmployeeDetails,
   getEmployeeFamilyDetails,
@@ -441,6 +442,23 @@ const SectionsPersonal = () => {
       console.log(error);
     }
   };
+  // can_edit_employee
+
+   const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
+    const orgId = getItemInLocalStorage("HRMSORGID");
+    const [roleAccess, setRoleAccess] = useState({});
+    useEffect(() => {
+      const fetchRoleAccess = async () => {
+        try {
+          const res = await getAdminAccess(orgId, empId);
+  
+          setRoleAccess(res[0]);
+        } catch (error) {
+          console.log(error);
+        }
+      };
+      fetchRoleAccess();
+    }, []);
 
   return (
     <div className="flex flex-col ml-20">
@@ -455,7 +473,7 @@ const SectionsPersonal = () => {
             title={"Basic Information"}
             content={
               <>
-                <div className="flex justify-end gap-2">
+                {roleAccess?.can_edit_employee &&<div className="flex justify-end gap-2">
                   {isEditing ? (
                     <>
                       <button
@@ -482,7 +500,7 @@ const SectionsPersonal = () => {
                       <BiEdit /> Edit
                     </button>
                   )}
-                </div>
+                </div>}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
@@ -665,7 +683,7 @@ const SectionsPersonal = () => {
             title={"Family Information"}
             content={
               <>
-                <div className="flex justify-end gap-2">
+               {roleAccess?.can_edit_employee && <div className="flex justify-end gap-2">
                   {isFamEditing ? (
                     <>
                       <button
@@ -692,7 +710,7 @@ const SectionsPersonal = () => {
                       <BiEdit /> Edit
                     </button>
                   )}
-                </div>
+                </div>}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
@@ -752,7 +770,7 @@ const SectionsPersonal = () => {
             title={"Address Information"}
             content={
               <>
-                <div className="flex justify-end gap-2">
+                {roleAccess?.can_edit_employee && <div className="flex justify-end gap-2">
                   {isAddressEditing ? (
                     <>
                       <button
@@ -779,7 +797,7 @@ const SectionsPersonal = () => {
                       <BiEdit /> Edit
                     </button>
                   )}
-                </div>
+                </div>}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
@@ -890,14 +908,16 @@ const SectionsPersonal = () => {
             content={
               <div>
                 {paymentsData.length === 0 && (
-                  <div className="flex justify-end">
+                  <>
+                  {roleAccess?.can_edit_employee && <div className="flex justify-end">
                     <button
                       className="bg-blue-500 text-white mb-2 hover:bg-gray-700 font-semibold py-2 px-4 rounded-full flex items-center gap-2"
                       onClick={() => setAddPaymentInfoModal(true)}
-                    >
+                      >
                       <PiPlusCircle size={18} /> Add
                     </button>
-                  </div>
+                  </div>}
+                      </>
                 )}
                 <Table
                   columns={PaymentColumn}
