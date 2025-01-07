@@ -179,22 +179,20 @@ function EmployeeDirectory() {
   };
 
   const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
-          const orgId = getItemInLocalStorage("HRMSORGID");
-          const [roleAccess, setRoleAccess] = useState({
-        
-          })
-          useEffect(() => {
-            const fetchRoleAccess = async () => {
-              try {
-                const res = await getAdminAccess(orgId, empId);
-        
-                setRoleAccess(res[0])
-              } catch (error) {
-                console.log(error);
-              }
-            };
-            fetchRoleAccess();
-          }, []);
+  const orgId = getItemInLocalStorage("HRMSORGID");
+  const [roleAccess, setRoleAccess] = useState({});
+  useEffect(() => {
+    const fetchRoleAccess = async () => {
+      try {
+        const res = await getAdminAccess(orgId, empId);
+
+        setRoleAccess(res[0]);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchRoleAccess();
+  }, []);
 
   return (
     <div className="w-full">
@@ -860,14 +858,16 @@ function EmployeeDirectory() {
                   >
                     Filter
                   </button> */}
-                  {roleAccess?.can_add_employee && <Link
-                    to={"/admin/add-employee/basics"}
-                    style={{ background: themeColor }}
-                    className="border-2 font-semibold hover:bg-black hover:text-white duration-150 transition-all border-white p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center mr-1"
-                  >
-                    <PiPlusCircle size={20} />
-                    Add Employee
-                  </Link>}
+                  {roleAccess?.can_add_employee && (
+                    <Link
+                      to={"/admin/add-employee/basics"}
+                      style={{ background: themeColor }}
+                      className="border-2 font-semibold hover:bg-black hover:text-white duration-150 transition-all border-white p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center mr-1"
+                    >
+                      <PiPlusCircle size={20} />
+                      Add Employee
+                    </Link>
+                  )}
                 </div>
               </div>
             </div>
@@ -1065,22 +1065,29 @@ function EmployeeDirectory() {
                                   >
                                     {employee?.status ? "Active" : "Inactive"}
                                   </p>
-                                  {(roleAccess?.can_edit_employee || roleAccess?.can_delete_employee ) && <div className="flex gap-2 items-center bg-white p-1 rounded-full px-2">
-                                   {roleAccess?.can_edit_employee && <Link
-                                      className="text-blue-500  hover:text-blue-900"
-                                      to={`/hrms/employee-directory-Personal/${employee.id}`}
-                                    >
-                                      <BiEdit size={18} />
-                                    </Link>}{" "}
-                                   {roleAccess?.can_delete_employee && <button
-                                      onClick={() =>
-                                        handleDeleteModal(employee.id)
-                                      }
-                                      className="text-red-400 hover:text-red-800"
-                                    >
-                                      <FaTrash size={15} />
-                                    </button>}
-                                  </div>}
+                                  {(roleAccess?.can_edit_employee ||
+                                    roleAccess?.can_delete_employee) && (
+                                    <div className="flex gap-2 items-center bg-white p-1 rounded-full px-2">
+                                      {roleAccess?.can_edit_employee && (
+                                        <Link
+                                          className="text-blue-500  hover:text-blue-900"
+                                          to={`/hrms/employee-directory-Personal/${employee.id}`}
+                                        >
+                                          <BiEdit size={18} />
+                                        </Link>
+                                      )}{" "}
+                                      {roleAccess?.can_delete_employee && (
+                                        <button
+                                          onClick={() =>
+                                            handleDeleteModal(employee.id)
+                                          }
+                                          className="text-red-400 hover:text-red-800"
+                                        >
+                                          <FaTrash size={15} />
+                                        </button>
+                                      )}
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             </div>
@@ -1208,13 +1215,17 @@ function EmployeeDirectory() {
                     <FaUserEdit /> View Profile
                   </Link>
                   <div className="flex justify-center gap-3">
-                  {selectedEmployee?.employee?.status &&  <Link
-                      to={`/hrms/separation/separate-application/resignation/${selectedEmployee?.employee?.id}`}
-                      style={{ background: themeColor }}
-                      className="bg-black text-white hover:bg-gray-700 w-full text-center py-2 px-4 rounded-full"
-                    >
-                      Separate
-                    </Link>}
+                   {roleAccess?.can_initiate_separation && <>
+                      {selectedEmployee?.employee?.status && (
+                        <Link
+                          to={`/hrms/separation/separate-application/resignation/${selectedEmployee?.employee?.id}`}
+                          style={{ background: themeColor }}
+                          className="bg-black text-white hover:bg-gray-700 w-full text-center py-2 px-4 rounded-full"
+                        >
+                          Separate
+                        </Link>
+                      )}
+                    </>}
                     {/* <button
                       type="submit"
                       className="bg-yellow-500 text-white hover:bg-gray-700  py-2 px-5 rounded-full"

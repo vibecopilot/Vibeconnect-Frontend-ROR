@@ -335,7 +335,7 @@ const BasicInformation = () => {
               />
             </div> */}
 
-            <div className="mb-2">
+            {/* <div className="mb-2">
               <label className="block text-gray-700 font-medium">
                 Do you want to overwrite old email ID if the same ID is used?
               </label>
@@ -373,7 +373,7 @@ const BasicInformation = () => {
                   <span className="ml-2">No</span>
                 </label>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
         {/* <div className="bg-white p-6 rounded-lg border border-gray-200 ">

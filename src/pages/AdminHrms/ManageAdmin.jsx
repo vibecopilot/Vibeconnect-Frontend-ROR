@@ -65,15 +65,19 @@ const ManageAdmin = () => {
         <div className="flex items-center gap-4">
           {roleAccess?.can_add_edit_admins && (
             <>
-              <button onClick={() => handleEditModal(row.id)}>
-                <BiEdit size={15} />
-              </button>
-              <button
-                onClick={() => handleDeleteAdmin(row.id)}
-                className="text-red-400"
-              >
-                <FaTrash size={15} />
-              </button>
+              {empId !== row.name && (
+                <>
+                  <button onClick={() => handleEditModal(row.id)}>
+                    <BiEdit size={15} />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteAdmin(row.id)}
+                    className="text-red-400"
+                  >
+                    <FaTrash size={15} />
+                  </button>
+                </>
+               )} 
             </>
           )}
         </div>
