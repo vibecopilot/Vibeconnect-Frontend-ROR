@@ -1,13 +1,41 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import Navbar from "../../components/Navbar";
 import { RiDeleteBin5Line } from "react-icons/ri";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { useNavigate } from "react-router-dom";
+import { postCamBill, getFloors, getUnits, getAddressSetup } from "../../api";
+import { getItemInLocalStorage } from "../../utils/localStorage";
+import toast from "react-hot-toast";
 
 function AddCAMBilling() {
+  const buildings = getItemInLocalStorage("Building");
+  const [floors, setFloors] = useState([]);
+  const [units, setUnits] = useState([]);
   const themeColor = useSelector((state) => state.theme.color);
   const [billingPeriod, setBillingPeriod] = useState([null, null]);
+  const [invoiceAdd, setInvoiceAdd] = useState([]);
+  const [formData, setFormData] = useState({
+    invoice_type: "",
+    invoiceAddress: "",
+    invoice_number: "",
+    dueDate: "",
+    dateSupply: "",
+    block: "",
+    floor_name: "",
+    flat: "",
+    notes: "",
+  });
+
+  // const handleChange1 = (e) => {
+  //   const { name, value } = e.target;
+  //   setFormData((prevFormData) => ({
+  //     ...prevFormData,
+  //     [name]: value,
+  //   }));
+  // };
+
   const [fields, setFields] = useState([
     {
       description: "",
@@ -132,21 +160,21 @@ function AddCAMBilling() {
 
     // Calculate CGST
     if (name === "cgstRate") {
-      const rateValue = parseFloat(value) || isNaN;
+      const rateValue = parseFloat(value) || null;
       camBilling.cgstRate = rateValue;
       camBilling.cgstAmount = (camBilling.taxableValue * rateValue) / 100;
     }
 
     // Calculate SGST
     if (name === "sgstRate") {
-      const rateValue = parseFloat(value) || isNaN;
+      const rateValue = parseFloat(value) || null;
       camBilling.sgstRate = rateValue;
       camBilling.sgstAmount = (camBilling.taxableValue * rateValue) / 100;
     }
 
     // Calculate IGST
     if (name === "igstRate") {
-      const rateValue = parseFloat(value) || isNaN;
+      const rateValue = parseFloat(value) || null;
       camBilling.igstRate = rateValue;
       camBilling.igstAmount = (camBilling.taxableValue * rateValue) / 100;
     }
@@ -186,7 +214,175 @@ function AddCAMBilling() {
     const [start, end] = dates; // Destructure the selected start and end dates
     setBillingPeriod([start, end]); // Update the state
   };
-  
+  useEffect(() => {
+    const fetchAddressSetup = async () => {
+      try {
+        const response = await getAddressSetup();
+        setInvoiceAdd(response.data);
+      } catch (err) {
+        console.error("Failed to fetch Address Setup data:", err);
+      }
+    };
+
+    fetchAddressSetup(); // Call the API
+  }, []);
+
+  const handleChange1 = async (e) => {
+    const { name, value, type } = e.target;
+
+    // Fetch floors based on building ID
+    const fetchFloor = async (buildingID) => {
+      try {
+        const response = await getFloors(buildingID);
+        setFloors(
+          response.data.map((item) => ({ name: item.name, id: item.id }))
+        );
+      } catch (error) {
+        console.error("Error fetching floors:", error);
+      }
+    };
+    // Fetch units based on floor ID
+    const fetchUnit = async (floorID) => {
+      try {
+        const response = await getUnits(floorID);
+        setUnits(
+          response.data.map((item) => ({ name: item.name, id: item.id }))
+        );
+      } catch (error) {
+        console.error("Error fetching units:", error);
+      }
+    };
+
+    if (type === "select-one" && name === "block") {
+      const buildingID = Number(value);
+      await fetchFloor(buildingID); // Fetch floors for the selected block
+      setFormData((prev) => ({
+        ...prev,
+        building_id: buildingID,
+        block: value,
+        floor_id: "", // Reset floor selection
+        flat: "", // Reset unit selection
+      }));
+    } else if (type === "select-one" && name === "floor_name") {
+      const floorID = Number(value);
+      await fetchUnit(floorID); // Fetch units for the selected floor
+      setFormData((prev) => ({
+        ...prev,
+        floor_id: floorID,
+        floor_name: value,
+        flat: "", // Reset unit selection
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
+  };
+
+  // Determine if the "Flat" dropdown should be disabled
+  const isFlatDisabled =
+    !formData.block || !formData.floor_name || !units.length;
+
+  const navigate = useNavigate();
+  const handleSubmit = async () => {
+    const sendData = new FormData();
+    sendData.append("cam_bill[invoice_type]", formData.invoice_type);
+    sendData.append("cam_bill[invoice_address_id]", formData.invoiceAddress);
+    sendData.append("cam_bill[invoice_number]", formData.invoice_number);
+    sendData.append("cam_bill[due_date]", formData.dueDate);
+    sendData.append("cam_bill[supply_date]", formData.dateSupply);
+    sendData.append("cam_bill[building_id]", formData.block);
+    sendData.append("cam_bill[floor_id]", formData.floor_name);
+    sendData.append("cam_bill[flat_id]", formData.flat);
+    sendData.append("cam_bill[due_amount]", previousDueAmount);
+    sendData.append("cam_bill[due_amount_interst]", previousDueAmountInterest);
+    sendData.append("cam_bill[note]", formData.notes);
+    if (billingPeriod[0] && billingPeriod[1]) {
+      const startDate = billingPeriod[0].toISOString().split("T")[0]; // Format: YYYY-MM-DD
+      const endDate = billingPeriod[1].toISOString().split("T")[0]; // Format: YYYY-MM-DD
+      sendData.append("cam_bill[bill_period_start_date]", startDate);
+      sendData.append("cam_bill[bill_period_end_date]", endDate);
+    } else {
+      sendData.append("cam_bill[bill_period_start_date]", "");
+      sendData.append("cam_bill[bill_period_end_date]", "");
+    }
+    fields.forEach((item) => {
+      sendData.append(
+        "cam_bill[cam_bill_charges_attributes][][description]",
+        item.description
+      );
+      sendData.append(
+        "cam_bill[cam_bill_charges_attributes][][hsn_id]",
+        item.sacHsnCode
+      );
+      sendData.append(
+        "cam_bill[cam_bill_charges_attributes][][quantity]",
+        item.qty
+      );
+      sendData.append(
+        "cam_bill[cam_bill_charges_attributes][][unit]",
+        item.unit
+      );
+      sendData.append(
+        "cam_bill[cam_bill_charges_attributes][][rate]",
+        item.rate
+      );
+      sendData.append(
+        "cam_bill[cam_bill_charges_attributes][][total_value]",
+        item.totalValue
+      );
+      sendData.append(
+        "cam_bill[cam_bill_charges_attributes][][discount_percent]",
+        item.percentage
+      );
+      sendData.append(
+        "cam_bill[cam_bill_charges_attributes][][discount_amount]",
+        item.discount
+      );
+      sendData.append(
+        "cam_bill[cam_bill_charges_attributes][][taxable_value]",
+        item.taxableValue
+      );
+      sendData.append(
+        "cam_bill[cam_bill_charges_attributes][][cgst_rate]",
+        item.cgstRate
+      );
+      sendData.append(
+        "cam_bill[cam_bill_charges_attributes][][cgst_amount]",
+        item.cgstAmount
+      );
+      sendData.append(
+        "cam_bill[cam_bill_charges_attributes][][sgst_rate]",
+        item.sgstRate
+      );
+      sendData.append(
+        "cam_bill[cam_bill_charges_attributes][][sgst_amount]",
+        item.sgstAmount
+      );
+      sendData.append(
+        "cam_bill[cam_bill_charges_attributes][][igst_rate]",
+        item.igstRate
+      );
+      sendData.append(
+        "cam_bill[cam_bill_charges_attributes][][igst_amount]",
+        item.igstAmount
+      );
+      sendData.append(
+        "cam_bill[cam_bill_charges_attributes][][total]",
+        item.total
+      );
+    });
+    try {
+      const billResp = await postCamBill(sendData);
+      toast.success("Cam Bill Added Successfully");
+      navigate("/admin/cam-billing");
+      console.log(billResp);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <section className="flex">
       <div className="hidden md:block">
@@ -209,6 +405,8 @@ function AddCAMBilling() {
                 <select
                   name="invoice_type"
                   id=" InvoiceType"
+                  value={formData.invoice_type}
+                  onChange={handleChange1}
                   className="border p-1 px-4 border-gray-500 rounded-md"
                 >
                   <option value="" disabled selected>
@@ -222,17 +420,21 @@ function AddCAMBilling() {
                   Invoice Address
                 </label>
                 <select
-                  name="invoice_address"
+                  name="invoiceAddress"
                   id=" invoiceAddress"
+                  value={formData.invoiceAddress}
+                  onChange={handleChange1}
                   className="border p-1 px-4 border-gray-500 rounded-md"
                 >
                   <option value="" disabled selected>
                     Select Address
                   </option>
-                  <option value="headOffice">head Office</option>
-                  <option value="vibe1">Vibe1</option>
-                  <option value="vibe2">Vibe2</option>
-                </select>
+                  {invoiceAdd.map((address) => (
+                    <option key={address.id} value={address.id}>
+                      {address.title}
+                    </option>
+                  ))}
+                </select> 
               </div>
               <div className="flex flex-col ">
                 <label htmlFor="invoiceNumber" className="font-semibold my-2">
@@ -242,6 +444,8 @@ function AddCAMBilling() {
                   type="text"
                   name="invoice_number"
                   id="invoiceNumber"
+                  value={formData.invoice_number}
+                  onChange={handleChange1}
                   placeholder="Enter Phone Number "
                   className="border p-1 px-4 border-gray-500 rounded-md"
                 />
@@ -252,8 +456,10 @@ function AddCAMBilling() {
                 </label>
                 <input
                   type="date"
-                  name=""
+                  name="dueDate"
                   id="dueDate"
+                  value={formData.dueDate}
+                  onChange={handleChange1}
                   placeholder="Enter Due Date"
                   className="border p-1 px-4 border-gray-500 rounded-md"
                 />
@@ -264,8 +470,10 @@ function AddCAMBilling() {
                 </label>
                 <input
                   type="date"
-                  name=""
+                  name="dateSupply"
                   id="dateSupply"
+                  value={formData.dateSupply}
+                  onChange={handleChange1}
                   placeholder="Enter Date of supply"
                   className="border p-1 px-4 border-gray-500 rounded-md"
                 />
@@ -276,12 +484,12 @@ function AddCAMBilling() {
                 </label>
                 <DatePicker
                   selectsRange
-                  startDate={billingPeriod[0]} 
-                  endDate={billingPeriod[1]} 
-                  onChange={handleDateChange} 
+                  startDate={billingPeriod[0]}
+                  endDate={billingPeriod[1]}
+                  onChange={handleDateChange}
                   placeholderText="Select Billing Period"
                   className="border p-1 px-4 border-gray-500 rounded-md w-full"
-                  isClearable 
+                  isClearable
                 />
               </div>
               <div className="flex flex-col">
@@ -289,32 +497,60 @@ function AddCAMBilling() {
                   Block
                 </label>
                 <select
-                  name="block"
-                  id=" Block"
                   className="border p-1 px-4 border-gray-500 rounded-md"
+                  onChange={handleChange1}
+                  value={formData.block}
+                  name="block"
                 >
-                  <option value="">Select Tower</option>
-                  <option value="a">A</option>
-                  <option value="tesla">Tesla</option>
-                  <option value="imperia">Imperia</option>
-                  <option value="open space">Open space</option>
-                  <option value="fm">FM</option>
-                  <option value="t1">T1</option>
-                  <option value="t2">T2</option>
+                  <option value="">Select Building</option>
+                  {buildings?.map((building) => (
+                    <option key={building.id} value={building.id}>
+                      {building.name}
+                    </option>
+                  ))}
                 </select>
               </div>
+
+              <div className="flex flex-col">
+                <label htmlFor="Floor" className="font-semibold my-2">
+                  Floor
+                </label>
+                <select
+                  className="border p-1 px-4 border-gray-500 rounded-md"
+                  onChange={handleChange1}
+                  value={formData.floor_name}
+                  name="floor_name"
+                  disabled={!floors.length} // Disable if no floors are available
+                >
+                  <option value="">Select Floor</option>
+                  {floors.map((floor) => (
+                    <option key={floor.id} value={floor.id}>
+                      {floor.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <div className="flex flex-col">
                 <label htmlFor="Flat" className="font-semibold my-2">
                   Flat
                 </label>
                 <select
-                  name="flat"
-                  id=" Flat"
                   className="border p-1 px-4 border-gray-500 rounded-md"
+                  onChange={handleChange1}
+                  value={formData.flat}
+                  name="flat"
+                  disabled={isFlatDisabled} // Disable if no building, floor, or units are available
                 >
                   <option value="">Select Flat</option>
+                  {units.map((unit) => (
+                    <option key={unit.id} value={unit.id}>
+                      {unit.name}
+                    </option>
+                  ))}
                 </select>
               </div>
+
               <div className="flex flex-col ">
                 <label
                   htmlFor="PreviousDueAmount"
@@ -324,7 +560,7 @@ function AddCAMBilling() {
                 </label>
                 <input
                   type="number"
-                  name=""
+                  name="previousDueAmount"
                   id="PreviousDueAmount"
                   placeholder="Enter Previous Due Amount"
                   className="border p-1 px-4 border-gray-500 rounded-md"
@@ -341,7 +577,7 @@ function AddCAMBilling() {
                 </label>
                 <input
                   type="number"
-                  name=""
+                  name="previousDueAmountInterest"
                   id="PreviousDueAmountInterest"
                   placeholder="Enter Previous Due Amount Interest"
                   className="border p-1 px-4 border-gray-500 rounded-md"
@@ -661,14 +897,16 @@ function AddCAMBilling() {
             </div>
             <div className="md:grid grid-cols-2 gap-5 my-3">
               <div className="flex flex-col col-span-2">
-                <label htmlFor="" className="font-semibold my-2">
+                <label htmlFor="notes" className="font-semibold my-2">
                   Notes
                 </label>
                 <textarea
-                  name=""
-                  id=""
+                  name="notes"
+                  id="notes"
                   cols="5"
                   rows="3"
+                  value={formData.notes}
+                  onChange={handleChange1}
                   placeholder="Enter extra notes"
                   className="border p-1 px-4 border-gray-500 rounded-md"
                 />
@@ -676,6 +914,7 @@ function AddCAMBilling() {
             </div>
             <div className="flex justify-center my-8 gap-2 ">
               <button
+                onClick={handleSubmit}
                 style={{ background: themeColor }}
                 className="bg-black text-white p-2 px-4 rounded-md font-medium"
               >

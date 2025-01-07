@@ -1,143 +1,68 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { IoPrintOutline } from "react-icons/io5";
 import Navbar from "../../../components/Navbar";
 import { useSelector } from "react-redux";
 import { FaDownload, FaRegFileAlt } from "react-icons/fa";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import Table from "../../../components/table/Table";
 import RecallInvoiceModal from "../../../containers/modals/RecallInvoiceModal";
 import CAMBillInvoiceReceivePaymentModal from "../../../containers/modals/CAMBillInvoiceReceivePaymentModal";
 import CAMBillingPaymentStatusModal from "../../../containers/modals/CAMBillingPaymentStatusModal";
-
+import {
+  getAddressSetupDetails,
+  getCamBillingDataDetails,
+  getInvoiceReceipt,
+  getReceiptPayment,
+} from "../../../api";
 function CAMBillingDetails() {
   const themeColor = useSelector((state) => state.theme.color);
   const [recallModal, setRecallModal] = useState(false);
   const [receivePayment, setReceivePayment] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState(false);
-  // const columns = [
-  //   {
-  //     name: "S.N.",
-  //     selector: (row, index) => row.sn,
-  //     sortable: true,
-  //   },
-  //   {
-  //     name: "Description",
-  //     selector: (row) => row.description,
-  //     sortable: true,
-  //   },
-  //   {
-  //     name: "SAC/HSN Code",
-  //     selector: (row) => row.SACHSNCode,
-  //     sortable: true,
-  //   },
-  //   {
-  //     name: "Qty",
-  //     selector: (row) => row.qty,
-  //     sortable: true,
-  //   },
-  //   {
-  //     name: "Unit",
-  //     selector: (row) => row.unit,
-  //     sortable: true,
-  //   },
-  //   {
-  //     name: "Rate",
-  //     selector: (row) => row.rate,
-  //     sortable: true,
-  //   },
-  //   {
-  //     name: "Total Value",
-  //     selector: (row) => row.total_value,
-  //     sortable: true,
-  //   },
-  //   {
-  //     name: "Discount/Percentage",
-  //     selector: (row) => row.percentage,
-  //     sortable: true,
-  //   },
-  //   {
-  //     name: "Discount/Amount",
-  //     selector: (row) => row.amount,
-  //     sortable: true,
-  //   },
-  //   {
-  //     name: "Taxable Value",
-  //     selector: (row) => row.taxable_value,
-  //     sortable: true,
-  //   },
-  //   {
-  //     name: "CGST Rate",
-  //     selector: (row) => row.cgst_rate,
-  //     sortable: true,
-  //   },
-  //   {
-  //     name: "CGST Amount",
-  //     selector: (row) => row.cgst_amount,
-  //     sortable: true,
-  //   },
-  //   {
-  //     name: "SGST Rate",
-  //     selector: (row) => row.sgst_rate,
-  //     sortable: true,
-  //   },
-  //   {
-  //     name: "SGST Amount",
-  //     selector: (row) => row.sgst_amount,
-  //     sortable: true,
-  //   },
-  //   {
-  //     name: "IGST Rate",
-  //     selector: (row) => row.igst_rate,
-  //     sortable: true,
-  //   },
-  //   {
-  //     name: "IGST Amount",
-  //     selector: (row) => row.igst_amount,
-  //     sortable: true,
-  //   },
-  // ];
+  const [camBilling, setComBilling] = useState([]); // Initialize as an array or object if expected
+  const [camBillingAllData, setCamBillingAllData] = useState({})
+  const [invoiceReceipt, setInvoiceReceipt] = useState([]);
+  const [addressInvoice, setAddressInvoice] = useState({});
+  const [amountCharges, setAmountCharges] = useState([]);
+  const { id } = useParams();
 
-  // const data = [
-  //   {
-  //     Id: 1,
-  //     sn: "1",
-  //     description: "good",
-  //     SACHSNCode: "HASN",
-  //     qty: "5",
-  //     unit: "1",
-  //     rate: "10",
-  //     total_value: "50",
-  //     percentage: "5%",
-  //     amount: "2.5",
-  //     taxable_value: "47.5",
-  //     cgst_rate: "10.0%",
-  //     cgst_amount: "32",
-  //     sgst_rate: "2%",
-  //     sgst_amount: "20",
-  //     igst_rate: "5%",
-  //     igst_amount: "20",
-  //   },
-  //   {
-  //     Id: 2,
-  //     sn: "2",
-  //     description: "good",
-  //     SACHSNCode: "HASN",
-  //     qty: "10",
-  //     unit: "2",
-  //     rate: "5",
-  //     total_value: "50",
-  //     percentage: "10%",
-  //     amount: "5",
-  //     taxable_value: "45",
-  //     cgst_rate: "8.0%",
-  //     cgst_amount: "30",
-  //     sgst_rate: "3%",
-  //     sgst_amount: "10",
-  //     igst_rate: "2%",
-  //     igst_amount: "10",
-  //   },
-  // ];
+  const fetchAddressSetupDetails = async (addressId) => {
+    try {
+      const addressSetupCamBilling = await getAddressSetupDetails(addressId);
+      setAddressInvoice(addressSetupCamBilling.data)
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  console.log(addressInvoice)
+  useEffect(() => {
+    const fetchCamBilling = async () => {
+      try {
+        const response = await getCamBillingDataDetails(id);
+        console.log(response.data)
+        setCamBillingAllData(response.data)
+        setComBilling(response.data); // Ensure response.data is structured as expected
+        fetchAddressSetupDetails(response.data.invoice_address_id);
+        const transformedData = [response.data];
+        setAmountCharges(transformedData)
+      } catch (err) {
+        console.error("Failed to fetch Address Setup data:", err);
+      }
+    };
+    console.log(camBillingAllData)
+    const fetchInvoiceReceipt = async () => {
+      try {
+        const response = await getInvoiceReceipt();
+        setInvoiceReceipt(response.data); // Ensure response.data is structured as expected
+      } catch (err) {
+        console.error("Failed to fetch Address Setup data:", err);
+      }
+    };
 
+    fetchCamBilling(); // Call the API
+    fetchInvoiceReceipt();
+    fetchReceiptPayment();
+  }, [id]);
   const columns = [
     { name: "S.N.", key: "sn" },
     { name: "Description Of Service/Goods", key: "description" },
@@ -156,46 +81,67 @@ function CAMBillingDetails() {
     { name: "IGST Amount", key: "igst_amount" },
   ];
 
-  const data = [
-    {
-      sn: "1",
-      description: "Good",
-      SACHSNCode: "Jsjhsd",
-      qty: "6.0",
-      unit: "2.0",
-      rate: "3.0",
-      total_value: "2376.0",
-      percentage: "38768.0",
-      taxable_value: "8787.00",
-      cgst_rate: "8.0%",
-      cgst_amount: "98.00",
-      sgst_rate: "8.0%",
-      sgst_amount: "88.00",
-      igst_rate: "0.0%",
-      igst_amount: "0.00",
-    },
-    {
-      sn: "2",
-      description: "Ravindra",
-      SACHSNCode: "Duygis",
-      qty: "5.0",
-      unit: "7.0",
-      rate: "79.0",
-      total_value: "98.00",
-      percentage: "65.0",
-      taxable_value: "2474.00",
-      cgst_rate: "6.0%",
-      cgst_amount: "78.00",
-      sgst_rate: "6.0%",
-      sgst_amount: "7.00",
-      igst_rate: "0.0%",
-      igst_amount: "0.00",
-    },
-  ];
+  // Safely access camBilling.charges
+  const filteredData =
+    camBilling?.charges?.map((charge, index) => ({
+      sn: index + 1,
+      description: charge.description || "N/A",
+      SACHSNCode: charge.hsn_id || "N/A",
+      qty: charge.quantity || "0",
+      unit: charge.unit || "N/A",
+      rate: charge.rate || "0.00",
+      total_value: charge.total_value || "0.00",
+      percentage: `${charge.discount_percent || "0"}%`,
+      taxable_value: charge.taxable_value || "0.00",
+      cgst_rate: `${charge.cgst_rate || "0"}%`,
+      cgst_amount: charge.cgst_amount || "0.00",
+      sgst_rate: `${charge.sgst_rate || "0"}%`,
+      sgst_amount: charge.sgst_amount || "0.00",
+      igst_rate: `${charge.igst_rate || "0"}%`,
+      igst_amount: charge.igst_amount || "0.00",
+    })) || []; // Default to an empty array if charges is undefined
+  console.log(filteredData);
+  // const data = [
+  //   {
+  //     sn: "1",
+  //     description: "Good",
+  //     SACHSNCode: "Jsjhsd",
+  //     qty: "6.0",
+  //     unit: "2.0",
+  //     rate: "3.0",
+  //     total_value: "2376.0",
+  //     percentage: "38768.0",
+  //     taxable_value: "8787.00",
+  //     cgst_rate: "8.0%",
+  //     cgst_amount: "98.00",
+  //     sgst_rate: "8.0%",
+  //     sgst_amount: "88.00",
+  //     igst_rate: "0.0%",
+  //     igst_amount: "0.00",
+  //   },
+  //   {
+  //     sn: "2",
+  //     description: "Ravindra",
+  //     SACHSNCode: "Duygis",
+  //     qty: "5.0",
+  //     unit: "7.0",
+  //     rate: "79.0",
+  //     total_value: "98.00",
+  //     percentage: "65.0",
+  //     taxable_value: "2474.00",
+  //     cgst_rate: "6.0%",
+  //     cgst_amount: "78.00",
+  //     sgst_rate: "6.0%",
+  //     sgst_amount: "7.00",
+  //     igst_rate: "0.0%",
+  //     igst_amount: "0.00",
+  //   },
+  // ];
+
   const columnsPaymentDetails = [
     {
       name: "Previous Amount Due",
-      selector: (row, index) => row.previous_amount_due,
+      selector: (row, index) => row.due_amount,
       sortable: true,
     },
     {
@@ -205,12 +151,12 @@ function CAMBillingDetails() {
     },
     {
       name: "Interest Amt on previous dues",
-      selector: (row) => row.interest,
+      selector: (row) => row.due_amount_interst,
       sortable: true,
     },
     {
       name: "Total Amount Due",
-      selector: (row) => row.total_amount_due,
+      selector: (row) => row.total,
       sortable: true,
     },
     {
@@ -232,69 +178,73 @@ function CAMBillingDetails() {
   ];
 
   const columnsReceipts = [
-    {
-      name: "Receipt No.",
-      selector: (row, index) => row.receipt_no,
-      sortable: true,
-    },
-    {
-      name: "Invoice No.",
-      selector: (row) => row.invoice_no,
-      sortable: true,
-    },
-    {
-      name: "Flat",
-      selector: (row) => row.flat,
-      sortable: true,
-    },
-    {
-      name: "Customer Name",
-      selector: (row) => row.customer_name,
-      sortable: true,
-    },
-    {
-      name: "Amount Received",
-      selector: (row) => row.amount_received,
-      sortable: true,
-    },
-    {
-      name: "Payment Mode",
-      selector: (row) => row.payment_mode,
-      sortable: true,
-    },
-    {
-      name: "Transaction Number",
-      selector: (row) => row.transaction_number,
-      sortable: true,
-    },
-    {
-      name: "Payment Date",
-      selector: (row) => row.payment_date,
-      sortable: true,
-    },
-    {
-      name: "Receipt Date",
-      selector: (row) => row.receipt_date,
-      sortable: true,
-    },
-    {
-      name: "Mail sent",
-      selector: (row) => row.mail_sent,
-      sortable: true,
-    },
-    {
-      name: "Attachments",
-      selector: (row) => (
-        <div>
-          <button>
-            <FaRegFileAlt />
-          </button>
-        </div>
-      ),
-      sortable: true,
-    },
-  ];
-
+      {
+        name: "Receipt No.",
+        selector: (row, index) => row.receipt_number,
+        sortable: true,
+      },
+      {
+        name: "Invoice No.",
+        selector: (row) => row.invoice_number,
+        sortable: true,
+      },
+      {
+        name: "Block",
+        selector: (row) => row.building_id,
+        sortable: true,
+      },
+      {
+        name: "Flat",
+        selector: (row) => row.unit_id,
+        sortable: true,
+      },
+      {
+        name: "Customer Name",
+        selector: (row) => row.customer_name,
+        sortable: true,
+      },
+      {
+        name: "Amount Received",
+        selector: (row) => row.amount_received,
+        sortable: true,
+      },
+      {
+        name: "Payment Mode",
+        selector: (row) => row.payment_mode,
+        sortable: true,
+      },
+      {
+        name: "Transaction Number",
+        selector: (row) => row.transaction_or_cheque_number,
+        sortable: true,
+      },
+      {
+        name: "Payment Date",
+        selector: (row) => row.payment_date,
+        sortable: true,
+      },
+      {
+        name: "Receipt Date",
+        selector: (row) => row.receipt_date,
+        sortable: true,
+      },
+      {
+        name: "Mail sent",
+        selector: (row) => row.mail_sent,
+        sortable: true,
+      },
+      {
+        name: "Attachments",
+        selector: (row) => (
+          <div>
+            <button>
+              <FaRegFileAlt />
+            </button>
+          </div>
+        ),
+        sortable: true,
+      },
+    ];
   const dataReceipts = [
     {
       Id: 1,
@@ -311,44 +261,59 @@ function CAMBillingDetails() {
     },
   ];
 
+  const [receivePaymentDetails, setReceivePaymentDetails] = useState([]);
+  const fetchReceiptPayment = async () => {
+    try {
+      const resp = await getReceiptPayment();
+      setReceivePaymentDetails(resp.data);
+    } catch (error) {
+      console.error("Failed to fetch Receipt Payment data:", error);
+    }
+  };
   const columnsTransaction = [
     {
       name: "Date",
-      selector: (row, index) => row.date,
+      selector: (row, index) => row.created_at,
       sortable: true,
     },
     {
       name: "Amount",
-      selector: (row) => row.amount,
+      selector: (row) => row.total_amount,
       sortable: true,
     },
     {
       name: "Payment Mode",
-      selector: (row) => row.payment_mode,
+      selector: (row) => row.payment_method,
       sortable: true,
     },
     {
       name: "Transaction Number",
-      selector: (row) => row.transaction_number,
+      selector: (row) => row.transaction_id,
+      sortable: true,
+    },
+    {
+      name: "Payment Date",
+      selector: (row) => row.paymen_date,
       sortable: true,
     },
     {
       name: "Image",
-      selector: (row) => row.image,
+      selector: (row) => row.image_url,
       sortable: true,
     },
   ];
 
-  const dataTransaction = [
-    {
-      Id: 1,
-      date: "20/04/2024",
-      amount: "460.00",
-      payment_mode: "Online",
-      transaction_number: "7444196469",
-      image: "",
-    },
-  ];
+  // const dataTransaction = [
+  //   {
+  //     Id: 1,
+  //     date: "20/04/2024",
+  //     amount: "460.00",
+  //     payment_mode: "Online",
+  //     transaction_number: "7444196469",
+  //     image: "",
+  //   },
+  // ];
+
   return (
     <section className="flex">
       <div className="hidden md:block">
@@ -359,7 +324,7 @@ function CAMBillingDetails() {
           style={{ background: themeColor }}
           className="text-center text-xl font-bold my-5 p-2 bg-black rounded-full text-white mx-10"
         >
-          Add CAM Billing
+          CAM Billing Details
         </h2>
         <div className="flex justify-end mx-5">
           <div className="md:flex grid grid-cols-2 sm:flex-row flex-col gap-2">
@@ -371,7 +336,7 @@ function CAMBillingDetails() {
               Recall
             </button>
             <Link
-              to={`/admin/create-invoice-receipt`}
+              to={`/admin/create-invoice-receipt/${id}`}
               style={{ background: themeColor }}
               className="px-4 py-2  font-medium text-white rounded-md flex gap-2 items-center justify-center"
             >
@@ -384,13 +349,13 @@ function CAMBillingDetails() {
             >
               Receive Payment
             </button>
-            <button
+            {/* <button
               className="font-semibold text-white px-4 p-1 flex gap-2 items-center justify-center rounded-md"
               style={{ background: themeColor }}
               onClick={() => setPaymentStatus(true)}
             >
               Paid
-            </button>
+            </button> */}
             <button
               className="font-semibold text-white px-4 p-1 flex gap-2 items-center justify-center rounded-md"
               style={{ background: themeColor }}
@@ -416,9 +381,11 @@ function CAMBillingDetails() {
             </div>
           </div>
           <div className="my-5">
-            <h2 className="font-bold text-lg">Jyoti Tower</h2>
-            <p className="font-semibold">G - 205, AB road. Andheri</p>
-            <p className="font-semibold">Tel : Fax: E-mail:</p>
+            <h2 className="font-bold text-lg">{addressInvoice.title}</h2>
+            <p className="font-normal">{addressInvoice.address}</p>
+            <p className="font-normal">Tel :{addressInvoice.phone_number}</p>
+            <p className="font-normal">Fax:{addressInvoice.fax_number}</p>
+            <p className="font-normal">E-mail:{addressInvoice.email_address}</p>
           </div>
         </div>
         <div className="mx-5">
@@ -429,15 +396,16 @@ function CAMBillingDetails() {
             <div className="space-y-2 px-5">
               <div className="grid grid-cols-2">
                 <p>GSTIN : </p>
-                <p className="text-sm font-normal">JY09192121</p>
+                <p className="text-sm font-normal">{addressInvoice.gst_number}</p>
               </div>
               <div className="grid grid-cols-2">
                 <p>PAN : </p>
-                <p className="text-sm font-normal"></p>
+                <p className="text-sm font-normal">{addressInvoice.pan_number}</p>
               </div>
               <div className="grid grid-cols-2">
-                <p>Consecutive Serial No : </p>
-                <p className="text-sm font-normal">tr</p>
+                {/* <p>Consecutive Serial No : </p> */}
+                <p>Invoice No : </p>
+                <p className="text-sm font-normal">{camBillingAllData.invoice_number}</p>
               </div>
               <div className="grid grid-cols-2">
                 <p>Customer Code : </p>
@@ -447,15 +415,15 @@ function CAMBillingDetails() {
             <div className="space-y-2 px-5">
               <div className="grid grid-cols-2">
                 <p>Date of Supply : </p>
-                <p className="text-sm font-normal">09.12.2024</p>
+                <p className="text-sm font-normal">{camBillingAllData.supply_date}</p>
               </div>
               <div className="grid grid-cols-2">
                 <p>Billing Period: : </p>
-                <p className="text-sm font-normal">01.01.2024 to 31.12.2024</p>
+                <p className="text-sm font-normal">{camBillingAllData.bill_period_start_date}  to  {camBillingAllData.bill_period_end_date}</p>
               </div>
               <div className="grid grid-cols-2">
                 <p>Place of Supply/Delivery : </p>
-                <p className="text-sm font-normal">MAHARASHTRA</p>
+                <p className="text-sm font-normal">{addressInvoice.state}</p>
               </div>
             </div>
           </div>
@@ -495,14 +463,14 @@ function CAMBillingDetails() {
               </div>
             </div>
             <div className="space-y-2 px-5">
-              <div className="grid grid-cols-2">
+              {/* <div className="grid grid-cols-2">
                 <p>Basis : </p>
                 <p className="text-sm font-normal">Adhoc Billing</p>
               </div>
               <div className="grid grid-cols-2">
                 <p>Date of Possession : </p>
                 <p className="text-sm font-normal">15/11/2020</p>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
@@ -522,7 +490,7 @@ function CAMBillingDetails() {
                 </tr>
               </thead>
               <tbody>
-                {data.map((row, index) => (
+                {filteredData.map((row, index) => (
                   <tr key={index} className="even:bg-gray-50">
                     {columns.map((column, colIndex) => (
                       <td
@@ -577,24 +545,28 @@ function CAMBillingDetails() {
                 <p className="text-sm font-normal"></p>
               </div>
               <div className="grid grid-cols-2">
-                <p>Bank Details : </p>
+                <p className="text-lg">Bank Details : </p>
                 <p className="text-sm font-normal"></p>
               </div>
               <div className="grid grid-cols-2">
                 <p>A/C Name : </p>
-                <p className="text-sm font-normal"></p>
+                <p className="text-sm font-normal">{addressInvoice.account_name}</p>
               </div>
               <div className="grid grid-cols-2">
                 <p>A/C No : </p>
-                <p className="text-sm font-normal"></p>
+                <p className="text-sm font-normal">{addressInvoice.account_number}</p>
+              </div>
+              <div className="grid grid-cols-2">
+                <p>Account Type : </p>
+                <p className="text-sm font-normal">{addressInvoice.account_type}</p>
               </div>
               <div className="grid grid-cols-2">
                 <p>Bank & Branch : </p>
-                <p className="text-sm font-normal"></p>
+                <p className="text-sm font-normal">{addressInvoice.bank_branch_name}</p>
               </div>
               <div className="grid grid-cols-2">
                 <p>IFSC : </p>
-                <p className="text-sm font-normal"></p>
+                <p className="text-sm font-normal">{addressInvoice.ifsc_code}</p>
               </div>
             </div>
             <div className="space-y-2 px-5">
@@ -619,15 +591,15 @@ function CAMBillingDetails() {
           </div>
         </div>
         <div className="my-5 mx-5">
-          <Table columns={columnsPaymentDetails} data={dataPaymentDetails} />
+          <Table columns={columnsPaymentDetails} data={amountCharges} />
         </div>
         <div className="my-5 mx-5">
           <h2 className="">Transaction details for this invoice</h2>
-          <Table columns={columnsTransaction} data={dataTransaction} />
+          <Table columns={columnsTransaction} data={receivePaymentDetails} />
         </div>
         <div className="my-5 mx-5">
           <h2 className="">Imported Receipts</h2>
-          <Table columns={columnsReceipts} data={dataReceipts} />
+          <Table columns={columnsReceipts} data={invoiceReceipt} />
         </div>
       </div>
       {recallModal && (
@@ -636,6 +608,7 @@ function CAMBillingDetails() {
       {receivePayment && (
         <CAMBillInvoiceReceivePaymentModal
           onclose={() => setReceivePayment(false)}
+          fetchReceiptPayment={fetchReceiptPayment}
         />
       )}
       {paymentStatus && (

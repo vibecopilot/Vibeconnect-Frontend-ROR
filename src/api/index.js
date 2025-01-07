@@ -7347,6 +7347,159 @@ export const getFBDetails = async (id) =>
               },
             });
           
-          
-          
-          
+   //cam billing 
+   //cambilling address setup
+   
+  export const postCamBilling = async (data) =>
+    axiosInstance.post(`/address_setups.json`, data, {
+      params: {
+        token: token,
+      },
+    });
+        
+  export const getAddressSetup = async () =>
+    axiosInstance.get("/address_setups.json", {
+      params: {
+        token: token,
+      },
+    });
+  export const getAddressSetupDetails = async (id) =>
+    axiosInstance.get(`/address_setups/${id}.json`, {
+      params: {
+        token: token,
+      },
+    });
+  export const updateAddressSetupCamBilling = async (data, id) =>
+    axiosInstance.put(`/address_setups/${id}.json`, data, {
+      params: {
+        token: token,
+      },
+  });
+  export const deleteAddressSetup = async (id) =>
+    axiosInstance.delete(`/address_setups/${id}.json`, {
+      params: {
+        token: token,
+      },
+    });
+  export const postCamBill = async (data) =>
+    axiosInstance.post(`/cam_bills.json`, data, {
+      params: {
+        token: token,
+      },
+  });
+
+  export const getCamBillingData = async () =>
+    axiosInstance.get("/cam_bills.json", {
+      params: {
+      token: token,
+    },
+  });
+
+  export const getCamBillingDataDetails = async (id) =>
+    axiosInstance.get(`/cam_bills/${id}.json`, {
+      params: {
+      token: token,
+    },
+  });
+
+  export const postInvoiceNumber = async (data) =>
+    axiosInstance.post(`/invoice_setups.json`, data, {
+      params: {
+        token: token,
+      },
+  });
+
+  export const getInvoiceNumber = async () =>
+    axiosInstance.get("/invoice_setups.json", {
+      params: {
+        token: token,
+    },
+  });
+
+
+  export const postReceiptNumber = async (data) =>
+    axiosInstance.post(`/receipt_setups.json`, data, {
+      params: {
+        token: token,
+      },
+  });
+  export const postInvoiceType = async (data) =>
+    axiosInstance.post(`/invoice_types.json`, data, {
+      params: {
+        token: token,
+      },
+  });
+  export const getInvoiceTypeSetup = async () =>
+    axiosInstance.get("/invoice_types.json", {
+      params: {
+        token: token,
+    },
+  });
+
+  export const getInvoiceTypeDetail = async (id) =>
+    axiosInstance.get(`/invoice_types/${id}.json`, {
+      params: {
+        token: token,
+    },
+  });
+  
+  export const putInvoiceType = async (id, data) =>
+    axiosInstance.patch(`/invoice_types/${id}.json`, data, {
+      params: {
+      token: token,
+    },
+  });
+
+  export const postLogoCamBillingSetup = async (data) =>
+    axiosInstance.post(`/upload_logo.json`, data, {
+      
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      
+      params: {
+        token: token,
+      },
+  });
+
+  export const postInvoiceReceipt = async (data) =>
+    axiosInstance.post(`/invoice_receipts.json`, data, {
+      params: {
+        token: token,
+      },
+  });
+
+  export const getInvoiceReceipt = async () =>
+    axiosInstance.get("/invoice_receipts.json", {
+      params: {
+        token: token,
+    },
+  });
+
+  export const camBillingStatus = async (id, data) =>
+    axiosInstance.put(`/cam_bills/${id}.json`, data,{ 
+      params: {
+      token: token
+    }
+  })
+
+  export const recallStatus = async (id, data) =>
+    axiosInstance.put(`/cam_bills/${id}.json`, data,{ 
+      params: {
+      token: token
+    }
+  })
+
+  export const receiptPayment = async (data) =>
+    axiosInstance.post(`/payments.json`, data, {
+      params: {
+        token: token,
+      },
+  });
+
+  export const getReceiptPayment = async () =>
+    axiosInstance.get(`/payments.json`, {
+      params: {
+        token:token,
+      }
+    })

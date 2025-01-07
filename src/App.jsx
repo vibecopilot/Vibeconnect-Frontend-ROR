@@ -729,6 +729,10 @@ import FBRestaurtantMenu from "./pages/SubPages/details/FBSubDetails/FBResturant
 import EditRestaurtantBooking from "./pages/SubPages/EditResturantBooking.jsx";
 import EditRestaurtantOrders from "./pages/SubPages/EditResturantOrders.jsx";
 import FBMainPage from "./pages/Setup/FBMainPage.jsx";
+import Survey from "./pages/Survey.jsx";
+import AddSurvey from "./pages/SubPages/AddSurvey.jsx";
+import AddReceiptInvoiceCamBilling from "./pages/SubPages/AddReceiptInvoiceCamBilling.jsx";
+import ReceiptInvoiceDetails from "./pages/SubPages/ReceiptInvoiceDetails.jsx";
 // new admin hrms
 
 function App() {
@@ -6981,7 +6985,7 @@ function App() {
             }
           />
           <Route
-            path="/admin/create-invoice-receipt"
+            path="/admin/create-invoice-receipt/:id"
             element={
               <ProtectedAdminRoutes>
                 <CreateInvoiceReceipt />
@@ -7001,6 +7005,39 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <EditBillingAddress />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/add-receipt-invoice-cam-billing"
+            element={
+              <ProtectedAdminRoutes>
+                <AddReceiptInvoiceCamBilling />
+              </ProtectedAdminRoutes>
+            }
+          />
+           {/* Survey */}
+           <Route
+            path="/admin/survey"
+            element={
+              <ProtectedAdminRoutes>
+                <Survey />
+              </ProtectedAdminRoutes>
+            }
+          />
+           <Route
+            path="/admin/add-survey"
+            element={
+              <ProtectedAdminRoutes>
+                <AddSurvey />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/receipt-invoice-details/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <ReceiptInvoiceDetails />
               </ProtectedAdminRoutes>
             }
           />

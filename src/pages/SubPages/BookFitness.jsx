@@ -1,22 +1,49 @@
 import React, { useState } from "react";
 import Navbar from "../../components/Navbar";
-
+import { postDocAppointment } from "../../api";
+import { useSelector } from "react-redux";
 const BookFitness = () => {
+  const themeColor = useSelector((state) => state.theme.color);
   const [behalf, setbehalf] = useState("self");
   const [formData, setFormData] = useState({
-    patientName: "",
+    name: "",
     relationship: "",
     age: "",
     gender: "",
-    bloodGroup: "",
     maritalStatus: "",
+    date: "",
+    mobileNo: "",
     preference: "",
     location: "",
-    doctor: "",
+    trainer: "",
     reportType: "",
     reason: "",
     selectedFiles: [],
   });
+
+  const confirmBooking = async () => {
+      try {
+        const formData = new FormData();
+        formData.append("full_name", formData.name);
+        formData.append("relationship", formData.relationship);
+        formData.append("age", formData.age);
+        formData.append("gender", formData.gender);
+        formData.append("marital_status", formData.maritalStatus);
+        formData.append("date", formData.date);
+        formData.append("phone_no", formData.mobileNo);
+        formData.append("meeting_pref_type", formData.selectPreference);
+        formData.append("doctor_id", formData.trainer);
+        formData.append("location", formData.location);
+        formData.append("reportType", formData.reportType);
+        formData.append("reason", formData.reason);
+
+        const jsonDataBooking = await postDocAppointment(formData);
+        console.log(jsonDataBooking)
+      } catch (error) {
+        console.error("Error:", error);
+      }
+    };
+
   console.log(formData);
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -54,7 +81,6 @@ const BookFitness = () => {
       ),
     }));
   };
-
   return (
     <section className="min-h-screen p-4 sm:p-0 flex flex-col md:flex-row">
       <div className="fixed hidden sm:block left-0 top-0 h-full md:static md:h-auto md:flex-shrink-0">
@@ -62,7 +88,7 @@ const BookFitness = () => {
       </div>
       <div className="flex justify-center my-5 overflow-x-auto w-full sm:w-full">
         <div className="border border-gray-300 rounded-lg w-full mx-5 px-8 flex flex-col gap-5">
-          <h2 className="text-center md:text-xl font-bold my-2 p-2 bg-black rounded-full text-white">
+          <h2 className="text-center md:text-xl font-bold my-2 p-2 bg-black rounded-md text-white" style={{ background: themeColor }}>
             Book Fitness Appointment
           </h2>
 
@@ -94,8 +120,8 @@ const BookFitness = () => {
               </label>
               <input
                 type="text"
-                name="patientName"
-                value={formData.patientName}
+                name="name"
+                value={formData.name}
                 onChange={handleInputChange}
                 className="border border-gray-400 p-2 rounded-md"
                 placeholder="Enter Patient Name"
@@ -128,6 +154,7 @@ const BookFitness = () => {
                 )}
               </select>
             </div>
+
             <div className="grid  gap-2 items-center w-full">
               <label htmlFor="age" className="font-semibold">
                 Age :
@@ -174,25 +201,28 @@ const BookFitness = () => {
               </select>
             </div>
             <div className="grid gap-2  items-center w-full">
-              <label htmlFor="maritalStatus" className="font-semibold">
+              <label htmlFor="date" className="font-semibold">
                 Date :
               </label>
               <input
                 type="date"
-                name=""
-                id=""
+                name="date"
+                value={formData.date}
+                onChange={handleInputChange}
+                id="date"
                 className="border border-gray-400 p-2 rounded-md"
               />
             </div>
             <div className="grid gap-2  items-center w-full">
-              <label htmlFor="maritalStatus" className="font-semibold">
+              <label htmlFor="mobileNo" className="font-semibold">
                 Mobile :
               </label>
-
               <input
                 type="tel"
-                name=""
-                id=""
+                name="mobileNo"
+                id="mobileNo"
+                value={formData.mobileNo}
+                onChange={handleInputChange}
                 className="border border-gray-400 p-2 rounded-md"
               />
             </div>
@@ -234,7 +264,7 @@ const BookFitness = () => {
               </label>
               <select
                 name="doctor"
-                value={formData.doctor}
+                value={formData.trainer}
                 onChange={handleInputChange}
                 className="border border-gray-400 p-2 rounded-md"
               >
@@ -258,7 +288,8 @@ const BookFitness = () => {
           </div>
 
           <div className="flex gap-5 justify-center items-center my-4">
-            <button
+            <button onClick={confirmBooking}
+            style={{ background: themeColor }}
               type="submit"
               className="bg-black text-white hover:bg-gray-700 font-semibold text-xl py-1 px-4 rounded"
             >
@@ -276,8 +307,5 @@ const BookFitness = () => {
     </section>
   );
 };
-
-
-
 
 export default BookFitness
