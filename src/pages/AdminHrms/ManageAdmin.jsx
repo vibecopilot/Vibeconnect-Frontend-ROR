@@ -77,7 +77,7 @@ const ManageAdmin = () => {
                     <FaTrash size={15} />
                   </button>
                 </>
-               )} 
+              )}
             </>
           )}
         </div>
@@ -184,7 +184,8 @@ const ManageAdmin = () => {
     }
     try {
       const res = await postManageAdmin(postData);
-      if (employeePermission.can_approve_reject_onboarding_request) {
+      if (employeePermission.can_approve_reject_onboarding_request ||
+        access === "Full Access") {
         const addApprover = new FormData();
         addApprover.append("organization_id", hrmsOrgId);
         addApprover.append("approver_id", selectedUserOption.value);
@@ -320,7 +321,10 @@ const ManageAdmin = () => {
     }
     try {
       const res = await editManageAdminDetails(adminId, editData);
-      if (employeePermission.can_approve_reject_onboarding_request) {
+      if (
+        employeePermission.can_approve_reject_onboarding_request ||
+        access === "Full Access"
+      ) {
         const addApprover = new FormData();
         addApprover.append("organization_id", hrmsOrgId);
         addApprover.append("approver_id", selectedUserOption.value);
