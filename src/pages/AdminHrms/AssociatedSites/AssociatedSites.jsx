@@ -45,6 +45,7 @@ const AssociatedSites = () => {
     pan: false,
     esic: false,
     BVG: false,
+    clientName: "",
   });
 
   const handleChange = (e) => {
@@ -64,7 +65,7 @@ const AssociatedSites = () => {
       sortable: true,
     },
     {
-      name: "Name",
+      name: "Site Name",
       selector: (row) => row.site_name,
       sortable: true,
     },
@@ -109,6 +110,7 @@ const AssociatedSites = () => {
   ];
   const [siteDetails, setSiteDetails] = useState({
     siteName: "",
+    clientName: "",
     address1: "",
     address2: "",
     city: "",
@@ -132,16 +134,17 @@ const AssociatedSites = () => {
       const res = await getAssociatedSiteDetails(siteID);
       setSiteDetails({
         ...siteDetails,
-        siteName: res.site_name,
-        address1: res.address_1,
-        address2: res.address_2,
-        city: res.city,
-        state: res.state,
-        country: res.country,
-        latitude: res.latitude,
-        longitude: res.longitude,
-        pinCode: res.zip_code,
-        status: res.status,
+        siteName: res?.site_name,
+        clientName: res?.client_name,
+        address1: res?.address_1,
+        address2: res?.address_2,
+        city: res?.city,
+        state: res?.state,
+        country: res?.country,
+        latitude: res?.latitude,
+        longitude: res?.longitude,
+        pinCode: res?.zip_code,
+        status: res?.status,
         radius: res?.radius,
         aadhar: res?.aadhar_required,
         BVG: res?.pan_required,
@@ -199,6 +202,7 @@ const AssociatedSites = () => {
     }
     const postData = new FormData();
     postData.append("site_name", formData.siteName);
+    postData.append("client_name", formData.clientName);
     postData.append("address_1", formData.address1);
     postData.append("address_2", formData.address2);
     postData.append("city", formData.city);
@@ -233,6 +237,11 @@ const AssociatedSites = () => {
         latitude: "",
         longitude: "",
         radius: "",
+        clientName: "",
+        aadhar: false,
+        BVG: false,
+        esic: false,
+        pan: false,
       });
     } catch (error) {
       console.log(error);
@@ -270,6 +279,7 @@ const AssociatedSites = () => {
     }
     const editData = new FormData();
     editData.append("site_name", siteDetails.siteName);
+    editData.append("client_name", siteDetails.clientName);
     editData.append("address_1", siteDetails.address1);
     editData.append("address_2", siteDetails.address2);
     editData.append("city", siteDetails.city);
@@ -306,7 +316,7 @@ const AssociatedSites = () => {
       setFilteredSites(associatedSites);
     } else {
       const filteredResults = associatedSites.filter((role) =>
-        role?.site_name.toLowerCase().includes(searchValue.toLowerCase())
+        role?.site_name?.toLowerCase().includes(searchValue.toLowerCase())
       );
       setFilteredSites(filteredResults);
     }
@@ -381,6 +391,20 @@ const AssociatedSites = () => {
                 />
                 {/* <p>Active</p> */}
                 {/* </div> */}
+              </div>
+              <div className="flex flex-col gap-1 ">
+                <label htmlFor="" className="font-medium">
+                  Client name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="clientName"
+                  value={siteDetails.clientName}
+                  onChange={handleChange}
+                  id=""
+                  className="border border-gray-400 rounded-md p-2"
+                  placeholder="Client name"
+                />
               </div>
               <div className="flex flex-col gap-1 ">
                 <label htmlFor="" className="font-medium">
@@ -623,6 +647,20 @@ const AssociatedSites = () => {
               </h2>
             </div>
             <div className="max-h-96 overflow-y-auto hide-scrollbar">
+              <div className="flex flex-col gap-1 ">
+                <label htmlFor="" className="font-medium">
+                  Client name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="clientName"
+                  value={formData.clientName}
+                  onChange={handleChange}
+                  id=""
+                  className="border border-gray-400 rounded-md p-2"
+                  placeholder="Client name"
+                />
+              </div>
               <div className="flex flex-col gap-1 ">
                 <label htmlFor="" className="font-medium">
                   Site name <span className="text-red-500">*</span>
