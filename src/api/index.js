@@ -4004,11 +4004,14 @@ export const getMyHRMSEmployees = async (orgId) => {
 };
 export const getMyHRMSAdmins = async (orgId) => {
   try {
-    const response = await HrmsAuth.get(`/employee/?organization_id=${orgId}&user_type=pms_admin`, {
-      headers: {
-        "Content-Type": "multipart/form-data/",
-      },
-    });
+    const response = await HrmsAuth.get(
+      `/employee/?organization_id=${orgId}&user_type=pms_admin`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
     return response.data;
   } catch (error) {
     console.error("Error getting employee :", error);
@@ -6861,11 +6864,7 @@ export const postApprovalAuthorities = async (data) => {
       `/approver-settings/`,
       data,
 
-      {
-        headers: {
-          "Content-Type": "multipart/form-data/",
-        },
-      }
+     
     );
     return response.data;
   } catch (error) {
@@ -6888,6 +6887,22 @@ export const editApprovalAuthoritiesStatus = async (approverID, data) => {
     return response.data;
   } catch (error) {
     console.error("Error getting approval authorities", error);
+    throw error;
+  }
+};
+export const getApprovalAuthoritiesDetail = async (approverId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/approver-settings/?approver_id=${approverId}`
+      // {
+      //   headers: {
+      //     "Content-Type": "multipart/form-data/",
+      //   },
+      // }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting approval authorities details", error);
     throw error;
   }
 };
@@ -7518,24 +7533,18 @@ export const getIncidentSubTags = async (tagType, parentId) =>
       },
     }
   );
-export const getIncidentSubTag = async ( parentId) =>
-  axiosInstance.get(
-    `/incidence_tags.json?q[parent_id_eq]=${parentId}`,
-    {
-      params: {
-        token: token,
-      },
-    }
-  );
+export const getIncidentSubTag = async (parentId) =>
+  axiosInstance.get(`/incidence_tags.json?q[parent_id_eq]=${parentId}`, {
+    params: {
+      token: token,
+    },
+  });
 export const getIncidentTreeNode = async (tagType) =>
-  axiosInstance.get(
-    `/incidence_tags/tree_structure.json?tag_type=${tagType}`,
-    {
-      params: {
-        token: token,
-      },
-    }
-  );
+  axiosInstance.get(`/incidence_tags/tree_structure.json?tag_type=${tagType}`, {
+    params: {
+      token: token,
+    },
+  });
 export const deleteIncidentTags = async () =>
   axiosInstance.delete(`/incidence_tags.json`, {
     params: {
