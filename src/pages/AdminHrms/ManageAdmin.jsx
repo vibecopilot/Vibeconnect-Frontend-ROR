@@ -7,8 +7,10 @@ import UserDetailsList from "./UserDetailsList";
 import { FaCheck, FaTrash } from "react-icons/fa";
 import {
   deleteManageAdmin,
+  editApprovalAuthoritiesStatus,
   editManageAdminDetails,
   getAdminAccess,
+  getApprovalAuthoritiesDetail,
   getManageAdmin,
   getManageAdminDetails,
   getMyHRMSAdmins,
@@ -184,8 +186,10 @@ const ManageAdmin = () => {
     }
     try {
       const res = await postManageAdmin(postData);
-      if (employeePermission.can_approve_reject_onboarding_request ||
-        access === "Full Access") {
+      if (
+        employeePermission.can_approve_reject_onboarding_request ||
+        access === "Full Access"
+      ) {
         const addApprover = new FormData();
         addApprover.append("organization_id", hrmsOrgId);
         addApprover.append("approver_id", selectedUserOption.value);
@@ -219,6 +223,7 @@ const ManageAdmin = () => {
 
       console.log(admin);
       setSelectedUserOption(admin || null);
+      fetchApproverDetails(admin.value);
       const updatedPermissions = { ...permissionAllowed };
       Object.keys(permissionAllowed).forEach((key) => {
         if (res[key] !== undefined) {
@@ -262,6 +267,29 @@ const ManageAdmin = () => {
       console.log(error);
     }
   };
+
+  const [approverDetails, setApproverDetails] = useState({
+    approverSettingId: "",
+    approverName: "",
+    approverId: "",
+    active: "",
+  });
+
+  const fetchApproverDetails = async (approverId) => {
+    try {
+      const res = await getApprovalAuthoritiesDetail(approverId);
+      const data = res[0];
+      setApproverDetails({
+        ...approverDetails,
+        approverId: data.approver,
+        approverName: data.approver_name,
+        approverSettingId: data.id,
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  console.log(approverDetails);
 
   const handleEditAdmin = async () => {
     const editData = new FormData();
@@ -321,16 +349,40 @@ const ManageAdmin = () => {
     }
     try {
       const res = await editManageAdminDetails(adminId, editData);
+      if (!employeePermission.can_approve_reject_onboarding_request) {
+        const addApprover = {
+          is_active: employeePermission.can_approve_reject_onboarding_request,
+          organization_id: hrmsOrgId,
+          approver_id: selectedUserOption.value,
+          type_of_approver: "Employee",
+        };
+        if (approverDetails.approverSettingId) {
+          const res = await editApprovalAuthoritiesStatus(
+            approverDetails.approverSettingId,
+            addApprover
+          );
+        }
+      }
       if (
         employeePermission.can_approve_reject_onboarding_request ||
         access === "Full Access"
       ) {
-        const addApprover = new FormData();
-        addApprover.append("organization_id", hrmsOrgId);
-        addApprover.append("approver_id", selectedUserOption.value);
-        addApprover.append("type_of_approver", "Employee");
+        const addApprover = {
+          is_active: employeePermission.can_approve_reject_onboarding_request,
+          organization_id: hrmsOrgId,
+          approver_id: selectedUserOption.value,
+          type_of_approver: "Employee",
+        };
+
         try {
-          const res = await postApprovalAuthorities(addApprover);
+          if (approverDetails.approverSettingId) {
+            const res = await editApprovalAuthoritiesStatus(
+              approverDetails.approverSettingId,
+              addApprover
+            );
+          } else {
+            const res = await postApprovalAuthorities(addApprover);
+          }
         } catch (error) {
           console.log(error);
         }
@@ -517,7 +569,7 @@ const ManageAdmin = () => {
                 <PiPlusCircle /> Add Manage Administrator
               </h1>
               <div className="grid grid-cols-3 gap-2 max-h-96 min-h-52 overflow-y-auto hide-scrollbar">
-                <div className="flex flex-col col-span-3 justify-center">
+                <div className="flex flex-col col-span-3 justify-center z-50">
                   <label className="block text-gray-700 font-medium ">
                     Select Admin :
                   </label>
@@ -526,6 +578,7 @@ const ManageAdmin = () => {
                     noOptionsMessage={() => "No Admin Available"}
                     onChange={handleUserChangeSelect}
                     placeholder="Select Admin"
+                    maxMenuHeight={140}
                   />
                 </div>
                 <div className="flex flex-col ">
