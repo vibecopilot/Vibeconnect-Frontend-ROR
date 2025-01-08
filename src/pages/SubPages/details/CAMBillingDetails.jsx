@@ -305,16 +305,16 @@ function CAMBillingDetails() {
     },
   ];
 
-  // const dataTransaction = [
-  //   {
-  //     Id: 1,
-  //     date: "20/04/2024",
-  //     amount: "460.00",
-  //     payment_mode: "Online",
-  //     transaction_number: "7444196469",
-  //     image: "",
-  //   },
-  // ];
+  const dataTransaction = [
+    {
+      Id: 1,
+      date: "20/04/2024",
+      amount: "460.00",
+      payment_mode: "Online",
+      transaction_number: "7444196469",
+      image: "",
+    },
+  ];
   const amount = camBilling.total_amount;
   const amountInWords = Number.isFinite(amount) ? toWords(amount) : "Invalid Amount";
   return (
