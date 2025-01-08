@@ -60,7 +60,7 @@ function CAMBilling() {
     },
     {
       name: "Amount",
-      selector: (row) => row.total,
+      selector: (row) => row.total_amount,
       sortable: true,
     },
     {
@@ -90,7 +90,7 @@ function CAMBilling() {
     },
     {
       name: "Recall",
-      selector: (row) => row.recall,
+      selector: (row) => row.status,
       sortable: true,
     },
     {

@@ -9,47 +9,49 @@ import RecallInvoiceModal from "../../../containers/modals/RecallInvoiceModal";
 import CAMBillInvoiceReceivePaymentModal from "../../../containers/modals/CAMBillInvoiceReceivePaymentModal";
 import CAMBillingPaymentStatusModal from "../../../containers/modals/CAMBillingPaymentStatusModal";
 import {
+  domainPrefix,
   getAddressSetupDetails,
   getCamBillingDataDetails,
   getInvoiceReceipt,
   getReceiptPayment,
 } from "../../../api";
+import { toWords } from 'number-to-words';
 function CAMBillingDetails() {
   const themeColor = useSelector((state) => state.theme.color);
   const [recallModal, setRecallModal] = useState(false);
   const [receivePayment, setReceivePayment] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState(false);
   const [camBilling, setComBilling] = useState([]); // Initialize as an array or object if expected
-  const [camBillingAllData, setCamBillingAllData] = useState({})
+  const [camBillingAllData, setCamBillingAllData] = useState({});
   const [invoiceReceipt, setInvoiceReceipt] = useState([]);
   const [addressInvoice, setAddressInvoice] = useState({});
   const [amountCharges, setAmountCharges] = useState([]);
   const { id } = useParams();
-
+  
   const fetchAddressSetupDetails = async (addressId) => {
     try {
       const addressSetupCamBilling = await getAddressSetupDetails(addressId);
-      setAddressInvoice(addressSetupCamBilling.data)
+      setAddressInvoice(addressSetupCamBilling.data);
     } catch (error) {
       console.log(error);
     }
   };
-  console.log(addressInvoice)
+  console.log(addressInvoice);
   useEffect(() => {
     const fetchCamBilling = async () => {
       try {
         const response = await getCamBillingDataDetails(id);
-        console.log(response.data)
-        setCamBillingAllData(response.data)
+        console.log(response.data);
+        setCamBillingAllData(response.data);
         setComBilling(response.data); // Ensure response.data is structured as expected
         fetchAddressSetupDetails(response.data.invoice_address_id);
         const transformedData = [response.data];
-        setAmountCharges(transformedData)
+        setAmountCharges(transformedData);
       } catch (err) {
         console.error("Failed to fetch Address Setup data:", err);
       }
     };
-    console.log(camBillingAllData)
+    console.log(camBillingAllData);
     const fetchInvoiceReceipt = async () => {
       try {
         const response = await getInvoiceReceipt();
@@ -146,7 +148,7 @@ function CAMBillingDetails() {
     },
     {
       name: "Current Charges",
-      selector: (row) => row.current_charges,
+      selector: (row) => row.total_charge,
       sortable: true,
     },
     {
@@ -156,7 +158,7 @@ function CAMBillingDetails() {
     },
     {
       name: "Total Amount Due",
-      selector: (row) => row.total,
+      selector: (row) => row.total_amount,
       sortable: true,
     },
     {
@@ -178,73 +180,73 @@ function CAMBillingDetails() {
   ];
 
   const columnsReceipts = [
-      {
-        name: "Receipt No.",
-        selector: (row, index) => row.receipt_number,
-        sortable: true,
-      },
-      {
-        name: "Invoice No.",
-        selector: (row) => row.invoice_number,
-        sortable: true,
-      },
-      {
-        name: "Block",
-        selector: (row) => row.building_id,
-        sortable: true,
-      },
-      {
-        name: "Flat",
-        selector: (row) => row.unit_id,
-        sortable: true,
-      },
-      {
-        name: "Customer Name",
-        selector: (row) => row.customer_name,
-        sortable: true,
-      },
-      {
-        name: "Amount Received",
-        selector: (row) => row.amount_received,
-        sortable: true,
-      },
-      {
-        name: "Payment Mode",
-        selector: (row) => row.payment_mode,
-        sortable: true,
-      },
-      {
-        name: "Transaction Number",
-        selector: (row) => row.transaction_or_cheque_number,
-        sortable: true,
-      },
-      {
-        name: "Payment Date",
-        selector: (row) => row.payment_date,
-        sortable: true,
-      },
-      {
-        name: "Receipt Date",
-        selector: (row) => row.receipt_date,
-        sortable: true,
-      },
-      {
-        name: "Mail sent",
-        selector: (row) => row.mail_sent,
-        sortable: true,
-      },
-      {
-        name: "Attachments",
-        selector: (row) => (
-          <div>
-            <button>
-              <FaRegFileAlt />
-            </button>
-          </div>
-        ),
-        sortable: true,
-      },
-    ];
+    {
+      name: "Receipt No.",
+      selector: (row, index) => row.receipt_number,
+      sortable: true,
+    },
+    {
+      name: "Invoice No.",
+      selector: (row) => row.invoice_number,
+      sortable: true,
+    },
+    {
+      name: "Block",
+      selector: (row) => row.building_id,
+      sortable: true,
+    },
+    {
+      name: "Flat",
+      selector: (row) => row.unit_id,
+      sortable: true,
+    },
+    {
+      name: "Customer Name",
+      selector: (row) => row.customer_name,
+      sortable: true,
+    },
+    {
+      name: "Amount Received",
+      selector: (row) => row.amount_received,
+      sortable: true,
+    },
+    {
+      name: "Payment Mode",
+      selector: (row) => row.payment_mode,
+      sortable: true,
+    },
+    {
+      name: "Transaction Number",
+      selector: (row) => row.transaction_or_cheque_number,
+      sortable: true,
+    },
+    {
+      name: "Payment Date",
+      selector: (row) => row.payment_date,
+      sortable: true,
+    },
+    {
+      name: "Receipt Date",
+      selector: (row) => row.receipt_date,
+      sortable: true,
+    },
+    {
+      name: "Mail sent",
+      selector: (row) => row.mail_sent,
+      sortable: true,
+    },
+    {
+      name: "Attachments",
+      selector: (row) => (
+        <div>
+          <button>
+            <FaRegFileAlt />
+          </button>
+        </div>
+      ),
+      sortable: true,
+    },
+  ];
   const dataReceipts = [
     {
       Id: 1,
@@ -313,7 +315,8 @@ function CAMBillingDetails() {
   //     image: "",
   //   },
   // ];
-
+  const amount = camBilling.total_amount;
+  const amountInWords = Number.isFinite(amount) ? toWords(amount) : "Invalid Amount";
   return (
     <section className="flex">
       <div className="hidden md:block">
@@ -363,12 +366,12 @@ function CAMBillingDetails() {
               <FaDownload />
               Download Invoice
             </button>
-            <button
+            {/* <button
               className=" font-semibold text-white px-4 p-1 flex gap-2 items-center justify-center rounded-md"
               style={{ background: themeColor }}
             >
               <IoPrintOutline />
-            </button>
+            </button> */}
           </div>
         </div>
         <div className="grid md:grid-cols-2 mx-5 my-5">
@@ -396,16 +399,22 @@ function CAMBillingDetails() {
             <div className="space-y-2 px-5">
               <div className="grid grid-cols-2">
                 <p>GSTIN : </p>
-                <p className="text-sm font-normal">{addressInvoice.gst_number}</p>
+                <p className="text-sm font-normal">
+                  {addressInvoice.gst_number}
+                </p>
               </div>
               <div className="grid grid-cols-2">
                 <p>PAN : </p>
-                <p className="text-sm font-normal">{addressInvoice.pan_number}</p>
+                <p className="text-sm font-normal">
+                  {addressInvoice.pan_number}
+                </p>
               </div>
               <div className="grid grid-cols-2">
                 {/* <p>Consecutive Serial No : </p> */}
                 <p>Invoice No : </p>
-                <p className="text-sm font-normal">{camBillingAllData.invoice_number}</p>
+                <p className="text-sm font-normal">
+                  {camBillingAllData.invoice_number}
+                </p>
               </div>
               <div className="grid grid-cols-2">
                 <p>Customer Code : </p>
@@ -415,11 +424,16 @@ function CAMBillingDetails() {
             <div className="space-y-2 px-5">
               <div className="grid grid-cols-2">
                 <p>Date of Supply : </p>
-                <p className="text-sm font-normal">{camBillingAllData.supply_date}</p>
+                <p className="text-sm font-normal">
+                  {camBillingAllData.supply_date}
+                </p>
               </div>
               <div className="grid grid-cols-2">
                 <p>Billing Period: : </p>
-                <p className="text-sm font-normal">{camBillingAllData.bill_period_start_date}  to  {camBillingAllData.bill_period_end_date}</p>
+                <p className="text-sm font-normal">
+                  {camBillingAllData.bill_period_start_date} to{" "}
+                  {camBillingAllData.bill_period_end_date}
+                </p>
               </div>
               <div className="grid grid-cols-2">
                 <p>Place of Supply/Delivery : </p>
@@ -509,7 +523,7 @@ function CAMBillingDetails() {
                     colSpan={columns.length}
                     className="px-4 py-2 text-sm font-bold text-right text-gray-800"
                   >
-                    Total Invoice Value (In Figure): 2745.00
+                    Total Invoice Value (In Figure): {camBilling.total_charge}
                   </td>
                 </tr>
                 <tr>
@@ -517,7 +531,7 @@ function CAMBillingDetails() {
                     colSpan={columns.length}
                     className="px-4 py-2 text-sm font-bold text-right text-gray-800"
                   >
-                    Total Amount Due (In Figure): 2905.00
+                    Total Amount Due (In Figure): {camBilling.total_amount}
                   </td>
                 </tr>
                 <tr>
@@ -525,8 +539,7 @@ function CAMBillingDetails() {
                     colSpan={columns.length}
                     className="px-4 py-2 text-sm font-bold text-right text-gray-800"
                   >
-                    Total Amount (In Words): Rupees Two Thousand, Nine Hundred,
-                    Five Only
+                   Total Amount (In Words): {amountInWords}
                   </td>
                 </tr>
               </tfoot>
@@ -550,23 +563,33 @@ function CAMBillingDetails() {
               </div>
               <div className="grid grid-cols-2">
                 <p>A/C Name : </p>
-                <p className="text-sm font-normal">{addressInvoice.account_name}</p>
+                <p className="text-sm font-normal">
+                  {addressInvoice.account_name}
+                </p>
               </div>
               <div className="grid grid-cols-2">
                 <p>A/C No : </p>
-                <p className="text-sm font-normal">{addressInvoice.account_number}</p>
+                <p className="text-sm font-normal">
+                  {addressInvoice.account_number}
+                </p>
               </div>
               <div className="grid grid-cols-2">
                 <p>Account Type : </p>
-                <p className="text-sm font-normal">{addressInvoice.account_type}</p>
+                <p className="text-sm font-normal">
+                  {addressInvoice.account_type}
+                </p>
               </div>
               <div className="grid grid-cols-2">
                 <p>Bank & Branch : </p>
-                <p className="text-sm font-normal">{addressInvoice.bank_branch_name}</p>
+                <p className="text-sm font-normal">
+                  {addressInvoice.bank_branch_name}
+                </p>
               </div>
               <div className="grid grid-cols-2">
                 <p>IFSC : </p>
-                <p className="text-sm font-normal">{addressInvoice.ifsc_code}</p>
+                <p className="text-sm font-normal">
+                  {addressInvoice.ifsc_code}
+                </p>
               </div>
             </div>
             <div className="space-y-2 px-5">
@@ -574,10 +597,15 @@ function CAMBillingDetails() {
                 <p>Authorized Signatory : </p>
                 <p className="text-sm font-normal"></p>
                 <div className="my-5">
-                  <img
-                    src="/signature.jpg"
-                    className="w-60 h-40 rounded-md"
-                  ></img>
+                  {addressInvoice?.attachments?.[0]?.image_url ? (
+                    <img
+                      src={domainPrefix + addressInvoice.attachments[0].image_url} // Prepend base URL if needed
+                      className="w-60 h-40 rounded-md"
+                      alt="Invoice"
+                    />
+                  ) : (
+                    <p>No image available</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -587,7 +615,7 @@ function CAMBillingDetails() {
           <h2 className="border-b  text-xl border-black font-semibold"></h2>
           <div className="grid grid-cols-1 my-5">
             <p>Note : </p>
-            <p className="text-sm font-normal">Demo</p>
+            <p className="text-sm font-normal">{camBilling.note}</p>
           </div>
         </div>
         <div className="my-5 mx-5">
