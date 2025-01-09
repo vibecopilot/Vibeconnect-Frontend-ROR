@@ -287,27 +287,12 @@ const AddAsset = () => {
       consumptionData.forEach((item) => {
         formDataSend.append("asset_params[][name]", item.name);
         formDataSend.append("asset_params[][order]", item.order);
-        formDataSend.append(
-          "asset_params[][unit_type]",
-          item.unit_type
-        );
+        formDataSend.append("asset_params[][unit_type]", item.unit_type);
         formDataSend.append("asset_params[][digit]", item.digit);
-        formDataSend.append(
-          "asset_params[][alert_below]",
-          item.alert_below
-        );
-        formDataSend.append(
-          "asset_params[][alert_above]",
-          item.alert_above
-        );
-        formDataSend.append(
-          "asset_params[][min_val]",
-          item.min_val
-        );
-        formDataSend.append(
-          "asset_params[][max_val]",
-          item.max_val
-        );
+        formDataSend.append("asset_params[][alert_below]", item.alert_below);
+        formDataSend.append("asset_params[][alert_above]", item.alert_above);
+        formDataSend.append("asset_params[][min_val]", item.min_val);
+        formDataSend.append("asset_params[][max_val]", item.max_val);
         formDataSend.append(
           "asset_params[][multiplier_factor]",
           item.multiplier_factor
@@ -320,10 +305,7 @@ const AddAsset = () => {
           "asset_params[][consumption_view]",
           item.consumption_view
         );
-        formDataSend.append(
-          "asset_params[][check_prev]",
-          item.check_prev
-        );
+        formDataSend.append("asset_params[][check_prev]", item.check_prev);
       });
 
       formData.invoice.forEach((file, index) => {
@@ -914,6 +896,71 @@ const AddAsset = () => {
                 </div>
               )}
             </div>
+            <p className="border-b border-black font-semibold">
+              Compliance Details
+            </p>
+            <div className="flex  flex-col gap-4 my-2  justify-between">
+              <div className="flex gap-4 my-2">
+                <p className="font-semibold">Compliance applicable: </p>
+                <div className="flex gap-2">
+                  <input
+                    type="radio"
+                    onChange={() =>
+                      setFormData({ ...formData, complianceApplicable: true })
+                    }
+                    checked={formData.complianceApplicable === true}
+                    id="inWarranty"
+                    // onClick={() => setWarranty(true)}
+                    className="checked:accent-black"
+                  />
+                  <label htmlFor="inWarranty">Yes</label>
+                </div>
+                <div className="flex  gap-2">
+                  <input
+                    type="radio"
+                    id="notInWarranty"
+                    checked={formData.complianceApplicable === false}
+                    onChange={() =>
+                      setFormData({ ...formData, complianceApplicable: false })
+                    }
+                    // onClick={() => setWarranty(false)}
+                    className="checked:accent-black"
+                  />
+                  <label htmlFor="notInWarranty">No</label>
+                </div>
+              </div>
+
+              {formData.complianceApplicable && (
+                <div className="flex md:flex-row flex-col md:items-center  gap-5">
+                  <div className="md:flex  flex-col grid grid-cols-2  gap-2 ">
+                    <label htmlFor="" className="font-medium text-sm">
+                      Start Date :
+                    </label>
+                    <input
+                      type="date"
+                      name="warranty_start"
+                      value={formData.warranty_start}
+                      onChange={handleChange}
+                      id="warranty_start"
+                      className="border p-1 px-4 border-gray-500 rounded-md w-72"
+                    />
+                  </div>
+                  <div className="md:flex flex-col grid grid-cols-2  gap-2 ">
+                    <label htmlFor="" className="font-medium text-sm">
+                      End Date :
+                    </label>
+                    <input
+                      type="date"
+                      name="warranty_expiry"
+                      value={formData.warranty_expiry}
+                      onChange={handleChange}
+                      id="warranty_expiry"
+                      className="border p-1 px-4 border-gray-500 rounded-md w-72"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
             <div className="my-5">
               <p className="border-b border-black font-semibold">
                 Supplier Contact Details
@@ -1308,7 +1355,7 @@ const AddAsset = () => {
                   </button>
                 </div>
               )}
-               {consumption === "nonConsumption" && (
+              {consumption === "nonConsumption" && (
                 <div className="my-5 space-y-3">
                   {consumptionData.map((con, index) => (
                     <div
