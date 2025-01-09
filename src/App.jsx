@@ -731,6 +731,9 @@ import EditRestaurtantOrders from "./pages/SubPages/EditResturantOrders.jsx";
 import FBMainPage from "./pages/Setup/FBMainPage.jsx";
 import EmployeeDocumentMain from "./pages/Employees/EmployeeDocumentMain.jsx";
 import EditDailyPickup from "./pages/SubPages/Transportation/EditDailyPickup.jsx";
+import Compliance from "./pages/Compliance/Compliance.jsx";
+import ComplianceSetup from "./pages/Setup/ComplianceSetupPages/ComplianceSetup.jsx";
+import AddCompliance from "./pages/Compliance/AddCompliance.jsx";
 // new admin hrms
 
 function App() {
@@ -1113,6 +1116,22 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <Ticket />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/compliance"
+            element={
+              <ProtectedAdminRoutes>
+                <Compliance />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/compliance/add-compliance"
+            element={
+              <ProtectedAdminRoutes>
+                <AddCompliance />
               </ProtectedAdminRoutes>
             }
           />
@@ -3627,6 +3646,14 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <IncidentSetup />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/setup-compliance"
+            element={
+              <ProtectedAdminRoutes>
+                <ComplianceSetup />
               </ProtectedAdminRoutes>
             }
           />
