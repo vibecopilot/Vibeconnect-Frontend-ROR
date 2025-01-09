@@ -456,6 +456,7 @@ const AddAuditChecklist = () => {
                 </div>
             )}
               </div>
+              {renderScheduleFields()}
             <h2 className="border-b text-center text-xl border-black mb-6 font-bold">
               Activity Name
             </h2>
