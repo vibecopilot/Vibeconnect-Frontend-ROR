@@ -134,6 +134,7 @@ const EditOpsScheduleAudit = () => {
         </label>
         <select id="group" className="border border-gray-400 p-2 rounded-md">
           <option value="">Select Group</option>
+
           {/* Add options here */}
         </select>
       </div>
@@ -214,27 +215,31 @@ const EditOpsScheduleAudit = () => {
           <label htmlFor="readingCheckbox">Help Text</label>
         </div>
         &nbsp;&nbsp;
-        <div className="text-xs">
-          {isChecked && (
-            <div className="text-red-500">
-              <label>
-                Choose a File:
-                <input type="file" />
-              </label>
-            </div>
-          )}
-        </div>
-        &nbsp;&nbsp;
-        {/* <div className="flex items-center"> */}
-        {/* <input
-                    type="checkbox"
-                    id="helpTextCheckbox"
-                    // checked={isHelpText}
-                    // onChange={handleHelpTextToggle}
-                    className="mr-2"
+        <div>
+          <div className="text-xs">
+            {isChecked && (
+              <div className="text-red-500">
+                <label>
+                  Choose a File:
+                  <input type="file" />
+                </label>
+              </div>
+            )}
+          </div>
+          &nbsp;&nbsp;
+          <div className="text-xs">
+            {isChecked && (
+              <div className="text-red-500">
+                <input
+                  type="text"
+                  id="task"
+                  className="border border-gray-400 p-2 rounded-md"
+                  placeholder="Enter Help Text Label"
                 />
-                <label htmlFor="helpTextCheckbox">Help Text</label> */}
-        {/* </div> */}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
       <div className="grid gap-2 items-center w-full">
         <label htmlFor="task" className="font-semibold">

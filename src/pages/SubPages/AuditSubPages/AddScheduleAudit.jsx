@@ -10,7 +10,9 @@ const AddScheduleAudit = () => {
   const [isOnTask, setIsOnTask] = useState(false);
   const [isOnWeight, setIsOnWeight] = useState(false);
   const [sections, setSections] = useState([]);
+
   const [isChecked, setIsChecked] = useState(false);
+
   const [formData, setFormData] = useState({
     audit_for: "",
     activity_name: "",
@@ -36,9 +38,11 @@ const AddScheduleAudit = () => {
     created_by_id: "",
     audit_tasks: [],
   });
+
   const handleAddSectionClick = () => {
     setSections([...sections, { id: sections.length + 1 }]); // Adding a new section with a unique ID
   };
+
   const handleCheckboxChange = (event) => {
     setIsChecked(event.target.checked);
   };
@@ -143,6 +147,7 @@ const AddScheduleAudit = () => {
         </label>
         <select id="group" className="border border-gray-400 p-2 rounded-md">
           <option value="">Select Group</option>
+          <option value="">Asset</option>
           {/* Add options here */}
         </select>
       </div>
@@ -152,9 +157,11 @@ const AddScheduleAudit = () => {
         </label>
         <select id="subGroup" className="border border-gray-400 p-2 rounded-md">
           <option value="">Select SubGroup</option>
+          <option value="">Sub Asset</option>
           {/* Add options here */}
         </select>
       </div>
+      <br />
       <div className="grid gap-2 items-center w-full">
         <label htmlFor="task" className="font-semibold">
           Task:
@@ -216,21 +223,39 @@ const AddScheduleAudit = () => {
             // checked={isHelpText}
             // onChange={handleHelpTextToggle}
             className="mr-2"
+            checked={isChecked}
+            onChange={handleCheckboxChange}
           />
           <label htmlFor="helpTextCheckbox">Help Text</label>
         </div>
         &nbsp;&nbsp;
-        <div className="text-xs">
-          {isChecked && (
-            <div className="text-red-500">
-              <label>
-                Choose a File:
-                <input type="file" />
-              </label>
-            </div>
-          )}
+        <div>
+          <div className="text-xs">
+            {isChecked && (
+              <div className="text-red-500">
+                <label>
+                  Choose a File:
+                  <input type="file" />
+                </label>
+              </div>
+            )}
+          </div>
+          &nbsp;&nbsp;
+          <div className="text-xs">
+            {isChecked && (
+              <div className="text-red-500">
+                <input
+                  type="text"
+                  id="task"
+                  className="border border-gray-400 p-2 rounded-md"
+                  placeholder="Enter Help Text Label"
+                />
+              </div>
+            )}
+          </div>
         </div>
       </div>
+
       {isOnWeight && (
         <div className="grid gap-2 items-center w-full">
           <label htmlFor="" className="font-semibold">
@@ -749,9 +774,9 @@ const AddScheduleAudit = () => {
                     {/* Your task fields here */}
                     {renderTaskFields()}
                     {/* Add more fields as needed */}
-                    <div className="flex justify-end">
+                    <div>
                       <button
-                        className="bg-red-400 text-white p-2 px-4 rounded-md font-medium   "
+                        className="text-sm text-red-500 hover:underline mt-2 flex items-center "
                         onClick={() => handleDeleteSectionClick(section.id)}
                       >
                         <FaTrash />
