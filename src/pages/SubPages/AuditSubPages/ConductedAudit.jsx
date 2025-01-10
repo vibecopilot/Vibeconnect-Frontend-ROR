@@ -4,6 +4,7 @@ import Table from "../../../components/table/Table";
 import { BsEye } from "react-icons/bs";
 import { BiEdit } from "react-icons/bi";
 import { PiPlusCircle } from "react-icons/pi";
+import { IoMdPrint } from "react-icons/io";
 
 const ScheduledAudit = () => {
   const columns = [
@@ -11,10 +12,9 @@ const ScheduledAudit = () => {
       name: "Report",
       cell: (row) => (
         <div className="flex items-center gap-4">
-          <Link to={`/tickets/details/${row.id}`}>
-            <BsEye size={15} />
+          <Link>
+            <IoMdPrint />
           </Link>
-         
         </div>
       ),
     },
@@ -60,7 +60,7 @@ const ScheduledAudit = () => {
     },
     {
       name: "Delete",
-      selector: (row) => (<button className="text-red-500">Delete</button>),
+      selector: (row) => <button className="text-red-500">Delete</button>,
       sortable: true,
     },
   ];
@@ -74,7 +74,7 @@ const ScheduledAudit = () => {
       status: "Completed",
       site: "efg",
       duration: "1 hr",
-      percentage: "2%"
+      percentage: "2%",
     },
   ];
 
@@ -145,7 +145,6 @@ const ScheduledAudit = () => {
         </div>
 
         <div className="flex gap-2">
-         
           <input
             type="text"
             placeholder="Search  "
@@ -153,13 +152,13 @@ const ScheduledAudit = () => {
             //   value={searchText}
             //   onChange={handleSearch}
           />
-        <button
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-          // onClick={exportToExcel}
+          <button
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            // onClick={exportToExcel}
           >
-          Export
-        </button>
-            </div>
+            Export
+          </button>
+        </div>
       </div>
       <Table columns={columns} data={data} isPagination={true} />
     </div>
