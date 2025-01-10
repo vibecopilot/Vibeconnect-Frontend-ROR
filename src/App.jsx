@@ -734,6 +734,7 @@ import EditDailyPickup from "./pages/SubPages/Transportation/EditDailyPickup.jsx
 import Compliance from "./pages/Compliance/Compliance.jsx";
 import ComplianceSetup from "./pages/Setup/ComplianceSetupPages/ComplianceSetup.jsx";
 import AddCompliance from "./pages/Compliance/AddCompliance.jsx";
+import SiteEmployee from "./pages/AdminHrms/Employee/SiteEmployee.jsx";
 // new admin hrms
 
 function App() {
@@ -5155,6 +5156,14 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <EmployeeDirectory />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/hrms/site-employee"
+            element={
+              <ProtectedAdminRoutes>
+                <SiteEmployee />
               </ProtectedAdminRoutes>
             }
           />

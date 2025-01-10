@@ -723,7 +723,7 @@ function ComplianceDashboard() {
 
   const cardColor = (type) => {
     switch (type) {
-      case "Total Compliance":
+      case "Total Open Compliance":
         return { bg: "bg-blue-50", text: "text-blue-400" };
       case "In-Progress":
         return { bg: "bg-green-50", text: "text-green-400" };
@@ -753,7 +753,7 @@ function ComplianceDashboard() {
 
   const cardData = [
     {
-      title: "Total Compliance",
+      title: "Total Open Compliance",
       count: totalAssetCount,
       downloadHandler: handleTotalAssetDownload,
       icon: <FiBriefcase className="w-4 h-4" />,
