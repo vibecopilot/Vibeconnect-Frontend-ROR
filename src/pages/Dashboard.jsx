@@ -172,7 +172,7 @@ const Dashboard = () => {
         <div className="w-full flex mx-3 flex-col p-2  ">
           <HighchartsComponent />
         </div>
-        {feat.includes("assets") && (
+        {feat.includes("permits") && (
           <div className="w-full flex flex-col p-2  ">
             <h2 className="border-b-2 border-black font-medium mb-2">
               Compliance

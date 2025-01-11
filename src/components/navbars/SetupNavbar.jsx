@@ -666,7 +666,7 @@ const SetupNavbar = () => {
             </NavLink>
           </li>
           )}
-          {feat.includes("incidents") && (
+          {feat.includes("permits") && (
           <li>
             <NavLink
               to={`/admin/setup-compliance`}
