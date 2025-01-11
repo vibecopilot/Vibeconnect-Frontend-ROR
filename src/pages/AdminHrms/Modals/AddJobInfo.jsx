@@ -169,7 +169,7 @@ const AddJobInfo = ({ closeModal1, fetchJobInfo }) => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Associate site <span className="text-red-500">*</span>
               </label>
-              
+
               <Select
                 options={sites}
                 onChange={handleAssociatedSiteChange}

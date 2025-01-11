@@ -735,6 +735,10 @@ import Compliance from "./pages/Compliance/Compliance.jsx";
 import ComplianceSetup from "./pages/Setup/ComplianceSetupPages/ComplianceSetup.jsx";
 import AddCompliance from "./pages/Compliance/AddCompliance.jsx";
 import SiteEmployee from "./pages/AdminHrms/Employee/SiteEmployee.jsx";
+import ComplianceVendor from "./pages/Setup/ComplianceSetupPages/ComplianceVendor.jsx";
+import ComplianceEvidence from "./pages/Setup/ComplianceSetupPages/ComplianceEvidence.jsx";
+import ComplianceDetails from "./pages/Compliance/ComplianceDetails.jsx";
+import ComplianceVendorDashboard from "./pages/Setup/ComplianceSetupPages/ComplianceVendorDashboard.jsx";
 // new admin hrms
 
 function App() {
@@ -7064,6 +7068,38 @@ function App() {
             element={
               <ProtectedRoute>
                 <EmployeeDocumentMain />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/compliance/vendor/dashboard"
+            element={
+              <ProtectedRoute>
+                <ComplianceVendorDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/compliance/vendor"
+            element={
+              <ProtectedRoute>
+                <ComplianceVendor />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/compliance/evidence"
+            element={
+              <ProtectedRoute>
+                <ComplianceEvidence />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/compliance/compliance-details"
+            element={
+              <ProtectedRoute>
+                <ComplianceDetails />
               </ProtectedRoute>
             }
           />
