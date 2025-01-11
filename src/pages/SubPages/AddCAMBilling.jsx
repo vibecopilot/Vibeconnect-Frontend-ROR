@@ -294,7 +294,7 @@ function AddCAMBilling() {
     sendData.append("cam_bill[supply_date]", formData.dateSupply);
     sendData.append("cam_bill[building_id]", formData.block);
     sendData.append("cam_bill[floor_id]", formData.floor_name);
-    sendData.append("cam_bill[flat_id]", formData.flat);
+    sendData.append("cam_bill[unit_id]", formData.flat);
     sendData.append("cam_bill[due_amount]", previousDueAmount);
     sendData.append("cam_bill[due_amount_interst]", previousDueAmountInterest);
     sendData.append("cam_bill[note]", formData.notes);

@@ -5,10 +5,15 @@ import { BsEye } from "react-icons/bs";
 import { IoAddCircleOutline } from "react-icons/io5";
 import { FaDownload, FaRegFileAlt, FaUpload } from "react-icons/fa";
 import { useSelector } from "react-redux";
-import { getInvoiceReceipt } from "../api";
+import { getInvoiceReceipt, getFloors, getUnits } from "../api";
+import { BiFilterAlt } from "react-icons/bi";
+import { getItemInLocalStorage } from "../utils/localStorage";
+import ReceiptInvoiceModal from "../containers/modals/ReceiptInvoiceModal";
 function ReceiptInvoiceCam() {
   const [invoiceReceipt, setInvoiceReceipt] = useState([]);
   const themeColor = useSelector((state) => state.theme.color);
+  const [filter, setFilter] = useState(false);
+  const [importModal, setImportModal] = useState(false);
   const columns = [
     {
       name: "Action",
@@ -99,6 +104,93 @@ function ReceiptInvoiceCam() {
     };
     fetchInvoiceReceipt();
   }, []);
+
+  const buildings = getItemInLocalStorage("Building");
+  const [floors, setFloors] = useState([]);
+  const [units, setUnits] = useState([]);
+  const [formData, setFormData] = useState({
+    block: "",
+    floor_name: "",
+    flat: "",
+    receiptDate: "",
+    receiptNumber: "",
+    invoiceNumber: "",
+  });
+  const handleChange = async (e) => {
+    const { name, value, type } = e.target;
+
+    // Fetch floors based on building ID
+    const fetchFloor = async (buildingID) => {
+      try {
+        const response = await getFloors(buildingID);
+        setFloors(
+          response.data.map((item) => ({ name: item.name, id: item.id }))
+        );
+      } catch (error) {
+        console.error("Error fetching floors:", error);
+      }
+    };
+    // Fetch units based on floor ID
+    const fetchUnit = async (floorID) => {
+      try {
+        const response = await getUnits(floorID);
+        setUnits(
+          response.data.map((item) => ({ name: item.name, id: item.id }))
+        );
+      } catch (error) {
+        console.error("Error fetching units:", error);
+      }
+    };
+
+    if (type === "select-one" && name === "block") {
+      const buildingID = Number(value);
+      await fetchFloor(buildingID); // Fetch floors for the selected block
+      setFormData((prev) => ({
+        ...prev,
+        building_id: buildingID,
+        block: value,
+        floor_id: "", // Reset floor selection
+        flat: "", // Reset unit selection
+      }));
+    } else if (type === "select-one" && name === "floor_name") {
+      const floorID = Number(value);
+      await fetchUnit(floorID); // Fetch units for the selected floor
+      setFormData((prev) => ({
+        ...prev,
+        floor_id: floorID,
+        floor_name: value,
+        flat: "", // Reset unit selection
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
+  };
+  const isFlatDisabled =
+    !formData.block || !formData.floor_name || !units.length;
+
+  const handleFilterData = async () => {
+    try {
+      const [startDate, endDate] = billingPeriod; // Extract start and end dates from the state
+      if (!startDate || !endDate) {
+        console.error("Please select a valid billing period");
+        return;
+      }
+      const resp = await gatCamBillFilter(
+        formData.block,
+        formData.floor_name,
+        formData.flat,
+        startDate,
+        endDate,
+        formData.dueDate
+      );
+      console.log(resp);
+    } catch (error) {
+      console.error("Error filtering data:", error);
+    }
+  };
   return (
     <div className="my-10">
       <div className="flex md:flex-row flex-col justify-between md:items-center my-2 gap-2  ">
@@ -131,9 +223,111 @@ function ReceiptInvoiceCam() {
             <FaDownload />
             Export
           </button>
+          <button
+            className=" font-semibold text-white px-4 p-1 flex gap-2 items-center justify-center rounded-md"
+            style={{ background: themeColor }}
+            onClick={() => setFilter(!filter)}
+          >
+            <BiFilterAlt />
+            Filter
+          </button>
         </div>
       </div>
+      {filter && (
+        <div className="flex flex-col md:flex-row mt-1 items-center justify-center gap-2 my-3">
+          <div className="flex flex-col">
+            <select
+              className="border p-1 px-4 border-gray-500 rounded-md"
+              onChange={handleChange}
+              value={formData.block}
+              name="block"
+            >
+              <option value="">Select Building</option>
+              {buildings?.map((building) => (
+                <option key={building.id} value={building.id}>
+                  {building.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex flex-col">
+            <select
+              className="border p-1 px-4 border-gray-500 rounded-md"
+              onChange={handleChange}
+              value={formData.floor_name}
+              name="floor_name"
+              disabled={!floors.length} // Disable if no floors are available
+            >
+              <option value="">Select Floor</option>
+              {floors.map((floor) => (
+                <option key={floor.id} value={floor.id}>
+                  {floor.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex flex-col">
+            <select
+              name="flat"
+              value={formData.flat}
+              onChange={handleChange}
+              disabled={isFlatDisabled}
+              className="border p-1 px-4 border-gray-500 rounded-md"
+            >
+              <option value="">Select Flat</option>
+              {units.map((unit) => (
+                <option key={unit.id} value={unit.id}>
+                  {unit.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex flex-col">
+            <input
+              type="text"
+              name="invoiceNumber"
+              value={formData.invoiceNumber}
+              onChange={handleChange}
+              placeholder="Enter Invoice Number"
+              className="border p-1 px-4 border-gray-500 rounded-md"
+            />
+          </div>
+          <div className="flex flex-col">
+            <input
+              type="text"
+              name="receiptNumber"
+              value={formData.receiptNumber}
+              onChange={handleChange}
+              placeholder="Enter Invoice Number"
+              className="border p-1 px-4 border-gray-500 rounded-md"
+            />
+          </div>
+          <div className="flex flex-col">
+            <input
+              type="date"
+              name="receiptDate"
+              value={formData.receiptDate}
+              onChange={handleChange}
+              placeholder="Enter Date of supply"
+              className="border p-1 px-4 border-gray-500 rounded-md"
+            />
+          </div>
+          <button
+            onClick={handleFilterData}
+            className=" p-1 px-4 text-white rounded-md"
+            style={{ background: themeColor }}
+          >
+            Apply
+          </button>
+          <button className="bg-red-400 p-1 px-4 text-white rounded-md">
+            Reset
+          </button>
+        </div>
+      )}
       <Table columns={columns} data={invoiceReceipt} selectableRow={true} />
+      {importModal && (
+        <ReceiptInvoiceModal onclose={() => setImportModal(false)} />
+      )}
     </div>
   );
 }

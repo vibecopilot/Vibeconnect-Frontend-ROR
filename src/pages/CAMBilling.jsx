@@ -10,8 +10,16 @@ import { BiFilterAlt } from "react-icons/bi";
 import InvoiceImportModal from "../containers/modals/InvoiceImportModal";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { getCamBillingData } from "../api";
+import {
+  getCamBillingData,
+  getCamBillingDownload,
+  getFloors,
+  getUnits,
+  gatCamBillFilter,
+} from "../api";
 import ReceiptInvoiceCam from "./ReceiptInvoiceCam";
+import toast from "react-hot-toast";
+import { getItemInLocalStorage } from "../utils/localStorage";
 function CAMBilling() {
   const themeColor = useSelector((state) => state.theme.color);
   const [page, setPage] = useState("cabBilling");
@@ -100,38 +108,161 @@ function CAMBilling() {
     },
   ];
 
-  const data = [
-    {
-      Id: 1,
-      flat: "DG",
-      period: "	01/01/2022 - 31/12/2022",
-      amount: "100.0",
-      due_date: "30/07/2022",
-      invoice_no: "INV-4047",
-      amount_paid: "0.00",
-      payment_status: "Unpaid",
-      mail_sent: "",
-      recall: "",
-      created_on: "30/11/2024",
-    },
-    {
-      Id: 2,
-      flat: "A1-102",
-      period: "01/08/2023 - 31/10/2023",
-      amount: "1140.00",
-      due_date: "11/10/2023",
-      invoice_no: "INV-4046",
-      amount_paid: "0.00",
-      payment_status: "Unpaid",
-      mail_sent: "",
-      recall: "",
-      created_on: "01/10/2023",
-    },
-  ];
-
+  // const data = [
+  //   {
+  //     Id: 1,
+  //     flat: "DG",
+  //     period: "	01/01/2022 - 31/12/2022",
+  //     amount: "100.0",
+  //     due_date: "30/07/2022",
+  //     invoice_no: "INV-4047",
+  //     amount_paid: "0.00",
+  //     payment_status: "Unpaid",
+  //     mail_sent: "",
+  //     recall: "",
+  //     created_on: "30/11/2024",
+  //   },
+  //   {
+  //     Id: 2,
+  //     flat: "A1-102",
+  //     period: "01/08/2023 - 31/10/2023",
+  //     amount: "1140.00",
+  //     due_date: "11/10/2023",
+  //     invoice_no: "INV-4046",
+  //     amount_paid: "0.00",
+  //     payment_status: "Unpaid",
+  //     mail_sent: "",
+  //     recall: "",
+  //     created_on: "01/10/2023",
+  //   },
+  // ];
   const handleDateChange = (dates) => {
-    const [start, end] = dates; // Destructure the selected start and end dates
+    const [start, end] = dates;
     setBillingPeriod([start, end]); // Update the state
+  };
+
+  const [selectedRows, setSelectedRows] = useState([]);
+  const handleSelectedRows = (rows) => {
+    const selectedId = rows.map((row) => row.id);
+    console.log(selectedId);
+    setSelectedRows(selectedId);
+  };
+
+  const handleDownload = async () => {
+    if (selectedRows.length === 0) {
+      return toast.error("Please select at least one data.");
+    }
+
+    console.log(selectedRows);
+    toast.loading("Cam Billing Invoice downloading, please wait!");
+
+    try {
+      const response = await getCamBillingDownload(selectedRows);
+      const url = window.URL.createObjectURL(
+        new Blob([response.data], {
+          type: response.headers["content-type"],
+        })
+      );
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "cam_invoice_file.xlsx");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success("Cam Billing Invoice downloaded successfully");
+      toast.dismiss();
+    } catch (error) {
+      toast.dismiss();
+      console.error("Error downloading :", error);
+      toast.error("Something went wrong, please try again");
+    }
+  };
+  const buildings = getItemInLocalStorage("Building");
+  const [floors, setFloors] = useState([]);
+  const [units, setUnits] = useState([]);
+  const [formData, setFormData] = useState({
+    block: "",
+    floor_name: "",
+    flat: "",
+    dueDate: "",
+  });
+
+  console.log(formData)
+  console.log(billingPeriod)
+  const handleChange = async (e) => {
+    const { name, value, type } = e.target;
+
+    // Fetch floors based on building ID
+    const fetchFloor = async (buildingID) => {
+      try {
+        const response = await getFloors(buildingID);
+        setFloors(
+          response.data.map((item) => ({ name: item.name, id: item.id }))
+        );
+      } catch (error) {
+        console.error("Error fetching floors:", error);
+      }
+    };
+    // Fetch units based on floor ID
+    const fetchUnit = async (floorID) => {
+      try {
+        const response = await getUnits(floorID);
+        setUnits(
+          response.data.map((item) => ({ name: item.name, id: item.id }))
+        );
+      } catch (error) {
+        console.error("Error fetching units:", error);
+      }
+    };
+
+    if (type === "select-one" && name === "block") {
+      const buildingID = Number(value);
+      await fetchFloor(buildingID); // Fetch floors for the selected block
+      setFormData((prev) => ({
+        ...prev,
+        building_id: buildingID,
+        block: value,
+        floor_id: "", // Reset floor selection
+        flat: "", // Reset unit selection
+      }));
+    } else if (type === "select-one" && name === "floor_name") {
+      const floorID = Number(value);
+      await fetchUnit(floorID); // Fetch units for the selected floor
+      setFormData((prev) => ({
+        ...prev,
+        floor_id: floorID,
+        floor_name: value,
+        flat: "", // Reset unit selection
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
+  };
+  const isFlatDisabled =
+    !formData.block || !formData.floor_name || !units.length;
+
+  const handleFilterData = async () => {
+    try {
+      const [startDate, endDate] = billingPeriod; // Extract start and end dates from the state
+      if (!startDate || !endDate) {
+        console.error("Please select a valid billing period");
+        return;
+      }
+      const resp = await gatCamBillFilter(
+        formData.block,
+        formData.floor_name,
+        formData.flat,
+        startDate,
+        endDate,
+        formData.dueDate,
+      );
+      console.log(resp);
+    } catch (error) {
+      console.error("Error filtering data:", error);
+    }
   };
 
   return (
@@ -188,6 +319,7 @@ function CAMBilling() {
                 <button
                   className="font-semibold text-white px-4 p-1 flex gap-2 items-center justify-center rounded-md"
                   style={{ background: themeColor }}
+                  onClick={handleDownload}
                 >
                   <FaDownload />
                   Export
@@ -207,27 +339,49 @@ function CAMBilling() {
               <div className="flex flex-col md:flex-row mt-1 items-center justify-center gap-2 my-3">
                 <div className="flex flex-col">
                   <select
-                    name="tower"
-                    id=" tower"
                     className="border p-1 px-4 border-gray-500 rounded-md"
+                    onChange={handleChange}
+                    value={formData.block}
+                    name="block"
                   >
-                    <option value="" disabled selected>
-                      Select Tower
-                    </option>
-                    <option value="headOffice">Fm</option>
-                    <option value="vibe1">Vibe1</option>
-                    <option value="vibe2">Vibe2</option>
+                    <option value="">Select Building</option>
+                    {buildings?.map((building) => (
+                      <option key={building.id} value={building.id}>
+                        {building.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex flex-col">
+                  <select
+                    className="border p-1 px-4 border-gray-500 rounded-md"
+                    onChange={handleChange}
+                    value={formData.floor_name}
+                    name="floor_name"
+                    disabled={!floors.length} // Disable if no floors are available
+                  >
+                    <option value="">Select Floor</option>
+                    {floors.map((floor) => (
+                      <option key={floor.id} value={floor.id}>
+                        {floor.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div className="flex flex-col">
                   <select
                     name="flat"
-                    id=" flat"
+                    value={formData.flat}
+                    onChange={handleChange}
+                    disabled={isFlatDisabled}
                     className="border p-1 px-4 border-gray-500 rounded-md"
                   >
-                    <option value="" selected>
-                      Select Flat
-                    </option>
+                    <option value="">Select Flat</option>
+                    {units.map((unit) => (
+                      <option key={unit.id} value={unit.id}>
+                        {unit.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div className="flex flex-col">
@@ -246,7 +400,9 @@ function CAMBilling() {
                 <div className="flex flex-col">
                   <input
                     type="date"
-                    name=""
+                    name="dueDate"
+                    value={formData.dueDate}
+                    onChange={handleChange}
                     id="dateSupply"
                     placeholder="Enter Date of supply"
                     className="border p-1 px-4 border-gray-500 rounded-md"
@@ -255,15 +411,16 @@ function CAMBilling() {
                 <div className="flex flex-col">
                   <DatePicker
                     selectsRange
-                    startDate={billingPeriod[0]} // Start date of the range
-                    endDate={billingPeriod[1]} // End date of the range
-                    onChange={handleDateChange} // Callback when dates are selected
+                    startDate={billingPeriod[0]}
+                    endDate={billingPeriod[1]}
+                    onChange={handleDateChange}
                     placeholderText="Select Billing Period"
-                    className="border p-1 px-4 border-gray-500 rounded-md w-full"
-                    isClearable // Optional: Allow clearing the selection
+                    className="border p-1 px-4 border-gray-500 rounded-md w-full z-20"
+                    isClearable
                   />
                 </div>
                 <button
+                  onClick={handleFilterData}
                   className=" p-1 px-4 text-white rounded-md"
                   style={{ background: themeColor }}
                 >
@@ -274,15 +431,22 @@ function CAMBilling() {
                 </button>
               </div>
             )}
-            <Table columns={columns} data={camBilling} selectableRow={true} />
+            <Table
+              columns={columns}
+              data={camBilling}
+              selectableRow={true}
+              onSelectedRows={handleSelectedRows}
+            />
             {importModal && (
               <InvoiceImportModal onclose={() => setImportModal(false)} />
             )}
           </>
         )}
-        {page === "receiptInvoice" && (<>
-          <ReceiptInvoiceCam />
-        </>)}
+        {page === "receiptInvoice" && (
+          <>
+            <ReceiptInvoiceCam />
+          </>
+        )}
       </div>
     </section>
   );

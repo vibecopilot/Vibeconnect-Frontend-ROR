@@ -7500,6 +7500,39 @@ export const getFBDetails = async (id) =>
   export const getReceiptPayment = async () =>
     axiosInstance.get(`/payments.json`, {
       params: {
-        token:token,
+      token:token,
+    }
+  })
+
+  export const downloadCamBillImport = async () =>
+    axiosInstance.get(`/cam_bills/download_sample.xlsx`, {
+      params: {
+        token: token, // Include the token in the request
+      },
+    responseType: "blob", // Ensure response is of type `blob`
+  });
+
+  export const uploadCamBillingImport = async (data) =>
+    axiosInstance.post(`/cam_bills/import.json`, data, {
+      params: {
+      token: token,
+    },
+  });
+
+  export const getCamBillingDownload = async (ids) =>
+    axiosInstance.get(`/cam_bills/export.xlsx`, {
+      responseType: "blob",
+      params: {
+        ids: `[${ids}]`, // Adding square brackets around ids
+        token: token,
+      },
+    });
+  
+    export const gatCamBillFilter = async (block, floor_name, flat, startDate, endDate, dueDate) =>
+      axiosInstance.get(`/cam_bills.json?q[building_id_eq]=${block}&q[floor_id_eq]=${floor_name}&q[flat_id_eq]=${flat}&q[bill_date_gteq]=${startDate}&q[bill_date_lteq]=${endDate}&q[due_date_lteq]=${dueDate}`,{
+        params: {
+        token: token,
+        },
       }
-    })
+    );
+  

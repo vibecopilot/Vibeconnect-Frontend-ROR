@@ -142,7 +142,7 @@ const CAMBillInvoiceReceivePaymentModal = ({ onclose, fetchReceiptPayment}) => {
               Payment Date
             </label>
             <input
-              type="text"
+              type="date"
               name="paymentDate"
               value={formData.paymentDate}
               onChange={handleChange}
