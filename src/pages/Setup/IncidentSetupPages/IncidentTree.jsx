@@ -33,7 +33,7 @@ const TreeNode = ({ node, fetchIncidentTree }) => {
   console.log(typeof fetchIncidentTree);
   console.log("Parent fetchIncidentTree:", fetchIncidentTree);
   return (
-    <div className="pl-2 border-l-2 border-gray-300 ">
+    <div className="pl-2  border-gray-300 ">
       <div className="grid grid-cols-2 items-center space-x-2 border-b p-2">
         <div className="flex items-center">
           {node.children && node.children.length > 0 && (

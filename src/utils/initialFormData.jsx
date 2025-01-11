@@ -35,7 +35,7 @@ export const initialAddAssetFormData = {
     vendor_id: "",
     oem_name:"",
     parent_asset_id:"",
-  
+  complianceApplicable: false,
     
   
     invoice: [],

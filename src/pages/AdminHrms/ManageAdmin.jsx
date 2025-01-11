@@ -341,7 +341,7 @@ const ManageAdmin = () => {
         editData.append(key, leavePermission[key]);
       });
     }
-    //
+    
     if (selectedUserOption && selectedUserOption.value) {
       editData.append("name", selectedUserOption.value);
     } else {
