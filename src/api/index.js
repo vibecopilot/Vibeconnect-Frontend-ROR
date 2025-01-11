@@ -7180,7 +7180,7 @@ export const siteChange = async (id) =>
     },
   });
 
-// forum
+// Forum
 export const postForum = async (data) =>
   axiosInstance.post(`/forums.json`, data, {
     params: {
@@ -7196,6 +7196,143 @@ export const getForum = async () =>
       token: token,
     },
   });
+
+export const updateForum = async (forumId) =>
+  axiosInstance.put(`/forums/${forumId}.json`, {
+    params: {
+      token: token,
+    },
+  });
+
+export const deleteForum = async (forumId) =>
+  axiosInstance.delete(`/forums/${forumId}/.json`, {
+    params: {
+      token: token,
+    },
+  });
+
+// Save Forums
+export const saveForum = async (forumId) =>
+  axiosInstance.post(`/forums/${forumId}/save_for_later.json?token=${token}`, {
+    // params: {
+    //   token: token,
+    // },
+  });
+
+export const fetchSavedForum = async (forumId) =>
+  axiosInstance.get(`forums/${forumId}/save_forums.json?token=${token}`, {
+    // params: {
+    //   token: token,
+    // },
+  });
+
+export const unsaveForum = async (forumId) =>
+  axiosInstance.delete(`forums/${forumId}/unsave.json?token=${token}`, {
+    // params: {
+    //   token: token,
+    // },
+  });
+
+
+// Report Forum Admin
+export const GetAllReportedForum = async (forumId) =>
+  axiosInstance.get(`/admin/forum_reports.json?token=${token}`, {
+    // params: {
+    //   token: token,
+    // },
+  });
+export const forumReportAction = async (forumId) =>
+  axiosInstance.post(`admin/forum_reports/${forumId}/take_action.json`,
+    {}
+  );
+
+// Report Forum Emp
+export const reportForum = async (forumId) =>
+  axiosInstance.post(`/admin/${forumId}/forum_reports.json?token=${token}`, {
+    // params: {
+    //   token: token,
+    // },
+  });
+
+// Forum Visibility
+export const forumVisibility = async (forumId) =>
+  axiosInstance.get(`/forums/visibility_status.json?token=${token}`,
+    // { params: {
+    //     token: token,
+    //   }}
+  );
+
+// Forum Hide and Unhide - Admin
+export const hideForum = async (forumId, payload) =>
+  axiosInstance.post(`/forums/${forumId}/hide.json?token=${token}`,
+    // {}
+  )
+
+export const unhideForum = async (forumId, payload) =>
+  axiosInstance.post(`forums/62/hide.json?token=${token}`);
+
+// Likes
+export const likeForum = async (forumId) => {
+  try {
+    const res = await axiosInstance.post(`forums/${forumId}/toggle_like.json?token=${token}`);
+    return res.data;
+  }
+  catch (error) {
+   console.log("Error is occuring :",error.response?.data || error.message);
+   throw error;
+  }
+}
+
+
+// Comments 
+export const getComments = async (forumId) => {
+  try {
+    const response = await axiosInstance.get(`/forums/${forumId}/forum_comments.json/`,
+      {
+        params: {
+          token: token,
+        },
+      });
+    return response.data;
+  } catch (error) {
+    console.error("Error :", error);
+    throw error;
+  }
+}
+
+export const addComment = async (forumId, commentText, userId) => {
+  try {
+    // Create FormData object with the correct parameter structure
+    const formData = new FormData();
+    formData.append('forum_comment[comment]', commentText);
+    // Changed from forum_comments to forum_comment
+    formData.append('forum_comment[user_id]', userId);
+    // Changed from forum_comments to forum_comment
+    const response = await axiosInstance.post(
+      `/forums/${forumId}/forum_comments.json`, formData,
+      {
+        params: {
+          token: token,
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting the comment:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const deleteComment = async (forumId) =>
+  axiosInstance.delete(`/forums/${forumId}/forum_comments.json?token=${token}`);
+
+export const updateComment = async (forumId) =>
+  axiosInstance.put(`/forums/${forumId}/forum_comments.json`, {
+    params: {
+      token: token,
+    }
+  })
+//////////////////////////////////////////////////////////////////
 
 export const downloadAsset = async () =>
   axiosInstance.get(`/site_assets/export.xlsx/`, {
