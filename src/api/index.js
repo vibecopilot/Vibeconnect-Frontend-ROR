@@ -6860,12 +6860,7 @@ export const getApprovalAuthorities = async (orgId) => {
 };
 export const postApprovalAuthorities = async (data) => {
   try {
-    const response = await HrmsAuth.post(
-      `/approver-settings/`,
-      data,
-
-     
-    );
+    const response = await HrmsAuth.post(`/approver-settings/`, data);
     return response.data;
   } catch (error) {
     console.error("Error getting approval authorities", error);
@@ -6940,6 +6935,17 @@ export const postRegularizationRequest = async (data) => {
     return response.data;
   } catch (error) {
     console.error("Error posting regularization request", error);
+    throw error;
+  }
+};
+export const getSiteWiseEmployee = async (orgId, siteId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/associated-organization/?organization_id=${orgId}&site_id=${siteId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting site employee", error);
     throw error;
   }
 };

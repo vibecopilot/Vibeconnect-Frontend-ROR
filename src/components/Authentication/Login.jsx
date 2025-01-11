@@ -3,7 +3,7 @@ import toast from "react-hot-toast";
 import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
 import { useNavigate } from "react-router-dom";
 import wave from "/wave.png";
-import { getHRMSEmployeeID, login, vibeLogin } from "../../api";
+import { getEmployeeAssociatedSites, getHRMSEmployeeID, login, vibeLogin } from "../../api";
 import { setItemInLocalStorage } from "../../utils/localStorage";
 
 const Login = () => {
@@ -80,6 +80,9 @@ const Login = () => {
       if (featNames.includes("hrms") && response.data.user.organization_id) {
         try {
           const res = await getHRMSEmployeeID(response.data.user.id);
+          const siteRes = await getEmployeeAssociatedSites(res.id);
+          const associatedSiteID = siteRes[0].associated_organization
+          setItemInLocalStorage("HRMS_SITE_ID",associatedSiteID)
           setItemInLocalStorage("HRMS_EMPLOYEE_ID", res.id);
           setItemInLocalStorage("APPROVERID", res.id);
         } catch (error) {
@@ -135,7 +138,10 @@ const Login = () => {
       toast.loading("Processing your data please wait...");
       if (userType === "pms_admin") {
         navigate("/dashboard");
-      } else {
+      }else if(userType === "house_keeping"){
+        navigate("/compliance/vendor/dashboard")
+      }
+       else {
         navigate(
           selectedSiteId === 10
             ? "/employee/dashboard"

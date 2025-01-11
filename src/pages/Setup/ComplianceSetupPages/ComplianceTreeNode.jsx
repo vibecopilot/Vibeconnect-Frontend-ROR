@@ -1,0 +1,92 @@
+import React, { useState } from "react";
+import { BiEdit, BiPlus, BiPlusCircle } from "react-icons/bi";
+import {
+  IoMdArrowDropdownCircle,
+  IoMdArrowDroprightCircle,
+} from "react-icons/io";
+import { getIncidentCatDetails } from "../../../api";
+import ComplianceSubCatModal from "./ComplianceSubCatModal";
+
+const ComplianceTreeNode = ({ node, fetchIncidentTree }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [modal, showModal] = useState(false);
+  const toggleExpand = () => {
+    setIsExpanded((prev) => !prev);
+  };
+  const [catId, setCatId] = useState("");
+  const [addCat, setAddSub] = useState(false);
+  const [tagType, setTagType] = useState("");
+  const handleEdit = async (id) => {
+    try {
+      const res = await getIncidentCatDetails(id);
+      setCatId(res.data.id);
+      setTagType(res.data.tag_type);
+      showModal(true);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleAdd = (parentId) => {
+    console.log("Add new item under parent ID:", parentId);
+  };
+
+  return (
+    <div className="pl-2 border-gray-300">
+      <div className="grid grid-cols-2 items-center space-x-2 border-b p-2">
+        <div className="flex items-center">
+          {node.children && node.children.length > 0 && (
+            <button
+              onClick={toggleExpand}
+              className="text-sm text-green-600 focus:outline-none"
+            >
+              {isExpanded ? (
+                <IoMdArrowDropdownCircle size={20} className="text-red-400" />
+              ) : (
+                <IoMdArrowDroprightCircle size={20} />
+              )}
+            </button>
+          )}
+          <span className="font-medium mx-1">{node.name}</span>
+          {/* Display tag type */}
+          {node.tag_type && (
+            <span className="text-gray-400 text-xs">
+              ({node.tag_type.replace(/([a-z])([A-Z])/g, "$1 $2")})
+            </span>
+          )}
+        </div>
+        <div className="flex justify-end">
+          <button
+            onClick={() => handleEdit(node.id)}
+            className="ml-auto text-blue-600 hover:text-blue-800 focus:outline-none"
+          >
+            <BiEdit size={15} />
+          </button>
+        </div>
+      </div>
+
+      {isExpanded && node.children && node.children.length > 0 && (
+        <div className="my-1">
+          <div className="flex justify-end">
+            <button
+              onClick={() => setAddSub(true)}
+              className="ml-4 text-green-600 hover:text-green-800 border-green-500 focus:outline-none border p-1 rounded-md font-medium flex items-center gap-2"
+            >
+              <BiPlusCircle size={15} className="inline" /> Add
+            </button>
+          </div>
+          {node.children.map((child) => (
+            <ComplianceTreeNode
+              key={child.id}
+              node={child}
+              fetchIncidentTree={fetchIncidentTree}
+            />
+          ))}
+        </div>
+      )}
+      {addCat && <ComplianceSubCatModal onclose={() => setAddSub(false)} />}
+    </div>
+  );
+};
+
+export default ComplianceTreeNode;
