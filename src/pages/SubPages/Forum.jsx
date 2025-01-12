@@ -11,9 +11,18 @@ import ForumCommentsModal from "../../containers/modals/ForumCommentModal";
 import Navbar from "../../components/Navbar";
 import Communication from "../Communication";
 import { PiPlusCircle } from "react-icons/pi";
-import { getForum, likeForum, domainPrefix } from "../../api/index";
+import { PiWarningFill } from "react-icons/pi";
+import {
+  getForum,
+  likeForum,
+  deleteForum,
+  hideForum,
+  PostSavedForum,
+  domainPrefix,
+} from "../../api/index";
 import { PiBookBookmark, PiEye } from "react-icons/pi";
-import { dateTimeFormat } from "../../utils/dateUtils";
+import { FormattedDateToShowProperly } from "../../utils/dateUtils";
+import { toast } from "react-hot-toast";
 
 function Forum() {
   const themeColor = useSelector((state) => state.theme.color);
@@ -25,7 +34,7 @@ function Forum() {
   const [isLiked, setIsLiked] = useState({});
   const [dropdownState, setDropdownState] = useState({});
   const [savedPosts, setSavedPosts] = useState([]);
-  const [hideForum, setHideForum] = useState([]);
+  const [hiddenForum, setHiddenForum] = useState([]);
   const [isRed, setIsRed] = useState({}); //
 
   const toggleDropdown = (index) => {
@@ -67,7 +76,7 @@ function Forum() {
 
   const handleDelete = async (id) => {
     try {
-      await getDelete(id);
+      await deleteForum(id);
       setForums((prevForums) => prevForums.filter((forum) => forum.id !== id));
       toast.success("Forum deleted successfully");
       setDropdownState({});
@@ -79,13 +88,26 @@ function Forum() {
 
   const handleSavePost = async (forumId) => {
     try {
-      await saveForum(forumId);
+      await PostSavedForum(forumId);
       setSavedPosts((prevSavedPosts) => [...prevSavedPosts, forumId]);
       toast.success("Post saved successfully");
     } catch (error) {
       console.error("Error saving the post:", error);
       toast.error("Failed to save the post. Please try again.");
     }
+  };
+
+  // Hide Functionality Inside Report section
+  const handleForumVisibility = async (forumId) => {
+    try {
+      await hideForum(forumId);
+      toast.success("Post saved successfully");
+      setHiddenForum();
+    } catch (error) {
+      console.error("Error hidding the forum", error);
+      toast.error("Failed to hidding the forum.");
+    }
+    fetchForums();
   };
 
   const fetchForums = async () => {
@@ -131,23 +153,32 @@ function Forum() {
           <Link
             to={`/admin/create-forum`}
             style={{ background: themeColor }}
-            className="font-semibold px-4 p-1 flex text-white items-center justify-center rounded-md gap-2"
+            className="font-semibold px-2 p-2 flex text-white items-center justify-center rounded-md gap-2"
           >
             <PiPlusCircle size={20} /> Create
           </Link>
           <Link
             to={`/admin/saved_forums`}
             style={{ background: themeColor }}
-            className="font-semibold px-4 p-1 flex text-white items-center justify-center rounded-md gap-2"
+            className="font-semibold px-2 p-2 flex text-white items-center justify-center rounded-md gap-2"
           >
             <PiBookBookmark size={20} /> Saved
           </Link>
+
           <Link
             to={`/admin/reported_forums`}
             style={{ background: themeColor }}
-            className="font-semibold px-4 p-1 flex text-white items-center justify-center rounded-md gap-2"
+            className="font-semibold px-2 p-2 flex text-white items-center justify-center rounded-md gap-2"
           >
-            <PiEye size={20} /> Reported
+            <PiWarningFill size={20} /> Reported
+          </Link>
+          <Link
+            to={`/admin/hidden_forums`}
+            style={{ background: themeColor }}
+            className="font-semibold px-2 p-2 flex justify-center text-white items-center rounded-md gap-2"
+          >
+            Hidden
+            <PiEye size={20} />
           </Link>
         </div>
         <div className="grid grid-cols-3 my-10">
@@ -171,7 +202,8 @@ function Forum() {
                         {forum.created_by_name?.lastname || ""}
                       </h2>
                       <p className="text-xs font-normal">
-                        {dateTimeFormat(forum.created_at) || "Unknown Date"}
+                        {FormattedDateToShowProperly(forum.created_at) ||
+                          "Unknown Date"}
                       </p>
                     </div>
                   </div>
@@ -185,7 +217,7 @@ function Forum() {
                     </button>
                     {dropdownState[index] && (
                       <div
-                        className="absolute right-0 mt-0  w-28  flex justify-start rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none "
+                        className="absolute right-0 mt-0 w-28 flex justify-start rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none"
                         role="menu"
                         aria-orientation="vertical"
                         aria-labelledby="menu-button"
@@ -196,14 +228,12 @@ function Forum() {
                             className="text-gray-700 block px-4 py-2 text-sm"
                             role="menuitem"
                           >
-                            Edit
-                          </a>
-                          <a
-                            href="#"
-                            className="text-gray-700 block px-4 py-2 text-sm"
-                            role="menuitem"
-                          >
-                            <button onClick={() => handleSavePost(forum.id)}>
+                            <button
+                              onClick={() => {
+                                handleSavePost(forum.id);
+                                toggleDropdown(index); // Close dropdown
+                              }}
+                            >
                               Save
                             </button>
                           </a>
@@ -212,8 +242,27 @@ function Forum() {
                             className="text-gray-700 block px-4 py-2 text-sm"
                             role="menuitem"
                           >
-                            <button onClick={() => handleDelete(forum.id)}>
+                            <button
+                              onClick={() => {
+                                handleDelete(forum.id);
+                                toggleDropdown(index); // Close dropdown
+                              }}
+                            >
                               Delete
+                            </button>
+                          </a>
+                          <a
+                            href="#"
+                            className="text-gray-700 block px-4 py-2 text-sm"
+                            role="menuitem"
+                          >
+                            <button
+                              onClick={() => {
+                                handleForumVisibility(forum.id);
+                                toggleDropdown(index); // Close dropdown
+                              }}
+                            >
+                              Hide
                             </button>
                           </a>
                         </div>

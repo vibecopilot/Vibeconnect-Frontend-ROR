@@ -7205,22 +7205,32 @@ export const updateForum = async (forumId) =>
   });
 
 export const deleteForum = async (forumId) =>
-  axiosInstance.delete(`/forums/${forumId}/.json`, {
+  axiosInstance.delete(`/forums/${forumId}.json`, {
     params: {
       token: token,
     },
   });
 
 // Save Forums
-export const saveForum = async (forumId) =>
-  axiosInstance.post(`/forums/${forumId}/save_for_later.json?token=${token}`, {
-    // params: {
-    //   token: token,
-    // },
-  });
+export const getSavedForum = async (forumId) => {
+  try {
+    const response = await axiosInstance.get(`/forums/saved_forums.json?token=${token}`);
+    console.log("API Response:", response.data); // Log API data to verify structure
 
-export const fetchSavedForum = async (forumId) =>
-  axiosInstance.get(`forums/${forumId}/save_forums.json?token=${token}`, {
+    if (Array.isArray(response.data)) {
+      return response.data; // Return array directly
+    } else {
+      throw new Error("API response is not an array");
+    }
+  }
+  catch (error) {
+    console.error("Error fetching saved forums:", error.message || error);
+    return [];
+  }
+}
+
+export const PostSavedForum = async (forumId) =>
+  axiosInstance.post(`/forums/${forumId}/save_for_later.json?token=${token}`, {
     // params: {
     //   token: token,
     // },
@@ -7235,41 +7245,44 @@ export const unsaveForum = async (forumId) =>
 
 
 // Report Forum Admin
-export const GetAllReportedForum = async (forumId) =>
-  axiosInstance.get(`/admin/forum_reports.json?token=${token}`, {
-    // params: {
-    //   token: token,
-    // },
-  });
-export const forumReportAction = async (forumId) =>
-  axiosInstance.post(`admin/forum_reports/${forumId}/take_action.json`,
-    {}
-  );
-
+export const GetAllReportedForum = async () => {
+  try {
+    const response = await axiosInstance.get(`/admin/forum_reports.json`, {
+      params: {
+        token: token, // Ensure `token` is defined and valid
+      },
+    });
+    return response.data; // Return the data from the response
+  } catch (error) {
+    console.error("Error fetching reported forums:", error.message || error);
+    throw error; // Propagate the error to the calling function
+  }
+};
 // Report Forum Emp
 export const reportForum = async (forumId) =>
   axiosInstance.post(`/admin/${forumId}/forum_reports.json?token=${token}`, {
-    // params: {
-    //   token: token,
-    // },
   });
 
 // Forum Visibility
-export const forumVisibility = async (forumId) =>
-  axiosInstance.get(`/forums/visibility_status.json?token=${token}`,
-    // { params: {
-    //     token: token,
-    //   }}
-  );
+// export const forumVisibility = async (forumId) =>
+//   axiosInstance.get(`/forums/visibility_status.json?token=${token}`,
+//     // { params: {
+//     //     token: token,
+//     //   }}
+//   );
 
 // Forum Hide and Unhide - Admin
-export const hideForum = async (forumId, payload) =>
+
+export const getHiddenForums = async () =>
+  axiosInstance.get(`/forums/visibility_status.json?token=${token}`)
+
+export const hideForum = async (forumId) =>
   axiosInstance.post(`/forums/${forumId}/hide.json?token=${token}`,
     // {}
   )
 
-export const unhideForum = async (forumId, payload) =>
-  axiosInstance.post(`forums/62/hide.json?token=${token}`);
+export const unhideForum = async (forumId) =>
+  axiosInstance.post(`forums/${forumId}/unhide.json?token=${token}`);
 
 // Likes
 export const likeForum = async (forumId) => {
@@ -7278,8 +7291,8 @@ export const likeForum = async (forumId) => {
     return res.data;
   }
   catch (error) {
-   console.log("Error is occuring :",error.response?.data || error.message);
-   throw error;
+    console.log("Error is occuring :", error.response?.data || error.message);
+    throw error;
   }
 }
 
@@ -7323,8 +7336,8 @@ export const addComment = async (forumId, commentText, userId) => {
   }
 };
 
-export const deleteComment = async (forumId) =>
-  axiosInstance.delete(`/forums/${forumId}/forum_comments.json?token=${token}`);
+export const deleteComment = async (forumId,id) =>
+  axiosInstance.delete(`/forums/${forumId}/forum_comments/${id}.json?token=${token}`);
 
 export const updateComment = async (forumId) =>
   axiosInstance.put(`/forums/${forumId}/forum_comments.json`, {

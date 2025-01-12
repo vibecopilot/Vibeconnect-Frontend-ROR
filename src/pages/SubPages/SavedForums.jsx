@@ -1,15 +1,20 @@
 import React, { useEffect, useState } from "react";
-import Navbar from "../components/Navbar";
+import Navbar from "../../components/Navbar";
 import { Link, useRevalidator } from "react-router-dom";
 import { BsThreeDots } from "react-icons/bs";
 import { useSelector } from "react-redux";
 import image from "/profile.png";
 import { FcLike } from "react-icons/fc";
 import { FaRegComment } from "react-icons/fa";
-import ForumCommentsModal from "../containers/modals/ForumCommentModal";
-import { toggleLike, getSavedForum, domainPrefix, RemoveSavedForum } from "../api/index";
-import { dateTimeFormat } from "../utils/dateUtils";
-import Communication from "../pages/Communication";
+import ForumCommentsModal from "../../containers/modals/ForumCommentModal";
+import {
+  likeForum,
+  getSavedForum,
+  unsaveForum,
+  domainPrefix,
+} from "../../api/index";
+import { dateTimeFormat } from "../../utils/dateUtils";
+import Communication from "../../pages/Communication";
 import {
   PiArrowArcLeftBold,
   PiBookBookmark,
@@ -41,7 +46,7 @@ function SavedForums() {
 
   const handleLikeToggle = async (forumId) => {
     try {
-      const response = await toggleLike(forumId);
+      const response = await likeForum(forumId);
       if (response.success) {
         setLikes((prevLikes) => ({
           ...prevLikes,
@@ -63,7 +68,7 @@ function SavedForums() {
 
   const handleDelete = async (id) => {
     try {
-      await RemoveSavedForum(id);
+      await unsaveForum(id);
       setForums((prevForums) => prevForums.filter((forum) => forum.id !== id));
       toast.success("Forum deleted successfully");
       setDropdownState({});
@@ -71,6 +76,7 @@ function SavedForums() {
       console.error("Error deleting the post:", error);
       toast.error("Failed to delete the post. Please try again.");
     }
+    fetchSavedPosts();
   };
 
   const fetchSavedPosts = async () => {
@@ -120,8 +126,10 @@ function SavedForums() {
       <div className="p-4 w-full my-0 flex md:mx-2 overflow-hidden flex-col">
         {/* Communication Component Placeholder */}
         {/* <Communication /> */}
-        <div className="text-center text-xl font-bold my-0 p-2  bg-black rounded-md text-white mx-10" 
-        style={{background:themeColor}}>
+        <div
+          className="text-center text-xl font-bold my-0 p-2  bg-black rounded-md text-white mx-10"
+          style={{ background: themeColor }}
+        >
           <h2>Saved Forum</h2>
         </div>
         <div className="flex justify-end">
