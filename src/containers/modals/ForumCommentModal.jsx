@@ -3,7 +3,8 @@ import image from "/profile.png"; // Default profile image
 import { addComment, getComments, deleteComment } from "../../api/index";
 import { MessageSquare } from "lucide-react";
 import { dateTimeFormat } from "../../utils/dateUtils";
-
+import { BiTrash } from "react-icons/bi";
+import toast from "react-hot-toast";
 const ForumCommentsModal = ({ onclose, forumId, onCommentAdded }) => {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
@@ -48,7 +49,7 @@ const ForumCommentsModal = ({ onclose, forumId, onCommentAdded }) => {
         },
         user_avatar: image,
       };
-
+      
       setComments((prev) => [...prev, newCommentObject]);
       setNewComment("");
 
@@ -116,12 +117,11 @@ const ForumCommentsModal = ({ onclose, forumId, onCommentAdded }) => {
                         {dateTimeFormat(comment.created_at)}
                       </p>
                     </div>
-                    {/* <button
+                    <button
                       onClick={() => handleDeleteComment(comment.id)}
-                      className="ml-auto text-red-600 text-sm"
-                    >
-                      Delete
-                    </button> */}
+                      className="ml-auto text-red-600 text-sm">
+                      <BiTrash/>
+                    </button>
                   </div>
                   <p className="text-gray-700 ml-11">{comment.comment}</p>
                 </div>
