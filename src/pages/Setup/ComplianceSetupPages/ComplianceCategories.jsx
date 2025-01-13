@@ -75,10 +75,10 @@ const ComplianceCategories = () => {
               ))}
               <div className="flex gap-2 w-full">
                 <button
-                  className="bg-green-500 bg-opacity-10 text-green-500 font-medium border-2 rounded-md p-2 border-green-500 w-full flex items-center gap-2"
+                  className="bg-green-500 bg-opacity-10 text-green-500 font-medium border-2 rounded-md p-2 border-green-500 w-full flex items-center justify-center gap-2"
                   onClick={handleAddOption}
                 >
-                  <PiPlusCircle size={20} /> Add Option
+                  <PiPlusCircle size={20} /> Add
                 </button>
                 <button className="bg-green-500 text-white p-2 flex gap-2 items-center rounded-md w-full font-medium justify-center">
                   <FaCheck /> Submit
