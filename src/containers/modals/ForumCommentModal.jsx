@@ -5,6 +5,7 @@ import { MessageSquare } from "lucide-react";
 import { dateTimeFormat } from "../../utils/dateUtils";
 import { BiTrash } from "react-icons/bi";
 import toast from "react-hot-toast";
+import { getItemInLocalStorage } from "../../utils/localStorage";
 const ForumCommentsModal = ({ onclose, forumId, onCommentAdded }) => {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
@@ -49,7 +50,7 @@ const ForumCommentsModal = ({ onclose, forumId, onCommentAdded }) => {
         },
         user_avatar: image,
       };
-      
+
       setComments((prev) => [...prev, newCommentObject]);
       setNewComment("");
 
@@ -81,14 +82,19 @@ const ForumCommentsModal = ({ onclose, forumId, onCommentAdded }) => {
     }
   };
 
+  const user_type = getItemInLocalStorage("USERTYPE");
+  const user_id = getItemInLocalStorage("UserId");
+
   return (
-    <div className="min-h-50 bg-white-50 flex items-center justify-center p-4">
-      <div className="modal w-full max-w-2xl h-[70vh] md:h-[50vh] bg-white rounded-2xl shadow-lg overflow-y-auto">
-        <div className="modal-content p-6 h-full">
+    <div className="fixed inset-0 z-50 flex items-center overflow-y-auto justify-center bg-gray-500 bg-opacity-50">
+      <div className="max-h-screen  bg-white p-2 w-[40rem] rounded-xl shadow-lg overflow-y-auto">
+        <div className="flex flex-col justify-center">
           {/* Header */}
           <div className="flex items-center gap-2 mb-6">
             <MessageSquare className="w-6 h-6 text-indigo-600" />
-            <h2 className="text-xl font-semibold text-gray-800">Comments</h2>
+            <h2 className="flex items-center gap-2 justify-center font-medium text-xl p-0">
+              Comment
+            </h2>
             <span className="bg-gray-100 text-gray-600 text-sm px-2 py-1 rounded-full">
               {comments.length}
             </span>
@@ -99,9 +105,9 @@ const ForumCommentsModal = ({ onclose, forumId, onCommentAdded }) => {
               comments.map((comment) => (
                 <div
                   key={comment.id || `comment-${Date.now()}-${Math.random()}`}
-                  className="p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors duration-200"
+                  className="p-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors duration-200"
                 >
-                  <div className="flex items-center gap-3 mb-2">
+                  <div className="flex mx-6 items-center gap-3 mb-2">
                     <img
                       src={comment.user_avatar || image}
                       alt={comment.user_name || "User avatar"}
@@ -117,11 +123,21 @@ const ForumCommentsModal = ({ onclose, forumId, onCommentAdded }) => {
                         {dateTimeFormat(comment.created_at)}
                       </p>
                     </div>
-                    <button
-                      onClick={() => handleDeleteComment(comment.id)}
-                      className="ml-auto text-red-600 text-sm">
-                      <BiTrash/>
-                    </button>
+                    {user_type === "pms_admin" ? (
+                      <button
+                        onClick={() => handleDeleteComment(comment.id)}
+                        className="ml-auto text-red-600 text-sm"
+                      >
+                        <BiTrash /> {/* Button for admin */}
+                      </button>
+                    ) : user_id === comment.user_id ? (
+                      <button
+                        onClick={() => handleDeleteComment(comment.id)}
+                        className="ml-auto text-red-600 text-sm"
+                      >
+                        <BiTrash /> {/* Button for regular user */}
+                      </button>
+                    ) : null}
                   </div>
                   <p className="text-gray-700 ml-11">{comment.comment}</p>
                 </div>
@@ -147,7 +163,7 @@ const ForumCommentsModal = ({ onclose, forumId, onCommentAdded }) => {
               <textarea
                 placeholder="Add your comment..."
                 className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-200 resize-none text-gray-700 placeholder-gray-400"
-                rows={3}
+                rows={2}
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
               />

@@ -1326,6 +1326,13 @@ export const getGroupsDetails = async (id) =>
       token: token,
     },
   });
+export const deleteGroup = async (id) =>
+  axiosInstance.delete(`/groups/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+
 export const editGroups = async (id, data) =>
   axiosInstance.put(`/groups/${id}.json`, data, {
     params: {
@@ -7331,12 +7338,12 @@ export const addComment = async (forumId, commentText, userId) => {
     );
     return response.data;
   } catch (error) {
-    console.error("Error posting the comment:", error.response?.data || error.message);
+    console.error("Error posting the comment:", error);
     throw error;
   }
 };
 
-export const deleteComment = async (forumId,id) =>
+export const deleteComment = async (forumId, id) =>
   axiosInstance.delete(`/forums/${forumId}/forum_comments/${id}.json?token=${token}`);
 
 export const updateComment = async (forumId) =>
