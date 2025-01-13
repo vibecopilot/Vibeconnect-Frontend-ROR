@@ -278,7 +278,7 @@ function Forum() {
                     {forum.thread_description || "No description available."}
                   </p>
                   {forum.forums_image && forum.forums_image.length > 0 && (
-                    <div className="flex flex-col items-center px-10">
+                    <div className="flex flex-col items-center px-10 py-5">
                       <img
                         src={domainPrefix + forum.forums_image[0].document}
                         className=" w-full h-auto object-cover m-2 rounded-md"
@@ -295,24 +295,11 @@ function Forum() {
                         onClick={() => handleLikeToggle(forum.id)}
                         className="flex items-center"
                       >
-                        <div className="relative">
-                          <FaRegHeart
-                            size={22}
-                            color={isRed[forum.id] ? "red" : "black"}
-                            className="relative z-10"
-                          />
-                          <div
-                            className="absolute inset-0 z-0"
-                            style={{
-                              backgroundColor: isRed[forum.id]
-                                ? "red"
-                                : "white",
-                              clipPath:
-                                "path('M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z')",
-                              transform: "scale(1.1)",
-                              transition: "background-color 0.1s ease", // Added smooth transition
-                            }}
-                          />
+                        {/* <div className="relative" color={isRed[forum.id] ? "red" : "black"}> */}
+                        <div className="relative" 
+                        
+                        color={isRed[forum.id] ? "red" : "black"}>
+                          <FaRegHeart size={22} className="relative z-10" />
                         </div>
                       </button>
                       <span className=" text-sm text-gray-500 flex justify-center">

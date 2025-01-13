@@ -1,19 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
-import interview from "/01.jpg";
 import Navbar from "../../../components/Navbar";
-import pic1 from "/profile1.jpg";
-import pic2 from "/profile2.jpg";
-import pic3 from "/profile3.jpg";
-import pic4 from "/profile4.jpg";
 import owners from "/owners.jpg";
-import { BsThreeDots } from "react-icons/bs";
-import { IoMdShareAlt } from "react-icons/io";
-import { PiPlus, PiPlusCircleBold } from "react-icons/pi";
-import { useParams } from "react-router-dom";
-import { getGroupsDetails, getSetupUsers } from "../../../api";
+import { Navigate, useParams , useNavigate } from "react-router-dom";
+import { getGroupsDetails, getSetupUsers, deleteGroup } from "../../../api";
 import Table from "../../../components/table/Table";
 import MultiSelect from "../../AdminHrms/Components/MultiSelect";
-import { BiEdit } from "react-icons/bi";
+import { BiEdit, BiTrash } from "react-icons/bi";
+import toast from "react-hot-toast";
 import EditGroupDetails from "../EditGroupDetails";
 function GroupJoinDetails() {
   const [page, setPage] = useState("empolyeeEvent");
@@ -37,6 +30,7 @@ function GroupJoinDetails() {
   const { id } = useParams();
   const [details, setDetails] = useState({});
   const [members, setMembers] = useState([]);
+  const [groups, setGroups] = useState([]);
   const [filteredMembers, setFilteredMembers] = useState([]);
   const fetchGroupDetails = async () => {
     try {
@@ -98,6 +92,18 @@ function GroupJoinDetails() {
       setFilteredMembers(filteredResult);
     }
   };
+  const navigate = useNavigate()
+  const handleDelete = async (id) => {
+    try {
+      await deleteGroup(id);
+      // setGroups((prevForums) => prevForums.filter((item) => item.id !== id));
+      toast.success("Forum deleted successfully");
+      navigate("/communication/groups");
+    } catch (error) {
+      console.error("Error deleting the post:", error);
+      toast.error("Failed to delete the post. Please try again.");
+    }
+  };
 
   const [editGroup, setEditGroup] = useState(false);
 
@@ -143,8 +149,11 @@ function GroupJoinDetails() {
                   </div> */}
 
                   <div className="">
-                    <button className="" onClick={() => setEditGroup(true)}>
+                    <button className="mx-2" onClick={() => setEditGroup(true)}>
                       <BiEdit size={20} />
+                    </button>
+                    <button className="mx-2" onClick={() => handleDelete(id)}>
+                      <BiTrash size={20} />
                     </button>
                   </div>
                 </div>

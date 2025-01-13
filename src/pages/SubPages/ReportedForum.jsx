@@ -132,6 +132,7 @@ function ReportForum() {
                         </p>
                       </div>
                     </div>
+                    
                     <div className="relative">
                       <button
                         onClick={() => toggleDropdown(index)}
@@ -168,7 +169,7 @@ function ReportForum() {
                       {forum?.thread_description || "No description available."}
                     </p>
                     {forum.forum_images && forum.forum_images.length > 0 && (
-                      <div className="flex flex-col items-center">
+                      <div className="flex flex-col items-center px-10 py-5">
                         <img
                           src={domainPrefix + forum.forum_images[0]}
                           className="w-85 h-60 object-cover mx-10 my-5 rounded-md"
@@ -216,3 +217,104 @@ function ReportForum() {
 }
 
 export default ReportForum;
+
+
+
+
+
+
+
+
+
+
+
+
+      //       return (
+      //           <div
+      //             key={forum.id}
+      //             className="shadow-custom-all-sides rounded-md mb-10 md:w-full relative"
+      //           >
+      //             <div>
+      //               <div className="flex justify-between gap-2 md:mx-8 my-5 mt-5">
+      //                 <div className="flex gap-3">
+      //                   <img
+      //                     src={image}
+      //                     alt="forum-profile"
+      //                     className="w-10 h-10"
+      //                   />
+      //                   <div>
+      //                     <h2 className="text-md font-semibold">
+      //                       {forum.created_by_name?.firstname}{" "}
+      //                       {forum.created_by_name?.lastname || ""}
+      //                     </h2>
+      //                     <p className="text-xs font-normal">
+      //                       {FormattedDateToShowProperly(forum.created_at) ||
+      //                         "Unknown Date"}
+      //                     </p>
+      //                   </div>
+      //                 </div>
+
+      //                 <div className="relative">
+      //                   <button
+      //                     onClick={() => toggleDropdown(index)}
+      //                     className="inline-flex justify-center w-full text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-full py-2 px-2"
+      //                   >
+      //                     <BsThreeDots size={15} />
+      //                   </button>
+      //                   {dropdownState[index] && (
+      //                     <div className="absolute right-0 mt-0 w-28 flex justify-start rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none">
+      //                       <div
+      //                         className="text-gray-700 block px-4 py-2 text-sm"
+      //                         role="none"
+      //                       >
+      //                         <button
+      //                           className="text-gray-700 block px-4 py-2 text-sm"
+      //                           onClick={() => handleForumVisibility(forum?.id)}
+      //                         >
+      //                           Unhide
+      //                         </button>
+      //                       </div>
+      //                     </div>
+      //                   )}
+      //                 </div>
+      //               </div>
+
+      //               <div>
+      //                 <h3 className="px-8 font-semibold">
+      //                   {forum.thread_title || "No Title"}
+      //                 </h3>
+      //                 <p className="px-8 text-sm">
+      //                   {forum.thread_description ||
+      //                     "No description available."}
+      //                 </p>
+      //                 {forum.forums_image && forum.forums_image.length > 0 && (
+      //                   <div className="flex flex-col items-center px-10">
+      //                     <img
+      //                       src={domainPrefix + forum.forums_image[0].document}
+      //                       className=" w-full h-auto object-cover m-2 rounded-md"
+      //                       alt="forum-content"
+      //                     />
+      //                   </div>
+      //                 )}
+      //               </div>
+      //             </div>
+      //             <div className="flex justify-start gap-5 mx-8 my-3">
+      //               <button>
+      //                 <FcLike size={22} />
+      //                 <span className="ml-1 text-sm text-gray-500">
+      //                   {likeCount}
+      //                 </span>
+      //               </button>
+      //               <button>
+      //                 <FaRegComment size={22} className="w-6" />
+      //                 <span className="ml-1 text-sm text-gray-500">
+      //                   {commentCount}
+      //                 </span>
+      //               </button>
+      //             </div>
+      //           </div>
+      //         );
+      //       })}
+      //     </div>
+      //   </div>
+      // </div>

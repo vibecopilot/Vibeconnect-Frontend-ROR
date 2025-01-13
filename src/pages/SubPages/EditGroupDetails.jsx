@@ -22,7 +22,7 @@ function EditGroupDetails({ onclose, fetchGroupDetails }) {
   const [formData, setFormData] = useState({
     groupName: "",
     groupDescription: "",
-    profilePic: [],
+    attachment:"",
   });
 
   const themeColor = useSelector((state) => state.theme.color);
@@ -40,6 +40,7 @@ function EditGroupDetails({ onclose, fetchGroupDetails }) {
           ...formData,
           groupName: res.data.group_name,
           groupDescription: res.data.group_description,
+          attchment: res.data.attachment,
         });
 
         const selectedMembers = res.data.group_members.map((member) => ({
@@ -91,31 +92,9 @@ function EditGroupDetails({ onclose, fetchGroupDetails }) {
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
-  const user_id = getItemInLocalStorage("UserId");
-  const handleCreateGroup = async () => {
-    const postData = new FormData();
-    postData.append("group[group_name]", formData.groupName);
-    postData.append("group[group_description]", formData.groupDescription);
-    postData.append("group[created_by_id]", user_id);
-    selectedOptions.forEach((member) => {
-      postData.append("group[member_ids][]", member);
-    });
 
-    try {
-      const res = await editGroups(id, postData);
-      toast.success("Group updated successfully");
-      fetchGroupDetails();
-      onclose();
-      setFormData({
-        groupName: "",
-        groupDescription: "",
-      });
-
-      setSelectedOptions([]);
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  
+  // const user_id = getItemInLocalStorage("UserId");
 
   return (
     <div className="fixed inset-0 z-50 flex items-center overflow-y-auto justify-center bg-gray-500 bg-opacity-50">
@@ -168,8 +147,8 @@ function EditGroupDetails({ onclose, fetchGroupDetails }) {
 
               <input
                 type="file"
-                name=""
-                id=""
+                accept="image/*"
+                onChange={handleChange}
                 className="border p-2 border-gray-300 rounded-md"
               />
             </div>
@@ -182,7 +161,7 @@ function EditGroupDetails({ onclose, fetchGroupDetails }) {
               </button>
               <button
                 className="flex items-center gap-2 bg-green-400 text-white p-2 rounded-full px-4 my-2"
-                onClick={handleCreateGroup}
+                onClick={handleChange}
               >
                 <FaCheck /> Save
               </button>
