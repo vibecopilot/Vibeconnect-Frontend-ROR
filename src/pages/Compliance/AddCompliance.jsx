@@ -74,7 +74,7 @@ const AddCompliance = () => {
             style={{ background: themeColor }}
             className="text-white text-center font-medium p-2 rounded-md"
           >
-            Add Compliance
+           Compliance Configuration
           </h1>
           <form onSubmit={handleSubmit} className="space-y-4 my-4">
             <div className="grid grid-cols-3 gap-2">
