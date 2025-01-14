@@ -13,6 +13,7 @@ import {
   deleteForum,
   hideForum,
   domainPrefix,
+  reportForum,
 } from "../../../api/index";
 import { PiBookBookmark, PiEye } from "react-icons/pi";
 import { FormattedDateToShowProperly } from "../../../utils/dateUtils";
@@ -29,8 +30,9 @@ function EmployeeForum() {
   const [isLiked, setIsLiked] = useState({});
   const [dropdownState, setDropdownState] = useState({});
   const [savedPosts, setSavedPosts] = useState([]);
-  const [hiddenForum, setHiddenForum] = useState([]);
   const [isRed, setIsRed] = useState({}); //
+  const [reportedForum, setReportedForum] = useState([]);
+  const [likedByUser, setLikedByUser] = useState({});
 
   const toggleDropdown = (index) => {
     setDropdownState((prevState) => ({
@@ -38,85 +40,126 @@ function EmployeeForum() {
       [index]: !prevState[index],
     }));
   };
+
+  const currentUserId = () => {
+    return localStorage.getItem("UserId");
+  };
   const handleCommentAdded = (forumId, newCount) => {
     setComments((prev) => ({ ...prev, [forumId]: newCount }));
   };
 
-   const handleLikeToggle = async (forumId) => {
-      try {
-        const response = await likeForum(forumId);
-        if (response.success) {
-          setLikes((prevLikes) => {
-            const updatedLikes = { ...prevLikes };
-            updatedLikes[forumId] = response.liked_count;
-            return updatedLikes;
-          });
-          setIsLiked((prevIsLiked) => {
-            const updatedIsLiked = { ...prevIsLiked };
-            updatedIsLiked[forumId] = !prevIsLiked[forumId];
-            return updatedIsLiked;
-          });
-          // Toggle background color
-          setIsRed((prevIsRed) => {
-            const updatedIsRed = { ...prevIsRed };
-            updatedIsRed[forumId] = !prevIsRed[forumId];
-            return updatedIsRed;
-          });
-        }
-      } catch (error) {
-        console.error("Error toggling like:", error);
+  const handleSavePost = async (forumId) => {
+    try {
+      await PostSavedForum(forumId);
+      setSavedPosts((prevSavedPosts) => [...prevSavedPosts, forumId]);
+      toast.success("Post saved successfully");
+    } catch (error) {
+      console.error("Error saving the post:", error);
+      toast.error("Failed to save the post. Please try again.");
+    }
+  };
+
+  const handleReportForum = async (forumId) => {
+    try {
+      // Retrieve userId from localStorage
+      const userId = localStorage.getItem("UserId");
+
+      // Ensure both forumId and userId are available
+      if (!forumId || !userId) {
+        throw new Error("Missing required parameters: forumId or userId");
       }
-    };
+
+      // Prepare the request body
+      const requestBody = {
+        reason: "The forum contains inappropriate content", // Customize as needed
+        reported_by: userId, // User ID from localStorage
+      };
+
+      // Make the report API call
+      await reportForum(forumId, requestBody);
+
+      // Update the state for reported forums
+      setReportedForum((prevReportedPosts) => [...prevReportedPosts, forumId]);
+
+      // Optionally, display a success toast
+      toast.success("Forum reported successfully");
+    } catch (error) {
+      console.error("Error reporting the forum:", error);
+      toast.error("Failed to report the forum. Please try again.");
+    }
+
+    // Optionally, refetch forums if needed
+    fetchForums();
+  };
+
+  const handleLikeToggle = async (forumId) => {
+    const wasLiked = likedByUser[forumId];
+    try {
+      const response = await likeForum(forumId);
+      if (response.success) {
+        setLikes((prevLikes) => ({
+          ...prevLikes,
+          [forumId]: response.liked_count,
+        }));
+        setLikedByUser((prevLikedByUser) => ({
+          ...prevLikedByUser,
+          [forumId]: !wasLiked,
+        }));
+        setIsRed((prevIsRed) => ({
+          ...prevIsRed,
+          [forumId]: !wasLiked,
+        }));
+        toast.success(wasLiked ? "Post unliked" : "Post liked");
+      }
+    } catch (error) {
+      console.error("Error toggling like:", error);
+      toast.error("Failed to update like status");
+    }
+  };
 
   const fetchForums = async () => {
     try {
       const res = await getForum();
-      console.log(res.data);
       setForums(res.data);
+      const likeCounts = {};
+      const userLikeStatuses = {};
 
-      const likeCounts = res.data.reduce((acc, forum) => {
-        if (forum.id && forum["liked_count"] !== undefined) {
-          acc[forum.id] = forum["liked_count"];
+      res.data.forEach((forum) => {
+        if (forum.id) {
+          likeCounts[forum.id] = forum.liked_count || 0;
+          userLikeStatuses[forum.id] = forum.likes?.some(
+            (like) => like.user_id === currentUserId()
+          );
         }
-        return acc;
-      }, {});
+      });
 
-      const CommentCounts = res.data.reduce((acc, forum) => {
-        if (forum.id && forum["comment_count"] !== undefined) {
-          acc[forum.id] = forum["comment_count"];
-        }
-        return acc;
-      }, {});
-
-      console.log(likeCounts);
       setLikes(likeCounts);
+      setLikedByUser(userLikeStatuses);
+      setIsRed(userLikeStatuses);
 
-      console.log(CommentCounts);
-      setComments(CommentCounts);
+      const commentCounts = res.data.reduce((acc, forum) => {
+        if (forum.id && forum.comment_count !== undefined) {
+          acc[forum.id] = forum.comment_count;
+        }
+        return acc;
+      }, {});
+
+      setComments(commentCounts);
     } catch (error) {
       console.error("Error fetching forums:", error);
+      toast.error("Failed to load forums");
     }
   };
 
   useEffect(() => {
     fetchForums();
   }, []);
-
   return (
     <section className="flex ">
       <Navbar />
       <div className="p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
         <EmployeeCommunication />
-        <div className="flex justify-between md:flex-row flex-col my-5 gap-y-3">
-          {/* <input
-          type="text"
-          placeholder="search"
-          className="border-2 p-2 w-70 border-gray-300 rounded-lg "
-        /> */}
-          {/* { <Link to={`/employee/employee-communication-create-forum`} className="font-semibold border-2 border-black px-4 p-1 flex gap-2 items-center justify-center rounded-md ">
-          Create Forum
-        </Link> } */}
-        </div>
+        <div className="flex justify-between md:flex-row flex-col my-5 gap-y-3"></div>
         <div className="grid grid-cols-3 my-10">
           <div></div>
           <div className="flex flex-col justify-center items-center flex-wrap gap-5 w-full">
@@ -127,7 +170,11 @@ function EmployeeForum() {
               >
                 <div className="flex justify-between gap-2 md:mx-8 my-5 mt-5">
                   <div className="flex gap-3">
-                    <img src={image} className="w-10 h-10" alt="forum-profile" />
+                    <img
+                      src={image}
+                      className="w-10 h-10"
+                      alt="forum-profile"
+                    />
                     <div>
                       <h2 className="text-md font-semibold">
                         {forum.created_by_name?.firstname}{" "}
@@ -176,25 +223,12 @@ function EmployeeForum() {
                           >
                             <button
                               onClick={() => {
-                                handleDelete(forum.id);
+                                // Make sure userId is available in localStorage before calling the report function
+                                handleReportForum(forum.id);
                                 toggleDropdown(index); // Close dropdown
                               }}
                             >
-                              Delete
-                            </button>
-                          </a>
-                          <a
-                            href="#"
-                            className="text-gray-700 block px-4 py-2 text-sm"
-                            role="menuitem"
-                          >
-                            <button
-                              onClick={() => {
-                                handleForumVisibility(forum.id);
-                                toggleDropdown(index); // Close dropdown
-                              }}
-                            >
-                              Hide
+                              Report
                             </button>
                           </a>
                         </div>

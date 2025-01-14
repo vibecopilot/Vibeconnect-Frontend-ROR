@@ -30,48 +30,33 @@ function Forum() {
   const [comments, setComments] = useState({});
   const [forums, setForums] = useState([]);
   const [forumId, setForumId] = useState(null);
+  // const [userLikes, setUserLikes] = useState({});
   const [likes, setLikes] = useState([]);
   const [isLiked, setIsLiked] = useState({});
   const [dropdownState, setDropdownState] = useState({});
   const [savedPosts, setSavedPosts] = useState([]);
   const [hiddenForum, setHiddenForum] = useState([]);
+  const [likedByUser, setLikedByUser] = useState({});
   const [isRed, setIsRed] = useState({}); //
+  const [activeDropdown, setActiveDropdown] = useState(null);
 
   const toggleDropdown = (index) => {
-    setDropdownState((prevState) => ({
-      ...prevState,
-      [index]: !prevState[index],
-    }));
+    setActiveDropdown((prev) => (prev === index ? null : index));
   };
+
+  const currentUserId = () => {
+    return localStorage.getItem("UserId");
+  };
+
+  // const toggleDropdown = (index) => {
+  //   setDropdownState((prevState) => ({
+  //     ...prevState,
+  //     [index]: !prevState[index],
+  //   }));
+  // };
 
   const handleCommentAdded = (forumId, newCount) => {
     setComments((prev) => ({ ...prev, [forumId]: newCount }));
-  };
-
-  const handleLikeToggle = async (forumId) => {
-    try {
-      const response = await likeForum(forumId);
-      if (response.success) {
-        setLikes((prevLikes) => {
-          const updatedLikes = { ...prevLikes };
-          updatedLikes[forumId] = response.liked_count;
-          return updatedLikes;
-        });
-        setIsLiked((prevIsLiked) => {
-          const updatedIsLiked = { ...prevIsLiked };
-          updatedIsLiked[forumId] = !prevIsLiked[forumId];
-          return updatedIsLiked;
-        });
-        // Toggle background color
-        setIsRed((prevIsRed) => {
-          const updatedIsRed = { ...prevIsRed };
-          updatedIsRed[forumId] = !prevIsRed[forumId];
-          return updatedIsRed;
-        });
-      }
-    } catch (error) {
-      console.error("Error toggling like:", error);
-    }
   };
 
   const handleDelete = async (id) => {
@@ -110,33 +95,62 @@ function Forum() {
     fetchForums();
   };
 
+  const handleLikeToggle = async (forumId) => {
+    const wasLiked = likedByUser[forumId];
+    try {
+      const response = await likeForum(forumId);
+      if (response.success) {
+        setLikes((prevLikes) => ({
+          ...prevLikes,
+          [forumId]: response.liked_count,
+        }));
+        setLikedByUser((prevLikedByUser) => ({
+          ...prevLikedByUser,
+          [forumId]: !wasLiked,
+        }));
+        setIsRed((prevIsRed) => ({
+          ...prevIsRed,
+          [forumId]: !wasLiked,
+        }));
+        toast.success(wasLiked ? "Post unliked" : "Post liked");
+      }
+    } catch (error) {
+      console.error("Error toggling like:", error);
+      toast.error("Failed to update like status");
+    }
+  };
+
   const fetchForums = async () => {
     try {
       const res = await getForum();
-      console.log(res.data);
       setForums(res.data);
+      const likeCounts = {};
+      const userLikeStatuses = {};
 
-      const likeCounts = res.data.reduce((acc, forum) => {
-        if (forum.id && forum["liked_count"] !== undefined) {
-          acc[forum.id] = forum["liked_count"];
+      res.data.forEach((forum) => {
+        if (forum.id) {
+          likeCounts[forum.id] = forum.liked_count || 0;
+          userLikeStatuses[forum.id] = forum.likes?.some(
+            (like) => like.user_id === currentUserId()
+          );
         }
-        return acc;
-      }, {});
+      });
 
-      const CommentCounts = res.data.reduce((acc, forum) => {
-        if (forum.id && forum["comment_count"] !== undefined) {
-          acc[forum.id] = forum["comment_count"];
-        }
-        return acc;
-      }, {});
-
-      console.log(likeCounts);
       setLikes(likeCounts);
+      setLikedByUser(userLikeStatuses);
+      setIsRed(userLikeStatuses);
 
-      console.log(CommentCounts);
-      setComments(CommentCounts);
+      const commentCounts = res.data.reduce((acc, forum) => {
+        if (forum.id && forum.comment_count !== undefined) {
+          acc[forum.id] = forum.comment_count;
+        }
+        return acc;
+      }, {});
+
+      setComments(commentCounts);
     } catch (error) {
       console.error("Error fetching forums:", error);
+      toast.error("Failed to load forums");
     }
   };
 
@@ -215,7 +229,7 @@ function Forum() {
                     >
                       <BsThreeDots size={15} />
                     </button>
-                    {dropdownState[index] && (
+                    {activeDropdown === index && (
                       <div
                         className="absolute right-0 mt-0 w-28 flex justify-start rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none"
                         role="menu"
@@ -290,23 +304,44 @@ function Forum() {
                 <div className="flex justify-start gap-5 mx-8 my-3">
                   <div className="flex gap-3 mb-5">
                     <div className="flex flex-col">
-                      <button
-                        key={forum.id}
-                        onClick={() => handleLikeToggle(forum.id)}
-                        className="flex items-center"
-                      >
-                        {/* <div className="relative" color={isRed[forum.id] ? "red" : "black"}> */}
-                        <div className="relative" 
-                        
-                        color={isRed[forum.id] ? "red" : "black"}>
-                          <FaRegHeart size={22} className="relative z-10" />
-                        </div>
-                      </button>
-                      <span className=" text-sm text-gray-500 flex justify-center">
-                        {likes[forum.id] || 0}
-                      </span>
+                      <div className="flex flex-col">
+                        <button
+                          aria-label={likedByUser[forum.id] ? "Unlike post" : "Like post"}
+                          key={forum.id}
+                          onClick={() => handleLikeToggle(forum.id)}
+                          className="flex items-center focus:outline-none"
+                          // aria-label={
+                          //   userLikes[forum.id] ? "Unlike post" : "Like post"
+                          // }
+                        >
+                          <div className="relative">
+                            <FaRegHeart
+                              size={22}
+                               className="relative z-10"
+                              style={{
+                                color: isRed[forum.id] ? "red" : "black",
+                                transition: "color 0.2s ease",
+                              }}
+                            />
+                            <div
+                              className="absolute inset-0 z-0"
+                              style={{
+                                backgroundColor: likedByUser[forum.id]
+                                  ? "red"
+                                  : "white",
+                                clipPath:
+                                  "path('M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z')",
+                                transform: "scale(1.1)",
+                                transition: "background-color 0.2s ease",
+                              }}
+                            />
+                          </div>
+                        </button>
+                        <span className="text-sm text-gray-500 flex justify-center">
+                          {likes[forum.id] || 0}
+                        </span>
+                      </div>
                     </div>
-
                     <button>
                       <FaRegComment
                         className="w-6"
