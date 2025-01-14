@@ -180,16 +180,16 @@ function ReportForum() {
                   </div>
                   <div className="">
                     <h3 className="px-8 font-semibold">Reported By</h3>
-                    <p className="px-8 text-sm">
+                    <p className="px-8 mb-5 text-sm">
                       {reported_by?.user_name || "No user name available"}
                     </p>
                   </div>
 
-                  <div className="flex justify-start gap-5 mx-8 my-3">
+                  {/* <div className="flex justify-start gap-5 mx-8 my-3">
                     <button>
                       <FcLike size={22} />
                       <span className="ml-0 text-sm text-gray-500">
-                        {likeCount}
+                        {likes[item.id] || 0}
                       </span>
                     </button>
                     <button>
@@ -202,10 +202,10 @@ function ReportForum() {
                         }}
                       />
                       <span className="ml-0 justify-center text-sm text-gray-500">
-                        {commentCount}
+                        {comments[item.id] || 0}
                       </span>
                     </button>
-                  </div>
+                  </div> */}
                 </div>
               );
             })}

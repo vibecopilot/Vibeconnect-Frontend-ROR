@@ -237,6 +237,14 @@ export const EditVendors = async (id, data) =>
     },
   });
 
+export const removeVendor = async (forumId) => {
+  axiosInstance.delete(`/vendors/${forumId}.json/`, {
+    params: {
+      token: token,
+    }
+  })
+}
+
 //
 export const getComplaints = async () =>
   axiosInstance.get(`/pms/complaints.json`, {
@@ -1333,12 +1341,16 @@ export const deleteGroup = async (id) =>
     },
   });
 
-export const editGroups = async (id, data) =>
-  axiosInstance.put(`/groups/${id}.json`, data, {
-    params: {
-      token: token,
+export const editGroups = async (id, data) => {
+  const token = getItemInLocalStorage("token"); // Ensure token retrieval is correct
+  return axiosInstance.put(`/groups/${id}.json`, data, {
+    headers: {
+      "Content-Type": "multipart/form-data",
     },
+    params: { token }, // Ensure the token is included correctly
   });
+};
+
 export const postColorCode = async (data) =>
   axiosInstance.post(`/color_codes.json`, data, {
     params: {
@@ -7217,6 +7229,68 @@ export const deleteForum = async (forumId) =>
       token: token,
     },
   });
+// mailroom
+export const inbound = async (forumId) =>
+  axiosInstance.get(`/mail_room_inbound/${forumId}.json`, {
+    params: {
+      token: token,
+    }
+  })
+
+export const createInbound = async (forumId) =>
+  axiosInstance.post(`/mail_room_inbound/${forumId}.json`, {
+    params: {
+      token: token,
+    }
+  })
+
+  export const editInbound = async (forumId, data) => {
+    const token = getItemInLocalStorage("token"); // Ensure token retrieval is correct
+    return axiosInstance.put(`/mail_room)inbound/${forumId}.json`, data, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+      params: { token }, // Ensure the token is included correctly
+    });
+  };
+
+export const deleteInbound = async (forumId) =>
+  axiosInstance.delete(`/mail_room_inbound/${forumId}.json`, {
+    params: {
+      token: token,
+    }
+  })
+export const outbound = async (forumId) =>
+  axiosInstance.get(`/mail_room_outbound/${forumId}.json`, {
+    params: {
+      token: token,
+    }
+  })
+
+  
+export const createOutbound = async (forumId) =>
+  axiosInstance.post(`/mail_room_outbound/${forumId}.json`, {
+    params: {
+      token: token,
+    }
+  })
+
+  export const edieOutbound = async (forumId, data) => {
+    const token = getItemInLocalStorage("token"); // Ensure token retrieval is correct
+    return axiosInstance.put(`/mail_roome_outbound/${forumId}.json`, data, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+      params: { token }, // Ensure the token is included correctly
+    });
+  };
+
+export const deleteOutbound = async (forumId) =>
+  axiosInstance.delete(`/mail_roome_outbound/${forumId}.json`, {
+    params: {
+      token: token,
+    }
+  })
 
 // Save Forums
 export const getSavedForum = async (forumId) => {
@@ -7265,21 +7339,15 @@ export const GetAllReportedForum = async () => {
     throw error; // Propagate the error to the calling function
   }
 };
-// Report Forum Emp
-export const reportForum = async (forumId) =>
-  axiosInstance.post(`/admin/${forumId}/forum_reports.json?token=${token}`, {
-  });
 
-// Forum Visibility
-// export const forumVisibility = async (forumId) =>
-//   axiosInstance.get(`/forums/visibility_status.json?token=${token}`,
-//     // { params: {
-//     //     token: token,
-//     //   }}
-//   );
+// Report Forum Emp
+export const reportForum = async (forumId, requestBody) => {
+  const token = localStorage.getItem("token"); // Assuming you are saving the token in localStorage
+  return axiosInstance.post(`/forums/${forumId}/report.json?token=${token}`, requestBody);
+};
+
 
 // Forum Hide and Unhide - Admin
-
 export const getHiddenForums = async () =>
   axiosInstance.get(`/forums/visibility_status.json?token=${token}`)
 
