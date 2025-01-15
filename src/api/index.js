@@ -7230,54 +7230,54 @@ export const deleteForum = async (forumId) =>
     },
   });
 // mailroom
-export const inbound = async (forumId) =>
-  axiosInstance.get(`/mail_room_inbound/${forumId}.json`, {
+export const getinbound = async () =>
+  axiosInstance.get(`/mail_room_inbounds.json`, {
     params: {
       token: token,
     }
   })
 
-export const createInbound = async (forumId) =>
-  axiosInstance.post(`/mail_room_inbound/${forumId}.json`, {
+export const createInbound = async (data) =>
+  axiosInstance.post(`/mail_room_inbounds.json`, data, {
     params: {
       token: token,
     }
   })
 
-  export const editInbound = async (forumId, data) => {
-    const token = getItemInLocalStorage("token"); // Ensure token retrieval is correct
-    return axiosInstance.put(`/mail_room)inbound/${forumId}.json`, data, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-      params: { token }, // Ensure the token is included correctly
-    });
-  };
+export const editInbound = async (id, payload) => {
+  const token = getItemInLocalStorage("token"); // Ensure token retrieval is correct
+  return axiosInstance.put(`/mail_room_inbounds/${forumId}.json`, payload, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+    params: { token }, // Ensure the token is included correctly
+  });
+};
 
 export const deleteInbound = async (forumId) =>
-  axiosInstance.delete(`/mail_room_inbound/${forumId}.json`, {
+  axiosInstance.delete(`/mail_room_inbounds/${forumId}.json`, {
     params: {
       token: token,
     }
   })
-export const outbound = async (forumId) =>
-  axiosInstance.get(`/mail_room_outbound/${forumId}.json`, {
+export const getoutbound = async () =>
+  axiosInstance.get(`/mail_room_outbounds.json`, {
     params: {
       token: token,
     }
   })
 
-  
+
 export const createOutbound = async (forumId) =>
-  axiosInstance.post(`/mail_room_outbound/${forumId}.json`, {
+  axiosInstance.post(`/mail_room_outbounds/${forumId}.json`, {
     params: {
       token: token,
     }
   })
 
-  export const edieOutbound = async (forumId, data) => {
+  export const editOutbound = async (id, payload) => {
     const token = getItemInLocalStorage("token"); // Ensure token retrieval is correct
-    return axiosInstance.put(`/mail_roome_outbound/${forumId}.json`, data, {
+    return axiosInstance.put(`/mail_room_outbounds/${forumId}.json`, payload, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
@@ -7286,7 +7286,7 @@ export const createOutbound = async (forumId) =>
   };
 
 export const deleteOutbound = async (forumId) =>
-  axiosInstance.delete(`/mail_roome_outbound/${forumId}.json`, {
+  axiosInstance.delete(`/mail_roome_outbounds/${forumId}.json`, {
     params: {
       token: token,
     }

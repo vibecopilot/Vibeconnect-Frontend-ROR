@@ -113,6 +113,7 @@ const DeliveryVendor = () => {
       ),
       sortable: false,
     },
+    { name: "Vendor ID", selector: (row) => row.id, sortable: true },
     { name: "Name", selector: (row) => row.vendor_name, sortable: true },
     {
       name: "Website Url",
