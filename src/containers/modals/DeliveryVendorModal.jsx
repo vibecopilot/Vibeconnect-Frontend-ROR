@@ -1,7 +1,7 @@
 import React from "react";
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { postVendors, EditVendors,getVendors } from "../../api";
+import { postVendors, EditVendors, getVendors } from "../../api";
 import ModalWrapper from "./ModalWrapper";
 
 const DeliveryVendorModal = ({ onclose, title = "Edit", vendor = null }) => {
@@ -16,7 +16,7 @@ const DeliveryVendorModal = ({ onclose, title = "Edit", vendor = null }) => {
     aggremenet_end_date: "",
     attachment: null,
     status: " ",
-    attachments:" "
+    attachments: " ",
   });
 
   // Populate form with existing vendor data when editing

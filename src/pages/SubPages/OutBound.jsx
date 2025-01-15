@@ -1,29 +1,97 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import DataTable from "react-data-table-component";
 import { IoAddCircleOutline } from "react-icons/io5";
 import DeliveryVendorModal from "../../containers/modals/DeliveryVendorModal";
 import { BsEye } from "react-icons/bs";
 import { Link } from "react-router-dom";
 import Table from "../../components/table/Table";
+import { BiTrash, BiEdit } from "react-icons/bi";
 
+import { getoutbound, deleteOutbound } from "../../api";
 const OutBound = () => {
   const [modal, showModal] = useState(false);
   const [add, setAdd] = useState(false);
   const [searchText, setSearchText] = useState("");
+  const [ouboundRecord, setOutboundRecord] = useState("");
+
+  const handleButtonClick = () => {
+    showModal(true);
+  };
+  const fetchOutboundRecord = async () => {
+    try {
+      const res = await getoutbound();
+      console.log("API response:", res);
+      const transformedData = res.data.map((item) => ({
+        Id: item.id,
+        vendor_id: item.vendor_id,
+        recipient: item.recipient_name,
+        mobile_number: item.mobile_number,
+        unit: item.unit,
+        sending_date: item.sending_date,
+        // department: item.department_name,
+        sender: item.sender,
+        company: item.company,
+        receivedOn: new Date(item.receiving_date).toLocaleDateString(),
+        AWB: item.awb_number,
+        recipient_address_1: item.recipient_address_1,
+        recipient_address_2: item.recipient_address_2,
+        // collectedOn: item.collect_on
+        //   ? new Date(item.collect_on).toLocaleDateString()
+        //   : "N/A",
+        collectedBy: item.collect_by,
+        // status: item.status,
+        created_by_id: item.created_by_id,
+        created_by: item.created_by_name
+          ? `${item.created_by_name.firstname || "Unknown"} ${
+              item.created_by_name.lastname || ""
+            }`.trim()
+          : "Unknown",
+        collect_by_id: item.collect_by_id,
+        mail_outbound_type: item.mail_outbound_type,
+      }));
+
+      setOutboundRecord(transformedData);
+      setFilteredData(transformedData);
+    } catch (error) {
+      console.error("Error fetching inbound records:", error);
+    }
+  };
+
+  // Handle delete / remove record of inbound
+  const handleRemovePackage = async (id) => {
+    try {
+      const deleteRec = await deleteOutbound(id);
+      console.log(deleteRec);
+      toast.success("Package deleted successfully");
+      fetchOutboundRecord(); // Refresh the data after deletion
+    } catch (error) {
+      console.error("Error deleting package:", error);
+      toast.error("Failed to delete the package");
+    }
+  };
+
+  useEffect(() => {
+    fetchOutboundRecord();
+  }, []);
+
   const column = [
     {
-      name: "Action",
-      cell: (row) => (
-        <Link to={"/mail-room/outbound/outbound-details"}>{row.action}</Link>
-      ),
+      name: "View",
+      cell: (row) => {
+        return (
+          <Link to={`/mail-room/outbound/outbound-details/${row.Id}`}>
+            <BsEye />
+          </Link>
+        );
+      },
       sortable: true,
     },
-    { name: "ID", selector: (row) => row.id, sortable: true },
-    {
-      name: "Sender Name",
-      selector: (row) => row.senderName,
-      sortable: true,
-    },
+    { name: "ID", selector: (row) => row.Id, sortable: true },
+    // {
+    //   name: "Sender Name",
+    //   selector: (row) => row.senderName,
+    //   sortable: true,
+    // },
     { name: "Recipient", selector: (row) => row.recipient, sortable: true },
     { name: "Unit", selector: (row) => row.unit, sortable: true },
     {
@@ -43,32 +111,27 @@ const OutBound = () => {
     },
     {
       name: "Type",
-      selector: (row) => row.type,
+      selector: (row) => row.mail_outbound_type,
       sortable: true,
     },
 
     {
       name: "Sending Date",
-      selector: (row) => row.sendingDate,
+      selector: (row) => row.sending_date,
+      sortable: true,
+    },
+    {
+      name: "Remove Package",
+      cell: (row) => (
+        <button onClick={() => handleRemovePackage(row.Id)}>
+          <BiTrash />
+        </button>
+      ),
       sortable: true,
     },
   ];
-  const data = [
-    {
-      id: 1,
-      action: <BsEye />,
-      courierVendor: "Courier",
-      senderName: "sender A",
-      recipient: "recipient 1",
-      unit: "unit 1",
-      AWB: "AWB 1",
-      entity: "entity1",
-      type: "fac1",
-      sendingDate: "date",
-    },
-  ];
 
-  const [filteredData, setFilteredData] = useState(data);
+  const [filteredData, setFilteredData] = useState([]);
   const handleSearch = (event) => {
     const searchValue = event.target.value;
     setSearchText(searchValue);
