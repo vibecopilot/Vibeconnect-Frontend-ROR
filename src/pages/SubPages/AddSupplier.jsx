@@ -362,7 +362,7 @@ const AddSupplier = () => {
                 placeholder="Enter GST Number"
               />
             </div>
-            <div className="flex items-center mt-5 gap-2">
+            {/* <div className="flex items-center mt-5 gap-2">
               <input
                 type="checkbox"
                 name=""
@@ -378,7 +378,7 @@ const AddSupplier = () => {
               <label htmlFor="" className="font-medium">
                 Compliance applicable :
               </label>
-            </div>
+            </div> */}
             {formData.complianceApplicable && (
               <MultiSelect
                 title="Select Compliance Categories"
