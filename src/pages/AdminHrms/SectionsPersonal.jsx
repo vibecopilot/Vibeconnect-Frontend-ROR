@@ -32,6 +32,7 @@ import { MdClose, MdFamilyRestroom, MdOutlinePayment } from "react-icons/md";
 import { IoHomeOutline } from "react-icons/io5";
 import { FaCheck, FaHome } from "react-icons/fa";
 import { PiPlusCircle } from "react-icons/pi";
+import { Switch } from "antd";
 
 const SectionsPersonal = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -121,7 +122,6 @@ const SectionsPersonal = () => {
     },
   ];
 
-  
   const { id } = useParams();
   const [formData, setFormData] = useState({
     firstName: "",
@@ -138,6 +138,7 @@ const SectionsPersonal = () => {
     emergencyContactNo: "",
     userType: "",
     status: false,
+    latRequired: true,
   });
   const [familyData, setFamilyData] = useState({
     fatherName: "",
@@ -177,6 +178,7 @@ const SectionsPersonal = () => {
         emergencyContactName: res?.emergency_contact_name,
         emergencyContactNo: res?.emergency_contact_no,
         userType: res?.user_type,
+        latRequired: res?.lat_long_required
       });
     } catch (error) {
       console.log(error);
@@ -285,6 +287,7 @@ const SectionsPersonal = () => {
     editData.append("user_type", formData.userType ? formData.userType : "");
     editData.append("status", formData.status);
     editData.append("organization", hrmsOrgId);
+    editData.append("lat_long_required", formData.latRequired);
     try {
       const res = await editEmployeeDetails(id, editData);
       setIsEditing(false);
@@ -444,21 +447,21 @@ const SectionsPersonal = () => {
   };
   // can_edit_employee
 
-   const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
-    const orgId = getItemInLocalStorage("HRMSORGID");
-    const [roleAccess, setRoleAccess] = useState({});
-    useEffect(() => {
-      const fetchRoleAccess = async () => {
-        try {
-          const res = await getAdminAccess(orgId, empId);
-  
-          setRoleAccess(res[0]);
-        } catch (error) {
-          console.log(error);
-        }
-      };
-      fetchRoleAccess();
-    }, []);
+  const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
+  const orgId = getItemInLocalStorage("HRMSORGID");
+  const [roleAccess, setRoleAccess] = useState({});
+  useEffect(() => {
+    const fetchRoleAccess = async () => {
+      try {
+        const res = await getAdminAccess(orgId, empId);
+
+        setRoleAccess(res[0]);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchRoleAccess();
+  }, []);
 
   return (
     <div className="flex flex-col ml-20">
@@ -473,34 +476,36 @@ const SectionsPersonal = () => {
             title={"Basic Information"}
             content={
               <>
-                {roleAccess?.can_edit_employee &&<div className="flex justify-end gap-2">
-                  {isEditing ? (
-                    <>
+                {roleAccess?.can_edit_employee && (
+                  <div className="flex justify-end gap-2">
+                    {isEditing ? (
+                      <>
+                        <button
+                          type="button"
+                          className="border-2 rounded-full p-1 transition-all duration-150 hover:bg-opacity-30 border-green-400  px-4 text-green-400 mb-2 hover:bg-green-300 font-semibold flex items-center gap-2 "
+                          onClick={handleEditEmployeeBasicInfo}
+                        >
+                          <FaCheck /> Save
+                        </button>
+                        <button
+                          type="button"
+                          className="border-2 rounded-full p-1 border-red-400  px-4 text-red-400 mb-2 hover:bg-opacity-30 hover:bg-red-300 font-semibold flex items-center gap-2 "
+                          onClick={() => setIsEditing(false)}
+                        >
+                          <MdClose /> Cancel
+                        </button>
+                      </>
+                    ) : (
                       <button
                         type="button"
-                        className="border-2 rounded-full p-1 transition-all duration-150 hover:bg-opacity-30 border-green-400  px-4 text-green-400 mb-2 hover:bg-green-300 font-semibold flex items-center gap-2 "
-                        onClick={handleEditEmployeeBasicInfo}
+                        className="bg-blue-500 text-white mb-2 hover:bg-gray-700 font-semibold py-2 px-4 rounded-full flex items-center gap-2 "
+                        onClick={() => setIsEditing(true)}
                       >
-                        <FaCheck /> Save
+                        <BiEdit /> Edit
                       </button>
-                      <button
-                        type="button"
-                        className="border-2 rounded-full p-1 border-red-400  px-4 text-red-400 mb-2 hover:bg-opacity-30 hover:bg-red-300 font-semibold flex items-center gap-2 "
-                        onClick={() => setIsEditing(false)}
-                      >
-                        <MdClose /> Cancel
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      type="button"
-                      className="bg-blue-500 text-white mb-2 hover:bg-gray-700 font-semibold py-2 px-4 rounded-full flex items-center gap-2 "
-                      onClick={() => setIsEditing(true)}
-                    >
-                      <BiEdit /> Edit
-                    </button>
-                  )}
-                </div>}
+                    )}
+                  </div>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
@@ -652,6 +657,21 @@ const SectionsPersonal = () => {
                       <option value="married">Married</option>
                     </select>
                   </div>
+                  <div className="flex items-center gap-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Location Required
+                    </label>
+                    <Switch
+                      checked={formData.latRequired}
+                      disabled={!isEditing}
+                      onChange={() =>
+                        setFormData({
+                          ...formData,
+                          latRequired: !formData.latRequired,
+                        })
+                      }
+                    />
+                  </div>
                   {/* <div>
                     <label className="block text-sm font-medium text-gray-700">
                       Role
@@ -683,34 +703,36 @@ const SectionsPersonal = () => {
             title={"Family Information"}
             content={
               <>
-               {roleAccess?.can_edit_employee && <div className="flex justify-end gap-2">
-                  {isFamEditing ? (
-                    <>
+                {roleAccess?.can_edit_employee && (
+                  <div className="flex justify-end gap-2">
+                    {isFamEditing ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={handleEditFamily}
+                          className="border-2 rounded-full p-1 transition-all duration-150 hover:bg-opacity-30 border-green-400  px-4 text-green-400 mb-2 hover:bg-green-300 font-semibold flex items-center gap-2 "
+                        >
+                          <FaCheck /> Save
+                        </button>
+                        <button
+                          type="button"
+                          className="border-2 rounded-full p-1 border-red-400  px-4 text-red-400 mb-2 hover:bg-opacity-30 hover:bg-red-300 font-semibold flex items-center gap-2 "
+                          onClick={() => setIsFamEditing(false)}
+                        >
+                          <MdClose /> Cancel
+                        </button>
+                      </>
+                    ) : (
                       <button
                         type="button"
-                        onClick={handleEditFamily}
-                        className="border-2 rounded-full p-1 transition-all duration-150 hover:bg-opacity-30 border-green-400  px-4 text-green-400 mb-2 hover:bg-green-300 font-semibold flex items-center gap-2 "
+                        className="bg-blue-500 text-white mb-2 hover:bg-gray-700 font-semibold py-2 px-4 rounded-full flex items-center gap-2"
+                        onClick={() => setIsFamEditing(true)}
                       >
-                        <FaCheck /> Save
+                        <BiEdit /> Edit
                       </button>
-                      <button
-                        type="button"
-                        className="border-2 rounded-full p-1 border-red-400  px-4 text-red-400 mb-2 hover:bg-opacity-30 hover:bg-red-300 font-semibold flex items-center gap-2 "
-                        onClick={() => setIsFamEditing(false)}
-                      >
-                        <MdClose /> Cancel
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      type="button"
-                      className="bg-blue-500 text-white mb-2 hover:bg-gray-700 font-semibold py-2 px-4 rounded-full flex items-center gap-2"
-                      onClick={() => setIsFamEditing(true)}
-                    >
-                      <BiEdit /> Edit
-                    </button>
-                  )}
-                </div>}
+                    )}
+                  </div>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
@@ -770,34 +792,36 @@ const SectionsPersonal = () => {
             title={"Address Information"}
             content={
               <>
-                {roleAccess?.can_edit_employee && <div className="flex justify-end gap-2">
-                  {isAddressEditing ? (
-                    <>
+                {roleAccess?.can_edit_employee && (
+                  <div className="flex justify-end gap-2">
+                    {isAddressEditing ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={handleEditAddress}
+                          className="border-2 rounded-full p-1 transition-all duration-150 hover:bg-opacity-30 border-green-400  px-4 text-green-400 mb-2 hover:bg-green-300 font-semibold  "
+                        >
+                          Save
+                        </button>
+                        <button
+                          type="button"
+                          className="border-2 rounded-full p-1 border-red-400  px-4 text-red-400 mb-2 hover:bg-opacity-30 hover:bg-red-300 font-semibold  "
+                          onClick={() => setIsAddressEditing(false)}
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
                       <button
                         type="button"
-                        onClick={handleEditAddress}
-                        className="border-2 rounded-full p-1 transition-all duration-150 hover:bg-opacity-30 border-green-400  px-4 text-green-400 mb-2 hover:bg-green-300 font-semibold  "
+                        className="bg-blue-500 text-white mb-2 hover:bg-gray-700 font-semibold py-2 px-4 rounded-full flex items-center gap-2"
+                        onClick={() => setIsAddressEditing(true)}
                       >
-                        Save
+                        <BiEdit /> Edit
                       </button>
-                      <button
-                        type="button"
-                        className="border-2 rounded-full p-1 border-red-400  px-4 text-red-400 mb-2 hover:bg-opacity-30 hover:bg-red-300 font-semibold  "
-                        onClick={() => setIsAddressEditing(false)}
-                      >
-                        Cancel
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      type="button"
-                      className="bg-blue-500 text-white mb-2 hover:bg-gray-700 font-semibold py-2 px-4 rounded-full flex items-center gap-2"
-                      onClick={() => setIsAddressEditing(true)}
-                    >
-                      <BiEdit /> Edit
-                    </button>
-                  )}
-                </div>}
+                    )}
+                  </div>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
@@ -909,15 +933,17 @@ const SectionsPersonal = () => {
               <div>
                 {paymentsData.length === 0 && (
                   <>
-                  {roleAccess?.can_edit_employee && <div className="flex justify-end">
-                    <button
-                      className="bg-blue-500 text-white mb-2 hover:bg-gray-700 font-semibold py-2 px-4 rounded-full flex items-center gap-2"
-                      onClick={() => setAddPaymentInfoModal(true)}
-                      >
-                      <PiPlusCircle size={18} /> Add
-                    </button>
-                  </div>}
-                      </>
+                    {roleAccess?.can_edit_employee && (
+                      <div className="flex justify-end">
+                        <button
+                          className="bg-blue-500 text-white mb-2 hover:bg-gray-700 font-semibold py-2 px-4 rounded-full flex items-center gap-2"
+                          onClick={() => setAddPaymentInfoModal(true)}
+                        >
+                          <PiPlusCircle size={18} /> Add
+                        </button>
+                      </div>
+                    )}
+                  </>
                 )}
                 <Table
                   columns={PaymentColumn}
