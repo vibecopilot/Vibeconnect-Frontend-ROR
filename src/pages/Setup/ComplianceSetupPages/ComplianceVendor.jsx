@@ -17,36 +17,36 @@ import toast from "react-hot-toast";
 const ComplianceVendor = () => {
   const themeColor = useSelector((state) => state.theme.color);
   const navigate = useNavigate();
-     const handleLogout = () => {
-        localStorage.removeItem("TOKEN");
-        localStorage.removeItem("COMPANYID");
-        localStorage.removeItem("HRMSORGID");
-        localStorage.removeItem("board_id");
-        localStorage.removeItem("menuState");
-        localStorage.removeItem("Name");
-        localStorage.removeItem("LASTNAME");
-        localStorage.removeItem("USERTYPE");
-        localStorage.removeItem("user");
-        localStorage.removeItem("UNITID");
-        localStorage.removeItem("Building");
-        localStorage.removeItem("categories");
-        localStorage.removeItem("SITEID");
-        localStorage.removeItem("STATUS");
-        localStorage.removeItem("complaint");
-        localStorage.removeItem("UserId");
-        localStorage.removeItem("VIBETOKEN");
-        localStorage.removeItem("VIBEUSERID");
-        localStorage.removeItem("VIBEORGID");
-        localStorage.removeItem("FEATURES");
-        localStorage.removeItem("HRMSORGID");
-        localStorage.removeItem("HRMS_EMPLOYEE_ID");
-        persistor.purge(["board"]).then(() => {
-          navigate("/login");
-          // window.location.reload();
-        });
-        // navigate("/login");
-        // window.location.reload();
-      };
+  const handleLogout = () => {
+    localStorage.removeItem("TOKEN");
+    localStorage.removeItem("COMPANYID");
+    localStorage.removeItem("HRMSORGID");
+    localStorage.removeItem("board_id");
+    localStorage.removeItem("menuState");
+    localStorage.removeItem("Name");
+    localStorage.removeItem("LASTNAME");
+    localStorage.removeItem("USERTYPE");
+    localStorage.removeItem("user");
+    localStorage.removeItem("UNITID");
+    localStorage.removeItem("Building");
+    localStorage.removeItem("categories");
+    localStorage.removeItem("SITEID");
+    localStorage.removeItem("STATUS");
+    localStorage.removeItem("complaint");
+    localStorage.removeItem("UserId");
+    localStorage.removeItem("VIBETOKEN");
+    localStorage.removeItem("VIBEUSERID");
+    localStorage.removeItem("VIBEORGID");
+    localStorage.removeItem("FEATURES");
+    localStorage.removeItem("HRMSORGID");
+    localStorage.removeItem("HRMS_EMPLOYEE_ID");
+    persistor.purge(["board"]).then(() => {
+      navigate("/login");
+      // window.location.reload();
+    });
+    // navigate("/login");
+    // window.location.reload();
+  };
   const column = [
     {
       name: "Actions",
@@ -255,7 +255,10 @@ const ComplianceVendor = () => {
         className="p-2 text-white font-medium text-lg flex justify-between items-center "
       >
         <p>Vibe Connect Vendor Compliance</p>
-        <button className="flex items-center gap-2 bg-red-400 rounded-md p-2" onClick={handleLogout}>
+        <button
+          className="flex items-center gap-2 bg-red-400 rounded-md p-2"
+          onClick={handleLogout}
+        >
           <MdLogout /> Logout{" "}
         </button>
       </div>
@@ -321,12 +324,13 @@ const ComplianceVendor = () => {
                     </p>
                   </div>
                   <div className="flex items-center gap-2 justify-end ">
-                    <button
+                    <Link
                       className=" font-medium bg-green-400 rounded-md text-white flex items-center gap-2 p-1 px-4"
-                      onClick={() => setShowTasks(true)}
+                      // onClick={() => setShowTasks(true)}
+                      to={"/compliance/evidence"}
                     >
                       <FaTasks /> Tasks
-                    </button>
+                    </Link>
                     <button className=" font-medium bg-green-400 rounded-md text-white flex items-center gap-2 p-1 px-4">
                       <FaDownload /> Format
                     </button>

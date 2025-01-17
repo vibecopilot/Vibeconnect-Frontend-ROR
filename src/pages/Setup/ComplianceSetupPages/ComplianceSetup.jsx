@@ -12,7 +12,7 @@ const ComplianceSetup = () => {
       </div>
       <div className="w-full flex mx-3 flex-col overflow-hidden h-full">
         <div className="grid grid-cols-12 h-full">
-          <div className=" flex col-span-2 w-full gap-1 flex-col my-5 mx-1 h-screen border-r p-1">
+          {/* <div className=" flex col-span-2 w-full gap-1 flex-col my-5 mx-1 h-screen border-r p-1">
             <h2
               className={`p-1 border-b ${
                 page === "category" &&
@@ -31,13 +31,9 @@ const ComplianceSetup = () => {
             >
               Checklists
             </h2>
-          </div>
+          </div> */}
           <div className="  border-gray-300 col-span-10 h-full m-2 w-full">
-            {page === "category" && (
-              <div>
-                <ComplianceCategories />
-              </div>
-            )}
+           
             {page === "checklist" && (
               <div>
                 <ComplianceChecklist />
@@ -45,6 +41,11 @@ const ComplianceSetup = () => {
             )}
           </div>
         </div>
+        {page === "category" && (
+              <div>
+                <ComplianceCategories />
+              </div>
+            )}
       </div>
     </section>
   );

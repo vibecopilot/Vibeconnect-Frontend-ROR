@@ -6,6 +6,7 @@ import {
 } from "react-icons/io";
 import { getIncidentCatDetails } from "../../../api";
 import ComplianceSubCatModal from "./ComplianceSubCatModal";
+import ComplianceTask from "./ComplianceTask";
 
 const ComplianceTreeNode = ({ node, fetchIncidentTree }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -15,6 +16,7 @@ const ComplianceTreeNode = ({ node, fetchIncidentTree }) => {
   };
   const [catId, setCatId] = useState("");
   const [addCat, setAddSub] = useState(false);
+  const [task, setTask] = useState(false);
   const [tagType, setTagType] = useState("");
   const handleEdit = async (id) => {
     try {
@@ -69,10 +71,16 @@ const ComplianceTreeNode = ({ node, fetchIncidentTree }) => {
         <div className="my-1">
           <div className="flex justify-end">
             <button
+              onClick={() => setTask(true)}
+              className="ml-4 text-green-600 hover:text-green-800 border-green-500 focus:outline-none border p-1 rounded-md font-medium flex items-center gap-2"
+            >
+              <BiPlusCircle size={15} className="inline" /> Add Task
+            </button>
+            <button
               onClick={() => setAddSub(true)}
               className="ml-4 text-green-600 hover:text-green-800 border-green-500 focus:outline-none border p-1 rounded-md font-medium flex items-center gap-2"
             >
-              <BiPlusCircle size={15} className="inline" /> Add
+              <BiPlusCircle size={15} className="inline" /> Add Sub Category
             </button>
           </div>
           {node.children.map((child) => (
@@ -85,6 +93,7 @@ const ComplianceTreeNode = ({ node, fetchIncidentTree }) => {
         </div>
       )}
       {addCat && <ComplianceSubCatModal onclose={() => setAddSub(false)} />}
+      {task && <ComplianceTask onClose={() => setTask(false)} />}
     </div>
   );
 };
