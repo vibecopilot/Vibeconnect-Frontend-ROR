@@ -34,71 +34,7 @@ const ComplianceSubCatModal = ({ onclose }) => {
                   placeholder="Enter name"
                 />
               </div>
-              <div className="flex flex-col gap-1">
-                <label htmlFor="" className="font-medium text-sm">
-                  Select Frequency
-                </label>
-                <select
-                  name="frequency"
-                  id=""
-                  value={formData.frequency}
-                  onChange={handleChange}
-                  className="border p-2 border-gray-500 rounded-md w-full"
-                >
-                  <option value="">Select Frequency</option>
-                  <option value="Daily">Daily</option>
-                  <option value="Weekly">Weekly</option>
-                  <option value="Monthly">Monthly</option>
-                  <option value="Yearly">Yearly</option>
-                </select>
-              </div>
-              {formData.frequency === "Yearly" && (
-                <div className="flex flex-col gap-1">
-                  <label htmlFor="" className="font-medium text-sm">
-                    Select Date
-                  </label>
-                  <input
-                    type="date"
-                    name=""
-                    id=""
-                    className="border p-2 border-gray-500 rounded-md w-full"
-                  />
-                </div>
-              )}
-              {formData.frequency === "Monthly" && (
-                <div className="flex flex-col gap-1">
-                  <label htmlFor="" className="font-medium text-sm">
-                    Select Date
-                  </label>
-                  <input
-                    type="date"
-                    name=""
-                    id=""
-                    className="border p-2 border-gray-500 rounded-md w-full"
-                  />
-                </div>
-              )}
-              {formData.frequency === "Weekly" && (
-                <div className="flex flex-col gap-1">
-                  <label htmlFor="" className="font-medium text-sm">
-                    Select Day
-                  </label>
-                  <select
-                    name=""
-                    id=""
-                    className="border p-2 border-gray-500 rounded-md w-full"
-                  >
-                    <option value="">Select Day</option>
-                    <option value="Monday">Monday</option>
-                    <option value="Tuesday">Tuesday</option>
-                    <option value="Wednesday">Wednesday</option>
-                    <option value="Thursday">Thursday</option>
-                    <option value="Friday">Friday</option>
-                    <option value="Saturday">Saturday</option>
-                    <option value="Sunday">Saturday</option>
-                  </select>
-                </div>
-              )}
+
               <div className="flex flex-col gap-1">
                 <label htmlFor="" className="font-medium text-sm">
                   Critical
@@ -143,38 +79,6 @@ const ComplianceSubCatModal = ({ onclose }) => {
                   <option value="">Rule</option>
                   <option value="">Returns</option>
                 </select>
-              </div>
-              <div className="flex flex-col gap-1">
-                <label htmlFor="" className="font-medium text-sm">
-                  Associate Checklist
-                </label>
-                <select
-                  name="critical"
-                  id=""
-                  className="border p-2 border-gray-500 rounded-md w-full"
-                >
-                  <option value="">Select Checklist</option>
-                  <option value="">Labour law - Checklist</option>
-                  <option value="">IT law - Checklist</option>
-                </select>
-              </div>
-
-              <div className="flex flex-col gap-1 justify-center">
-                <label
-                  htmlFor=""
-                  className="font-medium flex items-center gap-2"
-                >
-                  Weightage :
-                  <Switch
-                    checked={formData.weightage}
-                    onChange={() =>
-                      setFormData({
-                        ...formData,
-                        weightage: !formData.weightage,
-                      })
-                    }
-                  />
-                </label>
               </div>
             </div>
             {formData.weightage && (
