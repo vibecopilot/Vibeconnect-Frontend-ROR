@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { IoPrintOutline } from "react-icons/io5";
 import Navbar from "../../../components/Navbar";
 import { useSelector } from "react-redux";
 import { FaDownload, FaRegFileAlt } from "react-icons/fa";
@@ -14,20 +13,25 @@ import {
   getCamBillingDataDetails,
   getInvoiceReceipt,
   getReceiptPayment,
+  getCamBillInvoiceDownload,
+  getCamLogo,
 } from "../../../api";
-import { toWords } from 'number-to-words';
+import { toWords } from "number-to-words";
+import toast from "react-hot-toast";
 function CAMBillingDetails() {
   const themeColor = useSelector((state) => state.theme.color);
   const [recallModal, setRecallModal] = useState(false);
   const [receivePayment, setReceivePayment] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState(false);
-  const [camBilling, setComBilling] = useState([]); // Initialize as an array or object if expected
+  const [camBilling, setComBilling] = useState([]);
   const [camBillingAllData, setCamBillingAllData] = useState({});
   const [invoiceReceipt, setInvoiceReceipt] = useState([]);
   const [addressInvoice, setAddressInvoice] = useState({});
   const [amountCharges, setAmountCharges] = useState([]);
+  const [receiver, setReceiver] = useState({});
+  const [logo, setLogo] = useState({});
   const { id } = useParams();
-  
+
   const fetchAddressSetupDetails = async (addressId) => {
     try {
       const addressSetupCamBilling = await getAddressSetupDetails(addressId);
@@ -37,33 +41,48 @@ function CAMBillingDetails() {
     }
   };
   console.log(addressInvoice);
+
+  const fetchCamBilling = async () => {
+    try {
+      const response = await getCamBillingDataDetails(id);
+      console.log(response.data);
+      setCamBillingAllData(response.data);
+      setComBilling(response.data);
+      fetchAddressSetupDetails(response.data.invoice_address_id);
+      const transformedData = [response.data];
+      setAmountCharges(transformedData);
+      setReceiver(response.data.reciever_details);
+      console.log(receiver);
+      setInvoiceReceipt(response.data.invoice_receipts);
+      setReceivePaymentDetails(response.data.payments);
+    } catch (err) {
+      console.error("Failed to fetch Address Setup data:", err);
+    }
+  };
+
+  const fetchLogo = async () => {
+    try {
+      const response = await getCamLogo();
+      setLogo(response.data);
+      console.log(response.data);
+    } catch (error) {}
+  };
+
   useEffect(() => {
-    const fetchCamBilling = async () => {
-      try {
-        const response = await getCamBillingDataDetails(id);
-        console.log(response.data);
-        setCamBillingAllData(response.data);
-        setComBilling(response.data); // Ensure response.data is structured as expected
-        fetchAddressSetupDetails(response.data.invoice_address_id);
-        const transformedData = [response.data];
-        setAmountCharges(transformedData);
-      } catch (err) {
-        console.error("Failed to fetch Address Setup data:", err);
-      }
-    };
-    console.log(camBillingAllData);
-    const fetchInvoiceReceipt = async () => {
-      try {
-        const response = await getInvoiceReceipt();
-        setInvoiceReceipt(response.data); // Ensure response.data is structured as expected
-      } catch (err) {
-        console.error("Failed to fetch Address Setup data:", err);
-      }
-    };
+    // console.log(camBillingAllData);
+    // const fetchInvoiceReceipt = async () => {
+    //   try {
+    //     const response = await getInvoiceReceipt();
+    //     // Ensure response.data is structured as expected
+    //   } catch (err) {
+    //     console.error("Failed to fetch Address Setup data:", err);
+    //   }
+    // };
 
     fetchCamBilling(); // Call the API
-    fetchInvoiceReceipt();
-    fetchReceiptPayment();
+    // fetchInvoiceReceipt();
+    // fetchReceiptPayment();
+    fetchLogo();
   }, [id]);
   const columns = [
     { name: "S.N.", key: "sn" },
@@ -101,45 +120,8 @@ function CAMBillingDetails() {
       sgst_amount: charge.sgst_amount || "0.00",
       igst_rate: `${charge.igst_rate || "0"}%`,
       igst_amount: charge.igst_amount || "0.00",
-    })) || []; // Default to an empty array if charges is undefined
+    })) || [];
   console.log(filteredData);
-  // const data = [
-  //   {
-  //     sn: "1",
-  //     description: "Good",
-  //     SACHSNCode: "Jsjhsd",
-  //     qty: "6.0",
-  //     unit: "2.0",
-  //     rate: "3.0",
-  //     total_value: "2376.0",
-  //     percentage: "38768.0",
-  //     taxable_value: "8787.00",
-  //     cgst_rate: "8.0%",
-  //     cgst_amount: "98.00",
-  //     sgst_rate: "8.0%",
-  //     sgst_amount: "88.00",
-  //     igst_rate: "0.0%",
-  //     igst_amount: "0.00",
-  //   },
-  //   {
-  //     sn: "2",
-  //     description: "Ravindra",
-  //     SACHSNCode: "Duygis",
-  //     qty: "5.0",
-  //     unit: "7.0",
-  //     rate: "79.0",
-  //     total_value: "98.00",
-  //     percentage: "65.0",
-  //     taxable_value: "2474.00",
-  //     cgst_rate: "6.0%",
-  //     cgst_amount: "78.00",
-  //     sgst_rate: "6.0%",
-  //     sgst_amount: "7.00",
-  //     igst_rate: "0.0%",
-  //     igst_amount: "0.00",
-  //   },
-  // ];
-
   const columnsPaymentDetails = [
     {
       name: "Previous Amount Due",
@@ -167,18 +149,6 @@ function CAMBillingDetails() {
       sortable: true,
     },
   ];
-
-  const dataPaymentDetails = [
-    {
-      Id: 1,
-      previous_amount_due: "1000.00	",
-      current_charges: "460.00",
-      interest: "200.00",
-      total_amount_due: "1660.00",
-      due_date: "07.10.2023",
-    },
-  ];
-
   const columnsReceipts = [
     {
       name: "Receipt No.",
@@ -190,16 +160,16 @@ function CAMBillingDetails() {
       selector: (row) => row.invoice_number,
       sortable: true,
     },
-    {
-      name: "Block",
-      selector: (row) => row.building_id,
-      sortable: true,
-    },
-    {
-      name: "Flat",
-      selector: (row) => row.unit_id,
-      sortable: true,
-    },
+    // {
+    //   name: "Block",
+    //   selector: (row) => row.building_id,
+    //   sortable: true,
+    // },
+    // {
+    //   name: "Flat",
+    //   selector: (row) => row.unit_id,
+    //   sortable: true,
+    // },
     {
       name: "Customer Name",
       selector: (row) => row.customer_name,
@@ -230,11 +200,11 @@ function CAMBillingDetails() {
       selector: (row) => row.receipt_date,
       sortable: true,
     },
-    {
-      name: "Mail sent",
-      selector: (row) => row.mail_sent,
-      sortable: true,
-    },
+    // {
+    //   name: "Mail sent",
+    //   selector: (row) => row.mail_sent,
+    //   sortable: true,
+    // },
     {
       name: "Attachments",
       selector: (row) => (
@@ -247,31 +217,15 @@ function CAMBillingDetails() {
       sortable: true,
     },
   ];
-  const dataReceipts = [
-    {
-      Id: 1,
-      receipt_no: "1235",
-      invoice_no: "#IN92893283",
-      flat: "A1-101",
-      customer_name: "Ramesh Pal",
-      amount_received: "₹ 1000.0",
-      payment_mode: "cash",
-      transaction_number: "CHK07001",
-      payment_date: "11/10/2024",
-      receipt_date: "12/10/2024",
-      mail_sent: "10/10/2024 12:18 PM",
-    },
-  ];
-
   const [receivePaymentDetails, setReceivePaymentDetails] = useState([]);
-  const fetchReceiptPayment = async () => {
-    try {
-      const resp = await getReceiptPayment();
-      setReceivePaymentDetails(resp.data);
-    } catch (error) {
-      console.error("Failed to fetch Receipt Payment data:", error);
-    }
-  };
+  // const fetchReceiptPayment = async () => {
+  //   try {
+  //     const resp = await getReceiptPayment();
+  //     setReceivePaymentDetails(resp.data);
+  //   } catch (error) {
+  //     console.error("Failed to fetch Receipt Payment data:", error);
+  //   }
+  // };
   const columnsTransaction = [
     {
       name: "Date",
@@ -304,19 +258,34 @@ function CAMBillingDetails() {
       sortable: true,
     },
   ];
-
-  const dataTransaction = [
-    {
-      Id: 1,
-      date: "20/04/2024",
-      amount: "460.00",
-      payment_mode: "Online",
-      transaction_number: "7444196469",
-      image: "",
-    },
-  ];
   const amount = camBilling.total_amount;
-  const amountInWords = Number.isFinite(amount) ? toWords(amount) : "Invalid Amount";
+  const amountInWords = Number.isFinite(amount)
+    ? toWords(amount)
+    : "Invalid Amount";
+
+  const handleDownload = async () => {
+    try {
+      const response = await getCamBillInvoiceDownload(id);
+      console.log(response);
+      const url = window.URL.createObjectURL(
+        new Blob([response.data], {
+          type: response.headers["content-type"],
+        })
+      );
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "cam_invoice_file.xlsx");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success("Cam Billing Invoice downloaded successfully");
+      toast.dismiss();
+    } catch (error) {
+      toast.dismiss();
+      console.error("Error downloading :", error);
+      toast.error("Something went wrong, please try again");
+    }
+  };
   return (
     <section className="flex">
       <div className="hidden md:block">
@@ -339,7 +308,7 @@ function CAMBillingDetails() {
               Recall
             </button>
             <Link
-              to={`/admin/create-invoice-receipt/${id}`}
+              to={`/cam_bill/create-invoice-receipt/${id}`}
               style={{ background: themeColor }}
               className="px-4 py-2  font-medium text-white rounded-md flex gap-2 items-center justify-center"
             >
@@ -360,6 +329,7 @@ function CAMBillingDetails() {
               Paid
             </button> */}
             <button
+              onClick={handleDownload}
               className="font-semibold text-white px-4 p-1 flex gap-2 items-center justify-center rounded-md"
               style={{ background: themeColor }}
             >
@@ -380,7 +350,16 @@ function CAMBillingDetails() {
               Unpaid
             </h2>
             <div className="">
-              <img src="/building.jpg" className="w-60 h-40 rounded-md"></img>
+              {/* <img src="/building.jpg" className="w-60 h-40 rounded-md"></img> */}
+              {logo?.logo_url ? (
+                <img
+                  src={`${domainPrefix}${logo.logo_url}`} // Use logo_url for the image source
+                  className="w-60 h-40 rounded-md"
+                  alt="Invoice Logo"
+                />
+              ) : (
+                <p>No image available</p>
+              )}
             </div>
           </div>
           <div className="my-5">
@@ -450,30 +429,35 @@ function CAMBillingDetails() {
             <div className="space-y-2 px-5">
               <div className="grid grid-cols-2">
                 <p>Name : </p>
-                <p className="text-sm font-normal">Karan Gupta </p>
+                <p className="text-sm font-normal">
+                  {receiver?.firstname || ""} {receiver?.lastname || ""}
+                </p>
               </div>
               <div className="grid grid-cols-2">
                 <p>Address : </p>
                 <p className="text-sm font-normal">
-                  A-1 Lockated Demo, 2nd Floor, Jyothi Tower, Opposite Versova
-                  Police Station,
+                  {receiver?.user_address || ""}
                 </p>
               </div>
               <div className="grid grid-cols-2">
                 <p>PAN : </p>
-                <p className="text-sm font-normal"></p>
+                <p className="text-sm font-normal">
+                  {receiver?.pan_number || ""}
+                </p>
               </div>
               <div className="grid grid-cols-2">
                 <p>State : </p>
-                <p className="text-sm font-normal">MAHARASHTRA</p>
+                <p className="text-sm font-normal">{addressInvoice.state}</p>
               </div>
-              <div className="grid grid-cols-2">
+              {/* <div className="grid grid-cols-2">
                 <p>State Code : </p>
                 <p className="text-sm font-normal">27</p>
-              </div>
+              </div> */}
               <div className="grid grid-cols-2">
                 <p>GSTIN/ Unique ID : </p>
-                <p className="text-sm font-normal">sdf22134532</p>
+                <p className="text-sm font-normal">
+                  {receiver?.gst_number || ""}/{receiver?.uid || ""}
+                </p>
               </div>
             </div>
             <div className="space-y-2 px-5">
@@ -539,7 +523,7 @@ function CAMBillingDetails() {
                     colSpan={columns.length}
                     className="px-4 py-2 text-sm font-bold text-right text-gray-800"
                   >
-                   Total Amount (In Words): {amountInWords}
+                    Total Amount (In Words): {amountInWords}
                   </td>
                 </tr>
               </tfoot>
@@ -599,7 +583,9 @@ function CAMBillingDetails() {
                 <div className="my-5">
                   {addressInvoice?.attachments?.[0]?.image_url ? (
                     <img
-                      src={domainPrefix + addressInvoice.attachments[0].image_url} // Prepend base URL if needed
+                      src={
+                        domainPrefix + addressInvoice.attachments[0].image_url
+                      } // Prepend base URL if needed
                       className="w-60 h-40 rounded-md"
                       alt="Invoice"
                     />
@@ -631,12 +617,15 @@ function CAMBillingDetails() {
         </div>
       </div>
       {recallModal && (
-        <RecallInvoiceModal onclose={() => setRecallModal(false)} />
+        <RecallInvoiceModal
+          onclose={() => setRecallModal(false)}
+          fetchCamBilling={fetchCamBilling}
+        />
       )}
       {receivePayment && (
         <CAMBillInvoiceReceivePaymentModal
           onclose={() => setReceivePayment(false)}
-          fetchReceiptPayment={fetchReceiptPayment}
+          fetchCamBilling={fetchCamBilling}
         />
       )}
       {paymentStatus && (

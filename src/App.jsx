@@ -733,6 +733,7 @@ import Survey from "./pages/Survey.jsx";
 import AddSurvey from "./pages/SubPages/AddSurvey.jsx";
 import AddReceiptInvoiceCamBilling from "./pages/SubPages/AddReceiptInvoiceCamBilling.jsx";
 import ReceiptInvoiceDetails from "./pages/SubPages/ReceiptInvoiceDetails.jsx";
+import ReceiptInvoiceCam from "./pages/ReceiptInvoiceCam.jsx";
 // new admin hrms
 
 function App() {
@@ -6961,7 +6962,11 @@ function App() {
          
           {/* CAM Billing */}
           <Route
-            path="/admin/cam-billing"
+            path="/cam_bill"
+            element={<Navigate to="/cam_bill/billing" replace />}
+          />
+          <Route
+            path="/cam_bill/billing"
             element={
               <ProtectedAdminRoutes>
                 <CAMBilling />
@@ -6969,7 +6974,15 @@ function App() {
             }
           />
           <Route
-            path="/admin/add-cam-billing"
+            path="/cam_bill/reciept-invoice"
+            element={
+              <ProtectedAdminRoutes>
+                <ReceiptInvoiceCam />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/cam_bill/add"
             element={
               <ProtectedAdminRoutes>
                 <AddCAMBilling />
@@ -6977,7 +6990,7 @@ function App() {
             }
           />
           <Route
-            path="/admin/cam-billing-details/:id"
+            path="/cam_bill/details/:id"
             element={
               <ProtectedAdminRoutes>
                 <CAMBillingDetails />
@@ -6985,7 +6998,7 @@ function App() {
             }
           />
           <Route
-            path="/admin/create-invoice-receipt/:id"
+            path="/cam_bill/create-invoice-receipt/:id"
             element={
               <ProtectedAdminRoutes>
                 <CreateInvoiceReceipt />
@@ -7009,10 +7022,18 @@ function App() {
             }
           />
           <Route
-            path="/admin/add-receipt-invoice-cam-billing"
+            path="/cam_bill/receipt-invoice/add"
             element={
               <ProtectedAdminRoutes>
                 <AddReceiptInvoiceCamBilling />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/cam_bill/receipt-invoice/details/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <ReceiptInvoiceDetails />
               </ProtectedAdminRoutes>
             }
           />
@@ -7030,14 +7051,6 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <AddSurvey />
-              </ProtectedAdminRoutes>
-            }
-          />
-          <Route
-            path="/admin/receipt-invoice-details/:id"
-            element={
-              <ProtectedAdminRoutes>
-                <ReceiptInvoiceDetails />
               </ProtectedAdminRoutes>
             }
           />

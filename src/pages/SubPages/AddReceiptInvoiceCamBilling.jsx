@@ -1,16 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import Navbar from "../../components/Navbar";
-import { getCamBillingData, postInvoiceReceipt} from "../../api";
+import { getCamBillingData, postInvoiceReceipt } from "../../api";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 function AddReceiptInvoiceCamBilling() {
   const themeColor = useSelector((state) => state.theme.color);
   const [camBilling, setCamBilling] = useState([]);
   const [formData, setFormData] = useState({
     receiptNumber: "",
     invoiceNumber: "",
-    block: "",
-    flat: "",
+    // block: "",
+    // flat: "",
     // address: "",
     paymentMode: "",
     amountReceived: "",
@@ -46,30 +47,60 @@ function AddReceiptInvoiceCamBilling() {
   }, []);
 
   const navigate = useNavigate();
-  const handleSubmit = async () =>{
+  const handleSubmit = async () => {
+    if (!formData.receiptNumber) {
+      toast.error("Receipt Number is required");
+      return;
+    }
+    if (!formData.invoiceNumber) {
+      toast.error("Invoice Number is required");
+      return;
+    }
+    if (!formData.paymentMode) {
+      toast.error("Payment are required");
+      return;
+    }
+    if (!formData.transactionChequeNumber) {
+      toast.error("Transaction Cheque Number are required");
+      return;
+    }
+    if (!formData.paymentDate) {
+      toast.error("Payment date is required");
+      return;
+    }
+    if (!formData.receiptDate) {
+      toast.error("Receipt date is required");
+      return;
+    }
     const sendData = new FormData();
     sendData.append("invoice_receipt[receipt_number]", formData.receiptNumber);
     sendData.append("invoice_receipt[invoice_number]", formData.invoiceNumber);
-    sendData.append("invoice_receipt[building_id]", formData.block);
-    sendData.append("invoice_receipt[unit_id]", formData.flat);
+    // sendData.append("invoice_receipt[building_id]", formData.block);
+    // sendData.append("invoice_receipt[unit_id]", formData.flat);
     // sendData.append("invoice_receipt[address_id]", formData.address);
     sendData.append("invoice_receipt[payment_mode]", formData.paymentMode);
-    sendData.append("invoice_receipt[amount_received]", formData.amountReceived);
-    sendData.append("invoice_receipt[transaction_or_cheque_number]", formData.transactionChequeNumber);
+    sendData.append(
+      "invoice_receipt[amount_received]",
+      formData.amountReceived
+    );
+    sendData.append(
+      "invoice_receipt[transaction_or_cheque_number]",
+      formData.transactionChequeNumber
+    );
     sendData.append("invoice_receipt[bank_name]", formData.bankName);
     sendData.append("invoice_receipt[branch_name]", formData.branchName);
     sendData.append("invoice_receipt[payment_date]", formData.paymentDate);
-    sendData.append("invoice_receipt[receipt_date]",formData.receiptDate);
+    sendData.append("invoice_receipt[receipt_date]", formData.receiptDate);
     sendData.append("invoice_receipt[notes]", formData.notes);
-    try{
+    try {
       const receipt = await postInvoiceReceipt(sendData);
-      toast.success("Invoice Receipt Added Successfully")
+      toast.success("Invoice Receipt Added Successfully");
       console.log(receipt);
-      navigate("/admin/cam-billing");
-    }catch{
+      navigate("/cam_bill/reciept-invoice");
+    } catch {
       console.log(error);
     }
-  }
+  };
   console.log(camBilling);
   return (
     <section className="flex">
@@ -122,7 +153,7 @@ function AddReceiptInvoiceCamBilling() {
                 </select>
               </div>
               {/* Block */}
-              <div className="flex flex-col">
+              {/* <div className="flex flex-col">
                 <label htmlFor="block" className="font-semibold my-2">
                   Block
                 </label>
@@ -138,9 +169,9 @@ function AddReceiptInvoiceCamBilling() {
                   </option>
                   <option value="imperia">Imperia</option>
                 </select>
-              </div>
+              </div> */}
               {/* Flat */}
-              <div className="flex flex-col">
+              {/* <div className="flex flex-col">
                 <label htmlFor="flat" className="font-semibold my-2">
                   Flat
                 </label>
@@ -156,7 +187,7 @@ function AddReceiptInvoiceCamBilling() {
                   </option>
                   <option value="1001">1001</option>
                 </select>
-              </div>
+              </div> */}
               {/* Address */}
               {/* <div className="flex flex-col">
                 <label htmlFor="address" className="font-semibold my-2">
@@ -303,7 +334,8 @@ function AddReceiptInvoiceCamBilling() {
             </div>
 
             <div className="flex justify-center my-5">
-              <button onClick={handleSubmit}
+              <button
+                onClick={handleSubmit}
                 className="p-1 px-4 border-2 rounded-md text-white font-medium"
                 style={{ background: themeColor }}
               >

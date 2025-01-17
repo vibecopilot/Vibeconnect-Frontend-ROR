@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { BsEye } from "react-icons/bs";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Table from "../components/table/Table";
 import { useSelector } from "react-redux";
@@ -17,26 +17,28 @@ import {
   getUnits,
   gatCamBillFilter,
 } from "../api";
-import ReceiptInvoiceCam from "./ReceiptInvoiceCam";
 import toast from "react-hot-toast";
 import { getItemInLocalStorage } from "../utils/localStorage";
+import CamBillingHeader from "./SubPages/CamBillingHeader";
 function CAMBilling() {
   const themeColor = useSelector((state) => state.theme.color);
-  const [page, setPage] = useState("cabBilling");
   const [billingPeriod, setBillingPeriod] = useState([null, null]);
   const [importModal, setImportModal] = useState(false);
   const [filter, setFilter] = useState(false);
   const [camBilling, setComBilling] = useState([]);
-  useEffect(() => {
-    const fetchCamBilling = async () => {
-      try {
-        const response = await getCamBillingData();
-        setComBilling(response.data);
-      } catch (err) {
-        console.error("Failed to fetch Address Setup data:", err);
-      }
-    };
+  const [filteredData, setFilteredData] = useState([]);
+  const [searchText, setSearchText] = useState([]);
 
+  const fetchCamBilling = async () => {
+    try {
+      const response = await getCamBillingData();
+      setComBilling(response.data);
+      setFilteredData(response.data);
+    } catch (err) {
+      console.error("Failed to fetch Address Setup data:", err);
+    }
+  };
+  useEffect(() => {
     fetchCamBilling(); // Call the API
   }, []);
 
@@ -45,7 +47,7 @@ function CAMBilling() {
       name: "Action",
       cell: (row) => (
         <div className="flex items-center gap-4">
-          <Link to={`/admin/cam-billing-details/${row.id}`}>
+          <Link to={`/cam_bill/details/${row.id}`}>
             <BsEye size={15} />
           </Link>
         </div>
@@ -187,8 +189,8 @@ function CAMBilling() {
     dueDate: "",
   });
 
-  console.log(formData)
-  console.log(billingPeriod)
+  console.log(formData);
+  console.log(billingPeriod);
   const handleChange = async (e) => {
     const { name, value, type } = e.target;
 
@@ -232,7 +234,7 @@ function CAMBilling() {
         ...prev,
         floor_id: floorID,
         floor_name: value,
-        flat: "", // Reset unit selection
+        flat: "",
       }));
     } else {
       setFormData((prev) => ({
@@ -243,209 +245,208 @@ function CAMBilling() {
   };
   const isFlatDisabled =
     !formData.block || !formData.floor_name || !units.length;
-
+  const navigate = useNavigate();
   const handleFilterData = async () => {
     try {
-      const [startDate, endDate] = billingPeriod; // Extract start and end dates from the state
-      if (!startDate || !endDate) {
-        console.error("Please select a valid billing period");
-        return;
-      }
+      const [startDate, endDate] = billingPeriod;
       const resp = await gatCamBillFilter(
         formData.block,
         formData.floor_name,
         formData.flat,
         startDate,
         endDate,
-        formData.dueDate,
+        formData.dueDate
       );
       console.log(resp);
+      navigate("/admin/cam-billing");
+      setComBilling(resp.data);
     } catch (error) {
       console.error("Error filtering data:", error);
     }
   };
-
+  const handleSearch = (e) => {
+    const searchValue = e.target.value;
+    setSearchText(searchValue);
+    if (searchValue.trim() === "") {
+      setFilteredData(camBilling);
+    } else {
+      const filterResult = camBilling.filter(
+        (item) =>
+          item?.invoice_number
+            ?.toLowerCase()
+            .includes(searchValue.toLowerCase()) ||
+          // item?.unit_id?.toLowerCase().includes(searchValue.toLowerCase()) ||
+          item?.status?.toLowerCase().includes(searchValue.toLowerCase())
+      );
+      setFilteredData(filterResult);
+    }
+  };
+  console.log(searchText);
   return (
     <section className="flex">
       <Navbar />
       <div className="w-full flex mx-3 flex-col overflow-hidden">
-        <div className="flex justify-center my-2 w-full">
-          <div className="sm:flex grid grid-cols-2 sm:flex-row gap-5 font-medium p-1 sm:rounded-full rounded-md bg-gray-200">
-            <h2
-              className={`p-1 ${
-                page === "cabBilling" &&
-                "bg-white text-blue-500 shadow-custom-all-sides"
-              } rounded-full px-4 cursor-pointer text-center transition-all duration-300 ease-linear`}
-              onClick={() => setPage("cabBilling")}
+        <CamBillingHeader />
+        <div className="flex md:flex-row flex-col justify-between md:items-center my-2 gap-2  ">
+          <input
+            type="text"
+            onChange={handleSearch}
+            value={searchText}
+            placeholder="Search By Invoice No, Payment Status"
+            className=" p-2 md:w-96 border-gray-300 rounded-md placeholder:text-sm outline-none border "
+          />
+          <div className="md:flex grid grid-cols-2 sm:flex-row my-2 flex-col gap-2">
+            <Link
+              to={`/cam_bill/add`}
+              style={{ background: themeColor }}
+              className="px-4 py-2  font-medium text-white rounded-md flex gap-2 items-center justify-center"
             >
-              Cam Billing
-            </h2>
-            <h2
-              className={`p-1 ${
-                page === "receiptInvoice" &&
-                "bg-white text-blue-500 shadow-custom-all-sides"
-              } rounded-full px-4 cursor-pointer transition-all duration-300 ease-linear`}
-              onClick={() => setPage("receiptInvoice")}
+              <IoAddCircleOutline />
+              Add
+            </Link>
+            <button
+              className="font-semibold text-white px-4 p-1 flex gap-2 items-center justify-center rounded-md"
+              style={{ background: themeColor }}
+              onClick={() => setImportModal(true)}
             >
-              Receipt Invoice
-            </h2>
+              <FaUpload />
+              Import
+            </button>
+            <button
+              className="font-semibold text-white px-4 p-1 flex gap-2 items-center justify-center rounded-md"
+              style={{ background: themeColor }}
+              onClick={handleDownload}
+            >
+              <FaDownload />
+              Export
+            </button>
+            <button
+              className=" font-semibold text-white px-4 p-1 flex gap-2 items-center justify-center rounded-md"
+              style={{ background: themeColor }}
+              onClick={() => setFilter(!filter)}
+            >
+              <BiFilterAlt />
+              Filter
+            </button>
           </div>
         </div>
-        {page === "cabBilling" && (
-          <>
-            <div className="flex md:flex-row flex-col justify-between md:items-center my-2 gap-2  ">
-              <input
-                type="text"
-                placeholder="Search By Invoice No, Payment Status"
-                className=" p-2 md:w-96 border-gray-300 rounded-md placeholder:text-sm outline-none border "
-              />
-              <div className="md:flex grid grid-cols-2 sm:flex-row my-2 flex-col gap-2">
-                <Link
-                  to={`/admin/add-cam-billing`}
-                  style={{ background: themeColor }}
-                  className="px-4 py-2  font-medium text-white rounded-md flex gap-2 items-center justify-center"
-                >
-                  <IoAddCircleOutline />
-                  Add
-                </Link>
-                <button
-                  className="font-semibold text-white px-4 p-1 flex gap-2 items-center justify-center rounded-md"
-                  style={{ background: themeColor }}
-                  onClick={() => setImportModal(true)}
-                >
-                  <FaUpload />
-                  Import
-                </button>
-                <button
-                  className="font-semibold text-white px-4 p-1 flex gap-2 items-center justify-center rounded-md"
-                  style={{ background: themeColor }}
-                  onClick={handleDownload}
-                >
-                  <FaDownload />
-                  Export
-                </button>
-                <button
-                  className=" font-semibold text-white px-4 p-1 flex gap-2 items-center justify-center rounded-md"
-                  style={{ background: themeColor }}
-                  onClick={() => setFilter(!filter)}
-                >
-                  <BiFilterAlt />
-                  Filter
-                </button>
-              </div>
-            </div>
 
-            {filter && (
-              <div className="flex flex-col md:flex-row mt-1 items-center justify-center gap-2 my-3">
-                <div className="flex flex-col">
-                  <select
-                    className="border p-1 px-4 border-gray-500 rounded-md"
-                    onChange={handleChange}
-                    value={formData.block}
-                    name="block"
-                  >
-                    <option value="">Select Building</option>
-                    {buildings?.map((building) => (
-                      <option key={building.id} value={building.id}>
-                        {building.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="flex flex-col">
-                  <select
-                    className="border p-1 px-4 border-gray-500 rounded-md"
-                    onChange={handleChange}
-                    value={formData.floor_name}
-                    name="floor_name"
-                    disabled={!floors.length} // Disable if no floors are available
-                  >
-                    <option value="">Select Floor</option>
-                    {floors.map((floor) => (
-                      <option key={floor.id} value={floor.id}>
-                        {floor.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="flex flex-col">
-                  <select
-                    name="flat"
-                    value={formData.flat}
-                    onChange={handleChange}
-                    disabled={isFlatDisabled}
-                    className="border p-1 px-4 border-gray-500 rounded-md"
-                  >
-                    <option value="">Select Flat</option>
-                    {units.map((unit) => (
-                      <option key={unit.id} value={unit.id}>
-                        {unit.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="flex flex-col">
-                  <select
-                    name="paymentStatus"
-                    className="border p-1 px-4 border-gray-500 rounded-md"
-                  >
-                    <option value="" selected>
-                      Select Payment Status
-                    </option>
-                    <option value="paid">Paid</option>
-                    <option value="unpaid">Unpaid</option>
-                    <option value="PartPayment">Part Payment</option>
-                  </select>
-                </div>
-                <div className="flex flex-col">
-                  <input
-                    type="date"
-                    name="dueDate"
-                    value={formData.dueDate}
-                    onChange={handleChange}
-                    id="dateSupply"
-                    placeholder="Enter Date of supply"
-                    className="border p-1 px-4 border-gray-500 rounded-md"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <DatePicker
-                    selectsRange
-                    startDate={billingPeriod[0]}
-                    endDate={billingPeriod[1]}
-                    onChange={handleDateChange}
-                    placeholderText="Select Billing Period"
-                    className="border p-1 px-4 border-gray-500 rounded-md w-full z-20"
-                    isClearable
-                  />
-                </div>
-                <button
-                  onClick={handleFilterData}
-                  className=" p-1 px-4 text-white rounded-md"
-                  style={{ background: themeColor }}
-                >
-                  Apply
-                </button>
-                <button className="bg-red-400 p-1 px-4 text-white rounded-md">
-                  Reset
-                </button>
-              </div>
-            )}
-            <Table
-              columns={columns}
-              data={camBilling}
-              selectableRow={true}
-              onSelectedRows={handleSelectedRows}
-            />
-            {importModal && (
-              <InvoiceImportModal onclose={() => setImportModal(false)} />
-            )}
-          </>
+        {filter && (
+          <div className="flex flex-col md:flex-row mt-1 items-center justify-center gap-2 my-3">
+            <div className="flex flex-col">
+              <select
+                className="border p-1 px-4 border-gray-500 rounded-md"
+                onChange={handleChange}
+                value={formData.block}
+                name="block"
+              >
+                <option value="">Select Building</option>
+                {buildings?.map((building) => (
+                  <option key={building.id} value={building.id}>
+                    {building.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-col">
+              <select
+                className="border p-1 px-4 border-gray-500 rounded-md"
+                onChange={handleChange}
+                value={formData.floor_name}
+                name="floor_name"
+                disabled={!floors.length} // Disable if no floors are available
+              >
+                <option value="">Select Floor</option>
+                {floors.map((floor) => (
+                  <option key={floor.id} value={floor.id}>
+                    {floor.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-col">
+              <select
+                name="flat"
+                value={formData.flat}
+                onChange={handleChange}
+                disabled={isFlatDisabled}
+                className="border p-1 px-4 border-gray-500 rounded-md"
+              >
+                <option value="">Select Flat</option>
+                {units.map((unit) => (
+                  <option key={unit.id} value={unit.id}>
+                    {unit.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-col">
+              <select
+                name="paymentStatus"
+                className="border p-1 px-4 border-gray-500 rounded-md"
+              >
+                <option value="" selected>
+                  Select Payment Status
+                </option>
+                <option value="paid">Paid</option>
+                <option value="unpaid">Unpaid</option>
+                <option value="PartPayment">Part Payment</option>
+              </select>
+            </div>
+            <div className="flex flex-col">
+              <input
+                type="date"
+                name="dueDate"
+                value={formData.dueDate}
+                onChange={handleChange}
+                id="dateSupply"
+                placeholder="Enter Date of supply"
+                className="border p-1 px-4 border-gray-500 rounded-md"
+              />
+            </div>
+            <div className="flex flex-col">
+              <DatePicker
+                selectsRange
+                startDate={billingPeriod[0]}
+                endDate={billingPeriod[1]}
+                onChange={handleDateChange}
+                placeholderText="Select Billing Period"
+                className="border p-1 px-4 border-gray-500 rounded-md w-full z-20"
+                isClearable
+              />
+            </div>
+            <button
+              onClick={() => {
+                handleFilterData();
+                setFilter(!filter);
+              }}
+              className=" p-1 px-4 text-white rounded-md"
+              style={{ background: themeColor }}
+            >
+              Apply
+            </button>
+            <button
+              className="bg-red-400 p-1 px-4 text-white rounded-md"
+              onClick={() => {
+                fetchCamBilling();
+                setFilter(!filter);
+              }}
+            >
+              Reset
+            </button>
+          </div>
         )}
-        {page === "receiptInvoice" && (
-          <>
-            <ReceiptInvoiceCam />
-          </>
+        <Table
+          columns={columns}
+          data={filteredData}
+          selectableRow={true}
+          onSelectedRows={handleSelectedRows}
+        />
+        {importModal && (
+          <InvoiceImportModal
+            onclose={() => setImportModal(false)}
+            fetchCamBilling={fetchCamBilling}
+          />
         )}
       </div>
     </section>

@@ -2,13 +2,13 @@ import React, { useEffect, useState } from "react";
 import Navbar from "../../../components/Navbar";
 import { useSelector } from "react-redux";
 import toast from "react-hot-toast";
-import {postInvoiceReceipt, getCamBillingDataDetails} from "../../../api"
-import { useParams } from "react-router-dom";
+import { postInvoiceReceipt, getCamBillingDataDetails } from "../../../api";
+import { useNavigate, useParams } from "react-router-dom";
 function CreateInvoiceReceipt() {
   const themeColor = useSelector((state) => state.theme.color);
   // const [invoiceAdd, setInvoiceAdd] = useState([]);
   const { id } = useParams();
-  const [invoiceNumber, setInvoiceNumber] = useState([])
+  const [invoiceNumber, setInvoiceNumber] = useState([]);
   const [formData, setFormData] = useState({
     receiptNumber: "",
     invoiceNumber: "",
@@ -32,8 +32,28 @@ function CreateInvoiceReceipt() {
       [name]: value,
     }));
   };
-
-  const handleSubmit = async () =>{
+  const navigate = useNavigate();
+  const handleSubmit = async () => {
+    if (!formData.receiptNumber) {
+      toast.error("Receipt number is required");
+      return;
+    }
+    if (!formData.paymentMode) {
+      toast.error("Payment are required");
+      return;
+    }
+    if (!formData.transactionChequeNumber) {
+      toast.error("Transaction Cheque Number are required");
+      return;
+    }
+    if (!formData.paymentDate) {
+      toast.error("Payment date is required");
+      return;
+    }
+    if (!formData.receiptDate) {
+      toast.error("Receipt date is required");
+      return;
+    }
     const sendData = new FormData();
     sendData.append("invoice_receipt[receipt_number]", formData.receiptNumber);
     sendData.append("invoice_receipt[invoice_number]", formData.invoiceNumber);
@@ -41,22 +61,32 @@ function CreateInvoiceReceipt() {
     // sendData.append("invoice_receipt[unit_id]", formData.flat);
     // sendData.append("invoice_receipt[address_id]", formData.address);
     sendData.append("invoice_receipt[payment_mode]", formData.paymentMode);
-    sendData.append("invoice_receipt[amount_received]", formData.amountReceived);
-    sendData.append("invoice_receipt[transaction_or_cheque_number]", formData.transactionChequeNumber);
+    sendData.append(
+      "invoice_receipt[amount_received]",
+      formData.amountReceived
+    );
+    sendData.append(
+      "invoice_receipt[transaction_or_cheque_number]",
+      formData.transactionChequeNumber
+    );
     sendData.append("invoice_receipt[bank_name]", formData.bankName);
     sendData.append("invoice_receipt[branch_name]", formData.branchName);
     sendData.append("invoice_receipt[payment_date]", formData.paymentDate);
-    sendData.append("invoice_receipt[receipt_date]",formData.receiptDate);
+    sendData.append("invoice_receipt[receipt_date]", formData.receiptDate);
     sendData.append("invoice_receipt[notes]", formData.notes);
-    try{
+    sendData.append("invoice_receipt[resource_type]", "CamBill");
+    sendData.append("invoice_receipt[resource_id]", id);
+    sendData.append("invoice_receipt[cam_bill_id]", id);
+    try {
       const receipt = await postInvoiceReceipt(sendData);
-      toast.success("Invoice Receipt Added Successfully")
+      toast.success("Invoice Receipt Added Successfully");
+      navigate(`/cam_bill/details/${id}`);
       console.log(receipt);
-    }catch{
+    } catch {
       console.log(error);
     }
-  }
-  
+  };
+
   // useEffect(() => {
   //     const fetchAddressSetup = async () => {
   //       try {
@@ -66,22 +96,25 @@ function CreateInvoiceReceipt() {
   //         console.error("Failed to fetch Address Setup data:", err);
   //       }
   //     };
-  
+
   //     fetchAddressSetup(); // Call the API
   //   }, []);
 
-    useEffect(() => {
-       const fetchCamBilling = async () => {
-          try {
-            const response = await getCamBillingDataDetails(id);
-            setInvoiceNumber(response.data);
-            setFormData({...formData, invoiceNumber: response.data.invoice_number}) // Ensure response.data is structured as expected
-          } catch (err) {
-            console.error("Failed to fetch Address Setup data:", err);
-          }
-        };
-      fetchCamBilling(); // Call the API
-    }, [id]);
+  useEffect(() => {
+    const fetchCamBilling = async () => {
+      try {
+        const response = await getCamBillingDataDetails(id);
+        setInvoiceNumber(response.data);
+        setFormData({
+          ...formData,
+          invoiceNumber: response.data.invoice_number,
+        }); // Ensure response.data is structured as expected
+      } catch (err) {
+        console.error("Failed to fetch Address Setup data:", err);
+      }
+    };
+    fetchCamBilling(); // Call the API
+  }, [id]);
   return (
     <section className="flex">
       <div className="hidden md:block">

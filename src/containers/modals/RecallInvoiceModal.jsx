@@ -2,9 +2,9 @@ import React, { useEffect, useState } from "react";
 import ModalWrapper from "./ModalWrapper";
 import { useSelector } from "react-redux";
 import toast from "react-hot-toast";
-import { recallStatus, getCamBillingDataDetails} from "../../api";
+import { recallStatus, getCamBillingDataDetails } from "../../api";
 import { useParams } from "react-router-dom";
-const RecallInvoiceModal = ({ onclose }) => {
+const RecallInvoiceModal = ({ onclose, fetchCamBilling }) => {
   const themeColor = useSelector((state) => state.theme.color);
   const { id } = useParams();
   const [reason, setReason] = useState("");
@@ -13,29 +13,35 @@ const RecallInvoiceModal = ({ onclose }) => {
     const fetchCamBilling = async () => {
       try {
         const response = await getCamBillingDataDetails(id);
-        setReason(response.data.recall_reason)
+        setReason(response.data.recall_reason);
       } catch (err) {
         console.error("Failed to fetch Address Setup data:", err);
       }
     };
     fetchCamBilling(); // Call the API
   }, [id]);
-  
+
   const handleSubmit = async () => {
+    if (!reason) {
+      toast.error("Reason is required");
+      return;
+    }
     const sendData = new FormData();
     sendData.append("cam_bill[recall_reason]", reason);
-    sendData.append("cam_bill[status]", "recall");  // Add this line to set status to 'recall'
-  
+    sendData.append("cam_bill[status]", "recall"); // Add this line to set status to 'recall'
+
     try {
       const resp = await recallStatus(id, sendData);
       console.log(resp);
       toast.success("Status recall changed");
+      onclose();
+      fetchCamBilling();
     } catch (error) {
       console.error("Error: Recall did not change");
       toast.error("Failed to change recall status");
     }
   };
-  
+
   return (
     <ModalWrapper onclose={onclose}>
       <div className="flex flex-col w-80 justify-center">

@@ -57,6 +57,7 @@ import {
   FaDollarSign,
   FaFileInvoice,
   FaFileWord,
+  FaMoneyBillWave,
   FaRegFile,
   FaRegFileAlt,
   FaRegFilePowerpoint,
@@ -1376,7 +1377,7 @@ const Navbar = () => {
                 )}
                 {feat.includes("cam_bill") && (
                   <NavLink
-                    to={"/admin/cam-billing"}
+                    to={"/cam_bill"}
                     className={({ isActive }) =>
                       ` ${
                         isActive
@@ -1386,7 +1387,7 @@ const Navbar = () => {
                     }
                   >
                     <div>
-                      {React.createElement(LuParkingSquare, { size: "20" })}
+                      {React.createElement(FaMoneyBillWave, { size: "20" })}
                     </div>
 
                     <h2

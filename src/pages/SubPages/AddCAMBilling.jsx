@@ -159,19 +159,42 @@ function AddCAMBilling() {
     }
 
     // Calculate CGST
+    // if (name === "cgstRate") {
+    //   const rateValue = parseFloat(value) || null;
+    //   camBilling.cgstRate = rateValue;
+    //   camBilling.cgstAmount = (camBilling.taxableValue * rateValue) / 100;
+    // }
+
+    // // Calculate SGST
+    // if (name === "sgstRate") {
+    //   const rateValue = parseFloat(value) || null;
+    //   camBilling.sgstRate = rateValue;
+    //   camBilling.sgstAmount = (camBilling.taxableValue * rateValue) / 100;
+    // }
+
     if (name === "cgstRate") {
-      const rateValue = parseFloat(value) || null;
+      const rateValue = parseFloat(value) || ""; 
       camBilling.cgstRate = rateValue;
       camBilling.cgstAmount = (camBilling.taxableValue * rateValue) / 100;
+    
+      // Automatically assign the same values to SGST
+      camBilling.sgstRate = rateValue; 
+      camBilling.sgstAmount = (camBilling.taxableValue * rateValue) / 100; 
     }
-
-    // Calculate SGST
+    
+    // Calculate SGST separately (if needed)
     if (name === "sgstRate") {
-      const rateValue = parseFloat(value) || null;
+      const rateValue = parseFloat(value) || ""; 
       camBilling.sgstRate = rateValue;
       camBilling.sgstAmount = (camBilling.taxableValue * rateValue) / 100;
+    
+      
+      camBilling.cgstRate = rateValue; 
+      camBilling.cgstAmount = (camBilling.taxableValue * rateValue) / 100; 
     }
-
+    
+    
+    
     // Calculate IGST
     if (name === "igstRate") {
       const rateValue = parseFloat(value) || null;
@@ -286,6 +309,34 @@ function AddCAMBilling() {
 
   const navigate = useNavigate();
   const handleSubmit = async () => {
+    if (!formData.invoice_type) {
+      toast.error("Invoice Type is required");
+      return;
+    }
+    if (!formData.invoiceAddress) {
+      toast.error("Invoice Address is required");
+      return;
+    }
+    if (!formData.invoice_number) {
+      toast.error("Invoice Number is required");
+      return;
+    }
+    if (!formData.dueDate) {
+      toast.error("Due Date is required");
+      return;
+    }
+    if (!formData.block) {
+      toast.error("Block is required");
+      return;
+    }
+    if (!formData.floor_name) {
+      toast.error("Floor is required");
+      return;
+    }
+    if (!formData.flat) {
+      toast.error("Flat is required");
+      return;
+    }
     const sendData = new FormData();
     sendData.append("cam_bill[invoice_type]", formData.invoice_type);
     sendData.append("cam_bill[invoice_address_id]", formData.invoiceAddress);
@@ -376,7 +427,7 @@ function AddCAMBilling() {
     try {
       const billResp = await postCamBill(sendData);
       toast.success("Cam Bill Added Successfully");
-      navigate("/admin/cam-billing");
+      navigate("/cam_bill/billing");
       console.log(billResp);
     } catch (error) {
       console.log(error);

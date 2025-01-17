@@ -88,6 +88,14 @@ function BillingSetup() {
   };
 
   const handleInvoiceNumberSubmit = async () => {
+    if (!invoiceNumberSetup.prefix) {
+      toast.error("prefix is required ");
+      return;
+    }
+    if (!invoiceNumberSetup.nextNumber) {
+      toast.error("Next Number is required ");
+      return;
+    }
     const sendData = new FormData();
     sendData.append("invoice_setup[auto_generate]", invoiceOption);
     sendData.append("invoice_setup[prefix]", invoiceNumberSetup.prefix);
@@ -116,6 +124,14 @@ function BillingSetup() {
   };
 
   const handleReceiptNumberSubmit = async () => {
+    if (!receiptNumberSetup.prefix) {
+      toast.error("prefix is required");
+      return;
+    }
+    if (!receiptNumberSetup.nextNumber) {
+      toast.error("Next Number is required");
+      return;
+    }
     const sendData = new FormData();
     sendData.append("receipt_setup[auto_generate]", receiptOption);
     sendData.append("receipt_setup[prefix]", receiptNumberSetup.prefix);
@@ -292,7 +308,8 @@ function BillingSetup() {
             <div className="flex gap-2">
               <div>
                 <input
-                  defaultValue="INV"
+                  defaultValue="prefix"
+                  type="text"
                   name="prefix"
                   value={invoiceNumberSetup.prefix}
                   className="border p-1 px-4 border-gray-500 rounded-md"
@@ -303,7 +320,8 @@ function BillingSetup() {
               </div>
               <div>
                 <input
-                  defaultValue="4048"
+                  defaultValue="nextNumber"
+                  type="text"
                   className="border p-1 px-4 border-gray-500 rounded-md"
                   name="nextNumber"
                   value={invoiceNumberSetup.nextNumber}
@@ -355,7 +373,7 @@ function BillingSetup() {
             <div className="flex gap-2">
               <div>
                 <input
-                  defaultValue="RCPT"
+                  defaultValue="prefix"
                   name="prefix"
                   value={receiptNumberSetup.prefix}
                   onChange={handleChangeReceiptNumber}
@@ -366,7 +384,7 @@ function BillingSetup() {
               </div>
               <div>
                 <input
-                  defaultValue="4010"
+                  defaultValue="nextNumber"
                   name="nextNumber"
                   value={receiptNumberSetup.nextNumber}
                   onChange={handleChangeReceiptNumber}
@@ -441,7 +459,7 @@ function BillingSetup() {
               Submit
             </button>
           </div>
-        </div> 
+        </div>
         <div className="flex gap-5 mx-4 mb-10">
           <h2>Online Payment Allowed </h2>
           <Switch />

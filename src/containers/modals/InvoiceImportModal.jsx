@@ -4,7 +4,7 @@ import { useSelector } from "react-redux";
 import { FaDownload } from "react-icons/fa";
 import toast from "react-hot-toast";
 import { downloadCamBillImport, uploadCamBillingImport } from "../../api";
-const InvoiceImportModal = ({ onclose }) => {
+const InvoiceImportModal = ({ onclose, fetchCamBilling}) => {
   const themeColor = useSelector((state) => state.theme.color);
   const handleDownload = async () => {
     toast.loading("Downloading please wait");
@@ -50,6 +50,8 @@ const InvoiceImportModal = ({ onclose }) => {
 
     try {
       const resp = await uploadCamBillingImport(sendData); 
+      onclose();
+      fetchCamBilling();
       console.log(resp);
     } catch (error) {
       console.error("Error uploading file:", error);

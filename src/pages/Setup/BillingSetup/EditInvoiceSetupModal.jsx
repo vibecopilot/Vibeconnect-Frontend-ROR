@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import ModalWrapper from "../../../containers/modals/ModalWrapper";
-import { getInvoiceTypeDetail, putInvoiceType} from "../../../api";
+import { getInvoiceTypeDetail, putInvoiceType } from "../../../api";
 import toast from "react-hot-toast";
-function EditInvoiceSetupModal({ onclose, id, fetchInvoiceTypeSetup}) {
+function EditInvoiceSetupModal({ onclose, id, fetchInvoiceTypeSetup }) {
   const [invoiceType, setInvoiceType] = useState("");
-  const fetchInvoiceTypeSetupDetail= async () => {
+  const fetchInvoiceTypeSetupDetail = async () => {
     try {
       const response = await getInvoiceTypeDetail(id);
       setInvoiceType(response.data.name);
@@ -19,20 +19,23 @@ function EditInvoiceSetupModal({ onclose, id, fetchInvoiceTypeSetup}) {
   const handleChange = (e) => {
     setInvoiceType(e.target.value);
   };
-  const handleInvoiceTypeSubmit = async () =>{
+  const handleInvoiceTypeSubmit = async () => {
+    if (!invoiceType) {
+      toast.error("Invoice Type is required");
+      return;
+    }
     const sendData = new FormData();
     sendData.append("invoice_type[name]", invoiceType);
-    try{
-      const invType = await putInvoiceType(id,sendData)
+    try {
+      const invType = await putInvoiceType(id, sendData);
       toast.success("Invoice Type Edit Successfully");
-      console.log(invType)
+      console.log(invType);
       fetchInvoiceTypeSetup();
-      onclose()
-    }catch(error)
-    {
+      onclose();
+    } catch (error) {
       console.log(error);
     }
-  }
+  };
 
   return (
     <ModalWrapper onclose={onclose}>
@@ -72,7 +75,8 @@ function EditInvoiceSetupModal({ onclose, id, fetchInvoiceTypeSetup}) {
 
         {/* Submit Button */}
         <div className="flex justify-end mt-4">
-          <button onClick={handleInvoiceTypeSubmit}
+          <button
+            onClick={handleInvoiceTypeSubmit}
             type="button"
             className="bg-gray-500 text-white px-6 py-1 rounded-md"
           >
