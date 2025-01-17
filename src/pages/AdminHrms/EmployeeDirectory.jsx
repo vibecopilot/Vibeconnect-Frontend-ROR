@@ -213,8 +213,8 @@ function EmployeeDirectory() {
               <div className="flex gap-2">
                 <input
                   type="text"
-                  placeholder="Search by Name l"
-                  className="border p-2 text-black rounded-md "
+                  placeholder="Search by Name "
+                  className="border p-2 text-black rounded-md w-96"
                   onChange={handleSearch}
                   value={searchText}
                 />
