@@ -358,7 +358,7 @@ const SectionsEmployment = () => {
     postData.append("employment_type", formData.employmentType);
     postData.append("branch_location", formData.branch || "");
     postData.append("department", formData.department || "");
-    postData.append("reporting_supervisor", formData.supervisor|| "");
+    postData.append("reporting_supervisor", formData.supervisor || "");
     postData.append("designation", formData.designation);
     postData.append("ctc_months", formData.monthlyCTC);
     postData.append("employee", id);
