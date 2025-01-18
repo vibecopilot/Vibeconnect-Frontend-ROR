@@ -14,9 +14,8 @@ const DeliveryVendorModal = ({ onclose, title = "Edit", vendor = null }) => {
     spoc_person: "",
     aggrement_start_date: "",
     aggremenet_end_date: "",
-    attachment: null,
+    attachments: null,
     status: " ",
-    attachments: " ",
   });
 
   // Populate form with existing vendor data when editing
@@ -31,8 +30,8 @@ const DeliveryVendorModal = ({ onclose, title = "Edit", vendor = null }) => {
         spoc_person: vendor.spoc_person || "",
         aggrement_start_date: vendor.aggrement_start_date || "",
         aggremenet_end_date: vendor.aggremenet_end_date || "",
-        active: vendor.active || "",
-        attachments: vendor.attachments || "",
+        status: vendor.status || "",
+        attachments: vendor.attachments || null,
       });
     }
   }, [vendor]);
@@ -55,7 +54,13 @@ const DeliveryVendorModal = ({ onclose, title = "Edit", vendor = null }) => {
 
       // Append all form fields
       Object.keys(formData).forEach((key) => {
-        if (formData[key] !== null && formData[key] !== undefined) {
+        if (key === "attachments") {
+          if (formData.attachments instanceof File) {
+            formDataToSend.append(key, formData.attachments); // Append new file
+          } else if (formData.attachments) {
+            formDataToSend.append(key, formData.attachments); // Keep existing file path
+          }
+        } else if (formData[key] !== null && formData[key] !== undefined) {
           formDataToSend.append(key, formData[key]);
         }
       });
@@ -68,11 +73,12 @@ const DeliveryVendorModal = ({ onclose, title = "Edit", vendor = null }) => {
 
       if (vendor && vendor.id) {
         // Update existing vendor
-        await EditVendors(id, vendorData);
+        await EditVendors(vendor.id, formDataToSend, config);
       } else {
         // Create new vendor
-        await postVendors(formData);
+        await postVendors(formDataToSend, config);
       }
+
       // Close modal and refresh the vendor list
       onclose();
     } catch (error) {
@@ -222,9 +228,9 @@ const DeliveryVendorModal = ({ onclose, title = "Edit", vendor = null }) => {
               Status:
             </label>
             <input
-              name="active"
-              id="active"
-              value={formData.active}
+              name="status"
+              id="status"
+              value={formData.status}
               onChange={handleChange}
               className="border rounded-md border-gray-500 p-1 px-2"
             ></input>

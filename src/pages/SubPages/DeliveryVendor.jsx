@@ -35,7 +35,7 @@ const DeliveryVendor = () => {
         spoc_person: vendor.spoc_person,
         aggrement_start_date: vendor.aggrement_start_date,
         aggremenet_end_date: vendor.aggremenet_end_date,
-        status: vendor.active,
+        status: vendor.status,
         created_by: new Date(vendor.created_at).toLocaleDateString(),
       }));
 
@@ -133,7 +133,7 @@ const DeliveryVendor = () => {
       selector: (row) => row.aggremenet_end_date,
       sortable: true,
     },
-    { name: "Status", selector: (row) => row.active, sortable: true },
+    { name: "Status", selector: (row) => row.status, sortable: true },
     { name: "Created On", selector: (row) => row.created_by, sortable: true },
     {
       name: "Remove Vendor",
@@ -151,7 +151,7 @@ const DeliveryVendor = () => {
     const searchValue = event.target.value;
     setSearchText(searchValue);
     const filteredResults = deliveryVendors.filter((item) =>
-      item.name.toLowerCase().includes(searchValue.toLowerCase())
+      item.vendor_name.toLowerCase().includes(searchValue.toLowerCase())
     );
     setFilteredData(filteredResults);
   };

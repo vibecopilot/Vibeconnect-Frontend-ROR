@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { BsPass } from "react-icons/bs";
 import toast from "react-hot-toast";
 import { TiTick } from "react-icons/ti";
-import { getinbound, editInbound } from "../../../api";
+import { getInboundDetail, editInbound } from "../../../api";
 
 const InBoundDetails = () => {
   const { id } = useParams(); // Get the ID from the URL
@@ -15,35 +15,41 @@ const InBoundDetails = () => {
   const fetchInboundDetails = async () => {
     try {
       // Fetch specific inbound record based on the `id`
-      const res = await getinbound(id); // Use the API for single record fetch
+      const res = await getInboundDetail(id); // Use the API for single record fetch
       const item = res.data;
-      const transformedData = res.data.map((item) =>({
+      const transformedData = {
         id: item.id,
-        vendorId: item.vendor_id,
-        // vendor_name: item.vendor_name,
-        recipientName: item.recipient_name,
+        vendor_name: item.vendor_name,
+        vendor_id: item.vendor_id,
+        recipient: item.receipant_name,
+        mobile_number: item.mobile_number,
         unit: item.unit,
-        department: item.department_name,
+        department: item.department_id,
         sender: item.sender,
         company: item.company,
-        receiving_date: new Date(item.receiving_date).toLocaleDateString(),
-        collect_on: item.collect_on
+        receivedOn: new Date(item.receiving_date).toLocaleDateString(),
+        ageing: item.aging,
+        AWB: item.awb_number,
+        company_address_1: item.company_address_1,
+        company_address_2: item.company_address_2,
+        collectedOn: item.collect_on
           ? new Date(item.collect_on).toLocaleDateString()
           : "N/A",
-        awb_number: item.awb_number,
-        company_address1: item.company_address_1,
-        company_address2: item.company_address_2,
-        package_type: item.mail_outbound_type,
-        collect_by: item.collect_by,
+        collectedBy: item.collect_by,
+        status: item.status,
+        created_by_id: item.created_by_id,
         created_by: item.created_by_name
           ? `${item.created_by_name.firstname || "Unknown"} ${
               item.created_by_name.lastname || ""
             }`.trim()
           : "Unknown",
         collect_by_id: item.collect_by_id,
-      }));
+        entity: item.entity,
+        mail_inbound_type: item.mail_inbound_type,
+        mark_collected: item.mark_as_collected ?? null,
+      };
 
-      setInboundRecords(transformedData); // Set the record as an array (to match existing render structure)
+      setInboundRecords([transformedData]); // Set the record as an array (to match existing render structure)
       setLoading(false);
     } catch (err) {
       console.error("Error fetching inbound record details:", err);
@@ -57,32 +63,39 @@ const InBoundDetails = () => {
     fetchInboundDetails();
   }, []);
 
-  console.log(inboundRecords);
-  const handleDelegatePackage = async (id, newStatus, name) => {
+  // console.log(inboundRecords);
+  const handleMarkedPackage = async (id, currentStatus, vendorId) => {
     try {
-      if (!id || !name) throw new Error("ID or Name is invalid");
+      if (!id || !vendorId) throw new Error("ID or Vendor ID is invalid");
+
+      // Toggle the current status (invert it)
+      const newStatus = !currentStatus === null ? true : !currentStatus; // true -> false, false -> true
 
       const payload = {
-        mark_collected: newStatus,
-        name: name,
+        mark_collected: newStatus, // Pass the updated status
+        vendor_id: vendorId, // Pass vendor ID
       };
 
+      // Send the request to the backend
       const response = await editInbound(id, payload);
 
-      console.log("Status updated successfully:", response.data);
-      toast.success("Package marked as collected");
+      // Check if the response indicates success
+      if (response?.data?.success) {
+        console.log("Status updated successfully:", response.data);
+        toast.success("Package status updated successfully");
 
-      // Update the status locally in inboundRecords
-      setInboundRecords((prevRecords) =>
-        prevRecords.map((record) =>
-          record.id === id ? { ...record, mark_collected: newStatus } : record
-        )
-      );
-
-      // fetchInboundDetails();
+        // Update local state with the new status
+        setInboundRecords((prevRecords) =>
+          prevRecords.map((record) =>
+            record.id === id ? { ...record, mark_collected: newStatus } : record
+          )
+        );
+      } else {
+        toast.error("Failed to update package status");
+      }
     } catch (err) {
-      console.error(err);
-      toast.error("Failed to mark package as collected");
+      console.error("Error updating package status:", err);
+      toast.error("An error occurred while updating the package status");
     }
   };
 
@@ -101,31 +114,33 @@ const InBoundDetails = () => {
             inboundRecords.map((record) => (
               <div key={record.id} className="mb-6">
                 <div className="flex justify-between">
-                  {/* <p className="border-2 px-4 p-1 rounded-full text-blue-500 border-blue-500">
-                    Received
-                  </p> */}
                   <div className="flex gap-2">
                     <button
                       className={`flex gap-2 items-center justify-end border-2 px-4 p-1 rounded-full ${
                         record.mark_collected
-                          ? "bg-black text-white"
-                          : "bg-white text-black"
+                        ? "bg-black text-white"
+                        : "bg-white text-black"
                       }`}
-                      onClick={() =>
-                        handleDelegatePackage(
+                      onClick={() => {
+                        if (!record.vendor_id) {
+                          console.error(
+                            `Vendor ID is missing for record ID: ${record.id}`
+                          );
+                          toast.error("Vendor ID is missing");
+                          return;
+                        }
+                        handleMarkedPackage(
                           record.id,
-                          !item.mark_collected,
+                          record.mark_collected,
                           record.vendor_id
-                        )
-                      } // Toggle the status
+                        );
+                      }}
                     >
                       <TiTick />
-                      Mark As Collected
+                      {record.mark_collected
+                        ? "Unmark Collected"
+                        : "Mark As Collected"}
                     </button>
-                    {/* <button className="flex gap-2 items-center border-2 border-black px-4 p-1 rounded-full hover:bg-black hover:text-white">
-                      <BsPass />
-                      Delegate Package
-                    </button> */}
                   </div>
                 </div>
                 <h2 className="text-center font-semibold text-xl mt-4">
@@ -142,25 +157,25 @@ const InBoundDetails = () => {
                   </h2>
                   <div className="md:grid flex flex-col grid-cols-4 justify-center gap-6">
                     {/* <p className="text-lg font-medium"> */}
-                      {/* Vendor Name: {record.vendorName} */}
+                    {/* Vendor Name: {record.vendorName} */}
                     {/* </p> */}
                     <p className="text-lg font-medium">
-                      Department: {record.department_name}
+                      Department: {record.department}
                     </p>
                     <p className="text-lg font-medium">
-                      Collected On: {record.collect_on}
+                      Collected On: {record.collectedOn}
                     </p>
                     <p className="text-lg font-medium">
-                      AWB Number: {record.awb_number}
+                      AWB Number: {record.AWB}
                     </p>
                     <p className="text-lg font-medium">
-                      Recipient Name: {record.receipant_name}
+                      Recipient Name: {record.recipient}
                     </p>
                     <p className="text-lg font-medium">
-                      Received On: {record.receiving_date}
+                      Received On: {record.receivedOn}
                     </p>
                     <p className="text-lg font-medium">
-                      Received By: {record.receivedBy}
+                      Entity: {record.entity}
                     </p>
                   </div>
                 </div>

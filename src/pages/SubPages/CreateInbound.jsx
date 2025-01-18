@@ -30,55 +30,70 @@ const CreateInbound = () => {
     fetchVendors();
   }, []);
 
-  console.log(vendors)
+  console.log(vendors);
   const onSelect = (value) => {
     console.log(`Selected vendor ID: ${value}`);
   };
   const [formData, setFormData] = useState({
     id: " ",
-    vendor_id: "",
+    vendor_name: "",
+    vendor_id:"",
     receipant_name: "",
     sender: "",
+    sender_id: "",
     mobile_number: "",
     awb_number: "",
     company: "",
-    company_address_1: "",
-    company_address_2: "",
+    recipient_address_1: "",
+    recipient_address_2: "",
     state: "",
     city: "",
     pincode: "",
     mail_inbound_type: "",
     receiving_date: "",
     unit: "",
+    entity:"",
+    status: "",
     department_name: "",
     collect_on: "",
+    created_by_id:"",
     collect_by: "",
+    mark_as_collected:"",
   });
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    console.log("Input Change:", name, value);
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-      ...(name === "state" ? { city: "" } : {}),
-    }));
+    const {name,value } = e.target;
+    console.log( value);
+
+    if (name === "vendor_name") {
+      const selectedVendor = vendors.find(
+        (vendor) => vendor.vendor_name === value
+      );
+      setFormData((prevData) => ({
+        ...prevData,
+        vendor_name: value,
+        id: selectedVendor ? selectedVendor.id : "", // Set vendor ID if found
+      }));
+    } else {
+      setFormData((prevData) => ({
+        ...prevData,
+        [name]: value,
+        ...(name === "state" ? { city: "" } : {}),
+      }));
+    }
   };
+
   // Handle Form Submission
   const handleSubmit = async (e) => {
-    e.preventDefault(); // Prevent the default form submission behavior
+    e.preventDefault();
+    console.log("Submitting form with vendor_id:", formData.vendor_id);
     try {
-      const response = await createInbound(formData); // Make POST request
-      toast.success("Package created successfully");
-      navigate("/mail-room/"); //
-      //   if (response.status === 200 || response.status === 201) {
-      //     console.log("Success condition met");
-      //   }
-    } catch (err) {
-      toast.error("Error creating package:", err);
-      if (err.response?.status === 400) {
-        console.log("Bad request, possibly validation error");
-      }
+      const response = await createInbound(formData); // Pass formData.vendor_id to API
+      console.log("API Response:", response);
+      toast.success("Inbound Package created successfully");
+      navigate("/mail-room/");
+    } catch (error) {
+      console.error("Error submitting form:", error);
     }
   };
 
@@ -96,19 +111,34 @@ const CreateInbound = () => {
           <div className="flex justify-around my-10 mx-20 p-4 rounded-md border-2">
             <div className="flex gap-2 items-center">
               <label htmlFor="vendorSelect" className="font-semibold text-lg">
-                Select Vendor ID :
+                Select Vendor:
               </label>
               <select
-                onChange={(e) => onSelect(e.target.value)}
-                value={vendors.id}
+                id="vendorSelect"
+                name="vendor_id"
+                onChange={(e) => {
+                  const selectedVendor = vendors.find(
+                    (vendor) => vendor.vendor_name === e.target.value
+                  );
+                  setFormData((prevData) => ({
+                    ...prevData,
+                    vendor_id: selectedVendor ? selectedVendor.id : "", // Store vendor_id
+                  }));
+                }}
+                value={
+                  formData.vendor_id
+                    ? vendors.find((vendor) => vendor.id === formData.vendor_id)
+                        ?.vendor_name || ""
+                    : ""
+                } // Display vendor_name based on vendor_id
                 className="border p-1 px-4 rounded-md border-gray-400"
               >
                 <option value="" disabled>
                   Select Vendor
                 </option>
-                {vendors.map((item) => (
-                  <option key={item.id} value={item.vendor_name}>
-                    {item.vendor_name}
+                {vendors.map((vendor) => (
+                  <option key={vendor.id} value={vendor.vendor_name}>
+                    {vendor.vendor_name}
                   </option>
                 ))}
               </select>
@@ -290,16 +320,16 @@ const CreateInbound = () => {
                   className="border p-1 px-4 rounded-md border-gray-400"
                 />
               </div>
-              {/* <div className="flex flex-col">
-                <label className="font-semibold text-lg">CollectedBy:</label>
+              <div className="flex flex-col">
+                <label className="font-semibold text-lg">Entity:</label>
                 <input
                   type="text"
-                  name="collectedBy" // Ensure name matches formData key
-                  value={formData.collectedBy}
+                  name="entity" // Ensure name matches formData key
+                  value={formData.entity}
                   onChange={handleInputChange}
                   className="border p-1 px-4 rounded-md border-gray-400"
                 />
-              </div> */}
+              </div>
 
               <div className="flex flex-col">
                 <label className="font-semibold text-lg">Package Type:</label>

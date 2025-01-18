@@ -7,13 +7,14 @@ import { BiTrash, BiEdit } from "react-icons/bi";
 import { Link } from "react-router-dom";
 import Table from "../../components/table/Table";
 import toast from "react-hot-toast";
-import { getinbound, deleteInbound } from "../../api";
+import { getinbound, getInboundDetail, deleteInbound } from "../../api";
 
 const Inbound = () => {
   const [modal, showModal] = useState(false);
   const [add, setAdd] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [inboundRecord, setInboundRecord] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
 
   const handleButtonClick = () => {
     showModal(true);
@@ -24,11 +25,11 @@ const Inbound = () => {
       console.log("API response:", res);
       const transformedData = res.data.map((item) => ({
         Id: item.id,
-        vendor_id: item.vendor_id,
+        vendor_name: item.vendor_name,
         recipient: item.receipant_name,
         mobile_number: item.mobile_number,
         unit: item.unit,
-        department: item.department_name,
+        department: item.department_id,
         sender: item.sender,
         company: item.company,
         receivedOn: new Date(item.receiving_date).toLocaleDateString(),
@@ -48,7 +49,9 @@ const Inbound = () => {
             }`.trim()
           : "Unknown",
         collect_by_id: item.collect_by_id,
+        entity: item.entity,
         mail_inbound_type: item.mail_inbound_type,
+        mark_collected: item.mark_as_collected,
       }));
 
       setInboundRecord(transformedData);
@@ -89,8 +92,8 @@ const Inbound = () => {
     },
     { name: "ID", selector: (row) => row.Id, sortable: true },
     {
-      name: "Vendor ID ",
-      selector: (row) => row.vendor_id,
+      name: "Vendor Name ",
+      selector: (row) => row.vendor_name,
       sortable: true,
     },
     { name: "Recipient", selector: (row) => row.recipient, sortable: true },
@@ -100,13 +103,17 @@ const Inbound = () => {
       selector: (row) => row.mail_inbound_type,
       sortable: true,
     },
-    { name: "Created By", selector: (row) => row.created_by, sortable: true },
-    { name: "Collected By", selector: (row) => row.collect_by, sortable: true },
-    { name: "Created By", selector: (row) => row.created_by, sortable: true },
+    // { name: "Created By", selector: (row) => row.created_by ||  "anonymous", sortable: true },
+    // { name: "Collected By", selector: (row) => row.collect_by, sortable: true },
     { name: "Unit", selector: (row) => row.unit, sortable: true },
     {
       name: "Department",
-      selector: (row) => row.department_name,
+      selector: (row) => row.department,
+      sortable: true,
+    },
+    {
+      name: "Entity",
+      selector: (row) => row.entity,
       sortable: true,
     },
 
@@ -130,11 +137,11 @@ const Inbound = () => {
     //   selector: (row) => row.status,
     //   sortable: true,
     // },
-    {
-      name: "Ageing",
-      selector: (row) => row.ageing,
-      sortable: true,
-    },
+    // {
+    //   name: "Ageing",
+    //   selector: (row) => row.ageing,
+    //   sortable: true,
+    // },
     {
       name: "Collected On",
       selector: (row) => row.collectedOn,
@@ -151,16 +158,6 @@ const Inbound = () => {
     },
   ];
 
-  const [filteredData, setFilteredData] = useState([]);
-  const handleSearch = (event) => {
-    const searchValue = event.target.value;
-    setSearchText(searchValue);
-    const filteredResults = data.filter((item) =>
-      item.vendor_id.toLowerCase().includes(searchValue.toLowerCase())
-    );
-    setFilteredData(filteredResults);
-  };
-
   const customStyle = {
     headRow: {
       style: {
@@ -170,6 +167,17 @@ const Inbound = () => {
       },
     },
   };
+
+  // Filter/Search Inbound Record
+  const handleSearch = (event) => {
+    const searchValue = event.target.value;
+    setSearchText(searchValue);
+    const filteredResults = inboundRecord.filter((item) =>
+      item.vendor_name.toLowerCase().includes(searchValue.toLowerCase())
+    );
+    setFilteredData(filteredResults);
+  };
+
   return (
     <div className="my-5">
       <div className="flex justify-between items-center">
@@ -186,20 +194,10 @@ const Inbound = () => {
           className="bg-black  rounded-lg flex font-semibold items-center gap-2 text-white p-2 my-5"
         >
           <IoAddCircleOutline size={20} />
-          Add
+          Add Record
         </Link>
       </div>
-      <Table
-        columns={column}
-        data={filteredData}
-        // customStyles={customStyle}
-        // fixedHeader
-        //   fixedHeaderScrollHeight="500px"
-        //   pagination
-        //   selectableRowsHighlight
-        //   highlightOnHover
-        //   omitColumn={column}
-      />
+      <Table columns={column} data={filteredData} />
       {modal && <DeliveryVendorModal onclose={() => showModal(false)} />}
       {add && (
         <DeliveryVendorModal title={"Add"} onclose={() => setAdd(false)} />
