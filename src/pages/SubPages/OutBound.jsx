@@ -13,10 +13,12 @@ const OutBound = () => {
   const [add, setAdd] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [ouboundRecord, setOutboundRecord] = useState("");
+  const [filteredData, setFilteredData] = useState([]);
 
   const handleButtonClick = () => {
     showModal(true);
   };
+
   const fetchOutboundRecord = async () => {
     try {
       const res = await getoutbound();
@@ -24,22 +26,19 @@ const OutBound = () => {
       const transformedData = res.data.map((item) => ({
         Id: item.id,
         vendor_id: item.vendor_id,
+        vendor_name: item.vendor_name,
         recipient: item.recipient_name,
         mobile_number: item.mobile_number,
         unit: item.unit,
         sending_date: item.sending_date,
-        // department: item.department_name,
         sender: item.sender,
         company: item.company,
         receivedOn: new Date(item.receiving_date).toLocaleDateString(),
         AWB: item.awb_number,
         recipient_address_1: item.recipient_address_1,
         recipient_address_2: item.recipient_address_2,
-        // collectedOn: item.collect_on
-        //   ? new Date(item.collect_on).toLocaleDateString()
-        //   : "N/A",
         collectedBy: item.collect_by,
-        // status: item.status,
+        entity: item.entity,
         created_by_id: item.created_by_id,
         created_by: item.created_by_name
           ? `${item.created_by_name.firstname || "Unknown"} ${
@@ -87,11 +86,6 @@ const OutBound = () => {
       sortable: true,
     },
     { name: "ID", selector: (row) => row.Id, sortable: true },
-    // {
-    //   name: "Sender Name",
-    //   selector: (row) => row.senderName,
-    //   sortable: true,
-    // },
     { name: "Recipient", selector: (row) => row.recipient, sortable: true },
     { name: "Unit", selector: (row) => row.unit, sortable: true },
     {
@@ -99,18 +93,28 @@ const OutBound = () => {
       selector: (row) => row.entity,
       sortable: true,
     },
+    // {
+    //   name: "Company",
+    //   selector: (row) => row.company,
+    //   sortable: true,
+    // },
     {
-      name: "Courier Vendor",
-      selector: (row) => row.courierVendor,
+      name: "Vendor Id",
+      selector: (row) => row.vendor_id,
       sortable: true,
     },
+    // {
+    //   name: "Vendor Name ",
+    //   selector: (row) => row.vendor_name,
+    //   sortable: true,
+    // },
     {
       name: "AWB Number",
       selector: (row) => row.AWB,
       sortable: true,
     },
     {
-      name: "Type",
+      name: " Package Type",
       selector: (row) => row.mail_outbound_type,
       sortable: true,
     },
@@ -131,12 +135,11 @@ const OutBound = () => {
     },
   ];
 
-  const [filteredData, setFilteredData] = useState([]);
   const handleSearch = (event) => {
     const searchValue = event.target.value;
     setSearchText(searchValue);
-    const filteredResults = data.filter((item) =>
-      item.senderName.toLowerCase().includes(searchValue.toLowerCase())
+    const filteredResults = ouboundRecord.filter((item) =>
+      item.recipient.toLowerCase().includes(searchValue.toLowerCase())
     );
     setFilteredData(filteredResults);
   };

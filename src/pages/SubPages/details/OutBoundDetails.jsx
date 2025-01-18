@@ -1,97 +1,33 @@
-// import React from "react";
-// import { BsPass } from "react-icons/bs";
-// import { TiTick } from "react-icons/ti";
-
-// const OutBoundDetails = () => {
-//   return (
-//     <section>
-//       <div className="m-2">
-//         <h2 className="text-center text-xl font-bold p-2 bg-black rounded-full text-white">
-//           Out Package Details
-//         </h2>
-//         <div className="border-2 flex flex-col my-5 p-4 gap-4 rounded-md border-gray-400">
-//           <div className=" flex justify-between ">
-//             <p className="border-2 px-4 p-1 rounded-full text-green-500 border-green-500">Send</p>
-//             <div className="flex gap-2">
-//             <button className="flex gap-2 items-center border-2 border-black px-4 p-1 rounded-full hover:bg-black hover:text-white">
-//               <TiTick />
-//               Mark As Collected
-//             </button>
-//             <button className="flex gap-2 items-center border-2 border-black px-4 p-1 rounded-full hover:bg-black hover:text-white">
-//               <BsPass />
-//               Delegate Package
-//             </button>
-//             </div>
-//           </div>
-//           <div>
-//             <h2 className="text-center font-semibold text-xl">Package ID: 32</h2>
-//             <div>
-//                 <p className="text-lg font-medium">No. of Package:</p>
-//             </div>
-//           </div>
-//           <div className=" my-10">
-//             <h2 className="border-b text-center text-xl border-black m-5 font-bold">
-//               Package Details
-//             </h2>
-//             <div className="md:grid flex flex-col grid-cols-3 justify-center gap-6">
-//             <p className="text-lg font-medium">Sender Name:</p>
-//             <p className="text-lg font-medium">Recipient Name:</p>
-//             <p className="text-lg font-medium">Sending Date:</p>
-//             <p className="text-lg font-medium">Recipient Email ID:</p>
-//             <p className="text-lg font-medium">Recipient Mobile:</p>
-//             <p className="text-lg font-medium">Recipient Address:</p>
-           
-//             </div>
-//           </div>
-//           <div >
-//             <h2 className="border-b text-center text-xl border-black m-5 font-bold">
-//               Courier Details
-//             </h2>
-//             <div className="md:grid flex flex-col grid-cols-3 gap-4 justify-center">
-//             <p className="text-lg font-medium">Vendor Name:</p>
-//             <p className="text-lg font-medium">AWB Number:</p>
-//             <p className="text-lg font-medium">Track Status:</p>
-//             <p className="text-lg font-medium">SPOC Person:</p>
-//             <p className="text-lg font-medium">Contact Number:</p>
-//             </div>
-//           </div>
-//         </div>
-//       </div>
-//     </section>
-//   );
-// };
-// export default OutBoundDetails
-
-
-
-
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { BsPass } from "react-icons/bs";
 import toast from "react-hot-toast";
 import { TiTick } from "react-icons/ti";
-import { getinbound, editInbound } from "../../../api";
+import { getinbound, editOutbound, getOutboundDetail } from "../../../api";
 
 const InBoundDetails = () => {
   const { id } = useParams(); // Get the ID from the URL
-  const [inboundRecords, setInboundRecords] = useState(null); // For fetched data
+  const [outboundRecords, setOutboundRecords] = useState(null); // For fetched data
   const [loading, setLoading] = useState(true); // Loading state
   const [error, setError] = useState(null); // Error state
 
   // Fetch inbound details
-  const fetchInboundDetails = async () => {
+  const fetchOutboundDetails = async () => {
     try {
       // Fetch specific inbound record based on the `id`
-      const res = await getinbound(id); // Use the API for single record fetch
+      const res = await getOutboundDetail(id); // Use the API for single record fetch
       const item = res.data;
-      const transformedData = res.data.map((item) =>({
+      const transformedData = {
         id: item.id,
         vendorId: item.vendor_id,
-        // vendor_name: item.vendor_name,
+        vendor_name: item.vendor_name,
         recipientName: item.recipient_name,
+        recipient_email: item.recipient_email_id,
         unit: item.unit,
-        department: item.department_name,
+        department: item.department,
         sender: item.sender,
+        sender_id: item.sender_id,
+        mobile_number: item.mobile_number,
         company: item.company,
         receiving_date: new Date(item.receiving_date).toLocaleDateString(),
         collect_on: item.collect_on
@@ -108,9 +44,10 @@ const InBoundDetails = () => {
             }`.trim()
           : "Unknown",
         collect_by_id: item.collect_by_id,
-      }));
+        entity: item.entity,
+      };
 
-      setInboundRecords(transformedData); // Set the record as an array (to match existing render structure)
+      setOutboundRecords([transformedData]); // Set the record as an array (to match existing render structure)
       setLoading(false);
     } catch (err) {
       console.error("Error fetching inbound record details:", err);
@@ -121,35 +58,42 @@ const InBoundDetails = () => {
 
   // Run fetch function on component mount
   useEffect(() => {
-    fetchInboundDetails();
+    fetchOutboundDetails();
   }, []);
 
-  console.log(inboundRecords);
-  const handleDelegatePackage = async (id, newStatus, name) => {
+  console.log(outboundRecords);
+  const handleMarkedPackage = async (id, currentStatus, vendorId) => {
     try {
-      if (!id || !name) throw new Error("ID or Name is invalid");
+      if (!id || !vendorId) throw new Error("ID or Vendor ID is invalid");
+
+      // Toggle the current status (invert it)
+      const newStatus = !currentStatus === null ? true : !currentStatus; // true -> false, false -> true
 
       const payload = {
-        mark_collected: newStatus,
-        name: name,
+        mark_collected: newStatus, // Pass the updated status
+        vendor_id: vendorId, // Pass vendor ID
       };
 
-      const response = await editInbound(id, payload);
+      // Send the request to the backend
+      const response = await editOutbound(id, payload);
 
-      console.log("Status updated successfully:", response.data);
-      toast.success("Package marked as collected");
+      // Check if the response indicates success
+      if (response?.data?.success) {
+        console.log("Status updated successfully:", response.data);
+        toast.success("Package status updated successfully");
 
-      // Update the status locally in inboundRecords
-      setInboundRecords((prevRecords) =>
-        prevRecords.map((record) =>
-          record.id === id ? { ...record, mark_collected: newStatus } : record
-        )
-      );
-
-      // fetchInboundDetails();
+        // Update local state with the new status
+        setOutboundRecords((prevRecords) =>
+          prevRecords.map((record) =>
+            record.id === id ? { ...record, mark_collected: newStatus } : record
+          )
+        );
+      } else {
+        toast.error("Failed to update package status");
+      }
     } catch (err) {
-      console.error(err);
-      toast.error("Failed to mark package as collected");
+      console.error("Error updating package status:", err);
+      toast.error("An error occurred while updating the package status");
     }
   };
 
@@ -157,15 +101,15 @@ const InBoundDetails = () => {
     <section>
       <div className="m-2">
         <h2 className="text-center text-xl font-bold p-2 bg-black rounded-full text-white">
-          Inbound Package Details
+          Outbound Package Details
         </h2>
         <div className="border-2 flex flex-col my-5 p-4 gap-4 rounded-md border-gray-400">
           {loading ? (
             <p>Loading package details...</p>
           ) : error ? (
             <p className="text-red-500">{error}</p>
-          ) : inboundRecords && inboundRecords.length > 0 ? (
-            inboundRecords.map((record) => (
+          ) : outboundRecords && outboundRecords.length > 0 ? (
+            outboundRecords.map((record) => (
               <div key={record.id} className="mb-6">
                 <div className="flex justify-between">
                   {/* <p className="border-2 px-4 p-1 rounded-full text-blue-500 border-blue-500">
@@ -178,21 +122,26 @@ const InBoundDetails = () => {
                           ? "bg-black text-white"
                           : "bg-white text-black"
                       }`}
-                      onClick={() =>
-                        handleDelegatePackage(
+                      onClick={() => {
+                        if (!record.vendor_id) {
+                          console.error(
+                            `Vendor ID is missing for record ID: ${record.id}`
+                          );
+                          toast.error("Vendor ID is missing");
+                          return;
+                        }
+                        handleMarkedPackage(
                           record.id,
-                          !item.mark_collected,
+                          record.mark_collected,
                           record.vendor_id
-                        )
-                      } // Toggle the status
+                        );
+                      }}
                     >
                       <TiTick />
-                      Mark As Collected
+                      {record.mark_collected
+                        ? "Unmark Collected"
+                        : "Mark As Collected"}
                     </button>
-                    {/* <button className="flex gap-2 items-center border-2 border-black px-4 p-1 rounded-full hover:bg-black hover:text-white">
-                      <BsPass />
-                      Delegate Package
-                    </button> */}
                   </div>
                 </div>
                 <h2 className="text-center font-semibold text-xl mt-4">
@@ -205,14 +154,14 @@ const InBoundDetails = () => {
                 </div>
                 <div className="my-10">
                   <h2 className="border-b text-center text-xl border-black m-5 font-bold">
-                    Package Details
+                    Outbound Details
                   </h2>
                   <div className="md:grid flex flex-col grid-cols-4 justify-center gap-6">
                     {/* <p className="text-lg font-medium"> */}
-                      {/* Vendor Name: {record.vendorName} */}
+                    {/* Vendor Name: {record.vendorName} */}
                     {/* </p> */}
                     <p className="text-lg font-medium">
-                      Department: {record.department_name}
+                      Department: {record.department}
                     </p>
                     <p className="text-lg font-medium">
                       Collected On: {record.collect_on}
@@ -221,14 +170,17 @@ const InBoundDetails = () => {
                       AWB Number: {record.awb_number}
                     </p>
                     <p className="text-lg font-medium">
-                      Recipient Name: {record.receipant_name}
+                      Recipient Name: {record.recipientName}
                     </p>
                     <p className="text-lg font-medium">
-                      Received On: {record.receiving_date}
+                      Recipient Email: {record.recipient_email}
+                    </p>
+                    {/* <p className="text-lg font-medium">
+                      Received On: {record.created_at}
                     </p>
                     <p className="text-lg font-medium">
                       Received By: {record.receivedBy}
-                    </p>
+                    </p> */}
                   </div>
                 </div>
                 <div>
@@ -237,16 +189,16 @@ const InBoundDetails = () => {
                   </h2>
                   <div className="md:grid flex flex-col grid-cols-4 justify-center">
                     <p className="text-lg font-medium">
-                      Sender Name: {record.sender}
+                      Sender ID: {record.sender_id}
                     </p>
                     <p className="text-lg font-medium">
-                      Company: {record.company}
+                      Entity: {record.entity}
                     </p>
                     <p className="text-lg font-medium">
-                      company_address1: {record.company_address_1}
+                      Package Type: {record.package_type}
                     </p>
                     <p className="text-lg font-medium">
-                      company_address2: {record.company_address_2}
+                      Contact Info: {record.mobile_number}
                     </p>
                   </div>
                 </div>
