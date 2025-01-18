@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Navbar from "../../components/Navbar";
 import Table from "../../components/table/Table";
 import { useSelector } from "react-redux";
@@ -8,15 +8,34 @@ import { Eye } from "react-ionicons";
 import { BsEye } from "react-icons/bs";
 import { IoFilter } from "react-icons/io5";
 import { MdClose } from "react-icons/md";
+import { getComplianceConfiguration } from "../../api";
 
 const Compliance = () => {
   const [filter, setFilter] = useState(false);
+  const [compliances, setCompliances] = useState([]);
+
+  const fetchCompliances = async () => {
+    try {
+      const res = await getComplianceConfiguration();
+      const sortedData = res?.data?.sort((a, b) => {
+        return b.created_at - a.created_at;
+      });
+      setCompliances(sortedData);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchCompliances();
+  }, []);
+
   const columns = [
     {
       name: "View",
       selector: (row) => (
         <div>
-          <Link to={"/compliance/compliance-details"}>
+          <Link to={`/compliance/compliance-details/${row.id}`}>
             <BsEye />
           </Link>
         </div>
@@ -25,7 +44,7 @@ const Compliance = () => {
     },
     {
       name: "Site",
-      selector: (row) => row.site,
+      selector: (row) => row.site_name,
       sortable: true,
       width: "200px",
     },
@@ -35,24 +54,23 @@ const Compliance = () => {
       sortable: true,
     },
     {
-      name: "Category",
-      selector: (row) => row.category,
+      name: "Vendor",
+      selector: (row) => row.assign_to_name,
+      sortable: true,
+    },
+    {
+      name: "Auditor",
+      selector: (row) => row.reviewer_name,
       sortable: true,
     },
     // {
-    //   name: "Subcategory",
-    //   selector: (row) => row.Subcategory,
+    //   name: "Category",
+    //   selector: (row) => row.category,
     //   sortable: true,
-    // },
-    // {
-    //   name: "Sub-Subcategory",
-    //   selector: (row) => row.SubSubcategory,
-    //   sortable: true,
-    //   width: "300px",
     // },
     {
-      name: "Due Date",
-      selector: (row) => row.dueDate,
+      name: "Due days",
+      selector: (row) => `${row.due_in_days} days`,
       sortable: true,
     },
     {
@@ -83,16 +101,11 @@ const Compliance = () => {
       ),
       sortable: true,
     },
-    {
-      name: "Risk Level",
-      selector: (row) => row.riskLevel,
-      sortable: true,
-    },
-    {
-      name: "Assigned To",
-      selector: (row) => row.assignedTo,
-      sortable: true,
-    },
+    // {
+    //   name: "Risk Level",
+    //   selector: (row) => row.riskLevel,
+    //   sortable: true,
+    // },
   ];
   const data = [
     {
@@ -409,7 +422,7 @@ const Compliance = () => {
         )}
         <Table
           columns={columns}
-          data={data}
+          data={compliances}
           pagination
           responsive
           highlightOnHover

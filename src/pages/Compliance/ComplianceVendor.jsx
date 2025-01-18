@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { MdClose, MdLogout } from "react-icons/md";
 import { useSelector } from "react-redux";
 import Table from "../../components/table/Table";
@@ -14,6 +14,7 @@ import { Download } from "lucide-react";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import toast from "react-hot-toast";
+import { getComplianceTasks } from "../../api";
 const ComplianceVendor = () => {
   const themeColor = useSelector((state) => state.theme.color);
   const navigate = useNavigate();
@@ -248,6 +249,18 @@ const ComplianceVendor = () => {
 
   const [showTasks, setShowTasks] = useState(false);
 
+  const fetchComplianceTasks = async () => {
+    try {
+      const res = await getComplianceTasks();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchComplianceTasks();
+  }, []);
+
   return (
     <section>
       <div
@@ -295,15 +308,15 @@ const ComplianceVendor = () => {
                 </div> */}
               </div>
               <div className="bg-blue-100 p-2 rounded-md my-1 ">
-                <div className="grid grid-cols-3 justify-center gap-4 border-b border-gray-400 font-medium">
+                <div className="grid md:grid-cols-3 justify-center gap-4 border-b border-gray-400 font-medium">
                   <p className="font-medium">Payment Of Gratuity</p>
                   <div className="grid grid-cols-3 gap-2">
                     <p className="text-center">Risk</p>
                     <p className="text-center">Critical</p>
-                    <p className="text-center">Weightage</p>
+                   
                   </div>
                 </div>
-                <div className="grid grid-cols-3">
+                <div className="grid md:grid-cols-3">
                   <div className="flex flex-col gap-2">
                     <p className="flex items-center gap-1 text-gray-400">
                       <IoLocationSharp /> Mumbai (India)
@@ -319,11 +332,9 @@ const ComplianceVendor = () => {
                     <p className="text-center text-green-400 rounded-full px-4">
                       No
                     </p>
-                    <p className="text-center  text-green-500 rounded-full px-4">
-                      5%
-                    </p>
+                    
                   </div>
-                  <div className="flex items-center gap-2 justify-end ">
+                  <div className="flex flex-col md:flex-row items-center gap-2 justify-end ">
                     <Link
                       className=" font-medium bg-green-400 rounded-md text-white flex items-center gap-2 p-1 px-4"
                       // onClick={() => setShowTasks(true)}

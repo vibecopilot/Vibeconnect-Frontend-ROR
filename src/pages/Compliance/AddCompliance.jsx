@@ -4,9 +4,14 @@ import { useSelector } from "react-redux";
 import { MdClose } from "react-icons/md";
 import { FaCheck, FaTrash } from "react-icons/fa";
 import FileInputBox from "../../containers/Inputs/FileInputBox";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { PiPlusCircle } from "react-icons/pi";
-import { getComplianceTags, getFilteredUsers, postComplianceConfiguration } from "../../api";
+import {
+  getComplianceTags,
+  getFilteredUsers,
+  postComplianceCategoryConfiguration,
+  postComplianceConfiguration,
+} from "../../api";
 import Select from "react-select";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import toast from "react-hot-toast";
@@ -52,6 +57,7 @@ const AddCompliance = () => {
   };
   const siteId = getItemInLocalStorage("SITEID");
 
+  const navigate = useNavigate()
   const handleCreateCompliance = async (e) => {
     e.preventDefault();
     const sendData = new FormData();
@@ -63,29 +69,32 @@ const AddCompliance = () => {
     sendData.append("compliance_config[start_date]", formData.startDate);
     sendData.append("compliance_config[end_date]", formData.endDate);
     sendData.append("compliance_config[site_id]", siteId);
+    sendData.append("compliance_config[assign_to_id]", selectedVendor.value);
+    sendData.append("compliance_config[reviewer_id]", selectedAuditor.value);
     formData.attachments.forEach((file, index) => {
       sendData.append("attachments[]", file);
     });
     try {
       const res = await postComplianceConfiguration(sendData);
       const payload = {
-        compliance_config_tag: complianceFor.map((compliance) => ({
+        compliance_config_tags: complianceFor.map((compliance) => ({
           compliance_tag_id: compliance.category,
           compliance_config_id: res?.data.id,
         })),
       };
+
       try {
-        const res = await postComplianceConfiguration(payload);
+        const res = await postComplianceCategoryConfiguration(payload);
       } catch (error) {
         console.log(error);
       }
       toast.success("Compliance configured successfully");
+      navigate("/compliance")
     } catch (error) {
       console.log(error);
     }
   };
 
-  const [selectedOption, setSelectedOption] = useState({});
   const handleCategoryChange = (option, index) => {
     setComplianceFor((prev) =>
       prev.map((item, i) =>
@@ -106,16 +115,41 @@ const AddCompliance = () => {
       console.log(error);
     }
   };
-
-  const fetchVendors = async()=>{
+  const [vendors, setVendors] = useState([]);
+  const [auditors, setAuditors] = useState([]);
+  const fetchVendors = async () => {
     try {
-      const res = await getFilteredUsers("vendor")
+      const res = await getFilteredUsers("vendor");
+      const filteredUsers = res?.data?.filter(
+        (user) => user.user_type === "vendor"
+      );
+      const allVendors = filteredUsers?.map((vendor) => ({
+        label: `${vendor.firstname} ${vendor.lastname}`,
+        value: vendor.id,
+      }));
+      setVendors(allVendors);
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
-  }
+  };
+  const fetchAuditors = async () => {
+    try {
+      const res = await getFilteredUsers("auditor");
+      const filteredUsers = res?.data?.filter(
+        (user) => user.user_type === "auditor"
+      );
+      const allAuditors = filteredUsers?.map((auditor) => ({
+        label: `${auditor.firstname} ${auditor.lastname}`,
+        value: auditor.id
+      }));
+      setAuditors(allAuditors);
+    } catch (error) {
+      console.log(error);
+    }
+  };
   useEffect(() => {
-    fetchVendors()
+    fetchVendors();
+    fetchAuditors();
     fetchComplianceCat();
   }, []);
 
@@ -126,7 +160,15 @@ const AddCompliance = () => {
     });
     console.log(fieldName);
   };
-
+  const [selectedAuditor, setSelectedAuditor] = useState({});
+  const [selectedVendor, setSelectedVendor] = useState({});
+  const handleAuditorChange = (option) => {
+    console.log(option)
+    setSelectedAuditor(option);
+  };
+  const handleVendorChange = (option) => {
+    setSelectedVendor(option);
+  };
   return (
     <section className="flex">
       <Navbar />
@@ -227,7 +269,7 @@ const AddCompliance = () => {
                   <option value="yearly">Yearly</option>
                 </select>
               </div>
-              <div>
+              {/* <div>
                 <label
                   htmlFor="riskLevel"
                   className="block text-gray-700 font-medium"
@@ -247,28 +289,32 @@ const AddCompliance = () => {
                   <option value="high">High</option>
                   <option value="critical">Critical</option>
                 </select>
-              </div>
+              </div> */}
               <div>
                 <label className="block text-gray-700 font-medium">
                   Assigned To Auditor
                 </label>
-                <select className="w-full border border-gray-300 rounded-lg p-2">
-                  <option value="">Select Auditor</option>
-                  <option>Aniket Parkar</option>
-                  <option>Vishal Yadav</option>
-                  <option>Ravindar Sahani</option>
-                </select>
+                <Select
+                  options={auditors}
+                  onChange={handleAuditorChange}
+                  noOptionsMessage={() => "No Auditors available"}
+                  placeholder="Select Auditors"
+                  maxMenuHeight={300}
+                  className="z-50 w-full text-black"
+                />
               </div>
               <div>
                 <label className="block text-gray-700 font-medium">
                   Assigned To Vendor
                 </label>
-                <select className="w-full border border-gray-300 rounded-lg p-2">
-                  <option value="">Select Vendor</option>
-                  <option>Aniket Parkar</option>
-                  <option>Vishal Yadav</option>
-                  <option>Ravindar Sahani</option>
-                </select>
+                <Select
+                  options={vendors}
+                  onChange={handleVendorChange}
+                  noOptionsMessage={() => "No vendor available"}
+                  placeholder="Select Vendor"
+                  maxMenuHeight={200}
+                  className="z-20 w-full text-black"
+                />
               </div>
               <div>
                 <label className="block text-gray-700 font-medium">
@@ -299,9 +345,7 @@ const AddCompliance = () => {
                   <div className="col-span-2 z-10">
                     <Select
                       options={categories}
-                      onChange={(option) =>
-                        handleCategoryChange(option, index)
-                      }
+                      onChange={(option) => handleCategoryChange(option, index)}
                       // value={
                       //   categories.find(
                       //     (cat) => cat.value === compliance.category
@@ -310,7 +354,7 @@ const AddCompliance = () => {
                       noOptionsMessage={() => "No Categories available"}
                       placeholder="Select Category"
                       maxMenuHeight={300}
-                      className="z-50 w-full text-black"
+                      className="z-10 w-full text-black"
                     />
                   </div>
 

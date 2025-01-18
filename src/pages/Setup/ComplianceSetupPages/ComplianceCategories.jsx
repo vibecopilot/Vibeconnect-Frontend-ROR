@@ -27,6 +27,7 @@ const ComplianceCategories = () => {
     try {
       const res = await postComplianceTags(formData);
       toast.success("Compliance Category added successfully");
+      fetchComplianceTree()
       setAddCategory(false);
     } catch (error) {
       console.log(error);

@@ -7096,7 +7096,7 @@ function App() {
             }
           />
           <Route
-            path="/compliance/compliance-details"
+            path="/compliance/compliance-details/:id"
             element={
               <ProtectedRoute>
                 <ComplianceDetails />
