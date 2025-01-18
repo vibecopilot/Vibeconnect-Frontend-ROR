@@ -1,10 +1,12 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import DataTable from "react-data-table-component";
 import { BsEye } from "react-icons/bs";
 import { PiPlusCircle } from "react-icons/pi";
 import { Link } from "react-router-dom";
 import Table from "../../../components/table/Table";
 import { useSelector } from "react-redux";
+import { getTransportation } from "../../../api";
+import { formatTime } from "../../../utils/dateUtils";
 
 const DailyPickup = () => {
   const columns = [
@@ -25,12 +27,12 @@ const DailyPickup = () => {
     },
     {
       name: "Pickup Location",
-      selector: (row) => row.pickUp,
+      selector: (row) => row.pickup_location,
       sortable: true,
     },
     {
       name: "Drop-off Location",
-      selector: (row) => row.drop,
+      selector: (row) => row.dropoff_location,
       sortable: true,
     },
     {
@@ -40,12 +42,12 @@ const DailyPickup = () => {
     },
     {
       name: "Pickup Time",
-      selector: (row) => row.time,
+      selector: (row) => formatTime(row.time),
       sortable: true,
     },
     {
       name: "Passengers",
-      selector: (row) => row.passengers,
+      selector: (row) => row.no_of_passengers,
       sortable: true,
     },
 
@@ -66,40 +68,20 @@ const DailyPickup = () => {
     },
   ];
 
-  const filteredData = [
-    {
-      id: 1,
-      pickUp: "Home",
-      drop: "Office",
-      date: "23/05/2024",
-      time: "08:00 AM",
-      passengers: 2,
-      status: "Upcoming",
-      approval: "Approved",
-    },
-    {
-      id: 2,
-      pickUp: "Home",
-      drop: "Office",
-      date: "13/05/2024",
-      time: "08:00 AM",
-      passengers: 2,
-      status: "",
-      approval: "Rejected",
-    },
-    {
-      id: 2,
-      pickUp: "Home",
-      drop: "Office",
-      date: "1/05/2024",
-      time: "08:00 AM",
-      passengers: 2,
-      status: "Completed",
-      approval: "Approved",
-    },
-  ];
-
-  
+  const [pickupData, setPickup] = useState([]);
+  const [filteredData, setSetFilteredData] = useState([]);
+  const fetchTransportationRequests = async () => {
+    try {
+      const res = await getTransportation("Daily_Pickup");
+      setPickup(res.data);
+      setSetFilteredData(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(() => {
+    fetchTransportationRequests();
+  }, []);
 
   // const handleSearch = (e) => {
   //     const searchValue = e.target.value;

@@ -1,7 +1,7 @@
 import React, { useRef, useState } from "react";
 import { MdClose, MdLogout } from "react-icons/md";
 import { useSelector } from "react-redux";
-import Table from "../../../components/table/Table";
+import Table from "../../components/table/Table";
 import { BsEye } from "react-icons/bs";
 import { Link, useNavigate } from "react-router-dom";
 import {

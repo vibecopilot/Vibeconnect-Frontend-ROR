@@ -2,7 +2,7 @@ import React from "react";
 import { MdLogout } from "react-icons/md";
 import { useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
-import { persistor } from "../../../store/store";
+import { persistor } from "../../store/store";
 const ComplianceVendorDashboard = () => {
   const themeColor = useSelector((state) => state.theme.color);
   const navigate = useNavigate();

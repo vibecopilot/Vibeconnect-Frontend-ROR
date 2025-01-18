@@ -1,13 +1,50 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FaCheck, FaTrash } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 import { PiPlusCircle } from "react-icons/pi";
 import { complianceData } from "../../../utils/complianceStaticData";
 import TreeNode from "../IncidentSetupPages/IncidentTree";
 import ComplianceTreeNode from "./ComplianceTreeNode";
+import toast from "react-hot-toast";
+import { getItemInLocalStorage } from "../../../utils/localStorage";
+import { getComplianceTree, postComplianceTags } from "../../../api";
 
 const ComplianceCategories = () => {
   const [addCategory, setAddCategory] = useState(false);
+  const companyId = getItemInLocalStorage("COMPANYID");
+  const [category, setCategory] = useState("");
+  const handleAddCategory = async () => {
+    if (!category) {
+    return toast.error("Please enter category");
+    }
+    const formData = new FormData();
+    formData.append("compliance_tag[name]", category);
+    // formData.append("compliance_tag[parent_id]", null);
+    formData.append("compliance_tag[resource_id]", companyId);
+    formData.append("compliance_tag[resource_type]", "Pms::CompanySetup");
+    formData.append("compliance_tag[company_id]", companyId);
+    formData.append("compliance_tag[tag_type]", "complianceCategory");
+    try {
+      const res = await postComplianceTags(formData);
+      toast.success("Compliance Category added successfully");
+      setAddCategory(false);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const [complianceCatData, setComplianceCatData] = useState([])
+const fetchComplianceTree = async()=>{
+  try {
+    const res = await getComplianceTree()
+    setComplianceCatData(res.data)
+  } catch (error) {
+    console.log(error)
+  }
+}
+  useEffect(()=>{
+    fetchComplianceTree()
+  },[])
 
   return (
     <section className="mx-2">
@@ -18,10 +55,15 @@ const ComplianceCategories = () => {
               <input
                 type="text"
                 placeholder="Category"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
                 className="border p-2 w-full border-gray-300 rounded-lg col-span-2"
               />
-              {/* <div className="flex gap-2 w-full"> */}
-              <button className="bg-green-500 text-white p-2 flex gap-2 items-center rounded-md  font-medium justify-center">
+
+              <button
+                className="bg-green-500 text-white p-2 flex gap-2 items-center rounded-md  font-medium justify-center"
+                onClick={handleAddCategory}
+              >
                 <FaCheck /> Submit
               </button>
               <button
@@ -31,7 +73,6 @@ const ComplianceCategories = () => {
                 <MdClose /> Cancel
               </button>
             </div>
-            // </div>
           )}
         </div>
         {/* sub Cat */}
@@ -52,8 +93,8 @@ const ComplianceCategories = () => {
       </div>
 
       <div className=" rounded-xl my-2 mb-10">
-        {complianceData?.map((node) => (
-          <ComplianceTreeNode key={node.id} node={node} />
+        {complianceCatData?.map((node) => (
+          <ComplianceTreeNode key={node.id} node={node} fetchComplianceTree={fetchComplianceTree} />
         ))}
       </div>
     </section>
