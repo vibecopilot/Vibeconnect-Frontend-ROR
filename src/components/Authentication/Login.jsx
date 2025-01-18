@@ -138,7 +138,7 @@ const Login = () => {
       toast.loading("Processing your data please wait...");
       if (userType === "pms_admin") {
         navigate("/dashboard");
-      }else if(userType === "house_keeping"){
+      }else if(userType === "vendor"){
         navigate("/compliance/vendor/dashboard")
       }
        else {

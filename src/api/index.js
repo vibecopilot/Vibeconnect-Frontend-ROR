@@ -7700,3 +7700,86 @@ export const getDeviceConfiguration = async (siteId) =>
       token: token,
     },
   });
+export const postComplianceTags = async (data) =>
+  axiosInstance.post(`/compliance_tags.json`, data, {
+    params: {
+      token: token,
+    },
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+export const getComplianceTags = async (tagType) =>
+  axiosInstance.get(`/compliance_tags.json?q[tag_type_cont]=${tagType}`, {
+    params: {
+      token: token,
+    },
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+export const getComplianceTagDetails = async (catId) =>
+  axiosInstance.get(`/compliance_tags/${catId}.json`, {
+    params: {
+      token: token,
+    },
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+export const getComplianceTree = async () =>
+  axiosInstance.get(
+    `/compliance_tags/tree_structure.json?tag_type=complianceCategory`,
+
+    {
+      params: {
+        token: token,
+      },
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+export const postComplianceTasks = async (data) =>
+  axiosInstance.post(`/compliance_tag_tasks.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const postComplianceConfiguration = async (data) =>
+  axiosInstance.post(`/compliance_configs.json`, data, {
+    params: {
+      token: token,
+    },
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+export const getComplianceConfiguration = async () =>
+  axiosInstance.get(
+    `/compliance_configs.json`,
+    {
+      params: {
+        token: token,
+      },
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+export const postComplianceCategoryConfiguration = async (data) =>
+  axiosInstance.post(`/compliance_config_tags.json`, data, {
+    params: {
+      token: token,
+    },
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+export const getFilteredUsers = async (userType) =>
+  axiosInstance.get(`/users.json?q[user_type_eq]=${userType}`, {
+    params: {
+      token: token,
+    },
+  });

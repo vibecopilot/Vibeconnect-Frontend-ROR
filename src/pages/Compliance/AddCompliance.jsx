@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Navbar from "../../components/Navbar";
 import { useSelector } from "react-redux";
 import { MdClose } from "react-icons/md";
@@ -6,80 +6,29 @@ import { FaCheck, FaTrash } from "react-icons/fa";
 import FileInputBox from "../../containers/Inputs/FileInputBox";
 import { Link } from "react-router-dom";
 import { PiPlusCircle } from "react-icons/pi";
-
+import { getComplianceTags, getFilteredUsers, postComplianceConfiguration } from "../../api";
+import Select from "react-select";
+import { getItemInLocalStorage } from "../../utils/localStorage";
+import toast from "react-hot-toast";
 const AddCompliance = () => {
-  const [checklist, setChecklist] = useState([""]);
   const [complianceFor, setComplianceFor] = useState([
     {
-      category: "",
-      subLevel2: "",
-      subLevel3: "",
-      subLevel4: "",
-      subLevel5: "",
+      category: {},
     },
   ]);
-  const [tasks, setTasks] = useState([
-    {
-      question: "",
-      answerType: "",
-      Mandatory: false,
-      weightage: "",
-    },
-  ]);
-  const [categories] = useState([
-    {
-      name: "Labor Law",
-      subcategories: [
-        {
-          name: "Minimum Wages Act",
-          subSubcategories: ["Minimum Wage", "Overtime Wage"],
-        },
-        {
-          name: "Factories Act",
-          subSubcategories: ["Work Hours", "Safety Standards"],
-        },
-      ],
-    },
-    {
-      name: "Tax Compliance",
-      subcategories: [
-        {
-          name: "Direct Taxes",
-          subSubcategories: ["Income Tax", "Corporate Tax"],
-        },
-        {
-          name: "Indirect Taxes",
-          subSubcategories: ["GST", "VAT"],
-        },
-      ],
-    },
-  ]);
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [selectedSubcategory, setSelectedSubcategory] = useState("");
-  const [selectedSubSubcategory, setSelectedSubSubcategory] = useState("");
-
-  const handleChecklistChange = (index, value) => {
-    const updatedChecklist = [...checklist];
-    updatedChecklist[index] = value;
-    setChecklist(updatedChecklist);
-  };
-
-  const addChecklistItem = () => setChecklist([...checklist, ""]);
-
-  const removeChecklistItem = (index) => {
-    const updatedChecklist = checklist.filter((_, i) => i !== index);
-    setChecklist(updatedChecklist);
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log("Form submitted", {
-      selectedCategory,
-      selectedSubcategory,
-      selectedSubSubcategory,
-      checklist,
-    });
-  };
+  const [formData, setFormData] = useState({
+    complianceName: "",
+    startDate: "",
+    endDate: "",
+    targetDays: "",
+    frequency: "",
+    riskLevel: "",
+    auditorId: "",
+    vendorId: "",
+    priority: "",
+    description: "",
+    attachments: [],
+  });
 
   const themeColor = useSelector((state) => state.theme.color);
 
@@ -87,11 +36,7 @@ const AddCompliance = () => {
     setComplianceFor([
       ...complianceFor,
       {
-        category: "",
-        subLevel2: "",
-        subLevel3: "",
-        subLevel4: "",
-        subLevel5: "",
+        category: {},
       },
     ]);
   };
@@ -102,20 +47,84 @@ const AddCompliance = () => {
     );
   };
 
-  const handleAddTasks = () => {
-    setTasks([
-      ...tasks,
-      {
-        answerType: "",
-        Mandatory: false,
-        question: "",
-        weightage: "",
-      },
-    ]);
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+  const siteId = getItemInLocalStorage("SITEID");
+
+  const handleCreateCompliance = async (e) => {
+    e.preventDefault();
+    const sendData = new FormData();
+    sendData.append("compliance_config[name]", formData.complianceName);
+    sendData.append("compliance_config[frequency]", formData.frequency);
+    sendData.append("compliance_config[due_in_days]", formData.targetDays);
+    sendData.append("compliance_config[priority]", formData.priority);
+    sendData.append("compliance_config[description]", formData.description);
+    sendData.append("compliance_config[start_date]", formData.startDate);
+    sendData.append("compliance_config[end_date]", formData.endDate);
+    sendData.append("compliance_config[site_id]", siteId);
+    formData.attachments.forEach((file, index) => {
+      sendData.append("attachments[]", file);
+    });
+    try {
+      const res = await postComplianceConfiguration(sendData);
+      const payload = {
+        compliance_config_tag: complianceFor.map((compliance) => ({
+          compliance_tag_id: compliance.category,
+          compliance_config_id: res?.data.id,
+        })),
+      };
+      try {
+        const res = await postComplianceConfiguration(payload);
+      } catch (error) {
+        console.log(error);
+      }
+      toast.success("Compliance configured successfully");
+    } catch (error) {
+      console.log(error);
+    }
   };
 
-  const handleDeleteTask = (indexToRemove) => {
-    setTasks(tasks.filter((_, index) => index !== indexToRemove));
+  const [selectedOption, setSelectedOption] = useState({});
+  const handleCategoryChange = (option, index) => {
+    setComplianceFor((prev) =>
+      prev.map((item, i) =>
+        i === index ? { ...item, category: option.value } : item
+      )
+    );
+  };
+  const [categories, setCategories] = useState([]);
+  const fetchComplianceCat = async () => {
+    try {
+      const res = await getComplianceTags("complianceCategory");
+      const allCategories = res?.data?.map((category) => ({
+        value: category.id,
+        label: category.name,
+      }));
+      setCategories(allCategories);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const fetchVendors = async()=>{
+    try {
+      const res = await getFilteredUsers("vendor")
+    } catch (error) {
+      console.log(error)
+    }
+  }
+  useEffect(() => {
+    fetchVendors()
+    fetchComplianceCat();
+  }, []);
+
+  const handleFileChange = (files, fieldName) => {
+    setFormData({
+      ...formData,
+      [fieldName]: files,
+    });
+    console.log(fieldName);
   };
 
   return (
@@ -129,8 +138,8 @@ const AddCompliance = () => {
           >
             Compliance Configuration
           </h1>
-          <form onSubmit={handleSubmit} className="space-y-4 my-4">
-            <div className="grid grid-cols-3 gap-2">
+          <form onSubmit={handleCreateCompliance} className="space-y-4 my-4">
+            <div className="grid md:grid-cols-3 gap-2">
               <div>
                 <label className="block text-gray-700 font-medium">
                   Compliance Name
@@ -140,6 +149,9 @@ const AddCompliance = () => {
                   className="w-full border border-gray-300 rounded-lg p-2"
                   placeholder="Enter name"
                   required
+                  value={formData.complianceName}
+                  onChange={handleChange}
+                  name="complianceName"
                 />
               </div>
 
@@ -154,8 +166,8 @@ const AddCompliance = () => {
                   type="date"
                   id="startDate"
                   name="startDate"
-                  // value={formData.dueDate}
-                  // onChange={(e) => handleDateChange(e.target.value)}
+                  value={formData.startDate}
+                  onChange={handleChange}
                   className="border border-gray-300 p-2 rounded-md w-full"
                 />
               </div>
@@ -170,8 +182,8 @@ const AddCompliance = () => {
                   type="date"
                   id="endDate"
                   name="endDate"
-                  // value={formData.dueDate}
-                  // onChange={(e) => handleDateChange(e.target.value)}
+                  value={formData.endDate}
+                  onChange={handleChange}
                   className="border border-gray-300 p-2 rounded-md w-full"
                 />
               </div>
@@ -188,10 +200,10 @@ const AddCompliance = () => {
                 <input
                   type="text"
                   id="targetDates"
-                  name="targetDates"
+                  name="targetDays"
                   placeholder="1 day"
-                  // value={formData.dueDate}
-                  // onChange={(e) => handleDateChange(e.target.value)}
+                  value={formData.targetDays}
+                  onChange={handleChange}
                   className="border border-gray-300 p-2 rounded-md w-full"
                 />
               </div>
@@ -202,15 +214,17 @@ const AddCompliance = () => {
                 <select
                   name="frequency"
                   id=""
-                  // value={formData.frequency}
-                  // onChange={handleChange}
+                  value={formData.frequency}
+                  onChange={handleChange}
                   className="border p-2 border-gray-500 rounded-md w-full"
                 >
                   <option value="">Select Frequency</option>
-                  <option value="Daily">Daily</option>
-                  <option value="Weekly">Weekly</option>
-                  <option value="Monthly">Monthly</option>
-                  <option value="Yearly">Yearly</option>
+                  {/* <option value="Daily">Daily</option>
+                  <option value="Weekly">Weekly</option> */}
+                  <option value="monthly">Monthly</option>
+                  <option value="quarterly">Quarterly</option>
+                  <option value="half_yearly">Half Yearly</option>
+                  <option value="yearly">Yearly</option>
                 </select>
               </div>
               <div>
@@ -223,8 +237,8 @@ const AddCompliance = () => {
                 <select
                   id="riskLevel"
                   name="riskLevel"
-                  //value={formData.riskLevel}
-                  //onChange={handleChange}
+                  value={formData.riskLevel}
+                  onChange={handleChange}
                   className="border border-gray-300 p-2 rounded-md w-full"
                 >
                   <option value="">Select risk level</option>
@@ -260,10 +274,16 @@ const AddCompliance = () => {
                 <label className="block text-gray-700 font-medium">
                   Priority
                 </label>
-                <select className="w-full border border-gray-300 rounded-lg p-2">
-                  <option>High</option>
-                  <option>Medium</option>
-                  <option>Low</option>
+                <select
+                  className="w-full border border-gray-300 rounded-lg p-2"
+                  value={formData.priority}
+                  onChange={handleChange}
+                  name="priority"
+                >
+                  <option value="">Select Priority</option>
+                  <option value="High">High</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Low">Low</option>
                 </select>
               </div>
             </div>
@@ -276,29 +296,22 @@ const AddCompliance = () => {
                   className="grid grid-cols-3 gap-2 border-b border-black my-1 p-2"
                   key={index}
                 >
-                  <div className="flex flex-col gap-1">
-                    <label htmlFor="" className="font-medium">
-                      Select Category
-                    </label>
-                    <select
-                      name=""
-                      id=""
-                      className="w-full border border-gray-300 rounded-lg p-2"
-                    >
-                      <option value="">Select Category</option>
-                    </select>
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <label htmlFor="" className="font-medium">
-                      Select Sub Category
-                    </label>
-                    <select
-                      name=""
-                      id=""
-                      className="w-full border border-gray-300 rounded-lg p-2"
-                    >
-                      <option value="">Select Sub Category</option>
-                    </select>
+                  <div className="col-span-2 z-10">
+                    <Select
+                      options={categories}
+                      onChange={(option) =>
+                        handleCategoryChange(option, index)
+                      }
+                      // value={
+                      //   categories.find(
+                      //     (cat) => cat.value === compliance.category
+                      //   ) || null
+                      // }
+                      noOptionsMessage={() => "No Categories available"}
+                      placeholder="Select Category"
+                      maxMenuHeight={300}
+                      className="z-50 w-full text-black"
+                    />
                   </div>
 
                   <div className="flex items-end justify-end text-red-500">
@@ -329,6 +342,9 @@ const AddCompliance = () => {
                 className="w-full border border-gray-300 rounded-lg p-2"
                 placeholder="Description"
                 rows="3"
+                value={formData.description}
+                onChange={handleChange}
+                name="description"
               ></textarea>
             </div>
             <div>
@@ -338,7 +354,11 @@ const AddCompliance = () => {
               >
                 Upload Documents
               </label>
-              <FileInputBox />
+              <FileInputBox
+                handleChange={(files) => handleFileChange(files, "attachments")}
+                fieldName={"attachments"}
+                isMulti={true}
+              />
             </div>
             <div className="flex justify-center my-2 gap-2">
               <Link

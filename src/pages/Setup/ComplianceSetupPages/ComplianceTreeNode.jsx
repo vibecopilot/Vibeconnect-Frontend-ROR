@@ -8,7 +8,7 @@ import { getIncidentCatDetails } from "../../../api";
 import ComplianceSubCatModal from "./ComplianceSubCatModal";
 import ComplianceTask from "./ComplianceTask";
 
-const ComplianceTreeNode = ({ node, fetchIncidentTree }) => {
+const ComplianceTreeNode = ({ node, fetchComplianceTree }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [modal, showModal] = useState(false);
   const toggleExpand = () => {
@@ -28,16 +28,24 @@ const ComplianceTreeNode = ({ node, fetchIncidentTree }) => {
       console.log(error);
     }
   };
-
-  const handleAdd = (parentId) => {
-    console.log("Add new item under parent ID:", parentId);
+  const [nodeId, setNodeId] = useState("");
+  const handleAddTask = (node_id) => {
+    setTask(true);
+    setNodeId(node_id);
+  };
+  const [parentId, setParentId] = useState("");
+  const handleAddSubCat = ( parent_id) => {
+    setAddSub(true);
+   
+    setParentId(parent_id);
   };
 
+  console.log(node);
   return (
     <div className="pl-2 border-gray-300">
       <div className="grid grid-cols-2 items-center space-x-2 border-b p-2">
         <div className="flex items-center">
-          {node.children && node.children.length > 0 && (
+          {node.children && node.children && (
             <button
               onClick={toggleExpand}
               className="text-sm text-green-600 focus:outline-none"
@@ -57,27 +65,27 @@ const ComplianceTreeNode = ({ node, fetchIncidentTree }) => {
             </span>
           )}
         </div>
-        <div className="flex justify-end">
+        {/* <div className="flex justify-end">
           <button
             onClick={() => handleEdit(node.id)}
             className="ml-auto text-blue-600 hover:text-blue-800 focus:outline-none"
           >
             <BiEdit size={15} />
           </button>
-        </div>
+        </div> */}
       </div>
 
-      {isExpanded && node.children && node.children.length > 0 && (
+      {isExpanded && node.children && (
         <div className="my-1">
           <div className="flex justify-end">
             <button
-              onClick={() => setTask(true)}
+              onClick={() => handleAddTask(node.id)}
               className="ml-4 text-green-600 hover:text-green-800 border-green-500 focus:outline-none border p-1 rounded-md font-medium flex items-center gap-2"
             >
               <BiPlusCircle size={15} className="inline" /> Add Task
             </button>
             <button
-              onClick={() => setAddSub(true)}
+              onClick={() => handleAddSubCat( node.id)}
               className="ml-4 text-green-600 hover:text-green-800 border-green-500 focus:outline-none border p-1 rounded-md font-medium flex items-center gap-2"
             >
               <BiPlusCircle size={15} className="inline" /> Add Sub Category
@@ -87,13 +95,26 @@ const ComplianceTreeNode = ({ node, fetchIncidentTree }) => {
             <ComplianceTreeNode
               key={child.id}
               node={child}
-              fetchIncidentTree={fetchIncidentTree}
+              fetchComplianceTree={fetchComplianceTree}
             />
           ))}
         </div>
       )}
-      {addCat && <ComplianceSubCatModal onclose={() => setAddSub(false)} />}
-      {task && <ComplianceTask onClose={() => setTask(false)} />}
+      {addCat && (
+        <ComplianceSubCatModal
+          onclose={() => setAddSub(false)}
+          parentId={parentId}
+          fetchComplianceTree={fetchComplianceTree}
+        
+        />
+      )}
+      {task && (
+        <ComplianceTask
+          onClose={() => setTask(false)}
+          nodeId={nodeId}
+          fetchComplianceTree={fetchComplianceTree}
+        />
+      )}
     </div>
   );
 };
