@@ -14,7 +14,9 @@ import { Download } from "lucide-react";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import toast from "react-hot-toast";
-import { getComplianceTasks } from "../../api";
+import { getComplianceListDetails, getVendorComplianceList } from "../../api";
+import { getItemInLocalStorage } from "../../utils/localStorage";
+import { error } from "highcharts";
 const ComplianceVendor = () => {
   const themeColor = useSelector((state) => state.theme.color);
   const navigate = useNavigate();
@@ -248,10 +250,12 @@ const ComplianceVendor = () => {
   };
 
   const [showTasks, setShowTasks] = useState(false);
-
+  const userId = getItemInLocalStorage("UserId");
+  const [complianceList, setComplianceList] = useState([]);
   const fetchComplianceTasks = async () => {
     try {
-      const res = await getComplianceTasks();
+      const res = await getVendorComplianceList(userId);
+      setComplianceList(res.data);
     } catch (error) {
       console.log(error);
     }
@@ -286,143 +290,56 @@ const ComplianceVendor = () => {
             placeholder="Search"
           />
           <div className="flex flex-col gap-2">
-            <div className="border-2 rounded-xl my-2 p-2">
-              <div className="flex justify-between">
-                <h2 className="font-semibold px-2 text-lg">
-                  Payment Of Gratuity Act, 1972
-                </h2>
-                <div className="flex justify-end items-center mx-2">
-                  <button
-                    onClick={handleSubmit}
-                    className="p-2 bg-green-400 text-white rounded-md font-medium flex items-center gap-2"
-                  >
-                    <FaCheck /> Submit
-                  </button>
-                </div>
-                {/* <Link
-                    // to={"/compliance/evidence"}
-                    className="p-2 bg-green-400 text-white rounded-md font-medium"
-                  >
-                    Proceed
-                  </Link>
-                </div> */}
-              </div>
-              <div className="bg-blue-100 p-2 rounded-md my-1 ">
-                <div className="grid md:grid-cols-3 justify-center gap-4 border-b border-gray-400 font-medium">
-                  <p className="font-medium">Payment Of Gratuity</p>
-                  <div className="grid grid-cols-3 gap-2">
-                    <p className="text-center">Risk</p>
-                    <p className="text-center">Critical</p>
-                   
-                  </div>
-                </div>
-                <div className="grid md:grid-cols-3">
-                  <div className="flex flex-col gap-2">
-                    <p className="flex items-center gap-1 text-gray-400">
-                      <IoLocationSharp /> Mumbai (India)
-                    </p>
-                    <p className="flex items-center gap-1 text-gray-400">
-                      STTGDC-Mumbai Time Square-OCS Group
-                    </p>
-                  </div>
-                  <div className="font-medium grid items-center grid-cols-3 gap-2">
-                    <p className="text-center  text-yellow-400 rounded-full px-4">
-                      Low
-                    </p>
-                    <p className="text-center text-green-400 rounded-full px-4">
-                      No
-                    </p>
-                    
-                  </div>
-                  <div className="flex flex-col md:flex-row items-center gap-2 justify-end ">
+            {complianceList.map((list) => (
+              <div className="border-2 rounded-xl my-2 p-2" key={list.id}>
+                <div className="flex justify-between">
+                  <h2 className="font-semibold px-2 text-lg">
+                    {list.compliance_config_name}
+                  </h2>
+                  <div className="flex justify-end items-center mx-2">
                     <Link
                       className=" font-medium bg-green-400 rounded-md text-white flex items-center gap-2 p-1 px-4"
                       // onClick={() => setShowTasks(true)}
-                      to={"/compliance/evidence"}
+                      to={`/compliance/evidence/${list.id}`}
                     >
-                      <FaTasks /> Tasks
+                      <FaTasks /> Perform
                     </Link>
-                    <button className=" font-medium bg-green-400 rounded-md text-white flex items-center gap-2 p-1 px-4">
-                      <FaDownload /> Format
-                    </button>
-                    <div className="bg-green-400 rounded-md text-white flex items-center gap-2 p-1 font-medium px-4">
-                      <input
-                        type="file"
-                        ref={fileInputRef}
-                        hidden
-                        onChange={handleFileChange}
-                      />
-                      <IoDocumentAttach
-                        onClick={handleIconClick}
-                        className="cursor-pointer "
-                      />
-                      Upload
-                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="bg-blue-100 p-2 rounded-md my-1 ">
-                <div className="grid grid-cols-3 justify-center gap-4 border-b border-gray-400 font-medium">
-                  <p className="font-medium">
-                    {" "}
-                    Nomination Form And Updation of Nomination Form
-                  </p>
-                  <div className="grid grid-cols-3 gap-2">
-                    <p className="text-center">Risk</p>
-                    <p className="text-center">Critical</p>
-                    <p className="text-center">Weightage</p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-3">
-                  <div className="flex flex-col gap-2">
-                    <p className="flex items-center gap-1 text-gray-400">
-                      <IoLocationSharp /> Mumbai (India)
-                    </p>
-                    <p className="flex items-center gap-1 text-gray-400">
-                      STTGDC-Mumbai Time Square-OCS Group
-                    </p>
-                  </div>
-                  <div className="font-medium grid items-center grid-cols-3 gap-2">
-                    <p className="text-center  text-red-400 rounded-full px-4">
-                      High
-                    </p>
-                    <p className="text-center text-red-400 rounded-full px-4">
-                      Yes
-                    </p>
-                    <p className="text-center  text-red-500 rounded-full px-4">
-                      15%
-                    </p>
-                  </div>
-                  <div className="flex items-center justify-end ">
-                    <div className="flex items-center gap-2 justify-end ">
-                      <button
-                        className=" font-medium bg-green-400 rounded-md text-white flex items-center gap-2 p-1 px-4"
-                        onClick={() => setShowTasks(true)}
-                      >
-                        <FaTasks /> Tasks
-                      </button>
-                      <button className=" font-medium bg-green-400 rounded-md text-white flex items-center gap-2 p-1 px-4">
-                        <FaDownload /> Format
-                      </button>
-                      <div className="bg-green-400 rounded-md text-white flex items-center gap-2 p-1 font-medium px-4">
-                        <input
-                          type="file"
-                          ref={fileInputRef}
-                          hidden
-                          onChange={handleFileChange}
-                        />
-                        <IoDocumentAttach
-                          onClick={handleIconClick}
-                          className="cursor-pointer "
-                        />
-                        Upload
+                {list?.compliance_tracker_tags_by_category?.map(
+                  (category) => (
+                    <div className="bg-blue-100 p-2 rounded-md my-1">
+                      <div className="grid md:grid-cols-3 justify-center gap-4 border-b border-gray-400 font-medium">
+                        <p className="font-medium">{category.name}</p>
+                        <div className="grid grid-cols-3 gap-2">
+                          <p className="text-center">Risk</p>
+                          <p className="text-center">Critical</p>
+                        </div>
+                      </div>
+                      <div className="grid md:grid-cols-3">
+                        {/* <div className="flex flex-col gap-2">
+                          <p className="flex items-center gap-1 text-gray-400">
+                            <IoLocationSharp /> Mumbai (India)
+                          </p>
+                          <p className="flex items-center gap-1 text-gray-400">
+                            STTGDC-Mumbai Time Square-OCS Group
+                          </p>
+                        </div> */}
+                        <div className="font-medium grid items-center grid-cols-3 gap-2">
+                          <p className="text-center text-yellow-400 rounded-full px-4">
+                            {list?.risk}
+                          </p>
+                          <p className="text-center text-green-400 rounded-full px-4">
+                            {list?.critical}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </div>
+                  )
+                )}
               </div>
-            </div>
-            <div className="border-2 rounded-xl my-2 p-2">
+            ))}
+            {/* <div className="border-2 rounded-xl my-2 p-2">
               <div className="flex justify-between">
                 <h2 className="font-semibold px-2 text-lg">
                   Employee State Insurance Act, 1948
@@ -499,7 +416,7 @@ const ComplianceVendor = () => {
                   </div>
                 </div>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

@@ -4,6 +4,7 @@ import { MdClose } from "react-icons/md";
 import { PiPlusCircle } from "react-icons/pi";
 import { getComplianceTagDetails, postComplianceTasks } from "../../../api";
 import toast from "react-hot-toast";
+import FileInputBox from "../../../containers/Inputs/FileInputBox";
 
 const ComplianceTask = ({ onClose, nodeId, fetchComplianceTree }) => {
   const [tasks, setTasks] = useState([
@@ -27,10 +28,24 @@ const ComplianceTask = ({ onClose, nodeId, fetchComplianceTree }) => {
     fetchComplianceCatDetails();
   }, []);
 
+  // const handleInputChange = (index, field, value) => {
+  //   const updatedTasks = [...tasks];
+  //   updatedTasks[index][field] =
+  //     field === "Mandatory" ? value.target.checked : value;
+  //   setTasks(updatedTasks);
+  // };
+
   const handleInputChange = (index, field, value) => {
     const updatedTasks = [...tasks];
-    updatedTasks[index][field] =
-      field === "Mandatory" ? value.target.checked : value;
+
+    if (field === "Mandatory") {
+      updatedTasks[index][field] = value.target.checked;
+    } else if (field === "attachments") {
+      updatedTasks[index][field] = Array.from(value); // Store files as an array
+    } else {
+      updatedTasks[index][field] = value;
+    }
+
     setTasks(updatedTasks);
   };
 
@@ -50,24 +65,56 @@ const ComplianceTask = ({ onClose, nodeId, fetchComplianceTree }) => {
     setTasks(tasks.filter((_, index) => index !== indexToRemove));
   };
 
+  // const handleCreateTask = async () => {
+  //   const payload = {
+  //     compliance_tag_tasks: tasks.map((task) => ({
+  //       name: task.question,
+  //       weightage: task.weightage,
+  //       compliance_tag_id: nodeId,
+  //       mandatory: task.Mandatory,
+  //     })),
+  //   };
+
+  //   try {
+  //     const res = await postComplianceTasks(payload);
+  //     toast.success("Task added successfully");
+  //     onClose();
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // };
+
   const handleCreateTask = async () => {
-    const payload = {
-      compliance_tag_tasks: tasks.map((task) => ({
-        name: task.question,
-        weightage: task.weightage,
-        compliance_tag_id: nodeId,
-        mandatory: task.Mandatory,
-      })),
-    };
+    const tasksPayload = tasks.map((task) => ({
+      name: task.question,
+      weightage: task.weightage,
+      mandatory: task.Mandatory,
+      compliance_tag_id: nodeId,
+    }));
+
+    const formData = new FormData();
+    tasksPayload.forEach((task, index) => {
+      Object.entries(task).forEach(([key, value]) => {
+        formData.append(`compliance_tag_task[${index}][${key}]`, value);
+      });
+
+      if (tasks[index].attachments) {
+        tasks[index].attachments.forEach((file) => {
+          formData.append(`compliance_tag_task[${index}][attachments][]`, file);
+        });
+      }
+    });
 
     try {
-      const res = await postComplianceTasks(payload);
-      toast.success("Task added successfully");
+      const response = await postComplianceTasks(formData);
+      toast.success("Tasks created successfully");
       onClose();
     } catch (error) {
-      console.log(error);
+      console.error("Error creating tasks:", error);
+      toast.error("Failed to create tasks");
     }
   };
+
   return (
     <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-30 backdrop-blur-sm z-20">
       <div className="bg-white  rounded-xl ">
@@ -75,7 +122,7 @@ const ComplianceTask = ({ onClose, nodeId, fetchComplianceTree }) => {
           <PiPlusCircle /> Tasks for "{catName}"
         </h2>
 
-        <div className="overflow-y-auto max-h-96 hide-scrollbar md:w-auto min-w-[40rem] p-4 flex flex-col gap-5">
+        <div className="overflow-y-auto max-h-96 hide-scrollbar md:w-auto min-w-[40rem] p-2 flex flex-col gap-5">
           <div className="border rounded-xl p-2">
             {tasks.map((task, index) => (
               <div
@@ -125,7 +172,18 @@ const ComplianceTask = ({ onClose, nodeId, fetchComplianceTree }) => {
                   />
                   <label htmlFor="mandatory">Mandatory</label>
                 </div>
-                <div className="flex justify-end items-end">
+                <div className="col-span-2 flex flex-col gap-1">
+                  <h2 className="border-b font-medium border-black">
+                    Upload format
+                  </h2>
+                  <FileInputBox
+                    handleChange={(files) =>
+                      handleInputChange(index, "attachments", files)
+                    }
+                    fieldName={`attachments-${index}`}
+                  />
+                </div>
+                <div className="flex justify-end items-end col-span-2">
                   <button
                     type="button"
                     className="text-red-400"

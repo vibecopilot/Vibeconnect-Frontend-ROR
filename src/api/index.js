@@ -7745,6 +7745,9 @@ export const postComplianceTasks = async (data) =>
     params: {
       token: token,
     },
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
   });
 export const postComplianceConfiguration = async (data) =>
   axiosInstance.post(`/compliance_configs.json`, data, {
@@ -7786,8 +7789,23 @@ export const getFilteredUsers = async (userType) =>
       token: token,
     },
   });
-export const getComplianceTasks = async () =>
-  axiosInstance.get(`/compliance_trackers.json`, {
+export const getVendorComplianceList = async (assignedId) =>
+  axiosInstance.get(
+    `/compliance_trackers.json?q[complicance_config_assign_to_id_eq]=${assignedId}`,
+    {
+      params: {
+        token: token,
+      },
+    }
+  );
+export const getComplianceListDetails = async (taskId) =>
+  axiosInstance.get(`/compliance_trackers/${taskId}.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const postComplianceEvidence = async (data) =>
+  axiosInstance.post(`/compliance_tracker_tags.json`, data, {
     params: {
       token: token,
     },

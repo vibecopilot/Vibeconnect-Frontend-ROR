@@ -238,7 +238,7 @@ const AssociatedSites = () => {
         latitude: "",
         longitude: "",
         radius: "",
-        clientName: "",
+        
         aadhar: false,
         BVG: false,
         esic: false,
