@@ -735,10 +735,10 @@ import Compliance from "./pages/Compliance/Compliance.jsx";
 import ComplianceSetup from "./pages/Setup/ComplianceSetupPages/ComplianceSetup.jsx";
 import AddCompliance from "./pages/Compliance/AddCompliance.jsx";
 import SiteEmployee from "./pages/AdminHrms/Employee/SiteEmployee.jsx";
-import ComplianceVendor from "./pages/Setup/ComplianceSetupPages/ComplianceVendor.jsx";
+import ComplianceVendor from "./pages/Compliance/ComplianceVendor.jsx";
 import ComplianceEvidence from "./pages/Setup/ComplianceSetupPages/ComplianceEvidence.jsx";
 import ComplianceDetails from "./pages/Compliance/ComplianceDetails.jsx";
-import ComplianceVendorDashboard from "./pages/Setup/ComplianceSetupPages/ComplianceVendorDashboard.jsx";
+import ComplianceVendorDashboard from "./pages/Compliance/ComplianceVendorDashboard.jsx";
 // new admin hrms
 
 function App() {
@@ -7088,7 +7088,7 @@ function App() {
             }
           />
           <Route
-            path="/compliance/evidence"
+            path="/compliance/evidence/:id"
             element={
               <ProtectedRoute>
                 <ComplianceEvidence />
@@ -7096,7 +7096,7 @@ function App() {
             }
           />
           <Route
-            path="/compliance/compliance-details"
+            path="/compliance/compliance-details/:id"
             element={
               <ProtectedRoute>
                 <ComplianceDetails />
