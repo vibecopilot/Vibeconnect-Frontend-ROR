@@ -7810,3 +7810,13 @@ export const postComplianceEvidence = async (data) =>
       token: token,
     },
   });
+
+  export const getReviewerAssignments = async (complianceId, auditorId) =>
+  axiosInstance.get(
+    `/compliance_trackers/${complianceId}.json?q[compliance_config_reviewer_id_eq]=${auditorId}`,
+    {
+      params: {
+        token: token,
+      },
+    }
+  );

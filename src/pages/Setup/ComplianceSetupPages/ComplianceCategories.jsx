@@ -15,7 +15,7 @@ const ComplianceCategories = () => {
   const [category, setCategory] = useState("");
   const handleAddCategory = async () => {
     if (!category) {
-    return toast.error("Please enter category");
+      return toast.error("Please enter category");
     }
     const formData = new FormData();
     formData.append("compliance_tag[name]", category);
@@ -27,25 +27,25 @@ const ComplianceCategories = () => {
     try {
       const res = await postComplianceTags(formData);
       toast.success("Compliance Category added successfully");
-      fetchComplianceTree()
+      fetchComplianceTree();
       setAddCategory(false);
     } catch (error) {
       console.log(error);
     }
   };
 
-  const [complianceCatData, setComplianceCatData] = useState([])
-const fetchComplianceTree = async()=>{
-  try {
-    const res = await getComplianceTree()
-    setComplianceCatData(res.data)
-  } catch (error) {
-    console.log(error)
-  }
-}
-  useEffect(()=>{
-    fetchComplianceTree()
-  },[])
+  const [complianceCatData, setComplianceCatData] = useState([]);
+  const fetchComplianceTree = async () => {
+    try {
+      const res = await getComplianceTree();
+      setComplianceCatData(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(() => {
+    fetchComplianceTree();
+  }, []);
 
   return (
     <section className="mx-2">
@@ -93,11 +93,19 @@ const fetchComplianceTree = async()=>{
         </div> */}
       </div>
 
-      <div className=" rounded-xl my-2 mb-10">
-        {complianceCatData?.map((node) => (
-          <ComplianceTreeNode key={node.id} node={node} fetchComplianceTree={fetchComplianceTree} />
-        ))}
-      </div>
+      {complianceCatData.length !== 0 ? (
+        <div className=" rounded-xl my-2 mb-10">
+          {complianceCatData?.map((node) => (
+            <ComplianceTreeNode
+              key={node.id}
+              node={node}
+              fetchComplianceTree={fetchComplianceTree}
+            />
+          ))}
+        </div>
+      ) : (
+        <p className="text-center my-5">No Categories Available</p>
+      )}
     </section>
   );
 };

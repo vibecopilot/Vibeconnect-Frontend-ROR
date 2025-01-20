@@ -9,6 +9,7 @@ import { BsEye } from "react-icons/bs";
 import { IoFilter } from "react-icons/io5";
 import { MdClose } from "react-icons/md";
 import { getComplianceConfiguration } from "../../api";
+import { getItemInLocalStorage } from "../../utils/localStorage";
 
 const Compliance = () => {
   const [filter, setFilter] = useState(false);
@@ -107,92 +108,14 @@ const Compliance = () => {
     //   sortable: true,
     // },
   ];
-  const data = [
-    {
-      site: "STTGDC-Delhi Sarswati Vihar OCS Group (STTGDC-Delhi Sarswati Vihar)",
-      name: "Contractor Labour Act",
-      category: "Labor Law",
-
-      dueDate: "10-03-2025",
-      priority: "High",
-      riskLevel: "High",
-      assignedTo: "Aniket Parkar",
-      status: "100% Completed",
-    },
-    {
-      site: "STTGDC-Delhi Sarswati Vihar OCS Group (STTGDC-Delhi Sarswati Vihar)",
-      name: "GDPR Compliance",
-      category: "Data Protection",
-
-      dueDate: "01-02-2025",
-      priority: "Medium",
-      riskLevel: "Medium",
-      assignedTo: "Mohit Yadav",
-      status: "25% Completed",
-    },
-    {
-      site: "STTGDC-Delhi Sarswati Vihar OCS Group (STTGDC-Delhi Sarswati Vihar)",
-      name: "HIPAA Compliance",
-      category: "Healthcare",
-
-      dueDate: "15-03-2025",
-      priority: "High",
-      riskLevel: "High",
-      assignedTo: "Aman Raturi",
-      status: "25% Completed",
-    },
-    {
-      site: "STTGDC-Delhi Sarswati Vihar OCS Group (STTGDC-Delhi Sarswati Vihar)",
-      name: "PCI DSS Compliance",
-      category: "Payment Card Industry",
-
-      dueDate: "25-1-2025",
-      priority: "Low",
-      riskLevel: "Medium",
-      assignedTo: "Ravindar Sahani",
-      status: "25% Completed",
-    },
-    {
-      site: "STTGDC-Delhi Sarswati Vihar OCS Group (STTGDC-Delhi Sarswati Vihar)",
-      name: "ISO 27001 Compliance",
-      category: "Information Security",
-
-      dueDate: "30-11-2024",
-      priority: "High",
-      riskLevel: "High",
-      assignedTo: "Kunal Sah",
-      status: "50% Completed",
-    },
-    {
-      site: "STTGDC-Delhi Sarswati Vihar OCS Group (STTGDC-Delhi Sarswati Vihar)",
-      name: "CCPA Compliance",
-      category: "Data Privacy",
-
-      dueDate: "01-10-2024",
-      priority: "Medium",
-      riskLevel: "Medium",
-      assignedTo: "Pankti Seth",
-      status: "100% Completed",
-    },
-    {
-      site: "STTGDC-Delhi Sarswati Vihar OCS Group (STTGDC-Delhi Sarswati Vihar)",
-      name: "FISMA Compliance",
-      category: "US Government",
-
-      dueDate: "20-08-2024",
-      priority: "High",
-      riskLevel: "High",
-      assignedTo: "Aman Raturi",
-      status: "100% Completed",
-    },
-  ];
+ 
 
   const themeColor = useSelector((state) => state.theme.color);
-
+const userType = getItemInLocalStorage("USERTYPE")
   return (
     <section className="flex">
       <Navbar />
-      <div className=" w-full flex mx-3  flex-col overflow-hidden">
+      <div className=" w-full flex mx-3 mb-5 flex-col overflow-hidden">
         <div></div>
         <div className="my-2 flex justify-end gap-2">
           {!filter && (
@@ -203,12 +126,12 @@ const Compliance = () => {
               <IoFilter /> Filter
             </button>
           )}
-          <Link
+         {userType === "pms_admin" && <Link
             to={"/compliance/add-compliance"}
             className="flex items-center gap-2 bg-green-500 p-2 px-4 rounded-md font-medium text-white"
           >
             <PiPlusCircle size={20} /> Add
-          </Link>
+          </Link>}
         </div>
         {filter && (
           <div className="mb-5 border p-2 rounded-md">
