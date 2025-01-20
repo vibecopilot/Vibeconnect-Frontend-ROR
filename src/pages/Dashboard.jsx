@@ -122,7 +122,7 @@ const Dashboard = () => {
       // }}
     >
       <Navbar />
-      <div className=" w-full flex lg:mx-3 flex-col overflow-hidden">
+      <div className=" w-full flex lg:mx-3 flex-col overflow-hidden mb-10">
         <header
           style={{ background: themeColor }}
           className="w-full h-10 rounded-md  my-1 flex justify-between items-center"
@@ -172,7 +172,7 @@ const Dashboard = () => {
         <div className="w-full flex mx-3 flex-col p-2  ">
           <HighchartsComponent />
         </div>
-        {feat.includes("permits") && (
+        {feat.includes("compliance") && (
           <div className="w-full flex flex-col p-2  ">
             <h2 className="border-b-2 border-black font-medium mb-2">
               Compliance

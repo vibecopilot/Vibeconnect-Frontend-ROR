@@ -1,8 +1,66 @@
-import React from "react";
+import React, { useState } from "react";
+import toast from "react-hot-toast";
 import { FaCheck, FaStamp } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
+import { getItemInLocalStorage } from "../../utils/localStorage";
+import { postComplianceEvidence } from "../../api";
 
-const ComplianceAudit = ({ onClose }) => {
+const ComplianceAudit = ({ onClose, trackerId, tagId, taskId }) => {
+  const [formData, setFormData] = useState({
+    status: "",
+    observation: "",
+    recommendation: "",
+    objective: "",
+  });
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+  const userId = getItemInLocalStorage("UserId");
+  const handleAuditSubmission = async () => {
+    if (!formData.status) {
+      return toast.error("Please select status");
+    }
+
+    const formDataToSend = new FormData();
+
+    formDataToSend.append(
+      "compliance_tracker_tags[][compliance_tracker_id]",
+      trackerId
+    );
+
+    formDataToSend.append("compliance_tracker_tags[][submitted_by_id]", userId);
+    formDataToSend.append(
+      "compliance_tracker_tags[][compliance_tag_id]",
+      tagId
+    );
+    formDataToSend.append(
+      "compliance_tracker_tags[][observation]",
+      formData.observation
+    );
+    formDataToSend.append(
+      "compliance_tracker_tags[][recommendation]",
+      formData.recommendation
+    );
+    formDataToSend.append(
+      "compliance_tracker_tags[][objective]",
+      formData.objective
+    );
+    formDataToSend.append("compliance_tracker_tags[][status]", formData.status);
+
+    formDataToSend.append(
+      "compliance_tracker_tags[][compliance_tag_task_id]",
+      taskId
+    );
+
+    try {
+      const response = await postComplianceEvidence(formDataToSend);
+      toast.success("Audit submitted successfully!");
+      onClose();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex z-10 justify-center items-center">
       <div className="bg-white p-5 rounded-xl shadow-md w-[40rem]">
@@ -15,14 +73,16 @@ const ComplianceAudit = ({ onClose }) => {
               Compliance Status
             </label>
             <select
-              name=""
+              name="status"
+              value={formData.status}
+              onChange={handleChange}
               id=""
               className="border border-gray-400 rounded-md p-2 "
             >
               <option value="">Select Status</option>
-              <option value="">Complied</option>
-              <option value="">Not Valid</option>
-              <option value="">Document Missing</option>
+              <option value="complied">Complied</option>
+              <option value="not_valid">Not Valid</option>
+              <option value="document_missing">Document Missing</option>
             </select>
           </div>
           <div className="flex flex-col gap-1">
@@ -30,7 +90,9 @@ const ComplianceAudit = ({ onClose }) => {
               Observation
             </label>
             <textarea
-              name=""
+              name="observation"
+              value={formData.observation}
+              onChange={handleChange}
               id=""
               cols={10}
               rows={3}
@@ -43,7 +105,9 @@ const ComplianceAudit = ({ onClose }) => {
               Recommendation
             </label>
             <textarea
-              name=""
+              name="recommendation"
+              value={formData.recommendation}
+              onChange={handleChange}
               id=""
               cols={10}
               rows={3}
@@ -56,7 +120,9 @@ const ComplianceAudit = ({ onClose }) => {
               Objectives Of The Audit
             </label>
             <textarea
-              name=""
+              name="objective"
+              value={formData.objective}
+              onChange={handleChange}
               id=""
               cols={10}
               rows={3}
@@ -72,10 +138,12 @@ const ComplianceAudit = ({ onClose }) => {
           >
             <MdClose /> Cancel
           </button>
-          <button className="bg-green-400 text-white rounded-md p-2 flex items-center gap-2">
+          <button
+            className="bg-green-400 text-white rounded-md p-2 flex items-center gap-2"
+            onClick={handleAuditSubmission}
+          >
             <FaCheck /> Submit
           </button>
-         
         </div>
       </div>
     </div>
