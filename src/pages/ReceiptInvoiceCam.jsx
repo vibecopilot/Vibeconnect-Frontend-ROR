@@ -247,12 +247,10 @@ function ReceiptInvoiceCam() {
           item?.invoice_number
             ?.toLowerCase()
             .includes(searchValue.toLowerCase()) ||
-          item?.invoice_number
+          item?.receipt_number
             ?.toLowerCase()
             .includes(searchValue.toLowerCase()) ||
-          item?.invoice_number
-            ?.toLowerCase()
-            .includes(searchValue.toLowerCase())
+          item?.payment_mode?.toLowerCase().includes(searchValue.toLowerCase())
       );
       setFilterSearchData(filterResult);
     }
@@ -267,7 +265,7 @@ function ReceiptInvoiceCam() {
             type="text"
             onChange={handleSearch}
             value={searchText}
-            placeholder="Search By Invoice No, Payment Status"
+            placeholder="Search By Invoice No, Receipt No, Payment Mode"
             className=" p-2 md:w-96 border-gray-300 rounded-md placeholder:text-sm outline-none border "
           />
           <div className="md:flex grid grid-cols-2 sm:flex-row my-2 flex-col gap-2">

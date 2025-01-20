@@ -7589,16 +7589,22 @@ export const gatReceiptInvoiceFilter = async (
   );
 
 export const getCamBillInvoiceDownload = async (ids) =>
-  axiosInstance.get(`/cam_bills/pdf?`, {
+  axiosInstance.get(`/cam_bills/pdf?id=${ids}`, {
     responseType: "blob",
     params: {
-      ids: `[${ids}]`, // Adding square brackets around ids
       token: token,
     },
   });
 
 export const getCamLogo = async () =>
   axiosInstance.get(`/get_logo.json?`, {
+    params: {
+      token: token,
+    },
+  });
+
+export const getReceiveInvoiceData = async (id) =>
+  axiosInstance.get(`/invoice_receipts/${id}.json`, {
     params: {
       token: token,
     },

@@ -56,7 +56,7 @@ function CAMBillingDetails() {
       setInvoiceReceipt(response.data.invoice_receipts);
       setReceivePaymentDetails(response.data.payments);
     } catch (err) {
-      console.error("Failed to fetch Address Setup data:", err);
+      console.error("Failed to fetch Cam Billing data:", err);
     }
   };
 
@@ -226,6 +226,17 @@ function CAMBillingDetails() {
   //     console.error("Failed to fetch Receipt Payment data:", error);
   //   }
   // };
+
+  // const handleClick = (image_path) => {
+  //   console.log(image_path);
+  //   window.location.href = `${domainPrefix}${image_path}`;
+  // };
+
+  const handleClick = (image_path) => {
+    console.log(image_path);
+    window.open(`${domainPrefix}${image_path}`, "_blank");
+  };
+
   const columnsTransaction = [
     {
       name: "Date",
@@ -253,8 +264,14 @@ function CAMBillingDetails() {
       sortable: true,
     },
     {
-      name: "Image",
-      selector: (row) => row.image_url,
+      name: "Attachments",
+      selector: (row) => (
+        <div>
+          <button onClick={() => handleClick(row.image_url)}>
+            <FaRegFileAlt />
+          </button>
+        </div>
+      ),
       sortable: true,
     },
   ];
@@ -274,7 +291,7 @@ function CAMBillingDetails() {
       );
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", "cam_invoice_file.xlsx");
+      link.setAttribute("download", "cam_invoice_file.pdf");
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -286,6 +303,25 @@ function CAMBillingDetails() {
       toast.error("Something went wrong, please try again");
     }
   };
+
+  const getStatusButton = () => {
+    const status = camBillingAllData.status;
+
+    if (status === "pending" || status === "recall" || status === null) {
+      return (
+        <button className="bg-black text-white p-2 px-5 w-fit rounded-md">
+          Unpaid
+        </button>
+      );
+    } else {
+      return (
+        <button className="bg-green-500 text-white p-2 px-5 w-fit rounded-md">
+          Paid
+        </button>
+      );
+    }
+  };
+  console.log(camBillingAllData.status);
   return (
     <section className="flex">
       <div className="hidden md:block">
@@ -346,9 +382,7 @@ function CAMBillingDetails() {
         </div>
         <div className="grid md:grid-cols-2 mx-5 my-5">
           <div className="space-y-2">
-            <h2 className="bg-black text-white p-2 px-5 w-fit rounded-md">
-              Unpaid
-            </h2>
+            {getStatusButton()}
             <div className="">
               {/* <img src="/building.jpg" className="w-60 h-40 rounded-md"></img> */}
               {logo?.logo_url ? (
