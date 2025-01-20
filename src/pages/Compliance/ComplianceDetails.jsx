@@ -1,31 +1,72 @@
 import React, { useEffect, useState } from "react";
-import { FaCheck } from "react-icons/fa";
+import { FaCheck, FaRegFileAlt } from "react-icons/fa";
 import { IoDocumentAttach } from "react-icons/io5";
 import { LuStamp } from "react-icons/lu";
-import { MdClose } from "react-icons/md";
+import { MdClose, MdOutlinePendingActions } from "react-icons/md";
 import { useSelector } from "react-redux";
 import { Link, useParams } from "react-router-dom";
 import ComplianceAudit from "./ComplianceAudit";
 import { GrCertificate } from "react-icons/gr";
-import { getComplianceConfigurationDetails } from "../../api";
-import { dateFormat, dateFormatSTD } from "../../utils/dateUtils";
+import {
+  domainPrefix,
+  getComplianceConfigurationDetails,
+  getReviewerAssignments,
+} from "../../api";
+import {
+  dateFormat,
+  dateFormatSTD,
+  dateTimeFormat,
+} from "../../utils/dateUtils";
+import { getItemInLocalStorage } from "../../utils/localStorage";
 
 const ComplianceDetails = () => {
   const themeColor = useSelector((state) => state.theme.color);
   const [modal, setModal] = useState(false);
   const { id } = useParams();
+  const userId = getItemInLocalStorage("UserId");
   const [details, setDetails] = useState({});
+  const [assignments, setAssignments] = useState([]);
   useEffect(() => {
     const fetchComplianceDetails = async () => {
       try {
         const res = await getComplianceConfigurationDetails(id);
-        setDetails(res.data);
+        setDetails(res?.data);
+        setAssignments(res?.data?.compliance_trackers);
       } catch (error) {
         console.log(error);
       }
     };
+    // const fetchReviewerAssignments = async () => {
+    //   try {
+    //     const res = await getReviewerAssignments(userId);
+    //   } catch (error) {
+    //     console.log(error);
+    //   }
+    // };
+    // fetchReviewerAssignments();
     fetchComplianceDetails();
   }, []);
+  console.log(assignments);
+  const isImage = (filePath) => {
+    const imageExtensions = ["jpg", "jpeg", "png", "gif", "bmp", "svg"];
+    const extension = filePath.split(".").pop().split("?")[0].toLowerCase();
+    return imageExtensions.includes(extension);
+  };
+  const getFileName = (filePath) => {
+    return filePath.split("/").pop().split("?")[0];
+  };
+  const [complianceTrackerId, setComplianceTrackerId] = useState("");
+  const [complianceTagId, setComplianceTagId] = useState("");
+  const [complianceTagTaskId, setComplianceTagTaskId] = useState("");
+
+  const handleComplianceAuditModal = (trackerId, TagId, TagTaskId) => {
+    console.log("tracker: ", trackerId, "Tag :", TagId, "task:", TagTaskId);
+    setModal(true);
+    setComplianceTrackerId(trackerId);
+    setComplianceTagId(TagId);
+    setComplianceTagTaskId(TagTaskId);
+  };
+
   return (
     <section className="mb-10">
       <div
@@ -97,71 +138,118 @@ const ComplianceDetails = () => {
         </h2>
       </div>
       <div className="border p-2 rounded-xl m-2 flex flex-col gap-2">
-        <div className="bg-gray-50 rounded-xl p-2">
-          <div className="grid grid-cols-4 border-b">
-            <h2 className="font-medium text-green-500">
-              Q1. Attendance or Muster Roll
-            </h2>
-            <p className="text-center font-medium">Weightage : 10%</p>
-            <p className="text-right font-medium">Mandatory : Yes</p>
-            <p className="flex justify-end font-medium gap-2 items-center text-right text-green-500">
-              <FaCheck /> Complied
-            </p>
-          </div>
-          <div className="p-2 bg-blue-50 m-1">
-            <h2 className="font-medium border-b mb-1">Answer</h2>
-            <p className="bg-violet-100 p-2 rounded-md text-black">
-              Remark: Attendance or Muster Roll
-            </p>
-
-            <div className="flex items-center gap-4">
-              <p className="flex flex-col gap-2 items-start m-2">
-                <IoDocumentAttach className="text-yellow-400" size={40} />
-                Attendance_or_Muster_Roll.pdf
-              </p>
-              <p className="flex flex-col gap-2 items-start m-2">
-                <IoDocumentAttach className="text-yellow-400" size={40} />
-                Attendance_or_Muster_Roll.pdf
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-gray-50 rounded-xl p-2">
-          <div className="grid grid-cols-4 border-b">
-            <h2 className="font-medium  text-green-500">
-              Q1. Attendance or Muster Roll
-            </h2>
-            <p className="text-center font-medium">Weightage : 10%</p>
-            <p className="text-right font-medium">Mandatory : Yes</p>
-            <div className="flex justify-end">
-              <button
-                className="bg-white shadow-custom-all-sides hover:bg-gray-50 rounded-full text-green-400 flex items-center gap-2 font-medium px-4 "
-                onClick={() => setModal(true)}
+        {assignments?.map((assignment) =>
+          assignment?.compliance_tracker_tags_by_category?.map((category) =>
+            category?.compliance_tracker_tags?.map((tags) => (
+              <div
+                className="bg-gray-50 rounded-xl p-2"
+                key={category?.id || category?.name}
               >
-                <LuStamp /> Verify
-              </button>
-            </div>
-          </div>
-          <div className="p-2 bg-blue-50 m-1">
-            <h2 className="font-medium border-b mb-1">Answer</h2>
-            <p className="bg-violet-100 p-2 rounded-md text-black">
-              Remark: Attendance or Muster Roll
-            </p>
-            <div className="flex items-center gap-4">
-              <p className="flex flex-col gap-2 items-start m-2">
-                <IoDocumentAttach className="text-yellow-400" size={40} />
-                Attendance_or_Muster_Roll.pdf
-              </p>
-              <p className="flex flex-col gap-2 items-start m-2">
-                <IoDocumentAttach className="text-yellow-400" size={40} />
-                Attendance_or_Muster_Roll.pdf
-              </p>
-            </div>
-          </div>
-        </div>
+                <div className="grid grid-cols-4 border-b">
+                  <h2 className="font-medium text-green-500">
+                    {category?.name}
+                  </h2>
+                  <p className="text-center font-medium">
+                    Weightage : {tags?.task?.weightage}%
+                  </p>
+                  <p className="text-right font-medium">
+                    Mandatory : {tags?.task?.mandatory ? "Yes" : "No"}
+                  </p>
+                  <div className="flex justify-end gap-2">
+                    <p
+                      className={`flex justify-end font-medium gap-2 items-center text-right ${
+                        assignment?.status === "pending"
+                          ? "text-red-500"
+                          : "text-green-500"
+                      }`}
+                    >
+                      {assignment?.status === "pending" ? (
+                        <MdOutlinePendingActions />
+                      ) : (
+                        <FaCheck />
+                      )}
+                      {assignment?.status &&
+                        assignment?.status.charAt(0).toUpperCase() +
+                          assignment?.status.slice(1)}
+                    </p>
+                    <button
+                      className="bg-white shadow-custom-all-sides hover:bg-gray-50 rounded-full text-green-400 flex items-center gap-2 font-medium px-4 "
+                      onClick={() =>
+                        handleComplianceAuditModal(
+                          tags.compliance_tracker_id,
+                          tags.compliance_tag_id,
+                          tags.compliance_tag_task_id
+                        )
+                      }
+                    >
+                      <LuStamp /> Verify
+                    </button>
+                  </div>
+                </div>
+                <div className="p-2 bg-blue-50 m-1">
+                  <h2 className="font-medium border-b mb-1">Answer</h2>
+                  <p className="bg-violet-100 p-2 rounded-md text-black">
+                    Remark: {tags?.comment}
+                  </p>
+                  <div className="flex items-center gap-4">
+                    <div className="flex  gap-4 flex-wrap my-4 items-center  text-center">
+                      {tags?.attachments?.map((other, index) => (
+                        <div key={other.id} className="">
+                          {isImage(domainPrefix + other.image_url) ? (
+                            <img
+                              src={domainPrefix + other.image_url}
+                              alt={`Attachment ${index + 1}`}
+                              className="w-40 h-28 object-cover rounded-md"
+                              onClick={() =>
+                                window.open(
+                                  domainPrefix + other.image_url,
+                                  "_blank"
+                                )
+                              }
+                            />
+                          ) : (
+                            <a
+                              href={domainPrefix + other.image_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="attachment-link hover:text-blue-400 transition-all duration-300  text-center flex flex-col items-center  "
+                            >
+                              <IoDocumentAttach
+                                size={40}
+                                className="text-yellow-400"
+                              />
+                              {getFileName(other.image_url)}
+                            </a>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium">Submitted by : </p>
+                      <p>{tags?.submitted_by_name}</p>
+                    </div>
+                    <div className="flex items-center">
+                      <p className="font-medium">Submitted on : </p>
+                      <p>{dateTimeFormat(tags?.submitted_on)}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))
+          )
+        )}
       </div>
 
-      {modal && <ComplianceAudit onClose={() => setModal(false)} />}
+      {modal && (
+        <ComplianceAudit
+          onClose={() => setModal(false)}
+          tagId={complianceTagId}
+          taskId={complianceTagTaskId}
+          trackerId={complianceTrackerId}
+        />
+      )}
     </section>
   );
 };
