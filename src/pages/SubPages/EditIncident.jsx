@@ -8,15 +8,18 @@ import {
   getIncidentDetails,
   getIncidentSubTags,
   getIncidentTags,
+  updateIncidents
 } from "../../api";
 import { useNavigate, useParams } from "react-router-dom";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import FileInputBox from "../../containers/Inputs/FileInputBox";
 import { MdClose } from "react-icons/md";
+import toast from "react-hot-toast";
 const EditIncident = () => {
   const [incident, setIncident] = useState([{ name: "", mobile: "" }]);
   const [checkbutton, setCheckbutton] = useState();
   const [medical, setMedical] = useState();
+  const { id } = useParams();
   const [investigation, setInvestigation] = useState([
     { name1: "", mobile1: "" },
   ]);
@@ -56,6 +59,7 @@ const EditIncident = () => {
     newInvestigation.splice(index, 1);
     setInvestigation(newInvestigation);
   };
+
   const themeColor = useSelector((state) => state.theme.color);
 
   const [formData, setFormData] = useState({
@@ -76,12 +80,18 @@ const EditIncident = () => {
     attachment: [],
     hasPropertyDamaged: false,
     insuranceCovered: false,
+    Rca : "",
+    rootcausecategory:"",
+    preventiveAction:"",
+    correctiveAction:"",
+    sentMedicalTreatment: "",
+
   });
   const datePickerRef = useRef(null);
   const handleIncidentDateChange = (date) => {
     setFormData({ ...formData, date_time: date });
   };
-  const { id } = useParams();
+  
   useEffect(() => {
     const fetchIncidentDetails = async () => {
       try {
@@ -91,14 +101,161 @@ const EditIncident = () => {
           ...formData,
           date_time: data.time_and_date ? new Date(data.time_and_date) : null,
           buildingId: data.building_id,
-          primaryCategory: data.primary_incident_category,
+          primaryCategory: data.primary_incident_category, 
+          primarySubCategory: data.primary_incident_sub_category,
+          primarySubSubCategory: data.primary_incident_sub_sub_category,
+          secondaryCategory: data.secondary_incident_category,
+          secondarySubCategory: data.secondary_incident_sub_category,
+          secondarySubsubCategory: data.secondary_incident_sub_sub_category,
+          severity: data.severity,
+          level: data.level,
+          probability: data.probability,
+          description: data.description,
+          supportRequired: data.support_required,
+          factsStated: data.facts_stated,
+          attachment: data.attachment,
+          hasPropertyDamaged: data.has_property_damaged,
+          insuranceCovered: data.insurance_covered,
+          IncidentRCACategory:data.IncidentRCACategory,
+
+         
         });
+        fetchCategoryName(data.primary_incident_category)
+        fetchSubCategory(data.primary_incident_category)
+        fetchSubCategoryName(data.primary_incident_sub_category)
+        fetchSubSubCategory(data.primary_incident_sub_category)
+
+        // fetchCategoryName(data.secondary_incident_category)
+        // fetchSubCategory(data.secondary_incident_category)
+
+       // fetchIncidentsSecondaryCategory(data.secondary_incident_category)
+       fetchSecCategoryName(data.secondary_incident_category)
+    
+        fetchSecondarySubCategory(data.secondary_incident_category)
+        fetchSecSubCategoryName(data.secondary_incident_sub_category)
+
+        fetchSecondarySubSubCategory(data.secondary_incident_sub_sub_category)
+        
+        fetchIncidentsLevel(data.level)
+        fetchIncidentDamage(data.has_property_damaged)
+        fetchIncidentRCA(data.Rca)
+
+        console.log(formData.primarySubCategory)
       } catch (error) {
         console.log(error);
       }
     };
     fetchIncidentDetails();
   }, []);
+console.log(formData)
+  const fetchSubCategory = async (CategoryId) => {
+    try {
+      const res = await getIncidentSubTags("IncidentSubCategory", CategoryId);
+      setSubPrimaryCat(res.data);
+      console.log(primarySubCat)
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const fetchSubCategoryName = async (SubCategoryId) => {
+    try {
+      const res = await getIncidentCatDetails(SubCategoryId);
+      setSubCatName(res.data.name);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const fetchCategoryName = async (CategoryId) => {
+    try {
+      const res = await getIncidentCatDetails(CategoryId);
+      setCatName(res.data.name);
+    } catch (error) {
+      console.log(error);
+    }
+    
+  };
+
+  const fetchSubSubCategory = async (CategoryId) => {
+    try {
+      const res = await getIncidentSubTags(
+        "IncidentSubSubCategory",
+        CategoryId
+      );
+      setSubSubPrimaryCat(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  
+  const fetchSecSubCategoryName = async (CategoryId) => {
+    try {
+      const res = await getIncidentCatDetails(CategoryId);
+      setSecSubCatName(res.data.name);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const fetchSecCategoryName = async (CategoryId) => {
+    try {
+      const res = await getIncidentCatDetails(CategoryId);
+      setSecCatName(res.data.name);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const fetchIncidentsLevel = async () => {
+      try {
+        const res = await getIncidentTags("IncidentLevel");
+        setIncidentLevel(res.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    
+
+    const fetchSecondarySubCategory = async (CategoryId) => {
+      try {
+        const res = await getIncidentSubTags(
+          "IncidentSecondarySubCategory",
+          CategoryId
+        );
+        setSecondarySubCat(res.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    const fetchSecondarySubSubCategory = async (CategoryId) => {
+      try {
+        const res = await getIncidentSubTags(
+          "IncidentSecondarySubSubCategory",
+          CategoryId
+        );
+        setSecondarySubSubCat(res.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    const fetchIncidentRCA = async () => {
+      try {
+        const res = await getIncidentTags("IncidentRCACategory");
+        setRCA(res.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    const fetchIncidentDamage = async () => {
+      try {
+        const res = await getIncidentTags("IncidentDamageCategory");
+        setIncidentDamage(res.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    
+   
+
+
   const [catName, setCatName] = useState("");
   const [subCatName, setSubCatName] = useState("");
   const [primarySubCat, setSubPrimaryCat] = useState([]);
@@ -124,6 +281,7 @@ const EditIncident = () => {
       try {
         const res = await getIncidentSubTags("IncidentSubCategory", CategoryId);
         setSubPrimaryCat(res.data);
+        console.log(primarySubCat)
       } catch (error) {
         console.log(error);
       }
@@ -212,6 +370,8 @@ const EditIncident = () => {
         console.log(error);
       }
     };
+    
+
     fetchIncidentsCategory();
     fetchIncidentsSecondaryCategory();
     fetchIncidentsLevel();
@@ -223,6 +383,8 @@ const EditIncident = () => {
   const [secondarySubSubCat, setSecondarySubSubCat] = useState([]);
   const [secCatName, setSecCatName] = useState("");
   const [secSubCatName, setSecSubCatName] = useState("");
+  
+
   const handleSecondaryCategoryChange = async (e) => {
     const fetchSecCategoryName = async (CategoryId) => {
       try {
@@ -262,6 +424,8 @@ const EditIncident = () => {
         console.log(error);
       }
     };
+
+   
     if (
       e.target.type === "select-one" &&
       e.target.name === "secondaryCategory"
@@ -271,7 +435,7 @@ const EditIncident = () => {
       await fetchSecCategoryName(secCatId);
       setFormData({ ...formData, secondaryCategory: secCatId });
     } else if (
-      e.target.type === "select-one" &&
+      e.target.type === "select-one" && 
       e.target.name === "secondarySubCategory"
     ) {
       const secSubCatId = Number(e.target.value);
@@ -311,9 +475,80 @@ const EditIncident = () => {
       totalCost: total.toFixed(2),
     });
   };
-
+const userId = getItemInLocalStorage("UserId")
   const navigate = useNavigate()
+  const handleSave = async () => {
+    const sendData = new FormData(); 
+    sendData.append("incident[time_and_date]", formData.date_time);
+    sendData.append(
+      "incident[primary_incident_category]",
+      formData.primaryCategory
+    );
+    sendData.append(
+      "incident[primary_incident_sub_category]",
+      formData.primarySubCategory 
+    );
+    sendData.append("incident[primary_incident_sub_sub_category]", formData.primarySubSubCategory);
 
+    sendData.append(
+      "incident[secondary_incident_category]",
+      formData.secondaryCategory 
+    );
+    
+    sendData.append(
+      "incident[secondary_incident_sub_category]",
+      formData.secondarySubCategory
+    );
+    sendData.append(
+      "incident[secondary_incident_sub_sub_category]",
+      formData.secondarySubSubCategory 
+    );
+    sendData.append(
+      "incident[support_required]",
+      formData.supportRequired 
+    );
+     sendData.append(
+      "incident[first_aid_provided_employee]",
+      formData.first_aid_provided_employee 
+     );
+    sendData.append(
+      "incident[read_facts_states]",
+      formData.factsStated 
+    );
+   
+    
+    console.log(formData)
+    console.log(costs)
+    sendData.append("incident[cost_of_incident][equipment_property_cost]", costs.equipmentCost);
+    sendData.append("incident[cost_of_incident][production_loss]", costs.productionLoss);
+    sendData.append("incident[cost_of_incident][treatment_cost]", costs.treatmentCost);
+    sendData.append("incident[cost_of_incident][absenteeism_cost]", costs.absenteeismCost);
+    sendData.append("incident[cost_of_incident][other_cost]", costs.otherCost);
+    sendData.append("incident[cost_of_incident][total_cost]", costs.totalCost);
+    
+    sendData.append("incident[incident_severity]", formData.severity);
+    sendData.append("preventive_action]", formData.preventiveAction);
+    sendData.append("corrective_action]", formData.correctiveAction);
+    sendData.append("sent_medical_treatment]", formData.sentMedicalTreatment);
+  
+     sendData.append("incident[primary_root_cause_category]", costs.rootcausecategory);
+    sendData.append("incident[rca]", formData.Rca);
+    sendData.append("incident[incident_level]", formData.level);
+    sendData.append("incident[building_id]", formData.buildingId);
+    sendData.append("incident[probability]", formData.probability);
+    sendData.append("incident[description]", formData.description);
+    sendData.append("incident[created_by_id]", userId);
+    // formData.attachment.forEach((file, index) => {
+    //   sendData.append(`incident[attachments_attributes][][file]`, file);
+    // });
+    try {
+      const res = await updateIncidents(id, sendData);
+      toast.success("incident update successfully");
+      navigate("/admin/incidents");
+    } catch (error) {
+      console.log(error);
+    }
+  };
   return (
     <section className="flex">
       <div className="hidden md:block">
@@ -510,6 +745,25 @@ const EditIncident = () => {
               </div>
               <div className="flex flex-col">
                 <label htmlFor="" className="font-semibold text-sm">
+                  Incident level
+                </label>
+                <select
+                  name="level"
+                  value={formData.level}
+                  onChange={handleChangeIncident}
+                  id=""
+                  className="border p-2 border-gray-500 rounded-md"
+                >
+                  <option value="">Select Level </option>
+                  {incidentLevel.map((level) => (
+                    <option value={level.name} key={level.id}>
+                      {level.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex flex-col">
+                <label htmlFor="" className="font-semibold text-sm">
                   Has Any Property Damage Happened In The Incident?
                 </label>
                 <select
@@ -578,13 +832,34 @@ const EditIncident = () => {
                   </select>
                 </div>
               )}
+
+<div className="flex flex-col">
+                <label htmlFor="" className="font-semibold text-sm">
+                  Severity
+                </label>
+                <select
+                  name="severity"
+                  value={formData.severity}
+                  id=""
+                  className="border p-2 border-gray-500 rounded-md"
+                  onChange={handleChangeIncident}
+                >
+                  <option value="">Select Severity </option>
+                  <option value="Insignificant">Insignificant </option>
+                  <option value="Minor">Minor </option>
+                  <option value="Moderate">Moderate </option>
+                  <option value="Major">Major </option>
+                  <option value="catasTrophic">catasTrophic </option>
+                </select>
+              </div>
               <div className="flex flex-col">
                 <label htmlFor="" className="font-semibold text-sm">
                   RCA
                 </label>
                 <input
+                onChange={handleChangeIncident}
                   type="text"
-                  name=""
+                  name="Rca"
                   id=""
                   className="border p-2 border-gray-500 rounded-md"
                   placeholder="Root cause analysis"
@@ -601,7 +876,7 @@ const EditIncident = () => {
                 >
                   <option value="">Select </option>
                   {rca.map((rca) => (
-                    <option value={rca.id} key={rca.id}>
+                    <option value={rca.name} key={rca.id}>
                       {rca.name}
                     </option>
                   ))}
@@ -612,12 +887,14 @@ const EditIncident = () => {
                   Description
                 </label>
                 <textarea
-                  name=""
+                  name="description"
                   id=""
                   cols="5"
                   rows="2"
                   placeholder="Accident near Main Gate"
                   className="border p-1 px-4 border-gray-500 rounded-md"
+                  value={formData.description}
+                  onChange={handleChangeIncident}
                 />
               </div>
               <div className="flex flex-col">
@@ -625,7 +902,9 @@ const EditIncident = () => {
                   Corrective action
                 </label>
                 <textarea
-                  name=""
+                onChange={handleChangeIncident}
+                value={formData.correctiveAction}
+                  name="correctiveAction"
                   id=""
                   cols="5"
                   rows="2"
@@ -639,7 +918,9 @@ const EditIncident = () => {
                   Preventive action
                 </label>
                 <textarea
-                  name=""
+                onChange={handleChangeIncident}
+                value={formData.preventiveAction}
+                  name="preventiveAction"
                   id=""
                   cols="5"
                   rows="p"
@@ -964,7 +1245,7 @@ const EditIncident = () => {
           <button className="font-semibold bg-red-400 text-white  p-2 px-4 flex gap-2 rounded-md items-center" onClick={()=> navigate("/admin/incidents")}>
             <MdClose /> Cancel
           </button>
-          <button className="font-semibold bg-green-500 text-white p-2 px-4 flex items-center gap-2 rounded-md">
+          <button onClick={handleSave} className="font-semibold bg-green-500 text-white p-2 px-4 flex items-center gap-2 rounded-md">
             <FaCheck /> Save
           </button>
         </div>

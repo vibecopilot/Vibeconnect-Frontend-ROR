@@ -33,6 +33,8 @@ const AddIncident = () => {
     supportRequired: false,
     factsStated: false,
     attachment: [],
+    first_aid_provided_employee : true 
+    
   });
   const datePickerRef = useRef(null);
   const currentDate = new Date();
@@ -144,6 +146,15 @@ const AddIncident = () => {
   const [secondarySubSubCat, setSecondarySubSubCat] = useState([]);
   const [secCatName, setSecCatName] = useState("");
   const [secSubCatName, setSecSubCatName] = useState("");
+
+  const handleFileChange = (files, fieldName) => {
+    setFormData({
+      ...formData,
+      [fieldName]: files,
+    });
+    console.log(fieldName);
+  };
+
   const handleSecondaryCategoryChange = async (e) => {
     const fetchSecCategoryName = async (CategoryId) => {
       try {
@@ -213,15 +224,46 @@ const AddIncident = () => {
       formData.primaryCategory
     );
     postData.append(
-      "incident[secondary_incident_category]",
-      formData.secondaryCategory
+      "incident[primary_incident_sub_category]",
+      formData.primarySubCategory 
     );
+    postData.append("incident[primary_incident_sub_sub_category]", formData.primarySubSubCategory);
+
+    postData.append(
+      "incident[secondary_incident_category]",
+      formData.secondaryCategory 
+    );
+    
+    postData.append(
+      "incident[secondary_incident_sub_category]",
+      formData.secondarySubCategory
+    );
+    postData.append(
+      "incident[secondary_incident_sub_sub_category]",
+      formData.secondarySubSubCategory 
+    );
+    postData.append(
+      "incident[support_required]",
+      formData.supportRequired 
+    );
+    postData.append(
+      "incident[first_aid_provided_employee]",
+      formData.first_aid_provided_employee 
+    );
+    postData.append(
+      "incident[read_facts_states]",
+      formData.factsStated 
+    );
+   
     postData.append("incident[incident_severity]", formData.severity);
     postData.append("incident[incident_level]", formData.level);
     postData.append("incident[building_id]", formData.buildingId);
     postData.append("incident[probability]", formData.probability);
     postData.append("incident[description]", formData.description);
     postData.append("incident[created_by_id]", userId);
+    formData.attachment.forEach((file, index) => {
+      postData.append(`incident[attachments_attributes][][file]`, file);
+    });
     try {
       const res = await postIncidents(postData);
       toast.success("New incident added successfully");
@@ -245,7 +287,7 @@ const AddIncident = () => {
             Add Incidents
           </h2>
           <h2 className=" text-lg border-black border-b font-semibold ">
-            DETAILS
+            DETAILS  
           </h2>
           <div className="flex  flex-col justify-around ">
             <div className="grid md:grid-cols-3 item-start gap-x-4 gap-y-5 w-full">
@@ -436,7 +478,7 @@ const AddIncident = () => {
                 >
                   <option value="">Select Level </option>
                   {incidentLevel.map((level) => (
-                    <option value={level.id} key={level.id}>
+                    <option value={level.name} key={level.id}>
                       {level.name}
                     </option>
                   ))}
@@ -524,7 +566,10 @@ const AddIncident = () => {
             <h2 className=" text-lg border-black border-b font-semibold ">
               ATTACHMENTS
             </h2>
-            <FileInputBox />
+            <FileInputBox
+                handleChange={(files) => handleFileChange(files, "attachment")}
+                fieldName={"attachment"}
+              />
           </div>
           <div className="flex justify-center gap-2 mb-20 my-3">
             <button className="font-semibold bg-red-500 text-white  p-2 flex rounded-md items-center gap-2">

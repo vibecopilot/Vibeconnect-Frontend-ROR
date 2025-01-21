@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { BiEdit } from "react-icons/bi";
 import { FaCheckCircle } from "react-icons/fa";
 import { IoMdAdd, IoMdAddCircleOutline } from "react-icons/io";
@@ -7,10 +7,39 @@ import { Link, useParams } from "react-router-dom";
 import Navbar from "../../../components/Navbar";
 import IncidentUpdateModal from "../../../containers/modals/IncidentUpdateModal";
 import IncidentInjuryModal from "../../../containers/modals/IncidentInjuryModal";
+import { getIncidentData } from "../../../api";
 const IncidentsDetails = () => {
   const [modal, showModal] = useState(false);
   const [injurymodal, showInjurymodal] = useState(false);
   const { id } = useParams();
+
+  const [details, setDetails] = useState({
+    time_and_date: "",
+    status: "",
+    reporting_time_and_date: "",
+    reported_by: "",
+    level: "",
+    primaryCategory: "",
+    health_safety_category: "",
+    injury_illness_category: "",
+    supportRequired: false,
+    first_aid_provided_employee: true,
+    sent_for_medical_treatment: false,
+    property_damage: false,
+  });
+  useEffect(() => {
+    const fetchIncidentsCategory = async () => {
+      try {
+        const res = await getIncidentData(id);
+        setDetails(res.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    fetchIncidentsCategory();
+  }, []);
+
   return (
     <section className="flex">
       <Navbar />
@@ -58,15 +87,16 @@ const IncidentsDetails = () => {
           <div className="my-2 md:px-10 text-sm items-center font-medium grid gap-4 md:grid-cols-2">
             <div className="grid grid-cols-2 items-center">
               <p>Status:</p>
-              <p className="text-sm font-normal ">Pending</p>
+              <p>Status: {details.status}</p>
             </div>
             <div className="grid grid-cols-2 items-center">
-              <p>Incident Date and Time:</p>
-              <p className="text-sm font-normal ">18/03/2024 3:12 PM</p>
+              <p>Incident Date and Time: </p>
+
+              <p className="text-sm font-normal ">{details.time_and_date}</p>
             </div>
             <div className="grid grid-cols-2 items-center">
               <p>Revision Date and Time:</p>
-              <p className="text-sm font-normal ">18/03/2024 3:13 PM</p>
+              <p className="text-sm font-normal ">{details.time_and_date}</p>
             </div>
             <div className="grid grid-cols-2 items-center">
               <p>Reporting Date and Time:</p>
@@ -82,7 +112,7 @@ const IncidentsDetails = () => {
             </div>
             <div className="grid grid-cols-2 items-center">
               <p>Incident Primary Category:</p>
-              <p className="text-sm font-normal ">Health and Safety</p>
+              <p className="text-sm font-normal ">{details.property_damage}</p>
             </div>
             <div className="grid grid-cols-2 items-center">
               <p>Category for the Health and Safety Incident:</p>
@@ -94,11 +124,13 @@ const IncidentsDetails = () => {
             </div>
             <div className="grid grid-cols-2 items-center">
               <p>Support Required:</p>
-              <p className="text-sm font-normal ">Yes</p>
+              <p className="text-sm font-normal ">{details.supportRequired}</p>
             </div>
             <div className="grid grid-cols-2 items-center">
               <p>First Aid provided by Employees?:</p>
-              <p className="text-sm font-normal ">No</p>
+              <p className="text-sm font-normal ">
+                {details.first_aid_provided_employee}
+              </p>
             </div>
             <div className="grid grid-cols-2 items-center">
               <p>Sent for Medical Treatment:</p>

@@ -7509,6 +7509,14 @@ export const getIncidentTags = async (tagType) =>
       token: token,
     },
   });
+
+  export const getIncidentData = async (id) =>
+    axiosInstance.get(`/incidents/${id}.json`, {
+      params: {
+        token: token,
+      },
+    });
+
 export const getIncidentSubTags = async (tagType, parentId) =>
   axiosInstance.get(
     `/incidence_tags.json?q[tag_type_cont]=${tagType}&q[parent_id_eq]=${parentId}`,
@@ -7572,6 +7580,14 @@ export const postIncidents = async (data) =>
       token: token,
     },
   });
+  export const updateIncidents = async (id, data) =>
+    axiosInstance.put(`/incidents/${id}.json`, data, {
+      params: {
+        token: token,
+        
+      },
+    });
+  
 
 const defaultIp = getItemInLocalStorage("DEFAULT");
 const defaultUsername = getItemInLocalStorage("DeviceUsername");
