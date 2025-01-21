@@ -160,9 +160,9 @@ const InBoundDetails = () => {
                     {/* <p className="text-lg font-medium"> */}
                     {/* Vendor Name: {record.vendorName} */}
                     {/* </p> */}
-                    <p className="text-lg font-medium">
+                    {/* <p className="text-lg font-medium">
                       Department: {record.department}
-                    </p>
+                    </p> */}
                     <p className="text-lg font-medium">
                       Collected On: {record.collect_on}
                     </p>

@@ -8,12 +8,12 @@ import ForumCommentsModal from "../../../containers/modals/ForumCommentModal";
 import Navbar from "../../../components/Navbar";
 import Communication from "../../Communication";
 import {
-  getForum,
-  likeForum,
-  deleteForum,
-  hideForum,
   domainPrefix,
   reportForum,
+  getForum,
+  likeForum,
+  hideForum,
+  PostSavedForum,
 } from "../../../api/index";
 import { PiBookBookmark, PiEye } from "react-icons/pi";
 import { FormattedDateToShowProperly } from "../../../utils/dateUtils";
@@ -159,7 +159,15 @@ function EmployeeForum() {
       <Navbar />
       <div className="p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
         <EmployeeCommunication />
-        <div className="flex justify-between md:flex-row flex-col my-5 gap-y-3"></div>
+        <div className="flex justify-end md:flex-row flex-col my-2 gap-y-3">
+          <Link
+            to={`/employee/saved_forums`}
+            style={{ background: themeColor }}
+            className="font-semibold px-2 p-2 flex text-white items-center justify-center rounded-md gap-2"
+          >
+            <PiBookBookmark size={20} /> Saved Forum
+          </Link>
+        </div>
         <div className="grid grid-cols-3 my-10">
           <div></div>
           <div className="flex flex-col justify-center items-center flex-wrap gap-5 w-full">

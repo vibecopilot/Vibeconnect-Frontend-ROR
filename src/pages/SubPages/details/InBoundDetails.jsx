@@ -64,7 +64,7 @@ const InBoundDetails = () => {
   }, []);
 
   // console.log(inboundRecords);
-  const handleMarkedPackage = async (id, currentStatus, vendorId) => {
+const handleMarkedPackage = async (id, currentStatus, vendorId) => {
     try {
       if (!id || !vendorId) throw new Error("ID or Vendor ID is invalid");
 
@@ -124,7 +124,7 @@ const InBoundDetails = () => {
                       onClick={() => {
                         if (!record.vendor_id) {
                           console.error(
-                            `Vendor ID is missing for record ID: ${record.id}`
+                              `Vendor ID is missing for record ID: ${record.id}`
                           );
                           toast.error("Vendor ID is missing");
                           return;

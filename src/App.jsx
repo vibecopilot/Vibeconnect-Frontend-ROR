@@ -335,6 +335,7 @@ import EmployeeHRMSLeaves from "./pages/Employees/EmployeeHRMS/EmployeeHRMSLeave
 import EmployeeLeavesDetails from "./pages/Employees/EmployeeHRMS/EmployeeHRMSLeaveDetails.jsx";
 import CreatePolls from "./pages/SubPages/CreatePoll.jsx";
 import SavedForums from "./pages/SubPages/SavedForums.jsx"
+import EmpSavedForums from "./pages/SubPages/EmpSavedForums.jsx"
 import HiddenForums from "./pages/SubPages/HiddenForums.jsx";
 import ReportForum from  "./pages/SubPages/ReportedForum.jsx"
 import CreateForum from "./pages/SubPages/CreateForum.jsx";
@@ -1321,6 +1322,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <EmployeeForum />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/employee/saved_forums"
+            element={
+              <ProtectedRoute>
+                <EmpSavedForums/>
               </ProtectedRoute>
             }
           />
