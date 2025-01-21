@@ -519,12 +519,12 @@ const userId = getItemInLocalStorage("UserId")
     
     console.log(formData)
     console.log(costs)
-    sendData.append("incident[cost_of_incident][equipment_property_cost]", costs.equipmentCost);
-    sendData.append("incident[cost_of_incident][production_loss]", costs.productionLoss);
-    sendData.append("incident[cost_of_incident][treatment_cost]", costs.treatmentCost);
-    sendData.append("incident[cost_of_incident][absenteeism_cost]", costs.absenteeismCost);
-    sendData.append("incident[cost_of_incident][other_cost]", costs.otherCost);
-    sendData.append("incident[cost_of_incident][total_cost]", costs.totalCost);
+    sendData.append("incident[cost_of_incident_attributes][equipment_property_cost]", costs.equipmentCost);
+    sendData.append("incident[cost_of_incident_attributes][production_loss]", costs.productionLoss);
+    sendData.append("incident[cost_of_incident_attributes][treatment_cost]", costs.treatmentCost);
+    sendData.append("incident[cost_of_incident_attributes][absenteeism_cost]", costs.absenteeismCost);
+    sendData.append("incident[cost_of_incident_attributes][other_cost]", costs.otherCost);
+    sendData.append("incident[cost_of_incident_attributes][total_cost]", costs.totalCost);
     
     sendData.append("incident[incident_severity]", formData.severity);
     sendData.append("preventive_action]", formData.preventiveAction);
@@ -547,6 +547,8 @@ const userId = getItemInLocalStorage("UserId")
       navigate("/admin/incidents");
     } catch (error) {
       console.log(error);
+
+      
     }
   };
   return (
