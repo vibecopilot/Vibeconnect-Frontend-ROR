@@ -37,7 +37,7 @@ const CreateInbound = () => {
   const [formData, setFormData] = useState({
     id: " ",
     vendor_name: "",
-    vendor_id:"",
+    vendor_id: "",
     receipant_name: "",
     sender: "",
     sender_id: "",
@@ -52,18 +52,18 @@ const CreateInbound = () => {
     mail_inbound_type: "",
     receiving_date: "",
     unit: "",
-    entity:"",
+    entity: "",
     status: "",
     department_name: "",
     collect_on: "",
-    created_by_id:"",
+    created_by_id: "",
     collect_by: "",
-    mark_as_collected:"",
+    mark_as_collected: "",
   });
 
   const handleInputChange = (e) => {
-    const {name,value } = e.target;
-    console.log( value);
+    const { name, value } = e.target;
+    console.log(value);
 
     if (name === "vendor_name") {
       const selectedVendor = vendors.find(

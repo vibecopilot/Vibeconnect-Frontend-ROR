@@ -1,8 +1,13 @@
 import React, { useState, useRef, useEffect } from "react";
 import Navbar from "../../../components/Navbar";
 import owners from "/owners.jpg";
-import { Navigate, useParams , useNavigate } from "react-router-dom";
-import { getGroupsDetails, getSetupUsers, deleteGroup } from "../../../api";
+import { Navigate, useParams, useNavigate } from "react-router-dom";
+import {
+  getGroupsDetails,
+  getSetupUsers,
+  deleteGroup,
+  domainPrefix,
+} from "../../../api/index";
 import Table from "../../../components/table/Table";
 import MultiSelect from "../../AdminHrms/Components/MultiSelect";
 import { BiEdit, BiTrash } from "react-icons/bi";
@@ -92,7 +97,7 @@ function GroupJoinDetails() {
       setFilteredMembers(filteredResult);
     }
   };
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   const handleDelete = async (id) => {
     try {
       await deleteGroup(id);
@@ -106,7 +111,7 @@ function GroupJoinDetails() {
   };
 
   const [editGroup, setEditGroup] = useState(false);
-
+  //  console.log(domainPrefix + details.cover_image[0].document)
   return (
     <section className="flex">
       <Navbar />
@@ -117,11 +122,14 @@ function GroupJoinDetails() {
               <div className="flex flex-col">
                 <div className="flex md:flex-row flex-col justify-between gap-y-3 mx-5">
                   <div className="flex gap-2">
-                    <img
-                      src={owners}
-                      className="rounded-full w-28 h-28 object-cover"
-                      alt="forum-profile"
-                    />
+                    {details.cover_image && details.cover_image.length > 0 && (
+                      <img
+                        src={domainPrefix + details.cover_image[0].document}
+                        // src={owners}
+                        className="rounded-full w-28 h-28 object-cover"
+                        alt="forum-profile"
+                      />
+                    )}
                     <div className="flex flex-col gap-3">
                       <h2 className="font-semibold text-lg">
                         {details.group_name}
