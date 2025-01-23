@@ -1,126 +1,271 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 //import Navbar from "../components/Navbar";
 import Table from "../../../components/table/Table";
 import { ImEye } from "react-icons/im";
 import { useSelector } from "react-redux";
 import { BiEdit } from "react-icons/bi";
-import { BiTrash } from 'react-icons/bi';
+import { BiTrash } from "react-icons/bi";
 import { BsEye } from "react-icons/bs";
 import { PiPlusCircle } from "react-icons/pi";
-
-
 import { TiTick } from "react-icons/ti";
 import { IoClose } from "react-icons/io5";
 import { Link } from "react-router-dom";
-//import Modal from "../containers/modals/Modal";
+import { MdClose } from "react-icons/md";
+import { deletePermitActivity, editPermitActivity, getPermitActivity, getPermitActivityDetails, getPermitType, postPermitActivity } from "../../../api";
+import toast from "react-hot-toast";
+import { getItemInLocalStorage } from "../../../utils/localStorage";
+import { FaTimes, FaTrash } from "react-icons/fa";
+
 const PermitActivityTable = () => {
-    const themeColor = useSelector((state)=> state.theme.color)
+  const themeColor = useSelector((state) => state.theme.color);
+        const siteId = getItemInLocalStorage("SITEID");
+        const [activityData, setActivityData] = useState([]);
+        const [editingCategoryId, setEditingCategoryId] = useState(null);
+           const [isModalOpen, setIsModalOpen] = useState(false);
+           const openModal = (categoryId) => {
+            setEditingCategoryId(categoryId);
+            fetchCategoryDetails(categoryId);
+            setIsModalOpen(true);
+          };
+           const closeModal = () => setIsModalOpen(false);
+  const [filteredData, setFilteredData] = useState([]);
+  const [update, setupdate] = useState(false);
+   const [formData, setFormData] = useState({
+        permit_id:"",
+        name:"",  
+      })
+      const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+      };
+      const fetchCategoryDetails = async (categoryId) => {
+                try {
+                  const categoryDetails = await getPermitActivityDetails(categoryId);
+                  setFormData({
+                    name: categoryDetails.data.name,
+                    permit_id:categoryDetails.data.parent_id,
+                  });
+                } catch (error) {
+                  console.error("Error fetching category details:", error);
+                }
+              };
+              const DeletePermitActivity = async (categoryId) => {
+                try {
+                  const categoryDetails = await deletePermitActivity(categoryId);
+                  toast.success("Permit Activity Deleted Successfully");
+                  setupdate(true);
+                } catch (error) {
+                  console.error("Error Not Deleted:", error);
+                }
+              };
+        useEffect(() => {
+          const fetchPantry = async () => {
+           try {
+             const invResp = await getPermitType();
+             const sortedInvData = invResp.data.sort((a, b) => {
+               
+              return new Date(b.created_at) - new Date(a.created_at);
+            });
+             
+             setFilteredData(sortedInvData);
+             setupdate(false);
+             console.log(invResp);
+           } catch (error) {
+            console.log(error)
+           }
+          };
+          fetchPantry();
+        }, []);
+        useEffect(() => {
+          const fetchPantry = async () => {
+           try {
+             const invResp = await getPermitActivity();
+             const sortedInvData = invResp.data.sort((a, b) => {
+               
+              return new Date(b.created_at) - new Date(a.created_at);
+            });
+             
+            setActivityData(sortedInvData);
+             setupdate(false);
+             console.log(invResp);
+           } catch (error) {
+            console.log(error)
+           }
+          };
+          fetchPantry();
+        }, [update]);
   const column = [
+    
+    { name: "Permit Type", selector: (row) => row.parent, sortable: true },
+    { name: "Permit Activity", selector: (row) => row.name, sortable: true },
     {
       name: "Actions",
       cell: (row) => (
         <div className="flex items-center gap-4">
-          <Link >
-            <BiTrash size={15} />
-          </Link>
-          <Link >
+          <button onClick={() => DeletePermitActivity(row.id)}>
+            <FaTrash size={15} />
+          </button>
+          <button onClick={() => openModal(row.id)}>
             <BiEdit size={15} />
-          </Link>
+          </button>
         </div>
       ),
-      
     },
-
-    
-    { name: "Permit Type", selector: (row) => row.type, sortable: true },
-    { name: "Permit Activity", selector: (row) => row.type, sortable: true },
-    
   ];
-  const data = [
-    {
-      id: 1,
-     
-      type: "Loading, Unloading Hazardous Material Work",
-      
-    },
-    {
-        id: 2,
-       
-        type: "Radiology Work",
-       
-      },
-      {
-        id: 3,
-       
-        type: "Hot Work",
-       
-      },
-      {
-        id: 4,
-       
-        type: "Height Work",
-        
-      },
+ 
+  const handleSubmit = async () => {
+   
+
+    const sendData = new FormData();
+    sendData.append("permit_activity_setup[parent_id]", formData.permit_id);
+    sendData.append("permit_activity_setup[name]", formData.name);
+    sendData.append("permit_activity_setup[site_id]", siteId);
     
-  ];
-
-  const customStyle = {
-    headRow: {
-      style: {
-        backgroundColor: themeColor,
-        color: "white",
-
-        fontSize: "14px",
-      },
-    },
+    try {
+      const resp = await postPermitActivity(sendData);
+      setupdate(true);
+      toast.success("Permit Activity Created Successfully");
+      setFormData({ permit_id:"",name: "" });
+      console.log(resp);
+    } catch (error) {
+      console.log(error);
+    }
   };
-  document.title = `Permit - Vibe Connect`;
+  const handleEdit = async () => {
+   
+
+    const sendData = new FormData();
+    sendData.append("permit_activity_setup[parent_id]", formData.permit_id);
+    sendData.append("permit_activity_setup[name]", formData.name);
+    sendData.append("permit_activity_setup[site_id]", siteId);
+    
+    try {
+      const resp = await editPermitActivity(editingCategoryId,sendData);
+      setupdate(true);
+      setIsModalOpen(false);
+      toast.success("Permit Activity Updated Successfully");
+      setFormData({ permit_id:"",name: "" });
+      console.log(resp);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  document.title = `Permit Setup - Vibe Connect`;
+  const [showAdd, setShowAdd] = useState(false);
   return (
     <section className="flex ">
       {/* <Navbar /> */}
       <div className="w-full flex mx-3 flex-col overflow-hidden">
-       
-        <div className=" flex m-3 flex-col">
-          <div className="flex gap-2 items-center">
+        {showAdd && (
+          <div className="flex gap-2 items-center my-2">
+            <select
+              name="permit_id"
+              onChange={handleChange}
+            value={formData.permit_id}
+              id="permit_id"
+              className="border p-2 border-gray-300 rounded-md w-full"
+            >
+              <option value="">Select Permit Type</option>
+              {filteredData.map((category) => (
+    <option key={category.id} value={category.id}>
+      {category.name}
+    </option>
+  ))}
+            </select>
             <input
               type="text"
-              placeholder="Enter Permit Name"
-              className="border-2 p-2 w-96 border-gray-300 rounded-lg"
+              placeholder="Enter Activity Name"
+              name="name"
+              onChange={handleChange}
+            value={formData.name}
+              className="border p-2 border-gray-300 rounded-md w-full"
             />
-            
-           <button
-                // to={"/admin/addnewpermit"}
-                className="border-2 font-semibold hover:bg-black hover:text-white transition-all border-black p-2 rounded-md text-black cursor-pointer text-center flex items-center gap-2 justify-center"
-                style={{ height: '1cm' }}
-            >
-                <PiPlusCircle size={20} />
-                Submit
+            <button onClick={handleSubmit} className="bg-green-400 text-white rounded-md flex items-center gap-2 p-2 font-medium">
+              <PiPlusCircle size={20} />
+              Submit
             </button>
-            <div>
-         <label htmlFor="" className="font-semibold">Category</label>
-         <select name="" id="" className="border border-gray-400 p-2 rounded-md w-full">
-          <option value="">Category1</option>
-          <option value="">Category2</option>
-         </select>
-         </div>
+            <button
+              className="bg-red-400 text-white rounded-md flex items-center gap-2 p-2 font-medium"
+              onClick={() => setShowAdd(false)}
+            >
+              <MdClose size={20} />
+              Cancel
+            </button>
           </div>
-          
+        )}
+        {!showAdd && (
+          <div className="flex justify-end my-2">
+            <button
+              className="bg-green-400 text-white rounded-md flex items-center gap-2 p-2 font-medium"
+              onClick={() => setShowAdd(true)}
+            >
+              <PiPlusCircle size={20} />
+              Add
+            </button>
           </div>
-          <Table
-              columns={column}
-              data={data}
-              // customStyles={customStyle}
-              responsive
-             
-              fixedHeader
-              fixedHeaderScrollHeight="500px"
-              pagination
-              selectableRowsHighlight
-              highlightOnHover
-              omitColumn={column}
+        )}
+        <Table
+          columns={column}
+          data={activityData}
+          // customStyles={customStyle}
+          responsive
+          fixedHeader
+          fixedHeaderScrollHeight="500px"
+          pagination
+          selectableRowsHighlight
+          highlightOnHover
+          omitColumn={column}
+        />
+        {isModalOpen && (
+                <div className="fixed inset-0 flex items-center justify-center z-50">
+                  <div className="fixed inset-0 bg-black bg-opacity-90" onClick={closeModal}></div>
+                  <div className="bg-white w-96  rounded-lg shadow-lg p-4 relative z-10">
+                    <button
+                      className="absolute top-4 right-4 text-gray-600 hover:text-gray-900"
+                      onClick={closeModal}
+                    >
+                      <FaTimes />
+                    </button>
+                    <h2 className="text-xl font-semibold mb-4">Edit Permit Activity</h2>
+                    <div className="flex flex-col gap-4">
+                    <select
+              name="permit_id"
+              onChange={handleChange}
+            value={formData.permit_id}
+              id="permit_id"
+              className="border p-2 border-gray-300 rounded-md w-full"
+            >
+              <option value="">Select Permit Type</option>
+              {filteredData.map((category) => (
+    <option key={category.id} value={category.id}>
+      {category.name}
+    </option>
+  ))}
+            </select>
+            <input
+              type="text"
+              placeholder="Enter Activity Name"
+              name="name"
+              onChange={handleChange}
+            value={formData.name}
+              className="border p-2 border-gray-300 rounded-md w-full"
             />
+                     
+                      <div className="flex items-center justify-center">
+                        <button
+                          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md "
+                          type="button"
+                          style={{background: themeColor}}
+                          onClick={handleEdit}
+                        >
+                          Update
+                        </button>
+                        
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
       </div>
-      
     </section>
   );
 };

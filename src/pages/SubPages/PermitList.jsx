@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 //import Navbar from "../components/Navbar";
 import Table from "../../components/table/Table";
 import { ImEye } from "react-icons/im";
@@ -10,6 +10,7 @@ import { PiPlusCircle } from "react-icons/pi";
 import { TiTick } from "react-icons/ti";
 import { IoClose } from "react-icons/io5";
 import { Link } from "react-router-dom";
+import { getPermits } from "../../api";
 //import Modal from "../containers/modals/Modal";
 const PermitList = () => {
   const themeColor = useSelector((state) => state.theme.color);
@@ -29,64 +30,62 @@ const PermitList = () => {
     },
 
     { name: "ID", selector: (row) => row.id, sortable: true },
-    { name: "Ref No.", selector: (row) => row.ref, sortable: true },
-    { name: "Permit Type", selector: (row) => row.type, sortable: true },
-    { name: "Permit For", selector: (row) => row.for, sortable: true },
+    // { name: "Ref No.", selector: (row) => row.ref, sortable: true },
+    { name: "Permit Type", selector: (row) => row.permit_type_name, sortable: true },
+    { name: "Permit For", selector: (row) => row.permit_for, sortable: true },
 
-    { name: "Created By", selector: (row) => row.createby, sortable: true },
-    { name: "Designation", selector: (row) => row.desg, sortable: true },
-    { name: "Status", selector: (row) => row.status, sortable: true },
-    { name: "Location", selector: (row) => row.location, sortable: true },
-  ];
-  const data = [
+    { name: "Created By", selector: (row) => row.name, sortable: true },
+    // { name: "Designation", selector: (row) => row.desg, sortable: true },
+    { name: "Status", selector: (row) => row.permit_status, sortable: true },
+    { name: "Building Name", selector: (row) => row.building_name, sortable: true },
+    { name: "Floor Name", selector: (row) => row.floor_name, sortable: true },
+    { name: "Unit Name", selector: (row) => row.unit_name, sortable: true },
+
     {
-      id: 1,
-      ref: "45",
-      type: "Height Work",
-      for: "test123",
-      createby: "MP",
-      status: "Draft",
-      location: "Mumbai",
+      name: "Created On",
+      selector: (row) => new Date(row.created_at).toLocaleString(), // Formats date and time
+      sortable: true,
     },
     {
-      id: 2,
-      ref: "45",
-      type: "Height Work",
-      for: "test123",
-      createby: "MP",
-      status: "Draft",
-      location: "Mumbai",
-    },
-    {
-      id: 3,
-      ref: "45",
-      type: "Height Work",
-      for: "test123",
-      createby: "MP",
-      status: "Draft",
-      location: "Mumbai",
-    },
+      name: "Permit Expiry Date",
+      selector: (row) => 
+        row.expiry_date_and_time 
+          ? new Date(row.expiry_date_and_time).toLocaleString() 
+          : " ", // Show a blank space if the value is null or undefined
+      sortable: true,
+    }
+    
+    
+
   ];
 
-  const customStyle = {
-    headRow: {
-      style: {
-        backgroundColor: themeColor,
-        color: "white",
-
-        fontSize: "14px",
-      },
-    },
-  };
   document.title = `Permit - Vibe Connect`;
+  const [permits, setPermits] = useState([]);
+  const [filteredPermits, setFilteredPermits] = useState([]);
+  const fetchPermits = async () => {
+    try {
+      const res = await getPermits();
+      const sortedInvData = res.data.sort((a, b) => {
+               
+        return new Date(b.created_at) - new Date(a.created_at);
+      });
+      setPermits(sortedInvData);
+      setFilteredPermits(sortedInvData);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(() => {
+    fetchPermits();
+  }, []);
   return (
     <section className="flex ">
       {/* <Navbar /> */}
       <div className="w-full flex mx-3 flex-col overflow-hidden">
-        <div className="flex flex-col flex-wrap flex-shrink md:flex-row justify-start gap-4 my-5  ">
-          <div className="shadow-xl rounded-full border-4 border-gray-400 w-52  px-6 flex flex-col items-center">
+        <div className="flex flex-col flex-wrap flex-shrink md:flex-row justify-start gap-2 my-2  ">
+          <div className="shadow-xl rounded-full border-4 border-gray-400 w-52   flex flex-col items-center">
             <p className="font-semibold ">Total Permits</p>
-            <p className="text-center font-semibold ">0</p>
+            <p className="text-center font-semibold ">{filteredPermits.length}</p>
           </div>
           <div className="shadow-xl rounded-full border-4 border-green-400 w-52  px-6 flex flex-col items-center">
             <p className="font-semibold ">Draft Permits</p>
@@ -98,51 +97,40 @@ const PermitList = () => {
           </div>
 
           <div className="shadow-xl rounded-full border-4 border-orange-400 w-52  px-6 flex flex-col items-center">
-            <p className="font-semibold">Approved</p>
-            <p className="text-center font-semibold  ">90</p>
+            <p className="font-semibold">Approved Permits</p>
+            <p className="text-center font-semibold  ">0</p>
           </div>
           <div className="shadow-xl rounded-full border-4 border-indigo-400 w-52  px-6 flex flex-col items-center">
-            <p className="font-semibold">Rejected</p>
-            <p className="text-center font-semibold  ">80</p>
+            <p className="font-semibold">Rejected Permits</p>
+            <p className="text-center font-semibold  ">0</p>
           </div>
           <div className="shadow-xl rounded-full border-4 border-blue-400 w-52  px-6 flex flex-col items-center">
-            <p className="font-semibold ">Extended</p>
-            <p className="text-center font-semibold ">30</p>
+            <p className="font-semibold ">Extended Permits</p>
+            <p className="text-center font-semibold ">0</p>
           </div>
           <div className="shadow-xl rounded-full border-4 border-yellow-400 w-52  px-6 flex flex-col items-center">
-            <p className="font-semibold ">Closed</p>
-            <p className="text-center font-semibold ">20</p>
+            <p className="font-semibold ">Closed Permits</p>
+            <p className="text-center font-semibold ">0</p>
           </div>
         </div>
-        <div className=" flex my-3 flex-col">
+        <div className=" flex my-2 flex-col">
           <div className="flex justify-between items-center">
             <input
               type="text"
-              placeholder="Search By Name"
-              className="border-2 p-2 w-96 border-gray-300 rounded-lg"
+              placeholder="Search by Permit for"
+              className="border p-2 w-96 border-gray-300 rounded-lg"
             />
             <Link
-              to={"/admin/add-new-permit"}
-              className="border-2 font-semibold hover:bg-black hover:text-white transition-all border-black p-2 rounded-md text-black cursor-pointer text-center flex items-center gap-2 justify-center"
-              // style={{ height: '1cm' }}
+              to={"/admin/permit/add-new-permit"}
+              className="border-2 font-semibold   transition-all p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
+              style={{ background: themeColor }}
             >
               <PiPlusCircle size={20} />
               Add
             </Link>
           </div>
         </div>
-        <Table
-          columns={column}
-          data={data}
-          // customStyles={customStyle}
-          // responsive
-          // fixedHeader
-          // fixedHeaderScrollHeight="500px"
-          // pagination
-          // selectableRowsHighlight
-          // highlightOnHover
-          // omitColumn={column}
-        />
+        <Table columns={column} data={filteredPermits} />
       </div>
     </section>
   );
