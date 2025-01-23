@@ -1,13 +1,43 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import DataTable from "react-data-table-component";
 import { PiPlusCircle } from "react-icons/pi";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { BsEye } from "react-icons/bs";
 import Table from "../components/table/Table";
+import { getBookParking } from "../api";
 
 const Parkings = () => {
   const [filteredData, setFilteredData] = useState([]);
+   useEffect(() => {
+      const fetchPantry = async () => {
+       try {
+         const invResp = await getBookParking();
+         const sortedInvData = invResp.data.sort((a, b) => {
+           
+          return new Date(b.created_at) - new Date(a.created_at);
+        });
+         
+         setFilteredData(sortedInvData)
+         console.log(invResp);
+       } catch (error) {
+        console.log(error)
+       }
+      };
+      fetchPantry();
+    }, []);
+    const formatDate = (dateString) => {
+      const options = {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        // second: "2-digit",
+        hour12: true, // Use 12-hour format
+      };
+      return new Intl.DateTimeFormat("en-US", options).format(new Date(dateString));
+    };
   const columns = [
     {
       name: "view",
@@ -21,38 +51,62 @@ const Parkings = () => {
       ),
     },
     {
+      name: "Name",
+      selector: (row) => row.name,
+      sortable: true,
+    },
+    {
+      name: "Parking Number",
+      selector: (row) => row.parking_name,
+      sortable: true,
+    },
+    
+    {
+      name: "Parking Type",
+      selector: (row) => row.vehicle_type,
+      sortable: true,
+    },
+    {
+      name: "Parking Slot",
+      selector: (row) => row.vehicle_type,
+      sortable: true,
+    },
+    
+    // {
+    //   name: "From",
+    //   selector: (row) => new Date(row.booking_start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    //   sortable: true,
+    // },
+    // {
+    //   name: "To",
+    //   selector: (row) => new Date(row.booking_end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    //   sortable: true,
+    // },
+    
+    {
+      name: "Status",
+      selector: (row) => (row.status ? "Booked" : "Not Booked"),
+      sortable: true,
+    },
+    {
       name: "Booked by",
       selector: (row) => row.booked_by,
       sortable: true,
     },
     {
-      name: "Parking Level",
-      selector: (row) => row.level,
+      name: "Created On",
+      selector: (row) => formatDate(row.created_at),
       sortable: true,
     },
-    {
-      name: "From",
-      selector: (row) => row.from,
-      sortable: true,
-    },
-    {
-      name: "To",
-      selector: (row) => row.to,
-      sortable: true,
-    },
-    {
-      name: "Status",
-      selector: (row) => row.status,
-      sortable: true,
-    },
-    {
-      name: "Action",
-      selector: (row) =>
-        row.status !== "Expired" && (
-          <button className="text-red-500">Cancel</button>
-        ),
-      sortable: true,
-    },
+    
+    // {
+    //   name: "Action",
+    //   selector: (row) =>
+    //     row.status !== "Expired" && (
+    //       <button className="text-red-500">Cancel</button>
+    //     ),
+    //   sortable: true,
+    // },
   ];
 
   const data = [
@@ -71,21 +125,6 @@ const Parkings = () => {
       status: "Expired",
     },
   ];
-  const customStyle = {
-    headRow: {
-      style: {
-        backgroundColor: "black",
-        color: "white",
-
-        fontSize: "10px",
-      },
-    },
-    headCells: {
-      style: {
-        textTransform: "upperCase",
-      },
-    },
-  };
   return (
     <section className="flex">
       <Navbar />
@@ -112,7 +151,7 @@ const Parkings = () => {
         <div className=" flex justify-between my-5">
           <input
             type="text"
-            placeholder="Search by level "
+            placeholder="Search by name "
             className="border border-gray-400 w-96 placeholder:text-sm rounded-lg p-2"
             //   value={searchText}
             //   onChange={handleSearch}
@@ -125,7 +164,7 @@ const Parkings = () => {
             Book
           </Link>
         </div>
-        <Table columns={columns} data={data} isPagination={true} />
+        <Table columns={columns} data={filteredData} isPagination={true} />
       </div>
     </section>
   );

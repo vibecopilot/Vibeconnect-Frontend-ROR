@@ -1,11 +1,101 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { IoMdPrint } from "react-icons/io";
 import { MdFeed } from "react-icons/md";
 import Table from "../../../components/table/Table";
 import { useSelector } from "react-redux";
 import FileInputBox from "../../../containers/Inputs/FileInputBox";
+import { getPermitDetails, getSetupUsers, postExtensionPermit } from "../../../api";
+import { useParams } from "react-router-dom";
+import { getItemInLocalStorage } from "../../../utils/localStorage";
+import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 
 const PermitListDetails = () => {
+  const [vendors, setVendors] = useState([]);
+    const [floors, setFloors] = useState([]);
+    const [units, setUnits] = useState([]);
+      const userId = getItemInLocalStorage("UserId");
+    
+    const [formDataExtension, setFormDataExtension] = useState({
+      permit_id: "",
+      ext_date: "",
+      ext_time: "",
+      created_by_id: ""
+      });
+      const handleChangeExtension = (e) => {
+        setFormDataExtension({ ...formDataExtension, [e.target.name]: e.target.value });
+      };
+  const [formData, setFormData] = useState({
+      id:"",
+      name: "",
+      contact_number: "",
+      site_id: "",
+      unit_id: "",
+      permit_for: "",
+      building_id: "",
+      floor_id: "",
+      room_id: "",
+      client_specific: "internal",
+      entity: "",
+      copy_to_string: "",
+      permit_type: "",
+      vendor_id: "",
+      issue_date_and_time: "",
+      expiry_date_and_time: "",
+      comment: "",
+      permit_status: "",
+      extention_status: true,
+      created_by_id: "",
+      permit_activities: [],
+    });
+   const { id } = useParams();
+    const fetchPermitsDetails = async () => {
+      try {
+        const res = await getPermitDetails(id);
+        setFormData({
+          ...formData,
+          id:res?.data?.id,
+          name: res?.data?.name,
+          contact_number: res?.data?.contact_number,
+          permit_for: res?.data?.permit_for,
+          building_id: res?.data?.building_id,
+          floor_id: res?.data?.floor_id,
+          unit_id: res?.data?.unit_id,
+          client_specific: res?.data?.client_specific,
+         
+          permit_type: res?.data?.permit_type,
+          issue_date_and_time: res?.data?.issue_date_and_time,
+          expiry_date_and_time: res?.data?.expiry_date_and_time,
+          extention_status: res?.data?.extention_status,
+          permit_status: res?.data?.permit_status,
+          comment: res?.data?.comment,
+
+        });
+        fetchFloors(res?.data?.building_id);
+        fetchUnits(res?.data?.floor_id);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    const fetchFloors = async (buildingId) => {
+      try {
+        const res = await getFloors(buildingId);
+        setFloors(res.data.map((item) => ({ name: item.name, id: item.id })));
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    const fetchUnits = async (floorId) => {
+      try {
+        const res = await getUnits(floorId);
+        setUnits(res.data.map((item) => ({ name: item.name, id: item.id })));
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    useEffect(() => {
+      fetchPermitsDetails();
+    }, []);
   const column = [
     { name: "Inventory", selector: (row) => row.Inventory, sortable: true },
     {
@@ -214,6 +304,45 @@ const PermitListDetails = () => {
     },
   ];
   const themeColor = useSelector((state) => state.theme.color);
+  // Utility function to format date and time
+  const formatDateTime = (isoDate) => {
+    if (!isoDate) return ""; // Return empty string if null or undefined
+    const options = {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    };
+    return new Intl.DateTimeFormat("en-GB", options).format(new Date(isoDate));
+  };
+  const navigate = useNavigate()
+  const handleSubmitextension = async () => {
+   
+
+    const sendData = new FormData();
+    sendData.append("extension[permit_id]", id);
+    sendData.append("extension[created_by_id]", userId);
+    sendData.append("extension[ext_date]", formDataExtension.ext_date);
+    sendData.append("extension[ext_time]", formDataExtension.ext_time);
+
+   
+    // formData.attachfiles.forEach((file)=>{
+    //   sendData.append("attachfiles[]", file)
+    // })
+   
+    
+    try {
+      const resp = await postExtensionPermit(sendData);
+      navigate("/admin/permit");
+      toast.success("Permit Extended Successfully");
+      console.log(resp);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <section className="mb-20">
       <div
@@ -241,20 +370,20 @@ const PermitListDetails = () => {
         <div className="my-5 md:px-10 text-sm items-center font-medium grid gap-4 md:grid-cols-2">
           <div className="grid grid-cols-2 items-center">
             <p>Permit ID</p>
-            <p className="text-sm font-normal ">: 309</p>
+            <p className="text-sm font-normal ">: {formData.id}</p>
           </div>
           <div className="grid grid-cols-2 items-center">
             <p>Permit Type</p>
-            <p className="text-sm font-normal ">: Cold Work</p>
+            <p className="text-sm font-normal ">: {formData.permit_type}</p>
           </div>
           <div className="grid grid-cols-2 items-center">
             <p>Requested Date & Time</p>
-            <p className="text-sm font-normal ">: 03/06/2024 10:36 AM</p>
+            <p className="text-sm font-normal ">: {formatDateTime(formData.issue_date_and_time)}</p>
           </div>
           <div className="grid grid-cols-2 items-center">
-            <p>Issued Date & Time</p>
-            <p className="text-sm font-normal ">: 03/06/2024</p>
-          </div>
+  <p>Issued Date & Time</p>
+  <p className="text-sm font-normal">: {formatDateTime(formData.issue_date_and_time)}</p>
+</div>
           <div className="grid grid-cols-2 items-center">
             <p>Vendor</p>
             <p className="text-sm font-normal ">
@@ -263,20 +392,20 @@ const PermitListDetails = () => {
           </div>
           <div className="grid grid-cols-2 items-center">
             <p>Extension Status</p>
-            <p className="text-sm font-normal ">: No</p>
+            <p className="text-sm font-normal ">: {formData.extention_status?"Yes":"No"}</p>
           </div>
           <div className="grid grid-cols-2 items-center">
             <p>Permit Expiry Date</p>
-            <p className="text-sm font-normal ">: 03/06/2024 6:00 PM</p>
+            <p className="text-sm font-normal ">: {formatDateTime(formData.expiry_date_and_time)}</p>
           </div>
           <div className="grid grid-cols-2 items-center">
             <p>Permit Status</p>
-            <p className="text-sm font-normal ">: Draft</p>
+            <p className="text-sm font-normal ">: {formData.permit_status}</p>
           </div>
           <div className="grid grid-cols-2 items-center">
             <p>Permit For</p>
             <p className="text-sm font-normal ">
-              : cable laying work & Earthing work
+              : {formData.permit_for}
             </p>
           </div>
           <div className="grid grid-cols-2 items-center">
@@ -289,7 +418,7 @@ const PermitListDetails = () => {
           <div className="grid grid-cols-2 items-center">
             <p>Comment</p>
             <p className="text-sm font-normal ">
-              : use proper PPE during the work
+              : {formData.comment}
             </p>
           </div>
         </div>
@@ -299,12 +428,12 @@ const PermitListDetails = () => {
         <div className="my-5 md:px-10 text-sm items-center font-medium grid gap-4 md:grid-cols-2">
           <div className="grid grid-cols-2 items-center">
             <p>Created By</p>
-            <p className="text-sm font-normal ">: Awishkar Borkar</p>
+            <p className="text-sm font-normal ">: {formData.name}</p>
           </div>
-          <div className="grid grid-cols-2 items-center">
+          {/* <div className="grid grid-cols-2 items-center">
             <p>Department</p>
             <p className="text-sm font-normal ">: TECHNICAL</p>
-          </div>
+          </div> */}
           <div className="grid grid-cols-2 items-center">
             <p>Contact Number</p>
             <p className="text-sm font-normal ">: 7620619199</p>
@@ -380,11 +509,26 @@ const PermitListDetails = () => {
             </div>
             <div className="flex flex-col gap-2">
               <label htmlFor="">
-                Extension Date&Time* <span className="text-red-400">*</span>
+                Extension Date<span className="text-red-400">*</span>
               </label>
               <input
                 type="date"
-                name=""
+                name="ext_date"
+                value={formDataExtension.ext_date}
+                onChange={handleChangeExtension}
+                id=""
+                className="border rounded-md p-2 border-gray-300"
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="">
+                Extension Time<span className="text-red-400">*</span>
+              </label>
+              <input
+                type="time"
+                name="ext_time"
+                value={formDataExtension.ext_time}
+                onChange={handleChangeExtension}
                 id=""
                 className="border rounded-md p-2 border-gray-300"
               />
@@ -406,7 +550,7 @@ const PermitListDetails = () => {
             </label>
           </div>
           <div className="flex justify-center">
-            <button className="bg-green-500 text-white p-2 rounded-md">
+            <button onClick={handleSubmitextension} className="bg-green-500 text-white p-2 rounded-md">
               Extend Permit
             </button>
           </div>

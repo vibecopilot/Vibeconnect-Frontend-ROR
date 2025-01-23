@@ -1949,7 +1949,7 @@ const Navbar = () => {
                     </h2>
                   </NavLink>
                 )}
-              {/* {feat.includes("document_pro") && ( */}
+              {feat.includes("document_pro") && (
                 <NavLink
                   to={"/employee/documents"}
                   className={({ isActive }) =>
@@ -1980,7 +1980,7 @@ const Navbar = () => {
                     Document Pro
                   </h2>
                 </NavLink>
-              {/* )} */}
+               )} 
 
               {feat.includes("gatepass") && (
                 <NavLink

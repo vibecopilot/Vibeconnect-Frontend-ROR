@@ -6,6 +6,7 @@ import PermitHazardCategoryTable from "./SetupSubPages/PermitHazardCategoryTable
 
 import PermitRiskTable from "./SetupSubPages/PermitRiskTable";
 import SetupNavbar from "../../components/navbars/SetupNavbar";
+import PermitSafetyEquipment from "./SetupSubPages/PermitSafetyEquipment";
 const PermitSetup = () => {
   const [page, setPage] = useState("Permit Type");
   return (
@@ -80,6 +81,7 @@ const PermitSetup = () => {
         {page === "Permit Sub Activity" && <PermitSubActivityTable />}
         {page === "Permit Hazard Category" && <PermitHazardCategoryTable />}
         {page === "Permit Risk" && <PermitRiskTable />}
+        {page === "Permit Safety Equipment" && <PermitSafetyEquipment/>}
       </div>
     </div>
     </div>

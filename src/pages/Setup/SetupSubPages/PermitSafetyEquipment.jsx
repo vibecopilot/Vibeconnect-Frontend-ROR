@@ -11,17 +11,18 @@ import { TiTick } from "react-icons/ti";
 import { IoClose } from "react-icons/io5";
 import { Link } from "react-router-dom";
 import { MdClose } from "react-icons/md";
-import { getPermitType,getPermitActivity,getPermitSubActivity, getHazardCategory, getHazardCategoryDetails, editHazardCategory, deleteHazardCategory, postPermitRisks, getPermitRisks, getPermitRisksDetails, editPermitRisks, deletePermitRisks } from "../../../api";
+import { getPermitType,getPermitActivity,getPermitSubActivity, getHazardCategory, getHazardCategoryDetails, editHazardCategory, deleteHazardCategory, postPermitRisks, getPermitRisks, getPermitRisksDetails, editPermitRisks, deletePermitRisks, postPermitSafetyEquipment, getPermitSafetyEquipment, getPermitSafetyEquipmentDetails, editPermitSafetyEquipment, deletePermitSafetyEquipment } from "../../../api";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
 import { FaTimes, FaTrash } from "react-icons/fa";
 
-const PermitRiskTable = () => {
+const PermitSafetyEquipment = () => {
   const themeColor = useSelector((state) => state.theme.color);
   const siteId = getItemInLocalStorage("SITEID");
         const [update, setupdate] = useState(false);
    const [subactivityData, setSubActivityData] = useState([]);
    const [hazardData, setHazardData] = useState([]);
    const [riskData, setRiskData] = useState([]);
+   const [safeData, setSafeData] = useState([]);
 
      const [activityData, setActivityData] = useState([]);
      const [filteredData, setFilteredData] = useState([]);
@@ -38,6 +39,7 @@ const PermitRiskTable = () => {
             activity_id:"",
             sub_activity_id:"",
             hazard_category_id:"",
+            permit_risk_id:"",
                    name:"",  
                  })
                  const handleChange = (e) => {
@@ -61,7 +63,24 @@ const PermitRiskTable = () => {
                  };
                  fetchPantry();
                }, []);
-
+               useEffect(() => {
+                const fetchPantry = async () => {
+                 try {
+                   const invResp = await getPermitSafetyEquipment();
+                   const sortedInvData = invResp.data.sort((a, b) => {
+                     
+                    return new Date(b.created_at) - new Date(a.created_at);
+                  });
+                   
+                  setSafeData(sortedInvData);
+                   setupdate(false);
+                   console.log(invResp);
+                 } catch (error) {
+                  console.log(error)
+                 }
+                };
+                fetchPantry();
+              }, [update]);
                useEffect(() => {
                  const fetchPantry = async () => {
                   try {
@@ -133,25 +152,26 @@ const PermitRiskTable = () => {
                  }
                 };
                 fetchPantry();
-              }, [update]);
+              }, []);
               const fetchCategoryDetails = async (categoryId) => {
                           try {
-                            const categoryDetails = await getPermitRisksDetails(categoryId);
+                            const categoryDetails = await getPermitSafetyEquipmentDetails(categoryId);
                             setFormData({
                               permit_type_id:categoryDetails.data.permit_type_id,
                               activity_id:categoryDetails.data.activity_id,
                               hazard_category_id:categoryDetails.data.hazard_category_id,
                               sub_activity_id:categoryDetails.data.sub_activity_id,
-                              name:categoryDetails.data.risk_name,
+                              permit_risk_id:categoryDetails.data.permit_risk_id,
+                              name:categoryDetails.data.safety_equipment_name,
                             });
                           } catch (error) {
                             console.error("Error fetching category details:", error);
                           }
                         };
-                        const DeletePermitRisks = async (categoryId) => {
+                        const DeletePermitSafetyEquipment = async (categoryId) => {
                                     try {
-                                      const categoryDetails = await deletePermitRisks(categoryId);
-                                      toast.success("Permit Hazard Category Deleted Successfully");
+                                      const categoryDetails = await deletePermitSafetyEquipment(categoryId);
+                                      toast.success("Permit Safety Equipment Deleted Successfully");
                                       setupdate(true);
                                     } catch (error) {
                                       console.error("Error Not Deleted:", error);
@@ -177,10 +197,15 @@ const PermitRiskTable = () => {
       sortable: true,
     },
     {
+      name: "Permit Safety Equipment",
+      selector: (row) => row.safety_equipment_name,
+      sortable: true,
+    },
+    {
       name: "Actions",
       cell: (row) => (
         <div className="flex items-center gap-4">
-          <button onClick={() => DeletePermitRisks(row.id)}>
+          <button onClick={() => DeletePermitSafetyEquipment(row.id)}>
             <FaTrash size={15} />
           </button>
           <button onClick={() => openModal(row.id)}>
@@ -195,19 +220,20 @@ const handleSubmit = async () => {
    
 
     const sendData = new FormData();
-    sendData.append("permit_risk[permit_type_id]", formData.permit_type_id);
-    sendData.append("permit_risk[activity_id]", formData.activity_id);
-    sendData.append("permit_risk[sub_activity_id]", formData.sub_activity_id);
-    sendData.append("permit_risk[hazard_category_id]", formData.hazard_category_id);
+    sendData.append("permit_safety_equipment[permit_type_id]", formData.permit_type_id);
+    sendData.append("permit_safety_equipment[activity_id]", formData.activity_id);
+    sendData.append("permit_safety_equipment[sub_activity_id]", formData.sub_activity_id);
+    sendData.append("permit_safety_equipment[hazard_category_id]", formData.hazard_category_id);
+    sendData.append("permit_safety_equipment[permit_risk_id]", formData.permit_risk_id);
 
-    sendData.append("permit_risk[risk_name]", formData.name);
-    sendData.append("permit_risk[site_id]", siteId);
+    sendData.append("permit_safety_equipment[safety_equipment_name]", formData.name);
+    sendData.append("permit_safety_equipment[site_id]", siteId);
     
     try {
-      const resp = await postPermitRisks(sendData);
+      const resp = await postPermitSafetyEquipment(sendData);
       setupdate(true);
-      toast.success("Permit Risk Created Successfully");
-      setFormData({ permit_type_id:"",activity_id:"",sub_activity_id:"",name: "" });
+      toast.success("Permit Safety Equipment Created Successfully");
+      setFormData({ permit_type_id:"",activity_id:"",sub_activity_id:"",hazard_category_id:"",permit_risk_id:"",name: "" });
       console.log(resp);
     } catch (error) {
       console.log(error);
@@ -217,20 +243,21 @@ const handleSubmit = async () => {
    
 
     const sendData = new FormData();
-    sendData.append("permit_risk[permit_type_id]", formData.permit_type_id);
-    sendData.append("permit_risk[activity_id]", formData.activity_id);
-    sendData.append("permit_risk[sub_activity_id]", formData.sub_activity_id);
-    sendData.append("permit_risk[hazard_category_id]", formData.hazard_category_id);
+    sendData.append("permit_safety_equipment[permit_type_id]", formData.permit_type_id);
+    sendData.append("permit_safety_equipment[activity_id]", formData.activity_id);
+    sendData.append("permit_safety_equipment[sub_activity_id]", formData.sub_activity_id);
+    sendData.append("permit_safety_equipment[hazard_category_id]", formData.hazard_category_id);
+    sendData.append("permit_safety_equipment[permit_risk_id]", formData.permit_risk_id);
 
-    sendData.append("permit_risk[risk_name]", formData.name);
-    sendData.append("permit_risk[site_id]", siteId);
+    sendData.append("permit_safety_equipment[safety_equipment_name]", formData.name);
+    sendData.append("permit_safety_equipment[site_id]", siteId);
     
     try {
-      const resp = await editPermitRisks(editingCategoryId,sendData);
+      const resp = await editPermitSafetyEquipment(editingCategoryId,sendData);
       setupdate(true);
       setIsModalOpen(false);
-      toast.success("Permit Risks Updated Successfully");
-      setFormData({ permit_type_id:"",activity_id:"",sub_activity_id:"",hazard_category_id:"",name: "" });
+      toast.success("Permit Safety Equipment Updated Successfully");
+      setFormData({ permit_type_id:"",activity_id:"",sub_activity_id:"",hazard_category_id:"",permit_risk_id:"",name: "" });
       console.log(resp);
     } catch (error) {
       console.log(error);
@@ -301,10 +328,20 @@ const handleSubmit = async () => {
     </option>
   ))}
             </select>
+            <select name="permit_risk_id" id=""   className="border p-2 border-gray-300 rounded-md w-full"
+           onChange={handleChange}
+           value={formData.permit_risk_id} >
+<option value="">Select Permit Risks</option>
+{riskData.map((category) => (
+    <option key={category.id} value={category.id}>
+      {category.risk_name}
+    </option>
+  ))}
+            </select>
             <input
               type="text"
               name="name"
-              placeholder="Enter Permit Risk "
+              placeholder="Enter Permit Safety Equipment "
               className="border p-2 border-gray-300 rounded-md w-full"
               onChange={handleChange}
             value={formData.name}
@@ -338,7 +375,7 @@ const handleSubmit = async () => {
         )}
         <Table
           columns={column}
-          data={riskData}
+          data={safeData}
           // customStyles={customStyle}
           responsive
           fixedHeader
@@ -358,7 +395,7 @@ const handleSubmit = async () => {
                                     >
                                       <FaTimes />
                                     </button>
-                                    <h2 className="text-xl font-semibold mb-4">Edit Permit Risk</h2>
+                                    <h2 className="text-xl font-semibold mb-4">Edit Permit Safety Equipment</h2>
                                     <div className="flex flex-col gap-4">
                                     
                                     <select
@@ -417,10 +454,20 @@ const handleSubmit = async () => {
     </option>
   ))}
             </select>
+            <select name="permit_risk_id" id=""   className="border p-2 border-gray-300 rounded-md w-full"
+           onChange={handleChange}
+           value={formData.permit_risk_id} >
+<option value="">Select Permit Risks</option>
+{riskData.map((category) => (
+    <option key={category.id} value={category.id}>
+      {category.risk_name}
+    </option>
+  ))}
+            </select>
             <input
               type="text"
               name="name"
-              placeholder="Enter Permit Risks "
+              placeholder="Enter Permit Safety Equipment "
               className="border p-2 border-gray-300 rounded-md w-full"
               onChange={handleChange}
             value={formData.name}
@@ -449,4 +496,4 @@ const handleSubmit = async () => {
   );
 };
 
-export default PermitRiskTable;
+export default PermitSafetyEquipment;
