@@ -64,40 +64,40 @@ const InBoundDetails = () => {
   }, []);
 
   // console.log(inboundRecords);
-const handleMarkedPackage = async (id, currentStatus, vendorId) => {
-    try {
-      if (!id || !vendorId) throw new Error("ID or Vendor ID is invalid");
+// const handleMarkedPackage = async (id, currentStatus, vendorId) => {
+//     try {
+//       if (!id || !vendorId) throw new Error("ID or Vendor ID is invalid");
 
-      // Toggle the current status (invert it)
-      const newStatus = !currentStatus === null ? true : !currentStatus; // true -> false, false -> true
+//       // Toggle the current status (invert it)
+//       const newStatus = !currentStatus === null ? true : !currentStatus; // true -> false, false -> true
 
-      const payload = {
-        mark_collected: newStatus, // Pass the updated status
-        vendor_id: vendorId, // Pass vendor ID
-      };
+//       const payload = {
+//         mark_collected: newStatus, // Pass the updated status
+//         vendor_id: vendorId, // Pass vendor ID
+//       };
 
-      // Send the request to the backend
-      const response = await editInbound(id, payload);
+//       // Send the request to the backend
+//       const response = await editInbound(id, payload);
 
-      // Check if the response indicates success
-      if (response?.data?.success) {
-        console.log("Status updated successfully:", response.data);
-        toast.success("Package status updated successfully");
+//       // Check if the response indicates success
+//       if (response?.data?.success) {
+//         console.log("Status updated successfully:", response.data);
+//         toast.success("Package status updated successfully");
 
-        // Update local state with the new status
-        setInboundRecords((prevRecords) =>
-          prevRecords.map((record) =>
-            record.id === id ? { ...record, mark_collected: newStatus } : record
-          )
-        );
-      } else {
-        toast.error("Failed to update package status");
-      }
-    } catch (err) {
-      console.error("Error updating package status:", err);
-      toast.error("An error occurred while updating the package status");
-    }
-  };
+//         // Update local state with the new status
+//         setInboundRecords((prevRecords) =>
+//           prevRecords.map((record) =>
+//             record.id === id ? { ...record, mark_collected: newStatus } : record
+//           )
+//         );
+//       } else {
+//         toast.error("Failed to update package status");
+//       }
+//     } catch (err) {
+//       console.error("Error updating package status:", err);
+//       toast.error("An error occurred while updating the package status");
+//     }
+//   };
 
   return (
     <section>
@@ -113,7 +113,7 @@ const handleMarkedPackage = async (id, currentStatus, vendorId) => {
           ) : inboundRecords && inboundRecords.length > 0 ? (
             inboundRecords.map((record) => (
               <div key={record.id} className="mb-6">
-                <div className="flex justify-between">
+                {/* <div className="flex justify-between">
                   <div className="flex gap-2">
                     <button
                       className={`flex gap-2 items-center justify-end border-2 px-4 p-1 rounded-full ${
@@ -142,7 +142,7 @@ const handleMarkedPackage = async (id, currentStatus, vendorId) => {
                         : "Mark As Collected"}
                     </button>
                   </div>
-                </div>
+                </div> */}
                 <h2 className="text-center font-semibold text-xl mt-4">
                   Package ID: {record.id}
                 </h2>
