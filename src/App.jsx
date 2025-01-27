@@ -711,13 +711,41 @@ import CTCGeneralSettingEdit from "./pages/AdminHrms/CTCGeneralSettingEdit.jsx";
 import TimeSheetRecord from "./pages/AdminHrms/TimeSheet/TimeSheetRecord.jsx";
 import EmployeesSetup from "./pages/AdminHrms/EmployeesSetup.jsx";
 import UniformApplication from "./pages/AdminHrms/UniformApplication.jsx";
-import { setColor } from "./features/theme/themeSlice.js";
+// import { setColor } from "./features/theme/themeSlice.js";
 import CopyChecklistPPM from "./pages/SubPages/CopyChecklistPPM.jsx";
 import CopyChecklistService from "./pages/SubPages/CopyChecklistService.jsx";
 // import EmployeeSavedForum from "./pages/EmployeeSavedForum.jsx";
 // import BillingSetup from "./pages/Setup/BillingSetup/BillingSetup.jsx";
 // import AddCAMBillingSetup from "./pages/Setup/BillingSetup/AddCAMBillingSetup.jsx";
 // import CAMBilling from "./pages/CAMBilling.jsx";
+// import BillingSetup from "./pages/Setup/BillingSetup/BillingSetup.jsx";
+// import CAMBilling from "./pages/CAMBilling.jsx";
+import BillingAddress from "./pages/Setup/BillingSetup/BillingAddress.jsx";
+import EditBillingAddress from "./pages/Setup/BillingSetup/EditBillingAddress.jsx";
+import AddCAMBilling from "./pages/SubPages/AddCAMBilling.jsx";
+import CAMBillingDetails from "./pages/SubPages/details/CAMBillingDetails.jsx";
+import CreateInvoiceReceipt from "./pages/SubPages/details/CreateInvoiceReceipt.jsx";
+// import FBRestaurtantEdit from "./pages/SubPages/FBResturantEdit.jsx";
+// import PantryDetails from "./pages/SubPages/details/PantryDetails.jsx";
+// import FBCuisinesSetup from "./pages/Setup/FBCuisinesSetup.jsx";
+// import FBRestaurtantDetails from "./pages/SubPages/details/FBSubDetails/FBResturantsDetails.jsx";
+// import FBStatusSetup from "./pages/SubPages/details/FBStatusSetup.jsx";
+// import EditCategorySetup from "./pages/SubPages/EditCategorySetup.jsx";
+// import EditSubCategorySetup from "./pages/SubPages/EditSubCategorySetup.jsx";
+// import FBRestaurtantMenu from "./pages/SubPages/details/FBSubDetails/FBResturantMenu.jsx";
+// import EditRestaurtantBooking from "./pages/SubPages/EditResturantBooking.jsx";
+// import EditRestaurtantOrders from "./pages/SubPages/EditResturantOrders.jsx";
+// import FBMainPage from "./pages/Setup/FBMainPage.jsx";
+import EmployeeDocumentMain from "./pages/Employees/EmployeeDocumentMain.jsx";
+// import EditDailyPickup from "./pages/SubPages/Transportation/EditDailyPickup.jsx";
+// import Compliance from "./pages/Compliance/Compliance.jsx";
+// import ComplianceSetup from "./pages/Setup/ComplianceSetupPages/ComplianceSetup.jsx";
+// import AddCompliance from "./pages/Compliance/AddCompliance.jsx";
+// import SiteEmployee from "./pages/AdminHrms/Employee/SiteEmployee.jsx";
+import ComplianceVendor from "./pages/Compliance/ComplianceVendor.jsx";
+import ComplianceEvidence from "./pages/Setup/ComplianceSetupPages/ComplianceEvidence.jsx";
+import ComplianceDetails from "./pages/Compliance/ComplianceDetails.jsx";
+import ComplianceVendorDashboard from "./pages/Compliance/ComplianceVendorDashboard.jsx";
 // new admin hrms
 
 function App() {
@@ -6931,6 +6959,87 @@ function App() {
               </ProtectedAdminRoutes>
             }
           /> */}
+          
+          <Route
+            path="/admin/add-cam-billing"
+            element={
+              <ProtectedAdminRoutes>
+                <AddCAMBilling />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/cam-billing-details/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <CAMBillingDetails />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/create-invoice-receipt"
+            element={
+              <ProtectedAdminRoutes>
+                <CreateInvoiceReceipt />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/billing-address"
+            element={
+              <ProtectedAdminRoutes>
+                <BillingAddress />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/edit-billing-address/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <EditBillingAddress />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/employee/documents"
+            element={
+              <ProtectedRoute>
+                <EmployeeDocumentMain />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/compliance/vendor/dashboard"
+            element={
+              <ProtectedRoute>
+                <ComplianceVendorDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/compliance/vendor"
+            element={
+              <ProtectedRoute>
+                <ComplianceVendor />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/compliance/evidence/:id"
+            element={
+              <ProtectedRoute>
+                <ComplianceEvidence />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/compliance/compliance-details/:id"
+            element={
+              <ProtectedRoute>
+                <ComplianceDetails />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
         <Footer />
       </Router>

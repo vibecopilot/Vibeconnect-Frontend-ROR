@@ -75,7 +75,7 @@ const BookPickup = () => {
     try {
       const resp = await postDailyPickUpTransportation(sendData);
       toast.success("Daily Pickup & Drop added successfully");
-      navigate("/admin/transportation");
+      navigate("/employees/transportation");
     } catch (error) {
       console.error(error);
       toast.error("Failed to add Daily Pickup & Drop. Please try again.");
@@ -84,8 +84,10 @@ const BookPickup = () => {
 
   return (
     <section className="flex">
+      <div className="hidden md:block">
       <Navbar />
-      <div className="flex justify-center my-2 w-full md:p-2 ">
+      </div>
+      <div className="flex justify-center my-2 w-full md:p-2  mb-10">
         <div
           className="md:border  border-gray-300 rounded-lg md:p-2 w-full mx-4"
           // onSubmit={handleSubmit}
@@ -98,7 +100,7 @@ const BookPickup = () => {
           </h2>
 
           <div className="flex flex-col my-5 justify-around w-full gap-4">
-            <div className="grid grid-cols-3 gap-2 gap-y-4">
+            <div className="grid md:grid-cols-3 gap-2 gap-y-4">
               <div className="flex flex-col justify-around">
                 <label htmlFor="" className="font-medium">
                   Pickup Location:
@@ -198,7 +200,7 @@ const BookPickup = () => {
               <MdClose /> Cancel
             </button>
             <button
-              // onClick={handleSubmit}
+              onClick={handleSubmit}
               className={`text-white bg-green-400  rounded-full font-semibold py-2 px-4 transition-all duration-300 flex items-center gap-2`}
             >
               <FaCheck /> Submit
