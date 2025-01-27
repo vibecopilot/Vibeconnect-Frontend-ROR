@@ -1,36 +1,37 @@
-import React from "react";
-import { useEffect, useState } from "react";
-import axios from "axios";
-import { postVendors, EditVendors, getVendors } from "../../api";
+import React, { useEffect, useState } from "react";
+import { postVendors, EditVendors } from "../../api";
 import ModalWrapper from "./ModalWrapper";
+import { toast } from "react-toastify";
 
 const DeliveryVendorModal = ({ onclose, title = "Edit", vendor = null }) => {
   const [formData, setFormData] = useState({
+    vendor_id: "",
     vendor_name: "",
     website_url: "",
     address: "",
     email: "",
     mobile: "",
     spoc_person: "",
-    aggrement_start_date: "",
+    aggremenet_start_date: "",
     aggremenet_end_date: "",
     attachments: null,
-    status: " ",
+    status: "Active",
   });
 
-  // Populate form with existing vendor data when editing
+  // Populate form with existing vendor data
   useEffect(() => {
     if (vendor) {
       setFormData({
+        vendor_id: vendor.vendor_id || "",
         vendor_name: vendor.vendor_name || "",
         website_url: vendor.website_url || "",
         address: vendor.address || "",
         email: vendor.email || "",
         mobile: vendor.mobile || "",
         spoc_person: vendor.spoc_person || "",
-        aggrement_start_date: vendor.aggrement_start_date || "",
+        aggremenet_start_date: vendor.aggremenet_start_date || "",
         aggremenet_end_date: vendor.aggremenet_end_date || "",
-        status: vendor.status || "",
+        status: vendor.status || "Active",
         attachments: vendor.attachments || null,
       });
     }
@@ -51,39 +52,39 @@ const DeliveryVendorModal = ({ onclose, title = "Edit", vendor = null }) => {
 
     try {
       const formDataToSend = new FormData();
+      formDataToSend.append("vendor_id", formData.vendor_id);
+      formDataToSend.append("vendor_name", formData.vendor_name);
+      formDataToSend.append("website_url", formData.website_url);
+      formDataToSend.append("address", formData.address);
+      formDataToSend.append("email", formData.email);
+      formDataToSend.append("mobile", formData.mobile);
+      formDataToSend.append("spoc_person", formData.spoc_person);
+      formDataToSend.append("aggremenet_start_date", formData.aggremenet_start_date);
+      formDataToSend.append("aggremenet_end_date", formData.aggremenet_end_date);
+      formDataToSend.append("status", formData.status);
 
-      // Append all form fields
-      Object.keys(formData).forEach((key) => {
-        if (key === "attachments") {
-          if (formData.attachments instanceof File) {
-            formDataToSend.append(key, formData.attachments); // Append new file
-          } else if (formData.attachments) {
-            formDataToSend.append(key, formData.attachments); // Keep existing file path
-          }
-        } else if (formData[key] !== null && formData[key] !== undefined) {
-          formDataToSend.append(key, formData[key]);
-        }
-      });
-
-      const config = {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      };
-
-      if (vendor && vendor.id) {
-        // Update existing vendor
-        await EditVendors(vendor.id, formDataToSend, config);
-      } else {
-        // Create new vendor
-        await postVendors(formDataToSend, config);
+      // Handle attachments
+      if (formData.attachments instanceof File) {
+        formDataToSend.append("attachments", formData.attachments);
       }
 
-      // Close modal and refresh the vendor list
-      onclose();
+      // API call based on the operation
+      if (vendor && vendor.id) {
+        const response = await EditVendors(vendor.id, formDataToSend);
+        if (response.status === 200) {
+          toast.success("Vendor updated successfully!");
+          onclose();
+        }
+      } else {
+        const response = await postVendors(formDataToSend);
+        if (response.status === 200) {
+          toast.success("Vendor created successfully!");
+          onclose();
+        }
+      }
     } catch (error) {
-      console.error("Error submitting vendor:", error);
-      alert("Failed to submit vendor. Please check your inputs.");
+      console.error("Error:", error);
+      toast.error(error.response?.data?.message || "An error occurred.");
     }
   };
 
@@ -96,7 +97,22 @@ const DeliveryVendorModal = ({ onclose, title = "Edit", vendor = null }) => {
           className="grid grid-cols-2 px-5 gap-x-5 gap-y-4"
         >
           <div className="flex flex-col gap-2">
-            <label htmlFor="name" className="text-sm font-bold">
+            <label htmlFor="vendor_id" className="text-sm font-bold">
+              Vendor ID:
+            </label>
+            <input
+              type="number"
+              name="vendor_id"
+              id="vendor_id"
+              placeholder="Enter Vendor ID"
+              value={formData.vendor_id}
+              onChange={handleChange}
+              className="border rounded-md border-gray-500 p-1 px-2"
+              required
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="vendor_name" className="text-sm font-bold">
               Vendor Name:
             </label>
             <input
@@ -111,14 +127,14 @@ const DeliveryVendorModal = ({ onclose, title = "Edit", vendor = null }) => {
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label htmlFor="website_link" className="text-sm font-bold">
-              Website Url:
+            <label htmlFor="website_url" className="text-sm font-bold">
+              Website URL:
             </label>
             <input
               type="url"
               name="website_url"
               id="website_url"
-              placeholder="Enter Website Link"
+              placeholder="Enter Website URL"
               value={formData.website_url}
               onChange={handleChange}
               className="border rounded-md border-gray-500 p-1 px-2"
@@ -153,7 +169,7 @@ const DeliveryVendorModal = ({ onclose, title = "Edit", vendor = null }) => {
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label htmlFor="phone" className="text-sm font-bold">
+            <label htmlFor="mobile" className="text-sm font-bold">
               Phone:
             </label>
             <input
@@ -179,25 +195,26 @@ const DeliveryVendorModal = ({ onclose, title = "Edit", vendor = null }) => {
               value={formData.spoc_person}
               onChange={handleChange}
               className="border rounded-md border-gray-500 p-1 px-2"
-              required
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label htmlFor="agreement_start_date" className="text-sm font-bold">
+            <label
+              htmlFor="aggremenet_start_date"
+              className="text-sm font-bold"
+            >
               Agreement Start Date:
             </label>
             <input
               type="date"
-              name="aggrement_start_date"
-              id="aggrement_start_date"
-              value={formData.aggrement_start_date}
+              name="aggremenet_start_date"
+              id="aggremenet_start_date"
+              value={formData.aggremenet_start_date}
               onChange={handleChange}
               className="border rounded-md border-gray-500 p-1 px-2"
-              required
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label htmlFor="agreement_end_date" className="text-sm font-bold">
+            <label htmlFor="aggremenet_end_date" className="text-sm font-bold">
               Agreement End Date:
             </label>
             <input
@@ -207,11 +224,10 @@ const DeliveryVendorModal = ({ onclose, title = "Edit", vendor = null }) => {
               value={formData.aggremenet_end_date}
               onChange={handleChange}
               className="border rounded-md border-gray-500 p-1 px-2"
-              required
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label htmlFor="agreement_attachment" className="text-sm font-bold">
+            <label htmlFor="attachments" className="text-sm font-bold">
               Agreement Attachment:
             </label>
             <input
@@ -227,21 +243,25 @@ const DeliveryVendorModal = ({ onclose, title = "Edit", vendor = null }) => {
             <label htmlFor="status" className="text-sm font-bold">
               Status:
             </label>
-            <input
+            <select
               name="status"
               id="status"
               value={formData.status}
               onChange={handleChange}
               className="border rounded-md border-gray-500 p-1 px-2"
-            ></input>
+            >
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
           </div>
-          <button
-            type="submit"
-            // onClick
-            className="col-span-2 bg-black p-2 px-4 text-white rounded-md my-5"
-          >
-            Submit
-          </button>
+          <div className="col-span-2 mt-4 flex justify-center">
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+            >
+              {vendor && vendor.id ? "Update Vendor" : "Create Vendor"}
+            </button>
+          </div>
         </form>
       </div>
     </ModalWrapper>

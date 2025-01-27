@@ -27,6 +27,7 @@ const DeliveryVendor = () => {
       const response = await getVendors();
       const transformedData = response.data.map((vendor) => ({
         id: vendor.id,
+        vendor_id:vendor.vendor_id,
         vendor_name: vendor.vendor_name,
         website_url: vendor.website_url,
         address: vendor.address,
@@ -113,7 +114,8 @@ const DeliveryVendor = () => {
       ),
       sortable: false,
     },
-    { name: "Vendor ID", selector: (row) => row.id, sortable: true },
+    { name: "ID", selector: (row) => row.id, sortable: true },
+    { name: "Vendor ID", selector: (row) => row.vendor_id, sortable: true },
     { name: "Name", selector: (row) => row.vendor_name, sortable: true },
     {
       name: "Website Url",

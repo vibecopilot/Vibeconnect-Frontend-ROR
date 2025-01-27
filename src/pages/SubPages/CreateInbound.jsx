@@ -301,7 +301,7 @@ const CreateInbound = () => {
                 />
               </div>
               <div className="flex flex-col">
-                <label className="font-semibold text-lg">Department:</label>
+                <label className="font-semibold text-lg">Department ID:</label>
                 <input
                   type="text"
                   name="department_name" // Ensure name matches formData key

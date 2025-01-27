@@ -1343,11 +1343,10 @@ export const deleteGroup = async (id) =>
 
 export const editGroups = async (id, data) => {
   const token = getItemInLocalStorage("token"); // Ensure token retrieval is correct
-  return axiosInstance.put(`/groups/${id}.json`, data, {
+  return axiosInstance.put(`/groups/${id}.json?token=${token}`, data, {
     headers: {
       "Content-Type": "multipart/form-data",
-    },
-    params: { token }, // Ensure the token is included correctly
+    }
   });
 };
 
@@ -8049,7 +8048,7 @@ export const postComplianceEvidence = async (data) =>
     },
   });
 
-  export const getReviewerAssignments = async (complianceId, auditorId) =>
+export const getReviewerAssignments = async (complianceId, auditorId) =>
   axiosInstance.get(
     `/compliance_trackers/${complianceId}.json?q[compliance_config_reviewer_id_eq]=${auditorId}`,
     {

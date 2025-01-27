@@ -62,40 +62,40 @@ const InBoundDetails = () => {
   }, []);
 
   console.log(outboundRecords);
-  const handleMarkedPackage = async (id, currentStatus, vendorId) => {
-    try {
-      if (!id || !vendorId) throw new Error("ID or Vendor ID is invalid");
+  // const handleMarkedPackage = async (id, currentStatus, vendorId) => {
+  //   try {
+  //     if (!id || !vendorId) throw new Error("ID or Vendor ID is invalid");
 
-      // Toggle the current status (invert it)
-      const newStatus = !currentStatus === null ? true : !currentStatus; // true -> false, false -> true
+  //     // Toggle the current status (invert it)
+  //     const newStatus = !currentStatus === null ? true : !currentStatus; // true -> false, false -> true
 
-      const payload = {
-        mark_collected: newStatus, // Pass the updated status
-        vendor_id: vendorId, // Pass vendor ID
-      };
+  //     const payload = {
+  //       mark_collected: newStatus, // Pass the updated status
+  //       vendor_id: vendorId, // Pass vendor ID
+  //     };
 
-      // Send the request to the backend
-      const response = await editOutbound(id, payload);
+  //     // Send the request to the backend
+  //     const response = await editOutbound(id, payload);
 
-      // Check if the response indicates success
-      if (response?.data?.success) {
-        console.log("Status updated successfully:", response.data);
-        toast.success("Package status updated successfully");
+  //     // Check if the response indicates success
+  //     if (response?.data?.success) {
+  //       console.log("Status updated successfully:", response.data);
+  //       toast.success("Package status updated successfully");
 
-        // Update local state with the new status
-        setOutboundRecords((prevRecords) =>
-          prevRecords.map((record) =>
-            record.id === id ? { ...record, mark_collected: newStatus } : record
-          )
-        );
-      } else {
-        toast.error("Failed to update package status");
-      }
-    } catch (err) {
-      console.error("Error updating package status:", err);
-      toast.error("An error occurred while updating the package status");
-    }
-  };
+  //       // Update local state with the new status
+  //       setOutboundRecords((prevRecords) =>
+  //         prevRecords.map((record) =>
+  //           record.id === id ? { ...record, mark_collected: newStatus } : record
+  //         )
+  //       );
+  //     } else {
+  //       toast.error("Failed to update package status");
+  //     }
+  //   } catch (err) {
+  //     console.error("Error updating package status:", err);
+  //     toast.error("An error occurred while updating the package status");
+  //   }
+  // };
 
   return (
     <section>
@@ -115,34 +115,7 @@ const InBoundDetails = () => {
                   {/* <p className="border-2 px-4 p-1 rounded-full text-blue-500 border-blue-500">
                     Received
                   </p> */}
-                  <div className="flex gap-2">
-                    <button
-                      className={`flex gap-2 items-center justify-end border-2 px-4 p-1 rounded-full ${
-                        record.mark_collected
-                          ? "bg-black text-white"
-                          : "bg-white text-black"
-                      }`}
-                      onClick={() => {
-                        if (!record.vendor_id) {
-                          console.error(
-                            `Vendor ID is missing for record ID: ${record.id}`
-                          );
-                          toast.error("Vendor ID is missing");
-                          return;
-                        }
-                        handleMarkedPackage(
-                          record.id,
-                          record.mark_collected,
-                          record.vendor_id
-                        );
-                      }}
-                    >
-                      <TiTick />
-                      {record.mark_collected
-                        ? "Unmark Collected"
-                        : "Mark As Collected"}
-                    </button>
-                  </div>
+                  {/* c */}
                 </div>
                 <h2 className="text-center font-semibold text-xl mt-4">
                   Package ID: {record.id}
@@ -166,8 +139,9 @@ const InBoundDetails = () => {
                     <p className="text-lg font-medium">
                       Collected On: {record.collect_on}
                     </p>
-                    <p className="text-lg font-medium">
+                    <p  placeholder = "XXX-XXXXXXXX"className="text-lg font-medium">
                       AWB Number: {record.awb_number}
+
                     </p>
                     <p className="text-lg font-medium">
                       Recipient Name: {record.recipientName}
