@@ -6,7 +6,12 @@ import { useSelector } from "react-redux";
 import image from "/profile.png";
 import { FcLike } from "react-icons/fc";
 import { FaRegComment } from "react-icons/fa";
-import { domainPrefix, getHiddenForums, unhideForum , deleteForum } from "../../api/index";
+import {
+  domainPrefix,
+  getHiddenForums,
+  unhideForum,
+  deleteForum,
+} from "../../api/index";
 import toast from "react-hot-toast";
 import { FormattedDateToShowProperly } from "../../utils/dateUtils";
 
@@ -16,7 +21,8 @@ const HiddenForums = () => {
   const [likes, setLikes] = useState({});
   const [comments, setComments] = useState({});
   const [dropdownState, setDropdownState] = useState([]);
-  const  [ deleteForum , setDeletedForum] = useState([]);
+  const [deleteForum, setDeletedForum] = useState([]);
+
   const toggleDropdown = (index) => {
     setDropdownState((prevState) => {
       const newState = [...prevState];
@@ -28,6 +34,7 @@ const HiddenForums = () => {
   const handleForumVisibility = async (forumId) => {
     try {
       await unhideForum(forumId);
+      setDropdownState([]); // Close all dropdowns
       toast.success("Post saved successfully");
 
       // Remove the unhidden forum from the list
@@ -47,7 +54,7 @@ const HiddenForums = () => {
       setDeletedForum((prevForums) =>
         prevForums.filter((report) => report.forum.id !== id)
       );
-      setDropdownState([]);
+      setDropdownState([]); // Close all dropdowns
       toast.success("Forum deleted successfully");
     } catch (error) {
       console.error("Error deleting the forum:", error);
