@@ -159,7 +159,7 @@ const Navbar = () => {
         </div>
         <div className="flex flex-col h-full gap-4 mb-5 relative">
           {/* admin */}
-          {user === "pms_admin" && (
+          {(user === "pms_admin" || user === "auditor")&& (
             <>
               {/* <Link  className=" text-white" >
           
@@ -358,7 +358,7 @@ const Navbar = () => {
                     </h2>
                   </NavLink>
                 )}
-                {feat.includes("tickets") && (
+                {feat.includes("compliance") && (
                   <NavLink
                     to={"/compliance"}
                     className={({ isActive }) =>
@@ -377,14 +377,14 @@ const Navbar = () => {
                         !open && "opacity-0 translate-x-28 overflow-hidden"
                       }`}
                     >
-                      Compliance
+                      Compliance Tracker
                     </h2>
                     <h2
                       className={`${
                         open && "hidden"
                       } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
                     >
-                      Compliance
+                      Compliance Tracker
                     </h2>
                   </NavLink>
                 )}
@@ -1499,7 +1499,7 @@ const Navbar = () => {
           )}
 
           {/* user */}
-          {user !== "pms_admin" && (
+          {(user !== "pms_admin" && user !== "auditor") && (
             <>
               {/* {siteId === 25 ? */}
               <NavLink

@@ -3,7 +3,12 @@ import toast from "react-hot-toast";
 import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
 import { useNavigate } from "react-router-dom";
 import wave from "/wave.png";
-import { getEmployeeAssociatedSites, getHRMSEmployeeID, login, vibeLogin } from "../../api";
+import {
+  getEmployeeAssociatedSites,
+  getHRMSEmployeeID,
+  login,
+  vibeLogin,
+} from "../../api";
 import { setItemInLocalStorage } from "../../utils/localStorage";
 
 const Login = () => {
@@ -81,8 +86,8 @@ const Login = () => {
         try {
           const res = await getHRMSEmployeeID(response.data.user.id);
           const siteRes = await getEmployeeAssociatedSites(res.id);
-          const associatedSiteID = siteRes[0].associated_organization
-          setItemInLocalStorage("HRMS_SITE_ID",associatedSiteID)
+          const associatedSiteID = siteRes[0].associated_organization;
+          setItemInLocalStorage("HRMS_SITE_ID", associatedSiteID);
           setItemInLocalStorage("HRMS_EMPLOYEE_ID", res.id);
           setItemInLocalStorage("APPROVERID", res.id);
         } catch (error) {
@@ -138,6 +143,10 @@ const Login = () => {
       toast.loading("Processing your data please wait...");
       if (userType === "pms_admin") {
         navigate("/dashboard");
+      } else if (userType === "auditor") {
+        navigate("/dashboard");
+      } else if (userType === "vendor") {
+        navigate("/compliance/vendor/dashboard");
       } else {
         navigate(
           selectedSiteId === 10
