@@ -1,11 +1,19 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import { useSelector } from "react-redux";
+import { Link, useRevalidator } from "react-router-dom";
+import {
+  PiArrowArcLeftBold,
+  PiBookBookmark,
+  PiPlusCircle,
+} from "react-icons/pi";
 import FileInputBox from "../../containers/Inputs/FileInputBox";
 import { postForum } from "../../api";
 import toast from "react-hot-toast";
 
 function CreateForum() {
+  const navigate = useNavigate();
   const themeColor = useSelector((state) => state.theme.color);
   const [formData, setFormData] = useState({
     title: "",
@@ -29,19 +37,21 @@ function CreateForum() {
 
   const handleCreateForum = async () => {
     const postData = new FormData();
-    postData.append("thread_title", formData.title);
-    postData.append("thread_category", formData.category);
-    postData.append("thread_tags", formData.tags);
-    postData.append("thread_description", formData.description);
-    postData.append("thread_description", formData.description);
+    postData.append("forum[thread_title]", formData.title);
+    postData.append("forum[thread_category]", formData.category);
+    postData.append("forum[thread_tags]", formData.tags);
+    postData.append("forum[thread_description]", formData.description);
+    postData.append("forum[thread_description]", formData.description);
+
     if (formData.attachments) {
-      postData.append("forums_image", formData.attachments);
+      postData.append("attachfiles[]", formData.attachments);
     }
     try {
-      const res = await postForum(postData)
-      toast.success("Forum created successfully")
+      const res = await postForum(postData);
+      toast.success("Forum created successfully");
+      navigate("/communication/forum");
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
   };
   return (
@@ -127,7 +137,6 @@ function CreateForum() {
               </label>
               <input
                 type="file"
-
                 className="border p-2 rounded-md"
                 accept="image/*"
                 onChange={handleFileChange}
@@ -135,13 +144,13 @@ function CreateForum() {
             </div>
             <div className="flex justify-center my-4 gap-2">
               <button
-              onClick={handleCreateForum}
+                onClick={handleCreateForum}
                 style={{ background: themeColor }}
-                className="bg-black text-white p-2 px-4 rounded-md font-medium"
+                className="bg-black h text-white p-2 px-4 rounded-md font-medium"
               >
                 Create Forum
               </button>
-            </div>
+            </div >
           </div>
         </div>
       </div>
