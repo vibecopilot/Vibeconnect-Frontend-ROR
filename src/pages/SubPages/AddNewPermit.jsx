@@ -1,7 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import FileInputBox from "../../containers/Inputs/FileInputBox";
-import { getFloors, getPermitType, getSetupUsers, getUnits, getVendors, postNewPermit } from "../../api";
+import {
+  getFloors,
+  getPermitType,
+  getSetupUsers,
+  getUnits,
+  getVendors,
+  postNewPermit,
+} from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import { RiContactsBook2Line } from "react-icons/ri";
 import Accordion from "../AdminHrms/Components/Accordion";
@@ -15,48 +22,47 @@ import toast from "react-hot-toast";
 const AddNewPermit = () => {
   const buildings = getItemInLocalStorage("Building");
   const userId = getItemInLocalStorage("UserId");
-    const [assignedUser, setAssignedUser] = useState([]);
-            const siteId = getItemInLocalStorage("SITEID");
-  
- const [filteredData, setFilteredData] = useState([]);
-      useEffect(() => {
-        const fetchPantry = async () => {
-         try {
-           const invResp = await getPermitType();
-           const sortedInvData = invResp.data.sort((a, b) => {
-             
-            return new Date(b.created_at) - new Date(a.created_at);
-          });
-           
-           setFilteredData(sortedInvData)
-          //  setupdate(false);
-           console.log(invResp);
-         } catch (error) {
-          console.log(error)
-         }
-        };
-        fetchPantry();
-      }, []);
-      useEffect(() => {
-          const fetchAssignedTo = async () => {
-            try {
-              const response = await getSetupUsers();
-        
-              // Assuming response.data is an array of user objects
-              const formattedUsers = response.data.map(user => ({
-                id: user.id,
-                firstname: user.firstname,
-                lastname: user.lastname,
-              }));
-        
-              setAssignedUser(formattedUsers);
-            } catch (error) {
-              console.error("Error fetching assigned users:", error);
-            }
-          };
-        
-          fetchAssignedTo();
-        }, []);
+  const [assignedUser, setAssignedUser] = useState([]);
+  // const siteId = getItemInLocalStorage("SITEID");
+
+  const [filteredData, setFilteredData] = useState([]);
+  useEffect(() => {
+    const fetchPantry = async () => {
+      try {
+        const invResp = await getPermitType();
+        const sortedInvData = invResp.data.sort((a, b) => {
+          return new Date(b.created_at) - new Date(a.created_at);
+        });
+
+        setFilteredData(sortedInvData);
+        //  setupdate(false);
+        console.log(invResp);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchPantry();
+  }, []);
+  useEffect(() => {
+    const fetchAssignedTo = async () => {
+      try {
+        const response = await getSetupUsers();
+
+        // Assuming response.data is an array of user objects
+        const formattedUsers = response.data.map((user) => ({
+          id: user.id,
+          firstname: user.firstname,
+          lastname: user.lastname,
+        }));
+
+        setAssignedUser(formattedUsers);
+      } catch (error) {
+        console.error("Error fetching assigned users:", error);
+      }
+    };
+
+    fetchAssignedTo();
+  }, []);
   const [vendors, setVendors] = useState([]);
   const [floors, setFloors] = useState([]);
   const [units, setUnits] = useState([]);
@@ -96,7 +102,8 @@ const AddNewPermit = () => {
     created_by_id: "",
     permit_activities: [],
   });
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+  const siteId = getItemInLocalStorage("SITEID");
   const handleNewPermit = async () => {
     const sendData = new FormData();
     sendData.append("permit[name]", `${firstName} ${lastName}`);
@@ -106,14 +113,14 @@ const AddNewPermit = () => {
     sendData.append("permit[permit_for]", formData.permit_for);
     sendData.append("permit[building_id]", formData.building_id);
     sendData.append("permit[floor_id]", formData.floor_id);
-    // sendData.append("permit[room_id]", formData.room_id);
+    sendData.append("permit[room_id]", formData.unit_id);
     sendData.append("permit[client_specific]", formData.client_specific);
     sendData.append("permit[entity]", formData.entity);
     sendData.append("permit[copy_to_string]", formData.copy_to_string);
     sendData.append("permit[permit_type]", formData.permit_type);
     sendData.append("permit[vendor_id]", formData.vendor_id);
     const currentDateTime = new Date().toISOString();
-  sendData.append("permit[issue_date_and_time]", currentDateTime);
+    sendData.append("permit[issue_date_and_time]", currentDateTime);
     sendData.append(
       "permit[expiry_date_and_time]",
       formData.expiry_date_and_time
@@ -179,15 +186,12 @@ const AddNewPermit = () => {
         ...formData,
         building_id: BuildID,
       });
-    } else if (
-      e.target.type === "select-one" &&
-      e.target.name === "floor_id"
-    ) {
+    } else if (e.target.type === "select-one" && e.target.name === "floor_id") {
       const UnitID = Number(e.target.value);
       await getUnit(UnitID);
       setFormData({
         ...formData,
-        floor_id: UnitID,
+        floor_id: floorId,
       });
     } else {
       setFormData({
@@ -235,57 +239,58 @@ const AddNewPermit = () => {
   const lastName = getItemInLocalStorage("LASTNAME");
   const email = getItemInLocalStorage("USEREMAIL");
   const siteName = getItemInLocalStorage("SITENAME");
+  const mobileNumber = getItemInLocalStorage("Mobile");
   return (
     <section className="flex">
-      <Navbar/>
+      <Navbar />
       <div className="m-2 w-full">
-      <div className=" my-5 mb-10 sm:border border-gray-300 p-2 rounded-lg ">
-      <h2
+        <div className=" my-5 mb-10 sm:border border-gray-300 p-2 rounded-lg ">
+          <h2
             style={{ background: themeColor }}
             className="text-center text-xl font-bold p-2 rounded-md text-white"
           >
             New Permit
           </h2>
-        <div className=" my-5 mb-10 sm:border border-gray-300 p-5 px-10 rounded-lg ">
-          {/* <h2 className="border-b text-center text-xl border-black  font-bold">
+          <div className=" my-5 mb-10 sm:border border-gray-300 p-5 px-10 rounded-lg ">
+            {/* <h2 className="border-b text-center text-xl border-black  font-bold">
             PERMIT REQUESTOR DETAILS
           </h2> */}
-          <Accordion
-            icon={RiContactsBook2Line}
-            title={"Requestor Details"}
-            content={
-              <>
-               <div className="bg-green-50 p-2 rounded-md">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                    <div className="grid grid-cols-2 items-center">
-                      <label
-                        className="block text-gray-700 font-medium "
-                        htmlFor="name"
-                      >
-                        Name :
-                      </label>
-                      <p>{`${firstName} ${lastName}`}</p>
-                    </div>
+            <Accordion
+              icon={RiContactsBook2Line}
+              title={"Requestor Details"}
+              content={
+                <>
+                  <div className="bg-green-50 p-2 rounded-md">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                      <div className="grid grid-cols-2 items-center">
+                        <label
+                          className="block text-gray-700 font-medium "
+                          htmlFor="name"
+                        >
+                          Name :
+                        </label>
+                        <p>{`${firstName} ${lastName}`}</p>
+                      </div>
 
-                    <div className="grid grid-cols-2 items-center">
-                      <label
-                        className="block text-gray-700 font-medium  text-center"
-                        htmlFor="name"
-                      >
-                        Site :
-                      </label>
-                      <p>{siteName}</p>
-                    </div>
-                    <div className="grid grid-cols-2 items-center">
-                      <label
-                        className="block text-gray-700 font-medium "
-                        htmlFor="name"
-                      >
-                        Contact number :
-                      </label>
-                      <p>{formData?.contact_number}</p>
-                    </div>
-                    {/* <div className="grid grid-cols-2 items-center">
+                      <div className="grid grid-cols-2 items-center">
+                        <label
+                          className="block text-gray-700 font-medium  text-center"
+                          htmlFor="name"
+                        >
+                          Site :
+                        </label>
+                        <p>{siteName}</p>
+                      </div>
+                      <div className="grid grid-cols-2 items-center">
+                        <label
+                          className="block text-gray-700 font-medium "
+                          htmlFor="name"
+                        >
+                          Contact number :
+                        </label>
+                        <p>{formData?.contact_number}</p>
+                      </div>
+                      {/* <div className="grid grid-cols-2 items-center">
                       <label
                         className="block text-gray-700 font-medium "
                         htmlFor="name"
@@ -294,157 +299,160 @@ const AddNewPermit = () => {
                       </label>
                       <p>{siteName}</p>
                     </div> */}
+                    </div>
                   </div>
-                </div>
-              </>
-            }
-          />
+                </>
+              }
+            />
 
-          <h2 className="border-b  text-xl border-black font-medium mt-2">
-            BASIC DETAILS
-          </h2>
+            <h2 className="border-b  text-xl border-black font-medium mt-2">
+              BASIC DETAILS
+            </h2>
 
-          <div className="w-full my-3  ">
-            {/* Basic details input fields */}
-            <div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <div className="col-span-1">
-                  <label
-                    className="block  font-semibold mb-2"
-                    htmlFor="permit-for"
-                  >
-                    Permit For
-                  </label>
-                  <input
-          className="w-full border p-1 px-4 border-gray-500 rounded-md"
-          id="permit-for"
-                    type="text"
-                    onChange={handleChange}
-                    value={formData.permit_for}
-                    name="permit_for"
-                    placeholder="Enter Permit For"
-                  />
-                </div>
-                <div className="col-span-1">
-                  <label
-                    className="block text-gray-700 font-bold mb-2"
-                    htmlFor="building"
-                  >
-                    Building
-                  </label>
-                  <select
-          className="w-full border p-1 px-4 border-gray-500 rounded-md"
-          id="building"
-                    onChange={handleChange}
-                    value={formData.building_id}
-                    name="building_id"
-                  >
-                    <option value="">Select Building</option>
-                    {buildings?.map((building) => (
-                      <option key={building.id} value={building.id}>
-                        {building.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="col-span-1">
-                  <label
-                    className="block text-gray-700 font-bold mb-2"
-                    htmlFor="floor"
-                  >
-                    Floor
-                  </label>
-                  <select
-          className="w-full border p-1 px-4 border-gray-500 rounded-md"
-          id="floor"
-                    onChange={handleChange}
-                    value={formData.floor_id}
-                    name="floor_id"
-                  >
-                    <option value="">Select Floor</option>
-                    {floors?.map((floor) => (
-                      <option value={floor.id} key={floor.id}>
-                        {floor.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="col-span-1">
-                  <label
-                    className="block text-gray-700 font-bold mb-2"
-                    htmlFor="room"
-                  >
-                    Unit
-                  </label>
-                  <select
-          className="w-full border p-1 px-4 border-gray-500 rounded-md"
-          name="unit_id"
-          onChange={handleChange}
-                    value={formData.unit_id}
-          id="room"
-                  >
-                    <option>Select Unit</option>
-                    {units?.map((floor) => (
-                      <option value={floor.id} key={floor.id}>
-                        {floor.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="col-span-1">
-                  <label
-                    className="block text-gray-700 font-bold mb-2"
-                    htmlFor="type"
-                  >
-                    Client Specific
-                  </label>
-                  <div className="flex items-center justify-center bg-gray-200 border rounded-md  w-full p-1  text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                    <input
-                      className="mr-2 "
-                      type="radio"
-                      id="internal"
-                      name="client_specific"
-                      value="internal"
-                      checked={formData.client_specific === "internal"}
-                      onChange={handleRadioChange}
-                    />
+            <div className="w-full my-3  ">
+              {/* Basic details input fields */}
+              <div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 gap-y-4 mb-4">
+                  <div className="col-span-1">
                     <label
-                      className="text-gray-700 font-semibold mr-10"
-                      htmlFor="internal"
+                      className="block  font-semibold mb-2"
+                      htmlFor="permit-for"
                     >
-                      Internal
+                      Permit For
                     </label>
                     <input
-                      className="mr-2 "
-                      type="radio"
-                      id="client"
-                      name="client_specific"
-                      value="client"
-                      checked={formData.client_specific === "client"}
-                      onChange={handleRadioChange}
+                      className="w-full border p-1 px-4 border-gray-500 rounded-md"
+                      id="permit-for"
+                      type="text"
+                      onChange={handleChange}
+                      value={formData.permit_for}
+                      name="permit_for"
+                      placeholder="Enter Permit For"
                     />
-                    <label className="text-gray-700 font-semibold" htmlFor="client">
-                      Client
-                    </label>
                   </div>
-                </div>
-                {showEntityList && (
-                  <div className="col-span-2 md:col-span-1">
+                  <div className="col-span-1">
                     <label
-                      className="block text-gray-700 font-bold mb-2"
-                      htmlFor="entity-list"
+                      className="block text-gray-700 font-medium "
+                      htmlFor="building"
                     >
-                      List of Entity
+                      Building
                     </label>
                     <select
-          className="w-full border p-1 px-4 border-gray-500 rounded-md"
-          id="entity-list"
+                      className="w-full border p-1 px-4 border-gray-500 rounded-md"
+                      id="building"
                       onChange={handleChange}
-                      value={formData.entity}
-                      name="entity"
+                      value={formData.building_id}
+                      name="building_id"
                     >
-                      <option value="">Select Entity</option>
-                      {/* <option value="RISING ASSOSIATES">
+                      <option value="">Select Building</option>
+                      {buildings?.map((building) => (
+                        <option key={building.id} value={building.id}>
+                          {building.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="col-span-1">
+                    <label
+                      className="block text-gray-700 font-medium"
+                      htmlFor="floor"
+                    >
+                      Floor
+                    </label>
+                    <select
+                      className="w-full border p-1 px-4 border-gray-500 rounded-md"
+                      id="floor"
+                      onChange={handleChange}
+                      value={formData.floor_id}
+                      name="floor_id"
+                    >
+                      <option value="">Select Floor</option>
+                      {floors?.map((floor) => (
+                        <option value={floor.id} key={floor.id}>
+                          {floor.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="col-span-1">
+                    <label
+                      className="block text-gray-700 font-medium "
+                      htmlFor="room"
+                    >
+                      Unit
+                    </label>
+                    <select
+                      className="w-full border p-1 px-4 border-gray-500 rounded-md"
+                      name="unit_id"
+                      onChange={handleChange}
+                      value={formData.unit_id}
+                      id="room"
+                    >
+                      <option>Select Unit</option>
+                      {units?.map((floor) => (
+                        <option value={floor.id} key={floor.id}>
+                          {floor.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="col-span-1">
+                    <label
+                      className="block text-gray-700 font-medium"
+                      htmlFor="type"
+                    >
+                      Client Specific
+                    </label>
+                    <div className="flex items-center justify-center bg-gray-200 border rounded-md  w-full p-1  text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                      <input
+                        className="mr-2 "
+                        type="radio"
+                        id="internal"
+                        name="client_specific"
+                        value="internal"
+                        checked={formData.client_specific === "internal"}
+                        onChange={handleRadioChange}
+                      />
+                      <label
+                        className="text-gray-700 font-semibold mr-10"
+                        htmlFor="internal"
+                      >
+                        Internal
+                      </label>
+                      <input
+                        className="mr-2 "
+                        type="radio"
+                        id="client"
+                        name="client_specific"
+                        value="client"
+                        checked={formData.client_specific === "client"}
+                        onChange={handleRadioChange}
+                      />
+                      <label
+                        className="text-gray-700 font-semibold"
+                        htmlFor="client"
+                      >
+                        Client
+                      </label>
+                    </div>
+                  </div>
+                  {showEntityList && (
+                    <div className="col-span-2 md:col-span-1">
+                      <label
+                        className="block text-gray-700 font-medium"
+                        htmlFor="entity-list"
+                      >
+                        List of Entity
+                      </label>
+                      <select
+                        className="w-full border p-1 px-4 border-gray-500 rounded-md"
+                        id="entity-list"
+                        onChange={handleChange}
+                        value={formData.entity}
+                        name="entity"
+                      >
+                        <option value="">Select Entity</option>
+                        {/* <option value="RISING ASSOSIATES">
                         RISING ASSOSIATES
                       </option>
                       <option value="ABS Professional Services">
@@ -453,43 +461,43 @@ const AddNewPermit = () => {
                       <option value="Apex Fund Services LLP">
                         Apex Fund Services LLP
                       </option> */}
+                      </select>
+                    </div>
+                  )}
+                  <div className="col-span-1">
+                    <label
+                      className="block text-gray-700 font-medium "
+                      htmlFor="copy-to"
+                    >
+                      Copy To
+                    </label>
+                    <select
+                      name="copy_to_string"
+                      onChange={handleChange}
+                      value={formData.copy_to_string}
+                      className="w-full border p-1 px-4 border-gray-500 rounded-md"
+                      id="copy-to"
+                    >
+                      <option value="">Select</option>
+                      {assignedUser?.map((assign) => (
+                        <option key={assign.id} value={assign.id}>
+                          {assign.firstname} {assign.lastname}
+                        </option>
+                      ))}
                     </select>
                   </div>
-                )}
-                <div className="col-span-1">
-                  <label
-                    className="block text-gray-700 font-bold mb-2"
-                    htmlFor="copy-to"
-                  >
-                    Copy To
-                  </label>
-                  <select
-                    name="copy_to_string"
-                    onChange={handleChange}
-                    value={formData.copy_to_string}
-                    className="w-full border p-1 px-4 border-gray-500 rounded-md"
-                    id="copy-to"
-                  >
-                    <option value="">Select</option>
-                    {assignedUser?.map((assign) => (
-                  <option key={assign.id} value={assign.id}>
-                    {assign.firstname} {assign.lastname}
-                  </option>
-                ))}
-                  </select>
                 </div>
               </div>
             </div>
-          </div>
 
-          <h2 className="border-b  text-xl border-black  font-medium">
-            PERMIT DETAILS
-          </h2>
+            <h2 className="border-b  text-xl border-black  font-medium">
+              PERMIT DETAILS
+            </h2>
 
-          <div className="w-full my-2 ">
-            <h3 className="font-semibold mb-2">Permit Type</h3>
-            {/* Permit details input fields */}
-            {/* <div className="border rounded-xl p-2 bg-gray-50">
+            <div className="w-full my-2 ">
+              <h3 className="font-semibold mb-2">Permit Type</h3>
+              {/* Permit details input fields */}
+              {/* <div className="border rounded-xl p-2 bg-gray-50">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                 <div className="col-span-1">
                   <input
@@ -642,224 +650,224 @@ const AddNewPermit = () => {
                 </div>
               </div>
             </div> */}
-            <select 
-            name="permit_type" 
-            id="" 
-            onChange={handleChange}
-            value={formData.permit_type}
-            className=" border p-1 px-4 border-gray-500 w-1/3  rounded-md "
-          >
-              <option value="">Select Permit Type</option>
-              {filteredData?.map((building) => (
-                      <option key={building.id} value={building.id}>
-                        {building.name}
-                      </option>
-                    ))}
-            </select>
-          </div>
+              <select
+                name="permit_type"
+                id=""
+                onChange={handleChange}
+                value={formData.permit_type}
+                className=" border p-1 px-4 border-gray-500 w-1/3  rounded-md "
+              >
+                <option value="">Select Permit Type</option>
+                {filteredData?.map((building) => (
+                  <option key={building.id} value={building.id}>
+                    {building.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          <h3 className="font-semibold border-b border-gray-500 text-xl">
-            Enter Permit Description
-          </h3>
+            <h3 className="font-semibold border-b border-gray-500 text-xl">
+              Enter Permit Description
+            </h3>
 
-          <div className="w-full ">
-            {/* Permit details input fields */}
-            <div className="w-full   rounded-lg ">
-              {activities.map((activity, index) => (
-                <div
-                  key={activity.id}
-                  className="mb-4 border p-2 rounded-xl mt-1"
-                >
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    <div className="col-span-1">
-                      <label
-                        className="block text-gray-700 font-bold mb-2"
-                        htmlFor={`activity-${index}`}
-                      >
-                        Activity*
-                      </label>
-                      <select
-                        id={`activity-${index}`}
-                        type="text"
-                        name="activity"
-                        value={activity.activity}
-                        onChange={(e) => handleInputChange(index, e)}
-                        className="w-full border p-1 px-4 border-gray-500 rounded-md"
+            <div className="w-full ">
+              <div className="w-full   rounded-lg ">
+                {activities.map((activity, index) => (
+                  <div
+                    key={activity.id}
+                    className="mb-4 border p-2 rounded-xl mt-1"
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <div className="col-span-1">
+                        <label
+                          className="block text-gray-700 font-bold mb-2"
+                          htmlFor={`activity-${index}`}
                         >
-                        <option value="">Select Activity</option>
-                      </select>
+                          Activity <span className="text-red-400">*</span>
+                        </label>
+                        <select
+                          id={`activity-${index}`}
+                          type="text"
+                          name="activity"
+                          value={activity.activity}
+                          onChange={(e) => handleInputChange(index, e)}
+                          className="w-full border p-1 px-4 border-gray-500 rounded-md"
+                        >
+                          <option value="">Select Activity</option>
+                        </select>
+                      </div>
+                      <div className="col-span-1">
+                        <label
+                          className="block text-gray-700 font-bold mb-2"
+                          htmlFor={`sub-activity-${index}`}
+                        >
+                          Sub Activity<span className="text-red-400">*</span>
+                        </label>
+                        <select
+                          className="w-full border p-1 px-4 border-gray-500 rounded-md"
+                          id={`sub-activity-${index}`}
+                          type="text"
+                          placeholder="Select Sub Activity"
+                          name="sub_activity"
+                          value={activity.sub_activity}
+                          onChange={(e) => handleInputChange(index, e)}
+                        >
+                          <option value="">Select Sub Activity</option>
+                        </select>
+                      </div>
                     </div>
-                    <div className="col-span-1">
-                      <label
-                        className="block text-gray-700 font-bold mb-2"
-                        htmlFor={`sub-activity-${index}`}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
+                      <div className="col-span-1">
+                        <label
+                          className="block text-gray-700 font-bold mb-2"
+                          htmlFor={`hazard-category-${index}`}
+                        >
+                          Category of Hazards
+                          <span className="text-red-400">*</span>
+                        </label>
+                        <select
+                          className="w-full border p-1 px-4 border-gray-500 rounded-md"
+                          id={`hazard-category-${index}`}
+                          type="text"
+                          placeholder="Select Category of Hazards"
+                          name="category_of_hazards"
+                          value={activity.category_of_hazards}
+                          onChange={(e) => handleInputChange(index, e)}
+                        >
+                          <option value="">Select Category of Hazards</option>
+                        </select>
+                      </div>
+                      <div className="col-span-1">
+                        <label
+                          className="block text-gray-700 font-bold mb-2"
+                          htmlFor={`risks-${index}`}
+                        >
+                          Risks<span className="text-red-400">*</span>
+                        </label>
+                        <select
+                          className="w-full border p-1 px-4 border-gray-500 rounded-md"
+                          id={`risks-${index}`}
+                          type="text"
+                          placeholder="Enter Risks"
+                          name="risks"
+                          value={activity.risks}
+                          onChange={(e) => handleInputChange(index, e)}
+                        >
+                          <option value="">Select Risks</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end">
+                      <button
+                        className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:shadow-outline mt-1"
+                        type="button"
+                        onClick={() => handleDeleteActivity(index)}
                       >
-                        Sub Activity*
-                      </label>
-                      <select
-          className="w-full border p-1 px-4 border-gray-500 rounded-md"
-          id={`sub-activity-${index}`}
-                        type="text"
-                        placeholder="Select Sub Activity"
-                        name="sub_activity"
-                        value={activity.sub_activity}
-                        onChange={(e) => handleInputChange(index, e)}
-                      >
-                        <option value="">Select Sub Activity</option>
-                      </select>
+                        <FaTrash />
+                      </button>
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
-                    <div className="col-span-1">
-                      <label
-                        className="block text-gray-700 font-bold mb-2"
-                        htmlFor={`hazard-category-${index}`}
-                      >
-                        Category of Hazards*
-                      </label>
-                      <select
-          className="w-full border p-1 px-4 border-gray-500 rounded-md"
-          id={`hazard-category-${index}`}
-                        type="text"
-                        placeholder="Select Category of Hazards"
-                        name="category_of_hazards"
-                        value={activity.category_of_hazards}
-                        onChange={(e) => handleInputChange(index, e)}
-                      >
-                        <option value="">Select Category of Hazards</option>
-                      </select>
-                      
-                    </div>
-                    <div className="col-span-1">
+                ))}
+                <div className="flex items-center justify-between">
+                  <button
+                    style={{ background: themeColor }}
+                    className="bg-green-500 hover:bg-green-700 text-white font-bold flex items-center gap-2 py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                    type="button"
+                    onClick={handleAddActivity}
+                  >
+                    <PiPlusCircleBold /> Add Activity
+                  </button>
+                </div>
+              </div>
+
+              <div className="w-full   p-2 rounded-xl mt-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div className="col-span-1">
                     <label
-                      className="block text-gray-700 font-bold mb-2"
-                      htmlFor={`risks-${index}`}
+                      className="block text-gray-700 font-medium mb-2"
+                      htmlFor="vendor"
                     >
-                      Risks*
+                      Vendor
                     </label>
                     <select
-          className="w-full border p-1 px-4 border-gray-500 rounded-md"
-          id={`risks-${index}`}
+                      className="w-full border p-1 px-4 border-gray-500 rounded-md"
+                      id="vendor"
                       type="text"
-                      placeholder="Enter Risks"
-                      name="risks"
-                      value={activity.risks}
-                      onChange={(e) => handleInputChange(index, e)}
+                      value={formData.vendor_id}
+                      onChange={handleChange}
+                      name="vendor_id"
+                      placeholder="Enter Vendor"
                     >
-                      <option value="">Select Risks</option>
-                      </select>       
-                          </div>
+                      <option value="">Select Vendor</option>
+                      {vendors.map((vendor) => (
+                        <option value={vendor.id} key={vendor.id}>
+                          {vendor.vendor_name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                  
-                  <div className="flex justify-end">
-                    <button
-                      className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:shadow-outline mt-1"
-                      type="button"
-                      onClick={() => handleDeleteActivity(index)}
+                  <div className="col-span-1">
+                    <label
+                      className="block text-gray-700 font-medium mb-2"
+                      htmlFor="expiryDateTime"
                     >
-                      <FaTrash />
-                    </button>
+                      Expiry Date & Time*
+                    </label>
+                    <input
+                      className="w-full border p-1 px-4 border-gray-500 rounded-md"
+                      id="expiryDateTime"
+                      value={formData.expiry_date_and_time}
+                      onChange={handleChange}
+                      name="expiry_date_and_time"
+                      type="datetime-local"
+                      placeholder="dd-mm-yyyy --:--"
+                    />
                   </div>
                 </div>
-              ))}
-              <div className="flex items-center justify-between">
-                <button
-                style={{ background: themeColor }}
-                className="bg-green-500 hover:bg-green-700 text-white font-bold flex items-center gap-2 py-2 px-4 rounded focus:outline-none focus:shadow-outline"                  type="button"
-                  onClick={handleAddActivity}
-                >
-                 <PiPlusCircleBold/> Add Activity
-                </button>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div className="col-span-2">
+                    <label
+                      className="block text-gray-700 font-medium mb-2"
+                      htmlFor="comment"
+                    >
+                      Comment (Optional)
+                    </label>
+                    <textarea
+                      className="w-full border p-1 px-4 border-gray-500 rounded-md"
+                      id="comment"
+                      value={formData.comment}
+                      onChange={handleChange}
+                      name="comment"
+                      placeholder="Enter Comment"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="w-full   p-2 rounded-xl mt-1">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div className="col-span-1">
-                  <label
-                    className="block text-gray-700 font-bold mb-2"
-                    htmlFor="vendor"
-                  >
-                    Vendor
-                  </label>
-                  <select
-          className="w-full border p-1 px-4 border-gray-500 rounded-md"
-          id="vendor"
-                    type="text"
-                    value={formData.vendor_id}
-                    onChange={handleChange}
-                    name="vendor_id"
-                    placeholder="Enter Vendor"
-                  >
-                    <option value="">Select Vendor</option>
-                    {vendors.map((vendor) => (
-                      <option value={vendor.id} key={vendor.id}>
-                        {vendor.vendor_name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="col-span-1">
-                  <label
-                    className="block text-gray-700 font-bold mb-2"
-                    htmlFor="expiryDateTime"
-                  >
-                    Expiry Date & Time*
-                  </label>
-                  <input
-          className="w-full border p-1 px-4 border-gray-500 rounded-md"
-          id="expiryDateTime"
-                    value={formData.expiry_date_and_time}
-                    onChange={handleChange}
-                    name="expiry_date_and_time"
-                    type="datetime-local"
-                    placeholder="dd-mm-yyyy --:--"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div className="col-span-2">
-                  <label
-                    className="block text-gray-700 font-bold mb-2"
-                    htmlFor="comment"
-                  >
-                    Comment (Optional)
-                  </label>
-                  <textarea
-          className="w-full border p-1 px-4 border-gray-500 rounded-md"
-          id="comment"
-                    value={formData.comment}
-                    onChange={handleChange}
-                    name="comment"
-                    placeholder="Enter Comment"
-                  />
-                </div>
-              </div>
+            <h3 className="border-b text-xl border-black mb-2 font-medium">
+              ATTACHMENTS
+            </h3>
+
+            <FileInputBox />
+
+            {/* Submit button */}
+            <div className="sm:flex justify-center grid gap-2 mt-5 border-t p-1">
+              <button
+                className="bg-red-400 text-white p-2 px-4 rounded-md font-medium flex items-center gap-2"
+                onClick={() => navigate("/admin/permit")}
+              >
+                <MdClose size={20} /> Cancel
+              </button>
+              <button
+                className="bg-green-400 text-white p-2 px-4 rounded-md font-medium flex items-center gap-2"
+                onClick={handleNewPermit}
+              >
+                <FaCheck /> Submit
+              </button>
             </div>
           </div>
-
-          <h3 className="border-b text-xl border-black mb-2 font-medium">
-            ATTACHMENTS
-          </h3>
-          
-          <FileInputBox />
-
-          {/* Submit button */}
-          <div className="sm:flex justify-center grid gap-2 mt-5 border-t p-1">
-            <button
-              className="bg-red-400 text-white p-2 px-4 rounded-md font-medium flex items-center gap-2"
-              onClick={()=>navigate("/admin/permit")}
-            >
-              <MdClose size={20} /> Cancel
-            </button>
-            <button
-              className="bg-green-400 text-white p-2 px-4 rounded-md font-medium flex items-center gap-2"
-              onClick={handleNewPermit}
-            >
-              <FaCheck /> Submit
-            </button>
-          </div>
-        </div>
         </div>
       </div>
     </section>

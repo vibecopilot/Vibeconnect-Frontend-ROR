@@ -3,7 +3,12 @@ import toast from "react-hot-toast";
 import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
 import { useNavigate } from "react-router-dom";
 import wave from "/wave.png";
-import { getHRMSEmployeeID, login, vibeLogin } from "../../api";
+import {
+  getEmployeeAssociatedSites,
+  getHRMSEmployeeID,
+  login,
+  vibeLogin,
+} from "../../api";
 import { setItemInLocalStorage } from "../../utils/localStorage";
 
 const Login = () => {
@@ -49,10 +54,12 @@ const Login = () => {
       const userName = response.data.user.firstname;
       const userEmail = response.data?.user?.email;
       const siteName = response.data?.site?.name;
+      const mobileNumber = response.data?.user?.mobile;
       setItemInLocalStorage("SITENAME", siteName);
       setItemInLocalStorage("USEREMAIL", userEmail);
       setItemInLocalStorage("SITEID", selectedSiteId);
       setItemInLocalStorage("Name", userName);
+      setItemInLocalStorage("Mobile", mobileNumber);
       const features = response.data.features;
       setItemInLocalStorage("FEATURES", features);
 
@@ -78,6 +85,9 @@ const Login = () => {
       if (featNames.includes("hrms") && response.data.user.organization_id) {
         try {
           const res = await getHRMSEmployeeID(response.data.user.id);
+          const siteRes = await getEmployeeAssociatedSites(res.id);
+          const associatedSiteID = siteRes[0].associated_organization;
+          setItemInLocalStorage("HRMS_SITE_ID", associatedSiteID);
           setItemInLocalStorage("HRMS_EMPLOYEE_ID", res.id);
           setItemInLocalStorage("APPROVERID", res.id);
         } catch (error) {
@@ -133,6 +143,10 @@ const Login = () => {
       toast.loading("Processing your data please wait...");
       if (userType === "pms_admin") {
         navigate("/dashboard");
+      } else if (userType === "auditor") {
+        navigate("/dashboard");
+      } else if (userType === "vendor") {
+        navigate("/compliance/vendor/dashboard");
       } else {
         navigate(
           selectedSiteId === 10

@@ -4,6 +4,7 @@ import { BsEye } from "react-icons/bs";
 import { PiPlusCircle } from "react-icons/pi";
 import { Link } from "react-router-dom";
 import Table from "../../../components/table/Table";
+import { useSelector } from "react-redux";
 
 const OutStation = () => {
   const columns = [
@@ -20,6 +21,11 @@ const OutStation = () => {
     {
       name: "Booking ID",
       selector: (row) => row.id,
+      sortable: true,
+    },
+    {
+      name: "Departure From",
+      selector: (row) => row.departure,
       sortable: true,
     },
     {
@@ -63,6 +69,7 @@ const OutStation = () => {
     {
       id: 1,
       destination: "Mumbai",
+      departure: "Delhi",
       departure_date: "20/05/2024",
       return_date: "23/05/2024",
       passengers: 2,
@@ -70,6 +77,7 @@ const OutStation = () => {
     },
     {
       id: 2,
+      departure: "Mumbai",
       destination: "Delhi",
       departure_date: "10/05/2024",
       return_date: "13/05/2024",
@@ -123,7 +131,7 @@ const OutStation = () => {
   //       setFilteredData(filteredResults);
   //     }
   //   };
-
+  const themeColor = useSelector((state) => state.theme.color);
   return (
     <section className="my-5">
       <div className="flex justify-between gap-2 my-2">
@@ -136,9 +144,9 @@ const OutStation = () => {
         />
 
         <Link
-          to={"/employees/book-outstation"}
-          className="border-2 font-semibold hover:bg-black hover:text-white duration-300 transition-all border-black p-2 rounded-md text-black cursor-pointer text-center flex items-center w-44 gap-2 justify-center"
-          // onClick={() => setShowCountry(!showCountry)}
+          to={"/employees/transportation/book-outstation"}
+          className="rounded-md p-2 flex items-center gap-2 text-white font-medium"
+          style={{ background: themeColor }}
         >
           <PiPlusCircle size={20} />
           Book

@@ -1,10 +1,84 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import ModalWrapper from "../ModalWrapper";
 import { BiEditAlt } from "react-icons/bi";
 import { MdClose } from "react-icons/md";
 import { FaCheck } from "react-icons/fa";
+import { getItemInLocalStorage } from "../../../utils/localStorage";
+import {
+  editIncidentCatDetails,
+  getIncidentCatDetails,
+  getIncidentTags,
+} from "../../../api";
+import toast from "react-hot-toast";
 
-const SecSubSubSubModal = ({ onclose }) => {
+const SecSubSubSubModal = ({ onclose, catId, fetchIncidentCategory }) => {
+  const [formData, setFormData] = useState({
+    categoryId: "",
+    subCategoryId: "",
+    subSubCategory: "",
+  });
+  const companyId = getItemInLocalStorage("COMPANYID");
+  const [categories, setCategories] = useState([]);
+  const [subCategories, setSubCategories] = useState([]);
+  useEffect(() => {
+    const fetchCategoryDetails = async () => {
+      try {
+        const res = await getIncidentCatDetails(catId);
+        setFormData({
+          ...formData,
+          categoryId: res.data.root_id,
+          subCategoryId: res.data.parent_id,
+          subSubCategory: res.data.name,
+        });
+        console.log(res);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    const fetchIncidentCategory = async () => {
+      try {
+        const res = await getIncidentTags("IncidentSecondaryCategory");
+        setCategories(res.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    const fetchIncidentSubCategory = async () => {
+      try {
+        const res = await getIncidentTags("IncidentSecondarySubCategory");
+        setSubCategories(res.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchIncidentSubCategory();
+    fetchIncidentCategory();
+    fetchCategoryDetails();
+  }, []);
+  const handleEditCategory = async () => {
+    const payload = {
+      name: formData.subSubCategory,
+      active: true,
+      parent_id: formData.subCategoryId,
+      tag_type: "IncidentSecondarySubSubCategory",
+      resource_id: companyId,
+      resource_type: "Pms::CompanySetup",
+      // "comment": "Covers all types of plumbing problems."
+    };
+    try {
+      const res = await editIncidentCatDetails(catId, payload);
+      toast.success(
+        "Incident Secondary Sub Sub Category Updated successfully!"
+      );
+      onclose();
+      fetchIncidentCategory();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
   return (
     <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-30 backdrop-blur-sm z-20">
       <div className="bg-white overflow-auto max-h-[70%] md:w-auto min-w-96 p-4 flex flex-col rounded-xl gap-5">
@@ -15,33 +89,39 @@ const SecSubSubSubModal = ({ onclose }) => {
           <div className="border-t-2 border-black">
             <div className="grid grid-cols-2 gap-2 my-2">
               <select
-                name=""
+                name="categoryId"
                 id=""
                 className="border p-2 border-gray-500 rounded-md w-full"
+                value={formData.categoryId}
+                onChange={handleChange}
               >
                 <option value="">Select Secondary Category</option>
-                <option value="">Health and Safety</option>
-                <option value="">Fire</option>
-                <option value="">Near Miss/Good Catch</option>
+                {categories.map((category) => (
+                  <option value={category.id} key={category.id}>
+                    {category.name}
+                  </option>
+                ))}
               </select>
               <select
-                name=""
+                name="subCategoryId"
                 id=""
                 className="border p-2 border-gray-500 rounded-md w-full"
+                value={formData.subCategoryId}
+                onChange={handleChange}
               >
                 <option value="">Select Secondary Sub Category</option>
-              </select>
-              <select
-                name=""
-                id=""
-                className="border p-2 border-gray-500 rounded-md w-full"
-              >
-                <option value="">Select Secondary Sub Sub Category</option>
+                {subCategories.map((subCategory) => (
+                  <option value={subCategory.id} key={subCategory.id}>
+                    {subCategory.name}
+                  </option>
+                ))}
               </select>
               <input
                 type="text"
-                name=""
+                name="subSubCategory"
+                onChange={handleChange}
                 id=""
+                value={formData.subSubCategory}
                 placeholder="Secondary Sub Sub Sub Category"
                 className="border p-2 border-gray-500 rounded-md w-full"
               ></input>
@@ -54,7 +134,10 @@ const SecSubSubSubModal = ({ onclose }) => {
             >
               <MdClose /> Cancel
             </button>
-            <button className="bg-green-500 flex items-center gap-2 font-medium text-white rounded-md px-4 p-2 ">
+            <button
+              className="bg-green-500 flex items-center gap-2 font-medium text-white rounded-md px-4 p-2 "
+              onClick={handleEditCategory}
+            >
               <FaCheck /> Submit
             </button>
           </div>
@@ -64,4 +147,4 @@ const SecSubSubSubModal = ({ onclose }) => {
   );
 };
 
-export default SecSubSubSubModal
+export default SecSubSubSubModal;

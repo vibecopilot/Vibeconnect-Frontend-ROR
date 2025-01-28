@@ -17,6 +17,7 @@ import { getSiteData, siteChange } from "../api";
 import { MdExpandLess, MdExpandMore } from "react-icons/md";
 import { FaBuilding } from "react-icons/fa";
 import AssetDashboard from "./SubPages/AssetDashboard";
+import ComplianceDashboard from "./SubPages/ComplianceDashboard";
 const Dashboard = () => {
   const themeColor = useSelector((state) => state.theme.color);
   const vibeUserId = getItemInLocalStorage("VIBEUSERID");
@@ -121,7 +122,7 @@ const Dashboard = () => {
       // }}
     >
       <Navbar />
-      <div className=" w-full flex lg:mx-3 flex-col overflow-hidden">
+      <div className=" w-full flex lg:mx-3 flex-col overflow-hidden mb-10">
         <header
           style={{ background: themeColor }}
           className="w-full h-10 rounded-md  my-1 flex justify-between items-center"
@@ -171,6 +172,14 @@ const Dashboard = () => {
         <div className="w-full flex mx-3 flex-col p-2  ">
           <HighchartsComponent />
         </div>
+        {feat.includes("compliance") && (
+          <div className="w-full flex flex-col p-2  ">
+            <h2 className="border-b-2 border-black font-medium mb-2">
+              Compliance
+            </h2>
+            <ComplianceDashboard />
+          </div>
+        )}
         {feat.includes("soft_services") && (
           <div className="w-full flex mx-3 flex-col p-2  ">
             <h2 className="border-b-2 border-black font-medium mb-10">

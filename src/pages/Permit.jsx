@@ -3,9 +3,6 @@ import Navbar from "../components/Navbar";
 import PermitList from "./SubPages/PermitList";
 import PermitPendingApproval from "./PermitPendingApproval";
 
-
-
-
 const Permit = () => {
   const [page, setPage] = useState("permit");
   return (
@@ -35,15 +32,15 @@ const Permit = () => {
           </div>
         </div>
         {page === "permit" && (
-        <div className="transition-all duration-300 ease-linear">
-            <PermitList/>
-            </div>
-        )} 
+          <div className="transition-all duration-300 ease-linear">
+            <PermitList />
+          </div>
+        )}
         {page === "Pending Approvals" && (
-        <div className="transition-all duration-300 ease-linear">
-           <PermitPendingApproval/>
-            </div>
-        )} 
+          <div className="transition-all duration-300 ease-linear">
+            <PermitPendingApproval />
+          </div>
+        )}
       </div>
     </section>
   );

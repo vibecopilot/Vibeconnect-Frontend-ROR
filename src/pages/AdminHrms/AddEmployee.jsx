@@ -202,7 +202,7 @@ const AddEmployee = () => {
     postData.append("mobile", formData.mobile);
     postData.append("gender", formData.gender);
     postData.append("date_of_birth", formData.dob);
-    postData.append("blood_group", formData.bloodGroup);
+    postData.append("blood_group", formData.bloodGroup); 
     postData.append("pan", formData.pan);
     postData.append("aadhar_number", rawAadhar);
     postData.append("marital_status", formData.maritalStatus);

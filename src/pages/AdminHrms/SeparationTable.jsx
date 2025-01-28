@@ -5,6 +5,7 @@ import { BsEye } from "react-icons/bs";
 import Table from "../../components/table/Table";
 import { useSelector } from "react-redux";
 import {
+  getAdminAccess,
   getMyHRMSEmployees,
   getMyHRMSEmployeesAllData,
   getResignations,
@@ -160,20 +161,22 @@ const SeparationTable = () => {
       name: "Action",
       selector: (row) => (
         <div className="flex items-center gap-2">
+         {roleAccess?.can_approve_reject_separation_request && <>
           <button
             className="bg-green-400 rounded-full p-2 text-white"
             title="Approve"
             onClick={() => handleApprovalModal(row.id, "approve")}
-          >
+            >
             <FaCheck />
           </button>
           <button
             className="bg-red-400 rounded-full p-2 text-white"
             title="Reject"
             onClick={() => handleApprovalModal(row.id, "reject")}
-          >
+            >
             <MdClose />
           </button>
+            </>}
         </div>
       ),
       sortable: true,
@@ -196,6 +199,23 @@ const SeparationTable = () => {
     setAction(action);
   };
 
+  // roleAccess
+  const employeeId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
+      const orgId = getItemInLocalStorage("HRMSORGID");
+      const [roleAccess, setRoleAccess] = useState({});
+      useEffect(() => {
+        const fetchRoleAccess = async () => {
+          try {
+            const res = await getAdminAccess(orgId, employeeId);
+    
+            setRoleAccess(res[0]);
+          } catch (error) {
+            console.log(error);
+          }
+        };
+        fetchRoleAccess();
+      }, []);
+
   return (
     <section className="flex">
       <div className="w-full flex m-2 flex-col overflow-hidden">
@@ -213,14 +233,14 @@ const SeparationTable = () => {
             >
               Filter
             </button> */}
-            <button
+           {roleAccess?.can_initiate_separation && <button
               style={{ background: themeColor }}
               className="font-semibold text-white duration-150 transition-all w-52  p-2 rounded-md  cursor-pointer text-center flex items-center gap-2 justify-center"
               onClick={() => setIsModalOpen(true)}
             >
               <PiPlusCircle size={20} />
               Initiate Separation
-            </button>
+            </button>}
           </div>
         </div>
         {isModalOpen1 && (

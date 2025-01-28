@@ -14,8 +14,16 @@ function CreateGroup({ onclose }) {
   const [formData, setFormData] = useState({
     groupName: "",
     groupDescription: "",
-    profilePic: [],
+    attachment:"",
   });
+
+  const handleFileChange = (event) => {
+    const file = event.target.files[0]; // Get the first selected file
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      attachment: file,
+    }));
+  };
 
   const themeColor = useSelector((state) => state.theme.color);
   const [members, setMembers] = useState([]);
@@ -50,6 +58,7 @@ function CreateGroup({ onclose }) {
     };
     fetchAllMembers();
   }, []);
+  
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -63,8 +72,9 @@ function CreateGroup({ onclose }) {
       postData.append("group[member_ids][]", member);
     
     })
-    
-
+    if (formData.attachment) {
+      postData.append("attachment", formData.attachment);
+    }
     try {
       const res = await postGroups(postData);
       toast.success("Group created successfully")
@@ -72,12 +82,10 @@ function CreateGroup({ onclose }) {
       setFormData({
         groupName: "",
         groupDescription: "",
+        attachment:"",
       });
   
-    
       setSelectedOptions([]);
-  
-     
     } catch (error) {
       console.log(error);
     }
@@ -116,6 +124,8 @@ function CreateGroup({ onclose }) {
                   compTitle="Select Group Members"
                 />
               </div>
+
+              
             </div>
             <div className="flex flex-col mx-2 ">
               <label className=" font-medium ">Description</label>
@@ -132,12 +142,12 @@ function CreateGroup({ onclose }) {
             </div>
             <div className="flex flex-col m-2 ">
               <label className=" font-medium ">Group profile picture</label>
-
               <input
                 type="file"
-                name=""
-                id=""
+                accept="image/*"
+                // value={formData.attachment}
                 className="border p-2 border-gray-300 rounded-md"
+                onChange={handleFileChange}
               />
             </div>
             <div className="flex justify-center items-center gap-2">

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { FaCheck } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 import {
+  getAdminAccess,
   getEmployeeAssociatedSites,
   getEmployeeDetails,
   getMyHRMSEmployees,
@@ -53,8 +54,9 @@ const OnboardingEmployeeDetail = ({
     department: "",
     designation: "",
     supervisor: "",
+    monthlyCTC: "",
   });
-
+  console.log(formData);
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -134,10 +136,6 @@ const OnboardingEmployeeDetail = ({
   }, []);
 
   const handleAddEmployment = async () => {
-    if (!formData.employeeCode) {
-      toast.error("Employee Code is required!");
-      return;
-    }
     if (!formData.joinDate) {
       toast.error("Joining Date is required!");
       return;
@@ -156,6 +154,7 @@ const OnboardingEmployeeDetail = ({
     postData.append("department", formData.department);
     postData.append("reporting_supervisor", formData.supervisor);
     postData.append("designation", formData.designation);
+    postData.append("ctc_months", formData.monthlyCTC);
     postData.append("employee", empId);
     try {
       const res = await postEmployeeEmploymentInfo(postData);
@@ -167,6 +166,22 @@ const OnboardingEmployeeDetail = ({
       console.log(error);
     }
   };
+
+  const employeeId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
+  const orgId = getItemInLocalStorage("HRMSORGID");
+  const [roleAccess, setRoleAccess] = useState({});
+  useEffect(() => {
+    const fetchRoleAccess = async () => {
+      try {
+        const res = await getAdminAccess(orgId, employeeId);
+
+        setRoleAccess(res[0]);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchRoleAccess();
+  }, []);
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
@@ -181,7 +196,7 @@ const OnboardingEmployeeDetail = ({
         <div className="grid md:grid-cols-3 gap-2 border bg-blue-50 rounded-md p-2">
           <div className="grid grid-cols-2 gap-2">
             <label htmlFor="" className="font-medium">
-              Name :{" "}
+              Name : 
             </label>
             <p>
               {details?.first_name} {details?.last_name}
@@ -259,7 +274,7 @@ const OnboardingEmployeeDetail = ({
 
             <div className="grid gap-2 items-center w-full">
               <label htmlFor="jobTitle" className="font-semibold">
-                Joining Date:
+                Joining Date:<span className="text-red-400">*</span>
               </label>
               <input
                 type="date"
@@ -273,7 +288,7 @@ const OnboardingEmployeeDetail = ({
             </div>
             <div className="grid gap-2 items-center w-full">
               <label htmlFor="jobTitle" className="font-semibold">
-                Employment Type:
+                Employment Type:<span className="text-red-400">*</span>
               </label>
               <select
                 className="border border-gray-400 p-2 rounded-md"
@@ -368,26 +383,30 @@ const OnboardingEmployeeDetail = ({
               </select>
             </div>
             <div className="grid gap-2 items-center w-full">
-              <label htmlFor="designation" className="font-semibold">
+              <label htmlFor="CTC" className="font-semibold">
                 Enter Monthly CTC:
               </label>
               <input
                 type="text"
-                name=""
-                id=""
-                placeholder="Enter Monthly"
+                name="monthlyCTC"
+                value={formData.monthlyCTC}
+                onChange={handleChange}
+                id="CTC"
+                placeholder="Enter Monthly CTC"
                 className="border border-gray-400 p-2 rounded-md"
               />
             </div>
           </div>
         </div>
         <div className="flex justify-center gap-2 border-t p-2">
-          <button
-            className="flex items-center gap-2 bg-green-400 p-2 px-4 rounded-full text-white"
-            onClick={handleAddEmployment}
-          >
-            <FaCheck /> Submit & Approve
-          </button>
+          {roleAccess?.can_approve_reject_onboarding_request && (
+            <button
+              className="flex items-center gap-2 bg-green-400 p-2 px-4 rounded-full text-white"
+              onClick={handleAddEmployment}
+            >
+              <FaCheck /> Submit & Approve
+            </button>
+          )}
           <button
             onClick={setDetailsModal}
             className="flex items-center gap-2 bg-red-400 p-2 rounded-full text-white px-4"
