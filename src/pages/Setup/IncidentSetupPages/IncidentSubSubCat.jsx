@@ -50,7 +50,6 @@ const SubSubCategorysetup = () => {
       ),
     },
   ];
-  
 
   const [addSubSubCat, setAddSubSubCat] = useState(false);
   const [categories, setCategories] = useState([]);
@@ -66,7 +65,6 @@ const SubSubCategorysetup = () => {
     };
 
     fetchIncidentCategory();
-  
   }, []);
   const handleChange = async (e) => {
     const fetchIncidentSubCategory = async (parentId) => {

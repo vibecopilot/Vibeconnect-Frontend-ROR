@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import image from "/profile.png";
-import { FaTrash } from "react-icons/fa";
+import { FaCheck, FaTrash } from "react-icons/fa";
+import { MdClose } from "react-icons/md";
 import { useSelector } from "react-redux";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
 import toast from "react-hot-toast";
@@ -10,11 +11,13 @@ import {
   getVisitorStaffCategory,
   postNewGoods,
   postNewVisitor,
+  postVisitorInDevice,
 } from "../../../api";
 import { useNavigate } from "react-router-dom";
 import FileInputBox from "../../../containers/Inputs/FileInputBox";
 import Select from "react-select";
 import Webcam from "react-webcam";
+import AxiosDigestAuth from "@mhoc/axios-digest-auth";
 const EmployeeAddVisitor = () => {
   const siteId = getItemInLocalStorage("SITEID");
   const userId = getItemInLocalStorage("UserId");
@@ -98,16 +101,26 @@ const EmployeeAddVisitor = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
   const navigate = useNavigate();
-  const createNewVisitor = async () => {
-   
+  const formatDateWithSeconds = (dateStr) => {
+    const date = new Date(dateStr);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0"); // 0-indexed month
+    const day = String(date.getDate()).padStart(2, "0");
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    const seconds = String(date.getSeconds()).padStart(2, "0");
 
-    if(formData.visitorName === ""){
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+  };
+
+  const createNewVisitor = async () => {
+    if (formData.visitorName === "") {
       return toast.error("Provide Visitor name");
     }
-    if(formData.purpose === ""){
+    if (formData.purpose === "") {
       return toast.error("Provide Purpose");
     }
-    if(formData.mobile === ""){
+    if (formData.mobile === "") {
       return toast.error("Provide Visitor Mobile Number");
     }
     const mobilePattern = /^\d{10}$/;
@@ -136,7 +149,10 @@ const EmployeeAddVisitor = () => {
     }
     postData.append("visitor[contact_no]", formData.mobile);
     postData.append("visitor[purpose]", formData.purpose);
-    postData.append("visitor[vhost_id]", formData.host);
+    postData.append(
+      "visitor[vhost_id]",
+      userType === "security_guard" ? formData.host : userId
+    );
     postData.append("visitor[start_pass]", passStartDate);
     postData.append("visitor[end_pass]", passEndDate);
     postData.append("visitor[coming_from]", formData.comingFrom);
@@ -162,6 +178,27 @@ const EmployeeAddVisitor = () => {
     });
     try {
       const visitResp = await postNewVisitor(postData);
+      const dataToSave = {
+        UserInfo: {
+          employeeNo: visitResp.data.id,
+          name: formData.visitorName,
+          userType: "visitor",
+          Valid: {
+            enable: true,
+            beginTime: passStartDate,
+            endTime: passEndDate,
+          },
+        },
+      };
+      console.log("making json file");
+      const blob = new Blob([JSON.stringify(dataToSave, null, 2)], {
+        type: "application/json",
+      });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `visitor_data_${visitResp.data.id}.json`;
+      a.click();
+      console.log("json file created successfully");
       const postGoods = new FormData();
       formData.goodsAttachments.forEach((docs) => {
         postGoods.append("goods_files[]", docs);
@@ -179,7 +216,28 @@ const EmployeeAddVisitor = () => {
       } catch (error) {
         console.log(error);
       }
-      console.log(visitResp);
+      // try {
+      //   const payload = {
+      //     UserInfo: {
+      //       // employeeNo: "08035",
+      //       employeeNo: visitResp.data.id.toString(),
+      //       name: formData.visitorName,
+      //       userType: "visitor",
+      //       Valid: {
+      //         enable: true,
+      //         // beginTime: "2024-12-27T17:30:08",
+      //         beginTime: formatDateWithSeconds(passStartDate),
+      //         endTime: formatDateWithSeconds(passEndDate),
+      //         // endTime: "2024-12-29T18:30:08",
+      //       },
+      //     },
+      //   };
+      //   const deviceRes = await postVisitorInDevice(payload);
+      //   console.log(deviceRes);
+      // } catch (error) {
+      //   console.log(error);
+      // }
+
       navigate("/employee/passes/visitors");
       toast.success("Visitor Added Successfully");
     } catch (error) {
@@ -277,12 +335,34 @@ const EmployeeAddVisitor = () => {
     });
     console.log(fieldName);
   };
+
+  const handlePassStartDateChange = (event) => {
+    const selectedDateTime = event.target.value + ":00";
+    setPassStartDate(selectedDateTime);
+
+    if (passEndDate && selectedDateTime > passEndDate) {
+      setPassEndDate("");
+      toast.error("End date cannot be earlier than the start date.");
+    }
+  };
+
+  const handlePassEndDateChange = (event) => {
+    const selectedDateTime = event.target.value + ":00";
+
+    if (passStartDate && selectedDateTime < passStartDate) {
+      toast.error("End date cannot be earlier than the start date.");
+      return;
+    }
+
+    setPassEndDate(selectedDateTime);
+  };
+
   return (
-    <div className="flex justify-center items-center  w-full p-4">
+    <div className="flex justify-center items-center  w-full p-4 mb-10">
       <div className="md:border border-gray-300 rounded-lg md:p-4 w-full md:mx-4 ">
         <h2
           style={{ background: themeColor }}
-          className="text-center md:text-xl font-bold p-2 bg-black rounded-full text-white"
+          className="text-center md:text-xl font-bold p-2 bg-black rounded-md text-white"
         >
           {getHeadingText()}
         </h2>
@@ -389,39 +469,39 @@ const EmployeeAddVisitor = () => {
               </div>
             </div>
           </div>
-          {userType !== "security_guard" && (
-            <div className="flex gap-2 flex-col">
-              <h2 className="font-semibold">Visiting Frequency :</h2>
-              <div className="flex items-center gap-4 ">
-                <div className="flex items-center gap-2 ">
-                  <input
-                    type="radio"
-                    id="Once"
-                    name="frequency"
-                    value="Once"
-                    checked={selectedFrequency === "Once"}
-                    onChange={handleFrequencyChange}
-                  />
-                  <label htmlFor="Once" className="font-semibold">
-                    Once
-                  </label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    id="Frequently"
-                    name="frequency"
-                    value="Frequently"
-                    checked={selectedFrequency === "Frequently"}
-                    onChange={handleFrequencyChange}
-                  />
-                  <label htmlFor="Frequently" className="font-semibold ">
-                    Frequently
-                  </label>
-                </div>
+          {/* {userType !== "security_guard" && ( */}
+          <div className="flex gap-2 flex-col">
+            <h2 className="font-semibold">Visiting Frequency :</h2>
+            <div className="flex items-center gap-4 ">
+              <div className="flex items-center gap-2 ">
+                <input
+                  type="radio"
+                  id="Once"
+                  name="frequency"
+                  value="Once"
+                  checked={selectedFrequency === "Once"}
+                  onChange={handleFrequencyChange}
+                />
+                <label htmlFor="Once" className="font-semibold">
+                  Once
+                </label>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  id="Frequently"
+                  name="frequency"
+                  value="Frequently"
+                  checked={selectedFrequency === "Frequently"}
+                  onChange={handleFrequencyChange}
+                />
+                <label htmlFor="Frequently" className="font-semibold ">
+                  Frequently
+                </label>
               </div>
             </div>
-          )}
+          </div>
+          {/* )} */}
         </div>
 
         <div className="grid md:grid-cols-3 gap-5">
@@ -661,7 +741,12 @@ const EmployeeAddVisitor = () => {
             </div>
             <div className="flex flex-col gap-2">
               <p className="font-medium">Attachments Related to goods </p>
-              <FileInputBox handleChange={(files)=> handleFileChange(files, "goodsAttachments")}  fieldName={"goodsAttachments"} />
+              <FileInputBox
+                handleChange={(files) =>
+                  handleFileChange(files, "goodsAttachments")
+                }
+                fieldName={"goodsAttachments"}
+              />
             </div>
           </>
         )}
@@ -708,36 +793,38 @@ const EmployeeAddVisitor = () => {
           <div>
             <button
               onClick={handleAddVisitor}
-              className="bg-black text-white hover:bg-gray-700 font-semibold py-2 px-4 rounded"
+              className="bg-green-500 text-white hover:bg-gray-700 font-semibold py-2 px-4 rounded"
             >
               Add Additional Visitor
             </button>
           </div>
         </div>
+        <div className="grid md:grid-cols-3 gap-4 ">
+          <div className="flex flex-col">
+            <p className="font-medium"> Pass Valid From :</p>
+            <input
+              type="datetime-local"
+              min={todayDate}
+              value={passStartDate}
+              // onChange={(event) => setPassStartDate(event.target.value)}
+              onChange={handlePassStartDateChange}
+              className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full"
+            />
+          </div>
+          <div className="flex flex-col">
+            <p className="font-medium">Pass Valid To :</p>
+            <input
+              type="datetime-local"
+              min={todayDate}
+              value={passEndDate}
+              // onChange={(event) => setPassEndDate(event.target.value)}
+              onChange={handlePassEndDateChange}
+              className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full"
+            />
+          </div>
+        </div>
         {selectedFrequency === "Frequently" && (
           <div className="flex flex-col gap-2 my-2">
-            <div className="grid md:grid-cols-3 gap-4 ">
-              <div className="flex flex-col">
-                <p className="font-medium"> Pass Valid From :</p>
-                <input
-                  type="date"
-                  min={todayDate}
-                  value={passStartDate}
-                  onChange={(event) => setPassStartDate(event.target.value)}
-                  className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full"
-                />
-              </div>
-              <div className="flex flex-col">
-                <p className="font-medium">Pass Valid To :</p>
-                <input
-                  type="date"
-                  min={todayDate}
-                  value={passEndDate}
-                  onChange={(event) => setPassEndDate(event.target.value)}
-                  className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full"
-                />
-              </div>
-            </div>
             <p className="font-medium">Select Permitted Days:</p>
 
             <div className="flex gap-4 flex-wrap ">
@@ -762,12 +849,18 @@ const EmployeeAddVisitor = () => {
             </div>
           </div>
         )}
-        <div className="flex gap-5 justify-center items-center my-4">
+        <div className="flex gap-5 justify-center items-center my-4 border-t p-1">
           <button
             onClick={createNewVisitor}
-            className="bg-black text-white hover:bg-gray-700 font-semibold py-2 px-4 rounded"
+            className="bg-red-400 text-white  font-semibold py-2 px-4 rounded-full flex items-center gap-2"
           >
-            Submit
+            <MdClose /> Cancel
+          </button>
+          <button
+            onClick={createNewVisitor}
+            className="bg-green-400 text-white font-semibold py-2 px-4 rounded-full flex items-center gap-2"
+          >
+            <FaCheck /> Submit
           </button>
         </div>
       </div>

@@ -7,9 +7,12 @@ import Navbar from "../../components/Navbar";
 import { useSelector } from "react-redux";
 import Table from "../../components/table/Table";
 import {
+  getAllVisitorLogs,
   getExpectedVisitor,
   getVisitorApprovals,
   getVisitorHistory,
+  postVisitorLogFromDevice,
+  postVisitorLogToBackend,
   visitorApproval,
 } from "../../api";
 import { BsEye } from "react-icons/bs";
@@ -33,9 +36,7 @@ const VisitorPage = () => {
     []
   );
   const [expectedVisitor, setExpectedVisitor] = useState([]);
-  const [FilteredExpectedVisitor, setFilteredExpectedVisitor] = useState(
-    []
-  );
+  const [FilteredExpectedVisitor, setFilteredExpectedVisitor] = useState([]);
   const [FilteredApproval, setFilteredApproval] = useState([]);
   const [approvals, setApprovals] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
@@ -81,8 +82,8 @@ const VisitorPage = () => {
         setFilteredData(sortedVisitor);
         setUnexpectedVisitor(filteredUnexpectedVisitor);
         setFilteredUnexpectedVisitor(filteredUnexpectedVisitor);
-        setExpectedVisitor(filteredExpectedVisitor)
-        setFilteredExpectedVisitor(filteredExpectedVisitor)
+        setExpectedVisitor(filteredExpectedVisitor);
+        setFilteredExpectedVisitor(filteredExpectedVisitor);
         console.log(sortedVisitor);
       } catch (error) {
         console.log(error);
@@ -272,7 +273,7 @@ const VisitorPage = () => {
       }
     }
   };
-  const [searchAll, setSearchAll] = useState([])
+  const [searchAll, setSearchAll] = useState([]);
   const handleSearchAll = (e) => {
     const searchValue = e.target.value;
     setSearchAll(searchValue);
@@ -433,6 +434,108 @@ const VisitorPage = () => {
     },
   ];
   document.title = `Passes - Vibe Connect`;
+  const getVisitorLogData = () => {
+    const now = new Date();
+    const offsetMinutes = now.getTimezoneOffset(); // Timezone offset in minutes
+    const localNow = new Date(now.getTime() - offsetMinutes * 60 * 1000);
+
+    const startTime = new Date(localNow.getTime() - 15 * 60 * 1000); // 15 minutes ago
+    const endTime = localNow;
+
+    const formatTime = (date) => date.toISOString().slice(0, 19); // Remove milliseconds and 'Z'
+
+    return {
+      AcsEventCond: {
+        searchID: "3166590d-cdb3-43f3-fvdvfdvdb25e-f6e98a05d359",
+        searchResultPosition: 0,
+        maxResults: 50,
+        major: 0,
+        minor: 0,
+        // startTime: "2024-12-29T11:08:28",
+        startTime: formatTime(startTime),
+        endTime: formatTime(endTime), // Adjusted endTime
+      },
+    };
+  };
+
+ 
+  useEffect(() => {
+    const postLogs = async () => {
+      const visitorLogData = getVisitorLogData();
+      // if (visitorLogData?.InfoList?.length > 0) {
+      const data = await postVisitorLogFromDevice(visitorLogData);
+      await postVisitorLogToBackend(data);
+      // } else {
+      //   console.warn("No valid visitor log data to send.");
+      // }
+    };
+    const intervalId = setInterval(postLogs, 15 * 60 * 1000);
+    postLogs();
+
+    return () => clearInterval(intervalId);
+  }, []);
+
+  const visitorDeviceLogColumn = [
+    {
+      name: "Action",
+      cell: (row) => (
+        <div className="flex items-center gap-4">
+          <Link
+            to={`/admin/passes/visitors/visitor-details/${row.employee_no}`}
+          >
+            <BsEye size={15} />
+          </Link>
+        </div>
+      ),
+    },
+    {
+      name: "Sr. no.",
+      selector: (row, index) => index + 1,
+      sortable: true,
+    },
+    {
+      name: "Name",
+      selector: (row, index) => row.name,
+      sortable: true,
+    },
+    {
+      name: " Check in",
+      selector: (row) => (row.in_time ? dateTimeFormat(row.in_time) : ""),
+      sortable: true,
+    },
+    {
+      name: " Check out",
+      selector: (row) => (row.out_time ? dateTimeFormat(row.out_time) : null),
+      sortable: true,
+    },
+  ];
+  const [logs, setLogs] = useState([]);
+  const [filteredLogs, setFilteredLogs] = useState([]);
+  useEffect(() => {
+    const fetchAllVisitorLogs = async () => {
+      try {
+        const res = await getAllVisitorLogs();
+        setFilteredLogs(res.data.data);
+        setLogs(res.data.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchAllVisitorLogs();
+  }, []);
+  const [logSearchText, setLogSearchText] = useState();
+  const handleLogSearch = (e) => {
+    const searchValue = e.target.value;
+    setLogSearchText(searchValue);
+    if (searchValue.trim() === "") {
+      setFilteredLogs(logs);
+    } else {
+      const filteredResults = logs.filter((item) =>
+        item.name.toLowerCase().includes(searchValue.toLowerCase())
+      );
+      setFilteredLogs(filteredResults);
+    }
+  };
 
   return (
     <div className="visitors-page">
@@ -491,6 +594,16 @@ const VisitorPage = () => {
                 onClick={() => setPage("History")}
               >
                 History
+              </h2>
+              <h2
+                className={`p-2 ${
+                  page === "logs"
+                    ? "text-blue-500 font-medium  shadow-custom-all-sides"
+                    : "text-black"
+                }  rounded-t-md rounded-sm cursor-pointer text-center text-sm flex items-center justify-center transition-all duration-300`}
+                onClick={() => setPage("logs")}
+              >
+                Logs
               </h2>
             </div>
           </div>
@@ -630,6 +743,18 @@ const VisitorPage = () => {
               <Table columns={historyColumn} data={filteredHistory} />
             </div>
           )}
+          {page === "logs" && (
+            <div className="">
+              <input
+                type="text"
+                placeholder="Search using Name "
+                className="border p-2 rounded-md border-gray-300 w-full mb-2 placeholder:text-sm"
+                value={logSearchText}
+                onChange={handleLogSearch}
+              />
+              <Table columns={visitorDeviceLogColumn} data={filteredLogs} />
+            </div>
+          )}
           {page === "approval" && (
             <div className="">
               <input
@@ -656,7 +781,10 @@ const VisitorPage = () => {
             {/* all */}
             <div className="">
               {selectedVisitor === "expected" && page === "all" && (
-                <Table columns={VisitorColumns} data={FilteredExpectedVisitor} />
+                <Table
+                  columns={VisitorColumns}
+                  data={FilteredExpectedVisitor}
+                />
               )}
               {selectedVisitor === "unexpected" && page === "all" && (
                 <Table

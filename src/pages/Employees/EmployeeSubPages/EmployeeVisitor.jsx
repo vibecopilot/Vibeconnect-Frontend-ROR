@@ -6,9 +6,12 @@ import Navbar from "../../../components/Navbar";
 import { useSelector } from "react-redux";
 import Table from "../../../components/table/Table";
 import {
+  getExpectedUserVisitor,
   getExpectedVisitor,
   postOTPVerification,
   postVisitorCheckInCheckOut,
+  postVisitorLogFromDevice,
+  postVisitorLogToBackend,
 } from "../../../api";
 import { BsEye } from "react-icons/bs";
 import { BiEdit } from "react-icons/bi";
@@ -53,8 +56,23 @@ const EmployeeVisitor = () => {
       console.log(error);
     }
   };
+  const [userVisitors, setUserVisitors] = useState([]);
+  const [FilteredUserVisitors, setFilteredUserVisitors] = useState([]);
+  const fetchUserVisitors = async () => {
+    try {
+      const visitorResp = await getExpectedUserVisitor();
+      const sortedVisitor = visitorResp.data.sort((a, b) => {
+        return new Date(b.created_at) - new Date(a.created_at);
+      });
+      setUserVisitors(sortedVisitor);
+      setFilteredUserVisitors(sortedVisitor);
+    } catch (error) {
+      console.log(error);
+    }
+  };
   useEffect(() => {
     fetchExpectedVisitor();
+    fetchUserVisitors();
   }, []);
   const getLocalDateTime = () => {
     const now = new Date();
@@ -98,7 +116,7 @@ const EmployeeVisitor = () => {
   };
   const VisitorColumns = [
     {
-      name: "Action",
+      name: "View",
       cell: (row) => (
         <div className="flex items-center gap-4">
           <Link to={`/employee/passes/visitors/visitor-details/${row.id}`}>
@@ -154,7 +172,7 @@ const EmployeeVisitor = () => {
     },
     {
       name: "Host",
-      selector: (row) => row.hosts.map((host) => <p>{host.full_name}</p>),
+      selector: (row) => row?.hosts?.map((host) => <p>{host?.full_name}</p>),
       sortable: true,
     },
     {
@@ -221,6 +239,100 @@ const EmployeeVisitor = () => {
         }
         return null;
       },
+    },
+  ];
+  const EmployeeVisitorColumns = [
+    {
+      name: "Action",
+      cell: (row) => (
+        <div className="flex items-center gap-4">
+          <Link to={`/employee/passes/visitors/visitor-details/${row.id}`}>
+            <BsEye size={15} />
+          </Link>
+          {/* <Link to={`/employee/passes/visitors/edit-visitor/${row.id}`}>
+            <BiEdit size={15} />
+          </Link> */}
+        </div>
+      ),
+    },
+
+    {
+      name: "Visitor Type",
+      selector: (row) => row.visit_type,
+      sortable: true,
+    },
+    {
+      name: " Name",
+      selector: (row) => row.name,
+      sortable: true,
+    },
+    {
+      name: "Contact No.",
+      selector: (row) => row.contact_no,
+      sortable: true,
+    },
+
+    {
+      name: "Purpose",
+      selector: (row) => row.purpose,
+      sortable: true,
+    },
+    {
+      name: "Coming from",
+      selector: (row) => row.coming_from,
+      sortable: true,
+    },
+    {
+      name: "Expected Date",
+      selector: (row) => row.expected_date,
+      sortable: true,
+    },
+    {
+      name: "Expected Time",
+      selector: (row) => row.expected_time,
+      sortable: true,
+    },
+    {
+      name: "Vehicle No.",
+      selector: (row) => row.vehicle_number,
+      sortable: true,
+    },
+    {
+      name: "Host",
+      selector: (row) =>
+        row?.hosts?.map((host) => <p>{host?.host_details?.user_name}</p>),
+      sortable: true,
+    },
+    {
+      name: "Host Approval",
+      selector: (row) => (row.skip_host_approval ? "Not Required" : "Required"),
+      sortable: true,
+    },
+
+    {
+      name: "Pass Start",
+      selector: (row) => (row.start_pass ? dateFormat(row.start_pass) : ""),
+      sortable: true,
+    },
+    {
+      name: "Pass End",
+      selector: (row) => (row.end_pass ? dateFormat(row.end_pass) : ""),
+      sortable: true,
+    },
+    // {
+    //   name: "Check In",
+    //   selector: (row) => (row.check_in ? dateTimeFormat(row.check_in) : ""),
+    //   sortable: true,
+    // },
+    // {
+    //   name: "Check Out",
+    //   selector: (row) => (row.check_out ? dateTimeFormat(row.check_out) : ""),
+    //   sortable: true,
+    // },
+    {
+      name: "Created by",
+      selector: (row) => `${row?.created_by_name} `,
+      sortable: true,
     },
   ];
   const [searchText, setSearchText] = useState("");
@@ -294,6 +406,47 @@ const EmployeeVisitor = () => {
   };
   console.log(visitorId);
 
+    const getVisitorLogData = () => {
+      const now = new Date();
+      const offsetMinutes = now.getTimezoneOffset(); // Timezone offset in minutes
+      const localNow = new Date(now.getTime() - offsetMinutes * 60 * 1000);
+  
+      const startTime = new Date(localNow.getTime() - 15 * 60 * 1000); // 15 minutes ago
+      const endTime = localNow;
+  
+      const formatTime = (date) => date.toISOString().slice(0, 19); // Remove milliseconds and 'Z'
+  
+      return {
+        AcsEventCond: {
+          searchID: "3166590d-cdb3-43f3-fvdvfdvdb25e-f6e98a05d359",
+          searchResultPosition: 0,
+          maxResults: 50,
+          major: 0,
+          minor: 0,
+          // startTime: "2024-12-29T11:08:28",
+          startTime: formatTime(startTime),
+          endTime: formatTime(endTime), // Adjusted endTime
+        },
+      };
+    };
+  
+   
+    useEffect(() => {
+      const postLogs = async () => {
+        const visitorLogData = getVisitorLogData();
+        // if (visitorLogData?.InfoList?.length > 0) {
+        const data = await postVisitorLogFromDevice(visitorLogData);
+        await postVisitorLogToBackend(data);
+        // } else {
+        //   console.warn("No valid visitor log data to send.");
+        // }
+      };
+      const intervalId = setInterval(postLogs, 15 * 60 * 1000);
+      postLogs();
+  
+      return () => clearInterval(intervalId);
+    }, []);
+
   return (
     <div className="visitors-page">
       <section className="flex">
@@ -302,38 +455,40 @@ const EmployeeVisitor = () => {
           {/* <EmployeePasses/> */}
 
           {page === "Visitor In" && (
-            <div className="grid md:grid-cols-2 gap-2 items-center">
+            <div className="flex  gap-2 justify-between flex-col md:flex-row items-center">
               <input
                 type="text"
-                className="border border-gray-300 p-2 w-full rounded-md placeholder:text-sm"
+                className="border border-gray-300 p-2  rounded-md placeholder:text-sm w-96"
                 value={searchText}
                 onChange={handleSearch}
-                placeholder="Search using Visitor name, Host, vehicle number"
+                placeholder="Search using Visitor name, Host, vehicle number "
               />
 
-              {userType !== "security_guard" &&<div className="border md:flex-row flex-col flex p-2 rounded-md text-center border-black">
-                <span
-                  className={` md:border-r px-2 border-black cursor-pointer hover:underline ${
-                    selectedVisitor === "expected"
-                      ? "text-blue-600 underline"
-                      : ""
-                  } text-center`}
-                  onClick={() => handleClick("expected")}
-                >
-                  <span>Expected visitor</span>
-                </span>
-                <span
-                  className={`cursor-pointer hover:underline ${
-                    selectedVisitor === "unexpected"
-                      ? "text-blue-600 underline"
-                      : ""
-                  } text-center`}
-                  onClick={() => handleClick("unexpected")}
-                >
-                  &nbsp; <span>Unexpected visitor</span>
-                </span>
-              </div>}
               <div className="flex justify-end md:flex-row flex-col gap-2">
+                {userType !== "security_guard" && (
+                  <div className="border md:flex-row flex-col flex p-2 rounded-md text-center border-black">
+                    <span
+                      className={` md:border-r px-2 border-black cursor-pointer hover:underline ${
+                        selectedVisitor === "expected"
+                          ? "text-blue-600 underline"
+                          : ""
+                      } text-center`}
+                      onClick={() => handleClick("expected")}
+                    >
+                      <span>Expected visitor</span>
+                    </span>
+                    <span
+                      className={`cursor-pointer hover:underline ${
+                        selectedVisitor === "unexpected"
+                          ? "text-blue-600 underline"
+                          : ""
+                      } text-center`}
+                      onClick={() => handleClick("unexpected")}
+                    >
+                      &nbsp; <span>Unexpected visitor</span>
+                    </span>
+                  </div>
+                )}
                 {userType === "security_guard" && (
                   <button
                     className="bg-green-400 text-white rounded-md p-2 font-medium flex items-center justify-center gap-2"
@@ -395,15 +550,31 @@ const EmployeeVisitor = () => {
               />
             </div>
           )}
-          <div className="my-4">
-            {selectedVisitor === "expected" && page === "Visitor In" && (
-              <Table columns={VisitorColumns} data={filteredData} />
-            )}
-            {selectedVisitor === "unexpected" && (
-              // <Table columns={VisitorColumns} data={visitor} />
-              <p className="font-medium text-center">No Records</p>
-            )}
-          </div>
+          {userType === "security_guard" && (
+            <div className="my-4">
+              {selectedVisitor === "expected" && page === "Visitor In" && (
+                <Table columns={VisitorColumns} data={filteredData} />
+              )}
+              {selectedVisitor === "unexpected" && (
+                // <Table columns={VisitorColumns} data={visitor} />
+                <p className="font-medium text-center">No Records</p>
+              )}
+            </div>
+          )}
+          {userType !== "security_guard" && (
+            <div className="my-4">
+              {selectedVisitor === "expected" && page === "Visitor In" && (
+                <Table
+                  columns={EmployeeVisitorColumns}
+                  data={FilteredUserVisitors}
+                />
+              )}
+              {selectedVisitor === "unexpected" && (
+                // <Table columns={VisitorColumns} data={visitor} />
+                <p className="font-medium text-center">No Records</p>
+              )}
+            </div>
+          )}
         </div>
       </section>
       {otpModal && (

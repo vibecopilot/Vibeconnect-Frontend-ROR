@@ -8,6 +8,7 @@ import { MdClose } from "react-icons/md";
 import { useSelector } from "react-redux";
 import { BsEye } from "react-icons/bs";
 import {
+  getAdminAccess,
   getApprovalNotifications,
   getEmployeeDetails,
   postApproveOrRejectEmployee,
@@ -32,7 +33,7 @@ const OnBoardingTable = () => {
   useEffect(() => {
     fetchApprovalNotification();
   }, []);
- 
+
   const handleGrantApproval = async (notiId, decision) => {
     setGrantId(notiId);
     try {
@@ -52,7 +53,9 @@ const OnBoardingTable = () => {
       name: "View",
       selector: (row) => (
         <div>
-          <button onClick={() => handleEmployeeDetailsModal(row.record_id, row.id)}>
+          <button
+            onClick={() => handleEmployeeDetailsModal(row.record_id, row.id)}
+          >
             <BsEye />
           </button>
         </div>
@@ -83,18 +86,24 @@ const OnBoardingTable = () => {
       name: "Action",
       selector: (row) => (
         <div className="flex gap-2">
-          <button
-            className="bg-green-400 text-white rounded-full p-1 px-4"
-            onClick={() => handleEmployeeDetailsModal(row.record_id, row.id)}
-          >
-            <FaCheck />
-          </button>
-          <button
-            className="bg-red-400 text-white rounded-full p-1 px-4"
-            onClick={() => handleGrantApproval(row.id, "reject")}
-          >
-            <MdClose size={20} />
-          </button>
+          {roleAccess?.can_approve_reject_onboarding_request && (
+            <>
+              <button
+                className="bg-green-400 text-white rounded-full p-1 px-4"
+                onClick={() =>
+                  handleEmployeeDetailsModal(row.record_id, row.id)
+                }
+              >
+                <FaCheck />
+              </button>
+              <button
+                className="bg-red-400 text-white rounded-full p-1 px-4"
+                onClick={() => handleGrantApproval(row.id, "reject")}
+              >
+                <MdClose size={20} />
+              </button>
+            </>
+          )}
         </div>
       ),
       sortable: true,
@@ -106,11 +115,27 @@ const OnBoardingTable = () => {
   const [emplId, setEmplId] = useState("");
   const [grantId, setGrantId] = useState("");
   const handleEmployeeDetailsModal = async (id, grant) => {
-    setGrantId(grant)
+    setGrantId(grant);
     setEmplId(id);
     setDetailsModal(true);
     // fetchEmployeeDetails(id);
   };
+
+  const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
+  const orgId = getItemInLocalStorage("HRMSORGID");
+  const [roleAccess, setRoleAccess] = useState({});
+  useEffect(() => {
+    const fetchRoleAccess = async () => {
+      try {
+        const res = await getAdminAccess(orgId, empId);
+
+        setRoleAccess(res[0]);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchRoleAccess();
+  }, []);
 
   return (
     <section className="flex">
@@ -123,16 +148,18 @@ const OnBoardingTable = () => {
             //   value={searchText}
             //   onChange={handleSearch}
           />
-          <div className="flex justify-end">
-            <Link
-              to={"/admin/add-employee/basics"}
-              style={{ background: themeColor }}
-              className="border-2 font-semibold w-full hover:bg-black hover:text-white duration-150 transition-all border-white p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
-            >
-              <PiPlusCircle size={20} />
-              Add Employee
-            </Link>
-          </div>
+          {roleAccess?.can_add_employee && (
+            <div className="flex justify-end">
+              <Link
+                to={"/admin/add-employee/basics"}
+                style={{ background: themeColor }}
+                className="border-2 font-semibold w-full hover:bg-black hover:text-white duration-150 transition-all border-white p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
+              >
+                <PiPlusCircle size={20} />
+                Add Employee
+              </Link>
+            </div>
+          )}
         </div>
         <Table
           columns={columns}

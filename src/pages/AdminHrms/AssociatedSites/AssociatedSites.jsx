@@ -14,6 +14,7 @@ import { getItemInLocalStorage } from "../../../utils/localStorage";
 import { FaCheck } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 import {
+  getAdminAccess,
   getAssociatedSiteDetails,
   getAssociatedSites,
   postAssociatedSites,
@@ -44,6 +45,7 @@ const AssociatedSites = () => {
     pan: false,
     esic: false,
     BVG: false,
+    clientName: "",
   });
 
   const handleChange = (e) => {
@@ -63,7 +65,7 @@ const AssociatedSites = () => {
       sortable: true,
     },
     {
-      name: "Name",
+      name: "Site Name",
       selector: (row) => row.site_name,
       sortable: true,
     },
@@ -91,9 +93,11 @@ const AssociatedSites = () => {
       name: "Action",
       cell: (row) => (
         <div className="flex items-center gap-4">
-          <button onClick={() => handleEditModal(row.id)}>
-            <BiEdit size={15} />
-          </button>
+          {roleAccess.can_add_edit_associated_sites && (
+            <button onClick={() => handleEditModal(row.id)}>
+              <BiEdit size={15} />
+            </button>
+          )}
           {/* <button
             onClick={() => handleDeleteDepartment(row.id)}
             className="text-red-400"
@@ -106,6 +110,7 @@ const AssociatedSites = () => {
   ];
   const [siteDetails, setSiteDetails] = useState({
     siteName: "",
+    clientName: "",
     address1: "",
     address2: "",
     city: "",
@@ -129,16 +134,17 @@ const AssociatedSites = () => {
       const res = await getAssociatedSiteDetails(siteID);
       setSiteDetails({
         ...siteDetails,
-        siteName: res.site_name,
-        address1: res.address_1,
-        address2: res.address_2,
-        city: res.city,
-        state: res.state,
-        country: res.country,
-        latitude: res.latitude,
-        longitude: res.longitude,
-        pinCode: res.zip_code,
-        status: res.status,
+        siteName: res?.site_name,
+        clientName: res?.client_name || "",
+        address1: res?.address_1,
+        address2: res?.address_2,
+        city: res?.city,
+        state: res?.state,
+        country: res?.country,
+        latitude: res?.latitude,
+        longitude: res?.longitude,
+        pinCode: res?.zip_code,
+        status: res?.status,
         radius: res?.radius,
         aadhar: res?.aadhar_required,
         BVG: res?.pan_required,
@@ -196,6 +202,7 @@ const AssociatedSites = () => {
     }
     const postData = new FormData();
     postData.append("site_name", formData.siteName);
+    postData.append("client_name", formData.clientName);
     postData.append("address_1", formData.address1);
     postData.append("address_2", formData.address2);
     postData.append("city", formData.city);
@@ -221,6 +228,7 @@ const AssociatedSites = () => {
       setIsModalOpen1(false);
       setFormData({
         siteName: "",
+        clientName:"",
         address1: "",
         address2: "",
         city: "",
@@ -230,6 +238,11 @@ const AssociatedSites = () => {
         latitude: "",
         longitude: "",
         radius: "",
+        
+        aadhar: false,
+        BVG: false,
+        esic: false,
+        pan: false,
       });
     } catch (error) {
       console.log(error);
@@ -239,7 +252,7 @@ const AssociatedSites = () => {
   const handleEditChange = (e) => {
     setSiteDetails({ ...siteDetails, [e.target.name]: e.target.value });
   };
-
+console.log(siteDetails)
   const handleEditAssociatedSites = async () => {
     if (!siteDetails.siteName) {
       toast.error("Site name is required");
@@ -267,6 +280,7 @@ const AssociatedSites = () => {
     }
     const editData = new FormData();
     editData.append("site_name", siteDetails.siteName);
+    editData.append("client_name", siteDetails.clientName);
     editData.append("address_1", siteDetails.address1);
     editData.append("address_2", siteDetails.address2);
     editData.append("city", siteDetails.city);
@@ -303,11 +317,27 @@ const AssociatedSites = () => {
       setFilteredSites(associatedSites);
     } else {
       const filteredResults = associatedSites.filter((role) =>
-        role?.site_name.toLowerCase().includes(searchValue.toLowerCase())
+        role?.site_name?.toLowerCase().includes(searchValue.toLowerCase())
       );
       setFilteredSites(filteredResults);
     }
   };
+  // can_add_edit_associated_sites
+  const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
+  const orgId = getItemInLocalStorage("HRMSORGID");
+  const [roleAccess, setRoleAccess] = useState({});
+  useEffect(() => {
+    const fetchRoleAccess = async () => {
+      try {
+        const res = await getAdminAccess(orgId, empId);
+
+        setRoleAccess(res[0]);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchRoleAccess();
+  }, []);
 
   return (
     <section className="flex ml-20">
@@ -321,14 +351,16 @@ const AssociatedSites = () => {
             value={searchText}
             onChange={handleSearch}
           />
-          <button
-            onClick={() => setIsModalOpen1(true)}
-            style={{ background: themeColor }}
-            className="border-2 font-medium hover:text-white duration-150 transition-all  p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
-          >
-            <PiPlusCircle size={20} />
-            Add
-          </button>
+          {roleAccess?.can_add_edit_associated_sites && (
+            <button
+              onClick={() => setIsModalOpen1(true)}
+              style={{ background: themeColor }}
+              className="border-2 font-medium hover:text-white duration-150 transition-all  p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
+            >
+              <PiPlusCircle size={20} />
+              Add
+            </button>
+          )}
         </div>
         <Table columns={columns} data={filteredSites} isPagination={true} />
       </div>
@@ -360,6 +392,20 @@ const AssociatedSites = () => {
                 />
                 {/* <p>Active</p> */}
                 {/* </div> */}
+              </div>
+              <div className="flex flex-col gap-1 ">
+                <label htmlFor="" className="font-medium">
+                  Client name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="clientName"
+                  value={siteDetails.clientName}
+                  onChange={handleEditChange}
+                  id=""
+                  className="border border-gray-400 rounded-md p-2"
+                  placeholder="Client name"
+                />
               </div>
               <div className="flex flex-col gap-1 ">
                 <label htmlFor="" className="font-medium">
@@ -533,7 +579,10 @@ const AssociatedSites = () => {
                       id=""
                       checked={siteDetails.pan === true}
                       onChange={() =>
-                        setSiteDetails({ ...siteDetails, pan: !siteDetails.pan })
+                        setSiteDetails({
+                          ...siteDetails,
+                          pan: !siteDetails.pan,
+                        })
                       }
                     />
                     <label htmlFor="">Pan </label>
@@ -545,7 +594,10 @@ const AssociatedSites = () => {
                       id=""
                       checked={siteDetails.esic === true}
                       onChange={() =>
-                        setSiteDetails({ ...siteDetails, esic: !siteDetails.esic })
+                        setSiteDetails({
+                          ...siteDetails,
+                          esic: !siteDetails.esic,
+                        })
                       }
                     />
                     <label htmlFor="">ESIC </label>
@@ -557,7 +609,10 @@ const AssociatedSites = () => {
                       id=""
                       checked={siteDetails.BVG === true}
                       onChange={() =>
-                        setSiteDetails({ ...siteDetails, BVG: !siteDetails.BVG })
+                        setSiteDetails({
+                          ...siteDetails,
+                          BVG: !siteDetails.BVG,
+                        })
                       }
                     />
                     <label htmlFor="" title="Background verification">
@@ -593,6 +648,20 @@ const AssociatedSites = () => {
               </h2>
             </div>
             <div className="max-h-96 overflow-y-auto hide-scrollbar">
+              <div className="flex flex-col gap-1 ">
+                <label htmlFor="" className="font-medium">
+                  Client name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="clientName"
+                  value={formData.clientName}
+                  onChange={handleChange}
+                  id=""
+                  className="border border-gray-400 rounded-md p-2"
+                  placeholder="Client name"
+                />
+              </div>
               <div className="flex flex-col gap-1 ">
                 <label htmlFor="" className="font-medium">
                   Site name <span className="text-red-500">*</span>

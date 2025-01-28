@@ -12,6 +12,7 @@ import {
 import ToggleSwitch from "../../Buttons/ToggleSwitch";
 import EmployeeDetailView from "./EmployeeDetailView";
 import {
+  getAdminAccess,
   getAttendanceRecord,
   getEmployeeAttendanceOfToday,
   getUserDetails,
@@ -369,6 +370,22 @@ const AttendanceRec = () => {
   
     return `${formattedHours}:${formattedMinutes} ${amPm}`;
   };
+
+   const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
+        const orgId = getItemInLocalStorage("HRMSORGID");
+        const [roleAccess, setRoleAccess] = useState({});
+        useEffect(() => {
+          const fetchRoleAccess = async () => {
+            try {
+              const res = await getAdminAccess(orgId, empId);
+      
+              setRoleAccess(res[0]);
+            } catch (error) {
+              console.log(error);
+            }
+          };
+          fetchRoleAccess();
+        }, []);
 
   return (
     <div className="flex">
@@ -904,12 +921,12 @@ const AttendanceRec = () => {
                     {/* <p>{selectedRecord.schedule}</p> */}
                   </div>
                   <div className="flex gap-2 justify-end border-t p-1 ">
-                    <button
+                    {roleAccess.can_apply_regularization_on_behalf_of_employee &&<button
                       className=" bg-blue-500 text-white px-4 py-2 rounded-full"
                       onClick={() => setAddRegularization(true)}
                     >
-                      Apply for Regularization
-                    </button>
+                      Apply For Regularization
+                    </button>}
 
                     <button
                       className=" bg-red-500 text-white px-4 py-2 rounded-full"

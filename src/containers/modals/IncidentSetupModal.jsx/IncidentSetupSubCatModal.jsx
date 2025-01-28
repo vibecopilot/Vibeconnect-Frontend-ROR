@@ -63,7 +63,8 @@ const SubCategorySetupModal = ({
     };
     try {
       const res = await editIncidentCatDetails(subCatId, payload);
-      toast.success("Incident Category Updated successfully!");
+      toast.success("Incident Sub Category Updated successfully!");
+      console.log("tree called");
       onclose();
       fetchIncidentSubCategory();
     } catch (error) {

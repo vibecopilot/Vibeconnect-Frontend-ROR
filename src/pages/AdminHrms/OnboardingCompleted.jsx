@@ -7,7 +7,12 @@ import { useSelector } from "react-redux";
 import { BsEye } from "react-icons/bs";
 import { FaTrash } from "react-icons/fa";
 import { getItemInLocalStorage } from "../../utils/localStorage";
-import { getApprovedEmployees, getMyHRMSEmployees, getMyHRMSEmployeesAllData } from "../../api";
+import {
+  getAdminAccess,
+  getApprovedEmployees,
+  getMyHRMSEmployees,
+  getMyHRMSEmployeesAllData,
+} from "../../api";
 import toast from "react-hot-toast";
 import { dateFormatSTD } from "../../utils/dateUtils";
 
@@ -20,7 +25,9 @@ const OnBoardingCompleted = () => {
     try {
       // toast.loading("Loading employees Please wait!");
       const res = await getApprovedEmployees(approverID);
-      const sortedEmployees = res.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+      const sortedEmployees = res.sort(
+        (a, b) => new Date(b.created_date) - new Date(a.created_date)
+      );
       setEmployees(sortedEmployees);
       setFilteredEmployees(sortedEmployees);
       toast.dismiss();
@@ -93,6 +100,22 @@ const OnBoardingCompleted = () => {
   ];
   const themeColor = useSelector((state) => state.theme.color);
 
+  const employeeId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
+  const orgId = getItemInLocalStorage("HRMSORGID");
+  const [roleAccess, setRoleAccess] = useState({});
+  useEffect(() => {
+    const fetchRoleAccess = async () => {
+      try {
+        const res = await getAdminAccess(orgId, employeeId);
+
+        setRoleAccess(res[0]);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchRoleAccess();
+  }, []);
+
   return (
     <section className="flex">
       <div className=" w-full flex flex-col overflow-hidden">
@@ -104,16 +127,18 @@ const OnBoardingCompleted = () => {
             //   value={searchText}
             //   onChange={handleSearch}
           />
-          <div className="flex justify-end">
-            <Link
-              to={"/admin/add-employee/basics"}
-              style={{ background: themeColor }}
-              className="border-2 font-semibold w-full hover:bg-black hover:text-white duration-150 transition-all border-white p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
-            >
-              <PiPlusCircle size={20} />
-              Add Employee
-            </Link>
-          </div>
+          {roleAccess?.can_add_employee && (
+            <div className="flex justify-end">
+              <Link
+                to={"/admin/add-employee/basics"}
+                style={{ background: themeColor }}
+                className="border-2 font-semibold w-full hover:bg-black hover:text-white duration-150 transition-all border-white p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
+              >
+                <PiPlusCircle size={20} />
+                Add Employee
+              </Link>
+            </div>
+          )}
         </div>
         <Table columns={columns} data={filteredEmployees} isPagination={true} />
       </div>

@@ -91,7 +91,6 @@ const DetailsEdit = () => {
           corrective_action: response.data.corrective_action,
           comment: response.data.comment,
           docs: response.data.documents,
-         
         });
         console.log("check",response.data)
         setTicketInfo(response.data);

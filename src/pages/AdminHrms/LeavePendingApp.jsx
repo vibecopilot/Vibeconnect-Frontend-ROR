@@ -8,6 +8,7 @@ import { useSelector } from "react-redux";
 import { MdKeyboardArrowDown } from "react-icons/md";
 import {
   approveRejectMultipleRequest,
+  getAdminAccess,
   getLeaveApplications,
   getLeaveCategory,
   getMyHRMSEmployees,
@@ -20,6 +21,8 @@ import SingleLeaveApplication from "./LeaveApplicationModal/SingleLeaveApplicati
 import MultipleLeaveApplication from "./LeaveApplicationModal/MultipleLeaveApplication";
 import toast from "react-hot-toast";
 import EditLeaveApplication from "./LeaveApplicationModal/EditLeaveApplication";
+import LeaveApplicationDetails from "./LeaveApplicationModal/LeaveApplicationDetails";
+import { BsEye } from "react-icons/bs";
 const LeavePendingApp = () => {
   const themeColor = useSelector((state) => state.theme.color);
 
@@ -54,6 +57,22 @@ const LeavePendingApp = () => {
   };
 
   const columns = [
+     {
+          name: "View",
+          selector: (row) => (
+            <div className="flex justify-center gap-2">
+              <button
+                onClick={() => handleDetailsModal(row.id)}
+                className="text-blue-500 hover:text-blue-700 focus:outline-none"
+              >
+                <BsEye size={15} />
+              </button>
+    
+              
+            </div>
+          ),
+          sortable: true,
+        },
     {
       name: "Employee Name",
       selector: (row) => `${row.first_name} ${row.last_name}`,
@@ -88,28 +107,32 @@ const LeavePendingApp = () => {
       name: "Action",
       selector: (row) => (
         <div className="flex justify-center gap-2">
-          <button
+         {roleAccess?.can_add_leave_on_behalf_of_employee &&  <button
             onClick={() => handleEditApplication(row.id)}
             className="text-blue-500 hover:text-blue-700 focus:outline-none"
           >
             <BiEdit size={15} />
-          </button>
-          <button
-            className="text-green-400 font-medium hover:bg-green-400 hover:text-white transition-all duration-200 p-1 rounded-full"
-            onClick={() => {
-              handleLeaveApplicationApproval(row.id, "approved");
-            }}
-          >
-            <TiTick size={20} />
-          </button>
-          <button
-            className="text-red-400 font-medium hover:bg-red-400 hover:text-white transition-all duration-200 p-1 rounded-full"
-            onClick={() => {
-              handleLeaveApplicationApproval(row.id, "rejected");
-            }}
-          >
-            <IoClose size={20} />
-          </button>
+          </button>}
+          {roleAccess?.can_approve_reject_leave && (
+            <>
+              <button
+                className="text-green-400 font-medium hover:bg-green-400 hover:text-white transition-all duration-200 p-1 rounded-full"
+                onClick={() => {
+                  handleLeaveApplicationApproval(row.id, "approved");
+                }}
+              >
+                <TiTick size={20} />
+              </button>
+              <button
+                className="text-red-400 font-medium hover:bg-red-400 hover:text-white transition-all duration-200 p-1 rounded-full"
+                onClick={() => {
+                  handleLeaveApplicationApproval(row.id, "rejected");
+                }}
+              >
+                <IoClose size={20} />
+              </button>
+            </>
+          )}
         </div>
       ),
       sortable: true,
@@ -234,6 +257,29 @@ const LeavePendingApp = () => {
     };
   }, [setIsOpen]);
 
+  const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
+  const orgId = getItemInLocalStorage("HRMSORGID");
+  const [roleAccess, setRoleAccess] = useState({});
+  useEffect(() => {
+    const fetchRoleAccess = async () => {
+      try {
+        const res = await getAdminAccess(orgId, empId);
+
+        setRoleAccess(res[0]);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchRoleAccess();
+  }, []);
+
+   const [detailsModal, setDetailsModal] = useState(false);
+
+   const handleDetailsModal = (id) => {
+    setApplicationId(id);
+    setDetailsModal(true);
+  };
+
   return (
     <section className="flex">
       <div className="w-full flex mx-3 flex-col overflow-hidden">
@@ -267,15 +313,18 @@ const LeavePendingApp = () => {
             >
               Filter
             </button> */}
-            <div className="relative inline-block text-left">
-              <button
-                onClick={toggleDropdown}
-                className="inline-flex items-center justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500"
-              >
-                Actions
-                <MdKeyboardArrowDown size={20} />
-              </button>
-            </div>
+            {(roleAccess?.can_add_leave_on_behalf_of_employee ||
+              roleAccess?.can_approve_reject_leave) && (
+              <div className="relative inline-block text-left">
+                <button
+                  onClick={toggleDropdown}
+                  className="inline-flex items-center justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500"
+                >
+                  Actions
+                  <MdKeyboardArrowDown size={20} />
+                </button>
+              </div>
+            )}
           </div>
         </div>
         <Table
@@ -297,74 +346,82 @@ const LeavePendingApp = () => {
             aria-orientation="vertical"
             aria-labelledby="options-menu"
           >
-            <p
+            {roleAccess?.can_add_leave_on_behalf_of_employee && (
+              <>
+                <p
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  role="menuitem"
+                >
+                  <button
+                    onClick={() => {
+                      setSingleAppModal(true);
+                      setIsOpen(false);
+                    }}
+                  >
+                    Add Single Leave Applications
+                  </button>
+                </p>
+                <p
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  role="menuitem"
+                >
+                  <button
+                    onClick={() => {
+                      setMultiAppModal(true);
+                      setIsOpen(false);
+                    }}
+                  >
+                    Add Multiple Leave Applications
+                  </button>
+                </p>
+              </>
+            )}
+            {roleAccess?.can_approve_reject_leave && (
+              <>
+                <p
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  role="menuitem"
+                >
+                  {/* Upload Documents */}
+                  <button
+                    onClick={() => {
+                      setIsModalOpen3(true);
+                      setIsOpen(false);
+                    }}
+                  >
+                    Approve multiple requests
+                  </button>
+                </p>
+                {/* <p
               className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
               role="menuitem"
-            >
-              <button
-                onClick={() => {
-                  setSingleAppModal(true);
-                  setIsOpen(false);
-                }}
               >
-                Add Single Leave Applications
-              </button>
-            </p>
-            <p
-              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-              role="menuitem"
-            >
+              
               <button
-                onClick={() => {
-                  setMultiAppModal(true);
-                  setIsOpen(false);
+              onClick={() => {
+                setIsModalOpen4(true);
+                setIsOpen(false);
                 }}
-              >
-                Add Multiple Leave Applications
-              </button>
-            </p>
-            <p
-              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-              role="menuitem"
-            >
-              {/* Upload Documents */}
-              <button
-                onClick={() => {
-                  setIsModalOpen3(true);
-                  setIsOpen(false);
-                }}
-              >
-                Approve multiple requests
-              </button>
-            </p>
-            {/* <p
-              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-              role="menuitem"
-            >
-            
-              <button
-                onClick={() => {
-                  setIsModalOpen4(true);
-                  setIsOpen(false);
-                }}
-              >
+                >
                 Bulk Approve by filters{" "}
-              </button>
-            </p> */}
-            <p
-              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-              role="menuitem"
-            >
-              {/* Bulk Add New Employees */}
-              <button
-                onClick={() => {
-                  setIsModalOpen5(true);
-                  setIsOpen(false);
-                }}
-              >
-                Reject multiple requests
-              </button>
-            </p>
+                </button>
+                </p> */}
+                <p
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  role="menuitem"
+                >
+                  {/* Bulk Add New Employees */}
+                  <button
+                    onClick={() => {
+                      setIsModalOpen5(true);
+                      setIsOpen(false);
+                    }}
+                  >
+                    Reject multiple requests
+                  </button>
+                </p>
+              </>
+            )}
             {/* <p
               className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
               role="menuitem"
@@ -1013,6 +1070,12 @@ const LeavePendingApp = () => {
             </div>
           </div>
         </div>
+      )}
+       {detailsModal && (
+        <LeaveApplicationDetails
+          setDetailsModal={setDetailsModal}
+          applicationId={applicationId}
+        />
       )}
     </section>
   );
