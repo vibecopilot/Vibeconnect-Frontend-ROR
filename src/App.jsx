@@ -334,6 +334,10 @@ import HRMSLeavesDetails from "./pages/HRMS/HRMSLeaveDetails.jsx";
 import EmployeeHRMSLeaves from "./pages/Employees/EmployeeHRMS/EmployeeHRMSLeave.jsx";
 import EmployeeLeavesDetails from "./pages/Employees/EmployeeHRMS/EmployeeHRMSLeaveDetails.jsx";
 import CreatePolls from "./pages/SubPages/CreatePoll.jsx";
+import SavedForums from "./pages/SubPages/SavedForums.jsx"
+import EmpSavedForums from "./pages/SubPages/EmpSavedForums.jsx"
+import HiddenForums from "./pages/SubPages/HiddenForums.jsx";
+import ReportForum from  "./pages/SubPages/ReportedForum.jsx"
 import CreateForum from "./pages/SubPages/CreateForum.jsx";
 import ChatBot from "./pages/SubPages/ChatBot.jsx";
 import CreateGroup from "./pages/SubPages/CreateGroup.jsx";
@@ -707,34 +711,37 @@ import CTCGeneralSettingEdit from "./pages/AdminHrms/CTCGeneralSettingEdit.jsx";
 import TimeSheetRecord from "./pages/AdminHrms/TimeSheet/TimeSheetRecord.jsx";
 import EmployeesSetup from "./pages/AdminHrms/EmployeesSetup.jsx";
 import UniformApplication from "./pages/AdminHrms/UniformApplication.jsx";
-import { setColor } from "./features/theme/themeSlice.js";
+// import { setColor } from "./features/theme/themeSlice.js";
 import CopyChecklistPPM from "./pages/SubPages/CopyChecklistPPM.jsx";
 import CopyChecklistService from "./pages/SubPages/CopyChecklistService.jsx";
-import BillingSetup from "./pages/Setup/BillingSetup/BillingSetup.jsx";
-
-import CAMBilling from "./pages/CAMBilling.jsx";
+// import EmployeeSavedForum from "./pages/EmployeeSavedForum.jsx";
+// import BillingSetup from "./pages/Setup/BillingSetup/BillingSetup.jsx";
+// import AddCAMBillingSetup from "./pages/Setup/BillingSetup/AddCAMBillingSetup.jsx";
+// import CAMBilling from "./pages/CAMBilling.jsx";
+// import BillingSetup from "./pages/Setup/BillingSetup/BillingSetup.jsx";
+// import CAMBilling from "./pages/CAMBilling.jsx";
 import BillingAddress from "./pages/Setup/BillingSetup/BillingAddress.jsx";
 import EditBillingAddress from "./pages/Setup/BillingSetup/EditBillingAddress.jsx";
 import AddCAMBilling from "./pages/SubPages/AddCAMBilling.jsx";
 import CAMBillingDetails from "./pages/SubPages/details/CAMBillingDetails.jsx";
 import CreateInvoiceReceipt from "./pages/SubPages/details/CreateInvoiceReceipt.jsx";
-import FBRestaurtantEdit from "./pages/SubPages/FBResturantEdit.jsx";
-import PantryDetails from "./pages/SubPages/details/PantryDetails.jsx";
-import FBCuisinesSetup from "./pages/Setup/FBCuisinesSetup.jsx";
-import FBRestaurtantDetails from "./pages/SubPages/details/FBSubDetails/FBResturantsDetails.jsx";
-import FBStatusSetup from "./pages/SubPages/details/FBStatusSetup.jsx";
-import EditCategorySetup from "./pages/SubPages/EditCategorySetup.jsx";
-import EditSubCategorySetup from "./pages/SubPages/EditSubCategorySetup.jsx";
-import FBRestaurtantMenu from "./pages/SubPages/details/FBSubDetails/FBResturantMenu.jsx";
-import EditRestaurtantBooking from "./pages/SubPages/EditResturantBooking.jsx";
-import EditRestaurtantOrders from "./pages/SubPages/EditResturantOrders.jsx";
-import FBMainPage from "./pages/Setup/FBMainPage.jsx";
+// import FBRestaurtantEdit from "./pages/SubPages/FBResturantEdit.jsx";
+// import PantryDetails from "./pages/SubPages/details/PantryDetails.jsx";
+// import FBCuisinesSetup from "./pages/Setup/FBCuisinesSetup.jsx";
+// import FBRestaurtantDetails from "./pages/SubPages/details/FBSubDetails/FBResturantsDetails.jsx";
+// import FBStatusSetup from "./pages/SubPages/details/FBStatusSetup.jsx";
+// import EditCategorySetup from "./pages/SubPages/EditCategorySetup.jsx";
+// import EditSubCategorySetup from "./pages/SubPages/EditSubCategorySetup.jsx";
+// import FBRestaurtantMenu from "./pages/SubPages/details/FBSubDetails/FBResturantMenu.jsx";
+// import EditRestaurtantBooking from "./pages/SubPages/EditResturantBooking.jsx";
+// import EditRestaurtantOrders from "./pages/SubPages/EditResturantOrders.jsx";
+// import FBMainPage from "./pages/Setup/FBMainPage.jsx";
 import EmployeeDocumentMain from "./pages/Employees/EmployeeDocumentMain.jsx";
-import EditDailyPickup from "./pages/SubPages/Transportation/EditDailyPickup.jsx";
-import Compliance from "./pages/Compliance/Compliance.jsx";
-import ComplianceSetup from "./pages/Setup/ComplianceSetupPages/ComplianceSetup.jsx";
-import AddCompliance from "./pages/Compliance/AddCompliance.jsx";
-import SiteEmployee from "./pages/AdminHrms/Employee/SiteEmployee.jsx";
+// import EditDailyPickup from "./pages/SubPages/Transportation/EditDailyPickup.jsx";
+// import Compliance from "./pages/Compliance/Compliance.jsx";
+// import ComplianceSetup from "./pages/Setup/ComplianceSetupPages/ComplianceSetup.jsx";
+// import AddCompliance from "./pages/Compliance/AddCompliance.jsx";
+// import SiteEmployee from "./pages/AdminHrms/Employee/SiteEmployee.jsx";
 import ComplianceVendor from "./pages/Compliance/ComplianceVendor.jsx";
 import ComplianceEvidence from "./pages/Setup/ComplianceSetupPages/ComplianceEvidence.jsx";
 import ComplianceDetails from "./pages/Compliance/ComplianceDetails.jsx";
@@ -789,7 +796,7 @@ function App() {
   //       console.error("Failed to fetch color code:", error);
   //     }
   //   };
-
+  
   //   fetchColorCode();
   // }, []);
 
@@ -1061,7 +1068,7 @@ function App() {
             path="/asset/edit-ppm/:id"
             element={
               <ProtectedAdminRoutes>
-                <EditPPMChecklist />
+                <EditPPMChecklist/>
               </ProtectedAdminRoutes>
             }
           />
@@ -1069,7 +1076,7 @@ function App() {
             path="/assets/ppm-calendar"
             element={
               <ProtectedAdminRoutes>
-                <PPMCalendar />
+                <PPMCalendar/>
               </ProtectedAdminRoutes>
             }
           />
@@ -1116,30 +1123,7 @@ function App() {
             }
           />
           {/* tickets -Admin*/}
-          <Route
-            path="/tickets"
-            element={
-              <ProtectedAdminRoutes>
-                <Ticket />
-              </ProtectedAdminRoutes>
-            }
-          />
-          <Route
-            path="/compliance"
-            element={
-              <ProtectedAdminRoutes>
-                <Compliance />
-              </ProtectedAdminRoutes>
-            }
-          />
-          <Route
-            path="/compliance/add-compliance"
-            element={
-              <ProtectedAdminRoutes>
-                <AddCompliance />
-              </ProtectedAdminRoutes>
-            }
-          />
+          <Route path="/tickets" element={<Ticket />} />
           <Route
             path="/tickets/details/:id"
             element={
@@ -1370,6 +1354,14 @@ function App() {
             }
           />
           <Route
+            path="/employee/saved_forums"
+            element={
+              <ProtectedRoute>
+                <EmpSavedForums/>
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/employee/communication/groups"
             element={
               <ProtectedRoute>
@@ -1380,6 +1372,22 @@ function App() {
           {/* employee Communication create forum */}
           <Route
             path="/employee/employee-communication-create-forum"
+            element={
+              <ProtectedRoute>
+                <CreateEmployeeForum />
+              </ProtectedRoute>
+            }
+          />
+           {/* <Route
+            path="/employee/communication/saved_forums"
+            element={
+              <ProtectedRoute>
+                <EmployeeSavedForum/>
+              </ProtectedRoute>
+            }
+          /> */}
+          <Route
+            path="/employee/employee-communication-saved-forum"
             element={
               <ProtectedRoute>
                 <CreateEmployeeForum />
@@ -1562,6 +1570,32 @@ function App() {
             }
           />
           <Route
+            path="/admin/saved_forums"
+            element={
+              <ProtectedAdminRoutes>
+                <SavedForums/>
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/hidden_forums"
+            element={
+              <ProtectedAdminRoutes>
+                <HiddenForums/>
+              </ProtectedAdminRoutes>
+            }
+          />
+         
+          <Route
+            path="/admin/reported_forums"
+            element={
+              <ProtectedAdminRoutes>
+                <ReportForum/>
+              </ProtectedAdminRoutes>
+            }
+          />
+         
+          <Route
             path="/admin/communication-charbot"
             element={
               <ProtectedAdminRoutes>
@@ -1586,13 +1620,13 @@ function App() {
             }
           />
           {/* mail room */}
-          <Route path="/mail-room" element={<MailRoom />} />
+          <Route path="/mail-room/" element={<MailRoom />} />
           <Route
             path="/mail-room/inbound/create-inbound"
             element={<CreateInbound />}
           />
           <Route
-            path="/mail-room/inbound/inbound-details"
+            path="/mail-room/inbound/inbound-details/:id"
             element={<InBoundDetails />}
           />
           <Route
@@ -1600,7 +1634,7 @@ function App() {
             element={<CreateOutbound />}
           />
           <Route
-            path="/mail-room/outbound/outbound-details"
+            path="/mail-room/outbound/outbound-details/:id"
             element={<OutBoundDetails />}
           />
           {/* Asset */}
@@ -1835,7 +1869,7 @@ function App() {
             path="/admin/copy-checklist/:id"
             element={
               <ProtectedAdminRoutes>
-                <CopyChecklist />
+                <CopyChecklist/>
               </ProtectedAdminRoutes>
             }
           />
@@ -1843,7 +1877,7 @@ function App() {
             path="/admin/copy-checklist/service/:id"
             element={
               <ProtectedAdminRoutes>
-                <CopyChecklistService />
+                <CopyChecklistService/>
               </ProtectedAdminRoutes>
             }
           />
@@ -1851,7 +1885,7 @@ function App() {
             path="/admin/copy-checklist/ppm/:id"
             element={
               <ProtectedAdminRoutes>
-                <CopyChecklistPPM />
+                <CopyChecklistPPM/>
               </ProtectedAdminRoutes>
             }
           />
@@ -1909,7 +1943,7 @@ function App() {
             path="/edit-master-checklist-setup/:id"
             element={
               <ProtectedAdminRoutes>
-                <EditMasterChecklistSetup />
+                <EditMasterChecklistSetup/>
               </ProtectedAdminRoutes>
             }
           />
@@ -1917,7 +1951,7 @@ function App() {
             path="/admin/gdn-purpose-setup"
             element={
               <ProtectedAdminRoutes>
-                <GDNPurpose />
+                <GDNPurpose/>
               </ProtectedAdminRoutes>
             }
           />
@@ -1966,7 +2000,7 @@ function App() {
             }
           />
           <Route
-            path="/employees/transportation/book-outstation"
+            path="/employees/book-outstation"
             element={
               <ProtectedRoute>
                 <BookOutstation />
@@ -1974,7 +2008,7 @@ function App() {
             }
           />
           <Route
-            path="/employees/transportation/book-pickup"
+            path="/employees/book-pickup"
             element={
               <ProtectedRoute>
                 <BookPickup />
@@ -2008,20 +2042,10 @@ function App() {
             }
           />
           <Route
-            path="/admin/transportation/book-pickup"
-            // path="/admin/book-pickup"
+            path="/admin/book-pickup"
             element={
               <ProtectedAdminRoutes>
                 <AdminBookDailypickup />
-              </ProtectedAdminRoutes>
-            }
-          />
-          <Route
-            path="/admin/transportation/edit-pickup/:id"
-            // path="/admin/book-pickup"
-            element={
-              <ProtectedAdminRoutes>
-                <EditDailyPickup />
               </ProtectedAdminRoutes>
             }
           />
@@ -2168,14 +2192,6 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <Pantry />
-              </ProtectedAdminRoutes>
-            }
-          />
-          <Route
-            path="/admin/pantry-details/:id"
-            element={
-              <ProtectedAdminRoutes>
-                <PantryDetails />
               </ProtectedAdminRoutes>
             }
           />
@@ -2477,15 +2493,15 @@ function App() {
             path="/admin/add-masters"
             element={
               <ProtectedAdminRoutes>
-                <AddMasters />
+                <AddMasters/>
               </ProtectedAdminRoutes>
             }
           />
-          <Route
+           <Route
             path="/admin/master-details/:id"
             element={
               <ProtectedAdminRoutes>
-                <MasterDetails />
+                <MasterDetails/>
               </ProtectedAdminRoutes>
             }
           />
@@ -2493,7 +2509,7 @@ function App() {
             path="/admin/edit-masters/:id"
             element={
               <ProtectedAdminRoutes>
-                <EditMasters />
+                <EditMasters/>
               </ProtectedAdminRoutes>
             }
           />
@@ -3318,14 +3334,6 @@ function App() {
               </ProtectedAdminRoutes>
             }
           />
-          <Route
-            path="/setup/fnb/cuisines"
-            element={
-              <ProtectedAdminRoutes>
-                <FBMainPage />
-              </ProtectedAdminRoutes>
-            }
-          />
 
           {/* permit */}
           {/* admin permit */}
@@ -3338,7 +3346,7 @@ function App() {
             }
           />
           <Route
-            path="/admin/permit/add-new-permit"
+            path="/admin/add-new-permit"
             element={
               <ProtectedAdminRoutes>
                 <AddNewPermit />
@@ -3491,14 +3499,6 @@ function App() {
               </ProtectedAdminRoutes>
             }
           />
-          {/* <Route
-            path="/admin/fnb/restaurtant-details/:id"
-            element={
-              <ProtectedAdminRoutes>
-                <FBRestaurtantDetails/>
-              </ProtectedAdminRoutes>
-            }
-          /> */}
           <Route
             path="/admin/add-fb"
             element={
@@ -3511,7 +3511,7 @@ function App() {
             path="/admin/fb-details/:id"
             element={
               <ProtectedAdminRoutes>
-                <FBRestaurtantDetails />
+                <FBDetails />
               </ProtectedAdminRoutes>
             }
           />
@@ -3519,68 +3519,12 @@ function App() {
             path="/admin/fb-edit/:id"
             element={
               <ProtectedAdminRoutes>
-                <FBRestaurtantEdit />
+                <FBEdit />
               </ProtectedAdminRoutes>
             }
           />
           <Route
-            path="/fnb/status-setup/:id"
-            element={
-              <ProtectedAdminRoutes>
-                <FBStatusSetup />
-              </ProtectedAdminRoutes>
-            }
-          />
-          <Route
-            path="/fnb/status-setup/:id"
-            element={
-              <ProtectedAdminRoutes>
-                <FBStatusSetup />
-              </ProtectedAdminRoutes>
-            }
-          />
-          <Route
-            path="/fnb/category-setup/:id"
-            element={
-              <ProtectedAdminRoutes>
-                <EditCategorySetup />
-              </ProtectedAdminRoutes>
-            }
-          />
-          <Route
-            path="/fnb/sub-category-setup/:id"
-            element={
-              <ProtectedAdminRoutes>
-                <EditSubCategorySetup />
-              </ProtectedAdminRoutes>
-            }
-          />
-          <Route
-            path="/fnb/restaurtant-menu/:id"
-            element={
-              <ProtectedAdminRoutes>
-                <FBRestaurtantMenu />
-              </ProtectedAdminRoutes>
-            }
-          />
-          <Route
-            path="/admin/restaurtant-bookings/:id"
-            element={
-              <ProtectedAdminRoutes>
-                <EditRestaurtantBooking />
-              </ProtectedAdminRoutes>
-            }
-          />
-          <Route
-            path="/admin/restaurtant-orders/:id"
-            element={
-              <ProtectedAdminRoutes>
-                <EditRestaurtantOrders />
-              </ProtectedAdminRoutes>
-            }
-          />
-          <Route
-            path="/admin/fb-res-menu/:id"
+            path="/admin/fb-res-menu/"
             element={
               <ProtectedAdminRoutes>
                 <AddResMenu />
@@ -3588,7 +3532,7 @@ function App() {
             }
           />
           <Route
-            path="/admin/edit-resmenu/:resid/:id"
+            path="/admin/edit-resmenu/:id"
             element={
               <ProtectedAdminRoutes>
                 <EditResMenu />
@@ -3596,7 +3540,7 @@ function App() {
             }
           />
           <Route
-            path="/admin/fb-resmenudetails/:resid/:id"
+            path="/admin/fb-resmenudetails/:id"
             element={
               <ProtectedAdminRoutes>
                 <ResMenuDetails />
@@ -3630,7 +3574,7 @@ function App() {
             }
           />
           <Route
-            path="/admin/edit-incidents/:id"
+            path="/admin/edit-incidents"
             element={
               <ProtectedAdminRoutes>
                 <EditIncident />
@@ -3651,14 +3595,6 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 <IncidentSetup />
-              </ProtectedAdminRoutes>
-            }
-          />
-          <Route
-            path="/admin/setup-compliance"
-            element={
-              <ProtectedAdminRoutes>
-                <ComplianceSetup />
               </ProtectedAdminRoutes>
             }
           />
@@ -3916,6 +3852,7 @@ function App() {
               </ProtectedAdminRoutes>
             }
           />
+
           <Route
             path="/admin/edit-addresses-setup/:id"
             element={
@@ -5164,14 +5101,6 @@ function App() {
             }
           />
           <Route
-            path="/admin/hrms/site-employee"
-            element={
-              <ProtectedAdminRoutes>
-                <SiteEmployee />
-              </ProtectedAdminRoutes>
-            }
-          />
-          <Route
             path="/admin/add-employee"
             element={
               <ProtectedAdminRoutes>
@@ -5208,7 +5137,7 @@ function App() {
             element={
               <ProtectedAdminRoutes>
                 {/* <OrganizationTree /> */}
-                <OrganizationChart />
+                <OrganizationChart/>
               </ProtectedAdminRoutes>
             }
           />
@@ -7005,24 +6934,32 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route
+           {/* <Route
             path="/admin/billing-setup"
             element={
               <ProtectedAdminRoutes>
                 <BillingSetup />
               </ProtectedAdminRoutes>
             }
-          />
-
+          /> */}
+          {/* <Route
+            path="/admin/add-cam-billing-setup"
+            element={
+              <ProtectedAdminRoutes>
+                <AddCAMBillingSetup />
+              </ProtectedAdminRoutes>
+            }
+          /> */}
           {/* CAM Billing */}
-          <Route
+          {/* <Route
             path="/admin/cam-billing"
             element={
               <ProtectedAdminRoutes>
                 <CAMBilling />
               </ProtectedAdminRoutes>
             }
-          />
+          /> */}
+          
           <Route
             path="/admin/add-cam-billing"
             element={
