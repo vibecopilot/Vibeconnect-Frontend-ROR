@@ -1328,12 +1328,12 @@ export const getGroups = async () =>
       token: token,
     },
   });
-export const getGroupsDetails = async (id) =>
-  axiosInstance.get(`/groups/${id}.json`, {
-    params: {
-      token: token,
-    },
+
+export const getGroupsDetails = async (id) => {
+  return axiosInstance.get(`/groups/${id}.json?token=${token}`, {
   });
+}
+
 export const deleteGroup = async (id) =>
   axiosInstance.delete(`/groups/${id}.json`, {
     params: {
@@ -1342,11 +1342,11 @@ export const deleteGroup = async (id) =>
   });
 
 export const editGroups = async (id, data) => {
-  const token = getItemInLocalStorage("token"); // Ensure token retrieval is correct
-  return axiosInstance.put(`/groups/${id}.json?token=${token}`, data, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    }
+  // const token = getItemInLocalStorage("token"); // Ensure token retrieval is correct
+  return axiosInstance.put(`/groups/${id}.json`, data, {
+    params: {
+      token: token,
+    },
   });
 };
 
