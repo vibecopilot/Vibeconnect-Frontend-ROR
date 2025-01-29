@@ -54,7 +54,7 @@ const CreateInbound = () => {
     unit: "",
     entity: "",
     status: "",
-    department_name: "",
+    department_id: "",
     collect_on: "",
     created_by_id: "",
     collect_by: "",
@@ -86,7 +86,10 @@ const CreateInbound = () => {
   // Handle Form Submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Submitting form with vendor_id:", formData.vendor_id);
+    console.log(
+      "Submitting form with vendor_id:",
+      formData.vendor_id
+    );
     try {
       const response = await createInbound(formData); // Pass formData.vendor_id to API
       console.log("API Response:", response);
@@ -127,8 +130,9 @@ const CreateInbound = () => {
                 }}
                 value={
                   formData.vendor_id
-                    ? vendors.find((vendor) => vendor.id === formData.vendor_id)
-                        ?.vendor_name || ""
+                    ? vendors.find(
+                        (vendor) => vendor.id === formData.vendor_id
+                      )?.vendor_name || ""
                     : ""
                 } // Display vendor_name based on vendor_id
                 className="border p-1 px-4 rounded-md border-gray-400"
@@ -303,9 +307,9 @@ const CreateInbound = () => {
               <div className="flex flex-col">
                 <label className="font-semibold text-lg">Department ID:</label>
                 <input
-                  type="text"
-                  name="department_name" // Ensure name matches formData key
-                  value={formData.department_name}
+                  type="number"
+                  name="department_id" // Ensure name matches formData key
+                  value={formData.department_id}
                   onChange={handleInputChange}
                   className="border p-1 px-4 rounded-md border-gray-400"
                 />
