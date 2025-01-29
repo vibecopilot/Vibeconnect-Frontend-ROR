@@ -25,6 +25,7 @@ const Inbound = () => {
       console.log("API response:", res);
       const transformedData = res.data.map((item) => ({
         Id: item.id,
+        vendor_id :item.vendor_id,
         vendor_name: item.vendor_name,
         recipient: item.receipant_name,
         mobile_number: item.mobile_number,
@@ -92,8 +93,8 @@ const Inbound = () => {
     },
     { name: "ID", selector: (row) => row.Id, sortable: true },
     {
-      name: "Vendor Name ",
-      selector: (row) => row.vendor_name,
+      name: "Vendor Id ",
+      selector: (row) => row.vendor_id,
       sortable: true,
     },
     { name: "Recipient", selector: (row) => row.recipient, sortable: true },
