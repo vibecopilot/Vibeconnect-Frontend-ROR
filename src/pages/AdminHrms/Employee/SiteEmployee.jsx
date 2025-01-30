@@ -3,6 +3,7 @@ import AdminHRMS from "../AdminHrms";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
 import {
   getAssociatedSiteDetails,
+  getAssociatedSites,
   getEmployeeAssociatedSites,
   getSiteWiseEmployee,
 } from "../../../api";
@@ -10,15 +11,16 @@ import Table from "../../../components/table/Table";
 import { BsEye } from "react-icons/bs";
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
+import Select from "react-select";
 
 const SiteEmployee = () => {
   const associatedSiteId = getItemInLocalStorage("HRMS_SITE_ID");
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
   const [employees, setEmployees] = useState([]);
   const [filteredEmployees, setFilteredEmployees] = useState([]);
-  const fetchSiteWiseEmployee = async () => {
+  const fetchSiteWiseEmployee = async (siteId) => {
     try {
-      const res = await getSiteWiseEmployee(hrmsOrgId, associatedSiteId);
+      const res = await getSiteWiseEmployee(hrmsOrgId, siteId);
       setEmployees(res);
       setFilteredEmployees(res);
     } catch (error) {
@@ -34,9 +36,24 @@ const SiteEmployee = () => {
       console.log(error);
     }
   };
+  const [sites, setSites] = useState([]);
+  const fetchAssociatedSites = async () => {
+    try {
+      const res = await getAssociatedSites(hrmsOrgId);
+      const ActiveSites = res.filter((site) => site.status);
+      const allSites = ActiveSites.map((site) => ({
+        value: site.id,
+        label: site.site_name,
+      }));
+      setSites(allSites);
+    } catch (error) {
+      console.log(error);
+    }
+  };
   useEffect(() => {
-    fetchSiteWiseEmployee();
+    fetchSiteWiseEmployee(associatedSiteId);
     fetchSiteDetails();
+    fetchAssociatedSites();
   }, []);
 
   const columns = [
@@ -85,24 +102,39 @@ const SiteEmployee = () => {
       setFilteredEmployees(filteredResult);
     }
   };
+
+  const [selectedOption, setSelectedOption] = useState({});
+  const handleAssociatedSiteChange = (option) => {
+    setSelectedOption(option);
+    setSiteName(option.label);
+    fetchSiteWiseEmployee(option.value);
+  };
   return (
     <div className="flex ml-20">
       <AdminHRMS />
-      <div className=" w-full m-2 flex gap-2 overflow-hidden flex-col mb-4">
+      <div className=" w-full m-2 flex gap-2  flex-col mb-4">
         <div
           style={{ background: themeColor }}
-          className="p-2 rounded-md text-white "
+          className="p-2 rounded-md text-white flex justify-between items-center"
         >
           <p className="font-medium">Employees on site "{siteName}"</p>
+          <Select
+            options={sites}
+            onChange={handleAssociatedSiteChange}
+            noOptionsMessage={() => "No sites Available"}
+            placeholder="Select Site"
+            maxMenuHeight={500}
+            className="z-50 w-96 text-black"
+          />
         </div>
-        <div className="w-full">
+        <div className="w-full h-full ">
           <input
             type="text"
             name=""
             id=""
             value={searchText}
             onChange={handleSearch}
-            className="border rounded-md p-2 w-full"
+            className="border rounded-md p-2 w-full -z-50"
             placeholder="Search by employee name"
           />
         </div>

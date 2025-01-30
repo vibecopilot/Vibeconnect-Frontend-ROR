@@ -14,7 +14,7 @@ import CreateGroup from "./CreateGroup";
 import { PiPlusCircle } from "react-icons/pi";
 import { BiEdit } from "react-icons/bi";
 import { FaTrash } from "react-icons/fa";
-import { getGroups } from "../../api";
+import { getGroups , domainPrefix } from "../../api";
 import groupIcon from "/groupicon.jpg";
 import { dateFormatSTD } from "../../utils/dateUtils";
 function Groups() {
@@ -102,11 +102,14 @@ function Groups() {
               >
                 <div className="flex flex-col justify-between my-3 w-96 max-h-96 min-h-96">
                   <div className="border flex flex-col justify-between border-gray-100 rounded-xl bg-blue-50 hover:bg-blue-100 min-h-96 shadow-custom-all-sides transition-all duration-200 ease-in-out">
-                    <img
-                      src={groupIcon}
-                      className="rounded-t-xl h-52 w-full object-cover object-top"
-                      alt="forum-profile"
-                    />
+                  {group.cover_image && group.cover_image.length > 0 && (
+                       
+                      <img
+                        src={domainPrefix + group.cover_image[0].document}
+                        className=" w-min-98 h-48 object-cover  rounded-md"
+                        alt="forum-content"
+                      />
+                  )}
                     <div className="m-2">
                       <div className="flex justify-between">
                         <h2 className="text-lg font-medium ">

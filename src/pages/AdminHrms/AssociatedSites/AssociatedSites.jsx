@@ -135,7 +135,7 @@ const AssociatedSites = () => {
       setSiteDetails({
         ...siteDetails,
         siteName: res?.site_name,
-        clientName: res?.client_name,
+        clientName: res?.client_name || "",
         address1: res?.address_1,
         address2: res?.address_2,
         city: res?.city,
@@ -228,6 +228,7 @@ const AssociatedSites = () => {
       setIsModalOpen1(false);
       setFormData({
         siteName: "",
+        clientName:"",
         address1: "",
         address2: "",
         city: "",
@@ -237,7 +238,7 @@ const AssociatedSites = () => {
         latitude: "",
         longitude: "",
         radius: "",
-        clientName: "",
+        
         aadhar: false,
         BVG: false,
         esic: false,
@@ -251,7 +252,7 @@ const AssociatedSites = () => {
   const handleEditChange = (e) => {
     setSiteDetails({ ...siteDetails, [e.target.name]: e.target.value });
   };
-
+console.log(siteDetails)
   const handleEditAssociatedSites = async () => {
     if (!siteDetails.siteName) {
       toast.error("Site name is required");
@@ -400,7 +401,7 @@ const AssociatedSites = () => {
                   type="text"
                   name="clientName"
                   value={siteDetails.clientName}
-                  onChange={handleChange}
+                  onChange={handleEditChange}
                   id=""
                   className="border border-gray-400 rounded-md p-2"
                   placeholder="Client name"

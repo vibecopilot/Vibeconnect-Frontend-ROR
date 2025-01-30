@@ -1,141 +1,200 @@
-import React, { useState } from "react";
-import DataTable from "react-data-table-component";
+import React, { useEffect, useState } from "react";
 import { IoAddCircleOutline } from "react-icons/io5";
-import { BiEdit } from "react-icons/bi";
+import { BiEdit, BiTrash } from "react-icons/bi";
 import DeliveryVendorModal from "../../containers/modals/DeliveryVendorModal";
 import Table from "../../components/table/Table";
+import toast from "react-hot-toast";
+import axios from "axios";
+import {
+  getVendors,
+  removeVendor,
+  postVendors,
+  EditVendors,
+} from "../../api/index";
 
 const DeliveryVendor = () => {
   const [modal, showModal] = useState(false);
-  const [add, setAdd] = useState(false);
   const [searchText, setSearchText] = useState("");
-  const handleButtonClick = () => {
+  const [deliveryVendors, setDeliveryVendors] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
+  const [selectedVendor, setSelectedVendor] = useState(null);
+  const [vendors, setVendors] = useState([]);
+  const [error, setError] = useState(null);
+
+  // Fetch vendors function
+  const fetchVendors = async () => {
+    try {
+      const response = await getVendors();
+      const transformedData = response.data.map((vendor) => ({
+        id: vendor.id,
+        vendor_id: vendor.vendor_supplier_id,
+        vendor_name: vendor.vendor_name,
+        website_url: vendor.website_url,
+        address: vendor.address,
+        email: vendor.email,
+        mobile: vendor.mobile,
+        spoc_person: vendor.spoc_person,
+        aggrement_start_date: vendor.aggrement_start_date,
+        aggremenet_end_date: vendor.aggremenet_end_date,
+        status: vendor.status,
+        created_by: new Date(vendor.created_at).toLocaleDateString(),
+      }));
+
+      setDeliveryVendors(transformedData);
+      setFilteredData(transformedData);
+    } catch (error) {
+      console.error("Error fetching vendors:", error);
+      setError("Failed to fetch vendors. Please try again.");
+    }
+  };
+
+  // Fetch vendors on component mount
+  useEffect(() => {
+    fetchVendors();
+  }, []);
+
+  // Handle edit button click
+  const handleEditClick = async (vendor) => {
+    setSelectedVendor(vendor);
     showModal(true);
   };
 
-  const column = [
+  // Handle vendor submission (add/edit)
+  const handleVendorSubmit = async (vendorData) => {
+    try {
+      let updatedVendors;
+      if (selectedVendor) {
+        // Update existing vendor
+        await EditVendors(id, vendorData);
+        updatedVendors = deliveryVendors.map((vendor) =>
+          vendor.id === selectedVendor.id
+            ? { ...vendor, ...vendorData }
+            : vendor
+        );
+      } else {
+        // Create new vendor
+        const response = await postVendors(data);
+        updatedVendors = [
+          ...deliveryVendors,
+          { ...vendorData, id: response.data.id },
+        ];
+      }
+
+      // setDeliveryVendors(updatedVendors);
+      setFilteredData(updatedVendors);
+      console.log("Vendor saved successfully!");
+      toast.success("Vendor saved successfully");
+      showModal(false);
+      setSelectedVendor(null);
+      // console.log("Vendor saved successfully!");
+    } catch (error) {
+      console.error("Error saving vendor:", error);
+      setError("Failed to save vendor. Please try again.");
+    }
+  };
+
+  const handleRemoveVendor = async (id) => {
+    try {
+      const deleteRec = await removeVendor(id);
+      console.log(deleteRec);
+      toast.success("Vendor deleted successfully");
+      fetchVendors();
+    } catch (error) {
+      console.error("Error deleting vendor:", error);
+      toast.error("Failed to delete the vendor");
+    }
+    // fetchVendors();
+  };
+
+  // Column definition
+  const columns = [
     {
       name: "Action",
       cell: (row) => (
-        <button onClick={() => handleButtonClick(row.id)}>{row.action}</button>
+        <button onClick={() => handleEditClick(row)}>
+          <BiEdit />
+        </button>
       ),
-      sortable: true,
+      sortable: false,
     },
-    { name: "Name", selector: (row) => row.name, sortable: true },
+    { name: "ID", selector: (row) => row.id, sortable: true },
+    // {
+    //   name: "Vendor ID",
+    //   selector: (row) => row.vendor_supplier_id,
+    //   sortable: true,
+    // },
+    { name: "Name", selector: (row) => row.vendor_name, sortable: true },
     {
-      name: "Website Link",
-      selector: (row) => row.websitelink,
+      name: "Website Url",
+      selector: (row) => row.website_url,
       sortable: true,
     },
-    { name: "SPOC Person", selector: (row) => row.SPOC, sortable: true },
-    { name: "Contact Number", selector: (row) => row.contact, sortable: true },
+    { name: "Email", selector: (row) => row.email, sortable: true },
+    { name: "Phone", selector: (row) => row.mobile, sortable: true },
+    { name: "SPOC Person", selector: (row) => row.spoc_person, sortable: true },
     {
       name: "Agreement Start Date",
-      selector: (row) => row.ASD,
+      selector: (row) => row.aggrement_start_date,
       sortable: true,
     },
     {
       name: "Agreement End Date",
-      selector: (row) => row.AED,
+      selector: (row) => row.aggremenet_end_date,
       sortable: true,
     },
+    { name: "Status", selector: (row) => row.status, sortable: true },
+    { name: "Created On", selector: (row) => row.created_by, sortable: true },
     {
-      name: "Active/Inactive",
-      selector: (row) => row.status,
-      sortable: true,
-    },
-
-    {
-      name: "Created On",
-      selector: (row) => row.createdOn,
+      name: "Remove Vendor",
+      cell: (row) => (
+        <button onClick={() => handleRemoveVendor(row.id)}>
+          <BiTrash />
+        </button>
+      ),
       sortable: true,
     },
   ];
-  const data = [
-    {
-      id: 1,
-      action: <BiEdit />,
-      name: "fac1",
-      websitelink: "A",
-      SPOC: "person1",
-      contact: "12345",
-      ASD: "bookable",
-      AED: "date",
-      status: "time",
-      createdOn: "confirmed",
-    },
-    {
-      id: 2,
-      action: <BiEdit />,
-      name: "person2",
-      websitelink: "A",
-      SPOC: "person1",
-      contact: "12345",
-      ASD: "bookable",
-      AED: "date",
-      status: "time",
-      createdOn: "confirmed",
-    },
-  ];
 
-  const [filteredData, setFilteredData] = useState(data);
+  // Search handler
   const handleSearch = (event) => {
     const searchValue = event.target.value;
     setSearchText(searchValue);
-    const filteredResults = data.filter((item) =>
-      item.name.toLowerCase().includes(searchValue.toLowerCase())
+    const filteredResults = deliveryVendors.filter((item) =>
+      item.vendor_name.toLowerCase().includes(searchValue.toLowerCase())
     );
     setFilteredData(filteredResults);
   };
 
-  const customStyle = {
-    headRow: {
-      style: {
-        backgroundColor: "black",
-        color: "white",
-
-        fontSize: "10px",
-      },
-    },
-    headCells: {
-      style: {
-        textTransform: "upperCase",
-      },
-    },
-  };
   return (
-    <div className="my-5">
-      <div className="flex justify-between items-center">
+    <div>
+      <div className="justify-between flex item-center my-2">
+        {/* <h1 className="text-2xl font-bold"></h1> */}
         <input
           type="text"
-          placeholder="Search By name"
-          className="border-2 p-2 w-96 border-gray-300 rounded-lg"
+          placeholder="Search by Vendor name..."
           value={searchText}
           onChange={handleSearch}
+          className="border-2 p-1 w-96 border-gray-300 rounded-lg"
         />
-
-        <button
-          onClick={() => setAdd(true)}
-          className="bg-black  rounded-lg flex font-semibold items-center gap-2 text-white p-2 my-5"
-        >
-          <IoAddCircleOutline size={20} />
-          Add
-        </button>
+        <div className="flex justify-end my-1">
+          <button
+            onClick={() => showModal(true)}
+            className="flex items-center bg-black text-white p-2 rounded justify-end"
+          >
+            <IoAddCircleOutline className="mr-2" /> Add Vendor
+          </button>
+        </div>
       </div>
-      <Table
-        columns={column}
-        data={filteredData}
-        // customStyles={customStyle}
-        // fixedHeader
-        // fixedHeaderScrollHeight="500px"
-        // pagination
-        // selectableRowsHighlight
-        // highlightOnHover
-        // omitColumn={column}
-      />
-      {modal && <DeliveryVendorModal onclose={() => showModal(false)} />}
-      {add && (
-        <DeliveryVendorModal title={"Add"} onclose={() => setAdd(false)} />
+      {error && <p className="text-red-500">{error}</p>}
+      <Table data={filteredData} columns={columns} />
+      {modal && (
+        <DeliveryVendorModal
+          onclose={() => showModal(false)}
+          title={selectedVendor ? "Edit" : "Add"}
+          vendor={selectedVendor}
+          onSubmit={handleVendorSubmit}
+          
+        />
       )}
     </div>
   );
