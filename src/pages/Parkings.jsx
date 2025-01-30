@@ -4,40 +4,64 @@ import { PiPlusCircle } from "react-icons/pi";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { BsEye } from "react-icons/bs";
+import { BiTrash, BiEdit } from "react-icons/bi";
+import toast from "react-hot-toast";
+
 import Table from "../components/table/Table";
-import { getBookParking } from "../api";
+import { deleteBookParking, getBookParking } from "../api";
+import { dateFormat, formatTime } from "../utils/dateUtils";
 
 const Parkings = () => {
+  // const [filteredData, setFilteredData] = useState([]);
+  const [bookingdata, setBookingData] = useState([]);
+  const [searchText, setSearchText] = useState("");
   const [filteredData, setFilteredData] = useState([]);
-   useEffect(() => {
-      const fetchPantry = async () => {
-       try {
-         const invResp = await getBookParking();
-         const sortedInvData = invResp.data.sort((a, b) => {
-           
-          return new Date(b.created_at) - new Date(a.created_at);
-        });
-         
-         setFilteredData(sortedInvData)
-         console.log(invResp);
-       } catch (error) {
-        console.log(error)
-       }
-      };
-      fetchPantry();
-    }, []);
-    const formatDate = (dateString) => {
-      const options = {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        // second: "2-digit",
-        hour12: true, // Use 12-hour format
-      };
-      return new Intl.DateTimeFormat("en-US", options).format(new Date(dateString));
-    };
+
+  const fetchingbookingData = async () => {
+    try {
+      const res = await getBookParking();
+      const bookingReqData = res.data.map((item) => ({
+        id: item.id,
+        parking_id: item.parking_id,
+        name: item.user_name,
+        status: item.status,
+        booked_by: item.created_by,
+        parking_name: item.parking_name,
+        vehicle_type: item.vehicle_type,
+        slot_id: item.slot_id,
+        created_at: item.created_at,
+      }));
+      setBookingData(bookingReqData);
+    } catch (error) {
+      console.log("Error fetching booking request data:", error);
+    }
+  };
+
+  const handleSearch = (event) => {
+    const searchValue = event.target.value;
+    setSearchText(searchValue);
+    console.log(searchText);
+    const filteredResults = bookingdata.filter((item) =>
+      item.parking_name.toLowerCase().includes(searchValue)
+    );
+    setFilteredData(filteredResults);
+  };
+
+  const handleRemovePackage = async (parking_id) => {
+    try {
+      const deleteRec = await deleteBookParking(parking_id);
+      console.log(deleteRec);
+      toast.success("Package deleted successfully");
+      fetchingbookingData(); // Refresh the data after deletion
+    } catch (error) {
+      console.error("Error deleting package:", error);
+      toast.error("Failed to delete the package");
+    }
+  };
+  useEffect(() => {
+    fetchingbookingData();
+  }, []);
+
   const columns = [
     {
       name: "view",
@@ -50,17 +74,29 @@ const Parkings = () => {
         </div>
       ),
     },
+
     {
-      name: "Name",
+      name: "Booked For",
       selector: (row) => row.name,
       sortable: true,
     },
+    {
+      name: "Booked by",
+      selector: (row) => row.booked_by,
+      sortable: true,
+    },
+    {
+      name: "Status",
+      selector: (row) => (row.status ? "Booked" : "Not Booked"),
+      sortable: true,
+    },
+
     {
       name: "Parking Number",
       selector: (row) => row.parking_name,
       sortable: true,
     },
-    
+
     {
       name: "Parking Type",
       selector: (row) => row.vehicle_type,
@@ -68,10 +104,10 @@ const Parkings = () => {
     },
     {
       name: "Parking Slot",
-      selector: (row) => row.vehicle_type,
+      selector: (row) => row.slot_id,
       sortable: true,
     },
-    
+
     // {
     //   name: "From",
     //   selector: (row) => new Date(row.booking_start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -82,23 +118,27 @@ const Parkings = () => {
     //   selector: (row) => new Date(row.booking_end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     //   sortable: true,
     // },
-    
+
     {
-      name: "Status",
-      selector: (row) => (row.status ? "Booked" : "Not Booked"),
+      name: "Created Date",
+      selector: (row) => dateFormat(row.created_at),
       sortable: true,
     },
     {
-      name: "Booked by",
-      selector: (row) => row.booked_by,
+      name: "Created Time",
+      selector: (row) => formatTime(row.created_at),
       sortable: true,
     },
     {
-      name: "Created On",
-      selector: (row) => formatDate(row.created_at),
+      name: "Reject Request",
+      cell: (row) => (
+        <button onClick={() => handleRemovePackage(row.parking_id)}>
+          <BiTrash />
+        </button>
+      ),
       sortable: true,
     },
-    
+
     // {
     //   name: "Action",
     //   selector: (row) =>
@@ -107,23 +147,6 @@ const Parkings = () => {
     //     ),
     //   sortable: true,
     // },
-  ];
-
-  const data = [
-    {
-      booked_by: "person 1",
-      level: 1,
-      from: "09:30 AM",
-      to: "11:30 AM",
-      status: "Upcoming",
-    },
-    {
-      booked_by: "person 2",
-      level: 2,
-      from: "09:30 AM",
-      to: "11:30 AM",
-      status: "Expired",
-    },
   ];
   return (
     <section className="flex">
@@ -151,10 +174,12 @@ const Parkings = () => {
         <div className=" flex justify-between my-5">
           <input
             type="text"
-            placeholder="Search by name "
+            placeholder="Search by parking number "
             className="border border-gray-400 w-96 placeholder:text-sm rounded-lg p-2"
             //   value={searchText}
             //   onChange={handleSearch}
+            value={searchText}
+            onChange={handleSearch}
           />
           <Link
             to={"/admin/book-parking"}

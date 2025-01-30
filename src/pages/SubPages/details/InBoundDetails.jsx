@@ -113,36 +113,7 @@ const InBoundDetails = () => {
           ) : inboundRecords && inboundRecords.length > 0 ? (
             inboundRecords.map((record) => (
               <div key={record.id} className="mb-6">
-                {/* <div className="flex justify-between">
-                  <div className="flex gap-2">
-                    <button
-                      className={`flex gap-2 items-center justify-end border-2 px-4 p-1 rounded-full ${
-                        record.mark_collected
-                        ? "bg-black text-white"
-                        : "bg-white text-black"
-                      }`}
-                      onClick={() => {
-                        if (!record.vendor_id) {
-                          console.error(
-                              `Vendor ID is missing for record ID: ${record.id}`
-                          );
-                          toast.error("Vendor ID is missing");
-                          return;
-                        }
-                        handleMarkedPackage(
-                          record.id,
-                          record.mark_collected,
-                          record.vendor_id
-                        );
-                      }}
-                    >
-                      <TiTick />
-                      {record.mark_collected
-                        ? "Unmark Collected"
-                        : "Mark As Collected"}
-                    </button>
-                  </div>
-                </div> */}
+              
                 <h2 className="text-center font-semibold text-xl mt-4">
                   Package ID: {record.id}
                 </h2>

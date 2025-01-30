@@ -72,6 +72,10 @@ const AddNewPermit = () => {
     { activity: "", sub_activity: "", category_of_hazards: "", risks: "" },
   ]);
 
+  const [permit_activity , setPermitActivity] = useState([])
+
+  
+
   useEffect(() => {
     const fetchVendors = async () => {
       const vendorResp = await getVendors();
