@@ -1,35 +1,74 @@
-import React, { useState } from "react";
-import { FaCheck } from "react-icons/fa";
+import React, { useEffect, useState } from "react";
+import { FaCheck, FaTrash } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 import { PiPlusCircle } from "react-icons/pi";
 import { complianceData } from "../../../utils/complianceStaticData";
 import TreeNode from "../IncidentSetupPages/IncidentTree";
+import ComplianceTreeNode from "./ComplianceTreeNode";
+import toast from "react-hot-toast";
+import { getItemInLocalStorage } from "../../../utils/localStorage";
+import { getComplianceTree, postComplianceTags } from "../../../api";
 
 const ComplianceCategories = () => {
   const [addCategory, setAddCategory] = useState(false);
-  const [addSubSubCat, setAddSubSubCat] = useState(false);
-  const [addSubCat, setAddSubCat] = useState(false);
+  const companyId = getItemInLocalStorage("COMPANYID");
+  const [category, setCategory] = useState("");
+  const handleAddCategory = async () => {
+    if (!category) {
+      return toast.error("Please enter category");
+    }
+    const formData = new FormData();
+    formData.append("compliance_tag[name]", category);
+    // formData.append("compliance_tag[parent_id]", null);
+    formData.append("compliance_tag[resource_id]", companyId);
+    formData.append("compliance_tag[resource_type]", "Pms::CompanySetup");
+    formData.append("compliance_tag[company_id]", companyId);
+    formData.append("compliance_tag[tag_type]", "complianceCategory");
+    try {
+      const res = await postComplianceTags(formData);
+      toast.success("Compliance Category added successfully");
+      fetchComplianceTree();
+      setAddCategory(false);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const [complianceCatData, setComplianceCatData] = useState([]);
+  const fetchComplianceTree = async () => {
+    try {
+      const res = await getComplianceTree();
+      setComplianceCatData(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(() => {
+    fetchComplianceTree();
+  }, []);
+
   return (
     <section className="mx-2">
       <div className="w-full flex flex-col gap-2 overflow-hidden">
         <div className="flex justify-end">
           {addCategory && (
-            <div className="flex items-center gap-2 w-full">
+            <div className="w-full flex items-center gap-2">
               <input
                 type="text"
                 placeholder="Category"
-                className="border p-2 w-full border-gray-300 rounded-lg"
-                // value={cat}
-                // onChange={(e) => SetCat(e.target.value)}
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="border p-2 w-full border-gray-300 rounded-lg col-span-2"
               />
+
               <button
-                className="bg-green-500 text-white p-2 flex gap-2 items-center rounded-md"
-                // onClick={handleAddCategory}
+                className="bg-green-500 text-white p-2 flex gap-2 items-center rounded-md  font-medium justify-center"
+                onClick={handleAddCategory}
               >
                 <FaCheck /> Submit
               </button>
               <button
-                className="bg-red-400 text-white flex items-center gap-2 p-2 rounded-md"
+                className="bg-red-400 text-white flex items-center gap-2 p-2 rounded-md  justify-center font-medium"
                 onClick={() => setAddCategory(false)}
               >
                 <MdClose /> Cancel
@@ -38,74 +77,8 @@ const ComplianceCategories = () => {
           )}
         </div>
         {/* sub Cat */}
-        <div className="flex justify-end">
-          {addSubCat && (
-            <div className="flex items-center gap-2 w-full">
-              <select
-                name="categoryId"
-                id=""
-                // value={formData.categoryId}
-                // onChange={handleChange}
-                className="border p-2 px-4 border-gray-300 rounded-md w-full"
-              >
-                <option value="">Select Category</option>
-              </select>
-              <input
-                type="text"
-                placeholder="SubCategory"
-                className="border p-2 w-full border-gray-300 rounded-lg"
-                name="SubCategory"
-              />
-              <button className="bg-green-500 text-white p-2 flex gap-2 items-center rounded-md">
-                <FaCheck /> Submit
-              </button>
-              <button
-                className="bg-red-400 text-white flex items-center gap-2 p-2 rounded-md"
-                onClick={() => setAddSubCat(false)}
-              >
-                <MdClose /> Cancel
-              </button>
-            </div>
-          )}
-        </div>
-        {/* subsubcat */}
-        <div className="flex justify-end">
-          {addSubSubCat && (
-            <div className="flex items-center gap-2 w-full">
-              <select
-                name="categoryId"
-                id=""
-                className="border p-2 px-4 border-gray-300 rounded-md w-full"
-              >
-                <option value="">Select Category</option>
-              </select>
-              <select
-                name="SubCategoryId"
-                id=""
-                className="border p-2 w-full border-gray-300 rounded-lg"
-              >
-                <option value="">Select Sub Category</option>
-              </select>
-              <input
-                type="text"
-                placeholder="Sub Sub Category"
-                className="border p-2 w-full border-gray-300 rounded-lg"
-                name="subSubCategory"
-              />
 
-              <button className="bg-green-500 text-white p-2 flex gap-2 items-center rounded-md">
-                <FaCheck /> Submit
-              </button>
-              <button
-                className="bg-red-400 text-white flex items-center gap-2 p-2 rounded-md"
-                onClick={() => setAddSubSubCat(false)}
-              >
-                <MdClose /> Cancel
-              </button>
-            </div>
-          )}
-        </div>
-        <div className="flex justify-end gap-2">
+        <div className="flex w-full gap-2 justify-end">
           {!addCategory && (
             <button
               className="bg-green-400 p-2 rounded-md text-white flex items-center gap-2"
@@ -114,33 +87,25 @@ const ComplianceCategories = () => {
               <PiPlusCircle /> Add Category
             </button>
           )}
-          {!addSubCat && (
-            <button
-              className="bg-green-500 p-2 rounded-md text-white flex items-center gap-2"
-              onClick={() => setAddSubCat(true)}
-            >
-              <PiPlusCircle /> Add Sub Category
-            </button>
-          )}
-          {!addSubSubCat && (
-            <button
-              className="bg-green-600 p-2 rounded-md text-white flex items-center gap-2"
-              onClick={() => setAddSubSubCat(true)}
-            >
-              <PiPlusCircle /> Add Sub Sub Category
-            </button>
-          )}
         </div>
         {/* <div>
           <Table columns={column} data={categories} isPagination={true} />
         </div> */}
       </div>
 
-      <div className="p-4 rounded-xl my-2 mb-10">
-        {complianceData?.map((node) => (
-          <TreeNode key={node.id} node={node} />
-        ))}
-      </div>
+      {complianceCatData.length !== 0 ? (
+        <div className=" rounded-xl my-2 mb-10">
+          {complianceCatData?.map((node) => (
+            <ComplianceTreeNode
+              key={node.id}
+              node={node}
+              fetchComplianceTree={fetchComplianceTree}
+            />
+          ))}
+        </div>
+      ) : (
+        <p className="text-center my-5">No Categories Available</p>
+      )}
     </section>
   );
 };

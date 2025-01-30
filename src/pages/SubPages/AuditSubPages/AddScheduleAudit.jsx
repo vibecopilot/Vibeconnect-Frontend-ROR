@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { FaTrash } from "react-icons/fa";
+import { PiPlusCircle } from "react-icons/pi";
 import { useSelector } from "react-redux";
 
 const AddScheduleAudit = () => {
@@ -69,13 +70,13 @@ const AddScheduleAudit = () => {
       case "asset":
         return (
           <div className="grid md:grid-cols-1 gap-5">
-            <div className="grid gap-2 items-center w-full">
+            <div className="flex flex-col gap-2 w-full">
               <label htmlFor="assignTo" className="font-semibold">
                 Asset:
               </label>
               <select
                 id="assignTo"
-                className="border border-gray-400 p-2 rounded-md"
+                className="border border-gray-400 p-2 rounded-md w-full"
               >
                 <option value="">Select Asset</option>
                 {/* Add options here */}
@@ -85,7 +86,7 @@ const AddScheduleAudit = () => {
         );
       case "Services":
         return (
-          <div className="grid md:grid-cols-3 gap-5">
+          <div className="grid md:grid-cols-1 gap-5">
             <div className="grid gap-2 items-center w-full">
               <label htmlFor="serviceName" className="font-semibold">
                 Service Name
@@ -95,14 +96,14 @@ const AddScheduleAudit = () => {
                 name="serviceName"
                 id="serviceName"
                 placeholder="Enter Service Name"
-                className="border border-gray-400 p-2 rounded-md"
+                className="border border-gray-400 p-2 rounded-md w-full"
               />
             </div>
           </div>
         );
       case "Vendor":
         return (
-          <div className="grid md:grid-cols-3 gap-5">
+          <div className="grid md:grid-cols-1 gap-5">
             <div className="grid gap-2 items-center w-full">
               <label htmlFor="vendorName" className="font-semibold">
                 Vendor Name
@@ -112,14 +113,14 @@ const AddScheduleAudit = () => {
                 name="vendorName"
                 id="vendorName"
                 placeholder="Enter Vendor Name"
-                className="border border-gray-400 p-2 rounded-md"
+                className="border border-gray-400 p-2 rounded-md w-full"
               />
             </div>
           </div>
         );
       case "Training":
         return (
-          <div className="grid md:grid-cols-3 gap-5">
+          <div className="grid md:grid-cols-1 gap-5">
             <div className="grid gap-2 items-center w-full ">
               <label htmlFor="trainingName" className="font-semibold">
                 Training Name
@@ -129,7 +130,24 @@ const AddScheduleAudit = () => {
                 name="trainingName"
                 id="trainingName"
                 placeholder="Enter Training Name"
-                className="border border-gray-400 p-2 rounded-md"
+                className="border border-gray-400 p-2 rounded-md w-full"
+              />
+            </div>
+          </div>
+        );
+      case "Compliance":
+        return (
+          <div className="grid md:grid-cols-1 gap-5">
+            <div className="grid gap-2 items-center w-full ">
+              <label htmlFor="complianceName" className="font-semibold">
+                Compliance Name
+              </label>
+              <input
+                type="text"
+                name="complianceName"
+                id="complianceName"
+                placeholder="Enter Compliance Name"
+                className="border border-gray-400 p-2 rounded-md w-full"
               />
             </div>
           </div>
@@ -228,31 +246,20 @@ const AddScheduleAudit = () => {
           />
           <label htmlFor="helpTextCheckbox">Help Text</label>
         </div>
-        &nbsp;&nbsp;
+      </div>
+      <div>
         <div>
-          <div className="text-xs">
-            {isChecked && (
-              <div className="text-red-500">
-                <label>
-                  Choose a File:
-                  <input type="file" />
-                </label>
-              </div>
-            )}
-          </div>
-          &nbsp;&nbsp;
-          <div className="text-xs">
-            {isChecked && (
-              <div className="text-red-500">
-                <input
-                  type="text"
-                  id="task"
-                  className="border border-gray-400 p-2 rounded-md"
-                  placeholder="Enter Help Text Label"
-                />
-              </div>
-            )}
-          </div>
+          {isChecked && (
+            <div className="flex flex-col gap-2">
+              <input type="file" />
+              <input
+                type="text"
+                id="task"
+                className="border border-gray-400 p-2 rounded-md"
+                placeholder="Enter Help Text Label"
+              />
+            </div>
+          )}
         </div>
       </div>
 
@@ -281,12 +288,12 @@ const AddScheduleAudit = () => {
       <h2 className="border-b  text-xl border-black mb-6 font-bold">
         Schedule
       </h2>
-      <div className="grid md:grid-cols-3 gap-5">
-        <div>
+      <div className="grid md:grid-cols-3 gap-3">
+        <div className="flex flex-col gap-2">
           <label htmlFor="assignTo" className="font-semibold">
             Checklist Type:
           </label>
-          <form>
+          <div className="border rounded-md p-2 border-gray-400">
             <label>
               <input
                 type="radio"
@@ -306,7 +313,7 @@ const AddScheduleAudit = () => {
               />
               &nbsp;Asset Group
             </label>
-          </form>
+          </div>
         </div>
         {selection === "individual" && (
           <div className="grid gap-2 items-center w-full">
@@ -353,8 +360,9 @@ const AddScheduleAudit = () => {
             className="border border-gray-400 p-2 rounded-md"
           >
             <option value="">Select Assignee</option>
-            <option value="">Users</option>
-            <option value="">Group</option>
+            <option value="">Aniket Parkar</option>
+            <option value="">Vishal Yadav</option>
+            <option value="">Ravindar Sahani</option>
             {/* Add options here */}
           </select>
         </div>
@@ -717,6 +725,14 @@ const AddScheduleAudit = () => {
                       >
                         Training
                       </p>
+                      <p
+                        className={`border-2 p-1 px-6 border-black font-medium rounded-full cursor-pointer ${
+                          scheduleFor === "Compliance" && "bg-black text-white"
+                        }`}
+                        onClick={() => setScheduleFor("Compliance")}
+                      >
+                        Compliance
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -766,11 +782,14 @@ const AddScheduleAudit = () => {
               <h2 className="border-b  text-xl border-black mb-6 font-bold">
                 Task
               </h2>
-              {renderTaskFields()}
+              {/* {renderTaskFields()} */}
 
               <div className="grid gap-2 items-center w-full">
                 {sections.map((section) => (
-                  <div key={section.id} className="border-spacing-1">
+                  <div
+                    key={section.id}
+                    className="border-spacing-1 border rounded-md p-1 my-1"
+                  >
                     {/* Your task fields here */}
                     {renderTaskFields()}
                     {/* Add more fields as needed */}
@@ -786,9 +805,9 @@ const AddScheduleAudit = () => {
                 ))}
                 <button
                   onClick={handleAddSectionClick}
-                  className="bg-gray-600 text-white p-2 px-4 rounded-md font-medium h-10 w-40 mt-5"
+                  className="bg-green-600 text-white p-2 px-4 rounded-md font-medium h-10 w-40 my-5 flex items-center gap-2"
                 >
-                  Add Section
+                  <PiPlusCircle /> Add Section
                 </button>
               </div>
 

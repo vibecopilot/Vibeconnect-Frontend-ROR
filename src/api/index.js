@@ -237,6 +237,14 @@ export const EditVendors = async (id, data) =>
     },
   });
 
+export const removeVendor = async (forumId) => {
+  axiosInstance.delete(`/vendors/${forumId}.json/`, {
+    params: {
+      token: token,
+    }
+  })
+}
+
 //
 export const getComplaints = async () =>
   axiosInstance.get(`/pms/complaints.json`, {
@@ -1320,18 +1328,28 @@ export const getGroups = async () =>
       token: token,
     },
   });
-export const getGroupsDetails = async (id) =>
-  axiosInstance.get(`/groups/${id}.json`, {
+
+export const getGroupsDetails = async (id) => {
+  return axiosInstance.get(`/groups/${id}.json?token=${token}`, {
+  });
+}
+
+export const deleteGroup = async (id) =>
+  axiosInstance.delete(`/groups/${id}.json`, {
     params: {
       token: token,
     },
   });
-export const editGroups = async (id, data) =>
-  axiosInstance.put(`/groups/${id}.json`, data, {
+
+export const editGroups = async (id, data) => {
+  // const token = getItemInLocalStorage("token"); // Ensure token retrieval is correct
+  return axiosInstance.put(`/groups/${id}.json`, data, {
     params: {
       token: token,
     },
   });
+};
+
 export const postColorCode = async (data) =>
   axiosInstance.post(`/color_codes.json`, data, {
     params: {
@@ -7180,7 +7198,7 @@ export const siteChange = async (id) =>
     },
   });
 
-// forum
+// Forum
 export const postForum = async (data) =>
   axiosInstance.post(`/forums.json`, data, {
     params: {
@@ -7196,6 +7214,225 @@ export const getForum = async () =>
       token: token,
     },
   });
+
+export const updateForum = async (forumId) =>
+  axiosInstance.put(`/forums/${forumId}.json`, {
+    params: {
+      token: token,
+    },
+  });
+
+export const deleteForum = async (forumId) =>
+  axiosInstance.delete(`/forums/${forumId}.json`, {
+    params: {
+      token: token,
+    },
+  });
+// mailroom
+export const getinbound = async () =>
+  axiosInstance.get(`/mail_room_inbounds.json`, {
+    params: {
+      token: token,
+    }
+  })
+
+export const getInboundDetail = async (id) =>
+  axiosInstance.get(`/mail_room_inbounds/${id}.json`, {
+    params: {
+      token: token,
+    }
+  })
+export const createInbound = async (data) =>
+  axiosInstance.post(`/mail_room_inbounds.json`, data, {
+    params: {
+      token: token,
+    }
+  })
+
+export const editInbound = async (forumId, payload) => {
+  // const token = getItemInLocalStorage("token"); // Ensure token retrieval is correct
+  return axiosInstance.put(`/mail_room_inbounds/${forumId}.json`, payload, {
+    params: {
+      token: token,
+    }
+  });
+};
+
+
+export const deleteInbound = async (forumId) =>
+  axiosInstance.delete(`/mail_room_inbounds/${forumId}.json`, {
+    params: {
+      token: token,
+    }
+  })
+export const getoutbound = async () =>
+  axiosInstance.get(`/mail_room_outbounds.json`, {
+    params: {
+      token: token,
+    }
+  })
+
+
+export const createOutbound = async (data) =>
+  axiosInstance.post(`/mail_room_outbounds.json`, data, {
+    params: {
+      token: token,
+    }
+  })
+
+export const getOutboundDetail = async (id) =>
+  axiosInstance.get(`/mail_room_outbounds/${id}.json`, {
+    params: {
+      token: token,
+    }
+  })
+
+export const editOutbound = async (id, payload) => {
+  const token = getItemInLocalStorage("token"); // Ensure token retrieval is correct
+  return axiosInstance.put(`/mail_room_outbounds/${forumId}.json`, payload, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+    params: { token }, // Ensure the token is included correctly
+  });
+};
+
+export const deleteOutbound = async (forumId) =>
+  axiosInstance.delete(`/mail_room_outbounds/${forumId}.json`, {
+    params: {
+      token: token,
+    }
+  })
+
+// Save Forums
+export const getSavedForum = async (forumId) => {
+  try {
+    const response = await axiosInstance.get(`/forums/saved_forums.json?token=${token}`);
+    console.log("API Response:", response.data); // Log API data to verify structure
+
+    if (Array.isArray(response.data)) {
+      return response.data; // Return array directly
+    } else {
+      throw new Error("API response is not an array");
+    }
+  }
+  catch (error) {
+    console.error("Error fetching saved forums:", error.message || error);
+    return [];
+  }
+}
+
+export const PostSavedForum = async (forumId) =>
+  axiosInstance.post(`/forums/${forumId}/save_for_later.json?token=${token}`, {
+    // params: {
+    //   token: token,
+    // },
+  });
+
+export const unsaveForum = async (forumId) =>
+  axiosInstance.delete(`forums/${forumId}/unsave.json?token=${token}`, {
+    // params: {
+    //   token: token,
+    // },
+  });
+
+
+// Report Forum Admin
+export const GetAllReportedForum = async () => {
+  try {
+    const response = await axiosInstance.get(`/admin/forum_reports.json`, {
+      params: {
+        token: token, // Ensure `token` is defined and valid
+      },
+    });
+    return response.data; // Return the data from the response
+  } catch (error) {
+    console.error("Error fetching reported forums:", error.message || error);
+    throw error; // Propagate the error to the calling function
+  }
+};
+
+// Report Forum Emp
+export const reportForum = async (forumId, requestBody) => {
+  const token = localStorage.getItem("token"); // Assuming you are saving the token in localStorage
+  return axiosInstance.post(`/forums/${forumId}/report.json?token=${token}`, requestBody);
+};
+
+
+// Forum Hide and Unhide - Admin
+export const getHiddenForums = async () =>
+  axiosInstance.get(`/forums/visibility_status.json?token=${token}`)
+
+export const hideForum = async (forumId) =>
+  axiosInstance.post(`/forums/${forumId}/hide.json?token=${token}`,
+    // {}
+  )
+
+export const unhideForum = async (forumId) =>
+  axiosInstance.post(`forums/${forumId}/unhide.json?token=${token}`);
+
+// Likes
+export const likeForum = async (forumId) => {
+  try {
+    const res = await axiosInstance.post(`forums/${forumId}/toggle_like.json?token=${token}`);
+    return res.data;
+  }
+  catch (error) {
+    console.log("Error is occuring :", error.response?.data || error.message);
+    throw error;
+  }
+}
+
+
+// Comments 
+export const getComments = async (forumId) => {
+  try {
+    const response = await axiosInstance.get(`/forums/${forumId}/forum_comments.json/`,
+      {
+        params: {
+          token: token,
+        },
+      });
+    return response.data;
+  } catch (error) {
+    console.error("Error :", error);
+    throw error;
+  }
+}
+
+export const addComment = async (forumId, commentText, userId) => {
+  try {
+    // Create FormData object with the correct parameter structure
+    const formData = new FormData();
+    formData.append('forum_comment[comment]', commentText);
+    // Changed from forum_comments to forum_comment
+    formData.append('forum_comment[user_id]', userId);
+    // Changed from forum_comments to forum_comment
+    const response = await axiosInstance.post(
+      `/forums/${forumId}/forum_comments.json`, formData,
+      {
+        params: {
+          token: token,
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting the comment:", error);
+    throw error;
+  }
+};
+
+export const deleteComment = async (forumId, id) =>
+  axiosInstance.delete(`/forums/${forumId}/forum_comments/${id}.json?token=${token}`);
+
+export const updateComment = async (forumId) =>
+  axiosInstance.put(`/forums/${forumId}/forum_comments.json`, {
+    params: {
+      token: token,
+    }
+  })
+//////////////////////////////////////////////////////////////////
 
 export const downloadAsset = async () =>
   axiosInstance.get(`/site_assets/export.xlsx/`, {
@@ -7700,3 +7937,123 @@ export const getDeviceConfiguration = async (siteId) =>
       token: token,
     },
   });
+export const postComplianceTags = async (data) =>
+  axiosInstance.post(`/compliance_tags.json`, data, {
+    params: {
+      token: token,
+    },
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+export const getComplianceTags = async (tagType) =>
+  axiosInstance.get(`/compliance_tags.json?q[tag_type_cont]=${tagType}`, {
+    params: {
+      token: token,
+    },
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+export const getComplianceTagDetails = async (catId) =>
+  axiosInstance.get(`/compliance_tags/${catId}.json`, {
+    params: {
+      token: token,
+    },
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+export const getComplianceTree = async () =>
+  axiosInstance.get(
+    `/compliance_tags/tree_structure.json?tag_type=complianceCategory`,
+
+    {
+      params: {
+        token: token,
+      },
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+export const postComplianceTasks = async (data) =>
+  axiosInstance.post(`/compliance_tag_tasks.json`, data, {
+    params: {
+      token: token,
+    },
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+export const postComplianceConfiguration = async (data) =>
+  axiosInstance.post(`/compliance_configs.json`, data, {
+    params: {
+      token: token,
+    },
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+export const getComplianceConfiguration = async () =>
+  axiosInstance.get(`/compliance_configs.json`, {
+    params: {
+      token: token,
+    },
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+export const getComplianceConfigurationDetails = async (complianceId) =>
+  axiosInstance.get(`/compliance_configs/${complianceId}.json`, {
+    params: {
+      token: token,
+    },
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+export const postComplianceCategoryConfiguration = async (data) =>
+  axiosInstance.post(`/compliance_config_tags.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+
+export const getFilteredUsers = async (userType) =>
+  axiosInstance.get(`/users.json?q[user_type_eq]=${userType}`, {
+    params: {
+      token: token,
+    },
+  });
+export const getVendorComplianceList = async (assignedId) =>
+  axiosInstance.get(
+    `/compliance_trackers.json?q[complicance_config_assign_to_id_eq]=${assignedId}`,
+    {
+      params: {
+        token: token,
+      },
+    }
+  );
+export const getComplianceListDetails = async (taskId) =>
+  axiosInstance.get(`/compliance_trackers/${taskId}.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const postComplianceEvidence = async (data) =>
+  axiosInstance.post(`/compliance_tracker_tags.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+
+export const getReviewerAssignments = async (complianceId, auditorId) =>
+  axiosInstance.get(
+    `/compliance_trackers/${complianceId}.json?q[compliance_config_reviewer_id_eq]=${auditorId}`,
+    {
+      params: {
+        token: token,
+      },
+    }
+  );
