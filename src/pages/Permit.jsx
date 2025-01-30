@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import Navbar from "../components/Navbar";
 import PermitList from "./SubPages/PermitList";
 import PermitPendingApproval from "./PermitPendingApproval";
-
 const Permit = () => {
   const [page, setPage] = useState("permit");
   return (
