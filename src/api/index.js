@@ -4226,6 +4226,7 @@ export const editMyBankAccount = async (bankId, data) => {
     throw error;
   }
 };
+
 export const getManageAdmin = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
@@ -6428,6 +6429,46 @@ export const getReportingSupervisors = async (deptId, orgId) => {
     throw error;
   }
 };
+
+export const getNotification = async (id) => {
+  try {
+    const response = await HrmsAuth.get(`/notifications/?employee_id=${id}`, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return response.data; // Ensure it returns data
+  } catch (error) {
+    console.error("Error getting notifications:", error);
+    return []; // Return empty array on error
+  }
+};
+
+// export const updateNotificationStatus = async (notificationId) => {
+//   try {
+//     const response = await HrmsAuth.patch(`/notifications/${notificationId}/`)
+//     return response.data;
+//     console.log("Notification updated:", data);
+//   } catch (error) {
+//     console.error("Error updating notification:", error);
+//   }
+// };
+
+export const updateNotificationStatus = async (notificationId) => {
+  try {
+    const response = await HrmsAuth.patch(`/notifications/${notificationId}/`, {
+      is_read: true,
+    });
+    console.log("Notification updated:", response.data); // Log after getting the response
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Error updating notification:",
+      error.response ? error.response.data : error
+    );
+  }
+};
+
 export const getTotalHRMSEmployeeCount = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
@@ -7180,6 +7221,29 @@ export const getEmployeeEsic = async (empId) => {
   } catch (error) {
     console.error("Error getting Employee Esic card", error);
     throw error;
+  }
+};
+
+export const postFamilyEsic = async (data) => {
+  try {
+    console.log(data);
+    const { employee: id, ...formData } = data; // Extract `id` for the URL
+    const response = await HrmsAuth.post(
+      `/esic-family-members/?organization_id=${id}`, // Use `id` in the URL
+      formData, // Send remaining data as the payload
+      {
+        headers: {
+          "Content-Type": "multipart/form-data", // Correct Content-Type
+        },
+      }
+    );
+    return response.data; // Return the server response
+  } catch (error) {
+    console.error(
+      "Error posting request:",
+      error.response?.data || error.message
+    );
+    throw error; // Re-throw the error for further handling
   }
 };
 
