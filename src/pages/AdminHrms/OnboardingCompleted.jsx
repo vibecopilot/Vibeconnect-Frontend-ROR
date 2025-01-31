@@ -5,40 +5,71 @@ import { Link } from "react-router-dom";
 import { PiPlusCircle } from "react-icons/pi";
 import { useSelector } from "react-redux";
 import { BsEye } from "react-icons/bs";
-import { FaTrash } from "react-icons/fa";
+
 import { getItemInLocalStorage } from "../../utils/localStorage";
-import {
-  getAdminAccess,
-  getApprovedEmployees,
-  getMyHRMSEmployees,
-  getMyHRMSEmployeesAllData,
-} from "../../api";
+import { getAdminAccess, getApprovedEmployees } from "../../api";
 import toast from "react-hot-toast";
 import { dateFormatSTD } from "../../utils/dateUtils";
 
 const OnBoardingCompleted = () => {
-  const [employees, setEmployees] = useState([]);
-  const [filteredEmployees, setFilteredEmployees] = useState([]);
+  const [employees, setEmployees] = useState([]); // Original data
+  const [filteredEmployees, setFilteredEmployees] = useState([]); // Filtered data for the table
+  const [searchText, setSearchText] = useState(""); // Search input text
+
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
   const approverID = getItemInLocalStorage("APPROVERID");
+
+  // Fetch all employees
   const fetchAllEmployees = async () => {
     try {
-      // toast.loading("Loading employees Please wait!");
       const res = await getApprovedEmployees(approverID);
       const sortedEmployees = res.sort(
         (a, b) => new Date(b.created_date) - new Date(a.created_date)
       );
       setEmployees(sortedEmployees);
       setFilteredEmployees(sortedEmployees);
-      toast.dismiss();
+      console.log(filteredEmployees) // Initialize filtered data
     } catch (error) {
       console.log(error);
-      // toast.error("Something went wrong");
     }
   };
+
+  // Handle search functionality
+  // const handleSearch = (event) => {
+  //   const searchValue = event.target.value.toLowerCase();
+  //   setSearchText(searchValue);
+
+  //   if (searchValue.trim() === "") {
+  //     // If search input is empty, reset to all employees
+  //     setFilteredEmployees(employees);
+  //   } else {
+  //     // Filter employees based on search input
+  //     const filteredResults = employees.filter((employee) =>
+  //       employee.employee_name.toLowerCase().includes(searchValue)
+  //     );
+  //     setFilteredEmployees(filteredResults);
+  //   }
+  // };
+
+
+  const handleSearch = (event) => {
+    const searchValue = event.target.value;
+    setSearchText(searchValue);
+    if (searchValue.trim() === "") {
+      setFilteredEmployees(employees);
+    } else {
+      const filteredResults = employees.filter((item) =>
+        item.employee_name.toLowerCase().includes(searchValue.toLowerCase())
+      );
+      setFilteredEmployees(filteredResults);
+    }
+  };
+
+
   useEffect(() => {
     fetchAllEmployees();
   }, []);
+
   const columns = [
     {
       name: "View",
@@ -70,44 +101,18 @@ const OnBoardingCompleted = () => {
       selector: (row) => dateFormatSTD(row.created_date),
       sortable: true,
     },
-
-    // {
-    //   name: "Action",
-    //   selector: (row) => (
-    //     <div className="flex gap-2">
-    //       <button className="bg-green-400 text-white rounded-full p-1 px-4" onClick={()=>handleGrantApproval(row.id, "approve")}>
-    //         <FaCheck />
-    //       </button>
-    //       <button className="bg-red-400 text-white rounded-full p-1 px-4" onClick={()=>handleGrantApproval(row.id, "reject")}>
-    //         <MdClose size={20} />
-    //       </button>
-    //     </div>
-    //   ),
-    //   sortable: true,
-    // },
   ];
 
-  const data = [
-    {
-      Name: "person 1",
-      Location: "Mittu Panda",
-      City: "Completed",
-      State: "Completed",
-      Label: "5/5/2024",
-      Country: "Activated",
-      Leave_Days: "0 out of 0 letters",
-    },
-  ];
   const themeColor = useSelector((state) => state.theme.color);
 
   const employeeId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
   const orgId = getItemInLocalStorage("HRMSORGID");
   const [roleAccess, setRoleAccess] = useState({});
+
   useEffect(() => {
     const fetchRoleAccess = async () => {
       try {
         const res = await getAdminAccess(orgId, employeeId);
-
         setRoleAccess(res[0]);
       } catch (error) {
         console.log(error);
@@ -118,16 +123,17 @@ const OnBoardingCompleted = () => {
 
   return (
     <section className="flex">
-      <div className=" w-full flex flex-col overflow-hidden">
-        <div className=" flex justify-between my-2">
+      <div className="w-full flex flex-col overflow-hidden">
+        <div className="flex justify-between my-2">
+          {/* Search Input */}
           <input
             type="text"
-            placeholder="Search by name "
+            placeholder="Search by name"
             className="border border-gray-400 w-[30rem] placeholder:text-sm rounded-lg p-2"
-            //   value={searchText}
-            //   onChange={handleSearch}
+            value={searchText}
+            onChange={handleSearch} // Call handleSearch on input change
           />
-          {roleAccess?.can_add_employee && (
+          {roleAccess && roleAccess.can_add_employee && (
             <div className="flex justify-end">
               <Link
                 to={"/admin/add-employee/basics"}

@@ -4208,6 +4208,11 @@ export const editMyBankAccount = async (bankId, data) => {
     throw error;
   }
 };
+
+
+ 
+
+
 export const getManageAdmin = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
@@ -6410,6 +6415,43 @@ export const getReportingSupervisors = async (deptId, orgId) => {
     throw error;
   }
 };
+
+
+
+
+export const getNotification = async () => {
+  try {
+    const response = await HrmsAuth.get(`/notifications/?employee_id=8`, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return response.data; // Ensure it returns data
+  } catch (error) {
+    console.error("Error getting notifications:", error);
+    return []; // Return empty array on error
+  }
+};
+
+
+export const updateNotificationStatus = async (notificationId, status) => {
+  try {
+    const response = await HrmsAuth.patch(`/notifications/${notificationId}/`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(status),
+    });
+    const data = await response.json();
+    console.log("Notification updated:", data);
+  } catch (error) {
+    console.error("Error updating notification:", error);
+  }
+};
+
+
+
 export const getTotalHRMSEmployeeCount = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
@@ -7164,6 +7206,30 @@ export const getEmployeeEsic = async (empId) => {
     throw error;
   }
 };
+
+
+export const postFamilyEsic = async (data) => {
+  try {
+    console.log(data)
+    const { employee: id, ...formData } = data; // Extract `id` for the URL
+    const response = await HrmsAuth.post(
+      `/esic-family-members/?organization_id=${id}`, // Use `id` in the URL
+      formData, // Send remaining data as the payload
+      {
+        headers: {
+          "Content-Type": "multipart/form-data", // Correct Content-Type
+        },
+      }
+    );
+    return response.data; // Return the server response
+  } catch (error) {
+    console.error("Error posting request:", error.response?.data || error.message);
+    throw error; // Re-throw the error for further handling
+  }
+};
+
+
+
 
 // site id
 export const getSiteData = async () =>

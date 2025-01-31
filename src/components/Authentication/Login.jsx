@@ -103,7 +103,7 @@ const Login = () => {
       const userId = response.data.user.id;
       setItemInLocalStorage("UserId", userId);
       // console.log(userId)
-
+        
       const unitId = response.data.user.unit_id;
       setItemInLocalStorage("UNITID", unitId);
 
@@ -163,11 +163,11 @@ const Login = () => {
       toast.error("Login failed. Please check your credentials.");
     }
   };
-
+  
   const togglePassword = () => {
     showPassword(!password);
   };
-
+    
   return (
     <div
       className="h-screen relative"
