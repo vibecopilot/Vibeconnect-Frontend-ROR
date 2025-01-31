@@ -6,8 +6,11 @@ import {
   Routes,
   Route,
   Navigate,
+  useNavigate,
 } from "react-router-dom";
 import Dashboard from "./pages/Dashboard.jsx";
+import { toast, ToastContainer } from "react-toastify";
+import Notification from "./pages/SubPages/Notification.jsx";
 import Navbar from "./components/Navbar.jsx";
 import Attendance from "./pages/Attendance.jsx";
 import Setup from "./pages/Setup.jsx";
@@ -739,10 +742,14 @@ import ComplianceVendor from "./pages/Compliance/ComplianceVendor.jsx";
 import ComplianceEvidence from "./pages/Setup/ComplianceSetupPages/ComplianceEvidence.jsx";
 import ComplianceDetails from "./pages/Compliance/ComplianceDetails.jsx";
 import ComplianceVendorDashboard from "./pages/Compliance/ComplianceVendorDashboard.jsx";
+import ClientDashboard from "./pages/Employees/ClientDashboard.jsx";
+import { getNotification } from "./api/index.js";
 // new admin hrms
 
 function App() {
   const themeColor = useSelector((state) => state.theme.color);
+  // const navigate = useNavigate();
+
   document.documentElement.style.setProperty(
     "--scrollbar-thumb-color",
     themeColor
@@ -776,6 +783,43 @@ function App() {
     Get_Background();
   }, [setBackground]);
 
+  // const navigate = useNavigate();
+
+  // useEffect(() => {
+  //   const fetchNotifications = async () => {
+  //     try {
+  //       const data = await getNotification();
+  //       console.log("API Response:", data); // ✅ Check API response
+  //       if (data.length > 0) {
+  //         setNewUsers(data);
+  //         data.forEach((user) => {
+  //           toast.success(
+  //             <div>
+  //               <p>New Signup: {user.name}</p>
+  //               <button
+  //                 onClick={() => navigate("/admin/add-employee/onboarding")}
+  //                 className="bg-blue-500 text-white px-3 py-1 rounded mt-2"
+  //               >
+  //                 Approve
+  //               </button>
+  //             </div>,
+  //             { autoClose: true, position: "top-right" }
+  //           );
+  //         });
+  //       } else {
+  //         console.log("No new signups found."); // ✅ Debugging
+  //       }
+  //     } catch (error) {
+  //       console.error("Error fetching notifications:", error);
+  //     }
+  //   };
+
+  //   fetchNotifications();
+  //   const interval = setInterval(fetchNotifications, 50000); // Check every 50 seconds
+
+  //   return () => clearInterval(interval);
+  // }, []);
+
   // useEffect(() => {
   //   // Fetch the color code when the component mounts
   //   const fetchColorCode = async () => {
@@ -797,8 +841,9 @@ function App() {
     <>
       <Router>
         <Toaster />
-        {/* <Navbar/> */}
+        {/* <ToastContainer /> */}
         <Routes>
+          {/* <Navbar/> */}
           <Route path="/login" element={<Login />} />
           <Route path="/" element={<Navigate to="/login" />} />
 
@@ -7100,6 +7145,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <ComplianceDetails />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/hrms/client-dashboard"
+            element={
+              <ProtectedRoute>
+                <ClientDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/hrms/notification"
+            element={
+              <ProtectedRoute>
+                <Notification />
               </ProtectedRoute>
             }
           />
