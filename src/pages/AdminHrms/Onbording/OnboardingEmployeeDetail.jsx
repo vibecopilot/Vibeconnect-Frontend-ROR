@@ -167,7 +167,7 @@ const OnboardingEmployeeDetail = ({
     }
   };
 
-  const employeeId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
+  const employeeId = getItemInLocalStorage("APPROVERID");
   const orgId = getItemInLocalStorage("HRMSORGID");
   const [roleAccess, setRoleAccess] = useState({});
   useEffect(() => {
