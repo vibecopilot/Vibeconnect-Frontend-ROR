@@ -18,6 +18,7 @@ import { MdExpandLess, MdExpandMore } from "react-icons/md";
 import { FaBuilding } from "react-icons/fa";
 import AssetDashboard from "./SubPages/AssetDashboard";
 import ComplianceDashboard from "./SubPages/ComplianceDashboard";
+import logo from "/logo12.jpg";
 const Dashboard = () => {
   const themeColor = useSelector((state) => state.theme.color);
   const vibeUserId = getItemInLocalStorage("VIBEUSERID");
@@ -124,20 +125,21 @@ const Dashboard = () => {
       <Navbar />
       <div className=" w-full flex lg:mx-3 flex-col overflow-hidden mb-10">
         <header
-          style={{ background: themeColor }}
-          className="w-full h-10 rounded-md  my-1 flex justify-between items-center"
+          // style={{ background: themeColor }}
+          className="w-full h-12 rounded-md  my-1 flex justify-between items-center bg-slate-100"
         >
           {/* <div></div> */}
           <nav>
-            <h1 className="text-white text-center text-xl ml-5">
+            {/* <h1 className="text-white text-center text-xl ml-5">
               Vibe Connect
-            </h1>
+            </h1> */}
+            <img src={logo} className="w-20 h-8 ml-2" />
           </nav>
 
           <div className="relative" ref={dropdownRef}>
             <div
               onClick={toggleSite}
-              className="cursor-pointer flex items-center gap-2 font-medium p-2 text-white"
+              className="cursor-pointer flex items-center gap-2 font-medium p-2 text-black"
             >
               <FaBuilding />
               {/* <h2>{siteName}</h2> */}
@@ -157,7 +159,7 @@ const Dashboard = () => {
                       handleSiteChange(site.id, site.name_with_region);
                       setSiteName(site.name_with_region);
                     }}
-                    className="hover:text-gray-300"
+                    className="hover:text-gray-500"
                   >
                     {site.name_with_region}
                   </button>
@@ -169,6 +171,12 @@ const Dashboard = () => {
         <div className="m-5">
           <TicketDashboard />
         </div>
+        {feat.includes("assets") && (
+          <div className="w-full flex flex-col p-2  ">
+            <h2 className="border-b-2 border-black font-medium mb-2">Asset</h2>
+            <AssetDashboard />
+          </div>
+        )}
         <div className="w-full flex mx-3 flex-col p-2  ">
           <HighchartsComponent />
         </div>
@@ -186,12 +194,6 @@ const Dashboard = () => {
               Soft Services
             </h2>
             <SoftServiceHighCharts />
-          </div>
-        )}
-        {feat.includes("assets") && (
-          <div className="w-full flex flex-col p-2  ">
-            <h2 className="border-b-2 border-black font-medium mb-2">Asset</h2>
-            <AssetDashboard />
           </div>
         )}
 
