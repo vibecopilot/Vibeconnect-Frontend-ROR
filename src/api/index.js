@@ -4209,10 +4209,6 @@ export const editMyBankAccount = async (bankId, data) => {
   }
 };
 
-
- 
-
-
 export const getManageAdmin = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
@@ -6416,12 +6412,9 @@ export const getReportingSupervisors = async (deptId, orgId) => {
   }
 };
 
-
-
-
-export const getNotification = async () => {
+export const getNotification = async (id) => {
   try {
-    const response = await HrmsAuth.get(`/notifications/?employee_id=8`, {
+    const response = await HrmsAuth.get(`/notifications/?employee_id=${id}`, {
       headers: {
         "Content-Type": "multipart/form-data/",
       },
@@ -6433,24 +6426,30 @@ export const getNotification = async () => {
   }
 };
 
+// export const updateNotificationStatus = async (notificationId) => {
+//   try {
+//     const response = await HrmsAuth.patch(`/notifications/${notificationId}/`)
+//     return response.data;
+//     console.log("Notification updated:", data);
+//   } catch (error) {
+//     console.error("Error updating notification:", error);
+//   }
+// };
 
-export const updateNotificationStatus = async (notificationId, status) => {
+export const updateNotificationStatus = async (notificationId) => {
   try {
     const response = await HrmsAuth.patch(`/notifications/${notificationId}/`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(status),
+      is_read: true,
     });
-    const data = await response.json();
-    console.log("Notification updated:", data);
+    console.log("Notification updated:", response.data); // Log after getting the response
+    return response.data;
   } catch (error) {
-    console.error("Error updating notification:", error);
+    console.error(
+      "Error updating notification:",
+      error.response ? error.response.data : error
+    );
   }
 };
-
-
 
 export const getTotalHRMSEmployeeCount = async (orgId) => {
   try {
@@ -7207,10 +7206,9 @@ export const getEmployeeEsic = async (empId) => {
   }
 };
 
-
 export const postFamilyEsic = async (data) => {
   try {
-    console.log(data)
+    console.log(data);
     const { employee: id, ...formData } = data; // Extract `id` for the URL
     const response = await HrmsAuth.post(
       `/esic-family-members/?organization_id=${id}`, // Use `id` in the URL
@@ -7223,13 +7221,13 @@ export const postFamilyEsic = async (data) => {
     );
     return response.data; // Return the server response
   } catch (error) {
-    console.error("Error posting request:", error.response?.data || error.message);
+    console.error(
+      "Error posting request:",
+      error.response?.data || error.message
+    );
     throw error; // Re-throw the error for further handling
   }
 };
-
-
-
 
 // site id
 export const getSiteData = async () =>
@@ -7877,7 +7875,7 @@ export const postComplianceEvidence = async (data) =>
     },
   });
 
-  export const getReviewerAssignments = async (complianceId, auditorId) =>
+export const getReviewerAssignments = async (complianceId, auditorId) =>
   axiosInstance.get(
     `/compliance_trackers/${complianceId}.json?q[compliance_config_reviewer_id_eq]=${auditorId}`,
     {
