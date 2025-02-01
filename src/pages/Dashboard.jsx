@@ -130,10 +130,10 @@ const Dashboard = () => {
         >
           {/* <div></div> */}
           <nav>
-            {/* <h1 className="text-white text-center text-xl ml-5">
+            <h1 className="text-grey-500 text-center text-xl ml-5">
               Vibe Connect
-            </h1> */}
-            <img src={logo} className="w-20 h-8 ml-2" />
+            </h1>
+            {/* <img src={logo} className="w-20 h-8 ml-2" /> */}
           </nav>
 
           <div className="relative" ref={dropdownRef}>
