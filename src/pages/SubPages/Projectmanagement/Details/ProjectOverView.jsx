@@ -1,20 +1,20 @@
 import React, { useEffect, useState } from "react";
 import { CiCalendar, CiFlag1 } from "react-icons/ci";
-import { FiMessageSquare, FiShoppingCart } from "react-icons/fi";
-import { IoAddCircleOutline, IoClose, IoTimeOutline } from "react-icons/io5";
-import { LuPieChart } from "react-icons/lu";
-import { MdDeleteForever, MdEdit, MdOutlineCurrencyRupee, MdOutlineEmail } from "react-icons/md";
+// import { FiMessageSquare FiShoppingCart } from "react-icons/fi";
+import {  IoClose, IoTimeOutline } from "react-icons/io5";
+// import { LuPieChart } from "react-icons/lu";
+import { MdDeleteForever } from "react-icons/md";
 import profile1 from "/profile1.jpg";
 import profile2 from "/profile2.jpg";
 import profile3 from "/profile3.jpg";
-import { FaCheck } from "react-icons/fa6";
-import { GoAlert } from "react-icons/go";
+// import { FaCheck } from "react-icons/fa6";
+// import { GoAlert } from "react-icons/go";
 import ReactApexChart from "react-apexcharts";
-import { BsDatabaseDash, BsEye } from "react-icons/bs";
-import { Link } from "react-router-dom";
+import {  BsEye } from "react-icons/bs";
+// import { Link } from "react-router-dom";
 import { Switch } from "../../../../Buttons";
 import { useSelector } from "react-redux";
-import { dateFormat, FormattedDateToShowProperly } from "../../../../utils/dateUtils";
+import { dateFormat} from "../../../../utils/dateUtils";
 import Table from "../../../../components/table/Table";
 function ProjectOverView({boardData}) {
   // const boardData = useSelector((state)=> state.board.data)
