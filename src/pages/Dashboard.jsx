@@ -125,21 +125,21 @@ const Dashboard = () => {
       <Navbar />
       <div className=" w-full flex lg:mx-3 flex-col overflow-hidden mb-10">
         <header
-          // style={{ background: themeColor }}
-          className="w-full h-12 rounded-md  my-1 flex justify-between items-center bg-slate-100"
+          style={{ background: themeColor }}
+          className="w-full h-10 rounded-md  my-1 flex justify-between items-center"
         >
           {/* <div></div> */}
           <nav>
-            {/* <h1 className="text-white text-center text-xl ml-5">
+            <h1 className="text-white text-center text-xl ml-5">
               Vibe Connect
-            </h1> */}
-            <img src={logo} className="w-20 h-8 ml-2" />
+            </h1>
+            {/* <img src={logo} className="w-20 h-8 ml-2" /> */}
           </nav>
 
           <div className="relative" ref={dropdownRef}>
             <div
               onClick={toggleSite}
-              className="cursor-pointer flex items-center gap-2 font-medium p-2 text-black"
+              className="cursor-pointer flex items-center gap-2 font-medium p-2 text-white"
             >
               <FaBuilding />
               {/* <h2>{siteName}</h2> */}
