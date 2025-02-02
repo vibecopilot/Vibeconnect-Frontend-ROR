@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import {
+  FaBuilding,
   FaChevronDown,
   FaChevronUp,
   FaDownload,
@@ -31,6 +32,7 @@ import {
   getAssetInDownload,
   getRoutinePendingDownload,
   getRoutinePendingCount,
+  getSiteData,
 } from "../../api";
 import toast from "react-hot-toast";
 import { IoSettingsOutline } from "react-icons/io5";
@@ -59,14 +61,12 @@ function AssetDashboard() {
   const [routinePendingCount, setRoutinePendingCount] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-
   const dropdownRef = useRef(null);
   const handleClickOutside = (event) => {
     if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
       setIsDropdownOpen(false);
     }
   };
-
 
   useEffect(() => {
     document.addEventListener("mousedown", handleClickOutside);
@@ -75,13 +75,10 @@ function AssetDashboard() {
     };
   }, []);
 
-
   const [isAssetDropdown, setIsAssetDropdown] = useState(false);
   const [assetChartType, setAssetChartType] = useState("pie"); // State to store chart type
 
-
   const toggleAssetDropdown = () => setIsAssetDropdown(!isAssetDropdown);
-
 
   // Change chart type based on dropdown selection
   const handleAssetChartTypeChange = (type) => {
@@ -139,20 +136,16 @@ function AssetDashboard() {
     ],
   };
 
-
   const [isPPMDropdown, setIsPPMDropdown] = useState(false);
   const [ppmChartType, setPPMChartType] = useState("pie"); // State to store chart type
 
-
   const togglePPMDropdown = () => setIsPPMDropdown(!isPPMDropdown);
-
 
   // Change chart type based on dropdown selection
   const handlePPMChartTypeChange = (type) => {
     setPPMChartType(type);
     setIsPPMDropdown(false); // Close the dropdown after selecting a chart type
   };
-
 
   const optionsPPMSchedule = {
     chart: {
@@ -165,21 +158,23 @@ function AssetDashboard() {
     tooltip: {
       pointFormat: "{series.name}: <b>{point.y}</b>",
     },
-    xAxis: ppmChartType === "column"
-      ? {
-          categories: ["PPM Overdue", "PPM Complete",], // Labels for column chart
-          title: {
-            text: null, // No additional title needed for the x-axis
-          },
-        }
-      : undefined, // Omit xAxis for pie charts
-    yAxis: ppmChartType === "column"
-      ? {
-          title: {
-            text: "Count", // Label for the y-axis in column charts
-          },
-        }
-      : undefined, // Omit yAxis for pie charts
+    xAxis:
+      ppmChartType === "column"
+        ? {
+            categories: ["PPM Overdue", "PPM Complete"], // Labels for column chart
+            title: {
+              text: null, // No additional title needed for the x-axis
+            },
+          }
+        : undefined, // Omit xAxis for pie charts
+    yAxis:
+      ppmChartType === "column"
+        ? {
+            title: {
+              text: "Count", // Label for the y-axis in column charts
+            },
+          }
+        : undefined, // Omit yAxis for pie charts
     plotOptions: {
       pie: {
         allowPointSelect: true,
@@ -196,25 +191,26 @@ function AssetDashboard() {
         colorByPoint: true,
         data: [
           { name: "PPM Overdue", y: Number(ppmOverDue) || 0, color: "#EF4444" },
-          { name: "PPM Complete", y: Number(ppmComplete) || 0, color: "#10B981" },
+          {
+            name: "PPM Complete",
+            y: Number(ppmComplete) || 0,
+            color: "#10B981",
+          },
         ],
       },
     ],
   };
- 
+
   const [isRoutineDropdown, setIsRoutineDropdown] = useState(false);
   const [routineChartType, setRoutineChartType] = useState("pie"); // State to store chart type
 
-
   const toggleRoutineDropdown = () => setIsRoutineDropdown(!isRoutineDropdown);
-
 
   // Change chart type based on dropdown selection
   const handleRoutineChartTypeChange = (type) => {
     setRoutineChartType(type);
     setIsRoutineDropdown(false); // Close the dropdown after selecting a chart type
   };
-
 
   const getChartTypeIcon = (type) => {
     switch (type) {
@@ -230,7 +226,6 @@ function AssetDashboard() {
         return null;
     }
   };
-
 
   const optionsRoutineSchedule = {
     chart: {
@@ -305,7 +300,6 @@ function AssetDashboard() {
     ],
   };
 
-
   const handleTotalAssetDownload = async () => {
     toast.loading("Downloading Please Wait");
     try {
@@ -334,7 +328,6 @@ function AssetDashboard() {
     }
   };
 
-
   const handleTotalBreakdownDownload = async () => {
     toast.loading("Downloading Please Wait");
     try {
@@ -359,12 +352,10 @@ function AssetDashboard() {
     }
   };
 
-
   const assetInUseDownload = async () => {
     toast.loading("Downloading Please Wait");
     try {
       const response = await getAssetInDownload();
-
 
       const url = window.URL.createObjectURL(
         new Blob([response.data], {
@@ -385,7 +376,6 @@ function AssetDashboard() {
       toast.error("Something went wrong, please try again");
     }
   };
-
 
   const handleScheduledDownload = async () => {
     toast.loading("Downloading Please Wait");
@@ -411,7 +401,6 @@ function AssetDashboard() {
     }
   };
 
-
   const handlePPMOverDueDownload = async () => {
     toast.loading("Downloading Please Wait");
     try {
@@ -428,7 +417,6 @@ function AssetDashboard() {
       link.click();
       link.remove();
 
-
       toast.success("PPM Over Due downloaded successfully");
       toast.dismiss();
     } catch (error) {
@@ -437,7 +425,6 @@ function AssetDashboard() {
       toast.error("Something went wrong, please try again");
     }
   };
-
 
   const handlePPMPendingDownload = async () => {
     toast.loading("Downloading Please Wait");
@@ -455,7 +442,6 @@ function AssetDashboard() {
       link.click();
       link.remove();
 
-
       toast.success("PPM Pending downloaded successfully");
       toast.dismiss();
     } catch (error) {
@@ -464,7 +450,6 @@ function AssetDashboard() {
       toast.error("Something went wrong, please try again");
     }
   };
-
 
   const handlePPMCompleteDownload = async () => {
     toast.loading("Downloading Please Wait");
@@ -490,9 +475,7 @@ function AssetDashboard() {
     }
   };
 
-
   // task routine
-
 
   const handleRoutineScheduledDownload = async () => {
     toast.loading("Downloading Please Wait");
@@ -518,7 +501,6 @@ function AssetDashboard() {
     }
   };
 
-
   const handleRoutineOverDueDownload = async () => {
     toast.loading("Downloading Please Wait");
     try {
@@ -535,7 +517,6 @@ function AssetDashboard() {
       link.click();
       link.remove();
 
-
       toast.success("Routine Overdue downloaded successfully");
       toast.dismiss();
     } catch (error) {
@@ -544,7 +525,6 @@ function AssetDashboard() {
       toast.error("Something went wrong, please try again");
     }
   };
-
 
   const handleRoutinePendingDownload = async () => {
     toast.loading("Downloading Please Wait");
@@ -562,7 +542,6 @@ function AssetDashboard() {
       link.click();
       link.remove();
 
-
       toast.success("Routine Pending downloaded successfully");
       toast.dismiss();
     } catch (error) {
@@ -571,7 +550,6 @@ function AssetDashboard() {
       toast.error("Something went wrong, please try again");
     }
   };
-
 
   const handleRoutineCompleteDownload = async () => {
     toast.loading("downloading please wait");
@@ -597,115 +575,106 @@ function AssetDashboard() {
     }
   };
 
-
   useEffect(() => {
-    const fetchAssetTotalCount = async () => {
-      try {
-        const totalAsset = await getTotalAssetCount();
-        setTotalAssetCount(totalAsset.data.count);
-      } catch (error) {
-        console.log(error);
-      }
-    };
+    // const fetchAssetTotalCount = async () => {
+    //   try {
+    //     const totalAsset = await getTotalAssetCount();
+    //     setTotalAssetCount(totalAsset.data.count);
+    //   } catch (error) {
+    //     console.log(error);
+    //   }
+    // };
 
+    // const fetchTotalBreakdownCount = async () => {
+    //   try {
+    //     const breakCount = await getBreakCount();
+    //     setBreakCount(breakCount.data.count);
+    //   } catch (error) {
+    //     console.log(error);
+    //   }
+    // };
+    // const fetchInUseAssetBreakDownCount = async () => {
+    //   try {
+    //     const inUse = await getInUseAssetBreakDown(); // API call to fetch users
+    //     setInUseCount(inUse.data.count);
+    //   } catch (error) {
+    //     console.log(error);
+    //   }
+    // };
 
-    const fetchTotalBreakdownCount = async () => {
-      try {
-        const breakCount = await getBreakCount();
-        setBreakCount(breakCount.data.count);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    const fetchInUseAssetBreakDownCount = async () => {
-      try {
-        const inUse = await getInUseAssetBreakDown(); // API call to fetch users
-        setInUseCount(inUse.data.count);
-      } catch (error) {
-        console.log(error);
-      }
-    };
+    // const fetchPPMScheduleCount = async () => {
+    //   try {
+    //     const scheduleCount = await getPPMScheduleCount(); // API call to fetch users
+    //     setPPMSchedule(scheduleCount.data.count);
+    //   } catch (error) {
+    //     console.log(error);
+    //   }
+    // };
 
+    // const fetchPPMOverDueCount = async () => {
+    //   try {
+    //     const overDueCount = await getPPMOverDueCount(); // API call to fetch users
+    //     setPPMOverDue(overDueCount.data.count);
+    //   } catch (error) {
+    //     console.log(error);
+    //   }
+    // };
 
-    const fetchPPMScheduleCount = async () => {
-      try {
-        const scheduleCount = await getPPMScheduleCount(); // API call to fetch users
-        setPPMSchedule(scheduleCount.data.count);
-      } catch (error) {
-        console.log(error);
-      }
-    };
+    // const fetchPPMpendingCount = async () => {
+    //   try {
+    //     const pendingCount = await getPPMpendingCount(); // API call to fetch users
+    //     setPPMPending(pendingCount.data.count);
+    //   } catch (error) {
+    //     console.log(error);
+    //   }
+    // };
 
+    // const fetchPPMCompleteCount = async () => {
+    //   try {
+    //     const completeCount = await getPPMCompleteCount(); // API call to fetch users
+    //     setPPMComplete(completeCount.data.count);
+    //   } catch (error) {
+    //     console.log(error);
+    //   }
+    // };
+    // // routine
+    // const fetchRoutineScheduledCount = async () => {
+    //   try {
+    //     const routineSchedule = await getRoutineScheduledCount(); // API call to fetch users
+    //     setRoutineScheduleCount(routineSchedule.data.count);
+    //   } catch (error) {
+    //     console.log(error);
+    //   }
+    // };
+    // const fetchRoutineOverdueCount = async () => {
+    //   try {
+    //     const routineOverdue = await getRoutineOverdueCount(); // API call to fetch users
+    //     console.log(routineOverdue);
+    //     setRoutineOverdueCount(routineOverdue.data.count);
+    //   } catch (error) {
+    //     console.log(error);
+    //   }
+    // };
 
-    const fetchPPMOverDueCount = async () => {
-      try {
-        const overDueCount = await getPPMOverDueCount(); // API call to fetch users
-        setPPMOverDue(overDueCount.data.count);
-      } catch (error) {
-        console.log(error);
-      }
-    };
+    // const fetchRoutineCompleteCount = async () => {
+    //   try {
+    //     const routineComplete = await getRoutineCompleteCount(selectedSites); // API call to fetch users
+    //     console.log(routineComplete);
+    //     setRoutineCompleteCount(routineComplete.data.count);
+    //   } catch (error) {
+    //     console.log(error);
+    //   }
+    // };
 
-
-    const fetchPPMpendingCount = async () => {
-      try {
-        const pendingCount = await getPPMpendingCount(); // API call to fetch users
-        setPPMPending(pendingCount.data.count);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
-
-    const fetchPPMCompleteCount = async () => {
-      try {
-        const completeCount = await getPPMCompleteCount(); // API call to fetch users
-        setPPMComplete(completeCount.data.count);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    // routine
-    const fetchRoutineScheduledCount = async () => {
-      try {
-        const routineSchedule = await getRoutineScheduledCount(); // API call to fetch users
-        setRoutineScheduleCount(routineSchedule.data.count);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    const fetchRoutineOverdueCount = async () => {
-      try {
-        const routineOverdue = await getRoutineOverdueCount(); // API call to fetch users
-        console.log(routineOverdue);
-        setRoutineOverdueCount(routineOverdue.data.count);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
-
-    const fetchRoutineCompleteCount = async () => {
-      try {
-        const routineComplete = await getRoutineCompleteCount(); // API call to fetch users
-        console.log(routineComplete);
-        setRoutineCompleteCount(routineComplete.data.count);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
-
-    const fetchRoutinePendingCount = async () => {
-      try {
-        const routinePending = await getRoutinePendingCount(); // API call to fetch users
-        console.log(routinePending);
-        setRoutinePendingCount(routinePending.data.count);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
+    // const fetchRoutinePendingCount = async () => {
+    //   try {
+    //     const routinePending = await getRoutinePendingCount(selectedSites); // API call to fetch users
+    //     console.log(routinePending);
+    //     setRoutinePendingCount(routinePending.data.count);
+    //   } catch (error) {
+    //     console.log(error);
+    //   }
+    // };
 
     fetchTotalBreakdownCount();
     fetchAssetTotalCount();
@@ -720,6 +689,105 @@ function AssetDashboard() {
     fetchRoutinePendingCount();
   }, []);
 
+  const fetchAssetTotalCount = async () => {
+    try {
+      const totalAsset = await getTotalAssetCount(selectedSites);
+      setTotalAssetCount(totalAsset.data.count);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const fetchTotalBreakdownCount = async () => {
+    try {
+      const breakCount = await getBreakCount(selectedSites);
+      setBreakCount(breakCount.data.count);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const fetchInUseAssetBreakDownCount = async () => {
+    try {
+      const inUse = await getInUseAssetBreakDown(selectedSites); // API call to fetch users
+      setInUseCount(inUse.data.count);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const fetchPPMScheduleCount = async () => {
+    try {
+      const scheduleCount = await getPPMScheduleCount(selectedSites); // API call to fetch users
+      setPPMSchedule(scheduleCount.data.count);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const fetchPPMOverDueCount = async () => {
+    try {
+      const overDueCount = await getPPMOverDueCount(selectedSites); // API call to fetch users
+      setPPMOverDue(overDueCount.data.count);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const fetchPPMpendingCount = async () => {
+    try {
+      const pendingCount = await getPPMpendingCount(selectedSites); // API call to fetch users
+      setPPMPending(pendingCount.data.count);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const fetchPPMCompleteCount = async () => {
+    try {
+      const completeCount = await getPPMCompleteCount(selectedSites); // API call to fetch users
+      setPPMComplete(completeCount.data.count);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  // routine
+  const fetchRoutineScheduledCount = async () => {
+    try {
+      const routineSchedule = await getRoutineScheduledCount(selectedSites); // API call to fetch users
+      setRoutineScheduleCount(routineSchedule.data.count);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const fetchRoutineOverdueCount = async () => {
+    try {
+      const routineOverdue = await getRoutineOverdueCount(selectedSites); // API call to fetch users
+      console.log(routineOverdue);
+      setRoutineOverdueCount(routineOverdue.data.count);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const fetchRoutineCompleteCount = async () => {
+    try {
+      const routineComplete = await getRoutineCompleteCount(selectedSites); // API call to fetch users
+      console.log(routineComplete);
+      setRoutineCompleteCount(routineComplete.data.count);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const fetchRoutinePendingCount = async () => {
+    try {
+      const routinePending = await getRoutinePendingCount(selectedSites); // API call to fetch users
+      console.log(routinePending);
+      setRoutinePendingCount(routinePending.data.count);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const cardColor = (type) => {
     switch (type) {
@@ -749,7 +817,6 @@ function AssetDashboard() {
         return { bg: "bg-gray-50", text: "text-gray-400" };
     }
   };
-
 
   const cardData = [
     {
@@ -823,7 +890,6 @@ function AssetDashboard() {
     cardData.map((card) => card.title)
   );
 
-
   const handleCheckboxChange = (title) => {
     setSelectedTitles((prevSelected) =>
       prevSelected.includes(title)
@@ -831,41 +897,153 @@ function AssetDashboard() {
         : [...prevSelected, title]
     );
   };
+
+  const [site, setSite] = useState(false);
+  const [siteData, setSiteData] = useState([]);
+  const toggleSite = () => {
+    setSite(!site);
+  };
+
+  useEffect(() => {
+    const fetchSiteData = async () => {
+      try {
+        const response = await getSiteData();
+        setSiteData(response.data.sites);
+        console.log(response.data.sites);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+    fetchSiteData();
+  }, []);
+
+  const [selectedSites, setSelectedSites] = useState([]);
+
+  const handleSelectAll = () => {
+    if (selectedSites.length === siteData.length) {
+      setSelectedSites([]); // Unselect all
+    } else {
+      setSelectedSites(siteData.map((site) => site.id)); // Select all
+    }
+  };
+
+  const handleSiteCheckbox = (id) => {
+    setSelectedSites((prev) =>
+      prev.includes(id) ? prev.filter((siteId) => siteId !== id) : [...prev, id]
+    );
+  };
+
+  const applySelection = () => {
+    fetchTotalBreakdownCount();
+    fetchAssetTotalCount();
+    fetchPPMOverDueCount();
+    fetchPPMpendingCount();
+    fetchPPMCompleteCount();
+    fetchInUseAssetBreakDownCount();
+    fetchRoutineScheduledCount();
+    fetchRoutineOverdueCount();
+    fetchRoutineCompleteCount();
+    fetchPPMScheduleCount();
+    fetchRoutinePendingCount();
+  };
   return (
     <div className="w-full overflow-hidden flex flex-col">
       {/* Dropdown for Card Filters */}
-      <div className="relative mb-5 flex justify-end" ref={dropdownRef}>
-        <button
-          onClick={() => setIsDropdownOpen((prev) => !prev)}
-          className="bg-gray-100 text-gray-700 px-4 py-2 rounded-md flex gap-2 items-center"
-        >
-          <IoSettingsOutline /> Assets
-          {isDropdownOpen ? (
-            <FaChevronUp className="ml-2" />
-          ) : (
-            <FaChevronDown className="ml-2" />
-          )}
-        </button>
-        {isDropdownOpen && (
-          <div className="absolute mt-12 mr-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
-            <div className="py-2">
-              {cardData.map((card) => (
-                <label
-                  key={card.title}
-                  className="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer"
+      <div className="flex justify-end gap-5">
+        <div className="relative mb-5">
+          <button
+            onClick={toggleSite}
+            className="bg-gray-100 text-gray-700 px-4 py-2 rounded-md flex justify-between gap-2 items-center w-60"
+          >
+            <span className="flex items-center gap-2">
+              <FaBuilding /> select site
+            </span>
+            <div className="">
+              {site
+                ? React.createElement(FaChevronUp, { size: "15" })
+                : React.createElement(FaChevronDown, { size: "15" })}
+            </div>
+          </button>
+          {site && (
+            <div className="absolute left-0 top-12 bg-white border-2 rounded shadow-md max-h-80 w-60 overflow-y-auto z-10 px-5 space-y-2 py-2">
+              {/* Select All Option */}
+              <div className="flex items-center space-x-2 px-2">
+                <input
+                  type="checkbox"
+                  id="selectAll"
+                  checked={selectedSites.length === siteData.length}
+                  onChange={handleSelectAll}
+                />
+                <label htmlFor="selectAll" className="cursor-pointer">
+                  Select All
+                </label>
+              </div>
+
+              {/* List of Sites */}
+              {siteData.map((site) => (
+                <div
+                  key={site.id}
+                  className="flex  items-center space-x-2 px-2"
                 >
                   <input
                     type="checkbox"
-                    checked={selectedTitles.includes(card.title)}
-                    onChange={() => handleCheckboxChange(card.title)}
-                    className="form-checkbox h-4 w-4 text-blue-500 border-gray-300 rounded focus:ring-0"
+                    checked={selectedSites.includes(site.id)}
+                    onChange={() => handleSiteCheckbox(site.id)}
                   />
-                  <span className="ml-2 text-gray-700">{card.title}</span>
-                </label>
+                  <button
+                    onClick={() => setSiteName(site.name_with_region)}
+                    className="hover:text-gray-500 text-start"
+                  >
+                    {site.name_with_region}
+                  </button>
+                </div>
               ))}
+
+              <button
+                onClick={() => {
+                  applySelection();
+                  setSite(false);
+                }}
+                className="w-full bg-gray-500 text-white py-1 mt-2 rounded hover:bg-blue-600"
+              >
+                Apply
+              </button>
             </div>
-          </div>
-        )}
+          )}
+        </div>
+        <div className="relative mb-5" ref={dropdownRef}>
+          <button
+            onClick={() => setIsDropdownOpen((prev) => !prev)}
+            className="bg-gray-100 text-gray-700 px-4 py-2 rounded-md flex gap-2 items-center"
+          >
+            <IoSettingsOutline /> Assets
+            {isDropdownOpen ? (
+              <FaChevronUp className="ml-2" />
+            ) : (
+              <FaChevronDown className="ml-2" />
+            )}
+          </button>
+          {isDropdownOpen && (
+            <div className="absolute top-12 right-1 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+              <div className="py-2">
+                {cardData.map((card) => (
+                  <label
+                    key={card.title}
+                    className="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedTitles.includes(card.title)}
+                      onChange={() => handleCheckboxChange(card.title)}
+                      className="form-checkbox h-4 w-4 text-blue-500 border-gray-300 rounded focus:ring-0"
+                    />
+                    <span className="ml-2 text-gray-700">{card.title}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
       <div className="grid md:grid-cols-4 gap-5 mx-3">
         {cardData.map(
@@ -933,7 +1111,6 @@ function AssetDashboard() {
                       {getChartTypeIcon(assetChartType)}
                     </span>
                   </button>
-
 
                   {isAssetDropdown && (
                     <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-md shadow-lg z-10">
@@ -1022,7 +1199,6 @@ function AssetDashboard() {
                       {getChartTypeIcon(ppmChartType)}
                     </span>
                   </button>
-
 
                   {isPPMDropdown && (
                     <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-md shadow-lg z-10">
@@ -1114,7 +1290,6 @@ function AssetDashboard() {
                     </span>
                   </button>
 
-
                   {isRoutineDropdown && (
                     <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-md shadow-lg z-10">
                       <div className="py-1">
@@ -1189,8 +1364,4 @@ function AssetDashboard() {
   );
 }
 
-
 export default AssetDashboard;
-
-
-
