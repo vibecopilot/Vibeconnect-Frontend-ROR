@@ -19,6 +19,7 @@ import { FaBuilding } from "react-icons/fa";
 import AssetDashboard from "./SubPages/AssetDashboard";
 import ComplianceDashboard from "./SubPages/ComplianceDashboard";
 import logo from "/logo12.jpg";
+import PPMCalendarDashboard from "./SubPages/PPMCalendarDashboard";
 const Dashboard = () => {
   const themeColor = useSelector((state) => state.theme.color);
   const vibeUserId = getItemInLocalStorage("VIBEUSERID");
@@ -175,6 +176,14 @@ const Dashboard = () => {
           <div className="w-full flex flex-col p-2  ">
             <h2 className="border-b-2 border-black font-medium mb-2">Asset</h2>
             <AssetDashboard />
+          </div>
+        )}
+        {feat.includes("assets") && (
+          <div className="w-full flex flex-col p-2  ">
+            <h2 className="border-b-2 border-black font-medium mb-2">
+              PPM Calendar
+            </h2>
+            <PPMCalendarDashboard />
           </div>
         )}
         <div className="w-full flex mx-3 flex-col p-2  ">

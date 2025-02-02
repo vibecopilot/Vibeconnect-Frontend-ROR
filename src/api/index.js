@@ -241,9 +241,9 @@ export const removeVendor = async (forumId) => {
   axiosInstance.delete(`/vendors/${forumId}.json/`, {
     params: {
       token: token,
-    }
-  })
-}
+    },
+  });
+};
 
 //
 export const getComplaints = async () =>
@@ -1330,9 +1330,8 @@ export const getGroups = async () =>
   });
 
 export const getGroupsDetails = async (id) => {
-  return axiosInstance.get(`/groups/${id}.json?token=${token}`, {
-  });
-}
+  return axiosInstance.get(`/groups/${id}.json?token=${token}`, {});
+};
 
 export const deleteGroup = async (id) =>
   axiosInstance.delete(`/groups/${id}.json`, {
@@ -7297,59 +7296,57 @@ export const getinbound = async () =>
   axiosInstance.get(`/mail_room_inbounds.json`, {
     params: {
       token: token,
-    }
-  })
+    },
+  });
 
 export const getInboundDetail = async (id) =>
   axiosInstance.get(`/mail_room_inbounds/${id}.json`, {
     params: {
       token: token,
-    }
-  })
+    },
+  });
 export const createInbound = async (data) =>
   axiosInstance.post(`/mail_room_inbounds.json`, data, {
     params: {
       token: token,
-    }
-  })
+    },
+  });
 
 export const editInbound = async (forumId, payload) => {
   // const token = getItemInLocalStorage("token"); // Ensure token retrieval is correct
   return axiosInstance.put(`/mail_room_inbounds/${forumId}.json`, payload, {
     params: {
       token: token,
-    }
+    },
   });
 };
-
 
 export const deleteInbound = async (forumId) =>
   axiosInstance.delete(`/mail_room_inbounds/${forumId}.json`, {
     params: {
       token: token,
-    }
-  })
+    },
+  });
 export const getoutbound = async () =>
   axiosInstance.get(`/mail_room_outbounds.json`, {
     params: {
       token: token,
-    }
-  })
-
+    },
+  });
 
 export const createOutbound = async (data) =>
   axiosInstance.post(`/mail_room_outbounds.json`, data, {
     params: {
       token: token,
-    }
-  })
+    },
+  });
 
 export const getOutboundDetail = async (id) =>
   axiosInstance.get(`/mail_room_outbounds/${id}.json`, {
     params: {
       token: token,
-    }
-  })
+    },
+  });
 
 export const editOutbound = async (id, payload) => {
   const token = getItemInLocalStorage("token"); // Ensure token retrieval is correct
@@ -7365,13 +7362,15 @@ export const deleteOutbound = async (forumId) =>
   axiosInstance.delete(`/mail_room_outbounds/${forumId}.json`, {
     params: {
       token: token,
-    }
-  })
+    },
+  });
 
 // Save Forums
 export const getSavedForum = async (forumId) => {
   try {
-    const response = await axiosInstance.get(`/forums/saved_forums.json?token=${token}`);
+    const response = await axiosInstance.get(
+      `/forums/saved_forums.json?token=${token}`
+    );
     console.log("API Response:", response.data); // Log API data to verify structure
 
     if (Array.isArray(response.data)) {
@@ -7379,12 +7378,11 @@ export const getSavedForum = async (forumId) => {
     } else {
       throw new Error("API response is not an array");
     }
-  }
-  catch (error) {
+  } catch (error) {
     console.error("Error fetching saved forums:", error.message || error);
     return [];
   }
-}
+};
 
 export const PostSavedForum = async (forumId) =>
   axiosInstance.post(`/forums/${forumId}/save_for_later.json?token=${token}`, {
@@ -7399,7 +7397,6 @@ export const unsaveForum = async (forumId) =>
     //   token: token,
     // },
   });
-
 
 // Report Forum Admin
 export const GetAllReportedForum = async () => {
@@ -7419,18 +7416,21 @@ export const GetAllReportedForum = async () => {
 // Report Forum Emp
 export const reportForum = async (forumId, requestBody) => {
   const token = localStorage.getItem("token"); // Assuming you are saving the token in localStorage
-  return axiosInstance.post(`/forums/${forumId}/report.json?token=${token}`, requestBody);
+  return axiosInstance.post(
+    `/forums/${forumId}/report.json?token=${token}`,
+    requestBody
+  );
 };
-
 
 // Forum Hide and Unhide - Admin
 export const getHiddenForums = async () =>
-  axiosInstance.get(`/forums/visibility_status.json?token=${token}`)
+  axiosInstance.get(`/forums/visibility_status.json?token=${token}`);
 
 export const hideForum = async (forumId) =>
-  axiosInstance.post(`/forums/${forumId}/hide.json?token=${token}`,
+  axiosInstance.post(
+    `/forums/${forumId}/hide.json?token=${token}`
     // {}
-  )
+  );
 
 export const unhideForum = async (forumId) =>
   axiosInstance.post(`forums/${forumId}/unhide.json?token=${token}`);
@@ -7438,42 +7438,45 @@ export const unhideForum = async (forumId) =>
 // Likes
 export const likeForum = async (forumId) => {
   try {
-    const res = await axiosInstance.post(`forums/${forumId}/toggle_like.json?token=${token}`);
+    const res = await axiosInstance.post(
+      `forums/${forumId}/toggle_like.json?token=${token}`
+    );
     return res.data;
-  }
-  catch (error) {
+  } catch (error) {
     console.log("Error is occuring :", error.response?.data || error.message);
     throw error;
   }
-}
+};
 
-
-// Comments 
+// Comments
 export const getComments = async (forumId) => {
   try {
-    const response = await axiosInstance.get(`/forums/${forumId}/forum_comments.json/`,
+    const response = await axiosInstance.get(
+      `/forums/${forumId}/forum_comments.json/`,
       {
         params: {
           token: token,
         },
-      });
+      }
+    );
     return response.data;
   } catch (error) {
     console.error("Error :", error);
     throw error;
   }
-}
+};
 
 export const addComment = async (forumId, commentText, userId) => {
   try {
     // Create FormData object with the correct parameter structure
     const formData = new FormData();
-    formData.append('forum_comment[comment]', commentText);
+    formData.append("forum_comment[comment]", commentText);
     // Changed from forum_comments to forum_comment
-    formData.append('forum_comment[user_id]', userId);
+    formData.append("forum_comment[user_id]", userId);
     // Changed from forum_comments to forum_comment
     const response = await axiosInstance.post(
-      `/forums/${forumId}/forum_comments.json`, formData,
+      `/forums/${forumId}/forum_comments.json`,
+      formData,
       {
         params: {
           token: token,
@@ -7488,14 +7491,16 @@ export const addComment = async (forumId, commentText, userId) => {
 };
 
 export const deleteComment = async (forumId, id) =>
-  axiosInstance.delete(`/forums/${forumId}/forum_comments/${id}.json?token=${token}`);
+  axiosInstance.delete(
+    `/forums/${forumId}/forum_comments/${id}.json?token=${token}`
+  );
 
 export const updateComment = async (forumId) =>
   axiosInstance.put(`/forums/${forumId}/forum_comments.json`, {
     params: {
       token: token,
-    }
-  })
+    },
+  });
 //////////////////////////////////////////////////////////////////
 
 export const downloadAsset = async () =>
@@ -7563,61 +7568,68 @@ export const getPPMcompleteDownload = async () =>
     responseType: "blob",
   });
 
-export const getTotalAssetCount = async () =>
+export const getTotalAssetCount = async (ids) =>
   axiosInstance.get(`/site_assets/count.json`, {
     params: {
       token: token,
+      site_ids: ids.join(","),
     },
   });
 
-export const getBreakCount = async () =>
+export const getBreakCount = async (ids) =>
   axiosInstance.get(`/site_assets/count.json`, {
     params: {
       token: token,
       "q[breakdown_eq]": true, // add this line to include q[breakdown_eq]
+      site_ids: ids.join(","),
     },
   });
 
-export const getInUseAssetBreakDown = async () =>
+export const getInUseAssetBreakDown = async (ids) =>
   axiosInstance.get(`/site_assets/count.json`, {
     params: {
       token: token,
       "q[breakdown_eq]": false, // add this line to include q[breakdown_eq]
+      site_ids: ids.join(","),
     },
   });
 
-export const getPPMScheduleCount = async () =>
+export const getPPMScheduleCount = async (ids) =>
   axiosInstance.get(`/activities/count.json`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "ppm",
       scheduled: true,
+      site_ids: ids.join(","),
     },
   });
 
-export const getPPMOverDueCount = async () =>
+export const getPPMOverDueCount = async (ids) =>
   axiosInstance.get(`/activities/count.json`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "ppm",
       overdue: true,
+      site_ids: ids.join(","),
     },
   });
 
-export const getPPMpendingCount = async () =>
+export const getPPMpendingCount = async (ids) =>
   axiosInstance.get(`/activities/count.json`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "ppm",
       pending: true,
+      site_ids: ids.join(","),
     },
   });
-export const getPPMCompleteCount = async () =>
+export const getPPMCompleteCount = async (ids) =>
   axiosInstance.get(`/activities/count.json`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "ppm",
       complete: true,
+      site_ids: ids.join(","),
     },
   });
 
@@ -7660,36 +7672,40 @@ export const getRoutinePendingDownload = async () =>
     responseType: "blob",
   });
 
-export const getRoutineScheduledCount = async () =>
+export const getRoutineScheduledCount = async (ids) =>
   axiosInstance.get(`/activities/count.json`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "routine",
       scheduled: true,
+      site_ids: ids.join(","),
     },
   });
-export const getRoutineOverdueCount = async () =>
+export const getRoutineOverdueCount = async (ids) =>
   axiosInstance.get(`/activities/count.json`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "routine",
       overdue: true,
+      site_ids: ids.join(","),
     },
   });
-export const getRoutineCompleteCount = async () =>
+export const getRoutineCompleteCount = async (ids) =>
   axiosInstance.get(`/activities/count.json?`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "routine",
       complete: true,
+      site_ids: ids.join(","),
     },
   });
-export const getRoutinePendingCount = async () =>
+export const getRoutinePendingCount = async (ids) =>
   axiosInstance.get(`/activities/count.json`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "routine",
       pending: true,
+      site_ids: ids.join(","),
     },
   });
 
