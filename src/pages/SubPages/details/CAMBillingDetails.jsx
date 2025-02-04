@@ -15,6 +15,7 @@ import {
   getReceiptPayment,
   getCamBillInvoiceDownload,
   getCamLogo,
+  downloadReceiptInvoice,
 } from "../../../api";
 import { toWords } from "number-to-words";
 import toast from "react-hot-toast";
@@ -149,6 +150,30 @@ function CAMBillingDetails() {
       sortable: true,
     },
   ];
+  const download = async (id) => {
+    try {
+      const response = await downloadReceiptInvoice(id);
+      console.log(response);
+      const url = window.URL.createObjectURL(
+        new Blob([response.data], {
+          type: response.headers["content-type"],
+        })
+      );
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "receipt_invoice_file.pdf");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success("Receipt Invoice downloaded successfully");
+      toast.dismiss();
+    } catch (error) {
+      toast.dismiss();
+      console.error("Error downloading :", error);
+      toast.error("Something went wrong, please try again");
+    }
+  };
+
   const columnsReceipts = [
     {
       name: "Receipt No.",
@@ -209,7 +234,7 @@ function CAMBillingDetails() {
       name: "Attachments",
       selector: (row) => (
         <div>
-          <button>
+          <button onClick={() => download(row.id)}>
             <FaRegFileAlt />
           </button>
         </div>
@@ -264,7 +289,7 @@ function CAMBillingDetails() {
       sortable: true,
     },
     {
-      name: "Attachments",
+      name: "images",
       selector: (row) => (
         <div>
           <button onClick={() => handleClick(row.image_url)}>
@@ -283,7 +308,7 @@ function CAMBillingDetails() {
   const handleDownload = async () => {
     try {
       const response = await getCamBillInvoiceDownload(id);
-      console.log(response);
+      console.log(id);
       const url = window.URL.createObjectURL(
         new Blob([response.data], {
           type: response.headers["content-type"],
@@ -322,6 +347,7 @@ function CAMBillingDetails() {
     }
   };
   console.log(camBillingAllData.status);
+  console.log(receivePaymentDetails);
   return (
     <section className="flex">
       <div className="hidden md:block">

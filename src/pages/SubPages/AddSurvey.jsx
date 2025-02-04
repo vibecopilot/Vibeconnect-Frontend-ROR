@@ -18,6 +18,7 @@ function AddSurvey() {
       question: "",
       questionType: "",
       choices: ["", "", "", ""], // Default empty choices
+      checkBox: ["", "", "", ""],
     };
     setQuestions([...questions, newQuestion]);
   };
@@ -29,18 +30,21 @@ function AddSurvey() {
 
   const handleQuestionChange = (e, index) => {
     const updatedQuestions = [...questions];
+    console.log(updatedQuestions);
     updatedQuestions[index].question = e.target.value;
     setQuestions(updatedQuestions);
   };
 
   const handleQuestionTypeChange = (e, index) => {
     const updatedQuestions = [...questions];
+    console.log(updatedQuestions);
     updatedQuestions[index].questionType = e.target.value;
     setQuestions(updatedQuestions);
   };
 
   const handleChoiceChange = (e, questionIndex, choiceIndex) => {
     const updatedQuestions = [...questions];
+    console.log(questions);
     updatedQuestions[questionIndex].choices[choiceIndex] = e.target.value;
     setQuestions(updatedQuestions);
   };
@@ -61,12 +65,33 @@ function AddSurvey() {
     }
   };
 
-  
   const [isChecked, setIsChecked] = useState(false);
 
   // Handle checkbox change
   const handleCheckboxChange = () => {
     setIsChecked(!isChecked);
+  };
+
+  const handleChangeCheckBox = (e, questionCheckBox, checkBoxIndex) => {
+    const updatedQuestions = [...questions];
+    updatedQuestions[questionCheckBox].checkBox[checkBoxIndex] = e.target.value;
+    setQuestions(updatedQuestions);
+  };
+
+  const addCheckBox = (questionCheckBox) => {
+    const updatedQuestions = [...questions];
+    updatedQuestions[questionCheckBox].checkBox.push("");
+    setQuestions(updatedQuestions);
+  };
+
+  const removeCheckBox = (questionIndex, checkBoxIndex) => {
+    const updatedQuestions = [...questions];
+    if (updatedQuestions[questionIndex].checkBox.length > 1) {
+      updatedQuestions[questionIndex].checkBox = updatedQuestions[
+        questionIndex
+      ].checkBox.filter((_, i) => i !== checkBoxIndex);
+      setQuestions(updatedQuestions);
+    }
   };
 
   return (
@@ -277,7 +302,54 @@ function AddSurvey() {
                   )}
                   {question.questionType === "checkBoxes" && (
                     <div className="flex flex-col col-span-3 mt-4 space-y-3">
-                     
+                      {question.checkBox.map((box, checkBoxIndex) => (
+                        <div
+                          className="flex items-center gap-2"
+                          key={checkBoxIndex}
+                        >
+                          <div className="flex items-center gap-2 w-full">
+                            <input
+                              type="checkbox"
+                              id={`checkbox-${checkBoxIndex}`}
+                              className="border-gray-500 rounded-md"
+                              checked={isChecked}
+                              onChange={(e) =>
+                                handleCheckboxChange(e, index, checkBoxIndex)
+                              }
+                            />
+                            <input
+                              type="text"
+                              id={`box-${checkBoxIndex}`}
+                              className="border p-1 px-4 border-gray-500 rounded-md w-full"
+                              value={box}
+                              onChange={(e) =>
+                                handleChangeCheckBox(e, index, checkBoxIndex)
+                              }
+                              placeholder={`Enter an answer choice ${
+                                checkBoxIndex + 1
+                              }`}
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeCheckBox(index, checkBoxIndex)}
+                            className="text-red-500"
+                          >
+                            <FaTrash size={20} />
+                          </button>
+                        </div>
+                      ))}
+                      <div>
+                        {question.checkBox.length < 6 && (
+                          <button
+                            type="button"
+                            onClick={() => addCheckBox(index)}
+                            className="border border-gray-500 text-black px-4 py-1 rounded-md mt-2"
+                          >
+                            <BsPlusCircle />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   )}
                   {/* Remove Question Button */}

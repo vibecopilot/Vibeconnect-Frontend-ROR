@@ -7609,3 +7609,11 @@ export const getReceiveInvoiceData = async (id) =>
       token: token,
     },
   });
+
+export const downloadReceiptInvoice = async (ids) =>
+  axiosInstance.get(`cam_bills/invoice_pdf?id=${ids}`, {
+    responseType: "blob",
+    params: {
+      token: token,
+    },
+  });
