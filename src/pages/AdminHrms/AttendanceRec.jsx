@@ -108,7 +108,6 @@ const AttendanceRec = () => {
     setLoading(true);
     try {
       const res = await getAttendanceRecord(hrmsOrgId, page);
-      console.log("This is AttendanceRes:", res);
 
       const data = res.results;
       setAttendanceCount(res.count);
