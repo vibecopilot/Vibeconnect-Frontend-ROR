@@ -7,25 +7,29 @@ import Modal from "../containers/modals/Modal";
 import { getAttendance } from "../api";
 import Table from "../components/table/Table";
 import { useSelector } from "react-redux";
+import { getItemInLocalStorage } from "../utils/localStorage"
+
 import * as XLSX from "xlsx";
 const Attendance = () => {
   const [modal, setModal] = useState(false);
   const [attendanceData, setAttendanceData] = useState([]);
 
+  const orgId = getItemInLocalStorage("HRMSORGID");
+
   useEffect(() => {
     const fetchAttendance = async () => {
       try {
-        const attendanceResponse = await getAttendance();
+        const attendanceResponse = await getAttendance(orgId);
         console.log(attendanceResponse.data);
-        setAttendanceData(attendanceResponse.data)
+        setAttendanceData(attendanceResponse.data);
       } catch (error) {
-        console.log(error)
+        console.log(error);
       }
     };
     fetchAttendance();
   }, []);
 
- const timeFormat = (dateString) => {
+  const timeFormat = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleTimeString("en-GB", {
       hour: "2-digit",
@@ -34,21 +38,21 @@ const Attendance = () => {
       hour12: true,
     });
   };
- const dateFormat = (dateString) => {
+  const dateFormat = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-GB", {
       day: "2-digit",
       month: "short",
       year: "numeric",
- })
+    });
   };
 
   const TotalHours = (punchedIn, punchedOut) => {
     const punchedInDate = new Date(punchedIn);
     const punchedOutDate = new Date(punchedOut);
-    const diffMs = punchedOutDate - punchedInDate; 
-    const diffHrs = diffMs / (1000 * 60 * 60); 
-    return diffHrs.toFixed(2); 
+    const diffMs = punchedOutDate - punchedInDate;
+    const diffHrs = diffMs / (1000 * 60 * 60);
+    return diffHrs.toFixed(2);
   };
   const column = [
     // {
@@ -58,32 +62,49 @@ const Attendance = () => {
     // },
 
     { name: "Name", selector: (row) => row.attendance_of_name, sortable: true },
-    { name: "Date", selector: (row) => dateFormat(row.created_at), sortable: true },
-    { name: "Punch In", selector: (row) => timeFormat(row.punched_in_at), sortable: true },
-    { name: "Punch Out",  selector: (row) => row.punched_out_at ? timeFormat(row.punched_out_at) : "", sortable:true },
-    { name: "Total Hours Worked",  selector: (row) => {
-      if (row.punched_in_at && row.punched_out_at) {
-        return TotalHours(row.punched_in_at, row.punched_out_at);
-      } else {
-        return "";
-      }
-    }, sortable: true }
+    {
+      name: "Date",
+      selector: (row) => dateFormat(row.created_at),
+      sortable: true,
+    },
+    {
+      name: "Punch In",
+      selector: (row) => timeFormat(row.punched_in_at),
+      sortable: true,
+    },
+    {
+      name: "Punch Out",
+      selector: (row) =>
+        row.punched_out_at ? timeFormat(row.punched_out_at) : "",
+      sortable: true,
+    },
+    {
+      name: "Total Hours Worked",
+      selector: (row) => {
+        if (row.punched_in_at && row.punched_out_at) {
+          return TotalHours(row.punched_in_at, row.punched_out_at);
+        } else {
+          return "";
+        }
+      },
+      sortable: true,
+    },
   ];
- 
 
-  
   document.title = `Attendance - Vibe Connect`;
-  const themeColor = useSelector((state)=> state.theme.color)
+  const themeColor = useSelector((state) => state.theme.color);
 
   const exportAllToExcel = async () => {
-    
     const mappedData = attendanceData.map((attend) => ({
       Name: attend.attendance_of_name,
-Date: dateFormat(attend.created_at),
-"Punch In" : timeFormat(attend.punched_in_at),
- "Punch Out" :attend.punched_out_at ? timeFormat(attend.punched_out_at) : "-",
-"Total Hours Worked":attend.punched_out_at ? TotalHours(attend.punched_in_at, attend.punched_out_at) : "-"
-
+      Date: dateFormat(attend.created_at),
+      "Punch In": timeFormat(attend.punched_in_at),
+      "Punch Out": attend.punched_out_at
+        ? timeFormat(attend.punched_out_at)
+        : "-",
+      "Total Hours Worked": attend.punched_out_at
+        ? TotalHours(attend.punched_in_at, attend.punched_out_at)
+        : "-",
     }));
     const fileType =
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8";
@@ -131,14 +152,14 @@ Date: dateFormat(attend.created_at),
             <button
               className="bg-black w-20 rounded-lg text-white p-2 my-5"
               // onClick={() => setModal(true)}
-              onClick={ exportAllToExcel}
-              style={{background:themeColor}}
+              onClick={exportAllToExcel}
+              style={{ background: themeColor }}
             >
               Export
             </button>
           </div>
 
-         <Table  columns={column} data={attendanceData}/>
+          <Table columns={column} data={attendanceData} />
         </div>
       </div>
       {/* {modal && <Modal onclose={() => setModal(false)} />} */}
