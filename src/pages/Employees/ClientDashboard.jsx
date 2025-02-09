@@ -12,6 +12,7 @@ import {
   getClientDashboard,
   getEmployeeJobInfo,
   getAssociatedSite,
+  getAssociatedSites,
   getAttendance,
   getSiteWiseAttendance,
 } from "../../api/index";
@@ -96,21 +97,49 @@ const ClientDashboard = () => {
     const fetchClientDashboardData = async () => {
       try {
         const empId = localStorage.getItem("HRMS_EMPLOYEE_ID");
-        const res = await getClientDashboard(empId);
-        // Assume res is an array; store it in state
-        setClientData(res);
-        // Also fetch employee job info to get multiple associated sites
+        const orgId = localStorage.getItem("HRMSORGID");
+
+        // Fetch client dashboard data and set state
+        const clientDataResponse = await getClientDashboard(empId);
+        setClientData(clientDataResponse);
+
+        // Get HRMS admin data to extract associated site ids
         const hrmsAdminData = await getEmployeeJobInfo(empId);
         const multiple_asso = hrmsAdminData[0].multiple_associated;
+        console.log("Array for associated sites:", multiple_asso);
 
+        // Fetch ALL sites for the organization just once
+        const allSites = await getAssociatedSites(orgId);
+        console.log("All sites from API:", allSites);
+
+        const siteNamesResult = multiple_asso.map((id) => {
+          const matchingSite =
+            Array.isArray(allSites) && allSites.length > 0
+              ? allSites.find((site) => site.id === id)
+              : null;
+          // If found, get its site_name, otherwise mark as "Not Found"
+          const siteName = matchingSite ? matchingSite.site_name : "Not Found";
+          return { id, siteName };
+        });
+
+        console.log("Fetched site names:", siteNamesResult);
+
+        // Update state with the mapped site names so you can use it in your dropdown, etc.
+        setMultipleAssos(siteNamesResult);
+
+        // Update any additional state (like pie chart data) as needed
         setPieChartData([
-          { name: "Head Count", y: res.length, color: "#f97316" }
+          {
+            name: "Head Count",
+            y: clientDataResponse.length,
+            color: "#f97316",
+          },
         ]);
-        setMultipleAssos(multiple_asso);
       } catch (error) {
-        console.log("Error fetching client dashboard:", error);
+        console.error("Error fetching client dashboard:", error);
       }
     };
+
     fetchClientDashboardData();
   }, []);
 
@@ -340,7 +369,7 @@ const ClientDashboard = () => {
   return (
     <div className="flex flex-col h-screen relative">
       {/* Top Navigation Bar */}
-      <nav
+      {/* <nav
         style={{ background: themeColor }}
         className="text-white px-6 py-4 flex justify-between items-center"
       >
@@ -354,6 +383,27 @@ const ClientDashboard = () => {
               {multiple_ass.map((asso, index) => (
                 <option key={index} value={asso}>
                   {`Site ${asso}`}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+      </nav> */}
+
+      <nav
+        style={{ background: themeColor }}
+        className="text-white px-6 py-4 flex justify-between items-center"
+      >
+        <div className="text-2xl font-bold">Dashboard</div>
+        <div className="flex items-center space-x-4">
+          {multiple_ass.length === 0 ? (
+            <p className="text-grey-500">No site associated</p>
+          ) : (
+            <select className="text-black px-6 py-2" onChange={handleChange}>
+              <option value="">Select All Sites</option>
+              {multiple_ass.map((asso, index) => (
+                <option key={index} value={asso.id}>
+                  {asso.siteName}
                 </option>
               ))}
             </select>
@@ -464,7 +514,13 @@ const ClientDashboard = () => {
                       attendanceTableRecords.map((record) => (
                         <tr key={record.id}>
                           <td className="border px-4 py-2">{record.empName}</td>
-                          <td className=" text-center border px-4 py-2">
+                          <td
+                            className={`text-center border px-4 py-2 ${
+                              record.status === "Absent"
+                                ? "text-red-500"
+                                : "text-green-500"
+                            }`}
+                          >
                             {record.status}
                           </td>
                           <td className="text-center border px-4 py-2">
@@ -486,6 +542,41 @@ const ClientDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* --- Modal / Dropdown Overlay for Site Options --- */}
+      {isDropdownVisible && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white rounded-lg p-4 w-[300px]">
+            <h3 className="text-xl font-bold mb-4">
+              {selectedData ? `Selected: ${selectedData}` : "Select a Site"}
+            </h3>
+            <ul>
+              {multiple_ass.map((site) => (
+                <li
+                  key={site.id}
+                  className="cursor-pointer p-2 hover:bg-gray-200"
+                  onClick={() => {
+                    // Set the selected site and fetch its data
+                    setSelectedSite(site.id);
+                    fetchSiteData(site.id);
+                    setIsDropdownVisible(false);
+                    // Optionally switch to bar chart view (modal-like)
+                    setIsPieChart(false);
+                  }}
+                >
+                  {site.siteName}
+                </li>
+              ))}
+            </ul>
+            <button
+              onClick={() => setIsDropdownVisible(false)}
+              className="mt-4 px-4 py-2 bg-red-500 text-white rounded"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
