@@ -129,7 +129,6 @@ const HRMSDashboard = () => {
   };
 
   
-
   // const [notificationData, setNotificationData] = useState([]);
   // const empId = getItemInLocalStorage("APPROVERID");
 

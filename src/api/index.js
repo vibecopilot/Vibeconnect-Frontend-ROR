@@ -6483,19 +6483,21 @@ export const getClientDashboard = async (id) => {
   }
 }
 
-export const getAssociatedSite = async (id) => {
+export const getAssociatedOrgDash = async (empId, date) => {
   try {
-    const res = await HrmsAuth.get(`/associated/?site_id=${id}`, {
-      headers: {
-        "Content-Type": "multipart/form-data/",
-      },
-    })
-    return res.data; // Ensure it returns data
+    const res = await HrmsAuth.get(`associated-organization-dashboard/mutiple-site/?employee_id=${empId}&start_date=${date}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      })
+    return res.data;
   } catch (error) {
-    console.error("Error getting notifications:", error);
-    return []; // Return empty array on error
+    console.log("Error fetching the associated organization dashboard :", error)
   }
 }
+
+
 
 
 // export const updateNotificationStatus = async (notificationId) => {
@@ -6726,6 +6728,21 @@ export const getAssociatedSites = async (orgId) => {
     throw error;
   }
 };
+
+export const getAssociatedSite = async (id) => {
+  try {
+    const res = await HrmsAuth.get(`/associated/?site_id=${id}`, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    })
+    return res.data; // Ensure it returns data
+  } catch (error) {
+    console.error("Error getting notifications:", error);
+    return []; // Return empty array on error
+  }
+}
+
 export const postAssociatedSites = async (data) => {
   try {
     const response = await HrmsAuth.post(
@@ -7119,7 +7136,7 @@ export const getEmployeeAttendanceOfToday = async (empId, today) => {
     throw error;
   }
 };
-export const getSiteWiseAttendance = async  ( siteId,today) => {
+export const getSiteWiseAttendance = async (siteId, today) => {
   try {
     const response = await HrmsAuth.get(
       `associated-wise/attendance/${siteId}?start_date=${today}`,
