@@ -8,6 +8,7 @@ import "react-calendar/dist/Calendar.css";
 import { useSelector } from "react-redux";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import { PiSignOutBold } from "react-icons/pi";
+import { DNA } from "react-loader-spinner";
 import {
   getClientDashboard,
   getEmployeeJobInfo,
@@ -39,6 +40,24 @@ const ClientDashboard = () => {
   const [count, setCount] = useState(0);
   // overallAttendance holds the attendance for ALL sites when no site is selected.
   const [overallAttendance, setOverallAttendance] = useState(null);
+  const [checkInData, setCheckInData] = useState([]);
+  const [notCheckIn, setNotCheckIn] = useState([]);
+  const [showTable, setShowTable] = useState(false);
+  const [showCheckIn, setShowCheckIn] = useState();
+  const [showNotCheck, setShowNotCheckIn] = useState();
+  // Existing states…
+  // New state variables to keep the full list and the filtered list.
+  const [fullSiteAttendanceRecords, setFullSiteAttendanceRecords] = useState(
+    []
+  );
+  const [filteredSiteAttendanceRecords, setFilteredSiteAttendanceRecords] =
+    useState([]);
+  const [fullOverallAttendanceRecords, setFullOverallAttendanceRecords] =
+    useState([]);
+  const [
+    filteredOverallAttendanceRecords,
+    setFilteredOverallAttendanceRecords,
+  ] = useState([]);
 
   // Chart States
   const [pieChartData, setPieChartData] = useState([
@@ -76,6 +95,7 @@ const ClientDashboard = () => {
   // -------------------------------
   // FETCH OVERALL CLIENT DATA ON MOUNT
   // -------------------------------
+
   const fetchClientDashboardData = async (dateParam = selectedDate) => {
     try {
       const empId = localStorage.getItem("HRMS_EMPLOYEE_ID");
@@ -84,6 +104,7 @@ const ClientDashboard = () => {
       // Fetch client dashboard data and set state
       const clientDataResponse = await getClientDashboard(empId);
       setClientData(clientDataResponse);
+      console.log(clientDataResponse);
 
       // Format the date as YYYY-MM-DD
       const year = dateParam.getFullYear();
@@ -103,6 +124,44 @@ const ClientDashboard = () => {
         total_present,
         total_absent,
       });
+      // setting all present emp data in the checkIndata state
+      const checkIn = allAttendance.attendance;
+      setCheckInData(checkIn);
+      console.log("present id's:", checkIn);
+
+      const notCheckedInEmployees = clientDataResponse.filter(
+        (employee) =>
+          !checkIn.some(
+            (check) => Number(check.id) === Number(employee.vibe_id)
+          )
+      );
+      console.log("Employees not checked in:", notCheckedInEmployees);
+      // ----- BUILD OVERALL ATTENDANCE TABLE RECORDS -----
+      // Combine the clientData and checkIn data to create a unified record.
+      const overallAttendanceTableRecords = clientDataResponse.map((client) => {
+        // Build employee full name (fallback to "N/A" if missing)
+        const empName =
+          `${client.first_name || ""} ${client.last_name || ""}`.trim() ||
+          "N/A";
+        // Determine status based on checkInData (comparing as strings for safety)
+        const status = checkIn.some(
+          (check) => String(check.id) === String(client.vibe_id)
+        )
+          ? "Present"
+          : "Absent";
+        return {
+          id: client.id,
+          vibe_id: client.vibe_id,
+          empName,
+          gender: client.gender,
+          status,
+          date: todayDate,
+        };
+      });
+      // Save full & filtered records (initially unfiltered)
+      setFullOverallAttendanceRecords(overallAttendanceTableRecords);
+      setFilteredOverallAttendanceRecords(overallAttendanceTableRecords);
+      setNotCheckIn(notCheckedInEmployees);
 
       // Get HRMS admin data to extract associated site ids
       const hrmsAdminData = await getEmployeeJobInfo(empId);
@@ -252,6 +311,8 @@ const ClientDashboard = () => {
       });
       // console.log("Attendance Table Records:", tableRecords);
       setAttendanceTableRecords(tableRecords);
+      setFullSiteAttendanceRecords(tableRecords);
+      setFilteredSiteAttendanceRecords(tableRecords);
     } catch (error) {
       console.log("Error fetching site data:", error);
     }
@@ -260,6 +321,45 @@ const ClientDashboard = () => {
   // -------------------------------
   // HANDLERS
   // -------------------------------
+
+  const handlePresentEmpSiteWise = () => {
+    const presentRecords = fullSiteAttendanceRecords.filter(
+      (record) => record.status === "Present"
+    );
+    setFilteredSiteAttendanceRecords(presentRecords);
+  };
+
+  // Filter the full site records to show only Absent employees
+  const handleAbsentEmpSiteWise = () => {
+    const absentRecords = fullSiteAttendanceRecords.filter(
+      (record) => record.status === "Absent"
+    );
+    setFilteredSiteAttendanceRecords(absentRecords);
+  };
+
+  const handleOverallAll = () => {
+    setFilteredOverallAttendanceRecords(fullOverallAttendanceRecords);
+  };
+
+  const handleOverallPresent = () => {
+    const presentRecords = fullOverallAttendanceRecords.filter(
+      (record) => record.status === "Present"
+    );
+    setFilteredOverallAttendanceRecords(presentRecords);
+  };
+
+  const handleOverallAbsent = () => {
+    const absentRecords = fullOverallAttendanceRecords.filter(
+      (record) => record.status === "Absent"
+    );
+    setFilteredOverallAttendanceRecords(absentRecords);
+  };
+
+  // Reset the filter to show all records
+  const handleAllEmpSiteWise = () => {
+    setFilteredSiteAttendanceRecords(fullSiteAttendanceRecords);
+  };
+
   const handleChange = (event) => {
     const selectedSiteId = event.target.value;
     setSelectedSite(selectedSiteId);
@@ -269,7 +369,6 @@ const ClientDashboard = () => {
     } else {
       // fetchClientDashboardData();
 
-      // When no site is selected, show overall attendance (from getTotalAttendance)
       if (overallAttendance) {
         setCount(overallAttendance.total_employee);
         setPieChartData([
@@ -319,7 +418,7 @@ const ClientDashboard = () => {
     if (selectedSite) {
       fetchSiteData(selectedSite, date);
     } else if (overallAttendance) {
-    fetchClientDashboardData(date);
+      fetchClientDashboardData(date);
 
       // Update overall charts if no site is selected
       setPieChartData([
@@ -430,44 +529,7 @@ const ClientDashboard = () => {
 
         <div className="flex-1 p-6 bg-gray-100">
           {/* Data Boxes */}
-          {/* <div className="grid grid-cols-6 gap-2 mb-4">
-            <div
-              className="shadow-lg p-2 rounded-lg transition-colors duration-300 cursor-pointer"
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = themeColor)}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "white")}
-            >
-              <h3 className="font-semibold text-lg">Head Count</h3>
-              <p>
-                {selectedSite
-                  ? count
-                  : overallAttendance
-                  ? overallAttendance.total_employee
-                  : clientData
-                  ? clientData.length
-                  : 0}
-              </p>
-            </div>
-            {selectedSite && (
-              <>
-                <div
-                  className="shadow-lg p-2 rounded-lg transition-colors duration-300 cursor-pointer"
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = themeColor)}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "white")}
-                >
-                  <h3 className="font-semibold text-lg">Present</h3>
-                  <p>{barChartData[1]}</p>
-                </div>
-                <div
-                  className="shadow-lg p-2 rounded-lg transition-colors duration-300 cursor-pointer"
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = themeColor)}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "white")}
-                >
-                  <h3 className="font-semibold text-lg">Absent</h3>
-                  <p>{barChartData[2]}</p>
-                </div>
-              </>
-            )}
-          </div> */}
+
           <div className="grid grid-cols-6 gap-2 mb-4">
             {selectedSite ? (
               // When a site is selected, show site-specific counts:
@@ -489,17 +551,20 @@ const ClientDashboard = () => {
               // When no site is selected and overallAttendance is available, show overall counts:
               <>
                 <div className="shadow-lg p-2 rounded-lg transition-colors duration-300 cursor-pointer text-center">
-                  <h3 className="font-semibold text-lg">Head Count</h3>
+                  Headcout
+                  <h3 className="font-semibold text-lg"></h3>
                   <p>{overallAttendance.total_employee}</p>
                 </div>
+
                 <div className="shadow-lg p-2 rounded-lg transition-colors duration-300 cursor-pointer text-center">
                   <h3 className="font-semibold text-lg">Present</h3>
                   <p>{overallAttendance.total_present}</p>
                 </div>
-                <div className="shadow-lg p-2 rounded-lg transition-colors duration-300 cursor-pointer text-center">
-                  <h3 className="font-semibold text-lg">Absent</h3>
-                  <p>{overallAttendance.total_absent}</p>
-                </div>
+
+                  <div className="shadow-lg p-2 rounded-lg transition-colors duration-300 cursor-pointer text-center">
+                    <h3 className="font-semibold text-lg">Absent</h3>
+                    <p>{overallAttendance.total_absent}</p>
+                  </div>
               </>
             ) : (
               // Fallback: if overallAttendance isn't available, show head count only.
@@ -575,10 +640,101 @@ const ClientDashboard = () => {
               </div>
             )}
 
+            {!selectedSite && (
+              <div className="bg-white shadow-lg p-4 rounded-lg mt-4">
+                <h3 className="font-bold text-center text-xl mb-4">
+                  Overall Attendance Details
+                </h3>
+                {/* Filter Buttons */}
+                <div className="mb-4 flex gap-4">
+                  <button
+                    onClick={handleOverallAll}
+                    className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+                  >
+                    All
+                  </button>
+                  <button
+                    onClick={handleOverallPresent}
+                    className="px-4 py-2 bg-green-300 rounded hover:bg-green-400"
+                  >
+                    Present
+                  </button>
+                  <button
+                    onClick={handleOverallAbsent}
+                    className="px-4 py-2 bg-red-300 rounded hover:bg-red-400"
+                  >
+                    Absent
+                  </button>
+                </div>
+                <table className="text-left w-full border-collapse">
+                  <thead>
+                    <tr>
+                      <th className="border px-4 py-2">Emp ID</th>
+                      <th className="border px-4 py-2">Name</th>
+                      <th className="border px-4 py-2">Gender</th>
+                      <th className="border px-4 py-2">Status</th>
+                      <th className="border px-4 py-2">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredOverallAttendanceRecords.length > 0 ? (
+                      filteredOverallAttendanceRecords.map((record) => (
+                        <tr key={record.id}>
+                          <td className="border px-4 py-2">{record.vibe_id}</td>
+                          <td className="border px-4 py-2">{record.empName}</td>
+                          <td className="border px-4 py-2">{record.gender}</td>
+                          <td
+                            className={`border px-4 py-2 text-center ${
+                              record.status === "Absent"
+                                ? "text-red-500"
+                                : "text-green-500"
+                            }`}
+                          >
+                            {record.status}
+                          </td>
+                          <td className="border px-4 py-2 text-center">
+                            {record.date}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td className="border px-4 py-2" colSpan="5">
+                          No attendance records found.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
             {/* Attendance Table */}
             {selectedSite && (
               <div className="bg-white shadow-lg p-4 rounded-lg mt-4">
                 <h3 className="font-bold text-xl mb-4">Attendance Details</h3>
+                {/* Filter Buttons */}
+                <div className="mb-4 flex gap-4">
+                  <button
+                    onClick={handleAllEmpSiteWise}
+                    className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+                  >
+                    All
+                  </button>
+                  <button
+                    onClick={handlePresentEmpSiteWise}
+                    className="px-4 py-2 bg-green-300 rounded hover:bg-green-400"
+                  >
+                    Present
+                  </button>
+                  <button
+                    onClick={handleAbsentEmpSiteWise}
+                    className="px-4 py-2 bg-red-300 rounded hover:bg-red-400"
+                  >
+                    Absent
+                  </button>
+                </div>
+
                 <table className="w-full border-collapse">
                   <thead>
                     <tr>
@@ -588,8 +744,8 @@ const ClientDashboard = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {attendanceTableRecords.length > 0 ? (
-                      attendanceTableRecords.map((record) => (
+                    {filteredSiteAttendanceRecords.length > 0 ? (
+                      filteredSiteAttendanceRecords.map((record) => (
                         <tr key={record.id}>
                           <td className="border px-4 py-2">{record.empName}</td>
                           <td
