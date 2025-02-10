@@ -6715,12 +6715,6 @@ export const getAssociatedSites = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
       `/associated/?organization_id=${orgId}`
-
-      // {
-      //   headers: {
-      //     "Content-Type": "multipart/form-data/",
-      //   },
-      // }
     );
     return response.data;
   } catch (error) {
@@ -6728,6 +6722,16 @@ export const getAssociatedSites = async (orgId) => {
     throw error;
   }
 };
+
+export const getTotalAttendance = async (empId, date) => {
+  try {
+    const response = await HrmsAuth.get(`associated-organization-dashboard/mutiple-site/?employee_id=${empId}&start_date=${date}`);
+    return response.data;
+  } catch (error) {
+    console.log("error fetching total attendance site wise using empId and date:", error)
+    throw error;
+  }
+}
 
 export const getAssociatedSite = async (id) => {
   try {
@@ -7136,10 +7140,10 @@ export const getEmployeeAttendanceOfToday = async (empId, today) => {
     throw error;
   }
 };
-export const getSiteWiseAttendance = async (siteId, today) => {
+export const getSiteWiseAttendance = async (siteId, date) => {
   try {
     const response = await HrmsAuth.get(
-      `associated-wise/attendance/${siteId}?start_date=${today}`,
+      `associated-wise/attendance/${siteId}?start_date=${date}`,
       {
         headers: {
           "Content-Type": "multipart/form-data/",
