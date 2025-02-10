@@ -76,71 +76,71 @@ const ClientDashboard = () => {
   // -------------------------------
   // FETCH OVERALL CLIENT DATA ON MOUNT
   // -------------------------------
+  const fetchClientDashboardData = async (dateParam = selectedDate) => {
+    try {
+      const empId = localStorage.getItem("HRMS_EMPLOYEE_ID");
+      const orgId = localStorage.getItem("HRMSORGID");
+
+      // Fetch client dashboard data and set state
+      const clientDataResponse = await getClientDashboard(empId);
+      setClientData(clientDataResponse);
+
+      // Format the date as YYYY-MM-DD
+      const year = dateParam.getFullYear();
+      const month = String(dateParam.getMonth() + 1).padStart(2, "0");
+      const day = String(dateParam.getDate()).padStart(2, "0");
+      const todayDate = `${year}-${month}-${day}`;
+
+      // Fetch overall attendance which contains total_employee and total_present
+      const allAttendance = await getTotalAttendance(empId, todayDate);
+      const total_employee = allAttendance.total_employees || 0;
+      const total_present = allAttendance.total_present || 0;
+      const total_absent = Math.max(total_employee - total_present, 0);
+
+      // Store overall attendance
+      setOverallAttendance({
+        total_employee,
+        total_present,
+        total_absent,
+      });
+
+      // Get HRMS admin data to extract associated site ids
+      const hrmsAdminData = await getEmployeeJobInfo(empId);
+      const multiple_asso = hrmsAdminData[0].multiple_associated;
+      // console.log("Array for associated sites:", multiple_asso);
+
+      // Fetch ALL sites for the organization
+      const allSites = await getAssociatedSites(orgId);
+      // console.log("All sites from API:", allSites);
+
+      const siteNamesResult = multiple_asso.map((id) => {
+        const matchingSite =
+          Array.isArray(allSites) && allSites.length > 0
+            ? allSites.find((site) => site.id === id)
+            : null;
+        const siteName = matchingSite ? matchingSite.site_name : "Not Found";
+        return { id, siteName };
+      });
+      // console.log("Fetched site names:", siteNamesResult);
+      setMultipleAssos(siteNamesResult);
+
+      // Update the charts with overall attendance values
+      setPieChartData([
+        { name: "Head Count", y: total_employee, color: "#f97316" },
+        { name: "Present", y: total_present, color: "#10b981" },
+        { name: "Absent", y: total_absent, color: "#3b82f6" },
+      ]);
+      setBarChartData([total_employee, total_present, total_absent]);
+      setCount(total_employee);
+    } catch (error) {
+      console.error("Error fetching client dashboard:", error);
+    }
+  };
+
+  // Call fetchClientDashboardData on mount
   useEffect(() => {
-    const fetchClientDashboardData = async (dateParam = selectedDate) => {
-      try {
-        const empId = localStorage.getItem("HRMS_EMPLOYEE_ID");
-        const orgId = localStorage.getItem("HRMSORGID");
-
-        // Fetch client dashboard data and set state
-        const clientDataResponse = await getClientDashboard(empId);
-        setClientData(clientDataResponse);
-
-        // Format the date as YYYY-MM-DD
-        const year = dateParam.getFullYear();
-        const month = String(dateParam.getMonth() + 1).padStart(2, "0");
-        const day = String(dateParam.getDate()).padStart(2, "0");
-        const todayDate = `${year}-${month}-${day}`;
-
-        // Fetch overall attendance which contains total_employee and total_present
-        const allAttendance = await getTotalAttendance(empId, todayDate);
-        const total_employee = allAttendance.total_employees || 0;
-        const total_present = allAttendance.total_present || 0;
-        const total_absent = Math.max(total_employee - total_present, 0);
-
-        // Store overall attendance
-        setOverallAttendance({
-          total_employee,
-          total_present,
-          total_absent,
-        });
-
-        // Get HRMS admin data to extract associated site ids
-        const hrmsAdminData = await getEmployeeJobInfo(empId);
-        const multiple_asso = hrmsAdminData[0].multiple_associated;
-        // console.log("Array for associated sites:", multiple_asso);
-
-        // Fetch ALL sites for the organization
-        const allSites = await getAssociatedSites(orgId);
-        // console.log("All sites from API:", allSites);
-
-        const siteNamesResult = multiple_asso.map((id) => {
-          const matchingSite =
-            Array.isArray(allSites) && allSites.length > 0
-              ? allSites.find((site) => site.id === id)
-              : null;
-          const siteName = matchingSite ? matchingSite.site_name : "Not Found";
-          return { id, siteName };
-        });
-        // console.log("Fetched site names:", siteNamesResult);
-        setMultipleAssos(siteNamesResult);
-
-        // Update the charts with overall attendance values
-        setPieChartData([
-          { name: "Head Count", y: total_employee, color: "#f97316" },
-          { name: "Present", y: total_present, color: "#10b981" },
-          { name: "Absent", y: total_absent, color: "#3b82f6" },
-        ]);
-        setBarChartData([total_employee, total_present, total_absent]);
-        setCount(total_employee);
-      } catch (error) {
-        console.error("Error fetching client dashboard:", error);
-      }
-    };
-
     fetchClientDashboardData();
   }, []);
-
   // -------------------------------
   // FETCH SITE DATA AND ATTENDANCE (for a selected site)
   // -------------------------------
@@ -267,6 +267,8 @@ const ClientDashboard = () => {
       // When a site is selected, load its data.
       fetchSiteData(selectedSiteId, selectedDate);
     } else {
+      // fetchClientDashboardData();
+
       // When no site is selected, show overall attendance (from getTotalAttendance)
       if (overallAttendance) {
         setCount(overallAttendance.total_employee);
@@ -317,6 +319,8 @@ const ClientDashboard = () => {
     if (selectedSite) {
       fetchSiteData(selectedSite, date);
     } else if (overallAttendance) {
+    fetchClientDashboardData(date);
+
       // Update overall charts if no site is selected
       setPieChartData([
         {
