@@ -13,6 +13,7 @@ import {
   getEmployeeJobInfo,
   getAssociatedSite,
   getAssociatedSites,
+  getTotalAttendance,
   getAttendance,
   getSiteWiseAttendance,
 } from "../../api/index";
@@ -32,10 +33,12 @@ const ClientDashboard = () => {
 
   // Data States
   const [clientData, setClientData] = useState(null); // overall client data array
-  const [multiple_ass, setMultipleAssos] = useState([]);
+  const [multiple_ass, setMultipleAssos] = useState([]); // Array of objects: { id, siteName }
   const [selectedSite, setSelectedSite] = useState("");
-  const [siteWiseData, setSiteWiseData] = useState([]); // list of employees for selected site
+  const [siteWiseData, setSiteWiseData] = useState([]); // List of employees for selected site
   const [count, setCount] = useState(0);
+  // overallAttendance holds the attendance for ALL sites when no site is selected.
+  const [overallAttendance, setOverallAttendance] = useState(null);
 
   // Chart States
   const [pieChartData, setPieChartData] = useState([
@@ -45,10 +48,8 @@ const ClientDashboard = () => {
   ]);
   const [barChartData, setBarChartData] = useState([0, 0, 0]);
 
-  // Table State for attendance records
+  // Table and absent record states
   const [attendanceTableRecords, setAttendanceTableRecords] = useState([]);
-
-  // State for absent record
   const [absentRecord, setAbsentRecord] = useState(null);
 
   // User Info
@@ -64,26 +65,8 @@ const ClientDashboard = () => {
     [
       "TOKEN",
       "COMPANYID",
-      "HRMSORGID",
-      "board_id",
-      "menuState",
-      "Name",
-      "LASTNAME",
-      "USERTYPE",
-      "user",
-      "UNITID",
-      "Building",
-      "categories",
-      "SITEID",
-      "STATUS",
-      "complaint",
-      "UserId",
-      "VIBETOKEN",
-      "VIBEUSERID",
-      "VIBEORGID",
-      "FEATURES",
-      "HRMSORGID",
       "HRMS_EMPLOYEE_ID",
+      // ... other keys as needed
     ].forEach((key) => localStorage.removeItem(key));
     persistor.purge(["board"]).then(() => {
       navigate("/login");
@@ -93,62 +76,78 @@ const ClientDashboard = () => {
   // -------------------------------
   // FETCH OVERALL CLIENT DATA ON MOUNT
   // -------------------------------
+  const fetchClientDashboardData = async (dateParam = selectedDate) => {
+    try {
+      const empId = localStorage.getItem("HRMS_EMPLOYEE_ID");
+      const orgId = localStorage.getItem("HRMSORGID");
+
+      // Fetch client dashboard data and set state
+      const clientDataResponse = await getClientDashboard(empId);
+      setClientData(clientDataResponse);
+
+      // Format the date as YYYY-MM-DD
+      const year = dateParam.getFullYear();
+      const month = String(dateParam.getMonth() + 1).padStart(2, "0");
+      const day = String(dateParam.getDate()).padStart(2, "0");
+      const todayDate = `${year}-${month}-${day}`;
+
+      // Fetch overall attendance which contains total_employee and total_present
+      const allAttendance = await getTotalAttendance(empId, todayDate);
+      const total_employee = allAttendance.total_employees || 0;
+      const total_present = allAttendance.total_present || 0;
+      const total_absent = Math.max(total_employee - total_present, 0);
+
+      // Store overall attendance
+      setOverallAttendance({
+        total_employee,
+        total_present,
+        total_absent,
+      });
+
+      // Get HRMS admin data to extract associated site ids
+      const hrmsAdminData = await getEmployeeJobInfo(empId);
+      const multiple_asso = hrmsAdminData[0].multiple_associated;
+      // console.log("Array for associated sites:", multiple_asso);
+
+      // Fetch ALL sites for the organization
+      const allSites = await getAssociatedSites(orgId);
+      // console.log("All sites from API:", allSites);
+
+      const siteNamesResult = multiple_asso.map((id) => {
+        const matchingSite =
+          Array.isArray(allSites) && allSites.length > 0
+            ? allSites.find((site) => site.id === id)
+            : null;
+        const siteName = matchingSite ? matchingSite.site_name : "Not Found";
+        return { id, siteName };
+      });
+      // console.log("Fetched site names:", siteNamesResult);
+      setMultipleAssos(siteNamesResult);
+
+      // Update the charts with overall attendance values
+      setPieChartData([
+        { name: "Head Count", y: total_employee, color: "#f97316" },
+        { name: "Present", y: total_present, color: "#10b981" },
+        { name: "Absent", y: total_absent, color: "#3b82f6" },
+      ]);
+      setBarChartData([total_employee, total_present, total_absent]);
+      setCount(total_employee);
+    } catch (error) {
+      console.error("Error fetching client dashboard:", error);
+    }
+  };
+
+  // Call fetchClientDashboardData on mount
   useEffect(() => {
-    const fetchClientDashboardData = async () => {
-      try {
-        const empId = localStorage.getItem("HRMS_EMPLOYEE_ID");
-        const orgId = localStorage.getItem("HRMSORGID");
-
-        // Fetch client dashboard data and set state
-        const clientDataResponse = await getClientDashboard(empId);
-        setClientData(clientDataResponse);
-
-        // Get HRMS admin data to extract associated site ids
-        const hrmsAdminData = await getEmployeeJobInfo(empId);
-        const multiple_asso = hrmsAdminData[0].multiple_associated;
-        console.log("Array for associated sites:", multiple_asso);
-
-        // Fetch ALL sites for the organization just once
-        const allSites = await getAssociatedSites(orgId);
-        console.log("All sites from API:", allSites);
-
-        const siteNamesResult = multiple_asso.map((id) => {
-          const matchingSite =
-            Array.isArray(allSites) && allSites.length > 0
-              ? allSites.find((site) => site.id === id)
-              : null;
-          // If found, get its site_name, otherwise mark as "Not Found"
-          const siteName = matchingSite ? matchingSite.site_name : "Not Found";
-          return { id, siteName };
-        });
-
-        console.log("Fetched site names:", siteNamesResult);
-
-        // Update state with the mapped site names so you can use it in your dropdown, etc.
-        setMultipleAssos(siteNamesResult);
-
-        // Update any additional state (like pie chart data) as needed
-        setPieChartData([
-          {
-            name: "Head Count",
-            y: clientDataResponse.length,
-            color: "#f97316",
-          },
-        ]);
-      } catch (error) {
-        console.error("Error fetching client dashboard:", error);
-      }
-    };
-
     fetchClientDashboardData();
   }, []);
-
   // -------------------------------
-  // FETCH SITE DATA AND ATTENDANCE
+  // FETCH SITE DATA AND ATTENDANCE (for a selected site)
   // -------------------------------
   const fetchSiteData = async (siteId, dateParam = selectedDate) => {
     try {
-      // Fetch the list of employees for the site
+      // console.log("Selected Site ID:", siteId);
+      // Fetch the list of employees for the selected site
       const siteRes = await getAssociatedSite(siteId);
       setSiteWiseData(siteRes);
 
@@ -157,20 +156,20 @@ const ClientDashboard = () => {
       const month = String(dateParam.getMonth() + 1).padStart(2, "0");
       const day = String(dateParam.getDate()).padStart(2, "0");
       const todayDate = `${year}-${month}-${day}`;
-      console.log("Formatted Date:", todayDate);
+      // console.log("Formatted Date:", todayDate);
 
       // Fetch attendance data for the site using the formatted date
       const attendanceRes = await getSiteWiseAttendance(siteId, todayDate);
-      console.log("Site Wise Attendance Data:", attendanceRes);
+      // console.log("Site Wise Attendance Data:", attendanceRes);
 
       const presentRecord = attendanceRes.attendance_data;
-      console.log("Attendance records:", presentRecord);
+      // console.log("Attendance records:", presentRecord);
 
-      // Aggregated counts from attendanceRes
       const headCount = attendanceRes.total_employees || 0;
       const presentCount = attendanceRes.attended_employee_count || 0;
       const absentCount = headCount - presentCount;
 
+      // Update site-specific charts and count
       setPieChartData([
         { name: "Head Count", y: headCount, color: "#f97316" },
         { name: "Present", y: presentCount, color: "#10b981" },
@@ -179,7 +178,7 @@ const ClientDashboard = () => {
       setBarChartData([headCount, presentCount, absentCount]);
       setCount(headCount);
 
-      // Build mapping from employee id (as string) to employee name using first_name and last_name from siteRes
+      // Build a mapping for employee names from siteRes
       const employeeMap = siteRes.reduce((acc, employee) => {
         const name =
           `${employee.first_name || ""} ${employee.last_name || ""}`.trim() ||
@@ -187,9 +186,9 @@ const ClientDashboard = () => {
         acc[String(employee.id)] = name;
         return acc;
       }, {});
-      console.log("Employee Map:", employeeMap);
+      // console.log("Employee Map:", employeeMap);
 
-      // Build a fallback mapping from attendance records for employee names (if available)
+      // Build a mapping from attendance records for employee names (as a fallback)
       const attendanceNameMap = presentRecord.reduce((acc, record) => {
         if (record.employee) {
           const name = `${record.first_name || ""} ${
@@ -201,9 +200,8 @@ const ClientDashboard = () => {
         }
         return acc;
       }, {});
-      console.log("Attendance Name Map:", attendanceNameMap);
+      // console.log("Attendance Name Map:", attendanceNameMap);
 
-      // Map attendance records to include name (from attendance record)
       const presentEmployeeDetails = presentRecord
         .filter((record) => record.attendance_time.startsWith(todayDate))
         .map((record) => ({
@@ -212,15 +210,14 @@ const ClientDashboard = () => {
             `${record.first_name || ""} ${record.last_name || ""}`.trim() ||
             "N/A",
         }));
-      console.log("Present Employee Details:", presentEmployeeDetails);
+      // console.log("Present Employee Details:", presentEmployeeDetails);
 
-      // Extract present employee IDs as strings
       const presentEmployeeIDs = presentEmployeeDetails.map(
         (detail) => detail.employee
       );
-      console.log("Present Employee IDs:", presentEmployeeIDs);
+      // console.log("Present Employee IDs:", presentEmployeeIDs);
 
-      // Compute absent employees by filtering siteRes for those not present
+      // Build absent record (employees not in the present list)
       const absentEmployees = siteRes
         .filter((employee) => !presentEmployeeIDs.includes(String(employee.id)))
         .map((employee) => {
@@ -235,7 +232,7 @@ const ClientDashboard = () => {
         });
       const absentRecordObj = { absentrecord: absentEmployees };
       setAbsentRecord(absentRecordObj);
-      console.log("Absent Record:", absentRecordObj);
+      // console.log("Absent Record:", absentRecordObj);
 
       // Build the attendance table records
       const tableRecords = siteRes.map((employee) => {
@@ -253,7 +250,7 @@ const ClientDashboard = () => {
           date: todayDate,
         };
       });
-      console.log("Attendance Table Records:", tableRecords);
+      // console.log("Attendance Table Records:", tableRecords);
       setAttendanceTableRecords(tableRecords);
     } catch (error) {
       console.log("Error fetching site data:", error);
@@ -267,20 +264,50 @@ const ClientDashboard = () => {
     const selectedSiteId = event.target.value;
     setSelectedSite(selectedSiteId);
     if (selectedSiteId) {
+      // When a site is selected, load its data.
       fetchSiteData(selectedSiteId, selectedDate);
     } else {
-      // If no site is selected, use overall head count from clientData
-      setCount(clientData ? clientData.length : 0);
-      setPieChartData([
-        {
-          name: "Head Count",
-          y: clientData ? clientData.length : 0,
-          color: "#f97316",
-        },
-        { name: "Present", y: 0, color: "#10b981" },
-        { name: "Absent", y: 0, color: "#3b82f6" },
-      ]);
-      setBarChartData([clientData ? clientData.length : 0, 0, 0]);
+      // fetchClientDashboardData();
+
+      // When no site is selected, show overall attendance (from getTotalAttendance)
+      if (overallAttendance) {
+        setCount(overallAttendance.total_employee);
+        setPieChartData([
+          {
+            name: "Head Count",
+            y: overallAttendance.total_employee,
+            color: "#f97316",
+          },
+          {
+            name: "Present",
+            y: overallAttendance.total_present,
+            color: "#10b981",
+          },
+          {
+            name: "Absent",
+            y: overallAttendance.total_absent,
+            color: "#3b82f6",
+          },
+        ]);
+        setBarChartData([
+          overallAttendance.total_employee,
+          overallAttendance.total_present,
+          overallAttendance.total_absent,
+        ]);
+      } else {
+        // Fallback if overallAttendance is not set
+        setCount(clientData ? clientData.length : 0);
+        setPieChartData([
+          {
+            name: "Head Count",
+            y: clientData ? clientData.length : 0,
+            color: "#f97316",
+          },
+          { name: "Present", y: 0, color: "#10b981" },
+          { name: "Absent", y: 0, color: "#3b82f6" },
+        ]);
+        setBarChartData([clientData ? clientData.length : 0, 0, 0]);
+      }
       setAttendanceTableRecords([]);
       setAbsentRecord(null);
     }
@@ -291,20 +318,33 @@ const ClientDashboard = () => {
     setIsCalendarVisible(false);
     if (selectedSite) {
       fetchSiteData(selectedSite, date);
+    } else if (overallAttendance) {
+    fetchClientDashboardData(date);
+
+      // Update overall charts if no site is selected
+      setPieChartData([
+        {
+          name: "Head Count",
+          y: overallAttendance.total_employee,
+          color: "#f97316",
+        },
+        {
+          name: "Present",
+          y: overallAttendance.total_present,
+          color: "#10b981",
+        },
+        { name: "Absent", y: overallAttendance.total_absent, color: "#3b82f6" },
+      ]);
+      setBarChartData([
+        overallAttendance.total_employee,
+        overallAttendance.total_present,
+        overallAttendance.total_absent,
+      ]);
     }
   };
 
   const handleSliceClick = (event) => {
     setSelectedData(event.point.name);
-    setIsDropdownVisible(true);
-  };
-
-  const handleDropdownClick = (item) => {
-    setSelectedData(item);
-    setIsDropdownVisible(false);
-    if (item === "Head Count" || item === "Present" || item === "Absent") {
-      setIsPieChart(false);
-    }
   };
 
   // -------------------------------
@@ -318,17 +358,10 @@ const ClientDashboard = () => {
         allowPointSelect: true,
         cursor: "pointer",
         dataLabels: { enabled: true },
-        events: {
-          click: handleSliceClick,
-        },
+        events: { click: handleSliceClick },
       },
     },
-    series: [
-      {
-        name: "Employees",
-        data: pieChartData,
-      },
-    ],
+    series: [{ name: "Employees", data: pieChartData }],
   };
 
   const barChartOptions = {
@@ -339,57 +372,17 @@ const ClientDashboard = () => {
       pointPadding: 0.1,
       groupPadding: 0.1,
     },
-    yAxis: {
-      title: { text: "Count" },
-    },
-    plotOptions: {
-      series: {
-        cursor: "pointer",
-        events: {
-          click: (event) => {
-            setSelectedData(event.point.category);
-            setIsDropdownVisible(true);
-          },
-        },
-      },
-    },
+    yAxis: { title: { text: "Count" } },
+    plotOptions: { series: { cursor: "pointer" } },
     series: [
-      {
-        name: "Count",
-        data: barChartData,
-        color: "#4f9c88",
-        pointWidth: 40,
-      },
+      { name: "Count", data: barChartData, color: "#4f9c88", pointWidth: 40 },
     ],
-    tooltip: {
-      pointFormat: "{series.name}: <b>{point.y}</b>",
-    },
+    tooltip: { pointFormat: "{series.name}: <b>{point.y}</b>" },
   };
 
   return (
     <div className="flex flex-col h-screen relative">
       {/* Top Navigation Bar */}
-      {/* <nav
-        style={{ background: themeColor }}
-        className="text-white px-6 py-4 flex justify-between items-center"
-      >
-        <div className="text-2xl font-bold">Dashboard</div>
-        <div className="flex items-center space-x-4">
-          {multiple_ass.length === 0 ? (
-            <p className="text-grey-500">No site associated</p>
-          ) : (
-            <select className="text-black px-6 py-2" onChange={handleChange}>
-              <option value="">Select All Sites</option>
-              {multiple_ass.map((asso, index) => (
-                <option key={index} value={asso}>
-                  {`Site ${asso}`}
-                </option>
-              ))}
-            </select>
-          )}
-        </div>
-      </nav> */}
-
       <nav
         style={{ background: themeColor }}
         className="text-white px-6 py-4 flex justify-between items-center"
@@ -411,7 +404,7 @@ const ClientDashboard = () => {
         </div>
       </nav>
 
-      {/* Main Content */}
+      {/* Sidebar & Main Content */}
       <div className="flex flex-1">
         <aside
           style={{ background: themeColor }}
@@ -419,7 +412,6 @@ const ClientDashboard = () => {
           onMouseEnter={() => setOpen(true)}
           onMouseLeave={() => setOpen(false)}
         >
-          {/* User Profile Section */}
           <div className="flex items-center space-x-3 w-full px-4 text-xl font-medium transition-all duration-500">
             <FaRegUserCircle className="text-3xl" />
             <span className="hidden group-hover:inline-block text-lg font-semibold">
@@ -427,7 +419,6 @@ const ClientDashboard = () => {
             </span>
           </div>
           <div className="w-full border-b border-gray-400 my-4 group-hover:block hidden"></div>
-          {/* Logout Button */}
           <button
             onClick={handleLogout}
             className="font-semibold flex items-center rounded-md px-2 py-2 hover:bg-white hover:text-black transition-all duration-300 ease-in-out my-2 gap-4"
@@ -439,23 +430,83 @@ const ClientDashboard = () => {
 
         <div className="flex-1 p-6 bg-gray-100">
           {/* Data Boxes */}
-          <div className="grid grid-cols-6 gap-2 mb-4">
-            <div className="bg-white shadow-lg p-2 rounded-lg">
+          {/* <div className="grid grid-cols-6 gap-2 mb-4">
+            <div
+              className="shadow-lg p-2 rounded-lg transition-colors duration-300 cursor-pointer"
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = themeColor)}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "white")}
+            >
               <h3 className="font-semibold text-lg">Head Count</h3>
-              <p>{selectedSite ? count : clientData ? clientData.length : 0}</p>
+              <p>
+                {selectedSite
+                  ? count
+                  : overallAttendance
+                  ? overallAttendance.total_employee
+                  : clientData
+                  ? clientData.length
+                  : 0}
+              </p>
             </div>
-            {/* Only show Present and Absent boxes if a site is selected */}
             {selectedSite && (
               <>
-                <div className="bg-white shadow-lg p-2 rounded-lg">
+                <div
+                  className="shadow-lg p-2 rounded-lg transition-colors duration-300 cursor-pointer"
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = themeColor)}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "white")}
+                >
                   <h3 className="font-semibold text-lg">Present</h3>
                   <p>{barChartData[1]}</p>
                 </div>
-                <div className="bg-white shadow-lg p-2 rounded-lg">
+                <div
+                  className="shadow-lg p-2 rounded-lg transition-colors duration-300 cursor-pointer"
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = themeColor)}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "white")}
+                >
                   <h3 className="font-semibold text-lg">Absent</h3>
                   <p>{barChartData[2]}</p>
                 </div>
               </>
+            )}
+          </div> */}
+          <div className="grid grid-cols-6 gap-2 mb-4">
+            {selectedSite ? (
+              // When a site is selected, show site-specific counts:
+              <>
+                <div className="shadow-lg p-2 rounded-lg transition-colors duration-300 cursor-pointer">
+                  <h3 className="font-semibold text-lg">Head Count</h3>
+                  <p>{count}</p>
+                </div>
+                <div className="shadow-lg p-2 rounded-lg transition-colors duration-300 cursor-pointer">
+                  <h3 className="font-semibold text-lg">Present</h3>
+                  <p>{barChartData[1]}</p>
+                </div>
+                <div className="shadow-lg p-2 rounded-lg transition-colors duration-300 cursor-pointer">
+                  <h3 className="font-semibold text-lg">Absent</h3>
+                  <p>{barChartData[2]}</p>
+                </div>
+              </>
+            ) : overallAttendance ? (
+              // When no site is selected and overallAttendance is available, show overall counts:
+              <>
+                <div className="shadow-lg p-2 rounded-lg transition-colors duration-300 cursor-pointer text-center">
+                  <h3 className="font-semibold text-lg">Head Count</h3>
+                  <p>{overallAttendance.total_employee}</p>
+                </div>
+                <div className="shadow-lg p-2 rounded-lg transition-colors duration-300 cursor-pointer text-center">
+                  <h3 className="font-semibold text-lg">Present</h3>
+                  <p>{overallAttendance.total_present}</p>
+                </div>
+                <div className="shadow-lg p-2 rounded-lg transition-colors duration-300 cursor-pointer text-center">
+                  <h3 className="font-semibold text-lg">Absent</h3>
+                  <p>{overallAttendance.total_absent}</p>
+                </div>
+              </>
+            ) : (
+              // Fallback: if overallAttendance isn't available, show head count only.
+              <div className="shadow-lg p-2 rounded-lg transition-colors duration-300 cursor-pointer">
+                <h3 className="font-semibold text-lg">Head Count</h3>
+                <p>{clientData ? clientData.length : 0}</p>
+              </div>
             )}
           </div>
 
@@ -472,12 +523,39 @@ const ClientDashboard = () => {
                 />
               </div>
               {isPieChart ? (
-                <HighchartsReact highcharts={Highcharts} options={pieOptions} />
+                <>
+                  <HighchartsReact
+                    highcharts={Highcharts}
+                    options={pieOptions}
+                  />
+                  <div className="text-center mt-4">
+                    <a
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setIsPieChart(false);
+                      }}
+                      className="text-blue-500 underline"
+                    >
+                      Site View
+                    </a>
+                  </div>
+                </>
               ) : (
-                <HighchartsReact
-                  highcharts={Highcharts}
-                  options={barChartOptions}
-                />
+                <>
+                  <HighchartsReact
+                    highcharts={Highcharts}
+                    options={barChartOptions}
+                  />
+                  <div className="text-center mt-4">
+                    <button
+                      onClick={() => setIsPieChart(true)}
+                      className="px-4 py-2 bg-red-500 text-white rounded"
+                    >
+                      Back to Pie Chart
+                    </button>
+                  </div>
+                </>
               )}
             </div>
 
@@ -543,37 +621,64 @@ const ClientDashboard = () => {
         </div>
       </div>
 
-      {/* --- Modal / Dropdown Overlay for Site Options --- */}
+      {/* Modal for Site Selection (if needed) */}
       {isDropdownVisible && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white rounded-lg p-4 w-[300px]">
-            <h3 className="text-xl font-bold mb-4">
-              {selectedData ? `Selected: ${selectedData}` : "Select a Site"}
-            </h3>
-            <ul>
-              {multiple_ass.map((site) => (
-                <li
-                  key={site.id}
-                  className="cursor-pointer p-2 hover:bg-gray-200"
-                  onClick={() => {
-                    // Set the selected site and fetch its data
-                    setSelectedSite(site.id);
-                    fetchSiteData(site.id);
-                    setIsDropdownVisible(false);
-                    // Optionally switch to bar chart view (modal-like)
-                    setIsPieChart(false);
-                  }}
-                >
-                  {site.siteName}
-                </li>
-              ))}
-            </ul>
+          <div className="relative bg-white rounded-lg p-4 w-[300px]">
             <button
               onClick={() => setIsDropdownVisible(false)}
-              className="mt-4 px-4 py-2 bg-red-500 text-white rounded"
+              className="absolute top-2 right-2 text-gray-600 hover:text-gray-900 font-bold text-xl"
             >
-              Cancel
+              &times;
             </button>
+            <h3 className="text-xl text-center font-bold mb-4">
+              {selectedSite
+                ? `Site: ${
+                    multiple_ass.find((s) => s.id === selectedSite)?.siteName
+                  }`
+                : "No Site Selected"}
+            </h3>
+            {selectedSite ? (
+              <div>
+                <p className="mb-4 text-sm text-center">
+                  Site already selected.
+                </p>
+                <button
+                  onClick={() => {
+                    setIsDropdownVisible(false);
+                    setIsPieChart(false);
+                  }}
+                  className="w-full px-4 py-2 bg-blue-500 text-white rounded"
+                >
+                  Go to Bar Chart
+                </button>
+              </div>
+            ) : (
+              <div>
+                <ul>
+                  {multiple_ass.map((site) => (
+                    <li
+                      key={site.id}
+                      className="cursor-pointer p-2 hover:bg-gray-200"
+                      onClick={() => {
+                        setSelectedSite(site.id);
+                        fetchSiteData(site.id);
+                        setIsDropdownVisible(false);
+                        setIsPieChart(false);
+                      }}
+                    >
+                      {site.siteName}
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  onClick={() => setIsDropdownVisible(false)}
+                  className="mt-4 px-4 py-2 bg-red-500 text-white rounded"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
