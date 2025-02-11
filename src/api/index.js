@@ -1279,12 +1279,37 @@ export const sendMailToUsers = async (userId) =>
       token: token,
     },
   });
-export const getAttendance = async () =>
-  axiosInstance.get("/attendances.json", {
-    params: {
-      token: token,
-    },
-  });
+export const getAttendance = async (orgId, page) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/employees/attendance-bulk?organization_id=${orgId}`
+      // `/employees/attendance-bulk?organization_id=${orgId}`
+      // {
+      //   headers: {
+      //     "Content-Type": "multipart/form-data/",
+      //   },
+      // }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting attendance records:", error);
+    throw error;
+  }
+};
+
+
+// export const getClientAttendance = async(siteId, today)
+// try {
+//   const response = await HrmsAuth.
+//     // get(`/employee/attendance/?employee_id=${empId}&start_date=${today}`);
+//     get(`/employee/attendance/?employee_id=${siteId}&start_date=${today}`);
+//   return response;
+// } catch (error) {
+//   console.error("Error getting employee attendance of today", error);
+//   throw error;
+// };
+
+
 export const getEmployeeAttendance = async (userId) =>
   axiosInstance.get(`/attendances.json?q[attendance_of_id]=${userId}`, {
     params: {
@@ -4228,6 +4253,7 @@ export const editMyBankAccount = async (bankId, data) => {
   }
 };
 
+
 export const getManageAdmin = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
@@ -6445,6 +6471,37 @@ export const getNotification = async (id) => {
   }
 };
 
+export const getClientDashboard = async (id) => {
+  try {
+    const response = await HrmsAuth.get(`/associated-organizations/mutiple-site/?&employee_id=${id}`, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    })
+    return response.data; // Ensure it returns data
+  } catch (error) {
+    console.error("Error getting notifications:", error);
+    return []; // Return empty array on error
+  }
+}
+
+export const getAssociatedOrgDash = async (empId, date) => {
+  try {
+    const res = await HrmsAuth.get(`associated-organization-dashboard/mutiple-site/?employee_id=${empId}&start_date=${date}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      })
+    return res.data;
+  } catch (error) {
+    console.log("Error fetching the associated organization dashboard :", error)
+  }
+}
+
+
+
+
 // export const updateNotificationStatus = async (notificationId) => {
 //   try {
 //     const response = await HrmsAuth.patch(`/notifications/${notificationId}/`)
@@ -6660,12 +6717,6 @@ export const getAssociatedSites = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
       `/associated/?organization_id=${orgId}`
-
-      // {
-      //   headers: {
-      //     "Content-Type": "multipart/form-data/",
-      //   },
-      // }
     );
     return response.data;
   } catch (error) {
@@ -6673,6 +6724,31 @@ export const getAssociatedSites = async (orgId) => {
     throw error;
   }
 };
+
+export const getTotalAttendance = async (empId, date) => {
+  try {
+    const response = await HrmsAuth.get(`associated-organization-dashboard/mutiple-site/?employee_id=${empId}&start_date=${date}`);
+    return response.data;
+  } catch (error) {
+    console.log("error fetching total attendance site wise using empId and date:", error)
+    throw error;
+  }
+}
+
+export const getAssociatedSite = async (id) => {
+  try {
+    const res = await HrmsAuth.get(`/associated/?site_id=${id}`, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    })
+    return res.data; // Ensure it returns data
+  } catch (error) {
+    console.error("Error getting notifications:", error);
+    return []; // Return empty array on error
+  }
+}
+
 export const postAssociatedSites = async (data) => {
   try {
     const response = await HrmsAuth.post(
@@ -7060,6 +7136,23 @@ export const getEmployeeAttendanceOfToday = async (empId, today) => {
         },
       }
     );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting employee attendance of today", error);
+    throw error;
+  }
+};
+export const getSiteWiseAttendance = async (siteId, date) => {
+  try {
+    const response = await HrmsAuth.get(
+      `associated-wise/attendance/${siteId}?start_date=${date}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    // console.log(response.data)//
     return response.data;
   } catch (error) {
     console.error("Error getting employee attendance of today", error);

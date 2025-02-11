@@ -817,6 +817,7 @@ function App() {
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
+        if(!empId) return;
         const data = await getNotification(empId);
         console.log("API Response:", data);
         setNotificationData(data);
@@ -849,7 +850,6 @@ function App() {
         console.error("Error fetching notifications:", error);
       }
     };
-
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 60000);
 
