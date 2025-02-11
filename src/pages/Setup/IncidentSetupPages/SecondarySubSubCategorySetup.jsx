@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { BiEdit } from "react-icons/bi";
 import { BsEye } from "react-icons/bs";
 import { RiDeleteBinLine } from "react-icons/ri";
@@ -8,6 +8,13 @@ import SubSubSubCategorySetupModal from "../../../containers/modals/IncidentSetu
 import { FaCheck, FaTrash } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 import { PiPlusCircle } from "react-icons/pi";
+import {
+  getIncidentSubTags,
+  getIncidentTags,
+  postIncidentTags,
+} from "../../../api";
+import { getItemInLocalStorage } from "../../../utils/localStorage";
+import toast from "react-hot-toast";
 
 const SecondarySubSubCategorySetup = () => {
   const [modal, showModal] = useState(false);
@@ -20,14 +27,10 @@ const SecondarySubSubCategorySetup = () => {
     },
     {
       name: "Sub Sub Category",
-      selector: (row) => row.SubSubCategory,
+      selector: (row) => row.name,
       sortable: true,
     },
-    {
-      name: "Sub Sub Sub Category",
-      selector: (row) => row.SubSubSubCategory,
-      sortable: true,
-    },
+
     {
       name: "action",
 
@@ -44,17 +47,87 @@ const SecondarySubSubCategorySetup = () => {
       ),
     },
   ];
-  const data = [
-    {
-      id: 1,
-      Category: "Near Miss / Good Catch",
-      SubCategory: "Near Miss / Good Catch",
-      SubSubCategory: "Unsafe act",
-      SubSubSubCategory: "Na",
-      action: <BsEye />,
-    },
-  ];
+  const [formData, setFormData] = useState({
+    categoryId: "",
+    SubCategoryId: "",
+    subSubCategory: "",
+  });
   const [addSubSubSubCat, setAddSubSubSubCat] = useState(false);
+
+  const [categories, setCategories] = useState([]);
+  const [subCategories, setSubCategories] = useState([]);
+  useEffect(() => {
+    const fetchIncidentCategory = async () => {
+      try {
+        const res = await getIncidentTags("IncidentSecondaryCategory");
+        setCategories(res.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    fetchIncidentCategory();
+  }, []);
+  const handleChange = async (e) => {
+    const fetchIncidentSubCategory = async (parentId) => {
+      try {
+        const res = await getIncidentSubTags(
+          "IncidentSecondarySubCategory",
+          parentId
+        );
+        setSubCategories(res.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    if (e.target.type === "select-one" && e.target.name === "categoryId") {
+      const catId = Number(e.target.value);
+      await fetchIncidentSubCategory(catId);
+      setFormData({ ...formData, categoryId: catId });
+    } else {
+      setFormData({ ...formData, [e.target.name]: e.target.value });
+    }
+  };
+
+  const companyId = getItemInLocalStorage("COMPANYID");
+  const handleAddSubSubCategory = async () => {
+    const payload = {
+      name: formData.subSubCategory,
+      active: true,
+      parent_id: formData.SubCategoryId,
+      tag_type: "IncidentSecondarySubSubCategory",
+      resource_id: companyId,
+      resource_type: "Pms::CompanySetup",
+    };
+    try {
+      const res = await postIncidentTags(payload);
+      toast.success(
+        "Incident Secondary Sub Sub Category Created successfully!"
+      );
+      fetchIncidentSubCategory();
+      setFormData({
+        ...formData,
+        categoryId: "",
+        SubCategoryId: "",
+        subSubCategory: "",
+      });
+      setAddSubSubSubCat(false);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const [subSubCategories, setSubSubCategories] = useState([]);
+  const fetchIncidentSubCategory = async () => {
+    try {
+      const res = await getIncidentTags("IncidentSecondarySubSubCategory");
+      setSubSubCategories(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(() => {
+    fetchIncidentSubCategory();
+  }, []);
   return (
     <section className="mx-2">
       <div className="w-full flex flex-col gap-2 overflow-hidden">
@@ -63,30 +136,47 @@ const SecondarySubSubCategorySetup = () => {
             <div className="flex flex-col gap-2">
               <div className="grid grid-cols-4 gap-2 w-full">
                 <select
-                  name=""
+                  name="categoryId"
                   id=""
+                  value={formData.categoryId}
+                  onChange={handleChange}
                   className="border p-2 px-4 border-gray-300 rounded-md w-full"
                 >
                   <option value="">Select Secondary Category</option>
-                  <option value="">Health and Safety</option>
-                  <option value="">Fire</option>
-                  <option value="">Near Miss/Good Catch</option>
+                  {categories.map((category) => (
+                    <option value={category.id} key={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
                 </select>
                 <select
-                  name=""
+                  name="SubCategoryId"
+                  value={formData.SubCategoryId}
                   id=""
-                  className="border p-2 px-4 border-gray-300 rounded-md w-full"
+                  className="border p-2 w-full border-gray-300 rounded-lg"
+                  onChange={handleChange}
                 >
                   <option value="">Select Secondary Sub Category</option>
+                  {subCategories.map((subCategory) => (
+                    <option value={subCategory.id} key={subCategory.id}>
+                      {subCategory.name}
+                    </option>
+                  ))}
                 </select>
 
                 <input
                   type="text"
                   placeholder="Secondary Sub Sub Category"
                   className="border p-2 px-4 border-gray-300 rounded-md w-full"
+                  value={formData.subSubCategory}
+                  onChange={handleChange}
+                  name="subSubCategory"
                 />
                 <div className="flex justify-center gap-2">
-                  <button className="bg-green-500 text-white p-2 flex gap-2 items-center rounded-md">
+                  <button
+                    className="bg-green-500 text-white p-2 flex gap-2 items-center rounded-md"
+                    onClick={handleAddSubSubCategory}
+                  >
                     <FaCheck /> Submit
                   </button>
                   <button
@@ -111,7 +201,7 @@ const SecondarySubSubCategorySetup = () => {
           </div>
         )}
         <div>
-          <Table columns={column} data={data} isPagination={true} />
+          <Table columns={column} data={subSubCategories} isPagination={true} />
         </div>
         {modal && (
           <SubSubSubCategorySetupModal onclose={() => showModal(false)} />

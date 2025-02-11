@@ -11,10 +11,13 @@ import { PiPlusCircle } from "react-icons/pi";
 import { TiTick } from "react-icons/ti";
 import { IoClose } from "react-icons/io5";
 import { Link } from "react-router-dom";
+import { MdClose } from "react-icons/md";
 //import Modal from "../containers/modals/Modal";
 const PermitTypeTable = () => {
   const themeColor = useSelector((state) => state.theme.color);
   const column = [
+    
+    { name: "Permit Type", selector: (row) => row.type, sortable: true },
     {
       name: "Actions",
       cell: (row) => (
@@ -28,8 +31,6 @@ const PermitTypeTable = () => {
         </div>
       ),
     },
-
-    { name: "Permit Type", selector: (row) => row.type, sortable: true },
   ];
   const data = [
     {
@@ -54,38 +55,40 @@ const PermitTypeTable = () => {
     },
   ];
 
-  const customStyle = {
-    headRow: {
-      style: {
-        backgroundColor: themeColor,
-        color: "white",
-
-        fontSize: "14px",
-      },
-    },
-  };
-  document.title = `Permit - Vibe Connect`;
+  document.title = `Permit Setup - Vibe Connect`;
+  const [showAdd, setShowAdd] = useState(false);
   return (
     <section className="flex ">
-      {/* <Navbar /> */}
       <div className="w-full flex mx-3 flex-col overflow-hidden">
-        <div className=" flex m-3 flex-col">
-          <div className="flex gap-2 items-center">
-            <input
-              type="text"
-              placeholder="Enter permit Name"
-              className="border-2 p-2 w-96 border-gray-300 rounded-lg"
-            />
+       {showAdd && <div className="flex gap-2 items-center my-2">
+          <input
+            type="text"
+            placeholder="Enter permit Type"
+            className="border p-2 border-gray-300 rounded-md w-full"
+          />
+          <button className="bg-green-400 text-white rounded-md flex items-center gap-2 p-2 font-medium">
+            <PiPlusCircle size={20} />
+            Submit
+          </button>
+          <button
+            className="bg-red-400 text-white rounded-md flex items-center gap-2 p-2 font-medium"
+            onClick={() => setShowAdd(false)}
+          >
+            <MdClose size={20} />
+            Cancel
+          </button>
+        </div>}
+        {!showAdd && (
+          <div className="flex justify-end my-2">
             <button
-              // to={"/admin/addnewpermit"}
-              className="border-2 font-semibold hover:bg-black hover:text-white transition-all border-black p-2 rounded-md text-black cursor-pointer text-center flex items-center gap-2 justify-center"
-              style={{ height: "1cm" }}
+              className="bg-green-400 text-white rounded-md flex items-center gap-2 p-2 font-medium"
+              onClick={() => setShowAdd(true)}
             >
               <PiPlusCircle size={20} />
-              Submit
+              Add
             </button>
           </div>
-        </div>
+        )}
         <Table
           columns={column}
           data={data}

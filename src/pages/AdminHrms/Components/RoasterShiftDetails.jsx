@@ -3,6 +3,7 @@ import {
   deleteRosterRecord,
   editRosterRecord,
   editRosterShiftDetails,
+  getAdminAccess,
   getRosterRecordDetails,
   getRosterShift,
   postRosterRecord,
@@ -133,6 +134,22 @@ function RoasterShiftDetails({
       console.log(error);
     }
   };
+
+   const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
+    const orgId = getItemInLocalStorage("HRMSORGID");
+    const [roleAccess, setRoleAccess] = useState({});
+    useEffect(() => {
+      const fetchRoleAccess = async () => {
+        try {
+          const res = await getAdminAccess(orgId, empId);
+  
+          setRoleAccess(res[0]);
+        } catch (error) {
+          console.log(error);
+        }
+      };
+      fetchRoleAccess();
+    }, []);
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center">
       <div className="bg-white p-6 rounded-xl shadow-lg w-1/3">
@@ -193,6 +210,7 @@ function RoasterShiftDetails({
               value={formData.selectedShift}
               onChange={handleChange}
               name="selectedShift"
+              disabled={!roleAccess?.can_assign_edit_delete_shifts }
             >
               <option value="">Select Shift</option>
               {shifts.map((shift) => (
@@ -282,25 +300,25 @@ function RoasterShiftDetails({
           )}
         </div>
         <div className="flex justify-around items-center px-4 p-1 border-t">
-          <button
+         {roleAccess?.can_assign_edit_delete_shifts && <button
             className="px-4 py-2 border-2 border-red-500 text-red-500 rounded-full flex items-center gap-2"
             onClick={() => handleDeleteRosterRecord()}
           >
             <MdDeleteForever size={20} /> Delete
-          </button>
+          </button>}
           <button
             className="px-4 py-2 border-2 border-gray-500 text-gray-500  rounded-full flex items-center gap-2"
             onClick={onClose}
           >
             <MdClose size={20} /> Cancel
           </button>
-          <button
+          {roleAccess?.can_assign_edit_delete_shifts && <button
             // style={{ background: themeColor }}
             className="px-4 py-2 border border-green-500 text-green-500  rounded-full flex items-center gap-2"
             onClick={handleEditRosterShift}
           >
             <FaCheck /> Save
-          </button>
+          </button>}
         </div>
       </div>
     </div>

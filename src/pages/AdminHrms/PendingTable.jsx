@@ -5,14 +5,22 @@ import { TiTick } from "react-icons/ti";
 import { IoClose } from "react-icons/io5";
 import Collapsible from "react-collapsible";
 import CustomTrigger from "../../containers/CustomTrigger";
-import { FaTrash } from "react-icons/fa";
+import { FaRegAddressCard, FaTrash } from "react-icons/fa";
 import {
   approveRejectMultipleRegRequest,
+  getAdminAccess,
+  getEmployeeAssociatedSites,
+  getEmployeeDetails,
   getEmployeeRegularizationReq,
+  getRegularizationDetails,
+  hrmsDomain,
   postRegularizationApproval,
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import toast from "react-hot-toast";
+import { BsEye } from "react-icons/bs";
+import { MdClose } from "react-icons/md";
+import Accordion from "./Components/Accordion";
 const PendingTable = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -62,18 +70,28 @@ const PendingTable = () => {
     }));
   };
 
-  const formatTimeToAmPm = (timestamp) => {
-    const date = new Date(timestamp); // Automatically considers the time zone offset
-    const hours = date.getHours(); // Local hours
-    const minutes = date.getMinutes(); // Local minutes
+  const formatTimeToAmPmLocal = (isoString) => {
+    const date = new Date(isoString);
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
     const amPm = hours >= 12 ? "PM" : "AM";
-    const formattedHours = hours % 12 || 12; // Convert 0-23 to 1-12, with 0 being 12 AM
-    const formattedMinutes = minutes.toString().padStart(2, "0"); // Ensure two digits for minutes
+    const formattedHours = hours % 12 || 12;
+    const formattedMinutes = minutes.toString().padStart(2, "0");
 
     return `${formattedHours}:${formattedMinutes} ${amPm}`;
   };
 
   const columns = [
+    {
+      name: "Action",
+      cell: (row) => (
+        <div className="flex items-center gap-4">
+          <button onClick={() => handleShowDetails(row.id, row.employee)}>
+            <BsEye size={15} />
+          </button>
+        </div>
+      ),
+    },
     {
       name: "Employee Name",
       selector: (row) => `${row.first_name} ${row.last_name}`,
@@ -94,10 +112,10 @@ const PendingTable = () => {
       name: "Requested Timings",
       selector: (row) => {
         const checkIn = row.requested_check_in
-          ? formatTimeToAmPm(row.requested_check_in)
+          ? formatTimeToAmPmLocal(row.requested_check_in)
           : null;
         const checkOut = row.requested_check_out
-          ? formatTimeToAmPm(row.requested_check_out)
+          ? formatTimeToAmPmLocal(row.requested_check_out)
           : null;
 
         return (
@@ -151,18 +169,22 @@ const PendingTable = () => {
       name: "Approval",
       selector: (row) => (
         <div className="flex justify-center gap-2">
-          <button
-            className="text-green-400 font-medium hover:bg-green-400 hover:text-white transition-all duration-200 p-1 rounded-full"
-            onClick={() => handleReqApproval(row.id, "approve")}
-          >
-            <TiTick size={20} />
-          </button>
-          <button
-            className="text-red-400 font-medium hover:bg-red-400 hover:text-white transition-all duration-200 p-1 rounded-full"
-            onClick={() => handleReqApproval(row.id, "reject")}
-          >
-            <IoClose size={20} />
-          </button>
+          {roleAccess?.can_approve_reject_regularisation && (
+            <>
+              <button
+                className="text-green-400 font-medium hover:bg-green-400 hover:text-white transition-all duration-200 p-1 rounded-full"
+                onClick={() => handleReqApproval(row.id, "approve")}
+              >
+                <TiTick size={20} />
+              </button>
+              <button
+                className="text-red-400 font-medium hover:bg-red-400 hover:text-white transition-all duration-200 p-1 rounded-full"
+                onClick={() => handleReqApproval(row.id, "reject")}
+              >
+                <IoClose size={20} />
+              </button>
+            </>
+          )}
         </div>
       ),
       sortable: true,
@@ -215,6 +237,11 @@ const PendingTable = () => {
   };
 
   const [selectedRows, setSelectedRows] = useState([]);
+  const formatDateFromTimestamp = (timestamp) => {
+    const date = new Date(timestamp);
+    const options = { year: "numeric", month: "long", day: "numeric" };
+    return date.toLocaleDateString("en-US", options);
+  };
 
   const handleSelectedRows = (rows) => {
     const selectedId = rows.map((row) => row.id);
@@ -286,6 +313,82 @@ const PendingTable = () => {
       day: "2-digit",
     });
   };
+  const [regDate, setReqDate] = useState("");
+  const [requestedTime, setRequestedTime] = useState("");
+  const [actualTime, setActualTime] = useState("");
+  const [reason, setReason] = useState("");
+  const [comment, setComment] = useState("");
+  const [status, setStatus] = useState("");
+  const [details, setDetails] = useState({});
+  const [showDetailsModal, setshowDetailsModal] = useState(false);
+  const handleShowDetails = async (reqId, empId) => {
+    fetchEmployeeDetails(empId);
+    fetchEmployeeAssociatedSite(empId);
+    setshowDetailsModal(true);
+    try {
+      const res = await getRegularizationDetails(reqId);
+      setDetails(res);
+      setReqDate(
+        res.requested_check_in
+          ? res.requested_check_in
+          : res.requested_check_out
+      );
+      setRequestedTime(res.requested_timing);
+      setActualTime(res.actual_timing);
+      setReason(res.reason);
+      setComment(res.comment);
+      setStatus(res.status);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const formatTimeToAmPm = (isoString) => {
+    const date = new Date(isoString);
+    const hours = date.getHours();
+    const minutes = date.getMinutes(); // Local minutes
+    const amPm = hours >= 12 ? "PM" : "AM";
+    const formattedHours = hours % 12 || 12; // Convert 0-23 to 1-12, with 0 being 12 AM
+    const formattedMinutes = minutes.toString().padStart(2, "0"); // Ensure two digits for minutes
+
+    return `${formattedHours}:${formattedMinutes} ${amPm}`;
+  };
+
+  const [empDetails, setEmpDetails] = useState({});
+  const [empSiteDetails, setEmpSiteDetails] = useState({});
+  const fetchEmployeeDetails = async (employeeId) => {
+    try {
+      const res = await getEmployeeDetails(employeeId);
+      setEmpDetails(res);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const fetchEmployeeAssociatedSite = async (employeeId) => {
+    try {
+      const res = await getEmployeeAssociatedSites(employeeId);
+      setEmpSiteDetails(res[0]);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const empId = getItemInLocalStorage("APPROVERID");
+  const orgId = getItemInLocalStorage("HRMSORGID");
+  const [roleAccess, setRoleAccess] = useState({});
+  useEffect(() => {
+    const fetchRoleAccess = async () => {
+      try {
+        const res = await getAdminAccess(orgId, empId);
+
+        setRoleAccess(res[0]);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchRoleAccess();
+  }, []);
 
   return (
     <section className="flex">
@@ -298,20 +401,22 @@ const PendingTable = () => {
             value={searchText}
             onChange={handleSearch}
           />
-          <div className="flex gap-2">
-            {/* <button
+          {roleAccess?.can_approve_reject_regularisation && (
+            <div className="flex gap-2">
+              {/* <button
               className="px-4 py-2 bg-blue-600 text-white rounded-md"
               onClick={() => setShowFilterModal(true)}
             >
               Filter
             </button> */}
-            <button
-              onClick={() => setShowActionsDropdown(!showActionsDropdown)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md"
-            >
-              Actions
-            </button>
-          </div>
+              <button
+                onClick={() => setShowActionsDropdown(!showActionsDropdown)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md"
+              >
+                Actions
+              </button>
+            </div>
+          )}
           {showActionsDropdown && (
             <div
               className="absolute top-35 right-2 mt-11 w-60 bg-white border border-gray-300 rounded-md shadow-lg z-10"
@@ -852,6 +957,160 @@ const PendingTable = () => {
             >
               Apply
             </button>
+          </div>
+        </div>
+      )}
+
+      {showDetailsModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white p-4 rounded-lg shadow-lg w-[45rem] max-h-[30rem] overflow-y-auto hide-scrollbar">
+            <h2 className="text-xl font-semibold text-center border-b">
+              Regularization Request Details
+            </h2>
+            <Accordion
+              title={"Requestor Details"}
+              icon={FaRegAddressCard}
+              content={
+                <>
+                  <div className="grid  gap-2 border bg-blue-50 rounded-md p-2">
+                    <div className="flex items-center gap-2">
+                      <img
+                        src={hrmsDomain + empDetails.profile_photo}
+                        alt={empDetails?.employee?.first_name}
+                        className="border border-gray-300 rounded-full h-10 w-10 object-cover"
+                      />
+                      <p className="font-medium">
+                        {empDetails.first_name} {empDetails.last_name}
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-2">
+                        <label htmlFor="" className="font-medium">
+                          DOB :{" "}
+                        </label>
+                        <p>{empDetails.date_of_birth}</p>
+                      </div>
+                      <div className="grid grid-cols-2">
+                        <label htmlFor="" className="font-medium">
+                          Gender :{" "}
+                        </label>
+                        <p>{empDetails.gender}</p>
+                      </div>
+
+                      <div className="grid grid-cols-2">
+                        <label htmlFor="" className="font-medium">
+                          Mobile :{" "}
+                        </label>
+                        <p>{empDetails.mobile}</p>
+                      </div>
+                      <div className="grid grid-cols-2 ">
+                        <label htmlFor="" className="font-medium">
+                          Aadhar :{" "}
+                        </label>
+                        <p>{empDetails.aadhar_number}</p>
+                      </div>
+                      <div className="grid grid-cols-2">
+                        <label htmlFor="" className="font-medium">
+                          Pan :{" "}
+                        </label>
+                        <p>{empDetails.pan}</p>
+                      </div>
+                      <div className="grid grid-cols-2">
+                        <label htmlFor="" className="font-medium">
+                          Site :{" "}
+                        </label>
+                        <p>
+                          {empSiteDetails.associated_organization_name
+                            ? empSiteDetails.associated_organization_name
+                            : "Not Associated"}
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-2">
+                        <label htmlFor="" className="font-medium">
+                          Site ID :{" "}
+                        </label>
+                        <p>
+                          {empSiteDetails.associated_organization
+                            ? empSiteDetails.associated_organization
+                            : "Not Associated"}
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-2 ">
+                        <label htmlFor="" className="font-medium">
+                          Email :{" "}
+                        </label>
+                        <p className="text-wrap max-w-20">
+                          {empDetails.email_id}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              }
+            />
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="flex justify-between">
+                <span className="font-medium">Status:</span>
+                <span
+                  className={`font-medium ${
+                    status === "rejected" ? "text-red-400" : "text-green-400"
+                  }`}
+                >
+                  {status}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="font-medium">Regularization Date:</span>
+                <span>{formatDate(regDate)}</span>
+              </div>
+              {/* <div className="flex justify-between">
+                <span className="font-medium">Attendance Template:</span>
+                <span>Attendance Policy</span>
+              </div> */}
+              <div className="flex justify-between">
+                <span className="font-medium">Type of Request:</span>
+                {details?.request_type}
+              </div>
+              <div className="flex justify-between">
+                <span className="font-medium">Applied On:</span>
+                <span>{formatDateFromTimestamp(details.created_at)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="font-medium">Actual Check In:</span>
+                <span></span>
+              </div>
+              <div className="flex justify-between">
+                <span className="font-medium">Actual Check Out:</span>
+                <span></span>
+              </div>
+              <div className="flex justify-between">
+                <span className="font-medium">Requested Check In:</span>
+                <span>
+                  {details.requested_check_in
+                    ? formatTimeToAmPm(details.requested_check_in)
+                    : ""}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="font-medium">Requested Check Out:</span>
+                <span>
+                  {details.requested_check_out
+                    ? formatTimeToAmPm(details.requested_check_out)
+                    : ""}
+                </span>
+              </div>
+            </div>
+            {/* <div className="mt-4">
+              <span className="font-medium">Comments and History</span>
+            </div> */}
+            <div className="flex justify-center border-t p-1 mt-4">
+              <button
+                onClick={() => setshowDetailsModal(false)}
+                className="px-4 py-1 border-red-500 border text-red-500 rounded-full flex items-center gap-2"
+              >
+                <MdClose /> Close
+              </button>
+            </div>
           </div>
         </div>
       )}

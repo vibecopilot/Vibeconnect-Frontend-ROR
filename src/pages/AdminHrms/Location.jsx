@@ -11,6 +11,7 @@ import OrganisationSetting from "./OrganisationSetting";
 import HRMSHelpCenter from "./HRMSHelpCenter";
 import {
   editOrganizationLocation,
+  getAdminAccess,
   getMyOrganizationLocations,
   getOrganizationLocation,
   postMyOrganizationLocations,
@@ -57,9 +58,11 @@ const Location = () => {
 
       cell: (row) => (
         <div className="flex items-center gap-4">
+        {roleAccess?.can_add_edit_locations && 
           <button onClick={() => handleEditModal(row.id)}>
             <BiEdit size={15} />
           </button>
+        }
         </div>
       ),
     },
@@ -194,6 +197,25 @@ const Location = () => {
     }
   };
 
+
+   const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
+        const orgId = getItemInLocalStorage("HRMSORGID");
+        const [roleAccess, setRoleAccess] = useState({
+      
+        })
+        useEffect(() => {
+          const fetchRoleAccess = async () => {
+            try {
+              const res = await getAdminAccess(orgId, empId);
+      
+              setRoleAccess(res[0])
+            } catch (error) {
+              console.log(error);
+            }
+          };
+          fetchRoleAccess();
+        }, []);
+
   return (
     <section className="flex ml-20">
       <OrganisationSetting />
@@ -206,13 +228,13 @@ const Location = () => {
             value={searchText}
             onChange={handleSearch}
           />
-          <button
+          {roleAccess?.can_add_edit_locations &&<button
             style={{ background: themeColor }}
             className="flex items-center gap-2 font-medium border-2 text-white p-1 rounded-md"
             onClick={() => setAddModalIsOpen(true)}
           >
             <BiPlusCircle /> Add
-          </button>
+          </button>}
         </div>
         <Table columns={columns} data={filteredLocations} isPagination={true} />
       </div>

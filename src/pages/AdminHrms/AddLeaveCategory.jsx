@@ -54,14 +54,13 @@ function AddLeaveCategory() {
   };
   const navigate = useNavigate();
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
-  console.log(formData)
+  console.log(formData);
   const handleSubmit = async () => {
     if (
       !formData.leaveType ||
       !formData.customLabel ||
       !formData.abbreviationLabel ||
-      !formData.accrualPeriod ||
-      !formData.prorationMethod
+      !formData.accrualPeriod
     ) {
       return toast.error("Please fill all the required fields");
     }
@@ -206,7 +205,7 @@ function AddLeaveCategory() {
               <option value="Monthly">Monthly</option>
             </select>
           </div>
-          <div className="flex flex-col gap-2  justify-between">
+          {/* <div className="flex flex-col gap-2  justify-between">
             <label className="font-medium">Accrue leave in advance?</label>
             <div>
               <label className="mr-4">
@@ -360,7 +359,7 @@ function AddLeaveCategory() {
                 Pro-ration by joining date in the calendar month
               </option>
             </select>
-          </div>
+          </div> */}
 
           {formData.prorationMethod === "Fixed cut-off" && (
             <div className="flex flex-col gap-2">
@@ -396,7 +395,7 @@ function AddLeaveCategory() {
               />
             </div>
           )}
-          <div className="flex flex-col gap-2  justify-between">
+          {/* <div className="flex flex-col gap-2  justify-between">
             <label className="font-medium">
               Allow application on Weekly offs and Holidays?
             </label>
@@ -985,7 +984,7 @@ function AddLeaveCategory() {
                 No
               </label>
             </div>
-          </div>
+          </div> */}
         </div>
         <div className="flex justify-center border-t p-1 my-2">
           <button

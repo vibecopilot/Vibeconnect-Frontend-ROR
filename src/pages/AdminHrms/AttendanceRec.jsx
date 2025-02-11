@@ -12,6 +12,7 @@ import {
 import ToggleSwitch from "../../Buttons/ToggleSwitch";
 import EmployeeDetailView from "./EmployeeDetailView";
 import {
+  getAdminAccess,
   getAttendanceRecord,
   getEmployeeAttendanceOfToday,
   getUserDetails,
@@ -159,10 +160,21 @@ const AttendanceRec = () => {
     );
     const isPastDate = date < today;
     if (isPastDate) {
-      return record ? (record.is_present ? "Present" : "Absent") : "Absent";
+      return record ? (record.length !== 0 ? "Present" : "Absent") : "Absent";
     }
     return "";
   };
+  // const getAttendanceStatus = (employee, date) => {
+  //   const today = new Date();
+  //   const record = employee.attendance_records.find(
+  //     (record) => new Date(record.date).toDateString() === date.toDateString()
+  //   );
+  //   const isPastDate = date < today;
+  //   if (isPastDate) {
+  //     return record ? (record.is_present ? "Present" : "Absent") : "Absent";
+  //   }
+  //   return "";
+  // };
 
   const changeWeek = (direction) => {
     const newDate = new Date(startDate);
@@ -308,9 +320,15 @@ const AttendanceRec = () => {
         const checkOutRecord = res
           .reverse()
           .find((record) => record.is_check_in === false);
+        // const checkInTime = checkInRecord
+        //   ? formatTimeToAmPmUTC(checkInRecord.attendance_time)
+        //   : null;
         const checkInTime = checkInRecord
           ? new Date(checkInRecord.attendance_time).toLocaleTimeString()
           : null;
+        // const checkOutTime = checkOutRecord
+        //   ? formatTimeToAmPmUTC(checkInRecord.attendance_time)
+        //   : null;
         const checkOutTime = checkOutRecord
           ? new Date(checkOutRecord.attendance_time).toLocaleTimeString()
           : null;
@@ -336,11 +354,38 @@ const AttendanceRec = () => {
       sortable: true,
     },
     {
-      name: "Check out time",
+      name: "Timing",
       selector: (row) => new Date(row.attendance_time).toLocaleTimeString(),
       sortable: true,
     },
   ];
+
+  const formatTimeToAmPmUTC = (timestamp) => {
+    const date = new Date(timestamp); 
+    const hours = date.getUTCHours(); 
+    const minutes = date.getUTCMinutes(); 
+    const amPm = hours >= 12 ? "PM" : "AM";
+    const formattedHours = hours % 12 || 12; // Convert 0-23 to 1-12, with 0 being 12 AM
+    const formattedMinutes = minutes.toString().padStart(2, "0"); // Ensure two digits for minutes
+  
+    return `${formattedHours}:${formattedMinutes} ${amPm}`;
+  };
+
+   const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
+        const orgId = getItemInLocalStorage("HRMSORGID");
+        const [roleAccess, setRoleAccess] = useState({});
+        useEffect(() => {
+          const fetchRoleAccess = async () => {
+            try {
+              const res = await getAdminAccess(orgId, empId);
+      
+              setRoleAccess(res[0]);
+            } catch (error) {
+              console.log(error);
+            }
+          };
+          fetchRoleAccess();
+        }, []);
 
   return (
     <div className="flex">
@@ -876,12 +921,12 @@ const AttendanceRec = () => {
                     {/* <p>{selectedRecord.schedule}</p> */}
                   </div>
                   <div className="flex gap-2 justify-end border-t p-1 ">
-                    <button
+                    {roleAccess.can_apply_regularization_on_behalf_of_employee &&<button
                       className=" bg-blue-500 text-white px-4 py-2 rounded-full"
                       onClick={() => setAddRegularization(true)}
                     >
-                      Apply for Regularization
-                    </button>
+                      Apply For Regularization
+                    </button>}
 
                     <button
                       className=" bg-red-500 text-white px-4 py-2 rounded-full"

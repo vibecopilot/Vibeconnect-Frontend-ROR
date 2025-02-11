@@ -1,6 +1,13 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import FileInputBox from "../../containers/Inputs/FileInputBox";
+import { RiContactsBook2Line } from "react-icons/ri";
+import Accordion from "../AdminHrms/Components/Accordion";
+import { getItemInLocalStorage } from "../../utils/localStorage";
+import { getFloors, getPermitDetails, getUnits, getVendors } from "../../api";
+import { MdClose } from "react-icons/md";
+import { FaCheck, FaTrash } from "react-icons/fa";
+import { useNavigate, useParams } from "react-router-dom";
 
 const PermitListEdit = () => {
   const themeColor = useSelector((state) => state.theme.color);
@@ -39,111 +46,194 @@ const PermitListEdit = () => {
     setShowEntityList(event.target.value === "client");
   };
 
+  const firstName = getItemInLocalStorage("Name");
+  const lastName = getItemInLocalStorage("LASTNAME");
+  const email = getItemInLocalStorage("USEREMAIL");
+  const siteName = getItemInLocalStorage("SITENAME");
+  const mobileNumber = getItemInLocalStorage("Mobile");
+  const [floors, setFloors] = useState([]);
+  const [units, setUnits] = useState([]);
+  const buildings = getItemInLocalStorage("Building");
+  const userId = getItemInLocalStorage("UserId");
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    name: "",
+    contact_number: "",
+    site_id: "",
+    unit_id: "",
+    permit_for: "",
+    building_id: "",
+    floor_id: "",
+    room_id: "",
+    client_specific: "",
+    entity: "",
+    copy_to_string: "",
+    permit_type: "",
+    vendor_id: "",
+    issue_date_and_time: "",
+    expiry_date_and_time: "",
+    comment: "",
+    permit_status: "",
+    extention_status: true,
+    created_by_id: "",
+    permit_activities: [],
+  });
+  const [vendors, setVendors] = useState([]);
+  useEffect(() => {
+    const fetchVendors = async () => {
+      const vendorResp = await getVendors();
+      setVendors(vendorResp.data);
+    };
+
+    fetchVendors();
+  }, []);
+  const handleChange = async (e) => {
+    async function fetchFloor(floorID) {
+      try {
+        const build = await getFloors(floorID);
+        setFloors(build.data.map((item) => ({ name: item.name, id: item.id })));
+      } catch (e) {
+        console.log(e);
+      }
+    }
+
+    async function getUnit(UnitID) {
+      try {
+        const unit = await getUnits(UnitID);
+        setUnits(unit.data.map((item) => ({ name: item.name, id: item.id })));
+        console.log(unit);
+      } catch (error) {
+        console.log(error);
+      }
+    }
+    if (e.target.type === "select-one" && e.target.name === "building_id") {
+      const BuildID = Number(e.target.value);
+      await fetchFloor(BuildID);
+
+      setFormData({
+        ...formData,
+        building_id: BuildID,
+      });
+    } else if (
+      e.target.type === "select-one" &&
+      e.target.name === "floor_name"
+    ) {
+      const UnitID = Number(e.target.value);
+      await getUnit(UnitID);
+      setFormData({
+        ...formData,
+        floor_id: UnitID,
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [e.target.name]: e.target.value,
+      });
+    }
+  };
+  const { id } = useParams();
+  const fetchPermitsDetails = async () => {
+    try {
+      const res = await getPermitDetails(id);
+      setFormData({
+        ...formData,
+        name: res?.data?.name,
+        contact_number: res?.data?.contact_number,
+        permit_for: res?.data?.permit_for,
+        building_id: res?.data?.building_id,
+        floor_id: res?.data?.floor_id,
+        unit_id: res?.data?.unit_id,
+        client_specific: res?.data?.client_specific
+      });
+      fetchFloors(res?.data?.building_id);
+      fetchUnits(res?.data?.floor_id);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const fetchFloors = async (buildingId) => {
+    try {
+      const res = await getFloors(buildingId);
+      setFloors(res.data.map((item) => ({ name: item.name, id: item.id })));
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const fetchUnits = async (floorId) => {
+    try {
+      const res = await getUnits(floorId);
+      setUnits(res.data.map((item) => ({ name: item.name, id: item.id })));
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(() => {
+    fetchPermitsDetails();
+  }, []);
+
   return (
     <section>
       <div className="m-2">
-        <h2
-          style={{ background: themeColor }}
-          className="text-center text-xl font-bold p-2 rounded-full text-white"
-        >
-          Edit Permit
-        </h2>
-        <div className="md:mx-20 my-5 mb-10 sm:border border-gray-400 p-5 px-10 rounded-lg sm:shadow-xl">
-          <h2 className="border-b text-center text-xl border-black mb-6 font-bold">
-            PERMIT REQUESTOR DETAILS
+        <div className=" my-5 mb-10 sm:border border-gray-400 p-2 rounded-lg ">
+          <h2
+            style={{ background: themeColor }}
+            className="text-center text-xl font-bold p-2 rounded-md text-white"
+          >
+            Edit Permit
           </h2>
-          <h1 className="font-semibold">Requestor Details :</h1>
+          <Accordion
+            icon={RiContactsBook2Line}
+            title={"Requestor Details"}
+            content={
+              <>
+                <div className="bg-green-50 p-2 rounded-md">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div className="grid grid-cols-2 items-center">
+                      <label
+                        className="block text-gray-700 font-medium "
+                        htmlFor="name"
+                      >
+                        Name :
+                      </label>
+                      <p>{formData?.name}</p>
+                    </div>
 
-          <div className="w-full mx-3 my-5 p-5 shadow-lg rounded-lg border border-gray-300">
-            {/* Requestor details input fields */}
-            <div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <div className="col-span-1">
-                  <label
-                    className="block text-gray-700 font-bold mb-2"
-                    htmlFor="name"
-                  >
-                    Name
-                  </label>
-                  <input
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    id="name"
-                    type="text"
-                    placeholder="Abdul Ghaffar"
-                  />
+                    <div className="grid grid-cols-2 items-center">
+                      <label
+                        className="block text-gray-700 font-medium  text-center"
+                        htmlFor="name"
+                      >
+                        Site :
+                      </label>
+                      <p>{siteName}</p>
+                    </div>
+                    <div className="grid grid-cols-2 items-center">
+                      <label
+                        className="block text-gray-700 font-medium "
+                        htmlFor="name"
+                      >
+                        Contact number :
+                      </label>
+                      <p>{mobileNumber}</p>
+                    </div>
+                    {/* <div className="grid grid-cols-2 items-center">
+                      <label
+                        className="block text-gray-700 font-medium "
+                        htmlFor="name"
+                      >
+                        Unit :
+                      </label>
+                      <p>{siteName}</p>
+                    </div> */}
+                  </div>
                 </div>
-                <div className="col-span-1">
-                  <label
-                    className="block text-gray-700 font-bold mb-2"
-                    htmlFor="contact-number"
-                  >
-                    Contact Number
-                  </label>
-                  <input
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    id="contact-number"
-                    type="text"
-                    placeholder="91 9198278675"
-                  />
-                </div>
-                <div className="col-span-1">
-                  <label
-                    className="block text-gray-700 font-bold mb-2"
-                    htmlFor="site"
-                  >
-                    Site
-                  </label>
-                  <input
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    id="site"
-                    type="text"
-                    placeholder="Business Bay"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <div className="col-span-1">
-                  <label
-                    className="block text-gray-700 font-bold mb-2"
-                    htmlFor="department"
-                  >
-                    Department
-                  </label>
-                  <input
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    id="department"
-                    type="text"
-                    placeholder="Department"
-                  />
-                </div>
-                <div className="col-span-1">
-                  <label
-                    className="block text-gray-700 font-bold mb-2"
-                    htmlFor="unit"
-                  >
-                    Unit
-                  </label>
-                  <input
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    id="unit"
-                    type="text"
-                    placeholder="Unit"
-                  />
-                </div>
-                {/* <div className="col-span-1 flex items-end">
-      <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full" type="button">
-        Submit
-      </button>
-    </div> */}
-              </div>
-            </div>
-          </div>
-
-          <h2 className="border-b text-center text-xl border-black mb-6 font-bold">
+              </>
+            }
+          />
+          <h2 className="border-b text-xl border-black font-medium mt-2">
             BASIC DETAILS
           </h2>
-
-          <div className="w-full mx-3 my-5 p-5 shadow-lg rounded-lg border border-gray-300">
+          <div className="w-full  my-5 p-5 rounded-lg border border-gray-300">
             {/* Basic details input fields */}
             <div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -152,12 +242,15 @@ const PermitListEdit = () => {
                     className="block text-gray-700 font-bold mb-2"
                     htmlFor="permit-for"
                   >
-                    Permit For*
+                    Permit For
                   </label>
                   <input
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    className="border border-gray-300 rounded-md p-2 w-full"
                     id="permit-for"
                     type="text"
+                    onChange={handleChange}
+                    value={formData.permit_for}
+                    name="permit_for"
                     placeholder="Enter Permit For"
                   />
                 </div>
@@ -166,43 +259,21 @@ const PermitListEdit = () => {
                     className="block text-gray-700 font-bold mb-2"
                     htmlFor="building"
                   >
-                    Building*
+                    Building
                   </label>
                   <select
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    className="border border-gray-300 rounded-md p-2 w-full"
                     id="building"
+                    onChange={handleChange}
+                    value={formData.building_id}
+                    name="building_id"
                   >
-                    <option>Select Building</option>
-                  </select>
-                </div>
-                <div className="col-span-1">
-                  <label
-                    className="block text-gray-700 font-bold mb-2"
-                    htmlFor="wing"
-                  >
-                    Wing
-                  </label>
-                  <select
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    id="wing"
-                  >
-                    <option>Select Building First</option>
-                  </select>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <div className="col-span-1">
-                  <label
-                    className="block text-gray-700 font-bold mb-2"
-                    htmlFor="area"
-                  >
-                    Area
-                  </label>
-                  <select
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    id="area"
-                  >
-                    <option>Select Floor First</option>
+                    <option value="">Select Building</option>
+                    {buildings?.map((building) => (
+                      <option key={building.id} value={building.id}>
+                        {building.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div className="col-span-1">
@@ -213,10 +284,18 @@ const PermitListEdit = () => {
                     Floor
                   </label>
                   <select
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    className="border border-gray-300 rounded-md p-2 w-full"
                     id="floor"
+                    onChange={handleChange}
+                    value={formData.floor_id}
+                    name="floor_id"
                   >
-                    <option>Select Wing First</option>
+                    <option value="">Select Floor</option>
+                    {floors?.map((floor) => (
+                      <option value={floor.id} key={floor.id}>
+                        {floor.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div className="col-span-1">
@@ -224,17 +303,15 @@ const PermitListEdit = () => {
                     className="block text-gray-700 font-bold mb-2"
                     htmlFor="room"
                   >
-                    Room
+                    Unit
                   </label>
                   <select
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    className="border border-gray-300 rounded-md p-2 w-full"
                     id="room"
                   >
-                    <option>Select Wing First</option>
+                    <option>Select Unit</option>
                   </select>
                 </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <div className="col-span-1">
                   <label
                     className="block text-gray-700 font-bold mb-2"
@@ -242,13 +319,14 @@ const PermitListEdit = () => {
                   >
                     Client Specific
                   </label>
-                  <div className="flex items-center">
+                  <div className="border border-gray-300 rounded-md p-2 w-full">
                     <input
                       className="mr-2 leading-tight"
                       type="radio"
                       id="internal"
-                      name="type"
+                      name="client_specific"
                       value="internal"
+                      checked={formData.client_specific === "internal"}
                       onChange={handleRadioChange}
                     />
                     <label
@@ -261,8 +339,9 @@ const PermitListEdit = () => {
                       className="mr-2 leading-tight"
                       type="radio"
                       id="client"
-                      name="type"
+                      name="client_specific"
                       value="client"
+                      checked={formData.client_specific === "client"}
                       onChange={handleRadioChange}
                     />
                     <label className="text-gray-700 font-bold" htmlFor="client">
@@ -279,11 +358,22 @@ const PermitListEdit = () => {
                       List of Entity
                     </label>
                     <select
-                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      className="border border-gray-300 rounded-md p-2 w-full"
                       id="entity-list"
-                      style={{ width: "100%" }}
+                      onChange={handleChange}
+                      value={formData.entity}
+                      name="entity"
                     >
-                      <option>Select Entity</option>
+                      <option value="">Select Entity</option>
+                      <option value="RISING ASSOSIATES">
+                        RISING ASSOSIATES
+                      </option>
+                      <option value="ABS Professional Services">
+                        ABS Professional Services
+                      </option>
+                      <option value="Apex Fund Services LLP">
+                        Apex Fund Services LLP
+                      </option>
                     </select>
                   </div>
                 )}
@@ -294,228 +384,282 @@ const PermitListEdit = () => {
                   >
                     Copy To
                   </label>
-                  <input
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  <select
+                    name="copy_to_string"
+                    onChange={handleChange}
+                    value={formData.copy_to_string}
+                    className="border border-gray-300 rounded-md p-2 w-full"
                     id="copy-to"
-                    type="text"
-                    placeholder="Copy To"
-                  />
+                  >
+                    <option value="">Select</option>
+                  </select>
                 </div>
               </div>
             </div>
           </div>
 
-          <h2 className="border-b text-center text-xl border-black mb-6 font-bold">
+          <h2 className="border-b  text-xl border-black  font-medium">
             PERMIT DETAILS
           </h2>
 
-          <h3 className="font-semibold">Select Permit Type</h3>
           {/* Permit details input fields */}
-          <div className="w-full mx-3 my-5 p-5 shadow-lg rounded-lg border border-gray-300">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-              <div className="col-span-1">
-                <input
-                  type="radio"
-                  id="cold-work"
-                  name="permit-type"
-                  value="Cold Work"
-                />
-                <label
-                  className="text-gray-700 font-bold ml-2"
-                  htmlFor="cold-work"
-                >
-                  Cold Work
-                </label>
+          <div className="w-full my-2">
+            <h3 className="font-semibold">Select Permit Type</h3>
+            {/* Permit details input fields */}
+            <div className="border rounded-xl p-2 bg-gray-50">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                <div className="col-span-1">
+                  <input
+                    type="radio"
+                    id="cold-work"
+                    name="permit_type"
+                    value="Cold Work"
+                    checked={formData.permit_type === "Cold Work"}
+                    onChange={(e) =>
+                      setFormData({ ...formData, permit_type: e.target.value })
+                    }
+                  />
+                  <label
+                    className="text-gray-700 font-medium ml-2"
+                    htmlFor="cold-work"
+                  >
+                    Cold Work
+                  </label>
+                </div>
+                <div className="col-span-1">
+                  <input
+                    type="radio"
+                    id="confined-space-work"
+                    name="permit_type"
+                    value="Confined Space Work"
+                    checked={formData.permit_type === "Confined Space Work"}
+                    onChange={(e) =>
+                      setFormData({ ...formData, permit_type: e.target.value })
+                    }
+                  />
+                  <label
+                    className="text-gray-700 font-medium ml-2"
+                    htmlFor="confined-space-work"
+                  >
+                    Confined Space Work
+                  </label>
+                </div>
+                <div className="col-span-1">
+                  <input
+                    type="radio"
+                    id="electrical-work"
+                    name="permit-type"
+                    value="Electrical Work"
+                    checked={formData.permit_type === "Electrical Work"}
+                    onChange={(e) =>
+                      setFormData({ ...formData, permit_type: e.target.value })
+                    }
+                  />
+                  <label
+                    className="text-gray-700 font-medium ml-2"
+                    htmlFor="electrical-work"
+                  >
+                    Electrical Work
+                  </label>
+                </div>
+                <div className="col-span-1">
+                  <input
+                    type="radio"
+                    id="excavation-work"
+                    name="permit_type"
+                    value="Excavation Work"
+                    checked={formData.permit_type === "Excavation Work"}
+                    onChange={(e) =>
+                      setFormData({ ...formData, permit_type: e.target.value })
+                    }
+                  />
+                  <label
+                    className="text-gray-700 font-medium ml-2"
+                    htmlFor="excavation-work"
+                  >
+                    Excavation Work
+                  </label>
+                </div>
               </div>
-              <div className="col-span-1">
-                <input
-                  type="radio"
-                  id="confined-space-work"
-                  name="permit-type"
-                  value="Confined Space Work"
-                />
-                <label
-                  className="text-gray-700 font-bold ml-2"
-                  htmlFor="confined-space-work"
-                >
-                  Confined Space Work
-                </label>
-              </div>
-              <div className="col-span-1">
-                <input
-                  type="radio"
-                  id="electrical-work"
-                  name="permit-type"
-                  value="Electrical Work"
-                />
-                <label
-                  className="text-gray-700 font-bold ml-2"
-                  htmlFor="electrical-work"
-                >
-                  Electrical Work
-                </label>
-              </div>
-              <div className="col-span-1">
-                <input
-                  type="radio"
-                  id="excavation-work"
-                  name="permit-type"
-                  value="Excavation Work"
-                />
-                <label
-                  className="text-gray-700 font-bold ml-2"
-                  htmlFor="excavation-work"
-                >
-                  Excavation Work
-                </label>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-              <div className="col-span-1">
-                <input
-                  type="radio"
-                  id="height-work"
-                  name="permit-type"
-                  value="Height Work"
-                />
-                <label
-                  className="text-gray-700 font-bold ml-2"
-                  htmlFor="height-work"
-                >
-                  Height Work
-                </label>
-              </div>
-              <div className="col-span-1">
-                <input
-                  type="radio"
-                  id="hot-work"
-                  name="permit-type"
-                  value="Hot Work"
-                />
-                <label
-                  className="text-gray-700 font-bold ml-2"
-                  htmlFor="hot-work"
-                >
-                  Hot Work
-                </label>
-              </div>
-              <div className="col-span-1">
-                <input
-                  type="radio"
-                  id="radiology-work"
-                  name="permit-type"
-                  value="Radiology Work"
-                />
-                <label
-                  className="text-gray-700 font-bold ml-2"
-                  htmlFor="radiology-work"
-                >
-                  Radiology Work
-                </label>
-              </div>
-              <div className="col-span-1">
-                <input
-                  type="radio"
-                  id="loading-unloading-work"
-                  name="permit-type"
-                  value="Loading, Unloading Hazardous Material Work"
-                />
-                <label
-                  className="text-gray-700 font-bold ml-2"
-                  htmlFor="loading-unloading-work"
-                >
-                  Loading, Unloading Hazardous Material Work
-                </label>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                <div className="col-span-1">
+                  <input
+                    type="radio"
+                    id="height-work"
+                    name="permit_type"
+                    value="Height Work"
+                    checked={formData.permit_type === "Height Work"}
+                    onChange={(e) =>
+                      setFormData({ ...formData, permit_type: e.target.value })
+                    }
+                  />
+                  <label
+                    className="text-gray-700 font-medium ml-2"
+                    htmlFor="height-work"
+                  >
+                    Height Work
+                  </label>
+                </div>
+                <div className="col-span-1">
+                  <input
+                    type="radio"
+                    id="hot-work"
+                    name="permit_type"
+                    value="Hot Work"
+                    checked={formData.permit_type === "Hot Work"}
+                    onChange={(e) =>
+                      setFormData({ ...formData, permit_type: e.target.value })
+                    }
+                  />
+                  <label
+                    className="text-gray-700 font-medium ml-2"
+                    htmlFor="hot-work"
+                  >
+                    Hot Work
+                  </label>
+                </div>
+                <div className="col-span-1">
+                  <input
+                    type="radio"
+                    id="radiology-work"
+                    name="permit_type"
+                    value="Radiology Work"
+                    checked={formData.permit_type === "Radiology Work"}
+                    onChange={(e) =>
+                      setFormData({ ...formData, permit_type: e.target.value })
+                    }
+                  />
+                  <label
+                    className="text-gray-700 font-medium ml-2"
+                    htmlFor="radiology-work"
+                  >
+                    Radiology Work
+                  </label>
+                </div>
+                <div className="col-span-1">
+                  <input
+                    type="radio"
+                    id="loading-unloading-work"
+                    name="permit_type"
+                    value="Loading, Unloading Hazardous Material Work"
+                    checked={
+                      formData.permit_type ===
+                      "Loading, Unloading Hazardous Material Work"
+                    }
+                    onChange={(e) =>
+                      setFormData({ ...formData, permit_type: e.target.value })
+                    }
+                  />
+                  <label
+                    className="text-gray-700 font-medium ml-2"
+                    htmlFor="loading-unloading-work"
+                  >
+                    Loading, Unloading Hazardous Material Work
+                  </label>
+                </div>
               </div>
             </div>
           </div>
 
-          <h3 className="font-semibold">Enter Permit Description</h3>
+          <h3 className="font-semibold border-b border-gray-500 text-xl">
+            Enter Permit Description
+          </h3>
 
-          <div className="w-full mx-3 my-5 p-5 shadow-lg rounded-lg border border-gray-300">
+          <div className="w-full ">
             {/* Permit details input fields */}
-            <div className="w-full mx-3 my-5 p-5 shadow-lg rounded-lg border border-gray-300">
+            <div className="w-full   rounded-lg ">
               {activities.map((activity, index) => (
-                <div key={activity.id} className="mb-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div
+                  key={activity.id}
+                  className="mb-4 border p-2 rounded-xl mt-1"
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     <div className="col-span-1">
                       <label
-                        className="block text-gray-700 font-bold mb-2"
+                        className="block text-gray-700 font-medium mb-2"
                         htmlFor={`activity-${index}`}
                       >
                         Activity*
                       </label>
-                      <input
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      <select
                         id={`activity-${index}`}
                         type="text"
-                        placeholder="Select Activity"
                         name="activity"
                         value={activity.activity}
                         onChange={(e) => handleInputChange(index, e)}
-                      />
+                        className="border border-gray-300 rounded-md p-2 w-full"
+                      >
+                        <option value="">Select Activity</option>
+                      </select>
                     </div>
                     <div className="col-span-1">
                       <label
-                        className="block text-gray-700 font-bold mb-2"
+                        className="block text-gray-700 font-medium mb-2"
                         htmlFor={`sub-activity-${index}`}
                       >
                         Sub Activity*
                       </label>
-                      <input
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      <select
+                        className="border border-gray-300 rounded-md p-2 w-full"
                         id={`sub-activity-${index}`}
                         type="text"
                         placeholder="Select Sub Activity"
-                        name="subActivity"
-                        value={activity.subActivity}
+                        name="sub_activity"
+                        value={activity.sub_activity}
                         onChange={(e) => handleInputChange(index, e)}
-                      />
+                      >
+                        <option value="">Select Sub Activity</option>
+                      </select>
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 ">
                     <div className="col-span-1">
                       <label
-                        className="block text-gray-700 font-bold mb-2"
+                        className="block text-gray-700 font-medium mb-2"
                         htmlFor={`hazard-category-${index}`}
                       >
                         Category of Hazards*
                       </label>
-                      <input
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      <select
+                        className="border border-gray-300 rounded-md p-2 w-full"
                         id={`hazard-category-${index}`}
                         type="text"
                         placeholder="Select Category of Hazards"
-                        name="hazardCategory"
-                        value={activity.hazardCategory}
+                        name="category_of_hazards"
+                        value={activity.category_of_hazards}
                         onChange={(e) => handleInputChange(index, e)}
-                      />
-                    </div>
-                    <div className="col-span-1">
-                      <label
-                        className="block text-gray-700 font-bold mb-2"
-                        htmlFor={`risks-${index}`}
                       >
-                        Risks*
-                      </label>
-                      <input
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                        id={`risks-${index}`}
-                        type="text"
-                        placeholder="Enter Risks"
-                        name="risks"
-                        value={activity.risks}
-                        onChange={(e) => handleInputChange(index, e)}
-                      />
+                        <option value="">Select </option>
+                      </select>
+                      <input />
                     </div>
                   </div>
-                  <button
-                    className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                    type="button"
-                    onClick={() => handleDeleteActivity(activity.id)}
-                  >
-                    Delete
-                  </button>
+                  <div>
+                    <label
+                      className="block text-gray-700 font-medium mb-2"
+                      htmlFor={`risks-${index}`}
+                    >
+                      Risks*
+                    </label>
+                    <input
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      id={`risks-${index}`}
+                      type="text"
+                      placeholder="Enter Risks"
+                      name="risks"
+                      value={activity.risks}
+                      onChange={(e) => handleInputChange(index, e)}
+                    />
+                  </div>
+                  <div className="flex justify-end">
+                    <button
+                      className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:shadow-outline mt-1"
+                      type="button"
+                      onClick={() => handleDeleteActivity(index)}
+                    >
+                      <FaTrash />
+                    </button>
+                  </div>
                 </div>
               ))}
               <div className="flex items-center justify-between">
@@ -529,7 +673,7 @@ const PermitListEdit = () => {
               </div>
             </div>
 
-            <div className="w-full mx-3 my-5 p-5 shadow-lg rounded-lg border border-gray-300">
+            <div className="w-full  border p-2 rounded-xl mt-1">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div className="col-span-1">
                   <label
@@ -538,12 +682,22 @@ const PermitListEdit = () => {
                   >
                     Vendor
                   </label>
-                  <input
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  <select
+                    className="border border-gray-300 rounded-md p-2 w-full"
                     id="vendor"
                     type="text"
+                    value={formData.vendor_id}
+                    onChange={handleChange}
+                    name="vendor_id"
                     placeholder="Enter Vendor"
-                  />
+                  >
+                    <option value="">Select Vendor</option>
+                    {vendors.map((vendor) => (
+                      <option value={vendor.id} key={vendor.id}>
+                        {vendor.vendor_name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div className="col-span-1">
                   <label
@@ -553,9 +707,12 @@ const PermitListEdit = () => {
                     Expiry Date&Time*
                   </label>
                   <input
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    className="border border-gray-300 rounded-md p-2 w-full"
                     id="expiryDateTime"
-                    type="text"
+                    value={formData.expiry_date_and_time}
+                    onChange={handleChange}
+                    name="expiry_date_and_time"
+                    type="datetime-local"
                     placeholder="dd-mm-yyyy --:--"
                   />
                 </div>
@@ -569,8 +726,11 @@ const PermitListEdit = () => {
                     Comment (Optional)
                   </label>
                   <textarea
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    className="border border-gray-300 rounded-md p-2 w-full"
                     id="comment"
+                    value={formData.comment}
+                    onChange={handleChange}
+                    name="comment"
                     placeholder="Enter Comment"
                   />
                 </div>
@@ -584,12 +744,18 @@ const PermitListEdit = () => {
           <FileInputBox />
 
           {/* Submit button */}
-          <div className="sm:flex justify-center grid gap-2 my-5 ">
+          <div className="sm:flex justify-center grid gap-2 mt-5 border-t p-1">
             <button
-              className="bg-black text-white p-2 px-4 rounded-md font-medium"
-              //   onClick={handleSubmit}
+              className="bg-red-400 text-white p-2 px-4 rounded-md font-medium flex items-center gap-2"
+              onClick={() => navigate("/admin/permit")}
             >
-              Submit
+              <MdClose size={20} /> Cancel
+            </button>
+            <button
+              className="bg-green-400 text-white p-2 px-4 rounded-md font-medium flex items-center gap-2"
+              // onClick={handleNewPermit}
+            >
+              <FaCheck /> Submit
             </button>
           </div>
         </div>

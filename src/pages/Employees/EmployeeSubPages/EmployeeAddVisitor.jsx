@@ -1,13 +1,23 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import image from "/profile.png";
-import { FaTrash } from "react-icons/fa";
+import { FaCheck, FaTrash } from "react-icons/fa";
+import { MdClose } from "react-icons/md";
 import { useSelector } from "react-redux";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
 import toast from "react-hot-toast";
-import { getSetupUsers, postNewVisitor } from "../../../api";
+import {
+  getHostList,
+  getSetupUsers,
+  getVisitorStaffCategory,
+  postNewGoods,
+  postNewVisitor,
+  postVisitorInDevice,
+} from "../../../api";
 import { useNavigate } from "react-router-dom";
 import FileInputBox from "../../../containers/Inputs/FileInputBox";
-
+import Select from "react-select";
+import Webcam from "react-webcam";
+import AxiosDigestAuth from "@mhoc/axios-digest-auth";
 const EmployeeAddVisitor = () => {
   const siteId = getItemInLocalStorage("SITEID");
   const userId = getItemInLocalStorage("UserId");
@@ -19,7 +29,10 @@ const EmployeeAddVisitor = () => {
   const [selectedVisitorType, setSelectedVisitorType] = useState("Guest");
   const [passStartDate, setPassStartDate] = useState("");
   const [passEndDate, setPassEndDate] = useState("");
-
+  const [hosts, setHosts] = useState([]);
+  const [staffCategories, setStaffCategories] = useState([]);
+  const [showWebcam, setShowWebcam] = useState(false);
+  const [capturedImage, setCapturedImage] = useState(null);
   const [formData, setFormData] = useState({
     visitorName: "",
     mobile: "",
@@ -30,6 +43,13 @@ const EmployeeAddVisitor = () => {
     expectedTime: "",
     hostApproval: false,
     goodsInward: false,
+    host: "",
+    supportCategory: "",
+    passNumber: "",
+    noOfGoods: "",
+    goodsDescription: "",
+    goodsAttachments: [],
+    slotNumber: "",
   });
   console.log(formData);
   const themeColor = useSelector((state) => state.theme.color);
@@ -81,13 +101,27 @@ const EmployeeAddVisitor = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
   const navigate = useNavigate();
+  const formatDateWithSeconds = (dateStr) => {
+    const date = new Date(dateStr);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0"); // 0-indexed month
+    const day = String(date.getDate()).padStart(2, "0");
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    const seconds = String(date.getSeconds()).padStart(2, "0");
+
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+  };
+
   const createNewVisitor = async () => {
-    if (
-      formData.visitorName === "" ||
-      formData.purpose === "" ||
-      formData.mobile === ""
-    ) {
-      return toast.error("All fields are Required");
+    if (formData.visitorName === "") {
+      return toast.error("Provide Visitor name");
+    }
+    if (formData.purpose === "") {
+      return toast.error("Provide Purpose");
+    }
+    if (formData.mobile === "") {
+      return toast.error("Provide Visitor Mobile Number");
     }
     const mobilePattern = /^\d{10}$/;
     if (!mobilePattern.test(formData.mobile)) {
@@ -101,10 +135,24 @@ const EmployeeAddVisitor = () => {
     // if (capturedImage) {
     //   const response = await fetch(capturedImage);
     //   const blob = await response.blob();
-    postData.append("visitor[profile_pic]", imageFile, "visitor_image.jpg");
     // }
+    if (userType === "security_guard") {
+      if (capturedImage) {
+        const response = await fetch(capturedImage);
+        const blob = await response.blob();
+        postData.append("visitor[profile_pic]", blob, "visitor_image.jpg");
+      }
+    } else {
+      if (imageFile) {
+        postData.append("visitor[profile_pic]", imageFile, "visitor_image");
+      }
+    }
     postData.append("visitor[contact_no]", formData.mobile);
     postData.append("visitor[purpose]", formData.purpose);
+    postData.append(
+      "visitor[vhost_id]",
+      userType === "security_guard" ? formData.host : userId
+    );
     postData.append("visitor[start_pass]", passStartDate);
     postData.append("visitor[end_pass]", passEndDate);
     postData.append("visitor[coming_from]", formData.comingFrom);
@@ -130,7 +178,66 @@ const EmployeeAddVisitor = () => {
     });
     try {
       const visitResp = await postNewVisitor(postData);
-      console.log(visitResp);
+      const dataToSave = {
+        UserInfo: {
+          employeeNo: visitResp.data.id,
+          name: formData.visitorName,
+          userType: "visitor",
+          Valid: {
+            enable: true,
+            beginTime: passStartDate,
+            endTime: passEndDate,
+          },
+        },
+      };
+      console.log("making json file");
+      const blob = new Blob([JSON.stringify(dataToSave, null, 2)], {
+        type: "application/json",
+      });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `visitor_data_${visitResp.data.id}.json`;
+      a.click();
+      console.log("json file created successfully");
+      const postGoods = new FormData();
+      formData.goodsAttachments.forEach((docs) => {
+        postGoods.append("goods_files[]", docs);
+      });
+      postGoods.append("goods_in_out[visitor_id]", visitResp.data.id);
+      postGoods.append("goods_in_out[no_of_goods]", formData.noOfGoods);
+      postGoods.append("goods_in_out[description]", formData.goodsDescription);
+      postGoods.append("goods_in_out[ward_type]", "in");
+      postGoods.append("goods_in_out[vehicle_no]", formData.vehicleNumber);
+      postGoods.append("goods_in_out[person_name]", formData.visitorName);
+      postGoods.append("goods_in_out[created_by_id]", userId);
+      try {
+        const goodsRes = await postNewGoods(postGoods);
+        console.log(goodsRes);
+      } catch (error) {
+        console.log(error);
+      }
+      // try {
+      //   const payload = {
+      //     UserInfo: {
+      //       // employeeNo: "08035",
+      //       employeeNo: visitResp.data.id.toString(),
+      //       name: formData.visitorName,
+      //       userType: "visitor",
+      //       Valid: {
+      //         enable: true,
+      //         // beginTime: "2024-12-27T17:30:08",
+      //         beginTime: formatDateWithSeconds(passStartDate),
+      //         endTime: formatDateWithSeconds(passEndDate),
+      //         // endTime: "2024-12-29T18:30:08",
+      //       },
+      //     },
+      //   };
+      //   const deviceRes = await postVisitorInDevice(payload);
+      //   console.log(deviceRes);
+      // } catch (error) {
+      //   console.log(error);
+      // }
+
       navigate("/employee/passes/visitors");
       toast.success("Visitor Added Successfully");
     } catch (error) {
@@ -176,43 +283,158 @@ const EmployeeAddVisitor = () => {
     }
   };
   const userType = getItemInLocalStorage("USERTYPE");
+  console.log(userType);
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const usersResp = await getHostList(siteId);
+        const hostOptions = usersResp.data.hosts.map((host) => ({
+          value: host.id,
+          label: host.name,
+        }));
+        setHosts(hostOptions);
+        console.log(usersResp);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    const fetchVisitorCategory = async () => {
+      try {
+        const visitorCat = await getVisitorStaffCategory();
+        setStaffCategories(visitorCat.data.categories);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchUsers();
+    fetchVisitorCategory();
+  }, []);
+  const handleHostChange = (selectedOption) => {
+    setFormData({ ...formData, host: selectedOption?.value || "" });
+  };
+  const handleOpenCamera = () => {
+    setShowWebcam(true);
+  };
+
+  const handleCloseCamera = () => {
+    setShowWebcam(false);
+  };
+  const webcamRef = useRef(null);
+  const capture = useCallback(() => {
+    const imageSrc = webcamRef.current.getScreenshot();
+    console.log(imageSrc);
+    setShowWebcam(false);
+    setCapturedImage(imageSrc);
+  }, [webcamRef]);
+
+  const handleFileChange = (files, fieldName) => {
+    // Changed to receive 'files' directly
+    setFormData({
+      ...formData,
+      [fieldName]: files,
+    });
+    console.log(fieldName);
+  };
+
+  const handlePassStartDateChange = (event) => {
+    const selectedDateTime = event.target.value + ":00";
+    setPassStartDate(selectedDateTime);
+
+    if (passEndDate && selectedDateTime > passEndDate) {
+      setPassEndDate("");
+      toast.error("End date cannot be earlier than the start date.");
+    }
+  };
+
+  const handlePassEndDateChange = (event) => {
+    const selectedDateTime = event.target.value + ":00";
+
+    if (passStartDate && selectedDateTime < passStartDate) {
+      toast.error("End date cannot be earlier than the start date.");
+      return;
+    }
+
+    setPassEndDate(selectedDateTime);
+  };
+
   return (
-    <div className="flex justify-center items-center  w-full p-4">
+    <div className="flex justify-center items-center  w-full p-4 mb-10">
       <div className="md:border border-gray-300 rounded-lg md:p-4 w-full md:mx-4 ">
         <h2
           style={{ background: themeColor }}
-          className="text-center md:text-xl font-bold p-2 bg-black rounded-full text-white"
+          className="text-center md:text-xl font-bold p-2 bg-black rounded-md text-white"
         >
           {getHeadingText()}
         </h2>
         <br />
-
-        {behalf !== "Cab" && behalf !== "Delivery" && (
-          <div
-            onClick={handleImageClick}
-            className="cursor-pointer flex justify-center items-center my-4"
-          >
-            {imageFile ? (
-              <img
-                src={URL.createObjectURL(imageFile)}
-                // src={imageFile || image}
-                alt="Uploaded"
-                className="border-4 border-gray-300 rounded-full w-40 h-40 object-cover"
-              />
-            ) : (
-              <img
-                src={image}
-                alt="Default"
-                className="border-4 border-gray-300 rounded-full w-40 h-40 object-cover"
-              />
+        {userType !== "security_guard" && (
+          <div>
+            {behalf !== "Cab" && behalf !== "Delivery" && (
+              <div
+                onClick={handleImageClick}
+                className="cursor-pointer flex justify-center items-center my-4"
+              >
+                {imageFile ? (
+                  <img
+                    src={URL.createObjectURL(imageFile)}
+                    // src={imageFile || image}
+                    alt="Uploaded"
+                    className="border-4 border-gray-300 rounded-full w-40 h-40 object-cover"
+                  />
+                ) : (
+                  <img
+                    src={image}
+                    alt="Default"
+                    className="border-4 border-gray-300 rounded-full w-40 h-40 object-cover"
+                  />
+                )}
+                <input
+                  type="file"
+                  ref={inputRef}
+                  onChange={handleImageChange}
+                  style={{ display: "none" }}
+                  accept=".jpg, .jpeg, .png"
+                />
+              </div>
             )}
-            <input
-              type="file"
-              ref={inputRef}
-              onChange={handleImageChange}
-              style={{ display: "none" }}
-              accept=".jpg, .jpeg, .png"
-            />
+          </div>
+        )}
+        {userType === "security_guard" && (
+          <div className="flex justify-center">
+            {!showWebcam ? (
+              <button onClick={handleOpenCamera}>
+                <img
+                  src={capturedImage || image}
+                  alt="Uploaded"
+                  className="border-4 border-gray-300 rounded-full w-40 h-40 object-cover"
+                />
+              </button>
+            ) : (
+              <div>
+                <div className="rounded-full">
+                  <Webcam
+                    audio={false}
+                    ref={webcamRef}
+                    screenshotFormat="image/jpeg"
+                    className="rounded-full w-60 h-60 object-cover"
+                  />
+                </div>
+                <div className="flex gap-2 justify-center my-2 items-center">
+                  <button
+                    onClick={capture}
+                    className="bg-green-400 rounded-md text-white p-1 px-4"
+                  >
+                    Capture
+                  </button>
+                  <button
+                    onClick={handleCloseCamera}
+                    className="bg-red-400 rounded-md text-white p-1 px-4"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
         <div className="flex md:flex-row flex-col  my-5 gap-10">
@@ -247,6 +469,7 @@ const EmployeeAddVisitor = () => {
               </div>
             </div>
           </div>
+          {/* {userType !== "security_guard" && ( */}
           <div className="flex gap-2 flex-col">
             <h2 className="font-semibold">Visiting Frequency :</h2>
             <div className="flex items-center gap-4 ">
@@ -278,6 +501,7 @@ const EmployeeAddVisitor = () => {
               </div>
             </div>
           </div>
+          {/* )} */}
         </div>
 
         <div className="grid md:grid-cols-3 gap-5">
@@ -286,11 +510,18 @@ const EmployeeAddVisitor = () => {
               <label htmlFor="" className="font-medium">
                 Support Category :
               </label>
-              <select className="border border-gray-400 p-2 rounded-md">
+              <select
+                className="border border-gray-400 p-2 rounded-md"
+                value={formData.supportCategory}
+                onChange={handleChange}
+                name="supportCategory"
+              >
                 <option value="">Select Support Staff Category</option>
-                <option value="">Test Category</option>
-                <option value="">Test Category - 2</option>
-                <option value="">Test Category - 3</option>
+                {staffCategories.map((staffCat) => (
+                  <option value={staffCat.id} key={staffCat.id}>
+                    {staffCat.name}
+                  </option>
+                ))}
               </select>
             </div>
           )}
@@ -311,20 +542,37 @@ const EmployeeAddVisitor = () => {
             </div>
           )}
           {behalf !== "Cab" && (
-            <div className="grid gap-2 items-center w-full">
-              <label htmlFor="mobileNumber" className="font-semibold">
-                Mobile Number:
-              </label>
-              <input
-                type="number"
-                value={formData.mobile}
-                onChange={handleChange}
-                name="mobile"
-                id="mobileNumber"
-                className="border border-gray-400 p-2 rounded-md"
-                placeholder="Enter Mobile Number"
-              />
-            </div>
+            <>
+              <div className="grid gap-2 items-center w-full">
+                <label htmlFor="mobileNumber" className="font-semibold">
+                  Mobile Number:
+                </label>
+                <input
+                  type="number"
+                  value={formData.mobile}
+                  onChange={handleChange}
+                  name="mobile"
+                  id="mobileNumber"
+                  className="border border-gray-400 p-2 rounded-md"
+                  placeholder="Enter Mobile Number"
+                />
+              </div>
+              {userType === "security_guard" && (
+                <div className="grid gap-2 items-center w-full">
+                  <label htmlFor="" className="font-medium">
+                    Host :
+                  </label>
+                  <Select
+                    options={hosts}
+                    // value={hostOptions.find((option) => option.value === formData.host)}
+                    onChange={handleHostChange}
+                    placeholder="Select Person to meet"
+                    isClearable
+                    classNamePrefix="react-select"
+                  />
+                </div>
+              )}
+            </>
           )}
 
           {/* <div className="grid gap-2 items-center w-full">
@@ -470,7 +718,9 @@ const EmployeeAddVisitor = () => {
                 <p className="font-medium">No. of Goods :</p>
                 <input
                   type="number"
-                  name=""
+                  name="noOfGoods"
+                  value={formData.noOfGoods}
+                  onChange={handleChange}
                   id=""
                   className="border border-gray-400 p-2 rounded-md w-full"
                   placeholder="Enter Number "
@@ -479,7 +729,9 @@ const EmployeeAddVisitor = () => {
               <div className="col-span-2 flex flex-col gap-2">
                 <p className="font-medium ">Description :</p>
                 <textarea
-                  name=""
+                  name="goodsDescription"
+                  value={formData.goodsDescription}
+                  onChange={handleChange}
                   id=""
                   className="border border-gray-400 p-2 rounded-md w-full"
                   rows={1}
@@ -489,7 +741,12 @@ const EmployeeAddVisitor = () => {
             </div>
             <div className="flex flex-col gap-2">
               <p className="font-medium">Attachments Related to goods </p>
-              <FileInputBox />
+              <FileInputBox
+                handleChange={(files) =>
+                  handleFileChange(files, "goodsAttachments")
+                }
+                fieldName={"goodsAttachments"}
+              />
             </div>
           </>
         )}
@@ -536,36 +793,38 @@ const EmployeeAddVisitor = () => {
           <div>
             <button
               onClick={handleAddVisitor}
-              className="bg-black text-white hover:bg-gray-700 font-semibold py-2 px-4 rounded"
+              className="bg-green-500 text-white hover:bg-gray-700 font-semibold py-2 px-4 rounded"
             >
               Add Additional Visitor
             </button>
           </div>
         </div>
+        <div className="grid md:grid-cols-3 gap-4 ">
+          <div className="flex flex-col">
+            <p className="font-medium"> Pass Valid From :</p>
+            <input
+              type="datetime-local"
+              min={todayDate}
+              value={passStartDate}
+              // onChange={(event) => setPassStartDate(event.target.value)}
+              onChange={handlePassStartDateChange}
+              className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full"
+            />
+          </div>
+          <div className="flex flex-col">
+            <p className="font-medium">Pass Valid To :</p>
+            <input
+              type="datetime-local"
+              min={todayDate}
+              value={passEndDate}
+              // onChange={(event) => setPassEndDate(event.target.value)}
+              onChange={handlePassEndDateChange}
+              className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full"
+            />
+          </div>
+        </div>
         {selectedFrequency === "Frequently" && (
           <div className="flex flex-col gap-2 my-2">
-            <div className="grid md:grid-cols-3 gap-4 ">
-              <div className="flex flex-col">
-                <p className="font-medium"> Pass Valid From :</p>
-                <input
-                  type="date"
-                  min={todayDate}
-                  value={passStartDate}
-                  onChange={(event) => setPassStartDate(event.target.value)}
-                  className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full"
-                />
-              </div>
-              <div className="flex flex-col">
-                <p className="font-medium">Pass Valid To :</p>
-                <input
-                  type="date"
-                  min={todayDate}
-                  value={passEndDate}
-                  onChange={(event) => setPassEndDate(event.target.value)}
-                  className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full"
-                />
-              </div>
-            </div>
             <p className="font-medium">Select Permitted Days:</p>
 
             <div className="flex gap-4 flex-wrap ">
@@ -590,12 +849,18 @@ const EmployeeAddVisitor = () => {
             </div>
           </div>
         )}
-        <div className="flex gap-5 justify-center items-center my-4">
+        <div className="flex gap-5 justify-center items-center my-4 border-t p-1">
           <button
             onClick={createNewVisitor}
-            className="bg-black text-white hover:bg-gray-700 font-semibold py-2 px-4 rounded"
+            className="bg-red-400 text-white  font-semibold py-2 px-4 rounded-full flex items-center gap-2"
           >
-            Submit
+            <MdClose /> Cancel
+          </button>
+          <button
+            onClick={createNewVisitor}
+            className="bg-green-400 text-white font-semibold py-2 px-4 rounded-full flex items-center gap-2"
+          >
+            <FaCheck /> Submit
           </button>
         </div>
       </div>

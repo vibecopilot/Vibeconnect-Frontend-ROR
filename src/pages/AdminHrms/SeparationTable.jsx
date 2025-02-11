@@ -5,13 +5,19 @@ import { BsEye } from "react-icons/bs";
 import Table from "../../components/table/Table";
 import { useSelector } from "react-redux";
 import {
+  getAdminAccess,
   getMyHRMSEmployees,
   getMyHRMSEmployeesAllData,
   getResignations,
+  getResignationsDetails,
+  ResignationApproval,
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import { FaCheck } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
+import SeparationDetails from "./Modals/SeparationDetails";
+import toast from "react-hot-toast";
+import SeparationAction from "./Modals/SeparationAction";
 // import { Link } from "react-router-dom";
 // import { Link } from "react-router-dom";
 
@@ -95,8 +101,11 @@ const SeparationTable = () => {
   const fetchResignations = async () => {
     try {
       const res = await getResignations(hrmsOrgId);
-      setFilteredResignationData(res);
-      setResignationData(res);
+      const pendingSeparation = res.filter(
+        (separation) => separation.status === "Pending"
+      );
+      setFilteredResignationData(pendingSeparation);
+      setResignationData(pendingSeparation);
     } catch (error) {
       console.log(error);
     }
@@ -105,6 +114,19 @@ const SeparationTable = () => {
     fetchResignations();
   }, []);
   const columns = [
+    {
+      name: "Action",
+      cell: (row) => (
+        <div
+          className="flex items-center gap-4"
+          onClick={() => handleDetails(row.id, row.employee)}
+        >
+          <button>
+            <BsEye size={15} />
+          </button>
+        </div>
+      ),
+    },
     {
       name: "Employee Name",
       selector: (row) => row.employee_name,
@@ -130,34 +152,69 @@ const SeparationTable = () => {
       selector: (row) => row.status,
       sortable: true,
     },
-    {
-      name: "FnF Status",
-      selector: (row) => row.Leave_Days,
-      sortable: true,
-    },
+    // {
+    //   name: "FnF Status",
+    //   selector: (row) => row.Leave_Days,
+    //   sortable: true,
+    // },
     {
       name: "Action",
       selector: (row) => (
         <div className="flex items-center gap-2">
+         {roleAccess?.can_approve_reject_separation_request && <>
           <button
             className="bg-green-400 rounded-full p-2 text-white"
             title="Approve"
-          >
+            onClick={() => handleApprovalModal(row.id, "approve")}
+            >
             <FaCheck />
           </button>
           <button
             className="bg-red-400 rounded-full p-2 text-white"
             title="Reject"
-          >
+            onClick={() => handleApprovalModal(row.id, "reject")}
+            >
             <MdClose />
           </button>
+            </>}
         </div>
       ),
       sortable: true,
     },
   ];
+  const [showRegModal, setShowRegModal] = useState(false);
+  const [regId, setRegId] = useState("");
+  const [empId, setEmpId] = useState("");
+  const handleDetails = async (id, empId) => {
+    setShowRegModal(true);
+    setRegId(id);
+    setEmpId(empId);
+  };
 
- 
+  const [showApprovalModal, setApprovalModal] = useState(false);
+  const [action, setAction] = useState("");
+  const handleApprovalModal = async (id, action) => {
+    setRegId(id);
+    setApprovalModal(true);
+    setAction(action);
+  };
+
+  // roleAccess
+  const employeeId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
+      const orgId = getItemInLocalStorage("HRMSORGID");
+      const [roleAccess, setRoleAccess] = useState({});
+      useEffect(() => {
+        const fetchRoleAccess = async () => {
+          try {
+            const res = await getAdminAccess(orgId, employeeId);
+    
+            setRoleAccess(res[0]);
+          } catch (error) {
+            console.log(error);
+          }
+        };
+        fetchRoleAccess();
+      }, []);
 
   return (
     <section className="flex">
@@ -169,21 +226,21 @@ const SeparationTable = () => {
             className="border border-gray-400 w-full placeholder:text-sm rounded-md p-2"
           />
           <div className="flex items-center gap-2">
-            <button
+            {/* <button
               onClick={() => setIsModalOpen1(true)}
               style={{ background: themeColor }}
               className="bg-black text-white hover:bg-gray-700 font-semibold py-2 px-4 rounded"
             >
               Filter
-            </button>
-            <button
+            </button> */}
+           {roleAccess?.can_initiate_separation && <button
               style={{ background: themeColor }}
               className="font-semibold text-white duration-150 transition-all w-52  p-2 rounded-md  cursor-pointer text-center flex items-center gap-2 justify-center"
               onClick={() => setIsModalOpen(true)}
             >
               <PiPlusCircle size={20} />
               Initiate Separation
-            </button>
+            </button>}
           </div>
         </div>
         {isModalOpen1 && (
@@ -262,6 +319,22 @@ const SeparationTable = () => {
           isPagination={true}
         />
         <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+        {showRegModal && (
+          <SeparationDetails
+            empId={empId}
+            regId={regId}
+            onClose={() => setShowRegModal(false)}
+            page={"pending"}
+          />
+        )}
+        {showApprovalModal && (
+          <SeparationAction
+            regId={regId}
+            action={action}
+            onClose={() => setApprovalModal(false)}
+            fetchResignations={fetchResignations}
+          />
+        )}
       </div>
     </section>
   );

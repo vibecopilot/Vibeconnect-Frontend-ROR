@@ -3,72 +3,84 @@ import { useSelector } from "react-redux";
 import { getDailyPickUpTransportationDetails } from "../../../api";
 import { useParams } from "react-router-dom";
 import Navbar from "../../../components/Navbar";
+import { dateFormatSTD, formatTime } from "../../../utils/dateUtils";
 
 const AdminPickupDetails = () => {
-  const [users, setUsers] = useState("");
-  const {id} = useParams()
+  const [details, setDetails] = useState("");
+  const { id } = useParams();
 
   const themeColor = useSelector((state) => state.theme.color);
   useEffect(() => {
-    
-  const fetchCategoryDetails = async () => {
-    try {
-      const categoryDetails = await getDailyPickUpTransportationDetails(id);
-      setUsers(categoryDetails.data);
-    } catch (error) {
-      console.error("Error fetching category details:", error);
-    }
-  };
-  fetchCategoryDetails();
-}, []);
+    const fetchCategoryDetails = async () => {
+      try {
+        const categoryDetails = await getDailyPickUpTransportationDetails(id);
+        setDetails(categoryDetails.data);
+      } catch (error) {
+        console.error("Error fetching category details:", error);
+      }
+    };
+    fetchCategoryDetails();
+  }, []);
   return (
     <section className="flex ">
-      <Navbar/>
-     
-        <div className="w-full flex flex-col overflow-hidden">
-        <h2 className="text-center text-white my-1 font-semibold  text-lg p-4 px-4 " style={{ background: themeColor }}>
+      <Navbar />
+      <div className="w-full flex flex-col overflow-hidden mx-2">
+        <h2
+          className="text-center text-white my-1 font-semibold text-lg p-2 rounded-md "
+          style={{ background: themeColor }}
+        >
           Daily Pickup & Drop Details
         </h2>
-        <div className="grid grid-cols-3 gap-5 my-5 px-5">
+        <div className="grid grid-cols-3 gap-2 gap-y-4 my-2 p-5 border rounded-xl bg-blue-50">
           <div className="grid grid-cols-2">
             <p className="font-medium">Booking ID :</p>
-            <p>{users.id}</p>
+            <p>{details.id}</p>
           </div>
           <div className="grid grid-cols-2">
-            <p className="font-medium">Employee :</p>
-            <p>emp</p>
+            <p className="font-medium">Booked by/For :</p>
+            <p>{details?.user_full_name? details?.user_full_name: "Self"}</p>
           </div>
-          <div className="grid grid-cols-2">
-            <p className="font-medium">Department :</p>
-            <p>IT</p>
-          </div>
+
           <div className="grid grid-cols-2">
             <p className="font-medium">Pickup Location :</p>
-            <p>{users.pickup_location}</p>
+            <p>{details?.pickup_location}</p>
           </div>
           <div className="grid grid-cols-2">
             <p className="font-medium">Drop-Off Location :</p>
-            <p>{users.dropoff_location}</p>
+            <p>{details?.dropoff_location}</p>
           </div>
           <div className="grid grid-cols-2">
             <p className="font-medium">Date :</p>
-            <p>{users.date}</p>
+            <p>{dateFormatSTD(details?.date)}</p>
           </div>
           <div className="grid grid-cols-2">
             <p className="font-medium">Pickup Time :</p>
-            <p>{users.time}</p>
+            <p>{formatTime(details?.time)}</p>
           </div>
           <div className="grid grid-cols-2">
             <p className="font-medium">Passengers :</p>
-            <p>{users.no_of_passengers}</p>
+            <p>{details?.no_of_passengers}</p>
+          </div>
+          <div className="grid grid-cols-2">
+            <p className="font-medium">Created by :</p>
+            <p>{details.created_by_full_name}</p>
+          </div>
+          <div className="grid grid-cols-2">
+            <p className="font-medium">Created on :</p>
+            <p>{dateFormatSTD(details.created_at)}</p>
           </div>
         </div>
         <div className="px-4">
-            <p className="font-medium">Additional Note :</p>
-            <p className="bg-gray-300 rounded-md p-2">{users.additional_note}</p>
+          <p className="font-medium">Additional Note :</p>
+          <p className="bg-gray-50 rounded-md p-2">
+            {details.additional_note ? (
+              details.additional_note
+            ) : (
+              <p className="text-center">No Additional info</p>
+            )}
+          </p>
         </div>
-        </div>
-     
+      </div>
     </section>
   );
 };

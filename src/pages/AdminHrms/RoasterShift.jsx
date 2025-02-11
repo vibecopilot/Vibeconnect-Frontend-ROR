@@ -8,7 +8,7 @@ import { BiEdit } from "react-icons/bi";
 import { FaTrash } from "react-icons/fa";
 import AddRosterShift from "./Modals/AddRosterShift";
 import { useSelector } from "react-redux";
-import { deleteRosterShift, getRosterShift } from "../../api";
+import { deleteRosterShift, getAdminAccess, getRosterShift } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import { dateTimeFormat } from "../../utils/dateUtils";
 import toast from "react-hot-toast";
@@ -48,6 +48,7 @@ const RosterShift = () => {
       name: "Action",
       cell: (row) => (
         <div className="flex items-center gap-4">
+         {roleAccess?.can_edit_delete_roster_shift && <>
           <button onClick={() => handleEditModal(row.id)}>
             <BiEdit size={15} />
           </button>
@@ -57,6 +58,7 @@ const RosterShift = () => {
           >
             <FaTrash size={15} />
           </button>
+            </>}
         </div>
       ),
     },
@@ -117,6 +119,22 @@ const RosterShift = () => {
       setFilteredShifts(filteredResults);
     }
   };
+
+   const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
+    const orgId = getItemInLocalStorage("HRMSORGID");
+    const [roleAccess, setRoleAccess] = useState({});
+    useEffect(() => {
+      const fetchRoleAccess = async () => {
+        try {
+          const res = await getAdminAccess(orgId, empId);
+  
+          setRoleAccess(res[0]);
+        } catch (error) {
+          console.log(error);
+        }
+      };
+      fetchRoleAccess();
+    }, []);
   return (
     <section className="flex ml-20">
       <AdminHRMS />
@@ -129,14 +147,14 @@ const RosterShift = () => {
             value={searchText}
             onChange={handleSearch}
           />
-          <button
+          {roleAccess?.can_edit_delete_roster_shift &&<button
             onClick={handleModalToggle}
             style={{ background: themeColor }}
             className="border-2 font-semibold  text-white duration-150 transition-all  p-2 rounded-md k cursor-pointer text-center flex items-center gap-2 justify-center"
           >
             <PiPlusCircle size={20} />
             Add
-          </button>
+          </button>}
         </div>
         <Table columns={columns} data={filteredShifts} isPagination={true} />
       </div>

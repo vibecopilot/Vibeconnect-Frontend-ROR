@@ -14,6 +14,7 @@ import { getItemInLocalStorage } from "../../../utils/localStorage";
 import { FaCheck } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 import {
+  getAdminAccess,
   getAssociatedSiteDetails,
   getAssociatedSites,
   postAssociatedSites,
@@ -39,6 +40,12 @@ const AssociatedSites = () => {
     country: "",
     latitude: "",
     longitude: "",
+    radius: "",
+    aadhar: false,
+    pan: false,
+    esic: false,
+    BVG: false,
+    clientName: "",
   });
 
   const handleChange = (e) => {
@@ -58,7 +65,7 @@ const AssociatedSites = () => {
       sortable: true,
     },
     {
-      name: "Name",
+      name: "Site Name",
       selector: (row) => row.site_name,
       sortable: true,
     },
@@ -86,9 +93,11 @@ const AssociatedSites = () => {
       name: "Action",
       cell: (row) => (
         <div className="flex items-center gap-4">
-          <button onClick={() => handleEditModal(row.id)}>
-            <BiEdit size={15} />
-          </button>
+          {roleAccess.can_add_edit_associated_sites && (
+            <button onClick={() => handleEditModal(row.id)}>
+              <BiEdit size={15} />
+            </button>
+          )}
           {/* <button
             onClick={() => handleDeleteDepartment(row.id)}
             className="text-red-400"
@@ -101,6 +110,7 @@ const AssociatedSites = () => {
   ];
   const [siteDetails, setSiteDetails] = useState({
     siteName: "",
+    clientName: "",
     address1: "",
     address2: "",
     city: "",
@@ -111,6 +121,10 @@ const AssociatedSites = () => {
     longitude: "",
     status: true,
     radius: "",
+    aadhar: false,
+    pan: false,
+    esic: false,
+    BVG: false,
   });
   const [siteId, setSiteId] = useState("");
   const handleEditModal = async (siteID) => {
@@ -120,17 +134,22 @@ const AssociatedSites = () => {
       const res = await getAssociatedSiteDetails(siteID);
       setSiteDetails({
         ...siteDetails,
-        siteName: res.site_name,
-        address1: res.address_1,
-        address2: res.address_2,
-        city: res.city,
-        state: res.state,
-        country: res.country,
-        latitude: res.latitude,
-        longitude: res.longitude,
-        pinCode: res.zip_code,
-        status: res.status,
+        siteName: res?.site_name,
+        clientName: res?.client_name || "",
+        address1: res?.address_1,
+        address2: res?.address_2,
+        city: res?.city,
+        state: res?.state,
+        country: res?.country,
+        latitude: res?.latitude,
+        longitude: res?.longitude,
+        pinCode: res?.zip_code,
+        status: res?.status,
         radius: res?.radius,
+        aadhar: res?.aadhar_required,
+        BVG: res?.pan_required,
+        esic: res?.esic_required,
+        pan: res?.bvg_required,
       });
     } catch (error) {
       console.log(error);
@@ -183,6 +202,7 @@ const AssociatedSites = () => {
     }
     const postData = new FormData();
     postData.append("site_name", formData.siteName);
+    postData.append("client_name", formData.clientName);
     postData.append("address_1", formData.address1);
     postData.append("address_2", formData.address2);
     postData.append("city", formData.city);
@@ -193,6 +213,10 @@ const AssociatedSites = () => {
     postData.append("longitude", formData.longitude);
     postData.append("radius", formData.radius);
     postData.append("status", true);
+    postData.append("aadhar_required", formData.aadhar);
+    postData.append("pan_required", formData.pan);
+    postData.append("esic_required", formData.esic);
+    postData.append("bvg_required", formData.BVG);
     postData.append("organization", hrmsOrgId);
     postData.append("company_id_ror", rorCompanyId);
     postData.append("site_id_ror", rorSiteId);
@@ -204,6 +228,7 @@ const AssociatedSites = () => {
       setIsModalOpen1(false);
       setFormData({
         siteName: "",
+        clientName:"",
         address1: "",
         address2: "",
         city: "",
@@ -212,6 +237,12 @@ const AssociatedSites = () => {
         country: "",
         latitude: "",
         longitude: "",
+        radius: "",
+        
+        aadhar: false,
+        BVG: false,
+        esic: false,
+        pan: false,
       });
     } catch (error) {
       console.log(error);
@@ -221,7 +252,7 @@ const AssociatedSites = () => {
   const handleEditChange = (e) => {
     setSiteDetails({ ...siteDetails, [e.target.name]: e.target.value });
   };
-
+console.log(siteDetails)
   const handleEditAssociatedSites = async () => {
     if (!siteDetails.siteName) {
       toast.error("Site name is required");
@@ -249,6 +280,7 @@ const AssociatedSites = () => {
     }
     const editData = new FormData();
     editData.append("site_name", siteDetails.siteName);
+    editData.append("client_name", siteDetails.clientName);
     editData.append("address_1", siteDetails.address1);
     editData.append("address_2", siteDetails.address2);
     editData.append("city", siteDetails.city);
@@ -258,6 +290,10 @@ const AssociatedSites = () => {
     editData.append("latitude", siteDetails.latitude);
     editData.append("longitude", siteDetails.longitude);
     editData.append("radius", siteDetails.radius);
+    editData.append("aadhar_required", siteDetails.aadhar);
+    editData.append("pan_required", siteDetails.pan);
+    editData.append("esic_required", siteDetails.esic);
+    editData.append("bvg_required", siteDetails.BVG);
     editData.append("status", siteDetails.status);
     editData.append("organization", hrmsOrgId);
     editData.append("company_id_ror", rorCompanyId);
@@ -281,17 +317,33 @@ const AssociatedSites = () => {
       setFilteredSites(associatedSites);
     } else {
       const filteredResults = associatedSites.filter((role) =>
-        role?.site_name.toLowerCase().includes(searchValue.toLowerCase())
+        role?.site_name?.toLowerCase().includes(searchValue.toLowerCase())
       );
       setFilteredSites(filteredResults);
     }
   };
+  // can_add_edit_associated_sites
+  const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
+  const orgId = getItemInLocalStorage("HRMSORGID");
+  const [roleAccess, setRoleAccess] = useState({});
+  useEffect(() => {
+    const fetchRoleAccess = async () => {
+      try {
+        const res = await getAdminAccess(orgId, empId);
+
+        setRoleAccess(res[0]);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchRoleAccess();
+  }, []);
 
   return (
     <section className="flex ml-20">
       <OrganisationSetting />
       <div className="w-full flex m-3 flex-col overflow-hidden">
-        <div className="flex justify-between gap-2 my-2 mt-5">
+        <div className="flex justify-between gap-2 my-2 mt-3">
           <input
             type="text"
             placeholder="Search by name"
@@ -299,80 +351,19 @@ const AssociatedSites = () => {
             value={searchText}
             onChange={handleSearch}
           />
-          <button
-            onClick={() => setIsModalOpen1(true)}
-            style={{ background: themeColor }}
-            className="border-2 font-medium hover:text-white duration-150 transition-all  p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
-          >
-            <PiPlusCircle size={20} />
-            Add
-          </button>
+          {roleAccess?.can_add_edit_associated_sites && (
+            <button
+              onClick={() => setIsModalOpen1(true)}
+              style={{ background: themeColor }}
+              className="border-2 font-medium hover:text-white duration-150 transition-all  p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
+            >
+              <PiPlusCircle size={20} />
+              Add
+            </button>
+          )}
         </div>
         <Table columns={columns} data={filteredSites} isPagination={true} />
       </div>
-      {/* <div className="my-4 mx-2 w-fit">
-        <div className="flex flex-col  bg-gray-50 rounded-md text-wrap  gap-4 my-2 py-2 pl-5 pr-2 w-[18rem]">
-          <div className="flex  gap-4 font-medium">
-            <GrHelpBook size={20} />
-            <h2>Help Center</h2>
-          </div>
-
-          <div>
-            <p className="font-medium"> Department Settings Guidelines</p>
-            <ul style={listItemStyle} className="flex flex-col gap-2">
-              <li>
-                <ul style={listItemStyle}>
-                  <li>
-                    You can create departments such as a Sales, Marketing, HR,
-                    Finance, Operations, etc. By adding departments, you will be
-                    able to map the employees under specific departments from
-                    the employee profile --{">"} employment ---{">"} Job
-                    Information ---{">"} Position. This can further be mapped to
-                    head of departments for direct reporting and workflow
-                    approvals.
-                  </li>
-                </ul>
-              </li>
-              <li>
-                <ul style={listItemStyle}>
-                  <li>
-                    An analytic view is displayed on the dashboard that gives
-                    information on the no. Of employees mapped under specific
-                    departments. Departments can also be used in filters across
-                    modules.
-                  </li>
-                </ul>
-              </li>
-              <li>
-                <ul style={listItemStyle}>
-                  <li>How do I create departments?</li>
-                </ul>
-              </li>
-              <li>
-                <ul style={listItemStyle}>
-                  <li>
-                    Click on{" "}
-                    <button
-                      onClick={() => setIsModalOpen(true)}
-                      className="  text-white py-1 px-4 rounded-lg"
-                      style={{ background: themeColor }}
-                    >
-                      Add Department
-                    </button>
-                    ---{">"} Enter department name and select the head of the
-                    department from the employee list.
-                  </li>
-                </ul>
-              </li>
-
-              <li>
-                You can edit and disable the departments. But you cannot delete
-                the departments that contains mapped employees.
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div> */}
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex z-10 justify-center items-center">
@@ -401,6 +392,20 @@ const AssociatedSites = () => {
                 />
                 {/* <p>Active</p> */}
                 {/* </div> */}
+              </div>
+              <div className="flex flex-col gap-1 ">
+                <label htmlFor="" className="font-medium">
+                  Client name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="clientName"
+                  value={siteDetails.clientName}
+                  onChange={handleEditChange}
+                  id=""
+                  className="border border-gray-400 rounded-md p-2"
+                  placeholder="Client name"
+                />
               </div>
               <div className="flex flex-col gap-1 ">
                 <label htmlFor="" className="font-medium">
@@ -551,18 +556,68 @@ const AssociatedSites = () => {
                     Documents required on site
                   </label>
                 </div>
-                <div className="grid grid-cols-4 mb-4">
+                <div className="flex gap-4 items-center mb-4">
                   <div className="flex justify-center items-center gap-2">
-                    <input type="checkbox" name="" id="" />
-                    <label htmlFor="">Aadhar Card</label>
+                    <input
+                      type="checkbox"
+                      name=""
+                      id=""
+                      checked={siteDetails.aadhar === true}
+                      onChange={() =>
+                        setSiteDetails({
+                          ...siteDetails,
+                          aadhar: !siteDetails.aadhar,
+                        })
+                      }
+                    />
+                    <label htmlFor="">Aadhar </label>
                   </div>
                   <div className="flex justify-center items-center gap-2">
-                    <input type="checkbox" name="" id="" />
-                    <label htmlFor="">Pan Card</label>
+                    <input
+                      type="checkbox"
+                      name=""
+                      id=""
+                      checked={siteDetails.pan === true}
+                      onChange={() =>
+                        setSiteDetails({
+                          ...siteDetails,
+                          pan: !siteDetails.pan,
+                        })
+                      }
+                    />
+                    <label htmlFor="">Pan </label>
                   </div>
                   <div className="flex justify-center items-center gap-2">
-                    <input type="checkbox" name="" id="" />
-                    <label htmlFor="">ESIC Card</label>
+                    <input
+                      type="checkbox"
+                      name=""
+                      id=""
+                      checked={siteDetails.esic === true}
+                      onChange={() =>
+                        setSiteDetails({
+                          ...siteDetails,
+                          esic: !siteDetails.esic,
+                        })
+                      }
+                    />
+                    <label htmlFor="">ESIC </label>
+                  </div>
+                  <div className="flex justify-center items-center gap-2">
+                    <input
+                      type="checkbox"
+                      name=""
+                      id=""
+                      checked={siteDetails.BVG === true}
+                      onChange={() =>
+                        setSiteDetails({
+                          ...siteDetails,
+                          BVG: !siteDetails.BVG,
+                        })
+                      }
+                    />
+                    <label htmlFor="" title="Background verification">
+                      BGV{" "}
+                    </label>
                   </div>
                 </div>
               </div>
@@ -593,6 +648,20 @@ const AssociatedSites = () => {
               </h2>
             </div>
             <div className="max-h-96 overflow-y-auto hide-scrollbar">
+              <div className="flex flex-col gap-1 ">
+                <label htmlFor="" className="font-medium">
+                  Client name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="clientName"
+                  value={formData.clientName}
+                  onChange={handleChange}
+                  id=""
+                  className="border border-gray-400 rounded-md p-2"
+                  placeholder="Client name"
+                />
+              </div>
               <div className="flex flex-col gap-1 ">
                 <label htmlFor="" className="font-medium">
                   Site name <span className="text-red-500">*</span>
@@ -742,18 +811,56 @@ const AssociatedSites = () => {
                     Documents required on site
                   </label>
                 </div>
-                <div className="grid grid-cols-4 mb-4">
+                <div className="flex gap-4 items-center mb-4">
                   <div className="flex justify-center items-center gap-2">
-                    <input type="checkbox" name="" id="" />
-                    <label htmlFor="">Aadhar Card</label>
+                    <input
+                      type="checkbox"
+                      name=""
+                      id=""
+                      checked={formData.aadhar === true}
+                      onChange={(e) =>
+                        setFormData({ ...formData, aadhar: !formData.aadhar })
+                      }
+                    />
+                    <label htmlFor="">Aadhar </label>
                   </div>
                   <div className="flex justify-center items-center gap-2">
-                    <input type="checkbox" name="" id="" />
-                    <label htmlFor="">Pan Card</label>
+                    <input
+                      type="checkbox"
+                      name=""
+                      id=""
+                      checked={formData.pan === true}
+                      onChange={(e) =>
+                        setFormData({ ...formData, pan: !formData.pan })
+                      }
+                    />
+                    <label htmlFor="">Pan </label>
                   </div>
                   <div className="flex justify-center items-center gap-2">
-                    <input type="checkbox" name="" id="" />
-                    <label htmlFor="">ESIC Card</label>
+                    <input
+                      type="checkbox"
+                      name=""
+                      id=""
+                      checked={formData.esic === true}
+                      onChange={(e) =>
+                        setFormData({ ...formData, esic: !formData.esic })
+                      }
+                    />
+                    <label htmlFor="">ESIC </label>
+                  </div>
+                  <div className="flex justify-center items-center gap-2">
+                    <input
+                      type="checkbox"
+                      name=""
+                      id=""
+                      checked={formData.BVG === true}
+                      onChange={(e) =>
+                        setFormData({ ...formData, BVG: !formData.BVG })
+                      }
+                    />
+                    <label htmlFor="" title="Background verification">
+                      BGV{" "}
+                    </label>
                   </div>
                 </div>
               </div>

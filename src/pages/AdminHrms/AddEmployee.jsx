@@ -202,7 +202,7 @@ const AddEmployee = () => {
     postData.append("mobile", formData.mobile);
     postData.append("gender", formData.gender);
     postData.append("date_of_birth", formData.dob);
-    postData.append("blood_group", formData.bloodGroup);
+    postData.append("blood_group", formData.bloodGroup); 
     postData.append("pan", formData.pan);
     postData.append("aadhar_number", rawAadhar);
     postData.append("marital_status", formData.maritalStatus);
@@ -212,9 +212,11 @@ const AddEmployee = () => {
     postData.append("organization", hrmsOrgId);
     try {
       const empRes = await postEmployeeOnBoarding(postData);
-      setEmpId(empRes.id);
+      setEmpId(empRes.employee.id);
+      console.log(empRes.employee.id);
+      console.log(empRes.employee.id)
       const postFamily = new FormData();
-      postFamily.append("employee", empRes.id);
+      postFamily.append("employee", empRes.employee.id);
       postFamily.append("father_name", formData.fatherName);
       postFamily.append("mother_name", formData.motherName);
       postFamily.append("spouse_name", formData.spouseName);
@@ -224,7 +226,7 @@ const AddEmployee = () => {
         console.log(error);
       }
       const postAddress = new FormData();
-      postAddress.append("employee", empRes.id);
+      postAddress.append("employee", empRes.employee.id);
       postAddress.append("address_line_1", formData.address1);
       postAddress.append("address_line_2", formData.address2);
       postAddress.append("country", formData.country);
@@ -238,7 +240,7 @@ const AddEmployee = () => {
       }
       const postPayment = new FormData();
       postPayment.append("payments_mode", formData.paymentMode);
-      postPayment.append("employee", empRes.id);
+      postPayment.append("employee", empRes.employee.id);
       // Backend team working on more fields
       try {
         const paymentRes = await postEmployeePaymentInfo(postPayment);
@@ -467,7 +469,7 @@ const AddEmployee = () => {
                   value={formData.mobile}
                   onChange={handleChange}
                   name="mobile"
-                  maxLength={13}
+                  maxLength={10}
                   pattern="[0-9]*"
                   onKeyDown={(e) => {
                     if (
@@ -493,8 +495,8 @@ const AddEmployee = () => {
                   name="gender"
                 >
                   <option value="">Select Gender</option>
-                  <option value="MALE">Male</option>
-                  <option value="FEMALE">Female</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
                 </select>
               </div>
               <div className="grid gap-2 items-center w-full">

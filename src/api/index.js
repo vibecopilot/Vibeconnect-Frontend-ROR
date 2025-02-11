@@ -3,9 +3,14 @@ import { getItemInLocalStorage } from "../utils/localStorage";
 import axiosInstance from "./axiosInstance";
 import HrmsAuth from "./HrmsAuth";
 import vibeAuth from "./vibeAuth";
+import axios from "axios";
+// import DigestFetch from "digest-fetch";
 export const API_URL = "https://vibecopilot.ai";
 export const vibeMedia = "https://vibecopilot.ai/api/media/";
 export const hrmsDomain = "https://api.hrms.vibecopilot.ai/";
+import DigestFetch from "digest-fetch";
+// import DigestAuth from "@mhoc/axios-digest-auth";
+import AxiosDigestAuth from "@mhoc/axios-digest-auth";
 // export const hrmsDomain = "http://13.126.205.205";
 const token = getItemInLocalStorage("TOKEN");
 export const domainPrefix = "https://admin.vibecopilot.ai";
@@ -121,19 +126,19 @@ export const editOtherBillsDetails = async (id, data) =>
 export const postPolls = async (data) =>
   axiosInstance.post("/polls.json", data, {
     params: {
-      token: "775d6ae27272741669a65456ea10cc56cd4cce2bb99287b6",
+      token: token,
     },
   });
 export const postPollVote = async (id, data) =>
   axiosInstance.post(`/polls/${id}/poll_votes.json`, data, {
     params: {
-      token: "775d6ae27272741669a65456ea10cc56cd4cce2bb99287b6",
+      token: token,
     },
   });
 export const getPolls = async () =>
   axiosInstance.get("/polls.json", {
     params: {
-      token: "775d6ae27272741669a65456ea10cc56cd4cce2bb99287b6",
+      token: token,
     },
   });
 
@@ -231,6 +236,14 @@ export const EditVendors = async (id, data) =>
       token: token,
     },
   });
+
+export const removeVendor = async (forumId) => {
+  axiosInstance.delete(`/vendors/${forumId}.json/`, {
+    params: {
+      token: token,
+    },
+  });
+};
 
 //
 export const getComplaints = async () =>
@@ -1083,11 +1096,22 @@ export const getDailyPickUpTransportationDetails = async (id) =>
     }
   );
 export const getDailyPickUpTransportation = async () =>
-  axiosInstance.get("/transportations.json", {
+  axiosInstance.get("/transportations.json", {});
+export const editDailyPickUpTransportationDetails = async (id, data) =>
+  axiosInstance.put(`/transportations/${id}.json`, data, {
     params: {
       token: token,
     },
   });
+export const getTransportation = async (transportationType) =>
+  axiosInstance.get(
+    `/transportations.json?q[transportation_type_eq]=${transportationType}`,
+    {
+      params: {
+        token: token,
+      },
+    }
+  );
 export const getSetupUsers = async () =>
   axiosInstance.get("/users.json", {
     params: {
@@ -1232,6 +1256,22 @@ export const postStaff = async (data) =>
       token: token,
     },
   });
+export const postOTPVerification = async (data) =>
+  axiosInstance.post("/visitors/verify_votp.json", data, {
+    params: {
+      token: token,
+    },
+  });
+export const postVisitorCheckInCheckOut = async (visitorId, data) =>
+  axiosInstance.post(
+    `/visitors/${visitorId}/visitor_visits/check_visitor.json`,
+    data,
+    {
+      params: {
+        token: token,
+      },
+    }
+  );
 
 export const sendMailToUsers = async (userId) =>
   axiosInstance.get(`/users/send_welcome_email.json?id=${userId}`, {
@@ -1290,18 +1330,27 @@ export const getGroups = async () =>
       token: token,
     },
   });
-export const getGroupsDetails = async (id) =>
-  axiosInstance.get(`/groups/${id}.json`, {
+
+export const getGroupsDetails = async (id) => {
+  return axiosInstance.get(`/groups/${id}.json?token=${token}`, {});
+};
+
+export const deleteGroup = async (id) =>
+  axiosInstance.delete(`/groups/${id}.json`, {
     params: {
       token: token,
     },
   });
-export const editGroups = async (id, data) =>
-  axiosInstance.put(`/groups/${id}.json`, data, {
+
+export const editGroups = async (id, data) => {
+  // const token = getItemInLocalStorage("token"); // Ensure token retrieval is correct
+  return axiosInstance.put(`/groups/${id}.json`, data, {
     params: {
       token: token,
     },
   });
+};
+
 export const postColorCode = async (data) =>
   axiosInstance.post(`/color_codes.json`, data, {
     params: {
@@ -1351,6 +1400,18 @@ export const editBroadcastDetails = async (id, data) =>
 //Permit
 export const postNewPermit = async (data) =>
   axiosInstance.post("/permits.json", data, {
+    params: {
+      token: token,
+    },
+  });
+export const getPermits = async () =>
+  axiosInstance.get("/permits.json", {
+    params: {
+      token: token,
+    },
+  });
+export const getPermitDetails = async (permitId) =>
+  axiosInstance.get(`/permits/${permitId}.json`, {
     params: {
       token: token,
     },
@@ -1579,8 +1640,62 @@ export const getFolderDocumentCommon = async () =>
       token: token,
     },
   });
+export const getFolderDocumentPersonal = async () =>
+  axiosInstance.get(`/folders/get_personal_folders.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const getSharedwith = async () =>
+  axiosInstance.get(`/folders/get_share_with.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const getSubFolderDocumentCommon = async (id) =>
+  axiosInstance.get(`/folders/get_folders.json?parent_id=${id}`, {
+    params: {
+      token: token,
+    },
+  });
+export const postSharePersonal = async (data) =>
+  axiosInstance.post("/share_withs.json", data, {
+    params: {
+      token: token,
+    },
+  });
+export const deleteFolderPersonal = async (id) =>
+  axiosInstance.delete(`/destroy_folder/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const deleteFilePersonal = async (id) =>
+  axiosInstance.delete(`/folder_documents/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const deleteShareFolder = async (id) =>
+  axiosInstance.delete(`/share_withs/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const deleteShareFile = async (id) =>
+  axiosInstance.delete(`/share_withs/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
 export const postFolderDocumentCommon = async (data) =>
   axiosInstance.post("/folders/create_common_folder.json", data, {
+    params: {
+      token: token,
+    },
+  });
+export const postFolderDocumentPersonal = async (data) =>
+  axiosInstance.post("/folders/share_personal_documents.json", data, {
     params: {
       token: token,
     },
@@ -1599,6 +1714,12 @@ export const getServicesRoutineDetails = async (id) =>
   });
 export const getExpectedVisitor = async () =>
   axiosInstance.get(`/visitors.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const getExpectedUserVisitor = async () =>
+  axiosInstance.get(`/visitors/user.json`, {
     params: {
       token: token,
     },
@@ -3900,6 +4021,22 @@ export const getMyHRMSEmployees = async (orgId) => {
     throw error;
   }
 };
+export const getMyHRMSAdmins = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/employee/?organization_id=${orgId}&user_type=pms_admin`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting employee :", error);
+    throw error;
+  }
+};
 export const getMyHRMSEmployeesAllData = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
@@ -4090,6 +4227,7 @@ export const editMyBankAccount = async (bankId, data) => {
     throw error;
   }
 };
+
 export const getManageAdmin = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
@@ -4104,6 +4242,23 @@ export const getManageAdmin = async (orgId) => {
     return response.data;
   } catch (error) {
     console.error("Error getting Admins:", error);
+    throw error;
+  }
+};
+export const getAdminAccess = async (orgId, empId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/organization/user-setting/administrator-setting/?organization_id=${orgId}&employee_id=${empId}`,
+
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting Admin access:", error);
     throw error;
   }
 };
@@ -6275,6 +6430,46 @@ export const getReportingSupervisors = async (deptId, orgId) => {
     throw error;
   }
 };
+
+export const getNotification = async (id) => {
+  try {
+    const response = await HrmsAuth.get(`/notifications/?employee_id=${id}`, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return response.data; // Ensure it returns data
+  } catch (error) {
+    console.error("Error getting notifications:", error);
+    return []; // Return empty array on error
+  }
+};
+
+// export const updateNotificationStatus = async (notificationId) => {
+//   try {
+//     const response = await HrmsAuth.patch(`/notifications/${notificationId}/`)
+//     return response.data;
+//     console.log("Notification updated:", data);
+//   } catch (error) {
+//     console.error("Error updating notification:", error);
+//   }
+// };
+
+export const updateNotificationStatus = async (notificationId) => {
+  try {
+    const response = await HrmsAuth.patch(`/notifications/${notificationId}/`, {
+      is_read: true,
+    });
+    console.log("Notification updated:", response.data); // Log after getting the response
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Error updating notification:",
+      error.response ? error.response.data : error
+    );
+  }
+};
+
 export const getTotalHRMSEmployeeCount = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
@@ -6401,6 +6596,19 @@ export const getResignations = async (orgId) => {
     throw error;
   }
 };
+export const getResignationsDetails = async (regId) => {
+  try {
+    const response = await HrmsAuth.get(`/api/employee/resignation/${regId}`, {
+      // headers: {
+      //   "Content-Type": "multipart/form-data/",
+      // },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error getting resignation :", error);
+    throw error;
+  }
+};
 export const postResignations = async (data) => {
   try {
     const response = await HrmsAuth.post(`/api/employee/resignation/`, data, {
@@ -6411,6 +6619,23 @@ export const postResignations = async (data) => {
     return response.data;
   } catch (error) {
     console.error("Error posting resignation :", error);
+    throw error;
+  }
+};
+export const ResignationApproval = async (regId, data) => {
+  try {
+    const response = await HrmsAuth.patch(
+      `/api/employee/resignation/${regId}/`,
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error Posting resignation approval:", error);
     throw error;
   }
 };
@@ -6452,6 +6677,24 @@ export const postAssociatedSites = async (data) => {
   try {
     const response = await HrmsAuth.post(
       `/associated/`,
+      data,
+
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting associated sites :", error);
+    throw error;
+  }
+};
+export const getEmployeeAssociatedSites = async (empId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/associated/?employee_id=${empId}`,
       data,
 
       {
@@ -6677,16 +6920,7 @@ export const getApprovalAuthorities = async (orgId) => {
 };
 export const postApprovalAuthorities = async (data) => {
   try {
-    const response = await HrmsAuth.post(
-      `/approver-settings/`,
-      data,
-
-      {
-        headers: {
-          "Content-Type": "multipart/form-data/",
-        },
-      }
-    );
+    const response = await HrmsAuth.post(`/approver-settings/`, data);
     return response.data;
   } catch (error) {
     console.error("Error getting approval authorities", error);
@@ -6708,6 +6942,22 @@ export const editApprovalAuthoritiesStatus = async (approverID, data) => {
     return response.data;
   } catch (error) {
     console.error("Error getting approval authorities", error);
+    throw error;
+  }
+};
+export const getApprovalAuthoritiesDetail = async (approverId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/approver-settings/?approver_id=${approverId}`
+      // {
+      //   headers: {
+      //     "Content-Type": "multipart/form-data/",
+      //   },
+      // }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting approval authorities details", error);
     throw error;
   }
 };
@@ -6745,6 +6995,17 @@ export const postRegularizationRequest = async (data) => {
     return response.data;
   } catch (error) {
     console.error("Error posting regularization request", error);
+    throw error;
+  }
+};
+export const getSiteWiseEmployee = async (orgId, siteId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/associated-organization/?organization_id=${orgId}&site_id=${siteId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting site employee", error);
     throw error;
   }
 };
@@ -6964,6 +7225,29 @@ export const getEmployeeEsic = async (empId) => {
   }
 };
 
+export const postFamilyEsic = async (data) => {
+  try {
+    console.log(data);
+    const { employee: id, ...formData } = data; // Extract `id` for the URL
+    const response = await HrmsAuth.post(
+      `/esic-family-members/?organization_id=${id}`, // Use `id` in the URL
+      formData, // Send remaining data as the payload
+      {
+        headers: {
+          "Content-Type": "multipart/form-data", // Correct Content-Type
+        },
+      }
+    );
+    return response.data; // Return the server response
+  } catch (error) {
+    console.error(
+      "Error posting request:",
+      error.response?.data || error.message
+    );
+    throw error; // Re-throw the error for further handling
+  }
+};
+
 // site id
 export const getSiteData = async () =>
   axiosInstance.get(`/get_user_site.json`, {
@@ -6979,7 +7263,7 @@ export const siteChange = async (id) =>
     },
   });
 
-// forum
+// Forum
 export const postForum = async (data) =>
   axiosInstance.post(`/forums.json`, data, {
     params: {
@@ -6995,6 +7279,231 @@ export const getForum = async () =>
       token: token,
     },
   });
+
+export const updateForum = async (forumId) =>
+  axiosInstance.put(`/forums/${forumId}.json`, {
+    params: {
+      token: token,
+    },
+  });
+
+export const deleteForum = async (forumId) =>
+  axiosInstance.delete(`/forums/${forumId}.json`, {
+    params: {
+      token: token,
+    },
+  });
+// mailroom
+export const getinbound = async () =>
+  axiosInstance.get(`/mail_room_inbounds.json`, {
+    params: {
+      token: token,
+    },
+  });
+
+export const getInboundDetail = async (id) =>
+  axiosInstance.get(`/mail_room_inbounds/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const createInbound = async (data) =>
+  axiosInstance.post(`/mail_room_inbounds.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+
+export const editInbound = async (forumId, payload) => {
+  // const token = getItemInLocalStorage("token"); // Ensure token retrieval is correct
+  return axiosInstance.put(`/mail_room_inbounds/${forumId}.json`, payload, {
+    params: {
+      token: token,
+    },
+  });
+};
+
+export const deleteInbound = async (forumId) =>
+  axiosInstance.delete(`/mail_room_inbounds/${forumId}.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const getoutbound = async () =>
+  axiosInstance.get(`/mail_room_outbounds.json`, {
+    params: {
+      token: token,
+    },
+  });
+
+export const createOutbound = async (data) =>
+  axiosInstance.post(`/mail_room_outbounds.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+
+export const getOutboundDetail = async (id) =>
+  axiosInstance.get(`/mail_room_outbounds/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+
+export const editOutbound = async (id, payload) => {
+  const token = getItemInLocalStorage("token"); // Ensure token retrieval is correct
+  return axiosInstance.put(`/mail_room_outbounds/${forumId}.json`, payload, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+    params: { token }, // Ensure the token is included correctly
+  });
+};
+
+export const deleteOutbound = async (forumId) =>
+  axiosInstance.delete(`/mail_room_outbounds/${forumId}.json`, {
+    params: {
+      token: token,
+    },
+  });
+
+// Save Forums
+export const getSavedForum = async (forumId) => {
+  try {
+    const response = await axiosInstance.get(
+      `/forums/saved_forums.json?token=${token}`
+    );
+    console.log("API Response:", response.data); // Log API data to verify structure
+
+    if (Array.isArray(response.data)) {
+      return response.data; // Return array directly
+    } else {
+      throw new Error("API response is not an array");
+    }
+  } catch (error) {
+    console.error("Error fetching saved forums:", error.message || error);
+    return [];
+  }
+};
+
+export const PostSavedForum = async (forumId) =>
+  axiosInstance.post(`/forums/${forumId}/save_for_later.json?token=${token}`, {
+    // params: {
+    //   token: token,
+    // },
+  });
+
+export const unsaveForum = async (forumId) =>
+  axiosInstance.delete(`forums/${forumId}/unsave.json?token=${token}`, {
+    // params: {
+    //   token: token,
+    // },
+  });
+
+// Report Forum Admin
+export const GetAllReportedForum = async () => {
+  try {
+    const response = await axiosInstance.get(`/admin/forum_reports.json`, {
+      params: {
+        token: token, // Ensure `token` is defined and valid
+      },
+    });
+    return response.data; // Return the data from the response
+  } catch (error) {
+    console.error("Error fetching reported forums:", error.message || error);
+    throw error; // Propagate the error to the calling function
+  }
+};
+
+// Report Forum Emp
+export const reportForum = async (forumId, requestBody) => {
+  const token = localStorage.getItem("token"); // Assuming you are saving the token in localStorage
+  return axiosInstance.post(
+    `/forums/${forumId}/report.json?token=${token}`,
+    requestBody
+  );
+};
+
+// Forum Hide and Unhide - Admin
+export const getHiddenForums = async () =>
+  axiosInstance.get(`/forums/visibility_status.json?token=${token}`);
+
+export const hideForum = async (forumId) =>
+  axiosInstance.post(
+    `/forums/${forumId}/hide.json?token=${token}`
+    // {}
+  );
+
+export const unhideForum = async (forumId) =>
+  axiosInstance.post(`forums/${forumId}/unhide.json?token=${token}`);
+
+// Likes
+export const likeForum = async (forumId) => {
+  try {
+    const res = await axiosInstance.post(
+      `forums/${forumId}/toggle_like.json?token=${token}`
+    );
+    return res.data;
+  } catch (error) {
+    console.log("Error is occuring :", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+// Comments
+export const getComments = async (forumId) => {
+  try {
+    const response = await axiosInstance.get(
+      `/forums/${forumId}/forum_comments.json/`,
+      {
+        params: {
+          token: token,
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error :", error);
+    throw error;
+  }
+};
+
+export const addComment = async (forumId, commentText, userId) => {
+  try {
+    // Create FormData object with the correct parameter structure
+    const formData = new FormData();
+    formData.append("forum_comment[comment]", commentText);
+    // Changed from forum_comments to forum_comment
+    formData.append("forum_comment[user_id]", userId);
+    // Changed from forum_comments to forum_comment
+    const response = await axiosInstance.post(
+      `/forums/${forumId}/forum_comments.json`,
+      formData,
+      {
+        params: {
+          token: token,
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting the comment:", error);
+    throw error;
+  }
+};
+
+export const deleteComment = async (forumId, id) =>
+  axiosInstance.delete(
+    `/forums/${forumId}/forum_comments/${id}.json?token=${token}`
+  );
+
+export const updateComment = async (forumId) =>
+  axiosInstance.put(`/forums/${forumId}/forum_comments.json`, {
+    params: {
+      token: token,
+    },
+  });
+//////////////////////////////////////////////////////////////////
 
 export const downloadAsset = async () =>
   axiosInstance.get(`/site_assets/export.xlsx/`, {
@@ -7061,61 +7570,68 @@ export const getPPMcompleteDownload = async () =>
     responseType: "blob",
   });
 
-export const getTotalAssetCount = async () =>
+export const getTotalAssetCount = async (ids) =>
   axiosInstance.get(`/site_assets/count.json`, {
     params: {
       token: token,
+      site_ids: ids.join(","),
     },
   });
 
-export const getBreakCount = async () =>
+export const getBreakCount = async (ids) =>
   axiosInstance.get(`/site_assets/count.json`, {
     params: {
       token: token,
       "q[breakdown_eq]": true, // add this line to include q[breakdown_eq]
+      site_ids: ids.join(","),
     },
   });
 
-export const getInUseAssetBreakDown = async () =>
+export const getInUseAssetBreakDown = async (ids) =>
   axiosInstance.get(`/site_assets/count.json`, {
     params: {
       token: token,
       "q[breakdown_eq]": false, // add this line to include q[breakdown_eq]
+      site_ids: ids.join(","),
     },
   });
 
-export const getPPMScheduleCount = async () =>
+export const getPPMScheduleCount = async (ids) =>
   axiosInstance.get(`/activities/count.json`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "ppm",
       scheduled: true,
+      site_ids: ids.join(","),
     },
   });
 
-export const getPPMOverDueCount = async () =>
+export const getPPMOverDueCount = async (ids) =>
   axiosInstance.get(`/activities/count.json`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "ppm",
       overdue: true,
+      site_ids: ids.join(","),
     },
   });
 
-export const getPPMpendingCount = async () =>
+export const getPPMpendingCount = async (ids) =>
   axiosInstance.get(`/activities/count.json`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "ppm",
       pending: true,
+      site_ids: ids.join(","),
     },
   });
-export const getPPMCompleteCount = async () =>
+export const getPPMCompleteCount = async (ids) =>
   axiosInstance.get(`/activities/count.json`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "ppm",
       complete: true,
+      site_ids: ids.join(","),
     },
   });
 
@@ -7158,36 +7674,40 @@ export const getRoutinePendingDownload = async () =>
     responseType: "blob",
   });
 
-export const getRoutineScheduledCount = async () =>
+export const getRoutineScheduledCount = async (ids) =>
   axiosInstance.get(`/activities/count.json`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "routine",
       scheduled: true,
+      site_ids: ids.join(","),
     },
   });
-export const getRoutineOverdueCount = async () =>
+export const getRoutineOverdueCount = async (ids) =>
   axiosInstance.get(`/activities/count.json`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "routine",
       overdue: true,
+      site_ids: ids.join(","),
     },
   });
-export const getRoutineCompleteCount = async () =>
+export const getRoutineCompleteCount = async (ids) =>
   axiosInstance.get(`/activities/count.json?`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "routine",
       complete: true,
+      site_ids: ids.join(","),
     },
   });
-export const getRoutinePendingCount = async () =>
+export const getRoutinePendingCount = async (ids) =>
   axiosInstance.get(`/activities/count.json`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "routine",
       pending: true,
+      site_ids: ids.join(","),
     },
   });
 
@@ -7317,36 +7837,39 @@ export const postIncidentTags = async (data) =>
       token: token,
     },
   });
-export const getIncidentTags = async () =>
+export const gettIncidentTags = async () =>
   axiosInstance.get(`/incidence_tags.json`, {
     params: {
       token: token,
     },
   });
-export const deleteIncidentTags = async () =>
-  axiosInstance.delete(`/incidence_tags.json`, {
+// export const deleteIncidentTags = async () =>
+//   axiosInstance.delete(`/incidence_tags.json`, {})
+
+export const getIncidentTags = async (tagType) =>
+  axiosInstance.get(`/incidence_tags.json?q[tag_type_cont]=${tagType}`, {
     params: {
       token: token,
     },
   });
-export const getIncidentCatDetails = async (id) =>
-  axiosInstance.get(`/incidence_tags/${id}.json`, {
-    params: {
-      token: token,
-    },
-  });
-export const editIncidentCatDetails = async (id, data) =>
-  axiosInstance.put(`/incidence_tags/${id}.json`, data, {
-    params: {
-      token: token,
-    },
-  });
-export const getIncidents = async () =>
-  axiosInstance.get(`/incidents.json`, {
-    params: {
-      token: token,
-    },
-  });
+// export const getIncidentCatDetails = async (id) =>
+//   axiosInstance.get(`/incidence_tags/${id}.json`, {
+//     params: {
+//       token: token,
+//     },
+//   });
+// export const editIncidentCatDetails = async (id, data) =>
+//   axiosInstance.put(`/incidence_tags/${id}.json`, data, {
+//     params: {
+//       token: token,
+//     },
+//   });
+// export const getIncidents = async () =>
+//   axiosInstance.get(`/incidents.json`, {
+//     params: {
+//       token: token,
+//     },
+//   });
 
 //cam billing
 //cambilling address setup
@@ -7538,7 +8061,12 @@ export const gatCamBillFilter = async (
   axiosInstance.get(
     `/cam_bills.json?q[building_id_eq]=${block}&q[floor_id_eq]=${floor_name}
         &q[flat_id_eq]=${flat}&q[bill_period_start_date_eq]=${startDate}&q[bill_period_end_date_eq]=
-        ${endDate}&q[due_date_eq]=${dueDate}`,
+        ${endDate}&q[due_date_eq]=${dueDate}`
+  );
+
+export const getIncidentSubTags = async (tagType, parentId) =>
+  axiosInstance.get(
+    `/incidence_tags.json?q[tag_type_cont]=${tagType}&q[parent_id_eq]=${parentId}`,
     {
       params: {
         token: token,
@@ -7547,7 +8075,52 @@ export const gatCamBillFilter = async (
   );
 
 export const uploadCamReceiptImport = async (data) =>
-  axiosInstance.post(`/invoice_receipts/import.json`, data, {
+  axiosInstance.post(`/invoice_receipts/import.json`, data, {});
+
+export const getIncidentSubTag = async (parentId) =>
+  axiosInstance.get(`/incidence_tags.json?q[parent_id_eq]=${parentId}`, {
+    params: {
+      token: token,
+    },
+  });
+export const getIncidentTreeNode = async (tagType) =>
+  axiosInstance.get(`/incidence_tags/tree_structure.json?tag_type=${tagType}`, {
+    params: {
+      token: token,
+    },
+  });
+export const deleteIncidentTags = async () =>
+  axiosInstance.delete(`/incidence_tags.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const getIncidentCatDetails = async (id) =>
+  axiosInstance.get(`/incidence_tags/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const editIncidentCatDetails = async (id, data) =>
+  axiosInstance.put(`/incidence_tags/${id}.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const getIncidents = async () =>
+  axiosInstance.get(`/incidents.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const getIncidentDetails = async (incidentId) =>
+  axiosInstance.get(`/incidents/${incidentId}.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const postIncidents = async (data) =>
+  axiosInstance.post(`/incidents.json`, data, {
     params: {
       token: token,
     },
@@ -7565,6 +8138,92 @@ export const getReceiptInvoiceCamDownload = async (ids) =>
     responseType: "blob",
     params: {
       ids: `[${ids}]`, // Adding square brackets around ids
+    },
+  });
+
+const defaultIp = getItemInLocalStorage("DEFAULT");
+const defaultUsername = getItemInLocalStorage("DeviceUsername");
+const defaultPassword = getItemInLocalStorage("DevicePassword");
+export const postVisitorInDevice = async (data) => {
+  console.log(defaultIp);
+  // http://localhost:8080/
+  const url = ` http://localhost:8080/${defaultIp}/ISAPI/AccessControl/UserInfo/Record?format=json`;
+  // const url = "http://192.168.1.22/ISAPI/AccessControl/UserInfo/Record?format=json";
+  const username = defaultUsername;
+  const password = defaultPassword;
+
+  const client = new DigestFetch(username, password);
+
+  try {
+    const response = await client.fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `POST request failed: ${response.status} ${response.statusText}`
+      );
+    }
+
+    const result = await response.json();
+    console.log(result);
+    return result;
+  } catch (error) {
+    console.error("Error:", error);
+    throw error;
+  }
+};
+export const postVisitorLogFromDevice = async (data) => {
+  console.log(defaultIp);
+  // http://localhost:8080/
+  const url = ` http://${defaultIp}/ISAPI/AccessControl/AcsEvent?format=json`;
+  // const url = "http://192.168.1.22/ISAPI/AccessControl/UserInfo/Record?format=json";
+  const username = defaultUsername;
+  const password = defaultPassword;
+  console.log(username);
+  console.log(password);
+
+  const client = new DigestFetch(username, password);
+
+  try {
+    const response = await client.fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `POST request failed: ${response.status} ${response.statusText}`
+      );
+    }
+
+    const result = await response.json();
+    console.log(result);
+    return result;
+  } catch (error) {
+    console.error("Error:", error);
+    throw error;
+  }
+};
+
+export const postVisitorLogToBackend = async (data) =>
+  axiosInstance.post(`/visitor_device_logs.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const getVisitorLogs = async (visitorId) =>
+  axiosInstance.get(`/visitor_device_logs/${visitorId}.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const getAllVisitorLogs = async () =>
+  axiosInstance.get(`/visitor_device_logs.json`, {
+    params: {
       token: token,
     },
   });
@@ -7580,7 +8239,125 @@ export const gatReceiptInvoiceFilter = async (
   axiosInstance.get(
     `/invoice_receipts.json?q[building_id_eq]=${block}&q[floor_id_eq]=${floor_name}
         &q[unit_id_eq]=${flat}&q[invoice_number_eq]=${invoiceNumber}&q[receipt_date_gteq]=
-        ${receiptNumber}&q[receipt_date]=${receiptDate}`,
+        ${receiptNumber}&q[receipt_date]=${receiptDate}`
+  );
+//
+export const postDeviceConfiguration = async (data) =>
+  axiosInstance.post(`/hik_devices.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const editDeviceConfiguration = async (id, data) =>
+  axiosInstance.put(`/hik_devices/${id}.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const getDeviceConfigurationDetails = async (id) =>
+  axiosInstance.get(`/hik_devices/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const getDeviceConfiguration = async (siteId) =>
+  axiosInstance.get(`/hik_devices/find_by_site/${siteId}.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const postComplianceTags = async (data) =>
+  axiosInstance.post(`/compliance_tags.json`, data, {
+    params: {
+      token: token,
+    },
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+export const getComplianceTags = async (tagType) =>
+  axiosInstance.get(`/compliance_tags.json?q[tag_type_cont]=${tagType}`, {
+    params: {
+      token: token,
+    },
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+export const getComplianceTagDetails = async (catId) =>
+  axiosInstance.get(`/compliance_tags/${catId}.json`, {
+    params: {
+      token: token,
+    },
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+export const getComplianceTree = async () =>
+  axiosInstance.get(
+    `/compliance_tags/tree_structure.json?tag_type=complianceCategory`,
+
+    {
+      params: {
+        token: token,
+      },
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+export const postComplianceTasks = async (data) =>
+  axiosInstance.post(`/compliance_tag_tasks.json`, data, {
+    params: {
+      token: token,
+    },
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+export const postComplianceConfiguration = async (data) =>
+  axiosInstance.post(`/compliance_configs.json`, data, {
+    params: {
+      token: token,
+    },
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+export const getComplianceConfiguration = async () =>
+  axiosInstance.get(`/compliance_configs.json`, {
+    params: {
+      token: token,
+    },
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+export const getComplianceConfigurationDetails = async (complianceId) =>
+  axiosInstance.get(`/compliance_configs/${complianceId}.json`, {
+    params: {
+      token: token,
+    },
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+export const postComplianceCategoryConfiguration = async (data) =>
+  axiosInstance.post(`/compliance_config_tags.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+
+export const getFilteredUsers = async (userType) =>
+  axiosInstance.get(`/users.json?q[user_type_eq]=${userType}`, {
+    params: {
+      token: token,
+    },
+  });
+export const getVendorComplianceList = async (assignedId) =>
+  axiosInstance.get(
+    `/compliance_trackers.json?q[complicance_config_assign_to_id_eq]=${assignedId}`,
     {
       params: {
         token: token,
@@ -7591,6 +8368,15 @@ export const gatReceiptInvoiceFilter = async (
 export const getCamBillInvoiceDownload = async (ids) =>
   axiosInstance.get(`/cam_bills/pdf?id=${ids}`, {
     responseType: "blob",
+  });
+export const getComplianceListDetails = async (taskId) =>
+  axiosInstance.get(`/compliance_trackers/${taskId}.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const postComplianceEvidence = async (data) =>
+  axiosInstance.post(`/compliance_tracker_tags.json`, data, {
     params: {
       token: token,
     },
@@ -7617,3 +8403,12 @@ export const downloadReceiptInvoice = async (ids) =>
       token: token,
     },
   });
+export const getReviewerAssignments = async (complianceId, auditorId) =>
+  axiosInstance.get(
+    `/compliance_trackers/${complianceId}.json?q[compliance_config_reviewer_id_eq]=${auditorId}`,
+    {
+      params: {
+        token: token,
+      },
+    }
+  );

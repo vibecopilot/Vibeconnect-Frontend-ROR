@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { getLeaveApplicationDetails } from "../../../api";
+import {
+  getEmployeeAssociatedSites,
+  getLeaveApplicationDetails,
+} from "../../../api";
+import { getItemInLocalStorage } from "../../../utils/localStorage";
 
 const LeaveApplicationDetails = ({ applicationId, setDetailsModal }) => {
   const [status, setStatus] = useState("");
@@ -17,9 +21,9 @@ const LeaveApplicationDetails = ({ applicationId, setDetailsModal }) => {
 
     fetchLeaveApplicationDetails();
   }, []);
-  
+
   const capitalizeFirstLetter = (string) => {
-    if (!string) return ""; 
+    if (!string) return "";
     return string.charAt(0).toUpperCase() + string.slice(1);
   };
   const calculateTotalDays = (start_Date, end_Date) => {
@@ -35,7 +39,20 @@ const LeaveApplicationDetails = ({ applicationId, setDetailsModal }) => {
     const totalDays = Math.ceil(timeDifference / (1000 * 3600 * 24));
 
     return totalDays;
-  }
+  };
+  const [empSiteDetails, setEmpSiteDetails] = useState({});
+  const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
+  const fetchEmployeeAssociatedSite = async () => {
+    try {
+      const res = await getEmployeeAssociatedSites(empId);
+      setEmpSiteDetails(res[0]);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(()=>{
+    fetchEmployeeAssociatedSite()
+  },[])
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
@@ -75,7 +92,13 @@ const LeaveApplicationDetails = ({ applicationId, setDetailsModal }) => {
                     >
                       Status :
                     </label>
-                    <p className={`${status === "approved"&& "text-green-400"} ${status === "rejected" && "text-red-400"}`} >{capitalizeFirstLetter(status)}</p>
+                    <p
+                      className={`${
+                        status === "approved" && "text-green-400"
+                      } ${status === "rejected" && "text-red-400"}`}
+                    >
+                      {capitalizeFirstLetter(status)}
+                    </p>
                   </div>
                   <div className="grid grid-cols-2">
                     <label
@@ -85,6 +108,17 @@ const LeaveApplicationDetails = ({ applicationId, setDetailsModal }) => {
                       Employee Name :
                     </label>
                     <p>{`${details.first_name} ${details.last_name}`}</p>
+                  </div>
+                  <div className="grid grid-cols-2">
+                    <label
+                      htmlFor="leaveCategory"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Site :
+                    </label>
+                    <p>{empSiteDetails.associated_organization_name
+                            ? empSiteDetails.associated_organization_name
+                            : "Not Associated"}</p>
                   </div>
                   <div className="grid grid-cols-2">
                     <label
@@ -111,7 +145,10 @@ const LeaveApplicationDetails = ({ applicationId, setDetailsModal }) => {
                     >
                       Total leave Days :
                     </label>
-                    <p>{calculateTotalDays(details.start_date, details.end_date)} days</p>
+                    <p>
+                      {calculateTotalDays(details.start_date, details.end_date)}{" "}
+                      days
+                    </p>
                   </div>
                   <div className="grid grid-cols-2">
                     <label
@@ -120,7 +157,11 @@ const LeaveApplicationDetails = ({ applicationId, setDetailsModal }) => {
                     >
                       Half day date :
                     </label>
-                    <p>{details.half_day_selection ? details.half_day_selection : "No half days"}</p>
+                    <p>
+                      {details.half_day_selection
+                        ? details.half_day_selection
+                        : "No half days"}
+                    </p>
                   </div>
                   <div className="grid grid-cols-2">
                     <label
@@ -135,15 +176,15 @@ const LeaveApplicationDetails = ({ applicationId, setDetailsModal }) => {
               </div>
             </div>
           </div>
-        <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-          <button
-            type="button"
-            className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-            onClick={() => setDetailsModal(false)}
-          >
-            Close
-          </button>
-        </div>
+          <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+            <button
+              type="button"
+              className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+              onClick={() => setDetailsModal(false)}
+            >
+              Close
+            </button>
+          </div>
         </div>
         {/* Modal footer */}
       </div>

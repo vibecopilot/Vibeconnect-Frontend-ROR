@@ -6,7 +6,11 @@ import Table from "../../components/table/Table";
 import AdminHRMS from "./AdminHrms";
 import LeaveSetting from "./LeaveSetting";
 import { BiEdit } from "react-icons/bi";
-import { deleteLeaveCategory, getLeaveCategory } from "../../api";
+import {
+  deleteLeaveCategory,
+  getAdminAccess,
+  getLeaveCategory,
+} from "../../api";
 import { GrHelpBook } from "react-icons/gr";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import { FaTrash } from "react-icons/fa";
@@ -34,12 +38,16 @@ const LeaveCategories = () => {
 
       cell: (row) => (
         <div className="flex items-center gap-4">
-          <Link to={`/admin/leave-categories/${row.id}`}>
-            <BiEdit size={15} />
-          </Link>
-          <button onClick={() => handleDeleteLeaveCategory(row.id)}>
-            <FaTrash />
-          </button>
+          {roleAccess?.can_add_edit_delete_leave_category && (
+            <>
+              <Link to={`/admin/leave-categories/${row.id}`}>
+                <BiEdit size={15} />
+              </Link>
+              <button onClick={() => handleDeleteLeaveCategory(row.id)}>
+                <FaTrash />
+              </button>
+            </>
+          )}
         </div>
       ),
     },
@@ -90,6 +98,22 @@ const LeaveCategories = () => {
     fontWeight: 500,
   };
 
+  const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
+  const orgId = getItemInLocalStorage("HRMSORGID");
+  const [roleAccess, setRoleAccess] = useState({});
+  useEffect(() => {
+    const fetchRoleAccess = async () => {
+      try {
+        const res = await getAdminAccess(orgId, empId);
+
+        setRoleAccess(res[0]);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchRoleAccess();
+  }, []);
+
   return (
     <section className="flex justify-between ml-20 gap-2">
       <LeaveSetting />
@@ -102,13 +126,15 @@ const LeaveCategories = () => {
             value={searchText}
             onChange={handleSearch}
           />
-          <Link
-            to={"/admin/leave-categories"}
-            className="border-2 font-semibold hover:bg-black hover:text-white duration-150 transition-all border-black p-1 rounded-md text-black cursor-pointer text-center flex items-center  gap-2 justify-center"
-          >
-            <PiPlusCircle size={20} />
-            Add
-          </Link>
+          {roleAccess?.can_add_edit_delete_leave_category && (
+            <Link
+              to={"/admin/leave-categories"}
+              className="border-2 font-semibold hover:bg-black hover:text-white duration-150 transition-all border-black p-1 rounded-md text-black cursor-pointer text-center flex items-center  gap-2 justify-center"
+            >
+              <PiPlusCircle size={20} />
+              Add
+            </Link>
+          )}
         </div>
         <Table columns={columns} data={filteredLeavesCat} isPagination={true} />
       </div>

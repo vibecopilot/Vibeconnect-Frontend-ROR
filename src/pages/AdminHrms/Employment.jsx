@@ -27,7 +27,7 @@ const Employment = ({ setSteps, empId }) => {
     designation: "",
     supervisor: "",
   });
-
+  console.log(empId);
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };

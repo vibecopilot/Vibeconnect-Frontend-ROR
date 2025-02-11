@@ -138,12 +138,7 @@ const Navbar = () => {
 
   const firstName = getItemInLocalStorage("Name");
   const lastName = getItemInLocalStorage("LASTNAME");
-  const handleNavigation = () => {
-    // Replace this with your actual URL
-    const url =
-      "https://reports.lockated.com/FM/index.html?token=74805184912721105b2b2c64a3dd62d50a16931e6f08edab&pms_site_id=1010,2628,2630,2631,2632,2642,2643,2644,2645,2662,2663,2664,2665,2666,2667,2668,2714,2718,2719,2748,2770,2773,2793,2794,2803,2808,2814,2822&site_name=Multiple%20Sites%20Selected&society_id=3632,3712,3716,3719,3720,3734,null,3735,3736,3732,null,3729,3730,3728,null,null,3727,3747,3726,null,3766,null,3779,3780,3784,3786,3785,null";
-    window.location.href = url;
-  };
+
   return (
     <section className="flex gap-6 sticky top-0 left-0 bottom-0 h-screen z-20">
       <div
@@ -165,7 +160,7 @@ const Navbar = () => {
         </div>
         <div className="flex flex-col h-full gap-4 mb-5 relative">
           {/* admin */}
-          {user === "pms_admin" && (
+          {(user === "pms_admin" || user === "auditor")&& (
             <>
               {/* <Link  className=" text-white" >
           
@@ -361,6 +356,36 @@ const Navbar = () => {
                       } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
                     >
                       Calendar
+                    </h2>
+                  </NavLink>
+                )}
+                {feat.includes("compliance") && (
+                  <NavLink
+                    to={"/compliance"}
+                    className={({ isActive }) =>
+                      ` ${
+                        isActive
+                          ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
+                          : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
+                      }`
+                    }
+                  >
+                    <div>
+                      {React.createElement(AiOutlineAudit, { size: "20" })}
+                    </div>
+                    <h2
+                      className={`whitespace-pre duration-300 ${
+                        !open && "opacity-0 translate-x-28 overflow-hidden"
+                      }`}
+                    >
+                      Compliance Tracker
+                    </h2>
+                    <h2
+                      className={`${
+                        open && "hidden"
+                      } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
+                    >
+                      Compliance Tracker
                     </h2>
                   </NavLink>
                 )}
@@ -701,7 +726,7 @@ const Navbar = () => {
                     </h2>
                   </NavLink>
                 )}
-                {feat.includes("parking") && (
+                {feat.includes("document_pro") && (
                   <NavLink
                     to={"/documents"}
                     className={({ isActive }) =>
@@ -1504,7 +1529,7 @@ const Navbar = () => {
           )}
 
           {/* user */}
-          {user !== "pms_admin" && (
+          {(user !== "pms_admin" && user !== "auditor") && (
             <>
               {/* {siteId === 25 ? */}
               <NavLink
@@ -1950,38 +1975,8 @@ const Navbar = () => {
                 </NavLink>
               )}
               {feat.includes("insurances") && (
-                  <NavLink
-                    to={"/insurance"}
-                    className={({ isActive }) =>
-                      ` ${
-                        isActive
-                          ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
-                          : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
-                      }`
-                    }
-                  >
-                    <div>
-                      {React.createElement(MdOutlinePolicy, { size: "20" })}
-                    </div>
-                    <h2
-                      className={`whitespace-pre duration-300 ${
-                        !open && "opacity-0 translate-x-28 overflow-hidden"
-                      }`}
-                    >
-                      Insurance
-                    </h2>
-                    <h2
-                      className={`${
-                        open && "hidden"
-                      } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
-                    >
-                      Insurance
-                    </h2>
-                  </NavLink>
-                )}
-              {feat.includes("document_pro") && (
                 <NavLink
-                  to={"/documents"}
+                  to={"/insurance"}
                   className={({ isActive }) =>
                     ` ${
                       isActive
@@ -1991,26 +1986,56 @@ const Navbar = () => {
                   }
                 >
                   <div>
-                    {React.createElement(IoDocumentTextOutline, {
-                      size: "20",
-                    })}
+                    {React.createElement(MdOutlinePolicy, { size: "20" })}
                   </div>
                   <h2
                     className={`whitespace-pre duration-300 ${
                       !open && "opacity-0 translate-x-28 overflow-hidden"
                     }`}
                   >
-                    Document Pro
+                    Insurance
                   </h2>
                   <h2
                     className={`${
                       open && "hidden"
                     } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
                   >
-                    Document Pro
+                    Insurance
                   </h2>
                 </NavLink>
               )}
+              {/* {feat.includes("document_pro") && ( */}
+              <NavLink
+                to={"/employee/documents"}
+                className={({ isActive }) =>
+                  ` ${
+                    isActive
+                      ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
+                      : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
+                  }`
+                }
+              >
+                <div>
+                  {React.createElement(IoDocumentTextOutline, {
+                    size: "20",
+                  })}
+                </div>
+                <h2
+                  className={`whitespace-pre duration-300 ${
+                    !open && "opacity-0 translate-x-28 overflow-hidden"
+                  }`}
+                >
+                  Document Pro
+                </h2>
+                <h2
+                  className={`${
+                    open && "hidden"
+                  } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
+                >
+                  Document Pro
+                </h2>
+              </NavLink>
+              {/* )} */}
 
               {feat.includes("gatepass") && (
                 <NavLink

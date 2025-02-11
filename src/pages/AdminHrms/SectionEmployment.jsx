@@ -12,6 +12,7 @@ import {
   deleteCompanyAsset,
   deleteEmployeeAsset,
   editEmployeeEmploymentDetails,
+  getAdminAccess,
   getCompanyAsset,
   getEmployeeAsset,
   getEmployeeEmploymentDetails,
@@ -68,6 +69,7 @@ const SectionsEmployment = () => {
     designation: "",
     supervisor: "",
     id: "",
+    monthlyCTC: "",
   });
 
   const handleChange = (e) => {
@@ -148,7 +150,7 @@ const SectionsEmployment = () => {
 
     {
       name: "Effective From",
-      selector: (row) => dateFormat(row.start_date),
+      selector: (row) => (row.start_date ? dateFormat(row.start_date) : ""),
       sortable: true,
     },
     {
@@ -309,6 +311,7 @@ const SectionsEmployment = () => {
         probationDueDate: res.probation_due_date,
         supervisor: res.reporting_supervisor,
         id: res.id,
+        monthlyCTC: res.ctc_months,
       });
     } catch (error) {
       console.log(error);
@@ -353,10 +356,11 @@ const SectionsEmployment = () => {
     postData.append("probation_due_date", formData.probationDueDate);
     postData.append("employee_code", formData.employeeCode);
     postData.append("employment_type", formData.employmentType);
-    postData.append("branch_location", formData.branch);
-    postData.append("department", formData.department);
-    postData.append("reporting_supervisor", formData.supervisor);
+    postData.append("branch_location", formData.branch || "");
+    postData.append("department", formData.department || "");
+    postData.append("reporting_supervisor", formData.supervisor || "");
     postData.append("designation", formData.designation);
+    postData.append("ctc_months", formData.monthlyCTC);
     postData.append("employee", id);
     try {
       if (formData.id) {
@@ -404,6 +408,22 @@ const SectionsEmployment = () => {
       });
     }
   };
+
+  const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
+  const orgId = getItemInLocalStorage("HRMSORGID");
+  const [roleAccess, setRoleAccess] = useState({});
+  useEffect(() => {
+    const fetchRoleAccess = async () => {
+      try {
+        const res = await getAdminAccess(orgId, empId);
+
+        setRoleAccess(res[0]);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchRoleAccess();
+  }, []);
   return (
     <div className="flex flex-col ml-20">
       <EditEmployeeDirectory />
@@ -417,35 +437,37 @@ const SectionsEmployment = () => {
             icon={FaRegAddressCard}
             content={
               <>
-                <div className="flex justify-end gap-2 ">
-                  {isEditing ? (
-                    <>
+                {roleAccess?.can_edit_employee && (
+                  <div className="flex justify-end gap-2 ">
+                    {isEditing ? (
+                      <>
+                        <button
+                          type="button"
+                          className="border-2 rounded-full p-1 transition-all duration-150 hover:bg-opacity-30 border-green-400  px-4 text-green-400 hover:bg-green-300 font-semibold  "
+                          onClick={handleEditEmployment}
+                        >
+                          Save
+                        </button>
+                        <button
+                          type="button"
+                          className="border-2 rounded-full p-1 border-red-400  px-4 text-red-400  hover:bg-opacity-30 hover:bg-red-300 font-semibold  "
+                          onClick={() => setIsEditing(false)}
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
                       <button
                         type="button"
-                        className="border-2 rounded-full p-1 transition-all duration-150 hover:bg-opacity-30 border-green-400  px-4 text-green-400 hover:bg-green-300 font-semibold  "
-                        onClick={handleEditEmployment}
+                        style={{ background: themeColor }}
+                        className="bg-black text-white hover:bg-gray-700 font-semibold py-2 px-4 rounded-full flex items-center gap-2"
+                        onClick={() => setIsEditing(true)}
                       >
-                        Save
+                        <BiEdit /> Edit
                       </button>
-                      <button
-                        type="button"
-                        className="border-2 rounded-full p-1 border-red-400  px-4 text-red-400  hover:bg-opacity-30 hover:bg-red-300 font-semibold  "
-                        onClick={() => setIsEditing(false)}
-                      >
-                        Cancel
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      type="button"
-                      style={{ background: themeColor }}
-                      className="bg-black text-white hover:bg-gray-700 font-semibold py-2 px-4 rounded-full flex items-center gap-2"
-                      onClick={() => setIsEditing(true)}
-                    >
-                      <BiEdit /> Edit
-                    </button>
-                  )}
-                </div>
+                    )}
+                  </div>
+                )}
 
                 <div className="grid md:grid-cols-2 gap-2 mt-2">
                   <div className="grid gap-2 items-center ">
@@ -597,6 +619,22 @@ const SectionsEmployment = () => {
                       ))}
                     </select>
                   </div>
+                  <div className="grid gap-2 items-center w-full">
+                    <label htmlFor="CTC" className="font-semibold">
+                      Enter Monthly CTC:
+                    </label>
+                    <input
+                      type="text"
+                      name="monthlyCTC"
+                      value={formData.monthlyCTC}
+                      onChange={handleChange}
+                      id="CTC"
+                      placeholder="Enter Monthly CTC"
+                      className={`mt-1 p-2  border rounded-md ${
+                        !isEditing ? "bg-gray-200 text-gray-500" : ""
+                      }`}
+                    />
+                  </div>
                 </div>
               </>
             }
@@ -626,15 +664,17 @@ const SectionsEmployment = () => {
             icon={MdInfoOutline}
             content={
               <>
-                <div className="flex justify-end ">
-                  <button
-                    style={{ background: themeColor }}
-                    onClick={openModal1}
-                    className="bg-blue-500 text-white mb-2 font-semibold py-1 px-4 rounded-full flex items-center gap-2"
-                  >
-                    Update Info
-                  </button>
-                </div>
+                {roleAccess?.can_edit_employee && (
+                  <div className="flex justify-end ">
+                    <button
+                      style={{ background: themeColor }}
+                      onClick={openModal1}
+                      className="bg-blue-500 text-white mb-2 font-semibold py-1 px-4 rounded-full flex items-center gap-2"
+                    >
+                      Update Info
+                    </button>
+                  </div>
+                )}
 
                 <Table
                   columns={jobInfoColumn}
@@ -650,14 +690,16 @@ const SectionsEmployment = () => {
             icon={MdOutlineWebAsset}
             content={
               <>
-                <div className="flex justify-end">
-                  <button
-                    onClick={() => setAssetModal(true)}
-                    className="bg-blue-500 text-white mb-2 font-semibold py-1 px-4 rounded-full flex items-center gap-2"
-                  >
-                    <PiPlus /> Add Row
-                  </button>
-                </div>
+                {roleAccess?.can_edit_employee && (
+                  <div className="flex justify-end">
+                    <button
+                      onClick={() => setAssetModal(true)}
+                      className="bg-blue-500 text-white mb-2 font-semibold py-1 px-4 rounded-full flex items-center gap-2"
+                    >
+                      <PiPlus /> Add Row
+                    </button>
+                  </div>
+                )}
                 <Table
                   columns={assetColumn}
                   data={empAssets}
@@ -671,14 +713,16 @@ const SectionsEmployment = () => {
             icon={MdOutlineWebAsset}
             content={
               <>
-                <div className="flex justify-end ">
-                  <button
-                    onClick={() => setCompanyAssetModal(true)}
-                    className="bg-blue-500 text-white mb-2 font-semibold py-1 px-4 rounded-full flex items-center gap-2"
-                  >
-                    <PiPlus /> Add Row
-                  </button>
-                </div>
+                {roleAccess?.can_edit_employee && (
+                  <div className="flex justify-end ">
+                    <button
+                      onClick={() => setCompanyAssetModal(true)}
+                      className="bg-blue-500 text-white mb-2 font-semibold py-1 px-4 rounded-full flex items-center gap-2"
+                    >
+                      <PiPlus /> Add Row
+                    </button>
+                  </div>
+                )}
                 <Table
                   columns={companyAssetColumn}
                   data={comAssets}

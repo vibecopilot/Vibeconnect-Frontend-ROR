@@ -3,7 +3,12 @@ import toast from "react-hot-toast";
 import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
 import { useNavigate } from "react-router-dom";
 import wave from "/wave.png";
-import { getHRMSEmployeeID, login, vibeLogin } from "../../api";
+import {
+  getEmployeeAssociatedSites,
+  getHRMSEmployeeID,
+  login,
+  vibeLogin,
+} from "../../api";
 import { setItemInLocalStorage } from "../../utils/localStorage";
 
 const Login = () => {
@@ -48,34 +53,41 @@ const Login = () => {
       const selectedSiteId = response.data.user.selected_site_id;
       const userName = response.data.user.firstname;
       const userEmail = response.data?.user?.email;
+      const siteName = response.data?.site?.name;
+      const mobileNumber = response.data?.user?.mobile;
+      setItemInLocalStorage("SITENAME", siteName);
       setItemInLocalStorage("USEREMAIL", userEmail);
       setItemInLocalStorage("SITEID", selectedSiteId);
       setItemInLocalStorage("Name", userName);
+      setItemInLocalStorage("Mobile", mobileNumber);
       const features = response.data.features;
       setItemInLocalStorage("FEATURES", features);
 
       const featNames = features.map((feature) => feature.feature_name);
       // vibe login
       // if (selectedSiteId === 10) {
-      if (featNames.includes("project_task")) {
-        console.log("running copilot login");
+      // if (featNames.includes("project_task")) {
+      //   console.log("running copilot login");
 
-        const vibeResponse = await vibeLogin({
-          email: formData.email,
-          password: formData.password,
-        });
-        console.log("vibe", vibeResponse);
-        const vibeToken = vibeResponse.data.token.access.token;
-        setItemInLocalStorage("VIBETOKEN", vibeToken);
-        const vibeUserId = vibeResponse.data.data.user_id;
-        setItemInLocalStorage("VIBEUSERID", vibeUserId);
-        const vibeOrganizationId = vibeResponse.data.data.organization_id;
-        setItemInLocalStorage("VIBEORGID", vibeOrganizationId);
-      }
+      //   const vibeResponse = await vibeLogin({
+      //     email: formData.email,
+      //     password: formData.password,
+      //   });
+      //   console.log("vibe", vibeResponse);
+      //   const vibeToken = vibeResponse.data.token.access.token;
+      //   setItemInLocalStorage("VIBETOKEN", vibeToken);
+      //   const vibeUserId = vibeResponse.data.data.user_id;
+      //   setItemInLocalStorage("VIBEUSERID", vibeUserId);
+      //   const vibeOrganizationId = vibeResponse.data.data.organization_id;
+      //   setItemInLocalStorage("VIBEORGID", vibeOrganizationId);
+      // }
 
       if (featNames.includes("hrms") && response.data.user.organization_id) {
         try {
           const res = await getHRMSEmployeeID(response.data.user.id);
+          const siteRes = await getEmployeeAssociatedSites(res.id);
+          const associatedSiteID = siteRes[0].associated_organization;
+          setItemInLocalStorage("HRMS_SITE_ID", associatedSiteID);
           setItemInLocalStorage("HRMS_EMPLOYEE_ID", res.id);
           setItemInLocalStorage("APPROVERID", res.id);
         } catch (error) {
@@ -91,7 +103,7 @@ const Login = () => {
       const userId = response.data.user.id;
       setItemInLocalStorage("UserId", userId);
       // console.log(userId)
-
+        
       const unitId = response.data.user.unit_id;
       setItemInLocalStorage("UNITID", unitId);
 
@@ -131,6 +143,10 @@ const Login = () => {
       toast.loading("Processing your data please wait...");
       if (userType === "pms_admin") {
         navigate("/dashboard");
+      } else if (userType === "auditor") {
+        navigate("/dashboard");
+      } else if (userType === "vendor") {
+        navigate("/compliance/vendor/dashboard");
       } else {
         navigate(
           selectedSiteId === 10
@@ -147,11 +163,11 @@ const Login = () => {
       toast.error("Login failed. Please check your credentials.");
     }
   };
-
+  
   const togglePassword = () => {
     showPassword(!password);
   };
-
+    
   return (
     <div
       className="h-screen relative"

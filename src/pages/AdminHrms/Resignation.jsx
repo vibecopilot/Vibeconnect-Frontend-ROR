@@ -9,11 +9,12 @@ import {
   postResignations,
   putAdditionalResignationDetails,
 } from "../../api";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { FaCheck } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import Select from "react-select";
+import toast from "react-hot-toast";
 const Resignation = () => {
   const listItemStyle = {
     listStyleType: "disc",
@@ -77,6 +78,7 @@ const Resignation = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
   console.log(formData);
+  const navigate = useNavigate();
   const handleResignationSubmission = async () => {
     const resignationData = new FormData();
     resignationData.append("employee", id);
@@ -94,54 +96,56 @@ const Resignation = () => {
     try {
       const res = await postResignations(resignationData);
       console.log(res.data.id);
-      if (res.data.id) {
-      
-        const additionalData = {
-          additional_details: {
-              approval_authority: addInfo.approvalAuthority,
-              effective_date_of_approval_authority: addInfo.effectiveDateOfApprovalAuthority,
-              transfer_reporting_supervisor_to: addInfo.transferReportingSupervisor,
-              effective_date_of_transfer_supervisor: addInfo.effectiveDateOfReportingSupervisor,
-              hold_salary: addInfo.holdSalary,
-              portal_access_after_last_working_day: addInfo.accessAfterLastDay,
-          },
-          leave_encashment_recovery: {
-              total_encashment_days: addInfo.totalEncashmentDay || 0,
-              total_encashment_amount: addInfo.totalEncashmentAmount || 0,
-              overwrite_encashment_days: addInfo.overwriteEncashmentDays,
-              overwrite_encashment_amount: addInfo.overwriteEncashmentAmount,
-              calculate_encash_exemption: addInfo.calculateEncashExemption,
-              manual_fnf_amount: addInfo.manualFnfAmount,
-              encash_exemption_paid: addInfo.encashExemptionPaid,
-          },
-          gratuity: {
-              eligible_for_gratuity: addInfo.eligibleForGratuity,
-              gratuity_amount: addInfo.gratuityAmount || 0,
-              overwrite_gratuity_amount: addInfo.overwriteGratuityAmount,
-          },
-          notice_period_recovery: {
-              served_notice_days: addInfo.servedNoticeDay ||0,
-              notice_recovery_days: addInfo.noticeRecoveryDay|| 0,
-              notice_recovery_amount: addInfo.noticeRecoveryAmount || 0,
-              overwrite_notice_recovery_amount: addInfo.overwriteNoticeRecoveryAmount || 0,
-          },
-          // approver_details: [
-          //     {
-          //         user: addInfo.approvalAuthority || 17,
-          //         hr_admin: "Admin 1",
-          //     }
-          // ],
-      };
-        try {
-          const resp = await putAdditionalResignationDetails(
-            res.data.id,
-            additionalData
-          );
-          console.log(resp);
-        } catch (error) {
-          console.log(error);
-        }
-      }
+      toast.success("Resignation Submitted successfully");
+      navigate("/hrms/separation/separation-request");
+      // if (res.data.id) {
+
+      //   const additionalData = {
+      //     additional_details: {
+      //         approval_authority: addInfo.approvalAuthority,
+      //         effective_date_of_approval_authority: addInfo.effectiveDateOfApprovalAuthority,
+      //         transfer_reporting_supervisor_to: addInfo.transferReportingSupervisor,
+      //         effective_date_of_transfer_supervisor: addInfo.effectiveDateOfReportingSupervisor,
+      //         hold_salary: addInfo.holdSalary,
+      //         portal_access_after_last_working_day: addInfo.accessAfterLastDay,
+      //     },
+      //     leave_encashment_recovery: {
+      //         total_encashment_days: addInfo.totalEncashmentDay || 0,
+      //         total_encashment_amount: addInfo.totalEncashmentAmount || 0,
+      //         overwrite_encashment_days: addInfo.overwriteEncashmentDays,
+      //         overwrite_encashment_amount: addInfo.overwriteEncashmentAmount,
+      //         calculate_encash_exemption: addInfo.calculateEncashExemption,
+      //         manual_fnf_amount: addInfo.manualFnfAmount,
+      //         encash_exemption_paid: addInfo.encashExemptionPaid,
+      //     },
+      //     gratuity: {
+      //         eligible_for_gratuity: addInfo.eligibleForGratuity,
+      //         gratuity_amount: addInfo.gratuityAmount || 0,
+      //         overwrite_gratuity_amount: addInfo.overwriteGratuityAmount,
+      //     },
+      //     notice_period_recovery: {
+      //         served_notice_days: addInfo.servedNoticeDay ||0,
+      //         notice_recovery_days: addInfo.noticeRecoveryDay|| 0,
+      //         notice_recovery_amount: addInfo.noticeRecoveryAmount || 0,
+      //         overwrite_notice_recovery_amount: addInfo.overwriteNoticeRecoveryAmount || 0,
+      //     },
+      //     // approver_details: [
+      //     //     {
+      //     //         user: addInfo.approvalAuthority || 17,
+      //     //         hr_admin: "Admin 1",
+      //     //     }
+      //     // ],
+      // };
+      //   try {
+      //     const resp = await putAdditionalResignationDetails(
+      //       res.data.id,
+      //       additionalData
+      //     );
+      //     console.log(resp);
+      //   } catch (error) {
+      //     console.log(error);
+      //   }
+      // }
     } catch (error) {
       console.log(error);
     }
@@ -182,6 +186,8 @@ const Resignation = () => {
   const handleAdditionalChange = (e) => {
     setAddInfo({ ...addInfo, [e.target.name]: e.target.value });
   };
+
+  
   return (
     <div className="flex justify-between">
       <AdminHRMS />
@@ -438,7 +444,7 @@ const Resignation = () => {
               name="comment"
             ></textarea>
           </div>
-          <p className="font-bold border-b">Additional Details</p>
+          {/* <p className="font-bold border-b">Additional Details</p>
 
           <div className="grid md:grid-cols-2 gap-2 mt-2">
             <div className="grid gap-2 items-center w-full">
@@ -536,7 +542,7 @@ const Resignation = () => {
           </p>
           <p className="font-medium bg-gray-400 p-1 rounded-md text-white">
             Leave Encashment/Recovery:
-          </p>
+          </p> */}
           <div className="grid md:grid-cols-2 gap-2">
             {/* <div className="grid gap-2 items-center w-full">
               <label className="block font-medium">
@@ -565,10 +571,10 @@ const Resignation = () => {
                 className="border border-gray-200 p-2 rounded-md bg-gray-200"
               />
             </div> */}
-            <div className="grid gap-2 items-center w-full">
+            {/* <div className="grid gap-2 items-center w-full">
               <label className=" font-medium flex items-center gap-2 ">
                 Leave Encashment/Recovery Days{" "}
-                {/* Overwrite Leave Encashment/Recovery Days{" "} */}
+                
                 <FaCircleInfo title="Enter the leave encashment days which you would like to show in F&F" />
               </label>
               <input
@@ -578,11 +584,11 @@ const Resignation = () => {
                 onChange={handleAdditionalChange}
                 name="overwriteEncashmentDays"
               />
-            </div>
-            <div className="grid gap-2 items-center w-full">
+            </div> */}
+            {/* <div className="grid gap-2 items-center w-full">
               <label className="font-medium flex items-center gap-2">
                 Leave Encashment/Recovery Amount{" "}
-                {/* Overwrite Leave Encashment/Recovery Amount{" "} */}
+               
                 <FaCircleInfo title="Enter the leave encashment amount you would like to pay in F&F" />
               </label>
               <input
@@ -592,8 +598,8 @@ const Resignation = () => {
                 onChange={handleAdditionalChange}
                 name="overwriteEncashmentAmount"
               />
-            </div>
-            <div className="grid gap-2 items-center w-full">
+            </div> */}
+            {/* <div className="grid gap-2 items-center w-full">
               <label className="block font-medium">
                 How to calculate Leave encash exemption?
               </label>
@@ -611,8 +617,8 @@ const Resignation = () => {
                   Automatically calculate as per Government's Limit (300000)
                 </option>
               </select>
-            </div>
-            {addInfo.calculateEncashExemption === "Manually" && (
+            </div> */}
+            {/* {addInfo.calculateEncashExemption === "Manually" && (
               <div className="grid gap-2 items-center w-full">
                 <label className="block font-medium">
                   Leave Encashment Exemption to be paid
@@ -625,9 +631,9 @@ const Resignation = () => {
                   className="border border-gray-400 p-2 rounded-md"
                 />
               </div>
-            )}
+            )} */}
           </div>
-          <h2 className="font-bold border-b">Gratuity</h2>
+          {/* <h2 className="font-bold border-b">Gratuity</h2>
           <div className="grid grid-cols-2 gap-2">
             <div className="grid grid-cols-2 gap-2 items-center w-full">
               <div className="grid gap-2 items-center">
@@ -691,11 +697,11 @@ const Resignation = () => {
                 />
               </div>
             )}
-          </div>
-          <p className="font-medium bg-gray-400 p-1 rounded-md text-white">
+          </div> */}
+          {/* <p className="font-medium bg-gray-400 p-1 rounded-md text-white">
             Notice Period Recovery
-          </p>
-          <div className="grid md:grid-cols-2 gap-2 mt-2">
+          </p> */}
+          {/* <div className="grid md:grid-cols-2 gap-2 mt-2">
             <div className="grid gap-2 items-center w-full">
               <label className="block font-medium">
                 Served Notice Days <span className="text-red-500">*</span>
@@ -747,7 +753,7 @@ const Resignation = () => {
                 onChange={handleAdditionalChange}
               />
             </div>
-          </div>
+          </div> */}
           <div className="flex items-center gap-2 justify-center">
             <button
               onClick={handleResignationSubmission}
@@ -792,7 +798,7 @@ const Resignation = () => {
                   </li>
                 </ul>
               </li>
-              <li>
+              {/* <li>
                 <ul style={listItemStyle}>
                   <li>
                     Decide if you wish to keep the employees' salary on hold and
@@ -800,41 +806,33 @@ const Resignation = () => {
                     are required.{" "}
                   </li>
                 </ul>
-              </li>
+              </li> */}
 
-              <li>
+              {/* <li>
                 <p>
-                  {/* <a href="#" className="text-blue-400">
-                      Click Here{" "}
-                    </a> */}
+                 
                   Control the leave encashment/recovery, gratuity eligibility,
                   and notice period recovery.{" "}
                 </p>
-              </li>
-              <li>
+              </li> */}
+              {/* <li>
                 <p>
-                  {/* <a href="#" className="text-blue-400">
-                      Click Here{" "}
-                    </a> */}
+                 
                   View/Edit/Cancel Separation Applications{" "}
                 </p>
-              </li>
-              <li>
+              </li> */}
+              {/* <li>
                 <p>
-                  {/* <a href="#" className="text-blue-400">
-                      Click Here{" "}
-                    </a> */}
+                 
                   Download FNF Payslip{" "}
                 </p>
-              </li>
-              <li>
+              </li> */}
+              {/* <li>
                 <p>
-                  {/* <a href="#" className="text-blue-400">
-                      Click Here{" "}
-                    </a> */}
+                 
                   Download Resignation details{" "}
                 </p>
-              </li>
+              </li> */}
             </ul>
           </div>
         </div>

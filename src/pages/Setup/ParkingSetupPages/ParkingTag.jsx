@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 //import Navbar from "../components/Navbar";
 import Table from "../../../components/table/Table";
+import { PiPlusCircle } from "react-icons/pi";
 
 import { useSelector } from "react-redux";
 import { BiEdit } from "react-icons/bi";
@@ -229,18 +230,20 @@ const ParkingTag = () => {
                 <input type="checkbox" className="ml-4"/>
                 <label htmlFor="" className="font-semibold ml-2">Task</label>
             </div>
-           {/* <button
-                // to={"/admin/addnewpermit"}
-                className="border-2 font-semibold hover:bg-black hover:text-white transition-all border-black p-2 rounded-md text-black cursor-pointer text-center flex items-center gap-2 justify-center"
-                style={{ height: '1cm' }}
-            >
-                <PiPlusCircle size={20} />
-                Submit
-            </button> */}
+            <div className="flex items-center gap-2 justify-center mx-4">
+            <button
+      className="flex items-center justify-center gap-2 border-2 font-semibold hover:bg-black hover:text-white transition-all border-black p-2 rounded-md text-black cursor-pointer"
+    >
+      <PiPlusCircle size={20} />
+      <span>Add</span>
+    </button>
+            </div>
+         
 
 
 
           </div>
+       
           <Table
               columns={column}
               data={data}
