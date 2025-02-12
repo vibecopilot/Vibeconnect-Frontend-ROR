@@ -31,6 +31,7 @@ const ParkingDetails = () => {
           floor_name: item.floor_name,
           vehicle_type: item.vehicle_type,
         };
+        console.log(bookingReqData)
         setParkingData(bookingReqData);
       } catch (error) {
         console.log("Error fetching booking request data:", error);

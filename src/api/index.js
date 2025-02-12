@@ -1865,7 +1865,7 @@ export const getBookParking = async () =>
   });
 
 export const fetchParkingDetail = async (id) =>
-  axiosInstance.get(`/booking_parkings/${id}.json`, {
+  axiosInstance.get(`/parking_configurations/${id}.json`, {
     params: {
       token: token,
     }
