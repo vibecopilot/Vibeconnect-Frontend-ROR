@@ -4,75 +4,80 @@ import { BiEdit } from "react-icons/bi";
 import { Link } from "react-router-dom";
 import { PiPlusCircle } from "react-icons/pi";
 import { BsEye } from "react-icons/bs";
-import { editParkingConfiguration, getFloors, getParkingConfiguration, getParkingConfigurationDetails } from "../../../api";
+import {
+  editParkingConfiguration,
+  getFloors,
+  getParkingConfiguration,
+  getParkingConfigurationDetails,
+} from "../../../api";
 import { FaTimes } from "react-icons/fa";
 import { useSelector } from "react-redux";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
 import toast from "react-hot-toast";
 
 const ParkingConfigurationSetup = () => {
-   const [filteredData, setFilteredData] = useState([]);
-         const [editid, setEditId] = useState(null);
-         const [parkname, setparkname] = useState(null);
-const [update,setupdate] =useState(false);
-     const themeColor = useSelector((state) => state.theme.color);
-   const [location, setLocation] = useState(null);
-     const [floor, setFloor] = useState(null);
-       const [floors, setFloors] = useState([]);
-         const userId = getItemInLocalStorage("UserId");
-     const buildings = getItemInLocalStorage("Building");
-       const [isModalOpen, setIsModalOpen] = useState(false);
-       const openModal = (categoryId) => {
-        setEditId(categoryId);
-        fetchCategoryDetails(categoryId);
-        setIsModalOpen(true);
-      };
-       const closeModal = () => setIsModalOpen(false);
-    useEffect(() => {
-      const fetchPantry = async () => {
-       try {
-         const invResp = await getParkingConfiguration();
-         const sortedInvData = invResp.data.sort((a, b) => {
-           
+  const [filteredData, setFilteredData] = useState([]);
+  const [editid, setEditId] = useState(null);
+  const [parkname, setparkname] = useState(null);
+  const [update, setupdate] = useState(false);
+  const themeColor = useSelector((state) => state.theme.color);
+  const [location, setLocation] = useState(null);
+  const [floor, setFloor] = useState(null);
+  const [floors, setFloors] = useState([]);
+  const userId = getItemInLocalStorage("UserId");
+  const buildings = getItemInLocalStorage("Building");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const openModal = (categoryId) => {
+    setEditId(categoryId);
+    fetchCategoryDetails(categoryId);
+    setIsModalOpen(true);
+  };
+  const closeModal = () => setIsModalOpen(false);
+  useEffect(() => {
+    const fetchPantry = async () => {
+      try {
+        const invResp = await getParkingConfiguration();
+        const sortedInvData = invResp.data.sort((a, b) => {
           return new Date(b.created_at) - new Date(a.created_at);
         });
-         
-         setFilteredData(sortedInvData);
-         setupdate(false);
-         console.log(invResp);
-       } catch (error) {
-        console.log(error)
-       }
-      };
-      fetchPantry();
-    }, [update]);
-    const fetchCategoryDetails = async (categoryId) => {
-              try {
-                const categoryDetails = await getParkingConfigurationDetails(categoryId);
-                
-                setLocation(categoryDetails.data.building_id);
-                setFloor(categoryDetails.data.floor_id);
-                setparkname(categoryDetails.data.name);
-              } catch (error) {
-                console.error("Error fetching category details:", error);
-              }
-            };
-    useEffect(() => {
-      // Function to fetch floors when location changes
-      const fetchFloors = async () => {
-        try {
-          if (location) { // Only run if location is set
-            const floorsResp = await getFloors(location); // Call the API with location ID
-            setFloors(floorsResp.data); // Update the floors state
-            console.log('Floors:', floorsResp.data);
-          }
-        } catch (error) {
-          console.error('Error fetching floors:', error);
+
+        setFilteredData(sortedInvData);
+        setupdate(false);
+        console.log(invResp);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchPantry();
+  }, [update]);
+  const fetchCategoryDetails = async (categoryId) => {
+    try {
+      const categoryDetails = await getParkingConfigurationDetails(categoryId);
+
+      setLocation(categoryDetails.data.building_id);
+      setFloor(categoryDetails.data.floor_id);
+      setparkname(categoryDetails.data.name);
+    } catch (error) {
+      console.error("Error fetching category details:", error);
+    }
+  };
+  useEffect(() => {
+    // Function to fetch floors when location changes
+    const fetchFloors = async () => {
+      try {
+        if (location) {
+          // Only run if location is set
+          const floorsResp = await getFloors(location); // Call the API with location ID
+          setFloors(floorsResp.data); // Update the floors state
+          console.log("Floors:", floorsResp.data);
         }
-      };
-  
-      fetchFloors(); // Call the fetch function when location changes
-    }, [location]);
+      } catch (error) {
+        console.error("Error fetching floors:", error);
+      }
+    };
+
+    fetchFloors(); // Call the fetch function when location changes
+  }, [location]);
   const column = [
     {
       name: "Actions",
@@ -81,9 +86,9 @@ const [update,setupdate] =useState(false);
           {/* <Link to={`/admin/edit-park-config/${row.id}`}>
             <BiEdit size={15} />
           </Link> */}
-           <button onClick={() => openModal(row.id)}>
-                      <BiEdit size={15} />
-                    </button>
+          <button onClick={() => openModal(row.id)}>
+            <BiEdit size={15} />
+          </button>
         </div>
       ),
     },
@@ -91,33 +96,43 @@ const [update,setupdate] =useState(false);
 
     { name: "Location", selector: (row) => row.building_name, sortable: true },
     { name: "Floor", selector: (row) => row.floor_name, sortable: true },
-    { name: "Parking Type", selector: (row) => row.vehicle_type, sortable: true },
+    {
+      name: "Parking Type",
+      selector: (row) => row.vehicle_type,
+      sortable: true,
+    },
+    {
+      name: "Site Id",
+      selector: (row) => row.site_id,
+      sortable: true,
+    },
+    {
+      name: "Site Name",
+      selector: (row) => row.site_name,
+      sortable: true,
+    },
     // { name: "2 Wheeler", selector: (row) => row.TwoWheeler, sortable: true },
     // { name: "4 Wheeler", selector: (row) => row.Car, sortable: true },
   ];
 
- 
   const handleEdit = async () => {
-   
-
     const sendData = new FormData();
     sendData.append("parking_configuration[building_id]", location);
     sendData.append("parking_configuration[floor_id]", floor);
     sendData.append("parking_configuration[name]", parkname);
 
     try {
-      const resp = await editParkingConfiguration(editid,sendData);
+      const resp = await editParkingConfiguration(editid, sendData);
       setupdate(true);
       setIsModalOpen(false);
       toast.success("Parking configuration Update Successfully");
-      
+
       setFormData({ name: "" });
       console.log(resp);
     } catch (error) {
       console.log(error);
     }
   };
- 
 
   return (
     <section className="flex">
@@ -149,84 +164,87 @@ const [update,setupdate] =useState(false);
             selectableRowsHighlight
             highlightOnHover
           />
-           {isModalOpen && (
-                          <div className="fixed inset-0 flex items-center justify-center z-50">
-                            <div className="fixed inset-0 bg-black bg-opacity-90" onClick={closeModal}></div>
-                            <div className="bg-white w-96  rounded-lg shadow-lg p-4 relative z-10">
-                              <button
-                                className="absolute top-4 right-4 text-gray-600 hover:text-gray-900"
-                                onClick={closeModal}
-                              >
-                                <FaTimes />
-                              </button>
-                              <h2 className="text-xl font-semibold mb-4">Edit Parking Configuration</h2>
-                              <div className="flex flex-col gap-4">
-                                <div >
-                                  {/* <label className="block text-gray-700 text-medium font-bold mb-2" htmlFor="category-name">
+          {isModalOpen && (
+            <div className="fixed inset-0 flex items-center justify-center z-50">
+              <div
+                className="fixed inset-0 bg-black bg-opacity-90"
+                onClick={closeModal}
+              ></div>
+              <div className="bg-white w-96  rounded-lg shadow-lg p-4 relative z-10">
+                <button
+                  className="absolute top-4 right-4 text-gray-600 hover:text-gray-900"
+                  onClick={closeModal}
+                >
+                  <FaTimes />
+                </button>
+                <h2 className="text-xl font-semibold mb-4">
+                  Edit Parking Configuration
+                </h2>
+                <div className="flex flex-col gap-4">
+                  <div>
+                    {/* <label className="block text-gray-700 text-medium font-bold mb-2" htmlFor="category-name">
                                   Cuisine
                                   </label> */}
-                                   <div className="grid md:grid-cols-1 gap-2">
-        <div className="grid gap-2 items-center w-full">
-          {/* <label className="font-semibold">Location</label> */}
-          <select
-          name="building_id"
-          className="border p-1 px-4 border-gray-500 rounded-md"
-          value={location}
-          onChange={(e) => setLocation(e.target.value)}
-          >
-            <option value="">Select a location</option>
-            {buildings?.map((building) => (
-                  <option value={building.id} key={building.id}>
-                    {building.name}
-                  </option>
-                ))}
-          </select>
-        </div>
-        <div className="grid gap-2 items-center w-full">
-          {/* <label className="font-semibold">Floor</label> */}
-          <select
-             className="border p-1 px-4 border-gray-500 rounded-md"
-             value={floor}
-            onChange={(e) => setFloor(e.target.value)}
-          >
-            <option value="">Select Floor</option>
-            {floors?.map((floor) => (
-                  <option value={floor.id} key={floor.id}>
-                    {floor.name}
-                  </option>
-                ))}
-          </select>
-        </div>
-        <div className="grid gap-2 items-center w-full">
-        <input
-                                    id="category-name"
-                                    name="name"
-                                    className="border p-1 px-4 w-full border-gray-500 rounded-md"
-                                    onChange={(e) => setparkname(e.target.value)}
-                                    value={parkname}
-                                    type="text"
-                                    placeholder="Enter Parking Name"
-                                  />
-                                  </div>
-      </div>
-                              
-                                </div>
-                               
-                                <div className="flex items-center justify-center">
-                                  <button
-                        className="bg-green-400 text-white rounded-md flex items-center gap-2 p-2 font-medium"
-                        type="button"
-                        style={{background: themeColor}}
-                                    onClick={handleEdit}
-                                  >
-                                    Update
-                                  </button>
-                                  
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        )}
+                    <div className="grid md:grid-cols-1 gap-2">
+                      <div className="grid gap-2 items-center w-full">
+                        {/* <label className="font-semibold">Location</label> */}
+                        <select
+                          name="building_id"
+                          className="border p-1 px-4 border-gray-500 rounded-md"
+                          value={location}
+                          onChange={(e) => setLocation(e.target.value)}
+                        >
+                          <option value="">Select a location</option>
+                          {buildings?.map((building) => (
+                            <option value={building.id} key={building.id}>
+                              {building.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="grid gap-2 items-center w-full">
+                        {/* <label className="font-semibold">Floor</label> */}
+                        <select
+                          className="border p-1 px-4 border-gray-500 rounded-md"
+                          value={floor}
+                          onChange={(e) => setFloor(e.target.value)}
+                        >
+                          <option value="">Select Floor</option>
+                          {floors?.map((floor) => (
+                            <option value={floor.id} key={floor.id}>
+                              {floor.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="grid gap-2 items-center w-full">
+                        <input
+                          id="category-name"
+                          name="name"
+                          className="border p-1 px-4 w-full border-gray-500 rounded-md"
+                          onChange={(e) => setparkname(e.target.value)}
+                          value={parkname}
+                          type="text"
+                          placeholder="Enter Parking Name"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-center">
+                    <button
+                      className="bg-green-400 text-white rounded-md flex items-center gap-2 p-2 font-medium"
+                      type="button"
+                      style={{ background: themeColor }}
+                      onClick={handleEdit}
+                    >
+                      Update
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </section>

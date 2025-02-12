@@ -102,6 +102,7 @@ const handleChange = async (e) => {
       try {
         const response = await axios.get("/api/parking-configurations");
         const data = response.data.all_parking;
+        console.log(data)
 
         // Filter data for two-wheeler and four-wheeler parking
         setTwoWheelerNonStack(
