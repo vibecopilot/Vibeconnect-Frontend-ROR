@@ -103,7 +103,7 @@ const Parkings = () => {
       name: "view",
       cell: (row) => (
         <div className="flex items-center gap-4">
-          <Link to={`/admin/parking-details/${row.id}`}>
+          <Link to={`/admin/parking-details/${row.parking_id}`}>
             <BsEye size={15} />
           </Link>
         </div>
