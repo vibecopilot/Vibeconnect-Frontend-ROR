@@ -747,6 +747,9 @@ import ClientDashboard from "./pages/Employees/ClientDashboard.jsx";
 
 import { useParams } from "react-router-dom";
 import { getNotification, updateNotificationStatus } from "./api";
+import AddSelfRegistration from "./pages/SubPages/AddSelfRegistration.jsx";
+import EditSelfRegistration from "./pages/SubPages/EditSelfRegistration.jsx";
+import SelfRegistrationDetails from "./pages/SubPages/SelfRegistrationDetails.jsx";
 // new admin hrms
 
 function App() {
@@ -6500,6 +6503,26 @@ function App() {
           element={
             <ProtectedAdminRoutes>
               <AddGoods />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/admin/passes/add-self-registration/:id"
+          element={<AddSelfRegistration />}
+        />
+        <Route
+          path="/admin/passes/edit-self-registration/:id"
+          element={
+            <ProtectedAdminRoutes>
+              <EditSelfRegistration />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/admin/passes/self-registration-details/:id"
+          element={
+            <ProtectedAdminRoutes>
+              <SelfRegistrationDetails />
             </ProtectedAdminRoutes>
           }
         />
