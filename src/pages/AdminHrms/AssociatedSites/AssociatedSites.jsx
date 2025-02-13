@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Table from "../../../components/table/Table";
 import { BiEdit } from "react-icons/bi";
+import { BsEye ,BsDownload } from "react-icons/bs";
 import {
   PiPlusCircle,
   PiPlusCircleBold,
@@ -52,6 +53,21 @@ const AssociatedSites = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  function qrDownload(imageUrl) {
+    fetch(imageUrl)
+      .then((response) => response.blob())
+      .then((blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "image.png"; // Set the filename
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+      })
+      .catch((error) => console.error("Error downloading image:", error));
+  }
   const listItemStyle = {
     listStyleType: "disc",
     color: "gray",
@@ -107,7 +123,39 @@ const AssociatedSites = () => {
         </div>
       ),
     },
+    {
+      name: "QR Code",
+      cell: (row) => (
+        <div className="flex items-center gap-4">
+          {roleAccess.can_add_edit_associated_sites && (
+            <a
+              href={`https://api.hrms.vibecopilot.ai/${row.qr_code}`}
+              target="_blank"
+            >
+              <BsEye size={15} />
+            </a>
+          )}
+        </div>
+      ),
+    },
+    {
+      name: "Download Code",
+      cell: (row) => (
+        <div className="flex items-center gap-4">
+          {roleAccess.can_add_edit_associated_sites && (
+            <button
+              onClick={() =>
+                qrDownload(`https://api.hrms.vibecopilot.ai/${row.qr_code}`)
+              }
+            >
+               <BsDownload size={15} />
+            </button>
+          )}
+        </div>
+      ),
+    },
   ];
+
   const [siteDetails, setSiteDetails] = useState({
     siteName: "",
     clientName: "",
@@ -228,7 +276,7 @@ const AssociatedSites = () => {
       setIsModalOpen1(false);
       setFormData({
         siteName: "",
-        clientName:"",
+        clientName: "",
         address1: "",
         address2: "",
         city: "",
@@ -238,7 +286,7 @@ const AssociatedSites = () => {
         latitude: "",
         longitude: "",
         radius: "",
-        
+
         aadhar: false,
         BVG: false,
         esic: false,
@@ -252,7 +300,7 @@ const AssociatedSites = () => {
   const handleEditChange = (e) => {
     setSiteDetails({ ...siteDetails, [e.target.name]: e.target.value });
   };
-console.log(siteDetails)
+  console.log(siteDetails);
   const handleEditAssociatedSites = async () => {
     if (!siteDetails.siteName) {
       toast.error("Site name is required");
