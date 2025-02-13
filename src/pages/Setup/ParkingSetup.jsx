@@ -5,11 +5,6 @@ import ParkingSlotSetup from "./ParkingSetupPages/ParkingSlotSetup";
 import ParkingConfigurationSetup from "./ParkingSetupPages/ParkingConfigurationSetup";
 import SetupNavbar from "../../components/navbars/SetupNavbar";
 
-// import PermitTypeTable from "./PermitTypeTable";
-// import PermitActivityTable from "./PermitActivityTable";
-// import PermitSubActivityTable from "./PermitSubActivityTable";
-// import PermitHazardCategoryTable from "./PermitHazardCatgoryTable";
-// import PermitRiskTable from "./PermitRiskTable";
 const ParkingSetup = () => {
     const [page, setPage] = useState("Parking Configurations");
   return (

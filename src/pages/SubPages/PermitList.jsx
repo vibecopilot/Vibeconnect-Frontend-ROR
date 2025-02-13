@@ -11,6 +11,7 @@ import { TiTick } from "react-icons/ti";
 import { IoClose } from "react-icons/io5";
 import { Link } from "react-router-dom";
 import { getPermits } from "../../api";
+import { dateFormat, formatTime } from "../../utils/dateUtils";
 //import Modal from "../containers/modals/Modal";
 const PermitList = () => {
   const themeColor = useSelector((state) => state.theme.color);
@@ -31,42 +32,62 @@ const PermitList = () => {
 
     { name: "ID", selector: (row) => row.id, sortable: true },
     // { name: "Ref No.", selector: (row) => row.ref, sortable: true },
-    { name: "Permit Type", selector: (row) => row.permit_type_name, sortable: true },
+    {
+      name: "Permit Type",
+      selector: (row) => row.permit_type_name,
+      sortable: true,
+    },
     { name: "Permit For", selector: (row) => row.permit_for, sortable: true },
 
     { name: "Created By", selector: (row) => row.name, sortable: true },
     // { name: "Designation", selector: (row) => row.desg, sortable: true },
     { name: "Status", selector: (row) => row.permit_status, sortable: true },
-    { name: "Building Name", selector: (row) => row.building_name, sortable: true },
+    {
+      name: "Building Name",
+      selector: (row) => row.building_name,
+      sortable: true,
+    },
     { name: "Floor Name", selector: (row) => row.floor_name, sortable: true },
     { name: "Unit Name", selector: (row) => row.unit_name, sortable: true },
 
     {
-      name: "Created On",
-      selector: (row) => new Date(row.created_at).toLocaleString(), // Formats date and time
+      name: "Created Date",
+      selector: (row) => dateFormat(row.created_at), // Formats date and time
       sortable: true,
     },
     {
+      name: "Created On",
+      selector: (row) => formatTime(row.created_at), // Formats date and time
+      sortable: true,
+    },
+
+    {
       name: "Permit Expiry Date",
-      selector: (row) => 
-        row.expiry_date_and_time 
-          ? new Date(row.expiry_date_and_time).toLocaleString() 
+      selector: (row) =>
+        row.expiry_date_and_time
+          ? dateFormat(row.expiry_date_and_time)
           : " ", // Show a blank space if the value is null or undefined
       sortable: true,
-    }
-    
-    
-
+    },
+    {
+      name: "Permit Expiry Time",
+      selector: (row) =>
+        row.expiry_date_and_time
+          ? formatTime(row.expiry_date_and_time)
+          : " ", // Show a blank space if the value is null or undefined
+      sortable: true,
+    },
   ];
 
   document.title = `Permit - Vibe Connect`;
   const [permits, setPermits] = useState([]);
   const [filteredPermits, setFilteredPermits] = useState([]);
+  const [searchText, setSearchText] = useState("");
+
   const fetchPermits = async () => {
     try {
       const res = await getPermits();
       const sortedInvData = res.data.sort((a, b) => {
-               
         return new Date(b.created_at) - new Date(a.created_at);
       });
       setPermits(sortedInvData);
@@ -75,6 +96,26 @@ const PermitList = () => {
       console.log(error);
     }
   };
+
+  const handleSearch = (event) => {
+    const searchValue = event.target.value;
+    console.log(searchValue);
+    setSearchText(searchValue);
+    console.log(permits);
+
+    const filteredResults = permits.filter((item) => {
+      // Convert item.id to string (or use empty string if null/undefined)
+      const idStr = item.id ? item.id.toString() : "";
+      // Use empty string if building_name is null or undefined
+      const permit_for = item.permit_for || "";
+      return (
+        idStr.toLowerCase().includes(searchValue.toLowerCase()) ||
+        permit_for.toLowerCase().includes(searchValue.toLowerCase())
+      );
+    });
+    setFilteredPermits(filteredResults);
+  };
+
   useEffect(() => {
     fetchPermits();
   }, []);
@@ -85,7 +126,9 @@ const PermitList = () => {
         <div className="flex flex-col flex-wrap flex-shrink md:flex-row justify-start gap-2 my-2  ">
           <div className="shadow-xl rounded-full border-4 border-gray-400 w-52   flex flex-col items-center">
             <p className="font-semibold ">Total Permits</p>
-            <p className="text-center font-semibold ">{filteredPermits.length}</p>
+            <p className="text-center font-semibold ">
+              {filteredPermits.length}
+            </p>
           </div>
           <div className="shadow-xl rounded-full border-4 border-green-400 w-52  px-6 flex flex-col items-center">
             <p className="font-semibold ">Draft Permits</p>
@@ -118,6 +161,8 @@ const PermitList = () => {
             <input
               type="text"
               placeholder="Search by Permit for"
+              value={searchText}
+              onChange={handleSearch}
               className="border p-2 w-96 border-gray-300 rounded-lg"
             />
             <Link
