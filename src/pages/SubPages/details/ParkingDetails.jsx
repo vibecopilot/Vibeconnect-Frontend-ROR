@@ -15,18 +15,13 @@ const ParkingDetails = () => {
         const item = res.data;
         const bookingReqData = {
           id: item.id,
-          parking_id: item.parking_id,
-          name: item.user_name,
-          status: item.status,
+          floor_id:item.floor_id,
           booked_by: item.created_by,
-          parking_name: item.parking_name,
-          slot_id: item.slot_id,
+          parking_name: item.name,
+          site_id:item.site_id,
+          site_name:item.site_name,
           created_at: item.created_at,
           booking_date: item.booking_date,
-          end_hr: item.end_hr,
-          end_min: item.end_min,
-          start_hr: item.start_hr,
-          start_min: item.start_min,
           building_name: item.building_name,
           floor_name: item.floor_name,
           vehicle_type: item.vehicle_type,
@@ -54,33 +49,21 @@ const ParkingDetails = () => {
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="p-4 bg-gray-50 rounded-lg shadow-md">
-              <p className="text-gray-600 font-semibold">Name:</p>
+              <p className="text-gray-600 font-semibold">Parking Name:</p>
               <p className="text-lg font-bold text-gray-900">
                 {parkingData.parking_name}
               </p>
             </div>
             <div className="p-4 bg-gray-50 rounded-lg shadow-md">
-              <p className="text-gray-600 font-semibold">Parking Number:</p>
+              <p className="text-gray-600 font-semibold">Site Id:</p>
               <p className="text-lg font-bold text-gray-900">
-                {parkingData.parking_id}
+                {parkingData.site_id}
               </p>
             </div>
             <div className="p-4 bg-gray-50 rounded-lg shadow-md">
-              <p className="text-gray-600 font-semibold">Booking Date:</p>
+              <p className="text-gray-600 font-semibold">Site Name:</p>
               <p className="text-lg font-bold text-gray-900">
-                {parkingData.booking_date}
-              </p>
-            </div>
-            <div className="p-4 bg-gray-50 rounded-lg shadow-md">
-              <p className="text-gray-600 font-semibold">Start Time:</p>
-              <p className="text-lg font-bold text-gray-900">
-                {parkingData.start_hr}
-              </p>
-            </div>
-            <div className="p-4 bg-gray-50 rounded-lg shadow-md">
-              <p className="text-gray-600 font-semibold">End Time:</p>
-              <p className="text-lg font-bold text-gray-900">
-                {parkingData.end_hr}
+                {parkingData.site_name}
               </p>
             </div>
             <div className="p-4 bg-gray-50 rounded-lg shadow-md">
