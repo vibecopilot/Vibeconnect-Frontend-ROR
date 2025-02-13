@@ -2,20 +2,19 @@ import React, { useState, useRef, useCallback, useEffect } from "react";
 import image from "/profile.png";
 import { useSelector } from "react-redux";
 import Webcam from "react-webcam";
-import { getHostList, postNewVisitor } from "../../api";
+import { postNewVisitor } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import toast from "react-hot-toast";
 import axios from "axios";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 const AddSelfRegistration = () => {
   const [selectedVisitorType, setSelectedVisitorType] = useState("Guest");
   const [showWebcam, setShowWebcam] = useState(false);
   const [hosts, setHosts] = useState([]);
-  //const siteId = getItemInLocalStorage("SITEID");
-  const siteId = getItemInLocalStorage("SITEID");
-  const token = getItemInLocalStorage("TOKEN");
-  //const { siteId } = useParams();
+  // const siteId = getItemInLocalStorage("SITEID");
   const [capturedImage, setCapturedImage] = useState(null);
+  const { id } = useParams();
+  console.log(id);
   const [formData, setFormData] = useState({
     visitorName: "",
     mobile: "",
@@ -23,6 +22,8 @@ const AddSelfRegistration = () => {
     comingFrom: "",
     host: "",
   });
+
+  console.log("Host", hosts);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -48,56 +49,47 @@ const AddSelfRegistration = () => {
     setCapturedImage(imageSrc);
   }, [webcamRef]);
 
-  // //const [hosts, setHosts] = useState([]);
-  // const location = useLocation();
-
-  // // Extract token from query parameters
-  // const queryParams = new URLSearchParams(location.search);
-  // const token1 = queryParams.get("token");
-
-  // // Extract siteId from the URL path
-  // const pathParts = location.pathname.split("/");
-  // const siteId = pathParts[pathParts.length - 1]; // Last part of the path
-
-  // console.log("Extracted siteId:", siteId);
-  // console.log("Extracted token:", token1);
-
-  // useEffect(() => {
-  //   const fetchUsers = async () => {
-  //     if (!siteId || !token1) {
-  //       console.error("Missing site_id or token in URL");
-  //       return;
-  //     }
-
-  //     try {
-  //       const response = await axios.get(
-  //         "/visitors/fetch_potential_hosts.json",
-  //         {
-  //           params: { site_id: siteId, token: token1 },
-  //         }
-  //       );
-  //       console.log("API Response:", response.data);
-  //     } catch (error) {
-  //       console.error("Error fetching users:", error);
-  //     }
-  //   };
-
-  //   fetchUsers();
-  // }, [siteId, token1]);
-  // Dependencies: Fetch API when these values change
-
+  const searchParams = new URLSearchParams(location.search);
+  const token = searchParams.get("token");
+  const pathSegments = location.pathname.split("/");
+  const siteId = pathSegments[pathSegments.length - 1];
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const usersResp = await getHostList(siteId);
-        setHosts(usersResp.data.hosts);
-        console.log(usersResp);
+        // Extracts last part (10)
+
+        if (!token) {
+          console.error("Site ID or token is missing in the URL");
+          return;
+        }
+
+        console.log("Extracted site_id:", siteId);
+        console.log("Extracted token:", token);
+        const usersResp = await axios.get(
+          `http://13.215.74.38/visitors/fetch_potential_hosts.json`,
+          {
+            params: { site_id: siteId, token: token },
+          }
+        );
+
+        console.log("API Response:", usersResp.data);
+
+        if (usersResp.data.hosts) {
+          setHosts(usersResp.data.hosts);
+        } else {
+          console.error("Hosts data missing in response:", usersResp.data);
+        }
       } catch (error) {
-        console.log(error);
+        console.error(
+          "Error fetching hosts:",
+          error.response ? error.response.data : error
+        );
       }
     };
+
     fetchUsers();
-  }, []);
+  }, [location]);
+
   const navigate = useNavigate();
   const handleSubmit = async () => {
     if (
@@ -114,11 +106,13 @@ const AddSelfRegistration = () => {
     }
 
     const postData = new FormData();
+    postData.append("visitor[created_by_id]", siteId);
     postData.append("visitor[vhost_id]", formData.host);
     postData.append("visitor[name]", formData.visitorName);
     postData.append("visitor[contact_no]", formData.mobile);
     postData.append("visitor[purpose]", formData.purpose);
     postData.append("visitor[coming_from]", formData.comingFrom);
+    postData.append("visitor[visit_type]", selectedVisitorType);
 
     if (capturedImage) {
       const response = await fetch(capturedImage);
@@ -128,8 +122,17 @@ const AddSelfRegistration = () => {
 
     try {
       toast.loading("Creating new visitor Please wait!");
-      const visitResp = await postNewVisitor(postData);
-      navigate("/admin/passes/visitors");
+      const visitResp = await axios.post(
+        `http://13.215.74.38/visitors.json`,
+        postData,
+        {
+          params: { token: token },
+        }
+      );
+      const visitorId = visitResp.data.id;
+      navigate(
+        `/admin/passes/self-registration-details/${visitorId}?token=${token}`
+      );
       toast.dismiss();
       toast.success("Self Registration Added Successfully");
     } catch (error) {

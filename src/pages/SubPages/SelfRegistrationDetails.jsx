@@ -1,116 +1,38 @@
 import React, { useEffect, useState } from "react";
 import image from "/profile.png";
-import { domainPrefix, getVisitorDetails, getVisitorLogs } from "../../api";
-import { Link, useParams } from "react-router-dom";
+import { domainPrefix, getVisitorDetails } from "../../api";
+import { useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { BiEdit, BiQr } from "react-icons/bi";
-import SelfVisitorQRCode from "./SelfVisitorQRCode";
+import { BiQr } from "react-icons/bi";
 import Navbar from "../../components/Navbar";
-import Table from "../../components/table/Table";
+import VisitorQRCode from "../../containers/modals/VisitorQRCode";
+import axios from "axios";
 
 const SelfRegistrationDetails = () => {
   const [details, setDetails] = useState({});
-  const [logs, setLogs] = useState([]);
   const { id } = useParams();
+  console.log(id);
+  const searchParams = new URLSearchParams(location.search);
+  const token = searchParams.get("token");
   useEffect(() => {
     const fetchVisitorDetails = async () => {
       try {
-        const detailsResp = await getVisitorDetails(id);
+        const detailsResp = await axios.get(
+          `http://13.215.74.38/visitors/${id}.json`,
+          {
+            params: { token: token },
+          }
+        );
         setDetails(detailsResp.data);
         console.log(detailsResp.data);
       } catch (error) {
         console.log(error);
       }
     };
-    const fetchVisitorDeviceLogs = async () => {
-      try {
-        const logsResp = await getVisitorLogs(id);
-        setLogs(logsResp?.data?.data);
-        console.log(logsResp.data.data);
-      } catch (error) {
-        console.log(error);
-      }
-    };
     fetchVisitorDetails();
-    fetchVisitorDeviceLogs();
   }, [id]);
 
   const themeColor = useSelector((state) => state.theme.color);
-  const dateFormat = (dateString) => {
-    const date = new Date(dateString);
-    return date.toDateString();
-  };
-  const dateTimeFormat = (dateString) => {
-    if (!dateString) {
-      return " ";
-    }
-
-    const date = new Date(dateString);
-
-    if (isNaN(date)) {
-      return " ";
-    }
-
-    return date.toLocaleString();
-  };
-
-  const VisitorColumns = [
-    {
-      name: " Name",
-      selector: (row) => row.name,
-      sortable: true,
-    },
-    {
-      name: " Mobile No.",
-      selector: (row) => row.contact_no,
-      sortable: true,
-    },
-    {
-      name: "Created On",
-      selector: (row) => dateFormat(row.created_at),
-      sortable: true,
-    },
-  ];
-
-  const visitorLogColumn = [
-    {
-      name: "Sr. no.",
-      selector: (row, index) => index + 1,
-      sortable: true,
-    },
-    {
-      name: " Check in",
-      selector: (row) => (row.check_in ? dateTimeFormat(row.check_in) : ""),
-      sortable: true,
-    },
-    {
-      name: " Check out",
-      selector: (row) => (row.check_in ? dateTimeFormat(row.check_out) : null),
-      sortable: true,
-    },
-  ];
-  const visitorDeviceLogColumn = [
-    {
-      name: "Sr. no.",
-      selector: (row, index) => index + 1,
-      sortable: true,
-    },
-    {
-      name: "Name",
-      selector: (row, index) => row.name,
-      sortable: true,
-    },
-    {
-      name: " Check in",
-      selector: (row) => (row.in_time ? dateTimeFormat(row.in_time) : ""),
-      sortable: true,
-    },
-    {
-      name: " Check out",
-      selector: (row) => (row.out_time ? dateTimeFormat(row.out_time) : null),
-      sortable: true,
-    },
-  ];
   const [qrModal, setQrmodal] = useState(false);
   return (
     <section className="flex">
@@ -132,15 +54,10 @@ const SelfRegistrationDetails = () => {
             >
               <BiQr /> QR code
             </button>
-            <Link
-              to={`/admin/passes/edit-self-registration/${id}`}
-              className="border-2 border-black rounded-full px-2 p-1 flex items-center gap-2"
-            >
-              <BiEdit /> Edit Details
-            </Link>
           </div>
           <div className="flex justify-center">
             {details.profile_picture && details.profile_picture !== null ? (
+              // details.visitor_files.map((doc, index) => (
               <img
                 src={domainPrefix + details.profile_picture.url}
                 alt=""
@@ -153,6 +70,7 @@ const SelfRegistrationDetails = () => {
                 }
               />
             ) : (
+              // ))
               <img src={image} alt="" className="w-48 h-48" />
             )}
           </div>
@@ -161,12 +79,6 @@ const SelfRegistrationDetails = () => {
               <p className="font-semibold text-sm">Visitor Type : </p>
               <p className="">{details.visit_type}</p>
             </div>
-            {/* {details?.visit_type === "Support Staff" && (
-              <div className="grid grid-cols-2 ">
-                <p className="font-semibold text-sm">Staff Category : </p>
-                <p className="">{details?.visitor_staff_category?.name}</p>
-              </div>
-            )} */}
             <div className="grid grid-cols-2 ">
               <p className="font-semibold text-sm">Visitor's Name : </p>
               <p className="">{details?.name}</p>
@@ -185,103 +97,15 @@ const SelfRegistrationDetails = () => {
             </div>
             <div className="grid grid-cols-2 ">
               <p className="font-semibold text-sm">Host : </p>
-              <p className="">{details?.hosts}</p>
-            </div>
-            {/* <div className="grid grid-cols-2 ">
-              <p className="font-semibold text-sm">Expected Date : </p>
-              <p className="">{details?.expected_date}</p>
-            </div>
-            <div className="grid grid-cols-2 ">
-              <p className="font-semibold text-sm">Expected Time : </p>
-              <p className="">{details?.expected_time}</p>
-            </div>
-            <div className="grid grid-cols-2 ">
-              <p className="font-semibold text-sm">Goods Inward : </p>
-              <p className="">{details?.goods_inwards ? "Yes" : "No"}</p>
-            </div>
-            <div className="grid grid-cols-2 ">
-              <p className="font-semibold text-sm">Host Approval Needed ? : </p>
-              <p className="">{details?.skip_host_approval ? "No" : "Yes"}</p>
-            </div>
-            <div className="grid grid-cols-2 ">
-              <p className="font-semibold text-sm">Pass Start Date : </p>
-              <p className="">
-                {details.start_pass ? dateTimeFormat(details?.start_pass) : "-"}
-              </p>
-            </div>
-            <div className="grid grid-cols-2 ">
-              <p className="font-semibold text-sm">Pass End Date : </p>
-              <p className="">
-                {details.end_pass ? dateTimeFormat(details?.end_pass) : "-"}
-              </p>
-            </div>
-            <div className="grid grid-cols-2 ">
-              <p className="font-semibold text-sm">Host : </p>
               {details?.hosts?.map((host) => (
                 <p>{host?.full_name}</p>
               ))}
             </div>
-            <div className="grid grid-cols-2 ">
-              <p className="font-semibold text-sm">Created by : </p>
-              {details.created_by_name && (
-                <p className="">
-                  {details?.created_by_name.firstname}{" "}
-                  {details?.created_by_name.lastname}
-                </p>
-              )}
-            </div>
-            <div className="grid grid-cols-2 ">
-              <p className="font-semibold text-sm">Created On : </p>
-              <p className="">{dateFormat(details.created_at)}</p>
-            </div>
-            <div className="grid grid-cols-2 ">
-              <p className="font-semibold text-sm">Updated On : </p>
-              <p className="">{dateFormat(details.updated_at)}</p>
-            </div>
-            {details.frequency === "Frequently" && (
-              <div className="grid grid-cols-2 ">
-                <p className="font-semibold text-sm">Permitted Days : </p>
-                <p className="">{details.working_days.join(", ")}</p>
-              </div>
-            )} */}
           </div>
-
-          {/* <div className="my-4 ">
-            <h2 className="font-medium border-b text-lg border-gray-400 px-2 ">
-              Additional Visitors Info
-            </h2>
-            <div className="m-4  ">
-              {details.extra_visitors && details.extra_visitors.length !== 0 ? (
-                <Table columns={VisitorColumns} data={details.extra_visitors} />
-              ) : (
-                <p className="text-center">No Additional Visitor Added</p>
-              )}
-            </div>
-          </div> */}
-          <div className="my-4">
-            <h2 className="font-medium border-b text-lg border-gray-400 px-2 ">
-              Visitor Device Log
-            </h2>
-            <div className="m-4">
-              <Table columns={visitorDeviceLogColumn} data={logs} />
-            </div>
-          </div>
-          {/* <div className="my-4">
-            <h2 className="font-medium border-b text-lg border-gray-400 px-2 ">
-              Visitor Log
-            </h2>
-            <div className="m-4">
-              {details.visits_log && details.visits_log.length !== 0 ? (
-                <Table columns={visitorLogColumn} data={details.visits_log} />
-              ) : (
-                <p className="text-center">No Log Yet</p>
-              )}
-            </div>
-          </div> */}
         </div>
       </div>
       {qrModal && (
-        <SelfVisitorQRCode
+        <VisitorQRCode
           QR={domainPrefix + details.qr_code_image_url}
           onClose={() => setQrmodal(false)}
         />
