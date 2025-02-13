@@ -36,7 +36,6 @@ const SelfRegistrationDetails = () => {
   const [qrModal, setQrmodal] = useState(false);
   return (
     <section className="flex">
-      <Navbar />
       <div className=" w-full flex mx-3 flex-col overflow-hidden">
         <div className="flex flex-col gap-2">
           <h2
@@ -59,12 +58,12 @@ const SelfRegistrationDetails = () => {
             {details.profile_picture && details.profile_picture !== null ? (
               // details.visitor_files.map((doc, index) => (
               <img
-                src={domainPrefix + details.profile_picture.url}
+                src={domainPrefix + details.profile_picture}
                 alt=""
                 className="w-48 h-48 rounded-full cursor-pointer"
                 onClick={() =>
                   window.open(
-                    domainPrefix + details.profile_picture.url,
+                    domainPrefix + details.profile_picture,
                     "_blank"
                   )
                 }
