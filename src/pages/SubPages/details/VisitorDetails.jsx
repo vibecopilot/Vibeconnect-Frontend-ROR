@@ -178,96 +178,138 @@ const VisitorDetails = () => {
             <p className="font-semibold text-sm">Site Name : </p>
             <p className="">{details.site_name}</p>
           </div> */}
-            <div className="grid grid-cols-2 ">
-              <p className="font-semibold text-sm">Visitor Type : </p>
-              <p className="">{details.visit_type}</p>
-            </div>
+            {details.visit_type && (
+              <div className="grid grid-cols-2 ">
+                <p className="font-semibold text-sm">Visitor Type : </p>
+                <p className="">{details.visit_type}</p>
+              </div>
+            )}
             {details?.visit_type === "Support Staff" && (
               <div className="grid grid-cols-2 ">
                 <p className="font-semibold text-sm">Staff Category : </p>
                 <p className="">{details?.visitor_staff_category?.name}</p>
               </div>
             )}
-            <div className="grid grid-cols-2 ">
-              <p className="font-semibold text-sm">Visitor's Name : </p>
-              <p className="">{details?.name}</p>
-            </div>
-            <div className="grid grid-cols-2 ">
-              <p className="font-semibold text-sm">Mobile No. : </p>
-              <p className="">{details?.contact_no}</p>
-            </div>
+            {details.name !== null && (
+              <div className="grid grid-cols-2 ">
+                <p className="font-semibold text-sm">Visitor's Name : </p>
+                <p className="">{details?.name}</p>
+              </div>
+            )}
+            {details.contact_no !== null && (
+              <div className="grid grid-cols-2 ">
+                <p className="font-semibold text-sm">Mobile No. : </p>
+                <p className="">{details?.contact_no}</p>
+              </div>
+            )}
             {/* <div className="grid grid-cols-2 ">
             <p className="font-semibold text-sm">OTP : </p>
             <p className="">{details.otp}</p>
           </div> */}
-            <div className="grid grid-cols-2 ">
-              <p className="font-semibold text-sm">Purpose : </p>
-              <p className="">{details?.purpose}</p>
-            </div>
-            <div className="grid grid-cols-2 ">
-              <p className="font-semibold text-sm">Coming From : </p>
-              <p className="">{details?.coming_from}</p>
-            </div>
-            <div className="grid grid-cols-2 ">
-              <p className="font-semibold text-sm">Vehicle No. : </p>
-              <p className="">{details?.vehicle_number}</p>
-            </div>
-            <div className="grid grid-cols-2 ">
-              <p className="font-semibold text-sm">Expected Date : </p>
-              <p className="">{details?.expected_date}</p>
-            </div>
-            <div className="grid grid-cols-2 ">
-              <p className="font-semibold text-sm">Expected Time : </p>
-              <p className="">{details?.expected_time}</p>
-            </div>
-            <div className="grid grid-cols-2 ">
-              <p className="font-semibold text-sm">Goods Inward : </p>
-              <p className="">{details?.goods_inwards ? "Yes" : "No"}</p>
-            </div>
-            <div className="grid grid-cols-2 ">
-              <p className="font-semibold text-sm">Host Approval Needed ? : </p>
-              <p className="">{details?.skip_host_approval ? "No" : "Yes"}</p>
-            </div>
+            {details.purpose !== null && (
+              <div className="grid grid-cols-2 ">
+                <p className="font-semibold text-sm">Purpose : </p>
+                <p className="">{details?.purpose}</p>
+              </div>
+            )}
+            {details.coming_from !== null && (
+              <div className="grid grid-cols-2 ">
+                <p className="font-semibold text-sm">Coming From : </p>
+                <p className="">{details?.coming_from}</p>
+              </div>
+            )}
+            {details.vehicle_number !== null && (
+              <div className="grid grid-cols-2 ">
+                <p className="font-semibold text-sm">Vehicle No. : </p>
+                <p className="">{details?.vehicle_number}</p>
+              </div>
+            )}
+            {details.expected_date !== null && (
+              <div className="grid grid-cols-2 ">
+                <p className="font-semibold text-sm">Expected Date : </p>
+                <p className="">{details?.expected_date}</p>
+              </div>
+            )}
+            {details.expected_time !== null && (
+              <div className="grid grid-cols-2 ">
+                <p className="font-semibold text-sm">Expected Time : </p>
+                <p className="">{details?.expected_time}</p>
+              </div>
+            )}
+            {details.goods_inwards && (
+              <div className="grid grid-cols-2 ">
+                <p className="font-semibold text-sm">Goods Inward : </p>
+                <p className="">{details?.goods_inwards ? "Yes" : "No"}</p>
+              </div>
+            )}
+            {details.skip_host_approval && (
+              <div className="grid grid-cols-2 ">
+                <p className="font-semibold text-sm">
+                  Host Approval Needed ? :{" "}
+                </p>
+                <p className="">{details?.skip_host_approval ? "No" : "Yes"}</p>
+              </div>
+            )}
             {/* {details.frequency === "Frequently" && ( */}
+            {details.start_pass !== null && (
               <div className="grid grid-cols-2 ">
                 <p className="font-semibold text-sm">Pass Start Date : </p>
                 <p className="">
-                  {details.start_pass ? dateTimeFormat(details?.start_pass) : "-"}
+                  {details.start_pass
+                    ? dateTimeFormat(details?.start_pass)
+                    : "-"}
                 </p>
               </div>
+            )}
             {/* )} */}
             {/* {details.frequency === "Frequently" && ( */}
+            {details.end_pass !== null && (
               <div className="grid grid-cols-2 ">
                 <p className="font-semibold text-sm">Pass End Date : </p>
                 <p className="">
                   {details.end_pass ? dateTimeFormat(details?.end_pass) : "-"}
                 </p>
               </div>
-            {/* )} */}
+            )}
 
-            <div className="grid grid-cols-2 ">
-              <p className="font-semibold text-sm">Host : </p>
-              {details?.hosts?.map((host) => (
-                <p>{host?.full_name}</p>
-              ))}
-            </div>
-            <div className="grid grid-cols-2 ">
-              <p className="font-semibold text-sm">Created by : </p>
-              {details.created_by_name && (
-                <p className="">
-                  {details?.created_by_name.firstname}{" "}
-                  {details?.created_by_name.lastname}
-                </p>
-              )}
-            </div>
-            <div className="grid grid-cols-2 ">
-              <p className="font-semibold text-sm">Created On : </p>
-              <p className="">{dateFormat(details.created_at)}</p>
-            </div>
-            <div className="grid grid-cols-2 ">
-              <p className="font-semibold text-sm">Updated On : </p>
-              <p className="">{dateFormat(details.updated_at)}</p>
-            </div>
+            {/* )} */}
+            {details.hosts !== null && (
+              <div className="grid grid-cols-2 ">
+                <p className="font-semibold text-sm">Host : </p>
+                {details?.hosts?.map((host) => (
+                  <p>{host?.full_name}</p>
+                ))}
+              </div>
+            )}
+            {details.created_by_name !== null && (
+              <div className="grid grid-cols-2 ">
+                <p className="font-semibold text-sm">Created by : </p>
+                {details.created_by_name && (
+                  <p className="">
+                    {details?.created_by_name.firstname}{" "}
+                    {details?.created_by_name.lastname}
+                  </p>
+                )}
+              </div>
+            )}
+            {details.created_at !== null && (
+              <div className="grid grid-cols-2 ">
+                <p className="font-semibold text-sm">Created On : </p>
+                <p className="">{dateFormat(details.created_at)}</p>
+              </div>
+            )}
+            {/* {details.created_at !== null && (
+              <div className="grid grid-cols-2 ">
+                <p className="font-semibold text-sm">Created On : </p>
+                <p className="">{dateFormat(details.created_at)}</p>
+              </div>
+            )} */}
+            {details.updated_at !== null && (
+              <div className="grid grid-cols-2 ">
+                <p className="font-semibold text-sm">Updated On : </p>
+                <p className="">{dateFormat(details.updated_at)}</p>
+              </div>
+            )}
             {details.frequency === "Frequently" && (
               <div className="grid grid-cols-2 ">
                 <p className="font-semibold text-sm">Permitted Days : </p>
@@ -294,7 +336,7 @@ const VisitorDetails = () => {
             </h2>
             <div className="m-4">
               {/* {details.visits_log && details.visits_log.length !== 0 ? ( */}
-                <Table columns={visitorDeviceLogColumn} data={logs} />
+              <Table columns={visitorDeviceLogColumn} data={logs} />
               {/* ) : (
                 <p className="text-center">No Log Yet</p>
               )} */}
@@ -312,7 +354,6 @@ const VisitorDetails = () => {
               )}
             </div>
           </div>
-         
         </div>
       </div>
       {qrModal && (
