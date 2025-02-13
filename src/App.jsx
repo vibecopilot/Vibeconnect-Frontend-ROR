@@ -6520,11 +6520,7 @@ function App() {
         />
         <Route
           path="/admin/passes/self-registration-details/:id"
-          element={
-            <ProtectedAdminRoutes>
-              <SelfRegistrationDetails />
-            </ProtectedAdminRoutes>
-          }
+          element={<SelfRegistrationDetails />}
         />
         <Route
           path="/setup/visitor-setup"
