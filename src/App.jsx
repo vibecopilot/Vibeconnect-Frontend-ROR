@@ -747,6 +747,9 @@ import ClientDashboard from "./pages/Employees/ClientDashboard.jsx";
 
 import { useParams } from "react-router-dom";
 import { getNotification, updateNotificationStatus } from "./api";
+import AddSelfRegistration from "./pages/SubPages/AddSelfRegistration.jsx";
+import EditSelfRegistration from "./pages/SubPages/EditSelfRegistration.jsx";
+import SelfRegistrationDetails from "./pages/SubPages/SelfRegistrationDetails.jsx";
 // new admin hrms
 
 function App() {
@@ -801,6 +804,7 @@ function App() {
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
+        if(!empId) return;
         const data = await getNotification(empId);
         console.log("API Response:", data);
         setNotificationData(data);
@@ -833,7 +837,6 @@ function App() {
         console.error("Error fetching notifications:", error);
       }
     };
-
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 60000);
 
@@ -6502,6 +6505,22 @@ function App() {
               <AddGoods />
             </ProtectedAdminRoutes>
           }
+        />
+        <Route
+          path="/admin/passes/add-self-registration/:id"
+          element={<AddSelfRegistration />}
+        />
+        <Route
+          path="/admin/passes/edit-self-registration/:id"
+          element={
+            <ProtectedAdminRoutes>
+              <EditSelfRegistration />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/admin/passes/self-registration-details/:id"
+          element={<SelfRegistrationDetails />}
         />
         <Route
           path="/setup/visitor-setup"

@@ -23,6 +23,7 @@ import { formatTime } from "../../utils/dateUtils";
 import { IoClose } from "react-icons/io5";
 import { FaCheck } from "react-icons/fa6";
 import toast from "react-hot-toast";
+import SelfRegistration from "./SelfRegistration";
 const VisitorPage = () => {
   const [page, setPage] = useState("all");
   const themeColor = useSelector((state) => state.theme.color);
@@ -59,6 +60,17 @@ const VisitorPage = () => {
     const fetchExpectedVisitor = async () => {
       try {
         const visitorResp = await getExpectedVisitor();
+        // if (visitorResp?.data) {
+        //   const filteredVisitors = visitorResp.data.filter(
+        //     (visitor) => visitor.frequency_type !== null
+        //   );
+
+        //   console.log("Filtered Visitors:", filteredVisitors);
+
+        //   // Use filteredVisitors as needed
+        // } else {
+        //   console.warn("Unexpected API response:", visitorResp);
+        // }
         const sortedVisitor = visitorResp.data.sort((a, b) => {
           return new Date(b.created_at) - new Date(a.created_at);
         });
@@ -458,7 +470,6 @@ const VisitorPage = () => {
     };
   };
 
- 
   useEffect(() => {
     const postLogs = async () => {
       const visitorLogData = getVisitorLogData();
@@ -604,6 +615,16 @@ const VisitorPage = () => {
                 onClick={() => setPage("logs")}
               >
                 Logs
+              </h2>
+              <h2
+                className={`p-2 ${
+                  page === "self-registration"
+                    ? "text-blue-500 font-medium  shadow-custom-all-sides"
+                    : "text-black"
+                }  rounded-t-md rounded-sm cursor-pointer text-center text-sm flex items-center justify-center transition-all duration-300`}
+                onClick={() => setPage("self-registration")}
+              >
+                Self-Registration
               </h2>
             </div>
           </div>
@@ -765,6 +786,11 @@ const VisitorPage = () => {
                 onChange={handleSearchApproval}
               />
               <Table columns={approvalColumn} data={FilteredApproval} />
+            </div>
+          )}
+          {page === "self-registration" && (
+            <div>
+              <SelfRegistration />
             </div>
           )}
           <div className="my-4">
