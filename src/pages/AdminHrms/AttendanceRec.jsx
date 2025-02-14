@@ -111,6 +111,7 @@ const AttendanceRec = () => {
 
       const data = res.results;
       setAttendanceCount(res.count);
+      console.log("EmployeeData:",data)
       setEmployees(data);
       setFilteredEmployees(data);
       setPaginationInfo({
@@ -187,14 +188,17 @@ const AttendanceRec = () => {
   const handleSearch = (e) => {
     const searchValue = e.target.value;
     setSearchText(searchValue);
-    console.log("Line 190:",employees)
     if (searchValue.trim() === "") {
       setFilteredEmployees(employees);
     } else {
-      const filteredResult = employees.filter((employee) =>
-        `${employee.first_name} ${employee.last_name}`
-          .toLowerCase()
-          .includes(searchValue.toLowerCase())
+      const filteredResult = employees.filter(
+        (employee) =>
+          `${employee.first_name} ${employee.last_name}`
+            .toLowerCase()
+            .includes(searchValue.toLowerCase()) ||
+          employee.associated_organization_name
+            .toLowerCase()
+            .includes(searchValue.toLowerCase())
       );
       setFilteredEmployees(filteredResult);
     }

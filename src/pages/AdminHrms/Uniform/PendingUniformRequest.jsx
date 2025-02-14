@@ -38,6 +38,11 @@ const PendingUniformRequest = () => {
       ),
     },
     {
+      name: "Site Name",
+      selector: (row) => row.associated_organization_name,
+      sortable: true,
+    },
+    {
       name: "Employee Name",
       selector: (row) => row.employee_name,
       sortable: true,
@@ -94,20 +99,22 @@ const PendingUniformRequest = () => {
       name: "Action",
       cell: (row) => (
         <div className="flex items-center gap-4">
-          {roleAccess?.can_approve_reject_uniform_request && <>
-          <button
-            className="bg-green-400 text-white p-2 rounded-full"
-            onClick={() => handleUniformApproval(row.id, "Approved")}
-            >
-            <FaCheck title="Approve uniform" />
-          </button>
-          <button
-            className="bg-red-400 text-white p-2 rounded-full"
-            onClick={() => handleUniformApproval(row.id, "Rejected")}
-            >
-            <MdClose title="Reject uniform" size={15} />
-          </button>
-            </>}
+          {roleAccess?.can_approve_reject_uniform_request && (
+            <>
+              <button
+                className="bg-green-400 text-white p-2 rounded-full"
+                onClick={() => handleUniformApproval(row.id, "Approved")}
+              >
+                <FaCheck title="Approve uniform" />
+              </button>
+              <button
+                className="bg-red-400 text-white p-2 rounded-full"
+                onClick={() => handleUniformApproval(row.id, "Rejected")}
+              >
+                <MdClose title="Reject uniform" size={15} />
+              </button>
+            </>
+          )}
         </div>
       ),
     },
@@ -201,8 +208,14 @@ const PendingUniformRequest = () => {
     if (searchValue.trim() === "") {
       setFilteredRequests(requests);
     } else {
-      const filteredResult = requests.filter((employee) =>
-        employee.employee_name.toLowerCase().includes(searchValue.toLowerCase())
+      const filteredResult = requests.filter(
+        (employee) =>
+          employee.associated_organization_name
+            .toLowerCase()
+            .includes(searchValue.toLowerCase()) ||
+          employee.employee_name
+            .toLowerCase()
+            .includes(searchValue.toLowerCase())
       );
       setFilteredRequests(filteredResult);
     }
@@ -242,23 +255,22 @@ const PendingUniformRequest = () => {
     }
   };
 
-
   // can_approve_reject_uniform_request
   const employeeId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
-    const orgId = getItemInLocalStorage("HRMSORGID");
-    const [roleAccess, setRoleAccess] = useState({});
-    useEffect(() => {
-      const fetchRoleAccess = async () => {
-        try {
-          const res = await getAdminAccess(orgId, employeeId);
-  
-          setRoleAccess(res[0]);
-        } catch (error) {
-          console.log(error);
-        }
-      };
-      fetchRoleAccess();
-    }, []);
+  const orgId = getItemInLocalStorage("HRMSORGID");
+  const [roleAccess, setRoleAccess] = useState({});
+  useEffect(() => {
+    const fetchRoleAccess = async () => {
+      try {
+        const res = await getAdminAccess(orgId, employeeId);
+
+        setRoleAccess(res[0]);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchRoleAccess();
+  }, []);
 
   return (
     <section className="flex">
@@ -266,7 +278,7 @@ const PendingUniformRequest = () => {
         <div className="flex justify-between gap-2 my-2">
           <input
             type="text"
-            placeholder="Search by employee name"
+            placeholder="Search by employee name & Site name"
             className="border border-gray-400 w-full placeholder:text-sm rounded-lg p-2"
             value={searchText}
             onChange={handleSearch}
@@ -563,7 +575,9 @@ const PendingUniformRequest = () => {
                 {details.id_card !== null && (
                   <div className="grid grid-cols-2">
                     <p className="font-medium">ID Card:</p>
-                    <p className="">{details.id_card === "Yes"? "Required": "Not Required"}</p>
+                    <p className="">
+                      {details.id_card === "Yes" ? "Required" : "Not Required"}
+                    </p>
                   </div>
                 )}
               </div>

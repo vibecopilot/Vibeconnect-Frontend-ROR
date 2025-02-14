@@ -159,7 +159,7 @@ const Navbar = () => {
         </div>
         <div className="flex flex-col h-full gap-4 mb-5 relative">
           {/* admin */}
-          {(user === "pms_admin" || user === "auditor")&& (
+          {(user === "pms_admin" || user === "auditor") && (
             <>
               {/* <Link  className=" text-white" >
           
@@ -1499,7 +1499,7 @@ const Navbar = () => {
           )}
 
           {/* user */}
-          {(user !== "pms_admin" && user !== "auditor") && (
+          {user !== "pms_admin" && user !== "auditor" && (
             <>
               {/* {siteId === 25 ? */}
               <NavLink
