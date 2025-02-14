@@ -455,6 +455,8 @@ const ManageAdmin = () => {
   const [dashboardPermission, setDashboardPermission] = useState({
     dashboard_permissions: false,
     can_view_dashboard: false,
+    //changes aman
+    client_dashboard :false,
   })
   const [Dashboard, setDashboard] = useState(false)
   const permissionLabels = [
@@ -810,7 +812,7 @@ const ManageAdmin = () => {
                         </div>
                         {dashboardPermission.dashboard_permissions && (
                           <div className="border rounded-b-md">
-                            <div className="p-4 flex justify-between items-center border-b last:border-b-0">
+                            {/* <div className="p-4 flex justify-between items-center border-b last:border-b-0">
                               <span className="text-gray-700">Can view dashboard</span>
                               <Switch
                                 checked={dashboardPermission.can_view_dashboard}
@@ -818,6 +820,18 @@ const ManageAdmin = () => {
                                   setDashboardPermission((prev) => ({
                                     ...prev,
                                     can_view_dashboard: !prev.can_view_dashboard,
+                                  }))
+                                }
+                              />
+                            </div> */}
+                            <div className="p-4 flex justify-between items-center border-b last:border-b-0">
+                              <span className="text-gray-700">Client dashboard</span>
+                              <Switch
+                                checked={dashboardPermission.client_dashboard}
+                                onChange={() =>
+                                  setDashboardPermission((prev) => ({
+                                    ...prev,
+                                    client_dashboard: !prev.client_dashboard,
                                   }))
                                 }
                               />
@@ -1084,7 +1098,7 @@ const ManageAdmin = () => {
                         </div>
                         {dashboardPermission.dashboard_permissions && (
                           <div className="border rounded-b-md">
-                            <div className="p-4 flex justify-between items-center border-b last:border-b-0">
+                            {/* <div className="p-4 flex justify-between items-center border-b last:border-b-0">
                               <span className="text-gray-700">Can view dashboard</span>
                               <Switch
                                 checked={dashboardPermission.can_view_dashboard}
@@ -1092,6 +1106,18 @@ const ManageAdmin = () => {
                                   setDashboardPermission((prev) => ({
                                     ...prev,
                                     can_view_dashboard: !prev.can_view_dashboard,
+                                  }))
+                                }
+                              />
+                            </div> */}
+                            <div className="p-4 flex justify-between items-center border-b last:border-b-0">
+                              <span className="text-gray-700">Client Dashboard</span>
+                              <Switch
+                                checked={dashboardPermission.client_dashboard}
+                                onChange={() =>
+                                  setDashboardPermission((prev) => ({
+                                    ...prev,
+                                    client_dashboard: !prev.client_dashboard,
                                   }))
                                 }
                               />

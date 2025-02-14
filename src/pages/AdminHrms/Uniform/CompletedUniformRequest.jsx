@@ -22,6 +22,11 @@ const CompletedUniformRequest = () => {
       sortable: true,
     },
     {
+      name: "Site Name",
+      selector: (row) => row.associated_organization_name,
+      sortable: true,
+    },
+    {
       name: "Waist size",
       selector: (row) => (
         <p>
@@ -91,6 +96,7 @@ const CompletedUniformRequest = () => {
     try {
       const res = await getUniformRequest(hrmsOrgId);
       const filteredData = res.filter((item) => item.status !== "Pending");
+      console.log(filteredData)
       setRequests(filteredData);
       setFilteredRequests(filteredData);
     } catch (error) {
@@ -121,8 +127,12 @@ const CompletedUniformRequest = () => {
     if (searchValue.trim() === "") {
       setFilteredRequests(requests);
     } else {
-      const filteredResult = requests.filter((employee) =>
-        employee.employee_name.toLowerCase().includes(searchValue.toLowerCase())
+      const filteredResult = requests.filter(
+        (employee) =>
+          employee.employee_name
+            .toLowerCase()
+            .includes(searchValue.toLowerCase()) ||
+          employee.associated_organization_name.toLowerCase().includes(searchValue.toLowerCase())
       );
       setFilteredRequests(filteredResult);
     }

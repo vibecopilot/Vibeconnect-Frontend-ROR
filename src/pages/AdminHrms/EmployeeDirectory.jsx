@@ -72,10 +72,14 @@ function EmployeeDirectory() {
         address_information: employeeData.address_information || null,
         employment_info: employeeData.employment_info || null,
         family_information: employeeData.family_information || null,
+        employee_code: employeeData.employment_info?.employee_code || "",
       };
 
       acc[firstLetter].push(employeeDetails);
+      // console.log("This is details:", employeeDetails);
+      // console.log("employeeInfo:", employeeDetails?.employee_code);
     }
+    // console.log(acc);
     return acc;
   }, {});
 
@@ -112,7 +116,7 @@ function EmployeeDirectory() {
 
   const filteredEmployees = selectedLetter
     ? groupedEmployees[selectedLetter] || []
-    : employeesData;
+    : employeesData?.employee_code;
 
   function getRandomColor() {
     const colors = [
@@ -169,14 +173,16 @@ function EmployeeDirectory() {
   };
 
   const [searchText, setSearchText] = useState("");
+
   const handleSearch = (e) => {
     const searchValue = e.target.value;
     setSearchText(searchValue);
   };
-  // const
-  const handleChangeStatus = async () => {
-    // const
-  };
+
+  // // const
+  // const handleChangeStatus = async () => {
+  //   // const
+  // };
 
   const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
   const orgId = getItemInLocalStorage("HRMSORGID");
@@ -213,7 +219,7 @@ function EmployeeDirectory() {
               <div className="flex gap-2">
                 <input
                   type="text"
-                  placeholder="Search by Name "
+                  placeholder="Search by Name ,Emp Code "
                   className="border p-2 text-black rounded-md w-96"
                   onChange={handleSearch}
                   value={searchText}
@@ -983,10 +989,14 @@ function EmployeeDirectory() {
                     <div className="flex flex-wrap">
                       {/* {groupedEmployees[letter]?.map((employee, index) => ( */}
                       {groupedEmployees[letter]
-                        ?.filter((employee) =>
-                          `${employee.first_name} ${employee.last_name}`
-                            .toLowerCase()
-                            .includes(searchText.toLowerCase())
+                        ?.filter(
+                          (employee) =>
+                            `${employee.first_name} ${employee.last_name}`
+                              .toLowerCase()
+                              .includes(searchText.toLowerCase()) ||
+                            employee?.employee_code
+                              .toLowerCase()
+                              .includes(searchText.toLowerCase())
                         )
                         .map((employee, index) => (
                           <div

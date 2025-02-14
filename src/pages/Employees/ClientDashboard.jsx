@@ -158,6 +158,7 @@ const ClientDashboard = () => {
           gender: client.gender,
           status,
           date: todayDate,
+          // check_in:is_check_in,
         };
       });
       // Save full & filtered records (initially unfiltered)
@@ -631,7 +632,7 @@ const ClientDashboard = () => {
                 <Calendar
                   onChange={handleDateChange}
                   value={selectedDate}
-                  maxDate = {maxDate}
+                  // maxDate = {maxDate}
                   className="react-calendar p-0 w-full h-full overflow-y-auto"
                 />
                 <button
