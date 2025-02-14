@@ -1961,7 +1961,7 @@ const AdminHRMS = () => {
                   clientDashboard
                 </h2>
               </NavLink> */}
-              <NavLink
+              {/* <NavLink
               to="/admin/hrms/client-dashboard"
               className={({ isActive }) =>
                 `${
@@ -1988,7 +1988,7 @@ const AdminHRMS = () => {
               >
                 Client Dashboard
               </h2>
-            </NavLink>
+            </NavLink> */}
           </>
         </div>
       </div>

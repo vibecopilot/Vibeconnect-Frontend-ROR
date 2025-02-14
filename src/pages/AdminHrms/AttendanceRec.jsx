@@ -108,6 +108,7 @@ const AttendanceRec = () => {
     setLoading(true);
     try {
       const res = await getAttendanceRecord(hrmsOrgId, page);
+
       const data = res.results;
       setAttendanceCount(res.count);
       setEmployees(data);
@@ -186,6 +187,7 @@ const AttendanceRec = () => {
   const handleSearch = (e) => {
     const searchValue = e.target.value;
     setSearchText(searchValue);
+    console.log("Line 190:",employees)
     if (searchValue.trim() === "") {
       setFilteredEmployees(employees);
     } else {
@@ -361,31 +363,31 @@ const AttendanceRec = () => {
   ];
 
   const formatTimeToAmPmUTC = (timestamp) => {
-    const date = new Date(timestamp); 
-    const hours = date.getUTCHours(); 
-    const minutes = date.getUTCMinutes(); 
+    const date = new Date(timestamp);
+    const hours = date.getUTCHours();
+    const minutes = date.getUTCMinutes();
     const amPm = hours >= 12 ? "PM" : "AM";
     const formattedHours = hours % 12 || 12; // Convert 0-23 to 1-12, with 0 being 12 AM
     const formattedMinutes = minutes.toString().padStart(2, "0"); // Ensure two digits for minutes
-  
+
     return `${formattedHours}:${formattedMinutes} ${amPm}`;
   };
 
-   const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
-        const orgId = getItemInLocalStorage("HRMSORGID");
-        const [roleAccess, setRoleAccess] = useState({});
-        useEffect(() => {
-          const fetchRoleAccess = async () => {
-            try {
-              const res = await getAdminAccess(orgId, empId);
-      
-              setRoleAccess(res[0]);
-            } catch (error) {
-              console.log(error);
-            }
-          };
-          fetchRoleAccess();
-        }, []);
+  const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
+  const orgId = getItemInLocalStorage("HRMSORGID");
+  const [roleAccess, setRoleAccess] = useState({});
+  useEffect(() => {
+    const fetchRoleAccess = async () => {
+      try {
+        const res = await getAdminAccess(orgId, empId);
+
+        setRoleAccess(res[0]);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchRoleAccess();
+  }, []);
 
   return (
     <div className="flex">
@@ -921,16 +923,20 @@ const AttendanceRec = () => {
                     {/* <p>{selectedRecord.schedule}</p> */}
                   </div>
                   <div className="flex gap-2 justify-end border-t p-1 ">
-                    {roleAccess.can_apply_regularization_on_behalf_of_employee &&<button
-                      className=" bg-blue-500 text-white px-4 py-2 rounded-full"
-                      onClick={() => setAddRegularization(true)}
-                    >
-                      Apply For Regularization
-                    </button>}
+                    {roleAccess.can_apply_regularization_on_behalf_of_employee && (
+                      <button
+                        className=" bg-blue-500 text-white px-4 py-2 rounded-full"
+                        onClick={() => setAddRegularization(true)}
+                      >
+                        Apply For Regularization
+                      </button>
+                    )}
 
                     <button
                       className=" bg-red-500 text-white px-4 py-2 rounded-full"
-                      onClick={() => {setSelectedEmpAttendance(false), setCheckOutLogs([])}}
+                      onClick={() => {
+                        setSelectedEmpAttendance(false), setCheckOutLogs([]);
+                      }}
                     >
                       Close
                     </button>
