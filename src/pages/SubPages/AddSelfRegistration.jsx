@@ -66,7 +66,7 @@ const AddSelfRegistration = () => {
         console.log("Extracted site_id:", siteId);
         console.log("Extracted token:", token);
         const usersResp = await axios.get(
-          `https://13.215.74.38/visitors/fetch_potential_hosts.json`,
+          `http://13.215.74.38/visitors/fetch_potential_hosts.json`,
           {
             params: { site_id: siteId, token: token },
           }
