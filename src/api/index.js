@@ -6444,6 +6444,20 @@ export const getNotification = async (id) => {
   }
 };
 
+export const getClientDashboard = async (employeeId) => {
+  try {
+    const response = await HrmsAuth.get(`/associated-organizations/mutiple-site/?employee_id=${employeeId}`, {
+      // headers: {
+      //   "Content-Type": "multipart/form-data/",
+      // },
+    });
+    return response.data; // Ensure it returns data
+  } catch (error) {
+    console.error("Error getting employee:", error);
+    return []; // Return empty array on error
+  }
+};
+
 // export const updateNotificationStatus = async (notificationId) => {
 //   try {
 //     const response = await HrmsAuth.patch(`/notifications/${notificationId}/`)
@@ -7223,6 +7237,45 @@ export const getEmployeeEsic = async (empId) => {
     throw error;
   }
 };
+ 
+
+export const getFamilyMember = async (id) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/esic-family-members/?employee_id=${id}`,
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting Employee family members", error);
+    throw error;
+  }
+};
+
+export const postEsicCard = async (empId,data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/esic/create/?employee_id=${empId}`,
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting request", error);
+    throw error;
+  }
+};
+
+
 
 export const postFamilyEsic = async (data) => {
   try {
