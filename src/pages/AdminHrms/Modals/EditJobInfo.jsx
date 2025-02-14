@@ -105,7 +105,7 @@ const EditJobInfo = ({ closeModal1, fetchJobInfo, infoId }) => {
         deptId,
         hrmsOrgId
       );
-      console.log(reportingSupervisors);
+      console.log("This is superviser id:",reportingSupervisors);
 
       // Extract supervisors from the nested structure
       const supervisors = reportingSupervisors.flatMap((department) =>
@@ -114,7 +114,7 @@ const EditJobInfo = ({ closeModal1, fetchJobInfo, infoId }) => {
           label: supervisor.full_name,
         }))
       );
-
+       console.log("This is supervisor:",supervisors);
       setReportSupervisor(supervisors);
     };
 
@@ -156,7 +156,7 @@ const EditJobInfo = ({ closeModal1, fetchJobInfo, infoId }) => {
     postData.append("start_date", formData.startDate);
     postData.append("end_date", formData.endDate);
     postData.append("organization", hrmsOrgId);
-    postData.append("reporting_supervisor", selectedSupervisorOption.value);
+    postData.append("reporting_supervisor", selectedSupervisorOption.value || "");
     postData.append("department", formData.department);
     postData.append("associated_organization", selectedOption.value);
     postData.append("comment", formData.comment);
