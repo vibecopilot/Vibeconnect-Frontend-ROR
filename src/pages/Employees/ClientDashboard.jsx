@@ -3,6 +3,8 @@ import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import { RxExit } from "react-icons/rx";
 import { FaRegUserCircle } from "react-icons/fa";
+import Table from "../../components/table/Table";
+
 import { Calendar } from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { useSelector } from "react-redux";
@@ -291,7 +293,7 @@ const ClientDashboard = () => {
         });
       const absentRecordObj = { absentrecord: absentEmployees };
       setAbsentRecord(absentRecordObj);
-      // console.log("Absent Record:", absentRecordObj);
+      console.log("Site Data:",siteRes );
 
       // Build the attendance table records
       const tableRecords = siteRes.map((employee) => {
@@ -313,6 +315,7 @@ const ClientDashboard = () => {
       setAttendanceTableRecords(tableRecords);
       setFullSiteAttendanceRecords(tableRecords);
       setFilteredSiteAttendanceRecords(tableRecords);
+      console.log(tableRecords)
     } catch (error) {
       console.log("Error fetching site data:", error);
     }
@@ -551,8 +554,7 @@ const ClientDashboard = () => {
               // When no site is selected and overallAttendance is available, show overall counts:
               <>
                 <div className="shadow-lg p-2 rounded-lg transition-colors duration-300 cursor-pointer text-center">
-                  Headcout
-                  <h3 className="font-semibold text-lg"></h3>
+                  <h3 className="font-semibold text-lg">Head Count</h3>
                   <p>{overallAttendance.total_employee}</p>
                 </div>
 
@@ -629,6 +631,7 @@ const ClientDashboard = () => {
                 <Calendar
                   onChange={handleDateChange}
                   value={selectedDate}
+                  maxDate = {maxDate}
                   className="react-calendar p-0 w-full h-full overflow-y-auto"
                 />
                 <button
@@ -673,7 +676,6 @@ const ClientDashboard = () => {
                       <th className="border px-4 py-2">Name</th>
                       <th className="border px-4 py-2">Gender</th>
                       <th className="border px-4 py-2">Status</th>
-                      <th className="border px-4 py-2">Date</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -684,16 +686,13 @@ const ClientDashboard = () => {
                           <td className="border px-4 py-2">{record.empName}</td>
                           <td className="border px-4 py-2">{record.gender}</td>
                           <td
-                            className={`border px-4 py-2 text-center ${
+                            className={`border px-4 py-2 text-left ${
                               record.status === "Absent"
                                 ? "text-red-500"
                                 : "text-green-500"
                             }`}
                           >
                             {record.status}
-                          </td>
-                          <td className="border px-4 py-2 text-center">
-                            {record.date}
                           </td>
                         </tr>
                       ))
@@ -740,10 +739,11 @@ const ClientDashboard = () => {
                     <tr>
                       <th className="border px-4 py-2">Employee Name</th>
                       <th className="border px-4 py-2">Status</th>
-                      <th className="border px-4 py-2">Date</th>
+                      {/* <th className="border px-4 py-2">Date</th> */}
                     </tr>
                   </thead>
                   <tbody>
+                    
                     {filteredSiteAttendanceRecords.length > 0 ? (
                       filteredSiteAttendanceRecords.map((record) => (
                         <tr key={record.id}>
@@ -756,9 +756,6 @@ const ClientDashboard = () => {
                             }`}
                           >
                             {record.status}
-                          </td>
-                          <td className="text-center border px-4 py-2">
-                            {record.date}
                           </td>
                         </tr>
                       ))
