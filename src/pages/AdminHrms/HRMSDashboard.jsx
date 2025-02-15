@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, NavLink, useParams } from "react-router-dom";
 import {
   Chart as ChartJS,
   ArcElement,
@@ -11,13 +11,13 @@ import {
   Legend,
   Tooltip,
 } from "chart.js";
-import { Doughnut, Bar, Line } from "react-chartjs-2"
+import { Doughnut, Bar, Line } from "react-chartjs-2";
 import "tailwindcss/tailwind.css";
 import { ImFileText2 } from "react-icons/im";
 import { AiOutlineBell } from "react-icons/ai";
 import AdminHRMS from "./AdminHrms";
 import { FaPlus } from "react-icons/fa";
-import { MdSettings, MdAnnouncement, MdPostAdd } from "react-icons/md";
+import { MdSettings, MdAnnouncement, MdPostAdd ,MdNotificationsActive } from "react-icons/md";
 import { Link } from "react-router-dom";
 import { BiUser } from "react-icons/bi";
 import { IoReload } from "react-icons/io5";
@@ -30,6 +30,7 @@ import {
   // updateNotificationStatus,
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
+import Notification from "../SubPages/Notification";
 // import { toast, ToastContainer } from "react-toastify";
 // import toast from "react-hot-toast";
 // import Notification from "../Employees/Notification";
@@ -128,7 +129,6 @@ const HRMSDashboard = () => {
     }
   };
 
-  
   // const [notificationData, setNotificationData] = useState([]);
   // const empId = getItemInLocalStorage("APPROVERID");
 
@@ -190,13 +190,42 @@ const HRMSDashboard = () => {
             <h1 className="text-2xl font-bold pl-20 top-0 left-0 right-0">
               Welcome To <span>{orgName}</span>
             </h1>
-            {/* <div
-            className="bg-white mt-1 text-black text-center font-semibold absolute right-32 border-r-4"
-            style={{ width: "130px", height: "30px", borderRadius: "5%" }}
-          >
-            Vibe CopilotAI
-          </div>
-          &nbsp; */}
+            
+            <div
+              className="bg-white mt-1 text-black text-center font-semibold absolute right-32 "
+              style={{ width: "130px", height: "30px", borderRadius: "5%" }}
+            >
+             
+              <NavLink
+                to="/admin/hrms/notifications"
+                className={({ isActive }) =>
+                  `${
+                    isActive
+                      ? "text-black bg-white flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                      : "group flex items-center text-sm gap-3.5 font-medium p-2"
+                  }`
+                }
+              >
+                <h1
+                  className={`font-large whitespace-pre duration-300 ${
+                    !open && "opacity-0 translate-x-28 overflow-hidden"
+                  }`}
+                >
+                  Notification
+                </h1>
+                <h2
+                  className={`${
+                    open && "hidden"
+                  } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+                >
+                  Notification
+                </h2>
+                <div>
+                  {React.createElement(MdNotificationsActive, { size: "20" })}
+                </div>
+              </NavLink>
+            </div>
+            &nbsp;
           </div>
 
           <div className="mt-16 overflow-y-auto absolute top-1 left-20">
@@ -212,6 +241,9 @@ const HRMSDashboard = () => {
               </div>
               <div className="shadow-custom-all-sides rounded-lg ">
                 <EmployeeCount />
+              </div>
+              <div className="shadow-custom-all-sides rounded-lg ">
+                <Notification />
               </div>
               {/* <div
               className="bg-white p-6 rounded-lg shadow-custom-all-sides m-4 z-10"
@@ -267,6 +299,7 @@ const HRMSDashboard = () => {
     </>
   );
 };
+export default HRMSDashboard;
 
 // import React, { useEffect, useState } from "react";
 // import { useNavigate, useParams } from "react-router-dom";
@@ -573,5 +606,3 @@ const HRMSDashboard = () => {
 //     </section>
 //   );
 // };
-
-export default HRMSDashboard;

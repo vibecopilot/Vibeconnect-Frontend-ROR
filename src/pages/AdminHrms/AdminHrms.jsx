@@ -363,6 +363,19 @@ const AdminHRMS = () => {
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
+        {/* <div className={`py-3 flex ${open ? "justify-end" : "justify-center"}`}>
+          <MdNotificationsActive
+            size={26}
+            className="cursor-pointer"
+            onClick={() => setOpen(!open)}
+          />
+          {open && (
+            <p className="bg-white text-black p-2 rounded-md shadow-md">
+              Notification
+            </p>
+          )}
+        </div> */}
+
         <div className={`py-3 flex ${open ? "justify-end" : "justify-center"}`}>
           <HiMenuAlt3
             size={26}
@@ -372,6 +385,7 @@ const AdminHRMS = () => {
         </div>
         <div className="flex flex-col h-full gap-4 mb-5 relative">
           <>
+           
             <NavLink
               to="/admin/hrms/dashboard"
               className={({ isActive }) =>
@@ -400,6 +414,7 @@ const AdminHRMS = () => {
                 Dashboard
               </h2>
             </NavLink>
+
             {/* <NavLink
               to="/admin/hrms/alerts"
               className={({ isActive }) =>
@@ -635,7 +650,7 @@ const AdminHRMS = () => {
                       }
                     >
                       <div>
-                        {React.createElement(FaPeopleGroup , { size: "20" })}
+                        {React.createElement(FaPeopleGroup, { size: "20" })}
                       </div>
                       <h2
                         className={`whitespace-pre duration-300 ${
@@ -1952,7 +1967,7 @@ const AdminHRMS = () => {
                 Reports
               </h2>
             </NavLink> */}
-              {/* <NavLink to="/clientDashboard">
+            {/* <NavLink to="/clientDashboard">
               <h2
                   className={`whitespace-pre duration-300 ${
                     !open && "opacity-0 translate-x-28 overflow-hidden"
@@ -1961,7 +1976,7 @@ const AdminHRMS = () => {
                   clientDashboard
                 </h2>
               </NavLink> */}
-              {/* <NavLink
+            {/* <NavLink
               to="/admin/hrms/client-dashboard"
               className={({ isActive }) =>
                 `${

@@ -54,6 +54,7 @@ const Attendance = () => {
     const diffHrs = diffMs / (1000 * 60 * 60);
     return diffHrs.toFixed(2);
   };
+  console.log(TotalHours)
   const column = [
     // {
     //   name: "Actions",
