@@ -708,6 +708,7 @@ import CTCGeneralSettingEdit from "./pages/AdminHrms/CTCGeneralSettingEdit.jsx";
 import TimeSheetRecord from "./pages/AdminHrms/TimeSheet/TimeSheetRecord.jsx";
 import EmployeesSetup from "./pages/AdminHrms/EmployeesSetup.jsx";
 import UniformApplication from "./pages/AdminHrms/UniformApplication.jsx";
+// import Notification from "./pages/AdminHrms/Notification.jsx";
 // import { setColor } from "./features/theme/themeSlice.js";
 import CopyChecklistPPM from "./pages/SubPages/CopyChecklistPPM.jsx";
 import CopyChecklistService from "./pages/SubPages/CopyChecklistService.jsx";
@@ -804,7 +805,7 @@ function App() {
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        if(!empId) return;
+        if (!empId) return;
         const data = await getNotification(empId);
         console.log("API Response:", data);
         setNotificationData(data);
@@ -3961,6 +3962,14 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
+        <Route
+          path="/admin/hrms/notifications"
+          element={
+            <ProtectedAdminRoutes>
+              <Notification />
+            </ProtectedAdminRoutes>
+          }
+        />
 
         <Route
           path="/admin/hrms/alerts"
@@ -6726,14 +6735,6 @@ function App() {
           element={
             <ProtectedRoute>
               <ClientDashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/hrms/notification"
-          element={
-            <ProtectedRoute>
-              <Notification />
             </ProtectedRoute>
           }
         />

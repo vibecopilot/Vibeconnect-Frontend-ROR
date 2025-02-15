@@ -338,6 +338,7 @@ const SectionsEmployment = () => {
   const fetchJobInfo = async () => {
     try {
       const res = await getEmployeeJobInfo(id);
+      console.log(res)
       setJobInfo(res);
     } catch (error) {
       console.log(error);

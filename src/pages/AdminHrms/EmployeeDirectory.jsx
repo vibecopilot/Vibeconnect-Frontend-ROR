@@ -15,6 +15,8 @@ import {
   getMyHRMSEmployeesAllData,
   getUserDetails,
   hrmsDomain,
+  getEmployeeJobInfo,
+  getAssociatedSites,
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import toast from "react-hot-toast";
@@ -22,6 +24,7 @@ import toast from "react-hot-toast";
 function EmployeeDirectory() {
   const themeColor = useSelector((state) => state.theme.color);
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalOpen1, setIsModalOpen1] = useState(false);
   const [isModalOpen2, setIsModalOpen2] = useState(false);
@@ -37,20 +40,28 @@ function EmployeeDirectory() {
   const [employeesData, setEmployeesData] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState({});
   const [selectedLetter, setSelectedLetter] = useState(null);
+  const [AllSites, setAllSites] = useState([]); // Array of objects: { id, siteName }
+  const [selectedSite, setSelectedSite] = useState("");
+  const [filteredEmployeesSite, setFilteredEmployeesSite] = useState([]);
 
   const fetchAllEmployees = async () => {
     try {
       toast.loading("Loading employees Please wait!");
       const res = await getMyHRMSEmployeesAllData(hrmsOrgId);
-      console.log(res);
+      console.log("ALL DATA USER:", res);
       setEmployeesData(res);
       toast.dismiss();
+      const hrmsAdminData = await getEmployeeJobInfo(empId);
+      const allSites = await getAssociatedSites(orgId);
+      setAllSites(allSites);
     } catch (error) {
       console.log(error);
       toast.dismiss();
       toast.error("Something went wrong");
     }
   };
+  // console.log("This is All Site:",AllSites)
+  console.log("SITE DATA:", AllSites);
   useEffect(() => {
     fetchAllEmployees();
   }, []);
@@ -72,6 +83,7 @@ function EmployeeDirectory() {
         address_information: employeeData.address_information || null,
         employment_info: employeeData.employment_info || null,
         family_information: employeeData.family_information || null,
+        employee_code: employeeData.employment_info?.employee_code || "",
       };
 
       acc[firstLetter].push(employeeDetails);
@@ -110,6 +122,8 @@ function EmployeeDirectory() {
     // setSelectedEmployee(null);
   };
 
+  console.log("This is emp group :",groupedEmployees)
+
   const filteredEmployees = selectedLetter
     ? groupedEmployees[selectedLetter] || []
     : employeesData;
@@ -139,6 +153,7 @@ function EmployeeDirectory() {
   function getColorForEmployee(index) {
     return colors[index % colors.length];
   }
+  // select mulitple site
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [employeeId, setEmployeeId] = useState("");
@@ -168,16 +183,7 @@ function EmployeeDirectory() {
     }
   };
 
-  const [searchText, setSearchText] = useState("");
-  const handleSearch = (e) => {
-    const searchValue = e.target.value;
-    setSearchText(searchValue);
-  };
   // const
-  const handleChangeStatus = async () => {
-    // const
-  };
-
   const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
   const orgId = getItemInLocalStorage("HRMSORGID");
   const [roleAccess, setRoleAccess] = useState({});
@@ -191,9 +197,16 @@ function EmployeeDirectory() {
         console.log(error);
       }
     };
+
     fetchRoleAccess();
   }, []);
-
+  const [searchText, setSearchText] = useState("");
+  const handleSearch = (e) => {
+    const searchValue = e.target.value;
+    setSearchText(searchValue);
+  };
+ 
+  
   return (
     <div className="w-full">
       <AdminHRMS />
@@ -210,6 +223,23 @@ function EmployeeDirectory() {
                   Employee personal details are noted under this section.
                 </p> */}
               </div>
+              {/* Dropdown */}
+              <select
+                id="siteDropdown"
+                value={selectedSite}
+                onChange={(e) => setSelectedSite(e.target.value)}
+                className="border p-2 text-black rounded-md grid gap-2 items-center"
+              >
+                <option value="">Select All Site</option>
+                {AllSites.map((site) => (
+                  <option key={site.id} value={site.id}>
+                    {site.site_name}
+                  </option>
+                ))}
+              </select>
+
+              {/* Show selected site */}
+              {/* {selectedSite && <p>Selected Site ID: {selectedSite}</p>} */}
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -983,10 +1013,14 @@ function EmployeeDirectory() {
                     <div className="flex flex-wrap">
                       {/* {groupedEmployees[letter]?.map((employee, index) => ( */}
                       {groupedEmployees[letter]
-                        ?.filter((employee) =>
-                          `${employee.first_name} ${employee.last_name}`
-                            .toLowerCase()
-                            .includes(searchText.toLowerCase())
+                        ?.filter(
+                          (employee) =>
+                            `${employee.first_name} ${employee.last_name}`
+                              .toLowerCase()
+                              .includes(searchText.toLowerCase()) ||
+                            `${employee.employee_code}`
+                              .toLowerCase()
+                              .includes(searchText.toLowerCase())
                         )
                         .map((employee, index) => (
                           <div
