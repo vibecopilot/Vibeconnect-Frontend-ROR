@@ -21,217 +21,36 @@ import {
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import toast from "react-hot-toast";
 
-// function EmployeeDirectory() {
-//   const themeColor = useSelector((state) => state.theme.color);
-//   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
-
-//   const [isModalOpen, setIsModalOpen] = useState(false);
-//   const [isModalOpen1, setIsModalOpen1] = useState(false);
-//   const [isModalOpen2, setIsModalOpen2] = useState(false);
-//   const [isModalOpen3, setIsModalOpen3] = useState(false);
-//   const [isModalOpen4, setIsModalOpen4] = useState(false);
-//   const [isModalOpen5, setIsModalOpen5] = useState(false);
-//   const [isModalOpen6, setIsModalOpen6] = useState(false);
-//   const [isModalOpen7, setIsModalOpen7] = useState(false);
-//   const [isModalOpen8, setIsModalOpen8] = useState(false);
-//   const [isModalOpen9, setIsModalOpen9] = useState(false);
-//   const [isModalOpen10, setIsModalOpen10] = useState(false);
-//   const [isModalOpen11, setIsModalOpen11] = useState(false);
-//   const [employeesData, setEmployeesData] = useState([]);
-//   const [selectedEmployee, setSelectedEmployee] = useState({});
-//   const [selectedLetter, setSelectedLetter] = useState(null);
-//   const [AllSites, setAllSites] = useState([]); // Array of objects: { id, siteName }
-//   const [selectedSite, setSelectedSite] = useState("");
-//   const [filteredEmployeesSite, setFilteredEmployeesSite] = useState([]);
-
-//   const fetchAllEmployees = async () => {
-//     try {
-//       toast.loading("Loading employees Please wait!");
-//       const res = await getMyHRMSEmployeesAllData(hrmsOrgId);
-//       console.log("ALL DATA USER:", res);
-//       setEmployeesData(res);
-//       toast.dismiss();
-//       const hrmsAdminData = await getEmployeeJobInfo(empId);
-//       const allSites = await getAssociatedSites(orgId);
-//       setAllSites(allSites);
-//     } catch (error) {
-//       console.log(error);
-//       toast.dismiss();
-//       toast.error("Something went wrong");
-//     }
-//   };
-//   // console.log("This is All Site:",AllSites)
-//   console.log("SITE DATA:", AllSites);
-//   useEffect(() => {
-//     fetchAllEmployees();
-//   }, []);
-
-//   const groupedEmployees = employeesData.reduce((acc, employeeData) => {
-//     const employee = employeeData.employee;
-//     if (employee && employee.first_name) {
-//       const firstLetter = employee.first_name[0].toUpperCase();
-//       if (!acc[firstLetter]) acc[firstLetter] = [];
-
-//       const employeeDetails = {
-//         id: employee.id,
-//         first_name: employee.first_name,
-//         last_name: employee.last_name,
-//         email_id: employee.email_id,
-//         mobile: employee.mobile,
-//         status: employee.status,
-//         profile_photo: employee.profile_photo,
-//         address_information: employeeData.address_information || null,
-//         employment_info: employeeData.employment_info || null,
-//         family_information: employeeData.family_information || null,
-//         employee_code: employeeData.employment_info?.employee_code || "",
-//       };
-
-//       acc[firstLetter].push(employeeDetails);
-//     }
-//     return acc;
-//   }, {});
-
-//   const [isOpen, setIsOpen] = useState(false);
-//   const toggleDropdown = () => {
-//     setIsOpen(!isOpen);
-//   };
-//   const dropdownRef = useRef(null);
-//   useEffect(() => {
-//     const handleClickOutside = (event) => {
-//       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-//         setIsOpen(false);
-//       }
-//     };
-
-//     document.addEventListener("mousedown", handleClickOutside);
-
-//     return () => {
-//       document.removeEventListener("mousedown", handleClickOutside);
-//     };
-//   }, [dropdownRef]);
-
-//   const alphabet = `ABCDEFGHIJKLMNOPQRSTUVWXYZ`.split("");
-//   // const alphabet = ["All", ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split("")];
-
-//   const handleLetterClick = (letter) => {
-//     setSelectedLetter(letter);
-//     // setSelectedEmployee(null);
-//   };
-//   const handleAll = () => {
-//     setSelectedLetter(null);
-//     // setSelectedEmployee(null);
-//   };
-
-//   console.log("This is emp group :",groupedEmployees)
-
-//   const filteredEmployees = selectedLetter
-//     ? groupedEmployees[selectedLetter] || []
-//     : employeesData;
-
-//   function getRandomColor() {
-//     const colors = [
-//       "#8B0000",
-//       "#FF4500",
-//       "#2E8B57",
-//       "#4682B4",
-//       "#6A5ACD",
-//       "#D2691E",
-//     ];
-//     return colors[Math.floor(Math.random() * colors.length)];
-//   }
-
-//   const randomColor = getRandomColor();
-//   const colors = [
-//     // "#8B0000",
-//     "#FF4500",
-//     "#2E8B57",
-//     "#4682B4",
-//     "#6A5ACD",
-//     "#D2691E",
-//   ];
-
-//   function getColorForEmployee(index) {
-//     return colors[index % colors.length];
-//   }
-//   // select mulitple site
-
-//   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-//   const [employeeId, setEmployeeId] = useState("");
-
-//   const handleDeleteModal = (empId) => {
-//     setIsDeleteModalOpen(true);
-//     setEmployeeId(empId);
-//   };
-//   const handleDeleteEmployee = async () => {
-//     try {
-//       await deleteHRMSEmployee(employeeId);
-//       setIsDeleteModalOpen(false);
-//       fetchAllEmployees();
-//       toast.success("Employee deleted successfully");
-//     } catch (error) {
-//       console.log(error);
-//     }
-//   };
-
-//   const showEmployeeDetails = async (empId) => {
-//     setEmployeeId(empId);
-//     try {
-//       const res = await getUserDetails(empId);
-//       setSelectedEmployee(res);
-//     } catch (error) {
-//       console.log(error);
-//     }
-//   };
-
-//   // const
-//   const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
-//   const orgId = getItemInLocalStorage("HRMSORGID");
-//   const [roleAccess, setRoleAccess] = useState({});
-//   useEffect(() => {
-//     const fetchRoleAccess = async () => {
-//       try {
-//         const res = await getAdminAccess(orgId, empId);
-
-//         setRoleAccess(res[0]);
-//       } catch (error) {
-//         console.log(error);
-//       }
-//     };
-
-//     fetchRoleAccess();
-//   }, []);
-//   const [searchText, setSearchText] = useState("");
-//   const handleSearch = (e) => {
-//     const searchValue = e.target.value;
-//     setSearchText(searchValue);
-//   };
-
 function EmployeeDirectory() {
   const themeColor = useSelector((state) => state.theme.color);
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
-  const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
-  const orgId = getItemInLocalStorage("HRMSORGID");
 
-  // States
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isModalOpen1, setIsModalOpen1] = useState(false);
+  const [isModalOpen2, setIsModalOpen2] = useState(false);
+  const [isModalOpen3, setIsModalOpen3] = useState(false);
+  const [isModalOpen4, setIsModalOpen4] = useState(false);
+  const [isModalOpen5, setIsModalOpen5] = useState(false);
+  const [isModalOpen6, setIsModalOpen6] = useState(false);
+  const [isModalOpen7, setIsModalOpen7] = useState(false);
+  const [isModalOpen8, setIsModalOpen8] = useState(false);
+  const [isModalOpen9, setIsModalOpen9] = useState(false);
+  const [isModalOpen10, setIsModalOpen10] = useState(false);
+  const [isModalOpen11, setIsModalOpen11] = useState(false);
   const [employeesData, setEmployeesData] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState({});
   const [selectedLetter, setSelectedLetter] = useState(null);
-  const [AllSites, setAllSites] = useState([]);
+  const [AllSites, setAllSites] = useState([]); // Array of objects: { id, siteName }
   const [selectedSite, setSelectedSite] = useState("");
-  const [searchText, setSearchText] = useState("");
-  const [isOpen, setIsOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [employeeId, setEmployeeId] = useState("");
-  const [roleAccess, setRoleAccess] = useState({});
+  const [filteredEmployeesSite, setFilteredEmployeesSite] = useState([]);
 
-  // Fetch all employees and sites
   const fetchAllEmployees = async () => {
     try {
       toast.loading("Loading employees Please wait!");
       const res = await getMyHRMSEmployeesAllData(hrmsOrgId);
+      console.log("ALL DATA USER:", res);
       setEmployeesData(res);
       toast.dismiss();
-
       const hrmsAdminData = await getEmployeeJobInfo(empId);
       const allSites = await getAssociatedSites(orgId);
       setAllSites(allSites);
@@ -241,12 +60,12 @@ function EmployeeDirectory() {
       toast.error("Something went wrong");
     }
   };
-
+  // console.log("This is All Site:",AllSites)
+  console.log("SITE DATA:", AllSites);
   useEffect(() => {
     fetchAllEmployees();
   }, []);
 
-  // Group employees by first letter of their name
   const groupedEmployees = employeesData.reduce((acc, employeeData) => {
     const employee = employeeData.employee;
     if (employee && employee.first_name) {
@@ -265,8 +84,6 @@ function EmployeeDirectory() {
         employment_info: employeeData.employment_info || null,
         family_information: employeeData.family_information || null,
         employee_code: employeeData.employment_info?.employee_code || "",
-        associated_organization_name:
-          employeeData.employment_info?.associated_organization_name || "",
       };
 
       acc[firstLetter].push(employeeDetails);
@@ -274,69 +91,77 @@ function EmployeeDirectory() {
     return acc;
   }, {});
 
-  // Filter employees based on selected site, letter, and search text
-  const getFilteredEmployees = () => {
-    let filtered = employeesData;
-
-    // Filter by selected site
-    if (selectedSite) {
-      const selectedSiteInfo = AllSites.find(
-        (site) => site.id.toString() === selectedSite
-      );
-      if (selectedSiteInfo) {
-        filtered = filtered.filter(
-          (emp) =>
-            emp.employment_info?.associated_organization_name ===
-            selectedSiteInfo.site_name
-        );
-      }
-    }
-
-    // Filter by selected letter
-    if (selectedLetter) {
-      filtered = filtered.filter(
-        (emp) =>
-          emp.employee?.first_name?.charAt(0).toUpperCase() === selectedLetter
-      );
-    }
-
-    // Filter by search text
-    if (searchText) {
-      const searchLower = searchText.toLowerCase();
-      filtered = filtered.filter(
-        (emp) =>
-          emp.employee?.first_name?.toLowerCase().includes(searchLower) ||
-          emp.employee?.last_name?.toLowerCase().includes(searchLower)
-      );
-    }
-
-    return filtered;
+  const [isOpen, setIsOpen] = useState(false);
+  const toggleDropdown = () => {
+    setIsOpen(!isOpen);
   };
+  const dropdownRef = useRef(null);
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
 
-  const filteredEmployees = getFilteredEmployees();
+    document.addEventListener("mousedown", handleClickOutside);
 
-  // Event handlers
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [dropdownRef]);
+
+  const alphabet = `ABCDEFGHIJKLMNOPQRSTUVWXYZ`.split("");
+  // const alphabet = ["All", ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split("")];
+
   const handleLetterClick = (letter) => {
     setSelectedLetter(letter);
+    // setSelectedEmployee(null);
   };
-
   const handleAll = () => {
     setSelectedLetter(null);
+    // setSelectedEmployee(null);
   };
 
-  const handleSearch = (e) => {
-    setSearchText(e.target.value);
-  };
+  console.log("This is emp group :",groupedEmployees)
 
-  const handleSiteChange = (e) => {
-    setSelectedSite(e.target.value);
-  };
+  const filteredEmployees = selectedLetter
+    ? groupedEmployees[selectedLetter] || []
+    : employeesData;
+
+  function getRandomColor() {
+    const colors = [
+      "#8B0000",
+      "#FF4500",
+      "#2E8B57",
+      "#4682B4",
+      "#6A5ACD",
+      "#D2691E",
+    ];
+    return colors[Math.floor(Math.random() * colors.length)];
+  }
+
+  const randomColor = getRandomColor();
+  const colors = [
+    // "#8B0000",
+    "#FF4500",
+    "#2E8B57",
+    "#4682B4",
+    "#6A5ACD",
+    "#D2691E",
+  ];
+
+  function getColorForEmployee(index) {
+    return colors[index % colors.length];
+  }
+  // select mulitple site
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [employeeId, setEmployeeId] = useState("");
 
   const handleDeleteModal = (empId) => {
     setIsDeleteModalOpen(true);
     setEmployeeId(empId);
   };
-
   const handleDeleteEmployee = async () => {
     try {
       await deleteHRMSEmployee(employeeId);
@@ -358,10 +183,30 @@ function EmployeeDirectory() {
     }
   };
 
-  // Colors for employee cards
-  const colors = ["#FF4500", "#2E8B57", "#4682B4", "#6A5ACD", "#D2691E"];
-  const getColorForEmployee = (index) => colors[index % colors.length];
+  // const
+  const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
+  const orgId = getItemInLocalStorage("HRMSORGID");
+  const [roleAccess, setRoleAccess] = useState({});
+  useEffect(() => {
+    const fetchRoleAccess = async () => {
+      try {
+        const res = await getAdminAccess(orgId, empId);
 
+        setRoleAccess(res[0]);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    fetchRoleAccess();
+  }, []);
+  const [searchText, setSearchText] = useState("");
+  const handleSearch = (e) => {
+    const searchValue = e.target.value;
+    setSearchText(searchValue);
+  };
+ 
+  
   return (
     <div className="w-full">
       <AdminHRMS />
