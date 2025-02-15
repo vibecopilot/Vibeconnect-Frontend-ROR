@@ -16,6 +16,7 @@ import {
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import { dateFormat, dateFormatSTD } from "../../utils/dateUtils";
 import OnboardingEmployeeDetail from "./Onbording/OnboardingEmployeeDetail";
+import { SearchSharp } from "react-ionicons";
 
 const OnBoardingTable = () => {
   const [notifications, setNotifications] = useState([]);
@@ -136,7 +137,11 @@ const OnBoardingTable = () => {
     };
     fetchRoleAccess();
   }, []);
-
+   const [searchText ,setSearchText] = useState("");
+  const handleSearch  = (e) =>{
+    const searchValue  =e.target.value;
+     setSearchText(searchValue);
+  }
   return (
     <section className="flex">
       <div className=" w-full flex  flex-col overflow-hidden">
@@ -145,8 +150,8 @@ const OnBoardingTable = () => {
             type="text"
             placeholder="Search by name "
             className="border border-gray-400 w-[30rem] placeholder:text-sm rounded-lg p-2"
-            //   value={searchText}
-            //   onChange={handleSearch}
+              value={searchText}
+              onChange={handleSearch}
           />
           {roleAccess?.can_add_employee && (
             <div className="flex justify-end">
