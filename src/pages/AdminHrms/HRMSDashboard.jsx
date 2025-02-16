@@ -180,6 +180,9 @@ const HRMSDashboard = () => {
   //   return () => clearInterval(interval);
   // }, [empId]);
 
+  const handleNotification = {
+
+  }
   return (
     <>
       <section className="flex ">
@@ -197,7 +200,8 @@ const HRMSDashboard = () => {
             >
              
               <NavLink
-                to="/admin/hrms/notifications"
+                // to="/admin/hrms/notifications"
+                onClick={handleNotification}
                 className={({ isActive }) =>
                   `${
                     isActive
@@ -225,7 +229,6 @@ const HRMSDashboard = () => {
                 </div>
               </NavLink>
             </div>
-            &nbsp;
           </div>
 
           <div className="mt-16 overflow-y-auto absolute top-1 left-20">
