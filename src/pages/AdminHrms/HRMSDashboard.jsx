@@ -180,9 +180,6 @@ const HRMSDashboard = () => {
   //   return () => clearInterval(interval);
   // }, [empId]);
 
-  const handleNotification = {
-
-  }
   return (
     <>
       <section className="flex ">
@@ -199,9 +196,8 @@ const HRMSDashboard = () => {
               style={{ width: "130px", height: "30px", borderRadius: "5%" }}
             >
              
-              <NavLink
-                // to="/admin/hrms/notifications"
-                onClick={handleNotification}
+              {/* <NavLink
+                to="/admin/hrms/notifications"
                 className={({ isActive }) =>
                   `${
                     isActive
@@ -227,8 +223,9 @@ const HRMSDashboard = () => {
                 <div>
                   {React.createElement(MdNotificationsActive, { size: "20" })}
                 </div>
-              </NavLink>
+              </NavLink> */}
             </div>
+            &nbsp;
           </div>
 
           <div className="mt-16 overflow-y-auto absolute top-1 left-20">
@@ -245,9 +242,9 @@ const HRMSDashboard = () => {
               <div className="shadow-custom-all-sides rounded-lg ">
                 <EmployeeCount />
               </div>
-              <div className="shadow-custom-all-sides rounded-lg ">
+              {/* <div className="shadow-custom-all-sides rounded-lg ">
                 <Notification />
-              </div>
+              </div> */}
               {/* <div
               className="bg-white p-6 rounded-lg shadow-custom-all-sides m-4 z-10"
               style={{ width: "380px", height: "350px" }}
