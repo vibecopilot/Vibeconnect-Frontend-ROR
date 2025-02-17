@@ -43,7 +43,11 @@ function EmployeeDirectory() {
   const [AllSites, setAllSites] = useState([]); // Array of objects: { id, siteName }
   const [selectedSite, setSelectedSite] = useState("");
   const [filteredEmployee, setFilteredEmployees] = useState([]);
+<<<<<<< HEAD
   const [empfilterData, setEmpFilterData] = useState([]);
+=======
+  const [empfilterData , setEmpFilterData] = useState([])
+>>>>>>> 83cca8401235a72b327544c7cee7df48560d505f
   const fetchAllEmployees = async () => {
     try {
       toast.loading("Loading employees Please wait!");
@@ -70,7 +74,11 @@ function EmployeeDirectory() {
       if (employee && employee.first_name) {
         const firstLetter = employee.first_name[0].toUpperCase();
         if (!acc[firstLetter]) acc[firstLetter] = [];
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> 83cca8401235a72b327544c7cee7df48560d505f
         const employeeDetails = {
           id: employee.id,
           first_name: employee.first_name,
@@ -81,10 +89,17 @@ function EmployeeDirectory() {
           profile_photo: employee.profile_photo,
           address_information: employeeData.address_information || null,
           employment_info: employeeData.employment_info || null,
+<<<<<<< HEAD
           site_name:
             employeeData.employment_info?.associated_organization_name || null,
           site_id:
             employeeData.employment_info?.associated_organization_id || null,
+=======
+          site_name:employeeData.employment_info?.associated_organization_name
+          || null,
+          site_id :employeeData.employment_info?.associated_organization_id
+          || null,
+>>>>>>> 83cca8401235a72b327544c7cee7df48560d505f
           family_information: employeeData.family_information || null,
           employee_code: employeeData.employment_info?.employee_code || "",
         };
@@ -92,8 +107,13 @@ function EmployeeDirectory() {
       }
       return acc;
     }, {});
+<<<<<<< HEAD
     setEmpFilterData(groupedEmployees);
   }, [employeesData]);
+=======
+    setEmpFilterData(groupedEmployees)
+  },[employeesData])
+>>>>>>> 83cca8401235a72b327544c7cee7df48560d505f
 
   const [isOpen, setIsOpen] = useState(false);
   const toggleDropdown = () => {
@@ -132,6 +152,7 @@ function EmployeeDirectory() {
     ? groupedEmployees[selectedLetter] || []
     : employeesData;
 
+<<<<<<< HEAD
   const [searchText, setSearchText] = useState("");
   const handleSearch = (e) => {
     const searchValue = e.target.value;
@@ -142,6 +163,19 @@ function EmployeeDirectory() {
     // Convert to string to ensure type consistency
     setSelectedSite(e.target.value);
   };
+=======
+    const [searchText, setSearchText] = useState("");
+    const handleSearch = (e) => {
+      const searchValue = e.target.value; 
+      setSearchText(searchValue);
+    };
+   
+  
+    const handleDropdownChange = (e) => {
+      // Convert to string to ensure type consistency
+      setSelectedSite(e.target.value);
+    };
+>>>>>>> 83cca8401235a72b327544c7cee7df48560d505f
 
   function getRandomColor() {
     const colors = [
@@ -216,6 +250,10 @@ function EmployeeDirectory() {
     fetchRoleAccess();
   }, []);
 
+<<<<<<< HEAD
+=======
+  
+>>>>>>> 83cca8401235a72b327544c7cee7df48560d505f
   return (
     <div className="w-full">
       <AdminHRMS />
@@ -234,6 +272,7 @@ function EmployeeDirectory() {
               </div>
               {/* Dropdown */}
               <select
+<<<<<<< HEAD
                 onChange={handleDropdownChange}
                 className="border p-3 text-black rounded-md grid gap-2 items-center"
               >
@@ -244,6 +283,18 @@ function EmployeeDirectory() {
                   </option>
                 ))}
               </select>
+=======
+  onChange={handleDropdownChange}
+  className="border p-3 text-black rounded-md grid gap-2 items-center"
+>
+  <option value="">Select All Sites</option>
+  {AllSites.map((site) => (
+    <option key={site.id} value={String(site.id)}>
+      {site.site_name}
+    </option>
+  ))}
+</select>
+>>>>>>> 83cca8401235a72b327544c7cee7df48560d505f
 
               {/* Show selected site */}
               {/* {selectedSite && <p>Selected Site ID: {selectedSite}</p>} */}
@@ -1017,6 +1068,7 @@ function EmployeeDirectory() {
                         {letter}
                       </span>
                     </h2>
+<<<<<<< HEAD
                     <div className="flex flex-wrap">
                       {empfilterData[letter]
                         ?.filter((employee) => {
@@ -1138,6 +1190,239 @@ function EmployeeDirectory() {
                           </div>
                         ))}
                     </div>
+=======
+                    
+                    
+                    {/* <div className="flex flex-wrap">
+  {empfilterData[letter]
+    ?.filter((employee) => {
+      // Check if the employee matches the search text filter
+      const searchFilter =
+        `${employee.first_name} ${employee.last_name}`
+          .toLowerCase()
+          .includes(searchText.toLowerCase()) ||
+        `${employee.employee_code}`
+          .toLowerCase()
+          .includes(searchText.toLowerCase());
+
+      // Check if the employee matches the selected site filter
+      // If no site is selected (i.e. selectedSite is empty), we return true.
+      const siteFilter = selectedSite
+        ? employee.site_id === selectedSite
+        : true;
+
+      // Both conditions must be met
+      return searchFilter && siteFilter;
+    })
+    .map((employee, index) => (
+      <div
+        key={employee.id}
+        style={{ background: themeColor, color: "white" }}
+        className={`${
+          employeeId === employee.id
+            ? "bg-gradient-to-r from-yellow-400 via-red-300 to-pink-400 border-2 border-pink-400 "
+            : "bg-gradient-to-r from-yellow-400 via-red-300 to-pink-400 border-2 border-white "
+        } w-80 p-2 m-2 rounded-xl cursor-pointer`}
+        onClick={() => {
+          showEmployeeDetails(employee.id);
+        }}
+      >
+        <div className="flex items-center w-full">
+          <div className="w-32">
+            {employee?.profile_photo ? (
+              <img
+                src={hrmsDomain + employee?.profile_photo}
+                alt="Profile"
+                className="rounded-full h-20 w-20 border-4 border-white object-cover mr-4"
+              />
+            ) : (
+              <div
+                className="bg-gray-300 rounded-full text-xl border-white border-4 text-white h-20 w-20 flex items-center font-medium justify-center mr-4"
+                style={{ backgroundColor: getColorForEmployee(index) }}
+              >
+                {employee.first_name
+                  .split(" ")
+                  .map((n) => n[0])
+                  .join("")}
+                {employee.last_name
+                  .split(" ")
+                  .map((n) => n[0])
+                  .join("")}
+              </div>
+            )}
+          </div>
+          <div className="w-full">
+            <h2 className="font-semibold">
+              {employee.first_name} {employee.last_name}
+            </h2>
+            <div className="flex items-center gap-1 my-1">
+              <p className="text-sm font-medium text-gray-200">
+                {employee?.employment_info?.employee_code
+                  ? employee?.employment_info?.employee_code
+                  : "not added"}
+              </p>
+              <div className="border border-gray-400 h-5" />
+              <p className="text-sm font-medium text-gray-200">
+                DOJ :{" "}
+                {employee?.employment_info?.joining_date
+                  ? employee?.employment_info?.joining_date
+                  : "not added"}
+              </p>
+            </div>
+            <p className="text-sm font-medium text-gray-200">
+              {employee?.employment_info?.designation
+                ? employee?.employment_info?.designation
+                : "not added"}
+            </p>
+            <div className="flex items-center justify-between mt-2">
+              <p
+                className={`${
+                  employee?.status
+                    ? "bg-green-400 text-white"
+                    : "bg-red-400 text-white"
+                } font-medium w-fit px-2 my-1 rounded-full`}
+              >
+                {employee?.status ? "Active" : "Inactive"}
+              </p>
+              {(roleAccess?.can_edit_employee ||
+                roleAccess?.can_delete_employee) && (
+                <div className="flex gap-2 items-center bg-white p-1 rounded-full px-2">
+                  {roleAccess?.can_edit_employee && (
+                    <Link
+                      className="text-blue-500 hover:text-blue-900"
+                      to={`/hrms/employee-directory-Personal/${employee.id}`}
+                    >
+                      <BiEdit size={18} />
+                    </Link>
+                  )}
+                  {roleAccess?.can_delete_employee && (
+                    <button
+                      onClick={() => handleDeleteModal(employee.id)}
+                      className="text-red-400 hover:text-red-800"
+                    >
+                      <FaTrash size={15} />
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    ))}
+</div> */}<div className="flex flex-wrap">
+  {empfilterData[letter]
+    ?.filter((employee) => {
+      // Create a lower case version of search text and employee details
+      const fullName = `${employee.first_name} ${employee.last_name}`.toLowerCase();
+      const employeeCode = employee.employee_code.toLowerCase();
+      const searchTextLower = searchText.toLowerCase();
+
+      // Check if the employee matches the search text filter
+      const matchesSearch =
+        fullName.includes(searchTextLower) ||
+        employeeCode.includes(searchTextLower);
+
+      // Check if the employee matches the selected site filter.
+      // If no site is selected, site filter passes automatically.
+      const matchesSite = selectedSite
+        ? String(employee.site_id) === String(selectedSite)
+        : true;
+
+      // Return only employees matching both criteria
+      return matchesSearch && matchesSite;
+    })
+    .map((employee, index) => (
+      <div
+        key={employee.id}
+        style={{ background: themeColor, color: "white" }}
+        className={`${
+          employeeId === employee.id
+            ? "bg-gradient-to-r from-yellow-400 via-red-300 to-pink-400 border-2 border-pink-400 "
+            : "bg-gradient-to-r from-yellow-400 via-red-300 to-pink-400 border-2 border-white "
+        } w-80 p-2 m-2 rounded-xl cursor-pointer`}
+        onClick={() => showEmployeeDetails(employee.id)}
+      >
+        <div className="flex items-center w-full">
+          <div className="w-32">
+            {employee?.profile_photo ? (
+              <img
+                src={hrmsDomain + employee?.profile_photo}
+                alt="Profile"
+                className="rounded-full h-20 w-20 border-4 border-white object-cover mr-4"
+              />
+            ) : (
+              <div
+                className="bg-gray-300 rounded-full text-xl border-white border-4 text-white h-20 w-20 flex items-center font-medium justify-center mr-4"
+                style={{ backgroundColor: getColorForEmployee(index) }}
+              >
+                {employee.first_name
+                  .split(" ")
+                  .map((n) => n[0])
+                  .join("")}
+                {employee.last_name
+                  .split(" ")
+                  .map((n) => n[0])
+                  .join("")}
+              </div>
+            )}
+          </div>
+          <div className="w-full">
+            <h2 className="font-semibold">
+              {employee.first_name} {employee.last_name}
+            </h2>
+            <div className="flex items-center gap-1 my-1">
+              <p className="text-sm font-medium text-gray-200">
+                {employee?.employment_info?.employee_code || "not added"}
+              </p>
+              <div className="border border-gray-400 h-5" />
+              <p className="text-sm font-medium text-gray-200">
+                DOJ : {employee?.employment_info?.joining_date || "not added"}
+              </p>
+            </div>
+            <p className="text-sm font-medium text-gray-200">
+              {employee?.employment_info?.designation || "not added"}
+            </p>
+            <div className="flex items-center justify-between mt-2">
+              <p
+                className={`${
+                  employee?.status
+                    ? "bg-green-400 text-white"
+                    : "bg-red-400 text-white"
+                } font-medium w-fit px-2 my-1 rounded-full`}
+              >
+                {employee?.status ? "Active" : "Inactive"}
+              </p>
+              {(roleAccess?.can_edit_employee || roleAccess?.can_delete_employee) && (
+                <div className="flex gap-2 items-center bg-white p-1 rounded-full px-2">
+                  {roleAccess?.can_edit_employee && (
+                    <Link
+                      className="text-blue-500 hover:text-blue-900"
+                      to={`/hrms/employee-directory-Personal/${employee.id}`}
+                    >
+                      <BiEdit size={18} />
+                    </Link>
+                  )}
+                  {roleAccess?.can_delete_employee && (
+                    <button
+                      onClick={() => handleDeleteModal(employee.id)}
+                      className="text-red-400 hover:text-red-800"
+                    >
+                      <FaTrash size={15} />
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    ))}
+</div>
+
+
+
+>>>>>>> 83cca8401235a72b327544c7cee7df48560d505f
                   </>
                 ) : null}
               </div>

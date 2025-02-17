@@ -17,6 +17,11 @@ import { FaRegAddressCard } from "react-icons/fa";
 const CompletedUniformRequest = () => {
   const columns = [
     {
+      name: "Site Name",
+      selector: (row) => row.associated_organization_name,
+      sortable: true,
+    },
+    {
       name: "Employee Name",
       selector: (row) => row.employee_name,
       sortable: true,

@@ -196,7 +196,7 @@ const HRMSDashboard = () => {
               style={{ width: "130px", height: "30px", borderRadius: "5%" }}
             >
              
-              <NavLink
+              {/* <NavLink
                 to="/admin/hrms/notifications"
                 className={({ isActive }) =>
                   `${
@@ -223,7 +223,7 @@ const HRMSDashboard = () => {
                 <div>
                   {React.createElement(MdNotificationsActive, { size: "20" })}
                 </div>
-              </NavLink>
+              </NavLink> */}
             </div>
             &nbsp;
           </div>
@@ -242,9 +242,9 @@ const HRMSDashboard = () => {
               <div className="shadow-custom-all-sides rounded-lg ">
                 <EmployeeCount />
               </div>
-              <div className="shadow-custom-all-sides rounded-lg ">
+              {/* <div className="shadow-custom-all-sides rounded-lg ">
                 <Notification />
-              </div>
+              </div> */}
               {/* <div
               className="bg-white p-6 rounded-lg shadow-custom-all-sides m-4 z-10"
               style={{ width: "380px", height: "350px" }}
