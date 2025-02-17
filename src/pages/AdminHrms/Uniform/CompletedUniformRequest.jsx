@@ -87,13 +87,23 @@ const CompletedUniformRequest = () => {
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
   const [requests, setRequests] = useState([]);
   const [filteredRequests, setFilteredRequests] = useState([]);
+    const [allSites, setAllSites] = useState([]);
+    const [selectedSite, setSelectedSite] = useState("");
   const fetchUniformRequests = async () => {
     try {
       const res = await getUniformRequest(hrmsOrgId);
       const filteredData = res.filter((item) => item.status !== "Pending");
-      console.log(filteredData)
+      console.log(filteredData);
       setRequests(filteredData);
       setFilteredRequests(filteredData);
+      // Extract unique associated organization names
+      const uniqueSites = [
+        ...new Set(
+          filteredData.map((item) => item.associated_organization_name)
+        ),
+      ];
+      console.log("Unique Sites:", uniqueSites); // Check uniqueSites value
+      setAllSites(uniqueSites);
     } catch (error) {
       console.log(error);
     }
@@ -101,6 +111,7 @@ const CompletedUniformRequest = () => {
   useEffect(() => {
     fetchUniformRequests();
   }, []);
+
   const [showDetails, setShowDetails] = useState(false);
   const [details, setDetails] = useState({});
   const handleDetails = async (id, empID) => {
@@ -112,6 +123,20 @@ const CompletedUniformRequest = () => {
       setDetails(res);
     } catch (error) {
       console.log(error);
+    }
+  };
+
+  const handleDropdownChange = (e) => {
+    const selectedValue = e.target.value;
+    setSelectedSite(selectedValue);
+
+    if (selectedValue === "All") {
+      setFilteredRequests(requests); // Show all data if "All" is selected
+    } else {
+      const filteredData = requests.filter(
+        (item) => item.associated_organization_name === selectedValue
+      );
+      setFilteredRequests(filteredData);
     }
   };
 
@@ -127,7 +152,9 @@ const CompletedUniformRequest = () => {
           employee.employee_name
             .toLowerCase()
             .includes(searchValue.toLowerCase()) ||
-          employee.associated_organization_name.toLowerCase().includes(searchValue.toLowerCase())
+          employee.associated_organization_name
+            .toLowerCase()
+            .includes(searchValue.toLowerCase())
       );
       setFilteredRequests(filteredResult);
     }
@@ -164,6 +191,19 @@ const CompletedUniformRequest = () => {
             value={searchText}
             onChange={handleSearch}
           />
+          {/* DROPDOWN */}
+           <select
+            onChange={handleDropdownChange}
+            className="border border-gray-400 w-full placeholder:text-sm rounded-lg p-2"
+            value={selectedSite}
+          >
+            <option value="All">All Sites</option>
+            {allSites.map((site, index) => (
+              <option key={index} value={site}>
+                {site}
+              </option>
+            ))}
+          </select>
         </div>
         <Table
           columns={columns}

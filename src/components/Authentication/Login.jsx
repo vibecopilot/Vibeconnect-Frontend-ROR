@@ -151,6 +151,29 @@ const Login = () => {
       // -------------------------------
       const approverId = getItemInLocalStorage("APPROVERID");
       const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
+      // if (hrmsOrgId && approverId) {
+      //   try {
+      //     const accessRes = await getAdminAccess(hrmsOrgId, approverId);
+      //     if (accessRes && accessRes.length > 0) {
+      //       const clientDashboardAccess =
+      //         accessRes[0].client_dashboard === true || accessRes[0].client_dashboard === "true";
+      //       // Save full role access details in state if needed
+      //       setRoleAccess(accessRes[0]);
+      //       setClientDashboardVisible(clientDashboardAccess);
+      //       setUsername(accessRes[0].employee_name);
+      //       console.log("Client Dashboard Visibility:", clientDashboardAccess);
+      //       if (clientDashboardAccess) {
+      //         toast.dismiss();
+      //         navigate("/admin/hrms/client-dashboard");
+      //         window.location.reload();
+      //         return; // Stop further navigation
+      //       }
+      //     }
+      //   } catch (error) {
+      //     console.error("Error fetching admin access:", error);
+      //   }
+      // }
+
       if (hrmsOrgId && approverId) {
         try {
           const accessRes = await getAdminAccess(hrmsOrgId, approverId);
@@ -161,6 +184,10 @@ const Login = () => {
             setRoleAccess(accessRes[0]);
             setClientDashboardVisible(clientDashboardAccess);
             setUsername(accessRes[0].employee_name);
+            
+            // Store clientDashboardVisible in localStorage so App.jsx can check it
+            localStorage.setItem('CLIENT_DASHBOARD_VISIBLE', clientDashboardAccess);
+            
             console.log("Client Dashboard Visibility:", clientDashboardAccess);
             if (clientDashboardAccess) {
               toast.dismiss();
