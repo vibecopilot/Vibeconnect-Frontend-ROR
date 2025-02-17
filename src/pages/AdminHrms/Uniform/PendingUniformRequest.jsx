@@ -185,18 +185,33 @@ const PendingUniformRequest = () => {
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
+
   const [requests, setRequests] = useState([]);
   const [filteredRequests, setFilteredRequests] = useState([]);
+
+  const [allSites, setAllSites] = useState([]);
+  const [selectedSite, setSelectedSite] = useState("");
+
   const fetchUniformRequests = async () => {
     try {
       const res = await getUniformRequest(hrmsOrgId);
       const filteredData = res.filter((item) => item.status === "Pending");
       setRequests(filteredData);
       setFilteredRequests(filteredData);
+
+      // Extract unique associated organization names
+      const uniqueSites = [
+        ...new Set(
+          filteredData.map((item) => item.associated_organization_name)
+        ),
+      ];
+      console.log("Unique Sites:", uniqueSites); // Check uniqueSites value
+      setAllSites(uniqueSites);
     } catch (error) {
       console.log(error);
     }
   };
+
   useEffect(() => {
     fetchUniformRequests();
   }, []);
@@ -221,6 +236,20 @@ const PendingUniformRequest = () => {
     }
   };
 
+  const handleDropdownChange = (e) => {
+    const selectedValue = e.target.value;
+    setSelectedSite(selectedValue);
+
+    if (selectedValue === "All") {
+      setFilteredRequests(requests); // Show all data if "All" is selected
+    } else {
+      const filteredData = requests.filter(
+        (item) => item.associated_organization_name === selectedValue
+      );
+      setFilteredRequests(filteredData);
+    }
+  };
+
   const [showDetails, setShowDetails] = useState(false);
   const [details, setDetails] = useState({});
   const [empId, setEmpId] = useState("");
@@ -236,6 +265,7 @@ const PendingUniformRequest = () => {
       console.log(error);
     }
   };
+
   const [empDetails, setEmpDetails] = useState({});
   const [empSiteDetails, setEmpSiteDetails] = useState({});
   const fetchEmployeeDetails = async (employeeId) => {
@@ -283,6 +313,19 @@ const PendingUniformRequest = () => {
             value={searchText}
             onChange={handleSearch}
           />
+          {/* DROPDOWN */}
+          <select
+            onChange={handleDropdownChange}
+            className="border border-gray-400 w-full placeholder:text-sm rounded-lg p-2"
+            value={selectedSite}
+          >
+            <option value="All">All Sites</option>
+            {allSites.map((site, index) => (
+              <option key={index} value={site}>
+                {site}
+              </option>
+            ))}
+          </select>
           <div className="flex gap-2">
             {/* <button
               className="px-4 py-2 bg-blue-600 text-white rounded-md"
