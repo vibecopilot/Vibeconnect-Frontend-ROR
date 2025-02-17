@@ -183,7 +183,7 @@ const AttendanceRec = () => {
     newDate.setDate(newDate.getDate() + (direction === "next" ? 7 : -7));
     setStartDate(newDate);
   };
-
+  console.log("EMPLOYEES:",employees)
   const [searchText, setSearchText] = useState("");
   const handleSearch = (e) => {
     const searchValue = e.target.value;
@@ -498,7 +498,7 @@ const AttendanceRec = () => {
           </div>
           <div className="flex items-center gap-2">
             <input
-              type="search"
+              type="text"
               value={searchText}
               onChange={handleSearch}
               id=""

@@ -4306,12 +4306,8 @@ export const editManageAdminDetails = async (adminId, data) => {
     const response = await HrmsAuth.put(
       `/organization/user-setting/administrator-setting/${adminId}/`,
       data,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data/",
-        },
-      }
     );
+    console.log(response.data)
     return response.data;
   } catch (error) {
     console.error("Error edit Admin detail:", error);

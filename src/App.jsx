@@ -802,48 +802,101 @@ function App() {
     navigate("/admin/add-employee/onboarding");
   };
 
+  // useEffect(() => {
+  //   const fetchNotifications = async () => {
+  //     try {
+  //       if (!empId) return;
+  //       const data = await getNotification(empId);
+  //       console.log("API Response:", data);
+  //       setNotificationData(data);
+  //       if (data.length > 0) {
+  //         const unreadNotifications = data.filter((n) => !n.is_read);
+  //         setNotificationData(unreadNotifications);
+  //         unreadNotifications.forEach((notification) => {
+  //           toast.custom(
+  //             <div className="bg-white shadow-lg border border-gray-100 rounded-lg p-2">
+  //               <p className="text-base font-semibold text-gray-900">
+  //                 {notification.title}
+  //               </p>
+  //               <div className="flex items-center justify-between gap-x-4">
+  //                 <p className="text-xs font-medium w-[200px] text-gray-500">
+  //                   {notification.message}
+  //                 </p>
+  //                 <button
+  //                   onClick={() => handleClick(notification.id)}
+  //                   className="bg-blue-500 text-white px-2 py-1 rounded-lg text-xs font-medium"
+  //                 >
+  //                   View
+  //                 </button>
+  //               </div>
+  //             </div>,
+  //             { duration: 5000, position: "top-right" }
+  //           );
+  //         });
+  //       }
+  //     } catch (error) {
+  //       console.error("Error fetching notifications:", error);
+  //     }
+  //   };
+  //   fetchNotifications();
+  //   const interval = setInterval(fetchNotifications, 60000);
+
+  //   return () => clearInterval(interval);
+  // }, [empId]);
+
   useEffect(() => {
-    const fetchNotifications = async () => {
-      try {
-        if (!empId) return;
-        const data = await getNotification(empId);
-        console.log("API Response:", data);
-        setNotificationData(data);
-        if (data.length > 0) {
-          const unreadNotifications = data.filter((n) => !n.is_read);
-          setNotificationData(unreadNotifications);
-          unreadNotifications.forEach((notification) => {
-            toast.custom(
-              <div className="bg-white shadow-lg border border-gray-100 rounded-lg p-2">
-                <p className="text-base font-semibold text-gray-900">
-                  {notification.title}
-                </p>
-                <div className="flex items-center justify-between gap-x-4">
-                  <p className="text-xs font-medium w-[200px] text-gray-500">
-                    {notification.message}
+    // First check if user has client dashboard access
+    const clientDashboardVisible =
+      localStorage.getItem("CLIENT_DASHBOARD_VISIBLE") === "true";
+    console.log("Client dashboard value:", clientDashboardVisible);
+    // If user has client dashboard access, skip notifications setup
+    if (clientDashboardVisible) {
+      console.log("Skipping notifications for client dashboard user");
+      return;
+    } else {
+      // Only set up notifications for regular users
+      const fetchNotifications = async () => {
+        try {
+          if (!empId) return;
+          const data = await getNotification(empId);
+          console.log("API Response:", data);
+          setNotificationData(data);
+          if (data.length > 0) {
+            const unreadNotifications = data.filter((n) => !n.is_read);
+            setNotificationData(unreadNotifications);
+            unreadNotifications.forEach((notification) => {
+              toast.custom(
+                <div className="bg-white shadow-lg border border-gray-100 rounded-lg p-2">
+                  <p className="text-base font-semibold text-gray-900">
+                    {notification.title}
                   </p>
-                  <button
-                    onClick={() => handleClick(notification.id)}
-                    className="bg-blue-500 text-white px-2 py-1 rounded-lg text-xs font-medium"
-                  >
-                    View
-                  </button>
-                </div>
-              </div>,
-              { duration: 5000, position: "top-right" }
-            );
-          });
+                  <div className="flex items-center justify-between gap-x-4">
+                    <p className="text-xs font-medium w-[200px] text-gray-500">
+                      {notification.message}
+                    </p>
+                    <button
+                      onClick={() => handleClick(notification.id)}
+                      className="bg-blue-500 text-white px-2 py-1 rounded-lg text-xs font-medium"
+                    >
+                      View
+                    </button>
+                  </div>
+                </div>,
+                { duration: 5000, position: "top-right" }
+              );
+            });
+          }
+        } catch (error) {
+          console.error("Error fetching notifications:", error);
         }
-      } catch (error) {
-        console.error("Error fetching notifications:", error);
-      }
-    };
-    fetchNotifications();
-    const interval = setInterval(fetchNotifications, 60000);
+      };
+      
+      fetchNotifications();
+      const interval = setInterval(fetchNotifications, 60000);
+    }
 
     return () => clearInterval(interval);
   }, [empId]);
-
   return (
     <>
       <Toaster />
