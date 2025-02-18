@@ -890,7 +890,7 @@ function App() {
           console.error("Error fetching notifications:", error);
         }
       };
-      
+
       fetchNotifications();
       const interval = setInterval(fetchNotifications, 60000);
     }
