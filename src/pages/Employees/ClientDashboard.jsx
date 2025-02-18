@@ -96,6 +96,185 @@ const ClientDashboard = () => {
   };
   // FETCH OVERALL CLIENT DATA ON MOUNT
 
+  // const fetchClientDashboardData = async (dateParam = selectedDate) => {
+  //   try {
+  //     const empId = localStorage.getItem("HRMS_EMPLOYEE_ID");
+  //     const orgId = localStorage.getItem("HRMSORGID");
+
+  //     // Fetch client dashboard data and set state
+  //     const clientDataResponse = await getClientDashboard(empId);
+  //     setClientData(clientDataResponse);
+  //     console.log(clientDataResponse);
+  //     // Format the date as YYYY-MM-DD
+  //     const year = dateParam.getFullYear();
+  //     const month = String(dateParam.getMonth() + 1).padStart(2, "0");
+  //     const day = String(dateParam.getDate()).padStart(2, "0");
+  //     const todayDate = `${year}-${month}-${day}`;
+
+  //     // Fetch overall attendance which contains total_employee and total_present
+  //     const allAttendance = await getAssociatedOrgDash(empId, todayDate);
+  //     const total_employee = allAttendance.total_employees || 0;
+  //     const total_present = allAttendance.total_present || 0;
+  //     const total_absent = Math.max(total_employee - total_present, 0);
+  //     const attendanceRecord = allAttendance.attendance[0] || 0;
+  //     console.log("getAssociatedOrgDash:", allAttendance);
+
+  //     // Store overall attendance
+  //     setOverallAttendance({
+  //       total_employee,
+  //       total_present,
+  //       total_absent,
+  //       attendanceRecord,
+  //     });
+
+  //     const attendanceRecords = allAttendance.attendance || [];
+
+  //     // Create an array of IDs from attendance records for quick lookup.
+  //     const presentIds = attendanceRecords.map((record) => record.employee_id);
+
+  //     // Filter clients who are present
+  //     const presentRecords = clientDataResponse.filter((client) =>
+  //       presentIds.includes(client.id)
+  //     );
+
+  //     // Filter clients who are absent (i.e., their id is not in the presentIds array)
+  //     const absentRecords = clientDataResponse.filter(
+  //       (client) => !presentIds.includes(client.id)
+  //     );
+
+  //     console.log("Present Records:", presentRecords);
+  //     console.log("Absent Records:", absentRecords);
+
+  //     // setting all present emp data in the checkIndata state
+  //     const checkIn = allAttendance.attendance
+  //       .filter((item) => item.is_check_in === true)
+  //       .map(
+  //         ({
+  //           is_check_in,
+  //           attendance_time,
+  //           first_name,
+  //           last_name,
+  //           employee,
+  //         }) => ({
+  //           is_check_in,
+  //           attendance_time,
+  //           first_name,
+  //           last_name,
+  //           employee,
+  //         })
+  //       );
+
+  //     setCheckInData(checkIn);
+  //     console.log("Attendance CheckIn Data:", checkIn);
+
+  //     const checkOut = allAttendance.attendance
+  //       .filter((item) => item.is_check_in === false)
+  //       .map(
+  //         ({
+  //           is_check_in,
+  //           attendance_time,
+  //           first_name,
+  //           last_name,
+  //           employee,
+  //         }) => ({
+  //           is_check_in,
+  //           attendance_time,
+  //           first_name,
+  //           last_name,
+  //           employee,
+  //         })
+  //       );
+
+  //     setCheckOutData(checkOut);
+  //     console.log("Attendance Checkout Data:", checkOut);
+
+  //     const notCheckedInEmployees = clientDataResponse.filter(
+  //       (employee) =>
+  //         !checkIn.some(
+  //           (check) => Number(check.id) === Number(employee.vibe_id)
+  //         )
+  //     );
+
+  //     console.log("OverallEmpTableRecord:", clientDataResponse);
+
+  //     const AllEmpRecord = clientDataResponse.map((client) => {
+  //       // Build employee full name (fallback to "N/A" if missing)
+  //       const empName =
+  //         `${client.first_name || ""} ${client.last_name || ""}`.trim() ||
+  //         "N/A";
+
+  //       // Get attendance records for this employee based on matching employee id
+  //       const empCheckInData = checkIn.filter(
+  //         (record) => String(record.employee) === String(client.id)
+  //       );
+  //       const empCheckOutData = checkOut.filter(
+  //         (record) => String(record.employee) === String(client.id)
+  //       );
+
+  //       // Determine status: if any check-in exists, mark as "Present"
+  //       const status = empCheckInData.length > 0 ? "Present" : "Absent";
+
+  //       // If the employee is present, extract times; otherwise, set placeholder "__"
+  //       const checkInTime =
+  //         status === "Present"
+  //           ? empCheckInData.find((rec) => rec.is_check_in === true)
+  //               ?.attendance_time || "__"
+  //           : "__";
+  //       const checkOutTime =
+  //         status === "Present"
+  //           ? empCheckOutData.find((rec) => rec.is_check_in === false)
+  //               ?.attendance_time || "__"
+  //           : "__";
+
+  //       return {
+  //         id: client.id,
+  //         empName,
+  //         status,
+  //         date: todayDate,
+  //         checkInTime,
+  //         checkOutTime,
+  //       };
+  //     });
+
+  //     console.log("All emoRecord:", AllEmpRecord);
+  //     // Save full & filtered records (initially unfiltered)
+  //     setFullOverallAttendanceRecords(AllEmpRecord);
+  //     setFilteredOverallAttendanceRecords(AllEmpRecord);
+  //     setNotCheckIn(notCheckedInEmployees);
+
+  //     // Get HRMS admin data to extract associated site ids
+  //     const hrmsAdminData = await getEmployeeJobInfo(empId);
+  //     const multiple_asso = hrmsAdminData[0].multiple_associated;
+  //     // console.log("Array for associated sites:", multiple_asso);
+
+  //     // Fetch ALL sites for the organization
+  //     const allSites = await getAssociatedSites(orgId);
+  //     // console.log("All sites from API:", allSites);
+
+  //     const siteNamesResult = multiple_asso.map((id) => {
+  //       const matchingSite =
+  //         Array.isArray(allSites) && allSites.length > 0
+  //           ? allSites.find((site) => site.id === id)
+  //           : null;
+  //       const siteName = matchingSite ? matchingSite.site_name : "Not Found";
+  //       return { id, siteName };
+  //     });
+  //     // console.log("Fetched site names:", siteNamesResult);
+  //     setMultipleAssos(siteNamesResult);
+
+  //     // Update the charts with overall attendance values
+  //     setPieChartData([
+  //       { name: "Head Count", y: total_employee, color: "#f97316" },
+  //       { name: "Present", y: total_present, color: "#10b981" },
+  //       { name: "Absent", y: total_absent, color: "#3b82f6" },
+  //     ]);
+  //     setBarChartData([total_employee, total_present, total_absent]);
+  //     setCount(total_employee);
+  //   } catch (error) {
+  //     console.error("Error fetching client dashboard:", error);
+  //   }
+  // };
+
   const fetchClientDashboardData = async (dateParam = selectedDate) => {
     try {
       const empId = localStorage.getItem("HRMS_EMPLOYEE_ID");
@@ -104,29 +283,48 @@ const ClientDashboard = () => {
       // Fetch client dashboard data and set state
       const clientDataResponse = await getClientDashboard(empId);
       setClientData(clientDataResponse);
-      console.log(clientDataResponse);
+      console.log("Client data:", clientDataResponse);
+
       // Format the date as YYYY-MM-DD
       const year = dateParam.getFullYear();
       const month = String(dateParam.getMonth() + 1).padStart(2, "0");
       const day = String(dateParam.getDate()).padStart(2, "0");
       const todayDate = `${year}-${month}-${day}`;
 
-      // Fetch overall attendance which contains total_employee and total_present
+      // Fetch overall attendance data
       const allAttendance = await getAssociatedOrgDash(empId, todayDate);
       const total_employee = allAttendance.total_employees || 0;
       const total_present = allAttendance.total_present || 0;
       const total_absent = Math.max(total_employee - total_present, 0);
-      console.log("getAssociatedOrgDash:", allAttendance);
+      console.log("Overall Attendance Data:", allAttendance);
 
-      // Store overall attendance
+      // Store overall attendance in state
       setOverallAttendance({
         total_employee,
         total_present,
         total_absent,
+        attendanceRecord: allAttendance.attendance[0] || null,
       });
-      console.log("Attandance data:", allAttendance);
-      // setting all present emp data in the checkIndata state
-      const checkIn = allAttendance.attendance
+
+      // Extract attendance records from API response
+      const attendanceRecords = allAttendance.attendance || [];
+
+      // Create an array of present employee IDs using the correct key (employee_id)
+      const presentIds = attendanceRecords.map((record) => record.employee_id);
+
+      // (Optional) Filter out present and absent client records if needed
+      const presentRecords = clientDataResponse.filter((client) =>
+        presentIds.includes(client.id)
+      );
+      const absentRecords = clientDataResponse.filter(
+        (client) => !presentIds.includes(client.id)
+      );
+      console.log("Present Records:", presentRecords);
+      console.log("Absent Records:", absentRecords);
+
+      // Build checkIn and checkOut arrays from attendanceRecords.
+      // Notice that we map the property `employee_id` so that we compare the same key later.
+      const checkIn = attendanceRecords
         .filter((item) => item.is_check_in === true)
         .map(
           ({
@@ -134,20 +332,21 @@ const ClientDashboard = () => {
             attendance_time,
             first_name,
             last_name,
-            employee,
+            employee_id,
+            shift,
           }) => ({
             is_check_in,
             attendance_time,
             first_name,
             last_name,
-            employee,
+            employee_id,
+            shiftName: shift?.shift_name || "No Shift",
           })
         );
-
       setCheckInData(checkIn);
       console.log("Attendance CheckIn Data:", checkIn);
 
-      const checkOut = allAttendance.attendance
+      const checkOut = attendanceRecords
         .filter((item) => item.is_check_in === false)
         .map(
           ({
@@ -155,56 +354,67 @@ const ClientDashboard = () => {
             attendance_time,
             first_name,
             last_name,
-            employee,
+            employee_id,
+            shift,
           }) => ({
             is_check_in,
             attendance_time,
             first_name,
             last_name,
-            employee,
+            employee_id,
+            shiftName: shift?.shift_name || "No Shift",
           })
         );
-
       setCheckOutData(checkOut);
-      console.log("Attendance Checkout Data:", checkOut);
+      console.log("Attendance CheckOut Data:", checkOut);
 
+      // Filter out employees who have not checked in
+      // Use client.id (from clientDataResponse) and compare with checkIn.employee_id
       const notCheckedInEmployees = clientDataResponse.filter(
-        (employee) =>
+        (client) =>
           !checkIn.some(
-            (check) => Number(check.id) === Number(employee.vibe_id)
+            (check) => String(check.employee_id) === String(client.id)
           )
       );
+      console.log("Not Checked In Employees:", notCheckedInEmployees);
 
-      console.log("OverallEmpTableRecord:", clientDataResponse);
-
+      // Build the full employee attendance record array
+      // For each client, determine their attendance status based on checkIn/checkOut arrays
       const AllEmpRecord = clientDataResponse.map((client) => {
-        // Build employee full name (fallback to "N/A" if missing)
+        // Build the full name (fallback to "N/A" if missing)
         const empName =
           `${client.first_name || ""} ${client.last_name || ""}`.trim() ||
           "N/A";
 
-        // Get attendance records for this employee based on matching employee id
+        // Get attendance data using the consistent key (employee_id)
         const empCheckInData = checkIn.filter(
-          (record) => String(record.employee) === String(client.id)
+          (record) => String(record.employee_id) === String(client.id)
         );
         const empCheckOutData = checkOut.filter(
-          (record) => String(record.employee) === String(client.id)
+          (record) => String(record.employee_id) === String(client.id)
         );
 
-        // Determine status: if any check-in exists, mark as "Present"
+        // Determine status: if there is any check-in record, mark as "Present"
         const status = empCheckInData.length > 0 ? "Present" : "Absent";
 
-        // If the employee is present, extract times; otherwise, set placeholder "__"
+        // Extract check-in/out times if available; else use placeholder "__"
         const checkInTime =
           status === "Present"
-            ? empCheckInData.find((rec) => rec.is_check_in === true)
-                ?.attendance_time || "__"
+            ? empCheckInData[0]?.attendance_time || "__"
             : "__";
         const checkOutTime =
           status === "Present"
-            ? empCheckOutData.find((rec) => rec.is_check_in === false)
-                ?.attendance_time || "__"
+            ? empCheckOutData[0]?.attendance_time || "__"
             : "__";
+
+        // Extract shift name.
+        // Here, we first try the check-in record, and if that doesn't exist, then check-out.
+        const shiftName =
+          empCheckInData.length > 0
+            ? empCheckInData[0].shiftName
+            : empCheckOutData.length > 0
+            ? empCheckOutData[0].shiftName
+            : "No Shift";
 
         return {
           id: client.id,
@@ -213,11 +423,13 @@ const ClientDashboard = () => {
           date: todayDate,
           checkInTime,
           checkOutTime,
+          shiftName, // Added shiftName to the record
         };
       });
 
-      console.log("All emoRecord:", AllEmpRecord);
-      // Save full & filtered records (initially unfiltered)
+      console.log("AllEmpRecord:", AllEmpRecord);
+
+      // Save the full record (which is unfiltered) for your table view
       setFullOverallAttendanceRecords(AllEmpRecord);
       setFilteredOverallAttendanceRecords(AllEmpRecord);
       setNotCheckIn(notCheckedInEmployees);
@@ -225,11 +437,9 @@ const ClientDashboard = () => {
       // Get HRMS admin data to extract associated site ids
       const hrmsAdminData = await getEmployeeJobInfo(empId);
       const multiple_asso = hrmsAdminData[0].multiple_associated;
-      // console.log("Array for associated sites:", multiple_asso);
 
       // Fetch ALL sites for the organization
       const allSites = await getAssociatedSites(orgId);
-      // console.log("All sites from API:", allSites);
 
       const siteNamesResult = multiple_asso.map((id) => {
         const matchingSite =
@@ -239,7 +449,6 @@ const ClientDashboard = () => {
         const siteName = matchingSite ? matchingSite.site_name : "Not Found";
         return { id, siteName };
       });
-      // console.log("Fetched site names:", siteNamesResult);
       setMultipleAssos(siteNamesResult);
 
       // Update the charts with overall attendance values
@@ -586,6 +795,7 @@ const ClientDashboard = () => {
           status,
         };
       });
+      console.log("tablerecord:", tableRecords);
       setAttendanceTableRecords(tableRecords);
       setFullSiteAttendanceRecords(tableRecords);
       setFilteredSiteAttendanceRecords(tableRecords);
@@ -704,6 +914,10 @@ const ClientDashboard = () => {
         ]);
         setBarChartData([clientData ? clientData.length : 0, 0, 0]);
       }
+      console.log(
+        "filteredOverallAttendanceRecords:",
+        filteredOverallAttendanceRecords
+      );
       setAttendanceTableRecords([]);
       setAbsentRecord(null);
     }
@@ -969,13 +1183,14 @@ const ClientDashboard = () => {
                     <tr>
                       <th className="border px-4 py-2">Name</th>
                       {/* <th className="border px-4 py-2">Gender</th> */}
-                      <th className="border px-4 py-2">Staus</th>
+                      <th className="border text-center px-4 py-2">Staus</th>
                       <th className="border text-center px-4 py-2">
                         Check in Time{" "}
                       </th>
                       <th className="border text-center px-4 py-2">
                         Check in Out{" "}
                       </th>
+                      <th className="border text-center px-4 py-2">Shift Name</th>
                       {/* <th className="border px-4 py-2">Status</th> */}
                     </tr>
                   </thead>
@@ -985,7 +1200,7 @@ const ClientDashboard = () => {
                         <tr key={record.id}>
                           <td className="border px-4 py-2">{record.empName}</td>
                           <td
-                            className={`border px-4 py-2 text-left ${
+                            className={`border text-center px-4 py-2  ${
                               record.status === "Absent"
                                 ? "text-red-500"
                                 : "text-green-500"
@@ -1004,6 +1219,9 @@ const ClientDashboard = () => {
                             {record.checkInTime
                               ? formatTime(record.checkOutTime)
                               : "__"}
+                          </td>
+                          <td className="border px-4 py-2 text-center">
+                            {record.shiftName}
                           </td>
                         </tr>
                       ))
