@@ -6492,7 +6492,19 @@ export const getAssociatedOrgDash = async (empId, date) => {
   }
 }
 
-
+export const getClientRosterShift = async (orgId) => {
+  try {
+    const res = await HrmsAuth.get(`roster/roster-shift/?organization_id=${orgId}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      })
+    return res.data;
+  } catch (error) {
+    console.log("Error fetching the associated organization dashboard :", error)
+  }
+}
 
 
 // export const updateNotificationStatus = async (notificationId) => {
@@ -7310,7 +7322,7 @@ export const getEmployeeEsic = async (empId) => {
     throw error;
   }
 };
- 
+
 
 export const getFamilyMember = async (id) => {
   try {
@@ -7330,7 +7342,7 @@ export const getFamilyMember = async (id) => {
   }
 };
 
-export const postEsicCard = async (empId,data) => {
+export const postEsicCard = async (empId, data) => {
   try {
     const response = await HrmsAuth.post(
       `/esic/create/?employee_id=${empId}`,
