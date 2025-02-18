@@ -17,6 +17,11 @@ import {
   getEmployeeAttendanceOfToday,
   getUserDetails,
   postRegularizationRequest,
+  // fetchByIdAndAssociatedOrganization,
+  fetchByName,
+  fetchByAssociatedOrganization,
+  getAssociatedSites,
+  fetchByNumeric,
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import { Link } from "react-router-dom";
@@ -61,6 +66,20 @@ const AttendanceRec = () => {
   const [selectedRecord1, setSelectedRecord1] = useState(false);
   const [selectedEmpAttendance, setSelectedEmpAttendance] = useState(false);
   const [addRegularization, setAddRegularization] = useState(false);
+  const [filteredEmployees, setFilteredEmployees] = useState([]);
+  const [employees, setEmployees] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
+  const associatedOrgId = getItemInLocalStorage("HRMS_SITE_ID");
+  const [attendanceCount, setAttendanceCount] = useState("");
+  const [pageNumber, setPageNumber] = useState(1);
+  const [attRecords, setAttRecords] = useState([]);
+  const [employeeId, SetEmployeeId] = useState([]);
+  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedFirstName, setSelectedFirstName] = useState("");
+  const [selectedLastName, setSelectedLastName] = useState("");
+  const [allSites, setAllSites] = useState([]);
+  const [selectedSite, setSelectedSite] = useState("all");
   const employeesPerPage = 10;
   const [regData, setRegData] = useState({
     requestType: "",
@@ -94,12 +113,7 @@ const AttendanceRec = () => {
   const handleRecordClick = (employee, schedule, code) => {
     setSelectedRecord({ employee, schedule, code });
   };
-  const [filteredEmployees, setFilteredEmployees] = useState([]);
-  const [employees, setEmployees] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
-  const [attendanceCount, setAttendanceCount] = useState("");
-  const [pageNumber, setPageNumber] = useState(1);
+
   const [paginationInfo, setPaginationInfo] = useState({
     next: null,
     previous: null,
@@ -111,7 +125,7 @@ const AttendanceRec = () => {
 
       const data = res.results;
       setAttendanceCount(res.count);
-      console.log("EmployeeData:",data)
+      console.log("EmployeeData:", data);
       setEmployees(data);
       setFilteredEmployees(data);
       setPaginationInfo({
@@ -183,26 +197,91 @@ const AttendanceRec = () => {
     newDate.setDate(newDate.getDate() + (direction === "next" ? 7 : -7));
     setStartDate(newDate);
   };
-  console.log("EMPLOYEES:",employees)
+  console.log("EMPLOYEES:", employees);
+
+  // Handle search
+
   const [searchText, setSearchText] = useState("");
-  const handleSearch = (e) => {
-    const searchValue = e.target.value;
-    setSearchText(searchValue);
-    if (searchValue.trim() === "") {
+
+  // Load associated sites on component mount (or when orgId changes)
+  useEffect(() => {
+    const fetchSites = async () => {
+      try {
+        const sites = await getAssociatedSites(hrmsOrgId);
+        console.log("Site name :",sites)
+        setAllSites(sites);
+      } catch (error) {
+        console.error("Error fetching sites:", error);
+      }
+    };
+
+    fetchSites();
+  }, [hrmsOrgId]);
+
+  const handleSearch = async (e) => {
+    const value = e.target.value;
+    setSearchText(value);
+
+    // If search is empty, revert to the full list or clear the results.
+    if (value.trim() === "") {
       setFilteredEmployees(employees);
-    } else {
-      const filteredResult = employees.filter(
-        (employee) =>
-          `${employee.first_name} ${employee.last_name}`
-            .toLowerCase()
-            .includes(searchValue.toLowerCase()) ||
-          employee.associated_organization_name
-            .toLowerCase()
-            .includes(searchValue.toLowerCase())
-      );
-      setFilteredEmployees(filteredResult);
+      return;
+    }
+
+    try {
+      let result;
+
+      if (/^\d+$/.test(value)) {
+        // Numeric search.
+        result = await fetchByAssociatedOrganization(hrmsOrgId, value);
+      } else {
+        // Name-based search.
+        result = await fetchByName(hrmsOrgId, value);
+      }
+
+      // Log the full response to inspect its structure.
+      console.log("result:", result);
+
+      // Since your response has a "results" key, extract the employee array from it.
+      const employeesData = Array.isArray(result.results) ? result.results : [];
+      setFilteredEmployees(employeesData);
+    } catch (error) {
+      console.error("Error fetching attendance records:", error);
+      setFilteredEmployees([]);
     }
   };
+
+  // New handleDropdown for filtering by associated site
+  const handleDropdown = async (e) => {
+    const siteId = e.target.value;
+    setSelectedSite(siteId);
+
+    // If "all" is selected, revert to the default list
+    if (siteId === "all" || siteId.trim() === "") {
+      // Optionally, if there is also a search term active, you could re-run the search.
+      // For simplicity, we'll revert to the original employees list.
+      setFilteredEmployees(employees);
+      return;
+    }
+
+    try {
+      const result = await fetchByAssociatedOrganization(hrmsOrgId, siteId);
+      console.log("Dropdown result:", result);
+
+      // Extract data from result.results if it exists.
+      const employeesData =
+        result && result.results && Array.isArray(result.results)
+          ? result.results
+          : Array.isArray(result)
+          ? result
+          : [];
+      setFilteredEmployees(employeesData);
+    } catch (error) {
+      console.error("Error fetching associated organization data:", error);
+      setFilteredEmployees([]);
+    }
+  };
+
   const today = new Date();
   const currentMonth = `${today.getFullYear()}-${(today.getMonth() + 1)
     .toString()
@@ -226,12 +305,6 @@ const AttendanceRec = () => {
   const handleRegChanges = async (e) => {
     setRegData({ ...regData, [e.target.name]: e.target.value });
   };
-
-  const [attRecords, setAttRecords] = useState([]);
-  const [employeeId, SetEmployeeId] = useState([]);
-  const [selectedDate, setSelectedDate] = useState("");
-  const [selectedFirstName, setSelectedFirstName] = useState("");
-  const [selectedLastName, setSelectedLastName] = useState("");
 
   const handleShowAttendanceDetails = (
     dateSelected,
@@ -497,6 +570,21 @@ const AttendanceRec = () => {
             {"/ "}
           </div>
           <div className="flex items-center gap-2">
+            {/* Dropdown for Associated Sites */}
+            <select
+              value={selectedSite}
+              onChange={handleDropdown}
+              className="border border-gray-400 p-2 rounded-md"
+            >
+              <option value="all">All Sites</option>
+              {allSites &&
+                allSites.map((site) => (
+                  <option key={site.id} value={site.id}>
+                    {site.site_name}
+                  </option>
+                ))}
+            </select>
+
             <input
               type="text"
               value={searchText}
@@ -552,62 +640,123 @@ const AttendanceRec = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredEmployees.map((employee) => (
-                  <tr key={employee.id} className="hover:bg-gray-50">
-                    <td className="p-2 font-medium border-b flex items-center gap-2">
-                      {employee?.profile_photo ? (
-                        <div className=" h-10 w-10 rounded-full border">
-                          <img
-                            src={employee.profile_photo}
-                            alt=""
-                            className="rounded-full h-10 w-10"
-                          />
-                        </div>
-                      ) : (
-                        <div
-                          className=" text-white p-2 flex items-center justify-center rounded-full h-10 w-10 text-xs text-center border border-gray-700"
-                          style={{ background: themeColor }}
-                        >
-                          {employee.first_name.charAt(0).toUpperCase()}
-                          {employee.last_name.charAt(0).toUpperCase()}
-                        </div>
-                      )}
-                      {employee.first_name} {employee.last_name}
-                    </td>
-                    {nextSevenDays.map((date, index) => (
-                      <td key={index} className="p-2 text-center border-b">
-                        <span
-                          style={{ cursor: "pointer" }}
-                          onClick={() => {
-                            console.log(
-                              "Employee attendance selected!",
-                              date,
-                              employee
-                            );
-                            handleShowAttendanceDetails(
-                              date,
-                              employee.attendance_records,
-                              employee.id,
-                              employee.first_name,
-                              employee.last_name
-                            );
-                            setSelectedEmpAttendance(true);
-                            fetchTodayAttendance(employee.id, date);
-                          }}
-                          className={
-                            getAttendanceStatus(employee, date) === "Present"
-                              ? "text-green-600 border-2 rounded-full border-green-600 p-1 px-3"
-                              : getAttendanceStatus(employee, date) === "Absent"
-                              ? "text-red-600 border-2 rounded-full border-red-600 p-1 px-3"
-                              : ""
-                          }
-                        >
-                          {getAttendanceStatus(employee, date)}
-                        </span>
+                {/* {filteredEmployees &&
+                  filteredEmployees.map((employee) => (
+                    <tr key={employee.id} className="hover:bg-gray-50">
+                      <td className="p-2 font-medium border-b flex items-center gap-2">
+                        {employee?.profile_photo ? (
+                          <div className=" h-10 w-10 rounded-full border">
+                            <img
+                              src={employee.profile_photo}
+                              alt=""
+                              className="rounded-full h-10 w-10"
+                            />
+                          </div>
+                        ) : (
+                          <div
+                            className=" text-white p-2 flex items-center justify-center rounded-full h-10 w-10 text-xs text-center border border-gray-700"
+                            style={{ background: themeColor }}
+                          >
+                            {employee.first_name.charAt(0).toUpperCase()}
+                            {employee.last_name.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        {employee.first_name} {employee.last_name}
                       </td>
-                    ))}
-                  </tr>
-                ))}
+                      {nextSevenDays.map((date, index) => (
+                        <td key={index} className="p-2 text-center border-b">
+                          <span
+                            style={{ cursor: "pointer" }}
+                            onClick={() => {
+                              console.log(
+                                "Employee attendance selected!",
+                                date,
+                                employee
+                              );
+                              handleShowAttendanceDetails(
+                                date,
+                                employee.attendance_records,
+                                employee.id,
+                                employee.first_name,
+                                employee.last_name
+                              );
+                              setSelectedEmpAttendance(true);
+                              fetchTodayAttendance(employee.id, date);
+                            }}
+                            className={
+                              getAttendanceStatus(employee, date) === "Present"
+                                ? "text-green-600 border-2 rounded-full border-green-600 p-1 px-3"
+                                : getAttendanceStatus(employee, date) ===
+                                  "Absent"
+                                ? "text-red-600 border-2 rounded-full border-red-600 p-1 px-3"
+                                : ""
+                            }
+                          >
+                            {getAttendanceStatus(employee, date)}
+                          </span>
+                        </td>
+                      ))}
+                    </tr>
+                  ))} */}
+
+                {filteredEmployees &&
+                  filteredEmployees.map((employee) => (
+                    <tr key={employee.id} className="hover:bg-gray-50">
+                      <td className="p-2 font-medium border-b flex items-center gap-2">
+                        {employee?.profile_photo ? (
+                          <div className="h-10 w-10 rounded-full border">
+                            <img
+                              src={employee.profile_photo}
+                              alt=""
+                              className="rounded-full h-10 w-10"
+                            />
+                          </div>
+                        ) : (
+                          <div
+                            className="text-white p-2 flex items-center justify-center rounded-full h-10 w-10 text-xs text-center border border-gray-700"
+                            style={{ background: themeColor }}
+                          >
+                            {employee.first_name.charAt(0).toUpperCase()}
+                            {employee.last_name.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        {employee.first_name} {employee.last_name}
+                      </td>
+                      {nextSevenDays.map((date, index) => (
+                        <td key={index} className="p-2 text-center border-b">
+                          <span
+                            style={{ cursor: "pointer" }}
+                            onClick={() => {
+                              console.log(
+                                "Employee attendance selected!",
+                                date,
+                                employee
+                              );
+                              handleShowAttendanceDetails(
+                                date,
+                                employee.attendance_records,
+                                employee.id,
+                                employee.first_name,
+                                employee.last_name
+                              );
+                              setSelectedEmpAttendance(true);
+                              fetchTodayAttendance(employee.id, date);
+                            }}
+                            className={
+                              getAttendanceStatus(employee, date) === "Present"
+                                ? "text-green-600 border-2 rounded-full border-green-600 p-1 px-3"
+                                : getAttendanceStatus(employee, date) ===
+                                  "Absent"
+                                ? "text-red-600 border-2 rounded-full border-red-600 p-1 px-3"
+                                : ""
+                            }
+                          >
+                            {getAttendanceStatus(employee, date)}
+                          </span>
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
               </tbody>
             </table>
           ) : (
@@ -1097,3 +1246,141 @@ const AttendanceRec = () => {
 };
 
 export default AttendanceRec;
+
+// const handleSearch =  (e) => {
+//   const value = e.target.value;
+//   setSearchText(value);
+//   if (value.trim() === "") {
+//     setFilteredEmployees(employees);
+//     return;
+//   }
+//   try {
+//     if (/^\d+$/.test(value)) {
+//       // You could choose either fetchByNumeric or fetchByIdAndAssociatedOrganization;
+//       // here they do the same thing.
+//       const result = fetchById(
+//         hrmsOrgId,
+//         value
+//       );
+//     } else {
+//       const result =  fetchByName(
+//         hrmsOrgId,
+//         value
+//       );
+//     }
+//     console.log("result data:",result.data)
+//     setFilteredEmployees(result.data || result);
+//     // const filteredResult = employees.filter(
+//     //   (employee) =>
+//     //     `${employee.first_name} ${employee.last_name}`
+//     //   .toLowerCase()
+//     //   .includes(searchValue.toLowerCase()) ||
+//     //   employee.associated_organization_name
+//     //   .toLowerCase()
+//     //   .includes(searchValue.toLowerCase())
+//     // );
+//     // setFilteredEmployees(filteredResult);
+//   } catch (error) {
+//     console.error("Error fetching attendance records:", error);
+//     setFilteredEmployees([]);
+//   }
+// };
+
+// const handleSearch = async (e) => {
+//   const value = e.target.value;
+//   setSearchText(value);
+
+//   // If the search value is empty, show all employees or clear the search result.
+//   if (value.trim() === "") {
+//     setFilteredEmployees(employees);
+//     return;
+//   }
+
+//   try {
+//     let result; // Declare result in the outer scope.
+
+//     if (/^\d+$/.test(value)) {
+//       // Await the asynchronous call for numeric search.
+//       result = await fetchById(hrmsOrgId, value);
+//     } else {
+//       // Await the asynchronous call for name search.
+//       result = await fetchByName(hrmsOrgId, value);
+//     }
+
+//     console.log("result data:", result.data); // Ensure your API returns data in result.data or adjust accordingly.
+
+//     // Update the state with the fetched data.
+//     // If your API returns an object with a `data` property, use that.
+//     // Otherwise, use the result directly.
+//     setFilteredEmployees(result.data || result);
+//   } catch (error) {
+//     console.error("Error fetching attendance records:", error);
+//     setFilteredEmployees([]);
+//   }
+// };
+
+// const handleSearch = async (e) => {
+//   const value = e.target.value;
+//   setSearchText(value);
+
+//   // If search is empty, revert to the full list or clear the results
+//   if (value.trim() === "") {
+//     setFilteredEmployees(employees);
+//     return;
+//   }
+
+//   try {
+//     let result;
+
+//     if (/^\d+$/.test(value)) {
+//       // Numeric search
+//       result = await fetchById(hrmsOrgId, value);
+//     } else {
+//       // Name-based search
+//       result = await fetchByName(hrmsOrgId, value);
+//     }
+
+//     // Log the full response to inspect its structure
+//     console.log("result:", result.results);
+
+//     // Update filteredEmployees based on the response structure
+//     const employeesData = Array.isArray(result.results);
+//     setFilteredEmployees(employeesData);
+//   } catch (error) {
+//     console.error("Error fetching attendance records:", error);
+//     setFilteredEmployees([]);
+//   }
+// };
+
+// const handleSearch = async (e) => {
+//   const value = e.target.value;
+//   setSearchText(value);
+
+//   // If search is empty, revert to the full list or clear the results
+//   if (value.trim() === "") {
+//     setFilteredEmployees(employees);
+//     return;
+//   }
+
+//   try {
+//     let result;
+
+//     if (/^\d+$/.test(value)) {
+//       // Numeric search
+//       result = await fetchById(hrmsOrgId, value);
+//     } else {
+//       // Name-based search
+//       result = await fetchByName(hrmsOrgId, value);
+//     }
+
+//     // Log the full response to inspect its structure
+//     console.log("result:", result);
+
+//     // If the API returns an array directly, use it
+//     const employeesData = Array.isArray(result) ? result : [];
+//     setFilteredEmployees(employeesData);
+//   } catch (error) {
+//     console.error("Error fetching attendance records:", error);
+//     setFilteredEmployees([]);
+//   }
+// };
