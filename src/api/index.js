@@ -4866,6 +4866,86 @@ export const getAttendanceRecord = async (orgId, page) => {
     throw error;
   }
 };
+
+export const getAttendanceRecordFilter = async (orgId, data) => {
+  try {
+    const res = await HrmsAuth.get(`/employees/attendance-bulk?organization_id=2&associated_organization_id=${orgId}&id=${data}`, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return res.data;
+  } catch (error) {
+    console.error("Error posting leave category:", error);
+    throw error;
+  }
+}
+// export const getAttendanceRecordFilter2 = async (orgId, data) => {
+//   try {
+//     const res = await HrmsAuth.get(`/employees/attendance-bulk?organization_id=2&associated_organization_id=${orgId}&name=${data}`, {
+//       headers: {
+//         "Content-Type": "multipart/form-data/",
+//       },
+//     });
+//     return res.data;
+//   } catch (error) {
+//     console.error("Error posting leave category:", error);
+//     throw error;
+//   }
+// }
+export const fetchByNumeric = async (orgId, associatedOrgId, numericValue) => {
+  try {
+    const response = await HrmsAuth.get(`/employees/attendance-bulk?organization_id=${orgId}&associated_organization_id=${associatedOrgId}&id=${numericValue}`
+    );
+    // if (!response.ok) throw new Error("Network response was not ok");
+    return  response.data;
+  } catch (error) {
+    console.error("Error in fetchByNumeric:", error);
+    throw error;
+  }
+};
+
+// 
+export const fetchByAssociatedOrganization = async (orgId, associatedOrgValue) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/employees/attendance-bulk?organization_id=${orgId}&associated_organization_id=${associatedOrgValue}`
+    );
+    // if (!response.ok) throw new Error("Network response was not ok");
+    return  response.data;
+  } catch (error) {
+    console.error("Error in fetchByAssociatedOrganization:", error);
+    throw error;
+  }
+};
+
+export const fetchByName = async (orgId, name) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/employees/attendance-bulk?organization_id=${orgId}&name=${encodeURIComponent(name)}`
+    );
+    // if (!response.ok) throw new Error("Network response was not ok");
+    return response.data;
+  } catch (error) {
+    console.error("Error in fetchByName:", error);
+    throw error;
+  }
+};
+export const fetchById = async (orgId, id) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/employees/attendance-bulk?organization_id=${orgId}&id=${id}`
+    );
+    // if (!response.ok) throw new Error("Network response was not ok");
+    return response.data;
+  } catch (error) {
+    console.error("Error in fetchById:", error);
+    throw error;
+  }
+};
+
+
+
 export const postLeaveCategory = async (data) => {
   try {
     const response = await HrmsAuth.post(`/leave-categories/`, data, {
