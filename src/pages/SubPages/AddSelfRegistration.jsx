@@ -122,7 +122,7 @@ const AddSelfRegistration = () => {
     try {
       toast.loading("Creating new visitor Please wait!");
       const visitResp = await axios.post(
-        `http://13.215.74.38/visitors.json`,
+        `https://admin.vibecopilot.ai/visitors.json`,
         postData,
         {
           params: { token: token },
