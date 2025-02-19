@@ -18,7 +18,7 @@ const SelfRegistrationDetails = () => {
     const fetchVisitorDetails = async () => {
       try {
         const detailsResp = await axios.get(
-          `http://13.215.74.38/visitors/${id}.json`,
+          `https://admin.vibecopilot.ai/visitors/${id}.json`,
           {
             params: { token: token },
           }
