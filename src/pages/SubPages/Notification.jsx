@@ -96,8 +96,9 @@ const Notification = () => {
 
   return (
     <div className="relative z-20" ref={dropdownRef}>
+      <p>        Notification</p>
       <button onClick={toggleDropdown} className="relative focus:outline-none">
-        <IoIosNotificationsOutline size={35} />
+ <IoIosNotificationsOutline size={35} />
       </button>
 
       {isOpen && (
