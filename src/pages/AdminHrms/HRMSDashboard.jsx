@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, NavLink, useParams } from "react-router-dom";
 import {
   Chart as ChartJS,
@@ -17,7 +17,12 @@ import { ImFileText2 } from "react-icons/im";
 import { AiOutlineBell } from "react-icons/ai";
 import AdminHRMS from "./AdminHrms";
 import { FaPlus } from "react-icons/fa";
-import { MdSettings, MdAnnouncement, MdPostAdd ,MdNotificationsActive } from "react-icons/md";
+import {
+  MdSettings,
+  MdAnnouncement,
+  MdPostAdd,
+  MdNotificationsActive,
+} from "react-icons/md";
 import { Link } from "react-router-dom";
 import { BiUser } from "react-icons/bi";
 import { IoReload } from "react-icons/io5";
@@ -26,14 +31,15 @@ import EmployeeCount from "./HRMSHighChart/EmployeeCount";
 import DepartmentCount from "./HRMSHighChart/DepartmentCount";
 import {
   getMyOrganization,
+  getNotification,
+  updateNotificationStatus,
   // getNotification,
   // updateNotificationStatus,
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
-import Notification from "../SubPages/Notification";
-// import { toast, ToastContainer } from "react-toastify";
-// import toast from "react-hot-toast";
-// import Notification from "../Employees/Notification";
+import { useSelector } from "react-redux";
+import { toast } from "react-hot-toast"; // If using react-hot-toast
+
 ChartJS.register(
   ArcElement,
   BarElement,
@@ -46,10 +52,12 @@ ChartJS.register(
 );
 
 const HRMSDashboard = () => {
-  const { id } = useParams();
-  console.log("This is id:", id);
+  const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
   const [expanded, setExpanded] = useState(false);
   const [expanded1, setExpanded1] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [notificationData, setNotificationData] = useState([]);
+  const drawerRef = useRef(null);
   // const [notifications, setNotifications] = useState([]);
   // const [newUsers, setNewUsers] = useState([]);
   // const [seen, setSeen] = useState(false);
@@ -129,56 +137,87 @@ const HRMSDashboard = () => {
     }
   };
 
-  // const [notificationData, setNotificationData] = useState([]);
-  // const empId = getItemInLocalStorage("APPROVERID");
+  // Close the drawer if user clicks outside of it
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (drawerRef.current && !drawerRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+  useEffect(() => {
+    const clientDashboardVisible =
+      localStorage.getItem("CLIENT_DASHBOARD_VISIBLE") === "true";
+    console.log("Client dashboard value:", clientDashboardVisible);
 
-  // const handleClick = (notificationId) => {
-  //   console.log(notificationData);
-  //   updateNotificationStatus(notificationId);
-  //   navigate("/admin/add-employee/onboarding");
-  // };
+    if (clientDashboardVisible) {
+      console.log("Skipping notifications for client dashboard user");
+      return;
+    }
+    // Function to fetch notifications from your API
+    const fetchNotifications = async () => {
+      try {
+        if (!empId) return;
+        const data = await getNotification(empId);
+        // const data = await getNotification();
+        console.log("API Response:", data);
+        setNotificationData(data);
 
-  // useEffect(() => {
-  //   const fetchNotifications = async () => {
-  //     try {
-  //       const data = await getNotification(empId);
-  //       console.log("API Response:", data);
-  //       setNotificationData(data);
-  //       if (data.length > 0) {
-  //         const unreadNotifications = data.filter((n) => !n.is_read);
-  //         setNotificationData(unreadNotifications);
-  //         unreadNotifications.forEach((notification) => {
-  //           toast.custom(
-  //             <div className="bg-white shadow-lg border border-gray-100 rounded-lg p-2">
-  //               <p className="text-base font-semibold text-gray-900">
-  //                 {notification.title}
-  //               </p>
-  //               <div className="flex items-center justify-between gap-x-4">
-  //                 <p className="text-xs font-medium w-[200px] text-gray-500">
-  //                   {notification.message}
-  //                 </p>
-  //                 <button
-  //                   onClick={() => handleClick(notification.id)}
-  //                   className="bg-blue-500 text-white px-2 py-1 rounded-lg text-xs font-medium"
-  //                 >
-  //                   View
-  //                 </button>
-  //               </div>
-  //             </div>,
-  //             { duration: 5000, position: "top-right" }
-  //           );
-  //         });
-  //       }
-  //     } catch (error) {
-  //       console.error("Error fetching notifications:", error);
-  //     }
-  //   };
+        // Optionally, show a toast for each unread notification
+        // data.forEach((notification) => {
+        //   if (!notification.is_read) {
+        //     toast.custom(
+        //       <div className="bg-white shadow-lg border border-gray-100 rounded-lg p-2">
+        //         <p className="text-base font-semibold text-gray-900">
+        //           {notification.title}
+        //         </p>
+        //         <div className="flex items-center justify-between gap-x-4">
+        //           <p className="text-xs font-medium w-[200px] text-gray-500">
+        //             {notification.message || notification.description}
+        //           </p>
+        //           <button
+        //             onClick={() => handleView(notification.id)}
+        //             className="bg-blue-500 text-white px-2 py-1 rounded-lg text-xs font-medium"
+        //           >
+        //             View
+        //           </button>
+        //         </div>
+        //       </div>,
+        //       { duration: 5000, position: "top-right" }
+        //     );
+        //   }
+        // });
+      } catch (error) {
+        console.error("Error fetching notifications:", error);
+      }
+    };
 
-  //   fetchNotifications();
-  //   const interval = setInterval(fetchNotifications, 60000);
+    // Fetch on mount and set an interval to refresh notifications every 60 seconds
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 60000);
+    return () => clearInterval(interval);
+    // }, [empId]);
+  }, []);
 
-  //   return () => clearInterval(interval);
-  // }, [empId]);
+  const handleView = async (notificationId) => {
+    try {
+      const res = await updateNotificationStatus(notificationId);
+      console.log("Notification updated:", res.data);
+      // Navigate to the pending page after successful update
+      navigate("/admin/add-employee/onboarding");
+    } catch (error) {
+      console.error("Error updating notification status:", error);
+      toast.error("Error updating notification status: " + error.message);
+      // Refresh notifications count if update fails
+    }
+  };
+
+  // Toggle the drawer open/closed
+  const toggleDrawer = () => {
+    setIsOpen((prev) => !prev);
+  };
 
   return (
     <>
@@ -190,40 +229,106 @@ const HRMSDashboard = () => {
             <h1 className="text-2xl font-bold pl-20 top-0 left-0 right-0">
               Welcome To <span>{orgName}</span>
             </h1>
-            
             <div
               className="bg-white mt-1 text-black text-center font-semibold absolute right-32 "
-              style={{ width: "130px", height: "30px", borderRadius: "5%" }}
+              style={{ width: "10px", height: "10px", borderRadius: "5%" }}
             >
-             
-              {/* <NavLink
-                to="/admin/hrms/notifications"
-                className={({ isActive }) =>
-                  `${
-                    isActive
-                      ? "text-black bg-white flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
-                      : "group flex items-center text-sm gap-3.5 font-medium p-2"
-                  }`
-                }
-              >
-                <h1
-                  className={`font-large whitespace-pre duration-300 ${
-                    !open && "opacity-0 translate-x-28 overflow-hidden"
-                  }`}
+              <div className="relative z-20">
+                {/* Notification Icon (always visible) */}
+                <button
+                  onClick={toggleDrawer}
+                  className="relative focus:outline-none"
                 >
-                  Notification
-                </h1>
-                <h2
-                  className={`${
-                    open && "hidden"
-                  } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+                  {notificationData.length === 0 ? (
+                    <div className="flex">
+                      <p className="mx-1">Notification</p>
+                      <span>
+                        {React.createElement(MdNotificationsActive, {
+                          size: "25",
+                        })}
+                      </span>
+                    </div>
+                  ) : (
+                    <div>
+                      <span
+                        className="absolute top-0
+                         bg-blue-400 inline-flex items-center justify-center px-2 py-2 mx-4 text-xs font-bold leading-none text-grey-600 rounded-full"
+                      >
+                        {notificationData.filter((n) => !n.is_read).length}
+                      </span>
+                      <span className="">
+                        {React.createElement(MdNotificationsActive, {
+                          size: "25",
+                        })}
+                      </span>
+                    </div>
+                  )}
+                </button>
+
+                {/* Drawer notification panel */}
+                <div
+                  ref={drawerRef}
+                  className={`fixed top-20 right-0 h-50vh bg-white shadow-lg transform mx-15 ${
+                    isOpen ? "translate-x-1" : "translate-x-full"
+                  } transition-transform duration-300 ease-in-out`}
+                  style={{ width: "400px" }}
                 >
-                  Notification
-                </h2>
-                <div>
-                  {React.createElement(MdNotificationsActive, { size: "20" })}
+                  <div className="p-4 border-b border-gray-200">
+                    <div className="flex justify-between items-center">
+                      <p className="text-m text-black-600">
+                        {notificationData.filter((n) => !n.is_read).length} new
+                        notifications
+                      </p>
+
+                      <button
+                        onClick={toggleDrawer}
+                        className="text-grey-200 mx-5 focus:outline-none"
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </div>
+                  {/* Scrollable notifications container */}
+                  <div
+                    className="overflow-y-auto"
+                    style={{ maxHeight: "calc(50vh - 120px)" }}
+                  >
+                    {notificationData.map((notification) => (
+                      <div
+                        key={notification.id}
+                        className="p-4 border-b border-gray-200"
+                      >
+                        <div className="mb-1 flex justify-between">
+                          <p className="font-medium">{notification.title}</p>
+                          <p className="text-xs text-gray-500">
+                            {notification.date || "Just now"}
+                          </p>
+                        </div>
+                        <p className="text-xs flex text-gray-600">
+                          {notification.description || notification.message}
+                        </p>
+                        <div className="mt-2">
+                          <button
+                            onClick={() => handleView(notification.id)}
+                            className="bg-blue-500 flex text-white px-3 py-1 text-xs rounded"
+                          >
+                            {notification.actions && notification.actions.length
+                              ? notification.actions[0]
+                              : "View"}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="p-4 border-t border-gray-200">
+                    {/* <button className="w-full text-sm text-blue-500"
+                    // onClick={navigate("/admin/add-employee/onboarding")}
+                    >
+                      view all
+                    </button> */}
+                  </div>
                 </div>
-              </NavLink> */}
+              </div>
             </div>
             &nbsp;
           </div>
@@ -242,31 +347,34 @@ const HRMSDashboard = () => {
               <div className="shadow-custom-all-sides rounded-lg ">
                 <EmployeeCount />
               </div>
-              {/* <div className="shadow-custom-all-sides rounded-lg ">
+
+              <div>
+                {/* <div className="shadow-custom-all-sides rounded-lg ">
                 <Notification />
-              </div> */}
-              {/* <div
+                </div> */}
+                {/* <div
               className="bg-white p-6 rounded-lg shadow-custom-all-sides m-4 z-10"
               style={{ width: "380px", height: "350px" }}
-            >
+              >
               <h3 className=" font-semibold mb-4">Employee Head Count</h3>
               <Bar
-                data={employeeHeadCountData}
-                options={{ maintainAspectRatio: false }}
+              data={employeeHeadCountData}
+              options={{ maintainAspectRatio: false }}
               />
-            </div>*/}
-              {/* <div
+              </div>*/}
+                {/* <div
               className="bg-white p-6 rounded-lg shadow-custom-all-sides m-4 z-10"
               style={{ width: "380px", height: "350px" }}
-            >
+              >
               <h3 className=" font-semibold mb-4">
-                CTC Payout (Last 6 months)
+              CTC Payout (Last 6 months)
               </h3>
               <Line
-                data={ctcPayoutData}
-                options={{ maintainAspectRatio: false }}
+              data={ctcPayoutData}
+              options={{ maintainAspectRatio: false }}
               />
-            </div>  */}
+              </div>  */}
+              </div>
             </div>
             <div className="w-full flex flex-col overflow-hidden mt-3">
               <div className="flex justify-start gap-2 my-5 flex-wrap ml-5">
@@ -606,3 +714,54 @@ export default HRMSDashboard;
 //     </section>
 //   );
 // };
+
+// const [notificationData, setNotificationData] = useState([]);
+// const empId = getItemInLocalStorage("APPROVERID");
+
+// const handleClick = (notificationId) => {
+//   console.log(notificationData);
+//   updateNotificationStatus(notificationId);
+//   navigate("/admin/add-employee/onboarding");
+// };
+
+// useEffect(() => {
+//   const fetchNotifications = async () => {
+//     try {
+//       const data = await getNotification(empId);
+//       console.log("API Response:", data);
+//       setNotificationData(data);
+//       if (data.length > 0) {
+//         const unreadNotifications = data.filter((n) => !n.is_read);
+//         setNotificationData(unreadNotifications);
+//         unreadNotifications.forEach((notification) => {
+//           toast.custom(
+//             <div className="bg-white shadow-lg border border-gray-100 rounded-lg p-2">
+//               <p className="text-base font-semibold text-gray-900">
+//                 {notification.title}
+//               </p>
+//               <div className="flex items-center justify-between gap-x-4">
+//                 <p className="text-xs font-medium w-[200px] text-gray-500">
+//                   {notification.message}
+//                 </p>
+//                 <button
+//                   onClick={() => handleClick(notification.id)}
+//                   className="bg-blue-500 text-white px-2 py-1 rounded-lg text-xs font-medium"
+//                 >
+//                   View
+//                 </button>
+//               </div>
+//             </div>,
+//             { duration: 5000, position: "top-right" }
+//           );
+//         });
+//       }
+//     } catch (error) {
+//       console.error("Error fetching notifications:", error);
+//     }
+//   };
+
+//   fetchNotifications();
+//   const interval = setInterval(fetchNotifications, 60000);
+
+//   return () => clearInterval(interval);
+// }, [empId]);
