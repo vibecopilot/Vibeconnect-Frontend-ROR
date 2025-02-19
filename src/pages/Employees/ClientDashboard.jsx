@@ -631,7 +631,7 @@ const ClientDashboard = () => {
                 <Calendar
                   onChange={handleDateChange}
                   value={selectedDate}
-                  maxDate={maxDate}
+          {/* maxDate = {maxDate} */}
                   className="react-calendar p-0 w-full h-full overflow-y-auto"
                 />
                 <button
