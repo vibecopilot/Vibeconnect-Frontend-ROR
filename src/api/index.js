@@ -6530,6 +6530,19 @@ export const getReportingSupervisors = async (deptId, orgId) => {
   }
 };
 
+// export const getNotification = async () => {
+//   try {
+//     const response = await HrmsAuth.get(`/notifications/`, {
+//       headers: {
+//         "Content-Type": "multipart/form-data/",
+//       },
+//     });
+//     return response.data; // Ensure it returns data
+//   } catch (error) {
+//     console.error("Error getting notifications:", error);
+//     return []; // Return empty array on error
+//   }
+// };
 export const getNotification = async (id) => {
   try {
     const response = await HrmsAuth.get(`/notifications/?employee_id=${id}`, {
@@ -6585,17 +6598,6 @@ export const getClientRosterShift = async (orgId) => {
     console.log("Error fetching the associated organization dashboard :", error)
   }
 }
-
-
-// export const updateNotificationStatus = async (notificationId) => {
-//   try {
-//     const response = await HrmsAuth.patch(`/notifications/${notificationId}/`)
-//     return response.data;
-//     console.log("Notification updated:", data);
-//   } catch (error) {
-//     console.error("Error updating notification:", error);
-//   }
-// };
 
 export const updateNotificationStatus = async (notificationId) => {
   try {
