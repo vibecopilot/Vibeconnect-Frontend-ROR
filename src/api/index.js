@@ -7186,12 +7186,40 @@ export const getSiteWiseEmployee = async (orgId, siteId) => {
     throw error;
   }
 };
+
+export const getFullUser = async (orgId) => {
+  try {
+    const res = await HrmsAuth.get(`/user-details/download?associated_organization_id=${orgId}`, {
+      params: {
+        token: token,
+      },
+    });
+    return res.data;
+  } catch (error) {
+    console.log("Error fetching the organizational level user detail", error);
+    throw error;
+  }
+}
+
+export const getSiteWiseUserDetails = async (siteId) => {
+  try {
+    const res = await HrmsAuth.get(`/user-details/download?associated_organization_id=${siteId}`, {
+      params: {
+        token: token,
+      },
+    });
+    return res.data;
+  } catch (error) {
+    console.log("Error fetching the organizational level user detail", error);
+    throw error;
+  }
+}
+
 export const markEmployeeAttendance = async (data) => {
   try {
     const response = await HrmsAuth.post(
       `/employee/attendance/`,
       data,
-
       {
         headers: {
           "Content-Type": "multipart/form-data/",

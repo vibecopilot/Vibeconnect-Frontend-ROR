@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, NavLink, useParams } from "react-router-dom";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 import {
   Chart as ChartJS,
   ArcElement,
@@ -16,7 +18,7 @@ import "tailwindcss/tailwind.css";
 import { ImFileText2 } from "react-icons/im";
 import { AiOutlineBell } from "react-icons/ai";
 import AdminHRMS from "./AdminHrms";
-import { FaPlus } from "react-icons/fa";
+import { FaDownload, FaPlus } from "react-icons/fa";
 import {
   MdSettings,
   MdAnnouncement,
@@ -56,6 +58,7 @@ import { formatTime } from "../../utils/dateUtils";
 
 const HRMSDashboard = () => {
   const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
+  const [orgName, setOrgName] = useState("");
   const [expanded, setExpanded] = useState(false);
   const [expanded1, setExpanded1] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -63,8 +66,9 @@ const HRMSDashboard = () => {
   const drawerRef = useRef(null);
   const [AllSites, setAllSites] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
+  const [ilteredEmployees, setFilteredEmployees] = useState([]);
   const [selectedSite, setSelectedSite] = useState("all");
-  const [orgName, setOrgName] = useState("");
+  const [dashboardData, setDashboardData] = useState(null);
 
   const navigate = useNavigate();
   document.title = `HRMS Vibe Connect`;
@@ -134,15 +138,22 @@ const HRMSDashboard = () => {
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
   console.log(hrmsOrgId);
 
-  // const fetchMyOrganization = async () => {
-  //   try {
-  //     const res = await getMyOrganization(hrmsOrgId);
-  //     setOrgName(res.name);
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  // };
+  const fetchMyOrganization = async () => {
+    try {
+      const res = await getMyOrganization(hrmsOrgId);
+      console.log(res);
+      setOrgName(res.name);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
+  // const fetchOrgData = async ( ) => {
+  //   try
+  //   {
+  //     const orgData = await get
+  //   }
+  // }
   const fetchSites = async () => {
     try {
       const sites = await getAssociatedSites(hrmsOrgId);
@@ -153,48 +164,42 @@ const HRMSDashboard = () => {
     }
   };
 
-  useEffect(() => {
-    fetchSites();
-  }, []);
-
-  const handleDropdown = async (e) => {
-    const siteId = e.target.value;
-    setSelectedSite(siteId);
-
-    // If "all" is selected, revert to the default list
-    if (siteId === "all" || siteId.trim() === "") {
-      setFilteredEmployees(employees);
-      return;
-    }
-
+  // 2) Fetch site-level dashboard data (only if site is valid)
+  const loadDashboardData = async (siteId) => {
     try {
-      const result = await fetchSiteDashboard(selectedSite);
-      console.log("Dropdown result:", result);
-
-      // Extract data from result.results if it exists.
-      const employeesData =
-        result && result.results && Array.isArray(result.results)
-          ? result.results
-          : Array.isArray(result)
-          ? result
-          : [];
-      setFilteredEmployees(employeesData);
+      const result = await fetchSiteDashboard(siteId);
+      console.log("Site-level dashboard data:", result);
+      setDashboardData(result);
     } catch (error) {
-      console.error("Error fetching associated organization data:", error);
-      setFilteredEmployees([]);
+      console.error("Error fetching dashboard data:", error);
+      setDashboardData(null);
     }
   };
 
-  // Close the drawer if user clicks outside of it
-  // useEffect(() => {
-  //   const handleClickOutside = (event) => {
-  //     if (drawerRef.current && !drawerRef.current.contains(event.target)) {
-  //       setIsOpen(false);
-  //     }
-  //   };
-  //   document.addEventListener("mousedown", handleClickOutside);
-  //   return () => document.removeEventListener("mousedown", handleClickOutside);
-  // }, []);
+  useEffect(() => {
+    fetchMyOrganization();
+    fetchSites();
+    loadDashboardData(selectedSite);
+  }, []);
+
+  useEffect(() => {
+    // If user picked a valid site, fetch the site-level data
+    if (selectedSite && selectedSite.trim() !== "" && selectedSite !== "all") {
+      loadDashboardData(selectedSite);
+    } else {
+      // If "all" or "" (i.e. no site selected), we do NOT call the site-level API
+      // and we reset the dashboardData to null
+      setDashboardData(null);
+    }
+  }, [selectedSite]);
+
+  // 3) Handle dropdown changes
+  const handleDropdown = (e) => {
+    const siteId = e.target.value;
+    setSelectedSite(siteId);
+    // We do NOT call loadDashboardData here directly. The useEffect above will handle it.
+  };
+
 
   useEffect(() => {
     const clientDashboardVisible =
@@ -267,6 +272,27 @@ const HRMSDashboard = () => {
     setIsOpen((prev) => !prev);
   };
 
+  const downloadPDF = () => {
+    const input = document.getElementById("dashboard-content");
+    html2canvas(input).then((canvas) => {
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("landscape");
+
+      // Calculate available width and height in the PDF with a margin of 1 unit
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 1;
+      const availableWidth = pageWidth - margin * 1;
+
+      // Calculate height preserving aspect ratio
+      const imgHeight = (canvas.height * availableWidth) / canvas.width;
+
+      // If your image height exceeds the available height, you may need to scale further or add a new page
+      pdf.addImage(imgData, "PNG", margin, margin, availableWidth, imgHeight);
+      pdf.save("dashboard.pdf");
+    });
+  };
+
   return (
     <>
       <section className="flex ">
@@ -274,7 +300,7 @@ const HRMSDashboard = () => {
         {/* <div className="flex-1 flex flex-col"> */}
         <div className="p-2 w-full flex  overflow-hidden flex-col">
           <div className="bg-white flex justify-between  p-4 shadow-md absolute overflow-y-auto top-0 left-0 right-0">
-            <h1 className="text-2xl font-bold pl-20 top-0 left-0 right-0">
+            <h1 className="text-xl font-bold pl-20 top-0 left-0 right-0">
               Welcome To <span>{orgName}</span>
             </h1>
             <div>
@@ -290,6 +316,14 @@ const HRMSDashboard = () => {
                   </option>
                 ))}
               </select>
+            </div>
+            <div className="inline-flex items-center">
+              <button
+                className="flex items-center gap-2 px-2 py-2 bg-blue-500 text-white rounded text-xs"
+                onClick={downloadPDF}
+              >
+                Charts <FaDownload />
+              </button>
             </div>
             <div
               className="bg-white mt-1 text-black text-center font-semibold absolute right-32 "
@@ -314,9 +348,9 @@ const HRMSDashboard = () => {
                     </div>
                   ) : (
                     <div className="relative flex items-center">
-                      <p className="mx-1 text-m font-semibold text-gray-800">
+                      {/* <p className="mx-1 text-m font-semibold text-gray-800">
                         Notification
-                      </p>
+                      </p> */}
                       <span className="absolute top-[-8px] right-[-8px] bg-red-500 rounded-full w-5 h-5 text-xs font-bold text-white flex items-center justify-center">
                         {notificationData.filter((n) => !n.is_read).length}
                       </span>
@@ -401,7 +435,10 @@ const HRMSDashboard = () => {
             &nbsp;
           </div>
 
-          <div className="mt-16 overflow-y-auto absolute top-1 left-20">
+          <div
+            id="dashboard-content"
+            className="mt-16 overflow-y-auto absolute top-1 left-20"
+          >
             <Link
               to={"/dashboard"}
               className="text-blue-400 mx-10 my-2 underline font-medium"
@@ -409,14 +446,43 @@ const HRMSDashboard = () => {
               Home{">"}
             </Link>
             <div className="grid md:grid-cols-3 mr-2 my-2  gap-2">
-              <div className="shadow-custom-all-sides rounded-lg ml-5">
-                <DepartmentCount siteId={selectedSite} />
-              </div>
-              <div className="shadow-custom-all-sides rounded-lg ">
-                <EmployeeCount siteId={selectedSite} />
-              </div>
+              {/* Pass the dashboardData only when a site is selected.
+          Otherwise, children can work with an empty siteId to fetch org-level data. */}
 
-              <div>
+              {/* <div className="shadow-custom-all-sides rounded-lg ml-5">
+                <DepartmentCount
+                  dashboardData={selectedSite ? dashboardData : null}
+                  siteId={selectedSite}
+                />
+              </div>
+              <div className="shadow-custom-all-sides rounded-lg">
+                <EmployeeCount
+                  dashboardData={selectedSite ? dashboardData : null}
+                  siteId={selectedSite}
+                />
+              </div> */}
+
+              <DepartmentCount
+                // Pass siteId and dashboardData down
+                siteId={selectedSite}
+                dashboardData={
+                  selectedSite === "all" || selectedSite.trim() === ""
+                    ? null
+                    : dashboardData
+                }
+              />
+
+              {/* Employee Count */}
+              <EmployeeCount
+                siteId={selectedSite}
+                dashboardData={
+                  selectedSite === "all" || selectedSite.trim() === ""
+                    ? null
+                    : dashboardData
+                }
+              />
+
+              <div id="dashboard-content">
                 {/* <div className="shadow-custom-all-sides rounded-lg ">
                 <Notification />
                 </div> */}

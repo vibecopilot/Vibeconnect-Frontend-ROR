@@ -6,6 +6,7 @@ import {
   getUniformRequest,
   getUniformRequestDetails,
   hrmsDomain,
+  getAssociatedSites,
 } from "../../../api";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
 import { dateFormatSTD } from "../../../utils/dateUtils";
@@ -90,10 +91,12 @@ const CompletedUniformRequest = () => {
     },
   ];
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
+  const orgId = getItemInLocalStorage("HRMSORGID");
+
   const [requests, setRequests] = useState([]);
   const [filteredRequests, setFilteredRequests] = useState([]);
-    const [allSites, setAllSites] = useState([]);
-    const [selectedSite, setSelectedSite] = useState("");
+  const [allSites, setAllSites] = useState([]);
+  const [selectedSite, setSelectedSite] = useState("");
   const fetchUniformRequests = async () => {
     try {
       const res = await getUniformRequest(hrmsOrgId);
@@ -101,12 +104,11 @@ const CompletedUniformRequest = () => {
       console.log(filteredData);
       setRequests(filteredData);
       setFilteredRequests(filteredData);
+
+      const allSites = await getAssociatedSites(orgId);
+      console.log("allSites:", allSites);
       // Extract unique associated organization names
-      const uniqueSites = [
-        ...new Set(
-          filteredData.map((item) => item.associated_organization_name)
-        ),
-      ];
+      const uniqueSites = [...new Set(allSites.map((item) => item.site_name))];
       console.log("Unique Sites:", uniqueSites); // Check uniqueSites value
       setAllSites(uniqueSites);
     } catch (error) {
@@ -197,7 +199,7 @@ const CompletedUniformRequest = () => {
             onChange={handleSearch}
           />
           {/* DROPDOWN */}
-           <select
+          <select
             onChange={handleDropdownChange}
             className="border border-gray-400 w-full placeholder:text-sm rounded-lg p-2"
             value={selectedSite}
