@@ -5,8 +5,8 @@ import HrmsAuth from "./HrmsAuth";
 import vibeAuth from "./vibeAuth";
 import axios from "axios";
 // import DigestFetch from "digest-fetch";
-export const API_URL = "https://vibecopilot.ai";
-export const vibeMedia = "https://vibecopilot.ai/api/media/";
+export const API_URL = "https://admin.vibecopilot.ai";
+export const vibeMedia = "https://admin.vibecopilot.ai/api/media/";
 export const hrmsDomain = "https://api.hrms.vibecopilot.ai/";
 import DigestFetch from "digest-fetch";
 // import DigestAuth from "@mhoc/axios-digest-auth";
@@ -7574,12 +7574,18 @@ export const getIncidentDetails = async (incidentId) =>
       token: token,
     },
   });
-export const postIncidents = async (data) =>
-  axiosInstance.post(`/incidents.json`, data, {
+export const postIncidents = async (id) =>
+  axiosInstance.post(`/incidents.json`, id, {
     params: {
       token: token,
     },
   });
+  export const postInjurydata = async (data) =>
+    axiosInstance.post(`/incident_injuries.json`, data, {
+      params: {
+        token: token,
+      },
+    });
   export const updateIncidents = async (id, data) =>
     axiosInstance.put(`/incidents/${id}.json`, data, {
       params: {
