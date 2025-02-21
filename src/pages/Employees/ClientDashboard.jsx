@@ -16,6 +16,7 @@ import {
   getEmployeeJobInfo,
   getAssociatedSite,
   getAssociatedSites,
+  fetchAllRoster,
   // getTotalAttendance,
   // getAttendance,
   getSiteWiseAttendance,
@@ -321,6 +322,9 @@ const ClientDashboard = () => {
       );
       console.log("Present Records:", presentRecords);
       console.log("Absent Records:", absentRecords);
+
+      const EmpRoaster = await fetchAllRoster(orgId);
+      console.log(EmpRoaster);
 
       // Build checkIn and checkOut arrays from attendanceRecords.
       // Notice that we map the property `employee_id` so that we compare the same key later.
