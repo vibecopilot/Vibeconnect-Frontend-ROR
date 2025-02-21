@@ -21,6 +21,7 @@ import {
   fetchByName,
   fetchByAssociatedOrganization,
   getAssociatedSites,
+  getAttendanceRecordFilter,
   fetchByNumeric,
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
@@ -118,6 +119,8 @@ const AttendanceRec = () => {
     next: null,
     previous: null,
   });
+
+  // Default
   const fetchEmployeeAttendance = async (page) => {
     setLoading(true);
     try {
@@ -144,9 +147,18 @@ const AttendanceRec = () => {
     fetchEmployeeAttendance(pageNumber);
   }, []);
 
+  // const handlePageChange = (page) => {
+  //   setPageNumber(page); // Update state for pageNumber
+  //   fetchEmployeeAttendance(page); // Fetch data for the new page
+  // };
+
   const handlePageChange = (page) => {
-    setPageNumber(page); // Update state for pageNumber
-    fetchEmployeeAttendance(page); // Fetch data for the new page
+    setPageNumber(page);
+    if (selectedSite === "all" || selectedSite.trim() === "") {
+      fetchEmployeeAttendance(page);
+    } else {
+      fetchFilteredEmployeeAttendance(page, selectedSite);
+    }
   };
 
   const formatDate = (dateString) => {
@@ -208,7 +220,7 @@ const AttendanceRec = () => {
     const fetchSites = async () => {
       try {
         const sites = await getAssociatedSites(hrmsOrgId);
-        console.log("Site name :",sites)
+        console.log("Site name :", sites);
         setAllSites(sites);
       } catch (error) {
         console.error("Error fetching sites:", error);
@@ -217,6 +229,44 @@ const AttendanceRec = () => {
 
     fetchSites();
   }, [hrmsOrgId]);
+
+  // New function to fetch filtered attendance records with pagination
+  const fetchFilteredEmployeeAttendance = async (page, siteId) => {
+    setLoading(true);
+    try {
+      // Call your filtered endpoint with the provided siteId
+      // e.g., /employees/attendance-bulk?organization_id={hrmsOrgId}&associated_organization_id={siteId}&page={page}
+      const res = await getAttendanceRecordFilter(hrmsOrgId, siteId, page);
+      const data = res.results;
+      setAttendanceCount(res.count);
+      console.log("Filtered Attendance Data:", data);
+      setEmployees(data);
+      setFilteredEmployees(data);
+      setPaginationInfo({
+        next: res.next,
+        previous: res.previous,
+      });
+      setPageNumber(page);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle dropdown changes for filtering by site
+  const handleDropdown = (e) => {
+    const siteId = e.target.value;
+    setSelectedSite(siteId);
+
+    if (siteId === "all" || siteId.trim() === "") {
+      // For "all", revert to the default attendance list (page 1)
+      fetchEmployeeAttendance(1);
+    } else {
+      // For a specific site, call the filtered attendance API (page 1)
+      fetchFilteredEmployeeAttendance(1, siteId);
+    }
+  };
 
   const handleSearch = async (e) => {
     const value = e.target.value;
@@ -250,38 +300,6 @@ const AttendanceRec = () => {
       setFilteredEmployees([]);
     }
   };
-
-  // New handleDropdown for filtering by associated site
-  const handleDropdown = async (e) => {
-    const siteId = e.target.value;
-    setSelectedSite(siteId);
-
-    // If "all" is selected, revert to the default list
-    if (siteId === "all" || siteId.trim() === "") {
-      // Optionally, if there is also a search term active, you could re-run the search.
-      // For simplicity, we'll revert to the original employees list.
-      setFilteredEmployees(employees);
-      return;
-    }
-
-    try {
-      const result = await fetchByAssociatedOrganization(hrmsOrgId, siteId);
-      console.log("Dropdown result:", result);
-
-      // Extract data from result.results if it exists.
-      const employeesData =
-        result && result.results && Array.isArray(result.results)
-          ? result.results
-          : Array.isArray(result)
-          ? result
-          : [];
-      setFilteredEmployees(employeesData);
-    } catch (error) {
-      console.error("Error fetching associated organization data:", error);
-      setFilteredEmployees([]);
-    }
-  };
-
   const today = new Date();
   const currentMonth = `${today.getFullYear()}-${(today.getMonth() + 1)
     .toString()
@@ -555,7 +573,7 @@ const AttendanceRec = () => {
         </div>
 
         <div className="flex justify-between items-center my-4 gap-4">
-          <div>
+          {/* <div>
             <Link className="font-medium" to={"/admin/hrms/dashboard"}>
               Home
             </Link>{" "}
@@ -568,7 +586,7 @@ const AttendanceRec = () => {
               Attendance Record
             </Link>{" "}
             {"/ "}
-          </div>
+          </div> */}
           <div className="flex items-center gap-2">
             {/* Dropdown for Associated Sites */}
             <select
@@ -576,7 +594,7 @@ const AttendanceRec = () => {
               onChange={handleDropdown}
               className="border border-gray-400 p-2 rounded-md"
             >
-              <option value="all">All Sites</option>
+              <option value="all">All Sites Attendance Record </option>
               {allSites &&
                 allSites.map((site) => (
                   <option key={site.id} value={site.id}>

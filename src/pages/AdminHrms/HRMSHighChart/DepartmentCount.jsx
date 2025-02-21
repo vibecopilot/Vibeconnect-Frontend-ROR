@@ -8,7 +8,8 @@ import {
 } from "../../../api";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
 
-const DepartmentCount = () => {
+
+const DepartmentCount = ({ siteId }) => {
   const [selectedOption, setSelectedOption] = useState("Department");
   const [departmentData, setDepartmentData] = useState([]);
   const [locationData, setLocationData] = useState([]);
@@ -17,7 +18,9 @@ const DepartmentCount = () => {
 
   const fetchDepartmentData = async () => {
     try {
-      const res = await getDepartmentCount(hrmsOrgId);
+      const res = siteId
+        ? await getDepartmentCount(hrmsOrgId, siteId)
+        : await getDepartmentCount(hrmsOrgId);
       setDepartmentData(res);
     } catch (error) {
       console.log(error);
@@ -26,7 +29,9 @@ const DepartmentCount = () => {
 
   const fetchLocationData = async () => {
     try {
-      const res = await getLocationCount(hrmsOrgId);
+      const res = siteId
+        ? await getLocationCount(hrmsOrgId, siteId)
+        : await getLocationCount(hrmsOrgId);
       setLocationData(res);
     } catch (error) {
       console.log(error);
@@ -35,7 +40,9 @@ const DepartmentCount = () => {
 
   const fetchGenderData = async () => {
     try {
-      const res = await getGenderCount(hrmsOrgId);
+      const res = siteId
+        ? await getGenderCount(hrmsOrgId, siteId)
+        : await getGenderCount(hrmsOrgId);
       setGenderData(res);
     } catch (error) {
       console.log(error);
@@ -43,6 +50,7 @@ const DepartmentCount = () => {
   };
 
   useEffect(() => {
+    // Re-fetch when the filter option or siteId changes.
     if (selectedOption === "Department") {
       fetchDepartmentData();
     } else if (selectedOption === "Gender") {
@@ -50,7 +58,7 @@ const DepartmentCount = () => {
     } else {
       fetchLocationData();
     }
-  }, [selectedOption]);
+  }, [selectedOption, siteId]);
 
   // Prepare data for Department chart
   const departmentChartData = departmentData.reduce((acc, item) => {
@@ -75,10 +83,7 @@ const DepartmentCount = () => {
         dataLabels: {
           enabled: true,
           format: "{point.y}",
-          style: {
-            fontSize: "10px",
-            color: "#000", // Adjust color as needed
-          },
+          style: { fontSize: "10px", color: "#000" },
         },
         showInLegend: true,
       },
@@ -86,11 +91,9 @@ const DepartmentCount = () => {
     legend: {
       align: "center",
       verticalAlign: "bottom",
-      layout: "horizontal", // Horizontal layout for the legend
+      layout: "horizontal",
       itemMarginRight: 10,
-      itemStyle: {
-        fontSize: "10px",
-      },
+      itemStyle: { fontSize: "10px" },
     },
     series: [
       {
@@ -105,12 +108,11 @@ const DepartmentCount = () => {
     credits: { enabled: false },
   };
 
-  // Prepare data for Location chart
+  // Similar chart options for Location and Gender as in your existing code…
   const locationChartData = locationData.map((item) => ({
     name: item.location,
     y: item.employee_count,
   }));
-
   const locationChartOptions = {
     chart: { type: "pie" },
     title: "",
@@ -123,10 +125,7 @@ const DepartmentCount = () => {
         dataLabels: {
           enabled: true,
           format: "{point.y}",
-          style: {
-            fontSize: "10px",
-            color: "#000",
-          },
+          style: { fontSize: "10px", color: "#000" },
         },
       },
     },
@@ -135,9 +134,7 @@ const DepartmentCount = () => {
       verticalAlign: "bottom",
       layout: "horizontal",
       itemMarginRight: 10,
-      itemStyle: {
-        fontSize: "10px",
-      },
+      itemStyle: { fontSize: "10px" },
     },
     series: [
       {
@@ -149,12 +146,10 @@ const DepartmentCount = () => {
     credits: { enabled: false },
   };
 
-  // Prepare data for Gender chart
   const genderChartData = genderData.map((item) => ({
     name: item.gender,
     y: item.employee_count,
   }));
-
   const genderChartOptions = {
     chart: { type: "pie" },
     title: "",
@@ -171,9 +166,7 @@ const DepartmentCount = () => {
       verticalAlign: "bottom",
       layout: "horizontal",
       itemMarginRight: 10,
-      itemStyle: {
-        fontSize: "10px",
-      },
+      itemStyle: { fontSize: "10px" },
     },
     series: [
       {
@@ -188,7 +181,7 @@ const DepartmentCount = () => {
   return (
     <div className="ml-4">
       <div className="flex justify-between m-2">
-        <h2 className="text-gray-500 font-medium outline-none">
+        <h2 className="text-gray-500 font-medium">
           Employee count by {selectedOption.toLowerCase()}
         </h2>
         <select
@@ -204,25 +197,15 @@ const DepartmentCount = () => {
 
       <div>
         {selectedOption === "Department" ? (
-          <div className="relative">
-            <HighchartsReact
-              highcharts={Highcharts}
-              options={departmentChartOptions}
-            />
-            {/* Legend Wrapper for Horizontal Scroll */}
-            {/* <div className="mt-4 overflow-x-auto scrollbar-hide">
-              <div className="inline-block whitespace-nowrap">
-                {departmentChartOptions.series[0].data.map((item, index) => (
-                  <span
-                    key={index}
-                    className="mr-4 text-gray-700 text-sm"
-                  >{`${item.name}: ${item.y}`}</span>
-                ))}
-              </div>
-            </div> */}
-          </div>
+          <HighchartsReact
+            highcharts={Highcharts}
+            options={departmentChartOptions}
+          />
         ) : selectedOption === "Gender" ? (
-          <HighchartsReact highcharts={Highcharts} options={genderChartOptions} />
+          <HighchartsReact
+            highcharts={Highcharts}
+            options={genderChartOptions}
+          />
         ) : (
           <HighchartsReact
             highcharts={Highcharts}
@@ -233,6 +216,5 @@ const DepartmentCount = () => {
     </div>
   );
 };
-
 
 export default DepartmentCount;
