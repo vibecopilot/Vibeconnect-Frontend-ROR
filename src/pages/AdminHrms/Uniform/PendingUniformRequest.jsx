@@ -15,6 +15,7 @@ import {
   hrmsDomain,
   postUniformApproval,
   postUniformRequest,
+  getAssociatedSites,
 } from "../../../api";
 import Select from "react-select";
 import toast from "react-hot-toast";
@@ -199,10 +200,12 @@ const PendingUniformRequest = () => {
       setRequests(filteredData);
       setFilteredRequests(filteredData);
 
+      const allSites = await getAssociatedSites(orgId);
+      console.log("allSites:",allSites)
       // Extract unique associated organization names
       const uniqueSites = [
         ...new Set(
-          filteredData.map((item) => item.associated_organization_name)
+          allSites.map((item) => item.site_name)
         ),
       ];
       console.log("Unique Sites:", uniqueSites); // Check uniqueSites value

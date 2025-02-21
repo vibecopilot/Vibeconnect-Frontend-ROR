@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { BiEdit } from "react-icons/bi";
-import { FaChevronDown, FaTrash, FaUserEdit } from "react-icons/fa";
+import { FaChevronDown, FaDownload, FaTrash, FaUserEdit } from "react-icons/fa";
 import AdminHRMS from "./AdminHrms";
 import { Link } from "react-router-dom";
 import { PiPlusCircle } from "react-icons/pi";
@@ -15,11 +15,16 @@ import {
   getMyHRMSEmployeesAllData,
   getUserDetails,
   hrmsDomain,
+  getFullUser,
+  getSiteWiseUserDetails,
   getEmployeeJobInfo,
   getAssociatedSites,
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import toast from "react-hot-toast";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+import convert from "xml-js";
 
 function EmployeeDirectory() {
   const themeColor = useSelector((state) => state.theme.color);
@@ -143,6 +148,110 @@ function EmployeeDirectory() {
     setSelectedSite(e.target.value);
   };
 
+  const [fullUserDetaisl, setFullUserDetails] = useState([]);
+  const [allSiteUser, setAllSiteUser] = useState([]);
+
+  // const handleDownload = async () => {
+  //   try {
+  //     let res;
+  //     if (!selectedSite) {
+  //       // If no site is selected, fetch full user details
+  //       res = await getFullUser(orgId);
+  //       setFullUserDetails(res);
+  //     } else {
+  //       // If a site is selected, fetch site-specific user details
+  //       res = await getSiteWiseUserDetails(selectedSite);
+  //       setAllSiteUser(res);
+  //     }
+
+  //     // Convert JSON data to a worksheet
+  //     const worksheet = allSiteUser.json_to_sheet(res);
+
+  //     // Create a new workbook and append the worksheet
+  //     const workbook = allSiteUser.book_new();
+  //     allSiteUser.book_append_sheet(workbook, worksheet, "Data");
+
+  //     // Generate Excel file in binary array format
+  //     const excelBuffer = allSiteUser.write(workbook, {
+  //       bookType: "xlsx",
+  //       type: "array",
+  //     });
+
+  //     // Create a Blob from the buffer
+  //     const data = new Blob([excelBuffer], {
+  //       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8",
+  //     });
+
+  //     // Trigger the file download
+  //     saveAs(data, "data.xlsx");
+  //   } catch (error) {
+  //     console.error("Download failed:", error);
+  //   }
+  // };
+
+ // Helper function to sanitize XML string
+const sanitizeXml = (xml) => {
+  let sanitized = xml;
+  // Fix unescaped ampersands
+  sanitized = sanitized.replace(/&(?!amp;|lt;|gt;|quot;|apos;)/g, '&amp;');
+  // Fix attributes without a value by adding empty quotes
+  sanitized = sanitized.replace(/(\w+)=\s*(?=[>\s])/g, '$1=""');
+  return sanitized;
+};
+
+const handleDownload = async () => {
+  try {
+    let res;
+    if (!selectedSite) {
+      res = await getFullUser(orgId);
+      setFullUserDetails(res);
+    } else {
+      res = await getSiteWiseUserDetails(selectedSite);
+      setAllSiteUser(res);
+    }
+
+    // Convert response to string if needed
+    const xmlString =
+      typeof res === "string" ? res : new XMLSerializer().serializeToString(res);
+
+    // Sanitize XML to fix invalid entities and attributes without values
+    const sanitizedXml = sanitizeXml(xmlString);
+    console.log("Sanitized XML:", sanitizedXml);
+
+    // Convert sanitized XML to JSON
+    const options = { compact: true, ignoreComment: true, spaces: 4 };
+    const jsonStr = convert.xml2json(sanitizedXml, options);
+    const jsonData = JSON.parse(jsonStr);
+    console.log("Parsed JSON:", jsonData);
+
+    // Extract the array from JSON based on your XML structure.
+    // Adjust the extraction as needed; here's an example:
+    let dataArray = [];
+    if (jsonData.users && jsonData.users.user) {
+      dataArray = Array.isArray(jsonData.users.user)
+        ? jsonData.users.user
+        : [jsonData.users.user];
+    } else {
+      dataArray = [jsonData];
+    }
+    console.log("Data array:", dataArray);
+
+    // Convert JSON data to a worksheet
+    const worksheet = XLSX.utils.json_to_sheet(dataArray);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
+
+    // Generate Excel file as binary array
+    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+    const blob = new Blob([excelBuffer], {
+      type:
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8",
+    });
+    saveAs(blob, "data.xlsx");
+  } catch (error) {
+    console.error("Download failed:", error);
+  }
+};
   function getRandomColor() {
     const colors = [
       "#8B0000",
@@ -226,38 +335,47 @@ function EmployeeDirectory() {
             className="text-white  py-2 ml-20"
           >
             <div className="flex justify-between items-center  gap-2 ">
-              <div className="flex">
+              <div className="flex ">
                 <h1 className="text-lg pl-5 font-bold">Employee Directory</h1>
                 {/* <p className="pl-5">
                   Employee personal details are noted under this section.
                 </p> */}
               </div>
               {/* Dropdown */}
-              <select
-                onChange={handleDropdownChange}
-                className="border p-3 text-black rounded-md grid gap-2 items-center"
-              >
-                <option value="">Select All Sites</option>
-                {AllSites.map((site) => (
-                  <option key={site.id} value={String(site.id)}>
-                    {site.site_name}
-                  </option>
-                ))}
-              </select>
+              <div className="flex gap-2">
+                <select
+                  onChange={handleDropdownChange}
+                  className="border p-3 text-black rounded-md w-64"
+                >
+                  <option value="">Select All Sites</option>
+                  {AllSites.map((site) => (
+                    <option key={site.id} value={String(site.id)}>
+                      {site.site_name}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
               {/* Show selected site */}
               {/* {selectedSite && <p>Selected Site ID: {selectedSite}</p>} */}
               <div className="flex gap-2">
                 <input
                   type="text"
-                  placeholder="Search by Name "
-                  className="border p-2 text-black rounded-md w-96"
+                  placeholder="Search by Name"
+                  className="border p-3 text-black rounded-md w-64"
                   onChange={handleSearch}
                   value={searchText}
                 />
 
                 <div className="flex gap-3">
                   <div className="relative inline-block text-left">
+                    <button
+                      className=" justify-center w-full flex items-center gap-2 rounded-md border border-gray-300 shadow-sm px-4 py-3 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500"
+                      onClick={handleDownload}
+                    >
+                      Export
+                      <FaDownload />
+                    </button>
                     {/* <button
                       onClick={toggleDropdown}
                       className=" justify-center w-full flex items-center gap-2 rounded-md border border-gray-300 shadow-sm px-4 py-3 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500"
