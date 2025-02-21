@@ -14,7 +14,7 @@ const Incidents = () => {
   const column = [
     {
       name: "view",
-
+              
       cell: (row) => (
         <div className="flex items-center gap-4">
           <Link to={`/admin/incidents-details/${row.id}`}>

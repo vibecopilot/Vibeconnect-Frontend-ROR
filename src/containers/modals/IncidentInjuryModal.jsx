@@ -3,9 +3,18 @@ import ModalWrapper from "./ModalWrapper";
 import { MdClose } from "react-icons/md";
 import { FaCheck, FaTrash } from "react-icons/fa";
 import { PiPlusCircleBold } from "react-icons/pi";
+import {postInjurydata,getIncidentData} from "../../api"
+import { useParams } from "react-router-dom";
+import toast from "react-hot-toast";
 const IncidentInjuryModal = ({ onclose }) => {
+const { id } = useParams();
+  
   const [incident, setIncident] = useState([{ name: "", mobile: "" }]);
   const [injury, setInjury] = useState();
+  const [injuryType, setInjuryType] = useState("");
+  const [whoGotInjured, setWhoGotInjured] = useState("");
+  const [companyName , setCompanyName] = useState("")  
+
   const handleAddIncident = (event) => {
     event.preventDefault();
     setIncident([...incident, { name: "", mobile: "" }]);
@@ -22,6 +31,46 @@ const IncidentInjuryModal = ({ onclose }) => {
     const newIncident = [...incident];
     newIncident.splice(index, 1);
     setIncident(newIncident);
+  };
+
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    const data = {
+       incident_id: id,
+      injuries: incident.map((incident1) => ({
+        injury_type: injuryType,
+        injury_number: "",
+        lost_time: "",
+        who_got_injured_id: whoGotInjured,
+        name: incident1.name,
+        company_name: incident1.companyName,
+        mobile: incident1.mobile,
+      })),
+    };
+    if (!injuryType || !whoGotInjured) {
+      toast.error("Please select injury type and who got injured");
+      return;
+    }
+    incident.forEach((incident1, index) => {
+      if (!incident1.name || !incident1.mobile || !incident1.companyName) {
+        toast.error(`Please fill in all fields for incident ${index + 1}`);
+        return;
+      }
+    });
+    postInjurydata(data)
+      .then((response) => {
+        toast.success('Injury data submitted successfully!');
+        console.log(response);
+        onclose()
+        // Handle success response
+      })
+      .catch((error) => {
+        console.error(error);
+        toast.error('Error submitting injury data: ' + error.message);
+        // Handle error response
+        alert("Error: " + error.message);
+      });
   };
 
   return (
@@ -41,21 +90,22 @@ const IncidentInjuryModal = ({ onclose }) => {
                       Injury Type
                     </label>
                     <select
-                      name=""
-                      id=""
+                      name="injuryType"
+                      id={injuryType}
                       className="border p-2 border-gray-400 rounded-md w-full"
+                      onChange={(event) => setInjuryType(event.target.value)}
                     >
                       <option value="">Select Type</option>
-                      <option value="">Head</option>
-                      <option value="">Neck</option>
-                      <option value="">Nose</option>
-                      <option value="">Tongue</option>
-                      <option value="">Arms</option>
-                      <option value="">Legs</option>
-                      <option value="">Eye</option>
-                      <option value="">Ears</option>
-                      <option value="">Skin</option>
-                      <option value="">Mouth</option>
+                      <option value="Head">Head</option>
+                      <option value="Neck">Neck</option>
+                      <option value="Nose">Nose</option>
+                      <option value="Tongue">Tongue</option>
+                      <option value="Arms">Arms</option>
+                      <option value="Legs">Legs</option>
+                      <option value="Eye">Eye</option>
+                      <option value="Ears">Ears</option>
+                      <option value="Skin">Skin</option>
+                      <option value="Mouth">Mouth</option>
                     </select>
                   </div>
 
@@ -64,8 +114,9 @@ const IncidentInjuryModal = ({ onclose }) => {
                       Who got injured
                     </label>
                     <select
-                      name=""
-                      id=""
+                      name="whoGotInjured"
+                      id={whoGotInjured}
+                      onChange={(event) => setWhoGotInjured(event.target.value)}
                       className="border p-2 border-gray-400 rounded-md w-full"
                     >
                       <option value="">Select </option>
@@ -79,10 +130,10 @@ const IncidentInjuryModal = ({ onclose }) => {
                     </label>
                     <input
                       type="text"
-                      name=""
-                      id=""
+                      name="name"
+                      id="name"
                       placeholder="Name"
-                      value={incident.mobile}
+                      value={incident1.name}
                       onChange={(event) => handleInputChange(index, event)}
                       className="border rounded-md border-gray-400 p-2"
                     />
@@ -93,10 +144,10 @@ const IncidentInjuryModal = ({ onclose }) => {
                     </label>
                     <input
                       type="text"
-                      name=""
-                      id=""
+                      name="mobile"
+                      id="mobile"
                       placeholder="Mobile"
-                      value={incident.mobile}
+                      value={incident1.mobile}
                       onChange={(event) => handleInputChange(index, event)}
                       className="border rounded-md border-gray-400 p-2"
                     />
@@ -107,10 +158,10 @@ const IncidentInjuryModal = ({ onclose }) => {
                     </label>
                     <input
                       type="text"
-                      name=""
-                      id=""
+                      name="companyName"
+                      id="company"
                       placeholder="Company"
-                      value={incident.mobile}
+                      value={incident1.companyName}
                       onChange={(event) => handleInputChange(index, event)}
                       className="border rounded-md border-gray-400 p-2"
                     />
@@ -143,7 +194,7 @@ const IncidentInjuryModal = ({ onclose }) => {
           <button className="bg-red-400 text-white p-2 px-4 rounded-full flex items-center gap-2" onClick={()=> onclose()}>
             <MdClose /> Cancel
           </button>
-          <button className="bg-green-400 text-white p-2 px-4 rounded-full flex items-center gap-2">
+          <button className="bg-green-400 text-white p-2 px-4 rounded-full flex items-center gap-2" onClick={handleSubmit}>
             <FaCheck /> Submit
           </button>
         </div>
