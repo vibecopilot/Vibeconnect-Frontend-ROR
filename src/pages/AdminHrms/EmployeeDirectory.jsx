@@ -22,9 +22,6 @@ import {
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import toast from "react-hot-toast";
-import * as XLSX from "xlsx";
-import { saveAs } from "file-saver";
-import convert from "xml-js";
 
 function EmployeeDirectory() {
   const themeColor = useSelector((state) => state.theme.color);
@@ -190,68 +187,68 @@ function EmployeeDirectory() {
   // };
 
  // Helper function to sanitize XML string
-const sanitizeXml = (xml) => {
-  let sanitized = xml;
-  // Fix unescaped ampersands
-  sanitized = sanitized.replace(/&(?!amp;|lt;|gt;|quot;|apos;)/g, '&amp;');
-  // Fix attributes without a value by adding empty quotes
-  sanitized = sanitized.replace(/(\w+)=\s*(?=[>\s])/g, '$1=""');
-  return sanitized;
-};
+// const sanitizeXml = (xml) => {
+//   let sanitized = xml;
+//   // Fix unescaped ampersands
+//   sanitized = sanitized.replace(/&(?!amp;|lt;|gt;|quot;|apos;)/g, '&amp;');
+//   // Fix attributes without a value by adding empty quotes
+//   sanitized = sanitized.replace(/(\w+)=\s*(?=[>\s])/g, '$1=""');
+//   return sanitized;
+// };
 
-const handleDownload = async () => {
-  try {
-    let res;
-    if (!selectedSite) {
-      res = await getFullUser(orgId);
-      setFullUserDetails(res);
-    } else {
-      res = await getSiteWiseUserDetails(selectedSite);
-      setAllSiteUser(res);
-    }
+// const handleDownload = async () => {
+//   try {
+//     let res;
+//     if (!selectedSite) {
+//       res = await getFullUser(orgId);
+//       setFullUserDetails(res);
+//     } else {
+//       res = await getSiteWiseUserDetails(selectedSite);
+//       setAllSiteUser(res);
+//     }
 
-    // Convert response to string if needed
-    const xmlString =
-      typeof res === "string" ? res : new XMLSerializer().serializeToString(res);
+//     // Convert response to string if needed
+//     const xmlString =
+//       typeof res === "string" ? res : new XMLSerializer().serializeToString(res);
 
-    // Sanitize XML to fix invalid entities and attributes without values
-    const sanitizedXml = sanitizeXml(xmlString);
-    console.log("Sanitized XML:", sanitizedXml);
+//     // Sanitize XML to fix invalid entities and attributes without values
+//     const sanitizedXml = sanitizeXml(xmlString);
+//     console.log("Sanitized XML:", sanitizedXml);
 
-    // Convert sanitized XML to JSON
-    const options = { compact: true, ignoreComment: true, spaces: 4 };
-    const jsonStr = convert.xml2json(sanitizedXml, options);
-    const jsonData = JSON.parse(jsonStr);
-    console.log("Parsed JSON:", jsonData);
+//     // Convert sanitized XML to JSON
+//     const options = { compact: true, ignoreComment: true, spaces: 4 };
+//     const jsonStr = convert.xml2json(sanitizedXml, options);
+//     const jsonData = JSON.parse(jsonStr);
+//     console.log("Parsed JSON:", jsonData);
 
-    // Extract the array from JSON based on your XML structure.
-    // Adjust the extraction as needed; here's an example:
-    let dataArray = [];
-    if (jsonData.users && jsonData.users.user) {
-      dataArray = Array.isArray(jsonData.users.user)
-        ? jsonData.users.user
-        : [jsonData.users.user];
-    } else {
-      dataArray = [jsonData];
-    }
-    console.log("Data array:", dataArray);
+//     // Extract the array from JSON based on your XML structure.
+//     // Adjust the extraction as needed; here's an example:
+//     let dataArray = [];
+//     if (jsonData.users && jsonData.users.user) {
+//       dataArray = Array.isArray(jsonData.users.user)
+//         ? jsonData.users.user
+//         : [jsonData.users.user];
+//     } else {
+//       dataArray = [jsonData];
+//     }
+//     console.log("Data array:", dataArray);
 
-    // Convert JSON data to a worksheet
-    const worksheet = XLSX.utils.json_to_sheet(dataArray);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
+//     // Convert JSON data to a worksheet
+//     const worksheet = XLSX.utils.json_to_sheet(dataArray);
+//     const workbook = XLSX.utils.book_new();
+//     XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
 
-    // Generate Excel file as binary array
-    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
-    const blob = new Blob([excelBuffer], {
-      type:
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8",
-    });
-    saveAs(blob, "data.xlsx");
-  } catch (error) {
-    console.error("Download failed:", error);
-  }
-};
+//     // Generate Excel file as binary array
+//     const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+//     const blob = new Blob([excelBuffer], {
+//       type:
+//         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8",
+//     });
+//     saveAs(blob, "data.xlsx");
+//   } catch (error) {
+//     console.error("Download failed:", error);
+//   }
+// };
   function getRandomColor() {
     const colors = [
       "#8B0000",
