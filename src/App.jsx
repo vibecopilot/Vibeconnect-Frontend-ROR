@@ -1650,6 +1650,24 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
+        {/* Parking */}
+        <Route
+          path="/admin/parking"
+          element={
+            <ProtectedAdminRoutes>
+              <Parkings />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/admin/book-parking"
+          element={
+            <ProtectedAdminRoutes>
+              <AddParking />
+            </ProtectedAdminRoutes>
+          }
+        />
+
         {/*  */}
         <Route
           path="/admin/create-polls"
