@@ -22,7 +22,6 @@ import {
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import toast from "react-hot-toast";
-
 function EmployeeDirectory() {
   const themeColor = useSelector((state) => state.theme.color);
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
