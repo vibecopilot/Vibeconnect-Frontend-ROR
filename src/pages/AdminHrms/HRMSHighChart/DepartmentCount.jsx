@@ -259,7 +259,7 @@ const DepartmentCount = ({ dashboardData, siteId }) => {
           data:
             genderChartData.length > 0
               ? genderChartData
-              : [{ name: "No gender data", y: 0}],
+              : [{ name: "No gender data", y: 0 }],
         },
       ],
       credits: { enabled: false },
