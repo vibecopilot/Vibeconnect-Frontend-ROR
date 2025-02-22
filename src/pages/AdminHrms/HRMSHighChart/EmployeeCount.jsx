@@ -145,24 +145,18 @@ const EmployeeCount = ({ dashboardData, siteId }) => {
     try {
       // If we have site-level data (dashboardData) and specifically gender_wise, sum it up
       if (dashboardData && dashboardData.gender_wise) {
-        let total = 0;
-        dashboardData.gender_wise.forEach((item) => {
-          total += item.employee_count;
-        });
-        // Store it as an object so Highcharts can map it easily
+        let total = dashboardData.gender_all_employee_count;
+        // dashboardData.gender_wise.forEach((item) => {
+        //   total += item.employee_count;
+        // });
         setTotalEmployees({ Total: total });
-      }
-      // Otherwise, call the org-level or site-level total if siteId is given
-      else {
-        // If siteId is empty or "all", call org-level
+      } else {
         if (!siteId || siteId.trim() === "" || siteId === "all") {
           const res = await getTotalHRMSEmployeeCount(hrmsOrgId);
-          // Suppose res = { total: 146 } or similar
-          setTotalEmployees(res || {});
+          setTotalEmployees(res || []);
         } else {
-          // If a specific site is selected but no site-level data is available yet
-          const res = await getTotalHRMSEmployeeCount(hrmsOrgId, siteId);
-          setTotalEmployees(res || {});
+          // const res = await getTotalHRMSEmployeeCount(hrmsOrgId, siteId);
+          setTotalEmployees(res || [0]);
         }
       }
     } catch (error) {
@@ -171,45 +165,62 @@ const EmployeeCount = ({ dashboardData, siteId }) => {
     }
   };
 
-  // Re-run whenever siteId or dashboardData changes
   useEffect(() => {
     fetchEmployeeCount();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [siteId, dashboardData]);
 
   // Generate Highcharts config
-  const generateChartOptions = (title, data) => ({
-    chart: {
-      type: "column",
-      borderRadius: 30,
-    },
-    title: {
-      text: title,
-      style: {
-        fontSize: "16px",
-        fontWeight: "600",
-        color: "gray",
+  const generateChartOptions = (title, data) => {
+    // Check if there's no data or all counts are zero.
+    const isNoData =
+      !data ||
+      Object.keys(data).length === 0 ||
+      Object.values(data).every((val) => Number(val) === 0);
+
+    return {
+      chart: {
+        type: "column",
+        borderRadius: 30,
       },
-    },
-    plotOptions: {
-      column: {
-        dataLabels: {
-          enabled: true,
+      title: {
+        text: title,
+        style: {
+          fontSize: "16px",
+          fontWeight: "600",
+          color: "gray",
         },
       },
-    },
-    credits: { enabled: false },
-    series: [
-      {
-        name: title,
-        colorByPoint: true,
-        data: Object.keys(data).map((key) => ({
-          name: key,
-          y: data[key],
-        })),
+      xAxis: {
+        categories: isNoData ? ["No employee Count"] : Object.keys(data),
       },
-    ],
-  });
+      yAxis: {
+        title: {
+          text: "Value ",
+        },
+        allowDecimals: false,
+      },
+      plotOptions: {
+        column: {
+          dataLabels: {
+            enabled: true,
+          },
+        },
+      },
+      credits: { enabled: false },
+      series: [
+        {
+          name: title,
+          colorByPoint: true,
+          data: isNoData
+            ? [{ name: "No employee Count", y: 0 }]
+            : Object.keys(data).map((key) => ({
+                name: key,
+                y: data[key],
+              })),
+        },
+      ],
+    };
+  };
 
   return (
     <div className="ml-4">
