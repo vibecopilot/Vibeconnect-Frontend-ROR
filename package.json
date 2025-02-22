@@ -90,8 +90,7 @@
     "uuid": "^9.0.1",
     "vcard-creator": "^0.7.1",
     "vcards-js": "^2.10.0",
-    "xlsx": "^0.18.5",
-    "xml-js": "^1.6.11"
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@swc/core": "^1.10.16",
