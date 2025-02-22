@@ -367,7 +367,7 @@ function EmployeeDirectory() {
                   <div className="relative inline-block text-left">
                     <button
                       className=" justify-center w-full flex items-center gap-2 rounded-md border border-gray-300 shadow-sm px-4 py-3 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500"
-                      onClick={handleDownload}
+                      // onClick={handleDownload}
                     >
                       Export
                       <FaDownload />
