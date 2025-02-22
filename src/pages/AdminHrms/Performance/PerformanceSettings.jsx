@@ -10,7 +10,7 @@ import EvaluationTemplate from "./EvaluationTemplate";
 import PerformanceCycle from "./PerformanceCycle";
 import { PiBookThin } from "react-icons/pi";
 
-const A = () => {
+const PerformanceSettings = () => {
   const stepsData = [
     { id: 0, title: "1.Goal Category / Competency Bank", icon: <LuGoal /> },
     {
