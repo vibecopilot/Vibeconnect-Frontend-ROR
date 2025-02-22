@@ -43,9 +43,9 @@ import {
   AiOutlineUser,
 } from "react-icons/ai";
 import { RiPieChartFill } from "react-icons/ri";
-import { FiBarChart2, FiBriefcase } from "react-icons/fi";
+import { FiBarChart2,FiAlertTriangle, FiBriefcase } from "react-icons/fi";
 import { TbUsers } from "react-icons/tb";
-import { LuAlertTriangle, LuCheckCircle } from "react-icons/lu";
+import { FaRegCheckCircle } from "react-icons/fa";
 import { BsClock } from "react-icons/bs";
 function AssetDashboard() {
   const [breakCount, setBreakCount] = useState("");
@@ -847,7 +847,7 @@ function AssetDashboard() {
       title: "PPM Overdue",
       count: ppmOverDue,
       downloadHandler: handlePPMOverDueDownload,
-      icon: <LuAlertTriangle className="w-4 h-4" />,
+      icon: <FiAlertTriangle className="w-4 h-4" />,
     },
     // {
     //   title: "PPM Pending",
@@ -859,7 +859,7 @@ function AssetDashboard() {
       title: "PPM Complete",
       count: ppmComplete,
       downloadHandler: handlePPMCompleteDownload,
-      icon: <LuCheckCircle className="w-4 h-4" />,
+      icon: <FaRegCheckCircle className="w-4 h-4" />,
     },
     {
       title: "Routine Task Scheduled",
@@ -871,7 +871,7 @@ function AssetDashboard() {
       title: "Routine Task Overdue",
       count: routineOverdueCount,
       downloadHandler: handleRoutineOverDueDownload,
-      icon: <LuAlertTriangle className="w-4 h-4" />,
+      icon: <FiAlertTriangle className="w-4 h-4" />,
     },
     // {
     //   title: "Routine Task Pending",
@@ -883,7 +883,7 @@ function AssetDashboard() {
       title: "Routine Task Complete",
       count: routineCompleteCount,
       downloadHandler: handleRoutineCompleteDownload,
-      icon: <LuCheckCircle className="w-4 h-4" />,
+      icon: <FaRegCheckCircle className="w-4 h-4" />,
     },
   ];
   const [selectedTitles, setSelectedTitles] = useState(
