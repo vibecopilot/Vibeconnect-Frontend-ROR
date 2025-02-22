@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, NavLink, useParams } from "react-router-dom";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 import {
   Chart as ChartJS,
   ArcElement,
@@ -16,12 +18,12 @@ import "tailwindcss/tailwind.css";
 import { ImFileText2 } from "react-icons/im";
 import { AiOutlineBell } from "react-icons/ai";
 import AdminHRMS from "./AdminHrms";
-import { FaPlus } from "react-icons/fa";
+import { FaDownload, FaPlus } from "react-icons/fa";
 import {
   MdSettings,
   MdAnnouncement,
   MdPostAdd,
-  MdNotificationsActive,
+  MdOutlineNotificationsActive,
 } from "react-icons/md";
 import { Link } from "react-router-dom";
 import { BiUser } from "react-icons/bi";
@@ -33,6 +35,8 @@ import {
   getMyOrganization,
   getNotification,
   updateNotificationStatus,
+  getAssociatedSites,
+  fetchSiteDashboard,
   // getNotification,
   // updateNotificationStatus,
 } from "../../api";
@@ -50,103 +54,153 @@ ChartJS.register(
   Legend,
   Tooltip
 );
+import { formatTime } from "../../utils/dateUtils";
 
 const HRMSDashboard = () => {
   const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
+  const [orgName, setOrgName] = useState("");
   const [expanded, setExpanded] = useState(false);
   const [expanded1, setExpanded1] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [notificationData, setNotificationData] = useState([]);
   const drawerRef = useRef(null);
-  // const [notifications, setNotifications] = useState([]);
-  // const [newUsers, setNewUsers] = useState([]);
-  // const [seen, setSeen] = useState(false);
+  const [AllSites, setAllSites] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
+  const [ilteredEmployees, setFilteredEmployees] = useState([]);
+  const [selectedSite, setSelectedSite] = useState("all");
+  const [dashboardData, setDashboardData] = useState(null);
+
   const navigate = useNavigate();
   document.title = `HRMS Vibe Connect`;
-  const toggleExpand = () => {
-    setExpanded(!expanded);
-  };
-  const toggleExpand1 = () => {
-    setExpanded1(!expanded1);
-  };
 
-  const departmentDistributionData = {
-    labels: ["Unassigned", "Trainer"],
-    datasets: [
-      {
-        data: [1, 2],
-        backgroundColor: ["#FF6384", "#36A2EB"],
-      },
-    ],
-  };
-  const options = {
-    maintainAspectRatio: false,
-    legend: {
-      position: "bottom",
-    },
-  };
+  // const toggleExpand = () => {
+  //   setExpanded(!expanded);
+  // };
+  // const toggleExpand1 = () => {
+  //   setExpanded1(!expanded1);
+  // };
 
-  const employeeHeadCountData = {
-    labels: ["Jan 24", "Feb 24", "Mar 24", "Apr 24", "May 24", "Jun 24"],
-    datasets: [
-      {
-        label: "Active",
-        backgroundColor: "#36A2EB",
-        data: [10, 12, 14, 16, 18, 20],
-      },
-      {
-        label: "On-Hold",
-        backgroundColor: "#FFCE56",
-        data: [1, 1, 1, 1, 1, 1],
-      },
-      {
-        label: "In-Active",
-        backgroundColor: "#FF6384",
-        data: [1, 1, 1, 1, 1, 1],
-      },
-    ],
-  };
+  // const departmentDistributionData = {
+  //   labels: ["Unassigned", "Trainer"],
+  //   datasets: [
+  //     {
+  //       data: [1, 2],
+  //       backgroundColor: ["#FF6384", "#36A2EB"],
+  //     },
+  //   ],
+  // };
+  // const options = {
+  //   maintainAspectRatio: false,
+  //   legend: {
+  //     position: "bottom",
+  //   },
+  // };
 
-  const ctcPayoutData = {
-    labels: ["Dec 23", "Jan 24", "Feb 24", "Mar 24", "Apr 24", "May 24"],
-    datasets: [
-      {
-        label: "CTC",
-        borderColor: "#36A2EB",
-        data: [2, 2.5, 3, 3.5, 4, 4.5],
-        fill: false,
-      },
-      {
-        label: "Net Salary",
-        borderColor: "#FFCE56",
-        data: [1.5, 1.7, 1.9, 2.1, 2.3, 2.5],
-        fill: false,
-      },
-    ],
-  };
+  // const employeeHeadCountData = {
+  //   labels: ["Jan 24", "Feb 24", "Mar 24", "Apr 24", "May 24", "Jun 24"],
+  //   datasets: [
+  //     {
+  //       label: "Active",
+  //       backgroundColor: "#36A2EB",
+  //       data: [10, 12, 14, 16, 18, 20],
+  //     },
+  //     {
+  //       label: "On-Hold",
+  //       backgroundColor: "#FFCE56",
+  //       data: [1, 1, 1, 1, 1, 1],
+  //     },
+  //     {
+  //       label: "In-Active",
+  //       backgroundColor: "#FF6384",
+  //       data: [1, 1, 1, 1, 1, 1],
+  //     },
+  //   ],
+  // };
+
+  // const ctcPayoutData = {
+  //   labels: ["Dec 23", "Jan 24", "Feb 24", "Mar 24", "Apr 24", "May 24"],
+  //   datasets: [
+  //     {
+  //       label: "CTC",
+  //       borderColor: "#36A2EB",
+  //       data: [2, 2.5, 3, 3.5, 4, 4.5],
+  //       fill: false,
+  //     },
+  //     {
+  //       label: "Net Salary",
+  //       borderColor: "#FFCE56",
+  //       data: [1.5, 1.7, 1.9, 2.1, 2.3, 2.5],
+  //       fill: false,
+  //     },
+  //   ],
+  // };
+
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
   console.log(hrmsOrgId);
 
-  const [orgName, setOrgName] = useState("");
   const fetchMyOrganization = async () => {
     try {
       const res = await getMyOrganization(hrmsOrgId);
+      console.log(res);
       setOrgName(res.name);
     } catch (error) {
       console.log(error);
     }
   };
 
-  // Close the drawer if user clicks outside of it
+  // const fetchOrgData = async ( ) => {
+  //   try
+  //   {
+  //     const orgData = await get
+  //   }
+  // }
+  const fetchSites = async () => {
+    try {
+      const sites = await getAssociatedSites(hrmsOrgId);
+      console.log("Site name :", sites);
+      setAllSites(sites);
+    } catch (error) {
+      console.error("Error fetching sites:", error);
+    }
+  };
+
+  // 2) Fetch site-level dashboard data (only if site is valid)
+  const loadDashboardData = async (siteId) => {
+    try {
+      const result = await fetchSiteDashboard(siteId);
+      console.log("Site-level dashboard data:", result);
+      setDashboardData(result);
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+      setDashboardData(null);
+    }
+  };
+
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (drawerRef.current && !drawerRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    fetchMyOrganization();
+    fetchSites();
+    loadDashboardData(selectedSite);
   }, []);
+
+  useEffect(() => {
+    // If user picked a valid site, fetch the site-level data
+    if (selectedSite && selectedSite.trim() !== "" && selectedSite !== "all") {
+      loadDashboardData(selectedSite);
+    } else {
+      // If "all" or "" (i.e. no site selected), we do NOT call the site-level API
+      // and we reset the dashboardData to null
+      setDashboardData(null);
+    }
+  }, [selectedSite]);
+
+  // 3) Handle dropdown changes
+  const handleDropdown = (e) => {
+    const siteId = e.target.value;
+    setSelectedSite(siteId);
+    // We do NOT call loadDashboardData here directly. The useEffect above will handle it.
+  };
+
+
   useEffect(() => {
     const clientDashboardVisible =
       localStorage.getItem("CLIENT_DASHBOARD_VISIBLE") === "true";
@@ -200,7 +254,6 @@ const HRMSDashboard = () => {
     return () => clearInterval(interval);
     // }, [empId]);
   }, []);
-
   const handleView = async (notificationId) => {
     try {
       const res = await updateNotificationStatus(notificationId);
@@ -213,10 +266,31 @@ const HRMSDashboard = () => {
       // Refresh notifications count if update fails
     }
   };
-
   // Toggle the drawer open/closed
   const toggleDrawer = () => {
+    console.log(isOpen);
     setIsOpen((prev) => !prev);
+  };
+
+  const downloadPDF = () => {
+    const input = document.getElementById("dashboard-content");
+    html2canvas(input).then((canvas) => {
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("landscape");
+
+      // Calculate available width and height in the PDF with a margin of 1 unit
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 1;
+      const availableWidth = pageWidth - margin * 1;
+
+      // Calculate height preserving aspect ratio
+      const imgHeight = (canvas.height * availableWidth) / canvas.width;
+
+      // If your image height exceeds the available height, you may need to scale further or add a new page
+      pdf.addImage(imgData, "PNG", margin, margin, availableWidth, imgHeight);
+      pdf.save("dashboard.pdf");
+    });
   };
 
   return (
@@ -225,40 +299,65 @@ const HRMSDashboard = () => {
         <AdminHRMS />
         {/* <div className="flex-1 flex flex-col"> */}
         <div className="p-2 w-full flex  overflow-hidden flex-col">
-          <div className="bg-white flex justify-items-end  p-4 shadow-md absolute overflow-y-auto top-0 left-0 right-0">
-            <h1 className="text-2xl font-bold pl-20 top-0 left-0 right-0">
+          <div className="bg-white flex justify-between  p-4 shadow-md absolute overflow-y-auto top-0 left-0 right-0">
+            <h1 className="text-xl font-bold pl-20 top-0 left-0 right-0">
               Welcome To <span>{orgName}</span>
             </h1>
+            <div>
+              {/* Dropdown */}
+              <select
+                onChange={handleDropdown}
+                className="w-svw min-w-[100px] max-w-md border border-gray-400 w-half placeholder:text-sm rounded-lg p-2 text-wrap"
+              >
+                <option value="">Select All Sites</option>
+                {AllSites.map((site) => (
+                  <option key={site.id} value={site.id}>
+                    {site.site_name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="inline-flex items-center">
+              <button
+                className="flex items-center gap-2 px-2 py-2 bg-blue-500 text-white rounded text-xs"
+                onClick={downloadPDF}
+              >
+                Charts <FaDownload />
+              </button>
+            </div>
             <div
               className="bg-white mt-1 text-black text-center font-semibold absolute right-32 "
               style={{ width: "10px", height: "10px", borderRadius: "5%" }}
             >
+              {/* Notification Icon  */}
               <div className="relative z-20">
-                {/* Notification Icon (always visible) */}
                 <button
                   onClick={toggleDrawer}
                   className="relative focus:outline-none"
                 >
                   {notificationData.length === 0 ? (
-                    <div className="flex">
-                      <p className="mx-1">Notification</p>
+                    <div className="mx-1 relative flex items-center">
+                      <p className="mx-1 text-m font-semibold text-gray-800">
+                        {/* Notification */}
+                      </p>
                       <span>
-                        {React.createElement(MdNotificationsActive, {
+                        {React.createElement(MdOutlineNotificationsActive, {
                           size: "25",
                         })}
                       </span>
                     </div>
                   ) : (
-                    <div>
-                      <span
-                        className="absolute top-0
-                         bg-blue-400 inline-flex items-center justify-center px-2 py-2 mx-4 text-xs font-bold leading-none text-grey-600 rounded-full"
-                      >
+                    <div className="relative flex items-center">
+                      {/* <p className="mx-1 text-m font-semibold text-gray-800">
+                        Notification
+                      </p> */}
+                      <span className="absolute top-[-8px] right-[-8px] bg-red-500 rounded-full w-5 h-5 text-xs font-bold text-white flex items-center justify-center">
                         {notificationData.filter((n) => !n.is_read).length}
                       </span>
-                      <span className="">
-                        {React.createElement(MdNotificationsActive, {
+                      <span className="ml-2">
+                        {React.createElement(MdOutlineNotificationsActive, {
                           size: "25",
+                          className: "text-gray-600",
                         })}
                       </span>
                     </div>
@@ -301,7 +400,10 @@ const HRMSDashboard = () => {
                         <div className="mb-1 flex justify-between">
                           <p className="font-medium">{notification.title}</p>
                           <p className="text-xs text-gray-500">
-                            {notification.date || "Just now"}
+                            {/* {notification.created_at || "Just now"} */}
+                            {notification.created_at
+                              ? formatTime(new Date(notification.created_at))
+                              : "Just now"}
                           </p>
                         </div>
                         <p className="text-xs flex text-gray-600">
@@ -333,22 +435,54 @@ const HRMSDashboard = () => {
             &nbsp;
           </div>
 
-          <div className="mt-16 overflow-y-auto absolute top-1 left-20">
+          <div
+            id="dashboard-content"
+            className="mt-16 overflow-y-auto absolute top-1 left-20"
+          >
             <Link
               to={"/dashboard"}
-              className="text-blue-400 mx-10 my-2 underline font-medium"
+              className="absolute rounded-md p-1  text-blue-400 top-0 my-2 mx-6  font-semibold "
             >
-              Home{">"}
+              Home{""}
             </Link>
-            <div className="grid md:grid-cols-3 mr-2 my-2  gap-2">
-              <div className="shadow-custom-all-sides rounded-lg ml-5">
-                <DepartmentCount />
-              </div>
-              <div className="shadow-custom-all-sides rounded-lg ">
-                <EmployeeCount />
-              </div>
+            <div className="grid md:grid-cols-3 mr-2 my-10  gap-6">
+              {/* Pass the dashboardData only when a site is selected.
+          Otherwise, children can work with an empty siteId to fetch org-level data. */}
 
-              <div>
+              {/* <div className="shadow-custom-all-sides rounded-lg ml-5">
+                <DepartmentCount
+                  dashboardData={selectedSite ? dashboardData : null}
+                  siteId={selectedSite}
+                />
+              </div>
+              <div className="shadow-custom-all-sides rounded-lg">
+                <EmployeeCount
+                  dashboardData={selectedSite ? dashboardData : null}
+                  siteId={selectedSite}
+                />
+              </div> */}
+
+              <DepartmentCount
+                // Pass siteId and dashboardData down
+                siteId={selectedSite}
+                dashboardData={
+                  selectedSite === "all" || selectedSite.trim() === ""
+                    ? null
+                    : dashboardData
+                }
+              />
+
+              {/* Employee Count */}
+              <EmployeeCount
+                siteId={selectedSite}
+                dashboardData={
+                  selectedSite === "all" || selectedSite.trim() === ""
+                    ? null
+                    : dashboardData
+                }
+              />
+
+              <div id="dashboard-content">
                 {/* <div className="shadow-custom-all-sides rounded-lg ">
                 <Notification />
                 </div> */}

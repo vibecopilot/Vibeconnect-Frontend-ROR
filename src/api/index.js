@@ -4867,9 +4867,9 @@ export const getAttendanceRecord = async (orgId, page) => {
   }
 };
 
-export const getAttendanceRecordFilter = async (orgId, data) => {
+export const getAttendanceRecordFilter = async (orgId, siteId, page) => {
   try {
-    const res = await HrmsAuth.get(`/employees/attendance-bulk?organization_id=2&associated_organization_id=${orgId}&id=${data}`, {
+    const res = await HrmsAuth.get(`/employees/attendance-bulk?organization_id=${orgId}&associated_organization_id=${siteId}&page=${page}`, {
       headers: {
         "Content-Type": "multipart/form-data/",
       },
@@ -4880,44 +4880,44 @@ export const getAttendanceRecordFilter = async (orgId, data) => {
     throw error;
   }
 }
-// export const getAttendanceRecordFilter2 = async (orgId, data) => {
-//   try {
-//     const res = await HrmsAuth.get(`/employees/attendance-bulk?organization_id=2&associated_organization_id=${orgId}&name=${data}`, {
-//       headers: {
-//         "Content-Type": "multipart/form-data/",
-//       },
-//     });
-//     return res.data;
-//   } catch (error) {
-//     console.error("Error posting leave category:", error);
-//     throw error;
-//   }
-// }
 export const fetchByNumeric = async (orgId, associatedOrgId, numericValue) => {
   try {
     const response = await HrmsAuth.get(`/employees/attendance-bulk?organization_id=${orgId}&associated_organization_id=${associatedOrgId}&id=${numericValue}`
     );
     // if (!response.ok) throw new Error("Network response was not ok");
-    return  response.data;
+    return response.data;
   } catch (error) {
     console.error("Error in fetchByNumeric:", error);
     throw error;
   }
 };
 
-// 
+export const fetchSiteDashboard = async (siteId) => {
+  try {
+    const res = await HrmsAuth.get(
+      `/associated/?associated_organization_id=${siteId}`
+    );
+    return res.data;
+  } catch (error) {
+    console.log("Error in fetching fetchSiteDashboard:", error);
+    throw error;
+  }
+};
+
 export const fetchByAssociatedOrganization = async (orgId, associatedOrgValue) => {
   try {
     const response = await HrmsAuth.get(
       `/employees/attendance-bulk?organization_id=${orgId}&associated_organization_id=${associatedOrgValue}`
     );
     // if (!response.ok) throw new Error("Network response was not ok");
-    return  response.data;
+    return response.data;
   } catch (error) {
     console.error("Error in fetchByAssociatedOrganization:", error);
     throw error;
   }
 };
+
+
 
 export const fetchByName = async (orgId, name) => {
   try {
@@ -4943,7 +4943,6 @@ export const fetchById = async (orgId, id) => {
     throw error;
   }
 };
-
 
 
 export const postLeaveCategory = async (data) => {
@@ -5593,10 +5592,25 @@ export const editInvestmentSetting = async (invId, data) => {
     throw error;
   }
 };
+
+// Roaster
+export const fetchAllRoster = async (orgId) => {
+  try {
+    const res = await HrmsAuth.get(`/roster/roster-shift/?organization_id=${orgId}`
+    );
+    return res.data;
+  }
+  catch (error) {
+    console.error("Error getting roster shift:", error);
+    throw error;
+  }
+};
+
 export const getRosterShift = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
       `/roster/shift-master-data/?organization_id=${orgId}`
+
     );
     return response.data;
   } catch (error) {
@@ -6630,6 +6644,14 @@ export const getTotalHRMSEmployeeCount = async (orgId) => {
     throw error;
   }
 };
+export const getAllDepartmentCount = async (orgId) => {
+  try {
+    const res = await HrmsAuth.get(`/associated/?associated_organization_id=${orgId}&department_id=all`)
+    return res.data;
+  } catch (error) {
+    console.log("Error getting department count :", error)
+  }
+}
 export const getDepartmentCount = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
@@ -7172,12 +7194,40 @@ export const getSiteWiseEmployee = async (orgId, siteId) => {
     throw error;
   }
 };
+
+export const getFullUser = async (orgId) => {
+  try {
+    const res = await HrmsAuth.get(`/user-details/download?associated_organization_id=${orgId}`, {
+      params: {
+        token: token,
+      },
+    });
+    return res.data;
+  } catch (error) {
+    console.log("Error fetching the organizational level user detail", error);
+    throw error;
+  }
+}
+
+export const getSiteWiseUserDetails = async (siteId) => {
+  try {
+    const res = await HrmsAuth.get(`/user-details/download?associated_organization_id=${siteId}`, {
+      params: {
+        token: token,
+      },
+    });
+    return res.data;
+  } catch (error) {
+    console.log("Error fetching the organizational level user detail", error);
+    throw error;
+  }
+}
+
 export const markEmployeeAttendance = async (data) => {
   try {
     const response = await HrmsAuth.post(
       `/employee/attendance/`,
       data,
-
       {
         headers: {
           "Content-Type": "multipart/form-data/",
