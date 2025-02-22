@@ -446,22 +446,6 @@ const HRMSDashboard = () => {
               Home{""}
             </Link>
             <div className="grid md:grid-cols-3 mr-2 my-10  gap-6">
-              {/* Pass the dashboardData only when a site is selected.
-          Otherwise, children can work with an empty siteId to fetch org-level data. */}
-
-              {/* <div className="shadow-custom-all-sides rounded-lg ml-5">
-                <DepartmentCount
-                  dashboardData={selectedSite ? dashboardData : null}
-                  siteId={selectedSite}
-                />
-              </div>
-              <div className="shadow-custom-all-sides rounded-lg">
-                <EmployeeCount
-                  dashboardData={selectedSite ? dashboardData : null}
-                  siteId={selectedSite}
-                />
-              </div> */}
-
               <DepartmentCount
                 // Pass siteId and dashboardData down
                 siteId={selectedSite}
