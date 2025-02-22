@@ -33,7 +33,6 @@ import {
   RiSettings4Line,
   RiUserLocationFill,
 } from "react-icons/ri";
-import { LuParkingSquare, LuSettings2 } from "react-icons/lu";
 import {
   IoBusinessOutline,
   IoCashOutline,
@@ -57,6 +56,7 @@ import {
   FaDollarSign,
   FaFileInvoice,
   FaFileWord,
+  FaParking,
   FaRegFile,
   FaRegFileAlt,
   FaRegFilePowerpoint,
@@ -65,6 +65,7 @@ import {
   FaUserFriends,
 } from "react-icons/fa";
 import { IoIosPeople, IoMdSettings } from "react-icons/io";
+import { IoSettings } from "react-icons/io5";
 import { useSelector } from "react-redux";
 import { ImFileText2 } from "react-icons/im";
 import { FcMoneyTransfer } from "react-icons/fc";
@@ -983,7 +984,7 @@ const Navbar = () => {
                     }
                   >
                     <div>
-                      {React.createElement(LuSettings2, { size: "20" })}
+                      {React.createElement(IoSettings, { size: "20" })}
                     </div>
                     <h2
                       className={`whitespace-pre duration-300 ${
@@ -1411,7 +1412,7 @@ const Navbar = () => {
                     }
                   >
                     <div>
-                      {React.createElement(LuParkingSquare, { size: "20" })}
+                      {React.createElement(FaParking, { size: "20" })}
                     </div>
 
                     <h2
@@ -1442,7 +1443,7 @@ const Navbar = () => {
                     }
                   >
                     <div>
-                      {React.createElement(LuParkingSquare, { size: "20" })}
+                      {React.createElement(FaParking, { size: "20" })}
                     </div>
 
                     <h2
@@ -2167,7 +2168,7 @@ const Navbar = () => {
                   }
                 >
                   <div>
-                    {React.createElement(LuParkingSquare, { size: "20" })}
+                    {React.createElement(FaParking, { size: "20" })}
                   </div>
 
                   <h2
