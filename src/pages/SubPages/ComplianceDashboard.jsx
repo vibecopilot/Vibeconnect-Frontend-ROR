@@ -43,7 +43,7 @@ import {
 import { RiPieChartFill } from "react-icons/ri";
 import { FiBarChart2, FiBriefcase } from "react-icons/fi";
 import { TbUsers } from "react-icons/tb";
-// import { LuAlertTriangle, LuCheckCircle } from "react-icons/lu";
+// import { LuAlertTriangle, FaRegCheckCircle } from "react-icons/fa";
 import { BsClock } from "react-icons/bs";
 function ComplianceDashboard() {
   const [breakCount, setBreakCount] = useState("");
