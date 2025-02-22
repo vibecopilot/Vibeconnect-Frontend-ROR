@@ -338,7 +338,7 @@ const HRMSDashboard = () => {
                   {notificationData.length === 0 ? (
                     <div className="mx-1 relative flex items-center">
                       <p className="mx-1 text-m font-semibold text-gray-800">
-                        Notification
+                        {/* Notification */}
                       </p>
                       <span>
                         {React.createElement(MdOutlineNotificationsActive, {
@@ -441,11 +441,11 @@ const HRMSDashboard = () => {
           >
             <Link
               to={"/dashboard"}
-              className="text-blue-400 mx-10 my-2 underline font-medium"
+              className="absolute rounded-md p-1  text-blue-400 top-0 my-2 mx-6  font-semibold "
             >
-              Home{">"}
+              Home{""}
             </Link>
-            <div className="grid md:grid-cols-3 mr-2 my-2  gap-2">
+            <div className="grid md:grid-cols-3 mr-2 my-10  gap-6">
               {/* Pass the dashboardData only when a site is selected.
           Otherwise, children can work with an empty siteId to fetch org-level data. */}
 

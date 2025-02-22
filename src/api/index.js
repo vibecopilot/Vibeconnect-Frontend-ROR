@@ -6644,6 +6644,14 @@ export const getTotalHRMSEmployeeCount = async (orgId) => {
     throw error;
   }
 };
+export const getAllDepartmentCount = async (orgId) => {
+  try {
+    const res = await HrmsAuth.get(`/associated/?associated_organization_id=${orgId}&department_id=all`)
+    return res.data;
+  } catch (error) {
+    console.log("Error getting department count :", error)
+  }
+}
 export const getDepartmentCount = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
