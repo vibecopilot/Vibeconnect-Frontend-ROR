@@ -24,7 +24,7 @@ import {
 } from "../../api/index";
 import { persistor } from "../../store/store";
 import { useNavigate } from "react-router-dom";
-import { formatTime } from "../../utils/dateUtils";
+import { formatTime, convertTo12HourFormat,convertTo12HrFormat } from "../../utils/dateUtils";
 
 const ClientDashboard = () => {
   const navigate = useNavigate();
@@ -95,186 +95,6 @@ const ClientDashboard = () => {
       navigate("/login");
     });
   };
-  // FETCH OVERALL CLIENT DATA ON MOUNT
-
-  // const fetchClientDashboardData = async (dateParam = selectedDate) => {
-  //   try {
-  //     const empId = localStorage.getItem("HRMS_EMPLOYEE_ID");
-  //     const orgId = localStorage.getItem("HRMSORGID");
-
-  //     // Fetch client dashboard data and set state
-  //     const clientDataResponse = await getClientDashboard(empId);
-  //     setClientData(clientDataResponse);
-  //     console.log(clientDataResponse);
-  //     // Format the date as YYYY-MM-DD
-  //     const year = dateParam.getFullYear();
-  //     const month = String(dateParam.getMonth() + 1).padStart(2, "0");
-  //     const day = String(dateParam.getDate()).padStart(2, "0");
-  //     const todayDate = `${year}-${month}-${day}`;
-
-  //     // Fetch overall attendance which contains total_employee and total_present
-  //     const allAttendance = await getAssociatedOrgDash(empId, todayDate);
-  //     const total_employee = allAttendance.total_employees || 0;
-  //     const total_present = allAttendance.total_present || 0;
-  //     const total_absent = Math.max(total_employee - total_present, 0);
-  //     const attendanceRecord = allAttendance.attendance[0] || 0;
-  //     console.log("getAssociatedOrgDash:", allAttendance);
-
-  //     // Store overall attendance
-  //     setOverallAttendance({
-  //       total_employee,
-  //       total_present,
-  //       total_absent,
-  //       attendanceRecord,
-  //     });
-
-  //     const attendanceRecords = allAttendance.attendance || [];
-
-  //     // Create an array of IDs from attendance records for quick lookup.
-  //     const presentIds = attendanceRecords.map((record) => record.employee_id);
-
-  //     // Filter clients who are present
-  //     const presentRecords = clientDataResponse.filter((client) =>
-  //       presentIds.includes(client.id)
-  //     );
-
-  //     // Filter clients who are absent (i.e., their id is not in the presentIds array)
-  //     const absentRecords = clientDataResponse.filter(
-  //       (client) => !presentIds.includes(client.id)
-  //     );
-
-  //     console.log("Present Records:", presentRecords);
-  //     console.log("Absent Records:", absentRecords);
-
-  //     // setting all present emp data in the checkIndata state
-  //     const checkIn = allAttendance.attendance
-  //       .filter((item) => item.is_check_in === true)
-  //       .map(
-  //         ({
-  //           is_check_in,
-  //           attendance_time,
-  //           first_name,
-  //           last_name,
-  //           employee,
-  //         }) => ({
-  //           is_check_in,
-  //           attendance_time,
-  //           first_name,
-  //           last_name,
-  //           employee,
-  //         })
-  //       );
-
-  //     setCheckInData(checkIn);
-  //     console.log("Attendance CheckIn Data:", checkIn);
-
-  //     const checkOut = allAttendance.attendance
-  //       .filter((item) => item.is_check_in === false)
-  //       .map(
-  //         ({
-  //           is_check_in,
-  //           attendance_time,
-  //           first_name,
-  //           last_name,
-  //           employee,
-  //         }) => ({
-  //           is_check_in,
-  //           attendance_time,
-  //           first_name,
-  //           last_name,
-  //           employee,
-  //         })
-  //       );
-
-  //     setCheckOutData(checkOut);
-  //     console.log("Attendance Checkout Data:", checkOut);
-
-  //     const notCheckedInEmployees = clientDataResponse.filter(
-  //       (employee) =>
-  //         !checkIn.some(
-  //           (check) => Number(check.id) === Number(employee.vibe_id)
-  //         )
-  //     );
-
-  //     console.log("OverallEmpTableRecord:", clientDataResponse);
-
-  //     const AllEmpRecord = clientDataResponse.map((client) => {
-  //       // Build employee full name (fallback to "N/A" if missing)
-  //       const empName =
-  //         `${client.first_name || ""} ${client.last_name || ""}`.trim() ||
-  //         "N/A";
-
-  //       // Get attendance records for this employee based on matching employee id
-  //       const empCheckInData = checkIn.filter(
-  //         (record) => String(record.employee) === String(client.id)
-  //       );
-  //       const empCheckOutData = checkOut.filter(
-  //         (record) => String(record.employee) === String(client.id)
-  //       );
-
-  //       // Determine status: if any check-in exists, mark as "Present"
-  //       const status = empCheckInData.length > 0 ? "Present" : "Absent";
-
-  //       // If the employee is present, extract times; otherwise, set placeholder "__"
-  //       const checkInTime =
-  //         status === "Present"
-  //           ? empCheckInData.find((rec) => rec.is_check_in === true)
-  //               ?.attendance_time || "__"
-  //           : "__";
-  //       const checkOutTime =
-  //         status === "Present"
-  //           ? empCheckOutData.find((rec) => rec.is_check_in === false)
-  //               ?.attendance_time || "__"
-  //           : "__";
-
-  //       return {
-  //         id: client.id,
-  //         empName,
-  //         status,
-  //         date: todayDate,
-  //         checkInTime,
-  //         checkOutTime,
-  //       };
-  //     });
-
-  //     console.log("All emoRecord:", AllEmpRecord);
-  //     // Save full & filtered records (initially unfiltered)
-  //     setFullOverallAttendanceRecords(AllEmpRecord);
-  //     setFilteredOverallAttendanceRecords(AllEmpRecord);
-  //     setNotCheckIn(notCheckedInEmployees);
-
-  //     // Get HRMS admin data to extract associated site ids
-  //     const hrmsAdminData = await getEmployeeJobInfo(empId);
-  //     const multiple_asso = hrmsAdminData[0].multiple_associated;
-  //     // console.log("Array for associated sites:", multiple_asso);
-
-  //     // Fetch ALL sites for the organization
-  //     const allSites = await getAssociatedSites(orgId);
-  //     // console.log("All sites from API:", allSites);
-
-  //     const siteNamesResult = multiple_asso.map((id) => {
-  //       const matchingSite =
-  //         Array.isArray(allSites) && allSites.length > 0
-  //           ? allSites.find((site) => site.id === id)
-  //           : null;
-  //       const siteName = matchingSite ? matchingSite.site_name : "Not Found";
-  //       return { id, siteName };
-  //     });
-  //     // console.log("Fetched site names:", siteNamesResult);
-  //     setMultipleAssos(siteNamesResult);
-
-  //     // Update the charts with overall attendance values
-  //     setPieChartData([
-  //       { name: "Head Count", y: total_employee, color: "#f97316" },
-  //       { name: "Present", y: total_present, color: "#10b981" },
-  //       { name: "Absent", y: total_absent, color: "#3b82f6" },
-  //     ]);
-  //     setBarChartData([total_employee, total_present, total_absent]);
-  //     setCount(total_employee);
-  //   } catch (error) {
-  //     console.error("Error fetching client dashboard:", error);
-  //   }
-  // };
 
   const fetchClientDashboardData = async (dateParam = selectedDate) => {
     try {
@@ -284,7 +104,7 @@ const ClientDashboard = () => {
       // Fetch client dashboard data and set state
       const clientDataResponse = await getClientDashboard(empId);
       setClientData(clientDataResponse);
-      console.log("Client data:", clientDataResponse);
+      console.log("Client data 1:", clientDataResponse);
 
       // Format the date as YYYY-MM-DD
       const year = dateParam.getFullYear();
@@ -306,11 +126,7 @@ const ClientDashboard = () => {
         total_absent,
         attendanceRecord: allAttendance.attendance[0] || null,
       });
-
-      // Extract attendance records from API response
       const attendanceRecords = allAttendance.attendance || [];
-
-      // Create an array of present employee IDs using the correct key (employee_id)
       const presentIds = attendanceRecords.map((record) => record.employee_id);
 
       // (Optional) Filter out present and absent client records if needed
@@ -320,11 +136,50 @@ const ClientDashboard = () => {
       const absentRecords = clientDataResponse.filter(
         (client) => !presentIds.includes(client.id)
       );
-      console.log("Present Records:", presentRecords);
-      console.log("Absent Records:", absentRecords);
 
       const EmpRoaster = await fetchAllRoster(orgId);
-      console.log(EmpRoaster);
+      console.log("Roaster Record:", EmpRoaster);
+
+      const processedClients = clientDataResponse.map((client) => {
+        const clientId = client.id;
+
+        // Filter roster records that match the current client's id.
+        const clientRoster = EmpRoaster.filter(
+          (record) => Number(record.employee) === Number(clientId)
+        );
+        const rosterByDate = clientRoster.reduce((acc, record) => {
+          const date = record.date;
+
+          // Initialize the date group if it doesn't exist.
+          if (!acc[date]) {
+            acc[date] = [];
+          }
+
+          // Create an object with the desired fields.
+          acc[date].push({
+            employeeName: `${record.first_name} ${record.last_name}`,
+            employeeId: record.employee,
+            first_name: record.first_name,
+            last_name: record.last_name,
+            date: record.date,
+            shiftName: record.shift_name,
+            shiftStartTime: record.start_time,
+            shiftEndTime: record.end_time,
+            shiftId: record.shift,
+          });
+
+          return acc;
+        }, {}); // Start with an empty object for grouping
+
+        // Return a new object that combines client info with the processed roster.
+        return {
+          clientId,
+          clientName: `${client.first_name} ${client.last_name}`,
+          roster: rosterByDate,
+        };
+      });
+
+      console.log("Processed Clients:", processedClients);
 
       // Build checkIn and checkOut arrays from attendanceRecords.
       // Notice that we map the property `employee_id` so that we compare the same key later.
@@ -373,7 +228,6 @@ const ClientDashboard = () => {
       console.log("Attendance CheckOut Data:", checkOut);
 
       // Filter out employees who have not checked in
-      // Use client.id (from clientDataResponse) and compare with checkIn.employee_id
       const notCheckedInEmployees = clientDataResponse.filter(
         (client) =>
           !checkIn.some(
@@ -382,26 +236,22 @@ const ClientDashboard = () => {
       );
       console.log("Not Checked In Employees:", notCheckedInEmployees);
 
-      // Build the full employee attendance record array
-      // For each client, determine their attendance status based on checkIn/checkOut arrays
       const AllEmpRecord = clientDataResponse.map((client) => {
-        // Build the full name (fallback to "N/A" if missing)
         const empName =
           `${client.first_name || ""} ${client.last_name || ""}`.trim() ||
           "N/A";
+        const processedClient = processedClients.find(
+          (pc) => String(pc.clientId) === String(client.id)
+        );
+        const roster = processedClient ? processedClient.roster : {};
 
-        // Get attendance data using the consistent key (employee_id)
         const empCheckInData = checkIn.filter(
           (record) => String(record.employee_id) === String(client.id)
         );
         const empCheckOutData = checkOut.filter(
           (record) => String(record.employee_id) === String(client.id)
         );
-
-        // Determine status: if there is any check-in record, mark as "Present"
         const status = empCheckInData.length > 0 ? "Present" : "Absent";
-
-        // Extract check-in/out times if available; else use placeholder "__"
         const checkInTime =
           status === "Present"
             ? empCheckInData[0]?.attendance_time || "__"
@@ -411,15 +261,6 @@ const ClientDashboard = () => {
             ? empCheckOutData[0]?.attendance_time || "__"
             : "__";
 
-        // Extract shift name.
-        // Here, we first try the check-in record, and if that doesn't exist, then check-out.
-        const shiftName =
-          empCheckInData.length > 0
-            ? empCheckInData[0].shiftName
-            : empCheckOutData.length > 0
-            ? empCheckOutData[0].shiftName
-            : "No Shift";
-
         return {
           id: client.id,
           empName,
@@ -427,10 +268,9 @@ const ClientDashboard = () => {
           date: todayDate,
           checkInTime,
           checkOutTime,
-          shiftName, // Added shiftName to the record
+          roster, // full roster info grouped by date
         };
       });
-
       console.log("AllEmpRecord:", AllEmpRecord);
 
       // Save the full record (which is unfiltered) for your table view
@@ -441,7 +281,7 @@ const ClientDashboard = () => {
       // Get HRMS admin data to extract associated site ids
       const hrmsAdminData = await getEmployeeJobInfo(empId);
       const multiple_asso = hrmsAdminData[0].multiple_associated;
-
+      console.log("Multiple ass sitename:", multiple_ass);
       // Fetch ALL sites for the organization
       const allSites = await getAssociatedSites(orgId);
 
@@ -473,380 +313,52 @@ const ClientDashboard = () => {
     fetchClientDashboardData();
   }, []);
 
-  // -------------------------------
-  // FETCH SITE DATA AND ATTENDANCE (for a selected site)
-  // -------------------------------
-  // const fetchSiteData = async (siteId, dateParam = selectedDate) => {
-  //   try {
-  //     // console.log("Selected Site ID:", siteId);
-  //     // Fetch the list of employees for the selected site
-  //     const siteRes = await getAssociatedSite(siteId);
-  //     setSiteWiseData(siteRes);
-
-  //     // Format the date as YYYY-MM-DD
-  //     const year = dateParam.getFullYear();
-  //     const month = String(dateParam.getMonth() + 1).padStart(2, "0");
-  //     const day = String(dateParam.getDate()).padStart(2, "0");
-  //     const todayDate = `${year}-${month}-${day}`;
-  //     // console.log("Formatted Date:", todayDate);
-
-  //     // Fetch attendance data for the site using the formatted date
-  //     const attendanceRes = await getSiteWiseAttendance(siteId, todayDate);
-  //     // console.log("Site Wise Attendance Data:", attendanceRes);
-
-  //     const presentRecord = attendanceRes.attendance_data;
-  //     console.log("Attendance records:", presentRecord);
-
-  //     const headCount = attendanceRes.total_employees || 0;
-  //     const presentCount = attendanceRes.attended_employee_count || 0;
-  //     const absentCount = headCount - presentCount;
-
-  //     // Update site-specific charts and count
-  //     setPieChartData([
-  //       { name: "Head Count", y: headCount, color: "#f97316" },
-  //       { name: "Present", y: presentCount, color: "#10b981" },
-  //       { name: "Absent", y: absentCount, color: "#3b82f6" },
-  //     ]);
-  //     setBarChartData([headCount, presentCount, absentCount]);
-  //     setCount(headCount);
-
-  //     // Build a mapping for employee names from siteRes
-  //     const employeeMap = siteRes.reduce((acc, employee) => {
-  //       const name =
-  //         `${employee.first_name || ""} ${employee.last_name || ""}`.trim() ||
-  //         "N/A";
-  //       acc[String(employee.id)] = name;
-  //       return acc;
-  //     }, {});
-  //     // console.log("Employee Map:", employeeMap);
-
-  //     // Build a mapping from attendance records for employee names (as a fallback)
-  //     const attendanceNameMap = presentRecord.reduce((acc, record) => {
-  //       if (record.employee) {
-  //         const name = `${record.first_name || ""} ${
-  //           record.last_name || ""
-  //         }`.trim();
-  //         if (name) {
-  //           acc[String(record.employee)] = name;
-  //         }
-  //       }
-  //       return acc;
-  //     }, {});
-  //     // console.log("Attendance Name Map:", attendanceNameMap);
-
-  //     const presentEmployeeDetails = presentRecord
-  //       .filter((record) => record.attendance_time.startsWith(todayDate))
-  //       .map((record) => ({
-  //         employee: String(record.employee),
-  //         empName:
-  //           `${record.first_name || ""} ${record.last_name || ""}`.trim() ||
-  //           "N/A",
-  //       }));
-  //     // console.log("Present Employee Details:", presentEmployeeDetails);
-
-  //     const presentEmployeeIDs = presentEmployeeDetails.map(
-  //       (detail) => detail.employee
-  //     );
-  //     // console.log("Present Employee IDs:", presentEmployeeIDs);
-
-  //     // Build absent record (employees not in the present list)
-  //     const absentEmployees = siteRes
-  //       .filter((employee) => !presentEmployeeIDs.includes(String(employee.id)))
-  //       .map((employee) => {
-  //         const empName =
-  //           employeeMap[String(employee.id)] ||
-  //           attendanceNameMap[String(employee.id)] ||
-  //           "N/A";
-  //         return {
-  //           employee: employee.id,
-  //           empName,
-  //         };
-  //       });
-  //     const absentRecordObj = { absentrecord: absentEmployees };
-  //     setAbsentRecord(absentRecordObj);
-  //     console.log("Site Data:", siteRes);
-
-  //     // Build the attendance table records
-  //     const tableRecords = siteRes.map((employee) => {
-  //       const empName =
-  //         employeeMap[String(employee.id)] ||
-  //         attendanceNameMap[String(employee.id)] ||
-  //         "N/A";
-  //       const status = presentEmployeeIDs.includes(String(employee.id))
-  //         ? "Present"
-  //         : "Absent";
-  //       return {
-  //         id: employee.id,
-  //         empName,
-  //         status,
-  //         date: todayDate,
-  //       };
-  //     });
-  //     // console.log("Attendance Table Records:", tableRecords);
-  //     setAttendanceTableRecords(tableRecords);
-  //     setFullSiteAttendanceRecords(tableRecords);
-  //     setFilteredSiteAttendanceRecords(tableRecords);
-  //     console.log(tableRecords);
-  //   } catch (error) {
-  //     console.log("Error fetching site data:", error);
-  //   }
-  // };
-
-  // const fetchSiteData = async (siteId, dateParam = selectedDate) => {
-  //   try {
-  //     // Fetch the list of employees for the selected site
-  //     const siteRes = await getAssociatedSite(siteId);
-  //     console.log("All record:", siteRes);
-  //     setSiteWiseData(siteRes);
-
-  //     // Format the date as YYYY-MM-DD
-  //     const year = dateParam.getFullYear();
-  //     const month = String(dateParam.getMonth() + 1).padStart(2, "0");
-  //     const day = String(dateParam.getDate()).padStart(2, "0");
-  //     const todayDate = `${year}-${month}-${day}`;
-
-  //     // Fetch attendance data for the site using the formatted date
-  //     const attendanceRes = await getSiteWiseAttendance(siteId, todayDate);
-  //     const presentRecord = attendanceRes.attendance_data;
-  //     console.log("Attendance records:", presentRecord);
-
-  //     const headCount = attendanceRes.total_employees || 0;
-  //     const presentCount = attendanceRes.attended_employee_count || 0;
-  //     const absentCount = headCount - presentCount;
-
-  //     // Update site-specific charts and count
-  //     setPieChartData([
-  //       { name: "Head Count", y: headCount, color: "#f97316" },
-  //       { name: "Present", y: presentCount, color: "#10b981" },
-  //       { name: "Absent", y: absentCount, color: "#3b82f6" },
-  //     ]);
-  //     setBarChartData([headCount, presentCount, absentCount]);
-  //     setCount(headCount);
-
-  //     // Build a mapping for employee names from siteRes
-  //     const employeeMap = siteRes.reduce((acc, employee) => {
-  //       const name =
-  //         `${employee.first_name || ""} ${employee.last_name || ""}`.trim() ||
-  //         "N/A";
-  //       acc[String(employee.id)] = [id=employee.id,empName= name ];
-  //       // acc[String(employee.id)] = name;
-  //       return acc;
-  //     }, {});
-
-  //     console.log("EmployeeMap:", employeeMap);
-
-  //     // Build a fallback mapping from attendance records
-  //     const attendanceNameMap = presentRecord.reduce((acc, record) => {
-  //       if (record.employee) {
-  //         const name = `${record.first_name || ""} ${
-  //           record.last_name || ""
-  //         }`.trim();
-  //         if (name) {
-  //           acc[String(record.employee)] = name;
-  //         }
-  //       }
-  //       return acc;
-  //     }, {});
-
-  //     // Build the attendance table records with check‑in/out times
-  //     const tableRecords = siteRes.map((employee) => {
-  //       const empName =
-  //         employeeMap[String(employee.id)] ||
-  //         attendanceNameMap[String(employee.id)] ||
-  //         "N/A";
-
-  //       // Get attendance records for this employee (filter by today's date)
-  //       const empAttendance = presentRecord.filter(
-  //         (record) =>
-  //           String(record.employee) === String(employee.id) &&
-  //           record.attendance_time.startsWith(todayDate)
-  //       );
-
-  //       const checkInTime =
-  //         empAttendance.find((rec) => rec.is_check_in === true)
-  //           ?.attendance_time || null;
-  //       const checkOutTime =
-  //         empAttendance.find((rec) => rec.is_check_in === false)
-  //           ?.attendance_time || null;
-
-  //       const status = empAttendance.length > 0 ? "Present" : "Absent";
-
-  //       return {
-  //         id: employee.id,
-  //         empName,
-  //         gender: employee.gender,
-  //         date: todayDate,
-  //         checkInTime,
-  //         checkOutTime,
-  //         status,
-  //       };
-  //     });
-  //     setAttendanceTableRecords(tableRecords);
-  //     setFullSiteAttendanceRecords(tableRecords);
-  //     setFilteredSiteAttendanceRecords(tableRecords);
-  //     console.log("Attendance Table Records:", tableRecords);
-
-  //     // Build absent record (if needed)
-  //     const presentEmployeeIDs = presentRecord
-  //       .filter((record) => record.attendance_time.startsWith(todayDate))
-  //       .map((record) => String(record.employee));
-
-  //     const absentEmployees = siteRes
-  //       .filter((employee) => !presentEmployeeIDs.includes(String(employee.id)))
-  //       .map((employee) => {
-  //         const empName =
-  //           employeeMap[String(employee.id)] ||
-  //           attendanceNameMap[String(employee.id)] ||
-  //           "N/A";
-  //         return {
-  //           employee: employee.id,
-  //           empName,
-  //         };
-  //       });
-  //     setAbsentRecord({ absentrecord: absentEmployees });
-  //     console.log("Site Data:", siteRes);
-  //   } catch (error) {
-  //     console.log("Error fetching site data:", error);
-  //   }
-  // };
-
-  // const fetchSiteData = async (siteId, dateParam = selectedDate) => {
-  //   try {
-  //     // Fetch the list of employees for the selected site
-  //     const siteRes = await getAssociatedSite(siteId);
-  //     setSiteWiseData(siteRes);
-
-  //     // Format the date as YYYY-MM-DD
-  //     const year = dateParam.getFullYear();
-  //     const month = String(dateParam.getMonth() + 1).padStart(2, "0");
-  //     const day = String(dateParam.getDate()).padStart(2, "0");
-  //     const todayDate = `${year}-${month}-${day}`;
-
-  //     // Fetch attendance data for the site using the formatted date
-  //     const attendanceRes = await getSiteWiseAttendance(siteId, todayDate);
-  //     const AttendanceRecord = attendanceRes.attendance_data || [];
-  //     console.log("Attendance records:", AttendanceRecord);
-
-  //     const headCount = attendanceRes.total_employees || 0;
-  //     const presentCount = attendanceRes.attended_employee_count || 0;
-  //     const absentCount = headCount - presentCount;
-
-  //     // Update site-specific charts and count
-  //     setPieChartData([
-  //       { name: "Head Count", y: headCount, color: "#f97316" },
-  //       { name: "Present", y: presentCount, color: "#10b981" },
-  //       { name: "Absent", y: absentCount, color: "#3b82f6" },
-  //     ]);
-  //     setBarChartData([headCount, presentCount, absentCount]);
-  //     setCount(headCount);
-
-  //     // Build a mapping for employee names from siteRes
-  //     const employeeMap = siteRes.reduce((acc, employee) => {
-  //       const name =
-  //         `${employee.first_name || ""} ${employee.last_name || ""}`.trim() ||
-  //         "N/A";
-  //       acc[String(employee.id)] = name;
-  //       return acc;
-  //     }, {});
-
-  //     // Build a fallback mapping from attendance records
-  //     const attendanceNameMap = AttendanceRecord.reduce((acc, record) => {
-  //       if (record.employee) {
-  //         const name = `${record.first_name || ""} ${
-  //           record.last_name || ""
-  //         }`.trim();
-  //         if (name) {
-  //           acc[String(record.employee)] = name;
-  //         }
-  //       }
-  //       return acc;
-  //     }, {});
-
-  //     // Build the attendance table records with check‑in/out times
-  //     const tableRecords = siteRes.map((employee) => {
-  //       const empName =
-  //         employeeMap[String(employee.id)] ||
-  //         attendanceNameMap[String(employee.id)] ||
-  //         "N/A";
-
-  //       // Get attendance records for this employee (filter by today's date)
-  //       const empAttendance = AttendanceRecord.filter(
-  //         (record) =>
-  //           String(record.employee) === String(employee.id) &&
-  //           record.attendance_time.startsWith(todayDate)
-  //       );
-
-  //       // Determine status: Present if at least one record exists
-  //       const status = empAttendance.length > 0 ? "Present" : "Absent";
-
-  //       // If the employee is present, extract times; otherwise, use a placeholder "__"
-  //       const checkInTime =
-  //         status === "Present"
-  //           ? empAttendance.find((rec) => rec.is_check_in === true)
-  //               ?.attendance_time || "__"
-  //           : "__";
-  //       const checkOutTime =
-  //         status === "Present"
-  //           ? empAttendance.find((rec) => rec.is_check_in === false)
-  //               ?.attendance_time || "__"
-  //           : "__";
-
-  //       const shiftName =
-  //         empAttendance.length > 0 ? empAttendance[0].shiftName : "No Shift";
-
-  //       return {
-  //         id: employee.id,
-  //         empName,
-  //         gender: employee.gender,
-  //         date: todayDate,
-  //         checkInTime,
-  //         checkOutTime,
-  //         status,
-  //         shiftName, // Added shiftName to the record
-  //       };
-  //     });
-  //     console.log("tablerecord:", tableRecords);
-  //     setAttendanceTableRecords(tableRecords);
-  //     setFullSiteAttendanceRecords(tableRecords);
-  //     setFilteredSiteAttendanceRecords(tableRecords);
-
-  //     // Build absent record (if needed)
-  //     const presentEmployeeIDs = AttendanceRecord
-  //       .filter((record) => record.attendance_time.startsWith(todayDate))
-  //       .map((record) => String(record.employee));
-
-  //     console.log("present Employee ID:",presentEmployeeIDs)
-
-  //     const absentEmployees = siteRes
-  //       .filter((employee) => !presentEmployeeIDs.includes(String(employee.id)))
-  //       .map((employee) => {
-  //         const empName =
-  //           employeeMap[String(employee.id)] ||
-  //           attendanceNameMap[String(employee.id)] ||
-  //           "N/A";
-  //         return {
-  //           employee: employee.id,
-  //           empName,
-  //         };
-  //       });
-  //     console.log("absent Employee ID:",absentEmployees)
-
-  //     setAbsentRecord({ absentrecord: absentEmployees });
-  //     console.log("Site Data:", siteRes);
-  //   } catch (error) {
-  //     console.log("Error fetching site data:", error);
-  //   }
-  // };
-
-  // -------------------------------
-  // HANDLERS
-  // -------------------------------
-
   const fetchSiteData = async (siteId, dateParam = selectedDate) => {
     try {
       // 1. Fetch the list of employees for the selected site.
       const siteRes = await getAssociatedSite(siteId);
       setSiteWiseData(siteRes);
+      const empId = localStorage.getItem("HRMS_EMPLOYEE_ID");
+      const orgId = localStorage.getItem("HRMSORGID");
+      const EmpRoasterRec = await fetchAllRoster(orgId);
+      const processedClients = siteRes.map((client) => {
+        const clientId = client.id;
+
+        const clientRoster = EmpRoasterRec.filter(
+          (record) => Number(record.employee) === Number(clientId)
+        );
+        const roasterByDate = clientRoster.reduce((acc, record) => {
+          const date = record.date;
+
+          // Initialize the date group if it doesn't exist.
+          if (!acc[date]) {
+            acc[date] = [];
+          }
+
+          // Create an object with the desired fields.
+          acc[date].push({
+            employeeName: `${record.first_name} ${record.last_name}`,
+            employeeId: record.employee,
+            first_name: record.first_name,
+            last_name: record.last_name,
+            date: record.date,
+            shiftName: record.shift_name,
+            shiftStartTime: record.start_time,
+            shiftEndTime: record.end_time,
+            shiftId: record.shift,
+          });
+
+          return acc;
+        }, {}); // Start with an empty object for grouping
+
+        // Return a new object that combines client info with the processed roster.
+        return {
+          clientId,
+          clientName: `${client.first_name} ${client.last_name}`,
+          roster: roasterByDate,
+        };
+      });
+      console.log("Processed Clients Site Wise:", processedClients);
 
       // 2. Format the date as YYYY-MM-DD.
       const year = dateParam.getFullYear();
@@ -909,36 +421,41 @@ const ClientDashboard = () => {
             String(record.employee) === String(employee.id) &&
             record.attendance_time.startsWith(todayDate)
         );
-
-        // Determine the status: "Present" if there's at least one attendance record.
         const status = empAttendance.length > 0 ? "Present" : "Absent";
-
-        // Extract the check‑in and check‑out records separately.
         const checkInRecord = empAttendance.find(
           (rec) => rec.is_check_in === true
         );
         const checkOutRecord = empAttendance.find(
           (rec) => rec.is_check_in === false
         );
-
-        // Extract times with a fallback to "__" if not available.
         const checkInTime = checkInRecord
           ? checkInRecord.attendance_time
           : "__";
         const checkOutTime = checkOutRecord
           ? checkOutRecord.attendance_time
           : "__";
+        // Get the processed roster info for this employee for today's date
+        const processedClient = processedClients.find(
+          (pc) => String(pc.clientId) === String(employee.id)
+        );
+        const rosterForDate =
+          processedClient && processedClient.roster
+            ? processedClient.roster[todayDate]
+            : null;
 
-        // Extract shift name from the check‑in record (or check‑out record if needed).
-        // Here we assume the API returns a nested object 'shift' with a property 'shift_name'.
-        const shiftName =
-          checkInRecord && checkInRecord.shift && checkInRecord.shift.shift_name
-            ? checkInRecord.shift.shift_name
-            : checkOutRecord &&
-              checkOutRecord.shift &&
-              checkOutRecord.shift.shift_name
-            ? checkOutRecord.shift.shift_name
+        // Extract roaster fields from the roster data
+        const roasterName =
+          rosterForDate && rosterForDate.length > 0
+            ? rosterForDate[0].shiftName
             : "No Shift";
+        const roasterStartTime =
+          rosterForDate && rosterForDate.length > 0
+            ? rosterForDate[0].shiftStartTime
+            : "__";
+        const roasterEndTime =
+          rosterForDate && rosterForDate.length > 0
+            ? rosterForDate[0].shiftEndTime
+            : "__";
 
         return {
           id: employee.id,
@@ -948,7 +465,9 @@ const ClientDashboard = () => {
           checkInTime,
           checkOutTime,
           status,
-          shiftName, // Added shiftName to the record.
+          roasterName, // new field
+          roasterStartTime, // new field
+          roasterEndTime, // new field
         };
       });
 
@@ -1340,18 +859,22 @@ const ClientDashboard = () => {
                   <thead>
                     <tr>
                       <th className="border px-4 py-2">Name</th>
-                      {/* <th className="border px-4 py-2">Gender</th> */}
-                      <th className="border text-center px-4 py-2">Staus</th>
+                      <th className="border text-center px-4 py-2">Status</th>
                       <th className="border text-center px-4 py-2">
-                        Check in Time{" "}
+                        Check in Time
                       </th>
                       <th className="border text-center px-4 py-2">
-                        Check in Out{" "}
+                        Check out Time
                       </th>
                       <th className="border text-center px-4 py-2">
                         Shift Name
                       </th>
-                      {/* <th className="border px-4 py-2">Status</th> */}
+                      <th className="border text-center px-4 py-2">
+                        Shift Start Time
+                      </th>
+                      <th className="border text-center px-4 py-2">
+                        Shift End Time
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1360,7 +883,7 @@ const ClientDashboard = () => {
                         <tr key={record.id}>
                           <td className="border px-4 py-2">{record.empName}</td>
                           <td
-                            className={`border text-center px-4 py-2  ${
+                            className={`border text-center px-4 py-2 ${
                               record.status === "Absent"
                                 ? "text-red-500"
                                 : "text-green-500"
@@ -1369,25 +892,45 @@ const ClientDashboard = () => {
                             {record.status}
                           </td>
                           <td className="border text-center px-4 py-2 text-green-500">
-                            {/* {record.checkInTime} */}
                             {record.checkInTime
                               ? formatTime(record.checkInTime)
                               : "__"}
                           </td>
                           <td className="border text-center px-4 py-2 text-red-500">
-                            {/* {record.checkOutTime} */}
-                            {record.checkInTime
+                            {record.checkOutTime
                               ? formatTime(record.checkOutTime)
                               : "__"}
                           </td>
                           <td className="border px-4 py-2 text-center">
-                            {record.shiftName}
+                            {record.roster &&
+                            record.roster[record.date] &&
+                            record.roster[record.date].length > 0
+                              ? record.roster[record.date][0].shiftName
+                              : "No Shift"}
+                          </td>
+                          <td className="border px-4 py-2 text-center">
+                            {record.roster &&
+                            record.roster[record.date] &&
+                            record.roster[record.date].length > 0
+                              ? convertTo12HourFormat(
+                                  record.roster[record.date][0].shiftStartTime
+                                )
+                              : "__"}
+                          </td>
+                          <td className="border px-4 py-2 text-center">
+                            {record.roster &&
+                            record.roster[record.date] &&
+                            record.roster[record.date].length > 0
+                              ? convertTo12HourFormat(
+                                  record.roster[record.date][0].shiftEndTime
+                                )
+                              : "__"}
                           </td>
                         </tr>
                       ))
                     ) : (
                       <tr>
-                        <td className="border px-4 py-2" colSpan="5">
+                        <td className="border px-4 py-2" colSpan="7">
                           No attendance records found.
                         </td>
                       </tr>
@@ -1426,14 +969,23 @@ const ClientDashboard = () => {
                 <table className="w-full border-collapse">
                   <thead>
                     <tr>
-                      <th className="border text-left px-4 py-2">
-                        Employee Name
+                      <th className="border px-4 py-2">Name</th>
+                      <th className="border text-center px-4 py-2">Status</th>
+                      <th className="border text-center px-4 py-2">
+                        Check in Time
                       </th>
-                      <th className="border px-4 py-2">Status</th>
-                      <th className="border px-4 py-2">Check In Time</th>
-                      <th className="border px-4 py-2">Check Out Time</th>
-                      <th className="border px-4 py-2">Shift Name </th>
-                      {/* <th className="border px-4 py-2">Date</th> */}
+                      <th className="border text-center px-4 py-2">
+                        Check out Time
+                      </th>
+                      <th className="border text-center px-4 py-2">
+                        Shift Name
+                      </th>
+                      <th className="border text-center px-4 py-2">
+                        Shift Start Time
+                      </th>
+                      <th className="border text-center px-4 py-2">
+                        Shift End Time
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1464,7 +1016,13 @@ const ClientDashboard = () => {
                               : "__"}
                           </td>
                           <td className="border px-4 py-2 text-center">
-                            {record.shiftName}
+                            {record.roasterName}
+                          </td>
+                          <td className="border px-4 py-2 text-center">
+                            {convertTo12HrFormat(record.roasterStartTime)}
+                          </td>
+                          <td className="border px-4 py-2 text-center">
+                            {convertTo12HrFormat(record.roasterEndTime)}
                           </td>
                         </tr>
                       ))
@@ -1549,3 +1107,553 @@ const ClientDashboard = () => {
 };
 
 export default ClientDashboard;
+
+// -------------------------------
+// FETCH SITE DATA AND ATTENDANCE (for a selected site)
+// -------------------------------
+// const fetchSiteData = async (siteId, dateParam = selectedDate) => {
+//   try {
+//     // console.log("Selected Site ID:", siteId);
+//     // Fetch the list of employees for the selected site
+//     const siteRes = await getAssociatedSite(siteId);
+//     setSiteWiseData(siteRes);
+
+//     // Format the date as YYYY-MM-DD
+//     const year = dateParam.getFullYear();
+//     const month = String(dateParam.getMonth() + 1).padStart(2, "0");
+//     const day = String(dateParam.getDate()).padStart(2, "0");
+//     const todayDate = `${year}-${month}-${day}`;
+//     // console.log("Formatted Date:", todayDate);
+
+//     // Fetch attendance data for the site using the formatted date
+//     const attendanceRes = await getSiteWiseAttendance(siteId, todayDate);
+//     // console.log("Site Wise Attendance Data:", attendanceRes);
+
+//     const presentRecord = attendanceRes.attendance_data;
+//     console.log("Attendance records:", presentRecord);
+
+//     const headCount = attendanceRes.total_employees || 0;
+//     const presentCount = attendanceRes.attended_employee_count || 0;
+//     const absentCount = headCount - presentCount;
+
+//     // Update site-specific charts and count
+//     setPieChartData([
+//       { name: "Head Count", y: headCount, color: "#f97316" },
+//       { name: "Present", y: presentCount, color: "#10b981" },
+//       { name: "Absent", y: absentCount, color: "#3b82f6" },
+//     ]);
+//     setBarChartData([headCount, presentCount, absentCount]);
+//     setCount(headCount);
+
+//     // Build a mapping for employee names from siteRes
+//     const employeeMap = siteRes.reduce((acc, employee) => {
+//       const name =
+//         `${employee.first_name || ""} ${employee.last_name || ""}`.trim() ||
+//         "N/A";
+//       acc[String(employee.id)] = name;
+//       return acc;
+//     }, {});
+//     // console.log("Employee Map:", employeeMap);
+
+//     // Build a mapping from attendance records for employee names (as a fallback)
+//     const attendanceNameMap = presentRecord.reduce((acc, record) => {
+//       if (record.employee) {
+//         const name = `${record.first_name || ""} ${
+//           record.last_name || ""
+//         }`.trim();
+//         if (name) {
+//           acc[String(record.employee)] = name;
+//         }
+//       }
+//       return acc;
+//     }, {});
+//     // console.log("Attendance Name Map:", attendanceNameMap);
+
+//     const presentEmployeeDetails = presentRecord
+//       .filter((record) => record.attendance_time.startsWith(todayDate))
+//       .map((record) => ({
+//         employee: String(record.employee),
+//         empName:
+//           `${record.first_name || ""} ${record.last_name || ""}`.trim() ||
+//           "N/A",
+//       }));
+//     // console.log("Present Employee Details:", presentEmployeeDetails);
+
+//     const presentEmployeeIDs = presentEmployeeDetails.map(
+//       (detail) => detail.employee
+//     );
+//     // console.log("Present Employee IDs:", presentEmployeeIDs);
+
+//     // Build absent record (employees not in the present list)
+//     const absentEmployees = siteRes
+//       .filter((employee) => !presentEmployeeIDs.includes(String(employee.id)))
+//       .map((employee) => {
+//         const empName =
+//           employeeMap[String(employee.id)] ||
+//           attendanceNameMap[String(employee.id)] ||
+//           "N/A";
+//         return {
+//           employee: employee.id,
+//           empName,
+//         };
+//       });
+//     const absentRecordObj = { absentrecord: absentEmployees };
+//     setAbsentRecord(absentRecordObj);
+//     console.log("Site Data:", siteRes);
+
+//     // Build the attendance table records
+//     const tableRecords = siteRes.map((employee) => {
+//       const empName =
+//         employeeMap[String(employee.id)] ||
+//         attendanceNameMap[String(employee.id)] ||
+//         "N/A";
+//       const status = presentEmployeeIDs.includes(String(employee.id))
+//         ? "Present"
+//         : "Absent";
+//       return {
+//         id: employee.id,
+//         empName,
+//         status,
+//         date: todayDate,
+//       };
+//     });
+//     // console.log("Attendance Table Records:", tableRecords);
+//     setAttendanceTableRecords(tableRecords);
+//     setFullSiteAttendanceRecords(tableRecords);
+//     setFilteredSiteAttendanceRecords(tableRecords);
+//     console.log(tableRecords);
+//   } catch (error) {
+//     console.log("Error fetching site data:", error);
+//   }
+// };
+
+// const fetchSiteData = async (siteId, dateParam = selectedDate) => {
+//   try {
+//     // Fetch the list of employees for the selected site
+//     const siteRes = await getAssociatedSite(siteId);
+//     console.log("All record:", siteRes);
+//     setSiteWiseData(siteRes);
+
+//     // Format the date as YYYY-MM-DD
+//     const year = dateParam.getFullYear();
+//     const month = String(dateParam.getMonth() + 1).padStart(2, "0");
+//     const day = String(dateParam.getDate()).padStart(2, "0");
+//     const todayDate = `${year}-${month}-${day}`;
+
+//     // Fetch attendance data for the site using the formatted date
+//     const attendanceRes = await getSiteWiseAttendance(siteId, todayDate);
+//     const presentRecord = attendanceRes.attendance_data;
+//     console.log("Attendance records:", presentRecord);
+
+//     const headCount = attendanceRes.total_employees || 0;
+//     const presentCount = attendanceRes.attended_employee_count || 0;
+//     const absentCount = headCount - presentCount;
+
+//     // Update site-specific charts and count
+//     setPieChartData([
+//       { name: "Head Count", y: headCount, color: "#f97316" },
+//       { name: "Present", y: presentCount, color: "#10b981" },
+//       { name: "Absent", y: absentCount, color: "#3b82f6" },
+//     ]);
+//     setBarChartData([headCount, presentCount, absentCount]);
+//     setCount(headCount);
+
+//     // Build a mapping for employee names from siteRes
+//     const employeeMap = siteRes.reduce((acc, employee) => {
+//       const name =
+//         `${employee.first_name || ""} ${employee.last_name || ""}`.trim() ||
+//         "N/A";
+//       acc[String(employee.id)] = [id=employee.id,empName= name ];
+//       // acc[String(employee.id)] = name;
+//       return acc;
+//     }, {});
+
+//     console.log("EmployeeMap:", employeeMap);
+
+//     // Build a fallback mapping from attendance records
+//     const attendanceNameMap = presentRecord.reduce((acc, record) => {
+//       if (record.employee) {
+//         const name = `${record.first_name || ""} ${
+//           record.last_name || ""
+//         }`.trim();
+//         if (name) {
+//           acc[String(record.employee)] = name;
+//         }
+//       }
+//       return acc;
+//     }, {});
+
+//     // Build the attendance table records with check‑in/out times
+//     const tableRecords = siteRes.map((employee) => {
+//       const empName =
+//         employeeMap[String(employee.id)] ||
+//         attendanceNameMap[String(employee.id)] ||
+//         "N/A";
+
+//       // Get attendance records for this employee (filter by today's date)
+//       const empAttendance = presentRecord.filter(
+//         (record) =>
+//           String(record.employee) === String(employee.id) &&
+//           record.attendance_time.startsWith(todayDate)
+//       );
+
+//       const checkInTime =
+//         empAttendance.find((rec) => rec.is_check_in === true)
+//           ?.attendance_time || null;
+//       const checkOutTime =
+//         empAttendance.find((rec) => rec.is_check_in === false)
+//           ?.attendance_time || null;
+
+//       const status = empAttendance.length > 0 ? "Present" : "Absent";
+
+//       return {
+//         id: employee.id,
+//         empName,
+//         gender: employee.gender,
+//         date: todayDate,
+//         checkInTime,
+//         checkOutTime,
+//         status,
+//       };
+//     });
+//     setAttendanceTableRecords(tableRecords);
+//     setFullSiteAttendanceRecords(tableRecords);
+//     setFilteredSiteAttendanceRecords(tableRecords);
+//     console.log("Attendance Table Records:", tableRecords);
+
+//     // Build absent record (if needed)
+//     const presentEmployeeIDs = presentRecord
+//       .filter((record) => record.attendance_time.startsWith(todayDate))
+//       .map((record) => String(record.employee));
+
+//     const absentEmployees = siteRes
+//       .filter((employee) => !presentEmployeeIDs.includes(String(employee.id)))
+//       .map((employee) => {
+//         const empName =
+//           employeeMap[String(employee.id)] ||
+//           attendanceNameMap[String(employee.id)] ||
+//           "N/A";
+//         return {
+//           employee: employee.id,
+//           empName,
+//         };
+//       });
+//     setAbsentRecord({ absentrecord: absentEmployees });
+//     console.log("Site Data:", siteRes);
+//   } catch (error) {
+//     console.log("Error fetching site data:", error);
+//   }
+// };
+
+// const fetchSiteData = async (siteId, dateParam = selectedDate) => {
+//   try {
+//     // Fetch the list of employees for the selected site
+//     const siteRes = await getAssociatedSite(siteId);
+//     setSiteWiseData(siteRes);
+
+//     // Format the date as YYYY-MM-DD
+//     const year = dateParam.getFullYear();
+//     const month = String(dateParam.getMonth() + 1).padStart(2, "0");
+//     const day = String(dateParam.getDate()).padStart(2, "0");
+//     const todayDate = `${year}-${month}-${day}`;
+
+//     // Fetch attendance data for the site using the formatted date
+//     const attendanceRes = await getSiteWiseAttendance(siteId, todayDate);
+//     const AttendanceRecord = attendanceRes.attendance_data || [];
+//     console.log("Attendance records:", AttendanceRecord);
+
+//     const headCount = attendanceRes.total_employees || 0;
+//     const presentCount = attendanceRes.attended_employee_count || 0;
+//     const absentCount = headCount - presentCount;
+
+//     // Update site-specific charts and count
+//     setPieChartData([
+//       { name: "Head Count", y: headCount, color: "#f97316" },
+//       { name: "Present", y: presentCount, color: "#10b981" },
+//       { name: "Absent", y: absentCount, color: "#3b82f6" },
+//     ]);
+//     setBarChartData([headCount, presentCount, absentCount]);
+//     setCount(headCount);
+
+//     // Build a mapping for employee names from siteRes
+//     const employeeMap = siteRes.reduce((acc, employee) => {
+//       const name =
+//         `${employee.first_name || ""} ${employee.last_name || ""}`.trim() ||
+//         "N/A";
+//       acc[String(employee.id)] = name;
+//       return acc;
+//     }, {});
+
+//     // Build a fallback mapping from attendance records
+//     const attendanceNameMap = AttendanceRecord.reduce((acc, record) => {
+//       if (record.employee) {
+//         const name = `${record.first_name || ""} ${
+//           record.last_name || ""
+//         }`.trim();
+//         if (name) {
+//           acc[String(record.employee)] = name;
+//         }
+//       }
+//       return acc;
+//     }, {});
+
+//     // Build the attendance table records with check‑in/out times
+//     const tableRecords = siteRes.map((employee) => {
+//       const empName =
+//         employeeMap[String(employee.id)] ||
+//         attendanceNameMap[String(employee.id)] ||
+//         "N/A";
+
+//       // Get attendance records for this employee (filter by today's date)
+//       const empAttendance = AttendanceRecord.filter(
+//         (record) =>
+//           String(record.employee) === String(employee.id) &&
+//           record.attendance_time.startsWith(todayDate)
+//       );
+
+//       // Determine status: Present if at least one record exists
+//       const status = empAttendance.length > 0 ? "Present" : "Absent";
+
+//       // If the employee is present, extract times; otherwise, use a placeholder "__"
+//       const checkInTime =
+//         status === "Present"
+//           ? empAttendance.find((rec) => rec.is_check_in === true)
+//               ?.attendance_time || "__"
+//           : "__";
+//       const checkOutTime =
+//         status === "Present"
+//           ? empAttendance.find((rec) => rec.is_check_in === false)
+//               ?.attendance_time || "__"
+//           : "__";
+
+//       const shiftName =
+//         empAttendance.length > 0 ? empAttendance[0].shiftName : "No Shift";
+
+//       return {
+//         id: employee.id,
+//         empName,
+//         gender: employee.gender,
+//         date: todayDate,
+//         checkInTime,
+//         checkOutTime,
+//         status,
+//         shiftName, // Added shiftName to the record
+//       };
+//     });
+//     console.log("tablerecord:", tableRecords);
+//     setAttendanceTableRecords(tableRecords);
+//     setFullSiteAttendanceRecords(tableRecords);
+//     setFilteredSiteAttendanceRecords(tableRecords);
+
+//     // Build absent record (if needed)
+//     const presentEmployeeIDs = AttendanceRecord
+//       .filter((record) => record.attendance_time.startsWith(todayDate))
+//       .map((record) => String(record.employee));
+
+//     console.log("present Employee ID:",presentEmployeeIDs)
+
+//     const absentEmployees = siteRes
+//       .filter((employee) => !presentEmployeeIDs.includes(String(employee.id)))
+//       .map((employee) => {
+//         const empName =
+//           employeeMap[String(employee.id)] ||
+//           attendanceNameMap[String(employee.id)] ||
+//           "N/A";
+//         return {
+//           employee: employee.id,
+//           empName,
+//         };
+//       });
+//     console.log("absent Employee ID:",absentEmployees)
+
+//     setAbsentRecord({ absentrecord: absentEmployees });
+//     console.log("Site Data:", siteRes);
+//   } catch (error) {
+//     console.log("Error fetching site data:", error);
+//   }
+// };
+
+// -------------------------------
+// HANDLERS
+// -------------------------------
+
+// FETCH OVERALL CLIENT DATA ON MOUNT
+
+// const fetchClientDashboardData = async (dateParam = selectedDate) => {
+//   try {
+//     const empId = localStorage.getItem("HRMS_EMPLOYEE_ID");
+//     const orgId = localStorage.getItem("HRMSORGID");
+
+//     // Fetch client dashboard data and set state
+//     const clientDataResponse = await getClientDashboard(empId);
+//     setClientData(clientDataResponse);
+//     console.log(clientDataResponse);
+//     // Format the date as YYYY-MM-DD
+//     const year = dateParam.getFullYear();
+//     const month = String(dateParam.getMonth() + 1).padStart(2, "0");
+//     const day = String(dateParam.getDate()).padStart(2, "0");
+//     const todayDate = `${year}-${month}-${day}`;
+
+//     // Fetch overall attendance which contains total_employee and total_present
+//     const allAttendance = await getAssociatedOrgDash(empId, todayDate);
+//     const total_employee = allAttendance.total_employees || 0;
+//     const total_present = allAttendance.total_present || 0;
+//     const total_absent = Math.max(total_employee - total_present, 0);
+//     const attendanceRecord = allAttendance.attendance[0] || 0;
+//     console.log("getAssociatedOrgDash:", allAttendance);
+
+//     // Store overall attendance
+//     setOverallAttendance({
+//       total_employee,
+//       total_present,
+//       total_absent,
+//       attendanceRecord,
+//     });
+
+//     const attendanceRecords = allAttendance.attendance || [];
+
+//     // Create an array of IDs from attendance records for quick lookup.
+//     const presentIds = attendanceRecords.map((record) => record.employee_id);
+
+//     // Filter clients who are present
+//     const presentRecords = clientDataResponse.filter((client) =>
+//       presentIds.includes(client.id)
+//     );
+
+//     // Filter clients who are absent (i.e., their id is not in the presentIds array)
+//     const absentRecords = clientDataResponse.filter(
+//       (client) => !presentIds.includes(client.id)
+//     );
+
+//     console.log("Present Records:", presentRecords);
+//     console.log("Absent Records:", absentRecords);
+
+//     // setting all present emp data in the checkIndata state
+//     const checkIn = allAttendance.attendance
+//       .filter((item) => item.is_check_in === true)
+//       .map(
+//         ({
+//           is_check_in,
+//           attendance_time,
+//           first_name,
+//           last_name,
+//           employee,
+//         }) => ({
+//           is_check_in,
+//           attendance_time,
+//           first_name,
+//           last_name,
+//           employee,
+//         })
+//       );
+
+//     setCheckInData(checkIn);
+//     console.log("Attendance CheckIn Data:", checkIn);
+
+//     const checkOut = allAttendance.attendance
+//       .filter((item) => item.is_check_in === false)
+//       .map(
+//         ({
+//           is_check_in,
+//           attendance_time,
+//           first_name,
+//           last_name,
+//           employee,
+//         }) => ({
+//           is_check_in,
+//           attendance_time,
+//           first_name,
+//           last_name,
+//           employee,
+//         })
+//       );
+
+//     setCheckOutData(checkOut);
+//     console.log("Attendance Checkout Data:", checkOut);
+
+//     const notCheckedInEmployees = clientDataResponse.filter(
+//       (employee) =>
+//         !checkIn.some(
+//           (check) => Number(check.id) === Number(employee.vibe_id)
+//         )
+//     );
+
+//     console.log("OverallEmpTableRecord:", clientDataResponse);
+
+//     const AllEmpRecord = clientDataResponse.map((client) => {
+//       // Build employee full name (fallback to "N/A" if missing)
+//       const empName =
+//         `${client.first_name || ""} ${client.last_name || ""}`.trim() ||
+//         "N/A";
+
+//       // Get attendance records for this employee based on matching employee id
+//       const empCheckInData = checkIn.filter(
+//         (record) => String(record.employee) === String(client.id)
+//       );
+//       const empCheckOutData = checkOut.filter(
+//         (record) => String(record.employee) === String(client.id)
+//       );
+
+//       // Determine status: if any check-in exists, mark as "Present"
+//       const status = empCheckInData.length > 0 ? "Present" : "Absent";
+
+//       // If the employee is present, extract times; otherwise, set placeholder "__"
+//       const checkInTime =
+//         status === "Present"
+//           ? empCheckInData.find((rec) => rec.is_check_in === true)
+//               ?.attendance_time || "__"
+//           : "__";
+//       const checkOutTime =
+//         status === "Present"
+//           ? empCheckOutData.find((rec) => rec.is_check_in === false)
+//               ?.attendance_time || "__"
+//           : "__";
+
+//       return {
+//         id: client.id,
+//         empName,
+//         status,
+//         date: todayDate,
+//         checkInTime,
+//         checkOutTime,
+//       };
+//     });
+
+//     console.log("All emoRecord:", AllEmpRecord);
+//     // Save full & filtered records (initially unfiltered)
+//     setFullOverallAttendanceRecords(AllEmpRecord);
+//     setFilteredOverallAttendanceRecords(AllEmpRecord);
+//     setNotCheckIn(notCheckedInEmployees);
+
+//     // Get HRMS admin data to extract associated site ids
+//     const hrmsAdminData = await getEmployeeJobInfo(empId);
+//     const multiple_asso = hrmsAdminData[0].multiple_associated;
+//     // console.log("Array for associated sites:", multiple_asso);
+
+//     // Fetch ALL sites for the organization
+//     const allSites = await getAssociatedSites(orgId);
+//     // console.log("All sites from API:", allSites);
+
+//     const siteNamesResult = multiple_asso.map((id) => {
+//       const matchingSite =
+//         Array.isArray(allSites) && allSites.length > 0
+//           ? allSites.find((site) => site.id === id)
+//           : null;
+//       const siteName = matchingSite ? matchingSite.site_name : "Not Found";
+//       return { id, siteName };
+//     });
+//     // console.log("Fetched site names:", siteNamesResult);
+//     setMultipleAssos(siteNamesResult);
+
+//     // Update the charts with overall attendance values
+//     setPieChartData([
+//       { name: "Head Count", y: total_employee, color: "#f97316" },
+//       { name: "Present", y: total_present, color: "#10b981" },
+//       { name: "Absent", y: total_absent, color: "#3b82f6" },
+//     ]);
+//     setBarChartData([total_employee, total_present, total_absent]);
+//     setCount(total_employee);
+//   } catch (error) {
+//     console.error("Error fetching client dashboard:", error);
+//   }
+// };
