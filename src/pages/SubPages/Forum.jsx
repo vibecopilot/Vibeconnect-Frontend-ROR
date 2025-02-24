@@ -112,7 +112,7 @@ function Forum() {
           ...prevIsRed,
           [forumId]: !wasLiked,
         }));
-        toast.success(wasLiked ? "Post unliked" : "Post liked");
+        toast.success(wasLiked ? "Post liked" : "Post Unliked");
       }
     } catch (error) {
       console.error("Error toggling like:", error);
