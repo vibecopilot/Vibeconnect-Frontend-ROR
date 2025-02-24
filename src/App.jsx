@@ -753,6 +753,7 @@ import EditSelfRegistration from "./pages/SubPages/EditSelfRegistration.jsx";
 import SelfRegistrationDetails from "./pages/SubPages/SelfRegistrationDetails.jsx";
 // new admin hrms
 import Privacy from "./pages/Privacy/Privacy.jsx"
+import PrivacyPolicy from "./pages/Setup/Abous/PrivacyPolicy.jsx";
 
 function App() {
   const { id } = useParams();
@@ -6514,6 +6515,12 @@ function App() {
             <ProtectedAdminRoutes>
               <InstructorDetails />
             </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/setup/privacy_policy"
+          element={
+              <PrivacyPolicy /> 
           }
         />
         <Route
