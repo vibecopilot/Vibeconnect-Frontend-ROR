@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { postVendors, EditVendors } from "../../api";
 import ModalWrapper from "./ModalWrapper";
-import { toast } from "react-toastify";
+import { toast } from "react-hot-toast";
 
 const DeliveryVendorModal = ({ onclose, title = "Edit", vendor = null }) => {
   const [formData, setFormData] = useState({
@@ -99,6 +99,7 @@ const DeliveryVendorModal = ({ onclose, title = "Edit", vendor = null }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log("start");
 
     try {
       const formDataToSend = new FormData();
@@ -133,7 +134,7 @@ const DeliveryVendorModal = ({ onclose, title = "Edit", vendor = null }) => {
       } else {
         response = await postVendors(formDataToSend);
       }
-
+       console.log("Response:",response)
       if (response.status === 200) {
         toast.success(
           vendor
@@ -142,12 +143,14 @@ const DeliveryVendorModal = ({ onclose, title = "Edit", vendor = null }) => {
         );
 
         // Log to check if onclose is called
-        console.log("Closing the modal...");
-        onclose(); // Close modal after successful response
+        console.log("Closing the modal..."); // Close modal after successful response
       }
     } catch (error) {
       console.error("Error:", error);
       toast.error(error.response?.data?.message || "An error occurred.");
+    } finally {
+      onclose();
+      console.log("finally");
     }
   };
 
