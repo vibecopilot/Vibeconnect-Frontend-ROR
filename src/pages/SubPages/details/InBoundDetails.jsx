@@ -177,7 +177,7 @@ const InBoundDetails = () => {
       }
 
       // Toggle the current status
-      const newStatus = !currentStatus;
+      const newStatus = !currentStatus === null ? true : !currentStatus;
 
       // Prepare payload using the key expected by the backend (mark_as_collected)
       const payload = {
