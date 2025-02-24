@@ -1717,7 +1717,7 @@ function App() {
           element={<CreateInbound />}
         />
         <Route
-          path="/mail-room/inbound/inbound-details"
+          path="/mail-room/inbound/inbound-details/:id"
           element={<InBoundDetails />}
         />
         <Route
@@ -1725,7 +1725,7 @@ function App() {
           element={<CreateOutbound />}
         />
         <Route
-          path="/mail-room/outbound/outbound-details"
+          path="/mail-room/outbound/outbound-details/:id"
           element={<OutBoundDetails />}
         />
         {/* Asset */}
