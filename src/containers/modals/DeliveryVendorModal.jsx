@@ -320,6 +320,7 @@ const DeliveryVendorModal = ({ onclose, title = "Edit", vendor = null }) => {
           <div className="col-span-2 mt-4 flex justify-center">
             <button
               type="submit"
+              // onClick={() => showModal(false)}
               className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
             >
               {vendor && vendor.id ? "Update Vendor" : "Create Vendor"}
