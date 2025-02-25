@@ -834,17 +834,17 @@ const ClientDashboard = () => {
                 )}
                 {/*  */}
                 <div className="shadow-lg p-2 rounded-lg transition-colors duration-300 cursor-pointer text-center">
-                  <h3 className="font-semibold text-lg">Head Count</h3>
+                  <h3 className="font-semibold text-lg">Total Head Count</h3>
                   <p>{overallAttendance.total_employee}</p>
                 </div>
 
                 <div className="shadow-lg p-2 rounded-lg transition-colors duration-300 cursor-pointer text-center">
-                  <h3 className="font-semibold text-lg">Present</h3>
+                  <h3 className="font-semibold text-lg">Total Present</h3>
                   <p>{overallAttendance.total_present}</p>
                 </div>
 
                 <div className="shadow-lg p-2 rounded-lg transition-colors duration-300 cursor-pointer text-center">
-                  <h3 className="font-semibold text-lg">Absent</h3>
+                  <h3 className="font-semibold text-lg">Total Absent</h3>
                   <p>{overallAttendance.total_absent}</p>
                 </div>
               </>
