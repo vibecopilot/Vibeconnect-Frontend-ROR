@@ -63,45 +63,158 @@ const InBoundDetails = () => {
     fetchInboundDetails();
   }, []);
 
-  // console.log(inboundRecords);
-// const handleMarkedPackage = async (id, currentStatus, vendorId) => {
-//     try {
-//       if (!id || !vendorId) throw new Error("ID or Vendor ID is invalid");
+  console.log(inboundRecords);
+  // const handleMarkedPackage = async (id, currentStatus, vendorId) => {
+  //   try {
+  //     if (!id || !vendorId) throw new Error("ID or Vendor ID is invalid");
 
-//       // Toggle the current status (invert it)
-//       const newStatus = !currentStatus === null ? true : !currentStatus; // true -> false, false -> true
+  //     // Toggle the current status (invert it)
+  //     const newStatus = !currentStatus === null ? true : !currentStatus; // true -> false, false -> true
 
-//       const payload = {
-//         mark_collected: newStatus, // Pass the updated status
-//         vendor_id: vendorId, // Pass vendor ID
-//       };
+  //     const payload = {
+  //       mark_collected: newStatus, // Pass the updated status
+  //       vendor_id: vendorId, // Pass vendor ID
+  //     };
 
-//       // Send the request to the backend
-//       const response = await editInbound(id, payload);
+  //     // Send the request to the backend
+  //     const response = await editInbound(id, payload);
 
-//       // Check if the response indicates success
-//       if (response?.data?.success) {
-//         console.log("Status updated successfully:", response.data);
-//         toast.success("Package status updated successfully");
+  //     // Check if the response indicates success
+  //     if (response?.data?.success) {
+  //       console.log("Status updated successfully:", response.data);
+  //       toast.success("Package status updated successfully");
 
-//         // Update local state with the new status
-//         setInboundRecords((prevRecords) =>
-//           prevRecords.map((record) =>
-//             record.id === id ? { ...record, mark_collected: newStatus } : record
-//           )
-//         );
-//       } else {
-//         toast.error("Failed to update package status");
-//       }
-//     } catch (err) {
-//       console.error("Error updating package status:", err);
-//       toast.error("An error occurred while updating the package status");
-//     }
-//   };
+  //       // Update local state with the new status
+  //       setInboundRecords((prevRecords) =>
+  //         prevRecords.map((record) =>
+  //           record.id === id ? { ...record, mark_collected: newStatus } : record
+  //         )
+  //       );
+  //     } else {
+  //       toast.error("Failed to update package status");
+  //     }
+  //   } catch (err) {
+  //     console.error("Error updating package status:", err);
+  //     toast.error("An error occurred while updating the package status");
+  //   }
+  // };
+
+  // const handleMarkedPackage = async (id, currentStatus, vendorId) => {
+  //   try {
+  //     if (!id || !vendorId) throw new Error("ID or Vendor ID is invalid");
+
+  //     // Toggle the current status (true -> false, false -> true)
+  //     const newStatus = !currentStatus;
+
+  //     const payload = {
+  //       mark_collected: newStatus, // Pass the updated status
+  //       vendor_id: vendorId, // Pass vendor ID
+  //     };
+
+  //     // Send the request to the backend
+  //     const response = await editInbound(id, payload);
+
+  //     // Check if the response indicates success
+  //     if (response?.data?.success) {
+  //       console.log("Status updated successfully:", response.data);
+  //       toast.success("Package status updated successfully");
+
+  //       // Update local state with the new status
+  //       setInboundRecords((prevRecords) =>
+  //         prevRecords.map((record) =>
+  //           record.id === id ? { ...record, mark_collected: newStatus } : record
+  //         )
+  //       );
+  //     } else {
+  //       toast.error("Failed to update package status");
+  //     }
+  //   } catch (err) {
+  //     console.error("Error updating package status:", err);
+  //     toast.error("An error occurred while updating the package status");
+  //   }
+  // };
+
+  // const handleMarkedPackage = async (id, currentStatus, vendorId) => {
+  //   try {
+  //     if (!id || !vendorId) throw new Error("ID or Vendor ID is invalid");
+
+  //     // Toggle the current status (true -> false, false -> true)
+  //     const newStatus = !currentStatus;
+
+  //     // Use the key that your backend expects.
+  //     const payload = {
+  //       mark_as_collected: newStatus, // Updated key here
+  //       vendor_id: vendorId,
+  //     };
+
+  //     // Send the request to the backend
+  //     const response = await editInbound(id, payload);
+
+  //     // Check if the response indicates success
+  //     if (response?.data?.success) {
+  //       console.log("Status updated successfully:", response.data);
+  //       toast.success("Package status updated successfully");
+
+  //       // Update local state with the new status
+  //       setInboundRecords((prevRecords) =>
+  //         prevRecords.map((record) =>
+  //           record.id === id ? { ...record, mark_collected: newStatus } : record
+  //         )
+  //       );
+  //     } else {
+  //       toast.error("Failed to update package status");
+  //     }
+  //   } catch (err) {
+  //     console.error("Error updating package status:", err);
+  //     toast.error("An error occurred while updating the package status");
+  //   }
+  // };
+
+  const handleMarkedPackage = async (id, currentStatus, vendorId) => {
+    try {
+      if (!id || !vendorId) {
+        throw new Error("ID or Vendor ID is invalid");
+      }
+
+      // Toggle the current status
+      const newStatus = !currentStatus === null ? true : !currentStatus;
+
+      // Prepare payload using the key expected by the backend (mark_as_collected)
+      const payload = {
+        mark_as_collected: newStatus,
+        vendor_id: vendorId,
+      };
+
+      // Send the request to the backend
+      const response = await editInbound(id, payload);
+      console.log("editInbound response:", response);
+
+      // Check if the API responded with status 200 or 201
+      if (response && (response.status === 200 || response.status === 201)) {
+        toast.success("Package status updated successfully");
+
+        // Option 1: Update local state to reflect the change immediately
+        setInboundRecords((prevRecords) =>
+          prevRecords.map((record) =>
+            record.id === id ? { ...record, mark_collected: newStatus } : record
+          )
+        );
+
+        // Option 2 (alternative): Re-fetch the details to update the UI in real-time
+        // await fetchInboundDetails();
+      } else {
+        console.error("Unexpected response data:", response);
+        toast.error("Failed to update package status");
+      }
+    } catch (err) {
+      console.error("Error updating package status:", err);
+      toast.error("An error occurred while updating the package status");
+    }
+  };
 
   return (
     <section>
-      <div className="m-2">
+      <div className="m-2 mx-12 rounded-xl">
         <h2 className="text-center text-xl font-bold p-2 bg-black rounded-full text-white">
           Inbound Package Details
         </h2>
@@ -113,18 +226,18 @@ const InBoundDetails = () => {
           ) : inboundRecords && inboundRecords.length > 0 ? (
             inboundRecords.map((record) => (
               <div key={record.id} className="mb-6">
-                {/* <div className="flex justify-between">
+                <div className="flex justify-between">
                   <div className="flex gap-2">
                     <button
                       className={`flex gap-2 items-center justify-end border-2 px-4 p-1 rounded-full ${
                         record.mark_collected
-                        ? "bg-black text-white"
-                        : "bg-white text-black"
+                          ? "bg-black text-white"
+                          : "bg-white text-black"
                       }`}
                       onClick={() => {
                         if (!record.vendor_id) {
                           console.error(
-                              `Vendor ID is missing for record ID: ${record.id}`
+                            `Vendor ID is missing for record ID: ${record.id}`
                           );
                           toast.error("Vendor ID is missing");
                           return;
@@ -142,7 +255,7 @@ const InBoundDetails = () => {
                         : "Mark As Collected"}
                     </button>
                   </div>
-                </div> */}
+                </div>
                 <h2 className="text-center font-semibold text-xl mt-4">
                   Package ID: {record.id}
                 </h2>
