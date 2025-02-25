@@ -8,6 +8,9 @@ import { PiPlusCircle } from "react-icons/pi";
 import { useSelector } from "react-redux";
 import FileInputBox from "../../containers/Inputs/FileInputBox";
 import InviteEmployeeModal from "./InviteEmployeeModal";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+import convert from "xml-js";
 import {
   deleteHRMSEmployee,
   getAdminAccess,
@@ -45,6 +48,8 @@ function EmployeeDirectory() {
   const [selectedSite, setSelectedSite] = useState("");
   const [filteredEmployee, setFilteredEmployees] = useState([]);
   const [empfilterData, setEmpFilterData] = useState([]);
+  const [siteSearchText, setSiteSearchText] = useState("");
+
   const fetchAllEmployees = async () => {
     try {
       toast.loading("Loading employees Please wait!");
@@ -100,7 +105,25 @@ function EmployeeDirectory() {
   const toggleDropdown = () => {
     setIsOpen(!isOpen);
   };
+  const [isSiteDropdownOpen, setIsSiteDropdownOpen] = useState(false);
+  const siteDropdownRef = useRef(null);
   const dropdownRef = useRef(null);
+  useEffect(() => {
+    const handleSiteClickOutside = (event) => {
+      if (
+        siteDropdownRef.current &&
+        !siteDropdownRef.current.contains(event.target)
+      ) {
+        setIsSiteDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleSiteClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleSiteClickOutside);
+    };
+  }, []);
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -116,7 +139,6 @@ function EmployeeDirectory() {
   }, [dropdownRef]);
 
   const alphabet = `ABCDEFGHIJKLMNOPQRSTUVWXYZ`.split("");
-  // const alphabet = ["All", ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split("")];
 
   const handleLetterClick = (letter) => {
     setSelectedLetter(letter);
@@ -147,107 +169,70 @@ function EmployeeDirectory() {
   const [fullUserDetaisl, setFullUserDetails] = useState([]);
   const [allSiteUser, setAllSiteUser] = useState([]);
 
-  // const handleDownload = async () => {
-  //   try {
-  //     let res;
-  //     if (!selectedSite) {
-  //       // If no site is selected, fetch full user details
-  //       res = await getFullUser(orgId);
-  //       setFullUserDetails(res);
-  //     } else {
-  //       // If a site is selected, fetch site-specific user details
-  //       res = await getSiteWiseUserDetails(selectedSite);
-  //       setAllSiteUser(res);
-  //     }
+  const handleDownload = async () => {
+    try {
+      // Fetch XML data based on condition
+      const xmlData = !selectedSite
+        ? await getFullUser(orgId)
+        : await getSiteWiseUserDetails(selectedSite);
 
-  //     // Convert JSON data to a worksheet
-  //     const worksheet = allSiteUser.json_to_sheet(res);
+      // Convert to string if necessary
+      const xmlStr =
+        typeof xmlData === "string"
+          ? xmlData
+          : new XMLSerializer().serializeToString(xmlData);
 
-  //     // Create a new workbook and append the worksheet
-  //     const workbook = allSiteUser.book_new();
-  //     allSiteUser.book_append_sheet(workbook, worksheet, "Data");
+      let dataForExcel;
 
-  //     // Generate Excel file in binary array format
-  //     const excelBuffer = allSiteUser.write(workbook, {
-  //       bookType: "xlsx",
-  //       type: "array",
-  //     });
+      // Try to convert XML to JSON
+      try {
+        const jsonStr = convert.xml2json(xmlStr, {
+          compact: true,
+          ignoreComment: true,
+        });
+        const jsonData = JSON.parse(jsonStr);
+        dataForExcel =
+          jsonData.users && jsonData.users.user
+            ? Array.isArray(jsonData.users.user)
+              ? jsonData.users.user
+              : [jsonData.users.user]
+            : [jsonData];
+      } catch (conversionError) {
+        console.error(
+          "XML to JSON conversion failed, using raw XML",
+          conversionError
+        );
+        // Fallback: Put the raw XML into a cell
+        dataForExcel = [{ rawXml: xmlStr }];
+      }
 
-  //     // Create a Blob from the buffer
-  //     const data = new Blob([excelBuffer], {
-  //       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8",
-  //     });
+      // Create Excel workbook from data
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(
+        wb,
+        XLSX.utils.json_to_sheet(dataForExcel),
+        "Data"
+      );
 
-  //     // Trigger the file download
-  //     saveAs(data, "data.xlsx");
-  //   } catch (error) {
-  //     console.error("Download failed:", error);
-  //   }
-  // };
+      // Write workbook to binary array and create a Blob
+      const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+      const blob = new Blob([excelBuffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8",
+      });
 
- // Helper function to sanitize XML string
-// const sanitizeXml = (xml) => {
-//   let sanitized = xml;
-//   // Fix unescaped ampersands
-//   sanitized = sanitized.replace(/&(?!amp;|lt;|gt;|quot;|apos;)/g, '&amp;');
-//   // Fix attributes without a value by adding empty quotes
-//   sanitized = sanitized.replace(/(\w+)=\s*(?=[>\s])/g, '$1=""');
-//   return sanitized;
-// };
-
-// const handleDownload = async () => {
-//   try {
-//     let res;
-//     if (!selectedSite) {
-//       res = await getFullUser(orgId);
-//       setFullUserDetails(res);
-//     } else {
-//       res = await getSiteWiseUserDetails(selectedSite);
-//       setAllSiteUser(res);
-//     }
-
-//     // Convert response to string if needed
-//     const xmlString =
-//       typeof res === "string" ? res : new XMLSerializer().serializeToString(res);
-
-//     // Sanitize XML to fix invalid entities and attributes without values
-//     const sanitizedXml = sanitizeXml(xmlString);
-//     console.log("Sanitized XML:", sanitizedXml);
-
-//     // Convert sanitized XML to JSON
-//     const options = { compact: true, ignoreComment: true, spaces: 4 };
-//     const jsonStr = convert.xml2json(sanitizedXml, options);
-//     const jsonData = JSON.parse(jsonStr);
-//     console.log("Parsed JSON:", jsonData);
-
-//     // Extract the array from JSON based on your XML structure.
-//     // Adjust the extraction as needed; here's an example:
-//     let dataArray = [];
-//     if (jsonData.users && jsonData.users.user) {
-//       dataArray = Array.isArray(jsonData.users.user)
-//         ? jsonData.users.user
-//         : [jsonData.users.user];
-//     } else {
-//       dataArray = [jsonData];
-//     }
-//     console.log("Data array:", dataArray);
-
-//     // Convert JSON data to a worksheet
-//     const worksheet = XLSX.utils.json_to_sheet(dataArray);
-//     const workbook = XLSX.utils.book_new();
-//     XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
-
-//     // Generate Excel file as binary array
-//     const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
-//     const blob = new Blob([excelBuffer], {
-//       type:
-//         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8",
-//     });
-//     saveAs(blob, "data.xlsx");
-//   } catch (error) {
-//     console.error("Download failed:", error);
-//   }
-// };
+      // Download the Excel file using the anchor method
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "data.xlsx";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Download failed:", error);
+    }
+  };
   function getRandomColor() {
     const colors = [
       "#8B0000",
@@ -333,24 +318,83 @@ function EmployeeDirectory() {
             <div className="flex justify-between items-center  gap-2 ">
               <div className="flex ">
                 <h1 className="text-lg pl-5 font-bold">Employee Directory</h1>
-                {/* <p className="pl-5">
-                  Employee personal details are noted under this section.
-                </p> */}
               </div>
               {/* Dropdown */}
               <div className="flex gap-2">
-                <select
-                  onChange={handleDropdownChange}
-                  className="border p-3 text-black rounded-md w-64"
-                >
-                  <option value="">Select All Sites</option>
-                  {AllSites.map((site) => (
-                    <option key={site.id} value={String(site.id)}>
-                      {site.site_name}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative group" ref={dropdownRef}>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsSiteDropdownOpen(!isSiteDropdownOpen);
+                    }}
+                    id="site-dropdown-button"
+                    className=" inline-flex justify-center w-full px-6 py-3 text-l font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    <span className="mr-2">
+                      {selectedSite
+                        ? AllSites.find(
+                            (site) => String(site.id) === selectedSite
+                          )?.site_name
+                        : "Select All Sites"}
+                    </span>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="w-5 h-5 ml-2 -mr-1"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M6.293 9.293a1 1 0 011.414 0L10 11.586l2.293-2.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </button>
+
+                  {isSiteDropdownOpen && (
+                    <div
+                      id="site-dropdown-menu"
+                      className="absolute left-1/2 transform -translate-x-1/2 mt-4 w-80 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10"
+                    >
+                      {/* Search Input for Sites */}
+                      <div className="sticky top-0 bg-white px-1 py-2 border-b">
+                        <input
+                          id="site-search-input"
+                          type="text"
+                          placeholder="Search sites"
+                          autoComplete="off"
+                          value={siteSearchText}
+                          onChange={(e) => setSiteSearchText(e.target.value)}
+                          className="block w-full px-4 py-2 text-gray-800 border rounded-md border-gray-300 focus:outline-none"
+                        />
+                      </div>
+                      <div className="max-h-72 overflow-y-auto ">
+                        {/* Filtered site items */}
+                        {AllSites.filter((site) =>
+                          site.site_name
+                            .toLowerCase()
+                            .includes(siteSearchText.toLowerCase())
+                        ).map((site) => (
+                          <button
+                            key={site.id}
+                            onClick={() => {
+                              setSelectedSite(String(site.id));
+                              setIsSiteDropdownOpen(false);
+                              setSiteSearchText("");
+                            }}
+                            className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 active:bg-blue-100 cursor-pointer rounded-md"
+                          >
+                            {site.site_name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
+              {/* </div>
+              </div> */}
 
               {/* Show selected site */}
               {/* {selectedSite && <p>Selected Site ID: {selectedSite}</p>} */}
@@ -367,7 +411,7 @@ function EmployeeDirectory() {
                   <div className="relative inline-block text-left">
                     <button
                       className=" justify-center w-full flex items-center gap-2 rounded-md border border-gray-300 shadow-sm px-4 py-3 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500"
-                      // onClick={handleDownload}
+                      onClick={handleDownload}
                     >
                       Export
                       <FaDownload />

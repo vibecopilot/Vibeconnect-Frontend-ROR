@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Table from "../../../components/table/Table";
 import { BiEdit } from "react-icons/bi";
-import { BsEye ,BsDownload } from "react-icons/bs";
+import { BsEye, BsDownload } from "react-icons/bs";
 import {
   PiPlusCircle,
   PiPlusCircleBold,
@@ -148,7 +148,7 @@ const AssociatedSites = () => {
                 qrDownload(`https://api.hrms.vibecopilot.ai/${row.qr_code}`)
               }
             >
-               <BsDownload size={15} />
+              <BsDownload size={15} />
             </button>
           )}
         </div>
@@ -441,6 +441,25 @@ const AssociatedSites = () => {
                 {/* <p>Active</p> */}
                 {/* </div> */}
               </div>
+              <div className="flex justify-between items-center gap-1 border-b  py-2">
+                  <label htmlFor="" className="font-medium">
+                    QR Code  
+                  </label>
+                  {/* <div className="flex items-center gap-2">
+
+                 <p>Inactive</p> */}
+                  <Switch
+                    checked={siteDetails.qr_code_status}
+                    onChange={() =>
+                      setSiteDetails({
+                        ...siteDetails,
+                        qr_code_status: !siteDetails.qr_code_status,
+                      })
+                    }
+                  />
+                  {/* <p>Active</p> */}
+                  {/* </div> */}
+                </div>
               <div className="flex flex-col gap-1 ">
                 <label htmlFor="" className="font-medium">
                   Client name <span className="text-red-500">*</span>
@@ -597,6 +616,7 @@ const AssociatedSites = () => {
                     placeholder="radius(meter)"
                   />
                 </div>
+                
               </div>
               <div>
                 <div className="border-b-2 border-black my-2 ">

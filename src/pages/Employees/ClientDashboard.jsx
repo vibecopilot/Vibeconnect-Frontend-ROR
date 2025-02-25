@@ -24,7 +24,11 @@ import {
 } from "../../api/index";
 import { persistor } from "../../store/store";
 import { useNavigate } from "react-router-dom";
-import { formatTime, convertTo12HourFormat,convertTo12HrFormat } from "../../utils/dateUtils";
+import {
+  formatTime,
+  convertTo12HourFormat,
+  convertTo12HrFormat,
+} from "../../utils/dateUtils";
 
 const ClientDashboard = () => {
   const navigate = useNavigate();
@@ -95,6 +99,41 @@ const ClientDashboard = () => {
       navigate("/login");
     });
   };
+  const [Location, setLocation] = useState([]);
+  async function fetchSiteLocationData(siteLocation, selectedDate) {
+    try {
+      const formattedDate = `${selectedDate.getFullYear()}-${String(
+        selectedDate.getMonth() + 1
+      ).padStart(2, "0")}-${String(selectedDate.getDate()).padStart(2, "0")}`;
+
+      console.log("siteLocation:", siteLocation);
+      const updatedSites = await Promise.all(
+        siteLocation.map(async (site) => {
+          // Call the API for each site's id with the formatted date
+          const siteRes = await getSiteWiseAttendance(site.id, formattedDate);
+          const presentCount = siteRes.attended_employee_count;
+          const totalEmployeeCount = siteRes.total_employees;
+          // Calculate absent count as the difference
+          const absentCount = totalEmployeeCount - presentCount;
+
+          return {
+            id: site.id,
+            siteName: site.site_name,
+            presentCount,
+            totalEmployeeCount,
+            absentCount,
+          };
+        })
+      );
+
+      console.log("updatedSites:", updatedSites);
+      setLocation(updatedSites);
+      return updatedSites;
+    } catch (error) {
+      console.error("Error fetching site data:", error);
+      throw error;
+    }
+  }
 
   const fetchClientDashboardData = async (dateParam = selectedDate) => {
     try {
@@ -142,20 +181,14 @@ const ClientDashboard = () => {
 
       const processedClients = clientDataResponse.map((client) => {
         const clientId = client.id;
-
-        // Filter roster records that match the current client's id.
         const clientRoster = EmpRoaster.filter(
           (record) => Number(record.employee) === Number(clientId)
         );
         const rosterByDate = clientRoster.reduce((acc, record) => {
           const date = record.date;
-
-          // Initialize the date group if it doesn't exist.
           if (!acc[date]) {
             acc[date] = [];
           }
-
-          // Create an object with the desired fields.
           acc[date].push({
             employeeName: `${record.first_name} ${record.last_name}`,
             employeeId: record.employee,
@@ -167,11 +200,9 @@ const ClientDashboard = () => {
             shiftEndTime: record.end_time,
             shiftId: record.shift,
           });
-
           return acc;
-        }, {}); // Start with an empty object for grouping
+        }, {});
 
-        // Return a new object that combines client info with the processed roster.
         return {
           clientId,
           clientName: `${client.first_name} ${client.last_name}`,
@@ -181,8 +212,7 @@ const ClientDashboard = () => {
 
       console.log("Processed Clients:", processedClients);
 
-      // Build checkIn and checkOut arrays from attendanceRecords.
-      // Notice that we map the property `employee_id` so that we compare the same key later.
+      // Build checkIn and checkOut arrays from attendanceRecords
       const checkIn = attendanceRecords
         .filter((item) => item.is_check_in === true)
         .map(
@@ -268,12 +298,12 @@ const ClientDashboard = () => {
           date: todayDate,
           checkInTime,
           checkOutTime,
-          roster, // full roster info grouped by date
+          roster,
         };
       });
       console.log("AllEmpRecord:", AllEmpRecord);
 
-      // Save the full record (which is unfiltered) for your table view
+      // Save full record for your table view
       setFullOverallAttendanceRecords(AllEmpRecord);
       setFilteredOverallAttendanceRecords(AllEmpRecord);
       setNotCheckIn(notCheckedInEmployees);
@@ -281,10 +311,10 @@ const ClientDashboard = () => {
       // Get HRMS admin data to extract associated site ids
       const hrmsAdminData = await getEmployeeJobInfo(empId);
       const multiple_asso = hrmsAdminData[0].multiple_associated;
-      console.log("Multiple ass sitename:", multiple_ass);
-      // Fetch ALL sites for the organization
-      const allSites = await getAssociatedSites(orgId);
+      const siteLocation = hrmsAdminData[0].multiple_associated_info;
+      console.log("siteLocation:", siteLocation);
 
+      const allSites = await getAssociatedSites(orgId);
       const siteNamesResult = multiple_asso.map((id) => {
         const matchingSite =
           Array.isArray(allSites) && allSites.length > 0
@@ -295,7 +325,11 @@ const ClientDashboard = () => {
       });
       setMultipleAssos(siteNamesResult);
 
-      // Update the charts with overall attendance values
+      const updatedSiteData = await fetchSiteLocationData(
+        siteLocation,
+        selectedDate
+      );
+      console.log("Updated Site Data:", updatedSiteData);
       setPieChartData([
         { name: "Head Count", y: total_employee, color: "#f97316" },
         { name: "Present", y: total_present, color: "#10b981" },
@@ -308,10 +342,14 @@ const ClientDashboard = () => {
     }
   };
 
-  // Call fetchClientDashboardData on mount
   useEffect(() => {
     fetchClientDashboardData();
   }, []);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleLocation = () => {
+    setIsModalOpen(true);
+  };
 
   const fetchSiteData = async (siteId, dateParam = selectedDate) => {
     try {
@@ -722,15 +760,15 @@ const ClientDashboard = () => {
             {selectedSite ? (
               // When a site is selected, show site-specific counts:
               <>
-                <div className="shadow-lg p-2 rounded-lg transition-colors duration-300 cursor-pointer">
+                <div className="shadow-lg p-2 rounded-lg transition-colors duration-300 cursor-pointer text-center">
                   <h3 className="font-semibold text-lg">Head Count</h3>
                   <p>{count}</p>
                 </div>
-                <div className="shadow-lg p-2 rounded-lg transition-colors duration-300 cursor-pointer">
+                <div className="shadow-lg p-2 rounded-lg transition-colors duration-300 cursor-pointer text-center">
                   <h3 className="font-semibold text-lg">Present</h3>
                   <p>{barChartData[1]}</p>
                 </div>
-                <div className="shadow-lg p-2 rounded-lg transition-colors duration-300 cursor-pointer">
+                <div className="shadow-lg p-2 rounded-lg transition-colors duration-300 cursor-pointer text-center">
                   <h3 className="font-semibold text-lg">Absent</h3>
                   <p>{barChartData[2]}</p>
                 </div>
@@ -738,6 +776,63 @@ const ClientDashboard = () => {
             ) : overallAttendance ? (
               // When no site is selected and overallAttendance is available, show overall counts:
               <>
+                <div
+                  className="shadow-lg p-2 rounded-lg transition-colors duration-300 cursor-pointer text-center"
+                  onClick={handleLocation}
+                >
+                  <h3 className="font-semibold text-lg">Site Location</h3>
+                  <p>{Location.length}</p>
+                </div>
+                {/*  */}
+                {/* Modal for displaying Location data */}
+                {isModalOpen && (
+                  <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                    <div className="bg-white rounded-lg p-6 w-11/12 max-w-lg">
+                      <h2 className="text-xl text-center font-bold mb-4">
+                        Site Locations
+                      </h2>
+                      <div className="relative flex flex-col w-full h-full overflow-scroll text-gray-700 bg-white shadow-md rounded-xl bg-clip-border">
+                        <table className="w-full text-left table-auto min-w-max">
+                          <thead className="p-4 border-b border-blue-gray-100 bg-blue-gray-50">
+                            <tr >
+                              <th className="border  p-2">Site ID</th>
+                              <th className="border p-2">Site Name</th>
+                              <th className="border p-2">Present Emp Count </th>
+                              <th className="border p-2">Absent Emp Count</th>
+                              <th className="border p-2">Total Emp Count</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {Location.map((loc) => (
+                              <tr key={loc.id}>
+                                <td className="border text-center p-2">
+                                  {loc.id}
+                                </td>
+                                <td className="border p-2">{loc.siteName}</td>
+                                <td className="border p-2">
+                                  {loc.presentCount}
+                                </td>
+                                <td className="border p-2">
+                                  {loc.absentCount}
+                                </td>
+                                <td className="border p-2">
+                                  {loc.totalEmployeeCount}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      <button
+                        onClick={() => setIsModalOpen(false)}
+                        className="my-2 mx-48 px-4 py-2  bg-blue-500 text-white rounded"
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </div>
+                )}
+                {/*  */}
                 <div className="shadow-lg p-2 rounded-lg transition-colors duration-300 cursor-pointer text-center">
                   <h3 className="font-semibold text-lg">Head Count</h3>
                   <p>{overallAttendance.total_employee}</p>
@@ -943,7 +1038,9 @@ const ClientDashboard = () => {
             {/* Site Selected Attendance Table */}
             {selectedSite && (
               <div className="bg-white shadow-lg p-4 rounded-lg mt-4">
-                <h3 className="font-bold text-xl mb-4">Attendance Details</h3>
+                <h3 className="font-bold text-center text-xl mb-4">
+                  Attendance Details
+                </h3>
                 {/* Filter Buttons */}
                 <div className="mb-4 flex gap-4">
                   <button
