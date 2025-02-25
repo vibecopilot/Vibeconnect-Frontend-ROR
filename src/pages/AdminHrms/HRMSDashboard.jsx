@@ -330,7 +330,7 @@ const HRMSDashboard = () => {
               style={{ width: "10px", height: "10px", borderRadius: "5%" }}
             >
               {/* Notification Icon  */}
-              <div className="relative z-20">
+              <div className="relative z-20 ">
                 <button
                   onClick={toggleDrawer}
                   className="relative focus:outline-none"
@@ -342,12 +342,12 @@ const HRMSDashboard = () => {
                       </p>
                       <span>
                         {React.createElement(MdOutlineNotificationsActive, {
-                          size: "25",
+                          size: "30",
                         })}
                       </span>
                     </div>
                   ) : (
-                    <div className="relative flex items-center">
+                    <div className="relative flex items-center ">
                       {/* <p className="mx-1 text-m font-semibold text-gray-800">
                         Notification
                       </p> */}
@@ -356,7 +356,7 @@ const HRMSDashboard = () => {
                       </span>
                       <span className="ml-2">
                         {React.createElement(MdOutlineNotificationsActive, {
-                          size: "25",
+                          size: "30",
                           className: "text-gray-600",
                         })}
                       </span>
