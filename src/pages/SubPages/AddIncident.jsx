@@ -16,6 +16,8 @@ import {
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 const AddIncident = () => {
+
+  
   const themeColor = useSelector((state) => state.theme.color);
   const [formData, setFormData] = useState({
     date_time: "",
@@ -33,7 +35,8 @@ const AddIncident = () => {
     supportRequired: false,
     factsStated: false,
     attachment: [],
-    first_aid_provided_employee : true 
+    first_aid_provided_employee : true ,
+    buildingName: "",
     
   });
   const datePickerRef = useRef(null);
@@ -63,6 +66,7 @@ const AddIncident = () => {
         console.log(error);
       }
     };
+
     const fetchIncidentsLevel = async () => {
       try {
         const res = await getIncidentTags("IncidentLevel");
@@ -118,6 +122,8 @@ const AddIncident = () => {
         console.log(error);
       }
     };
+
+    
     if (e.target.type === "select-one" && e.target.name === "primaryCategory") {
       console.log("sub cat");
       const selectedOptionId = e.target.selectedOptions[0].id;
@@ -200,6 +206,12 @@ const AddIncident = () => {
         console.log(error);
       }
     };
+
+    if (e.target.type === "select-one" && e.target.name === "buildingId") {
+      const selectedBuildingId = e.target.value;
+      const selectedBuildingName = e.target.selectedOptions[0].text;
+      setFormData({ ...formData, buildingId: selectedBuildingId, buildingName: selectedBuildingName });
+    }
     if (
       e.target.type === "select-one" &&
       e.target.name === "secondaryCategory"
@@ -251,6 +263,10 @@ const AddIncident = () => {
       formData.secondarySubCategory
     );
     postData.append(
+      "incident[secondary_incident_sub_category]",
+      formData.secondarySubCategory
+    );
+    postData.append(
       "incident[secondary_incident_sub_sub_category]",
       formData.secondarySubSubCategory 
     );
@@ -266,10 +282,12 @@ const AddIncident = () => {
       "incident[read_facts_states]",
       formData.factsStated 
     );
-   
+    postData.append("incident[building_id]", formData.buildingId);
+    postData.append("incident[building_name]", formData.buildingName);
+  
     postData.append("incident[incident_severity]", formData.severity);
     postData.append("incident[incident_level]", formData.level);
-    postData.append("incident[building_id]", formData.buildingId);
+    
     postData.append("incident[probability]", formData.probability);
     postData.append("incident[description]", formData.description);
     postData.append("incident[created_by_id]", userId);

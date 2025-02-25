@@ -7510,6 +7510,20 @@ export const getIncidentTags = async (tagType) =>
     },
   });
 
+  export const getInjured = async (InjuredType) =>
+    axiosInstance.get(`/incidence_tags.json?q[tag_type_cont]=${InjuredType}`, {
+      params: {
+        token: token,
+      },
+    });
+
+  export const postInjured = async (data) =>
+    axiosInstance.post(`/incidence_tags.json`,data, {
+      params: {
+        token: token,
+      },
+    });
+
   export const getIncidentData = async (id) =>
     axiosInstance.get(`/incidents/${id}.json`, {
       params: {

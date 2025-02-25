@@ -1242,6 +1242,7 @@ const Calender = () => {
     const urlSearchParams = new URLSearchParams(window.location.search);
     return urlSearchParams.get(name);
   };
+  
   const codeParameter = getQueryParam("code");
   const exchangeCodeForAccessToken = async (code) => {
     console.log(code);

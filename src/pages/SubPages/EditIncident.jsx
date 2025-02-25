@@ -36,6 +36,9 @@ const EditIncident = () => {
   const [secondarySubSubCat, setSecondarySubSubCat] = useState([]);
   const [secCatName, setSecCatName] = useState("");
   const [secSubCatName, setSecSubCatName] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("");
+  const [statuses, setStatuses] = useState([]);
+
   const [costs, setCosts] = useState({
     equipmentCost: "",
     productionLoss: "",
@@ -74,13 +77,17 @@ const EditIncident = () => {
     first_aid_attendant: "",
     treatment_facility: "",
     attending_physician: "",
+    investigation: [],
+    costs: {},
+    buildingStatus: "",
+    statuses: "",
   });
 
   const datePickerRef = useRef(null);
   const navigate = useNavigate();
   const { id } = useParams();
   const themeColor = useSelector((state) => state.theme.color);
-
+  // const incidentId = getItemInLocalStorage("COMPANYID")
   const userId = getItemInLocalStorage("UserId");
 
   const handleAddInvestigationTeam = (event) => {
@@ -265,6 +272,16 @@ const EditIncident = () => {
         console.log(error);
       }
     };
+    const fetchIncidentStatuses = async () => {
+      try {
+        const res = await getIncidentTags("IncidentStatus");
+        setStatuses(res.data);
+        return res.data;
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    
     const fetchSecondarySubSubCategory = async (CategoryId) => {
       try {
         const res = await getIncidentSubTags(
@@ -272,6 +289,15 @@ const EditIncident = () => {
           CategoryId
         );
         setSecondarySubSubCat(res.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    const selectIncidentStatuses = async () => {
+      try {
+        const res = await getIncidentTags("IncidentStatus");
+        setStatuses(res.data);
+        setSelectedStatus(res.data[0].name); // Set the selected status to the first status
       } catch (error) {
         console.log(error);
       }
@@ -284,6 +310,9 @@ const EditIncident = () => {
         await fetchIncidentsLevel();
         await fetchIncidentDamage();
         await fetchIncidentRCA();
+        fetchIncidentStatuses();
+        await selectIncidentStatuses()
+       
         const res = await getIncidentDetails(id);
         const data = res.data;
 
@@ -307,6 +336,7 @@ const EditIncident = () => {
           read_fact_state: data.read_fact_state,
           insuranceCovered: data.insurance_covered,
           IncidentRCACategory: data.IncidentRCACategory,
+          buildingStatus: data.status
         });
 
         console.log("Response Data: ", data);
@@ -353,6 +383,8 @@ const EditIncident = () => {
       }
     };
 
+    
+
     fetchIncidentDetails();
   }, []);
 
@@ -394,6 +426,9 @@ const EditIncident = () => {
         console.log(error);
       }
     };
+    if (e.target.name === "buildingStatus") {
+      setFormData({ ...formData, buildingStatus: e.target.value });
+    }
     if (e.target.name === "propertyDamage") {
       setFormData({ ...formData, propertyDamage: e.target.value });
     }
@@ -588,6 +623,7 @@ const EditIncident = () => {
       "incident[cost_of_incident_attributes][total_cost]",
       costs.totalCost
     );
+    sendData.append("incident[status]", formData.buildingStatus);
 
     incident.forEach((incident1, index) => {
       sendData.append(
@@ -631,8 +667,8 @@ const EditIncident = () => {
       formData.treatment_facility
     );
     sendData.append("incident[incident_severity]", formData.severity);
-    sendData.append("sent_medical_treatment]", formData.sent_medical_treatment);
-    sendData.append("first_aid_attendant]", formData.first_aid_attendant);
+    sendData.append("incident[sent_medical_treatment]", formData.sent_medical_treatment);
+    sendData.append("incident[first_aid_attendant]", formData.first_aid_attendant);
 
     sendData.append("incident[rca]", formData.Rca);
     sendData.append("incident[property_damage]", formData.propertyDamage);
@@ -668,6 +704,7 @@ const EditIncident = () => {
     }
   };
 
+  console.log(buildings);
   return (
     <section className="flex">
       <div className="hidden md:block">
@@ -716,6 +753,25 @@ const EditIncident = () => {
                   {buildings?.map((building) => (
                     <option key={building.id} value={building.id}>
                       {building.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex flex-col">
+                <label htmlFor="" className="font-semibold text-sm">
+                  Incident Status
+                </label>
+                <select
+                  name="buildingStatus"
+                  id=""
+                  className="border p-2 border-gray-500 rounded-md"
+                  value={formData.buildingStatus}
+                  onChange={handleChangeIncident}
+                >
+                  <option value="">Select Incident Status</option>
+                  {statuses.map((status) => (
+                    <option value={status.name} key={status.id}>
+                      {status.name}
                     </option>
                   ))}
                 </select>
