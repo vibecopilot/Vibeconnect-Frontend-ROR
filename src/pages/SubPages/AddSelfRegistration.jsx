@@ -56,17 +56,16 @@ const AddSelfRegistration = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        // Extracts last part (10)
 
         if (!token) {
           console.error("Site ID or token is missing in the URL");
-          return;
+          return;   
         }
 
         console.log("Extracted site_id:", siteId);
         console.log("Extracted token:", token);
         const usersResp = await axios.get(
-          `http://13.215.74.38/visitors/fetch_potential_hosts.json`,
+          `https://admin.vibecopilot.ai/visitors/fetch_potential_hosts.json`,
           {
             params: { site_id: siteId, token: token },
           }
@@ -123,7 +122,7 @@ const AddSelfRegistration = () => {
     try {
       toast.loading("Creating new visitor Please wait!");
       const visitResp = await axios.post(
-        `http://13.215.74.38/visitors.json`,
+        `https://admin.vibecopilot.ai/visitors.json`,
         postData,
         {
           params: { token: token },

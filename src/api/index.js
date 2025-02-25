@@ -7621,11 +7621,10 @@ export const getOutboundDetail = async (id) =>
 
 export const editOutbound = async (id, payload) => {
   const token = getItemInLocalStorage("token"); // Ensure token retrieval is correct
-  return axiosInstance.put(`/mail_room_outbounds/${forumId}.json`, payload, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-    params: { token }, // Ensure the token is included correctly
+  return axiosInstance.put(`/mail_room_outbounds/${id}.json`, payload, {
+    params: {
+      token: token,
+    },// Ensure the token is included correctly
   });
 };
 

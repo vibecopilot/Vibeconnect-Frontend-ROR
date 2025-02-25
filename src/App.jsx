@@ -752,6 +752,8 @@ import AddSelfRegistration from "./pages/SubPages/AddSelfRegistration.jsx";
 import EditSelfRegistration from "./pages/SubPages/EditSelfRegistration.jsx";
 import SelfRegistrationDetails from "./pages/SubPages/SelfRegistrationDetails.jsx";
 // new admin hrms
+import Privacy from "./pages/Privacy/Privacy.jsx"
+import PrivacyPolicy from "./pages/Setup/Abous/PrivacyPolicy.jsx";
 
 function App() {
   const { id } = useParams();
@@ -1716,7 +1718,7 @@ function App() {
           element={<CreateInbound />}
         />
         <Route
-          path="/mail-room/inbound/inbound-details"
+          path="/mail-room/inbound/inbound-details/:id"
           element={<InBoundDetails />}
         />
         <Route
@@ -1724,7 +1726,7 @@ function App() {
           element={<CreateOutbound />}
         />
         <Route
-          path="/mail-room/outbound/outbound-details"
+          path="/mail-room/outbound/outbound-details/:id"
           element={<OutBoundDetails />}
         />
         {/* Asset */}
@@ -6516,6 +6518,12 @@ function App() {
           }
         />
         <Route
+          path="/setup/privacy_policy"
+          element={
+              <PrivacyPolicy /> 
+          }
+        />
+        <Route
           path="/admin/skill-grow/create-course-details"
           element={
             <ProtectedAdminRoutes>
@@ -6809,6 +6817,12 @@ function App() {
             <ProtectedRoute>
               <ClientDashboard />
             </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/privacy"
+          element={
+              <Privacy />
           }
         />
       </Routes>
