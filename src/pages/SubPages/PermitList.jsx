@@ -34,7 +34,7 @@ const PermitList = () => {
     // { name: "Ref No.", selector: (row) => row.ref, sortable: true },
     {
       name: "Permit Type",
-      selector: (row) => row.permit_type_name,
+      selector: (row) => row.permit_type || "No Type",
       sortable: true,
     },
     { name: "Permit For", selector: (row) => row.permit_for, sortable: true },
@@ -64,17 +64,13 @@ const PermitList = () => {
     {
       name: "Permit Expiry Date",
       selector: (row) =>
-        row.expiry_date_and_time
-          ? dateFormat(row.expiry_date_and_time)
-          : " ", // Show a blank space if the value is null or undefined
+        row.expiry_date_and_time ? dateFormat(row.expiry_date_and_time) : " ", // Show a blank space if the value is null or undefined
       sortable: true,
     },
     {
       name: "Permit Expiry Time",
       selector: (row) =>
-        row.expiry_date_and_time
-          ? formatTime(row.expiry_date_and_time)
-          : " ", // Show a blank space if the value is null or undefined
+        row.expiry_date_and_time ? formatTime(row.expiry_date_and_time) : " ", // Show a blank space if the value is null or undefined
       sortable: true,
     },
   ];
@@ -84,14 +80,35 @@ const PermitList = () => {
   const [filteredPermits, setFilteredPermits] = useState([]);
   const [searchText, setSearchText] = useState("");
 
+  const [permitStats, setPermitStats] = useState({
+    total_approved: 0,
+    total_closed: 0,
+    total_drafts: 0,
+    total_extended: 0,
+    total_open: 0,
+    total_permits: 0,
+    total_rejected: 0,
+  });
   const fetchPermits = async () => {
     try {
       const res = await getPermits();
       const sortedInvData = res.data.sort((a, b) => {
         return new Date(b.created_at) - new Date(a.created_at);
       });
+      console.log("sortedInvData:", sortedInvData);
       setPermits(sortedInvData);
       setFilteredPermits(sortedInvData);
+      setPermitStats({
+        total_approved: sortedInvData[0].total_approved,
+        total_closed: sortedInvData[0].total_closed,
+        total_drafts: sortedInvData[0].total_drafts,
+        total_extended: sortedInvData[0].total_extended,
+        total_open: sortedInvData[0].total_open,
+        total_permits: sortedInvData[0].total_permits,
+        total_rejected: sortedInvData[0].total_rejected,
+      });
+
+      console.log("sortedInvData:", sortedInvData);
     } catch (error) {
       console.log(error);
     }
@@ -117,6 +134,7 @@ const PermitList = () => {
   };
 
   useEffect(() => {
+    console.log("permitStats:", permitStats);
     fetchPermits();
   }, []);
   return (
@@ -127,33 +145,33 @@ const PermitList = () => {
           <div className="shadow-xl rounded-full border-4 border-gray-400 w-52   flex flex-col items-center">
             <p className="font-semibold ">Total Permits</p>
             <p className="text-center font-semibold ">
-              {filteredPermits.length}
+              {permitStats.total_permits}
             </p>
           </div>
           <div className="shadow-xl rounded-full border-4 border-green-400 w-52  px-6 flex flex-col items-center">
             <p className="font-semibold ">Draft Permits</p>
-            <p className="text-center font-semibold  ">0</p>
+            <p className="text-center font-semibold  ">{permitStats.total_drafts}</p>
           </div>
           <div className="shadow-xl rounded-full border-4 border-red-400 w-52  px-6 flex flex-col items-center">
             <p className="font-semibold ">Open Permits</p>
-            <p className="text-center font-semibold  ">0</p>
+            <p className="text-center font-semibold  ">{permitStats.total_open}</p>
           </div>
 
           <div className="shadow-xl rounded-full border-4 border-orange-400 w-52  px-6 flex flex-col items-center">
             <p className="font-semibold">Approved Permits</p>
-            <p className="text-center font-semibold  ">0</p>
+            <p className="text-center font-semibold  ">{permitStats.total_approved}</p>
           </div>
           <div className="shadow-xl rounded-full border-4 border-indigo-400 w-52  px-6 flex flex-col items-center">
             <p className="font-semibold">Rejected Permits</p>
-            <p className="text-center font-semibold  ">0</p>
+            <p className="text-center font-semibold  ">{permitStats.total_rejected}</p>
           </div>
           <div className="shadow-xl rounded-full border-4 border-blue-400 w-52  px-6 flex flex-col items-center">
             <p className="font-semibold ">Extended Permits</p>
-            <p className="text-center font-semibold ">0</p>
+            <p className="text-center font-semibold ">{permitStats.total_extended}</p>
           </div>
           <div className="shadow-xl rounded-full border-4 border-yellow-400 w-52  px-6 flex flex-col items-center">
             <p className="font-semibold ">Closed Permits</p>
-            <p className="text-center font-semibold ">0</p>
+            <p className="text-center font-semibold ">{permitStats.total_closed}</p>
           </div>
         </div>
         <div className=" flex my-2 flex-col">

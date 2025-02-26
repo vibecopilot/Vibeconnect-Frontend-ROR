@@ -200,7 +200,7 @@ import PermitPendingApprovalDetails from "./pages/SubPages/details/PermitPending
 import ScheduleAuditDetails from "./pages/SubPages/details/ScheduleAuditDetails.jsx";
 import ChecklistDetails from "./pages/SubPages/details/ChecklistDetails.jsx";
 import PermitSetup from "./pages/Setup/PermitSetup.jsx";
-import PermitEntity from "./pages/Setup/PermitEntity.jsx"
+import PermitEntity from "./pages/Setup/SetupSubPages/PermitEntity.jsx"
 import LetterOfIndent from "./pages/LetterOfIndent.jsx";
 import AddLoi from "./pages/SubPages/AddLoi.jsx";
 import EditLoiPO from "./pages/SubPages/details/EditLoiPo.jsx";

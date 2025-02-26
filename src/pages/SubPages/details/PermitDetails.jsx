@@ -8,6 +8,8 @@ import {
   getPermitDetails,
   getSetupUsers,
   postExtensionPermit,
+  getFloors,
+  getUnits,
 } from "../../../api";
 import { useParams } from "react-router-dom";
 import { getItemInLocalStorage } from "../../../utils/localStorage";

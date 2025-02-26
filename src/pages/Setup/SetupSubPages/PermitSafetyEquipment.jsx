@@ -97,6 +97,7 @@ const PermitSafetyEquipment = () => {
     };
     fetchPantry();
   }, [update]);
+
   useEffect(() => {
     const fetchPantry = async () => {
       try {
@@ -268,6 +269,7 @@ const PermitSafetyEquipment = () => {
       const resp = await postPermitSafetyEquipment(sendData);
       setupdate(true);
       toast.success("Permit Safety Equipment Created Successfully");
+      
       setFormData({
         permit_type_id: "",
         activity_id: "",
@@ -331,6 +333,8 @@ const PermitSafetyEquipment = () => {
 
   document.title = `Permit Setup - Vibe Connect`;
   const [showAdd, setShowAdd] = useState(false);
+
+
   return (
     <section className="flex ">
       {/* <Navbar /> */}
@@ -440,7 +444,7 @@ const PermitSafetyEquipment = () => {
               onClick={() => setShowAdd(true)}
             >
               <PiPlusCircle size={20} />
-              Add
+              Add First
             </button>
           </div>
         )}
@@ -456,6 +460,7 @@ const PermitSafetyEquipment = () => {
           highlightOnHover
           omitColumn={column}
         />
+        {/* Update Modal */}
         {isModalOpen && (
           <div className="fixed inset-0 flex items-center justify-center z-50">
             <div

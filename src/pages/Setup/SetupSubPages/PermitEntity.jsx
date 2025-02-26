@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 //import Navbar from "../components/Navbar";
-import Table from "../../components/table/Table";
+import Table from "../../../components/table/Table";
 import { ImEye } from "react-icons/im";
 import { useSelector } from "react-redux";
 import { BiEdit } from "react-icons/bi";
@@ -19,8 +19,8 @@ import {
   getPermitType,
   getPermitTypeDetails,
   postPermitType,
-} from "../../api";
-import { getItemInLocalStorage } from "../../utils/localStorage";
+} from "../../../api";
+import { getItemInLocalStorage } from "../../../utils/localStorage";
 import toast from "react-hot-toast";
 //import Modal from "../containers/modals/Modal";
 
@@ -40,7 +40,12 @@ const PermitEntity = () => {
   const closeModal = () => setIsModalOpen(false);
   const [formData, setFormData] = useState({
     name: "",
+    permit_id:"",
+    site_id:"",
+    ative:"",
   });
+ 
+  
   const [filteredData, setFilteredData] = useState([]);
   useEffect(() => {
     const fetchPantry = async () => {
