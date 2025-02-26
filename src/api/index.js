@@ -5,8 +5,8 @@ import HrmsAuth from "./HrmsAuth";
 import vibeAuth from "./vibeAuth";
 import axios from "axios";
 // import DigestFetch from "digest-fetch";
-export const API_URL = "https://vibecopilot.ai";
-export const vibeMedia = "https://vibecopilot.ai/api/media/";
+export const API_URL = "https://admin.vibecopilot.ai";
+export const vibeMedia = "https://admin.vibecopilot.ai/api/media/";
 export const hrmsDomain = "https://api.hrms.vibecopilot.ai/";
 import DigestFetch from "digest-fetch";
 // import DigestAuth from "@mhoc/axios-digest-auth";
@@ -8117,6 +8117,28 @@ export const getIncidentTags = async (tagType) =>
       token: token,
     },
   });
+
+  export const getInjured = async (InjuredType) =>
+    axiosInstance.get(`/incidence_tags.json?q[tag_type_cont]=${InjuredType}`, {
+      params: {
+        token: token,
+      },
+    });
+
+  export const postInjured = async (data) =>
+    axiosInstance.post(`/incidence_tags.json`,data, {
+      params: {
+        token: token,
+      },
+    });
+
+  export const getIncidentData = async (id) =>
+    axiosInstance.get(`/incidents/${id}.json`, {
+      params: {
+        token: token,
+      },
+    });
+
 export const getIncidentSubTags = async (tagType, parentId) =>
   axiosInstance.get(
     `/incidence_tags.json?q[tag_type_cont]=${tagType}&q[parent_id_eq]=${parentId}`,
@@ -8168,12 +8190,26 @@ export const getIncidentDetails = async (incidentId) =>
       token: token,
     },
   });
-export const postIncidents = async (data) =>
-  axiosInstance.post(`/incidents.json`, data, {
+export const postIncidents = async (id) =>
+  axiosInstance.post(`/incidents.json`, id, {
     params: {
       token: token,
     },
   });
+  export const postInjurydata = async (data) =>
+    axiosInstance.post(`/incident_injuries.json`, data, {
+      params: {
+        token: token,
+      },
+    });
+  export const updateIncidents = async (id, data) =>
+    axiosInstance.put(`/incidents/${id}.json`, data, {
+      params: {
+        token: token,
+        
+      },
+    });
+  
 
 const defaultIp = getItemInLocalStorage("DEFAULT");
 const defaultUsername = getItemInLocalStorage("DeviceUsername");

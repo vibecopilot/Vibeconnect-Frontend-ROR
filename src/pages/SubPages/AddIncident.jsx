@@ -16,6 +16,8 @@ import {
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 const AddIncident = () => {
+
+  
   const themeColor = useSelector((state) => state.theme.color);
   const [formData, setFormData] = useState({
     date_time: "",
@@ -33,6 +35,9 @@ const AddIncident = () => {
     supportRequired: false,
     factsStated: false,
     attachment: [],
+    first_aid_provided_employee : true ,
+    buildingName: "",
+    
   });
   const datePickerRef = useRef(null);
   const currentDate = new Date();
@@ -61,6 +66,7 @@ const AddIncident = () => {
         console.log(error);
       }
     };
+
     const fetchIncidentsLevel = async () => {
       try {
         const res = await getIncidentTags("IncidentLevel");
@@ -78,6 +84,8 @@ const AddIncident = () => {
   const [primarySubCat, setSubPrimaryCat] = useState([]);
   const [primarySubSubCat, setSubSubPrimaryCat] = useState([]);
   const handleChangeIncident = async (e) => {
+    console.log(e.target.selectedOptions)
+  
     const fetchCategoryName = async (CategoryId) => {
       try {
         const res = await getIncidentCatDetails(CategoryId);
@@ -114,28 +122,34 @@ const AddIncident = () => {
         console.log(error);
       }
     };
+
+    
     if (e.target.type === "select-one" && e.target.name === "primaryCategory") {
       console.log("sub cat");
-      const catId = Number(e.target.value);
-      await fetchCategoryName(catId);
-      await fetchSubCategory(catId);
-      setFormData({ ...formData, primaryCategory: catId });
+      const selectedOptionId = e.target.selectedOptions[0].id;
+      const catValue = (e.target.value);
+      console.log(catValue,selectedOptionId)
+
+      await fetchCategoryName(selectedOptionId);
+      await fetchSubCategory(selectedOptionId);
+      setFormData({ ...formData, primaryCategory: catValue });
     } else if (
       e.target.type === "select-one" &&
       e.target.name === "primarySubCategory"
     ) {
-      const subCatId = Number(e.target.value);
-      await fetchSubCategoryName(subCatId);
-      await fetchSubSubCategory(subCatId);
+      const selectedOptionId = e.target.selectedOptions[0].id;
+      const SubCatValue = (e.target.value);
+      await fetchSubCategoryName(selectedOptionId);
+      await fetchSubSubCategory(selectedOptionId);
 
-      setFormData({ ...formData, primarySubCategory: subCatId });
+      setFormData({ ...formData, primarySubCategory: SubCatValue });
     } else if (
       e.target.type === "select-one" &&
       e.target.name === "primarySubSubCategory"
     ) {
-      const subSubCatId = Number(e.target.value);
+      const subSubCatValue = (e.target.value);
 
-      setFormData({ ...formData, primarySubSubCategory: subSubCatId });
+      setFormData({ ...formData, primarySubSubCategory: subSubCatValue });
     } else {
       setFormData({ ...formData, [e.target.name]: e.target.value });
     }
@@ -144,6 +158,15 @@ const AddIncident = () => {
   const [secondarySubSubCat, setSecondarySubSubCat] = useState([]);
   const [secCatName, setSecCatName] = useState("");
   const [secSubCatName, setSecSubCatName] = useState("");
+
+  const handleFileChange = (files, fieldName) => {
+    setFormData({
+      ...formData,
+      [fieldName]: files,
+    });
+    console.log(fieldName);
+  };
+
   const handleSecondaryCategoryChange = async (e) => {
     const fetchSecCategoryName = async (CategoryId) => {
       try {
@@ -183,22 +206,32 @@ const AddIncident = () => {
         console.log(error);
       }
     };
+
+    if (e.target.type === "select-one" && e.target.name === "buildingId") {
+      const selectedBuildingId = e.target.value;
+      const selectedBuildingName = e.target.selectedOptions[0].text;
+      setFormData({ ...formData, buildingId: selectedBuildingId, buildingName: selectedBuildingName });
+    }
     if (
       e.target.type === "select-one" &&
       e.target.name === "secondaryCategory"
     ) {
-      const secCatId = Number(e.target.value);
-      await fetchSecondarySubCategory(secCatId);
-      await fetchSecCategoryName(secCatId);
-      setFormData({ ...formData, secondaryCategory: secCatId });
+      const selectedOptionId = e.target.selectedOptions[0].id;
+      const secCatValue = (e.target.value);
+      await fetchSecondarySubCategory(selectedOptionId);
+      await fetchSecCategoryName(selectedOptionId);
+      setFormData({ ...formData, secondaryCategory: secCatValue });
     } else if (
       e.target.type === "select-one" &&
       e.target.name === "secondarySubCategory"
     ) {
-      const secSubCatId = Number(e.target.value);
-      await fetchSecondarySubSubCategory(secSubCatId);
-      await fetchSecSubCategoryName(secSubCatId);
-      setFormData({ ...formData, secondarySubCategory: secSubCatId });
+      const selectedOptionId = e.target.selectedOptions[0].id;
+      const secSubCatValue = (e.target.value);
+      await fetchSecondarySubSubCategory(selectedOptionId);
+      await fetchSecSubCategoryName(selectedOptionId);
+      setFormData({ ...formData, secondarySubCategory: secSubCatValue });
+
+      
     } else {
       setFormData({ ...formData, [e.target.name]: e.target.value });
     }
@@ -207,22 +240,66 @@ const AddIncident = () => {
   const navigate = useNavigate();
   const handleAddIncident = async () => {
     const postData = new FormData();
+    console.log(formData)
+    
     postData.append("incident[time_and_date]", formData.date_time);
     postData.append(
       "incident[primary_incident_category]",
       formData.primaryCategory
     );
     postData.append(
-      "incident[secondary_incident_category]",
-      formData.secondaryCategory
+      "incident[primary_incident_sub_category]",
+      formData.primarySubCategory 
     );
+    postData.append("incident[primary_incident_sub_sub_category]", formData.primarySubSubCategory);
+
+    postData.append(
+      "incident[secondary_incident_category]",
+      formData.secondaryCategory 
+    );
+    
+    postData.append(
+      "incident[secondary_incident_sub_category]",
+      formData.secondarySubCategory
+    );
+    postData.append(
+      "incident[secondary_incident_sub_category]",
+      formData.secondarySubCategory
+    );
+    postData.append(
+      "incident[secondary_incident_sub_sub_category]",
+      formData.secondarySubSubCategory 
+    );
+    postData.append(
+      "incident[support_required]",
+      formData.supportRequired 
+    );
+    postData.append(
+      "incident[first_aid_provided_employee]",
+      formData.first_aid_provided_employee 
+    );
+    postData.append(
+      "incident[read_facts_states]",
+      formData.factsStated 
+    );
+    postData.append("incident[building_id]", formData.buildingId);
+    postData.append("incident[building_name]", formData.buildingName);
+  
     postData.append("incident[incident_severity]", formData.severity);
     postData.append("incident[incident_level]", formData.level);
-    postData.append("incident[building_id]", formData.buildingId);
+    
     postData.append("incident[probability]", formData.probability);
     postData.append("incident[description]", formData.description);
     postData.append("incident[created_by_id]", userId);
+    formData.attachment.forEach((file, index) => {
+      postData.append(`incident[attachments_attributes][][file]`, file);
+    });
     try {
+      if (!formData.supportRequired || !formData.factsStated) {
+        toast.error("Please check the required checkboxes");
+        return;
+      }
+    
       const res = await postIncidents(postData);
       toast.success("New incident added successfully");
       navigate("/admin/incidents");
@@ -245,7 +322,7 @@ const AddIncident = () => {
             Add Incidents
           </h2>
           <h2 className=" text-lg border-black border-b font-semibold ">
-            DETAILS
+            DETAILS  
           </h2>
           <div className="flex  flex-col justify-around ">
             <div className="grid md:grid-cols-3 item-start gap-x-4 gap-y-5 w-full">
@@ -277,7 +354,7 @@ const AddIncident = () => {
                 >
                   <option value="">Select Building</option>
                   {buildings?.map((building) => (
-                    <option key={building.id} value={building.id}>
+                    <option key={building.id} id={building.id} value={building.id}>
                       {building.name}
                     </option>
                   ))}
@@ -296,7 +373,7 @@ const AddIncident = () => {
                 >
                   <option value="">Select Primary Category</option>
                   {primaryCat.map((cat) => (
-                    <option value={cat.id} key={cat.id}>
+                    <option value={cat.name } id={cat.id} key={cat.id}>
                       {cat.name}
                     </option>
                   ))}
@@ -316,7 +393,7 @@ const AddIncident = () => {
                 >
                   <option value="">Select </option>
                   {primarySubCat.map((subCat) => (
-                    <option value={subCat.id} key={subCat.id}>
+                    <option value={subCat.name} id={subCat.id} key={subCat.id}>
                       {subCat.name}
                     </option>
                   ))}
@@ -337,7 +414,7 @@ const AddIncident = () => {
                 >
                   <option value="">Select </option>
                   {primarySubSubCat.map((subSubCat) => (
-                    <option value={subSubCat.id} key={subSubCat.id}>
+                    <option value={subSubCat.name} id={subSubCat.id} key={subSubCat.id}>
                       {subSubCat.name}
                     </option>
                   ))}
@@ -357,7 +434,7 @@ const AddIncident = () => {
                 >
                   <option value="">Select </option>
                   {secondaryCat.map((secCat) => (
-                    <option value={secCat.id} key={secCat.id}>
+                    <option value={secCat.name} id={secCat.id} key={secCat.id}>
                       {secCat.name}
                     </option>
                   ))}
@@ -377,7 +454,7 @@ const AddIncident = () => {
                 >
                   <option value="">Select </option>
                   {secondarySubCat.map((secSubCat) => (
-                    <option value={secSubCat.id} key={secSubCat.id}>
+                    <option value={secSubCat.name} id={secSubCat.id} key={secSubCat.id}>
                       {secSubCat.name}
                     </option>
                   ))}
@@ -398,7 +475,7 @@ const AddIncident = () => {
                 >
                   <option value="">Select </option>
                   {secondarySubSubCat.map((secSubSubCat) => (
-                    <option value={secSubSubCat.id} key={secSubSubCat.id}>
+                    <option value={secSubSubCat.name} id={secSubSubCat.id} key={secSubSubCat.id}>
                       {secSubSubCat.name}
                     </option>
                   ))}
@@ -436,7 +513,7 @@ const AddIncident = () => {
                 >
                   <option value="">Select Level </option>
                   {incidentLevel.map((level) => (
-                    <option value={level.id} key={level.id}>
+                    <option value={level.name} id={level.id} key={level.id}>
                       {level.name}
                     </option>
                   ))}
@@ -524,7 +601,10 @@ const AddIncident = () => {
             <h2 className=" text-lg border-black border-b font-semibold ">
               ATTACHMENTS
             </h2>
-            <FileInputBox />
+            <FileInputBox
+                handleChange={(files) => handleFileChange(files, "attachment")}
+                fieldName={"attachment"}
+              />
           </div>
           <div className="flex justify-center gap-2 mb-20 my-3">
             <button className="font-semibold bg-red-500 text-white  p-2 flex rounded-md items-center gap-2">
