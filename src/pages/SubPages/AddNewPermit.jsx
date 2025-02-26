@@ -8,6 +8,10 @@ import {
   getUnits,
   getVendors,
   postNewPermit,
+  getPermitActivity,
+  getPermitSubActivity,
+  getPermitRisks,
+  getHazardCategory,
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import { RiContactsBook2Line } from "react-icons/ri";
@@ -18,14 +22,27 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import { PiPlusCircleBold } from "react-icons/pi";
 import toast from "react-hot-toast";
+import CARAddItemsModal from "../../containers/modals/CARAddItemsModal";
 
 const AddNewPermit = () => {
   const buildings = getItemInLocalStorage("Building");
   const userId = getItemInLocalStorage("UserId");
   const [assignedUser, setAssignedUser] = useState([]);
   // const siteId = getItemInLocalStorage("SITEID");
-
   const [filteredData, setFilteredData] = useState([]);
+  const firstName = getItemInLocalStorage("Name");
+  const lastName = getItemInLocalStorage("LASTNAME");
+  const email = getItemInLocalStorage("USEREMAIL");
+  const siteName = getItemInLocalStorage("SITENAME");
+  const mobileNumber = getItemInLocalStorage("Mobile");
+
+  // Permit Activity
+  const [allPermitActivities, setAllPermitActivities] = useState([]);
+  const [allPermitSubActivities, setAllPermitSubActivities] = useState([]);
+  const [allHazardCategories, setAllHazardCategories] = useState([]);
+  const [allPermitRisks, setAllPermitRisks] = useState([]);
+  const [permitActivityOptions, setPermitActivityOptions] = useState([]);
+
   useEffect(() => {
     const fetchPantry = async () => {
       try {
@@ -33,16 +50,16 @@ const AddNewPermit = () => {
         const sortedInvData = invResp.data.sort((a, b) => {
           return new Date(b.created_at) - new Date(a.created_at);
         });
-
+        console.log("sortedInvData:", sortedInvData);
         setFilteredData(sortedInvData);
-        //  setupdate(false);
-        console.log(invResp);
       } catch (error) {
         console.log(error);
       }
     };
     fetchPantry();
   }, []);
+  // ok
+
   useEffect(() => {
     const fetchAssignedTo = async () => {
       try {
@@ -54,7 +71,6 @@ const AddNewPermit = () => {
           firstname: user.firstname,
           lastname: user.lastname,
         }));
-
         setAssignedUser(formattedUsers);
       } catch (error) {
         console.error("Error fetching assigned users:", error);
@@ -63,6 +79,8 @@ const AddNewPermit = () => {
 
     fetchAssignedTo();
   }, []);
+  // ok
+
   const [vendors, setVendors] = useState([]);
   const [floors, setFloors] = useState([]);
   const [units, setUnits] = useState([]);
@@ -71,10 +89,9 @@ const AddNewPermit = () => {
   const [activities, setActivities] = useState([
     { activity: "", sub_activity: "", category_of_hazards: "", risks: "" },
   ]);
+  const [permit_activity, setPermitActivity] = useState([]);
 
-  const [permit_activity , setPermitActivity] = useState([])
-
-  
+  // ok
 
   useEffect(() => {
     const fetchVendors = async () => {
@@ -108,6 +125,7 @@ const AddNewPermit = () => {
   });
   const navigate = useNavigate();
   const siteId = getItemInLocalStorage("SITEID");
+
   const handleNewPermit = async () => {
     const sendData = new FormData();
     sendData.append("permit[name]", `${firstName} ${lastName}`);
@@ -150,23 +168,43 @@ const AddNewPermit = () => {
       sendData.append(`permit[permit_activities][][risks]`, activity.risks);
     });
 
-    // formData.permit_attachments.forEach((file) => {
-    //     sendData.append("attachfiles[]", file)
-    // });
     try {
       const billResp = await postNewPermit(sendData);
       toast.success("Permit Added Successfully");
       navigate("/admin/permit");
-      console.log("Permit response", billResp);
+      // console.log("Permit response", billResp.data);
     } catch (error) {
       console.log(error);
     }
   };
+
   const handleChange = async (e) => {
+    // Check if the field is permit_type.
+    if (e.target.name === "permit_type") {
+      const permitType = e.target.value;
+      setFormData({
+        ...formData,
+        permit_type: permitType,
+      });
+      try {
+        // Call the API that returns permit activities based on the selected permit type.
+        const res = await getPermitActivity(permitType);
+        // console.log("fetchPermitActivities:", res.data);
+
+        if (res && res.data) {
+          setPermitActivity(res.data);
+        }
+      } catch (error) {
+        console.error("Error fetching permit activity:", error);
+      }
+      return; // Prevent further processing.
+    }
+
     async function fetchFloor(floorID) {
-      console.log(floorID);
+      // console.log(floorID);
       try {
         const build = await getFloors(floorID);
+        // console.log(build);
         setFloors(build.data.map((item) => ({ name: item.name, id: item.id })));
       } catch (e) {
         console.log(e);
@@ -174,10 +212,11 @@ const AddNewPermit = () => {
     }
 
     async function getUnit(UnitID) {
+      // console.log(UnitID);
       try {
         const unit = await getUnits(UnitID);
         setUnits(unit.data.map((item) => ({ name: item.name, id: item.id })));
-        console.log(unit);
+        // console.log(unit);
       } catch (error) {
         console.log(error);
       }
@@ -191,8 +230,8 @@ const AddNewPermit = () => {
         building_id: BuildID,
       });
     } else if (e.target.type === "select-one" && e.target.name === "floor_id") {
-      const UnitID = Number(e.target.value);
-      await getUnit(UnitID);
+      const floorId = Number(e.target.value);
+      await getUnit(floorId);
       setFormData({
         ...formData,
         floor_id: floorId,
@@ -204,25 +243,24 @@ const AddNewPermit = () => {
       });
     }
   };
-  const handleInputChange = (index, event) => {
-    const { name, value } = event.target;
-    const newActivities = [...activities];
-    newActivities[index][name] = value;
-    setActivities(newActivities);
-  };
+  // console.log("Permit activity:", permit_activity);
+
+  // console.log("Formdata:", formData);
 
   const handleAddActivity = () => {
     setActivities([
       ...activities,
       {
         activity: "",
-        subActivity: "",
-        hazardCategory: "",
+        sub_activity: "",
+        category_of_hazards: "",
         risks: "",
+        subOptions: [],
+        hazardOptions: [],
+        riskOptions: [],
       },
     ]);
   };
-
   const handleDeleteActivity = (index) => {
     const removeActivities = [...activities];
     removeActivities.splice(index, 1);
@@ -232,18 +270,223 @@ const AddNewPermit = () => {
   const handleRadioChange = (event) => {
     const value = event.target.value;
     setShowEntityList(value === "client");
-
-    // Update formData with the selected value
     setFormData((prevData) => ({
       ...prevData,
       client_specific: value,
     }));
   };
-  const firstName = getItemInLocalStorage("Name");
-  const lastName = getItemInLocalStorage("LASTNAME");
-  const email = getItemInLocalStorage("USEREMAIL");
-  const siteName = getItemInLocalStorage("SITENAME");
-  const mobileNumber = getItemInLocalStorage("Mobile");
+
+  // ---------- 1) Load all data on mount ----------
+  useEffect(() => {
+    const loadAllData = async () => {
+      try {
+        // Fetch all 4–5 endpoints in parallel
+        const [
+          permitActivitiesRes,
+          permitSubActivitiesRes,
+          hazardCategoriesRes,
+          permitRisksRes,
+        ] = await Promise.all([
+          getPermitActivity(), // no params, loads all
+          getPermitSubActivity(), // no params, loads all
+          getHazardCategory(),
+          getPermitRisks(),
+        ]);
+
+        // Log each raw API response to console
+        console.log(
+          "RAW Permit Activities Response:",
+          permitActivitiesRes.data
+        );
+        console.log(
+          "RAW Permit Sub Activities Response:",
+          permitSubActivitiesRes.data
+        );
+        console.log(
+          "RAW Hazard Categories Response:",
+          hazardCategoriesRes.data
+        );
+        console.log("RAW Permit Risks Response:", permitRisksRes.data);
+
+        // Store the full results in state
+        setAllPermitActivities(permitActivitiesRes.data);
+        setAllPermitSubActivities(permitSubActivitiesRes.data);
+        setAllHazardCategories(hazardCategoriesRes.data);
+        setAllPermitRisks(permitRisksRes.data);
+      } catch (error) {
+        console.error("Error fetching data in parallel:", error);
+      }
+    };
+
+    loadAllData();
+  }, []);
+
+  const handlePermitTypeChange = (e) => {
+    const selectedTypeId = e.target.value;
+    setFormData({ ...formData, permit_type: selectedTypeId });
+    console.log("formdata after :", formData);
+
+    console.log("allPermitActivities:", allPermitActivities);
+
+    const filteredActivities = allPermitActivities.filter(
+      (act) => act.parent_id === Number(selectedTypeId)
+    );
+
+    console.log("filteredActivities:", filteredActivities);
+    setPermitActivityOptions(filteredActivities);
+  };
+
+  // const handleActivityChange = (index, e) => {
+  //   const selectedActivityId = e.target.value;
+  //   const newActivities = [...activities];
+  //   newActivities[index] = { ...newActivities[index] };
+  //   newActivities[index].activity = selectedActivityId;
+  //   newActivities[index].sub_activity = "";
+  //   newActivities[index].category_of_hazards = "";
+  //   newActivities[index].risks = "";
+  //   newActivities[index].subOptions = [];
+  //   newActivities[index].hazardOptions = [];
+  //   newActivities[index].riskOptions = [];
+  //   console.log("AllPermitSubactivity:", allPermitSubActivities);
+
+  //   const subActivityList = allPermitSubActivities.filter(
+  //     (sub) => sub.permit_activity_setup_id === selectedActivityId
+  //   );
+  //   newActivities[index].subOptions = subActivityList;
+
+  //   setActivities(newActivities);
+  //   setFormData({
+  //     ...formData,
+  //     permit_activities: newActivities,
+  //   });
+  //   console.log("Updated Sub-activities:", newActivities);
+  // };
+
+  const handleActivityChange = (index, e) => {
+    const selectedActivityId = e.target.value;
+    // Create copies to avoid in-place mutation.
+    const newActivities = [...activities];
+    newActivities[index] = { ...newActivities[index] };
+
+    // Store the single selected activity ID.
+    newActivities[index].activity = selectedActivityId;
+
+    // Reset dependent values.
+    newActivities[index].sub_activity = "";
+    newActivities[index].category_of_hazards = "";
+    newActivities[index].risks = "";
+    newActivities[index].subOptions = [];
+    newActivities[index].hazardOptions = [];
+    newActivities[index].riskOptions = [];
+
+    // Filter sub activities using the selected activity ID.
+    const subActivityList = allPermitSubActivities.filter(
+      (sub) => sub.permit_activity_setup_id === Number(selectedActivityId)
+    );
+    console.log("Filtered Sub Activities:", subActivityList);
+    newActivities[index].subOptions = subActivityList;
+
+    setActivities(newActivities);
+  };
+
+  // const handleSubActivityChange = (index, e) => {
+  //   const selectedSubActivityId = e.target.permit_type_id;
+  //   console.log("SubActivity selected value:", value);
+
+  //   const newActivities = [...activities];
+  //   newActivities[index] = { ...newActivities[index] };
+
+  //   newActivities[index].sub_activity = value;
+
+  //   newActivities[index].category_of_hazards = "";
+  //   newActivities[index].risks = "";
+  //   newActivities[index].hazardOptions = [];
+  //   newActivities[index].riskOptions = [];
+
+  //   if (value) {
+  //     const hazardList = allHazardCategories.filter(
+  //       (haz) => haz.permit_type_id === Number(selectedSubActivityId)
+  //     );
+  //     console.log("Filtered Hazard List:", hazardList);
+  //     newActivities[index].hazardOptions = hazardList;
+  //   } else {
+  //     console.log("No sub-activity selected, hazard list is empty");
+  //   }
+
+  //   setActivities(newActivities);
+  // };
+
+  const handleSubActivityChange = (index, e) => {
+    const selectedSubActivityId = e.target.value;
+    const newActivities = [...activities];
+    newActivities[index] = { ...newActivities[index] };
+
+    newActivities[index].sub_activity = selectedSubActivityId;
+    newActivities[index].category_of_hazards = "";
+    newActivities[index].risks = "";
+    newActivities[index].hazardOptions = [];
+    newActivities[index].riskOptions = [];
+
+    // Filter hazard categories where the sub_activity_id matches.
+    const hazardList = allHazardCategories.filter(
+      (haz) => haz.sub_activity_id === Number(selectedSubActivityId)
+    );
+    console.log("Filtered Hazard Categories:", hazardList);
+    newActivities[index].hazardOptions = hazardList;
+
+    setActivities(newActivities);
+  };
+
+  // const handleHazardChange = (index, e) => {
+  //   const { value } = e.target;
+  //   const newActivities = [...activities];
+  //   newActivities[index].category_of_hazards = value;
+  //   newActivities[index].risks = "";
+  //   newActivities[index].riskOptions = [];
+
+  //   const riskList = allPermitRisks.filter(
+  //     (risk) => risk.hazard_category_id === Number(value)
+  //   );
+  //   newActivities[index].riskOptions = riskList;
+
+  //   setActivities(newActivities);
+  // };
+
+  const handleHazardChange = (index, e) => {
+    const selectedHazardId = e.target.value;
+    const newActivities = [...activities];
+    newActivities[index] = { ...newActivities[index] };
+
+    newActivities[index].category_of_hazards = selectedHazardId;
+    newActivities[index].risks = "";
+    newActivities[index].riskOptions = [];
+
+    const riskList = allPermitRisks.filter(
+      (risk) => risk.hazard_category_id === Number(selectedHazardId)
+    );
+    console.log("Filtered Risks:", riskList);
+    newActivities[index].riskOptions = riskList;
+
+    setActivities(newActivities);
+  };
+
+  const handleRiskChange = (index, e) => {
+    const selectedRiskId = e.target.value;
+    const newActivities = [...activities];
+    newActivities[index] = { ...newActivities[index] };
+    newActivities[index].risks = selectedRiskId;
+    setActivities(newActivities);
+  };
+
+  // const handleRiskChange = (index, e) => {
+  //   const { value } = e.target;
+  //   const newActivities = [...activities];
+  //   newActivities[index].risks = value;
+  //   setActivities(newActivities);
+  // };
+
+  // console.log("This is filter data :", filteredData);
+
   return (
     <section className="flex">
       <Navbar />
@@ -657,7 +900,7 @@ const AddNewPermit = () => {
               <select
                 name="permit_type"
                 id=""
-                onChange={handleChange}
+                onChange={handlePermitTypeChange}
                 value={formData.permit_type}
                 className=" border p-1 px-4 border-gray-500 w-1/3  rounded-md "
               >
@@ -677,10 +920,7 @@ const AddNewPermit = () => {
             <div className="w-full ">
               <div className="w-full   rounded-lg ">
                 {activities.map((activity, index) => (
-                  <div
-                    key={activity.id}
-                    className="mb-4 border p-2 rounded-xl mt-1"
-                  >
+                  <div key={index} className="mb-4 border p-2 rounded-xl mt-1">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                       <div className="col-span-1">
                         <label
@@ -694,10 +934,15 @@ const AddNewPermit = () => {
                           type="text"
                           name="activity"
                           value={activity.activity}
-                          onChange={(e) => handleInputChange(index, e)}
+                          onChange={(e) => handleActivityChange(index, e)}
                           className="w-full border p-1 px-4 border-gray-500 rounded-md"
                         >
                           <option value="">Select Activity</option>
+                          {permitActivityOptions.map((act) => (
+                            <option key={act.id} value={act.id}>
+                              {act.name}
+                            </option>
+                          ))}
                         </select>
                       </div>
                       <div className="col-span-1">
@@ -714,9 +959,15 @@ const AddNewPermit = () => {
                           placeholder="Select Sub Activity"
                           name="sub_activity"
                           value={activity.sub_activity}
-                          onChange={(e) => handleInputChange(index, e)}
+                          disabled={!activity.activity}
+                          onChange={(e) => handleSubActivityChange(index, e)}
                         >
                           <option value="">Select Sub Activity</option>
+                          {activity.subOptions?.map((option) => (
+                            <option key={option.id} value={option.id}>
+                              {option.name}
+                            </option>
+                          ))}
                         </select>
                       </div>
                     </div>
@@ -736,9 +987,15 @@ const AddNewPermit = () => {
                           placeholder="Select Category of Hazards"
                           name="category_of_hazards"
                           value={activity.category_of_hazards}
-                          onChange={(e) => handleInputChange(index, e)}
+                          disabled={!activity.sub_activity}
+                          onChange={(e) => handleHazardChange(index,e)}
                         >
                           <option value="">Select Category of Hazards</option>
+                          {activity.hazardOptions?.map((option)=>(
+                            <option key={option.id} value={option.id}>
+                              {option.name}
+                            </option>
+                          ))}
                         </select>
                       </div>
                       <div className="col-span-1">
@@ -755,9 +1012,15 @@ const AddNewPermit = () => {
                           placeholder="Enter Risks"
                           name="risks"
                           value={activity.risks}
-                          onChange={(e) => handleInputChange(index, e)}
+                          disabled={!activity.category_of_hazards}
+                          onChange={(e) => handleRiskChange(index,e)}
                         >
                           <option value="">Select Risks</option>
+                          {activity.riskOptions?.map((option) => (
+                            <option key={option.id} value={option.id}>
+                              {option.risk_name}
+                            </option>
+                          ))}
                         </select>
                       </div>
                     </div>

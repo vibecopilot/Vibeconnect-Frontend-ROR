@@ -1663,6 +1663,42 @@ export const postParking = async (data) =>
       token: token,
     },
   });
+// Permit Add Activity 
+export const fetchPermitActivities = async () => {
+  try {
+    const res = await axiosInstance.get(`/permit_activities.json?token=${token}`, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    })
+    return res.data;
+  } catch (error) {
+    throw error;
+  }
+}
+
+export const fetchPermitSubActivities = async (data) => {
+  axiosInstance.get(`/permit_sub_activities.json?token=${token}`, data, {
+    params: {
+      token: token,
+    }
+  })
+}
+export const fetchPermitRisks = async (data) => {
+  axiosInstance.get(`/permit_risks.json?token=${token}`, data, {
+    params: {
+      token: token,
+    }
+  })
+}
+export const fetchHazardCategories = async (data) => {
+  axiosInstance.get(`/hazard_categories.json?token=${token}`, data, {
+    params: {
+      token: token,
+    }
+  })
+}
+// Permit Detail Activity 
 export const postPermitSubActivity = async (data) =>
   axiosInstance.post(`/permit_sub_activities.json`, data, {
     params: {
@@ -1699,6 +1735,8 @@ export const postPermitActivity = async (data) =>
       token: token,
     },
   });
+
+// Permit Risk
 export const postPermitRisks = async (data) =>
   axiosInstance.post(`/permit_risks.json`, data, {
     params: {
@@ -1729,6 +1767,7 @@ export const deletePermitRisks = async (id) =>
       token: token,
     },
   });
+// Hazards Category
 export const postHazardCategory = async (data) =>
   axiosInstance.post(`/hazard_categories.json`, data, {
     params: {
@@ -1759,6 +1798,8 @@ export const getHazardCategory = async () =>
       token: token,
     },
   });
+
+// Permit Activity Setup
 export const getPermitActivityDetails = async (id) =>
   axiosInstance.get(`/permit_activity_setups/${id}.json`, {
     params: {
