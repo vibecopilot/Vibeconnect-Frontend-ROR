@@ -14,9 +14,6 @@ const ScheduledAudit = () => {
           <Link to={`/admin/scheduled-details/${row.id}`}>
             <BsEye size={15} />
           </Link>
-          <Link to={`/admin/audit/edit-schedule-audit/${row.id}`}>
-            <BiEdit size={15} />
-          </Link>
         </div>
       ),
     },

@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { FiShoppingCart } from "react-icons/fi";
-import { LuPieChart } from "react-icons/lu";
+import { FiShoppingCart ,FiPieChart } from "react-icons/fi";
 import { MdOutlineCurrencyRupee } from "react-icons/md";
 import { IoIosArrowRoundDown, IoIosArrowRoundUp } from "react-icons/io";
 import ReactApexChart from "react-apexcharts";
@@ -331,7 +330,7 @@ function EmployeeBudget() {
                   <p className="text-base text-slate-500 ml-2">Remaining</p>
                 </div>
                 <div className="bg-green-100 rounded-full p-3">
-                  <LuPieChart
+                  <FiPieChart
                     className="items-center text-green-400"
                     size={30}
                   />

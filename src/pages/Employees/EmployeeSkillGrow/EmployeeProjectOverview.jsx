@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { CiCalendar, CiFlag1 } from "react-icons/ci";
 import { FiMessageSquare, FiShoppingCart } from "react-icons/fi";
 import { IoAddCircleOutline, IoClose, IoTimeOutline } from "react-icons/io5";
-import { LuPieChart } from "react-icons/lu";
+import { FiPieChart } from "react-icons/fi";
 import { MdEdit, MdOutlineCurrencyRupee, MdOutlineEmail } from "react-icons/md";
 import profile1 from "/profile1.jpg";
 import profile2 from "/profile2.jpg";
@@ -11,7 +11,7 @@ import { FaCheck } from "react-icons/fa6";
 import { GoAlert } from "react-icons/go";
 import ReactApexChart from "react-apexcharts";
 import { BsDatabaseDash } from "react-icons/bs";
-import { Link } from "react-router-dom";
+// import { Link } from "react-router-dom";
 import Switch from "../../../Buttons/Switch";
 function EmployeeProjectOverview() {
   const [overview, setOverview] = useState(false);
@@ -355,7 +355,7 @@ function EmployeeProjectOverview() {
                 <p className="text-base text-gray-700 ml-2">Remaining</p>
               </div>
               <div className="bg-green-100 rounded-full p-3">
-                <LuPieChart className="items-center text-green-400" size={30} />
+                <FiPieChart className="items-center text-green-400" size={30} />
               </div>
             </div>
             <div className="flex justify-between gap-5 items-center p-5 px-10 border-l border-t border-gray-300">

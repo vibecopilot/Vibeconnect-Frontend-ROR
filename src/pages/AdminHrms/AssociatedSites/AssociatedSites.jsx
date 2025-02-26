@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Table from "../../../components/table/Table";
 import { BiEdit } from "react-icons/bi";
+import { BsEye ,BsDownload } from "react-icons/bs";
 import {
   PiPlusCircle,
   PiPlusCircleBold,
@@ -45,12 +46,28 @@ const AssociatedSites = () => {
     pan: false,
     esic: false,
     BVG: false,
+    clientName: "",
   });
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  function qrDownload(imageUrl) {
+    fetch(imageUrl)
+      .then((response) => response.blob())
+      .then((blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "image.png"; // Set the filename
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+      })
+      .catch((error) => console.error("Error downloading image:", error));
+  }
   const listItemStyle = {
     listStyleType: "disc",
     color: "gray",
@@ -64,7 +81,7 @@ const AssociatedSites = () => {
       sortable: true,
     },
     {
-      name: "Name",
+      name: "Site Name",
       selector: (row) => row.site_name,
       sortable: true,
     },
@@ -106,9 +123,42 @@ const AssociatedSites = () => {
         </div>
       ),
     },
+    {
+      name: "QR Code",
+      cell: (row) => (
+        <div className="flex items-center gap-4">
+          {roleAccess.can_add_edit_associated_sites && (
+            <a
+              href={`https://api.hrms.vibecopilot.ai/${row.qr_code}`}
+              target="_blank"
+            >
+              <BsEye size={15} />
+            </a>
+          )}
+        </div>
+      ),
+    },
+    {
+      name: "Download Code",
+      cell: (row) => (
+        <div className="flex items-center gap-4">
+          {roleAccess.can_add_edit_associated_sites && (
+            <button
+              onClick={() =>
+                qrDownload(`https://api.hrms.vibecopilot.ai/${row.qr_code}`)
+              }
+            >
+               <BsDownload size={15} />
+            </button>
+          )}
+        </div>
+      ),
+    },
   ];
+
   const [siteDetails, setSiteDetails] = useState({
     siteName: "",
+    clientName: "",
     address1: "",
     address2: "",
     city: "",
@@ -132,16 +182,17 @@ const AssociatedSites = () => {
       const res = await getAssociatedSiteDetails(siteID);
       setSiteDetails({
         ...siteDetails,
-        siteName: res.site_name,
-        address1: res.address_1,
-        address2: res.address_2,
-        city: res.city,
-        state: res.state,
-        country: res.country,
-        latitude: res.latitude,
-        longitude: res.longitude,
-        pinCode: res.zip_code,
-        status: res.status,
+        siteName: res?.site_name,
+        clientName: res?.client_name || "",
+        address1: res?.address_1,
+        address2: res?.address_2,
+        city: res?.city,
+        state: res?.state,
+        country: res?.country,
+        latitude: res?.latitude,
+        longitude: res?.longitude,
+        pinCode: res?.zip_code,
+        status: res?.status,
         radius: res?.radius,
         aadhar: res?.aadhar_required,
         BVG: res?.pan_required,
@@ -199,6 +250,7 @@ const AssociatedSites = () => {
     }
     const postData = new FormData();
     postData.append("site_name", formData.siteName);
+    postData.append("client_name", formData.clientName);
     postData.append("address_1", formData.address1);
     postData.append("address_2", formData.address2);
     postData.append("city", formData.city);
@@ -224,6 +276,7 @@ const AssociatedSites = () => {
       setIsModalOpen1(false);
       setFormData({
         siteName: "",
+        clientName: "",
         address1: "",
         address2: "",
         city: "",
@@ -233,6 +286,11 @@ const AssociatedSites = () => {
         latitude: "",
         longitude: "",
         radius: "",
+
+        aadhar: false,
+        BVG: false,
+        esic: false,
+        pan: false,
       });
     } catch (error) {
       console.log(error);
@@ -242,7 +300,7 @@ const AssociatedSites = () => {
   const handleEditChange = (e) => {
     setSiteDetails({ ...siteDetails, [e.target.name]: e.target.value });
   };
-
+  console.log(siteDetails);
   const handleEditAssociatedSites = async () => {
     if (!siteDetails.siteName) {
       toast.error("Site name is required");
@@ -270,6 +328,7 @@ const AssociatedSites = () => {
     }
     const editData = new FormData();
     editData.append("site_name", siteDetails.siteName);
+    editData.append("client_name", siteDetails.clientName);
     editData.append("address_1", siteDetails.address1);
     editData.append("address_2", siteDetails.address2);
     editData.append("city", siteDetails.city);
@@ -306,7 +365,7 @@ const AssociatedSites = () => {
       setFilteredSites(associatedSites);
     } else {
       const filteredResults = associatedSites.filter((role) =>
-        role?.site_name.toLowerCase().includes(searchValue.toLowerCase())
+        role?.site_name?.toLowerCase().includes(searchValue.toLowerCase())
       );
       setFilteredSites(filteredResults);
     }
@@ -381,6 +440,20 @@ const AssociatedSites = () => {
                 />
                 {/* <p>Active</p> */}
                 {/* </div> */}
+              </div>
+              <div className="flex flex-col gap-1 ">
+                <label htmlFor="" className="font-medium">
+                  Client name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="clientName"
+                  value={siteDetails.clientName}
+                  onChange={handleEditChange}
+                  id=""
+                  className="border border-gray-400 rounded-md p-2"
+                  placeholder="Client name"
+                />
               </div>
               <div className="flex flex-col gap-1 ">
                 <label htmlFor="" className="font-medium">
@@ -623,6 +696,20 @@ const AssociatedSites = () => {
               </h2>
             </div>
             <div className="max-h-96 overflow-y-auto hide-scrollbar">
+              <div className="flex flex-col gap-1 ">
+                <label htmlFor="" className="font-medium">
+                  Client name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="clientName"
+                  value={formData.clientName}
+                  onChange={handleChange}
+                  id=""
+                  className="border border-gray-400 rounded-md p-2"
+                  placeholder="Client name"
+                />
+              </div>
               <div className="flex flex-col gap-1 ">
                 <label htmlFor="" className="font-medium">
                   Site name <span className="text-red-500">*</span>

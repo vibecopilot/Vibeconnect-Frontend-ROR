@@ -3,17 +3,32 @@ import toast from "react-hot-toast";
 import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
 import { useNavigate } from "react-router-dom";
 import wave from "/wave.png";
-import { getHRMSEmployeeID, login, vibeLogin } from "../../api";
-import { setItemInLocalStorage } from "../../utils/localStorage";
+import {
+  getEmployeeAssociatedSites,
+  getHRMSEmployeeID,
+  login,
+  vibeLogin,
+  getAdminAccess, // newly imported API call
+} from "../../api";
+import { setItemInLocalStorage, getItemInLocalStorage } from "../../utils/localStorage";
 
 const Login = () => {
   const navigate = useNavigate();
+
+  // Form and password states
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
   const [password, showPassword] = useState(false);
   const [page, setPage] = useState("login");
+
+  // New states for role access
+  const [userName, setUsername] = useState("");
+  const [roleAccess, setRoleAccess] = useState({});
+  const [clientDashboardVisible, setClientDashboardVisible] = useState(false);
+
+  // Handle input change
   const onChange = (e) => {
     setFormData((prev) => ({
       ...prev,
@@ -21,16 +36,37 @@ const Login = () => {
     }));
   };
 
+  // If token exists, check role access and redirect accordingly.
   useEffect(() => {
     const token = localStorage.getItem("TOKEN");
-    const user = localStorage.getItem("Name");
-    // console.log(user)
-    if (token) {
-      navigate("/dashboard");
-      toast.success("You are already logged in!");
+    const approverId = localStorage.getItem("APPROVERID");
+    const hrmsOrgId = localStorage.getItem("HRMSORGID");
+    if (token && approverId && hrmsOrgId) {
+      const fetchRoleAccess = async () => {
+        try {
+          const res = await getAdminAccess(hrmsOrgId, approverId);
+          if (res && res.length > 0) {
+            const clientDashboardAccess =
+              res[0].client_dashboard === true || res[0].client_dashboard === "true";
+            if (clientDashboardAccess) {
+              navigate("/admin/hrms/client-dashboard");
+            } else {
+              navigate("/dashboard");
+            }
+          } else {
+            navigate("/dashboard");
+          }
+          toast.success("You are already logged in!");
+        } catch (error) {
+          console.error("Error fetching admin access:", error);
+          navigate("/dashboard");
+        }
+      };
+      fetchRoleAccess();
     }
-  }, []);
+  }, [navigate]);
 
+  // Handle login form submission
   const onSubmit = async (e) => {
     e.preventDefault();
     if (!formData.email || !formData.password) {
@@ -45,96 +81,136 @@ const Login = () => {
         },
       });
 
+      // Store various data in local storage
       const selectedSiteId = response.data.user.selected_site_id;
-      const userName = response.data.user.firstname;
+      const userNameFromResponse = response.data.user.firstname;
       const userEmail = response.data?.user?.email;
       const siteName = response.data?.site?.name;
       const mobileNumber = response.data?.user?.mobile;
       setItemInLocalStorage("SITENAME", siteName);
       setItemInLocalStorage("USEREMAIL", userEmail);
       setItemInLocalStorage("SITEID", selectedSiteId);
-      setItemInLocalStorage("Name", userName);
+      setItemInLocalStorage("Name", userNameFromResponse);
       setItemInLocalStorage("Mobile", mobileNumber);
       const features = response.data.features;
       setItemInLocalStorage("FEATURES", features);
 
       const featNames = features.map((feature) => feature.feature_name);
-      // vibe login
+
+      // (Optional) Vibe Login logic commented out
       // if (selectedSiteId === 10) {
-      if (featNames.includes("project_task")) {
-        console.log("running copilot login");
+      //   if (featNames.includes("project_task")) {
+      //     const vibeResponse = await vibeLogin({
+      //       email: formData.email,
+      //       password: formData.password,
+      //     });
+      //     const vibeToken = vibeResponse.data.token.access.token;
+      //     setItemInLocalStorage("VIBETOKEN", vibeToken);
+      //     const vibeUserId = vibeResponse.data.data.user_id;
+      //     setItemInLocalStorage("VIBEUSERID", vibeUserId);
+      //     const vibeOrganizationId = vibeResponse.data.data.organization_id;
+      //     setItemInLocalStorage("VIBEORGID", vibeOrganizationId);
+      //   }
+      // }
 
-        const vibeResponse = await vibeLogin({
-          email: formData.email,
-          password: formData.password,
-        });
-        console.log("vibe", vibeResponse);
-        const vibeToken = vibeResponse.data.token.access.token;
-        setItemInLocalStorage("VIBETOKEN", vibeToken);
-        const vibeUserId = vibeResponse.data.data.user_id;
-        setItemInLocalStorage("VIBEUSERID", vibeUserId);
-        const vibeOrganizationId = vibeResponse.data.data.organization_id;
-        setItemInLocalStorage("VIBEORGID", vibeOrganizationId);
-      }
-
+      // If HRMS feature is available, get employee and associated site info.
       if (featNames.includes("hrms") && response.data.user.organization_id) {
         try {
-          const res = await getHRMSEmployeeID(response.data.user.id);
-          setItemInLocalStorage("HRMS_EMPLOYEE_ID", res.id);
-          setItemInLocalStorage("APPROVERID", res.id);
+          const hrmsRes = await getHRMSEmployeeID(response.data.user.id);
+          const siteRes = await getEmployeeAssociatedSites(hrmsRes.id);
+          const associatedSiteID = siteRes[0].associated_organization;
+          setItemInLocalStorage("HRMS_SITE_ID", associatedSiteID);
+          setItemInLocalStorage("HRMS_EMPLOYEE_ID", hrmsRes.id);
+          setItemInLocalStorage("APPROVERID", hrmsRes.id);
         } catch (error) {
           console.error("Error getting employee ID:", error);
         }
       }
 
-      //
-      console.log("skipped copilot");
+      // Store additional user details
       const loginD = response.data.user;
       setItemInLocalStorage("user", loginD);
-      console.log("User details", loginD);
-      const userId = response.data.user.id;
-      setItemInLocalStorage("UserId", userId);
-      // console.log(userId)
-
-      const unitId = response.data.user.unit_id;
-      setItemInLocalStorage("UNITID", unitId);
-
-      const building = response.data.buildings;
-      setItemInLocalStorage("Building", building);
-      // console.log("Buildingss-",building)
-
-      const categories = response.data.categories;
-      setItemInLocalStorage("categories", categories);
+      setItemInLocalStorage("UserId", response.data.user.id);
+      setItemInLocalStorage("UNITID", response.data.user.unit_id);
+      setItemInLocalStorage("Building", response.data.buildings);
+      setItemInLocalStorage("categories", response.data.categories);
       const token = response.data.user.api_key;
       setItemInLocalStorage("TOKEN", token);
-
-      // console.log(userName)
-      const lastName = response.data.user.lastname;
-      setItemInLocalStorage("LASTNAME", lastName);
-
+      setItemInLocalStorage("LASTNAME", response.data.user.lastname);
       const userType = response.data.user.user_type;
       setItemInLocalStorage("USERTYPE", userType);
-      const CompanyId = response.data.user.company_id;
-      setItemInLocalStorage("COMPANYID", CompanyId);
-      // setItemInLocalStorage("HRMSORGID", 1);
+      setItemInLocalStorage("COMPANYID", response.data.user.company_id);
       setItemInLocalStorage("HRMSORGID", response.data.user.organization_id);
+      setItemInLocalStorage("STATUS", response.data.statuses);
+      setItemInLocalStorage("complaint", response.data.complanits);
 
-      // setItemInLocalStorage("HRMS_EMPLOYEE_ID", 22);
-
-      // console.log(userType)
-
-      const statuses = response.data.statuses;
-      setItemInLocalStorage("STATUS", statuses);
-      // console.log("Status", statuses)
-
-      const complaint = response.data.complanits;
-      setItemInLocalStorage("complaint", complaint);
-
-      // console.log(userName)
-      // console.log("Sit",selectedSiteId)
       toast.loading("Processing your data please wait...");
+
+      // -------------------------------
+      // ROLE ACCESS CHECK FOR CLIENT DASHBOARD
+      // -------------------------------
+      const approverId = getItemInLocalStorage("APPROVERID");
+      const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
+      // if (hrmsOrgId && approverId) {
+      //   try {
+      //     const accessRes = await getAdminAccess(hrmsOrgId, approverId);
+      //     if (accessRes && accessRes.length > 0) {
+      //       const clientDashboardAccess =
+      //         accessRes[0].client_dashboard === true || accessRes[0].client_dashboard === "true";
+      //       // Save full role access details in state if needed
+      //       setRoleAccess(accessRes[0]);
+      //       setClientDashboardVisible(clientDashboardAccess);
+      //       setUsername(accessRes[0].employee_name);
+      //       console.log("Client Dashboard Visibility:", clientDashboardAccess);
+      //       if (clientDashboardAccess) {
+      //         toast.dismiss();
+      //         navigate("/admin/hrms/client-dashboard");
+      //         window.location.reload();
+      //         return; // Stop further navigation
+      //       }
+      //     }
+      //   } catch (error) {
+      //     console.error("Error fetching admin access:", error);
+      //   }
+      // }
+
+      if (hrmsOrgId && approverId) {
+        try {
+          const accessRes = await getAdminAccess(hrmsOrgId, approverId);
+          if (accessRes && accessRes.length > 0) {
+            const clientDashboardAccess =
+              accessRes[0].client_dashboard === true || accessRes[0].client_dashboard === "true";
+            // Save full role access details in state if needed
+            setRoleAccess(accessRes[0]);
+            setClientDashboardVisible(clientDashboardAccess);
+            setUsername(accessRes[0].employee_name);
+            
+            // Store clientDashboardVisible in localStorage so App.jsx can check it
+            localStorage.setItem('CLIENT_DASHBOARD_VISIBLE', clientDashboardAccess);
+            
+            console.log("Client Dashboard Visibility:", clientDashboardAccess);
+            if (clientDashboardAccess) {
+              toast.dismiss();
+              navigate("/admin/hrms/client-dashboard");
+              window.location.reload();
+              return; // Stop further navigation
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching admin access:", error);
+        }
+      }
+      // -------------------------------
+      // END ROLE ACCESS CHECK
+      // -------------------------------
+
+      // Continue with the normal navigation logic if client dashboard is not to be shown
       if (userType === "pms_admin") {
         navigate("/dashboard");
+      } else if (userType === "auditor") {
+        navigate("/dashboard");
+      } else if (userType === "vendor") {
+        navigate("/compliance/vendor/dashboard");
       } else {
         navigate(
           selectedSiteId === 10
@@ -152,6 +228,7 @@ const Login = () => {
     }
   };
 
+  // Toggle password visibility
   const togglePassword = () => {
     showPassword(!password);
   };
@@ -167,15 +244,15 @@ const Login = () => {
         opacity: 0.9,
       }}
     >
-      <div className=" rounded-md  ">
-        <h1 className="text-3xl text-white  p-2 px-10 font-semibold jersey-15-regular ">
+      <div className="rounded-md">
+        <h1 className="text-3xl text-white p-2 px-10 font-semibold jersey-15-regular">
           VIBE CONNECT
         </h1>
       </div>
-      <div className=" flex justify-center  h-[90vh] items-center">
+      <div className="flex justify-center h-[90vh] items-center">
         <div className="bg-white border-2 border-white w-[30rem] rounded-xl max-h-full p-5 shadow-2xl">
           <h1 className="text-2xl font-semibold text-center">Login</h1>
-          <form onSubmit={onSubmit} className="m-2 flex flex-col gap-4 w-full ">
+          <form onSubmit={onSubmit} className="m-2 flex flex-col gap-4 w-full">
             <div className="flex flex-col gap-2 mx-5">
               <label htmlFor="email" className="font-medium">
                 Email:
@@ -184,7 +261,7 @@ const Login = () => {
                 type="email"
                 name="email"
                 id="email"
-                className=" rounded-sm p-1 px-2 border border-black"
+                className="rounded-sm p-1 px-2 border border-black"
                 placeholder="example@company.com"
                 onChange={onChange}
                 value={formData.email}
@@ -204,7 +281,7 @@ const Login = () => {
                   onChange={onChange}
                   value={formData.password}
                 />
-                <div className="p-1 rounded-full  absolute top-12 right-2 transform -translate-y-1/2 cursor-pointer font">
+                <div className="p-1 rounded-full absolute top-12 right-2 transform -translate-y-1/2 cursor-pointer">
                   {password ? (
                     <AiFillEye onClick={togglePassword} />
                   ) : (
@@ -215,7 +292,7 @@ const Login = () => {
             )}
             <div className="mx-5 flex gap-2">
               <input type="checkbox" name="" id="" />
-              <label htmlFor="" className="">
+              <label className="" htmlFor="">
                 Remember Me
               </label>
             </div>
@@ -223,14 +300,14 @@ const Login = () => {
               {page === "login" && (
                 <button
                   type="submit"
-                  className="w-20 my-2 bg-black text-white p-1 rounded-md text-xl font-bold hover:bg-gray-300 "
+                  className="w-20 my-2 bg-black text-white p-1 rounded-md text-xl font-bold hover:bg-gray-300"
                 >
                   Login
                 </button>
               )}
               <p
                 onClick={() => setPage("sso")}
-                className="w-20 my-2 border-black border-2 p-1 cursor-pointer text-center rounded-md text-xl font-medium hover:bg-gray-300 "
+                className="w-20 my-2 border-black border-2 p-1 cursor-pointer text-center rounded-md text-xl font-medium hover:bg-gray-300"
               >
                 {page === "sso" ? "Submit" : "SSO"}
               </p>
