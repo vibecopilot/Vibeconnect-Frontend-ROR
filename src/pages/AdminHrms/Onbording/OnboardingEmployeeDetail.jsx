@@ -54,9 +54,9 @@ const OnboardingEmployeeDetail = ({
     department: "",
     designation: "",
     supervisor: "",
-    monthlyCTC:""
+    monthlyCTC: "",
   });
-console.log(formData)
+  console.log(formData);
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -136,10 +136,6 @@ console.log(formData)
   }, []);
 
   const handleAddEmployment = async () => {
-    if (!formData.employeeCode) {
-      toast.error("Employee Code is required!");
-      return;
-    }
     if (!formData.joinDate) {
       toast.error("Joining Date is required!");
       return;
@@ -171,21 +167,21 @@ console.log(formData)
     }
   };
 
-  const employeeId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
-    const orgId = getItemInLocalStorage("HRMSORGID");
-    const [roleAccess, setRoleAccess] = useState({});
-    useEffect(() => {
-      const fetchRoleAccess = async () => {
-        try {
-          const res = await getAdminAccess(orgId, employeeId);
-  
-          setRoleAccess(res[0]);
-        } catch (error) {
-          console.log(error);
-        }
-      };
-      fetchRoleAccess();
-    }, []);
+  const employeeId = getItemInLocalStorage("APPROVERID");
+  const orgId = getItemInLocalStorage("HRMSORGID");
+  const [roleAccess, setRoleAccess] = useState({});
+  useEffect(() => {
+    const fetchRoleAccess = async () => {
+      try {
+        const res = await getAdminAccess(orgId, employeeId);
+
+        setRoleAccess(res[0]);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchRoleAccess();
+  }, []);
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
@@ -200,7 +196,7 @@ console.log(formData)
         <div className="grid md:grid-cols-3 gap-2 border bg-blue-50 rounded-md p-2">
           <div className="grid grid-cols-2 gap-2">
             <label htmlFor="" className="font-medium">
-              Name :{" "}
+              Name : 
             </label>
             <p>
               {details?.first_name} {details?.last_name}
@@ -278,7 +274,7 @@ console.log(formData)
 
             <div className="grid gap-2 items-center w-full">
               <label htmlFor="jobTitle" className="font-semibold">
-                Joining Date:
+                Joining Date:<span className="text-red-400">*</span>
               </label>
               <input
                 type="date"
@@ -292,7 +288,7 @@ console.log(formData)
             </div>
             <div className="grid gap-2 items-center w-full">
               <label htmlFor="jobTitle" className="font-semibold">
-                Employment Type:
+                Employment Type:<span className="text-red-400">*</span>
               </label>
               <select
                 className="border border-gray-400 p-2 rounded-md"
@@ -403,12 +399,14 @@ console.log(formData)
           </div>
         </div>
         <div className="flex justify-center gap-2 border-t p-2">
-         {roleAccess?.can_approve_reject_onboarding_request && <button
-            className="flex items-center gap-2 bg-green-400 p-2 px-4 rounded-full text-white"
-            onClick={handleAddEmployment}
-          >
-            <FaCheck /> Submit & Approve
-          </button>}
+          {roleAccess?.can_approve_reject_onboarding_request && (
+            <button
+              className="flex items-center gap-2 bg-green-400 p-2 px-4 rounded-full text-white"
+              onClick={handleAddEmployment}
+            >
+              <FaCheck /> Submit & Approve
+            </button>
+          )}
           <button
             onClick={setDetailsModal}
             className="flex items-center gap-2 bg-red-400 p-2 rounded-full text-white px-4"

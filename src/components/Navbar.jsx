@@ -33,7 +33,6 @@ import {
   RiSettings4Line,
   RiUserLocationFill,
 } from "react-icons/ri";
-import { LuParkingSquare, LuSettings2 } from "react-icons/lu";
 import {
   IoBusinessOutline,
   IoCashOutline,
@@ -57,6 +56,7 @@ import {
   FaDollarSign,
   FaFileInvoice,
   FaFileWord,
+  FaParking,
   FaRegFile,
   FaRegFileAlt,
   FaRegFilePowerpoint,
@@ -65,6 +65,7 @@ import {
   FaUserFriends,
 } from "react-icons/fa";
 import { IoIosPeople, IoMdSettings } from "react-icons/io";
+import { IoSettings } from "react-icons/io5";
 import { useSelector } from "react-redux";
 import { ImFileText2 } from "react-icons/im";
 import { FcMoneyTransfer } from "react-icons/fc";
@@ -159,7 +160,7 @@ const Navbar = () => {
         </div>
         <div className="flex flex-col h-full gap-4 mb-5 relative">
           {/* admin */}
-          {user === "pms_admin" && (
+          {(user === "pms_admin" || user === "auditor") && (
             <>
               {/* <Link  className=" text-white" >
           
@@ -355,6 +356,36 @@ const Navbar = () => {
                       } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
                     >
                       Calendar
+                    </h2>
+                  </NavLink>
+                )}
+                {feat.includes("compliance") && (
+                  <NavLink
+                    to={"/compliance"}
+                    className={({ isActive }) =>
+                      ` ${
+                        isActive
+                          ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
+                          : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
+                      }`
+                    }
+                  >
+                    <div>
+                      {React.createElement(AiOutlineAudit, { size: "20" })}
+                    </div>
+                    <h2
+                      className={`whitespace-pre duration-300 ${
+                        !open && "opacity-0 translate-x-28 overflow-hidden"
+                      }`}
+                    >
+                      Compliance Tracker
+                    </h2>
+                    <h2
+                      className={`${
+                        open && "hidden"
+                      } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
+                    >
+                      Compliance Tracker
                     </h2>
                   </NavLink>
                 )}
@@ -953,7 +984,7 @@ const Navbar = () => {
                     }
                   >
                     <div>
-                      {React.createElement(LuSettings2, { size: "20" })}
+                      {React.createElement(IoSettings, { size: "20" })}
                     </div>
                     <h2
                       className={`whitespace-pre duration-300 ${
@@ -1381,7 +1412,7 @@ const Navbar = () => {
                     }
                   >
                     <div>
-                      {React.createElement(LuParkingSquare, { size: "20" })}
+                      {React.createElement(FaParking, { size: "20" })}
                     </div>
 
                     <h2
@@ -1412,7 +1443,7 @@ const Navbar = () => {
                     }
                   >
                     <div>
-                      {React.createElement(LuParkingSquare, { size: "20" })}
+                      {React.createElement(FaParking, { size: "20" })}
                     </div>
 
                     <h2
@@ -1469,7 +1500,7 @@ const Navbar = () => {
           )}
 
           {/* user */}
-          {user !== "pms_admin" && (
+          {user !== "pms_admin" && user !== "auditor" && (
             <>
               {/* {siteId === 25 ? */}
               <NavLink
@@ -2137,7 +2168,7 @@ const Navbar = () => {
                   }
                 >
                   <div>
-                    {React.createElement(LuParkingSquare, { size: "20" })}
+                    {React.createElement(FaParking, { size: "20" })}
                   </div>
 
                   <h2

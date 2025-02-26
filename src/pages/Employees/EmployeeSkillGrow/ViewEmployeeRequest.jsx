@@ -3,8 +3,7 @@ import Navbar from "../../../components/Navbar";
 import { CiCalendar, CiFlag1 } from "react-icons/ci";
 import { IoTimeOutline } from "react-icons/io5";
 import { MdOutlineCurrencyRupee } from "react-icons/md";
-import { FiShoppingCart } from "react-icons/fi";
-import { LuPieChart } from "react-icons/lu";
+import { FiShoppingCart , FiPieChart } from "react-icons/fi";
 import { BsDatabaseDash } from "react-icons/bs";
 import profile1 from "/profile1.jpg";
 import profile2 from "/profile2.jpg";
@@ -407,7 +406,7 @@ function ViewEmployeeRequest() {
                   <p className="text-base text-gray-700 ml-2">Remaining</p>
                 </div>
                 <div className="bg-green-100 rounded-full p-3">
-                  <LuPieChart
+                  <FiPieChart
                     className="items-center text-green-400"
                     size={30}
                   />

@@ -15,6 +15,7 @@ import {
   hrmsDomain,
   postUniformApproval,
   postUniformRequest,
+  getAssociatedSites,
 } from "../../../api";
 import Select from "react-select";
 import toast from "react-hot-toast";
@@ -36,6 +37,11 @@ const PendingUniformRequest = () => {
           </button>
         </div>
       ),
+    },
+    {
+      name: "Site Name",
+      selector: (row) => row.associated_organization_name,
+      sortable: true,
     },
     {
       name: "Employee Name",
@@ -94,20 +100,22 @@ const PendingUniformRequest = () => {
       name: "Action",
       cell: (row) => (
         <div className="flex items-center gap-4">
-          {roleAccess?.can_approve_reject_uniform_request && <>
-          <button
-            className="bg-green-400 text-white p-2 rounded-full"
-            onClick={() => handleUniformApproval(row.id, "Approved")}
-            >
-            <FaCheck title="Approve uniform" />
-          </button>
-          <button
-            className="bg-red-400 text-white p-2 rounded-full"
-            onClick={() => handleUniformApproval(row.id, "Rejected")}
-            >
-            <MdClose title="Reject uniform" size={15} />
-          </button>
-            </>}
+          {roleAccess?.can_approve_reject_uniform_request && (
+            <>
+              <button
+                className="bg-green-400 text-white p-2 rounded-full"
+                onClick={() => handleUniformApproval(row.id, "Approved")}
+              >
+                <FaCheck title="Approve uniform" />
+              </button>
+              <button
+                className="bg-red-400 text-white p-2 rounded-full"
+                onClick={() => handleUniformApproval(row.id, "Rejected")}
+              >
+                <MdClose title="Reject uniform" size={15} />
+              </button>
+            </>
+          )}
         </div>
       ),
     },
@@ -178,18 +186,35 @@ const PendingUniformRequest = () => {
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
+
   const [requests, setRequests] = useState([]);
   const [filteredRequests, setFilteredRequests] = useState([]);
+
+  const [allSites, setAllSites] = useState([]);
+  const [selectedSite, setSelectedSite] = useState("");
+
   const fetchUniformRequests = async () => {
     try {
       const res = await getUniformRequest(hrmsOrgId);
       const filteredData = res.filter((item) => item.status === "Pending");
       setRequests(filteredData);
       setFilteredRequests(filteredData);
+
+      const allSites = await getAssociatedSites(orgId);
+      console.log("allSites:",allSites)
+      // Extract unique associated organization names
+      const uniqueSites = [
+        ...new Set(
+          allSites.map((item) => item.site_name)
+        ),
+      ];
+      console.log("Unique Sites:", uniqueSites); // Check uniqueSites value
+      setAllSites(uniqueSites);
     } catch (error) {
       console.log(error);
     }
   };
+
   useEffect(() => {
     fetchUniformRequests();
   }, []);
@@ -201,10 +226,30 @@ const PendingUniformRequest = () => {
     if (searchValue.trim() === "") {
       setFilteredRequests(requests);
     } else {
-      const filteredResult = requests.filter((employee) =>
-        employee.employee_name.toLowerCase().includes(searchValue.toLowerCase())
+      const filteredResult = requests.filter(
+        (employee) =>
+          employee.associated_organization_name
+            .toLowerCase()
+            .includes(searchValue.toLowerCase()) ||
+          employee.employee_name
+            .toLowerCase()
+            .includes(searchValue.toLowerCase())
       );
       setFilteredRequests(filteredResult);
+    }
+  };
+
+  const handleDropdownChange = (e) => {
+    const selectedValue = e.target.value;
+    setSelectedSite(selectedValue);
+
+    if (selectedValue === "All") {
+      setFilteredRequests(requests); // Show all data if "All" is selected
+    } else {
+      const filteredData = requests.filter(
+        (item) => item.associated_organization_name === selectedValue
+      );
+      setFilteredRequests(filteredData);
     }
   };
 
@@ -223,6 +268,7 @@ const PendingUniformRequest = () => {
       console.log(error);
     }
   };
+
   const [empDetails, setEmpDetails] = useState({});
   const [empSiteDetails, setEmpSiteDetails] = useState({});
   const fetchEmployeeDetails = async (employeeId) => {
@@ -242,23 +288,22 @@ const PendingUniformRequest = () => {
     }
   };
 
-
   // can_approve_reject_uniform_request
   const employeeId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
-    const orgId = getItemInLocalStorage("HRMSORGID");
-    const [roleAccess, setRoleAccess] = useState({});
-    useEffect(() => {
-      const fetchRoleAccess = async () => {
-        try {
-          const res = await getAdminAccess(orgId, employeeId);
-  
-          setRoleAccess(res[0]);
-        } catch (error) {
-          console.log(error);
-        }
-      };
-      fetchRoleAccess();
-    }, []);
+  const orgId = getItemInLocalStorage("HRMSORGID");
+  const [roleAccess, setRoleAccess] = useState({});
+  useEffect(() => {
+    const fetchRoleAccess = async () => {
+      try {
+        const res = await getAdminAccess(orgId, employeeId);
+
+        setRoleAccess(res[0]);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchRoleAccess();
+  }, []);
 
   return (
     <section className="flex">
@@ -266,11 +311,24 @@ const PendingUniformRequest = () => {
         <div className="flex justify-between gap-2 my-2">
           <input
             type="text"
-            placeholder="Search by employee name"
+            placeholder="Search by employee name & Site name"
             className="border border-gray-400 w-full placeholder:text-sm rounded-lg p-2"
             value={searchText}
             onChange={handleSearch}
           />
+          {/* DROPDOWN */}
+          <select
+            onChange={handleDropdownChange}
+            className="border border-gray-400 w-full placeholder:text-sm rounded-lg p-2"
+            value={selectedSite}
+          >
+            <option value="All">All Sites</option>
+            {allSites.map((site, index) => (
+              <option key={index} value={site}>
+                {site}
+              </option>
+            ))}
+          </select>
           <div className="flex gap-2">
             {/* <button
               className="px-4 py-2 bg-blue-600 text-white rounded-md"
@@ -563,7 +621,9 @@ const PendingUniformRequest = () => {
                 {details.id_card !== null && (
                   <div className="grid grid-cols-2">
                     <p className="font-medium">ID Card:</p>
-                    <p className="">{details.id_card === "Yes"? "Required": "Not Required"}</p>
+                    <p className="">
+                      {details.id_card === "Yes" ? "Required" : "Not Required"}
+                    </p>
                   </div>
                 )}
               </div>

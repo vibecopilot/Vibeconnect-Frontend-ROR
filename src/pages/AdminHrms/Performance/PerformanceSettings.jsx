@@ -2,12 +2,13 @@ import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { ImFileText2 } from "react-icons/im";
 import AdminHRMS from "../AdminHrms";
-import { LuBookTemplate, LuGoal } from "react-icons/lu";
+import { LuGoal } from "react-icons/lu";
 import { MdAutoGraph } from "react-icons/md";
 import { FaChevronRight } from "react-icons/fa";
 import GoalCompetency from "./GoalCompetency";
 import EvaluationTemplate from "./EvaluationTemplate";
 import PerformanceCycle from "./PerformanceCycle";
+import { PiBookThin } from "react-icons/pi";
 
 const PerformanceSettings = () => {
   const stepsData = [
@@ -15,7 +16,7 @@ const PerformanceSettings = () => {
     {
       id: 1,
       title: "2. Evaluation Template",
-      icon: <LuBookTemplate />,
+      icon: <PiBookThin />,
     },
     {
       id: 2,
