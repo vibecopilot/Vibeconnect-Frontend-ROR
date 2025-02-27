@@ -151,12 +151,12 @@ const EmployeeCount = ({ dashboardData, siteId }) => {
         // });
         setTotalEmployees({ Total: total });
       } else {
-        if (!siteId || siteId.trim() === "" || siteId === "all") {
+        if (!siteId || siteId.site_name === "Select All Sites"|| siteId === "all") {
           const res = await getTotalHRMSEmployeeCount(hrmsOrgId);
           setTotalEmployees(res || []);
         } else {
           // const res = await getTotalHRMSEmployeeCount(hrmsOrgId, siteId);
-          setTotalEmployees(res || [0]);
+          setTotalEmployees([0]);
         }
       }
     } catch (error) {

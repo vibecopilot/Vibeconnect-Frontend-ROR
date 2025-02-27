@@ -23,7 +23,7 @@ const DepartmentCount = ({ dashboardData, siteId }) => {
     try {
       let res;
       // Use org-level API if no site is selected or siteId equals "all"
-      if (!siteId || siteId.trim() === "" || siteId === "all") {
+      if (!siteId ||siteId.site_name === "Select All Sites" || siteId === "all") {
         res = await getDepartmentCount(hrmsOrgId);
       } else {
         // When a specific site is selected, use dashboardData if available,
@@ -68,7 +68,7 @@ const DepartmentCount = ({ dashboardData, siteId }) => {
     setErrorMsg("");
     try {
       let res;
-      if (!siteId || siteId.trim() === "" || siteId === "all") {
+      if (!siteId || siteId.site_name === "Select All Sites" || siteId === "all") {
         res = await getLocationCount(hrmsOrgId);
       } else if (dashboardData && dashboardData.location_wise) {
         res = dashboardData.location_wise;
@@ -90,7 +90,7 @@ const DepartmentCount = ({ dashboardData, siteId }) => {
     setErrorMsg("");
     try {
       let res;
-      if (!siteId || siteId.trim() === "" || siteId === "all") {
+      if (!siteId || siteId.site_name === "Select All Sites" || siteId === "all") {
         res = await getGenderCount(hrmsOrgId);
       } else if (dashboardData && dashboardData.gender_wise) {
         res = dashboardData.gender_wise;

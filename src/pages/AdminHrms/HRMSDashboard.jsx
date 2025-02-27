@@ -43,7 +43,7 @@ import {
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import { useSelector } from "react-redux";
 import { toast } from "react-hot-toast"; // If using react-hot-toast
-
+import { CustomDropdown } from "../../utils/CustomDropdown";
 ChartJS.register(
   ArcElement,
   BarElement,
@@ -148,12 +148,6 @@ const HRMSDashboard = () => {
     }
   };
 
-  // const fetchOrgData = async ( ) => {
-  //   try
-  //   {
-  //     const orgData = await get
-  //   }
-  // }
   const fetchSites = async () => {
     try {
       const sites = await getAssociatedSites(hrmsOrgId);
@@ -184,11 +178,13 @@ const HRMSDashboard = () => {
 
   useEffect(() => {
     // If user picked a valid site, fetch the site-level data
-    if (selectedSite && selectedSite.trim() !== "" && selectedSite !== "all") {
+    if (
+      !selectedSite ||
+      selectedSite.site_name === "Select All Sites" ||
+      selectedSite !== "all"
+    ) {
       loadDashboardData(selectedSite);
     } else {
-      // If "all" or "" (i.e. no site selected), we do NOT call the site-level API
-      // and we reset the dashboardData to null
       setDashboardData(null);
     }
   }, [selectedSite]);
@@ -199,7 +195,6 @@ const HRMSDashboard = () => {
     setSelectedSite(siteId);
     // We do NOT call loadDashboardData here directly. The useEffect above will handle it.
   };
-
 
   useEffect(() => {
     const clientDashboardVisible =
@@ -305,7 +300,7 @@ const HRMSDashboard = () => {
             </h1>
             <div>
               {/* Dropdown */}
-              <select
+              {/* <select
                 onChange={handleDropdown}
                 className="w-svw min-w-[100px] max-w-md border border-gray-400 w-half placeholder:text-sm rounded-lg p-2 text-wrap"
               >
@@ -315,7 +310,18 @@ const HRMSDashboard = () => {
                     {site.site_name}
                   </option>
                 ))}
-              </select>
+              </select> */}
+              <div className="relative w-96 min-w-[100px] max-w-md">
+                <CustomDropdown
+                  AllSites={AllSites}
+                  selectedValue={selectedSite}
+                  onSelect={(site) =>
+                    site.site_name === "Select All Sites"
+                      ? setSelectedSite(null) // Reset filter
+                      : setSelectedSite(site.id)
+                  }
+                />
+              </div>
             </div>
             <div className="inline-flex items-center">
               <button
@@ -450,7 +456,9 @@ const HRMSDashboard = () => {
                 // Pass siteId and dashboardData down
                 siteId={selectedSite}
                 dashboardData={
-                  selectedSite === "all" || selectedSite.trim() === ""
+                  !selectedSite ||
+                  selectedSite === "all" ||
+                  selectedSite.site_name === "Select All Sites"
                     ? null
                     : dashboardData
                 }
@@ -460,7 +468,9 @@ const HRMSDashboard = () => {
               <EmployeeCount
                 siteId={selectedSite}
                 dashboardData={
-                  selectedSite === "all" || selectedSite.trim() === ""
+                  !selectedSite ||
+                  selectedSite === "all" ||
+                  selectedSite.site_name === "Select All Sites"
                     ? null
                     : dashboardData
                 }
