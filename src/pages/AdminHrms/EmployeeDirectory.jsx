@@ -149,8 +149,6 @@ function EmployeeDirectory() {
     // setSelectedEmployee(null);
   };
 
-  // console.log("This is emp group :",groupedEmployees)
-
   const filteredEmployees = selectedLetter
     ? groupedEmployees[selectedLetter] || []
     : employeesData;
@@ -165,16 +163,14 @@ function EmployeeDirectory() {
     // Convert to string to ensure type consistency
     setSelectedSite(e.target.value);
   };
-
-  const [fullUserDetaisl, setFullUserDetails] = useState([]);
-  const [allSiteUser, setAllSiteUser] = useState([]);
-
   const handleDownload = async () => {
     try {
       // Fetch XML data based on condition
       const xmlData = !selectedSite
         ? await getFullUser(orgId)
         : await getSiteWiseUserDetails(selectedSite);
+
+      console.log(xmlData);
 
       // Convert to string if necessary
       const xmlStr =
@@ -328,7 +324,7 @@ function EmployeeDirectory() {
                       setIsSiteDropdownOpen(!isSiteDropdownOpen);
                     }}
                     id="site-dropdown-button"
-                    className=" inline-flex justify-center w-full px-6 py-3 text-l font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    className=" inline-flex  justify-center w-80 px-10 py-3 text-l font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                   >
                     <span className="mr-2">
                       {selectedSite
@@ -355,7 +351,7 @@ function EmployeeDirectory() {
                   {isSiteDropdownOpen && (
                     <div
                       id="site-dropdown-menu"
-                      className="absolute left-1/2 transform -translate-x-1/2 mt-4 w-80 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10"
+                      className="absolute left-1/2 transform -translate-x-1/2 mt-1 w-80 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10"
                     >
                       {/* Search Input for Sites */}
                       <div className="sticky top-0 bg-white px-1 py-2 border-b">

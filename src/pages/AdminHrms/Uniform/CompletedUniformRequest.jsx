@@ -14,6 +14,7 @@ import { BsEye } from "react-icons/bs";
 import { MdClose } from "react-icons/md";
 import Accordion from "../Components/Accordion";
 import { FaRegAddressCard } from "react-icons/fa";
+import { CustomDropdown } from "../../../utils/CustomDropdown";
 
 const CompletedUniformRequest = () => {
   const columns = [
@@ -108,16 +109,43 @@ const CompletedUniformRequest = () => {
       const allSites = await getAssociatedSites(orgId);
       console.log("allSites:", allSites);
       // Extract unique associated organization names
-      const uniqueSites = [...new Set(allSites.map((item) => item.site_name))];
-      console.log("Unique Sites:", uniqueSites); // Check uniqueSites value
+      const uniqueSites = Array.from(
+        new Map(
+          allSites.map((item, index) => [
+            item.site_name,
+            { index, site_name: item.site_name },
+          ])
+        ).values()
+      );
+
+      console.log("Unique Sites:", uniqueSites);
       setAllSites(uniqueSites);
     } catch (error) {
       console.log(error);
     }
   };
+
   useEffect(() => {
     fetchUniformRequests();
   }, []);
+
+  useEffect(() => {
+    if (selectedSite && selectedSite.site_name !== "Select All Sites") {
+      console.log("Selected Site:", selectedSite);
+      console.log("Selected Site Data:", requests);
+      const newFiltered = requests.filter((item) =>
+        item.associated_organization_name
+          .toLowerCase()
+          .includes(selectedSite.site_name.toLowerCase())
+      );
+
+      console.log("newFiltered:", newFiltered);
+      setFilteredRequests(newFiltered);
+    } else {
+      // If no specific site is selected, show all requests
+      setFilteredRequests(requests);
+    }
+  }, [selectedSite, requests]);
 
   const [showDetails, setShowDetails] = useState(false);
   const [details, setDetails] = useState({});
@@ -199,7 +227,7 @@ const CompletedUniformRequest = () => {
             onChange={handleSearch}
           />
           {/* DROPDOWN */}
-          <select
+          {/* <select
             onChange={handleDropdownChange}
             className="border border-gray-400 w-full placeholder:text-sm rounded-lg p-2"
             value={selectedSite}
@@ -210,8 +238,19 @@ const CompletedUniformRequest = () => {
                 {site}
               </option>
             ))}
-          </select>
+          </select> */}
+
+          <CustomDropdown
+            AllSites={allSites}
+            selectedValue={selectedSite}
+            onSelect={(site) =>
+              site.site_name === "Select All Sites"
+                ? setSelectedSite(null) // Reset filter
+                : setSelectedSite(site)
+            }
+          />
         </div>
+        {/* <div className="flex gap-2"></div> */}
         <Table
           columns={columns}
           data={filteredRequests}
