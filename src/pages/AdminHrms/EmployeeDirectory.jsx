@@ -149,8 +149,6 @@ function EmployeeDirectory() {
     // setSelectedEmployee(null);
   };
 
-  // console.log("This is emp group :",groupedEmployees)
-
   const filteredEmployees = selectedLetter
     ? groupedEmployees[selectedLetter] || []
     : employeesData;
@@ -175,6 +173,8 @@ function EmployeeDirectory() {
       const xmlData = !selectedSite
         ? await getFullUser(orgId)
         : await getSiteWiseUserDetails(selectedSite);
+        
+      console.log(xmlData)
 
       // Convert to string if necessary
       const xmlStr =

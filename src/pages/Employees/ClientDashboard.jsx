@@ -33,6 +33,8 @@ import {
 const ClientDashboard = () => {
   const navigate = useNavigate();
 
+  const [isLoading, setIsLoading] = useState(false);
+
   // UI States
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
   const [isCalendarVisible, setIsCalendarVisible] = useState(false);
@@ -100,6 +102,7 @@ const ClientDashboard = () => {
     });
   };
   const [Location, setLocation] = useState([]);
+
   async function fetchSiteLocationData(siteLocation, selectedDate) {
     try {
       const formattedDate = `${selectedDate.getFullYear()}-${String(
@@ -134,6 +137,14 @@ const ClientDashboard = () => {
       throw error;
     }
   }
+
+  // Update your handleSiteDateChange to call fetchSiteLocationData:
+  const handleSiteDateChange = async (date) => {
+    setSelectedDate(date);
+    // Call fetchSiteLocationData with your current site locations and the new date
+    await fetchSiteLocationData(Location, date);
+    await fetchClientDashboardData(date);
+  };
 
   const fetchClientDashboardData = async (dateParam = selectedDate) => {
     try {
@@ -346,6 +357,10 @@ const ClientDashboard = () => {
     fetchClientDashboardData();
   }, []);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const renderCell = (data) => {
+    if (isLoading) return "Loading...";
+    return data !== undefined && data !== null ? data : "Fetching Data..";
+  };
 
   const handleLocation = () => {
     setIsModalOpen(true);
@@ -787,14 +802,32 @@ const ClientDashboard = () => {
                 {/* Modal for displaying Location data */}
                 {isModalOpen && (
                   <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-                    <div className="bg-white rounded-lg p-6 w-11/12 max-w-lg">
-                      <h2 className="text-xl text-center font-bold mb-4">
-                        Site Locations
-                      </h2>
+                    <div className="bg-white rounded-lg p-6 w-full md:w-2/3 lg:w-2/3">
+                      <div className="flex justify-between">
+                        <div className="justify-start">
+                          <h2 className="text-xl py-1  font-bold mb-4">
+                            Site Locations
+                          </h2>
+                        </div>
+                        <div className="mb-2">
+                          <input
+                            type="date"
+                            onChange={(e) =>
+                              handleSiteDateChange(new Date(e.target.value))
+                            }
+                            defaultValue={
+                              selectedDate.toISOString().split("T")[0]
+                            }
+                            className="p-2 border rounded"
+                          />
+                        </div>
+                      </div>
+                      {/* Date picker inside modal header */}
+
                       <div className="relative flex flex-col w-full h-full overflow-scroll text-gray-700 bg-white shadow-md rounded-xl bg-clip-border">
                         <table className="w-full text-left table-auto min-w-max">
                           <thead className="p-4 border-b border-blue-gray-100 bg-blue-gray-50">
-                            <tr >
+                            <tr>
                               <th className="border  p-2">Site ID</th>
                               <th className="border p-2">Site Name</th>
                               <th className="border p-2">Present Emp Count </th>
@@ -802,33 +835,38 @@ const ClientDashboard = () => {
                               <th className="border p-2">Total Emp Count</th>
                             </tr>
                           </thead>
-                          <tbody>
+
+                          <tbody className="">
                             {Location.map((loc) => (
                               <tr key={loc.id}>
-                                <td className="border text-center p-2">
-                                  {loc.id}
-                                </td>
-                                <td className="border p-2">{loc.siteName}</td>
-                                <td className="border p-2">
-                                  {loc.presentCount}
+                                <td className="border  p-1 px-2">
+                                  {renderCell(loc.id)}
                                 </td>
                                 <td className="border p-2">
-                                  {loc.absentCount}
+                                  {renderCell(loc.siteName)}
                                 </td>
                                 <td className="border p-2">
-                                  {loc.totalEmployeeCount}
+                                  {renderCell(loc.presentCount)}
+                                </td>
+                                <td className="border p-2">
+                                  {renderCell(loc.absentCount)}
+                                </td>
+                                <td className="border p-2">
+                                  {renderCell(loc.totalEmployeeCount)}
                                 </td>
                               </tr>
                             ))}
                           </tbody>
                         </table>
                       </div>
-                      <button
-                        onClick={() => setIsModalOpen(false)}
-                        className="my-2 mx-48 px-4 py-2  bg-blue-500 text-white rounded"
-                      >
-                        Close
-                      </button>
+                      <div className="flex justify-center">
+                        <button
+                          onClick={() => setIsModalOpen(false)}
+                          className="my-2 px-8 py-2 text-l bg-blue-500  text-white rounded"
+                        >
+                          Close
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}
