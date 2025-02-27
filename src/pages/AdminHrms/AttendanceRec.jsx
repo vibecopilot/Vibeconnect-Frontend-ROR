@@ -32,6 +32,7 @@ import toast from "react-hot-toast";
 import { Pagination } from "antd";
 import Accordion from "./Components/Accordion";
 import Table from "../../components/table/Table";
+import { CustomDropdown } from "../../utils/CustomDropdown";
 
 const getDateRange = (startDate) => {
   const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -81,7 +82,15 @@ const AttendanceRec = () => {
   const [selectedLastName, setSelectedLastName] = useState("");
   const [allSites, setAllSites] = useState([]);
   const [selectedSite, setSelectedSite] = useState("all");
+  const [checkInTime, setCheckInTime] = useState("");
+  const [checkOutTime, setCheckOutTime] = useState("");
+  const [checkOutLogs, setCheckOutLogs] = useState([]);
+  const [isPresent, setIsPresent] = useState(false);
+  const [selectedAttendanceDate, setSelectedAttendanceDate] = useState("");
+  const [empDesignation, setEmpDesignation] = useState("");
+  const [searchText, setSearchText] = useState("");
   const employeesPerPage = 10;
+
   const [regData, setRegData] = useState({
     requestType: "",
     checkInTime: "",
@@ -153,11 +162,12 @@ const AttendanceRec = () => {
   // };
 
   const handlePageChange = (page) => {
+    console.log("Pagination new page:", page);
     setPageNumber(page);
-    if (selectedSite === "all" || selectedSite.trim() === "") {
+    if (!selectedSite || selectedSite.site_name === "Select All Sites") {
       fetchEmployeeAttendance(page);
     } else {
-      fetchFilteredEmployeeAttendance(page, selectedSite);
+      fetchFilteredEmployeeAttendance(page, selectedSite.id);
     }
   };
 
@@ -210,10 +220,6 @@ const AttendanceRec = () => {
     setStartDate(newDate);
   };
   console.log("EMPLOYEES:", employees);
-
-  // Handle search
-
-  const [searchText, setSearchText] = useState("");
 
   // Load associated sites on component mount (or when orgId changes)
   useEffect(() => {
@@ -387,12 +393,6 @@ const AttendanceRec = () => {
       toast.error("Failed to submit the regularization request");
     }
   };
-  const [checkInTime, setCheckInTime] = useState("");
-  const [checkOutTime, setCheckOutTime] = useState("");
-  const [checkOutLogs, setCheckOutLogs] = useState([]);
-  const [isPresent, setIsPresent] = useState(false);
-  const [selectedAttendanceDate, setSelectedAttendanceDate] = useState("");
-  const [empDesignation, setEmpDesignation] = useState("");
   const fetchEmployeeFullDetails = async (empId) => {
     try {
       const res = await getUserDetails(empId);
@@ -471,6 +471,7 @@ const AttendanceRec = () => {
   const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
   const orgId = getItemInLocalStorage("HRMSORGID");
   const [roleAccess, setRoleAccess] = useState({});
+  
   useEffect(() => {
     const fetchRoleAccess = async () => {
       try {
@@ -572,48 +573,37 @@ const AttendanceRec = () => {
           </div>
         </div>
 
-        <div className="flex justify-between items-center my-4 gap-4">
-          {/* <div>
-            <Link className="font-medium" to={"/admin/hrms/dashboard"}>
-              Home
-            </Link>{" "}
-            {"/ "}
-            <Link className="font-medium" to={""}>
-              Attendance
-            </Link>{" "}
-            {"/ "}
-            <Link className="font-medium" to={""}>
-              Attendance Record
-            </Link>{" "}
-            {"/ "}
-          </div> */}
-          <div className="flex items-center gap-2">
-            {/* Dropdown for Associated Sites */}
-            <select
-              value={selectedSite}
-              onChange={handleDropdown}
-              className="border border-gray-400 p-2 rounded-md"
-            >
-              <option value="all">All Sites Attendance Record </option>
-              {allSites &&
-                allSites.map((site) => (
-                  <option key={site.id} value={site.id}>
-                    {site.site_name}
-                  </option>
-                ))}
-            </select>
-
+        <div className="flex items-center justify-between my-4 gap-4">
+          {/* Left group: Dropdown + Search */}
+          <div className="flex items-center gap-4">
             <input
               type="text"
               value={searchText}
               onChange={handleSearch}
-              id=""
-              className="border border-gray-400 w-96 p-2 rounded-md"
+              className="border border-gray-400 p-2 rounded-md w-96"
               placeholder="Search by employee name"
             />
+
+            <CustomDropdown
+              AllSites={allSites}
+              selectedValue={selectedSite}
+              onSelect={(site) => {
+                if (site.site_name === "Select All Sites") {
+                  setSelectedSite(null);
+                  fetchEmployeeAttendance(1);
+                } else {
+                  setSelectedSite(site);
+                  fetchFilteredEmployeeAttendance(1, site.id);
+                }
+              }}
+            />
+          </div>
+
+          {/* Right group: Prev Button + Date Range + Next Button */}
+          <div className="flex items-center gap-2">
             <button
               onClick={() => changeWeek("prev")}
-              className=" font-bold  p-2 rounded border-2 text-black border-black"
+              className="font-bold p-2 rounded border-2 text-black border-black"
             >
               <FaAngleLeft />
             </button>
@@ -623,12 +613,13 @@ const AttendanceRec = () => {
             </span>
             <button
               onClick={() => changeWeek("next")}
-              className=" font-bold  p-2 rounded border-2 text-black border-black"
+              className="font-bold p-2 rounded border-2 text-black border-black"
             >
               <FaAngleRight size={20} />
             </button>
           </div>
         </div>
+
         <div className="overflow-x-auto">
           {loading ? (
             <div className="flex justify-center items-center h-full">
