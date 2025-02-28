@@ -6828,7 +6828,7 @@ function App() {
           }
         />
         <Route
-          path="/otp-qr/535"
+          path="/otp-qr/:id"
           element={
           
               <OtpAndQr/>
