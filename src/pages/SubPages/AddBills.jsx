@@ -21,6 +21,11 @@ const AddBills = () => {
   const [tcsAmount, setTcsAmount] = useState("");
   const [taxAmount, setTaxAmount] = useState("");
   const [totalAmount, setTotalAmount] = useState("");
+  const [firstAmt, setFirstAmt] = useState("");
+  const [deduction, setDeduction] = useState("");
+  const [tdsRate, setTdsRate] = useState("");
+  const [tdsAmount, setTdsAmount] = useState("");
+
   const [formData, setFormData] = useState({
     vendor_id: "",
     bill_date: "",
@@ -32,12 +37,11 @@ const AddBills = () => {
     payment_tenure: "",
     description: "",
     other_bills_attachments: [],
-    pan_no:"",
-    gst_no :"",
-    
+    base_amount:"",
+    // pan_no:"",
+    // gst_no :"",
   });
 
-  
   useEffect(() => {
     const fetchSuppliers = async () => {
       try {
@@ -58,27 +62,27 @@ const AddBills = () => {
   const navigate = useNavigate();
   const handleNewBillSubmit = async () => {
     if (!formData.invoice_number) {
-        toast.error("Please enter the invoice number");
-        return;
-      }
-    
-      if (!formData.pan_no) {
-        toast.error("Please enter the pan number");
-        return;
-      }
-      if (!formData.gst_no) {
-        toast.error("Please enter the Gst number");
-        return;
-      }
+      toast.error("Please enter the invoice number");
+      return;
+    }
+
+    // if (!formData.pan_no) {
+    //   toast.error("Please enter the pan number");
+    //   return;
+    // }
+    // if (!formData.gst_no) {
+    //   toast.error("Please enter the Gst number");
+    //   return;
+    // }
 
     const sendData = new FormData();
     sendData.append("other_bill[vendor_id]", formData.vendor_id);
     sendData.append("other_bill[bill_date]", formData.bill_date);
     sendData.append("other_bill[invoice_number]", formData.invoice_number);
     sendData.append("other_bill[related_to]", formData.related_to);
-    sendData.append("other_bill[tds_percentage]", formData.tds_percentage);
-    sendData.append("other_bill[pan_no]", formData.pan_no);
-    sendData.append("other_bill[gst_no]", formData.gst_no);
+    sendData.append("other_bill[tds_percentage]", tdsRate);
+    // sendData.append("other_bill[pan_no]", formData.pan_no);
+    //sendData.append("other_bill[gst_no]", formData.gst_no);
     //sendData.append("other_bill[suplier_name]", formData.suplier_name);
     sendData.append(
       "other_bill[retention_percentage]",
@@ -88,9 +92,11 @@ const AddBills = () => {
       "other_bill[deduction_remarks]",
       formData.deduction_remarks
     );
-    sendData.append("other_bill[deduction_amount]", amount);
+    sendData.append("other_bill[deduction_amount]", deduction);
     sendData.append("other_bill[additional_expenses]", additionalExpenses);
     sendData.append("other_bill[payment_tenure]", formData.payment_tenure);
+    sendData.append("other_bill[tds_rate]", tdsRate);
+    sendData.append("other_bill[tds_amount]", tdsAmount);
     sendData.append("other_bill[cgst_rate]", cgstRate);
     sendData.append("other_bill[cgst_amount]", cgstAmount);
     sendData.append("other_bill[sgst_rate]", sgstRate);
@@ -101,13 +107,15 @@ const AddBills = () => {
     sendData.append("other_bill[tcs_amount]", tcsAmount);
     sendData.append("other_bill[tax_amount]", taxAmount);
     sendData.append("other_bill[total_amount]", totalAmount);
+    sendData.append("other_bill[base_amount]",firstAmt);amount
+    sendData.append("other_bill[amount]", amount)
     sendData.append("other_bill[description]", formData.description);
     formData.other_bills_attachments.forEach((file) => {
       sendData.append("attachfiles[]", file);
     });
     try {
-      const billResp = await postOtherBills(sendData,formData.vendor_id);
-      
+      const billResp = await postOtherBills(sendData, formData.vendor_id);
+
       toast.success("Bill Added Successfully");
       navigate("/admin/other-bills");
       console.log(billResp);
@@ -115,6 +123,37 @@ const AddBills = () => {
       console.log(error);
     }
   };
+  // const calculateAmount = () => {
+  //   const baseAmount = Math.round(parseFloat(firstAmt) || 0);
+  //   const deductionAmount = Math.round(parseFloat(deduction) || 0);
+  //   return baseAmount - deductionAmount;
+  // };
+  const handleFirstAmtChange = (e) => {
+    const newBaseAmount = parseFloat(e.target.value || 0);
+    const deductionAmount = parseFloat(deduction) || 0;
+    setFirstAmt(e.target.value);
+    setAmount(newBaseAmount > deductionAmount ? newBaseAmount - deductionAmount : newBaseAmount );
+    console.log(newBaseAmount,deductionAmount,newBaseAmount - deductionAmount)
+  };
+
+  const handleDeductionChange = (e) => {
+    console.log(e.target.value)
+    const deductionAmount = parseFloat(e.target.value || 0 ) ;
+    const newBaseAmount = parseFloat(firstAmt) || 0;
+    setDeduction(e.target.value);
+    setAmount(newBaseAmount > deductionAmount ? newBaseAmount - deductionAmount : newBaseAmount );
+    console.log(newBaseAmount,deductionAmount,newBaseAmount - deductionAmount)
+  };
+  const handleTdsChange = (e) => {
+    const tdsRateValue = parseFloat(e.target.value || 0);
+    const baseAmount = parseFloat(amount) || 0;
+    const tdsAmountValue = (baseAmount * tdsRateValue) / 100;
+    setTdsRate(tdsRateValue);
+    setTdsAmount(tdsAmountValue);
+    setTotalAmount(baseAmount - tdsAmountValue)
+   // setAmount(baseAmount - tdsAmountValue);
+  };
+
   const handleFileChange = (files, fieldName) => {
     setFormData({
       ...formData,
@@ -181,7 +220,7 @@ const AddBills = () => {
                 <label htmlFor="" className="font-semibold my-1">
                   Supplier
                 </label>
-                
+
                 <select
                   className="border p-1 px-4 border-gray-500 rounded-md"
                   id="supplier"
@@ -215,7 +254,7 @@ const AddBills = () => {
                   Invoice Number
                 </label>
                 <input
-                required
+                  required
                   type="text"
                   name="invoice_number"
                   value={formData.invoice_number}
@@ -240,64 +279,25 @@ const AddBills = () => {
               </div>
               <div className="flex flex-col">
                 <label htmlFor="" className="font-semibold my-1">
-                  GST NUMBER
+                  base Amount
                 </label>
                 <input
-                required
-                  type=""
-                  name="gst_no"
-                  value={formData.gst_no}
-                  onChange={handleChange}
-                  placeholder=" GST NUMBER"
+                  type="number"
+                  name="base_amount"
+                  value={firstAmt}
+                  onChange={handleFirstAmtChange}
+                  placeholder="Base Amount"
                   className="border p-1 px-4 border-gray-500 rounded-md"
                 />
               </div>
               <div className="flex flex-col">
                 <label htmlFor="" className="font-semibold my-1">
-                  PAN NUMBER
+                  Deduction
                 </label>
                 <input
-                required
-                  type=""
-                  name="pan_no"
-                  value={formData.pan_no}
-                  onChange={handleChange}
-                  placeholder="PAN NUMBER"
-                  className="border p-1 px-4 border-gray-500 rounded-md"
-                />
-              </div>
-              <div className="flex flex-col">
-                <label htmlFor="" className="font-semibold my-1">
-                  TDS(%)
-                </label>
-                <input
-                  type="text"
-                  name="tds_percentage"
-                  value={formData.tds_percentage}
-                  onChange={handleChange}
-                  placeholder="TDS(%)"
-                  className="border p-1 px-4 border-gray-500 rounded-md"
-                />
-              </div>
-              <div className="flex flex-col">
-                <label htmlFor="" className="font-semibold my-1">
-                  Retention(%)
-                </label>
-                <input
-                  type="text"
-                  name="retention_percentage"
-                  value={formData.retention_percentage}
-                  onChange={handleChange}
-                  placeholder="Retention(%)"
-                  className="border p-1 px-4 border-gray-500 rounded-md"
-                />
-              </div>
-              <div className="flex flex-col">
-                <label htmlFor="" className="font-semibold my-1">
-                  Deduction{" "}
-                </label>
-                <input
-                  type="text"
+                  type="number"
+                  value={deduction}
+                  onChange={handleDeductionChange}
                   placeholder="Deduction"
                   className="border p-1 px-4 border-gray-500 rounded-md"
                 />
@@ -320,14 +320,79 @@ const AddBills = () => {
                 <label htmlFor="" className="font-semibold my-1">
                   Amount
                 </label>
+
                 <input
                   type="number"
+                  name="amount"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="Amount"
                   className="border p-1 px-4 border-gray-500 rounded-md"
                 />
               </div>
+              {/* <div className="flex flex-col">
+                <label htmlFor="" className="font-semibold my-1">
+                  GST NUMBER
+                </label>
+                <input
+                required
+                  type=""
+                  name="gst_no"
+                  value={formData.gst_no}
+                  onChange={handleChange}
+                  placeholder=" GST NUMBER"
+                  className="border p-1 px-4 border-gray-500 rounded-md"
+                />
+              </div> */}
+              {/* <div className="flex flex-col">
+                <label htmlFor="" className="font-semibold my-1">
+                  PAN NUMBER
+                </label>
+                <input
+                required
+                  type=""
+                  name="pan_no"
+                  value={formData.pan_no}
+                  onChange={handleChange}
+                  placeholder="PAN NUMBER"
+                  className="border p-1 px-4 border-gray-500 rounded-md"
+                />
+              </div> */}
+              <div className="flex flex-col">
+                <label htmlFor="" className="font-semibold my-1">
+                  TDS(%)
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    value={tdsRate}
+                    onChange={handleTdsChange}
+                    placeholder="TDS Rate"
+                    className="border p-1 px-4 min-w-8 border-gray-500 rounded-md"
+                  />
+                  <input
+                    type="number"
+                    value={tdsAmount}
+                    readOnly
+                    placeholder="TDS Amount"
+                    className="border p-1 px-3 border-gray-500 min-w-11 rounded-md"
+                  />
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <label htmlFor="" className="font-semibold my-1">
+                  Retention(%)
+                </label>
+                <input
+                  type="text"
+                  name="retention_percentage"
+                  value={formData.retention_percentage}
+                  onChange={handleChange}
+                  placeholder="Retention(%)"
+                  className="border p-1 px-4 border-gray-500 rounded-md"
+                />
+              </div>
+
               <div className="flex flex-col">
                 <label htmlFor="" className="font-semibold my-1">
                   Payment Tenure(in days)
@@ -353,8 +418,7 @@ const AddBills = () => {
                   className="border p-1 px-4 border-gray-500 rounded-md"
                 />
               </div>
-              
-              
+
               {/* Tax rate and amount inputs */}
               <div className="flex flex-col">
                 <label htmlFor="" className="font-semibold my-1">
@@ -366,14 +430,14 @@ const AddBills = () => {
                     value={cgstRate}
                     onChange={handleCgstChange}
                     placeholder="CGST Rate"
-                    className="border p-1 px-4 w-48 border-gray-500 rounded-md"
+                    className="border p-1 px-4 min-w-8 border-gray-500 rounded-md"
                   />
                   <input
                     type="number"
                     value={cgstAmount}
                     readOnly
                     placeholder="CGST Amount"
-                    className="border p-1 px-3 border-gray-500 w-48 rounded-md"
+                    className="border p-1 px-3 border-gray-500 min-w-11 rounded-md"
                   />
                 </div>
               </div>
@@ -392,14 +456,14 @@ const AddBills = () => {
                     onChange={(e) => setSgstRate(e.target.value)}
                     placeholder="SGST Rate"
                     readOnly
-                    className="border p-1 px-4 w-48  border-gray-500 rounded-md"
+                    className="border p-1 px-1 min-w-8  border-gray-500 rounded-md"
                   />
                   <input
                     type="number"
                     value={sgstAmount}
                     readOnly
                     placeholder="SGST Amount"
-                    className="border p-1 px-2 border-gray-500 w-48 rounded-md"
+                    className="border p-1 px-2 border-gray-500 min-w-11 rounded-md"
                   />
                 </div>
               </div>
@@ -417,14 +481,14 @@ const AddBills = () => {
                     value={igstRate}
                     onChange={(e) => setIgstRate(e.target.value)}
                     placeholder="IGST Rate"
-                    className="border p-1 px-4 w-48 border-gray-500 rounded-md"
+                    className="border p-1 px-4 min-w-8 border-gray-500 rounded-md"
                   />
                   <input
                     type="number"
                     value={igstAmount}
                     readOnly
                     placeholder="IGST Amount"
-                    className="border p-1 px-2 border-gray-500 w-48 rounded-md"
+                    className="border p-1 px-2 border-gray-500 min-w-11 rounded-md"
                   />
                 </div>
               </div>
@@ -442,14 +506,14 @@ const AddBills = () => {
                     value={tcsRate}
                     onChange={(e) => setTcsRate(e.target.value)}
                     placeholder="TCS Rate"
-                    className="border p-1 px-4 w-48 border-gray-500 rounded-md"
+                    className="border p-1 px-4 min-w-8 border-gray-500 rounded-md"
                   />
                   <input
                     type="number"
                     value={tcsAmount}
                     readOnly
                     placeholder="TCS Amount"
-                    className="border p-1 px-2 border-gray-500 w-48 rounded-md"
+                    className="border p-1 px-2 border-gray-500 min-w-11 rounded-md"
                   />
                 </div>
               </div>
