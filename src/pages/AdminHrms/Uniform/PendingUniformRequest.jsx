@@ -339,19 +339,6 @@ const PendingUniformRequest = () => {
             onChange={handleSearch}
           />
           {/* DROPDOWN */}
-          {/* <select
-            onChange={handleDropdownChange}
-            className="border border-gray-400 w-full placeholder:text-sm rounded-lg p-2"
-            value={selectedSite}
-          >
-            <option value="All">All Sites</option>
-            {allSites.map((site, index) => (
-              <option key={index} value={site}>
-                {site}
-              </option>
-            ))}
-          </select> */}
-
           <CustomDropdown
             AllSites={allSites}
             selectedValue={selectedSite}

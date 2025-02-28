@@ -104,10 +104,6 @@ const AttendanceRec = () => {
   // Pagination logic
   const indexOfLastEmployee = currentPage * employeesPerPage;
   const indexOfFirstEmployee = indexOfLastEmployee - employeesPerPage;
-  // const currentEmployees = employees.slice(
-  //   indexOfFirstEmployee,
-  //   indexOfLastEmployee
-  // );
 
   const handleNextPage = () => {
     if (indexOfLastEmployee < employees.length) {
@@ -129,7 +125,6 @@ const AttendanceRec = () => {
     previous: null,
   });
 
-  // Default
   const fetchEmployeeAttendance = async (page) => {
     setLoading(true);
     try {
@@ -155,11 +150,6 @@ const AttendanceRec = () => {
   useEffect(() => {
     fetchEmployeeAttendance(pageNumber);
   }, []);
-
-  // const handlePageChange = (page) => {
-  //   setPageNumber(page); // Update state for pageNumber
-  //   fetchEmployeeAttendance(page); // Fetch data for the new page
-  // };
 
   const handlePageChange = (page) => {
     console.log("Pagination new page:", page);
@@ -202,18 +192,6 @@ const AttendanceRec = () => {
     }
     return "";
   };
-  // const getAttendanceStatus = (employee, date) => {
-  //   const today = new Date();
-  //   const record = employee.attendance_records.find(
-  //     (record) => new Date(record.date).toDateString() === date.toDateString()
-  //   );
-  //   const isPastDate = date < today;
-  //   if (isPastDate) {
-  //     return record ? (record.is_present ? "Present" : "Absent") : "Absent";
-  //   }
-  //   return "";
-  // };
-
   const changeWeek = (direction) => {
     const newDate = new Date(startDate);
     newDate.setDate(newDate.getDate() + (direction === "next" ? 7 : -7));
@@ -221,7 +199,7 @@ const AttendanceRec = () => {
   };
   console.log("EMPLOYEES:", employees);
 
-  // Load associated sites on component mount (or when orgId changes)
+
   useEffect(() => {
     const fetchSites = async () => {
       try {
@@ -236,12 +214,10 @@ const AttendanceRec = () => {
     fetchSites();
   }, [hrmsOrgId]);
 
-  // New function to fetch filtered attendance records with pagination
   const fetchFilteredEmployeeAttendance = async (page, siteId) => {
     setLoading(true);
     try {
       // Call your filtered endpoint with the provided siteId
-      // e.g., /employees/attendance-bulk?organization_id={hrmsOrgId}&associated_organization_id={siteId}&page={page}
       const res = await getAttendanceRecordFilter(hrmsOrgId, siteId, page);
       const data = res.results;
       setAttendanceCount(res.count);
@@ -260,20 +236,6 @@ const AttendanceRec = () => {
     }
   };
 
-  // Handle dropdown changes for filtering by site
-  const handleDropdown = (e) => {
-    const siteId = e.target.value;
-    setSelectedSite(siteId);
-
-    if (siteId === "all" || siteId.trim() === "") {
-      // For "all", revert to the default attendance list (page 1)
-      fetchEmployeeAttendance(1);
-    } else {
-      // For a specific site, call the filtered attendance API (page 1)
-      fetchFilteredEmployeeAttendance(1, siteId);
-    }
-  };
-
   const handleSearch = async (e) => {
     const value = e.target.value;
     setSearchText(value);
@@ -286,7 +248,6 @@ const AttendanceRec = () => {
 
     try {
       let result;
-
       if (/^\d+$/.test(value)) {
         // Numeric search.
         result = await fetchByAssociatedOrganization(hrmsOrgId, value);
@@ -300,6 +261,7 @@ const AttendanceRec = () => {
 
       // Since your response has a "results" key, extract the employee array from it.
       const employeesData = Array.isArray(result.results) ? result.results : [];
+      console.log("employeeData:",employeesData)
       setFilteredEmployees(employeesData);
     } catch (error) {
       console.error("Error fetching attendance records:", error);

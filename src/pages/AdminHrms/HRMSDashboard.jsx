@@ -2,6 +2,8 @@ import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, NavLink, useParams } from "react-router-dom";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { MdClose } from "react-icons/md";
+
 import {
   Chart as ChartJS,
   ArcElement,
@@ -59,14 +61,16 @@ import { formatTime } from "../../utils/dateUtils";
 const HRMSDashboard = () => {
   const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
   const [orgName, setOrgName] = useState("");
-  const [expanded, setExpanded] = useState(false);
-  const [expanded1, setExpanded1] = useState(false);
+  // const [expanded, setExpanded] = useState(false);
+  // const [expanded1, setExpanded1] = useState(false);
+  // const [filteredData, setFilteredData] = useState([]);
+  // const [ilteredEmployees, setFilteredEmployees] = useState([]);
+
   const [isOpen, setIsOpen] = useState(false);
   const [notificationData, setNotificationData] = useState([]);
   const drawerRef = useRef(null);
   const [AllSites, setAllSites] = useState([]);
-  const [filteredData, setFilteredData] = useState([]);
-  const [ilteredEmployees, setFilteredEmployees] = useState([]);
+
   const [selectedSite, setSelectedSite] = useState("all");
   const [dashboardData, setDashboardData] = useState(null);
 
@@ -136,12 +140,10 @@ const HRMSDashboard = () => {
   // };
 
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
-  console.log(hrmsOrgId);
 
   const fetchMyOrganization = async () => {
     try {
       const res = await getMyOrganization(hrmsOrgId);
-      console.log(res);
       setOrgName(res.name);
     } catch (error) {
       console.log(error);
@@ -151,7 +153,7 @@ const HRMSDashboard = () => {
   const fetchSites = async () => {
     try {
       const sites = await getAssociatedSites(hrmsOrgId);
-      console.log("Site name :", sites);
+      console.log("Sites:", sites);
       setAllSites(sites);
     } catch (error) {
       console.error("Error fetching sites:", error);
@@ -162,7 +164,6 @@ const HRMSDashboard = () => {
   const loadDashboardData = async (siteId) => {
     try {
       const result = await fetchSiteDashboard(siteId);
-      console.log("Site-level dashboard data:", result);
       setDashboardData(result);
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
@@ -211,7 +212,6 @@ const HRMSDashboard = () => {
         if (!empId) return;
         const data = await getNotification(empId);
         // const data = await getNotification();
-        console.log("API Response:", data);
         setNotificationData(data);
 
         // Optionally, show a toast for each unread notification
@@ -288,6 +288,9 @@ const HRMSDashboard = () => {
     });
   };
 
+
+  const unreadCount = notificationData.filter((n) => !n.is_read).length;
+
   return (
     <>
       <section className="flex ">
@@ -299,18 +302,6 @@ const HRMSDashboard = () => {
               Welcome To <span>{orgName}</span>
             </h1>
             <div>
-              {/* Dropdown */}
-              {/* <select
-                onChange={handleDropdown}
-                className="w-svw min-w-[100px] max-w-md border border-gray-400 w-half placeholder:text-sm rounded-lg p-2 text-wrap"
-              >
-                <option value="">Select All Sites</option>
-                {AllSites.map((site) => (
-                  <option key={site.id} value={site.id}>
-                    {site.site_name}
-                  </option>
-                ))}
-              </select> */}
               <div className="relative w-96 min-w-[100px] max-w-md">
                 <CustomDropdown
                   AllSites={AllSites}
@@ -323,12 +314,12 @@ const HRMSDashboard = () => {
                 />
               </div>
             </div>
-            <div className="inline-flex items-center">
+            <div className="inline-block m-1 items-center">
               <button
                 className="flex items-center gap-2 px-2 py-2 bg-blue-500 text-white rounded text-xs"
                 onClick={downloadPDF}
               >
-                Charts <FaDownload />
+                All Charts <FaDownload />
               </button>
             </div>
             <div
@@ -337,32 +328,30 @@ const HRMSDashboard = () => {
             >
               {/* Notification Icon  */}
               <div className="relative z-20 ">
+                <h2></h2>
                 <button
                   onClick={toggleDrawer}
-                  className="relative focus:outline-none"
+                  className=" absolute rounded-full  bg-slate-200 py-2 focus:outline-none"
                 >
                   {notificationData.length === 0 ? (
-                    <div className="mx-1 relative flex items-center">
-                      <p className="mx-1 text-m font-semibold text-gray-800">
-                        {/* Notification */}
-                      </p>
+                    <div className="mx-2 relative flex items-center">
                       <span>
                         {React.createElement(MdOutlineNotificationsActive, {
-                          size: "30",
+                          size: "25",
                         })}
                       </span>
                     </div>
                   ) : (
-                    <div className="relative flex items-center ">
+                    <div className="relative mr-2 flex items-center ">
                       {/* <p className="mx-1 text-m font-semibold text-gray-800">
                         Notification
                       </p> */}
-                      <span className="absolute top-[-8px] right-[-8px] bg-red-500 rounded-full w-5 h-5 text-xs font-bold text-white flex items-center justify-center">
+                      <span className="absolute top-[-7px] right-[-12px] bg-red-500 rounded-full w-5 h-5 text-xs font-bold text-white flex items-center justify-center">
                         {notificationData.filter((n) => !n.is_read).length}
                       </span>
                       <span className="ml-2">
                         {React.createElement(MdOutlineNotificationsActive, {
-                          size: "30",
+                          size: "25",
                           className: "text-gray-600",
                         })}
                       </span>
@@ -381,15 +370,18 @@ const HRMSDashboard = () => {
                   <div className="p-4 border-b border-gray-200">
                     <div className="flex justify-between items-center">
                       <p className="text-m text-black-600">
-                        {notificationData.filter((n) => !n.is_read).length} new
-                        notifications
+                        {unreadCount === 0
+                          ? "Notification"
+                          : `${unreadCount} New Notification${
+                              unreadCount > 1 ? "s" : ""
+                            }`}
                       </p>
 
                       <button
                         onClick={toggleDrawer}
                         className="text-grey-200 mx-5 focus:outline-none"
                       >
-                        Close
+                        <MdClose />
                       </button>
                     </div>
                   </div>
@@ -451,18 +443,21 @@ const HRMSDashboard = () => {
             >
               Home{""}
             </Link>
-            <div className="grid md:grid-cols-3 mr-2 my-10  gap-6">
-              <DepartmentCount
-                // Pass siteId and dashboardData down
-                siteId={selectedSite}
-                dashboardData={
-                  !selectedSite ||
-                  selectedSite === "all" ||
-                  selectedSite.site_name === "Select All Sites"
-                    ? null
-                    : dashboardData
-                }
-              />
+           
+            <div className="grid md:grid-cols-2 mr-2 my-10 gap-10">
+              <div className="" >
+                <DepartmentCount
+                  // Pass siteId and dashboardData down
+                  siteId={selectedSite}
+                  dashboardData={
+                    !selectedSite ||
+                    selectedSite === "all" ||
+                    selectedSite.site_name === "Select All Sites"
+                      ? null
+                      : dashboardData
+                  }
+                />
+              </div>
 
               {/* Employee Count */}
               <EmployeeCount
@@ -523,9 +518,9 @@ const HRMSDashboard = () => {
                   <p className="text-center font-semibold md:text-lg">1</p>
                 </div>
                 <div className=" flex justify-end w-full ">
-                  <p className="font-semibold m-5 bg-gray-100 p-2 rounded-full text-right">
+                  {/* <p className="font-semibold m-5 bg-gray-100 p-2 rounded-full text-right">
                     Today's Birthdays / Work Anniversaries (0)
-                  </p>
+                  </p> */}
                 </div>
               </div>
             </div>
