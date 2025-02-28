@@ -754,6 +754,7 @@ import SelfRegistrationDetails from "./pages/SubPages/SelfRegistrationDetails.js
 // new admin hrms
 import Privacy from "./pages/Privacy/Privacy.jsx"
 import PrivacyPolicy from "./pages/Setup/Abous/PrivacyPolicy.jsx";
+import OtpAndQr from "./pages/OtpAndQr.jsx";
 
 function App() {
   const { id } = useParams();
@@ -6825,7 +6826,17 @@ function App() {
               <Privacy />
           }
         />
+        <Route
+          path="/otp-qr/535"
+          element={
+          
+              <OtpAndQr/>
+           
+          }
+        />
       </Routes>
+
+      
       <Footer />
     </>
   );
