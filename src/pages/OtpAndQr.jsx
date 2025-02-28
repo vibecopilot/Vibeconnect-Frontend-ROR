@@ -6,7 +6,7 @@ import {domainPrefix} from "../api/index";
 // import Image from "next/image"
 
 const OtpAndQr = () => {
-  const id = 535;
+  const {id} = useParams();
   console.log("id:", id);
   const [userData, setUserData] = useState({});
   //const [otp, setOtp] = useState("");
