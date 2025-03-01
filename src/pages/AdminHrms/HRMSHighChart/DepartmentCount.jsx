@@ -285,12 +285,12 @@ const DepartmentCount = ({ dashboardData, siteId }) => {
     const input = document.getElementById("piechart-content");
     html2canvas(input).then((canvas) => {
       const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF("LandScape", "mm", "a6");
+      const pdf = new jsPDF("portrait", "mm", "a6");
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
       const margin = 1;
       const availableWidth = pageWidth - margin * 1;
-      const imgHeight = (canvas.height * availableWidth) / canvas.width;
+      const imgHeight = pageHeight * 0.9;
       pdf.addImage(imgData, "PNG", margin, margin, availableWidth, imgHeight);
       pdf.save("pirchart.pdf");
     });
