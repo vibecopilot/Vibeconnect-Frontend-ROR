@@ -18,16 +18,21 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../../../components/Navbar";
 
 const PermitListDetails = () => {
+  const { id } = useParams(); //
   const [vendors, setVendors] = useState([]);
   const [floors, setFloors] = useState([]);
   const [units, setUnits] = useState([]);
   const userId = getItemInLocalStorage("UserId");
+  const [assignedUser, setAssignedUser] = useState([]);
 
   const [formDataExtension, setFormDataExtension] = useState({
     permit_id: "",
     ext_date: "",
     ext_time: "",
     created_by_id: "",
+    assign_to_names: [],
+    assign_to_ids: [],
+    reason: "",
   });
   const handleChangeExtension = (e) => {
     setFormDataExtension({
@@ -58,7 +63,6 @@ const PermitListDetails = () => {
     created_by_id: "",
     permit_activities: [],
   });
-  const { id } = useParams();
   const fetchPermitsDetails = async () => {
     try {
       const res = await getPermitDetails(id);
@@ -105,6 +109,7 @@ const PermitListDetails = () => {
   useEffect(() => {
     fetchPermitsDetails();
   }, []);
+
   const column = [
     { name: "Inventory", selector: (row) => row.Inventory, sortable: true },
     {
@@ -314,6 +319,28 @@ const PermitListDetails = () => {
   ];
   const themeColor = useSelector((state) => state.theme.color);
   // Utility function to format date and time
+
+  useEffect(() => {
+    const fetchAssignedTo = async () => {
+      try {
+        const response = await getSetupUsers();
+
+        // Assuming response.data is an array of user objects
+        const formattedUsers = response.data.map((user) => ({
+          id: user.id,
+          firstname: user.firstname,
+          lastname: user.lastname,
+        }));
+        console.log(formattedUsers);
+        setAssignedUser(formattedUsers);
+      } catch (error) {
+        console.error("Error fetching assigned users:", error);
+      }
+    };
+
+    fetchAssignedTo();
+  }, []);
+
   const formatDateTime = (isoDate) => {
     if (!isoDate) return ""; // Return empty string if null or undefined
     const options = {
@@ -333,13 +360,23 @@ const PermitListDetails = () => {
     sendData.append("extension[created_by_id]", userId);
     sendData.append("extension[ext_date]", formDataExtension.ext_date);
     sendData.append("extension[ext_time]", formDataExtension.ext_time);
+    sendData.append(
+      "extension[assign_to_names][]",
+      formDataExtension.assign_to_names
+    );
+    sendData.append(
+      "extension[assign_to_ids][]",
+      formDataExtension.assign_to_ids
+    );
+    sendData.append("extension[reason]", formDataExtension.reason);
+    // sendData.append("extension[reason]",formDataExtension.reason);
 
     // formData.attachfiles.forEach((file)=>{
     //   sendData.append("attachfiles[]", file)
     // })
 
     try {
-      const resp = await postExtensionPermit(sendData);
+      const resp = await postExtensionPermit(id, sendData);
       navigate("/admin/permit");
       toast.success("Permit Extended Successfully");
       console.log(resp);
@@ -471,10 +508,10 @@ const PermitListDetails = () => {
               </p>
             </div>
           </div>
-          <h2 className="border-b text-lg  border-black font-semibold ">
+          {/* <h2 className="border-b text-lg  border-black font-semibold ">
             MANPOWER DETAILS
-          </h2>
-          <div className="my-2 md:px-10 text-sm items-center font-medium grid gap-2 md:grid-cols-3 bg-red-50 rounded-md p-2">
+          </h2> */}
+          {/* <div className="my-2 md:px-10 text-sm items-center font-medium grid gap-2 md:grid-cols-3 bg-red-50 rounded-md p-2">
             <div className="grid grid-cols-2 items-center">
               <p>Name</p>
               <p className="text-sm font-normal ">: Ravindar Sahani</p>
@@ -487,7 +524,7 @@ const PermitListDetails = () => {
               <p>Contact No.</p>
               <p className="text-sm font-normal ">: 7709079207</p>
             </div>
-          </div>
+          </div> */}
           <div className="border p-2 rounded-md">
             <h2 className="border-b text-lg  border-black font-semibold ">
               PERMIT EXTENSION
@@ -507,14 +544,23 @@ const PermitListDetails = () => {
               </div>
               <div className="flex flex-col gap-2">
                 <label htmlFor="">
-                  Assignees <span className="text-red-400">*</span>
+                  Assignees{" "}
+                  <span className="text-red-400" htmlFor="assignees">
+                    *
+                  </span>
                 </label>
                 <select
-                  name=""
-                  id=""
+                  name="assign_to_ids"
+                  value={formDataExtension.assign_to_ids}
+                  id="assignees"
                   className="border rounded-md p-2 border-gray-300"
                 >
                   <option value="">Select</option>
+                  {assignedUser.map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.firstname} {user.lastname}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div className="flex flex-col gap-2">
@@ -581,12 +627,12 @@ const PermitListDetails = () => {
           </h2>
           <p className="text-sm text-center">No attachments</p>
         </div>
-        <div className="border-b flex items-center justify-between mx-5 pb-5">
+        {/* <div className="border-b flex items-center justify-between mx-5 pb-5">
           <h2 className="text-md font-semibold   ">Comment log</h2>
           <button className="bg-green-600 p-2 rounded-md text-white">
             Comment
           </button>
-        </div>
+        </div> */}
       </div>
     </section>
   );
