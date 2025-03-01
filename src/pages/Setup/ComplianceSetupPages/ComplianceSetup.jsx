@@ -33,7 +33,6 @@ const ComplianceSetup = () => {
             </h2>
           </div> */}
           <div className="  border-gray-300 col-span-10 h-full m-2 w-full">
-           
             {page === "checklist" && (
               <div>
                 <ComplianceChecklist />
@@ -42,10 +41,10 @@ const ComplianceSetup = () => {
           </div>
         </div>
         {page === "category" && (
-              <div>
-                <ComplianceCategories />
-              </div>
-            )}
+          <div>
+            <ComplianceCategories />
+          </div>
+        )}
       </div>
     </section>
   );
