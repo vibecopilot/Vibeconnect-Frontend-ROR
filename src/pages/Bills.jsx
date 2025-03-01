@@ -40,10 +40,12 @@ function Bills() {
     },
     { name: "Id", selector: (row) => row.id, sortable: true },
     { name: "Description", selector: (row) => row.description, sortable: true },
-    { name: "Supplier", selector: (row) => row.vendor_name, sortable: true },
+    { name: "Supplier", selector: (row) => row.suplier_name, sortable: true },
+      
+      
     { name: "Last Approved By", selector: (row) => row.LastApprovedBy, sortable: true },
     { name: "Total Amount", selector: (row) => row.total_amount, sortable: true },
-    { name: "Deduction", selector: (row) => row.Deduction, sortable: true },
+    { name: "Deduction", selector: (row) => row.deduction_amount, sortable: true },
     { name: "TDS(%)", selector: (row) => row.tds_percentage, sortable: true },
     {
       name: "TDS Amount",
@@ -56,6 +58,8 @@ function Bills() {
     { name: "Payable Amount", selector: (row) => row.PayableAmount, sortable: true },
     { name: "Bill Date", selector: (row) => row.bill_date, sortable: true },
     { name: "Invoice Number", selector: (row) => row.invoice_number, sortable: true },
+    { name: "Gst Number", selector: (row) => row.gst_no, sortable: true },
+    { name: "Pan Number", selector: (row) => row.pan_no, sortable: true },
     { name: "Payment Tenure(In Days)", selector: (row) => row.payment_tenure, sortable: true },
     
     { name: "Amount Paid", selector: (row) => row.AmountPaid, sortable: true },
@@ -82,7 +86,11 @@ function Bills() {
     
     // { name: "Payment Status", selector: (row) => row.Payment_Status, sortable: true },
     { name: "Created On", selector: (row) => FormatedDate(row.created_at), sortable: true },
-    { name: "Created By", selector: (row) => row.Created_by, sortable: true },
+    { name: "Created By", selector: (row) => (
+      <div>
+  {row.created_by_name?.firstname || ''} {row.created_by_name?.lastname || ''}
+</div>
+    ),sortable: true },
   ];
 
   useEffect(() => {

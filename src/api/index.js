@@ -1121,6 +1121,12 @@ export const getHostList = async (siteId) =>
       token: token,
     },
   });
+  export const getUserOtp = async (id) =>
+    axiosInstance.get(`/visitors/get_visitor_by_id.json?id=${id}`, {
+      // params: {
+      //   token: token,
+      // },
+    });
 export const postSetupUsers = async (data) =>
   axiosInstance.post("/users/create.json", data, {
     params: {
