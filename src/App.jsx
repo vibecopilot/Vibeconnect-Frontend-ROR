@@ -736,17 +736,10 @@ import CreateInvoiceReceipt from "./pages/SubPages/details/CreateInvoiceReceipt.
 // import EditRestaurtantOrders from "./pages/SubPages/EditResturantOrders.jsx";
 // import FBMainPage from "./pages/Setup/FBMainPage.jsx";
 import EmployeeDocumentMain from "./pages/Employees/EmployeeDocumentMain.jsx";
-<<<<<<< HEAD
- import EditDailyPickup from "./pages/SubPages/Transportation/EditDailyPickup.jsx";
-// import Compliance from "./pages/Compliance/Compliance.jsx";
-// import ComplianceSetup from "./pages/Setup/ComplianceSetupPages/ComplianceSetup.jsx";
-// import AddCompliance from "./pages/Compliance/AddCompliance.jsx";
-=======
 // import EditDailyPickup from "./pages/SubPages/Transportation/EditDailyPickup.jsx";
 import Compliance from "./pages/Compliance/Compliance.jsx";
 import ComplianceSetup from "./pages/Setup/ComplianceSetupPages/ComplianceSetup.jsx";
 import AddCompliance from "./pages/Compliance/AddCompliance.jsx";
->>>>>>> ba7f90c01075a706a7f8ec52d06993cf69b9c08a
 // import SiteEmployee from "./pages/AdminHrms/Employee/SiteEmployee.jsx";
 import ComplianceVendor from "./pages/Compliance/ComplianceVendor.jsx";
 import ComplianceEvidence from "./pages/Setup/ComplianceSetupPages/ComplianceEvidence.jsx";
@@ -6893,7 +6886,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-<<<<<<< HEAD
         <Route
           path="/privacy"
           element={
@@ -6921,10 +6913,6 @@ function App() {
         />
 
 
-=======
-        <Route path="/privacy" element={<Privacy />} />
-        <Route path="/otp-qr/:id" element={<OtpAndQr />} />
->>>>>>> ba7f90c01075a706a7f8ec52d06993cf69b9c08a
       </Routes>
 
       <Footer />
