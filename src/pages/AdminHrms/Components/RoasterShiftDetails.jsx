@@ -135,21 +135,21 @@ function RoasterShiftDetails({
     }
   };
 
-   const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
-    const orgId = getItemInLocalStorage("HRMSORGID");
-    const [roleAccess, setRoleAccess] = useState({});
-    useEffect(() => {
-      const fetchRoleAccess = async () => {
-        try {
-          const res = await getAdminAccess(orgId, empId);
-  
-          setRoleAccess(res[0]);
-        } catch (error) {
-          console.log(error);
-        }
-      };
-      fetchRoleAccess();
-    }, []);
+  const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
+  const orgId = getItemInLocalStorage("HRMSORGID");
+  const [roleAccess, setRoleAccess] = useState({});
+  useEffect(() => {
+    const fetchRoleAccess = async () => {
+      try {
+        const res = await getAdminAccess(orgId, empId);
+
+        setRoleAccess(res[0]);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchRoleAccess();
+  }, []);
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center">
       <div className="bg-white p-6 rounded-xl shadow-lg w-1/3">
@@ -189,7 +189,7 @@ function RoasterShiftDetails({
             {/* <p>{employee.date}</p> */}
           </div>
 
-          {/* <div className="mb-4">
+          <div className="mb-4">
             <label className="block mb-2 font-medium">Select Type</label>
             <select
               className="w-full p-2 border rounded-md"
@@ -201,7 +201,7 @@ function RoasterShiftDetails({
               <option value="full_day_weekly_off">Full Day Weekly Off</option>
               <option value="half_day_weekly_off">Half Day Weekly Off</option>
             </select>
-          </div> */}
+          </div>
 
           <div className="mb-4">
             <label className="block mb-2 font-medium">Select Shift</label>
@@ -210,7 +210,7 @@ function RoasterShiftDetails({
               value={formData.selectedShift}
               onChange={handleChange}
               name="selectedShift"
-              disabled={!roleAccess?.can_assign_edit_delete_shifts }
+              disabled={!roleAccess?.can_assign_edit_delete_shifts}
             >
               <option value="">Select Shift</option>
               {shifts.map((shift) => (
@@ -221,7 +221,7 @@ function RoasterShiftDetails({
             </select>
           </div>
 
-          {/* <div className="mb-4">
+           {/* <div className="mb-4">
             <label className="block mb-2">Branch Location</label>
             <input
               type="text"
@@ -230,7 +230,7 @@ function RoasterShiftDetails({
               onChange={(e) => setBranchLocation(e.target.value)}
               placeholder="Branch Location"
             />
-          </div>
+          </div> */}
 
           <div className="mb-4">
             <label className="flex items-center">
@@ -242,7 +242,7 @@ function RoasterShiftDetails({
               />
               Repeat?
             </label>
-          </div> */}
+          </div> 
           {repeat && (
             <div>
               <div className="flex flex-col">
@@ -300,25 +300,29 @@ function RoasterShiftDetails({
           )}
         </div>
         <div className="flex justify-around items-center px-4 p-1 border-t">
-         {roleAccess?.can_assign_edit_delete_shifts && <button
-            className="px-4 py-2 border-2 border-red-500 text-red-500 rounded-full flex items-center gap-2"
-            onClick={() => handleDeleteRosterRecord()}
-          >
-            <MdDeleteForever size={20} /> Delete
-          </button>}
+          {roleAccess?.can_assign_edit_delete_shifts && (
+            <button
+              className="px-4 py-2 border-2 border-red-500 text-red-500 rounded-full flex items-center gap-2"
+              onClick={() => handleDeleteRosterRecord()}
+            >
+              <MdDeleteForever size={20} /> Delete
+            </button>
+          )}
           <button
             className="px-4 py-2 border-2 border-gray-500 text-gray-500  rounded-full flex items-center gap-2"
             onClick={onClose}
           >
             <MdClose size={20} /> Cancel
           </button>
-          {roleAccess?.can_assign_edit_delete_shifts && <button
-            // style={{ background: themeColor }}
-            className="px-4 py-2 border border-green-500 text-green-500  rounded-full flex items-center gap-2"
-            onClick={handleEditRosterShift}
-          >
-            <FaCheck /> Save
-          </button>}
+          {roleAccess?.can_assign_edit_delete_shifts && (
+            <button
+              // style={{ background: themeColor }}
+              className="px-4 py-2 border border-green-500 text-green-500  rounded-full flex items-center gap-2"
+              onClick={handleEditRosterShift}
+            >
+              <FaCheck /> Save
+            </button>
+          )}
         </div>
       </div>
     </div>

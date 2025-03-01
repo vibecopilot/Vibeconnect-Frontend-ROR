@@ -103,6 +103,18 @@ export const convertTo12HourFormat = (time) => {
   return `${formattedHour}:${minute} ${period}`;
 };
 
+
+export const  convertTo12HrFormat = (timeStr) =>{
+  if (!timeStr || timeStr.trim() === "" || timeStr === "__") return "No Data";
+  const parts = timeStr.split(':');
+  if (parts.length < 2) return "No Data";
+  let hours = parseInt(parts[0], 10);
+  const minutes = parts[1];
+  const ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12 || 12;
+  return `${hours}:${minutes} ${ampm}`;
+}
+   
 export const formatShiftTime = (shiftStartTime, shiftEndTime) => {
   return `${convertTo12HourFormat(shiftStartTime)} - ${convertTo12HourFormat(shiftEndTime)}`;
 };
