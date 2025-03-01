@@ -3605,6 +3605,7 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
+        {/*  */}
 
         {/* booking & Req */}
         <Route
@@ -5279,7 +5280,23 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
-
+        {/* Fitness */}
+        <Route
+          path="/admin/fitness"
+          element={
+            <ProtectedRoute>
+              <Fitness />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/book-fitness"
+          element={
+            <ProtectedRoute>
+              <BookFitness />
+            </ProtectedRoute>
+          }
+        />
         {/*personal financial */}
         <Route
           path="/personal-finance"
