@@ -4937,6 +4937,7 @@ export const fetchByName = async (orgId, name) => {
     throw error;
   }
 };
+
 export const fetchById = async (orgId, id) => {
   try {
     const response = await HrmsAuth.get(
@@ -5611,12 +5612,20 @@ export const fetchAllRoster = async (orgId) => {
     throw error;
   }
 };
+export const fetchRoasterBySite = async (orgId,siteId,date) =>{
+  try{
+    const res = await HrmsAuth.get(`/roster/roster-shift/?organization_id=${orgId}&associated_organization_id=${siteId}&date=${date}`);
+    return response.data;
+  }catch(error) {
+    console.error("Error getting roster shift:", error);
+    throw error;
+  }
+}
 
 export const getRosterShift = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
       `/roster/shift-master-data/?organization_id=${orgId}`
-
     );
     return response.data;
   } catch (error) {

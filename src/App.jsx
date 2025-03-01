@@ -756,6 +756,8 @@ import SelfRegistrationDetails from "./pages/SubPages/SelfRegistrationDetails.js
 import Privacy from "./pages/Privacy/Privacy.jsx";
 import PrivacyPolicy from "./pages/Setup/Abous/PrivacyPolicy.jsx";
 import OtpAndQr from "./pages/OtpAndQr.jsx";
+import Mom from "./pages/Mom/Mom.jsx";
+import NewMom from "./pages/Mom/NewMom.jsx";
 
 function App() {
   const { id } = useParams();
@@ -6884,8 +6886,33 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="/privacy" element={<Privacy />} />
-        <Route path="/otp-qr/:id" element={<OtpAndQr />} />
+        <Route
+          path="/privacy"
+          element={
+              <Privacy />
+          }
+        />
+        <Route path="/otp-qr" element={<OtpAndQr />} />
+
+<Route
+          path="/admin/mom"
+          element={
+            <ProtectedRoute>
+              <Mom/>
+            </ProtectedRoute>
+          }
+        />
+
+<Route
+          path="/admin/new-mom"
+          element={
+            <ProtectedRoute>
+              <NewMom/>
+            </ProtectedRoute>
+          }
+        />
+
+
       </Routes>
 
       <Footer />

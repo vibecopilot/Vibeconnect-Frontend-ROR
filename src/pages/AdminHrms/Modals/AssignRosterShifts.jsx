@@ -19,6 +19,20 @@ const AssignRosterShifts = ({ onClose, fetchRosterRecords }) => {
   const [formData, setFormData] = useState({
     selectedShift: "",
   });
+  const [AllSites, setAllSites] = useState([]);
+  const [selectedSite, setSelectedSite] = useState("");
+
+  const fetchSites = async () => {
+    try {
+      const sites = await getAssociatedSites(hrmsOrgId);
+      console.log("Sites:", sites);
+      setAllSites(sites);
+    } catch (error) {
+      console.error("Error fetching sites:", error);
+    }
+  };
+  
+
   useEffect(() => {
     const fetchAllEmployees = async () => {
       try {
@@ -45,7 +59,7 @@ const AssignRosterShifts = ({ onClose, fetchRosterRecords }) => {
         console.log(error);
       }
     };
-    
+
     fetchRosterShifts();
     fetchAllEmployees();
   }, []);
