@@ -84,14 +84,16 @@ const DeliveryVendor = () => {
       setFilteredData(updatedVendors);
       console.log("Vendor saved successfully!");
       toast.success("Vendor saved successfully");
-      showModal(false);
+      // showModal(false);
       setSelectedVendor(null);
       // console.log("Vendor saved successfully!");
     } catch (error) {
       console.error("Error saving vendor:", error);
       setError("Failed to save vendor. Please try again.");
     }
+    finally{showModal(false)}
   };
+
 
   const handleRemoveVendor = async (id) => {
     try {
