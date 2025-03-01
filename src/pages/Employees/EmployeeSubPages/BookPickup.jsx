@@ -75,7 +75,8 @@ const BookPickup = () => {
     try {
       const resp = await postDailyPickUpTransportation(sendData);
       toast.success("Daily Pickup & Drop added successfully");
-      navigate("/employees/transportation");
+      // navigate("/employees/transportation");
+      navigate("/admin/transportation");
     } catch (error) {
       console.error(error);
       toast.error("Failed to add Daily Pickup & Drop. Please try again.");
