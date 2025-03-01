@@ -6,6 +6,7 @@ import { PiFiles, PiSignOutBold } from "react-icons/pi";
 import { getItemInLocalStorage } from "../utils/localStorage";
 import { FaMoneyBillTrendUp } from "react-icons/fa6";
 import image from "/profile.png";
+
 import {
   BsBroadcast,
   BsBuilding,
@@ -983,9 +984,7 @@ const Navbar = () => {
                       }`
                     }
                   >
-                    <div>
-                      {React.createElement(IoSettings, { size: "20" })}
-                    </div>
+                    <div>{React.createElement(IoSettings, { size: "20" })}</div>
                     <h2
                       className={`whitespace-pre duration-300 ${
                         !open && "opacity-0 translate-x-28 overflow-hidden"
@@ -1122,6 +1121,67 @@ const Navbar = () => {
                     </h2>
                   </NavLink>
                 )}
+
+                {feat.includes("transport") && (
+                  <NavLink
+                    to={"/admin/mom"}
+                    className={({ isActive }) =>
+                      ` ${
+                        isActive
+                          ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
+                          : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
+                      }`
+                    }
+                  >
+                    <div>{React.createElement(FaCar, { size: "20" })}</div>
+
+                    <h2
+                      className={`whitespace-pre duration-300 ${
+                        !open && "opacity-0 translate-x-28 overflow-hidden"
+                      }`}
+                    >
+                      MOM
+                    </h2>
+                    <h2
+                      className={`${
+                        open && "hidden"
+                      } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
+                    >
+                      MOM
+                    </h2>
+                  </NavLink>
+                )}
+
+                {/* {feat.includes("MOM") && (
+                  <NavLink
+                    to={"/admin/Mom"}
+                    className={({ isActive }) =>
+                      ` ${
+                        isActive
+                          ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
+                          : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
+                      }`
+                    }
+                  >
+                    <div>{React.createElement(FaCar, { size: "20" })}</div>
+
+                    <h2
+                      className={`whitespace-pre duration-300 ${
+                        !open && "opacity-0 translate-x-28 overflow-hidden"
+                      }`}
+                    >
+                      MOM
+                    </h2>
+                    <h2
+                      className={`${
+                        open && "hidden"
+                      } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
+                    >
+                      MOM
+                    </h2>
+                  </NavLink>
+                )} */}
+
                 {feat.includes("integration") && (
                   <NavLink
                     to={"/integration"}
@@ -1411,9 +1471,7 @@ const Navbar = () => {
                       }`
                     }
                   >
-                    <div>
-                      {React.createElement(FaParking, { size: "20" })}
-                    </div>
+                    <div>{React.createElement(FaParking, { size: "20" })}</div>
 
                     <h2
                       className={`whitespace-pre duration-300 ${
@@ -1442,9 +1500,7 @@ const Navbar = () => {
                       }`
                     }
                   >
-                    <div>
-                      {React.createElement(FaParking, { size: "20" })}
-                    </div>
+                    <div>{React.createElement(FaParking, { size: "20" })}</div>
 
                     <h2
                       className={`whitespace-pre duration-300 ${
@@ -2167,9 +2223,7 @@ const Navbar = () => {
                     }`
                   }
                 >
-                  <div>
-                    {React.createElement(FaParking, { size: "20" })}
-                  </div>
+                  <div>{React.createElement(FaParking, { size: "20" })}</div>
 
                   <h2
                     className={`whitespace-pre duration-300 ${
