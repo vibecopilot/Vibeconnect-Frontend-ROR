@@ -1404,11 +1404,17 @@ export const postNewPermit = async (data) =>
     },
   });
 export const postExtensionPermit = async (data) =>
-  axiosInstance.post("/extensions.json", data, {
+  axiosInstance.post(`/permit_extensions.json`, data, {
     params: {
       token: token,
     },
   });
+// export const postExtensionPermit = async (data) =>
+//   axiosInstance.post("/extensions.json", data, {
+//     params: {
+//       token: token,
+//     },
+//   });
 export const getPermits = async () =>
   axiosInstance.get("/permits.json", {
     params: {
@@ -1663,40 +1669,19 @@ export const postParking = async (data) =>
       token: token,
     },
   });
-// Permit Add Activity 
-export const fetchPermitActivities = async () => {
-  try {
-    const res = await axiosInstance.get(`/permit_activities.json?token=${token}`, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    })
-    return res.data;
-  } catch (error) {
-    throw error;
-  }
-}
 
-export const fetchPermitSubActivities = async (data) => {
-  axiosInstance.get(`/permit_sub_activities.json?token=${token}`, data, {
-    params: {
-      token: token,
-    }
-  })
-}
-export const fetchPermitRisks = async (data) => {
-  axiosInstance.get(`/permit_risks.json?token=${token}`, data, {
-    params: {
-      token: token,
-    }
-  })
-}
-export const fetchHazardCategories = async (data) => {
-  axiosInstance.get(`/hazard_categories.json?token=${token}`, data, {
-    params: {
-      token: token,
-    }
-  })
+// Permit Entity
+export const fetchPermitEntity = async () => {
+  try{
+    const response = axiosInstance.get(`/permit_entities.json`, {
+      params: {
+        token: token,
+      },
+    });
+    return response;
+  }catch(error){
+    console.log("handling entities error:",error)
+  }
 }
 // Permit Detail Activity 
 export const postPermitSubActivity = async (data) =>

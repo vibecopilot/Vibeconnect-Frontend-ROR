@@ -12,6 +12,7 @@ import {
   getPermitSubActivity,
   getPermitRisks,
   getHazardCategory,
+  fetchPermitEntity,
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import { RiContactsBook2Line } from "react-icons/ri";
@@ -154,25 +155,27 @@ const AddNewPermit = () => {
 
     activities.forEach((activity) => {
       sendData.append(
-        `permit[permit_activities][][activity]`,
-        activity.activity
+        "permit[permit_activities][][activity]",
+        activity.activity || ""
       );
       sendData.append(
-        `permit[permit_activities][][sub_activity]`,
-        activity.sub_activity
+        "permit[permit_activities][][sub_activity]",
+        activity.sub_activity || ""
       );
       sendData.append(
-        `permit[permit_activities][][category_of_hazards]`,
-        activity.category_of_hazards
+        "permit[permit_activities][][category_of_hazards]",
+        activity.category_of_hazards || ""
       );
-      sendData.append(`permit[permit_activities][][risks]`, activity.risks);
+      sendData.append(
+        "permit[permit_activities][][risks]",
+        activity.risks || ""
+      );
     });
 
     try {
       const billResp = await postNewPermit(sendData);
       toast.success("Permit Added Successfully");
       navigate("/admin/permit");
-      // console.log("Permit response", billResp.data);
     } catch (error) {
       console.log(error);
     }
@@ -243,18 +246,19 @@ const AddNewPermit = () => {
       });
     }
   };
-  // console.log("Permit activity:", permit_activity);
-
-  // console.log("Formdata:", formData);
 
   const handleAddActivity = () => {
     setActivities([
       ...activities,
       {
         activity: "",
+        activity_name: "",
         sub_activity: "",
+        sub_activity_name: "",
         category_of_hazards: "",
+        category_of_hazards_name: "",
         risks: "",
+        risks_name: "",
         subOptions: [],
         hazardOptions: [],
         riskOptions: [],
@@ -321,146 +325,69 @@ const AddNewPermit = () => {
     loadAllData();
   }, []);
 
+  // When a permit type is selected, filter activities based on that type.
   const handlePermitTypeChange = (e) => {
     const selectedTypeId = e.target.value;
     setFormData({ ...formData, permit_type: selectedTypeId });
-    console.log("formdata after :", formData);
-
-    console.log("allPermitActivities:", allPermitActivities);
+    console.log("formdata after:", formData);
 
     const filteredActivities = allPermitActivities.filter(
       (act) => act.parent_id === Number(selectedTypeId)
     );
-
     console.log("filteredActivities:", filteredActivities);
     setPermitActivityOptions(filteredActivities);
   };
 
-  // const handleActivityChange = (index, e) => {
-  //   const selectedActivityId = e.target.value;
-  //   const newActivities = [...activities];
-  //   newActivities[index] = { ...newActivities[index] };
-  //   newActivities[index].activity = selectedActivityId;
-  //   newActivities[index].sub_activity = "";
-  //   newActivities[index].category_of_hazards = "";
-  //   newActivities[index].risks = "";
-  //   newActivities[index].subOptions = [];
-  //   newActivities[index].hazardOptions = [];
-  //   newActivities[index].riskOptions = [];
-  //   console.log("AllPermitSubactivity:", allPermitSubActivities);
-
-  //   const subActivityList = allPermitSubActivities.filter(
-  //     (sub) => sub.permit_activity_setup_id === selectedActivityId
-  //   );
-  //   newActivities[index].subOptions = subActivityList;
-
-  //   setActivities(newActivities);
-  //   setFormData({
-  //     ...formData,
-  //     permit_activities: newActivities,
-  //   });
-  //   console.log("Updated Sub-activities:", newActivities);
-  // };
-
+  // When an activity is selected, store its id only.
   const handleActivityChange = (index, e) => {
     const selectedActivityId = e.target.value;
-    // Create copies to avoid in-place mutation.
     const newActivities = [...activities];
     newActivities[index] = { ...newActivities[index] };
+    newActivities[index].activity = selectedActivityId; // store id
 
-    // Store the single selected activity ID.
-    newActivities[index].activity = selectedActivityId;
-
-    // Reset dependent values.
+    // Reset dependent fields.
     newActivities[index].sub_activity = "";
     newActivities[index].category_of_hazards = "";
     newActivities[index].risks = "";
-    newActivities[index].subOptions = [];
-    newActivities[index].hazardOptions = [];
-    newActivities[index].riskOptions = [];
-
-    // Filter sub activities using the selected activity ID.
+    // Filter sub activities based on the selected activity id.
     const subActivityList = allPermitSubActivities.filter(
       (sub) => sub.permit_activity_setup_id === Number(selectedActivityId)
     );
     console.log("Filtered Sub Activities:", subActivityList);
     newActivities[index].subOptions = subActivityList;
+    newActivities[index].hazardOptions = [];
+    newActivities[index].riskOptions = [];
 
     setActivities(newActivities);
   };
 
-  // const handleSubActivityChange = (index, e) => {
-  //   const selectedSubActivityId = e.target.permit_type_id;
-  //   console.log("SubActivity selected value:", value);
-
-  //   const newActivities = [...activities];
-  //   newActivities[index] = { ...newActivities[index] };
-
-  //   newActivities[index].sub_activity = value;
-
-  //   newActivities[index].category_of_hazards = "";
-  //   newActivities[index].risks = "";
-  //   newActivities[index].hazardOptions = [];
-  //   newActivities[index].riskOptions = [];
-
-  //   if (value) {
-  //     const hazardList = allHazardCategories.filter(
-  //       (haz) => haz.permit_type_id === Number(selectedSubActivityId)
-  //     );
-  //     console.log("Filtered Hazard List:", hazardList);
-  //     newActivities[index].hazardOptions = hazardList;
-  //   } else {
-  //     console.log("No sub-activity selected, hazard list is empty");
-  //   }
-
-  //   setActivities(newActivities);
-  // };
-
+  // When a sub-activity is selected, store its id only.
   const handleSubActivityChange = (index, e) => {
     const selectedSubActivityId = e.target.value;
     const newActivities = [...activities];
     newActivities[index] = { ...newActivities[index] };
-
-    newActivities[index].sub_activity = selectedSubActivityId;
+    newActivities[index].sub_activity = selectedSubActivityId; // store id
     newActivities[index].category_of_hazards = "";
     newActivities[index].risks = "";
-    newActivities[index].hazardOptions = [];
-    newActivities[index].riskOptions = [];
-
-    // Filter hazard categories where the sub_activity_id matches.
+    // Filter hazard categories using the selected sub-activity id.
     const hazardList = allHazardCategories.filter(
       (haz) => haz.sub_activity_id === Number(selectedSubActivityId)
     );
     console.log("Filtered Hazard Categories:", hazardList);
     newActivities[index].hazardOptions = hazardList;
+    newActivities[index].riskOptions = [];
 
     setActivities(newActivities);
   };
 
-  // const handleHazardChange = (index, e) => {
-  //   const { value } = e.target;
-  //   const newActivities = [...activities];
-  //   newActivities[index].category_of_hazards = value;
-  //   newActivities[index].risks = "";
-  //   newActivities[index].riskOptions = [];
-
-  //   const riskList = allPermitRisks.filter(
-  //     (risk) => risk.hazard_category_id === Number(value)
-  //   );
-  //   newActivities[index].riskOptions = riskList;
-
-  //   setActivities(newActivities);
-  // };
-
+  // When a hazard category is selected, store its id only.
   const handleHazardChange = (index, e) => {
     const selectedHazardId = e.target.value;
     const newActivities = [...activities];
     newActivities[index] = { ...newActivities[index] };
-
-    newActivities[index].category_of_hazards = selectedHazardId;
+    newActivities[index].category_of_hazards = selectedHazardId; // store id
     newActivities[index].risks = "";
-    newActivities[index].riskOptions = [];
-
+    // Filter risks based on the hazard category id.
     const riskList = allPermitRisks.filter(
       (risk) => risk.hazard_category_id === Number(selectedHazardId)
     );
@@ -470,22 +397,15 @@ const AddNewPermit = () => {
     setActivities(newActivities);
   };
 
+  // When a risk is selected, store its id only.
   const handleRiskChange = (index, e) => {
     const selectedRiskId = e.target.value;
     const newActivities = [...activities];
     newActivities[index] = { ...newActivities[index] };
-    newActivities[index].risks = selectedRiskId;
+    newActivities[index].risks = selectedRiskId; // store id
+    console.log("Updated Activities:", newActivities);
     setActivities(newActivities);
   };
-
-  // const handleRiskChange = (index, e) => {
-  //   const { value } = e.target;
-  //   const newActivities = [...activities];
-  //   newActivities[index].risks = value;
-  //   setActivities(newActivities);
-  // };
-
-  // console.log("This is filter data :", filteredData);
 
   return (
     <section className="flex">
@@ -499,9 +419,6 @@ const AddNewPermit = () => {
             New Permit
           </h2>
           <div className=" my-5 mb-10 sm:border border-gray-300 p-5 px-10 rounded-lg ">
-            {/* <h2 className="border-b text-center text-xl border-black  font-bold">
-            PERMIT REQUESTOR DETAILS
-          </h2> */}
             <Accordion
               icon={RiContactsBook2Line}
               title={"Requestor Details"}
@@ -537,15 +454,6 @@ const AddNewPermit = () => {
                         </label>
                         <p>{formData?.contact_number}</p>
                       </div>
-                      {/* <div className="grid grid-cols-2 items-center">
-                      <label
-                        className="block text-gray-700 font-medium "
-                        htmlFor="name"
-                      >
-                        Unit :
-                      </label>
-                      <p>{siteName}</p>
-                    </div> */}
                     </div>
                   </div>
                 </>
@@ -917,11 +825,12 @@ const AddNewPermit = () => {
               Enter Permit Description
             </h3>
 
-            <div className="w-full ">
-              <div className="w-full   rounded-lg ">
+            <div className="w-full">
+              <div className="w-full rounded-lg">
                 {activities.map((activity, index) => (
                   <div key={index} className="mb-4 border p-2 rounded-xl mt-1">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      {/* Activity Dropdown */}
                       <div className="col-span-1">
                         <label
                           className="block text-gray-700 font-bold mb-2"
@@ -931,9 +840,8 @@ const AddNewPermit = () => {
                         </label>
                         <select
                           id={`activity-${index}`}
-                          type="text"
                           name="activity"
-                          value={activity.activity}
+                          value={activity.activity || ""}
                           onChange={(e) => handleActivityChange(index, e)}
                           className="w-full border p-1 px-4 border-gray-500 rounded-md"
                         >
@@ -945,6 +853,7 @@ const AddNewPermit = () => {
                           ))}
                         </select>
                       </div>
+                      {/* Sub Activity Dropdown */}
                       <div className="col-span-1">
                         <label
                           className="block text-gray-700 font-bold mb-2"
@@ -953,14 +862,12 @@ const AddNewPermit = () => {
                           Sub Activity<span className="text-red-400">*</span>
                         </label>
                         <select
-                          className="w-full border p-1 px-4 border-gray-500 rounded-md"
                           id={`sub-activity-${index}`}
-                          type="text"
-                          placeholder="Select Sub Activity"
                           name="sub_activity"
-                          value={activity.sub_activity}
-                          disabled={!activity.activity}
+                          value={activity.sub_activity || ""}
                           onChange={(e) => handleSubActivityChange(index, e)}
+                          disabled={!activity.activity}
+                          className="w-full border p-1 px-4 border-gray-500 rounded-md"
                         >
                           <option value="">Select Sub Activity</option>
                           {activity.subOptions?.map((option) => (
@@ -972,6 +879,7 @@ const AddNewPermit = () => {
                       </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
+                      {/* Hazard Category Dropdown */}
                       <div className="col-span-1">
                         <label
                           className="block text-gray-700 font-bold mb-2"
@@ -981,23 +889,22 @@ const AddNewPermit = () => {
                           <span className="text-red-400">*</span>
                         </label>
                         <select
-                          className="w-full border p-1 px-4 border-gray-500 rounded-md"
                           id={`hazard-category-${index}`}
-                          type="text"
-                          placeholder="Select Category of Hazards"
                           name="category_of_hazards"
-                          value={activity.category_of_hazards}
+                          value={activity.category_of_hazards || ""}
+                          onChange={(e) => handleHazardChange(index, e)}
                           disabled={!activity.sub_activity}
-                          onChange={(e) => handleHazardChange(index,e)}
+                          className="w-full border p-1 px-4 border-gray-500 rounded-md"
                         >
                           <option value="">Select Category of Hazards</option>
-                          {activity.hazardOptions?.map((option)=>(
+                          {activity.hazardOptions?.map((option) => (
                             <option key={option.id} value={option.id}>
                               {option.name}
                             </option>
                           ))}
                         </select>
                       </div>
+                      {/* Risk Dropdown */}
                       <div className="col-span-1">
                         <label
                           className="block text-gray-700 font-bold mb-2"
@@ -1006,25 +913,22 @@ const AddNewPermit = () => {
                           Risks<span className="text-red-400">*</span>
                         </label>
                         <select
-                          className="w-full border p-1 px-4 border-gray-500 rounded-md"
                           id={`risks-${index}`}
-                          type="text"
-                          placeholder="Enter Risks"
                           name="risks"
-                          value={activity.risks}
+                          value={activity.risks || ""}
+                          onChange={(e) => handleRiskChange(index, e)}
                           disabled={!activity.category_of_hazards}
-                          onChange={(e) => handleRiskChange(index,e)}
+                          className="w-full border p-1 px-4 border-gray-500 rounded-md"
                         >
                           <option value="">Select Risks</option>
                           {activity.riskOptions?.map((option) => (
                             <option key={option.id} value={option.id}>
-                              {option.risk_name}
+                              {option.risk_name || option.name}
                             </option>
                           ))}
                         </select>
                       </div>
                     </div>
-
                     <div className="flex justify-end">
                       <button
                         className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:shadow-outline mt-1"
@@ -1048,7 +952,7 @@ const AddNewPermit = () => {
                 </div>
               </div>
 
-              <div className="w-full   p-2 rounded-xl mt-1">
+              <div className="w-full p-2 rounded-xl mt-1">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div className="col-span-1">
                     <label
@@ -1060,15 +964,14 @@ const AddNewPermit = () => {
                     <select
                       className="w-full border p-1 px-4 border-gray-500 rounded-md"
                       id="vendor"
-                      type="text"
+                      name="vendor_id"
                       value={formData.vendor_id}
                       onChange={handleChange}
-                      name="vendor_id"
                       placeholder="Enter Vendor"
                     >
                       <option value="">Select Vendor</option>
                       {vendors.map((vendor) => (
-                        <option value={vendor.id} key={vendor.id}>
+                        <option key={vendor.id} value={vendor.id}>
                           {vendor.vendor_name}
                         </option>
                       ))}
@@ -1084,10 +987,10 @@ const AddNewPermit = () => {
                     <input
                       className="w-full border p-1 px-4 border-gray-500 rounded-md"
                       id="expiryDateTime"
+                      type="datetime-local"
+                      name="expiry_date_and_time"
                       value={formData.expiry_date_and_time}
                       onChange={handleChange}
-                      name="expiry_date_and_time"
-                      type="datetime-local"
                       placeholder="dd-mm-yyyy --:--"
                     />
                   </div>
@@ -1103,9 +1006,9 @@ const AddNewPermit = () => {
                     <textarea
                       className="w-full border p-1 px-4 border-gray-500 rounded-md"
                       id="comment"
+                      name="comment"
                       value={formData.comment}
                       onChange={handleChange}
-                      name="comment"
                       placeholder="Enter Comment"
                     />
                   </div>

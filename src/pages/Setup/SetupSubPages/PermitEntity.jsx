@@ -19,6 +19,7 @@ import {
   getPermitType,
   getPermitTypeDetails,
   postPermitType,
+  fetchPermitEntity,
 } from "../../../api";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
 import toast from "react-hot-toast";
@@ -27,6 +28,8 @@ import toast from "react-hot-toast";
 const PermitEntity = () => {
   const themeColor = useSelector((state) => state.theme.color);
   const siteId = getItemInLocalStorage("SITEID");
+  const [permit_entities, setPermitEntities] = useState();
+  const [filteredData, setFilteredData] = useState([]);
   const [update, setupdate] = useState(false);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -40,14 +43,23 @@ const PermitEntity = () => {
   const closeModal = () => setIsModalOpen(false);
   const [formData, setFormData] = useState({
     name: "",
-    permit_id:"",
-    site_id:"",
-    ative:"",
+    permit_id: "",
+    site_id: "",
+    ative: "",
   });
- 
-  
-  const [filteredData, setFilteredData] = useState([]);
+
   useEffect(() => {
+    const fetchPermitEntities = async () => {
+      try {
+        const res = await fetchPermitEntity();
+        console.log("res:", res.data);
+        // If your API returns data in a "data" property, use res.data
+        setPermitEntities(res.data);
+        setData(res.data);
+      } catch (error) {
+        console.log("error fetching permit entities", error);
+      }
+    };
     const fetchPantry = async () => {
       try {
         const invResp = await getPermitType();
@@ -62,18 +74,21 @@ const PermitEntity = () => {
         console.log(error);
       }
     };
+
+    fetchPermitEntities();
     fetchPantry();
   }, [update]);
-  const fetchCategoryDetails = async (categoryId) => {
-    try {
-      const categoryDetails = await getPermitTypeDetails(categoryId);
-      setFormData({
-        name: categoryDetails.data.name,
-      });
-    } catch (error) {
-      console.error("Error fetching category details:", error);
-    }
-  };
+
+  // const fetchCategoryDetails = async (categoryId) => {
+  //   try {
+  //     const categoryDetails = await getPermitTypeDetails(categoryId);
+  //     setFormData({
+  //       name: categoryDetails.data.name,
+  //     });
+  //   } catch (error) {
+  //     console.error("Error fetching category details:", error);
+  //   }
+  // };
   const DeletePermittype = async (categoryId) => {
     try {
       const categoryDetails = await deletePermitType(categoryId);
@@ -118,10 +133,43 @@ const PermitEntity = () => {
       console.log(error);
     }
   };
+
+  const [data, setData] = useState([]);
+
+  const toggleStatus = (id) => {
+    setData((prevData) =>
+      prevData.map((row) =>
+        row.id === id ? { ...row, active: !row.active } : row
+      )
+    );
+  };
+
   const column = [
-    { name: "Permit Type", selector: (row) => row.name, sortable: true },
+    { name: "Entity Name", selector: (row) => row.name, sortable: true },
+    { name: "Permit Id", selector: (row) => row.permit_id, sortable: true },
+    { name: "Site Id", selector: (row) => row.site_id, sortable: true },
     {
-      name: "Actions",
+      name: "Status",
+      selector: (row) => (row.active ? "Active" : "Inactive"),
+      sortable: true,
+      cell: (row) => (
+        <button
+          onClick={() => toggleStatus(row.id)}
+          style={{
+            padding: "5px 10px",
+            backgroundColor: row.active ? "blueviolet" :"lightgray",
+            color: "white",
+            border: "none",
+            borderRadius: "5px",
+            cursor: "pointer",
+          }}
+        >
+          {row.active ? "Active" : "Inactive"}
+        </button>
+      ),
+    },
+    {
+      name: "Actions class",
       cell: (row) => (
         <div className="flex items-center gap-4">
           <button onClick={() => openModal(row.id)}>
@@ -137,6 +185,7 @@ const PermitEntity = () => {
 
   document.title = `Permit Setup - Vibe Connect`;
   const [showAdd, setShowAdd] = useState(false);
+
   return (
     <section className="flex ">
       <div className="w-full flex mx-3 flex-col overflow-hidden">
@@ -179,7 +228,7 @@ const PermitEntity = () => {
         )}
         <Table
           columns={column}
-          data={filteredData}
+          data={permit_entities}
           // customStyles={customStyle}
           responsive
           fixedHeader

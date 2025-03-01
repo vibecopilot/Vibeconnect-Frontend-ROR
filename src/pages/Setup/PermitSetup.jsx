@@ -92,7 +92,7 @@ const PermitSetup = () => {
           {page === "Permit Hazard Category" && <PermitHazardCategoryTable />}
           {page === "Permit Risk" && <PermitRiskTable />}
           {page === "Permit Safety Equipment" && <PermitSafetyEquipment />}
-          {page === "Permit Entity " && <PermitEntity />}
+          {page === "Permit Entity" && <PermitEntity />}
         </div>
       </div>
     </div>
