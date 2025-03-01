@@ -106,7 +106,7 @@ const Incidents = () => {
         <div>
           <Table
             columns={column}
-            data={filteredIncidents}
+            data={[]}
             isPagination={true}
           />
         </div>

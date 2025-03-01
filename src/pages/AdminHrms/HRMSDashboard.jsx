@@ -444,7 +444,7 @@ const HRMSDashboard = () => {
               Home{""}
             </Link>
            
-            <div className="grid md:grid-cols-2 mr-2 my-10 gap-10">
+            <div className="grid md:grid-cols-3 mr-2 my-10 gap-10">
               <div className="" >
                 <DepartmentCount
                   // Pass siteId and dashboardData down
