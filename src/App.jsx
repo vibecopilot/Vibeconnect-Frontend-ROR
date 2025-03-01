@@ -3605,6 +3605,7 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
+        {/*  */}
 
         {/* booking & Req */}
         <Route
@@ -5279,7 +5280,73 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
-
+        {/* Transportation */}
+        <Route
+          path="/admin/transportation"
+          element={
+            <ProtectedAdminRoutes>
+            <Transportation/>
+            </ProtectedAdminRoutes>
+          }
+          />
+        <Route
+          path="/admin/transportation/book-pickup"
+          element={
+            <ProtectedAdminRoutes>
+            <BookPickup/>
+            </ProtectedAdminRoutes>
+          }
+          />
+        {/* Insurance */}
+        <Route
+          path="/insurance"
+          element={
+            <ProtectedAdminRoutes>
+              <Insurance />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/insurance/add-policy"
+          element={
+            <ProtectedAdminRoutes>
+              <AddPersonalInsurance/>
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="insurance/add-existing-policy"
+          element={
+            <ProtectedAdminRoutes>
+              <AddPersonalInsurance/>
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/insurance"
+          element={
+            <ProtectedAdminRoutes>
+              <Insurance />
+            </ProtectedAdminRoutes>
+          }
+        />
+        {/* Fitness */}
+        <Route
+          path="/admin/fitness"
+          element={
+            <ProtectedRoute>
+              <Fitness />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/book-fitness"
+          element={
+            <ProtectedRoute>
+              <BookFitness />
+            </ProtectedRoute>
+          }
+        />
         {/*personal financial */}
         <Route
           path="/personal-finance"
