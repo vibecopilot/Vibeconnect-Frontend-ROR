@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { getUserOtp } from "../api";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 // import { ChevronLeft } from "lucide-react"
 import {domainPrefix} from "../api/index";
 // import Image from "next/image"
 
 const OtpAndQr = () => {
-  const {id} = useParams();
+
+  const [searchParams] = useSearchParams();
+  const id = searchParams.get("v"); 
+  // const {id} = useParams();
   console.log("id:", id);
   const [userData, setUserData] = useState({});
   //const [otp, setOtp] = useState("");
@@ -14,30 +17,24 @@ const OtpAndQr = () => {
   const [qrCodeImageUrl, setQrCodeImageUrl] = useState("");
   const [otpDigits, setOtpDigits] = useState([]);
 
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     const response = await getUserOtp(id);
-  //     setUserData(response.data);
-  //     //setOtp(response.data.otp || ""); // Add a default value if otp is undefined
-  //     // setQrCode(response.data.qrCode);
-  //     setQrCodeImageUrl(response.data.qr_code_image_url);
-  //     setOtpDigits(response.data);
-  //     console.log("otp:",otpDigits)
-  //   };
-  //   fetchData();
-  // }, [id]);
-  // console.log("Otp:",otpDigits)
+  
 
   useEffect(() => {
     const fetchData = async () => {
-      const response = await getUserOtp(id);
-      setUserData(response.data);
-      setOtpDigits(response.data.otp.toString().split('')); // assuming otp is the list in response.data
-      setQrCodeImageUrl(response.data.qr_code_image_url);
-      console.log("otp:",otpDigits)
-      console.log("qrCodeImageUrl:",qrCodeImageUrl)
-// 
+      if (!id) return; // Prevent API call if id is null
+      try {
+        const response = await getUserOtp(id);
+        setUserData(response.data);
+        setOtpDigits(response.data.otp.toString().split(""));
+        setQrCodeImageUrl(response.data.qr_code_image_url);
+        
+        console.log("OTP Digits:", response.data.otp.toString().split(""));
+        console.log("QR Code URL:", response.data.qr_code_image_url);
+      } catch (error) {
+        console.error("Error fetching OTP data:", error);
+      }
     };
+  
     fetchData();
   }, [id]);
 
