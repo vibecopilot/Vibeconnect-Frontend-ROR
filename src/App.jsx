@@ -737,9 +737,9 @@ import CreateInvoiceReceipt from "./pages/SubPages/details/CreateInvoiceReceipt.
 // import FBMainPage from "./pages/Setup/FBMainPage.jsx";
 import EmployeeDocumentMain from "./pages/Employees/EmployeeDocumentMain.jsx";
 // import EditDailyPickup from "./pages/SubPages/Transportation/EditDailyPickup.jsx";
-// import Compliance from "./pages/Compliance/Compliance.jsx";
-// import ComplianceSetup from "./pages/Setup/ComplianceSetupPages/ComplianceSetup.jsx";
-// import AddCompliance from "./pages/Compliance/AddCompliance.jsx";
+import Compliance from "./pages/Compliance/Compliance.jsx";
+import ComplianceSetup from "./pages/Setup/ComplianceSetupPages/ComplianceSetup.jsx";
+import AddCompliance from "./pages/Compliance/AddCompliance.jsx";
 // import SiteEmployee from "./pages/AdminHrms/Employee/SiteEmployee.jsx";
 import ComplianceVendor from "./pages/Compliance/ComplianceVendor.jsx";
 import ComplianceEvidence from "./pages/Setup/ComplianceSetupPages/ComplianceEvidence.jsx";
@@ -753,7 +753,7 @@ import AddSelfRegistration from "./pages/SubPages/AddSelfRegistration.jsx";
 import EditSelfRegistration from "./pages/SubPages/EditSelfRegistration.jsx";
 import SelfRegistrationDetails from "./pages/SubPages/SelfRegistrationDetails.jsx";
 // new admin hrms
-import Privacy from "./pages/Privacy/Privacy.jsx"
+import Privacy from "./pages/Privacy/Privacy.jsx";
 import PrivacyPolicy from "./pages/Setup/Abous/PrivacyPolicy.jsx";
 import OtpAndQr from "./pages/OtpAndQr.jsx";
 
@@ -847,7 +847,6 @@ function App() {
 
   //   return () => clearInterval(interval);
   // }, [empId]);
-
 
   //updated
   // useEffect(() => {
@@ -1234,22 +1233,24 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
-        {/* <Route
+        {/* { */}
+        <Route
           path="/compliance"
           element={
             <ProtectedAdminRoutes>
               <Compliance />
             </ProtectedAdminRoutes>
           }
-        /> */}
-        {/* <Route
+        />
+        {/* } */}
+        <Route
           path="/compliance/add-compliance"
           element={
             <ProtectedAdminRoutes>
               <AddCompliance />
             </ProtectedAdminRoutes>
           }
-        /> */}
+        />
         <Route
           path="/tickets/details/:id"
           element={
@@ -3334,14 +3335,14 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
-        {/* <Route
+        <Route
           path="/admin/setup-compliance"
           element={
             <ProtectedAdminRoutes>
               <ComplianceSetup />
             </ProtectedAdminRoutes>
           }
-        /> */}
+        />
         {/* Meter Types */}
         <Route
           path="/admin/setup-meter-type"
@@ -6519,12 +6520,7 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
-        <Route
-          path="/setup/privacy_policy"
-          element={
-              <PrivacyPolicy /> 
-          }
-        />
+        <Route path="/setup/privacy_policy" element={<PrivacyPolicy />} />
         <Route
           path="/admin/skill-grow/create-course-details"
           element={
@@ -6821,23 +6817,10 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/privacy"
-          element={
-              <Privacy />
-          }
-        />
-        <Route
-          path="/otp-qr/:id"
-          element={
-          
-              <OtpAndQr/>
-           
-          }
-        />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/otp-qr/:id" element={<OtpAndQr />} />
       </Routes>
 
-      
       <Footer />
     </>
   );
