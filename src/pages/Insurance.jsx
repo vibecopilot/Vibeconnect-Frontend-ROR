@@ -280,27 +280,22 @@ const Insurance = () => {
           {page === "Current Policies" && (
             <div>
               {isLoadingPolicy ? (
-                <div className=" m-4" style={{ textAlign: "center" }}>
-                  <center className="m-4">
-                    <div
-                      className="spinner-border"
-                      style={{ opacity: 0.3 }}
-                      role="status"
-                    >
-                      <span className="sr-only"></span>
-                    </div>
-                    <br />
-                    <span style={{ opacity: 0.6 }}>Please wait...</span>
-                  </center>
-                </div>
-              ) : policies.length === 0 ? (
-                <div className="col-md-12" style={{ textAlign: "center" }}>
-                  <div className="m-4">
-                    <center>
-                      No Policies
-                      <br />
-                    </center>
+                <div className="m-4" style={{ textAlign: "center" }}>
+                  <div
+                    className="spinner-border"
+                    style={{ opacity: 0.3 }}
+                    role="status"
+                  >
+                    <span className="sr-only"></span>
                   </div>
+                  <br />
+                  <span style={{ opacity: 0.6 }}>Please wait...</span>
+                </div>
+              ) : !policies ||
+                !Array.isArray(policies) ||
+                policies.length === 0 ? (
+                <div className="col-md-12" style={{ textAlign: "center" }}>
+                  <div className="m-4">No Policies</div>
                 </div>
               ) : (
                 policies.map((policy) => (
@@ -598,7 +593,9 @@ const Insurance = () => {
                     <span style={{ opacity: 0.6 }}>Please wait...</span>
                   </center>
                 </div>
-              ) : policies.length === 0 ? (
+              ) : !policies ||
+                !Array.isArray(policies) ||
+                policies.length === 0 ? (
                 <div className="col-md-12" style={{ textAlign: "center" }}>
                   <div className="m-4">
                     <center>
