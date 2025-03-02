@@ -6872,6 +6872,19 @@ export const getAssociatedSite = async (id) => {
     return []; // Return empty array on error
   }
 }
+export const getAssociatedSiteOnly = async (id) => {
+  try {
+    const res = await HrmsAuth.get(`/associated/${id}`, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    })
+    return res.data; // Ensure it returns data
+  } catch (error) {
+    console.error("Error getting notifications:", error);
+    return []; // Return empty array on error
+  }
+}
 
 export const postAssociatedSites = async (data) => {
   try {

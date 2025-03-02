@@ -119,7 +119,7 @@ const AddressInformation = () => {
     const fetchRoleAccess = async () => {
       try {
         const res = await getAdminAccess(orgId, empId);
-
+        console.log("res acces:",res[0])
         setRoleAccess(res[0]);
       } catch (error) {
         console.log(error);
