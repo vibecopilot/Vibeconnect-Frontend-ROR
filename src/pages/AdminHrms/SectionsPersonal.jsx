@@ -42,6 +42,11 @@ const SectionsPersonal = () => {
   const [isFamEditing, setIsFamEditing] = useState(false);
   const [isAddressEditing, setIsAddressEditing] = useState(false);
   const [selectedOptions, setSelectedOptions] = useState([]);
+
+  const role = getItemInLocalStorage("Role");
+  console.log(role);
+  const [geotag, setGeoTag] = useState(false);
+
   const handleSelectChange = (selected) => {
     setSelectedOptions(selected);
   };
@@ -139,6 +144,7 @@ const SectionsPersonal = () => {
     userType: "",
     status: false,
     latRequired: true,
+    geotag_enabled: false,
   });
   const [familyData, setFamilyData] = useState({
     fatherName: "",
@@ -178,7 +184,8 @@ const SectionsPersonal = () => {
         emergencyContactName: res?.emergency_contact_name,
         emergencyContactNo: res?.emergency_contact_no,
         userType: res?.user_type,
-        latRequired: res?.lat_long_required
+        latRequired: res?.lat_long_required,
+        geotag_enabled: res?.geotag_enabled
       });
     } catch (error) {
       console.log(error);
@@ -288,6 +295,7 @@ const SectionsPersonal = () => {
     editData.append("status", formData.status);
     editData.append("organization", hrmsOrgId);
     editData.append("lat_long_required", formData.latRequired);
+    editData.append("geotag_enabled", formData.geotag_enabled);
     try {
       const res = await editEmployeeDetails(id, editData);
       setIsEditing(false);
@@ -454,7 +462,7 @@ const SectionsPersonal = () => {
     const fetchRoleAccess = async () => {
       try {
         const res = await getAdminAccess(orgId, empId);
-
+        console.log("Role AdminAccess", res);
         setRoleAccess(res[0]);
       } catch (error) {
         console.log(error);
@@ -462,6 +470,12 @@ const SectionsPersonal = () => {
     };
     fetchRoleAccess();
   }, []);
+
+  console.log("roleAccess", roleAccess.role);
+
+  const allowedRoles = ["superadmin", "admin","pms_admin"];
+  const normalizedRole = roleAccess?.role?.toLowerCase().replace(/\s/g, "");
+  const isAuthorized = allowedRoles.includes(normalizedRole);
 
   return (
     <div className="flex flex-col ml-20">
@@ -668,6 +682,22 @@ const SectionsPersonal = () => {
                         setFormData({
                           ...formData,
                           latRequired: !formData.latRequired,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      GeoTag Enable
+                    </label>
+                    <Switch
+                      checked={formData.geotag_enabled}
+                      disabled={!isEditing || !isAuthorized}
+                      onChange={() =>
+                        isAuthorized &&
+                        setFormData({
+                          ...formData,
+                          geotag_enabled: !formData.geotag_enabled,
                         })
                       }
                     />
