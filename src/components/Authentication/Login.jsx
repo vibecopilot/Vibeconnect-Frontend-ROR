@@ -82,6 +82,7 @@ const Login = () => {
       });
 
       // Store various data in local storage
+      console.log("response data:",response.data)
       const selectedSiteId = response.data.user.selected_site_id;
       const userNameFromResponse = response.data.user.firstname;
       const userEmail = response.data?.user?.email;

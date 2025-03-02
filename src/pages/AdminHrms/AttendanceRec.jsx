@@ -9,6 +9,7 @@ import {
   FaChevronRight,
   FaRedo,
 } from "react-icons/fa";
+import { FaLocationDot } from "react-icons/fa6";
 import ToggleSwitch from "../../Buttons/ToggleSwitch";
 import EmployeeDetailView from "./EmployeeDetailView";
 import {
@@ -197,8 +198,7 @@ const AttendanceRec = () => {
     newDate.setDate(newDate.getDate() + (direction === "next" ? 7 : -7));
     setStartDate(newDate);
   };
-  console.log("EMPLOYEES:", employees);
-
+  // console.log("EMPLOYEES:", employees);
 
   useEffect(() => {
     const fetchSites = async () => {
@@ -255,13 +255,10 @@ const AttendanceRec = () => {
         // Name-based search.
         result = await fetchByName(hrmsOrgId, value);
       }
-
-      // Log the full response to inspect its structure.
       console.log("result:", result);
 
-      // Since your response has a "results" key, extract the employee array from it.
       const employeesData = Array.isArray(result.results) ? result.results : [];
-      console.log("employeeData:",employeesData)
+      console.log(" 264 EmployeeData:", employeesData);
       setFilteredEmployees(employeesData);
     } catch (error) {
       console.error("Error fetching attendance records:", error);
@@ -366,6 +363,23 @@ const AttendanceRec = () => {
     }
   };
 
+  // Changes
+  const navigateToLocation = (latitude, longitude) => {
+    const url = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+    window.open(url, "_blank");
+  };
+
+  const [emplocation, setEmployeeLocation] = useState([]);
+  const firstLocation = emplocation[0];
+  const validLocations = emplocation.filter(
+    (loc) => loc.latitude && loc.longitude
+  );
+
+  // Fetch the last valid location, or null if none exists
+  const lastValidLocation = validLocations.length
+    ? validLocations[validLocations.length - 1]
+    : null;
+
   const fetchTodayAttendance = async (empId, dateString) => {
     await fetchEmployeeFullDetails(empId);
     try {
@@ -379,26 +393,35 @@ const AttendanceRec = () => {
         const checkOutRecord = res
           .reverse()
           .find((record) => record.is_check_in === false);
-        // const checkInTime = checkInRecord
-        //   ? formatTimeToAmPmUTC(checkInRecord.attendance_time)
-        //   : null;
+        console.log("CheckOutRecord:", checkOutRecord);
+
         const checkInTime = checkInRecord
           ? new Date(checkInRecord.attendance_time).toLocaleTimeString()
           : null;
-        // const checkOutTime = checkOutRecord
-        //   ? formatTimeToAmPmUTC(checkInRecord.attendance_time)
-        //   : null;
+
         const checkOutTime = checkOutRecord
           ? new Date(checkOutRecord.attendance_time).toLocaleTimeString()
           : null;
+
+        // const checkInTime = checkInRecord
+        //   ? formatTimeToAmPmUTC(checkInRecord.attendance_time)
+        //   : null;
+        // const checkOutTime = checkOutRecord
+        //   ? formatTimeToAmPmUTC(checkInRecord.attendance_time)
+        //   : null;
+        const location = res.map(({ latitude, longitude }) => ({
+          latitude,
+          longitude,
+        }));
+
         setCheckInTime(checkInTime || "-");
         setCheckOutTime(checkOutTime || "-");
+        setEmployeeLocation(location);
         setCheckOutLogs(res);
         console.log(res);
       } else {
         setCheckInTime("");
         setCheckOutTime("");
-
         setIsPresent(false);
       }
     } catch (error) {
@@ -433,7 +456,7 @@ const AttendanceRec = () => {
   const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
   const orgId = getItemInLocalStorage("HRMSORGID");
   const [roleAccess, setRoleAccess] = useState({});
-  
+
   useEffect(() => {
     const fetchRoleAccess = async () => {
       try {
@@ -958,6 +981,8 @@ const AttendanceRec = () => {
           </div>
         </div>
       )}
+
+      {/* Selected Employee Details Modal */}
       {selectedEmpAttendance && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center">
           <div className="bg-white px-6 py-4 rounded-xl shadow-lg min-w-96 max-h-[35rem] overflow-auto hide-scrollbar">
@@ -997,6 +1022,7 @@ const AttendanceRec = () => {
                     </div>
                   )}
                 </div>
+                {/* Modal */}
                 <div className="flex flex-col gap-2 my-2">
                   <div className="w-full border-b flex justify-between items-center">
                     <p className="font-medium">Attendance Details </p>
@@ -1012,6 +1038,51 @@ const AttendanceRec = () => {
                   <div className=" flex justify-between">
                     <p className="font-medium">Check Out :</p>
                     <p>{checkOutTime}</p>
+                  </div>
+                  <div>
+                    {emplocation.length > 0 && (
+                      <>
+                        {/* Display first location */}
+                        <div className=" flex justify-between">
+                          <h3 className="font-medium">Check In :</h3>
+                          <button className="flex items-center space-x-1"
+                            onClick={() =>
+                              navigateToLocation(
+                                firstLocation.latitude,
+                                firstLocation.longitude
+                              )
+                            }
+                          >
+                            <span className="text-slate-900  ">Location</span>
+                            <FaLocationDot />
+                          </button>
+                        </div>
+                        {/* Display last location */}
+                        <div>
+                          {lastValidLocation ? (
+                            <div className=" flex justify-between my-2">
+                              <h3 className="font-medium">Check Out :</h3>
+                              <button
+                                className="flex items-center space-x-1 "
+                                onClick={() =>
+                                  navigateToLocation(
+                                    lastValidLocation.latitude,
+                                    lastValidLocation.longitude
+                                  )
+                                }
+                              >
+                                <span className="text-slate-900  ">
+                                  Location
+                                </span>
+                                <FaLocationDot />
+                              </button>
+                            </div>
+                          ) : (
+                            <p>No valid Checkout Location Found.</p>
+                          )}
+                        </div>
+                      </>
+                    )}
                   </div>
                   <Accordion
                     icon={MdOutlinePunchClock}
