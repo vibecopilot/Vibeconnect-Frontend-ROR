@@ -7,6 +7,8 @@ import { BsEye, BsFilter } from "react-icons/bs";
 import { BiEdit } from "react-icons/bi";
 import { MdAdd } from "react-icons/md";
 
+
+
 const Mom = () => {
   const column = [
     {
@@ -66,7 +68,9 @@ const Mom = () => {
     setIsFilterModalOpen(false);
   };
   return (
-    <div cl>
+    <div 
+    >
+        {/* <Navbar /> */}
       <h2 className="text-2xl font-semibold pt-6 pl-[2%]">MOM LIST</h2>
 
       <div className="flex justify-end gap-8 p-4">

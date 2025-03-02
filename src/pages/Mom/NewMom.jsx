@@ -40,6 +40,8 @@ export default function NewMom() {
     }]);
   };
 
+
+  
   const handleAddAttendee = () => {
     if (selectedAttendee) {
       setAttendees([
@@ -145,6 +147,14 @@ export default function NewMom() {
 
         {points.map((point, index) => (
           <div key={index} className="border border-gray-200 rounded-md p-4 mb-4">
+            <div className=" justify-end text-end">
+      <button
+        onClick={() => handleRemovePoint(index)}
+        className="bg-red-500 text-white px-4 py-2 rounded text-sm"
+      >
+        Remove
+      </button>
+    </div>
             <div className="mb-4">
               <label className="block text-xl mb-1">Points To Discuss</label>
               <textarea
@@ -156,95 +166,124 @@ export default function NewMom() {
               ></textarea>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className="block text-xl mb-1">
-                  Responsible Person Type
-                </label>
-                <div className="flex items-center space-x-4">
-                  <label className="flex items-center">
-                    <div className="relative flex items-centers">
-                      <input
-                        type="radio"
-                        name="responsiblePersonType"
-                        value="internal"
-                        checked={point.responsiblePersonType === "internal"}
-                        onChange={(e) => handleInputChange(e, index)}
-                        className="opacity-0 absolute h-5 w-5"
-                      />
-                      <div
-                        className={`border border-gray-300 rounded-full w-5 h-5 flex flex-shrink-0 justify-center items-center mr-2 ${
-                          point.responsiblePersonType === "internal"
-                            ? "bg-green-500 border-transparent"
-                            : ""
-                        }`}
-                      >
-                        {point.responsiblePersonType === "internal" && (
-                          <div className="rounded-full w-3 h-3 bg-white"></div>
-                        )}
-                      </div>
-                    </div>
-                    <span>Internal</span>
-                  </label>
+            <div className="grid grid-cols-3 md:grid-cols-3 gap-4 mb-4">
+  <div>
+    <label className="block text-xl mb-1">
+      Responsible Person Type
+    </label>
+    <div className="flex items-center space-x-4">
+      <label className="flex items-center">
+        <div className="relative flex items-center">
+          <input
+            type="radio"
+            name="responsiblePersonType"
+            value="internal"
+            checked={point.responsiblePersonType === "internal"}
+            onChange={(e) => handleInputChange(e, index)}
+            className="opacity-0 absolute h-5 w-5"
+          />
+          <div
+            className={`border border-gray-300 rounded-full w-5 h-5 flex flex-shrink-0 justify-center items-center mr-2 ${
+              point.responsiblePersonType === "internal"
+                ? "bg-green-500 border-transparent"
+                : ""
+            }`}
+          >
+            {point.responsiblePersonType === "internal" && (
+              <div className="rounded-full w-3 h-3 bg-white"></div>
+            )}
+          </div>
+        </div>
+        <span>Internal</span>
+      </label>
 
-                  <label className="flex items-center">
-                    <div className="relative flex items-center">
-                      <input
-                        type="radio"
-                        name="responsiblePersonType"
-                        value="external"
-                        checked={point.responsiblePersonType === "external"}
-                        onChange={(e) => handleInputChange(e, index)}
-                        className="opacity-0 absolute h-5 w-5"
-                      />
-                      <div
-                        className={`border border-gray-300 rounded-full w-5 h-5 flex flex-shrink-0 justify-center items-center mr-2 ${
-                          point.responsiblePersonType === "external"
-                            ? "bg-green-500 border-transparent"
-                            : ""
-                        }`}
-                      >
-                        {point.responsiblePersonType === "external" && (
-                          <div className="rounded-full w-3 h-3 bg-white"></div>
-                        )}
-                      </div>
-                    </div>
-                    <span>External</span>
-                  </label>
-                </div>
-              </div>
+      <label className="flex items-center">
+        <div className="relative flex items-center">
+          <input
+            type="radio"
+            name="responsiblePersonType"
+            value="external"
+            checked={point.responsiblePersonType === "external"}
+            onChange={(e) => handleInputChange(e, index)}
+            className="opacity-0 absolute h-5 w-5"
+          />
+          <div
+            className={`border border-gray-300 rounded-full w-5 h-5 flex flex-shrink-0 justify-center items-center mr-2 ${
+              point.responsiblePersonType === "external"
+                ? "bg-green-500 border-transparent"
+                : ""
+            }`}
+          >
+            {point.responsiblePersonType === "external" && (
+              <div className="rounded-full w-3 h-3 bg-white"></div>
+            )}
+          </div>
+        </div>
+        <span>External</span>
+      </label>
+    </div>
+  </div>
 
-              <div>
-                <label className="block text-xl mb-1">Responsible Person</label>
-                <div className="relative">
-                  <select
-                    name="responsiblePerson"
-                    value={point.responsiblePerson}
-                    onChange={(e) => handleInputChange(e, index)}
-                    className="w-full border border-gray-300 rounded p-2 appearance-none"
-                  >
-                    <option value="">Select Responsible Person</option>
-                    <option value="person1">Person 1</option>
-                    <option value="person2">Person 2</option>
-                  </select>
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                    <svg
-                      className="h-5 w-5 text-gray-400"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-            </div>
+  <div>
+    {point.responsiblePersonType === "internal" ? (
+      <label className="block text-xl mb-1">Responsible Person</label>
+    ) : (
+      <label className="block text-xl mb-1"> Responsible Person Name</label>
+    )}
+    <div className="relative">
+      {point.responsiblePersonType === "internal" ? (
+        <select
+          name="responsiblePerson"
+          value={point.responsiblePerson}
+          onChange={(e) => handleInputChange(e, index)}
+          className="w-full border border-gray-300 rounded p-2 appearance-none"
+        >
+          <option value="">Select Responsible Person</option>
+          <option value="person1">Person 1</option>
+          <option value="person2">Person 2</option>
+        </select>
+      ) : (
+        <input
+          type="text"
+          name="externalResponsiblePerson"
+          value={point.externalResponsiblePerson}
+          onChange={(e) => handleInputChange(e, index)}
+          className="w-full border border-gray-300 rounded p-2"
+          placeholder="Responsible Person Name"
+        />
+      )}
+      {/* <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+        <svg
+          className="h-5 w-5 text-gray-400"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M19 9l-7 7-7-7"
+          />
+        </svg>
+      </div> */}
+    </div>
+  </div>
+
+  {point.responsiblePersonType === "external" && (
+    <div>
+      <label className="block text-xl mb-1">Responsible Person Email</label>
+      <input
+        type="email"
+        name="externalResponsiblePersonEmail"
+        value={point.externalResponsiblePersonEmail}
+        onChange={(e) => handleInputChange(e, index)}
+        className="w-full border border-gray-300 rounded p-2"
+        placeholder=" Responsible Person Email"
+      />
+    </div>
+  )}
+</div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
               <div className="md:col-span-1">
@@ -308,14 +347,14 @@ export default function NewMom() {
               </div>
             </div>
 
-            <div>
+            {/* <div>
               <button
                 onClick={() => handleRemovePoint(index)}
                 className="bg-red-500 text-white px-4 py-2 rounded text-sm"
               >
                 Remove
               </button>
-            </div>
+            </div> */}
           </div>
         ))}
 

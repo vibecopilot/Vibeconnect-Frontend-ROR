@@ -88,7 +88,7 @@ const OtpAndQr = () => {
           <div className="flex justify-between mb-6">
             <div className="bg-yellow-100 rounded-lg p-2 text-center w-[45%]">
               <p className="text-xs font-medium">Start Date</p>
-              <p className="text-sm font-bold">{userData.pass_start_date}</p>
+              <p className="text-sm font-bold">{new Date(userData.created_at).toLocaleDateString()}</p>
             </div>
 
             {/* Company logo */}
@@ -100,7 +100,7 @@ const OtpAndQr = () => {
 
             <div className="bg-yellow-100 rounded-lg p-2 text-center w-[45%]">
               <p className="text-xs font-medium">End Date</p>
-              <p className="text-sm font-bold">{userData.pass_end_date}</p>
+              <p className="text-sm font-bold">{new Date(userData.created_at).toLocaleDateString()}</p>
             </div>
           </div>
 
