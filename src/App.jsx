@@ -736,11 +736,11 @@ import CreateInvoiceReceipt from "./pages/SubPages/details/CreateInvoiceReceipt.
 // import EditRestaurtantOrders from "./pages/SubPages/EditResturantOrders.jsx";
 // import FBMainPage from "./pages/Setup/FBMainPage.jsx";
 import EmployeeDocumentMain from "./pages/Employees/EmployeeDocumentMain.jsx";
-// import EditDailyPickup from "./pages/SubPages/Transportation/EditDailyPickup.jsx";
-import Compliance from "./pages/Compliance/Compliance.jsx";
-import ComplianceSetup from "./pages/Setup/ComplianceSetupPages/ComplianceSetup.jsx";
-import AddCompliance from "./pages/Compliance/AddCompliance.jsx";
-// import SiteEmployee from "./pages/AdminHrms/Employee/SiteEmployee.jsx";
+ import EditDailyPickup from "./pages/SubPages/Transportation/EditDailyPickup.jsx";
+ import Compliance from "./pages/Compliance/Compliance.jsx";
+ import ComplianceSetup from "./pages/Setup/ComplianceSetupPages/ComplianceSetup.jsx";
+ import AddCompliance from "./pages/Compliance/AddCompliance.jsx";
+ import SiteEmployee from "./pages/AdminHrms/Employee/SiteEmployee.jsx";
 import ComplianceVendor from "./pages/Compliance/ComplianceVendor.jsx";
 import ComplianceEvidence from "./pages/Setup/ComplianceSetupPages/ComplianceEvidence.jsx";
 import ComplianceDetails from "./pages/Compliance/ComplianceDetails.jsx";
