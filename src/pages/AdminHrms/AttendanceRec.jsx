@@ -387,28 +387,33 @@ const AttendanceRec = () => {
       const formattedDate = date.toISOString().slice(0, 10);
       const formattedEnd = date.toISOString().slice(0, 10);
       setSelectedAttendanceDate(formattedDate);
-      const res = await getEmployeeAttendanceOfToday(empId, formattedDate,formattedEnd);
-      console.log("attendance record for emp:",res)
-      if (res.length > 0) {
+      const res = await getEmployeeAttendanceOfToday(
+        empId,
+        formattedDate,
+        formattedEnd
+      );
+      console.log("attendance record for emp:", res);
+      if (res && res.length > 0) {
         const checkInRecord = res.find((record) => record.is_check_in === true);
-        // console.log("CheckInRecord:", checkInRecord);
-
-        setIsPresent(checkInRecord.is_check_in);
-        const checkOutRecord = res
-          .reverse()
-          .find((record) => record.is_check_in === false);
+        setIsPresent(checkInRecord ? checkInRecord.is_check_in : false);
+        const reversedRes = [...res].reverse();
+        const checkOutRecord = reversedRes.find(
+          (record) => record.is_check_in === false
+        );
         console.log("CheckOutRecord:", checkOutRecord);
 
         const checkInTime = checkInRecord
           ? new Date(checkInRecord.attendance_time).toLocaleTimeString()
           : null;
-
-          // console.log("checkInTime:",checkInTime)
-          
-          const checkOutTime = checkOutRecord
+        const checkOutTime = checkOutRecord
           ? new Date(checkOutRecord.attendance_time).toLocaleTimeString()
           : null;
-          console.log("checkOutTime:",checkOutTime)
+        console.log("CheckOutTime:", checkOutTime);
+
+        // const checkOutTime = checkOutRecord
+        //   ? new Date(checkOutRecord.attendance_time).toLocaleTimeString()
+        //   : null;
+        // console.log("checkOutTime:", checkOutTime);
 
         // const checkInTime = checkInRecord
         //   ? formatTimeToAmPmUTC(checkInRecord.attendance_time)
@@ -416,15 +421,19 @@ const AttendanceRec = () => {
         // const checkOutTime = checkOutRecord
         //   ? formatTimeToAmPmUTC(checkInRecord.attendance_time)
         //   : null;
-        const location = res
-          .filter(
-            ({ latitude, longitude }) => latitude != null && longitude != null
-          )
-          .map(({ latitude, longitude }) => ({
-            latitude,
-            longitude,
-          }));
-        console.log("location:",location)
+        const validLocations = res.filter(
+          ({ latitude, longitude }) => latitude != null && longitude != null
+        );
+        const location =
+          validLocations.length > 0
+            ? validLocations.map(({ latitude, longitude }) => ({
+                latitude,
+                longitude,
+              }))
+            : null;
+        if (!location) {
+          console.warn("No valid location data available.", location);
+        }
 
         setCheckInTime(checkInTime || "-");
         setCheckOutTime(checkOutTime || "-");
@@ -435,10 +444,12 @@ const AttendanceRec = () => {
         setCheckInTime("");
         setCheckOutTime("");
         setIsPresent(false);
+        setEmployeeLocation([]); // Clear out location data.
       }
     } catch (error) {
       console.log("Error fetching attendance:", error);
     }
+    console.log("employeeLocation:", emplocation);
   };
 
   const checkOutLogsColumn = [
