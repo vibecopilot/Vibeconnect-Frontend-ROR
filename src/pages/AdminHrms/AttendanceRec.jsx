@@ -370,15 +370,12 @@ const AttendanceRec = () => {
   };
 
   const [emplocation, setEmployeeLocation] = useState([]);
-  const firstLocation = emplocation[0];
-  const validLocations = emplocation.filter(
-    (loc) => loc.latitude && loc.longitude
+  const safeLoc = Array.isArray(emplocation) ? emplocation : [];
+  const firstLocation = safeLoc[0] ?? {};
+  const validLocations = safeLoc.filter(
+    (loc) => loc?.latitude && loc?.longitude
   );
-
-  // Fetch the last valid location, or null if none exists
-  const lastValidLocation = validLocations.length
-    ? validLocations[validLocations.length - 1]
-    : null;
+  const lastValidLocation = validLocations[validLocations.length - 1] ?? null;
 
   const fetchTodayAttendance = async (empId, dateString) => {
     await fetchEmployeeFullDetails(empId);
@@ -1063,10 +1060,10 @@ const AttendanceRec = () => {
                     <p>{checkOutTime}</p>
                   </div>
                   <div>
-                    {emplocation.length > 0 && (
+                    {safeLoc.length > 0 && (
                       <>
                         {/* Display first location */}
-                        <div className=" flex justify-between">
+                        <div className="flex justify-between">
                           <h3 className="font-medium">Check In Location :</h3>
                           <button
                             className="flex items-center space-x-1"
@@ -1077,19 +1074,19 @@ const AttendanceRec = () => {
                               )
                             }
                           >
-                            <span className="text-slate-900  ">Map</span>
+                            <span className="text-slate-900">Map</span>
                             <FaLocationDot />
                           </button>
                         </div>
                         {/* Display last location */}
                         <div>
                           {lastValidLocation ? (
-                            <div className=" flex justify-between my-2">
+                            <div className="flex justify-between my-2">
                               <h3 className="font-medium">
                                 Check Out Location:
                               </h3>
                               <button
-                                className="flex items-center space-x-1 "
+                                className="flex items-center space-x-1"
                                 onClick={() =>
                                   navigateToLocation(
                                     lastValidLocation.latitude,
@@ -1097,7 +1094,7 @@ const AttendanceRec = () => {
                                   )
                                 }
                               >
-                                <span className="text-slate-900  ">Map</span>
+                                <span className="text-slate-900">Map</span>
                                 <FaLocationDot />
                               </button>
                             </div>
@@ -1108,6 +1105,7 @@ const AttendanceRec = () => {
                       </>
                     )}
                   </div>
+
                   <Accordion
                     icon={MdOutlinePunchClock}
                     title={"Attendance logs"}
