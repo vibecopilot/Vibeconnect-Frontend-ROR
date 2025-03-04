@@ -65,7 +65,7 @@ const HiddenForums = () => {
   const fetchHiddenForum = async () => {
     try {
       const res = await getHiddenForums();
-
+      console.log("hidden forum:",res.data.hidden_forums[0].forums_image[0].document)
       if (!res || !res.data) {
         throw new Error("Invalid API response");
       }
