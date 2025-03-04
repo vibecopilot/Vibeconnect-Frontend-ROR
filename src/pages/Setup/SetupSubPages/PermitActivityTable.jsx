@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 //import Navbar from "../components/Navbar";
 import Table from "../../../components/table/Table";
 import { ImEye } from "react-icons/im";
@@ -12,119 +12,145 @@ import { TiTick } from "react-icons/ti";
 import { IoClose } from "react-icons/io5";
 import { Link } from "react-router-dom";
 import { MdClose } from "react-icons/md";
-
+import {
+  deletePermitActivity,
+  editPermitActivity,
+  getPermitActivity,
+  getPermitActivityDetails,
+  getPermitType,
+  postPermitActivity,
+} from "../../../api";
+import toast from "react-hot-toast";
+import { getItemInLocalStorage } from "../../../utils/localStorage";
+import { FaTimes, FaTrash } from "react-icons/fa";
 
 const PermitActivityTable = () => {
   const themeColor = useSelector((state) => state.theme.color);
-  const [showEdit, setShowEdit] = useState(false);
-  const [showAdd, setShowAdd] = useState(false);
-
-  const [editingRowId, setEditingRowId] = useState(null); // Track which row is being edited
-  const [editedActivity, setEditedActivity] = useState(""); // Track the edited activity name
-
+    const [showAdd, setShowAdd] = useState(false);
   
-  const handleEditClick = (row) => {
-    setEditingRowId(row.id);
-    setEditedActivity(row.type);
+  const siteId = getItemInLocalStorage("SITEID");
+  const [activityData, setActivityData] = useState([]);
+  const [editingCategoryId, setEditingCategoryId] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const openModal = (categoryId) => {
+    setEditingCategoryId(categoryId);
+    fetchCategoryDetails(categoryId);
+    setIsModalOpen(true);
   };
-  const handleSaveClick = (row) => {
-    // Save the edited activity (you can add your logic here)
-    console.log("Saved:", editedActivity);
-    setEditingRowId(null); // Exit edit mode
+  const closeModal = () => setIsModalOpen(false);
+  const [filteredData, setFilteredData] = useState([]);
+  const [update, setupdate] = useState(false);
+  const [formData, setFormData] = useState({
+    permit_id: "",
+    name: "",
+  });
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
-  const handleCancelClick = () => {
-    setEditingRowId(null); // Exit edit mode
+  const fetchCategoryDetails = async (categoryId) => {
+    try {
+      const categoryDetails = await getPermitActivityDetails(categoryId);
+      setFormData({
+        name: categoryDetails.data.name,
+        permit_id: categoryDetails.data.parent_id,
+      });
+    } catch (error) {
+      console.error("Error fetching category details:", error);
+    }
   };
+  const DeletePermitActivity = async (categoryId) => {
+    try {
+      const categoryDetails = await deletePermitActivity(categoryId);
+      toast.success("Permit Activity Deleted Successfully");
+      setupdate(true);
+    } catch (error) {
+      console.error("Error Not Deleted:", error);
+    }
+  };
+  useEffect(() => {
+    const fetchPantry = async () => {
+      try {
+        const invResp = await getPermitType();
+        const sortedInvData = invResp.data.sort((a, b) => {
+          return new Date(b.created_at) - new Date(a.created_at);
+        });
 
-  const columns = [
-    {
-      name: "Permit Type",
-      selector: (row) =>
-        editingRowId === row.id ? (
-         <select  className="border p-2 w-80 border-gray-300 rounded-md">
-           <option value="">Select Type</option>
-         </select>
-        ) : (
-          row.type
-        ),
-      sortable: true,
-    },
-    {
-      name: "Permit Activity",
-      selector: (row) =>
-        editingRowId === row.id ? (
-          <input
-            type="text"
-            value={editedActivity}
-            onChange={(e) => setEditedActivity(e.target.value)}
-            className="border p-2 w-80 border-gray-300 rounded-md"
-          />
-        ) : (
-          row.type
-        ),
-      sortable: true,
-    },
-    
-     {
-       name: "Actions",
-       cell: (row) => (
-         <div className="flex items-center gap-4">
-           {editingRowId !== row.id && (
-         <button>
-           <BiTrash size={15} />
-         </button>
-       )}
-           {editingRowId === row.id ? (
-             <>
-               <button onClick={() => handleSaveClick(row)}>
-                 <FaCheck size={15} />
-               </button>
-               <button onClick={handleCancelClick}>
-                 <MdClose size={15} />
-               </button>
-             </>
-           ) : (
-             <button onClick={() => handleEditClick(row)}>
-               <BiEdit size={15} />
-             </button>
-           )}
-         </div>
-       ),
-     },
-   ];
+        setFilteredData(sortedInvData);
+        setupdate(false);
+        console.log(invResp);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchPantry();
+  }, []);
+  useEffect(() => {
+    const fetchPantry = async () => {
+      try {
+        const invResp = await getPermitActivity();
+        const sortedInvData = invResp.data.sort((a, b) => {
+          return new Date(b.created_at) - new Date(a.created_at);
+        });
 
-  const data = [
+        setActivityData(sortedInvData);
+        setupdate(false);
+        console.log(invResp);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchPantry();
+  }, [update]);
+  const column = [
+    { name: "Permit Type", selector: (row) => row.parent, sortable: true },
+    { name: "Permit Activity", selector: (row) => row.name, sortable: true },
     {
-      id: 1,
-
-      type: "Loading, Unloading Hazardous Material Work",
-    },
-    {
-      id: 2,
-
-      type: "Radiology Work",
-    },
-    {
-      id: 3,
-
-      type: "Hot Work",
-    },
-    {
-      id: 4,
-
-      type: "Height Work",
+      name: "Actions",
+      cell: (row) => (
+        <div className="flex items-center gap-4">
+          <button onClick={() => DeletePermitActivity(row.id)}>
+            <FaTrash size={15} />
+          </button>
+          <button onClick={() => openModal(row.id)}>
+            <BiEdit size={15} />
+          </button>
+        </div>
+      ),
     },
   ];
 
-  const customStyle = {
-    headRow: {
-      style: {
-        backgroundColor: themeColor,
-        color: "white",
+  const handleSubmit = async () => {
+    const sendData = new FormData();
+    sendData.append("permit_activity_setup[parent_id]", formData.permit_id);
+    sendData.append("permit_activity_setup[name]", formData.name);
+    sendData.append("permit_activity_setup[site_id]", siteId);
 
-        fontSize: "14px",
-      },
-    },
+    try {
+      const resp = await postPermitActivity(sendData);
+      setupdate(true);
+      toast.success("Permit Activity Created Successfully");
+      setFormData({ permit_id: "", name: "" });
+      console.log(resp);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const handleEdit = async () => {
+    const sendData = new FormData();
+    sendData.append("permit_activity_setup[parent_id]", formData.permit_id);
+    sendData.append("permit_activity_setup[name]", formData.name);
+    sendData.append("permit_activity_setup[site_id]", siteId);
+
+    try {
+      const resp = await editPermitActivity(editingCategoryId, sendData);
+      setupdate(true);
+      setIsModalOpen(false);
+      toast.success("Permit Activity Updated Successfully");
+      setFormData({ permit_id: "", name: "" });
+      console.log(resp);
+    } catch (error) {
+      console.log(error);
+    }
   };
   document.title = `Permit Setup - Vibe Connect`;
   
@@ -135,18 +161,31 @@ const PermitActivityTable = () => {
         {showAdd && (
           <div className="flex gap-2 items-center my-2">
             <select
-              name=""
-              id=""
-              className="border p-2 border-gray-300 rounded-md w-40"
+              name="permit_id"
+              onChange={handleChange}
+              value={formData.permit_id}
+              id="permit_id"
+              className="border p-2 border-gray-300 rounded-md w-full"
             >
               <option value="">Select Permit Type</option>
+              {filteredData.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
             </select>
             <input
               type="text"
               placeholder="Enter Activity Name"
-              className="border p-2 border-gray-300 rounded-md w-40"
+              name="name"
+              onChange={handleChange}
+              value={formData.name}
+              className="border p-2 border-gray-300 rounded-md w-full"
             />
-            <button className="bg-green-400 text-white rounded-md flex items-center gap-2 p-2 font-medium">
+            <button
+              onClick={handleSubmit}
+              className="bg-green-400 text-white rounded-md flex items-center gap-2 p-2 font-medium"
+            >
               <PiPlusCircle size={20} />
               Submit
             </button>
@@ -171,8 +210,8 @@ const PermitActivityTable = () => {
           </div>
         )}
         <Table
-          columns={columns}
-          data={data}
+          columns={column}
+          data={activityData}
           // customStyles={customStyle}
           responsive
           fixedHeader
@@ -180,8 +219,62 @@ const PermitActivityTable = () => {
           pagination
           selectableRowsHighlight
           highlightOnHover
-          omitColumn={columns}
+          omitColumn={column}
         />
+        {isModalOpen && (
+          <div className="fixed inset-0 flex items-center justify-center z-50">
+            <div
+              className="fixed inset-0 bg-black bg-opacity-90"
+              onClick={closeModal}
+            ></div>
+            <div className="bg-white w-96  rounded-lg shadow-lg p-4 relative z-10">
+              <button
+                className="absolute top-4 right-4 text-gray-600 hover:text-gray-900"
+                onClick={closeModal}
+              >
+                <FaTimes />
+              </button>
+              <h2 className="text-xl font-semibold mb-4">
+                Edit Permit Activity
+              </h2>
+              <div className="flex flex-col gap-4">
+                <select
+                  name="permit_id"
+                  onChange={handleChange}
+                  value={formData.permit_id}
+                  id="permit_id"
+                  className="border p-2 border-gray-300 rounded-md w-full"
+                >
+                  <option value="">Select Permit Type</option>
+                  {filteredData.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="text"
+                  placeholder="Enter Activity Name"
+                  name="name"
+                  onChange={handleChange}
+                  value={formData.name}
+                  className="border p-2 border-gray-300 rounded-md w-full"
+                />
+
+                <div className="flex items-center justify-center">
+                  <button
+                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md "
+                    type="button"
+                    style={{ background: themeColor }}
+                    onClick={handleEdit}
+                  >
+                    Update
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
       
     </section>
