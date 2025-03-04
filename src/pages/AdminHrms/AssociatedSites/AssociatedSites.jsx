@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Table from "../../../components/table/Table";
 import { BiEdit } from "react-icons/bi";
+import { BsEye, BsDownload } from "react-icons/bs";
 import {
   PiPlusCircle,
   PiPlusCircleBold,
@@ -52,6 +53,21 @@ const AssociatedSites = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  function qrDownload(imageUrl) {
+    fetch(imageUrl)
+      .then((response) => response.blob())
+      .then((blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "image.png"; // Set the filename
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+      })
+      .catch((error) => console.error("Error downloading image:", error));
+  }
   const listItemStyle = {
     listStyleType: "disc",
     color: "gray",
@@ -107,7 +123,39 @@ const AssociatedSites = () => {
         </div>
       ),
     },
+    {
+      name: "QR Code",
+      cell: (row) => (
+        <div className="flex items-center gap-4">
+          {roleAccess.can_add_edit_associated_sites && (
+            <a
+              href={`https://api.hrms.vibecopilot.ai/${row.qr_code}`}
+              target="_blank"
+            >
+              <BsEye size={15} />
+            </a>
+          )}
+        </div>
+      ),
+    },
+    {
+      name: "Download Code",
+      cell: (row) => (
+        <div className="flex items-center gap-4">
+          {roleAccess.can_add_edit_associated_sites && (
+            <button
+              onClick={() =>
+                qrDownload(`https://api.hrms.vibecopilot.ai/${row.qr_code}`)
+              }
+            >
+              <BsDownload size={15} />
+            </button>
+          )}
+        </div>
+      ),
+    },
   ];
+
   const [siteDetails, setSiteDetails] = useState({
     siteName: "",
     clientName: "",
@@ -147,6 +195,7 @@ const AssociatedSites = () => {
         status: res?.status,
         radius: res?.radius,
         aadhar: res?.aadhar_required,
+        qr_code_status: res?.qr_code_status,
         BVG: res?.pan_required,
         esic: res?.esic_required,
         pan: res?.bvg_required,
@@ -228,7 +277,7 @@ const AssociatedSites = () => {
       setIsModalOpen1(false);
       setFormData({
         siteName: "",
-        clientName:"",
+        clientName: "",
         address1: "",
         address2: "",
         city: "",
@@ -238,7 +287,7 @@ const AssociatedSites = () => {
         latitude: "",
         longitude: "",
         radius: "",
-        
+        qr_code_status: false,
         aadhar: false,
         BVG: false,
         esic: false,
@@ -252,7 +301,7 @@ const AssociatedSites = () => {
   const handleEditChange = (e) => {
     setSiteDetails({ ...siteDetails, [e.target.name]: e.target.value });
   };
-console.log(siteDetails)
+  console.log(siteDetails);
   const handleEditAssociatedSites = async () => {
     if (!siteDetails.siteName) {
       toast.error("Site name is required");
@@ -298,17 +347,24 @@ console.log(siteDetails)
     editData.append("organization", hrmsOrgId);
     editData.append("company_id_ror", rorCompanyId);
     editData.append("site_id_ror", rorSiteId);
+    editData.append("qr_code_status", siteDetails.qr_code_status);
 
     try {
-      const res = await putAssociatedSiteDetails(siteId, editData);
+      await putAssociatedSiteDetails(siteId, editData);
       toast.success("Site updated successfully");
-      fetchAssociatedSites();
+      // Update the associatedSites array:
+      setAssociatedSites((prev) =>
+        prev.map((site) =>
+          site.id === siteId
+            ? { ...site, qr_code_status: siteDetails.qr_code_status }
+            : site
+        )
+      );
       setIsModalOpen(false);
     } catch (error) {
       console.log(error);
     }
   };
-
   const [searchText, setSearchText] = useState("");
   const handleSearch = (e) => {
     const searchValue = e.target.value;
@@ -387,6 +443,25 @@ console.log(siteDetails)
                     setSiteDetails({
                       ...siteDetails,
                       status: !siteDetails.status,
+                    })
+                  }
+                />
+                {/* <p>Active</p> */}
+                {/* </div> */}
+              </div>
+              <div className="flex justify-between items-center gap-1 border-b  py-2">
+                <label htmlFor="" className="font-medium">
+                  QR Code
+                </label>
+                {/* <div className="flex items-center gap-2">
+
+                 <p>Inactive</p> */}
+                <Switch
+                  checked={siteDetails.qr_code_status}
+                  onChange={() =>
+                    setSiteDetails({
+                      ...siteDetails,
+                      qr_code_status: !siteDetails.qr_code_status,
                     })
                   }
                 />

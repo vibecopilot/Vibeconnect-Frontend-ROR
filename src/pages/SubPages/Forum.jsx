@@ -112,7 +112,7 @@ function Forum() {
           ...prevIsRed,
           [forumId]: !wasLiked,
         }));
-        toast.success(wasLiked ? "Post unliked" : "Post liked");
+        toast.success(wasLiked ? "Post liked" : "Post Unliked");
       }
     } catch (error) {
       console.error("Error toggling like:", error);
@@ -130,8 +130,8 @@ function Forum() {
       res.data.forEach((forum) => {
         if (forum.id) {
           likeCounts[forum.id] = forum.liked_count || 0;
-          userLikeStatuses[forum.id] = forum.likes?.some(
-            (like) => like.user_id === currentUserId()
+          userLikeStatuses[forum.id] = forum.likes?.filter(
+            (like) => like.user_id === currentUserId() && like.liked_count > 0
           );
         }
       });
@@ -306,7 +306,7 @@ function Forum() {
                     <div className="flex flex-col">
                       <div className="flex flex-col">
                         <button
-                          aria-label={likedByUser[forum.id] ? "Unlike post" : "Like post"}
+                          aria-label={likes[forum.id] > 0 ? "Unlike post" : "Like post"}
                           key={forum.id}
                           onClick={() => handleLikeToggle(forum.id)}
                           className="flex items-center focus:outline-none"
@@ -319,14 +319,14 @@ function Forum() {
                               size={22}
                                className="relative z-10"
                               style={{
-                                color: isRed[forum.id] ? "red" : "black",
+                                color:likes[forum.id] > 0 ? "red" : "black",
                                 transition: "color 0.2s ease",
                               }}
                             />
                             <div
                               className="absolute inset-0 z-0"
                               style={{
-                                backgroundColor: likedByUser[forum.id]
+                                backgroundColor: likes[forum.id] > 0 
                                   ? "red"
                                   : "white",
                                 clipPath:

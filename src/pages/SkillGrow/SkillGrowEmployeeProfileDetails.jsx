@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import Navbar from "../../components/Navbar";
 import profile3 from "/profile3.jpg";
 import { IoBookOutline } from "react-icons/io5";
-import { LuFileBarChart2 } from "react-icons/lu";
+import { RiFileChartLine } from "react-icons/ri";
 import react from "/reactImg.png";
 import digitalMarketing from "/digitalMarketing.jpg";
 import { MdOutlineSlowMotionVideo } from "react-icons/md";
@@ -210,7 +210,7 @@ function SkillGrowEmployeeProfileDetails() {
             >
               <div className="flex justify-between mx-5 py-3">
                 <p className="text-sm font-medium text-gray-600">PROJECTS</p>
-                <LuFileBarChart2 size={20} className="text-violet-500" />
+                <RiFileChartLine size={20} className="text-violet-500" />
               </div>
               <p className="text-4xl font-semibold text-center">2</p>
               <p className="text-base text-gray-600 text-center">

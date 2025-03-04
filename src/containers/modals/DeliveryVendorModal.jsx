@@ -1,19 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { postVendors, EditVendors } from "../../api";
 import ModalWrapper from "./ModalWrapper";
-import { toast } from "react-toastify";
+import { toast } from "react-hot-toast";
 
 const DeliveryVendorModal = ({ onclose, title = "Edit", vendor = null }) => {
   const [formData, setFormData] = useState({
-    vendor_id: "",
+    vendor_supplier_id: "",
     vendor_name: "",
     website_url: "",
     address: "",
     email: "",
     mobile: "",
     spoc_person: "",
-    aggremenet_start_date: "",
-    aggremenet_end_date: "",
+    aggrement_start_date: "",
+    aggremen_start_date: "",
     attachments: null,
     status: "Active",
   });
@@ -22,14 +22,14 @@ const DeliveryVendorModal = ({ onclose, title = "Edit", vendor = null }) => {
   useEffect(() => {
     if (vendor) {
       setFormData({
-        vendor_id: vendor.vendor_id || "",
+        vendor_id: vendor.id || "",
         vendor_name: vendor.vendor_name || "",
         website_url: vendor.website_url || "",
         address: vendor.address || "",
         email: vendor.email || "",
         mobile: vendor.mobile || "",
         spoc_person: vendor.spoc_person || "",
-        aggremenet_start_date: vendor.aggremenet_start_date || "",
+        aggrement_start_date: vendor.aggrement_start_date || "",
         aggremenet_end_date: vendor.aggremenet_end_date || "",
         status: vendor.status || "Active",
         attachments: vendor.attachments || null,
@@ -40,6 +40,15 @@ const DeliveryVendorModal = ({ onclose, title = "Edit", vendor = null }) => {
   // Handle input changes
   const handleChange = (e) => {
     const { name, value, type, files } = e.target;
+
+    // Log the change for debugging
+    console.log(
+      "Changed field:",
+      name,
+      "New value:",
+      type === "file" ? files[0] : value
+    );
+
     setFormData((prev) => ({
       ...prev,
       [name]: type === "file" ? files[0] : value,
@@ -47,44 +56,101 @@ const DeliveryVendorModal = ({ onclose, title = "Edit", vendor = null }) => {
   };
 
   // Handle form submission
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+
+  //   try {
+  //     const formDataToSend = new FormData();
+  //     formDataToSend.append("vendor_id", formData.vendor_id);
+  //     formDataToSend.append("vendor_name", formData.vendor_name);
+  //     formDataToSend.append("website_url", formData.website_url);
+  //     formDataToSend.append("address", formData.address);
+  //     formDataToSend.append("email", formData.email);
+  //     formDataToSend.append("mobile", formData.mobile);
+  //     formDataToSend.append("spoc_person", formData.spoc_person);
+  //     formDataToSend.append("aggremenet_start_date", formData.aggremenet_start_date);
+  //     formDataToSend.append("aggremenet_end_date", formData.aggremenet_end_date);
+  //     formDataToSend.append("status", formData.status);
+
+  //     // Handle attachments
+  //     if (formData.attachments instanceof File) {
+  //       formDataToSend.append("attachments", formData.attachments);
+  //     }
+
+  //     // API call based on the operation
+  //     if (vendor && vendor.id) {
+  //       const response = await EditVendors(vendor.id, formDataToSend);
+  //       if (response.status === 200) {
+  //         toast.success("Vendor updated successfully!");
+  //         onclose();
+  //       }
+  //     } else {
+  //       const response = await postVendors(formDataToSend);
+  //       if (response.status === 200) {
+  //         toast.success("Vendor created successfully!");
+  //         onclose();
+  //       }
+  //     }
+  //   } catch (error) {
+  //     console.error("Error:", error);
+  //     toast.error(error.response?.data?.message || "An error occurred.");
+  //   }
+  // };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log("start");
 
     try {
       const formDataToSend = new FormData();
-      formDataToSend.append("vendor_id", formData.vendor_id);
-      formDataToSend.append("vendor_name", formData.vendor_name);
-      formDataToSend.append("website_url", formData.website_url);
-      formDataToSend.append("address", formData.address);
-      formDataToSend.append("email", formData.email);
-      formDataToSend.append("mobile", formData.mobile);
-      formDataToSend.append("spoc_person", formData.spoc_person);
-      formDataToSend.append("aggremenet_start_date", formData.aggremenet_start_date);
-      formDataToSend.append("aggremenet_end_date", formData.aggremenet_end_date);
-      formDataToSend.append("status", formData.status);
+
+      // Wrap all fields in 'vendor' object
+      formDataToSend.append("vendor[vendor_id]", formData.vendor_id);
+      formDataToSend.append("vendor[vendor_name]", formData.vendor_name);
+      formDataToSend.append("vendor[website_url]", formData.website_url);
+      formDataToSend.append("vendor[address]", formData.address);
+      formDataToSend.append("vendor[email]", formData.email);
+      formDataToSend.append("vendor[mobile]", formData.mobile);
+      formDataToSend.append("vendor[spoc_person]", formData.spoc_person);
+      formDataToSend.append(
+        "vendor[aggrement_start_date]",
+        formData.aggrement_start_date
+      );
+      formDataToSend.append(
+        "vendor[aggremenet_end_date]",
+        formData.aggremenet_end_date
+      );
+      formDataToSend.append("vendor[status]", formData.status);
 
       // Handle attachments
       if (formData.attachments instanceof File) {
-        formDataToSend.append("attachments", formData.attachments);
+        formDataToSend.append("vendor[attachments]", formData.attachments);
       }
 
       // API call based on the operation
+      let response;
       if (vendor && vendor.id) {
-        const response = await EditVendors(vendor.id, formDataToSend);
-        if (response.status === 200) {
-          toast.success("Vendor updated successfully!");
-          onclose();
-        }
+        response = await EditVendors(vendor.id, formDataToSend);
       } else {
-        const response = await postVendors(formDataToSend);
-        if (response.status === 200) {
-          toast.success("Vendor created successfully!");
-          onclose();
-        }
+        response = await postVendors(formDataToSend);
+      }
+       console.log("Response:",response)
+      if (response.status === 200) {
+        toast.success(
+          vendor
+            ? "Vendor updated successfully!"
+            : "Vendor created successfully!"
+        );
+
+        // Log to check if onclose is called
+        console.log("Closing the modal..."); // Close modal after successful response
       }
     } catch (error) {
       console.error("Error:", error);
       toast.error(error.response?.data?.message || "An error occurred.");
+    } finally {
+      onclose();
+      console.log("finally");
     }
   };
 
@@ -206,9 +272,9 @@ const DeliveryVendorModal = ({ onclose, title = "Edit", vendor = null }) => {
             </label>
             <input
               type="date"
-              name="aggremenet_start_date"
-              id="aggremenet_start_date"
-              value={formData.aggremenet_start_date}
+              name="aggrement_start_date"
+              id="aggrement_start_date"
+              value={formData.aggrement_start_date}
               onChange={handleChange}
               className="border rounded-md border-gray-500 p-1 px-2"
             />
@@ -257,6 +323,7 @@ const DeliveryVendorModal = ({ onclose, title = "Edit", vendor = null }) => {
           <div className="col-span-2 mt-4 flex justify-center">
             <button
               type="submit"
+              // onClick={() => showModal(false)}
               className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
             >
               {vendor && vendor.id ? "Update Vendor" : "Create Vendor"}

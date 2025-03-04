@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { BiEdit } from "react-icons/bi";
-import { FaChevronDown, FaTrash, FaUserEdit } from "react-icons/fa";
+import { FaChevronDown, FaDownload, FaTrash, FaUserEdit } from "react-icons/fa";
 import AdminHRMS from "./AdminHrms";
 import { Link } from "react-router-dom";
 import { PiPlusCircle } from "react-icons/pi";
@@ -8,6 +8,9 @@ import { PiPlusCircle } from "react-icons/pi";
 import { useSelector } from "react-redux";
 import FileInputBox from "../../containers/Inputs/FileInputBox";
 import InviteEmployeeModal from "./InviteEmployeeModal";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+import convert from "xml-js";
 import {
   deleteHRMSEmployee,
   getAdminAccess,
@@ -15,13 +18,17 @@ import {
   getMyHRMSEmployeesAllData,
   getUserDetails,
   hrmsDomain,
+  getFullUser,
+  getSiteWiseUserDetails,
+  getEmployeeJobInfo,
+  getAssociatedSites,
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import toast from "react-hot-toast";
-
 function EmployeeDirectory() {
   const themeColor = useSelector((state) => state.theme.color);
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalOpen1, setIsModalOpen1] = useState(false);
   const [isModalOpen2, setIsModalOpen2] = useState(false);
@@ -37,53 +44,86 @@ function EmployeeDirectory() {
   const [employeesData, setEmployeesData] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState({});
   const [selectedLetter, setSelectedLetter] = useState(null);
+  const [AllSites, setAllSites] = useState([]); // Array of objects: { id, siteName }
+  const [selectedSite, setSelectedSite] = useState("");
+  const [filteredEmployee, setFilteredEmployees] = useState([]);
+  const [empfilterData, setEmpFilterData] = useState([]);
+  const [siteSearchText, setSiteSearchText] = useState("");
 
   const fetchAllEmployees = async () => {
     try {
       toast.loading("Loading employees Please wait!");
       const res = await getMyHRMSEmployeesAllData(hrmsOrgId);
-      console.log(res);
+      console.log("complete hrmsemployeedata :", res);
       setEmployeesData(res);
       toast.dismiss();
+      const allSites = await getAssociatedSites(orgId);
+      setAllSites(allSites);
     } catch (error) {
       console.log(error);
       toast.dismiss();
       toast.error("Something went wrong");
     }
   };
+
   useEffect(() => {
     fetchAllEmployees();
   }, []);
 
-  const groupedEmployees = employeesData.reduce((acc, employeeData) => {
-    const employee = employeeData.employee;
-    if (employee && employee.first_name) {
-      const firstLetter = employee.first_name[0].toUpperCase();
-      if (!acc[firstLetter]) acc[firstLetter] = [];
+  useEffect(() => {
+    const groupedEmployees = employeesData.reduce((acc, employeeData) => {
+      const employee = employeeData.employee;
+      if (employee && employee.first_name) {
+        const firstLetter = employee.first_name[0].toUpperCase();
+        if (!acc[firstLetter]) acc[firstLetter] = [];
 
-      const employeeDetails = {
-        id: employee.id,
-        first_name: employee.first_name,
-        last_name: employee.last_name,
-        email_id: employee.email_id,
-        mobile: employee.mobile,
-        status: employee.status,
-        profile_photo: employee.profile_photo,
-        address_information: employeeData.address_information || null,
-        employment_info: employeeData.employment_info || null,
-        family_information: employeeData.family_information || null,
-      };
-
-      acc[firstLetter].push(employeeDetails);
-    }
-    return acc;
-  }, {});
+        const employeeDetails = {
+          id: employee.id,
+          first_name: employee.first_name,
+          last_name: employee.last_name,
+          email_id: employee.email_id,
+          mobile: employee.mobile,
+          status: employee.status,
+          profile_photo: employee.profile_photo,
+          address_information: employeeData.address_information || null,
+          employment_info: employeeData.employment_info || null,
+          site_name:
+            employeeData.employment_info?.associated_organization_name || null,
+          site_id:
+            employeeData.employment_info?.associated_organization_id || null,
+          family_information: employeeData.family_information || null,
+          employee_code: employeeData.employment_info?.employee_code || "",
+        };
+        acc[firstLetter].push(employeeDetails);
+      }
+      return acc;
+    }, {});
+    setEmpFilterData(groupedEmployees);
+  }, [employeesData]);
 
   const [isOpen, setIsOpen] = useState(false);
   const toggleDropdown = () => {
     setIsOpen(!isOpen);
   };
+  const [isSiteDropdownOpen, setIsSiteDropdownOpen] = useState(false);
+  const siteDropdownRef = useRef(null);
   const dropdownRef = useRef(null);
+  useEffect(() => {
+    const handleSiteClickOutside = (event) => {
+      if (
+        siteDropdownRef.current &&
+        !siteDropdownRef.current.contains(event.target)
+      ) {
+        setIsSiteDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleSiteClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleSiteClickOutside);
+    };
+  }, []);
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -99,7 +139,6 @@ function EmployeeDirectory() {
   }, [dropdownRef]);
 
   const alphabet = `ABCDEFGHIJKLMNOPQRSTUVWXYZ`.split("");
-  // const alphabet = ["All", ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split("")];
 
   const handleLetterClick = (letter) => {
     setSelectedLetter(letter);
@@ -114,6 +153,82 @@ function EmployeeDirectory() {
     ? groupedEmployees[selectedLetter] || []
     : employeesData;
 
+  const [searchText, setSearchText] = useState("");
+  const handleSearch = (e) => {
+    const searchValue = e.target.value;
+    setSearchText(searchValue);
+  };
+
+  const handleDropdownChange = (e) => {
+    // Convert to string to ensure type consistency
+    setSelectedSite(e.target.value);
+  };
+  const handleDownload = async () => {
+    try {
+      // Fetch XML data based on condition
+      const xmlData = !selectedSite
+        ? await getFullUser(orgId)
+        : await getSiteWiseUserDetails(selectedSite);
+
+      console.log(xmlData);
+
+      // Convert to string if necessary
+      const xmlStr =
+        typeof xmlData === "string"
+          ? xmlData
+          : new XMLSerializer().serializeToString(xmlData);
+
+      let dataForExcel;
+
+      // Try to convert XML to JSON
+      try {
+        const jsonStr = convert.xml2json(xmlStr, {
+          compact: true,
+          ignoreComment: true,
+        });
+        const jsonData = JSON.parse(jsonStr);
+        dataForExcel =
+          jsonData.users && jsonData.users.user
+            ? Array.isArray(jsonData.users.user)
+              ? jsonData.users.user
+              : [jsonData.users.user]
+            : [jsonData];
+      } catch (conversionError) {
+        console.error(
+          "XML to JSON conversion failed, using raw XML",
+          conversionError
+        );
+        // Fallback: Put the raw XML into a cell
+        dataForExcel = [{ rawXml: xmlStr }];
+      }
+
+      // Create Excel workbook from data
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(
+        wb,
+        XLSX.utils.json_to_sheet(dataForExcel),
+        "Data"
+      );
+
+      // Write workbook to binary array and create a Blob
+      const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+      const blob = new Blob([excelBuffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8",
+      });
+
+      // Download the Excel file using the anchor method
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "data.xlsx";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Download failed:", error);
+    }
+  };
   function getRandomColor() {
     const colors = [
       "#8B0000",
@@ -139,6 +254,7 @@ function EmployeeDirectory() {
   function getColorForEmployee(index) {
     return colors[index % colors.length];
   }
+  // select mulitple site
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [employeeId, setEmployeeId] = useState("");
@@ -168,16 +284,7 @@ function EmployeeDirectory() {
     }
   };
 
-  const [searchText, setSearchText] = useState("");
-  const handleSearch = (e) => {
-    const searchValue = e.target.value;
-    setSearchText(searchValue);
-  };
   // const
-  const handleChangeStatus = async () => {
-    // const
-  };
-
   const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
   const orgId = getItemInLocalStorage("HRMSORGID");
   const [roleAccess, setRoleAccess] = useState({});
@@ -191,6 +298,7 @@ function EmployeeDirectory() {
         console.log(error);
       }
     };
+
     fetchRoleAccess();
   }, []);
 
@@ -204,23 +312,106 @@ function EmployeeDirectory() {
             className="text-white  py-2 ml-20"
           >
             <div className="flex justify-between items-center  gap-2 ">
-              <div className="flex">
+              <div className="flex ">
                 <h1 className="text-lg pl-5 font-bold">Employee Directory</h1>
-                {/* <p className="pl-5">
-                  Employee personal details are noted under this section.
-                </p> */}
               </div>
+              {/* Dropdown */}
+              <div className="flex gap-2">
+                <div className="relative group" ref={dropdownRef}>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsSiteDropdownOpen(!isSiteDropdownOpen);
+                    }}
+                    id="site-dropdown-button"
+                    className=" inline-flex  justify-center w-80 px-10 py-3 text-l font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    <span className="mr-2">
+                      {selectedSite
+                        ? AllSites.find(
+                            (site) => String(site.id) === selectedSite
+                          )?.site_name
+                        : "Select All Sites"}
+                    </span>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="w-5 h-5 ml-2 -mr-1"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M6.293 9.293a1 1 0 011.414 0L10 11.586l2.293-2.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </button>
+
+                  {isSiteDropdownOpen && (
+                    <div
+                      id="site-dropdown-menu"
+                      className="absolute left-1/2 transform -translate-x-1/2 mt-1 w-80 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10"
+                    >
+                      {/* Search Input for Sites */}
+                      <div className="sticky top-0 bg-white px-1 py-2 border-b">
+                        <input
+                          id="site-search-input"
+                          type="text"
+                          placeholder="Search sites"
+                          autoComplete="off"
+                          value={siteSearchText}
+                          onChange={(e) => setSiteSearchText(e.target.value)}
+                          className="block w-full px-4 py-2 text-gray-800 border rounded-md border-gray-300 focus:outline-none"
+                        />
+                      </div>
+                      <div className="max-h-72 overflow-y-auto ">
+                        {/* Filtered site items */}
+                        {AllSites.filter((site) =>
+                          site.site_name
+                            .toLowerCase()
+                            .includes(siteSearchText.toLowerCase())
+                        ).map((site) => (
+                          <button
+                            key={site.id}
+                            onClick={() => {
+                              setSelectedSite(String(site.id));
+                              setIsSiteDropdownOpen(false);
+                              setSiteSearchText("");
+                            }}
+                            className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 active:bg-blue-100 cursor-pointer rounded-md"
+                          >
+                            {site.site_name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              {/* </div>
+              </div> */}
+
+              {/* Show selected site */}
+              {/* {selectedSite && <p>Selected Site ID: {selectedSite}</p>} */}
               <div className="flex gap-2">
                 <input
                   type="text"
-                  placeholder="Search by Name "
-                  className="border p-2 text-black rounded-md w-96"
+                  placeholder="Search by Name"
+                  className="border p-3 text-black rounded-md w-64"
                   onChange={handleSearch}
                   value={searchText}
                 />
 
                 <div className="flex gap-3">
                   <div className="relative inline-block text-left">
+                    <button
+                      className=" justify-center w-full flex items-center gap-2 rounded-md border border-gray-300 shadow-sm px-4 py-3 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500"
+                      onClick={handleDownload}
+                    >
+                      Export
+                      <FaDownload />
+                    </button>
                     {/* <button
                       onClick={toggleDropdown}
                       className=" justify-center w-full flex items-center gap-2 rounded-md border border-gray-300 shadow-sm px-4 py-3 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500"
@@ -980,28 +1171,159 @@ function EmployeeDirectory() {
                         {letter}
                       </span>
                     </h2>
+
+                    {/* <div className="flex flex-wrap">
+  {empfilterData[letter]
+    ?.filter((employee) => {
+      // Check if the employee matches the search text filter
+      const searchFilter =
+        `${employee.first_name} ${employee.last_name}`
+          .toLowerCase()
+          .includes(searchText.toLowerCase()) ||
+        `${employee.employee_code}`
+          .toLowerCase()
+          .includes(searchText.toLowerCase());
+
+      // Check if the employee matches the selected site filter
+      // If no site is selected (i.e. selectedSite is empty), we return true.
+      const siteFilter = selectedSite
+        ? employee.site_id === selectedSite
+        : true;
+
+      // Both conditions must be met
+      return searchFilter && siteFilter;
+    })
+    .map((employee, index) => (
+      <div
+        key={employee.id}
+        style={{ background: themeColor, color: "white" }}
+        className={`${
+          employeeId === employee.id
+            ? "bg-gradient-to-r from-yellow-400 via-red-300 to-pink-400 border-2 border-pink-400 "
+            : "bg-gradient-to-r from-yellow-400 via-red-300 to-pink-400 border-2 border-white "
+        } w-80 p-2 m-2 rounded-xl cursor-pointer`}
+        onClick={() => {
+          showEmployeeDetails(employee.id);
+        }}
+      >
+        <div className="flex items-center w-full">
+          <div className="w-32">
+            {employee?.profile_photo ? (
+              <img
+                src={hrmsDomain + employee?.profile_photo}
+                alt="Profile"
+                className="rounded-full h-20 w-20 border-4 border-white object-cover mr-4"
+              />
+            ) : (
+              <div
+                className="bg-gray-300 rounded-full text-xl border-white border-4 text-white h-20 w-20 flex items-center font-medium justify-center mr-4"
+                style={{ backgroundColor: getColorForEmployee(index) }}
+              >
+                {employee.first_name
+                  .split(" ")
+                  .map((n) => n[0])
+                  .join("")}
+                {employee.last_name
+                  .split(" ")
+                  .map((n) => n[0])
+                  .join("")}
+              </div>
+            )}
+          </div>
+          <div className="w-full">
+            <h2 className="font-semibold">
+              {employee.first_name} {employee.last_name}
+            </h2>
+            <div className="flex items-center gap-1 my-1">
+              <p className="text-sm font-medium text-gray-200">
+                {employee?.employment_info?.employee_code
+                  ? employee?.employment_info?.employee_code
+                  : "not added"}
+              </p>
+              <div className="border border-gray-400 h-5" />
+              <p className="text-sm font-medium text-gray-200">
+                DOJ :{" "}
+                {employee?.employment_info?.joining_date
+                  ? employee?.employment_info?.joining_date
+                  : "not added"}
+              </p>
+            </div>
+            <p className="text-sm font-medium text-gray-200">
+              {employee?.employment_info?.designation
+                ? employee?.employment_info?.designation
+                : "not added"}
+            </p>
+            <div className="flex items-center justify-between mt-2">
+              <p
+                className={`${
+                  employee?.status
+                    ? "bg-green-400 text-white"
+                    : "bg-red-400 text-white"
+                } font-medium w-fit px-2 my-1 rounded-full`}
+              >
+                {employee?.status ? "Active" : "Inactive"}
+              </p>
+              {(roleAccess?.can_edit_employee ||
+                roleAccess?.can_delete_employee) && (
+                <div className="flex gap-2 items-center bg-white p-1 rounded-full px-2">
+                  {roleAccess?.can_edit_employee && (
+                    <Link
+                      className="text-blue-500 hover:text-blue-900"
+                      to={`/hrms/employee-directory-Personal/${employee.id}`}
+                    >
+                      <BiEdit size={18} />
+                    </Link>
+                  )}
+                  {roleAccess?.can_delete_employee && (
+                    <button
+                      onClick={() => handleDeleteModal(employee.id)}
+                      className="text-red-400 hover:text-red-800"
+                    >
+                      <FaTrash size={15} />
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    ))}
+</div> */}
                     <div className="flex flex-wrap">
-                      {/* {groupedEmployees[letter]?.map((employee, index) => ( */}
-                      {groupedEmployees[letter]
-                        ?.filter((employee) =>
-                          `${employee.first_name} ${employee.last_name}`
-                            .toLowerCase()
-                            .includes(searchText.toLowerCase())
-                        )
+                      {empfilterData[letter]
+                        ?.filter((employee) => {
+                          // Create a lower case version of search text and employee details
+                          const fullName =
+                            `${employee.first_name} ${employee.last_name}`.toLowerCase();
+                          const employeeCode =
+                            employee.employee_code.toLowerCase();
+                          const searchTextLower = searchText.toLowerCase();
+
+                          // Check if the employee matches the search text filter
+                          const matchesSearch =
+                            fullName.includes(searchTextLower) ||
+                            employeeCode.includes(searchTextLower);
+
+                          // Check if the employee matches the selected site filter.
+                          // If no site is selected, site filter passes automatically.
+                          const matchesSite = selectedSite
+                            ? String(employee.site_id) === String(selectedSite)
+                            : true;
+
+                          // Return only employees matching both criteria
+                          return matchesSearch && matchesSite;
+                        })
                         .map((employee, index) => (
                           <div
                             key={employee.id}
                             style={{ background: themeColor, color: "white" }}
-                            className={` ${
+                            className={`${
                               employeeId === employee.id
                                 ? "bg-gradient-to-r from-yellow-400 via-red-300 to-pink-400 border-2 border-pink-400 "
                                 : "bg-gradient-to-r from-yellow-400 via-red-300 to-pink-400 border-2 border-white "
-                            }  w-80 p-2 m-2 rounded-xl  cursor-pointer`}
-                            // className="bg-white w-64 p-2 m-2 rounded-lg border cursor-pointer"
-                            // onClick={() => setEmployeeId(employee.id)}
-                            onClick={() => {
-                              showEmployeeDetails(employee.id);
-                            }}
+                            } w-80 p-2 m-2 rounded-xl cursor-pointer`}
+                            onClick={() => showEmployeeDetails(employee.id)}
                           >
                             <div className="flex items-center w-full">
                               <div className="w-32">
@@ -1036,26 +1358,21 @@ function EmployeeDirectory() {
                                 </h2>
                                 <div className="flex items-center gap-1 my-1">
                                   <p className="text-sm font-medium text-gray-200">
-                                    {employee?.employment_info?.employee_code
-                                      ? employee?.employment_info?.employee_code
-                                      : "not added"}
+                                    {employee?.employment_info?.employee_code ||
+                                      "not added"}
                                   </p>
                                   <div className="border border-gray-400 h-5" />
                                   <p className="text-sm font-medium text-gray-200">
                                     DOJ :{" "}
-                                    {employee?.employment_info?.joining_date
-                                      ? employee?.employment_info?.joining_date
-                                      : "not added"}
+                                    {employee?.employment_info?.joining_date ||
+                                      "not added"}
                                   </p>
                                 </div>
                                 <p className="text-sm font-medium text-gray-200">
-                                  {" "}
-                                  {employee?.employment_info?.designation
-                                    ? employee?.employment_info?.designation
-                                    : "not added"}
+                                  {employee?.employment_info?.designation ||
+                                    "not added"}
                                 </p>
-
-                                <div className="flex items-center justify-between  mt-2">
+                                <div className="flex items-center justify-between mt-2">
                                   <p
                                     className={`${
                                       employee?.status
@@ -1070,12 +1387,12 @@ function EmployeeDirectory() {
                                     <div className="flex gap-2 items-center bg-white p-1 rounded-full px-2">
                                       {roleAccess?.can_edit_employee && (
                                         <Link
-                                          className="text-blue-500  hover:text-blue-900"
+                                          className="text-blue-500 hover:text-blue-900"
                                           to={`/hrms/employee-directory-Personal/${employee.id}`}
                                         >
                                           <BiEdit size={18} />
                                         </Link>
-                                      )}{" "}
+                                      )}
                                       {roleAccess?.can_delete_employee && (
                                         <button
                                           onClick={() =>

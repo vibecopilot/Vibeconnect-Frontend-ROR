@@ -7,6 +7,7 @@ import { BiEdit } from "react-icons/bi";
 import { BiTrash } from "react-icons/bi";
 import { BsEye } from "react-icons/bs";
 import { PiPlusCircle } from "react-icons/pi";
+import { FaCheck } from "react-icons/fa";
 import { TiTick } from "react-icons/ti";
 import { IoClose } from "react-icons/io5";
 import { Link } from "react-router-dom";
@@ -150,7 +151,7 @@ const PermitActivityTable = () => {
     }
   };
   document.title = `Permit Setup - Vibe Connect`;
-  const [showAdd, setShowAdd] = useState(false);
+  
   return (
     <section className="flex ">
       {/* <Navbar /> */}
@@ -216,7 +217,7 @@ const PermitActivityTable = () => {
           pagination
           selectableRowsHighlight
           highlightOnHover
-          omitColumn={column}
+          omitColumn={columns}
         />
         {isModalOpen && (
           <div className="fixed inset-0 flex items-center justify-center z-50">
@@ -273,6 +274,7 @@ const PermitActivityTable = () => {
           </div>
         )}
       </div>
+      
     </section>
   );
 };

@@ -1242,12 +1242,13 @@ const Calender = () => {
     const urlSearchParams = new URLSearchParams(window.location.search);
     return urlSearchParams.get(name);
   };
+  
   const codeParameter = getQueryParam("code");
   const exchangeCodeForAccessToken = async (code) => {
     console.log(code);
     try {
      
-      const redirectUri = "https://app.vibecopilot.ai/calendar";
+      const redirectUri = "https://admin.vibecopilot.ai/calendar";
       const apiUrl = `https://vibecopilot.ai/api/get-outlook-token/?code=${code}&redirect_uri=${redirectUri}`;
 
       const response = await fetch(apiUrl);
@@ -1317,7 +1318,7 @@ const Calender = () => {
     const params = {
       client_id:
         "339274559462-6r06f0d9aqubhnhqmvrkjaqs8nikiidd.apps.googleusercontent.com",
-      redirect_uri: "https://app.vibecopilot.ai/calendar",
+      redirect_uri: "https://admin.vibecopilot.ai/calendar",
       
       response_type: "token",
       

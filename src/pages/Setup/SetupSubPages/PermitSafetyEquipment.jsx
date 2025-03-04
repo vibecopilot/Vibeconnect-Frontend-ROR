@@ -7,6 +7,7 @@ import { BiEdit } from "react-icons/bi";
 import { BiTrash } from "react-icons/bi";
 import { BsEye } from "react-icons/bs";
 import { PiPlusCircle } from "react-icons/pi";
+import { FaCheck } from "react-icons/fa";
 import { TiTick } from "react-icons/ti";
 import { IoClose } from "react-icons/io5";
 import { Link } from "react-router-dom";
@@ -458,7 +459,7 @@ const PermitSafetyEquipment = () => {
           pagination
           selectableRowsHighlight
           highlightOnHover
-          omitColumn={column}
+          omitColumn={columns}
         />
         {/* Update Modal */}
         {isModalOpen && (
@@ -572,6 +573,7 @@ const PermitSafetyEquipment = () => {
           </div>
         )}
       </div>
+      
     </section>
   );
 };

@@ -262,7 +262,7 @@ const ServicePage = () => {
               visible={true}
               height="120"
               width="120"
-              ariaLabel="dna-loading"
+              ariaLabel="dna-loading" 
               wrapperStyle={{}}
               wrapperClass="dna-wrapper"
             />

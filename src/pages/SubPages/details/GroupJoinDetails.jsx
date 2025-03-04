@@ -4,7 +4,6 @@ import owners from "/owners.jpg";
 import { Navigate, useParams, useNavigate } from "react-router-dom";
 import {
   getGroupsDetails,
-  getSetupUsers,
   deleteGroup,
   domainPrefix,
 } from "../../../api/index";
@@ -13,6 +12,7 @@ import MultiSelect from "../../AdminHrms/Components/MultiSelect";
 import { BiEdit, BiTrash } from "react-icons/bi";
 import toast from "react-hot-toast";
 import EditGroupDetails from "../EditGroupDetails";
+
 function GroupJoinDetails() {
   const [page, setPage] = useState("empolyeeEvent");
   const dropdownRef = useRef(null);
@@ -37,6 +37,18 @@ function GroupJoinDetails() {
   const [members, setMembers] = useState([]);
   const [groups, setGroups] = useState([]);
   const [filteredMembers, setFilteredMembers] = useState([]);
+
+  // const fetchGroupDetails = async () => {
+  //   try {
+  //     const res = await getGroupsDetails(id);
+  //     setDetails(res.data);
+  //     console.log(res.data.group_members);
+  //     setFilteredMembers(res.data.group_members);
+  //     setMembers(res.data.group_members);
+  //   } catch (error) {
+  //     console.log(res);
+  //   }
+  // };
   const fetchGroupDetails = async () => {
     try {
       const res = await getGroupsDetails(id);
@@ -45,7 +57,7 @@ function GroupJoinDetails() {
       setFilteredMembers(res.data.group_members);
       setMembers(res.data.group_members);
     } catch (error) {
-      console.log(res);
+      console.log("Error fetching group details:", error); // Fix here
     }
   };
   useEffect(() => {

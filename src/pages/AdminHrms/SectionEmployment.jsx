@@ -338,6 +338,7 @@ const SectionsEmployment = () => {
   const fetchJobInfo = async () => {
     try {
       const res = await getEmployeeJobInfo(id);
+      console.log(res)
       setJobInfo(res);
     } catch (error) {
       console.log(error);
@@ -598,7 +599,7 @@ const SectionsEmployment = () => {
                       readOnly={!isEditing}
                     />
                   </div>
-                  <div className="grid gap-2 items-center w-full">
+                  {/* <div className="grid gap-2 items-center w-full">
                     <label htmlFor="designation" className="font-semibold">
                       Reporting Supervisor:
                     </label>
@@ -618,7 +619,37 @@ const SectionsEmployment = () => {
                         </option>
                       ))}
                     </select>
+                  </div> */}
+                  <div className="grid gap-2 items-center w-full">
+                    <label htmlFor="designation" className="font-semibold">
+                      Reporting Supervisor:
+                    </label>
+                    <select
+                      className={`mt-1 p-2 border rounded-md ${
+                        !isEditing ? "bg-gray-200 text-gray-500" : ""
+                      }`}
+                      value={formData.supervisor}
+                      onChange={handleChange}
+                      name="supervisor"
+                      disabled={!isEditing}
+                    >
+                      {reportSupervisors.length > 0 ? (
+                        <>
+                          <option value="">Select Supervisor</option>
+                          {reportSupervisors.map((supervisor) => (
+                            <option value={supervisor.id} key={supervisor.id}>
+                              {supervisor.full_name}
+                            </option>
+                          ))}
+                          <option value="NA">N/A</option>
+                        </>
+                      ) : (
+                        // If no supervisors are available, default to N/A
+                        <option value="NA">N/A</option>
+                      )}
+                    </select>
                   </div>
+
                   <div className="grid gap-2 items-center w-full">
                     <label htmlFor="CTC" className="font-semibold">
                       Enter Monthly CTC:
