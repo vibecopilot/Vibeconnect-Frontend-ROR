@@ -7290,14 +7290,13 @@ export const getEmployeeAttendanceOfMonth = async (
     throw error;
   }
 };
-export const getEmployeeAttendanceOfToday = async (empId, today) => {
+export const getEmployeeAttendanceOfToday = async (empId, startDate, endDate) => {
   try {
     const response = await HrmsAuth.get(
-      `/employee/attendance/?employee_id=${empId}&start_date=${today}`,
-
+      `/employee/attendance/?employee_id=${empId}&start_date=${startDate}&end_date=${endDate}`,
       {
         headers: {
-          "Content-Type": "multipart/form-data/",
+          "Content-Type": "application/json", // Fixed incorrect content type
         },
       }
     );

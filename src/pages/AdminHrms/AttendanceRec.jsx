@@ -370,38 +370,47 @@ const AttendanceRec = () => {
   };
 
   const [emplocation, setEmployeeLocation] = useState([]);
-  const firstLocation = emplocation[0];
-  const validLocations = emplocation.filter(
-    (loc) => loc.latitude && loc.longitude
+  const safeLoc = Array.isArray(emplocation) ? emplocation : [];
+  const firstLocation = safeLoc[0] ?? {};
+  const validLocations = safeLoc.filter(
+    (loc) => loc?.latitude && loc?.longitude
   );
-
-  // Fetch the last valid location, or null if none exists
-  const lastValidLocation = validLocations.length
-    ? validLocations[validLocations.length - 1]
-    : null;
+  const lastValidLocation = validLocations[validLocations.length - 1] ?? null;
 
   const fetchTodayAttendance = async (empId, dateString) => {
     await fetchEmployeeFullDetails(empId);
     try {
       const date = new Date(dateString);
       const formattedDate = date.toISOString().slice(0, 10);
+      const formattedEnd = date.toISOString().slice(0, 10);
       setSelectedAttendanceDate(formattedDate);
-      const res = await getEmployeeAttendanceOfToday(empId, formattedDate);
-      if (res.length > 0) {
+      const res = await getEmployeeAttendanceOfToday(
+        empId,
+        formattedDate,
+        formattedEnd
+      );
+      console.log("attendance record for emp:", res);
+      if (res && res.length > 0) {
         const checkInRecord = res.find((record) => record.is_check_in === true);
-        setIsPresent(checkInRecord.is_check_in);
-        const checkOutRecord = res
-          .reverse()
-          .find((record) => record.is_check_in === false);
+        setIsPresent(checkInRecord ? checkInRecord.is_check_in : false);
+        const reversedRes = [...res].reverse();
+        const checkOutRecord = reversedRes.find(
+          (record) => record.is_check_in === false
+        );
         console.log("CheckOutRecord:", checkOutRecord);
 
         const checkInTime = checkInRecord
           ? new Date(checkInRecord.attendance_time).toLocaleTimeString()
           : null;
-
         const checkOutTime = checkOutRecord
           ? new Date(checkOutRecord.attendance_time).toLocaleTimeString()
           : null;
+        console.log("CheckOutTime:", checkOutTime);
+
+        // const checkOutTime = checkOutRecord
+        //   ? new Date(checkOutRecord.attendance_time).toLocaleTimeString()
+        //   : null;
+        // console.log("checkOutTime:", checkOutTime);
 
         // const checkInTime = checkInRecord
         //   ? formatTimeToAmPmUTC(checkInRecord.attendance_time)
@@ -409,10 +418,19 @@ const AttendanceRec = () => {
         // const checkOutTime = checkOutRecord
         //   ? formatTimeToAmPmUTC(checkInRecord.attendance_time)
         //   : null;
-        const location = res.map(({ latitude, longitude }) => ({
-          latitude,
-          longitude,
-        }));
+        const validLocations = res.filter(
+          ({ latitude, longitude }) => latitude != null && longitude != null
+        );
+        const location =
+          validLocations.length > 0
+            ? validLocations.map(({ latitude, longitude }) => ({
+                latitude,
+                longitude,
+              }))
+            : null;
+        if (!location) {
+          console.warn("No valid location data available.", location);
+        }
 
         setCheckInTime(checkInTime || "-");
         setCheckOutTime(checkOutTime || "-");
@@ -423,10 +441,12 @@ const AttendanceRec = () => {
         setCheckInTime("");
         setCheckOutTime("");
         setIsPresent(false);
+        setEmployeeLocation([]); // Clear out location data.
       }
     } catch (error) {
       console.log("Error fetching attendance:", error);
     }
+    console.log("employeeLocation:", emplocation);
   };
 
   const checkOutLogsColumn = [
@@ -1031,21 +1051,22 @@ const AttendanceRec = () => {
                   </div>
 
                   <div className=" flex justify-between">
-                    <p className="font-medium">Check In :</p>
+                    <p className="font-medium">Check In Time :</p>
                     <p>{checkInTime}</p>
                   </div>
 
                   <div className=" flex justify-between">
-                    <p className="font-medium">Check Out :</p>
+                    <p className="font-medium">Check Out Time :</p>
                     <p>{checkOutTime}</p>
                   </div>
                   <div>
-                    {emplocation.length > 0 && (
+                    {safeLoc.length > 0 && (
                       <>
                         {/* Display first location */}
-                        <div className=" flex justify-between">
-                          <h3 className="font-medium">Check In :</h3>
-                          <button className="flex items-center space-x-1"
+                        <div className="flex justify-between">
+                          <h3 className="font-medium">Check In Location :</h3>
+                          <button
+                            className="flex items-center space-x-1"
                             onClick={() =>
                               navigateToLocation(
                                 firstLocation.latitude,
@@ -1053,17 +1074,19 @@ const AttendanceRec = () => {
                               )
                             }
                           >
-                            <span className="text-slate-900  ">Location</span>
+                            <span className="text-slate-900">Map</span>
                             <FaLocationDot />
                           </button>
                         </div>
                         {/* Display last location */}
                         <div>
                           {lastValidLocation ? (
-                            <div className=" flex justify-between my-2">
-                              <h3 className="font-medium">Check Out :</h3>
+                            <div className="flex justify-between my-2">
+                              <h3 className="font-medium">
+                                Check Out Location:
+                              </h3>
                               <button
-                                className="flex items-center space-x-1 "
+                                className="flex items-center space-x-1"
                                 onClick={() =>
                                   navigateToLocation(
                                     lastValidLocation.latitude,
@@ -1071,9 +1094,7 @@ const AttendanceRec = () => {
                                   )
                                 }
                               >
-                                <span className="text-slate-900  ">
-                                  Location
-                                </span>
+                                <span className="text-slate-900">Map</span>
                                 <FaLocationDot />
                               </button>
                             </div>
@@ -1084,6 +1105,7 @@ const AttendanceRec = () => {
                       </>
                     )}
                   </div>
+
                   <Accordion
                     icon={MdOutlinePunchClock}
                     title={"Attendance logs"}
