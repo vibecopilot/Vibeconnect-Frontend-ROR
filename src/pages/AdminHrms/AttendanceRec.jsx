@@ -258,7 +258,7 @@ const AttendanceRec = () => {
       console.log("result:", result);
 
       const employeesData = Array.isArray(result.results) ? result.results : [];
-      console.log(" 264 EmployeeData:", employeesData);
+      console.log("EmployeeData :", employeesData);
       setFilteredEmployees(employeesData);
     } catch (error) {
       console.error("Error fetching attendance records:", error);

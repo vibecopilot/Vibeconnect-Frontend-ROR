@@ -1121,12 +1121,12 @@ export const getHostList = async (siteId) =>
       token: token,
     },
   });
-  export const getUserOtp = async (id) =>
-    axiosInstance.get(`/visitors/get_visitor_by_id.json?id=${id}`, {
-      // params: {
-      //   token: token,
-      // },
-    });
+export const getUserOtp = async (id) =>
+  axiosInstance.get(`/visitors/get_visitor_by_id.json?id=${id}`, {
+    // params: {
+    //   token: token,
+    // },
+  });
 export const postSetupUsers = async (data) =>
   axiosInstance.post("/users/create.json", data, {
     params: {
@@ -5612,11 +5612,24 @@ export const fetchAllRoster = async (orgId) => {
     throw error;
   }
 };
-export const fetchRoasterBySite = async (orgId,siteId,date) =>{
-  try{
+export const fetchByRoasterName = async (orgId, name) => {
+  try {
+    const response = await HrmsAuth.get(
+      `roster/roster-shift/?organization_id=${orgId}&name=${name}`
+    );
+    // if (!response.ok) throw new Error("Network response was not ok");
+    return response.data;
+  } catch (error) {
+    console.error("Error in fetchByName:", error);
+    throw error;
+  }
+};
+
+export const fetchRoasterBySite = async (orgId, siteId, date) => {
+  try {
     const res = await HrmsAuth.get(`/roster/roster-shift/?organization_id=${orgId}&associated_organization_id=${siteId}&date=${date}`);
     return response.data;
-  }catch(error) {
+  } catch (error) {
     console.error("Error getting roster shift:", error);
     throw error;
   }
@@ -8145,26 +8158,26 @@ export const getIncidentTags = async (tagType) =>
     },
   });
 
-  export const getInjured = async (InjuredType) =>
-    axiosInstance.get(`/incidence_tags.json?q[tag_type_cont]=${InjuredType}`, {
-      params: {
-        token: token,
-      },
-    });
+export const getInjured = async (InjuredType) =>
+  axiosInstance.get(`/incidence_tags.json?q[tag_type_cont]=${InjuredType}`, {
+    params: {
+      token: token,
+    },
+  });
 
-  export const postInjured = async (data) =>
-    axiosInstance.post(`/incidence_tags.json`,data, {
-      params: {
-        token: token,
-      },
-    });
+export const postInjured = async (data) =>
+  axiosInstance.post(`/incidence_tags.json`, data, {
+    params: {
+      token: token,
+    },
+  });
 
-  export const getIncidentData = async (id) =>
-    axiosInstance.get(`/incidents/${id}.json`, {
-      params: {
-        token: token,
-      },
-    });
+export const getIncidentData = async (id) =>
+  axiosInstance.get(`/incidents/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
 
 export const getIncidentSubTags = async (tagType, parentId) =>
   axiosInstance.get(
@@ -8223,20 +8236,20 @@ export const postIncidents = async (id) =>
       token: token,
     },
   });
-  export const postInjurydata = async (data) =>
-    axiosInstance.post(`/incident_injuries.json`, data, {
-      params: {
-        token: token,
-      },
-    });
-  export const updateIncidents = async (id, data) =>
-    axiosInstance.put(`/incidents/${id}.json`, data, {
-      params: {
-        token: token,
-        
-      },
-    });
-  
+export const postInjurydata = async (data) =>
+  axiosInstance.post(`/incident_injuries.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const updateIncidents = async (id, data) =>
+  axiosInstance.put(`/incidents/${id}.json`, data, {
+    params: {
+      token: token,
+
+    },
+  });
+
 
 const defaultIp = getItemInLocalStorage("DEFAULT");
 const defaultUsername = getItemInLocalStorage("DeviceUsername");

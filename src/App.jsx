@@ -1602,6 +1602,30 @@ function App() {
           }
         />
         <Route
+          path="/communication/forum/saved_forum"
+          element={
+            <ProtectedAdminRoutes>
+              <SavedForums/>
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/communication/forum/hidden_forum"
+          element={
+            <ProtectedAdminRoutes>
+              <HiddenForums/>
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/communication/forum/reported_forum"
+          element={
+            <ProtectedAdminRoutes>
+              <ReportForum/>
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
           path="/communication/groups"
           element={
             <ProtectedAdminRoutes>
