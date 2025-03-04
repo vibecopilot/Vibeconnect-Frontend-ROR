@@ -197,6 +197,7 @@ import PermitPendingApprovalDetails from "./pages/SubPages/details/PermitPending
 import ScheduleAuditDetails from "./pages/SubPages/details/ScheduleAuditDetails.jsx";
 import ChecklistDetails from "./pages/SubPages/details/ChecklistDetails.jsx";
 import PermitSetup from "./pages/Setup/PermitSetup.jsx";
+import PermitEntity from "./pages/Setup/SetupSubPages/PermitEntity.jsx"
 import LetterOfIndent from "./pages/LetterOfIndent.jsx";
 import AddLoi from "./pages/SubPages/AddLoi.jsx";
 import EditLoiPO from "./pages/SubPages/details/EditLoiPo.jsx";
@@ -3010,40 +3011,40 @@ function App() {
           }
         /> */}
 
-        {/* permit */}
-        {/* admin permit */}
-        <Route
-          path="/admin/permit"
-          element={
-            <ProtectedAdminRoutes>
-              <Permit />
-            </ProtectedAdminRoutes>
-          }
-        />
-        <Route
-          path="/admin/permit/add-new-permit"
-          element={
-            <ProtectedAdminRoutes>
-              <AddNewPermit />
-            </ProtectedAdminRoutes>
-          }
-        />
-        <Route
-          path="/admin/edit-permit/:id"
-          element={
-            <ProtectedAdminRoutes>
-              <PermitListEdit />
-            </ProtectedAdminRoutes>
-          }
-        />
-        <Route
-          path="/admin/permit-details/:id"
-          element={
-            <ProtectedAdminRoutes>
-              <PermitListDetails />
-            </ProtectedAdminRoutes>
-          }
-        />
+          {/* permit */}
+          {/* admin permit */}
+          <Route
+            path="/admin/permit"
+            element={
+              <ProtectedAdminRoutes>
+                <Permit />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/permit/add-new-permit"
+            element={
+              <ProtectedAdminRoutes>
+                <AddNewPermit />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/edit-permit/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <PermitListEdit />
+              </ProtectedAdminRoutes>
+            }
+          />
+          <Route
+            path="/admin/permit-details/:id"
+            element={
+              <ProtectedAdminRoutes>
+                <PermitListDetails />
+              </ProtectedAdminRoutes>
+            }
+          />
 
         <Route
           path="/admin/pending-details/:id"
