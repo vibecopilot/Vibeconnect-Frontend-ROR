@@ -1,0 +1,32 @@
+[33me7afde6[m[33m ([m[1;36mHEAD -> [m[1;32mfeat/hrms_clientDashboard[m[33m, [m[1;31morigin/feat/hrms_clientDashboard[m[33m)[m feat/hrms_clientDashboard@{0}: commit: QR Code , Attendance duplicate , dashboard chart dowlonad option
+[33mb8a1f1b[m feat/hrms_clientDashboard@{1}: commit: added improved site wise filter on uniform , employee , dashboard , attendance
+[33md70f961[m feat/hrms_clientDashboard@{2}: commit: calender inside site location
+[33mdc1f1e2[m feat/hrms_clientDashboard@{3}: commit (merge): conflict resolve
+[33m386f64e[m feat/hrms_clientDashboard@{4}: commit: name change in client dashboad
+[33m8a8bbfb[m feat/hrms_clientDashboard@{5}: commit: location , emp search bar , wr code toggle
+[33m1615da4[m feat/hrms_clientDashboard@{6}: commit: roaster name & timing
+[33m262342a[m feat/hrms_clientDashboard@{7}: commit: ok
+[33m54a82ab[m feat/hrms_clientDashboard@{8}: commit: ok
+[33m7be4722[m feat/hrms_clientDashboard@{9}: commit: remove xls
+[33ma3ebc12[m feat/hrms_clientDashboard@{10}: commit: updated react-icon 5.3.0 to 5.5.0 & icon change
+[33m7203136[m feat/hrms_clientDashboard@{11}: commit: change navbar parking icon old version
+[33m618cd9d[m feat/hrms_clientDashboard@{12}: commit: no change
+[33m86b0488[m feat/hrms_clientDashboard@{13}: commit: dashboard chart complete
+[33m09f1779[m feat/hrms_clientDashboard@{14}: commit: dashboard complete
+[33mbdd8356[m feat/hrms_clientDashboard@{15}: commit: pagination and dashboard inomplete
+[33m472d4d1[m feat/hrms_clientDashboard@{16}: commit: notification on dashboard
+[33me7021ea[m feat/hrms_clientDashboard@{17}: commit: attendance filter and search
+[33m66936f6[m feat/hrms_clientDashboard@{18}: commit: attendance search by name
+[33m0238510[m feat/hrms_clientDashboard@{19}: commit: shift for sites
+[33m9430fc2[m feat/hrms_clientDashboard@{20}: commit: absent present error , roaster
+[33m2ff579c[m feat/hrms_clientDashboard@{21}: commit: ok
+[33m54e53da[m feat/hrms_clientDashboard@{22}: commit (merge): Merge branch 'feat/hrms_clientDashboard' of https://github.com/vibecopilot/vibeconnect-frontend into feat/hrms_clientDashboard
+[33m4e29878[m feat/hrms_clientDashboard@{23}: commit: uniform , client d toggle , notification
+[33macfd400[m feat/hrms_clientDashboard@{24}: commit (merge): Merge branch 'server' of https://github.com/vibecopilot/vibeconnect-frontend into feat/hrms_clientDashboard
+[33m490a0fe[m feat/hrms_clientDashboard@{25}: commit: ok
+[33mda2be4e[m feat/hrms_clientDashboard@{26}: commit: check in and check out done
+[33mb36b6c0[m feat/hrms_clientDashboard@{27}: commit: changes
+[33m15382b0[m feat/hrms_clientDashboard@{28}: commit: maxdate comt issue
+[33mb23e379[m feat/hrms_clientDashboard@{29}: pull --tags origin server: Fast-forward
+[33mb4a19e5[m feat/hrms_clientDashboard@{30}: commit: qr code
+[33m56a47b3[m feat/hrms_clientDashboard@{31}: branch: Created from origin/feat/hrms_clientDashboard

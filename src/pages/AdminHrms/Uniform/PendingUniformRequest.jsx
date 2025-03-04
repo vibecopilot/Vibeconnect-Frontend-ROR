@@ -5,6 +5,7 @@ import { useSelector } from "react-redux";
 import { PiPlusCircle } from "react-icons/pi";
 import { MdClose } from "react-icons/md";
 import { FaCheck, FaRegAddressCard } from "react-icons/fa";
+import {CustomDropdown} from "../../../utils/CustomDropdown";
 import {
   getAdminAccess,
   getEmployeeAssociatedSites,
@@ -15,6 +16,7 @@ import {
   hrmsDomain,
   postUniformApproval,
   postUniformRequest,
+  getAssociatedSites,
 } from "../../../api";
 import Select from "react-select";
 import toast from "react-hot-toast";
@@ -22,6 +24,16 @@ import { BsEye } from "react-icons/bs";
 import { dateFormatSTD } from "../../../utils/dateUtils";
 import Accordion from "../Components/Accordion";
 const PendingUniformRequest = () => {
+  const [requests, setRequests] = useState([]);
+  const [filteredRequests, setFilteredRequests] = useState([]);
+  const [allSites, setAllSites] = useState([]);
+  const [selectedSite, setSelectedSite] = useState("");
+  const themeColor = useSelector((state) => state.theme.color);
+  const [addRequest, setAddRequest] = useState(false);
+  const [employees, setEmployees] = useState([]);
+  const [searchText, setSearchText] = useState("");
+  const [selectedOption, setSelectedOption] = useState({});
+
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
   const columns = [
     {
@@ -36,6 +48,11 @@ const PendingUniformRequest = () => {
           </button>
         </div>
       ),
+    },
+    {
+      name: "Site Name",
+      selector: (row) => row.associated_organization_name,
+      sortable: true,
     },
     {
       name: "Employee Name",
@@ -94,20 +111,22 @@ const PendingUniformRequest = () => {
       name: "Action",
       cell: (row) => (
         <div className="flex items-center gap-4">
-          {roleAccess?.can_approve_reject_uniform_request && <>
-          <button
-            className="bg-green-400 text-white p-2 rounded-full"
-            onClick={() => handleUniformApproval(row.id, "Approved")}
-            >
-            <FaCheck title="Approve uniform" />
-          </button>
-          <button
-            className="bg-red-400 text-white p-2 rounded-full"
-            onClick={() => handleUniformApproval(row.id, "Rejected")}
-            >
-            <MdClose title="Reject uniform" size={15} />
-          </button>
-            </>}
+          {roleAccess?.can_approve_reject_uniform_request && (
+            <>
+              <button
+                className="bg-green-400 text-white p-2 rounded-full"
+                onClick={() => handleUniformApproval(row.id, "Approved")}
+              >
+                <FaCheck title="Approve uniform" />
+              </button>
+              <button
+                className="bg-red-400 text-white p-2 rounded-full"
+                onClick={() => handleUniformApproval(row.id, "Rejected")}
+              >
+                <MdClose title="Reject uniform" size={15} />
+              </button>
+            </>
+          )}
         </div>
       ),
     },
@@ -125,9 +144,6 @@ const PendingUniformRequest = () => {
     }
   };
 
-  const themeColor = useSelector((state) => state.theme.color);
-  const [addRequest, setAddRequest] = useState(false);
-  const [employees, setEmployees] = useState([]);
   useEffect(() => {
     const fetchAllEmployees = async () => {
       try {
@@ -146,7 +162,6 @@ const PendingUniformRequest = () => {
     fetchAllEmployees();
   }, []);
 
-  const [selectedOption, setSelectedOption] = useState({});
   const handleEmployeeChange = (option) => {
     setSelectedOption(option);
   };
@@ -178,33 +193,85 @@ const PendingUniformRequest = () => {
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
-  const [requests, setRequests] = useState([]);
-  const [filteredRequests, setFilteredRequests] = useState([]);
+
   const fetchUniformRequests = async () => {
     try {
       const res = await getUniformRequest(hrmsOrgId);
       const filteredData = res.filter((item) => item.status === "Pending");
       setRequests(filteredData);
       setFilteredRequests(filteredData);
+
+      const allSites = await getAssociatedSites(orgId);
+      console.log("allSites:", allSites);
+      // Extract unique associated organization names
+      const uniqueSites = Array.from(
+        new Map(
+          allSites.map((item, index) => [
+            item.site_name,
+            { index, site_name: item.site_name },
+          ])
+        ).values()
+      );
+
+      console.log("Unique Sites:", uniqueSites);
+      setAllSites(uniqueSites);
     } catch (error) {
       console.log(error);
     }
   };
+
   useEffect(() => {
     fetchUniformRequests();
   }, []);
 
-  const [searchText, setSearchText] = useState("");
+  useEffect(() => {
+    if (selectedSite && selectedSite.site_name !== "Select All Sites") {
+      console.log("Selected Site:", selectedSite);
+      console.log("Selected Site Data:", requests);
+      const newFiltered = requests.filter((item) =>
+        item.associated_organization_name
+          .toLowerCase()
+          .includes(selectedSite.site_name.toLowerCase())
+      );
+
+      console.log("newFiltered:", newFiltered);
+      setFilteredRequests(newFiltered);
+    } else {
+      // If no specific site is selected, show all requests
+      setFilteredRequests(requests);
+    }
+  }, [selectedSite, requests]);
+
   const handleSearch = (e) => {
     const searchValue = e.target.value;
     setSearchText(searchValue);
     if (searchValue.trim() === "") {
       setFilteredRequests(requests);
     } else {
-      const filteredResult = requests.filter((employee) =>
-        employee.employee_name.toLowerCase().includes(searchValue.toLowerCase())
+      const filteredResult = requests.filter(
+        (employee) =>
+          employee.associated_organization_name
+            .toLowerCase()
+            .includes(searchValue.toLowerCase()) ||
+          employee.employee_name
+            .toLowerCase()
+            .includes(searchValue.toLowerCase())
       );
       setFilteredRequests(filteredResult);
+    }
+  };
+
+  const handleDropdownChange = (e) => {
+    const selectedValue = e.target.value;
+    setSelectedSite(selectedValue);
+
+    if (selectedValue === "All") {
+      setFilteredRequests(requests); // Show all data if "All" is selected
+    } else {
+      const filteredData = requests.filter(
+        (item) => item.associated_organization_name === selectedValue
+      );
+      setFilteredRequests(filteredData);
     }
   };
 
@@ -223,6 +290,7 @@ const PendingUniformRequest = () => {
       console.log(error);
     }
   };
+
   const [empDetails, setEmpDetails] = useState({});
   const [empSiteDetails, setEmpSiteDetails] = useState({});
   const fetchEmployeeDetails = async (employeeId) => {
@@ -242,23 +310,22 @@ const PendingUniformRequest = () => {
     }
   };
 
-
   // can_approve_reject_uniform_request
   const employeeId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
-    const orgId = getItemInLocalStorage("HRMSORGID");
-    const [roleAccess, setRoleAccess] = useState({});
-    useEffect(() => {
-      const fetchRoleAccess = async () => {
-        try {
-          const res = await getAdminAccess(orgId, employeeId);
-  
-          setRoleAccess(res[0]);
-        } catch (error) {
-          console.log(error);
-        }
-      };
-      fetchRoleAccess();
-    }, []);
+  const orgId = getItemInLocalStorage("HRMSORGID");
+  const [roleAccess, setRoleAccess] = useState({});
+  useEffect(() => {
+    const fetchRoleAccess = async () => {
+      try {
+        const res = await getAdminAccess(orgId, employeeId);
+
+        setRoleAccess(res[0]);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchRoleAccess();
+  }, []);
 
   return (
     <section className="flex">
@@ -266,10 +333,20 @@ const PendingUniformRequest = () => {
         <div className="flex justify-between gap-2 my-2">
           <input
             type="text"
-            placeholder="Search by employee name"
+            placeholder="Search by employee name & Site name"
             className="border border-gray-400 w-full placeholder:text-sm rounded-lg p-2"
             value={searchText}
             onChange={handleSearch}
+          />
+          {/* DROPDOWN */}
+          <CustomDropdown
+            AllSites={allSites}
+            selectedValue={selectedSite}
+            onSelect={(site) =>
+              site.site_name === "Select All Sites"
+                ? setSelectedSite(null) // Reset filter
+                : setSelectedSite(site)
+            }
           />
           <div className="flex gap-2">
             {/* <button
@@ -292,6 +369,7 @@ const PendingUniformRequest = () => {
           data={filteredRequests}
           // selectableRow={true}
           isPagination={true}
+          selectableRows={true}
           //   onSelectedRows={handleSelectedRows}
         />
       </div>
@@ -563,7 +641,9 @@ const PendingUniformRequest = () => {
                 {details.id_card !== null && (
                   <div className="grid grid-cols-2">
                     <p className="font-medium">ID Card:</p>
-                    <p className="">{details.id_card === "Yes"? "Required": "Not Required"}</p>
+                    <p className="">
+                      {details.id_card === "Yes" ? "Required" : "Not Required"}
+                    </p>
                   </div>
                 )}
               </div>

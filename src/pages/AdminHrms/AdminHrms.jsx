@@ -9,6 +9,7 @@ import {
   MdExpandMore,
   MdExpandLess,
   MdOutlineSettings,
+  MdNotificationsActive,
 } from "react-icons/md";
 import { AiOutlineFieldTime } from "react-icons/ai";
 import { useSelector } from "react-redux";
@@ -335,7 +336,7 @@ const AdminHRMS = () => {
   ];
   const routes10 = ["/admin/hrms/site-employee"];
 
-  const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
+  const empId = getItemInLocalStorage("APPROVERID");
   const orgId = getItemInLocalStorage("HRMSORGID");
   const [roleAccess, setRoleAccess] = useState({});
   useEffect(() => {
@@ -363,6 +364,19 @@ const AdminHRMS = () => {
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
+        {/* <div className={`py-3 flex ${open ? "justify-end" : "justify-center"}`}>
+          <MdNotificationsActive
+            size={26}
+            className="cursor-pointer"
+            onClick={() => setOpen(!open)}
+          />
+          {open && (
+            <p className="bg-white text-black p-2 rounded-md shadow-md">
+              Notification
+            </p>
+          )}
+        </div> */}
+
         <div className={`py-3 flex ${open ? "justify-end" : "justify-center"}`}>
           <HiMenuAlt3
             size={26}
@@ -372,6 +386,34 @@ const AdminHRMS = () => {
         </div>
         <div className="flex flex-col h-full gap-4 mb-5 relative">
           <>
+            {/* <NavLink
+              to="/admin/hrms/notifications"
+              className={({ isActive }) =>
+                `${
+                  isActive
+                    ? "text-black bg-white flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                    : "group flex items-center text-sm gap-3.5 font-medium p-2"
+                }`
+              }
+            >
+              <div>
+                {React.createElement(MdNotificationsActive, { size: "20" })}
+              </div>
+              <h2
+                className={`whitespace-pre duration-300 ${
+                  !open && "opacity-0 translate-x-28 overflow-hidden"
+                }`}
+              >
+                Notification
+              </h2>
+              <h2
+                className={`${
+                  open && "hidden"
+                } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+              >
+                Notification
+              </h2>
+            </NavLink> */}
             <NavLink
               to="/admin/hrms/dashboard"
               className={({ isActive }) =>
@@ -400,6 +442,7 @@ const AdminHRMS = () => {
                 Dashboard
               </h2>
             </NavLink>
+
             {/* <NavLink
               to="/admin/hrms/alerts"
               className={({ isActive }) =>
@@ -635,7 +678,7 @@ const AdminHRMS = () => {
                       }
                     >
                       <div>
-                        {React.createElement(FaPeopleGroup , { size: "20" })}
+                        {React.createElement(FaPeopleGroup, { size: "20" })}
                       </div>
                       <h2
                         className={`whitespace-pre duration-300 ${
@@ -1950,6 +1993,43 @@ const AdminHRMS = () => {
                 } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
               >
                 Reports
+              </h2>
+            </NavLink> */}
+            {/* <NavLink to="/clientDashboard">
+              <h2
+                  className={`whitespace-pre duration-300 ${
+                    !open && "opacity-0 translate-x-28 overflow-hidden"
+                  }`}
+                >
+                  clientDashboard
+                </h2>
+              </NavLink> */}
+            {/* <NavLink
+              to="/admin/hrms/client-dashboard"
+              className={({ isActive }) =>
+                `${
+                  isActive
+                    ? "text-black bg-white flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                    : "group flex items-center text-sm gap-3.5 font-medium p-2 "
+                }`
+              }
+            >
+              <div>
+                {React.createElement(MdOutlineDashboard, { size: "20" })}
+              </div>
+              <h2
+                className={`whitespace-pre duration-300 ${
+                  !open && "opacity-0 translate-x-28 overflow-hidden"
+                }`}
+              >
+                Client Dashboard
+              </h2>
+              <h2
+                className={`${
+                  open && "hidden"
+                } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+              >
+                Client Dashboard
               </h2>
             </NavLink> */}
           </>

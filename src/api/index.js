@@ -5,8 +5,8 @@ import HrmsAuth from "./HrmsAuth";
 import vibeAuth from "./vibeAuth";
 import axios from "axios";
 // import DigestFetch from "digest-fetch";
-export const API_URL = "https://vibecopilot.ai";
-export const vibeMedia = "https://vibecopilot.ai/api/media/";
+export const API_URL = "https://admin.vibecopilot.ai";
+export const vibeMedia = "https://admin.vibecopilot.ai/api/media/";
 export const hrmsDomain = "https://api.hrms.vibecopilot.ai/";
 import DigestFetch from "digest-fetch";
 // import DigestAuth from "@mhoc/axios-digest-auth";
@@ -18,7 +18,6 @@ export const domainPrefix = "https://admin.vibecopilot.ai";
 export const login = async (data) => axiosInstance.post("/login.json", data);
 
 export const getLogin = async () => axiosInstance.get("/login.json");
-
 // dashboard
 export const getTicketDashboard = async () =>
   axiosInstance.get("/pms/admin/complaints/complaints_dashboard.json", {
@@ -241,9 +240,9 @@ export const removeVendor = async (forumId) => {
   axiosInstance.delete(`/vendors/${forumId}.json/`, {
     params: {
       token: token,
-    }
-  })
-}
+    },
+  });
+};
 
 //
 export const getComplaints = async () =>
@@ -1122,6 +1121,12 @@ export const getHostList = async (siteId) =>
       token: token,
     },
   });
+  export const getUserOtp = async (id) =>
+    axiosInstance.get(`/visitors/get_visitor_by_id.json?id=${id}`, {
+      // params: {
+      //   token: token,
+      // },
+    });
 export const postSetupUsers = async (data) =>
   axiosInstance.post("/users/create.json", data, {
     params: {
@@ -1277,12 +1282,37 @@ export const sendMailToUsers = async (userId) =>
       token: token,
     },
   });
-export const getAttendance = async () =>
-  axiosInstance.get("/attendances.json", {
-    params: {
-      token: token,
-    },
-  });
+export const getAttendance = async (orgId, page) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/employees/attendance-bulk?organization_id=${orgId}`
+      // `/employees/attendance-bulk?organization_id=${orgId}`
+      // {
+      //   headers: {
+      //     "Content-Type": "multipart/form-data/",
+      //   },
+      // }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting attendance records:", error);
+    throw error;
+  }
+};
+
+
+// export const getClientAttendance = async(siteId, today)
+// try {
+//   const response = await HrmsAuth.
+//     // get(`/employee/attendance/?employee_id=${empId}&start_date=${today}`);
+//     get(`/employee/attendance/?employee_id=${siteId}&start_date=${today}`);
+//   return response;
+// } catch (error) {
+//   console.error("Error getting employee attendance of today", error);
+//   throw error;
+// };
+
+
 export const getEmployeeAttendance = async (userId) =>
   axiosInstance.get(`/attendances.json?q[attendance_of_id]=${userId}`, {
     params: {
@@ -1328,12 +1358,11 @@ export const getGroups = async () =>
       token: token,
     },
   });
-export const getGroupsDetails = async (id) =>
-  axiosInstance.get(`/groups/${id}.json`, {
-    params: {
-      token: token,
-    },
-  });
+
+export const getGroupsDetails = async (id) => {
+  return axiosInstance.get(`/groups/${id}.json?token=${token}`, {});
+};
+
 export const deleteGroup = async (id) =>
   axiosInstance.delete(`/groups/${id}.json`, {
     params: {
@@ -1342,11 +1371,11 @@ export const deleteGroup = async (id) =>
   });
 
 export const editGroups = async (id, data) => {
-  const token = getItemInLocalStorage("token"); // Ensure token retrieval is correct
-  return axiosInstance.put(`/groups/${id}.json?token=${token}`, data, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    }
+  // const token = getItemInLocalStorage("token"); // Ensure token retrieval is correct
+  return axiosInstance.put(`/groups/${id}.json`, data, {
+    params: {
+      token: token,
+    },
   });
 };
 
@@ -4534,6 +4563,8 @@ export const editMyBankAccount = async (bankId, data) => {
     throw error;
   }
 };
+
+
 export const getManageAdmin = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
@@ -4589,12 +4620,8 @@ export const editManageAdminDetails = async (adminId, data) => {
     const response = await HrmsAuth.put(
       `/organization/user-setting/administrator-setting/${adminId}/`,
       data,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data/",
-        },
-      }
     );
+    console.log(response.data)
     return response.data;
   } catch (error) {
     console.error("Error edit Admin detail:", error);
@@ -5153,6 +5180,86 @@ export const getAttendanceRecord = async (orgId, page) => {
     throw error;
   }
 };
+
+export const getAttendanceRecordFilter = async (orgId, siteId, page) => {
+  try {
+    const res = await HrmsAuth.get(`/employees/attendance-bulk?organization_id=${orgId}&associated_organization_id=${siteId}&page=${page}`, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return res.data;
+  } catch (error) {
+    console.error("Error posting leave category:", error);
+    throw error;
+  }
+}
+export const fetchByNumeric = async (orgId, associatedOrgId, numericValue) => {
+  try {
+    const response = await HrmsAuth.get(`/employees/attendance-bulk?organization_id=${orgId}&associated_organization_id=${associatedOrgId}&id=${numericValue}`
+    );
+    // if (!response.ok) throw new Error("Network response was not ok");
+    return response.data;
+  } catch (error) {
+    console.error("Error in fetchByNumeric:", error);
+    throw error;
+  }
+};
+
+export const fetchSiteDashboard = async (siteId) => {
+  try {
+    const res = await HrmsAuth.get(
+      `/associated/?associated_organization_id=${siteId}`
+    );
+    return res.data;
+  } catch (error) {
+    console.log("Error in fetching fetchSiteDashboard:", error);
+    throw error;
+  }
+};
+
+export const fetchByAssociatedOrganization = async (orgId, associatedOrgValue) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/employees/attendance-bulk?organization_id=${orgId}&associated_organization_id=${associatedOrgValue}`
+    );
+    // if (!response.ok) throw new Error("Network response was not ok");
+    return response.data;
+  } catch (error) {
+    console.error("Error in fetchByAssociatedOrganization:", error);
+    throw error;
+  }
+};
+
+
+
+export const fetchByName = async (orgId, name) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/employees/attendance-bulk?organization_id=${orgId}&name=${encodeURIComponent(name)}`
+    );
+    // if (!response.ok) throw new Error("Network response was not ok");
+    return response.data;
+  } catch (error) {
+    console.error("Error in fetchByName:", error);
+    throw error;
+  }
+};
+
+export const fetchById = async (orgId, id) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/employees/attendance-bulk?organization_id=${orgId}&id=${id}`
+    );
+    // if (!response.ok) throw new Error("Network response was not ok");
+    return response.data;
+  } catch (error) {
+    console.error("Error in fetchById:", error);
+    throw error;
+  }
+};
+
+
 export const postLeaveCategory = async (data) => {
   try {
     const response = await HrmsAuth.post(`/leave-categories/`, data, {
@@ -5800,6 +5907,29 @@ export const editInvestmentSetting = async (invId, data) => {
     throw error;
   }
 };
+
+// Roaster
+export const fetchAllRoster = async (orgId) => {
+  try {
+    const res = await HrmsAuth.get(`/roster/roster-shift/?organization_id=${orgId}`
+    );
+    return res.data;
+  }
+  catch (error) {
+    console.error("Error getting roster shift:", error);
+    throw error;
+  }
+};
+export const fetchRoasterBySite = async (orgId,siteId,date) =>{
+  try{
+    const res = await HrmsAuth.get(`/roster/roster-shift/?organization_id=${orgId}&associated_organization_id=${siteId}&date=${date}`);
+    return response.data;
+  }catch(error) {
+    console.error("Error getting roster shift:", error);
+    throw error;
+  }
+}
+
 export const getRosterShift = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
@@ -6736,6 +6866,91 @@ export const getReportingSupervisors = async (deptId, orgId) => {
     throw error;
   }
 };
+
+// export const getNotification = async () => {
+//   try {
+//     const response = await HrmsAuth.get(`/notifications/`, {
+//       headers: {
+//         "Content-Type": "multipart/form-data/",
+//       },
+//     });
+//     return response.data; // Ensure it returns data
+//   } catch (error) {
+//     console.error("Error getting notifications:", error);
+//     return []; // Return empty array on error
+//   }
+// };
+export const getNotification = async (id) => {
+  try {
+    const response = await HrmsAuth.get(`/notifications/?employee_id=${id}`, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
+    return response.data; // Ensure it returns data
+  } catch (error) {
+    console.error("Error getting notifications:", error);
+    return []; // Return empty array on error
+  }
+};
+
+export const getClientDashboard = async (id) => {
+  try {
+    const response = await HrmsAuth.get(`/associated-organizations/mutiple-site/?&employee_id=${id}`, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    })
+    return response.data; // Ensure it returns data
+  } catch (error) {
+    console.error("Error getting notifications:", error);
+    return []; // Return empty array on error
+  }
+}
+
+export const getAssociatedOrgDash = async (empId, date) => {
+  try {
+    const res = await HrmsAuth.get(`associated-organization-dashboard/mutiple-site/?employee_id=${empId}&start_date=${date}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      })
+    return res.data;
+  } catch (error) {
+    console.log("Error fetching the associated organization dashboard :", error)
+  }
+}
+
+export const getClientRosterShift = async (orgId) => {
+  try {
+    const res = await HrmsAuth.get(`roster/roster-shift/?organization_id=${orgId}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      })
+    return res.data;
+  } catch (error) {
+    console.log("Error fetching the associated organization dashboard :", error)
+  }
+}
+
+export const updateNotificationStatus = async (notificationId) => {
+  try {
+    const response = await HrmsAuth.patch(`/notifications/${notificationId}/`, {
+      is_read: true,
+    });
+    console.log("Notification updated:", response.data); // Log after getting the response
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Error updating notification:",
+      error.response ? error.response.data : error
+    );
+  }
+};
+
 export const getTotalHRMSEmployeeCount = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
@@ -6752,6 +6967,14 @@ export const getTotalHRMSEmployeeCount = async (orgId) => {
     throw error;
   }
 };
+export const getAllDepartmentCount = async (orgId) => {
+  try {
+    const res = await HrmsAuth.get(`/associated/?associated_organization_id=${orgId}&department_id=all`)
+    return res.data;
+  } catch (error) {
+    console.log("Error getting department count :", error)
+  }
+}
 export const getDepartmentCount = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
@@ -6926,12 +7149,6 @@ export const getAssociatedSites = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
       `/associated/?organization_id=${orgId}`
-
-      // {
-      //   headers: {
-      //     "Content-Type": "multipart/form-data/",
-      //   },
-      // }
     );
     return response.data;
   } catch (error) {
@@ -6939,6 +7156,31 @@ export const getAssociatedSites = async (orgId) => {
     throw error;
   }
 };
+
+export const getTotalAttendance = async (empId, date) => {
+  try {
+    const response = await HrmsAuth.get(`associated-organization-dashboard/mutiple-site/?employee_id=${empId}&start_date=${date}`);
+    return response.data;
+  } catch (error) {
+    console.log("error fetching total attendance site wise using empId and date:", error)
+    throw error;
+  }
+}
+
+export const getAssociatedSite = async (id) => {
+  try {
+    const res = await HrmsAuth.get(`/associated/?site_id=${id}`, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    })
+    return res.data; // Ensure it returns data
+  } catch (error) {
+    console.error("Error getting notifications:", error);
+    return []; // Return empty array on error
+  }
+}
+
 export const postAssociatedSites = async (data) => {
   try {
     const response = await HrmsAuth.post(
@@ -7275,12 +7517,40 @@ export const getSiteWiseEmployee = async (orgId, siteId) => {
     throw error;
   }
 };
+
+export const getFullUser = async (orgId) => {
+  try {
+    const res = await HrmsAuth.get(`/user-details/download?associated_organization_id=${orgId}`, {
+      params: {
+        token: token,
+      },
+    });
+    return res.data;
+  } catch (error) {
+    console.log("Error fetching the organizational level user detail", error);
+    throw error;
+  }
+}
+
+export const getSiteWiseUserDetails = async (siteId) => {
+  try {
+    const res = await HrmsAuth.get(`/user-details/download?associated_organization_id=${siteId}`, {
+      params: {
+        token: token,
+      },
+    });
+    return res.data;
+  } catch (error) {
+    console.log("Error fetching the organizational level user detail", error);
+    throw error;
+  }
+}
+
 export const markEmployeeAttendance = async (data) => {
   try {
     const response = await HrmsAuth.post(
       `/employee/attendance/`,
       data,
-
       {
         headers: {
           "Content-Type": "multipart/form-data/",
@@ -7326,6 +7596,23 @@ export const getEmployeeAttendanceOfToday = async (empId, today) => {
         },
       }
     );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting employee attendance of today", error);
+    throw error;
+  }
+};
+export const getSiteWiseAttendance = async (siteId, date) => {
+  try {
+    const response = await HrmsAuth.get(
+      `associated-wise/attendance/${siteId}?start_date=${date}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    // console.log(response.data)//
     return response.data;
   } catch (error) {
     console.error("Error getting employee attendance of today", error);
@@ -7491,6 +7778,68 @@ export const getEmployeeEsic = async (empId) => {
   }
 };
 
+
+export const getFamilyMember = async (id) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/esic-family-members/?employee_id=${id}`,
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting Employee family members", error);
+    throw error;
+  }
+};
+
+export const postEsicCard = async (empId, data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/esic/create/?employee_id=${empId}`,
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error posting request", error);
+    throw error;
+  }
+};
+
+
+
+export const postFamilyEsic = async (data) => {
+  try {
+    console.log(data);
+    const { employee: id, ...formData } = data; // Extract `id` for the URL
+    const response = await HrmsAuth.post(
+      `/esic-family-members/?organization_id=${id}`, // Use `id` in the URL
+      formData, // Send remaining data as the payload
+      {
+        headers: {
+          "Content-Type": "multipart/form-data", // Correct Content-Type
+        },
+      }
+    );
+    return response.data; // Return the server response
+  } catch (error) {
+    console.error(
+      "Error posting request:",
+      error.response?.data || error.message
+    );
+    throw error; // Re-throw the error for further handling
+  }
+};
+
 // site id
 export const getSiteData = async () =>
   axiosInstance.get(`/get_user_site.json`, {
@@ -7541,67 +7890,64 @@ export const getinbound = async () =>
   axiosInstance.get(`/mail_room_inbounds.json`, {
     params: {
       token: token,
-    }
-  })
+    },
+  });
 
 export const getInboundDetail = async (id) =>
   axiosInstance.get(`/mail_room_inbounds/${id}.json`, {
     params: {
       token: token,
-    }
-  })
+    },
+  });
 export const createInbound = async (data) =>
   axiosInstance.post(`/mail_room_inbounds.json`, data, {
     params: {
       token: token,
-    }
-  })
+    },
+  });
 
 export const editInbound = async (forumId, payload) => {
   // const token = getItemInLocalStorage("token"); // Ensure token retrieval is correct
   return axiosInstance.put(`/mail_room_inbounds/${forumId}.json`, payload, {
     params: {
       token: token,
-    }
+    },
   });
 };
-
 
 export const deleteInbound = async (forumId) =>
   axiosInstance.delete(`/mail_room_inbounds/${forumId}.json`, {
     params: {
       token: token,
-    }
-  })
+    },
+  });
 export const getoutbound = async () =>
   axiosInstance.get(`/mail_room_outbounds.json`, {
     params: {
       token: token,
-    }
-  })
-
+    },
+  });
 
 export const createOutbound = async (data) =>
   axiosInstance.post(`/mail_room_outbounds.json`, data, {
     params: {
       token: token,
-    }
-  })
+    },
+  });
 
 export const getOutboundDetail = async (id) =>
   axiosInstance.get(`/mail_room_outbounds/${id}.json`, {
     params: {
       token: token,
-    }
-  })
+    },
+  });
 
 export const editOutbound = async (id, payload) => {
   const token = getItemInLocalStorage("token"); // Ensure token retrieval is correct
-  return axiosInstance.put(`/mail_room_outbounds/${forumId}.json`, payload, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-    params: { token }, // Ensure the token is included correctly
+  return axiosInstance.put(`/mail_room_outbounds/${id}.json`, payload, {
+    params: {
+      token: token,
+    },// Ensure the token is included correctly
   });
 };
 
@@ -7609,13 +7955,15 @@ export const deleteOutbound = async (forumId) =>
   axiosInstance.delete(`/mail_room_outbounds/${forumId}.json`, {
     params: {
       token: token,
-    }
-  })
+    },
+  });
 
 // Save Forums
 export const getSavedForum = async (forumId) => {
   try {
-    const response = await axiosInstance.get(`/forums/saved_forums.json?token=${token}`);
+    const response = await axiosInstance.get(
+      `/forums/saved_forums.json?token=${token}`
+    );
     console.log("API Response:", response.data); // Log API data to verify structure
 
     if (Array.isArray(response.data)) {
@@ -7623,12 +7971,11 @@ export const getSavedForum = async (forumId) => {
     } else {
       throw new Error("API response is not an array");
     }
-  }
-  catch (error) {
+  } catch (error) {
     console.error("Error fetching saved forums:", error.message || error);
     return [];
   }
-}
+};
 
 export const PostSavedForum = async (forumId) =>
   axiosInstance.post(`/forums/${forumId}/save_for_later.json?token=${token}`, {
@@ -7643,7 +7990,6 @@ export const unsaveForum = async (forumId) =>
     //   token: token,
     // },
   });
-
 
 // Report Forum Admin
 export const GetAllReportedForum = async () => {
@@ -7663,18 +8009,21 @@ export const GetAllReportedForum = async () => {
 // Report Forum Emp
 export const reportForum = async (forumId, requestBody) => {
   const token = localStorage.getItem("token"); // Assuming you are saving the token in localStorage
-  return axiosInstance.post(`/forums/${forumId}/report.json?token=${token}`, requestBody);
+  return axiosInstance.post(
+    `/forums/${forumId}/report.json?token=${token}`,
+    requestBody
+  );
 };
-
 
 // Forum Hide and Unhide - Admin
 export const getHiddenForums = async () =>
-  axiosInstance.get(`/forums/visibility_status.json?token=${token}`)
+  axiosInstance.get(`/forums/visibility_status.json?token=${token}`);
 
 export const hideForum = async (forumId) =>
-  axiosInstance.post(`/forums/${forumId}/hide.json?token=${token}`,
+  axiosInstance.post(
+    `/forums/${forumId}/hide.json?token=${token}`
     // {}
-  )
+  );
 
 export const unhideForum = async (forumId) =>
   axiosInstance.post(`forums/${forumId}/unhide.json?token=${token}`);
@@ -7682,42 +8031,45 @@ export const unhideForum = async (forumId) =>
 // Likes
 export const likeForum = async (forumId) => {
   try {
-    const res = await axiosInstance.post(`forums/${forumId}/toggle_like.json?token=${token}`);
+    const res = await axiosInstance.post(
+      `forums/${forumId}/toggle_like.json?token=${token}`
+    );
     return res.data;
-  }
-  catch (error) {
+  } catch (error) {
     console.log("Error is occuring :", error.response?.data || error.message);
     throw error;
   }
-}
+};
 
-
-// Comments 
+// Comments
 export const getComments = async (forumId) => {
   try {
-    const response = await axiosInstance.get(`/forums/${forumId}/forum_comments.json/`,
+    const response = await axiosInstance.get(
+      `/forums/${forumId}/forum_comments.json/`,
       {
         params: {
           token: token,
         },
-      });
+      }
+    );
     return response.data;
   } catch (error) {
     console.error("Error :", error);
     throw error;
   }
-}
+};
 
 export const addComment = async (forumId, commentText, userId) => {
   try {
     // Create FormData object with the correct parameter structure
     const formData = new FormData();
-    formData.append('forum_comment[comment]', commentText);
+    formData.append("forum_comment[comment]", commentText);
     // Changed from forum_comments to forum_comment
-    formData.append('forum_comment[user_id]', userId);
+    formData.append("forum_comment[user_id]", userId);
     // Changed from forum_comments to forum_comment
     const response = await axiosInstance.post(
-      `/forums/${forumId}/forum_comments.json`, formData,
+      `/forums/${forumId}/forum_comments.json`,
+      formData,
       {
         params: {
           token: token,
@@ -7732,14 +8084,16 @@ export const addComment = async (forumId, commentText, userId) => {
 };
 
 export const deleteComment = async (forumId, id) =>
-  axiosInstance.delete(`/forums/${forumId}/forum_comments/${id}.json?token=${token}`);
+  axiosInstance.delete(
+    `/forums/${forumId}/forum_comments/${id}.json?token=${token}`
+  );
 
 export const updateComment = async (forumId) =>
   axiosInstance.put(`/forums/${forumId}/forum_comments.json`, {
     params: {
       token: token,
-    }
-  })
+    },
+  });
 //////////////////////////////////////////////////////////////////
 
 export const downloadAsset = async () =>
@@ -7807,61 +8161,68 @@ export const getPPMcompleteDownload = async () =>
     responseType: "blob",
   });
 
-export const getTotalAssetCount = async () =>
+export const getTotalAssetCount = async (ids) =>
   axiosInstance.get(`/site_assets/count.json`, {
     params: {
       token: token,
+      site_ids: ids.join(","),
     },
   });
 
-export const getBreakCount = async () =>
+export const getBreakCount = async (ids) =>
   axiosInstance.get(`/site_assets/count.json`, {
     params: {
       token: token,
       "q[breakdown_eq]": true, // add this line to include q[breakdown_eq]
+      site_ids: ids.join(","),
     },
   });
 
-export const getInUseAssetBreakDown = async () =>
+export const getInUseAssetBreakDown = async (ids) =>
   axiosInstance.get(`/site_assets/count.json`, {
     params: {
       token: token,
       "q[breakdown_eq]": false, // add this line to include q[breakdown_eq]
+      site_ids: ids.join(","),
     },
   });
 
-export const getPPMScheduleCount = async () =>
+export const getPPMScheduleCount = async (ids) =>
   axiosInstance.get(`/activities/count.json`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "ppm",
       scheduled: true,
+      site_ids: ids.join(","),
     },
   });
 
-export const getPPMOverDueCount = async () =>
+export const getPPMOverDueCount = async (ids) =>
   axiosInstance.get(`/activities/count.json`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "ppm",
       overdue: true,
+      site_ids: ids.join(","),
     },
   });
 
-export const getPPMpendingCount = async () =>
+export const getPPMpendingCount = async (ids) =>
   axiosInstance.get(`/activities/count.json`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "ppm",
       pending: true,
+      site_ids: ids.join(","),
     },
   });
-export const getPPMCompleteCount = async () =>
+export const getPPMCompleteCount = async (ids) =>
   axiosInstance.get(`/activities/count.json`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "ppm",
       complete: true,
+      site_ids: ids.join(","),
     },
   });
 
@@ -7904,36 +8265,40 @@ export const getRoutinePendingDownload = async () =>
     responseType: "blob",
   });
 
-export const getRoutineScheduledCount = async () =>
+export const getRoutineScheduledCount = async (ids) =>
   axiosInstance.get(`/activities/count.json`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "routine",
       scheduled: true,
+      site_ids: ids.join(","),
     },
   });
-export const getRoutineOverdueCount = async () =>
+export const getRoutineOverdueCount = async (ids) =>
   axiosInstance.get(`/activities/count.json`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "routine",
       overdue: true,
+      site_ids: ids.join(","),
     },
   });
-export const getRoutineCompleteCount = async () =>
+export const getRoutineCompleteCount = async (ids) =>
   axiosInstance.get(`/activities/count.json?`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "routine",
       complete: true,
+      site_ids: ids.join(","),
     },
   });
-export const getRoutinePendingCount = async () =>
+export const getRoutinePendingCount = async (ids) =>
   axiosInstance.get(`/activities/count.json`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "routine",
       pending: true,
+      site_ids: ids.join(","),
     },
   });
 
@@ -8075,6 +8440,28 @@ export const getIncidentTags = async (tagType) =>
       token: token,
     },
   });
+
+  export const getInjured = async (InjuredType) =>
+    axiosInstance.get(`/incidence_tags.json?q[tag_type_cont]=${InjuredType}`, {
+      params: {
+        token: token,
+      },
+    });
+
+  export const postInjured = async (data) =>
+    axiosInstance.post(`/incidence_tags.json`,data, {
+      params: {
+        token: token,
+      },
+    });
+
+  export const getIncidentData = async (id) =>
+    axiosInstance.get(`/incidents/${id}.json`, {
+      params: {
+        token: token,
+      },
+    });
+
 export const getIncidentSubTags = async (tagType, parentId) =>
   axiosInstance.get(
     `/incidence_tags.json?q[tag_type_cont]=${tagType}&q[parent_id_eq]=${parentId}`,
@@ -8126,12 +8513,26 @@ export const getIncidentDetails = async (incidentId) =>
       token: token,
     },
   });
-export const postIncidents = async (data) =>
-  axiosInstance.post(`/incidents.json`, data, {
+export const postIncidents = async (id) =>
+  axiosInstance.post(`/incidents.json`, id, {
     params: {
       token: token,
     },
   });
+  export const postInjurydata = async (data) =>
+    axiosInstance.post(`/incident_injuries.json`, data, {
+      params: {
+        token: token,
+      },
+    });
+  export const updateIncidents = async (id, data) =>
+    axiosInstance.put(`/incidents/${id}.json`, data, {
+      params: {
+        token: token,
+        
+      },
+    });
+  
 
 const defaultIp = getItemInLocalStorage("DEFAULT");
 const defaultUsername = getItemInLocalStorage("DeviceUsername");

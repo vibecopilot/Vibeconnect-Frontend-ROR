@@ -178,7 +178,15 @@ const ManageAdmin = () => {
         postData.append(key, leavePermission[key]);
       });
     }
-    //
+    if (access === "Full Access") {
+      Object.keys(dashboardPermission).forEach((key) => {
+        postData.append(key, true);
+      });
+    } else {
+      Object.keys(dashboardPermission).forEach((key) => {
+        postData.append(key, dashboardPermission[key]);
+      });
+    }
     if (selectedUserOption && selectedUserOption.value) {
       postData.append("name", selectedUserOption.value);
     } else {
@@ -209,21 +217,87 @@ const ManageAdmin = () => {
     }
   };
   const [adminId, setAdminId] = useState("");
+  // const handleEditModal = async (id) => {
+  //   setShowModal1(true)
+  //   setAdminId(id)
+  //   try {
+  //     const res = await getManageAdminDetails(id)
+  //     console.log(res)
+  //     setAccess(res.access)
+  //     setRole(res.role)
+  //     // const admin = employees.find((employee) => employee.value === res.name);
+  //     const admin = employees.find((employee) => String(employee.value) === String(res.name))
+
+  //     console.log(admin)
+  //     setSelectedUserOption(admin || null)
+  //     fetchApproverDetails(admin.value)
+  //     const updatedPermissions = { ...permissionAllowed }
+  //     Object.keys(permissionAllowed).forEach((key) => {
+  //       if (res[key] !== undefined) {
+  //         updatedPermissions[key] = res[key]
+  //       }
+  //     })
+  //     setPermissionAllowed(updatedPermissions)
+
+  //     const updatedEmployeePermissions = { ...employeePermission }
+  //     Object.keys(employeePermission).forEach((key) => {
+  //       if (res[key] !== undefined) {
+  //         updatedEmployeePermissions[key] = res[key]
+  //       }
+  //     })
+  //     setEMployeePermission(updatedEmployeePermissions)
+
+  //     const updatedAttendancePermissions = { ...attendancePermission }
+  //     Object.keys(attendancePermission).forEach((key) => {
+  //       if (res[key] !== undefined) {
+  //         updatedAttendancePermissions[key] = res[key]
+  //       }
+  //     })
+  //     setAttendancePermission(updatedAttendancePermissions)
+
+  //     const updatedRosterPermission = { ...rosterPermission }
+  //     Object.keys(rosterPermission).forEach((key) => {
+  //       if (res[key] !== undefined) {
+  //         updatedRosterPermission[key] = res[key]
+  //       }
+  //     })
+  //     setRosterPermission(updatedRosterPermission)
+
+  //     const updatedLeavePermission = { ...leavePermission }
+  //     Object.keys(leavePermission).forEach((key) => {
+  //       if (res[key] !== undefined) {
+  //         updatedLeavePermission[key] = res[key]
+  //       }
+  //     })
+  //     setLeavePermission(updatedLeavePermission)
+
+  //     const updatedDashboardPermission = { ...dashboardPermission }
+  //     Object.keys(dashboardPermission).forEach((key) => {
+  //       if (res[key] !== undefined) {
+  //         updatedDashboardPermission[key] = res[key]
+  //       }
+  //     })
+  //     setDashboardPermission(updatedDashboardPermission)
+  //   } catch (error) {
+  //     console.log(error)
+  //   }
+  // }
   const handleEditModal = async (id) => {
     setShowModal1(true);
     setAdminId(id);
     try {
       const res = await getManageAdminDetails(id);
+      console.log("This is res:", res);
       setAccess(res.access);
       setRole(res.role);
-      // const admin = employees.find((employee) => employee.value === res.name);
       const admin = employees.find(
         (employee) => String(employee.value) === String(res.name)
       );
-
       console.log(admin);
       setSelectedUserOption(admin || null);
       fetchApproverDetails(admin.value);
+
+      // Update your permission states as before…
       const updatedPermissions = { ...permissionAllowed };
       Object.keys(permissionAllowed).forEach((key) => {
         if (res[key] !== undefined) {
@@ -263,6 +337,26 @@ const ManageAdmin = () => {
         }
       });
       setLeavePermission(updatedLeavePermission);
+
+      const updatedDashboardPermission = {
+        dashboard_permissions: res?.client_dashboard || false,
+        can_view_dashboard: res?.client_dashboard || false,
+        client_dashboard: res?.client_dashboard || false,
+      };
+      console.log("Permission:", updatedDashboardPermission);
+      // setDashboardPermission({ ...updatedDashboardPermission });
+      const updatePayload = {
+        ...res,
+        ...updatedDashboardPermission,
+      };
+      // console.log("updated payload dashboard permission :",updatePayload.dashboard_permissions)
+      // console.log("updated payload can view dashboard:",updatePayload.can_view_dashboard)
+      // console.log("updated payload cleint_dashboard:",updatePayload.client_dashboard)
+
+      const updateRes = await editManageAdminDetails(id, updatePayload);
+      console.log("Updated client_dashboard:", updateRes);
+      setDashboardPermission({ ...updatedDashboardPermission });
+      // ********************************************
     } catch (error) {
       console.log(error);
     }
@@ -281,9 +375,9 @@ const ManageAdmin = () => {
       const data = res[0];
       setApproverDetails({
         ...approverDetails,
-        approverId: data.approver,
-        approverName: data.approver_name,
-        approverSettingId: data.id,
+        approverId: data?.approver || "",
+        approverName: data?.approver_name || "",
+        approverSettingId: data?.id || "",
       });
     } catch (error) {
       console.log(error);
@@ -341,7 +435,15 @@ const ManageAdmin = () => {
         editData.append(key, leavePermission[key]);
       });
     }
-    
+    if (access === "Full Access") {
+      Object.keys(dashboardPermission).forEach((key) => {
+        editData.append(key, true);
+      });
+    } else {
+      Object.keys(dashboardPermission).forEach((key) => {
+        editData.append(key, dashboardPermission[key]);
+      });
+    }
     if (selectedUserOption && selectedUserOption.value) {
       editData.append("name", selectedUserOption.value);
     } else {
@@ -447,6 +549,29 @@ const ManageAdmin = () => {
     can_add_edit_delete_leave_category: false,
     can_approve_reject_leave: false,
   });
+  const [dashboardPermission, setDashboardPermission] = useState({
+    dashboard_permissions: false,
+    can_view_dashboard: false,
+    client_dashboard: false, // Added for your dashboard toggle.
+  });
+  const [Dashboard, setDashboard] = useState(false);
+
+  useEffect(() => {
+    async function fetchDetails() {
+      try {
+        const res = await getManageAdminDetails(adminId);
+        // Update your state based on the response.
+        setDashboardPermission({
+          dashboard_permissions: res.dashboard_permissions,
+          can_view_dashboard: res.can_view_dashboard,
+          client_dashboard: res.client_dashboard,
+        });
+      } catch (error) {
+        console.error("Error fetching admin details:", error);
+      }
+    }
+    if (adminId) fetchDetails();
+  }, [adminId]);
   const permissionLabels = [
     {
       key: "can_edit_basic_info",
@@ -818,6 +943,117 @@ const ManageAdmin = () => {
                           </div>
                         )}
                       </div>
+                      <div>
+                        <div className="bg-gray-400 text-white p-2 flex justify-between items-center">
+                          <span className="text-lg">Dashboard</span>
+
+                          {/* <Switch
+                            checked={dashboardPermission.client_dashboard}
+                            onChange={async () => {
+                              const toggledValue =
+                                !dashboardPermission.client_dashboard;
+                              // Update the state immediately so the UI reflects the new value.
+                              setDashboardPermission((prev) => ({
+                                ...prev,
+                                client_dashboard: toggledValue,
+                              }));
+                              // Build the payload for the API update.
+                              const payload = {
+                                client_dashboard: toggledValue,
+                              };
+                              try {
+                                // Send the PUT request to update the API.
+                                const res = await updateManageAdminDetails(
+                                  adminId,
+                                  payload
+                                );
+                                console.log("Updated client_dashboard:", res);
+                              } catch (error) {
+                                console.error(
+                                  "Error updating client_dashboard:",
+                                  error
+                                );
+                              }
+                            }}
+                          /> */}
+
+                          <Switch
+                            checked={dashboardPermission.dashboard_permissions}
+                            onChange={async () => {
+                              // Toggle the current value
+                              const toggledValue =
+                                !dashboardPermission.dashboard_permissions;
+                              // Update state immediately
+                              setDashboardPermission((prev) => ({
+                                ...prev,
+                                dashboard_permissions: toggledValue,
+                              }));
+
+                              // Build the payload with the toggled value
+                              const payload = {
+                                client_dashboard: toggledValue, // API expects this field
+                              };
+
+                              try {
+                                const res = await editManageAdminDetails(
+                                  adminId,
+                                  payload
+                                );
+                                console.log("Dashboard updated:", res);
+                              } catch (error) {
+                                console.error(
+                                  "Error updating dashboard:",
+                                  error
+                                );
+                              }
+                            }}
+                          />
+                          <span className="ml-2">
+                            {dashboardPermission.client_dashboard
+                              ? "Toggle Active"
+                              : "Toggle Inactive"}
+                          </span>
+                        </div>
+                        {dashboardPermission.dashboard_permissions && (
+                          <div className="border rounded-b-md">
+                            <div className="p-4 flex justify-between items-center border-b last:border-b-0">
+                              <span className="text-gray-700">
+                                Can view dashboard
+                              </span>
+                              <Switch
+                                checked={dashboardPermission.can_view_dashboard}
+                                onChange={async () => {
+                                  const toggledView =
+                                    !dashboardPermission.can_view_dashboard;
+                                  setDashboardPermission((prev) => ({
+                                    ...prev,
+                                    can_view_dashboard: toggledView,
+                                  }));
+                                  const payload = {
+                                    can_view_dashboard: toggledView,
+                                  };
+
+                                  try {
+                                    const res = await editManageAdminDetails(
+                                      adminId,
+                                      payload
+                                    );
+                                    console.log(
+                                      "Updated can_view_dashboard:",
+                                      res
+                                    );
+                                  } catch (error) {
+                                    console.error(
+                                      "Error updating can_view_dashboard:",
+                                      error
+                                    );
+                                  }
+                                }}
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1094,6 +1330,41 @@ const ManageAdmin = () => {
                             ))}
                           </div>
                         )}
+                      </div>
+                      <div>
+                        <div className="bg-gray-400 text-white p-2 flex justify-between items-center">
+                          <span className="text-lg">Client Dashboard</span>
+                          <Switch
+                            checked={dashboardPermission.client_dashboard}
+                            onChange={() =>
+                              setDashboardPermission((dashboardPermission) => ({
+                                ...dashboardPermission,
+                                client_dashboard:
+                                  !dashboardPermission.client_dashboard,
+                              }))
+                            }
+                          />
+                        </div>
+                        {/* {dashboardPermission.dashboard_permissions && (
+                          <div className="border rounded-b-md">
+                            <div className="p-4 flex justify-between items-center border-b last:border-b-0">
+                              <span className="text-gray-700">
+                                Can view dashboard
+                              </span>
+                              <Switch
+                                checked={dashboardPermission.client_dashboard}
+                                onChange={() =>
+                                  setDashboardPermission((prev) => ({
+                                    ...prev,
+                                    can_view_dashboard:
+                                      !prev.can_view_dashboard,
+                                    client_dashboard: !prev.client_dashboard,
+                                  }))
+                                }
+                              />
+                            </div>
+                          </div>
+                        )} */}
                       </div>
                     </div>
                   )}

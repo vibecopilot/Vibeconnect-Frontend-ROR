@@ -2,7 +2,11 @@ import React, { useEffect, useState } from "react";
 import { FaCheck } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 import MultiSelect from "../Components/MultiSelect";
-import { getMyHRMSEmployees, getRosterShift, postRosterRecord } from "../../../api";
+import {
+  getMyHRMSEmployees,
+  getRosterShift,
+  postRosterRecord,
+} from "../../../api";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
 import DatePicker from "react-multi-date-picker";
 import "react-multi-date-picker/styles/colors/teal.css";
@@ -15,19 +19,33 @@ const AssignRosterShifts = ({ onClose, fetchRosterRecords }) => {
   const [formData, setFormData] = useState({
     selectedShift: "",
   });
+  const [AllSites, setAllSites] = useState([]);
+  const [selectedSite, setSelectedSite] = useState("");
+
+  const fetchSites = async () => {
+    try {
+      const sites = await getAssociatedSites(hrmsOrgId);
+      console.log("Sites:", sites);
+      setAllSites(sites);
+    } catch (error) {
+      console.error("Error fetching sites:", error);
+    }
+  };
+  
+
   useEffect(() => {
     const fetchAllEmployees = async () => {
       try {
         const res = await getMyHRMSEmployees(hrmsOrgId);
-
+        console.log("first res line 21:", res);
         const employeesList = res.map((emp) => ({
           value: emp.id,
           label: `${emp.first_name} ${emp.last_name}`,
         }));
+        console.log("first res line EmployeeList:", employeesList);
 
         setEmployees(employeesList);
         setFilteredEmployees(employeesList);
-        console.log(res);
       } catch (error) {
         console.log(error);
       }
@@ -35,16 +53,20 @@ const AssignRosterShifts = ({ onClose, fetchRosterRecords }) => {
     const fetchRosterShifts = async () => {
       try {
         const res = await getRosterShift(hrmsOrgId);
+        console.log("Roster Shifts:", res);
         setShifts(res);
       } catch (error) {
         console.log(error);
       }
     };
+
     fetchRosterShifts();
     fetchAllEmployees();
   }, []);
   const [selectedOptions, setSelectedOptions] = useState([]);
+
   const handleSelect = (option) => {
+    console.log("Option:", option);
     if (selectedOptions.includes(option)) {
       setSelectedOptions(selectedOptions.filter((item) => item !== option));
     } else {
@@ -61,33 +83,32 @@ const AssignRosterShifts = ({ onClose, fetchRosterRecords }) => {
     const formattedDates = dates.map((date) => date.format("YYYY-MM-DD"));
     setSelectedDates(formattedDates);
   };
-console.log(selectedDates)
-const handleAssignRoster = async () => {
-  try {
-   
-    if (!selectedOptions.length) {
-      return toast.error("Please select employees")
+  console.log(selectedDates);
+  const handleAssignRoster = async () => {
+    try {
+      if (!selectedOptions.length) {
+        return toast.error("Please select employees");
+      }
+      if (!formData.selectedShift) {
+        return toast.error("Please select shift");
+      }
+      if (!selectedDates.length) {
+        return toast.error("Please select dates");
+      }
+
+      const payload = {
+        employee_ids: selectedOptions,
+        shift_id: formData.selectedShift,
+        date_range: selectedDates,
+      };
+      const response = await postRosterRecord(payload);
+      console.log("Roster assigned successfully:", response);
+      fetchRosterRecords();
+      onClose();
+    } catch (error) {
+      console.error("Error assigning roster:", error.message);
     }
-    if (!formData.selectedShift) {
-      return toast.error("Please select shift")
-    }
-    if (!selectedDates.length) {
-      return toast.error("Please select dates")
-    }
- 
-    const payload = {
-      employee_ids: selectedOptions,
-      shift_id: formData.selectedShift,
-      date_range: selectedDates,
-    };
-    const response = await postRosterRecord(payload);
-    console.log("Roster assigned successfully:", response);
-    fetchRosterRecords()
-    onClose();
-  } catch (error) {
-    console.error("Error assigning roster:", error.message);
-  }
-};
+  };
 
   return (
     <div className="z-10 fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center">
@@ -146,7 +167,7 @@ const handleAssignRoster = async () => {
           </button>
           <button
             className="border-2 rounded-full flex items-center gap-2 border-green-500 text-green-500 p-1 px-4"
-              onClick={handleAssignRoster}
+            onClick={handleAssignRoster}
           >
             <FaCheck /> Add Shift
           </button>

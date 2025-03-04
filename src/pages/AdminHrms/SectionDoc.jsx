@@ -5,7 +5,7 @@ import Table from "../../components/table/Table";
 import { Link, useParams } from "react-router-dom";
 import { BsEye } from "react-icons/bs";
 import { BiEdit } from "react-icons/bi";
-import { FaDownload, FaTrash } from "react-icons/fa";
+import { FaDownload, FaEye, FaTrash } from "react-icons/fa";
 import Collapsible from "react-collapsible";
 import CustomTrigger from "../../containers/CustomTrigger";
 import { AddCircleOutline } from "react-ionicons";
@@ -34,9 +34,12 @@ import {
   getEmployeeDocs,
   getEmployeeEsic,
   getEmployeeLetters,
+  getFamilyMember,
   hrmsDomain,
   postEmployeeDocs,
   postEmployeeLetters,
+  postEsicCard,
+  postFamilyEsic,
 } from "../../api";
 import {
   dateFormat,
@@ -66,6 +69,22 @@ const SectionDoc = () => {
     name: "",
     doc: [],
   });
+
+  const [esicModalOpen, setEsicModalOpen] = useState(false);
+  const [esicData, setEsicData] = useState({
+    esic_number: "",
+    photo: [],
+  });
+
+  const [familyMember, setFamilyMember] = useState({
+    id: "",
+    name: "",
+    relation: "",
+    dateOfBirth: "",
+    // gender: "",
+    photo: [],
+  });
+
   const [letterData, setLetterData] = useState({
     name: "",
     letters: [],
@@ -198,6 +217,48 @@ const SectionDoc = () => {
       console.log(error);
     }
   };
+
+  // Esic
+  const handleFamilySubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const familyData = {
+        "employee": id,
+       " esic_record": esicId,
+        "family_member_name": familyMember.name,
+        "relation": familyMember.relation,
+        "date_of_birth": familyMember.dateOfBirth,
+        "gender": familyMember.gender,
+        "photo": familyMember.photo,
+      };
+      console.log(getEmployeeEsic(id));
+      try {
+        const response = await postFamilyEsic(familyData);
+        console.log(response);
+        toast.success(`${familyMember.name} added as a family member`);
+        setFamilyModalOpen(false);
+        setFamilyMembers(familyMember);
+        // Reset the form
+        setFamilyMember({
+          name: "",
+          relation: "",
+          dateOfBirth: "",
+          gender: "",
+          photo: null,
+          esic_record: "",
+        });
+         fetchFamilyMembers();
+      } catch (error) {
+        console.error("Error adding family member:", error);
+        toast.error("Failed to add family member. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error fetching ESIC data:", error);
+      toast.error("Failed to fetch ESIC data. Please try again.");
+    }
+  };
+  // console.log(AddFamily)
+
   const [docDelId, setDocDelId] = useState("");
   const [letterDelId, setLetterDelId] = useState("");
   const handleDeleteDocModal = async (id) => {
@@ -235,11 +296,15 @@ const SectionDoc = () => {
     Modal.setAppElement("#root");
   }, []);
   const [esic, setEsic] = useState([]);
+  const [esicId, setEsicId] = useState("");
   const fetchEmployeeESICData = async () => {
     try {
       const res = await getEmployeeEsic(id);
       console.log(res);
+      const esicData = res.find((item) => item); // Find the first object in the array
       setEsic(res);
+      setEsicId(esicData.id);
+      console.log(esicId);
     } catch (error) {
       console.log(error);
     }
@@ -263,6 +328,66 @@ const SectionDoc = () => {
       }
     };
     fetchRoleAccess();
+  }, []);
+
+  const [familyModalOpen, setFamilyModalOpen] = useState(false);
+
+  const handleFamilyInputChange = (e) => {
+    const { name, value, type } = e.target;
+    setFamilyMember((prev) => ({
+      ...prev,
+      [name]: type === "file" ? e.target.files[0] : value,
+    }));
+  };
+
+  const handlFamilySubmit = (e) => {
+    e.preventDefault();
+    // Here you would typically send the data to your backend
+    console.log(familyMember);
+    setFamilyModalOpen(false);
+    // Reset the form
+    setFamilyMember({
+      name: "",
+      relation: "",
+      dateOfBirth: "",
+      gender: "",
+      photo: [],
+    });
+  };
+
+  const handleAddEsicCard = async () => {
+    const formData = new FormData();
+    formData.append("esic_number", esicData.esic_number);
+    formData.append("photo", esicData.photo);
+    formData.append("employee_id", id);
+    try {
+      const response = await postEsicCard(empId, formData);
+      console.log(response);
+      toast.success("ESIC card added successfully");
+      setEsicModalOpen(false);
+      setEsicData({
+        esic_number: "",
+        photo: null,
+      });
+      fetchEmployeeESICData()
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to add ESIC card");
+    }
+  };
+
+  const [familyMembers, setFamilyMembers] = useState([]);
+  const fetchFamilyMembers = async () => {
+    try {
+      const res = await getFamilyMember(id);
+      setFamilyMembers(res);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchFamilyMembers();
   }, []);
 
   return (
@@ -334,12 +459,14 @@ const SectionDoc = () => {
               <div className="bg-green-100 p-4 rounded-lg mb-1">
                 <div className="flex justify-end items-center mb-2">
                   {/* <h2 className="text-xl font-semibold">Employee Letters</h2> */}
-                  {roleAccess?.can_edit_employee && (<button
-                    onClick={openLetter}
-                    className="text-green-500 px-2 border-2 rounded-full border-green-500 flex gap-2 items-center p-1 "
-                  >
-                    <AddCircleOutline /> Add
-                  </button>)}
+                  {roleAccess?.can_edit_employee && (
+                    <button
+                      onClick={openLetter}
+                      className="text-green-500 px-2 border-2 rounded-full border-green-500 flex gap-2 items-center p-1 "
+                    >
+                      <AddCircleOutline /> Add
+                    </button>
+                  )}
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {lettersList.map((letter, index) => (
@@ -358,12 +485,12 @@ const SectionDoc = () => {
                         Updated On: {dateFormat(letter?.updated_date)}
                       </p>
                       <div className="flex justify-end w-full ">
-                        {/* <button
+                        <button
                           className="border-blue-400 px-2 hover:bg-yellow-100 border rounded-l-md p-1"
                           onClick={() => openLetterModal(doc)}
                         >
                           <BsEye />
-                        </button> */}
+                        </button>
                         <a
                           href={hrmsDomain + letter.letter_file}
                           target="_blank"
@@ -390,15 +517,14 @@ const SectionDoc = () => {
             icon={MdDescription}
             content={
               <div className="bg-green-100 p-4 rounded-lg mb-1">
-                {/* <div className="flex justify-end items-center mb-2">
-                 
+                <div className="flex justify-end items-center mb-2">
                   <button
-                    onClick={openLetter}
+                    onClick={() => setEsicModalOpen(true)}
                     className="text-green-500 px-2 border-2 rounded-full border-green-500 flex gap-2 items-center p-1 "
                   >
                     <AddCircleOutline /> Add
                   </button>
-                </div> */}
+                </div>
                 <div className="flex justify-center ">
                   {esic.map((letter, index) => (
                     <div
@@ -417,7 +543,7 @@ const SectionDoc = () => {
                       </div>
                       <div>
                         <img
-                          src={hrmsDomain + letter.photo}
+                          src={hrmsDomain + letter.photo || "/placeholder.svg"}
                           alt=""
                           className="bg-white p-4 rounded-lg shadow-md border border-gray-200 flex flex-col items-center w-auto h-auto max-h-80 max-w-[20rem] object-cover"
                         />
@@ -428,20 +554,155 @@ const SectionDoc = () => {
               </div>
             }
           />
+
+          <Modal
+            isOpen={esicModalOpen}
+            onRequestClose={() => setEsicModalOpen(false)}
+            className="fixed inset-0 flex flex-col items-center justify-center p-4"
+            overlayClassName="fixed inset-0 bg-black bg-opacity-50"
+          >
+            <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full flex flex-col h-auto max-h-[80vh] overflow-y-auto">
+              <h2 className="font-medium text-xl border-b border-gray-300 mb-4">
+                Add ESIC Card
+              </h2>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleAddEsicCard();
+                }}
+                className="flex flex-col gap-4"
+              >
+                <input
+                  type="text"
+                  name="esic_number"
+                  value={esicData.esic_number}
+                  onChange={(e) =>
+                    setEsicData({ ...esicData, esic_number: e.target.value })
+                  }
+                  placeholder="ESIC Card Number"
+                  className="border border-gray-300 p-2 rounded"
+                  required
+                />
+                <input
+                  type="file"
+                  name="photo"
+                  onChange={(e) =>
+                    setEsicData({ ...esicData, photo: e.target.files[0] })
+                  }
+                  className="border border-gray-300 p-2 rounded"
+                  accept="image/*"
+                  required
+                />
+                <div className="flex justify-end gap-2 mt-4">
+                  <button
+                    type="submit"
+                    className="bg-green-500 text-white px-4 py-2 rounded"
+                  >
+                    Save
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEsicModalOpen(false)}
+                    className="bg-red-500 text-white px-4 py-2 rounded"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </Modal>
+
+          <Accordion
+            title="ESIC - Add Family "
+            icon={MdDescription}
+            content={
+              <div className="bg-green-100 p-4 rounded-lg mb-1">
+                <div className="flex justify-end items-center mb-2">
+                  {roleAccess?.can_edit_employee && (
+                    <button
+                      onClick={() => setFamilyModalOpen(true)}
+                      className="text-green-500 px-2 border-2 rounded-full border-green-500 flex gap-2 items-center p-1"
+                    >
+                      <AddCircleOutline /> Add Family Member
+                    </button>
+                  )}
+                </div>
+                <div className="grid grid-cols-1 my-auto sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {Array.isArray(familyMembers) &&  familyMembers.map((member, index) => (
+                    <div
+                      key={member.id}
+                      className="bg-white p-4 rounded-lg shadow-md border border-gray-200 flex flex-col items-center "
+                    >
+                      <p className=" text-sm  ml-auto"> Created At :{dateFormatSTD(member.created_at)}</p>
+                      {/* <div className="text-3xl mb-2 text-green-600">
+                        <FaFileAlt />
+                      </div> */}
+
+                      <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                      Name :  {member.family_member_name}
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        Relation: {member.relation}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        Date of Birth: {member.date_of_birth}
+                      </p>
+                      <div className="flex justify-center items-center">
+                        <div className="flex flex-col items-center">
+                          <img
+                            src={
+                              hrmsDomain + member.photo || "/placeholder.svg"
+                            }
+                            alt=""
+                            className="bg-white p-4 rounded-lg shadow-md border border-gray-200 flex flex-col items-center w-full h-full object-cover"
+                          />
+
+<div className="flex justify-center items-center mt-2">
+  <button
+    onClick={() => {
+      if (member.photo) {
+        const url = hrmsDomain + member.photo;
+        fetch(url)
+          .then(response => response.blob())
+          .then(blob => {
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `image_${member.id}.jpg`;
+            link.click();
+            link.remove();
+          });
+      } else {
+        alert("No photo available to download");
+      }
+    }}
+    className="text-green-500 px-2 border-2 rounded-full border-green-500 flex gap-2 items-center p-1"
+  >
+    <FaDownload /> Download
+  </button>
+  <button
+    onClick={() => {
+      if (member.photo) {
+        const url = hrmsDomain + member.photo;
+        window.open(url, "_blank");
+      } else {
+        alert("No photo available to view");
+      }
+    }}
+    className="text-green-500 px-2 border-2 rounded-full border-green-500 flex gap-2 items-center p-1 ml-2"
+  >
+    <FaEye /> View
+  </button>
+</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            }
+          />
         </div>
       </div>
-      {/* {modalIsOpen && (
-        <PdfViewer
-          fileUrl={hrmsDomain + currentItem.document_file}
-          onClose={closeModal}
-        />
-      )} */}
-      {/* {lettersModal && (
-        <PdfViewer
-          fileUrl={hrmsDomain + currentItem.letter_file}
-          onClose={closeLetterModal}
-        />
-      )} */}
 
       <Modal
         isOpen={addDoc}
@@ -490,54 +751,83 @@ const SectionDoc = () => {
           </div>
         </div>
       </Modal>
+
       <Modal
-        isOpen={addLetter}
-        onRequestClose={closeLetter}
-        contentLabel="add Document "
+        isOpen={familyModalOpen}
+        onRequestClose={() => setFamilyModalOpen(false)}
         className="fixed inset-0 flex flex-col items-center justify-center p-4"
         overlayClassName="fixed inset-0 bg-black bg-opacity-50"
       >
         <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full flex flex-col h-auto max-h-[80vh] overflow-y-auto">
-          {/* <h2 className="text-2xl font-semibold mb-4">{currentItem?.name}</h2> */}
-          <h2 className="font-medium text-xl border-b border-gray-3">
-            Add Letter
+          <h2 className="font-medium text-xl border-b border-gray-300 mb-4">
+            Add Family Member
           </h2>
-          <div className="flex flex-col gap-2 mt-2">
-            <div className="flex flex-col ">
-              <label htmlFor="" className="font-medium">
-                Letter name
-              </label>
-              <input
-                type="text"
-                className="border border-gray-400 p-1 rounded-md"
-                placeholder="Document name"
-                value={letterData.name}
-                onChange={(e) =>
-                  setLetterData({ ...letterData, name: e.target.value })
-                }
-                name="name"
-              />
-            </div>
-            <div className="border-2 border-dashed p-2 mt-2">
-              <input type="file" name="" id="" onChange={handleLetterChange} />
-            </div>
-            <div className="flex justify-end w-full gap-2">
+          <form onSubmit={handleFamilySubmit} className="flex flex-col gap-4">
+            <input
+              type="text"
+              name="name"
+              value={familyMember.name}
+              onChange={handleFamilyInputChange}
+              placeholder="Name"
+              className="border border-gray-300 p-2 rounded"
+              required
+            />
+            <input
+              type="text"
+              name="relation"
+              value={familyMember.relation}
+              onChange={handleFamilyInputChange}
+              placeholder="Relation"
+              className="border border-gray-300 p-2 rounded"
+              required
+            />
+            <input
+              type="date"
+              name="dateOfBirth"
+              value={familyMember.dateOfBirth}
+              onChange={handleFamilyInputChange}
+              className="border border-gray-300 p-2 rounded"
+              required
+            />
+            {/* <select
+              name="gender"
+              value={familyMember.gender}
+              onChange={handleFamilyInputChange}
+              className="border border-gray-300 p-2 rounded"
+              required
+            >
+              <option value="">Select Gender</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+            </select> */}
+            <input
+              type="file"
+              name="photo"
+              onChange={handleFamilyInputChange}
+              className="border border-gray-300 p-2 rounded"
+              accept="image/*"
+              required
+            />
+            <div className="flex justify-end gap-2 mt-4">
               <button
-                className="bg-blue-400 text-white p-1 px-2 w-full rounded-md"
-                onClick={handleAddEmployeeLetters}
+                type="submit"
+                className="bg-green-500 text-white px-4 py-2 rounded"
               >
                 Save
               </button>
               <button
-                className="bg-red-400 text-white p-1 px-2 w-full rounded-md"
-                onClick={closeLetter}
+                type="button"
+                onClick={handlFamilySubmit}
+                className="bg-red-500 text-white px-4 py-2 rounded"
               >
-                Close
+                Cancel
               </button>
             </div>
-          </div>
+          </form>
         </div>
       </Modal>
+
       <Modal
         isOpen={deleteDocModal}
         onRequestClose={() => setDeleteDocModal(true)}

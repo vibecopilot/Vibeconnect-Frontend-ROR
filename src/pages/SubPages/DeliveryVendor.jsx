@@ -27,7 +27,7 @@ const DeliveryVendor = () => {
       const response = await getVendors();
       const transformedData = response.data.map((vendor) => ({
         id: vendor.id,
-        vendor_id:vendor.vendor_id,
+        vendor_id: vendor.vendor_supplier_id,
         vendor_name: vendor.vendor_name,
         website_url: vendor.website_url,
         address: vendor.address,
@@ -82,13 +82,18 @@ const DeliveryVendor = () => {
 
       // setDeliveryVendors(updatedVendors);
       setFilteredData(updatedVendors);
-      showModal(false);
+      console.log("Vendor saved successfully!");
+      toast.success("Vendor saved successfully");
+      // showModal(false);
       setSelectedVendor(null);
+      // console.log("Vendor saved successfully!");
     } catch (error) {
       console.error("Error saving vendor:", error);
       setError("Failed to save vendor. Please try again.");
     }
+    finally{showModal(false)}
   };
+
 
   const handleRemoveVendor = async (id) => {
     try {
@@ -115,7 +120,11 @@ const DeliveryVendor = () => {
       sortable: false,
     },
     { name: "ID", selector: (row) => row.id, sortable: true },
-    { name: "Vendor ID", selector: (row) => row.vendor_id, sortable: true },
+    // {
+    //   name: "Vendor ID",
+    //   selector: (row) => row.vendor_supplier_id,
+    //   sortable: true,
+    // },
     { name: "Name", selector: (row) => row.vendor_name, sortable: true },
     {
       name: "Website Url",
@@ -186,6 +195,7 @@ const DeliveryVendor = () => {
           title={selectedVendor ? "Edit" : "Add"}
           vendor={selectedVendor}
           onSubmit={handleVendorSubmit}
+          
         />
       )}
     </div>
