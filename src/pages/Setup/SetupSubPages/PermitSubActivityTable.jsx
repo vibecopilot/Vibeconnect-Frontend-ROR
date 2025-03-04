@@ -28,7 +28,7 @@ const PermitSubActivityTable = () => {
   const themeColor = useSelector((state) => state.theme.color);
   const siteId = getItemInLocalStorage("SITEID");
   const [subactivityData, setSubActivityData] = useState([]);
-
+  const [showAdd, setShowAdd] = useState(false);
   const [activityData, setActivityData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [update, setupdate] = useState(false);
@@ -285,7 +285,7 @@ const PermitSubActivityTable = () => {
           pagination
           selectableRowsHighlight
           highlightOnHover
-          omitColumn={columns}
+          omitColumn={column}
         />
         {isModalOpen && (
           <div className="fixed inset-0 flex items-center justify-center z-50">

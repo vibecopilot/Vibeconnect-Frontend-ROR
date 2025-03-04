@@ -32,6 +32,8 @@ import { FaTimes, FaTrash } from "react-icons/fa";
 const PermitRiskTable = () => {
   const themeColor = useSelector((state) => state.theme.color);
   const siteId = getItemInLocalStorage("SITEID");
+  const [showAdd, setShowAdd] = useState(false);
+
   const [update, setupdate] = useState(false);
   const [subactivityData, setSubActivityData] = useState([]);
   const [hazardData, setHazardData] = useState([]);
@@ -182,7 +184,7 @@ const PermitRiskTable = () => {
       selector: (row) => row.sub_activity_name,
       sortable: true,
     },
-    
+
     {
       name: "Permit Hazard Category",
       selector: (row) => row.hazard_category_name,
@@ -268,7 +270,7 @@ const PermitRiskTable = () => {
   };
 
   document.title = `Permit Setup - Vibe Connect`;
-  
+
   return (
     <section className="flex ">
       {/* <Navbar /> */}
@@ -378,7 +380,7 @@ const PermitRiskTable = () => {
           pagination
           selectableRowsHighlight
           highlightOnHover
-          omitColumn={columns}
+          omitColumn={column}
         />
         {isModalOpen && (
           <div className="fixed inset-0 flex items-center justify-center z-50">
@@ -475,7 +477,6 @@ const PermitRiskTable = () => {
           </div>
         )}
       </div>
-     
     </section>
   );
 };
