@@ -27,9 +27,12 @@ import toast from "react-hot-toast";
 const PermitTypeTable = () => {
   const themeColor = useSelector((state) => state.theme.color);
   const siteId = getItemInLocalStorage("SITEID");
+
   const [update, setupdate] = useState(false);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showAdd, setShowAdd] = useState(false);
+
   const [editingCategoryId, setEditingCategoryId] = useState(null);
 
   const openModal = (categoryId) => {
@@ -193,7 +196,7 @@ const PermitTypeTable = () => {
           pagination
           selectableRowsHighlight
           highlightOnHover
-          omitColumn={columns}
+          omitColumn={column}
         />
         {isModalOpen && (
           <div className="fixed inset-0 flex items-center justify-center z-50">

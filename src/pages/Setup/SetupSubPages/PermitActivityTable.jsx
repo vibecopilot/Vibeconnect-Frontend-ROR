@@ -26,6 +26,8 @@ import { FaTimes, FaTrash } from "react-icons/fa";
 
 const PermitActivityTable = () => {
   const themeColor = useSelector((state) => state.theme.color);
+    const [showAdd, setShowAdd] = useState(false);
+  
   const siteId = getItemInLocalStorage("SITEID");
   const [activityData, setActivityData] = useState([]);
   const [editingCategoryId, setEditingCategoryId] = useState(null);
@@ -217,7 +219,7 @@ const PermitActivityTable = () => {
           pagination
           selectableRowsHighlight
           highlightOnHover
-          omitColumn={columns}
+          omitColumn={column}
         />
         {isModalOpen && (
           <div className="fixed inset-0 flex items-center justify-center z-50">

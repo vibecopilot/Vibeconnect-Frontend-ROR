@@ -42,7 +42,7 @@ const PermitSafetyEquipment = () => {
   const [hazardData, setHazardData] = useState([]);
   const [riskData, setRiskData] = useState([]);
   const [safeData, setSafeData] = useState([]);
-
+  // const [showAdd, setShowAdd] = useState(false);
   const [activityData, setActivityData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -270,7 +270,7 @@ const PermitSafetyEquipment = () => {
       const resp = await postPermitSafetyEquipment(sendData);
       setupdate(true);
       toast.success("Permit Safety Equipment Created Successfully");
-      
+
       setFormData({
         permit_type_id: "",
         activity_id: "",
@@ -334,7 +334,6 @@ const PermitSafetyEquipment = () => {
 
   document.title = `Permit Setup - Vibe Connect`;
   const [showAdd, setShowAdd] = useState(false);
-
 
   return (
     <section className="flex ">
@@ -459,7 +458,7 @@ const PermitSafetyEquipment = () => {
           pagination
           selectableRowsHighlight
           highlightOnHover
-          omitColumn={columns}
+          omitColumn={column}
         />
         {/* Update Modal */}
         {isModalOpen && (
@@ -573,7 +572,6 @@ const PermitSafetyEquipment = () => {
           </div>
         )}
       </div>
-      
     </section>
   );
 };

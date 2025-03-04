@@ -31,7 +31,7 @@ const PermitHazardCategoryTable = () => {
   const [update, setupdate] = useState(false);
   const [subactivityData, setSubActivityData] = useState([]);
   const [hazardData, setHazardData] = useState([]);
-
+  const [showAdd, setShowAdd] = useState(false);
   const [activityData, setActivityData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -158,7 +158,7 @@ const PermitHazardCategoryTable = () => {
       selector: (row) => row.sub_activity_name,
       sortable: true,
     },
-    
+
     {
       name: "Permit Hazard Category",
       selector: (row) => row.name,
@@ -236,7 +236,7 @@ const PermitHazardCategoryTable = () => {
   };
 
   document.title = `Permit Setup - Vibe Connect`;
-  
+
   return (
     <section className="flex ">
       {/* <Navbar /> */}
@@ -333,7 +333,7 @@ const PermitHazardCategoryTable = () => {
           pagination
           selectableRowsHighlight
           highlightOnHover
-          omitColumn={columns}
+          omitColumn={column}
         />
         {isModalOpen && (
           <div className="fixed inset-0 flex items-center justify-center z-50">
@@ -419,9 +419,8 @@ const PermitHazardCategoryTable = () => {
           </div>
         )}
       </div>
-      
     </section>
   );
 };
 
-export default PermitHazardCategory;
+export default PermitHazardCategoryTable;
