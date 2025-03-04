@@ -6,7 +6,12 @@ import { FaArrowLeft, FaArrowRight } from "react-icons/fa";
 import { useSelector } from "react-redux";
 import { BiChevronLeft, BiChevronRight } from "react-icons/bi";
 import RoasterShiftDetails from "./Components/RoasterShiftDetails";
-import { getAdminAccess, getRosterRecords } from "../../api";
+import {
+  getAdminAccess,
+  getRosterRecords,
+  getAssociatedSites,
+  fetchByRoasterName,
+} from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import { formatShiftTime } from "../../utils/dateUtils";
 import AssignRosterShifts from "./Modals/AssignRosterShifts";
@@ -92,6 +97,35 @@ const Roster = () => {
   const [assignShifts, setAssignShifts] = useState(false);
   const [rosterCount, setRosterCount] = useState("");
   const [pageNumber, setPageNumber] = useState(1);
+  const [allSites, setAllSites] = useState([]);
+  const [filtered, setFileredEmployees] = useState([]);
+
+  useEffect(() => {
+    const fetchSites = async () => {
+      try {
+        const sites = await getAssociatedSites(hrmsOrgId);
+        console.log("Site name :", sites);
+        setAllSites(sites);
+      } catch (error) {
+        console.error("Error fetching sites:", error);
+      }
+    };
+    fetchSites();
+  }, [hrmsOrgId]);
+
+  const [searchText,setSearchText] =useState("")
+  const handlesearch = async (e) => {
+    const value = e.target.value;
+    setSearchText(value);
+    try {
+      const res = await fetchByRoasterName(hrmsOrgId, value);
+      console.log("res:", res);
+      setFileredEmployees(res);
+    } catch (error) {
+      console.log("error in roaster of employee by name:", error);
+    }
+  };
+
   const fetchRosterRecords = async (page) => {
     try {
       const res = await getRosterRecords(hrmsOrgId, page);
@@ -194,8 +228,8 @@ const Roster = () => {
                 type="text"
                 placeholder="Search Employee Name/ Code"
                 className="p-2 pl-10 border rounded-full w-full focus:outline-none focus:ring-2 focus:ring-blue-300"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={searchText}
+                onChange={handlesearch}
               />
               <svg
                 xmlns="http://www.w3.org/2000/svg"
