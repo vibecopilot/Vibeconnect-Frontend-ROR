@@ -11,7 +11,14 @@ import { BiPlusCircle } from "react-icons/bi";
 import { Switch } from "../../Buttons";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { postFacilitySetup } from "../../api";
+import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
+import { getItemInLocalStorage } from "../../utils/localStorage";
+
 const SetupFacility = () => {
+    const siteId = getItemInLocalStorage("SITEID");
+  
   const [allowMultipleSlots, setAllowMultipleSlots] = useState("no");
 
   const handleSelectChange = (e) => {
@@ -20,7 +27,50 @@ const SetupFacility = () => {
   const themeColor = useSelector((state) => state.theme.color);
   const [formData, setFormData] = useState({
     type: "bookable",
+    name:"",
+    description:"",
+    attachments: [],
+    cover_images:[]
   });
+  const handleFileChange = (files, fieldName) => {
+    // Changed to receive 'files' directly
+    setFormData({
+      ...formData,
+      [fieldName]: files,
+    });
+    console.log(fieldName);
+  };
+  const handleChange1 = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+  const navigate = useNavigate();
+  const handleSubmit = async () => {
+   
+
+    const sendData = new FormData();
+    sendData.append("amenity[site_id]", siteId);
+    sendData.append("amenity[name]", formData.name);
+    sendData.append("amenity[description]", formData.description);
+    formData.attachments.forEach((file, index) => {
+      sendData.append(`attachments[]`, file);
+    });
+    formData.cover_images.forEach((file, index) => {
+      sendData.append(`cover_images[]`, file);
+    });
+    try {
+      toast.loading("please wait!");
+      const response = await postFacilitySetup(sendData);
+      toast.dismiss();
+      toast.success("New Facility Setup Added Successfully!");
+      navigate(`/setup/facility`);
+      console.log(response);
+    } catch (error) {
+      console.log(error);
+      toast.dismiss();
+      toast.error("Error Adding New Facility");
+    }
+  };
   const [slots, setSlots] = useState([
     {
       id: 1,
@@ -115,7 +165,11 @@ const SetupFacility = () => {
   const [blockData, setBlockData] = useState({
     blockBy: "",
   });
+  const [selectedType, setSelectedType] = useState("bookable");
 
+  const handleChange = (event) => {
+    setSelectedType(event.target.id);
+  };
   return (
     <section className="flex">
       <Navbar />
@@ -129,13 +183,21 @@ const SetupFacility = () => {
 
         <div className="flex  gap-4 my-4">
           <div className="flex gap-2 items-center">
-            <input type="radio" name="type" id="bookable" />
+            <input type="radio"
+          name="type"
+          id="bookable"
+          checked={selectedType === "bookable"}
+          onChange={handleChange} />
             <label htmlFor="bookable" className="text-lg">
               Bookable
             </label>
           </div>
           <div className="flex gap-2 items-center">
-            <input type="radio" name="type" id="request" />
+            <input  type="radio"
+          name="type"
+          id="request"
+          checked={selectedType === "request"}
+          onChange={handleChange} />
             <label htmlFor="request" className="text-lg">
               Request
             </label>
@@ -153,7 +215,9 @@ const SetupFacility = () => {
               </label>
               <input
                 type="text"
-                name=""
+                name="name"
+                value={formData.name}
+                onChange={handleChange1}
                 id=""
                 className="border border-gray-400 rounded-md p-2"
                 placeholder="Facility name"
@@ -743,21 +807,31 @@ const SetupFacility = () => {
           <h2 className="border-b border-black text-lg mb-1 font-medium">
             Cover Images
           </h2>
-          <FileInputBox fileType="image/*" />
+          <FileInputBox
+            handleChange={(files) => handleFileChange(files, "cover_images")}
+            fieldName={"cover_images"}
+            isMulti={true}
+          />
         </div>
         <div className="my-4">
           <h2 className="border-b border-black text-lg mb-1 font-medium">
             Attachments
           </h2>
-          <FileInputBox />
+          <FileInputBox
+            handleChange={(files) => handleFileChange(files, "attachments")}
+            fieldName={"attachments"}
+            isMulti={true}
+          />
         </div>
         <div className="flex flex-col">
           <label htmlFor="" className="font-medium">
             Description
           </label>
           <textarea
-            name=""
+            name="description"
             id=""
+            value={formData.description}
+            onChange={handleChange1}
             cols="80"
             rows="3"
             className="border border-gray-400 p-1 placeholder:text-sm rounded-md"
