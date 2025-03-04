@@ -194,7 +194,7 @@ const EditParkingConfiguration = () => {
         <div className="w-full mx-3 my-5 p-5 shadow-lg rounded-lg border border-gray-300">
           <h3 className="border-b text-center text-xl border-black mb-6 font-bold">Parking Configuration</h3>
           <h1 className="text-xl border-black mb-6 font-bold">Two Wheeler</h1>
-          <div className="flex flex-col justify-center md:flex-row gap-20">
+          <div className="flex flex-col ml-20 md:flex-row gap-20">
             {/* Non Stack Parking for Two Wheeler */}
             <div>
               <span className="mb-5"><b>Non Stack Parking</b></span>
@@ -247,7 +247,7 @@ const EditParkingConfiguration = () => {
             </div>
 
             {/* Stack Parking for Two Wheeler */}
-            <div>
+            {/* <div>
               <span className="mb-5"><b>Stack Parking</b></span>
               <div className="w-[310px] h-[200px] border border-black">
                 <div className="p-4">
@@ -295,7 +295,7 @@ const EditParkingConfiguration = () => {
                   className="mb-4 bg-white border border-gray-400 w-20 h-10 ml-2 px-2 py-1 rounded"
                 />
               </div>
-            </div>
+            </div> */}
 
             {/* Reserved Parking for Two Wheeler */}
             <div>
@@ -353,7 +353,7 @@ const EditParkingConfiguration = () => {
         {/* Car Configuration */}
         <div className="w-full mx-3 my-5 p-5 shadow-lg rounded-lg border border-gray-300">
           {/* <h3 className="border-b text-center text-xl border-black mb-6 font-bold">Parking Configuration</h3> */}
-          <h1 className="text-xl border-black mb-6 font-bold">Car</h1>
+          <h1 className="text-xl border-black mb-6 font-bold">Four Wheeler</h1>
           <div className="flex flex-col justify-center md:flex-row gap-20">
             {/* Non Stack Parking for Car */}
             <div>
@@ -510,9 +510,9 @@ const EditParkingConfiguration = () => {
           </div>
         </div>
         <div className="w-full mx-3 my-5 p-5 shadow-lg rounded-lg border border-gray-300">
-        <h1 className="text-xl border-black mb-6 font-bold">Floor Map</h1>
+        {/* <h1 className="text-xl border-black mb-6 font-bold">Floor Map</h1>
 
-        <FileInputBox/>
+        <FileInputBox/> */}
       </div>
       <div className="sm:flex justify-center grid gap-2 my-5 ">
             <button

@@ -1432,6 +1432,18 @@ export const postNewPermit = async (data) =>
       token: token,
     },
   });
+export const postExtensionPermit = async (data) =>
+  axiosInstance.post(`/permit_extensions.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+// export const postExtensionPermit = async (data) =>
+//   axiosInstance.post("/extensions.json", data, {
+//     params: {
+//       token: token,
+//     },
+//   });
 export const getPermits = async () =>
   axiosInstance.get("/permits.json", {
     params: {
@@ -1440,6 +1452,12 @@ export const getPermits = async () =>
   });
 export const getPermitDetails = async (permitId) =>
   axiosInstance.get(`/permits/${permitId}.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const editPermit = async (id, data) =>
+  axiosInstance.put(`/permits/${id}.json`, data, {
     params: {
       token: token,
     },
@@ -1652,6 +1670,296 @@ export const getServicesTaskList = async () =>
   });
 export const postServicePR = async (data) =>
   axiosInstance.post(`/service_orders.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const postFacilitySetup = async (data) =>
+  axiosInstance.post(`/amenities.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const postParkingSlots = async (data) =>
+  axiosInstance.post(`/parking_slots.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const postParkingConfiguration = async (data) =>
+  axiosInstance.post(`/parking_configurations.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const postParking = async (data) =>
+  axiosInstance.post(`/booking_parkings.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+
+// Permit Entity
+export const fetchPermitEntity = async () => {
+  try{
+    const response = axiosInstance.get(`/permit_entities.json`, {
+      params: {
+        token: token,
+      },
+    });
+    return response;
+  }catch(error){
+    console.log("handling entities error:",error)
+  }
+}
+// Permit Detail Activity 
+export const postPermitSubActivity = async (data) =>
+  axiosInstance.post(`/permit_sub_activities.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const getPermitSubActivity = async () =>
+  axiosInstance.get(`/permit_sub_activities.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const getPermitSubActivityDetails = async (id) =>
+  axiosInstance.get(`/permit_sub_activities/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const editPermitSubActivity = async (id, data) =>
+  axiosInstance.put(`/permit_sub_activities/${id}.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const deletePermitSubActivity = async (id) =>
+  axiosInstance.delete(`/permit_sub_activities/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const postPermitActivity = async (data) =>
+  axiosInstance.post(`/permit_activity_setups.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+
+// Permit Risk
+export const postPermitRisks = async (data) =>
+  axiosInstance.post(`/permit_risks.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const getPermitRisks = async () =>
+  axiosInstance.get(`/permit_risks.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const getPermitRisksDetails = async (id) =>
+  axiosInstance.get(`/permit_risks/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const editPermitRisks = async (id, data) =>
+  axiosInstance.put(`/permit_risks/${id}.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const deletePermitRisks = async (id) =>
+  axiosInstance.delete(`/permit_risks/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+// Hazards Category
+export const postHazardCategory = async (data) =>
+  axiosInstance.post(`/hazard_categories.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const getHazardCategoryDetails = async (id) =>
+  axiosInstance.get(`/hazard_categories/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const editHazardCategory = async (id, data) =>
+  axiosInstance.put(`/hazard_categories/${id}.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const deleteHazardCategory = async (id) =>
+  axiosInstance.delete(`/hazard_categories/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const getHazardCategory = async () =>
+  axiosInstance.get(`/hazard_categories.json`, {
+    params: {
+      token: token,
+    },
+  });
+
+// Permit Activity Setup
+export const getPermitActivityDetails = async (id) =>
+  axiosInstance.get(`/permit_activity_setups/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const editPermitActivity = async (id, data) =>
+  axiosInstance.put(`/permit_activity_setups/${id}.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const getPermitActivity = async () =>
+  axiosInstance.get(`/permit_activity_setups.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const deletePermitActivity = async (id) =>
+  axiosInstance.delete(`/permit_activity_setups/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const postPermitType = async (data) =>
+  axiosInstance.post(`/permit_types.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const postPermitSafetyEquipment = async (data) =>
+  axiosInstance.post(`/permit_safety_equipments.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const getPermitSafetyEquipmentDetails = async (id) =>
+  axiosInstance.get(`/permit_safety_equipments/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const editPermitSafetyEquipment = async (id, data) =>
+  axiosInstance.put(`/permit_safety_equipments/${id}.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const deletePermitSafetyEquipment = async (id) =>
+  axiosInstance.delete(`/permit_safety_equipments/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const getPermitSafetyEquipment = async () =>
+  axiosInstance.get(`/permit_safety_equipments.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const getPermitType = async () =>
+  axiosInstance.get(`/permit_types.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const getPermitTypeDetails = async (id) =>
+  axiosInstance.get(`/permit_types/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const editPermitType = async (id, data) =>
+  axiosInstance.put(`/permit_types/${id}.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const deletePermitType = async (id) =>
+  axiosInstance.delete(`/permit_types/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const getParkingSlotDetails = async (id) =>
+  axiosInstance.get(`/parking_slots/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const getParkingSlots = async () =>
+  axiosInstance.get(`/parking_slots.json`, {
+    params: {
+      token: token,
+    },
+  });
+
+
+export const getBookParking = async () =>
+  axiosInstance.get(`/booking_parkings.json`, {
+    params: {
+      token: token,
+    },
+  });
+
+export const fetchParkingDetail = async (id) =>
+  axiosInstance.get(`/parking_configurations/${id}.json`, {
+    params: {
+      token: token,
+    }
+  })
+
+export const deleteBookParking = async (id) =>
+  axiosInstance.delete(`/booking_parkings/${id}.json`, {
+    params: {
+      token: token,
+    }
+  })
+
+
+export const getAvailableParkingNumber = async () =>
+  axiosInstance.get(`/available_parking_configurations.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const editParkingConfiguration = async (id, data) =>
+  axiosInstance.put(`/parking_configurations/${id}.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const getParkingConfigurationDetails = async (id) =>
+  axiosInstance.get(`/parking_configurations/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const getParkingConfiguration = async () =>
+  axiosInstance.get(`/parking_configurations.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const editParkingSlots = async (id, data) =>
+  axiosInstance.put(`/parking_slots/${id}.json`, data, {
     params: {
       token: token,
     },

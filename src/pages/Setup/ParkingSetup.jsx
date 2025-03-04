@@ -5,20 +5,15 @@ import ParkingSlotSetup from "./ParkingSetupPages/ParkingSlotSetup";
 import ParkingConfigurationSetup from "./ParkingSetupPages/ParkingConfigurationSetup";
 import SetupNavbar from "../../components/navbars/SetupNavbar";
 
-// import PermitTypeTable from "./PermitTypeTable";
-// import PermitActivityTable from "./PermitActivityTable";
-// import PermitSubActivityTable from "./PermitSubActivityTable";
-// import PermitHazardCategoryTable from "./PermitHazardCatgoryTable";
-// import PermitRiskTable from "./PermitRiskTable";
 const ParkingSetup = () => {
-    const [page, setPage] = useState("Tag");
+    const [page, setPage] = useState("Parking Configurations");
   return (
     <div className=" flex ">
 <SetupNavbar/>
 <div className=" w-full my-2 flex flex-col overflow-hidden ">
     <div className="flex w-full">
       <div className=" flex gap-2 p-2 pb-0 border-b-2 border-gray-200 w-full">
-        <h2
+        {/* <h2
           className={`p-1 ${
             page === "Tag" &&
             `bg-white font-medium text-blue-500 shadow-custom-all-sides`
@@ -26,8 +21,8 @@ const ParkingSetup = () => {
           onClick={() => setPage("Tag")}
         >
            Tag
-        </h2>
-        <h2
+        </h2> */}
+        {/* <h2
           className={`p-1 ${
             page === "Parking Categories" &&
             "bg-white font-medium text-blue-500 shadow-custom-all-sides"
@@ -35,7 +30,7 @@ const ParkingSetup = () => {
           onClick={() => setPage("Parking Categories")}
         >
           Parking Categories
-        </h2>
+        </h2> */}
         <h2
           className={`p-1 ${
             page === "Parking Configurations" &&
