@@ -1,56 +1,49 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
-import image from "/profile.png";
-import { FaTrash } from "react-icons/fa";
-import { useSelector } from "react-redux";
-import { getItemInLocalStorage } from "../utils/localStorage";
-import toast from "react-hot-toast";
-import {
-  getHostList,
-  getParkingConfig,
-  getSetupUsers,
-  getVisitorStaffCategory,
-  postNewGoods,
-  postNewVisitor,
-  postVisitorInDevice,
-  postVisitorLogFromDevice,
-  postVisitorOTPApi,
-} from "../api";
-import { useNavigate } from "react-router-dom";
-import Webcam from "react-webcam";
-import FileInputBox from "../containers/Inputs/FileInputBox";
+"use client"
+
+import { useState, useRef, useEffect, useCallback } from "react"
+import image from "/profile.png"
+import { FaTrash } from "react-icons/fa"
+import { useSelector } from "react-redux"
+import { getItemInLocalStorage } from "../utils/localStorage"
+import toast from "react-hot-toast"
+import { getHostList, getParkingConfig, getVisitorStaffCategory, postNewGoods, postNewVisitor } from "../api"
+import { useNavigate } from "react-router-dom"
+import Webcam from "react-webcam"
+import FileInputBox from "../containers/Inputs/FileInputBox"
 const AddNewVisitor = () => {
-  const siteId = getItemInLocalStorage("SITEID");
-  const userId = getItemInLocalStorage("UserId");
-  const [behalf, setbehalf] = useState("Visitor");
-  const inputRef = useRef(null);
-  const [imageFile, setImageFile] = useState(null);
-  const [visitors, setVisitors] = useState([{ name: "", mobile: "" }]);
-  const [selectedFrequency, setSelectedFrequency] = useState("Once");
-  const [selectedVisitorType, setSelectedVisitorType] = useState("Guest");
-  const [hosts, setHosts] = useState([]);
-  const [passStartDate, setPassStartDate] = useState("");
-  const [showWebcam, setShowWebcam] = useState(false);
-  const [capturedImage, setCapturedImage] = useState(null);
-  const [slots, setSlots] = useState([]);
+  const siteId = getItemInLocalStorage("SITEID")
+  const userId = getItemInLocalStorage("UserId")
+  const [behalf, setbehalf] = useState("Visitor")
+  const inputRef = useRef(null)
+  const [imageFile, setImageFile] = useState(null)
+  const [visitors, setVisitors] = useState([{ name: "", mobile: "" }])
+  const [selectedFrequency, setSelectedFrequency] = useState("Once")
+  const [selectedVisitorType, setSelectedVisitorType] = useState("Guest")
+  const [hosts, setHosts] = useState([])
+  const [passStartDate, setPassStartDate] = useState("")
+  const [showWebcam, setShowWebcam] = useState(false)
+  const [capturedImage, setCapturedImage] = useState(null)
+  const [slots, setSlots] = useState([])
 
   const handleOpenCamera = () => {
-    setShowWebcam(true);
-  };
+    setShowWebcam(true)
+  }
 
   const handleCloseCamera = () => {
-    setShowWebcam(false);
-  };
-  const [staffCategories, setStaffCategories] = useState([]);
-  const [passEndDate, setPassEndDate] = useState("");
-  console.log("pass start", passStartDate);
-  console.log("pass end", passEndDate);
+    setShowWebcam(false)
+  }
+  const [staffCategories, setStaffCategories] = useState([])
+  const [passEndDate, setPassEndDate] = useState("")
+  console.log("pass start", passStartDate)
+  console.log("pass end", passEndDate)
+  const currentDate = new Date().toISOString().split("T")[0] // Format: YYYY-MM-DD
   const [formData, setFormData] = useState({
     visitorName: "",
     mobile: "",
     purpose: "",
     comingFrom: "",
     vehicleNumber: "",
-    expectedDate: "",
+    expectedDate: currentDate,
     expectedTime: "",
     hostApproval: false,
     goodsInward: false,
@@ -61,22 +54,22 @@ const AddNewVisitor = () => {
     goodsAttachments: [],
     supportCategory: "",
     slotNumber: "",
-  });
+  })
 
-  console.log(formData);
+  console.log(formData)
   const handleFrequencyChange = (e) => {
-    setSelectedFrequency(e.target.value);
-  };
+    setSelectedFrequency(e.target.value)
+  }
   const handleVisitorTypeChange = (e) => {
-    setSelectedVisitorType(e.target.value);
-  };
+    setSelectedVisitorType(e.target.value)
+  }
 
-  const currentDates = new Date();
-  const year = currentDates.getFullYear();
-  const month = String(currentDates.getMonth() + 1).padStart(2, "0");
-  const day = String(currentDates.getDate()).padStart(2, "0");
-  const todayDate = `${year}-${month}-${day}`;
-  const [selectedWeekdays, setSelectedWeekdays] = useState([]);
+  const currentDates = new Date()
+  const year = currentDates.getFullYear()
+  const month = String(currentDates.getMonth() + 1).padStart(2, "0")
+  const day = String(currentDates.getDate()).padStart(2, "0")
+  const todayDate = `${year}-${month}-${day}`
+  const [selectedWeekdays, setSelectedWeekdays] = useState([])
   const [weekdaysMap, setWeekdaysMap] = useState([
     { day: "Mon", index: 0, isActive: false },
     { day: "Tue", index: 1, isActive: false },
@@ -85,268 +78,150 @@ const AddNewVisitor = () => {
     { day: "Fri", index: 4, isActive: false },
     { day: "Sat", index: 5, isActive: false },
     { day: "Sun", index: 6, isActive: false },
-  ]);
-  console.log(selectedWeekdays);
+  ])
+  console.log(selectedWeekdays)
 
   const handleWeekdaySelection = (weekday) => {
-    console.log(`Selected day: ${weekday}`);
+    console.log(`Selected day: ${weekday}`)
 
-    const index = weekdaysMap.find((dayObj) => dayObj.day === weekday)?.index;
+    const index = weekdaysMap.find((dayObj) => dayObj.day === weekday)?.index
 
     if (index !== undefined) {
       const updatedWeekdaysMap = weekdaysMap.map((dayObj) =>
-        dayObj.index === index
-          ? { ...dayObj, isActive: !dayObj.isActive }
-          : dayObj
-      );
-      setWeekdaysMap(updatedWeekdaysMap);
+        dayObj.index === index ? { ...dayObj, isActive: !dayObj.isActive } : dayObj,
+      )
+      setWeekdaysMap(updatedWeekdaysMap)
 
       setSelectedWeekdays((prevSelectedWeekdays) =>
         prevSelectedWeekdays.includes(weekday)
           ? prevSelectedWeekdays.filter((day) => day !== weekday)
-          : [...prevSelectedWeekdays, weekday]
-      );
+          : [...prevSelectedWeekdays, weekday],
+      )
       // setSelectedWeekdays((prevSelectedWeekdays) =>
       //   prevSelectedWeekdays.includes(index)
       //     ? prevSelectedWeekdays.filter((day) => day !== index)
       //     : [...prevSelectedWeekdays, index]
       // );
     }
-  };
+  }
   const handleAddVisitor = (event) => {
-    event.preventDefault();
-    setVisitors([...visitors, { name: "", mobile: "" }]);
-  };
+    event.preventDefault()
+    setVisitors([...visitors, { name: "", mobile: "" }])
+  }
 
   const handleInputChange = (index, event) => {
-    const { name, value } = event.target;
-    const newVisitors = [...visitors];
-    newVisitors[index][name] = value;
-    setVisitors(newVisitors);
-  };
+    const { name, value } = event.target
+    const newVisitors = [...visitors]
+    newVisitors[index][name] = value
+    setVisitors(newVisitors)
+  }
 
   const handleRemoveVisitor = (index) => {
-    const newVisitors = [...visitors];
-    newVisitors.splice(index, 1);
-    setVisitors(newVisitors);
-  };
+    const newVisitors = [...visitors]
+    newVisitors.splice(index, 1)
+    setVisitors(newVisitors)
+  }
 
   const getHeadingText = () => {
     switch (behalf) {
       case "Visitor":
-        return "NEW VISITOR";
+        return "NEW VISITOR"
       case "Delivery":
-        return "DELIVERY & SUPPORT STAFF";
+        return "DELIVERY & SUPPORT STAFF"
       case "Cab":
-        return "CAB";
+        return "CAB"
       default:
-        return "CREATE VISITOR";
+        return "CREATE VISITOR"
     }
-  };
+  }
 
-  const themeColor = useSelector((state) => state.theme.color);
+  const themeColor = useSelector((state) => state.theme.color)
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-  const webcamRef = useRef(null);
+    setFormData({ ...formData, [e.target.name]: e.target.value })
+  }
+  const webcamRef = useRef(null)
   const capture = useCallback(() => {
-    const imageSrc = webcamRef.current.getScreenshot();
-    console.log(imageSrc);
-    setShowWebcam(false);
-    setCapturedImage(imageSrc);
-  }, [webcamRef]);
+    const imageSrc = webcamRef.current.getScreenshot()
+    console.log(imageSrc)
+    setShowWebcam(false)
+    setCapturedImage(imageSrc)
+  }, [])
 
   const generateOtp = () => {
-    return Math.floor(100000 + Math.random() * 900000).toString();
-  };
+    return Math.floor(100000 + Math.random() * 900000).toString()
+  }
 
-  const otp = generateOtp();
+  const otp = generateOtp()
   const handleFileChange = (files, fieldName) => {
     // Changed to receive 'files' directly
     setFormData({
       ...formData,
       [fieldName]: files,
-    });
-    console.log(fieldName);
-  };
+    })
+    console.log(fieldName)
+  }
   const formatDateWithSeconds = (dateStr) => {
-    const date = new Date(dateStr);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0"); // 0-indexed month
-    const day = String(date.getDate()).padStart(2, "0");
-    const hours = String(date.getHours()).padStart(2, "0");
-    const minutes = String(date.getMinutes()).padStart(2, "0");
-    const seconds = String(date.getSeconds()).padStart(2, "0");
+    const date = new Date(dateStr)
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, "0") // 0-indexed month
+    const day = String(date.getDate()).padStart(2, "0")
+    const hours = String(date.getHours()).padStart(2, "0")
+    const minutes = String(date.getMinutes()).padStart(2, "0")
+    const seconds = String(date.getSeconds()).padStart(2, "0")
 
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-  };
-  const navigate = useNavigate();
-  // const createNewVisitor = async () => {
-  //   if (
-  //     formData.visitorName === "" ||
-  //     formData.purpose === "" ||
-  //     formData.mobile === ""
-  //   ) {
-  //     return toast.error("All fields are Required");
-  //   }
-  //   const mobilePattern = /^\d{10}$/;
-  //   if (!mobilePattern.test(formData.mobile)) {
-  //     return toast.error("Mobile number must be  10 digits.");
-  //   }
-
-  //   const postData = new FormData();
-  //   postData.append("visitor[site_id]", siteId);
-  //   postData.append("visitor[created_by_id]", userId);
-  //   postData.append("visitor[vhost_id]", formData.host);
-  //   postData.append("visitor[name]", formData.visitorName);
-  //   postData.append("visitor[visitor_staff_category_id]", formData.supportCategory);
-  //   postData.append("visitor[contact_no]", formData.mobile);
-  //   postData.append("visitor[purpose]", formData.purpose);
-  //   postData.append("visitor[start_pass]", passStartDate);
-  //   postData.append("visitor[end_pass]", passEndDate);
-  //   postData.append("visitor[coming_from]", formData.comingFrom);
-  //   postData.append("visitor[vehicle_number]", formData.vehicleNumber);
-  //   postData.append("visitor[expected_date]", formData.expectedDate);
-  //   postData.append("visitor[expected_time]", formData.expectedTime);
-  //   postData.append("visitor[skip_host_approval]", formData.hostApproval);
-  //   postData.append("visitor[goods_inwards]", formData.goodsInward);
-  //   postData.append("visitor[visit_type]", selectedVisitorType);
-  //   postData.append("visitor[pass_number]", formData.passNumber);
-  //   postData.append("visitor[frequency]", selectedFrequency);
-  //   postData.append("visitor[parking_slot]", formData.slotNumber );
-  //   if (capturedImage) {
-  //     const response = await fetch(capturedImage);
-  //     const blob = await response.blob();
-  //     postData.append("visitor[profile_pic]", blob, "visitor_image.jpg");
-  //   }
-  //   const blob = await fetch(capturedImage).then((res) => res.blob());
-  //   selectedWeekdays.forEach((day) => {
-  //     postData.append("visitor[working_days][]", day);
-  //   });
-  //   visitors.forEach((extraVisitor, index) => {
-  //     postData.append(
-  //       `visitor[extra_visitors_attributes][${index}][name]`,
-  //       extraVisitor.name
-  //     );
-  //     postData.append(
-  //       `visitor[extra_visitors_attributes][${index}][contact_no]`,
-  //       extraVisitor.mobile
-  //     );
-  //   });
-  //   try {
-  //     toast.loading("Creating new visitor Please wait!");
-  //     const visitResp = await postNewVisitor(postData);
-  //     const postGoods = new FormData();
-  //     formData.goodsAttachments.forEach((docs) => {
-  //       postGoods.append("goods_files[]", docs);
-  //     });
-  //     postGoods.append("goods_in_out[visitor_id]", visitResp.data.id);
-  //     postGoods.append("goods_in_out[no_of_goods]", formData.noOfGoods);
-  //     postGoods.append("goods_in_out[description]", formData.goodsDescription);
-  //     postGoods.append("goods_in_out[ward_type]", "in");
-  //     postGoods.append("goods_in_out[vehicle_no]", formData.vehicleNumber);
-  //     postGoods.append("goods_in_out[person_name]", formData.visitorName);
-  //     postGoods.append("goods_in_out[created_by_id]", userId);
-  //     try {
-  //       const goodsRes = await postNewGoods(postGoods)
-  //       console.log(goodsRes)
-  //     } catch (error) {
-  //       console.log(error)
-  //     }
-  //      try {
-  //             const payload = {
-  //               UserInfo: {
-  //                 // employeeNo: "08035",
-  //                 employeeNo: visitResp.data.id.toString(),
-  //                 name: formData.visitorName,
-  //                 userType: "visitor",
-  //                 Valid: {
-  //                   enable: true,
-  //                   // beginTime: "2024-12-27T17:30:08",
-  //                   beginTime: formatDateWithSeconds(passStartDate),
-  //                   endTime: formatDateWithSeconds(passEndDate),
-  //                   // endTime: "2024-12-29T18:30:08",
-  //                 },
-  //               },
-  //             };
-  //             const deviceRes = await postVisitorInDevice(payload);
-  //             console.log(deviceRes);
-  //           } catch (error) {
-  //             console.log(error);
-  //           }
-  //     console.log(visitResp);
-  //     navigate("/admin/passes/visitors");
-  //     toast.dismiss();
-  //     toast.success("Visitor Added Successfully");
-  //   } catch (error) {
-  //     console.log(error);
-  //     toast.dismiss();
-  //   }
-  // };
-
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`
+  }
+  const navigate = useNavigate()
   const createNewVisitor = async () => {
-    if (
-      formData.visitorName === "" ||
-      formData.purpose === "" ||
-      formData.mobile === ""
-    ) {
-      return toast.error("All fields are Required");
+    if (formData.visitorName === "" || formData.purpose === "" || formData.mobile === "") {
+      return toast.error("All fields are Required")
     }
 
-    const mobilePattern = /^\d{10}$/;
+    const mobilePattern = /^\d{10}$/
     if (!mobilePattern.test(formData.mobile)) {
-      return toast.error("Mobile number must be  10 digits.");
+      return toast.error("Mobile number must be  10 digits.")
     }
 
-    const postData = new FormData();
-    postData.append("visitor[site_id]", siteId);
-    postData.append("visitor[created_by_id]", userId);
-    postData.append("visitor[vhost_id]", formData.host);
-    postData.append("visitor[name]", formData.visitorName);
-    postData.append(
-      "visitor[visitor_staff_category_id]",
-      formData.supportCategory
-    );
-    postData.append("visitor[contact_no]", formData.mobile);
-    postData.append("visitor[purpose]", formData.purpose);
-    postData.append("visitor[start_pass]", passStartDate);
-    postData.append("visitor[end_pass]", passEndDate);
-    postData.append("visitor[coming_from]", formData.comingFrom);
-    postData.append("visitor[vehicle_number]", formData.vehicleNumber);
-    postData.append("visitor[expected_date]", formData.expectedDate);
-    postData.append("visitor[expected_time]", formData.expectedTime);
-    postData.append("visitor[skip_host_approval]", formData.hostApproval);
-    postData.append("visitor[goods_inwards]", formData.goodsInward);
-    postData.append("visitor[visit_type]", selectedVisitorType);
-    postData.append("visitor[pass_number]", formData.passNumber);
-    postData.append("visitor[frequency]", selectedFrequency);
-    postData.append("visitor[parking_slot]", formData.slotNumber);
+    const postData = new FormData()
+    postData.append("visitor[site_id]", siteId)
+    postData.append("visitor[created_by_id]", userId)
+    postData.append("visitor[vhost_id]", formData.host)
+    postData.append("visitor[name]", formData.visitorName)
+    postData.append("visitor[visitor_staff_category_id]", formData.supportCategory)
+    postData.append("visitor[contact_no]", formData.mobile)
+    postData.append("visitor[purpose]", formData.purpose)
+    postData.append("visitor[start_pass]", passStartDate)
+    postData.append("visitor[end_pass]", passEndDate)
+    postData.append("visitor[coming_from]", formData.comingFrom)
+    postData.append("visitor[vehicle_number]", formData.vehicleNumber)
+    postData.append("visitor[expected_date]", formData.expectedDate)
+    postData.append("visitor[expected_time]", formData.expectedTime)
+    postData.append("visitor[skip_host_approval]", formData.hostApproval)
+    postData.append("visitor[goods_inwards]", formData.goodsInward)
+    postData.append("visitor[visit_type]", selectedVisitorType)
+    postData.append("visitor[pass_number]", formData.passNumber)
+    postData.append("visitor[frequency]", selectedFrequency)
+    postData.append("visitor[parking_slot]", formData.slotNumber)
 
     if (capturedImage) {
-      const response = await fetch(capturedImage);
-      const blob = await response.blob();
-      postData.append("visitor[profile_pic]", blob, "visitor_image.jpg");
+      const response = await fetch(capturedImage)
+      const blob = await response.blob()
+      postData.append("visitor[profile_pic]", blob, "visitor_image.jpg")
     }
 
     selectedWeekdays.forEach((day) => {
-      postData.append("visitor[working_days][]", day);
-    });
+      postData.append("visitor[working_days][]", day)
+    })
 
     visitors.forEach((extraVisitor, index) => {
-      postData.append(
-        `visitor[extra_visitors_attributes][${index}][name]`,
-        extraVisitor.name
-      );
-      postData.append(
-        `visitor[extra_visitors_attributes][${index}][contact_no]`,
-        extraVisitor.mobile
-      );
-    });
+      postData.append(`visitor[extra_visitors_attributes][${index}][name]`, extraVisitor.name)
+      postData.append(`visitor[extra_visitors_attributes][${index}][contact_no]`, extraVisitor.mobile)
+    })
 
     try {
-      toast.loading("Creating new visitor Please wait!");
-      const visitResp = await postNewVisitor(postData);
+      toast.loading("Creating new visitor Please wait!")
+      const visitResp = await postNewVisitor(postData)
 
       const dataToSave = {
         UserInfo: {
@@ -359,115 +234,113 @@ const AddNewVisitor = () => {
             endTime: passEndDate,
           },
         },
-      };
-      console.log("making json file");
+      }
+      console.log("making json file")
       const blob = new Blob([JSON.stringify(dataToSave, null, 2)], {
         type: "application/json",
-      });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `visitor_data_${visitResp.data.id}.json`;
-      a.click();
-      console.log("json file created successfully");
-      const postGoods = new FormData();
+      })
+      const a = document.createElement("a")
+      a.href = URL.createObjectURL(blob)
+      a.download = `visitor_data_${visitResp.data.id}.json`
+      a.click()
+      console.log("json file created successfully")
+      const postGoods = new FormData()
       formData.goodsAttachments.forEach((docs) => {
-        postGoods.append("goods_files[]", docs);
-      });
-      postGoods.append("goods_in_out[visitor_id]", visitResp.data.id);
-      postGoods.append("goods_in_out[no_of_goods]", formData.noOfGoods);
-      postGoods.append("goods_in_out[description]", formData.goodsDescription);
-      postGoods.append("goods_in_out[ward_type]", "in");
-      postGoods.append("goods_in_out[vehicle_no]", formData.vehicleNumber);
-      postGoods.append("goods_in_out[person_name]", formData.visitorName);
-      postGoods.append("goods_in_out[created_by_id]", userId);
+        postGoods.append("goods_files[]", docs)
+      })
+      postGoods.append("goods_in_out[visitor_id]", visitResp.data.id)
+      postGoods.append("goods_in_out[no_of_goods]", formData.noOfGoods)
+      postGoods.append("goods_in_out[description]", formData.goodsDescription)
+      postGoods.append("goods_in_out[ward_type]", "in")
+      postGoods.append("goods_in_out[vehicle_no]", formData.vehicleNumber)
+      postGoods.append("goods_in_out[person_name]", formData.visitorName)
+      postGoods.append("goods_in_out[created_by_id]", userId)
 
       try {
-        const goodsRes = await postNewGoods(postGoods);
-        console.log(goodsRes);
+        const goodsRes = await postNewGoods(postGoods)
+        console.log(goodsRes)
       } catch (error) {
-        console.log(error);
+        console.log(error)
       }
 
-      // try {
-      //   const payload = {
-      //     UserInfo: {
-      //       employeeNo: visitResp.data.id.toString(),
-      //       name: formData.visitorName,
-      //       userType: "visitor",
-      //       Valid: {
-      //         enable: true,
-      //         beginTime: formatDateWithSeconds(passStartDate),
-      //         endTime: formatDateWithSeconds(passEndDate),
-      //       },
-      //     },
-      //   };
-      //   const deviceRes = await postVisitorInDevice(payload);
-      //   console.log(deviceRes);
-      // } catch (error) {
-      //   console.log(error);
-      // }
-
-      console.log(visitResp);
-      navigate("/admin/passes/visitors");
-      toast.dismiss();
-      toast.success("Visitor Added Successfully");
+      console.log(visitResp)
+      navigate("/admin/passes/visitors")
+      toast.dismiss()
+      toast.success("Visitor Added Successfully")
     } catch (error) {
-      console.log(error);
-      toast.dismiss();
+      console.log(error)
+      toast.dismiss()
     }
-  };
+  }
 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const usersResp = await getHostList(siteId);
-        setHosts(usersResp.data.hosts);
-        console.log(usersResp);
+        const usersResp = await getHostList(siteId)
+        setHosts(usersResp.data.hosts)
+        console.log(usersResp)
       } catch (error) {
-        console.log(error);
+        console.log(error)
       }
-    };
+    }
     const fetchVisitorCategory = async () => {
       try {
-        const visitorCat = await getVisitorStaffCategory();
-        setStaffCategories(visitorCat.data.categories);
+        const visitorCat = await getVisitorStaffCategory()
+        setStaffCategories(visitorCat.data.categories)
       } catch (error) {
-        console.log(error);
+        console.log(error)
       }
-    };
+    }
     const fetchParkingConfig = async () => {
       try {
-        const parkingRes = await getParkingConfig();
-        setSlots(parkingRes.data);
+        const parkingRes = await getParkingConfig()
+        setSlots(parkingRes.data)
       } catch (error) {
-        console.log(error);
+        console.log(error)
       }
-    };
-    fetchUsers();
-    fetchVisitorCategory();
-    fetchParkingConfig();
-  }, []);
+    }
+    fetchUsers()
+    fetchVisitorCategory()
+    fetchParkingConfig()
+  }, [siteId])
+
+  // const fetchTodaty =async() => {
+  //   try{
+  //     const today = new Date().toISOString().split("T")[0]
+  //     console.log("Today:",today)
+  //     setFormData((prevData) => ({
+  //       ...prevData,
+  //       expectedDate: today,
+  //     }))
+  //   }catch(error)
+  //   {
+  //     console.log("error fetching date:",error)
+  //   }
+  // }
+  // useEffect(() => {
+  //   fetchTodaty();
+  // }, []) // Empty dependency array means this runs once on mount
 
   const handlePassStartDateChange = (event) => {
-    const selectedDateTime = event.target.value + ":00";
-    setPassStartDate(selectedDateTime);
+    const selectedDateTime = event.target.value + ":00"
+    setPassStartDate(selectedDateTime)
 
     if (passEndDate && selectedDateTime > passEndDate) {
-      setPassEndDate("");
-      toast.error("End date cannot be earlier than the start date.");
+      setPassEndDate("")
+      toast.error("End date cannot be earlier than the start date.")
     }
-  };
+  }
 
   const handlePassEndDateChange = (event) => {
-    const selectedDateTime = event.target.value + ":00";
+    const selectedDateTime = event.target.value + ":00"
 
     if (passStartDate && selectedDateTime < passStartDate) {
-      toast.error("End date cannot be earlier than the start date.");
-      return;
+      toast.error("End date cannot be earlier than the start date.")
+      return
     }
 
-    setPassEndDate(selectedDateTime);
-  };
+    setPassEndDate(selectedDateTime)
+  }
 
   return (
     <div className="flex justify-center items-center  w-full p-4">
@@ -499,16 +372,10 @@ const AddNewVisitor = () => {
                 />
               </div>
               <div className="flex gap-2 justify-center my-2 items-center">
-                <button
-                  onClick={capture}
-                  className="bg-green-400 rounded-md text-white p-1 px-4"
-                >
+                <button onClick={capture} className="bg-green-400 rounded-md text-white p-1 px-4">
                   Capture
                 </button>
-                <button
-                  onClick={handleCloseCamera}
-                  className="bg-red-400 rounded-md text-white p-1 px-4"
-                >
+                <button onClick={handleCloseCamera} className="bg-red-400 rounded-md text-white p-1 px-4">
                   Close
                 </button>
               </div>
@@ -829,17 +696,13 @@ const AddNewVisitor = () => {
             </div>
 
             <FileInputBox
-              handleChange={(files) =>
-                handleFileChange(files, "goodsAttachments")
-              }
+              handleChange={(files) => handleFileChange(files, "goodsAttachments")}
               fieldName={"goodsAttachments"}
               isMulti={true}
             />
           </>
         )}
-        <h2 className="font-medium border-b-2 mt-5 border-black">
-          Additional Visitor
-        </h2>
+        <h2 className="font-medium border-b-2 mt-5 border-black">Additional Visitor</h2>
         <div className="grid md:grid-cols-3 gap-3 mt-5">
           {visitors.map((visitor, index) => (
             <div key={index}>
@@ -926,8 +789,8 @@ const AddNewVisitor = () => {
                       : ""
                   }`}
                   onClick={(e) => {
-                    e.preventDefault();
-                    handleWeekdaySelection(weekdayObj.day);
+                    e.preventDefault()
+                    handleWeekdaySelection(weekdayObj.day)
                   }}
                 >
                   <a>{weekdayObj.day}</a>
@@ -947,7 +810,8 @@ const AddNewVisitor = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default AddNewVisitor;
+export default AddNewVisitor
+
