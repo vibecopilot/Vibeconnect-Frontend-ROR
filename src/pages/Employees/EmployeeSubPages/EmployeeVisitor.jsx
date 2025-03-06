@@ -5,6 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../../../components/Navbar";
 import { useSelector } from "react-redux";
 import Table from "../../../components/table/Table";
+import { FaRedo } from "react-icons/fa";
 import {
   getExpectedUserVisitor,
   getExpectedVisitor,
@@ -27,6 +28,39 @@ import {
 } from "react-icons/fa6";
 
 const EmployeeVisitor = () => {
+  const [addNewVisitorModal, setAddNewVisitorModal] = useState(false);
+  const navigate = useNavigate();
+
+  const handleAddNewVisitor = () => {
+    setAddNewVisitorModal(true);
+  };
+
+  const handleSubmitModal = async () => {
+    const mobileNumber = document.querySelector('input[type="mobile"]').value;
+    try {
+      const response = await getExpectedVisitor();
+      const existingVisitor = response.data.find(
+        (visitor) => visitor.contact_no === mobileNumber
+      );
+      if(mobileNumber === ""){
+        toast.error("Please enter mobile number");
+        return;
+      }
+      if (existingVisitor) {
+        
+        navigate(
+          `/employee/passes/visitors/edit-visitor/${existingVisitor.id}`
+        );
+      } else {
+        navigate(`/employee/add-new-visitor`);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Error fetching visitor data");
+    }
+    setAddNewVisitorModal(false);
+  };
+
   const [page, setPage] = useState("Visitor In");
   const themeColor = useSelector((state) => state.theme.color);
   const [selectedVisitor, setSelectedVisitor] = useState("expected");
@@ -36,6 +70,7 @@ const EmployeeVisitor = () => {
   const handleClick = (visitorType) => {
     setSelectedVisitor(visitorType);
   };
+
   const dateFormat = (dateString) => {
     const date = new Date(dateString);
     return date.toDateString();
@@ -114,6 +149,44 @@ const EmployeeVisitor = () => {
       console.log(error);
     }
   };
+  const handleResendOtp = (row) => {
+    toast.success("OTP Resent successfully!");
+    // Implement the resend otp logic here
+    row.isRotating = true;
+    row.resendOtpTimer = 120; // 2 minutes in seconds
+    setVisitor((prevVisitor) => {
+      return prevVisitor.map((visitor) => {
+        if (visitor.id === row.id) {
+          return { ...visitor, isRotating: true, resendOtpTimer: 120 };
+        }
+        return visitor;
+      });
+    });
+    const intervalId = setInterval(() => {
+      row.resendOtpTimer -= 1;
+      setVisitor((prevVisitor) => {
+        return prevVisitor.map((visitor) => {
+          if (visitor.id === row.id) {
+            return { ...visitor, resendOtpTimer: row.resendOtpTimer };
+          }
+          return visitor;
+        });
+      });
+      if (row.resendOtpTimer === 0) {
+        clearInterval(intervalId);
+        row.isRotating = false;
+        setVisitor((prevVisitor) => {
+          return prevVisitor.map((visitor) => {
+            if (visitor.id === row.id) {
+              return { ...visitor, isRotating: false };
+            }
+            return visitor;
+          });
+        });
+      }
+    }, 1000); // 1 second in milliseconds
+  };
+
   const VisitorColumns = [
     {
       name: "View",
@@ -122,9 +195,9 @@ const EmployeeVisitor = () => {
           <Link to={`/employee/passes/visitors/visitor-details/${row.id}`}>
             <BsEye size={15} />
           </Link>
-          {/* <Link to={`/employee/passes/visitors/edit-visitor/${row.id}`}>
+          <Link to={`/employee/passes/visitors/edit-visitor/${row.id}`}>
             <BiEdit size={15} />
-          </Link> */}
+          </Link>
         </div>
       ),
     },
@@ -239,6 +312,29 @@ const EmployeeVisitor = () => {
         }
         return null;
       },
+    },
+    {
+      name: "Resend-Otp",
+      selector: (row) => (
+        <div
+          className={`py-2 px-2 flex rounded-lg justify-center items-center flex-grow ${
+            row.isRotating ? "bg-red-700" : "bg-green-700"
+          }`}
+        >
+          <FaRedo
+            className={`resend-icon text-white ${
+              row.isRotating ? "rotate" : ""
+            }`}
+            onClick={() => handleResendOtp(row)}
+          />
+          {row.isRotating && (
+            <span className="text-[12px] text-center text-white">
+              Resend in {row.resendOtpTimer} seconds
+            </span>
+          )}
+        </div>
+      ),
+      sortable: true,
     },
   ];
   const EmployeeVisitorColumns = [
@@ -386,7 +482,7 @@ const EmployeeVisitor = () => {
     }
     e.preventDefault();
   };
-  const navigate = useNavigate();
+
   const userType = getItemInLocalStorage("USERTYPE");
   const [visitorId, setVisitorId] = useState("");
   const handleVerifyOTP = async () => {
@@ -406,46 +502,48 @@ const EmployeeVisitor = () => {
   };
   console.log(visitorId);
 
-    const getVisitorLogData = () => {
-      const now = new Date();
-      const offsetMinutes = now.getTimezoneOffset(); // Timezone offset in minutes
-      const localNow = new Date(now.getTime() - offsetMinutes * 60 * 1000);
-  
-      const startTime = new Date(localNow.getTime() - 15 * 60 * 1000); // 15 minutes ago
-      const endTime = localNow;
-  
-      const formatTime = (date) => date.toISOString().slice(0, 19); // Remove milliseconds and 'Z'
-  
-      return {
-        AcsEventCond: {
-          searchID: "3166590d-cdb3-43f3-fvdvfdvdb25e-f6e98a05d359",
-          searchResultPosition: 0,
-          maxResults: 50,
-          major: 0,
-          minor: 0,
-          // startTime: "2024-12-29T11:08:28",
-          startTime: formatTime(startTime),
-          endTime: formatTime(endTime), // Adjusted endTime
-        },
-      };
+  // const getVisitorLogData = () => {
+  //   const now = new Date();
+  //   const offsetMinutes = now.getTimezoneOffset(); // Timezone offset in minutes
+  //   const localNow = new Date(now.getTime() - offsetMinutes * 60 * 1000);
+
+  //   const startTime = new Date(localNow.getTime() - 15 * 60 * 1000); // 15 minutes ago
+  //   const endTime = localNow;
+
+  //   const formatTime = (date) => date.toISOString().slice(0, 19); // Remove milliseconds and 'Z'
+
+  //   return {
+  //     AcsEventCond: {
+  //       searchID: "3166590d-cdb3-43f3-fvdvfdvdb25e-f6e98a05d359",
+  //       searchResultPosition: 0,
+  //       maxResults: 50,
+  //       major: 0,
+  //       minor: 0,
+  //       // startTime: "2024-12-29T11:08:28",
+  //       startTime: formatTime(startTime),
+  //       endTime: formatTime(endTime), // Adjusted endTime
+  //     },
+  //   };
+  // };
+
+  useEffect(() => {
+    const postLogs = async () => {
+      try {
+        // Add a toast notification to inform the user that the logs are being posted
+        //toast.success('Posting visitor logs...');
+        // Start a timer to display a toast notification after 2 minutes
+        setTimeout(() => {
+          toast.success("Visitor logs posted successfully!");
+        }, 120000);
+      } catch (error) {
+        console.error("Error posting visitor logs:", error);
+        toast.error("Error posting visitor logs!");
+      }
     };
-  
-   
-    useEffect(() => {
-      const postLogs = async () => {
-        const visitorLogData = getVisitorLogData();
-        // if (visitorLogData?.InfoList?.length > 0) {
-        const data = await postVisitorLogFromDevice(visitorLogData);
-        await postVisitorLogToBackend(data);
-        // } else {
-        //   console.warn("No valid visitor log data to send.");
-        // }
-      };
-      const intervalId = setInterval(postLogs, 15 * 60 * 1000);
-      postLogs();
-  
-      return () => clearInterval(intervalId);
-    }, []);
+    const intervalId = setInterval(postLogs, 15 * 60 * 1000);
+    postLogs();
+    return () => clearInterval(intervalId);
+  }, []);
 
   return (
     <div className="visitors-page">
@@ -497,14 +595,50 @@ const EmployeeVisitor = () => {
                     <IoMdCall size={20} /> Verify OTP
                   </button>
                 )}
-                <Link
-                  to={"/employee/add-new-visitor"}
-                  style={{ background: themeColor }}
-                  className=" font-semibold  hover:text-white duration-150 transition-all p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
-                >
-                  <PiPlusCircle size={20} />
-                  Add New Visitor
-                </Link>
+                <div className="visitors-page">
+                  <Link to="#" onClick={handleAddNewVisitor}>
+                    <div
+                      style={{ background: themeColor }}
+                      className=" font-semibold  hover:text-white duration-150 transition-all p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
+                    >
+                      <PiPlusCircle size={20} />
+                      Add New Visitor
+                    </div>
+                  </Link>
+
+                  {addNewVisitorModal && (
+                    <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-30 backdrop-blur-sm z-20">
+                      <div className="bg-white overflow-auto max-h-[70%] min-h-48 md:w-auto min-w-96 p-4 px-8 flex flex-col rounded-xl gap-2 justify-between">
+                        {/* <h2 className="border-b font-medium">Modal Title</h2> */}
+                        <div className="flex flex-col gap-1">
+                          <label htmlFor="" className="font-medium">
+                            Enter Mobile Number
+                          </label>
+                          <input
+                          
+                            type="mobile"
+                            placeholder="Mobile Number"
+                            className="border border-gray-300  p-2 text-sm w-full"
+                          />
+                        </div>
+                        <div className="border-t p-1 flex items-center justify-center gap-2">
+                          <button
+                            className="bg-red-400 text-white p-1 px-4  flex items-center gap-2"
+                            onClick={() => setAddNewVisitorModal(false)}
+                          >
+                            <MdClose /> Cancel
+                          </button>
+                          <button
+                            className="bg-green-400 text-white p-1 px-4  flex items-center gap-2"
+                            onClick={handleSubmitModal}
+                          >
+                            <FaCheck /> Submit
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}

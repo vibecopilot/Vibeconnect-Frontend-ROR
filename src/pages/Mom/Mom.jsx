@@ -11,20 +11,20 @@ import { MdAdd } from "react-icons/md";
 
 const Mom = () => {
   const column = [
-    {
-      name: "view",
+    // {
+    //   name: "view",
 
-      cell: (row) => (
-        <div className="flex items-center gap-4">
-          <Link to={`/admin/edit-mom/${row.id}`}>
-            <BsEye size={15} />
-          </Link>
-          <Link to={`/admin/edit-mom/${row.id}`}>
-            <BiEdit size={15} />
-          </Link>
-        </div>
-      ),
-    },
+    //   cell: (row) => (
+    //     <div className="flex items-center gap-4">
+    //       <Link to={`/admin/edit-mom/${row.id}`}>
+    //         <BsEye size={15} />
+    //       </Link>
+    //       <Link to={`/admin/edit-mom/${row.id}`}>
+    //         <BiEdit size={15} />
+    //       </Link>
+    //     </div>
+    //   ),
+    // },
 
     { name: "ID", selector: (row) => row.id, sortable: true },
 
@@ -54,9 +54,9 @@ const Mom = () => {
       Tower: "tower",
     },
     { id: 2, Tower: "tower2" },
-    { id: 2, Tower: "tower2" },
-    { id: 2, Tower: "tower2" },
-    { id: 2, Tower: "tower2" },
+    { id: 3, Tower: "towerzz" },
+    { id: 4, Tower: "tower2" },
+    { id: 5, Tower: "tower2" },
   ];
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const themeColor = useSelector((state) => state.theme.color);
@@ -68,8 +68,11 @@ const Mom = () => {
     setIsFilterModalOpen(false);
   };
   return (
-    <div 
-    >
+
+    <section className="flex">
+        <Navbar/>
+    <div className="overflow-hidden" >
+    
         {/* <Navbar /> */}
       <h2 className="text-2xl font-semibold pt-6 pl-[2%]">MOM LIST</h2>
 
@@ -160,7 +163,7 @@ const Mom = () => {
 )}
     </div>
 
-
+    </section>
 
   );
 };
