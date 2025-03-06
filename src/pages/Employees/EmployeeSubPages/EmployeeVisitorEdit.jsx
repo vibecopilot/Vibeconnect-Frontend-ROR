@@ -240,6 +240,9 @@ const EmployeeVisitorEdit = () => {
           extraVisitor._destroy
         );
       }
+      if (imageFile) {
+    postData.append("visitor[image]", imageFile);
+  }
     });
     try {
       const visitResp = await editVisitorDetails(id, postData);
@@ -470,6 +473,7 @@ const EmployeeVisitorEdit = () => {
               onChange={handleChange}
               name="expectedDate"
               id="expectedDate"
+              defaultValue={formData.expectedDate}
               className="border border-gray-400 p-2 rounded-md"
             />
           </div>
@@ -484,6 +488,7 @@ const EmployeeVisitorEdit = () => {
               onChange={handleChange}
               name="expectedTime"
               id="expectedTime"
+              defaultValue={formData.expectedTime}
               className="border border-gray-400 p-2 rounded-md"
             />
           </div>

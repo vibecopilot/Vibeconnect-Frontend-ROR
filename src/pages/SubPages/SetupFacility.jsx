@@ -8,19 +8,54 @@ import { useSelector } from "react-redux";
 import FileInputBox from "../../containers/Inputs/FileInputBox";
 import { FaCheck, FaTrash } from "react-icons/fa";
 import { BiPlusCircle } from "react-icons/bi";
+import axios from "axios";
 import { Switch } from "../../Buttons";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { postFacilitySetup } from "/src/api";
+import { useParams } from "react-router-dom";
+import { getItemInLocalStorage } from "../../utils/localStorage";
 const SetupFacility = () => {
   const [allowMultipleSlots, setAllowMultipleSlots] = useState("no");
 
   const handleSelectChange = (e) => {
     setAllowMultipleSlots(e.target.value);
   };
+  // const id = useParams().id;
+  const id = getItemInLocalStorage("SITEID")
+  const [isTenant, setIsTenant] = useState(false);
   const themeColor = useSelector((state) => state.theme.color);
   const [formData, setFormData] = useState({
-    type: "bookable",
+     site_id:id,
+    fac_type: "",
+    fac_name: "",
+    member:false,
+    member_charges: "",
+    member_price_adult:"",
+    member_price_child:"",
+    startTime: "",
+    tenant: "",
+    description: "",
+    cancellation_policy: "",
+    terms: "",
+    bookBefore: {},
+    timeValues:[],
+    min_people:"",
+    max_people:"",
+    tenant:false,
+    tenant_price_adult:"",
+    tenant_price_child:"",
+    covers:[],
+    attachments:[],
+    guest:false,
+    guest_price_adult:"",
+    guest_price_child:"",
   });
+
+  const handleDescriptionChange = (e) => {
+    setFormData({ ...formData, description: e.target.value });
+  };
+
   const [slots, setSlots] = useState([
     {
       id: 1,
@@ -50,6 +85,15 @@ const SetupFacility = () => {
     ]);
   };
 
+  const handleFacTypeChange = (e) => {
+    setFormData({ ...formData, fac_type: e.target.value });
+  };
+
+  const [bookBefore, setBookBefore] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+  });
   const handleRemoveSlot = (id) => {
     setSlots(slots.filter((slot) => slot.id !== id));
   };
@@ -115,6 +159,80 @@ const SetupFacility = () => {
   const [blockData, setBlockData] = useState({
     blockBy: "",
   });
+  const handleFileChange = (files, fieldName) => {
+    setFormData({
+      ...formData,
+      attachments: files,
+    });
+  };
+
+  
+
+  const handleAddFacility = async (e) => {
+    // if (formData.companyName === "") {
+    //   return toast.error("Please Provide Company name");
+    // }
+    e.preventDefault()
+    const bookBeforeArray = [
+      `${bookBefore.days} days, ${bookBefore.hours} hours, ${bookBefore.minutes} minutes`,
+      bookBefore,
+      null
+    ];
+    const sendData = new FormData();
+    sendData.append("amenity[site_id]", formData.site_id);
+    sendData.append("amenity[fac_name]", formData.fac_name);
+    sendData.append("amenity[tenant]", formData.tenant);
+    sendData.append("amenity[description]", formData.description);
+    sendData.append("amenity[terms]", formData.terms);
+    sendData.append("amenity[min_people]", formData.min_people);
+    sendData.append("amenity[max_people]", formData.max_people);
+    sendData.append("amenity[member_charges]", formData.member_charges);
+    //sendData.append("amenity[member_price_adult]", formData.member_price_adult);
+   // sendData.append("amenity[member_price_child]", formData.member_price_child);
+    sendData.append("amenity[memeber]", formData.member);
+    sendData.append("amenity[guest]", formData.guest);
+    sendData.append("amenity[covers]", formData.covers)
+
+
+    sendData.append("amenity[terms]", formData.terms)
+    sendData.append("book_before[0]", bookBeforeArray[0]);
+    sendData.append("book_before[1]", bookBeforeArray[1]);
+    sendData.append("book_before[2]", bookBeforeArray[2]);
+
+    sendData.append("amenity[fac_type]", formData.fac_type);
+    sendData.append("amenity_slots_attributes[start_hr]", slots.startTime);
+    sendData.append("amenity[startTime]", timeValues.time1);
+    sendData.append("amenity[endTime]", timeValues.time2);
+    sendData.append("amenity[cancelTime]", timeValues.time3);
+
+    sendData.append("amenity_slots_attributes[end_hr]", slots.endTime);
+    sendData.append("amenity_slots_attributes[day]", slots.day);
+    sendData.append("amenity_slots_attributes[is_active]", slots.isActive);
+    sendData.append("amenity_slots_attributes[is_bookable]", slots.isBookable);
+
+    // if (formData.attachments) {
+    //   Array.from(formData.attachments).forEach((file) => {
+    //     sendData.append("amenity[attachments]", file);
+    //   });
+    // }
+    try {
+      const response = await postFacilitySetup(formData);
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        console.log(data);
+        toast.success("Facility added successfully");
+      } else {
+        const error = await response.json();
+        console.error(error);
+        toast.error("Error adding facility");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Error adding facility");
+    }
+  };
 
   return (
     <section className="flex">
@@ -129,13 +247,27 @@ const SetupFacility = () => {
 
         <div className="flex  gap-4 my-4">
           <div className="flex gap-2 items-center">
-            <input type="radio" name="type" id="bookable" />
+            <input
+              type="radio"
+              name="fac_type"
+              id="bookable"
+              value={"bookable"}
+              checked={formData.fac_type === "bookable"}
+              onChange={handleFacTypeChange}
+            />
             <label htmlFor="bookable" className="text-lg">
               Bookable
             </label>
           </div>
           <div className="flex gap-2 items-center">
-            <input type="radio" name="type" id="request" />
+            <input
+              type="radio"
+              name="fac_type"
+              id="request"
+              value={"request"}
+              checked={formData.fac_type === "request"}
+              onChange={handleFacTypeChange}
+            />
             <label htmlFor="request" className="text-lg">
               Request
             </label>
@@ -153,8 +285,12 @@ const SetupFacility = () => {
               </label>
               <input
                 type="text"
-                name=""
+                name="fac_name"
                 id=""
+                value={formData.fac_name}
+                onChange={(e) =>
+                  setFormData({ ...formData, fac_name: e.target.value })
+                }
                 className="border border-gray-400 rounded-md p-2"
                 placeholder="Facility name"
               />
@@ -297,7 +433,7 @@ const SetupFacility = () => {
             <div className="grid grid-cols-4 items-center border-b">
               <div className="flex justify-center my-2">
                 <label htmlFor="">
-                  <input type="checkbox" name="" id="" /> Member
+                  <input type="checkbox" name="member" id="" checked={formData.member} onChange={(e)=> setFormData({...formData,member:e.target.checked}) } /> Member
                 </label>
               </div>
               <div className="flex justify-center my-2">
@@ -307,8 +443,10 @@ const SetupFacility = () => {
                   </div>
                   <input
                     type="text"
-                    name=""
+                    name="member_price_adult"
                     id=""
+                    value={formData.member_price_adult}
+                    onChange={(e) => setFormData({...formData,member_price_adult:e.target.value})}
                     className="border border-gray-400 rounded-r-md p-2 outline-none"
                     placeholder="₹100"
                   />
@@ -321,8 +459,10 @@ const SetupFacility = () => {
                   </div>
                   <input
                     type="text"
-                    name=""
+                    name="member_price_child"
                     id=""
+                    value={formData.member_price_child}
+                    onChange={(e)=> setFormData({...formData, member_price_child: e.target.value})}
                     className="border border-gray-400 rounded-r-md p-2 outline-none"
                     placeholder="₹100"
                   />
@@ -408,7 +548,9 @@ const SetupFacility = () => {
             <div className="grid grid-cols-4 items-center border-b">
               <div className="flex justify-center my-2">
                 <label htmlFor="" className="flex items-center gap-2">
-                  <input type="checkbox" name="" id="" />
+                  <input type="checkbox" name="guest" checked={formData.guest}
+                  onChange={(e)=> setFormData({...formData,guest:e.target.checked})}
+                  id="" />
                   Guest
                 </label>
               </div>
@@ -419,8 +561,10 @@ const SetupFacility = () => {
                   </div>
                   <input
                     type="text"
-                    name=""
+                    name="guest_price_adult"
                     id=""
+                    value={formData.guest_price_adult}
+                    onChange={(e)=> setFormData({...formData,guest_price_adult:e.target.value})}
                     className="border border-gray-400 rounded-r-md p-2 outline-none"
                     placeholder="₹100"
                   />
@@ -433,8 +577,10 @@ const SetupFacility = () => {
                   </div>
                   <input
                     type="text"
-                    name=""
+                    name="guest_price_child"
                     id=""
+                    value={formData.guest_price_child}
+                    onChange={(e)=> setFormData({...formData,guest_price_child:e.target.value})}
                     className="border border-gray-400 rounded-r-md p-2 outline-none"
                     placeholder="₹100"
                   />
@@ -464,7 +610,14 @@ const SetupFacility = () => {
             <div className="grid grid-cols-4 items-center border-b ">
               <div className="flex justify-center my-2">
                 <label htmlFor="" className="flex items-center gap-2">
-                  <input type="checkbox" name="" id="" />
+                  <input
+                    type="checkbox"
+                    name="tenant"
+                    id=""
+                    value={formData.tenant}
+                    // checked={isTenant}
+                    onChange={(e)=> setFormData({...formData,tenant:e.target.checked}) }
+                  />
                   Tenant
                 </label>
               </div>
@@ -475,8 +628,10 @@ const SetupFacility = () => {
                   </div>
                   <input
                     type="text"
-                    name=""
+                    name="tenant_price_adult"
                     id=""
+                    value={formData.tenant_price_adult}
+                    onChange={(e)=> setFormData({...formData,tenant_price_adult:e.target.value}) }
                     className="border border-gray-400 rounded-r-md p-2 outline-none"
                     placeholder="₹100"
                   />
@@ -489,8 +644,11 @@ const SetupFacility = () => {
                   </div>
                   <input
                     type="text"
-                    name=""
+                    name="tenant_price_child"
                     id=""
+                    value={formData.tenant_price_child}
+                  onChange={(e)=> setFormData({...formData,tenant_price_child:e.target.value}) }
+                    
                     className="border border-gray-400 rounded-r-md p-2 outline-none"
                     placeholder="₹100"
                   />
@@ -524,7 +682,9 @@ const SetupFacility = () => {
                 </label>
                 <input
                   type="number"
-                  name=""
+                  name="min_people"
+                  value={formData.min_people}
+                  onChange={(e) => setFormData({ ...formData, min_people: e.target.value })}
                   id=""
                   className="border rounded-md p-2"
                   placeholder="Minimum person allowed"
@@ -536,8 +696,10 @@ const SetupFacility = () => {
                 </label>
                 <input
                   type="number"
-                  name=""
+                  name="max_people"
                   id=""
+                  value={formData.max_people}
+                  onChange={(e)=> setFormData({...formData, max_people: e.target.value})}
                   className="border rounded-md p-2"
                   placeholder="Maximum person allowed"
                 />
@@ -572,27 +734,33 @@ const SetupFacility = () => {
             </div>
             <div className="flex justify-center my-2 w-full">
               <input
-                type="text"
-                name=""
+                type="number"
+                name="bookBefore[days]"
                 id=""
+                value={bookBefore.days}
+                onChange={(e) => setBookBefore({...bookBefore, days: e.target.value|| "day"})}
                 className="border border-gray-400 rounded-md p-2 outline-none w-full"
                 placeholder="Day"
               />
             </div>
             <div className="flex justify-center my-2 w-full">
               <input
-                type="text"
-                name=""
+                type="number"
+                name="bookBefore[hours]"
                 id=""
+                value={bookBefore.hours}
+                onChange={(e) => setBookBefore({...bookBefore, hours:e.target.value||"Hour" })}
                 className="border border-gray-400 rounded-md p-2 outline-none w-full"
                 placeholder="Hour"
               />
             </div>
             <div className="flex justify-center my-2 w-full">
               <input
-                type="text"
-                name=""
+                type="number"
+                name="bookBefore[minutes]"
                 id=""
+                value={bookBefore.minutes}
+                onChange={(e) => setBookBefore({...bookBefore, minutes: parseInt(e.target.value) ||"Mins" })}
                 className="border border-gray-400 rounded-md w-full p-2 outline-none"
                 placeholder="Mins"
               />
@@ -749,17 +917,23 @@ const SetupFacility = () => {
           <h2 className="border-b border-black text-lg mb-1 font-medium">
             Attachments
           </h2>
-          <FileInputBox />
+          <FileInputBox
+          
+          handleChange={(files) => handleFileChange(files, "attachments")}
+                fieldName={"attachments"}
+          />
         </div>
         <div className="flex flex-col">
           <label htmlFor="" className="font-medium">
             Description
           </label>
           <textarea
-            name=""
+            name="description"
             id=""
             cols="80"
+            value={formData.description}
             rows="3"
+            onChange={handleDescriptionChange}
             className="border border-gray-400 p-1 placeholder:text-sm rounded-md"
           />
         </div>
@@ -906,12 +1080,16 @@ const SetupFacility = () => {
         </div>
         <div></div>
         <div className="flex flex-col">
-          <label htmlFor="" className="font-medium">
+          <label htmlFor="terms" className="font-medium">
             Terms & Conditions
           </label>
           <textarea
-            name=""
-            id=""
+            name="terms"
+            id="terms"
+            value={formData.terms}
+            onChange={(e) =>
+              setFormData({ ...formData, terms: e.target.value })
+            }
             rows="3"
             className="border border-gray-400 rounded-md"
           />
@@ -921,8 +1099,12 @@ const SetupFacility = () => {
             Cancellation Policy
           </label>
           <textarea
-            name=""
+            name="cancellation_policy"
             id=""
+            onChange={(e) =>
+              setFormData({ ...formData, cancellation_policy: e.target.value })
+            }
+            value={formData.cancellation_policy}
             rows="3"
             className="border border-gray-400 rounded-md"
           />
@@ -1066,6 +1248,7 @@ const SetupFacility = () => {
         </div>
         <div className="flex justify-center my-2">
           <button
+            onClick={handleAddFacility}
             style={{ background: themeColor }}
             className=" text-white p-2 px-4 font-semibold rounded-md flex items-center gap-2"
           >

@@ -140,11 +140,15 @@ const EmployeeAddVisitor = () => {
       if (capturedImage) {
         const response = await fetch(capturedImage);
         const blob = await response.blob();
-        postData.append("visitor[profile_pic]", blob, "visitor_image.jpg");
+        const file = URL.createObjectURL(blob);
+        const fileObject = new File([blob], "visitor_image.jpg", {
+          type: blob.type,
+        });
+        postData.append("visitor[profile_picture]", fileObject);
       }
     } else {
       if (imageFile) {
-        postData.append("visitor[profile_pic]", imageFile, "visitor_image");
+        postData.append("visitor[profile_picture]", imageFile, "visitor_image");
       }
     }
     postData.append("visitor[contact_no]", formData.mobile);

@@ -11,10 +11,21 @@ export default function NewMom() {
         showTargetDate: false,
       }]);
 
+      const [attendeeSections, setAttendeeSections] = useState([
+        {
+          attendeeType: "internal",
+          selectedAttendee: "",
+          externalAttendeeName: "",
+          externalAttendeeEmail: "",
+          externalAttendeePhone: "",
+          externalAttendeeCompany: "",
+        },
+      ]);
+
   const [attendees, setAttendees] = useState([]);
-  const [attendeeType, setAttendeeType] = useState("internal");
-  const [selectedAttendee, setSelectedAttendee] = useState("");
-  const [showTargetDate, setShowTargetDate] = useState(true);
+  //const [attendeeType, setAttendeeType] = useState("internal");
+  //const [selectedAttendee, setSelectedAttendee] = useState("");
+ // const [showTargetDate, setShowTargetDate] = useState(true);
   const handleInputChange = (e, index) => {
     const { name, value, type, checked } = e.target;
     const updatedPoints = [...points];
@@ -40,17 +51,43 @@ export default function NewMom() {
     }]);
   };
 
-
-  
-  const handleAddAttendee = () => {
-    if (selectedAttendee) {
-      setAttendees([
-        ...attendees,
-        { type: attendeeType, name: selectedAttendee },
-      ]);
-      setSelectedAttendee("");
+  const handleAttendeeTypeChange = (e, index) => {
+    const newSections = [...attendeeSections];
+    newSections[index].attendeeType = e.target.value;
+    if (e.target.value === "external") {
+      newSections[index].externalAttendeeName = "";
+      newSections[index].externalAttendeeEmail = "";
+      newSections[index].externalAttendeePhone = "";
+      newSections[index].externalAttendeeCompany = "";
     }
+    setAttendeeSections(newSections);
   };
+  const handleAttendeeChange = (e, index) => {
+    const newSections = [...attendeeSections];
+    if (newSections[index].attendeeType === "internal") {
+      newSections[index].selectedAttendee = e.target.value;
+    } else {
+      newSections[index][e.target.name] = e.target.value;
+    }
+    setAttendeeSections(newSections);
+  };
+  const handleAddAttendeeSection = () => {
+    const newSection = {
+      attendeeType: "internal",
+      selectedAttendee: "",
+      externalAttendeeName: "",
+      externalAttendeeEmail: "",
+      externalAttendeePhone: "",
+      externalAttendeeCompany: "",
+    };
+    setAttendeeSections([...attendeeSections, newSection]);
+  };
+  const handleRemoveAttendeeSection = (index) => {
+    const newSections = [...attendeeSections];
+    newSections.splice(index, 1);
+    setAttendeeSections(newSections);
+  };
+  
   const handleRemovePoint = (index) => {
     const updatedPoints = [...points];
     updatedPoints.splice(index, 1);
@@ -67,7 +104,7 @@ export default function NewMom() {
           <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white mr-2">
             <span>1</span>
           </div>
-          <h2 className="text-2xl font-medium text-orange-500">
+          <h2 className="text-2xl font-medium text-black">
             BASIC DETAILS
           </h2>
         </div>
@@ -140,7 +177,7 @@ export default function NewMom() {
           <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white mr-2">
             <span>2</span>
           </div>
-          <h2 className="text-2xl font-semibold text-orange-500">
+          <h2 className="text-2xl font-semibold text-black">
             Points To Discuss
           </h2>
         </div>
@@ -371,130 +408,183 @@ export default function NewMom() {
 
       {/* Attendees Section */}
       <div className="mb-8 shadow-lg p-4">
-        <div className="flex items-center mb-4">
-          <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white mr-2">
-            <span>3</span>
-          </div>
-          <h2 className="text-2xl font-medium text-orange-500">Attendees</h2>
-        </div>
+  <div className="flex items-center mb-4">
+    <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white mr-2">
+      <span>3</span>
+    </div>
+    <h2 className="text-2xl font-medium text-black">Attendees</h2>
+  </div>
 
-        <div className="border border-gray-200 rounded-md p-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div>
-              <label className="block text-2xl mb-1">Attendee Type</label>
-              <div className="flex items-center space-x-4">
-                <label className="flex items-center">
-                  <div className="relative flex items-center  ">
-                    <input
-                      type="radio"
-                      name="attendeeType"
-                      value="internal"
-                      checked={attendeeType === "internal"}
-                      onChange={(e) => setAttendeeType(e.target.value)}
-                      className="opacity-0 absolute h-5 w-5"
-                    />
-                    <div
-                      className={`border border-gray-300 rounded-full w-5 h-5 flex flex-shrink-0 justify-center items-center mr-2 ${
-                        attendeeType === "internal"
-                          ? "bg-green-500 border-transparent"
-                          : ""
-                      }`}
-                    >
-                      {attendeeType === "internal" && (
-                        <div className="rounded-full w-3 h-3 bg-white"></div>
-                      )}
-                    </div>
-                  </div>
-                  <span>Internal</span>
-                </label>
-
-                <label className="flex items-center">
-                  <div className="relative flex items-center">
-                    <input
-                      type="radio"
-                      name="attendeeType"
-                      value="external"
-                      checked={attendeeType === "external"}
-                      onChange={(e) => setAttendeeType(e.target.value)}
-                      className="opacity-0 absolute h-5 w-5"
-                    />
-                    <div
-                      className={`border border-gray-300 rounded-full w-5 h-5 flex flex-shrink-0 justify-center items-center mr-2 ${
-                        attendeeType === "external"
-                          ? "bg-green-500 border-transparent"
-                          : ""
-                      }`}
-                    >
-                      {attendeeType === "external" && (
-                        <div className="rounded-full w-3 h-3 bg-white"></div>
-                      )}
-                    </div>
-                  </div>
-                  <span>External</span>
-                </label>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-lg mb-1">Name</label>
-              <div className="relative flex">
-                <select
-                  value={selectedAttendee}
-                  onChange={(e) => setSelectedAttendee(e.target.value)}
-                  className="w-full border border-gray-300 rounded p-2 appearance-none"
-                >
-                  <option value="">Select Attendee</option>
-                  <option value="attendee1">Attendee 1</option>
-                  <option value="attendee2">Attendee 2</option>
-                </select>
-                <div className="absolute inset-y-0 right-8 flex items-center  pointer-events-none">
-                  <svg
-                    className="h-5 w-5 text-gray-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </div>
-                <div className="ml-2 flex items-center">
-                  <div className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center text-white">
-                    <span>×</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <button
-              onClick={handleAddAttendee}
-              className="bg-blue-500 text-white px-4 py-2 rounded text-lg"
+  <div className="border border-gray-200 rounded-md p-4">
+  {attendeeSections.map((section, index) => (
+  <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 border-b border-gray-200 pb-4">
+    <div>
+      <label className="block text-2xl mb-1">Attendee Type</label>
+      <div className="flex items-center space-x-4">
+        <label className="flex items-center">
+          <div className="relative flex items-center  ">
+            <input
+              type="radio"
+              name={`attendeeType${index}`}
+              value="internal"
+              checked={section.attendeeType === "internal"}
+              onChange={(e) => handleAttendeeTypeChange(e, index)}
+              className="opacity-0 absolute h-5 w-5"
+            />
+            <div
+              className={`border border-gray-300 rounded-full w-5 h-5 flex flex-shrink-0 justify-center items-center mr-2 ${
+                section.attendeeType === "internal"
+                  ? "bg-green-500 border-transparent"
+                  : ""
+              }`}
             >
-              + Add Attendee
-            </button>
-          </div>
-
-          {attendees.length > 0 && (
-            <div className="mt-4">
-              <h3 className="text-xl font-medium mb-2">Added Attendees:</h3>
-              <ul className="space-y-1">
-                {attendees.map((attendee, index) => (
-                  <li key={index} className="text-sm">
-                    {attendee.name} ({attendee.type})
-                  </li>
-                ))}
-              </ul>
+              {section.attendeeType === "internal" && (
+                <div className="rounded-full w-3 h-3 bg-white"></div>
+              )}
             </div>
-          )}
+          </div>
+          <span>Internal</span>
+        </label>
+
+        <label className="flex items-center">
+          <div className="relative flex items-center">
+            <input
+              type="radio"
+              name={`attendeeType${index}`}
+              value="external"
+              checked={section.attendeeType === "external"}
+              onChange={(e) => handleAttendeeTypeChange(e, index)}
+              className="opacity-0 absolute h-5 w-5"
+            />
+            <div
+              className={`border border-gray-300 rounded-full w-5 h-5 flex flex-shrink-0 justify-center items-center mr-2 ${
+                section.attendeeType === "external"
+                  ? "bg-green-500 border-transparent"
+                  : ""
+              }`}
+            >
+              {section.attendeeType === "external" && (
+                <div className="rounded-full w-3 h-3 bg-white"></div>
+              )}
+            </div>
+          </div>
+          <span>External</span>
+        </label>
+      </div>
+      
+    </div>
+    <div className="ml-auto flex items-center">
+        <div
+          className="w-20 h-8 rounded-sm bg-red-500 flex items-center justify-center text-white cursor-pointer"
+          onClick={() => handleRemoveAttendeeSection(index)}
+        >
+          <span className="text-sm">Remove</span>
         </div>
       </div>
+    {section.attendeeType === "internal" ? (
+  <div>
+    <label className="block text-lg mb-1">Name</label>
+    <div className="relative flex">
+      <select
+        value={section.selectedAttendee}
+        onChange={(e) => handleAttendeeChange(e, index)}
+        className="w-[70%] border border-gray-300 rounded p-2 appearance-none"
+      >
+        <option value="">Select Attendee</option>
+        <option value="attendee1">Attendee 1</option>
+        <option value="attendee2">Attendee 2</option>
+      </select>
+      <div className="absolute inset-y-0 right-48 flex items-center  pointer-events-none">
+        <svg
+          className="h-5 w-5 text-gray-400"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M19 9l-7 7-7-7"
+          />
+        </svg>
+      </div>
+      
+    </div>
+  </div>
+) : (
+    <div className="grid grid-cols-2 md:grid-cols-2 gap-2">
+    <div className="grid grid-cols-1 gap-2">
+      <label className="block text-lg ">Name</label>
+      <input
+        type="text"
+        name="externalAttendeeName"
+        value={section.externalAttendeeName}
+        onChange={(e) => handleAttendeeChange(e, index)}
+        className="w-full border border-gray-300 rounded p-2"
+        placeholder="Attendee Name"
+      />
+    </div>
+    <div className="grid grid-cols-1 gap-2">
+      <label className="block text-lg ">Organization</label>
+      <input
+        type="text"
+        name="externalAttendeeEmail"
+        value={section.externalAttendeeEmail}
+        onChange={(e) => handleAttendeeChange(e, index)}
+        className="w-full border border-gray-300 rounded p-2"
+        placeholder=" Attendee Organization "
+      />
+    </div>
+    <div className="grid grid-cols-1 gap-2">
+      <label className="block text-lg ">Roll</label>
+      <input
+        type="text"
+        name="externalAttendeePhone"
+        value={section.externalAttendeePhone}
+        onChange={(e) => handleAttendeeChange(e, index)}
+        className="w-full border border-gray-300 rounded p-2"
+        placeholder="Attendee Phone"
+      />
+    </div>
+    <div className="grid grid-cols-1 gap-2">
+      <label className="block text-lg ">Email</label>
+      <input
+        type="text"
+        name="externalAttendeeCompany"
+        value={section.externalAttendeeCompany}
+        onChange={(e) => handleAttendeeChange(e, index)}
+        className="w-full border border-gray-300 rounded p-2"
+        placeholder="Attendee Email"
+      />
+    </div>
+  </div>
+)}
+  </div>
+))}
+    <div>
+      <button
+        onClick={handleAddAttendeeSection}
+        className="bg-blue-500 text-white px-4 py-2 rounded text-lg"
+      >
+        + Add Attendee
+      </button>
+    </div>
 
+    {attendees.length > 0 && (
+      <div className="mt-4">
+        <h3 className="text-xl font-medium mb-2">Added Attendees:</h3>
+        <ul className="space-y-1">
+          {attendees.map((attendee, index) => (
+            <li key={index} className="text-sm">
+              {attendee.name} ({attendee.type})
+            </li>
+          ))}
+        </ul>
+      </div>
+    )}
+  </div>
+</div>
       {/* Attachment Section */}
       <div className="mb-8 shadow-lg p-4">
         <div className="flex items-center mb-4">
