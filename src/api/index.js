@@ -468,6 +468,18 @@ export const getAssignedTo = async (data) =>
       token: token,
     },
   });
+  export const postFacilitySetup = async (data) =>
+    axiosInstance.post(`/amenities.json`,data, {
+      params: {
+        token: token,
+      },
+    });
+    export const getFacilitySetup = async (data) =>
+      axiosInstance.get(`/amenities.json`,data, {
+        params: {
+          token: token,
+        },
+      });
 
 export const getIssueType = async () =>
   axiosInstance.get(`pms/admin/complaint_issue_types.json`, {
