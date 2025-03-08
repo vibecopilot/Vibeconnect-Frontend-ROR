@@ -468,12 +468,7 @@ export const getAssignedTo = async (data) =>
       token: token,
     },
   });
-  export const postFacilitySetup = async (data) =>
-    axiosInstance.post(`/amenities.json`,data, {
-      params: {
-        token: token,
-      },
-    });
+ 
     export const getFacilitySetup = async (data) =>
       axiosInstance.get(`/amenities.json`,data, {
         params: {
