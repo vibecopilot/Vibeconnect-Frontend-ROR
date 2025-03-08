@@ -43,6 +43,7 @@ const SetupFacility = () => {
     });
     console.log(fieldName);
   };
+
   const handleChange1 = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -177,12 +178,7 @@ const SetupFacility = () => {
   const [blockData, setBlockData] = useState({
     blockBy: "",
   });
-  const handleFileChange = (files, fieldName) => {
-    setFormData({
-      ...formData,
-      attachments: files,
-    });
-  };
+ 
 
   
 
@@ -302,14 +298,9 @@ const SetupFacility = () => {
               <input
                 type="text"
                 name="fac_name"
-                name="name"
-                value={formData.name}
                 onChange={handleChange1}
                 id=""
                 value={formData.fac_name}
-                onChange={(e) =>
-                  setFormData({ ...formData, fac_name: e.target.value })
-                }
                 className="border border-gray-400 rounded-md p-2"
                 placeholder="Facility name"
               />
@@ -957,6 +948,7 @@ const SetupFacility = () => {
             onChange={handleChange1}
             cols="80"
             rows="3"
+            // onChange={handleDescriptionChange}
             className="border border-gray-400 p-1 placeholder:text-sm rounded-md"
           />
         </div>
