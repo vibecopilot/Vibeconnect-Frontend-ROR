@@ -8,14 +8,17 @@ import { useSelector } from "react-redux";
 import FileInputBox from "../../containers/Inputs/FileInputBox";
 import { FaCheck, FaTrash } from "react-icons/fa";
 import { BiPlusCircle } from "react-icons/bi";
-import axios from "axios";
 import { Switch } from "../../Buttons";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { postFacilitySetup } from "/src/api";
-import { useParams } from "react-router-dom";
+import { postFacilitySetup } from "../../api";
+import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 import { getItemInLocalStorage } from "../../utils/localStorage";
+
 const SetupFacility = () => {
+    const siteId = getItemInLocalStorage("SITEID");
+  
   const [allowMultipleSlots, setAllowMultipleSlots] = useState("no");
 
   const handleSelectChange = (e) => {
@@ -26,36 +29,51 @@ const SetupFacility = () => {
   const [isTenant, setIsTenant] = useState(false);
   const themeColor = useSelector((state) => state.theme.color);
   const [formData, setFormData] = useState({
-     site_id:id,
-    fac_type: "",
-    fac_name: "",
-    member:false,
-    member_charges: "",
-    member_price_adult:"",
-    member_price_child:"",
-    startTime: "",
-    tenant: "",
-    description: "",
-    cancellation_policy: "",
-    terms: "",
-    bookBefore: {},
-    timeValues:[],
-    min_people:"",
-    max_people:"",
-    tenant:false,
-    tenant_price_adult:"",
-    tenant_price_child:"",
-    covers:[],
-    attachments:[],
-    guest:false,
-    guest_price_adult:"",
-    guest_price_child:"",
+    type: "bookable",
+    name:"",
+    description:"",
+    attachments: [],
+    cover_images:[]
   });
-
-  const handleDescriptionChange = (e) => {
-    setFormData({ ...formData, description: e.target.value });
+  const handleFileChange = (files, fieldName) => {
+    // Changed to receive 'files' directly
+    setFormData({
+      ...formData,
+      [fieldName]: files,
+    });
+    console.log(fieldName);
   };
+  const handleChange1 = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+  const navigate = useNavigate();
+  const handleSubmit = async () => {
+   
 
+    const sendData = new FormData();
+    sendData.append("amenity[site_id]", siteId);
+    sendData.append("amenity[name]", formData.name);
+    sendData.append("amenity[description]", formData.description);
+    formData.attachments.forEach((file, index) => {
+      sendData.append(`attachments[]`, file);
+    });
+    formData.cover_images.forEach((file, index) => {
+      sendData.append(`cover_images[]`, file);
+    });
+    try {
+      toast.loading("please wait!");
+      const response = await postFacilitySetup(sendData);
+      toast.dismiss();
+      toast.success("New Facility Setup Added Successfully!");
+      navigate(`/setup/facility`);
+      console.log(response);
+    } catch (error) {
+      console.log(error);
+      toast.dismiss();
+      toast.error("Error Adding New Facility");
+    }
+  };
   const [slots, setSlots] = useState([
     {
       id: 1,
@@ -233,7 +251,11 @@ const SetupFacility = () => {
       toast.error("Error adding facility");
     }
   };
+  const [selectedType, setSelectedType] = useState("bookable");
 
+  const handleChange = (event) => {
+    setSelectedType(event.target.id);
+  };
   return (
     <section className="flex">
       <Navbar />
@@ -247,27 +269,21 @@ const SetupFacility = () => {
 
         <div className="flex  gap-4 my-4">
           <div className="flex gap-2 items-center">
-            <input
-              type="radio"
-              name="fac_type"
-              id="bookable"
-              value={"bookable"}
-              checked={formData.fac_type === "bookable"}
-              onChange={handleFacTypeChange}
-            />
+            <input type="radio"
+          name="type"
+          id="bookable"
+          checked={selectedType === "bookable"}
+          onChange={handleChange} />
             <label htmlFor="bookable" className="text-lg">
               Bookable
             </label>
           </div>
           <div className="flex gap-2 items-center">
-            <input
-              type="radio"
-              name="fac_type"
-              id="request"
-              value={"request"}
-              checked={formData.fac_type === "request"}
-              onChange={handleFacTypeChange}
-            />
+            <input  type="radio"
+          name="type"
+          id="request"
+          checked={selectedType === "request"}
+          onChange={handleChange} />
             <label htmlFor="request" className="text-lg">
               Request
             </label>
@@ -286,6 +302,9 @@ const SetupFacility = () => {
               <input
                 type="text"
                 name="fac_name"
+                name="name"
+                value={formData.name}
+                onChange={handleChange1}
                 id=""
                 value={formData.fac_name}
                 onChange={(e) =>
@@ -911,16 +930,20 @@ const SetupFacility = () => {
           <h2 className="border-b border-black text-lg mb-1 font-medium">
             Cover Images
           </h2>
-          <FileInputBox fileType="image/*" />
+          <FileInputBox
+            handleChange={(files) => handleFileChange(files, "cover_images")}
+            fieldName={"cover_images"}
+            isMulti={true}
+          />
         </div>
         <div className="my-4">
           <h2 className="border-b border-black text-lg mb-1 font-medium">
             Attachments
           </h2>
           <FileInputBox
-          
-          handleChange={(files) => handleFileChange(files, "attachments")}
-                fieldName={"attachments"}
+            handleChange={(files) => handleFileChange(files, "attachments")}
+            fieldName={"attachments"}
+            isMulti={true}
           />
         </div>
         <div className="flex flex-col">
@@ -930,10 +953,10 @@ const SetupFacility = () => {
           <textarea
             name="description"
             id=""
-            cols="80"
             value={formData.description}
+            onChange={handleChange1}
+            cols="80"
             rows="3"
-            onChange={handleDescriptionChange}
             className="border border-gray-400 p-1 placeholder:text-sm rounded-md"
           />
         </div>

@@ -43,6 +43,7 @@
     "lucide-react": "^0.468.0",
     "mammoth": "^1.8.0",
     "moment": "^2.30.1",
+    "node-fetch": "^3.3.2",
     "number-to-words": "^1.2.4",
     "pdfjs-dist": "^3.4.120",
     "primereact": "^10.6.3",

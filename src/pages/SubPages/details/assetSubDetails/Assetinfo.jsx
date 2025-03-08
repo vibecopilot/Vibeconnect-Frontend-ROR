@@ -77,7 +77,7 @@ const Assetinfo = ({ assetData }) => {
   const [qrCode, setQrCode] = useState(false);
   const [paramsId, setParamsId] = useState("");
   const [page, setPage] = useState("consumption");
-  console.log(assetData);
+  console.log("AssetData:",assetData);
 
   const isImage = (filePath) => {
     const imageExtensions = ["jpg", "jpeg", "png", "gif", "bmp", "svg"];
