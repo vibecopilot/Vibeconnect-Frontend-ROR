@@ -172,7 +172,7 @@ function Forum() {
             <PiPlusCircle size={20} /> Create
           </Link>
           <Link
-            to={`/admin/saved_forums`}
+            to={`/communication/forum/saved_forum`}
             style={{ background: themeColor }}
             className="font-semibold px-2 p-2 flex text-white items-center justify-center rounded-md gap-2"
           >
@@ -180,14 +180,14 @@ function Forum() {
           </Link>
 
           <Link
-            to={`/admin/reported_forums`}
+            to={`/communication/forum/reported_forum`}
             style={{ background: themeColor }}
             className="font-semibold px-2 p-2 flex text-white items-center justify-center rounded-md gap-2"
           >
             <PiWarningFill size={20} /> Reported
           </Link>
           <Link
-            to={`/admin/hidden_forums`}
+            to={`/communication/forum/hidden_forum`}
             style={{ background: themeColor }}
             className="font-semibold px-2 p-2 flex justify-center text-white items-center rounded-md gap-2"
           >
