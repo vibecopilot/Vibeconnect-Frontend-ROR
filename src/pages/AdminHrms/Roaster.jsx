@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import dayjs from "dayjs";
 import ToggleSwitch from "../../Buttons/ToggleSwitch";
 import AdminHRMS from "./AdminHrms";
@@ -11,11 +11,13 @@ import {
   getRosterRecords,
   getAssociatedSites,
   fetchByRoasterName,
+  getRosterRecordsFilter,
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import { formatShiftTime } from "../../utils/dateUtils";
 import AssignRosterShifts from "./Modals/AssignRosterShifts";
 import { Pagination } from "antd";
+import { CustomDropdown } from "../../utils/CustomDropdown";
 
 const Roster = () => {
   const themeColor = useSelector((state) => state.theme.color);
@@ -27,12 +29,12 @@ const Roster = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [employees, setEmployees] = useState([]);
   const [selectedShift, setSelectedShift] = useState(null);
-
+  const [selectedSite, setSelectedSite] = useState("all");
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
-
-  const handleShiftClick = (employee, date, schedule) => {
+  const [shiftColor, setShiftColor] = useState([]);
+  const handleShiftClick = (employee, date, schedule, mode) => {
     console.log(schedule);
-    setSelectedShift({ employee, date, schedule });
+    setSelectedShift({ employee, date, schedule, mode });
   };
 
   const toggleModal = () => {
@@ -75,12 +77,15 @@ const Roster = () => {
     });
   };
 
-  const filteredEmployees = employees.filter((employee) =>
-    `${employee.first_name} ${employee.last_name}`
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase())
-  );
+  const filteredEmployees = Array.isArray(employees)
+    ? employees.filter((employee) =>
+        `${employee.first_name} ${employee.last_name}`
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase())
+      )
+    : [];
 
+  console.log(filteredEmployees);
   const formatDate = (date) => {
     return date.toLocaleDateString("en-US", {
       weekday: "short",
@@ -113,14 +118,14 @@ const Roster = () => {
     fetchSites();
   }, [hrmsOrgId]);
 
-  const [searchText,setSearchText] =useState("")
-  const handlesearch = async (e) => {
+  const [searchText, setSearchText] = useState("");
+  const handleSearch = async (e) => {
     const value = e.target.value;
     setSearchText(value);
     try {
       const res = await fetchByRoasterName(hrmsOrgId, value);
       console.log("res:", res);
-      setFileredEmployees(res);
+      setEmployees(res);
     } catch (error) {
       console.log("error in roaster of employee by name:", error);
     }
@@ -132,17 +137,49 @@ const Roster = () => {
       setEmployees(res.results);
       setRosterCount(res.count);
       setPageNumber(page);
+      const shifts = employees.flatMap((emp) =>
+        emp.roster_records.map((record) => record.shift)
+      );
+      setShiftColor(shifts);
+      console.log(res);
     } catch (error) {
       console.log(error);
     }
   };
+
+  const fetchRosterRecordFilter = async (page, siteId) => {
+    try {
+      const res = await getRosterRecordsFilter(hrmsOrgId, siteId, page);
+      setEmployees(res.results);
+      setRosterCount(res.count);
+      setPageNumber(page);
+      const shifts = employees.flatMap((emp) =>
+        emp.roster_records.map((record) => record.shift)
+      );
+      setShiftColor(shifts);
+      console.log(res);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   useEffect(() => {
     fetchRosterRecords(pageNumber);
   }, []);
 
+  // const handlePageChange = (page) => {
+  //   console.log("Pagination new page:", page);
+  //   setPageNumber(page);
+  //   fetchRosterRecords(page);
+  // };
   const handlePageChange = (page) => {
+    console.log("Pagination new page:", page);
     setPageNumber(page);
-    fetchRosterRecords(page);
+    if (!selectedSite || selectedSite.site_name === "Select All Sites") {
+      fetchRosterRecords(page);
+    } else {
+      fetchRosterRecordFilter(page, selectedSite.id);
+    }
   };
 
   const capitalize = (string) => {
@@ -157,7 +194,6 @@ const Roster = () => {
     const fetchRoleAccess = async () => {
       try {
         const res = await getAdminAccess(orgId, empId);
-
         setRoleAccess(res[0]);
       } catch (error) {
         console.log(error);
@@ -174,21 +210,38 @@ const Roster = () => {
           className="bg-blue-500 p-4 text-white rounded-md flex justify-between items-center"
         >
           <h1 className="text-2xl font-medium">Roster Record</h1>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 text-black">
+            <div className="w-72">
+              <CustomDropdown
+                AllSites={allSites}
+                selectedValue={selectedSite}
+                onSelect={(site) => {
+                  if (site.site_name === "Select All Sites") {
+                    setSelectedSite(null);
+                    fetchRosterRecords(1);
+                  } else {
+                    setSelectedSite(site);
+                    fetchRosterRecordFilter(1, site.id);
+                  }
+                }}
+              />
+            </div>
             <input
               className="border p-2 w-64 px-4 text-black rounded-md"
               type="month"
               value={currentMonth}
               onChange={(e) => setCurrentMonth(e.target.value)}
             />
-            {roleAccess?.can_assign_edit_delete_shifts && (
-              <button
-                className="bg-white p-2 rounded-md text-black font-medium"
-                onClick={() => setAssignShifts(true)}
-              >
-                Assign Shifts
-              </button>
-            )}
+            <div className="">
+              {roleAccess?.can_assign_edit_delete_shifts && (
+                <button
+                  className="bg-white p-2 px-5 rounded-md text-black font-medium w-full"
+                  onClick={() => setAssignShifts(true)}
+                >
+                  Assign Shifts
+                </button>
+              )}
+            </div>
             {/* <button onClick={toggleModal} className="border p-2 rounded-md">
               Upload Records
             </button>
@@ -229,7 +282,7 @@ const Roster = () => {
                 placeholder="Search Employee Name/ Code"
                 className="p-2 pl-10 border rounded-full w-full focus:outline-none focus:ring-2 focus:ring-blue-300"
                 value={searchText}
-                onChange={handlesearch}
+                onChange={handleSearch}
               />
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -305,20 +358,28 @@ const Roster = () => {
                     </td>
                     {weekDates?.map((date, index) => {
                       const shift = getShiftForDate(employee, date);
-                      const isWeekend =
-                        date?.getDay() === 0 || date?.getDay() === 6;
+
+                      const shiftTime = shift?.shift_type;
+
+                      const isWeekend = shiftTime === "Morning Shift";
+                      // const isWeekend =
+                      //   date?.getDay() === 0 || date?.getDay() === 6;
                       return (
                         <td key={index} className="border-none p-2 text-center">
                           {shift ? (
                             <div
                               onClick={() =>
-                                handleShiftClick(employee, shift, date)
+                                handleShiftClick(employee, shift, date, "edit")
                               }
                               // title={isWeekend? "":""}
                               className={`rounded-md p-1 cursor-pointer transition duration-200 ${
-                                isWeekend
-                                  ? "bg-orange-100 text-orange-800 hover:bg-orange-200"
-                                  : "bg-green-100 text-green-800 hover:bg-green-200"
+                                shiftTime === "full_working_day"
+                                  ? "bg-green-300 text-white hover:bg-green-500"
+                                  : shiftTime === "full_day_weekly_off"
+                                  ? "bg-orange-300 text-white hover:bg-orange-500"
+                                  : shiftTime === "half_day_weekly_off"
+                                  ? "bg-blue-300 text-white hover:bg-blue-500"
+                                  : "bg-gray-300 text-white hover:bg-gray-500"
                               }`}
                             >
                               <div>
@@ -334,7 +395,7 @@ const Roster = () => {
                             <div
                               title="No Shift Assigned"
                               onClick={() =>
-                                handleShiftClick(employee, shift, date)
+                                handleShiftClick(employee, shift, date, "add")
                               }
                               className="bg-gray-100 cursor-pointer text-gray-500 rounded-md p-1 hover:bg-gray-200 transition duration-200"
                             >
@@ -474,6 +535,7 @@ const Roster = () => {
           employee={selectedShift.employee}
           date={selectedShift.date}
           schedule={selectedShift.schedule}
+          mode={selectedShift.mode}
           onClose={() => setSelectedShift(null)}
           fetchRosterRecords={() => fetchRosterRecords(pageNumber)}
         />

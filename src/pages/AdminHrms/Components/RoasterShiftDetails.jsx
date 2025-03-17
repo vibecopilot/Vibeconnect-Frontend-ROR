@@ -7,6 +7,8 @@ import {
   getRosterRecordDetails,
   getRosterShift,
   postRosterRecord,
+  postRosterAssign,
+  editRosterAssign,
 } from "../../../api";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
 import { useSelector } from "react-redux";
@@ -21,16 +23,19 @@ function RoasterShiftDetails({
   onClose,
   recordId,
   fetchRosterRecords,
+  mode,
 }) {
   const [shiftType, setShiftType] = useState("Full Day Weekly Off");
+  const [shiftData, setShiftData] = useState("");
   const [branchLocation, setBranchLocation] = useState("");
   const [employeeData, setEmployeeData] = useState([]);
   const [repeat, setRepeat] = useState(false);
+  const [frequency, setFrequency] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [formData, setFormData] = useState({
-    endOn: "Never",
-    selectedShift: "",
+    endOn: "never",
   });
-
+  console.log(employee.id);
   const formatDate = (date) => {
     return new Date(date).toLocaleDateString("en-US", {
       day: "numeric",
@@ -39,14 +44,22 @@ function RoasterShiftDetails({
       weekday: "short",
     });
   };
+  console.log(mode);
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
   const [shifts, setShifts] = useState([]);
+  console.log(shiftData, repeat, frequency, formData.endOn, endDate);
   useEffect(() => {
     const fetchRosterRecordDetails = async () => {
       try {
         const res = await getRosterRecordDetails(date.id);
-        setEmployeeData(res);
-        setFormData({ ...formData, selectedShift: res.shift });
+        // setEmployeeData(res);
+        // setFormData({ ...formData, selectedShift: res.shift });
+        setShiftType(res.shift_type);
+        setShiftData(res.shift);
+        setRepeat(res.repeat);
+        setFrequency(res.frequency);
+        setFormData({ ...formData, endOn: res.ends_on });
+        setEndDate(res.end_date);
       } catch (error) {
         console.log(error);
       }
@@ -92,6 +105,120 @@ function RoasterShiftDetails({
   //     toast.error("Something went wrong");
   //   }
   // };
+
+  console.log("Schedule 105", schedule);
+
+  const dayIndex = schedule.getDay();
+  let selectedDay;
+  let indexNumber;
+
+  function getWeekdayOccurrencesForSelectedDate(selectedDate) {
+    const date = new Date(selectedDate);
+    const month = date.getMonth();
+    const year = date.getFullYear();
+    const dayOfMonth = date.getDate();
+
+    const weekdayCount = [0, 0, 0, 0, 0, 0, 0];
+
+    for (let day = 1; day <= dayOfMonth; day++) {
+      const currentDay = new Date(year, month, day);
+      const weekday = currentDay.getDay();
+      weekdayCount[weekday]++;
+    }
+    return weekdayCount;
+  }
+
+  const occurrences = getWeekdayOccurrencesForSelectedDate(schedule);
+  const weekdays = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
+
+  weekdays.forEach((day, index) => {
+    indexNumber = occurrences[index];
+    let nth;
+
+    if (occurrences[index] === 1) {
+      nth = "st";
+    } else if (occurrences[index] === 2) {
+      nth = "nd";
+    } else if (occurrences[index] === 3) {
+      nth = "rd";
+    } else {
+      nth = "th";
+    }
+
+    if (dayIndex === index) {
+      selectedDay = `${occurrences[index]}${nth} ${day} of the month`;
+    }
+  });
+
+  const day = schedule.toLocaleDateString("en-US", { weekday: "long" });
+
+  const dayMapping = {
+    Monday: 0,
+    Tuesday: 1,
+    Wednesday: 2,
+    Thursday: 3,
+    Friday: 4,
+    Saturday: 5,
+    Sunday: 6,
+  };
+
+  const dayNumber = dayMapping[day];
+
+  console.log(dayNumber);
+  const formattedDate = schedule.toISOString().split("T")[0];
+  console.log(formattedDate);
+  const handleAddShift = async () => {
+    const postData = new FormData();
+    postData.append("employee", employee.id);
+    postData.append("date", formattedDate);
+    postData.append("shift_type", shiftType);
+    postData.append("shift", shiftData);
+    postData.append("repeat", repeat);
+    postData.append("frequency", frequency);
+    postData.append("selected_weekday", dayNumber);
+    postData.append("nth_weekday", indexNumber);
+    postData.append("ends_on", formData.endOn);
+    postData.append("end_date", endDate);
+    try {
+      const res = await postRosterAssign(postData);
+      onClose();
+      toast.success("New Shift Added Successfully");
+      fetchRosterRecords();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleEditShift = async () => {
+    const editData = new FormData();
+    // editData.append("employee", employee.id);
+    // editData.append("id", date.id);
+    editData.append("date", formattedDate);
+    editData.append("shift_type", shiftType);
+    editData.append("shift", shiftData);
+    editData.append("repeat", repeat);
+    editData.append("frequency", frequency);
+    // editData.append("selected_weekday", dayNumber);
+    // editData.append("nth_weekday", indexNumber);
+    editData.append("ends_on", formData.endOn);
+    editData.append("end_date", endDate);
+    try {
+      const res = await editRosterAssign(date.id, editData);
+      onClose();
+      toast.success("New Shift Update Successfully");
+      fetchRosterRecords();
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const handleEditRosterShift = async () => {
     try {
@@ -142,7 +269,6 @@ function RoasterShiftDetails({
     const fetchRoleAccess = async () => {
       try {
         const res = await getAdminAccess(orgId, empId);
-
         setRoleAccess(res[0]);
       } catch (error) {
         console.log(error);
@@ -152,7 +278,7 @@ function RoasterShiftDetails({
   }, []);
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center">
-      <div className="bg-white p-6 rounded-xl shadow-lg w-1/3">
+      <div className="bg-white p-6 rounded-xl shadow-lg w-2/3 md:w-1/3">
         {/* <div className="bg-white p-2 w-80"> */}
         <h2 className="font-semibold text-lg border-b mb-1">
           Selected Employee Details
@@ -207,9 +333,9 @@ function RoasterShiftDetails({
             <label className="block mb-2 font-medium">Select Shift</label>
             <select
               className="w-full p-2 border rounded"
-              value={formData.selectedShift}
-              onChange={handleChange}
-              name="selectedShift"
+              value={shiftData}
+              onChange={(e) => setShiftData(e.target.value)}
+              name="shiftData"
               disabled={!roleAccess?.can_assign_edit_delete_shifts}
             >
               <option value="">Select Shift</option>
@@ -221,7 +347,7 @@ function RoasterShiftDetails({
             </select>
           </div>
 
-           {/* <div className="mb-4">
+          {/* <div className="mb-4">
             <label className="block mb-2">Branch Location</label>
             <input
               type="text"
@@ -242,23 +368,27 @@ function RoasterShiftDetails({
               />
               Repeat?
             </label>
-          </div> 
+          </div>
           {repeat && (
             <div>
               <div className="flex flex-col">
                 <label htmlFor="" className="font-medium">
                   Select Frequency
                 </label>
-                <select name="" id="" className="w-full p-2 border rounded-md">
+                <select
+                  name=""
+                  id=""
+                  className="w-full p-2 border rounded-md"
+                  value={frequency}
+                  onChange={(e) => setFrequency(e.target.value)}
+                >
                   <option value="">Select</option>
-                  <option value="Daily">Daily</option>
-                  <option value="Weekly">Weekly</option>
-                  <option value="Monthly on same date">
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly_same_date">
                     Monthly on same date
                   </option>
-                  <option value="4th Monday of the month">
-                    4th Monday of the month
-                  </option>
+                  <option value="monthly_nth_weekday">{selectedDay}</option>
                 </select>
               </div>
               <div className="flex flex-col my-2">
@@ -271,9 +401,9 @@ function RoasterShiftDetails({
                       type="radio"
                       name="end"
                       id="never"
-                      checked={formData.endOn === "Never"}
+                      checked={formData.endOn === "never"}
                       onChange={() =>
-                        setFormData({ ...formData, endOn: "Never" })
+                        setFormData({ ...formData, endOn: "never" })
                       }
                     />
                     <label htmlFor="never">Never</label>
@@ -283,17 +413,23 @@ function RoasterShiftDetails({
                       type="radio"
                       name="end"
                       id="on"
-                      checked={formData.endOn === "On"}
-                      onChange={() => setFormData({ ...formData, endOn: "On" })}
+                      checked={formData.endOn === "on"}
+                      onChange={() => setFormData({ ...formData, endOn: "on" })}
                     />
                     <label htmlFor="on">On</label>
                   </div>
                 </div>
               </div>
-              {formData.endOn === "On" && (
+              {formData.endOn === "on" && (
                 <div className="flex flex-col gap-2">
-                  <label htmlFor="">End date</label>
-                  <input type="date" className="w-full p-2 border rounded-md" />
+                  <label htmlFor="endDate">End date</label>
+                  <input
+                    id="endDate"
+                    type="date"
+                    className="w-full p-2 border rounded-md"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                  />
                 </div>
               )}
             </div>
@@ -314,15 +450,22 @@ function RoasterShiftDetails({
           >
             <MdClose size={20} /> Cancel
           </button>
-          {roleAccess?.can_assign_edit_delete_shifts && (
-            <button
-              // style={{ background: themeColor }}
-              className="px-4 py-2 border border-green-500 text-green-500  rounded-full flex items-center gap-2"
-              onClick={handleEditRosterShift}
-            >
-              <FaCheck /> Save
-            </button>
-          )}
+          {roleAccess?.can_assign_edit_delete_shifts &&
+            (mode === "add" ? (
+              <button
+                className="px-4 py-2 border border-green-500 text-green-500 rounded-full flex items-center gap-2"
+                onClick={handleAddShift}
+              >
+                <FaCheck /> Add
+              </button>
+            ) : (
+              <button
+                className="px-4 py-2 border border-green-500 text-green-500 rounded-full flex items-center gap-2"
+                onClick={handleEditShift} // Assuming there's an edit function
+              >
+                <FaCheck /> Edit
+              </button>
+            ))}
         </div>
       </div>
     </div>
