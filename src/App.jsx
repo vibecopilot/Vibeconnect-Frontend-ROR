@@ -6937,7 +6937,7 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="/mycity-privacy"
+        <Route path="/privacy-policy-adani-realty"
         element={<MycityPrivacy />} />
 
 
