@@ -69,9 +69,9 @@ const Mom = () => {
   };
   return (
 
-    <section className="flex">
+    <section className="flex  ">
         <Navbar/>
-    <div className="overflow-hidden" >
+    <div className="overflow-hidden w-full" >
     
         {/* <Navbar /> */}
       <h2 className="text-2xl font-semibold pt-6 pl-[2%]">MOM LIST</h2>
