@@ -468,13 +468,13 @@ export const getAssignedTo = async (data) =>
       token: token,
     },
   });
- 
-    export const getFacilitySetup = async (data) =>
-      axiosInstance.get(`/amenities.json`,data, {
-        params: {
-          token: token,
-        },
-      });
+
+export const getFacilitySetup = async (data) =>
+  axiosInstance.get(`/amenities.json`, data, {
+    params: {
+      token: token,
+    },
+  });
 
 export const getIssueType = async () =>
   axiosInstance.get(`pms/admin/complaint_issue_types.json`, {
@@ -1307,7 +1307,6 @@ export const getAttendance = async (orgId, page) => {
   }
 };
 
-
 // export const getClientAttendance = async(siteId, today)
 // try {
 //   const response = await HrmsAuth.
@@ -1318,7 +1317,6 @@ export const getAttendance = async (orgId, page) => {
 //   console.error("Error getting employee attendance of today", error);
 //   throw error;
 // };
-
 
 export const getEmployeeAttendance = async (userId) =>
   axiosInstance.get(`/attendances.json?q[attendance_of_id]=${userId}`, {
@@ -1708,18 +1706,18 @@ export const postParking = async (data) =>
 
 // Permit Entity
 export const fetchPermitEntity = async () => {
-  try{
+  try {
     const response = axiosInstance.get(`/permit_entities.json`, {
       params: {
         token: token,
       },
     });
     return response;
-  }catch(error){
-    console.log("handling entities error:",error)
+  } catch (error) {
+    console.log("handling entities error:", error);
   }
-}
-// Permit Detail Activity 
+};
+// Permit Detail Activity
 export const postPermitSubActivity = async (data) =>
   axiosInstance.post(`/permit_sub_activities.json`, data, {
     params: {
@@ -1918,7 +1916,6 @@ export const getParkingSlots = async () =>
     },
   });
 
-
 export const getBookParking = async () =>
   axiosInstance.get(`/booking_parkings.json`, {
     params: {
@@ -1930,16 +1927,15 @@ export const fetchParkingDetail = async (id) =>
   axiosInstance.get(`/parking_configurations/${id}.json`, {
     params: {
       token: token,
-    }
-  })
+    },
+  });
 
 export const deleteBookParking = async (id) =>
   axiosInstance.delete(`/booking_parkings/${id}.json`, {
     params: {
       token: token,
-    }
-  })
-
+    },
+  });
 
 export const getAvailableParkingNumber = async () =>
   axiosInstance.get(`/available_parking_configurations.json`, {
@@ -4571,7 +4567,6 @@ export const editMyBankAccount = async (bankId, data) => {
   }
 };
 
-
 export const getManageAdmin = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
@@ -4626,9 +4621,9 @@ export const editManageAdminDetails = async (adminId, data) => {
   try {
     const response = await HrmsAuth.put(
       `/organization/user-setting/administrator-setting/${adminId}/`,
-      data,
+      data
     );
-    console.log(response.data)
+    console.log(response.data);
     return response.data;
   } catch (error) {
     console.error("Error edit Admin detail:", error);
@@ -5190,20 +5185,24 @@ export const getAttendanceRecord = async (orgId, page) => {
 
 export const getAttendanceRecordFilter = async (orgId, siteId, page) => {
   try {
-    const res = await HrmsAuth.get(`/employees/attendance-bulk?organization_id=${orgId}&associated_organization_id=${siteId}&page=${page}`, {
-      headers: {
-        "Content-Type": "multipart/form-data/",
-      },
-    });
+    const res = await HrmsAuth.get(
+      `/employees/attendance-bulk?organization_id=${orgId}&associated_organization_id=${siteId}&page=${page}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
     return res.data;
   } catch (error) {
     console.error("Error posting leave category:", error);
     throw error;
   }
-}
+};
 export const fetchByNumeric = async (orgId, associatedOrgId, numericValue) => {
   try {
-    const response = await HrmsAuth.get(`/employees/attendance-bulk?organization_id=${orgId}&associated_organization_id=${associatedOrgId}&id=${numericValue}`
+    const response = await HrmsAuth.get(
+      `/employees/attendance-bulk?organization_id=${orgId}&associated_organization_id=${associatedOrgId}&id=${numericValue}`
     );
     // if (!response.ok) throw new Error("Network response was not ok");
     return response.data;
@@ -5225,7 +5224,10 @@ export const fetchSiteDashboard = async (siteId) => {
   }
 };
 
-export const fetchByAssociatedOrganization = async (orgId, associatedOrgValue) => {
+export const fetchByAssociatedOrganization = async (
+  orgId,
+  associatedOrgValue
+) => {
   try {
     const response = await HrmsAuth.get(
       `/employees/attendance-bulk?organization_id=${orgId}&associated_organization_id=${associatedOrgValue}`
@@ -5238,12 +5240,12 @@ export const fetchByAssociatedOrganization = async (orgId, associatedOrgValue) =
   }
 };
 
-
-
 export const fetchByName = async (orgId, name) => {
   try {
     const response = await HrmsAuth.get(
-      `/employees/attendance-bulk?organization_id=${orgId}&name=${encodeURIComponent(name)}`
+      `/employees/attendance-bulk?organization_id=${orgId}&name=${encodeURIComponent(
+        name
+      )}`
     );
     // if (!response.ok) throw new Error("Network response was not ok");
     return response.data;
@@ -5265,7 +5267,6 @@ export const fetchById = async (orgId, id) => {
     throw error;
   }
 };
-
 
 export const postLeaveCategory = async (data) => {
   try {
@@ -5918,11 +5919,11 @@ export const editInvestmentSetting = async (invId, data) => {
 // Roaster
 export const fetchAllRoster = async (orgId) => {
   try {
-    const res = await HrmsAuth.get(`/roster/roster-shift/?organization_id=${orgId}`
+    const res = await HrmsAuth.get(
+      `/roster/roster-shift/?organization_id=${orgId}`
     );
     return res.data;
-  }
-  catch (error) {
+  } catch (error) {
     console.error("Error getting roster shift:", error);
     throw error;
   }
@@ -5942,13 +5943,15 @@ export const fetchByRoasterName = async (orgId, name) => {
 
 export const fetchRoasterBySite = async (orgId, siteId, date) => {
   try {
-    const res = await HrmsAuth.get(`/roster/roster-shift/?organization_id=${orgId}&associated_organization_id=${siteId}&date=${date}`);
+    const res = await HrmsAuth.get(
+      `/roster/roster-shift/?organization_id=${orgId}&associated_organization_id=${siteId}&date=${date}`
+    );
     return response.data;
   } catch (error) {
     console.error("Error getting roster shift:", error);
     throw error;
   }
-}
+};
 
 export const getRosterShift = async (orgId) => {
   try {
@@ -5981,6 +5984,16 @@ export const postRosterShift = async (data) => {
     throw error;
   }
 };
+export const postRosterAssign = async (data) => {
+  try {
+    const response = await HrmsAuth.post(`/roster/roster-shift/`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error post roster shift:", error);
+    throw error;
+  }
+};
+
 export const getRosterShiftDetails = async (shiftId) => {
   try {
     const response = await HrmsAuth.get(
@@ -6016,6 +6029,18 @@ export const getRosterRecords = async (orgId, page) => {
     throw error;
   }
 };
+export const getRosterRecordsFilter = async (orgId, siteId, page) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/roster/roster-shift/?organization_id=${orgId}&associated_organization_id=${siteId}&page=${page}`
+      // `/roster-shift-list/?organization_id=${orgId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting roster records:", error);
+    throw error;
+  }
+};
 export const getRosterRecordDetails = async (shiftId) => {
   try {
     const response = await HrmsAuth.get(`/roster/roster-shift/${shiftId}/`);
@@ -6028,6 +6053,18 @@ export const getRosterRecordDetails = async (shiftId) => {
 export const editRosterRecord = async (data) => {
   try {
     const response = await HrmsAuth.put(`/roster/roster-shift/`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error updating roster records:", error);
+    throw error;
+  }
+};
+export const editRosterAssign = async (shiftId, data) => {
+  try {
+    const response = await HrmsAuth.patch(
+      `/roster/roster-shift/${shiftId}/`,
+      data
+    );
     return response.data;
   } catch (error) {
     console.error("Error updating roster records:", error);
@@ -6916,45 +6953,58 @@ export const getNotification = async (id) => {
 
 export const getClientDashboard = async (id) => {
   try {
-    const response = await HrmsAuth.get(`/associated-organizations/mutiple-site/?&employee_id=${id}`, {
-      headers: {
-        "Content-Type": "multipart/form-data/",
-      },
-    })
+    const response = await HrmsAuth.get(
+      `/associated-organizations/mutiple-site/?&employee_id=${id}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
     return response.data; // Ensure it returns data
   } catch (error) {
     console.error("Error getting notifications:", error);
     return []; // Return empty array on error
   }
-}
+};
 
 export const getAssociatedOrgDash = async (empId, date) => {
   try {
-    const res = await HrmsAuth.get(`associated-organization-dashboard/mutiple-site/?employee_id=${empId}&start_date=${date}`,
+    const res = await HrmsAuth.get(
+      `associated-organization-dashboard/mutiple-site/?employee_id=${empId}&start_date=${date}`,
       {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      })
+      }
+    );
     return res.data;
   } catch (error) {
-    console.log("Error fetching the associated organization dashboard :", error)
+    console.log(
+      "Error fetching the associated organization dashboard :",
+      error
+    );
   }
-}
+};
 
 export const getClientRosterShift = async (orgId) => {
   try {
-    const res = await HrmsAuth.get(`roster/roster-shift/?organization_id=${orgId}`,
+    const res = await HrmsAuth.get(
+      `roster/roster-shift/?organization_id=${orgId}`,
       {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      })
+      }
+    );
     return res.data;
   } catch (error) {
-    console.log("Error fetching the associated organization dashboard :", error)
+    console.log(
+      "Error fetching the associated organization dashboard :",
+      error
+    );
   }
-}
+};
 
 export const updateNotificationStatus = async (notificationId) => {
   try {
@@ -6989,12 +7039,14 @@ export const getTotalHRMSEmployeeCount = async (orgId) => {
 };
 export const getAllDepartmentCount = async (orgId) => {
   try {
-    const res = await HrmsAuth.get(`/associated/?associated_organization_id=${orgId}&department_id=all`)
+    const res = await HrmsAuth.get(
+      `/associated/?associated_organization_id=${orgId}&department_id=all`
+    );
     return res.data;
   } catch (error) {
-    console.log("Error getting department count :", error)
+    console.log("Error getting department count :", error);
   }
-}
+};
 export const getDepartmentCount = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
@@ -7179,13 +7231,18 @@ export const getAssociatedSites = async (orgId) => {
 
 export const getTotalAttendance = async (empId, date) => {
   try {
-    const response = await HrmsAuth.get(`associated-organization-dashboard/mutiple-site/?employee_id=${empId}&start_date=${date}`);
+    const response = await HrmsAuth.get(
+      `associated-organization-dashboard/mutiple-site/?employee_id=${empId}&start_date=${date}`
+    );
     return response.data;
   } catch (error) {
-    console.log("error fetching total attendance site wise using empId and date:", error)
+    console.log(
+      "error fetching total attendance site wise using empId and date:",
+      error
+    );
     throw error;
   }
-}
+};
 
 export const getAssociatedSite = async (id) => {
   try {
@@ -7193,26 +7250,26 @@ export const getAssociatedSite = async (id) => {
       headers: {
         "Content-Type": "multipart/form-data/",
       },
-    })
+    });
     return res.data; // Ensure it returns data
   } catch (error) {
     console.error("Error getting notifications:", error);
     return []; // Return empty array on error
   }
-}
+};
 export const getAssociatedSiteOnly = async (id) => {
   try {
     const res = await HrmsAuth.get(`/associated/${id}`, {
       headers: {
         "Content-Type": "multipart/form-data/",
       },
-    })
+    });
     return res.data; // Ensure it returns data
   } catch (error) {
     console.error("Error getting notifications:", error);
     return []; // Return empty array on error
   }
-}
+};
 
 export const postAssociatedSites = async (data) => {
   try {
@@ -7553,43 +7610,45 @@ export const getSiteWiseEmployee = async (orgId, siteId) => {
 
 export const getFullUser = async (orgId) => {
   try {
-    const res = await HrmsAuth.get(`/user-details/download?associated_organization_id=${orgId}`, {
-      params: {
-        token: token,
-      },
-    });
-    return res.data;
-  } catch (error) {
-    console.log("Error fetching the organizational level user detail", error);
-    throw error;
-  }
-}
-
-export const getSiteWiseUserDetails = async (siteId) => {
-  try {
-    const res = await HrmsAuth.get(`/user-details/download?associated_organization_id=${siteId}`, {
-      params: {
-        token: token,
-      },
-    });
-    return res.data;
-  } catch (error) {
-    console.log("Error fetching the organizational level user detail", error);
-    throw error;
-  }
-}
-
-export const markEmployeeAttendance = async (data) => {
-  try {
-    const response = await HrmsAuth.post(
-      `/employee/attendance/`,
-      data,
+    const res = await HrmsAuth.get(
+      `/user-details/download?associated_organization_id=${orgId}`,
       {
-        headers: {
-          "Content-Type": "multipart/form-data/",
+        params: {
+          token: token,
         },
       }
     );
+    return res.data;
+  } catch (error) {
+    console.log("Error fetching the organizational level user detail", error);
+    throw error;
+  }
+};
+
+export const getSiteWiseUserDetails = async (siteId) => {
+  try {
+    const res = await HrmsAuth.get(
+      `/user-details/download?associated_organization_id=${siteId}`,
+      {
+        params: {
+          token: token,
+        },
+      }
+    );
+    return res.data;
+  } catch (error) {
+    console.log("Error fetching the organizational level user detail", error);
+    throw error;
+  }
+};
+
+export const markEmployeeAttendance = async (data) => {
+  try {
+    const response = await HrmsAuth.post(`/employee/attendance/`, data, {
+      headers: {
+        "Content-Type": "multipart/form-data/",
+      },
+    });
     return response.data;
   } catch (error) {
     console.error("Error posting employee attendance", error);
@@ -7618,7 +7677,11 @@ export const getEmployeeAttendanceOfMonth = async (
     throw error;
   }
 };
-export const getEmployeeAttendanceOfToday = async (empId, startDate, endDate) => {
+export const getEmployeeAttendanceOfToday = async (
+  empId,
+  startDate,
+  endDate
+) => {
   try {
     const response = await HrmsAuth.get(
       `/employee/attendance/?employee_id=${empId}&start_date=${startDate}&end_date=${endDate}`,
@@ -7810,7 +7873,6 @@ export const getEmployeeEsic = async (empId) => {
   }
 };
 
-
 export const getFamilyMember = async (id) => {
   try {
     const response = await HrmsAuth.get(
@@ -7846,8 +7908,6 @@ export const postEsicCard = async (empId, data) => {
     throw error;
   }
 };
-
-
 
 export const postFamilyEsic = async (data) => {
   try {
@@ -7979,7 +8039,7 @@ export const editOutbound = async (id, payload) => {
   return axiosInstance.put(`/mail_room_outbounds/${id}.json`, payload, {
     params: {
       token: token,
-    },// Ensure the token is included correctly
+    }, // Ensure the token is included correctly
   });
 };
 
@@ -8561,10 +8621,8 @@ export const updateIncidents = async (id, data) =>
   axiosInstance.put(`/incidents/${id}.json`, data, {
     params: {
       token: token,
-
     },
   });
-
 
 const defaultIp = getItemInLocalStorage("DEFAULT");
 const defaultUsername = getItemInLocalStorage("DeviceUsername");
