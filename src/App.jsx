@@ -758,6 +758,7 @@ import PrivacyPolicy from "./pages/Setup/Abous/PrivacyPolicy.jsx";
 import OtpAndQr from "./pages/OtpAndQr.jsx";
 import Mom from "./pages/Mom/Mom.jsx";
 import NewMom from "./pages/Mom/NewMom.jsx";
+import MycityPrivacy from "./pages/MycityPrivacy.jsx";
 
 function App() {
   const { id } = useParams();
@@ -6911,6 +6912,8 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route path="/mycity-privacy"
+        element={<MycityPrivacy />} />
 
 
       </Routes>
