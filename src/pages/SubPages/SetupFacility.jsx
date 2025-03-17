@@ -1,8 +1,4 @@
 import React, { useState } from "react";
-import TextFields from "../../containers/Inputs/TextFields";
-import FileInput from "../../Buttons/FileInput";
-import TimeHourPicker from "../../containers/TimeHourPicker";
-import TimeMinPicker from "../../containers/TimeMinPicker";
 import Navbar from "../../components/Navbar";
 import { useSelector } from "react-redux";
 import FileInputBox from "../../containers/Inputs/FileInputBox";
@@ -222,7 +218,8 @@ const SetupFacility = () => {
         const data = await response.json();
         
         console.log(data);
-        toast.success("Facility added successfully");
+         toast.success("Facility added successfully");
+        history.push("/setup/facility");
       } else {
         const error = await response.json();
         console.error(error);
