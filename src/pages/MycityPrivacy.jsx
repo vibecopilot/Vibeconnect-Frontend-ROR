@@ -3,19 +3,17 @@ import React from 'react'
 const MycityPrivacy = () => {
 
 
-
-
   return (
    <>
    
    <div className="max-w-4xl mx-auto px-4 py-8 bg-white shadow-lg">
       <h1 className="text-3xl md:text-4xl font-bold text-slate-800 mb-4">
-        Privacy Policy for Myciti.life Residents App
+        Privacy Policy for Adani Realty Residents App
       </h1>
 
       <p className="text-slate-700 mb-8">
-        Myciti.life ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we
-        collect, use, disclose, and safeguard your information when you use the Myciti.life Residents App. By accessing
+        Adani Realty ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we
+        collect, use, disclose, and safeguard your information when you use the Adani Realty Residents App. By accessing
         or using the App, you agree to the practices outlined in this Privacy Policy.
       </p>
 
@@ -134,10 +132,10 @@ const MycityPrivacy = () => {
        
       </section>
       <div className='py-5 bg-slate-100 px-3'>
-        <h1>Myciti.life</h1>
-        <p>Email - myciti.lifeofficial@gmail.com</p>
+        <h1>Adani Realty</h1>
+        <p>Email - adani.realityofficial@gmail.com</p>
       </div>
-      <p className='py-4'>By using the Myciti.life Residents App, you acknowledge that you have read and agree to this Privacy Policy.</p>
+      <p className='py-4'>By using the Adani Realty Residents App, you acknowledge that you have read and agree to this Privacy Policy.</p>
     </div>
    
    </>
