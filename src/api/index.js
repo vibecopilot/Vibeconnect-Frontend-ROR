@@ -6020,7 +6020,7 @@ export const editRosterShiftDetails = async (shiftId, data) => {
 export const getRosterRecords = async (orgId, page) => {
   try {
     const response = await HrmsAuth.get(
-      `/roster-shift-list/?organization_id=${orgId}&page=${page}`
+      `/roster/roster-shift-dashboard/?organization_id=${orgId}&page=${page}`
       // `/roster-shift-list/?organization_id=${orgId}`
     );
     return response.data;
@@ -6032,7 +6032,7 @@ export const getRosterRecords = async (orgId, page) => {
 export const getRosterRecordsFilter = async (orgId, siteId, page) => {
   try {
     const response = await HrmsAuth.get(
-      `/roster/roster-shift/?organization_id=${orgId}&associated_organization_id=${siteId}&page=${page}`
+      `/roster/roster-shift-dashboard/?organization_id=${orgId}&associated_organization_id=${siteId}&page=${page}`
       // `/roster-shift-list/?organization_id=${orgId}`
     );
     return response.data;
