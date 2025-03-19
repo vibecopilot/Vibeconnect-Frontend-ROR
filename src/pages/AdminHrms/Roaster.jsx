@@ -174,8 +174,8 @@ const Roster = () => {
   // };
   const handlePageChange = (page) => {
     console.log("Pagination new page:", page);
-    setPageNumber(page);
-    if (!selectedSite || selectedSite.site_name === "Select All Sites") {
+    setPageNumber(pageNumber);
+    if (selectedSite === "all" || selectedSite === null) {
       fetchRosterRecords(page);
     } else {
       fetchRosterRecordFilter(page, selectedSite.id);
@@ -211,37 +211,33 @@ const Roster = () => {
         >
           <h1 className="text-2xl font-medium">Roster Record</h1>
           <div className="flex items-center space-x-2 text-black">
-            <div className="w-72">
-              <CustomDropdown
-                AllSites={allSites}
-                selectedValue={selectedSite}
-                onSelect={(site) => {
-                  if (site.site_name === "Select All Sites") {
-                    setSelectedSite(null);
-                    fetchRosterRecords(1);
-                  } else {
-                    setSelectedSite(site);
-                    fetchRosterRecordFilter(1, site.id);
-                  }
-                }}
-              />
-            </div>
+            <CustomDropdown
+              AllSites={allSites}
+              selectedValue={selectedSite}
+              onSelect={(site) => {
+                if (site.site_name === "Select All Sites") {
+                  setSelectedSite(null);
+                  fetchRosterRecords(1);
+                } else {
+                  setSelectedSite(site);
+                  fetchRosterRecordFilter(1, site.id);
+                }
+              }}
+            />
             <input
               className="border p-2 w-64 px-4 text-black rounded-md"
               type="month"
               value={currentMonth}
               onChange={(e) => setCurrentMonth(e.target.value)}
             />
-            <div className="">
-              {roleAccess?.can_assign_edit_delete_shifts && (
-                <button
-                  className="bg-white p-2 px-5 rounded-md text-black font-medium w-full"
-                  onClick={() => setAssignShifts(true)}
-                >
-                  Assign Shifts
-                </button>
-              )}
-            </div>
+            {roleAccess?.can_assign_edit_delete_shifts && (
+              <button
+                className="bg-white p-2 px-5 rounded-md text-black font-medium whitespace-nowrap"
+                onClick={() => setAssignShifts(true)}
+              >
+                Assign Shifts
+              </button>
+            )}
             {/* <button onClick={toggleModal} className="border p-2 rounded-md">
               Upload Records
             </button>
