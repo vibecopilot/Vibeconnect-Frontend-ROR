@@ -2,13 +2,12 @@ import React, { useEffect, useState } from "react";
 import { getUserOtp } from "../api";
 import { useParams, useSearchParams } from "react-router-dom";
 // import { ChevronLeft } from "lucide-react"
-import {domainPrefix} from "../api/index";
+import { domainPrefix } from "../api/index";
 // import Image from "next/image"
 
 const OtpAndQr = () => {
-
   const [searchParams] = useSearchParams();
-  const id = searchParams.get("v"); 
+  const id = searchParams.get("v");
   // const {id} = useParams();
   console.log("id:", id);
   const [userData, setUserData] = useState({});
@@ -16,8 +15,6 @@ const OtpAndQr = () => {
   //const [qrCode, setQrCode] = useState('');
   const [qrCodeImageUrl, setQrCodeImageUrl] = useState("");
   const [otpDigits, setOtpDigits] = useState([]);
-
-  
 
   useEffect(() => {
     const fetchData = async () => {
@@ -27,19 +24,19 @@ const OtpAndQr = () => {
         setUserData(response.data);
         setOtpDigits(response.data.otp.toString().split(""));
         setQrCodeImageUrl(response.data.qr_code_image_url);
-        
+
         console.log("OTP Digits:", response.data.otp.toString().split(""));
         console.log("QR Code URL:", response.data.qr_code_image_url);
       } catch (error) {
         console.error("Error fetching OTP data:", error);
       }
     };
-  
+
     fetchData();
   }, [id]);
 
   return (
-    <div className="flex flex-col items-center min-h-screen bg-gray-100">
+    <div className="flex flex-col items-center min-h-screen bg-gray-100 pt-3 pb-8">
       {/* Mobile frame */}
       <div className="relative max-w-lg w-full bg-white shadow-lg rounded-xl overflow-hidden">
         {/* Header */}
@@ -74,10 +71,29 @@ const OtpAndQr = () => {
                 />
               </div>
             </div>
-            <div className="flex-1">
-              <h2 className="font-bold text-lg"> Name :{userData.name}</h2>
-              <p className="text-gray-600 text-sm">{userData.purpose}</p>
-              <p className="text-gray-500 text-xs">Type: {userData.visit_type}</p>
+            <div className="flex-1 space-y-1">
+              <h2 className="font-bold text-lg">
+                {" "}
+                Name : <span>{userData.name}</span>
+              </h2>
+              <p className="font-medium text-xs">
+                Purpose:
+                <span className="font-normal text-gray-600 mx-1">
+                  {userData.purpose}
+                </span>
+              </p>
+              <p className="font-medium text-xs">
+                Type:{" "}
+                <span className="font-normal text-gray-600 mx-1">
+                  {userData.visit_type}
+                </span>
+              </p>
+              <p className="font-medium text-xs">
+                Host:
+                <span className="font-normal text-gray-600 mx-1">
+                  {userData.hosts?.length ? userData.hosts[0].full_name : "N/A"}
+                </span>
+              </p>
             </div>
             <div className="text-xs text-gray-500">
               {userData.wing} {userData.floor}
@@ -88,7 +104,9 @@ const OtpAndQr = () => {
           <div className="flex justify-between mb-6">
             <div className="bg-yellow-100 rounded-lg p-2 text-center w-[45%]">
               <p className="text-xs font-medium">Start Date</p>
-              <p className="text-sm font-bold">{new Date(userData.created_at).toLocaleDateString()}</p>
+              <p className="text-sm font-bold">
+                {new Date(userData.created_at).toLocaleDateString()}
+              </p>
             </div>
 
             {/* Company logo */}
@@ -100,7 +118,9 @@ const OtpAndQr = () => {
 
             <div className="bg-yellow-100 rounded-lg p-2 text-center w-[45%]">
               <p className="text-xs font-medium">End Date</p>
-              <p className="text-sm font-bold">{new Date(userData.created_at).toLocaleDateString()}</p>
+              <p className="text-sm font-bold">
+                {new Date(userData.created_at).toLocaleDateString()}
+              </p>
             </div>
           </div>
 
@@ -114,13 +134,13 @@ const OtpAndQr = () => {
           {/* QR code section */}
           <div className="text-center mb-6">
             <p className="text-sm font-medium mb-2">Scan QR For Entry</p>
-            
+
             <div className="flex justify-center mb-2">
               <div className="h-40 w-40 bg-white border border-gray-300 flex items-center justify-center">
                 <img
                   // src={domainPrifix+qrCodeImageUrl[0].}
                   //  src={qrCodeImageUrl}
-                  
+
                   src={domainPrefix + qrCodeImageUrl}
                   alt="QR Code"
                   width={140}
