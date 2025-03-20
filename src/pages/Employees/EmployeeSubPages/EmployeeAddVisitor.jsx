@@ -117,9 +117,12 @@ const EmployeeAddVisitor = () => {
     if (formData.visitorName === "") {
       return toast.error("Provide Visitor name");
     }
-    if (formData.purpose === "") {
-      return toast.error("Provide Purpose");
+    if (formData.host === "") {
+      return toast.error("Provide Host name");
     }
+    // if (formData.purpose === "") {
+    //   return toast.error("Provide Purpose");
+    // }
     if (formData.mobile === "") {
       return toast.error("Provide Visitor Mobile Number");
     }
@@ -532,7 +535,8 @@ const EmployeeAddVisitor = () => {
           {behalf !== "Cab" && (
             <div className="grid gap-2 items-center w-full">
               <label htmlFor="visitorName" className="font-semibold">
-                Visitor Name:
+                Visitor Name:{" "}
+                <span className="text-red-500 font-medium px-1">*</span>
               </label>
               <input
                 value={formData.visitorName}
@@ -550,6 +554,7 @@ const EmployeeAddVisitor = () => {
               <div className="grid gap-2 items-center w-full">
                 <label htmlFor="mobileNumber" className="font-semibold">
                   Mobile Number:
+                  <span className="text-red-500 font-medium px-1">*</span>
                 </label>
                 <input
                   type="number"
@@ -565,6 +570,7 @@ const EmployeeAddVisitor = () => {
                 <div className="grid gap-2 items-center w-full">
                   <label htmlFor="" className="font-medium">
                     Host :
+                    <span className="text-red-500 font-medium px-1">*</span>
                   </label>
                   <Select
                     options={hosts}
@@ -603,7 +609,8 @@ const EmployeeAddVisitor = () => {
           {behalf !== "Delivery" && behalf !== "Cab" && (
             <div className="grid gap-2 items-center w-full">
               <label htmlFor="comingFrom" className="font-semibold">
-                Coming from:
+                Coming from:{" "}
+                <span className="text-red-500 font-medium px-1">*</span>
               </label>
               <input
                 type="text"
