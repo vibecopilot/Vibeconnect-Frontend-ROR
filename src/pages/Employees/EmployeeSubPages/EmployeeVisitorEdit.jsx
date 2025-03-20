@@ -9,11 +9,12 @@ import {
   getSetupUsers,
   getVisitorDetails,
   postNewVisitor,
+  getHostList,
 } from "../../../api";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
 import { useNavigate, useParams } from "react-router-dom";
 import { BiEdit } from "react-icons/bi";
-
+import Select from "react-select";
 const EmployeeVisitorEdit = () => {
   const siteId = getItemInLocalStorage("SITEID");
   const userId = getItemInLocalStorage("UserId");
@@ -27,6 +28,7 @@ const EmployeeVisitorEdit = () => {
   const [selectedVisitorType, setSelectedVisitorType] = useState("Guest");
   const [passStartDate, setPassStartDate] = useState("");
   const [passEndDate, setPassEndDate] = useState("");
+  const [hosts, setHosts] = useState([]);
   const [formData, setFormData] = useState({
     visitorName: "",
     mobile: "",
@@ -38,6 +40,7 @@ const EmployeeVisitorEdit = () => {
     hostApproval: false,
     goodsInward: false,
     host: "",
+    hostName: "",
     passNumber: "",
     notes: "",
   });
@@ -48,14 +51,17 @@ const EmployeeVisitorEdit = () => {
       try {
         const detailsResp = await getVisitorDetails(id);
         const editDetail = detailsResp.data;
-
+        console.log(
+          editDetail?.hosts?.[0]?.full_name || "Data is not available"
+        );
         console.log(editDetail);
         setFormData({
           ...formData,
           visitorName: editDetail.name,
           mobile: editDetail.contact_no,
           purpose: editDetail.purpose,
-          host: editDetail.created_by_id,
+          // host: editDetail.created_by_id,
+          host: editDetail?.hosts?.[0]?.full_name || "NA",
           comingFrom: editDetail.coming_from,
           vehicleNumber: editDetail.vehicle_number,
           expectedDate: editDetail.expected_date,
@@ -88,7 +94,21 @@ const EmployeeVisitorEdit = () => {
         console.log(error);
       }
     };
+    const fetchHost = async () => {
+      try {
+        const usersResp = await getHostList(siteId);
+        const hostOptions = usersResp.data.hosts.map((host) => ({
+          value: host.id,
+          label: host.name,
+        }));
+        setHosts(hostOptions);
+        console.log(usersResp);
+      } catch (error) {
+        console.log(error);
+      }
+    };
     fetchVisitorDetails();
+    fetchHost();
   }, [id]);
   console.log(formData);
   const handleFrequencyChange = (e) => {
@@ -96,6 +116,9 @@ const EmployeeVisitorEdit = () => {
   };
   const handleVisitorTypeChange = (e) => {
     setSelectedVisitorType(e.target.value);
+  };
+  const handleHostChange = (selectedOption) => {
+    setFormData({ ...formData, host: selectedOption?.value || "" });
   };
   console.log(passEndDate);
   console.log(passStartDate);
@@ -241,23 +264,23 @@ const EmployeeVisitorEdit = () => {
         );
       }
       if (imageFile) {
-    postData.append("visitor[image]", imageFile);
-  }
+        postData.append("visitor[image]", imageFile);
+      }
     });
     try {
       const visitResp = await editVisitorDetails(id, postData);
       console.log(visitResp);
-      navigate(`/employee/passes/visitors/visitor-details/${visitResp.data.id}`);
+      navigate(
+        `/employee/passes/visitors/visitor-details/${visitResp.data.id}`
+      );
     } catch (error) {
       console.log(error);
     }
   };
- 
-
+  console.log(formData.host);
   return (
     <div className="flex justify-center items-center  w-full p-4">
       <div className="md:border border-gray-300 rounded-lg md:p-4 w-full md:mx-4 ">
-       
         <h2
           style={{ background: themeColor }}
           className="text-center md:text-xl font-bold p-2 bg-black rounded-full text-white"
@@ -400,9 +423,20 @@ const EmployeeVisitorEdit = () => {
               placeholder="Enter Mobile Number"
             />
           </div>
-
-          
-
+          <div className="grid gap-2 items-center w-full">
+            <label htmlFor="" className="font-medium">
+              Host :<span className="text-red-500 font-medium px-1">*</span>
+            </label>
+            <Select
+              options={hosts}
+              value={formData.host}
+              // value={hosts.find((option) => option.id === formData.host)}
+              onChange={handleHostChange}
+              placeholder="Select Person to meet"
+              isClearable
+              classNamePrefix="react-select"
+            />
+          </div>
           <div className="grid gap-2 items-center w-full">
             <label htmlFor="additionalVisitor" className="font-semibold">
               Pass Number
