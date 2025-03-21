@@ -54,6 +54,8 @@ const EmployeeVisitorEdit = () => {
         console.log(
           editDetail?.hosts?.[0]?.full_name || "Data is not available"
         );
+        const visitorHostUserId = editDetail?.hosts?.[0]?.user_id || "";
+        console.log(visitorHostUserId);
         console.log(editDetail);
         setFormData({
           ...formData,
@@ -61,7 +63,8 @@ const EmployeeVisitorEdit = () => {
           mobile: editDetail.contact_no,
           purpose: editDetail.purpose,
           // host: editDetail.created_by_id,
-          host: editDetail?.hosts?.[0]?.full_name || "NA",
+          // host: editDetail?.hosts?.[0]?.id || "",
+          host: visitorHostUserId,
           comingFrom: editDetail.coming_from,
           vehicleNumber: editDetail.vehicle_number,
           expectedDate: editDetail.expected_date,
@@ -98,13 +101,14 @@ const EmployeeVisitorEdit = () => {
       try {
         const usersResp = await getHostList(siteId);
         const hostOptions = usersResp.data.hosts.map((host) => ({
-          value: host.id,
-          label: host.name,
+          value: host.id, // Store host ID from host list
+          label: host.name, // Show full name
         }));
+
+        console.log("Fetched hosts:", hostOptions);
         setHosts(hostOptions);
-        console.log(usersResp);
       } catch (error) {
-        console.log(error);
+        console.log("Error fetching hosts:", error);
       }
     };
     fetchVisitorDetails();
@@ -118,7 +122,10 @@ const EmployeeVisitorEdit = () => {
     setSelectedVisitorType(e.target.value);
   };
   const handleHostChange = (selectedOption) => {
-    setFormData({ ...formData, host: selectedOption?.value || "" });
+    setFormData((prevData) => ({
+      ...prevData,
+      host: selectedOption?.value || "",
+    }));
   };
   console.log(passEndDate);
   console.log(passStartDate);
@@ -397,6 +404,7 @@ const EmployeeVisitorEdit = () => {
           <div className="grid gap-2 items-center w-full">
             <label htmlFor="visitorName" className="font-semibold">
               Visitor Name:
+              <span className="text-red-500 font-medium px-1">*</span>
             </label>
             <input
               type="text"
@@ -412,6 +420,7 @@ const EmployeeVisitorEdit = () => {
           <div className="grid gap-2 items-center w-full">
             <label htmlFor="mobileNumber" className="font-semibold">
               Mobile Number :
+              <span className="text-red-500 font-medium px-1">*</span>
             </label>
             <input
               type="number"
@@ -429,8 +438,9 @@ const EmployeeVisitorEdit = () => {
             </label>
             <Select
               options={hosts}
-              value={formData.host}
-              // value={hosts.find((option) => option.id === formData.host)}
+              value={
+                hosts.find((option) => option.value === formData.host) || null
+              } // Match user_id
               onChange={handleHostChange}
               placeholder="Select Person to meet"
               isClearable
@@ -455,6 +465,7 @@ const EmployeeVisitorEdit = () => {
           <div className="grid gap-2 items-center w-full">
             <label htmlFor="comingFrom" className="font-semibold">
               Coming from:
+              <span className="text-red-500 font-medium px-1">*</span>
             </label>
             <input
               type="text"
