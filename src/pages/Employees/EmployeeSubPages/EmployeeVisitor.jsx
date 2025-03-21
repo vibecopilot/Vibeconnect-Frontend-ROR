@@ -37,17 +37,18 @@ const EmployeeVisitor = () => {
 
   const handleSubmitModal = async () => {
     const mobileNumber = document.querySelector('input[type="mobile"]').value;
+    const loadingToast = toast.loading("Please wait...");
     try {
       const response = await getExpectedVisitor();
       const existingVisitor = response.data.find(
         (visitor) => visitor.contact_no === mobileNumber
       );
-      if(mobileNumber === ""){
+      if (mobileNumber === "") {
         toast.error("Please enter mobile number");
         return;
       }
+      toast.dismiss(loadingToast);
       if (existingVisitor) {
-        
         navigate(
           `/employee/passes/visitors/edit-visitor/${existingVisitor.id}`
         );
@@ -56,6 +57,7 @@ const EmployeeVisitor = () => {
       }
     } catch (error) {
       console.error(error);
+      toast.dismiss(loadingToast);
       toast.error("Error fetching visitor data");
     }
     setAddNewVisitorModal(false);
@@ -596,7 +598,7 @@ const EmployeeVisitor = () => {
                   </button>
                 )}
                 <div className="visitors-page">
-                  <Link to="#" onClick={handleAddNewVisitor}>
+                  <button onClick={handleAddNewVisitor}>
                     <div
                       style={{ background: themeColor }}
                       className=" font-semibold  hover:text-white duration-150 transition-all p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
@@ -604,7 +606,7 @@ const EmployeeVisitor = () => {
                       <PiPlusCircle size={20} />
                       Add New Visitor
                     </div>
-                  </Link>
+                  </button>
 
                   {addNewVisitorModal && (
                     <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-30 backdrop-blur-sm z-20">
@@ -615,9 +617,8 @@ const EmployeeVisitor = () => {
                             Enter Mobile Number
                           </label>
                           <input
-                          
                             type="mobile"
-                            placeholder="Mobile Number"
+                            placeholder="Mobile Number for visiter name"
                             className="border border-gray-300  p-2 text-sm w-full"
                           />
                         </div>
