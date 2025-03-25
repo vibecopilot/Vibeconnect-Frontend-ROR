@@ -37,7 +37,7 @@ const EmployeeVisitor = () => {
 
   const handleSubmitModal = async () => {
     const mobileNumber = document.querySelector('input[type="mobile"]').value;
-    const loadingToast = toast.loading("Please wait...");
+    const loadingToast = toast.loading("Please wait..."); // Store toast ID
     try {
       const response = await getExpectedVisitor();
       const existingVisitor = response.data.find(
@@ -53,7 +53,7 @@ const EmployeeVisitor = () => {
           `/employee/passes/visitors/edit-visitor/${existingVisitor.id}`
         );
       } else {
-        navigate(`/employee/add-new-visitor`);
+        navigate(`/employee/add-new-visitor?mobileNumber=${mobileNumber}`);
       }
     } catch (error) {
       console.error(error);
@@ -95,6 +95,7 @@ const EmployeeVisitor = () => {
   };
   const [userVisitors, setUserVisitors] = useState([]);
   const [FilteredUserVisitors, setFilteredUserVisitors] = useState([]);
+  console.log(FilteredUserVisitors);
   const fetchUserVisitors = async () => {
     try {
       const visitorResp = await getExpectedUserVisitor();
@@ -547,6 +548,15 @@ const EmployeeVisitor = () => {
     return () => clearInterval(intervalId);
   }, []);
 
+  const [mobile, setMobile] = useState("");
+
+  const handleChangeMobile = (e) => {
+    let value = e.target.value.replace(/\D/g, ""); // Remove non-numeric characters
+    if (value.length <= 10) {
+      setMobile(value); // Update state only if length ≤ 10
+    }
+  };
+
   return (
     <div className="visitors-page">
       <section className="flex">
@@ -617,9 +627,12 @@ const EmployeeVisitor = () => {
                             Enter Mobile Number
                           </label>
                           <input
-                            type="mobile"
-                            placeholder="Mobile Number for visiter name"
-                            className="border border-gray-300  p-2 text-sm w-full"
+                            type="tel"
+                            placeholder="Mobile Number"
+                            className="border border-gray-300 p-2 text-sm w-full"
+                            value={mobile}
+                            onChange={handleChangeMobile}
+                            maxLength={10}
                           />
                         </div>
                         <div className="border-t p-1 flex items-center justify-center gap-2">
@@ -629,12 +642,13 @@ const EmployeeVisitor = () => {
                           >
                             <MdClose /> Cancel
                           </button>
-                          <button
+                          <Link
+                            to={`/employee/add-new-visitor?mobileNumber=${mobile}`}
                             className="bg-green-400 text-white p-1 px-4  flex items-center gap-2"
-                            onClick={handleSubmitModal}
+                            // onClick={handleSubmitModal}
                           >
                             <FaCheck /> Submit
-                          </button>
+                          </Link>
                         </div>
                       </div>
                     </div>
