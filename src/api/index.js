@@ -2051,6 +2051,12 @@ export const getServicesRoutineDetails = async (id) =>
       token: token,
     },
   });
+export const getExpectedMobile = async (mobile) =>
+  axiosInstance.get(`/visitors/get_visitor.json?mobile=${mobile}`, {
+    params: {
+      token: token,
+    },
+  });
 export const getExpectedVisitor = async () =>
   axiosInstance.get(`/visitors.json`, {
     params: {

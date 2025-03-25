@@ -12,8 +12,9 @@ import {
   postNewGoods,
   postNewVisitor,
   postVisitorInDevice,
+  getExpectedMobile,
 } from "../../../api";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import FileInputBox from "../../../containers/Inputs/FileInputBox";
 import Select from "react-select";
 import Webcam from "react-webcam";
@@ -33,14 +34,58 @@ const EmployeeAddVisitor = () => {
   const [staffCategories, setStaffCategories] = useState([]);
   const [showWebcam, setShowWebcam] = useState(false);
   const [capturedImage, setCapturedImage] = useState(null);
+  const [searchParams] = useSearchParams();
+  const [data, setData] = useState({});
+  const mobileNo = searchParams.get("mobileNumber");
+  console.log(mobileNo);
+  const [time, setTime] = useState(new Date());
+  let expDate = "";
+  let expTime = "";
+  useEffect(() => {
+    const newTime = new Date();
+    setTime((prevTime) => {
+      expDate = `${newTime.getDate()}-${
+        newTime.getMonth() + 1
+      }-${newTime.getFullYear()}`;
+      console.log("Updated Date:", expDate);
+      expTime = `${newTime.getHours()}:${newTime.getMinutes()}`;
+      console.log("Updated Time:", expTime);
+
+      return newTime; // Update state only if needed
+    });
+  }, []); //
+  const getData = async (mobileNo) => {
+    try {
+      const response = await getExpectedMobile(mobileNo);
+      console.log(response.data);
+      const visitorHostUserId = response?.data?.hosts?.[0]?.user_id || "";
+      setFormData({
+        ...formData,
+        visitorName: response.data.name,
+        purpose: response.data.purpose,
+        passNumber: response.data.pass_number,
+        comingFrom: response.data.coming_from,
+        vehicleNumber: response.data.vehicle_number,
+        host: visitorHostUserId,
+      });
+    } catch (error) {
+      console.error(error);
+      toast.error("Add New number");
+    }
+  };
+
+  useEffect(() => {
+    getData(mobileNo);
+  }, [mobileNo]);
+
   const [formData, setFormData] = useState({
     visitorName: "",
-    mobile: "",
+    mobile: mobileNo,
     purpose: "",
     comingFrom: "",
     vehicleNumber: "",
-    expectedDate: "",
-    expectedTime: "",
+    expDate: new Date().toISOString().split("T")[0],
+    expTime: new Date().toLocaleTimeString().slice(0, 5),
     hostApproval: false,
     goodsInward: false,
     host: "",
@@ -51,7 +96,6 @@ const EmployeeAddVisitor = () => {
     goodsAttachments: [],
     slotNumber: "",
   });
-  console.log(formData);
   const themeColor = useSelector((state) => state.theme.color);
   const handleFrequencyChange = (e) => {
     setSelectedFrequency(e.target.value);
@@ -164,8 +208,8 @@ const EmployeeAddVisitor = () => {
     postData.append("visitor[end_pass]", passEndDate);
     postData.append("visitor[coming_from]", formData.comingFrom);
     postData.append("visitor[vehicle_number]", formData.vehicleNumber);
-    postData.append("visitor[expected_date]", formData.expectedDate);
-    postData.append("visitor[expected_time]", formData.expectedTime);
+    postData.append("visitor[expected_date]", formData.expDate);
+    postData.append("visitor[expected_time]", formData.expTime);
     postData.append("visitor[skip_host_approval]", formData.hostApproval);
     postData.append("visitor[goods_inwards]", formData.goodsInward);
     postData.append("visitor[visit_type]", selectedVisitorType);
@@ -317,8 +361,14 @@ const EmployeeAddVisitor = () => {
     fetchVisitorCategory();
   }, []);
   const handleHostChange = (selectedOption) => {
-    setFormData({ ...formData, host: selectedOption?.value || "" });
+    setFormData((prevData) => ({
+      ...prevData,
+      host: selectedOption?.value || "",
+    }));
   };
+  // const handleHostChange = (selectedOption) => {
+  //   setFormData({ ...formData, host: selectedOption?.value || "" });
+  // };
   const handleOpenCamera = () => {
     setShowWebcam(true);
   };
@@ -574,7 +624,13 @@ const EmployeeAddVisitor = () => {
                   </label>
                   <Select
                     options={hosts}
-                    // value={hostOptions.find((option) => option.value === formData.host)}
+                    value={
+                      hosts.find((option) => option.value === formData.host) ||
+                      null
+                    }
+                    // value={hostOptions.find(
+                    //   (option) => option.value === formData.host
+                    // )}
                     onChange={handleHostChange}
                     placeholder="Select Person to meet"
                     isClearable
@@ -647,9 +703,9 @@ const EmployeeAddVisitor = () => {
               type="date"
               id="expectedDate"
               className="border border-gray-400 p-2 rounded-md"
-              value={formData.expectedDate}
+              value={formData.expDate || new Date().toISOString().split("T")[0]}
               onChange={handleChange}
-              name="expectedDate"
+              name="expDate"
               min={new Date().toISOString().split("T")[0]}
             />
           </div>
@@ -660,11 +716,13 @@ const EmployeeAddVisitor = () => {
             </label>
             <input
               type="time"
+              name="expTime"
               id="expectedTime"
+              value={
+                formData.expTime || new Date().toLocaleTimeString().slice(0, 5)
+              }
               className="border border-gray-400 p-2 rounded-md"
               onChange={handleChange}
-              name="expectedTime"
-              value={formData.expectedTime}
             />
           </div>
 

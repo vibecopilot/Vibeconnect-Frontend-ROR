@@ -177,7 +177,7 @@ function RoasterShiftDetails({
   console.log(formattedDate);
   const handleAddShift = async () => {
     const postData = new FormData();
-    postData.append("employee", [employee.id]);
+    postData.append("employee[]", employee.id);
     postData.append("date", formattedDate);
     postData.append("shift_type", shiftType);
     postData.append("shift", shiftData);
