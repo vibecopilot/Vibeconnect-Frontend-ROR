@@ -197,7 +197,7 @@ import PermitPendingApprovalDetails from "./pages/SubPages/details/PermitPending
 import ScheduleAuditDetails from "./pages/SubPages/details/ScheduleAuditDetails.jsx";
 import ChecklistDetails from "./pages/SubPages/details/ChecklistDetails.jsx";
 import PermitSetup from "./pages/Setup/PermitSetup.jsx";
-import PermitEntity from "./pages/Setup/SetupSubPages/PermitEntity.jsx"
+import PermitEntity from "./pages/Setup/SetupSubPages/PermitEntity.jsx";
 import LetterOfIndent from "./pages/LetterOfIndent.jsx";
 import AddLoi from "./pages/SubPages/AddLoi.jsx";
 import EditLoiPO from "./pages/SubPages/details/EditLoiPo.jsx";
@@ -715,16 +715,13 @@ import UniformApplication from "./pages/AdminHrms/UniformApplication.jsx";
 import CopyChecklistPPM from "./pages/SubPages/CopyChecklistPPM.jsx";
 import CopyChecklistService from "./pages/SubPages/CopyChecklistService.jsx";
 // import EmployeeSavedForum from "./pages/EmployeeSavedForum.jsx";
-// import BillingSetup from "./pages/Setup/BillingSetup/BillingSetup.jsx";
-// import AddCAMBillingSetup from "./pages/Setup/BillingSetup/AddCAMBillingSetup.jsx";
-// import CAMBilling from "./pages/CAMBilling.jsx";
-// import BillingSetup from "./pages/Setup/BillingSetup/BillingSetup.jsx";
-// import CAMBilling from "./pages/CAMBilling.jsx";
+import CAMBilling from "./pages/CAMBilling.jsx";
 import BillingAddress from "./pages/Setup/BillingSetup/BillingAddress.jsx";
 import EditBillingAddress from "./pages/Setup/BillingSetup/EditBillingAddress.jsx";
 import AddCAMBilling from "./pages/SubPages/AddCAMBilling.jsx";
 import CAMBillingDetails from "./pages/SubPages/details/CAMBillingDetails.jsx";
 import CreateInvoiceReceipt from "./pages/SubPages/details/CreateInvoiceReceipt.jsx";
+import BillingSetup from "./pages/Setup/BillingSetup/BillingSetup.jsx";
 // import FBRestaurtantEdit from "./pages/SubPages/FBResturantEdit.jsx";
 // import PantryDetails from "./pages/SubPages/details/PantryDetails.jsx";
 // import FBCuisinesSetup from "./pages/Setup/FBCuisinesSetup.jsx";
@@ -737,11 +734,11 @@ import CreateInvoiceReceipt from "./pages/SubPages/details/CreateInvoiceReceipt.
 // import EditRestaurtantOrders from "./pages/SubPages/EditResturantOrders.jsx";
 // import FBMainPage from "./pages/Setup/FBMainPage.jsx";
 import EmployeeDocumentMain from "./pages/Employees/EmployeeDocumentMain.jsx";
- import EditDailyPickup from "./pages/SubPages/Transportation/EditDailyPickup.jsx";
- import Compliance from "./pages/Compliance/Compliance.jsx";
- import ComplianceSetup from "./pages/Setup/ComplianceSetupPages/ComplianceSetup.jsx";
- import AddCompliance from "./pages/Compliance/AddCompliance.jsx";
- import SiteEmployee from "./pages/AdminHrms/Employee/SiteEmployee.jsx";
+import EditDailyPickup from "./pages/SubPages/Transportation/EditDailyPickup.jsx";
+import Compliance from "./pages/Compliance/Compliance.jsx";
+import ComplianceSetup from "./pages/Setup/ComplianceSetupPages/ComplianceSetup.jsx";
+import AddCompliance from "./pages/Compliance/AddCompliance.jsx";
+import SiteEmployee from "./pages/AdminHrms/Employee/SiteEmployee.jsx";
 import ComplianceVendor from "./pages/Compliance/ComplianceVendor.jsx";
 import ComplianceEvidence from "./pages/Setup/ComplianceSetupPages/ComplianceEvidence.jsx";
 import ComplianceDetails from "./pages/Compliance/ComplianceDetails.jsx";
@@ -759,6 +756,9 @@ import PrivacyPolicy from "./pages/Setup/Abous/PrivacyPolicy.jsx";
 import OtpAndQr from "./pages/OtpAndQr.jsx";
 import Mom from "./pages/Mom/Mom.jsx";
 import NewMom from "./pages/Mom/NewMom.jsx";
+import ReceiptInvoiceCam from "./pages/ReceiptInvoiceCam.jsx";
+import AddReceiptInvoiceCamBilling from "./pages/SubPages/AddReceiptInvoiceCamBilling.jsx";
+import ReceiptInvoiceDetails from "./pages/SubPages/ReceiptInvoiceDetails.jsx";
 
 function App() {
   const { id } = useParams();
@@ -1606,7 +1606,7 @@ function App() {
           path="/communication/forum/saved_forum"
           element={
             <ProtectedAdminRoutes>
-              <SavedForums/>
+              <SavedForums />
             </ProtectedAdminRoutes>
           }
         />
@@ -1614,7 +1614,7 @@ function App() {
           path="/communication/forum/hidden_forum"
           element={
             <ProtectedAdminRoutes>
-              <HiddenForums/>
+              <HiddenForums />
             </ProtectedAdminRoutes>
           }
         />
@@ -1622,7 +1622,7 @@ function App() {
           path="/communication/forum/reported_forum"
           element={
             <ProtectedAdminRoutes>
-              <ReportForum/>
+              <ReportForum />
             </ProtectedAdminRoutes>
           }
         />
@@ -3035,40 +3035,40 @@ function App() {
           }
         /> */}
 
-          {/* permit */}
-          {/* admin permit */}
-          <Route
-            path="/admin/permit"
-            element={
-              <ProtectedAdminRoutes>
-                <Permit />
-              </ProtectedAdminRoutes>
-            }
-          />
-          <Route
-            path="/admin/permit/add-new-permit"
-            element={
-              <ProtectedAdminRoutes>
-                <AddNewPermit />
-              </ProtectedAdminRoutes>
-            }
-          />
-          <Route
-            path="/admin/edit-permit/:id"
-            element={
-              <ProtectedAdminRoutes>
-                <PermitListEdit />
-              </ProtectedAdminRoutes>
-            }
-          />
-          <Route
-            path="/admin/permit-details/:id"
-            element={
-              <ProtectedAdminRoutes>
-                <PermitListDetails />
-              </ProtectedAdminRoutes>
-            }
-          />
+        {/* permit */}
+        {/* admin permit */}
+        <Route
+          path="/admin/permit"
+          element={
+            <ProtectedAdminRoutes>
+              <Permit />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/admin/permit/add-new-permit"
+          element={
+            <ProtectedAdminRoutes>
+              <AddNewPermit />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/admin/edit-permit/:id"
+          element={
+            <ProtectedAdminRoutes>
+              <PermitListEdit />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/admin/permit-details/:id"
+          element={
+            <ProtectedAdminRoutes>
+              <PermitListDetails />
+            </ProtectedAdminRoutes>
+          }
+        />
 
         <Route
           path="/admin/pending-details/:id"
@@ -5312,18 +5312,18 @@ function App() {
           path="/admin/transportation"
           element={
             <ProtectedAdminRoutes>
-            <Transportation/>
+              <Transportation />
             </ProtectedAdminRoutes>
           }
-          />
+        />
         <Route
           path="/admin/transportation/book-pickup"
           element={
             <ProtectedAdminRoutes>
-            <BookPickup/>
+              <BookPickup />
             </ProtectedAdminRoutes>
           }
-          />
+        />
         {/* Insurance */}
         <Route
           path="/insurance"
@@ -5337,7 +5337,7 @@ function App() {
           path="/insurance/add-policy"
           element={
             <ProtectedAdminRoutes>
-              <AddPersonalInsurance/>
+              <AddPersonalInsurance />
             </ProtectedAdminRoutes>
           }
         />
@@ -5345,7 +5345,7 @@ function App() {
           path="insurance/add-existing-policy"
           element={
             <ProtectedAdminRoutes>
-              <AddPersonalInsurance/>
+              <AddPersonalInsurance />
             </ProtectedAdminRoutes>
           }
         />
@@ -6805,26 +6805,28 @@ function App() {
             </ProtectedRoute>
           }
         />
-        {/* <Route
+        <Route
           path="/admin/billing-setup"
           element={
             <ProtectedAdminRoutes>
               <BillingSetup />
             </ProtectedAdminRoutes>
           }
-        /> */}
-
-        {/* CAM Billing */}
-        {/* <Route
-          path="/admin/cam-billing"
+        />
+        <Route
+          path="/cam_bill"
+          element={<Navigate to="/cam_bill/billing" replace />}
+        />
+        <Route
+          path="/cam_bill/billing"
           element={
             <ProtectedAdminRoutes>
               <CAMBilling />
             </ProtectedAdminRoutes>
           }
-        /> */}
+        />
         <Route
-          path="/admin/add-cam-billing"
+          path="/cam_bill/add"
           element={
             <ProtectedAdminRoutes>
               <AddCAMBilling />
@@ -6832,7 +6834,7 @@ function App() {
           }
         />
         <Route
-          path="/admin/cam-billing-details/:id"
+          path="/cam_bill/details/:id"
           element={
             <ProtectedAdminRoutes>
               <CAMBillingDetails />
@@ -6840,10 +6842,34 @@ function App() {
           }
         />
         <Route
-          path="/admin/create-invoice-receipt"
+          path="/cam_bill/create-invoice-receipt/:id"
           element={
             <ProtectedAdminRoutes>
               <CreateInvoiceReceipt />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/cam_bill/reciept-invoice"
+          element={
+            <ProtectedAdminRoutes>
+              <ReceiptInvoiceCam />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/cam_bill/receipt-invoice/add"
+          element={
+            <ProtectedAdminRoutes>
+              <AddReceiptInvoiceCamBilling />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/cam_bill/receipt-invoice/details/:id"
+          element={
+            <ProtectedAdminRoutes>
+              <ReceiptInvoiceDetails />
             </ProtectedAdminRoutes>
           }
         />
@@ -6911,33 +6937,26 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/privacy"
-          element={
-              <Privacy />
-          }
-        />
+        <Route path="/privacy" element={<Privacy />} />
         <Route path="/otp-qr" element={<OtpAndQr />} />
 
-<Route
+        <Route
           path="/admin/mom"
           element={
             <ProtectedRoute>
-              <Mom/>
+              <Mom />
             </ProtectedRoute>
           }
         />
 
-<Route
+        <Route
           path="/admin/new-mom"
           element={
             <ProtectedRoute>
-              <NewMom/>
+              <NewMom />
             </ProtectedRoute>
           }
         />
-
-
       </Routes>
 
       <Footer />
