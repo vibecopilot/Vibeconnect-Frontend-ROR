@@ -1462,7 +1462,7 @@ const Navbar = () => {
                 )}
                 {feat.includes("cam_bill") && (
                   <NavLink
-                    to={"/admin/cam-billing"}
+                    to={"/cam_bill/billing"}
                     className={({ isActive }) =>
                       ` ${
                         isActive
