@@ -58,7 +58,7 @@ const SetupBookingFacility = () => {
     { name: "ID", selector: (row) => row.id, sortable: true },
     {
       name: "Name",
-      selector: (row) => row.facility,
+      selector: (row) => row.fac_name,
       sortable: true,
     },
     { name: "Type", selector: (row) => row.fac_type, sortable: true },
@@ -80,7 +80,7 @@ const SetupBookingFacility = () => {
     },
     {
       name: "Created On",
-      selector: (row) => row.createdOn,
+      selector: (row) => row.created_at,
       sortable: true,
     },
     // {

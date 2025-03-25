@@ -2051,6 +2051,12 @@ export const getServicesRoutineDetails = async (id) =>
       token: token,
     },
   });
+export const getExpectedMobile = async (mobile) =>
+  axiosInstance.get(`/visitors/get_visitor.json?mobile=${mobile}`, {
+    params: {
+      token: token,
+    },
+  });
 export const getExpectedVisitor = async () =>
   axiosInstance.get(`/visitors.json`, {
     params: {
@@ -5984,6 +5990,16 @@ export const postRosterShift = async (data) => {
     throw error;
   }
 };
+export const postRosterAssign = async (data) => {
+  try {
+    const response = await HrmsAuth.post(`/roster/roster-shift/`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error post roster shift:", error);
+    throw error;
+  }
+};
+
 export const getRosterShiftDetails = async (shiftId) => {
   try {
     const response = await HrmsAuth.get(
@@ -6010,7 +6026,19 @@ export const editRosterShiftDetails = async (shiftId, data) => {
 export const getRosterRecords = async (orgId, page) => {
   try {
     const response = await HrmsAuth.get(
-      `/roster-shift-list/?organization_id=${orgId}&page=${page}`
+      `/roster/roster-shift-dashboard/?organization_id=${orgId}&page=${page}`
+      // `/roster-shift-list/?organization_id=${orgId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting roster records:", error);
+    throw error;
+  }
+};
+export const getRosterRecordsFilter = async (orgId, siteId, page) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/roster/roster-shift-dashboard/?organization_id=${orgId}&associated_organization_id=${siteId}&page=${page}`
       // `/roster-shift-list/?organization_id=${orgId}`
     );
     return response.data;
@@ -6031,6 +6059,18 @@ export const getRosterRecordDetails = async (shiftId) => {
 export const editRosterRecord = async (data) => {
   try {
     const response = await HrmsAuth.put(`/roster/roster-shift/`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error updating roster records:", error);
+    throw error;
+  }
+};
+export const editRosterAssign = async (shiftId, data) => {
+  try {
+    const response = await HrmsAuth.patch(
+      `/roster/roster-shift/${shiftId}/`,
+      data
+    );
     return response.data;
   } catch (error) {
     console.error("Error updating roster records:", error);
