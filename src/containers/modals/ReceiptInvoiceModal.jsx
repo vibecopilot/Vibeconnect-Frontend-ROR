@@ -2,38 +2,13 @@ import React, { useState } from "react";
 import ModalWrapper from "./ModalWrapper";
 import { useSelector } from "react-redux";
 import { FaDownload } from "react-icons/fa";
+import {
+  uploadCamReceiptImport,
+  downloadReceiptInvoiceSample,
+} from "../../api";
 import toast from "react-hot-toast";
-import { downloadCamBillImport, uploadCamBillingImport } from "../../api";
-const InvoiceImportModal = ({ onclose, fetchCamBilling }) => {
+const ReceiptInvoiceModal = ({ onclose, fetchInvoiceReceipt }) => {
   const themeColor = useSelector((state) => state.theme.color);
-
-  const handleDownload = async () => {
-    toast.loading("Downloading please wait");
-    try {
-      const resp = await downloadCamBillImport(); // Await the API call
-      console.log(resp); // Log the response to ensure it contains the file blob and headers
-
-      const url = window.URL.createObjectURL(
-        new Blob([resp.data], {
-          // Use `resp.data` to access the file blob
-          type: resp.headers["content-type"], // Access headers from `resp.headers`
-        })
-      );
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "cam_invoice_file.xlsx");
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-
-      toast.success("Cam Billing downloaded successfully");
-      toast.dismiss();
-    } catch (error) {
-      toast.dismiss();
-      console.error("Error downloading Ticket:", error);
-      toast.error("Something went wrong, please try again");
-    }
-  };
   const [upload, setUpload] = useState([]);
 
   const handleFileChange = (event) => {
@@ -50,15 +25,42 @@ const InvoiceImportModal = ({ onclose, fetchCamBilling }) => {
     });
 
     try {
-      const resp = await uploadCamBillingImport(sendData);
+      const resp = await uploadCamReceiptImport(sendData);
       onclose();
-      fetchCamBilling();
+      fetchInvoiceReceipt();
       console.log(resp);
     } catch (error) {
       console.error("Error uploading file:", error);
     }
   };
 
+  const handleDownload = async () => {
+    toast.loading("Downloading please wait");
+    try {
+      const resp = await downloadReceiptInvoiceSample(); // Await the API call
+      console.log(resp); // Log the response to ensure it contains the file blob and headers
+
+      const url = window.URL.createObjectURL(
+        new Blob([resp.data], {
+          // Use `resp.data` to access the file blob
+          type: resp.headers["content-type"], // Access headers from `resp.headers`
+        })
+      );
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "receipt_invoice_file.xlsx");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      toast.success("Receipt Invoice downloaded successfully");
+      toast.dismiss();
+    } catch (error) {
+      toast.dismiss();
+      console.error("Error downloading Ticket:", error);
+      toast.error("Something went wrong, please try again");
+    }
+  };
   return (
     <ModalWrapper onclose={onclose}>
       <div className="flex flex-col justify-center w-80">
@@ -98,4 +100,4 @@ const InvoiceImportModal = ({ onclose, fetchCamBilling }) => {
   );
 };
 
-export default InvoiceImportModal;
+export default ReceiptInvoiceModal;

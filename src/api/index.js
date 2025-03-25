@@ -8862,3 +8862,251 @@ export const getReviewerAssignments = async (complianceId, auditorId) =>
       },
     }
   );
+
+//cam billing
+export const getCamBillingData = async () =>
+  axiosInstance.get("/cam_bills.json", {
+    params: {
+      token: token,
+    },
+  });
+
+export const getCamBillingDownload = async (ids) =>
+  axiosInstance.get(`/cam_bills/export.xlsx`, {
+    responseType: "blob",
+    params: {
+      ids: `[${ids}]`, // Adding square brackets around ids
+      token: token,
+    },
+  });
+
+export const gatCamBillFilter = async (
+  block,
+  floor_name,
+  flat,
+  status,
+  startDate,
+  endDate,
+  dueDate
+) =>
+  axiosInstance.get(
+    `/cam_bills.json?q[building_id_eq]=${block}&q[floor_id_eq]=${floor_name}&q[unit_id_eq]=${flat}&q[payment_status_eq]=${status}&q[bill_period_start_date_eq]=${startDate}&q[bill_period_end_date_eq]=${endDate}&q[due_date_eq]=${dueDate}`,
+    {
+      params: {
+        token: token,
+      },
+    }
+  );
+export const downloadCamBillImport = async () =>
+  axiosInstance.get(`/cam_bills/download_sample.xlsx`, {
+    params: {
+      token: token, // Include the token in the request
+    },
+    responseType: "blob", // Ensure response is of type `blob`
+  });
+
+export const uploadCamBillingImport = async (data) =>
+  axiosInstance.post(`/cam_bills/import.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+
+export const postCamBilling = async (data) =>
+  axiosInstance.post(`/address_setups.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+
+export const getAddressSetupDetails = async (id) =>
+  axiosInstance.get(`/address_setups/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+
+export const updateAddressSetupCamBilling = async (data, id) =>
+  axiosInstance.put(`/address_setups/${id}.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+
+export const getAddressSetup = async () =>
+  axiosInstance.get("/address_setups.json", {
+    params: {
+      token: token,
+    },
+  });
+export const postCamBill = async (data) =>
+  axiosInstance.post(`/cam_bills.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+
+export const getCamBillingDataDetails = async (id) =>
+  axiosInstance.get(`/cam_bills/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+
+export const recallStatus = async (id, data) =>
+  axiosInstance.put(`/cam_bills/${id}.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+
+export const receiptPayment = async (data) =>
+  axiosInstance.post(`/payments.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+
+export const camBillingStatus = async (id, data) =>
+  axiosInstance.put(`/cam_bills/${id}.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+
+export const downloadReceiptInvoice = async (ids) =>
+  axiosInstance.get(`cam_bills/invoice_pdf?id=${ids}`, {
+    responseType: "blob",
+    params: {
+      token: token,
+    },
+  });
+
+export const getCamBillInvoiceDownload = async (ids) =>
+  axiosInstance.get(`/cam_bills/pdf?id=${ids}`, {
+    responseType: "blob",
+  });
+
+export const getCamLogo = async () =>
+  axiosInstance.get(`/get_logo.json?`, {
+    params: {
+      token: token,
+    },
+  });
+
+export const postInvoiceReceipt = async (data) =>
+  axiosInstance.post(`/invoice_receipts.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+
+export const downloadReceiptInvoiceSample = async () =>
+  axiosInstance.get(`/invoice_receipts/download_sample.json?`, {
+    params: {
+      token: token, // Include the token in the request
+    },
+    responseType: "blob", // Ensure response is of type `blob`
+  });
+
+export const uploadCamReceiptImport = async (data) =>
+  axiosInstance.post(`/invoice_receipts/import.json`, data, {});
+
+export const gatReceiptInvoiceFilter = async (
+  block,
+  floor_name,
+  flat,
+  invoiceNumber,
+  receiptNumber,
+  receiptDate
+) =>
+  axiosInstance.get(
+    `/invoice_receipts.json?q[building_id_eq]=${block}&q[floor_id_eq]=${floor_name}&q[unit_id_eq]=${flat}&q[invoice_number_eq]=${invoiceNumber}&q[receipt_number_eq]=${receiptNumber}&q[receipt_date_eq]=${receiptDate}`,
+    {
+      params: {
+        token: token,
+      },
+    }
+  );
+
+export const getInvoiceReceipt = async () =>
+  axiosInstance.get("/invoice_receipts.json", {
+    params: {
+      token: token,
+    },
+  });
+
+export const getReceiptInvoiceCamDownload = async (ids) =>
+  axiosInstance.get(`/invoice_receipts/export.xlsx?`, {
+    responseType: "blob",
+    params: {
+      ids: `[${ids}]`, // Adding square brackets around ids
+    },
+  });
+
+export const getReceiveInvoiceData = async (id) =>
+  axiosInstance.get(`/invoice_receipts/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+
+export const postInvoiceType = async (data) =>
+  axiosInstance.post(`/invoice_types.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+
+export const getInvoiceTypeDetail = async (id) =>
+  axiosInstance.get(`/invoice_types/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+
+export const putInvoiceType = async (id, data) =>
+  axiosInstance.patch(`/invoice_types/${id}.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+
+export const deleteAddressSetup = async (id) =>
+  axiosInstance.delete(`/address_setups/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+
+export const getInvoiceTypeSetup = async () =>
+  axiosInstance.get("/invoice_types.json", {
+    params: {
+      token: token,
+    },
+  });
+
+export const postInvoiceNumber = async (data) =>
+  axiosInstance.post(`/invoice_setups.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+
+export const postLogoCamBillingSetup = async (data) =>
+  axiosInstance.post(`/upload_logo.json`, data, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+
+    params: {
+      token: token,
+    },
+  });
+
+export const postReceiptNumber = async (data) =>
+  axiosInstance.post(`/receipt_setups.json`, data, {
+    params: {
+      token: token,
+    },
+  });
