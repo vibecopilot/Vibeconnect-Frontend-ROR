@@ -759,6 +759,7 @@ import NewMom from "./pages/Mom/NewMom.jsx";
 import ReceiptInvoiceCam from "./pages/ReceiptInvoiceCam.jsx";
 import AddReceiptInvoiceCamBilling from "./pages/SubPages/AddReceiptInvoiceCamBilling.jsx";
 import ReceiptInvoiceDetails from "./pages/SubPages/ReceiptInvoiceDetails.jsx";
+import MycityPrivacy from "./pages/MycityPrivacy.jsx";
 
 function App() {
   const { id } = useParams();
@@ -6956,6 +6957,10 @@ function App() {
               <NewMom />
             </ProtectedRoute>
           }
+        />
+        <Route
+          path="/privacy-policy-adani-realty"
+          element={<MycityPrivacy />}
         />
       </Routes>
 

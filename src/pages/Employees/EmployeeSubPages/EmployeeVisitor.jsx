@@ -37,25 +37,27 @@ const EmployeeVisitor = () => {
 
   const handleSubmitModal = async () => {
     const mobileNumber = document.querySelector('input[type="mobile"]').value;
+    const loadingToast = toast.loading("Please wait..."); // Store toast ID
     try {
       const response = await getExpectedVisitor();
       const existingVisitor = response.data.find(
         (visitor) => visitor.contact_no === mobileNumber
       );
-      if(mobileNumber === ""){
+      if (mobileNumber === "") {
         toast.error("Please enter mobile number");
         return;
       }
+      toast.dismiss(loadingToast);
       if (existingVisitor) {
-        
         navigate(
           `/employee/passes/visitors/edit-visitor/${existingVisitor.id}`
         );
       } else {
-        navigate(`/employee/add-new-visitor`);
+        navigate(`/employee/add-new-visitor?mobileNumber=${mobileNumber}`);
       }
     } catch (error) {
       console.error(error);
+      toast.dismiss(loadingToast);
       toast.error("Error fetching visitor data");
     }
     setAddNewVisitorModal(false);
@@ -93,6 +95,7 @@ const EmployeeVisitor = () => {
   };
   const [userVisitors, setUserVisitors] = useState([]);
   const [FilteredUserVisitors, setFilteredUserVisitors] = useState([]);
+  console.log(FilteredUserVisitors);
   const fetchUserVisitors = async () => {
     try {
       const visitorResp = await getExpectedUserVisitor();
@@ -545,6 +548,15 @@ const EmployeeVisitor = () => {
     return () => clearInterval(intervalId);
   }, []);
 
+  const [mobile, setMobile] = useState("");
+
+  const handleChangeMobile = (e) => {
+    let value = e.target.value.replace(/\D/g, ""); // Remove non-numeric characters
+    if (value.length <= 10) {
+      setMobile(value); // Update state only if length ≤ 10
+    }
+  };
+
   return (
     <div className="visitors-page">
       <section className="flex">
@@ -596,7 +608,7 @@ const EmployeeVisitor = () => {
                   </button>
                 )}
                 <div className="visitors-page">
-                  <Link to="#" onClick={handleAddNewVisitor}>
+                  <button onClick={handleAddNewVisitor}>
                     <div
                       style={{ background: themeColor }}
                       className=" font-semibold  hover:text-white duration-150 transition-all p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
@@ -604,7 +616,7 @@ const EmployeeVisitor = () => {
                       <PiPlusCircle size={20} />
                       Add New Visitor
                     </div>
-                  </Link>
+                  </button>
 
                   {addNewVisitorModal && (
                     <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-30 backdrop-blur-sm z-20">
@@ -615,10 +627,12 @@ const EmployeeVisitor = () => {
                             Enter Mobile Number
                           </label>
                           <input
-                          
-                            type="mobile"
+                            type="tel"
                             placeholder="Mobile Number"
-                            className="border border-gray-300  p-2 text-sm w-full"
+                            className="border border-gray-300 p-2 text-sm w-full"
+                            value={mobile}
+                            onChange={handleChangeMobile}
+                            maxLength={10}
                           />
                         </div>
                         <div className="border-t p-1 flex items-center justify-center gap-2">
@@ -628,12 +642,13 @@ const EmployeeVisitor = () => {
                           >
                             <MdClose /> Cancel
                           </button>
-                          <button
+                          <Link
+                            to={`/employee/add-new-visitor?mobileNumber=${mobile}`}
                             className="bg-green-400 text-white p-1 px-4  flex items-center gap-2"
-                            onClick={handleSubmitModal}
+                            // onClick={handleSubmitModal}
                           >
                             <FaCheck /> Submit
-                          </button>
+                          </Link>
                         </div>
                       </div>
                     </div>
