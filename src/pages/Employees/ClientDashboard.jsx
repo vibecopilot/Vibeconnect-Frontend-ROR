@@ -802,7 +802,7 @@ const ClientDashboard = () => {
                 {/* Modal for displaying Location data */}
                 {isModalOpen && (
                   <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-                    <div className="bg-white rounded-lg p-6 w-full md:w-2/3 lg:w-2/3">
+                    <div className="bg-white rounded-lg p-6 w-full md:w-2/3 lg:w-2/3 h-[80%]">
                       <div className="flex justify-between">
                         <div className="justify-start">
                           <h2 className="text-xl py-1  font-bold mb-4">
@@ -824,7 +824,7 @@ const ClientDashboard = () => {
                       </div>
                       {/* Date picker inside modal header */}
 
-                      <div className="relative flex flex-col w-full h-full overflow-scroll text-gray-700 bg-white shadow-md rounded-xl bg-clip-border">
+                      <div className="flex flex-col w-full h-[80%] overflow-scroll text-gray-700 bg-white shadow-md rounded-xl bg-clip-border">
                         <table className="w-full text-left table-auto min-w-max">
                           <thead className="p-4 border-b border-blue-gray-100 bg-blue-gray-50">
                             <tr>
