@@ -561,7 +561,7 @@ const EmployeeAddVisitor = () => {
           {/* )} */}
         </div>
 
-        <div className="grid md:grid-cols-3 gap-5">
+        <div className="grid md:grid-cols-3 gap-5 mb-5">
           {selectedVisitorType === "Support Staff" && (
             <div className="grid gap-2 items-center w-full">
               <label htmlFor="" className="font-medium">
@@ -749,7 +749,7 @@ const EmployeeAddVisitor = () => {
           )}
         </div>
         <span className="my-2">
-          {userType !== "security_guard" && (
+          {/* {userType !== "security_guard" && (
             <>
               <input
                 type="checkbox"
@@ -766,7 +766,23 @@ const EmployeeAddVisitor = () => {
               &nbsp;<label htmlFor="">Skip Host Approval</label>
               &nbsp;&nbsp;&nbsp;
             </>
-          )}
+          )} */}
+          <>
+            <input
+              type="checkbox"
+              value={formData.hostApproval}
+              checked={formData.hostApproval}
+              onChange={() =>
+                setFormData((prevState) => ({
+                  ...prevState,
+                  hostApproval: !prevState.hostApproval,
+                }))
+              }
+              id="hostApproval"
+            />
+            &nbsp;<label htmlFor="">Skip Host Approval</label>
+            &nbsp;&nbsp;&nbsp;
+          </>
           <input
             type="checkbox"
             id="goods"
