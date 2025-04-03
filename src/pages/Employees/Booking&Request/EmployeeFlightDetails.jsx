@@ -1,25 +1,45 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-
+import { useParams } from "react-router-dom";
+import { getFlightRequestDetails } from "../../../api";
 const EmployeeFlightRequestDetails = () => {
-  // Sample data (for demonstration purposes)
-  const request = {
-    employeeName: "Jane Smith",
-    employeeId: "54321",
-    departureCity: "New York",
-    arrivalCity: "London",
-    departureDate: "2024-07-10",
-    returnDate: "2024-07-20",
-    preferredAirlines: ["British Airways", "Delta Airlines"],
-    class: "Business",
-    passengerNames: ["Jane Smith"],
-    passportInformation: "Passport No: ABC12345, Expiry: 2026-05-15",
-    ticketConfirmationNumber: "XYZ789",
-    bookingStatus: "Confirmed",
-    managerApproval: "Yes",
-    bookingConfirmationEmail: "jane.smith@example.com",
-  };
+  const { id } = useParams();
   const themeColor = useSelector((state) => state.theme.color);
+  const [formData, setFormData] = useState({
+    departure_city: "",
+    arrival_city: "",
+    departure_date: "",
+    return_date: "",
+    preferred_airlines: "",
+    flight_class: "",
+    passport_information: "",
+    passenger_name: [],
+  });
+  useEffect(() => {
+    const fetchFlightRequestDetails = async () => {
+      try {
+        const HotelreqDetailsResponse = await getFlightRequestDetails(id);
+        const data = HotelreqDetailsResponse.data;
+        console.log(data);
+        setFormData({
+          ...formData,
+          departure_city: data.departure_city,
+          arrival_city: data.arrival_city,
+          departure_date: data.departure_date,
+          return_date: data.return_date,
+          preferred_airlines: data.preferred_airlines,
+          flight_class: data.flight_class,
+          passport_information: data.passport_information,
+          passenger_name: [...data.additional_passengers],
+        });
+        setAdditionalPassenger(data);
+        console.log(passengers);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchFlightRequestDetails();
+  }, []);
   return (
     <div className="flex justify-center items-center my-2 w-full p-4">
       <div className="border border-gray-300 rounded-lg p-2 w-full mx-4 max-h-screen overflow-y-auto">
@@ -31,83 +51,53 @@ const EmployeeFlightRequestDetails = () => {
         </h2>
         <div className="grid md:grid-cols-3 gap-5 mt-5">
           <div className="flex gap-2 items-center w-full">
-            <label className="font-semibold">Employee Name:</label>
-            <p>{request.employeeName}</p>
-          </div>
-
-          <div className="flex gap-2 items-center w-full">
-            <label className="font-semibold">Employee ID:</label>
-            <p>{request.employeeId}</p>
-          </div>
-
-          <div className="flex gap-2 items-center w-full">
             <label className="font-semibold">Departure City:</label>
-            <p>{request.departureCity}</p>
+            <p>{formData.departure_city}</p>
           </div>
 
           <div className="flex gap-2 items-center w-full">
             <label className="font-semibold">Arrival City:</label>
-            <p>{request.arrivalCity}</p>
+            <p>{formData.arrival_city}</p>
           </div>
 
           <div className="flex gap-2 items-center w-full">
             <label className="font-semibold">Departure Date:</label>
-            <p>{request.departureDate}</p>
+            <p>{formData.departure_date}</p>
           </div>
 
           <div className="flex gap-2 items-center w-full">
             <label className="font-semibold">Return Date:</label>
-            <p>{request.returnDate}</p>
+            <p>{formData.return_date}</p>
           </div>
 
           <div className="flex gap-2 items-center w-full">
             <label className="font-semibold">Preferred Airlines:</label>
-            <ul>
-              {request.preferredAirlines.map((airline, index) => (
-                <li key={index}>{airline}</li>
-              ))}
-            </ul>
+            <p>{formData.preferred_airlines}</p>
           </div>
 
           <div className="flex gap-2 items-center w-full">
             <label className="font-semibold">Class:</label>
-            <p>{request.class}</p>
+            <p>{formData.flight_class}</p>
           </div>
-
-          <div className="flex gap-2 items-center w-full">
-            <label className="font-semibold">Passenger Name(s):</label>
-            <ul>
-              {request.passengerNames.map((name, index) => (
-                <li key={index}>{name}</li>
-              ))}
-            </ul>
+          <div className="flex gap-2 items-start w-full">
+            <label className="font-semibold">Additional passengers:</label>
+            <p>
+              {formData.passenger_name.length > 0
+                ? formData.passenger_name.map((passenger, index) => (
+                    <span key={index} className="flex flex-col">
+                      <div className="flex gap-2 items-start">
+                        {passenger.name} <span className="mx-2">|</span>
+                        {passenger.class_type} <span className="mx-2">|</span>
+                        {passenger.gender}
+                      </div>
+                    </span>
+                  ))
+                : "No passengers"}
+            </p>
           </div>
-
           <div className="flex gap-2 items-center w-full">
             <label className="font-semibold">Passport Information:</label>
-            <p>{request.passportInformation}</p>
-          </div>
-
-          <div className="flex gap-2 items-center w-full">
-            <label className="font-semibold">Ticket Confirmation Number:</label>
-            <p>{request.ticketConfirmationNumber}</p>
-          </div>
-
-          <div className="flex gap-2 items-center w-full">
-            <label className="font-semibold">Booking Status:</label>
-            <p>{request.bookingStatus}</p>
-          </div>
-
-          <div className="flex gap-2 items-center w-full">
-            <label className="font-semibold">
-              Manager Approval (If Required):
-            </label>
-            <p>{request.managerApproval}</p>
-          </div>
-
-          <div className="flex gap-2 items-center w-full">
-            <label className="font-semibold">Booking Confirmation Email:</label>
-            <p>{request.bookingConfirmationEmail}</p>
+            <p>{formData.passport_information}</p>
           </div>
         </div>
       </div>
