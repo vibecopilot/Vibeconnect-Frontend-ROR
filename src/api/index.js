@@ -935,6 +935,18 @@ export const getHotelRequest = async () =>
       token: token,
     },
   });
+export const getFilterHotelRequest = async (approve) =>
+  axiosInstance.get(`/hotels.json?q[booking_status_eq]=${approve}`, {
+    params: {
+      token: token,
+    },
+  });
+export const hotelApproval = async (approve, data) =>
+  axiosInstance.patch(`/hotels/${approve}.json?`, data, {
+    params: {
+      token: token,
+    },
+  });
 export const postHotelRequest = async (data) =>
   axiosInstance.post(`/hotels.json`, data, {
     params: {
@@ -972,6 +984,18 @@ export const getFlightTicketRequest = async () =>
       token: token,
     },
   });
+export const getFilterFlightTicketRequest = async (approve) =>
+  axiosInstance.get(`/flight_requests.json?q[booking_status_eq]=${approve}`, {
+    params: {
+      token: token,
+    },
+  });
+export const flightApproval = async (approve, data) =>
+  axiosInstance.patch(`/flight_requests/${approve}.json?`, data, {
+    params: {
+      token: token,
+    },
+  });
 export const UpdateCabRequest = async (data, id) =>
   axiosInstance.put(`/cab_and_bus_requests/${id}.json`, data, {
     params: {
@@ -986,6 +1010,21 @@ export const getCabRequestDetails = async (id) =>
   });
 export const getcabRequest = async () =>
   axiosInstance.get("/cab_and_bus_requests.json", {
+    params: {
+      token: token,
+    },
+  });
+export const getFilterCabRequest = async (approve) =>
+  axiosInstance.get(
+    `/cab_and_bus_requests.json?q[booking_status_eq]=${approve}`,
+    {
+      params: {
+        token: token,
+      },
+    }
+  );
+export const cabApproval = async (approve, data) =>
+  axiosInstance.patch(`/cab_and_bus_requests/${approve}.json?`, data, {
     params: {
       token: token,
     },
@@ -1010,6 +1049,21 @@ export const gettransportRequestDetails = async (id) =>
   });
 export const gettransportRequest = async () =>
   axiosInstance.get("/transport_requests.json", {
+    params: {
+      token: token,
+    },
+  });
+export const getFilterTransportRequest = async (approve) =>
+  axiosInstance.get(
+    `/transport_requests.json?q[booking_status_eq]=${approve}`,
+    {
+      params: {
+        token: token,
+      },
+    }
+  );
+export const transportationApproval = async (approve, data) =>
+  axiosInstance.patch(`/transport_requests/${approve}.json?`, data, {
     params: {
       token: token,
     },
@@ -1044,6 +1098,25 @@ export const getTravellingAllowanceRequestDetails = async (id) =>
       token: token,
     },
   });
+export const getFilterTravellingAllowanceRequest = async (approve) =>
+  axiosInstance.get(
+    `/transportation_allowance_requests.json?q[approval_status_eq]=${approve}`,
+    {
+      params: {
+        token: token,
+      },
+    }
+  );
+export const travellingAllowanceApproval = async (approve, data) =>
+  axiosInstance.patch(
+    `/transportation_allowance_requests/${approve}.json?`,
+    data,
+    {
+      params: {
+        token: token,
+      },
+    }
+  );
 // ppm details
 export const getAssetReadingDetails = async (assetId) =>
   axiosInstance.get(

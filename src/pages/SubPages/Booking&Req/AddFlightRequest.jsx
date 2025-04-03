@@ -1,15 +1,17 @@
-import React, { useState } from "react";
-import { postFlightTicketRequest } from "../../../api";
+import React, { useEffect, useState } from "react";
+import { postFlightTicketRequest, getSetupUsers } from "../../../api";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { FaCheck, FaTrash } from "react-icons/fa";
 import { PiPlusCircleBold } from "react-icons/pi";
-
+import Select from "react-select";
 const AddFlightRequest = () => {
+  const [users, setUsers] = useState([]);
+  const [selectedUser, setSelectedUser] = useState(null);
   const themeColor = useSelector((state) => state.theme.color);
   const [additionalPassenger, setAdditionalPassenger] = useState([
-    { name: "", gender: "" },
+    { name: "", gender: "", class_type: "" },
   ]);
   const [formData, setFormData] = useState({
     employee_name: "",
@@ -32,9 +34,47 @@ const AddFlightRequest = () => {
   };
   const navigate = useNavigate();
   const handleFlightRequest = async () => {
+    if (!selectedUser || !selectedUser.label) {
+      toast("Employee Name is required.");
+      return;
+    }
+    if (
+      !formData.ticket_confirmation_number ||
+      !/^\d{10}$/.test(formData.ticket_confirmation_number)
+    ) {
+      toast("The mobile number must be at least 10 characters");
+      return;
+    }
+    if (
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.booking_confirmation_email)
+    ) {
+      toast("Please enter a valid email address");
+      return;
+    }
+    if (!formData.departure_city) {
+      toast("Departure City is required.");
+      return;
+    }
+    if (!formData.arrival_city) {
+      toast("Arrival City is required.");
+      return;
+    }
+    if (!formData.departure_date) {
+      toast("Departure Date is required.");
+      return;
+    }
+    if (!formData.return_date) {
+      toast("Return Date is required.");
+      return;
+    }
+    if (!formData.flight_class) {
+      toast("Flight Class is required.");
+      return;
+    }
     const sendData = new FormData();
-    sendData.append("flight_request[employee_id]", formData.employee_id);
-    sendData.append("flight_request[employee_name]", formData.employee_name);
+    // sendData.append("flight_request[employee_id]", formData.employee_id);
+    sendData.append("flight_request[employee_name]", selectedUser.label);
+    sendData.append("flight_request[booking_status]", "pending");
     sendData.append("flight_request[departure_city]", formData.departure_city);
     sendData.append("flight_request[arrival_city]", formData.arrival_city);
     sendData.append("flight_request[departure_date]", formData.departure_date);
@@ -44,16 +84,14 @@ const AddFlightRequest = () => {
       formData.preferred_airlines
     );
     sendData.append("flight_request[flight_class]", formData.flight_class);
-    sendData.append("flight_request[passenger_name]", formData.passenger_name);
     sendData.append(
       "flight_request[passport_information]",
       formData.passport_information
     );
     sendData.append(
-      "flight_request[ticket_confirmation_number]",
+      "flight_request[mobile_no]",
       formData.ticket_confirmation_number
     );
-    sendData.append("flight_request[booking_status]", formData.booking_status);
     sendData.append(
       "flight_request[manager_approval]",
       formData.manager_approval
@@ -62,6 +100,20 @@ const AddFlightRequest = () => {
       "flight_request[booking_confirmation_email]",
       formData.booking_confirmation_email
     );
+    additionalPassenger.forEach((item) => {
+      sendData.append(
+        "flight_request[additional_passengers_attributes][][name]",
+        item.name
+      );
+      sendData.append(
+        "flight_request[additional_passengers_attributes][][gender]",
+        item.gender
+      );
+      sendData.append(
+        "flight_request[additional_passengers_attributes][][class_type]",
+        item.class_type
+      );
+    });
 
     try {
       const FlightreqResp = await postFlightTicketRequest(sendData);
@@ -73,7 +125,10 @@ const AddFlightRequest = () => {
     }
   };
   const handleAddAdditionalPassenger = () => {
-    setAdditionalPassenger([...additionalPassenger, { name: "", gender: "" }]);
+    setAdditionalPassenger([
+      ...additionalPassenger,
+      { name: "", gender: "", class_type: "" },
+    ]);
   };
   const handleRemoveAdditionalPassenger = (index) => {
     setAdditionalPassenger(additionalPassenger.filter((_, i) => i !== index));
@@ -85,6 +140,29 @@ const AddFlightRequest = () => {
     );
     setAdditionalPassenger(updatedPassengers);
   };
+
+  const handleUserChange = (selectedOption) => {
+    setSelectedUser(selectedOption); // Update selected user state
+    console.log("Selected user:", selectedOption);
+  };
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const setupUsers = await getSetupUsers(); // API call to fetch users
+        const formattedOptions = setupUsers.data.map((user) => ({
+          value: user.id,
+          label: user.firstname,
+        }));
+        setUsers(formattedOptions);
+        console.log(formattedOptions);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchUsers();
+  }, []);
+
   return (
     <div className="w-full  ">
       {/* <BackButton to={"/employee/flight-request"} /> */}
@@ -98,7 +176,7 @@ const AddFlightRequest = () => {
             Flight Request
           </h2>
           <div className="grid md:grid-cols-3 gap-5 mt-5">
-            <div className="grid gap-2 items-center w-full">
+            {/* <div className="grid gap-2 items-center w-full">
               <label htmlFor="employeeId" className="font-semibold">
                 Employee ID:
               </label>
@@ -125,6 +203,18 @@ const AddFlightRequest = () => {
                 id="employeeName"
                 className="border p-1 px-4 border-gray-500 rounded-md"
                 placeholder="Enter Employee Name"
+              />
+            </div> */}
+            <div className="grid gap-2 items-center w-full">
+              <label className="font-medium">Employee Name:</label>
+              <Select
+                name="employee_name"
+                options={users}
+                className="basic-single-select pr-5 text-black"
+                classNamePrefix="select"
+                placeholder="Select a Employee..."
+                value={selectedUser} // Set the value from state
+                onChange={handleUserChange} // Update selected value on change
               />
             </div>
             <div className="grid gap-2 items-center w-full">
@@ -254,7 +344,7 @@ const AddFlightRequest = () => {
 
             <div className="grid gap-2 items-center w-full">
               <label htmlFor="managerApproval" className="font-semibold">
-                Manager Approval Required :
+                Manager Approval (If Required): :
               </label>
               <select
                 id="managerApproval"
@@ -273,12 +363,13 @@ const AddFlightRequest = () => {
               <h2 className="font-medium border-b border-black my-2">
                 Additional passengers
               </h2>
-              <div className="grid md:grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 w-full">
                 {additionalPassenger.map((passenger, index) => (
                   <div key={index} className="flex gap-2 mb-2">
                     <input
                       type="text"
                       value={passenger.name}
+                      name="name"
                       onChange={(e) =>
                         handlePassengerChange(index, "name", e.target.value)
                       }
@@ -295,6 +386,24 @@ const AddFlightRequest = () => {
                       <option value="">Select gender</option>
                       <option value="Male">Male</option>
                       <option value="Female">Female</option>
+                    </select>
+                    <select
+                      id="class"
+                      name="class_type"
+                      value={passenger.class_type}
+                      onChange={(e) =>
+                        handlePassengerChange(
+                          index,
+                          "class_type",
+                          e.target.value
+                        )
+                      }
+                      className="border p-1 px-4 border-gray-500 rounded-md w-full"
+                    >
+                      <option value="">Select Class</option>
+                      <option value="Economy">Economy</option>
+                      <option value="Business">Business</option>
+                      <option value="First">First</option>
                     </select>
                     <button
                       type="button"

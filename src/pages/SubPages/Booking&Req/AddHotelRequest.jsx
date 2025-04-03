@@ -1,16 +1,18 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { postHotelRequest } from "../../../api";
+import { postHotelRequest, getSetupUsers } from "../../../api";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
 import { FaCheck } from "react-icons/fa";
-
+import Select from "react-select";
 const AddHotelRequest = () => {
   const siteId = getItemInLocalStorage("SITEID");
+  const [users, setUsers] = useState([]);
+  const [selectedUser, setSelectedUser] = useState(null);
   const [formData, setFormData] = useState({
-    employee_id: "",
-    employee_name: "",
+    // employee_id: "",
+    // employee_name: "",
     destination: "",
     hotel_name: "",
     location: "",
@@ -32,9 +34,44 @@ const AddHotelRequest = () => {
   };
   const navigate = useNavigate();
   const handleHotelRequest = async () => {
+    if (!selectedUser || !selectedUser.label) {
+      toast("Employee Name is required.");
+      return;
+    }
+    if (
+      !formData.booking_confirmation_number ||
+      !/^\d{10}$/.test(formData.booking_confirmation_number)
+    ) {
+      toast("Valid Mobile Number is required.");
+      return;
+    }
+    if (
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.booking_certification_email)
+    ) {
+      toast("Please enter a valid email address");
+      return;
+    }
+
+    if (!formData || !formData.destination) {
+      toast("Destination is required.");
+      return;
+    }
+    if (!formData || !formData.check_in_date) {
+      toast("Check In Date is required.");
+      return;
+    }
+    if (!formData || !formData.check_out_date) {
+      toast("Check Out Date is required.");
+      return;
+    }
+    if (!formData || !formData.room_type) {
+      toast("Room type is required.");
+      return;
+    }
     const sendData = new FormData();
-    sendData.append("hotel[employee_id]", formData.employee_id);
-    sendData.append("hotel[employee_name]", formData.employee_name);
+    // sendData.append("hotel[employee_id]", formData.employee_id);
+    // sendData.append("hotel[employee_name]", formData.employee_name);
+    sendData.append("hotel[employee_name]", selectedUser.label);
     sendData.append("hotel[destination]", formData.destination);
     sendData.append("hotel[number_of_rooms]", formData.number_of_rooms);
     sendData.append("hotel[room_type]", formData.room_type);
@@ -64,6 +101,29 @@ const AddHotelRequest = () => {
     }
   };
   const themeColor = useSelector((state) => state.theme.color);
+
+  const handleUserChange = (selectedOption) => {
+    setSelectedUser(selectedOption); // Update selected user state
+    console.log("Selected user:", selectedOption);
+  };
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const setupUsers = await getSetupUsers(); // API call to fetch users
+        const formattedOptions = setupUsers.data.map((user) => ({
+          value: user.id,
+          label: user.firstname,
+        }));
+        setUsers(formattedOptions);
+        console.log(formattedOptions);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchUsers();
+  }, []);
+
   return (
     <div className="flex justify-center  my-2 w-full p-4">
       <div className="border border-gray-300 rounded-lg p-4 w-full mx-4  ">
@@ -74,7 +134,7 @@ const AddHotelRequest = () => {
           Hotel Request
         </h2>
         <div className="grid md:grid-cols-3 gap-2 mt-5">
-          <div className="grid gap-2 items-center w-full">
+          {/* <div className="grid gap-2 items-center w-full">
             <label htmlFor="employeeId" className="font-semibold">
               Employee ID:
             </label>
@@ -102,6 +162,18 @@ const AddHotelRequest = () => {
               className="border p-2 px-4 border-gray-500 rounded-md"
               placeholder="Enter Employee Name"
             />
+          </div> */}
+          <div className="grid gap-2 items-center w-full">
+            <label className="font-medium">Employee Name:</label>
+            <Select
+              name="user"
+              options={users}
+              className="basic-single-select pr-5 text-black"
+              classNamePrefix="select"
+              placeholder="Select a Employee..."
+              value={selectedUser} // Set the value from state
+              onChange={handleUserChange} // Update selected value on change
+            />
           </div>
           <div className="grid gap-2 items-center w-full">
             <label
@@ -117,7 +189,7 @@ const AddHotelRequest = () => {
               value={formData.booking_confirmation_number}
               onChange={handleChange}
               className="border p-2 px-4 border-gray-500 rounded-md"
-              placeholder="Enter Booking Confirmation Number"
+              placeholder="Enter Mobile Number"
             />
           </div>
           <div className="grid gap-2 items-center w-full">
@@ -131,7 +203,7 @@ const AddHotelRequest = () => {
               value={formData.booking_certification_email}
               onChange={handleChange}
               className="border p-2 px-4 border-gray-500 rounded-md"
-              placeholder="Enter Booking Confirmation Email"
+              placeholder="Enter Email"
             />
           </div>
           <div className="grid gap-2 items-center w-full">
@@ -209,8 +281,21 @@ const AddHotelRequest = () => {
               <option value="suite">Suite</option>
             </select>
           </div>
-
-         
+          <div className="grid gap-2 items-center w-full">
+            <label htmlFor="managerApproval" className="font-semibold">
+              Manager Approval (If Required) :
+            </label>
+            <select
+              id="managerApproval"
+              className="border p-2 px-4 border-gray-500 rounded-md"
+              name="manager_approval"
+              value={formData.manager_approval}
+              onChange={handleChange}
+            >
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </select>
+          </div>
 
           {/* <div className="grid gap-2 items-center w-full">
             <label htmlFor="managerApproval" className="font-semibold">

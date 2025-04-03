@@ -11,11 +11,17 @@ import { BiEdit } from "react-icons/bi";
 
 import Navbar from "../../../components/Navbar";
 import BookingRequestNav from "./BookingRequestnav";
-import { getHotelRequest } from "../../../api";
+import {
+  getHotelRequest,
+  getFilterHotelRequest,
+  hotelApproval,
+} from "../../../api";
+import toast from "react-hot-toast";
 
 const HotelRequest = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [HotelrequestsData, setHotelrequestsData] = useState([]);
+  const [approved, setApproved] = useState(true);
   const themeColor = useSelector((state) => state.theme.color);
   const dateFormat = (dateString) => {
     const date = new Date(dateString);
@@ -26,22 +32,54 @@ const HotelRequest = () => {
   };
 
   useEffect(() => {
-    const fetchFlightRequest = async () => {
+    const fetchRequests = async () => {
       try {
-        const response = await getHotelRequest();
-        const hotelreqresp = response.data.sort((a, b) => {
+        let hotelreqresp;
+
+        if (selectedStatus === "all") {
+          // Fetch all requests
+          const response = await getHotelRequest();
+          hotelreqresp = response.data;
+        } else {
+          // Fetch filtered requests
+          const response = await getFilterHotelRequest(approved);
+          hotelreqresp = response.data;
+        }
+
+        // Sort the requests by date
+        hotelreqresp = hotelreqresp.sort((a, b) => {
           return new Date(b.created_at) - new Date(a.created_at);
         });
-        console.log("response from api", hotelreqresp);
 
+        console.log("response from api", hotelreqresp);
         setHotelrequestsData(hotelreqresp);
       } catch (err) {
         console.error("Failed to fetch hotel request data:", err);
       }
     };
 
-    fetchFlightRequest(); // Call the API
-  }, []);
+    fetchRequests(); // Call the API function
+  }, [approved, selectedStatus]);
+
+  const handleApproval = async (id, decision) => {
+    const approveData = new FormData();
+    approveData.append("hotel[booking_status]", decision);
+    try {
+      const res = await hotelApproval(id, approveData);
+      console.log(res);
+      console.log(approveData);
+      // fetchApprovals();
+      setApproved((prev) => !prev);
+      if (decision === true) {
+        toast.success("Booking successfully");
+      } else {
+        toast.success("Approval denied");
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const columns = [
     {
       name: "Action",
@@ -56,14 +94,19 @@ const HotelRequest = () => {
         </div>
       ),
     },
-    {
-      name: "Employee ID",
-      selector: (row) => row.employee_id,
-      sortable: true,
-    },
+    // {
+    //   name: "Employee ID",
+    //   selector: (row) => row.employee_id,
+    //   sortable: true,
+    // },
     {
       name: "Employee Name",
       selector: (row) => row.employee_name,
+      sortable: true,
+    },
+    {
+      name: "Mobile No",
+      selector: (row) => row.booking_confirmation_number,
       sortable: true,
     },
     {
@@ -102,30 +145,49 @@ const HotelRequest = () => {
       selector: (row) => row.room_type,
       sortable: true,
     },
-    // {
-    //   name: "Manager Approval ",
-    //   selector: (row) => (row.manager_approval ? "Approved" : "Not Approved"),
-    //   sortable: true,
-    // },
     {
-      name: "Booking Status ",
-      selector: (row) => row.booking_status,
+      name: "Manager Approval",
+      selector: (row) => (row.manager_approval ? "Yes" : "No"),
       sortable: true,
     },
+    // {
+    //   name: "Status",
+    //   selector: (row) => (row.status ? "Approve" : "false"),
+    //   sortable: true,
+    // },
+    // {
+    //   name: "Booking Status ",
+    //   selector: (row) => row.booking_status,
+    //   sortable: true,
+    // },
 
     {
       name: "Approval",
       selector: (row) =>
-        row.booking_status === "pending" && (
+        row.booking_status === "pending" ? (
           <div className="flex justify-center gap-2">
-            <button className="text-green-400 font-medium hover:bg-green-400 hover:text-white transition-all duration-200 p-1 rounded-full">
+            <button
+              className="text-green-400 font-medium hover:bg-green-400 hover:text-white transition-all duration-200 p-1 rounded-full"
+              onClick={() => handleApproval(row.id, true)}
+            >
               <TiTick size={20} />
             </button>
-            <button className="text-red-400 font-medium hover:bg-red-400 hover:text-white transition-all duration-200 p-1 rounded-full">
+            <button
+              className="text-red-400 font-medium hover:bg-red-400 hover:text-white transition-all duration-200 p-1 rounded-full"
+              onClick={() => handleApproval(row.id, false)}
+            >
               <IoClose size={20} />
             </button>
           </div>
-        ),
+        ) : row.booking_status === "true" ? (
+          <span className="text-green-600 font-medium">
+            <TiTick size={20} />
+          </span>
+        ) : row.booking_status === "false" ? (
+          <span className="text-red-600 font-medium">
+            <IoClose size={20} />
+          </span>
+        ) : null,
       sortable: true,
     },
   ];
@@ -145,7 +207,9 @@ const HotelRequest = () => {
                 id="all"
                 name="status"
                 checked={selectedStatus === "all"}
-                onChange={() => setSelectedStatus("all")}
+                onChange={() => {
+                  setSelectedStatus("all");
+                }}
               />
               <label htmlFor="all" className="text-sm">
                 All
@@ -154,28 +218,49 @@ const HotelRequest = () => {
             <div className="flex items-center gap-2">
               <input
                 type="radio"
-                id="upcoming"
+                id="Approved"
                 name="status"
-                checked={selectedStatus === "upcoming"}
-                onChange={() => setSelectedStatus("upcoming")}
+                checked={selectedStatus === "Approved"}
+                onChange={() => {
+                  setSelectedStatus("Approved");
+                  setApproved(true);
+                }}
               />
-              <label htmlFor="upcoming" className="text-sm">
-                Upcoming
+              <label htmlFor="Approved" className="text-sm">
+                Approved
               </label>
             </div>
             <div className="flex items-center gap-2">
               <input
                 type="radio"
-                id="completed"
+                id="pending"
                 name="status"
-                checked={selectedStatus === "completed"}
-                onChange={() => setSelectedStatus("completed")}
+                checked={selectedStatus === "pending"}
+                onChange={() => {
+                  setSelectedStatus("pending");
+                  setApproved("pending");
+                }}
               />
-              <label htmlFor="completed" className="text-sm">
-                Completed
+              <label htmlFor="pending" className="text-sm">
+                Pending
               </label>
             </div>
             <div className="flex items-center gap-2">
+              <input
+                type="radio"
+                id="Rejected"
+                name="status"
+                checked={selectedStatus === "Rejected"}
+                onChange={() => {
+                  setSelectedStatus("Rejected");
+                  setApproved(false);
+                }}
+              />
+              <label htmlFor="Rejected" className="text-sm">
+                Rejected
+              </label>
+            </div>
+            {/* <div className="flex items-center gap-2">
               <input
                 type="radio"
                 id="cancelled"
@@ -186,7 +271,7 @@ const HotelRequest = () => {
               <label htmlFor="cancelled" className="text-sm">
                 Cancelled
               </label>
-            </div>
+            </div> */}
           </div>
           <span className="flex gap-4">
             <Link
