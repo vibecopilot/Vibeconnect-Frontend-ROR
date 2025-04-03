@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { PiPlusCircle } from "react-icons/pi";
 import { Link } from "react-router-dom";
-import { NavLink } from 'react-router-dom';
-
+import { NavLink } from "react-router-dom";
+import { gettransportRequest, getFilterTransportRequest } from "../../../api";
 import Table from "../../../components/table/Table";
 import { useSelector } from "react-redux";
 import { BsEye } from "react-icons/bs";
@@ -11,13 +11,57 @@ import Navbar from "../../../components/Navbar";
 const EmployeeTransportationRequest = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const themeColor = useSelector((state) => state.theme.color);
+  const [TransportrequestsData, setTransportrequestsData] = useState([]);
+  const [approved, setApproved] = useState(true);
+  useEffect(() => {
+    const fetchTransportRequest = async () => {
+      try {
+        let transportreqresp;
+
+        if (selectedStatus === "all") {
+          const response = await gettransportRequest();
+          transportreqresp = response.data;
+        } else {
+          const response = await getFilterTransportRequest(approved); // Use a filter API
+          transportreqresp = response.data;
+        }
+
+        const processedData = transportreqresp
+          .map((request) => {
+            let date = "";
+            let time = "";
+
+            if (request.date_and_time) {
+              const dateTime = new Date(request.date_and_time);
+              date = dateTime.toISOString().split("T")[0]; // Extract the date
+              time = dateTime.toTimeString().split(" ")[0]; // Extract the time
+            }
+
+            return {
+              ...request,
+              date,
+              time,
+            };
+          })
+          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)); // Sort by created_at in descending order
+
+        console.log("response from API:", processedData);
+
+        setTransportrequestsData(processedData);
+      } catch (err) {
+        console.error("Failed to fetch Transport request data:", err);
+      }
+    };
+
+    fetchTransportRequest();
+  }, [selectedStatus, approved]);
   const CustomNavLink = ({ to, children }) => {
     return (
       <NavLink
         to={to}
         className={({ isActive }) =>
           `p-1 rounded-full px-4 cursor-pointer text-center transition-all duration-300 ease-linear ${
-            isActive && 'bg-white text-blue-500 shadow-custom-all-sides'
+            isActive && "bg-white text-blue-500 shadow-custom-all-sides"
           }`
         }
       >
@@ -38,111 +82,52 @@ const EmployeeTransportationRequest = () => {
       ),
     },
     {
-      name: "Employee ID",
-      selector: (row) => row.Id,
+      name: "Pickup Location",
+      selector: (row) => row.pickup_location,
       sortable: true,
     },
     {
-      name: "Employee Name",
-      selector: (row) => row.name,
+      name: "Pickup Location",
+      selector: (row) => row.drop_off_location,
       sortable: true,
     },
     {
-      name: "Destination",
-      selector: (row) => row.Destination,
+      name: "Date Date",
+      selector: (row) => row.start_date,
       sortable: true,
     },
     {
-      name: "Date",
-      selector: (row) => row.date,
-      sortable: true,
-    },
-    {
-      name: "Time",
-      selector: (row) => row.time,
-      sortable: true,
-    },
-    {
-      name: "Driver Information",
-      selector: (row) => row.driver,
-      sortable: true,
-    },
-    {
-      name: "Transportation Type",
-      selector: (row) => row.type,
+      name: "End Date",
+      selector: (row) => row.end_date,
       sortable: true,
     },
     {
       name: "Special Requirements",
-      selector: (row) => row.req,
-      sortable: true,
-    },
-    {
-      name: "Vehicle Details",
-      selector: (row) => row.Passport_Information,
-      sortable: true,
-    },
-    {
-      name: "Manager Approval",
-      selector: (row) => row.Manager_Approval,
-      sortable: true,
-    },
-    {
-      name: "Booking Status",
-      selector: (row) => row.status,
-      sortable: true,
-    },
-    {
-      name: "Confirmation Email",
-      selector: (row) => row.email,
+      selector: (row) => row.special_requirements,
       sortable: true,
     },
     {
       name: "Cancellation",
-      selector: (row) => (row.status === "Upcoming" && <button className="text-red-400 font-medium">Cancel</button>),
+      selector: (row) =>
+        row.booking_status === "false" && (
+          <button className="text-red-400 font-medium">Cancel</button>
+        ),
+      sortable: true,
+    },
+    {
+      name: "Action",
+      selector: (row) => {
+        if (row.booking_status === "true") {
+          return <span className="text-black">Approved</span>;
+        } else if (row.booking_status === "pending") {
+          return <span className="text-black">Pending</span>;
+        } else if (row.booking_status === "false") {
+          return <button className="text-black">Cancel</button>;
+        }
+      },
       sortable: true,
     },
   ];
-
-  // const customStyle = {
-  //   headRow: {
-  //     style: {
-  //       backgroundColor: themeColor,
-  //       color: "white",
-  //       fontSize: "10px",
-  //     },
-  //   },
-  //   headCells: {
-  //     style: {
-  //       textTransform: "upperCase",
-  //     },
-  //   },
-  // };
-
-  const data = [
-    {
-      id: 1,
-      Id: "55",
-      name: "Mi",
-      Destination: "Mumbai",
-      Arrival_City: "abc",
-      time: "5:00AM",
-      date: "15/02/2024",
-      driver: "abc",
-      type: "abc",
-      req: "VIP Transport",
-      Class: "Economy",
-      Passenger_Name: "abc",
-      Passport_Information: "ab",
-      Manager_Approval: "Upcoming",
-      status: "pending",
-    },
-  ];
-
-  const handleStatusChange = (status) => {
-    setSelectedStatus(status);
-    // Handle status change logic here if needed
-  };
 
   return (
     <section className="flex">
@@ -150,22 +135,35 @@ const EmployeeTransportationRequest = () => {
       <div className="w-full flex mx-3 flex-col overflow-hidden">
         <div className="flex justify-center w-full my-2">
           <div className="sm:flex grid grid-cols-2 sm:flex-row gap-5 font-medium p-2 sm:rounded-full rounded-md opacity-90 bg-gray-200">
-            <CustomNavLink to="/employee/booking-request/hotel-request">Hotel Request</CustomNavLink>
-            <CustomNavLink to="/employee/booking-request/flight-ticket-request">Flight Ticket Request</CustomNavLink>
-            <CustomNavLink to="/employee/booking-request/cab-bus-request">Cab/Bus Request</CustomNavLink>
-            <CustomNavLink to="/employee/booking-request/transportation-request">Transportation Request</CustomNavLink>
-            <CustomNavLink to="/employee/booking-request/traveling-allowance-request"> Traveling Allowance Request</CustomNavLink>
+            <CustomNavLink to="/employee/booking-request/hotel-request">
+              Hotel Request
+            </CustomNavLink>
+            <CustomNavLink to="/employee/booking-request/flight-ticket-request">
+              Flight Ticket Request
+            </CustomNavLink>
+            <CustomNavLink to="/employee/booking-request/cab-bus-request">
+              Cab/Bus Request
+            </CustomNavLink>
+            <CustomNavLink to="/employee/booking-request/transportation-request">
+              Transportation Request
+            </CustomNavLink>
+            <CustomNavLink to="/employee/booking-request/traveling-allowance-request">
+              {" "}
+              Traveling Allowance Request
+            </CustomNavLink>
           </div>
         </div>
         <div className="w-full flex md:flex-row flex-col gap-5 justify-between mt-10 my-2">
-          <div className="sm:flex grid grid-cols-2 items-center justify-center  gap-4 border border-gray-300 rounded-md px-3 p-2 w-auto">
+          <div className="sm:flex grid grid-cols-2 items-center justify-center gap-4 border border-gray-300 rounded-md px-3 p-2 w-auto">
             <div className="flex items-center gap-2">
               <input
                 type="radio"
                 id="all"
                 name="status"
                 checked={selectedStatus === "all"}
-                onChange={() => handleStatusChange("all")}
+                onChange={() => {
+                  setSelectedStatus("all");
+                }}
               />
               <label htmlFor="all" className="text-sm">
                 All
@@ -174,37 +172,46 @@ const EmployeeTransportationRequest = () => {
             <div className="flex items-center gap-2">
               <input
                 type="radio"
-                id="upcoming"
+                id="Approved"
                 name="status"
-                checked={selectedStatus === "upcoming"}
-                onChange={() => handleStatusChange("upcoming")}
+                checked={selectedStatus === "Approved"}
+                onChange={() => {
+                  setSelectedStatus("Approved");
+                  setApproved(true);
+                }}
               />
-              <label htmlFor="upcoming" className="text-sm">
-                Upcoming
+              <label htmlFor="Approved" className="text-sm">
+                Approved
               </label>
             </div>
             <div className="flex items-center gap-2">
               <input
                 type="radio"
-                id="completed"
+                id="pending"
                 name="status"
-                checked={selectedStatus === "completed"}
-                onChange={() => handleStatusChange("completed")}
+                checked={selectedStatus === "pending"}
+                onChange={() => {
+                  setSelectedStatus("pending");
+                  setApproved("pending");
+                }}
               />
-              <label htmlFor="completed" className="text-sm">
-                Completed
+              <label htmlFor="pending" className="text-sm">
+                Pending
               </label>
             </div>
             <div className="flex items-center gap-2">
               <input
                 type="radio"
-                id="cancelled"
+                id="Rejected"
                 name="status"
-                checked={selectedStatus === "cancelled"}
-                onChange={() => handleStatusChange("cancelled")}
+                checked={selectedStatus === "Rejected"}
+                onChange={() => {
+                  setSelectedStatus("Rejected");
+                  setApproved(false);
+                }}
               />
-              <label htmlFor="cancelled" className="text-sm">
-                Cancelled
+              <label htmlFor="Rejected" className="text-sm">
+                Rejected
               </label>
             </div>
           </div>
@@ -212,7 +219,7 @@ const EmployeeTransportationRequest = () => {
             <Link
               to={"/employee/add-transport-request"}
               className="border-2 font-semibold hover:bg-black hover:text-white transition-all border-black p-2 rounded-md text-black cursor-pointer text-center flex items-center gap-2 justify-center"
-              style={{ height: '1cm' }}
+              style={{ height: "1cm" }}
             >
               <PiPlusCircle size={20} />
               Add
@@ -224,7 +231,7 @@ const EmployeeTransportationRequest = () => {
           <Table
             responsive
             columns={columns}
-            data={data}
+            data={TransportrequestsData}
             // customStyles={customStyle}
             pagination
             fixedHeader
