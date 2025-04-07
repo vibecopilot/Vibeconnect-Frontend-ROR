@@ -173,7 +173,6 @@ const EditEvent = () => {
     const userIdsString = selectedIds.join(",");
 
     setFormData({ ...formData, user_ids: userIdsString });
-    
   };
 
   const handleFileAttachment = (event) => {
@@ -396,10 +395,10 @@ const EditEvent = () => {
                       options={users}
                       closeMenuOnSelect={false}
                       placeholder="Select User"
-                      // value={users.filter((user) =>
-                      //   formData.user_ids.includes(user.value)
-                      // )}
-                      value={formData.user_ids}
+                      value={users.filter((user) =>
+                        formData.user_ids.includes(user.value)
+                      )}
+                      // value={formData.user_ids}
                       onChange={handleSelectChange}
                       isMulti
                       className="w-full"
