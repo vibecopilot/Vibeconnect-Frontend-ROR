@@ -184,7 +184,7 @@ const CreateEvent = () => {
       [fieldName]: files,
     });
   };
-console.log(groups)
+  console.log(groups);
   return (
     <section className="flex">
       <div className="hidden md:block">
@@ -232,7 +232,6 @@ console.log(groups)
                 />
               </div>
               <div className="flex items-center gap-2 w-full">
-                
                 <DatePicker
                   selected={formData.start_date_time}
                   onChange={handleStartDateChange}
@@ -351,6 +350,7 @@ console.log(groups)
                       options={users}
                       closeMenuOnSelect={false}
                       placeholder="Select User"
+                      isMulti
                       value={users.filter((user) =>
                         formData.user_ids.includes(user.value)
                       )}
@@ -380,7 +380,7 @@ console.log(groups)
                       <option value="">Select Group</option>
                       {groups.map((group) => (
                         <option value={group.id} key={group.id}>
-                        {group.group_name}
+                          {group.group_name}
                         </option>
                       ))}
                     </select>
