@@ -158,6 +158,7 @@ const EmployeeAddVisitor = () => {
   };
 
   const createNewVisitor = async () => {
+    const loadingToast = toast.loading("Please wait...");
     if (formData.visitorName === "") {
       return toast.error("Provide Visitor name");
     }
@@ -288,11 +289,12 @@ const EmployeeAddVisitor = () => {
       // } catch (error) {
       //   console.log(error);
       // }
-
+      toast.dismiss(loadingToast);
       navigate("/employee/passes/visitors");
       toast.success("Visitor Added Successfully");
     } catch (error) {
       console.log(error);
+      toast.dismiss(loadingToast);
     }
   };
 
