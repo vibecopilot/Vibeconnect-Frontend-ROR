@@ -1259,6 +1259,11 @@ export const postNewVisitor = async (data) =>
     params: {
       token: token,
     },
+    headers: {
+      "Cache-Control": "no-cache",
+      Pragma: "no-cache",
+      Expires: "0",
+    },
   });
 
 export const getPatrollings = async () =>
