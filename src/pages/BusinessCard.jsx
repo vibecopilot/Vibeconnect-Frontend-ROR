@@ -21,14 +21,13 @@ import VCLogo from "./SVG/VCLogo.svg";
 const BusinessCard = () => {
   const user = getItemInLocalStorage("user");
   const [isQRVisible, setIsQRVisible] = useState(false);
-  const [details,setDetails]=useState("");
+  const [details, setDetails] = useState("");
   useEffect(() => {
     const fetchCategory = async () => {
       try {
         const siteDetailsResp = await getBusinessCard();
-        console.log("business card",siteDetailsResp);
+        console.log("business card", siteDetailsResp);
         setDetails(siteDetailsResp.data[0]);
-        
       } catch (error) {
         console.log(error);
       }
@@ -184,14 +183,14 @@ const BusinessCard = () => {
 
   const captureAndShare = async () => {
     if (elementRef.current) {
-      
       const canvas = await html2canvas(elementRef.current);
-      const imgDataUrl = canvas.toDataURL('image/png');
-      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(imgDataUrl)}`;
-      window.open(whatsappUrl, '_blank');
+      const imgDataUrl = canvas.toDataURL("image/png");
+      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(
+        imgDataUrl
+      )}`;
+      window.open(whatsappUrl, "_blank");
     }
   };
-
 
   return (
     <section className="flex">
@@ -227,7 +226,10 @@ const BusinessCard = () => {
             <PiPlusCircle size={20} /> Add
           </button>
         </div>
-        <div ref={elementRef} className="bCard relative flex flex-col md:flex-row gap-4 justify-center md:justify-start   w-fit  md:px-4 py-10  rounded-2xl">
+        <div
+          ref={elementRef}
+          className="bCard relative flex flex-col md:flex-row gap-4 justify-center md:justify-start   w-fit  md:px-4 py-10  rounded-2xl"
+        >
           {/* <div className="bg-white  rounded-full z-10 h-20 w-20 absolute left-[10rem]  md:left-[8.5rem] top-2 shadow-custom-all-sides">
             <img src={profile} alt="" />
           </div> */}
@@ -253,10 +255,10 @@ const BusinessCard = () => {
               <p className="text-center font-bold  mt-10 flex flex-col gap-10 text-lg">
                 {/* <p className="text-center font-bold  mt-10 text-lg"> */}
                 {/* {user.firstname} {user.lastname} */}
-               {details.full_name}
+                <p>{details?.full_name || "No Name Provided"}</p>
               </p>
               <p className="text-center font-medium mt-1">
-              {details.profession}
+                {details?.profession || "No profession"}
               </p>
             </div>
             {/* <div>
