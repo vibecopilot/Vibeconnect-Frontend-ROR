@@ -725,13 +725,13 @@ import BillingSetup from "./pages/Setup/BillingSetup/BillingSetup.jsx";
 // import FBRestaurtantEdit from "./pages/SubPages/FBResturantEdit.jsx";
 // import PantryDetails from "./pages/SubPages/details/PantryDetails.jsx";
 // import FBCuisinesSetup from "./pages/Setup/FBCuisinesSetup.jsx";
-// import FBRestaurtantDetails from "./pages/SubPages/details/FBSubDetails/FBResturantsDetails.jsx";
-// import FBStatusSetup from "./pages/SubPages/details/FBStatusSetup.jsx";
-// import EditCategorySetup from "./pages/SubPages/EditCategorySetup.jsx";
-// import EditSubCategorySetup from "./pages/SubPages/EditSubCategorySetup.jsx";
-// import FBRestaurtantMenu from "./pages/SubPages/details/FBSubDetails/FBResturantMenu.jsx";
-// import EditRestaurtantBooking from "./pages/SubPages/EditResturantBooking.jsx";
-// import EditRestaurtantOrders from "./pages/SubPages/EditResturantOrders.jsx";
+import FBRestaurtantDetails from "./pages/SubPages/details/FBSubDetails/FBResturantsDetails.jsx";
+import FBStatusSetup from "./pages/SubPages/details/FBStatusSetup.jsx";
+import EditCategorySetup from "./pages/SubPages/EditCategorySetup.jsx";
+import EditSubCategorySetup from "./pages/SubPages/EditSubCategorySetup.jsx";
+import FBRestaurtantMenu from "./pages/SubPages/details/FBSubDetails/FBResturantMenu.jsx";
+import EditRestaurtantBooking from "./pages/SubPages/EditResturantBooking.jsx";
+import EditRestaurtantOrders from "./pages/SubPages/EditResturantOrders.jsx";
 // import FBMainPage from "./pages/Setup/FBMainPage.jsx";
 import EmployeeDocumentMain from "./pages/Employees/EmployeeDocumentMain.jsx";
 import EditDailyPickup from "./pages/SubPages/Transportation/EditDailyPickup.jsx";
@@ -3216,14 +3216,14 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
-        {/* <Route
+        <Route
           path="/admin/fb-details/:id"
           element={
             <ProtectedAdminRoutes>
               <FBRestaurtantDetails />
             </ProtectedAdminRoutes>
           }
-        /> */}
+        />
         {/* <Route
           path="/admin/fb-edit/:id"
           element={
@@ -3232,6 +3232,14 @@ function App() {
             </ProtectedAdminRoutes>
           }
         /> */}
+        <Route
+          path="/fnb/status-setup/:id"
+          element={
+            <ProtectedAdminRoutes>
+              <FBStatusSetup />
+            </ProtectedAdminRoutes>
+          }
+        />
         {/* <Route
           path="/fnb/status-setup/:id"
           element={
@@ -3240,54 +3248,46 @@ function App() {
             </ProtectedAdminRoutes>
           }
         /> */}
-        {/* <Route
-          path="/fnb/status-setup/:id"
-          element={
-            <ProtectedAdminRoutes>
-              <FBStatusSetup />
-            </ProtectedAdminRoutes>
-          }
-        /> */}
-        {/* <Route
+        <Route
           path="/fnb/category-setup/:id"
           element={
             <ProtectedAdminRoutes>
               <EditCategorySetup />
             </ProtectedAdminRoutes>
           }
-        /> */}
-        {/* <Route
+        />
+        <Route
           path="/fnb/sub-category-setup/:id"
           element={
             <ProtectedAdminRoutes>
               <EditSubCategorySetup />
             </ProtectedAdminRoutes>
           }
-        /> */}
-        {/* <Route
+        />
+        <Route
           path="/fnb/restaurtant-menu/:id"
           element={
             <ProtectedAdminRoutes>
               <FBRestaurtantMenu />
             </ProtectedAdminRoutes>
           }
-        /> */}
-        {/* <Route
+        />
+        <Route
           path="/admin/restaurtant-bookings/:id"
           element={
             <ProtectedAdminRoutes>
               <EditRestaurtantBooking />
             </ProtectedAdminRoutes>
           }
-        /> */}
-        {/* <Route
+        />
+        <Route
           path="/admin/restaurtant-orders/:id"
           element={
             <ProtectedAdminRoutes>
               <EditRestaurtantOrders />
             </ProtectedAdminRoutes>
           }
-        /> */}
+        />
         <Route
           path="/admin/fb-res-menu/:id"
           element={
@@ -6955,6 +6955,14 @@ function App() {
           element={
             <ProtectedRoute>
               <NewMom />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/business-card"
+          element={
+            <ProtectedRoute>
+              <BusinessCard />
             </ProtectedRoute>
           }
         />
