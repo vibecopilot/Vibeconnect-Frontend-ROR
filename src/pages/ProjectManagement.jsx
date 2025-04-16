@@ -9,7 +9,7 @@ import { useSelector } from "react-redux";
 import Boards from "../components/Boards";
 import bridge from "/bridge.jpg";
 import { getItemInLocalStorage } from "../utils/localStorage";
-import vibe from "/vibe.jpeg"
+import vibe from "/vibe.jpeg";
 import {
   API_URL,
   getOutsideUsers,
@@ -43,7 +43,7 @@ const ProjectManagement = () => {
   const [board_id_for_Temp, setboard_id_for_Temp] = useState("");
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState(null);
- 
+
   var count = 0;
   const user_id = getItemInLocalStorage("VIBEUSERID");
   useEffect(() => {
@@ -100,8 +100,8 @@ const ProjectManagement = () => {
   const [boardName, setBoardName] = useState("");
   const [emails, setEmails] = useState([]);
   const [dueDate, setDueDate] = useState(todayDate);
-  const [profile, setProfile] = useState(null)
-  const [summary, setSummary] = useState("")
+  const [profile, setProfile] = useState(null);
+  const [summary, setSummary] = useState("");
   var handleChangeSelect = (selectedOption) => {
     setSelectedOption(selectedOption);
     console.log(emails);
@@ -208,17 +208,14 @@ const ProjectManagement = () => {
     console.log(e.target.value);
   };
   const [isEditingDate, setIsEditingDate] = useState(false);
-const navigate = useNavigate()
+  const navigate = useNavigate();
   const goToProject = (id) => {
     // if (!isEditingDate) {
-      navigate(`/project-management/customBoard/?id=${id}`);
+    navigate(`/project-management/customBoard/?id=${id}`);
     // }
-    
   };
 
   const Update_board_template = async () => {
-    
-
     const formData = new FormData();
     formData.append("board_id", board_id_for_Temp);
     formData.append("template_id", selectedTemplateId);
@@ -234,7 +231,7 @@ const navigate = useNavigate()
       }
     } catch (error) {}
   };
-  document.title= `Project Management - Vibe Connect`
+  document.title = `Project Management - Vibe Connect`;
   return (
     <section
       className="flex"

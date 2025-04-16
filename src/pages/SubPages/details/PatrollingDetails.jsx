@@ -163,6 +163,16 @@ const PatrollingDetails = () => {
       selector: (row) => row.status,
       sortable: true,
     },
+    {
+      name: "Remark",
+      selector: (row) => row.remark,
+      sortable: true,
+    },
+    {
+      name: "Attachment",
+      selector: (row) => row.attachment,
+      sortable: true,
+    },
   ];
 
   return (
