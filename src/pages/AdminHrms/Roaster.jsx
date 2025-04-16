@@ -18,6 +18,7 @@ import { formatShiftTime } from "../../utils/dateUtils";
 import AssignRosterShifts from "./Modals/AssignRosterShifts";
 import { Pagination } from "antd";
 import { CustomDropdown } from "../../utils/CustomDropdown";
+import AddAssignRosterShift from "./Modals/AddAssignRosterShift";
 
 const Roster = () => {
   const themeColor = useSelector((state) => state.theme.color);
@@ -148,6 +149,7 @@ const Roster = () => {
   };
 
   const fetchRosterRecordFilter = async (page, siteId) => {
+    console.log(page, siteId);
     try {
       const res = await getRosterRecordsFilter(hrmsOrgId, siteId, page);
       setEmployees(res.results);
@@ -230,14 +232,20 @@ const Roster = () => {
               value={currentMonth}
               onChange={(e) => setCurrentMonth(e.target.value)}
             />
-            {roleAccess?.can_assign_edit_delete_shifts && (
+            {/* {roleAccess?.can_assign_edit_delete_shifts && (
               <button
                 className="bg-white p-2 px-5 rounded-md text-black font-medium whitespace-nowrap"
                 onClick={() => setAssignShifts(true)}
               >
                 Assign Shifts
               </button>
-            )}
+            )} */}
+            <button
+              className="bg-white p-2 px-5 rounded-md text-black font-medium whitespace-nowrap"
+              onClick={() => setAssignShifts(true)}
+            >
+              Assign Shifts
+            </button>
             {/* <button onClick={toggleModal} className="border p-2 rounded-md">
               Upload Records
             </button>
@@ -536,8 +544,14 @@ const Roster = () => {
           fetchRosterRecords={() => fetchRosterRecords(pageNumber)}
         />
       )}
-      {assignShifts && (
+      {/* {assignShifts && (
         <AssignRosterShifts
+          onClose={() => setAssignShifts(false)}
+          fetchRosterRecords={() => fetchRosterRecords(pageNumber)}
+        />
+      )} */}
+      {assignShifts && (
+        <AddAssignRosterShift
           onClose={() => setAssignShifts(false)}
           fetchRosterRecords={() => fetchRosterRecords(pageNumber)}
         />
