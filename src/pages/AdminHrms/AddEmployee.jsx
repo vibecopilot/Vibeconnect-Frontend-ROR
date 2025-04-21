@@ -157,6 +157,13 @@ const AddEmployee = () => {
       toast.error("A valid 10-digit Mobile Number is required!");
       return;
     }
+    if(
+      !formData.emergencyContactNumber.trim() ||
+      formData.emergencyContactNumber.length !== 10 ||
+      !/^\d+$/.test(formData.emergencyContactNumber)
+    ){
+      toast.error("A Valid 10-digit Contact Number is required")
+    }
     if (!formData.password) {
       toast.error("Password is required!");
       return;
@@ -621,6 +628,7 @@ const AddEmployee = () => {
                   value={formData.emergencyContactNumber}
                   onChange={handleChange}
                   name="emergencyContactNumber"
+                  maxLength={10}
                   pattern="[0-9]*"
                   onKeyDown={(e) => {
                     if (
