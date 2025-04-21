@@ -4,7 +4,7 @@ import HighchartsReact from "highcharts-react-official";
 import { RxExit } from "react-icons/rx";
 import { FaRegUserCircle } from "react-icons/fa";
 import Table from "../../components/table/Table";
-
+import AdminHRMS from "../AdminHrms/AdminHrms";
 import { Calendar } from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { useSelector } from "react-redux";
@@ -72,7 +72,7 @@ const ClientDashboard = () => {
     filteredOverallAttendanceRecords,
     setFilteredOverallAttendanceRecords,
   ] = useState([]);
-
+console.log(getItemInLocalStorage)
   // Chart States
   const [pieChartData, setPieChartData] = useState([
     { name: "Head Count", y: 0, color: "#f97316" },
@@ -148,27 +148,32 @@ const ClientDashboard = () => {
 
   const fetchClientDashboardData = async (dateParam = selectedDate) => {
     try {
+      setIsLoading(true);
       const empId = localStorage.getItem("HRMS_EMPLOYEE_ID");
       const orgId = localStorage.getItem("HRMSORGID");
-
+  
+      if (!empId || !orgId) {
+        throw new Error("Employee ID or Organization ID not found");
+      }
+  
       // Fetch client dashboard data and set state
       const clientDataResponse = await getClientDashboard(empId);
       setClientData(clientDataResponse);
-      console.log("Client data 1:", clientDataResponse);
-
+      console.log("Client data:", clientDataResponse);
+  
       // Format the date as YYYY-MM-DD
       const year = dateParam.getFullYear();
       const month = String(dateParam.getMonth() + 1).padStart(2, "0");
       const day = String(dateParam.getDate()).padStart(2, "0");
       const todayDate = `${year}-${month}-${day}`;
-
+  
       // Fetch overall attendance data
       const allAttendance = await getAssociatedOrgDash(empId, todayDate);
       const total_employee = allAttendance.total_employees || 0;
       const total_present = allAttendance.total_present || 0;
       const total_absent = Math.max(total_employee - total_present, 0);
       console.log("Overall Attendance Data:", allAttendance);
-
+  
       // Store overall attendance in state
       setOverallAttendance({
         total_employee,
@@ -176,54 +181,19 @@ const ClientDashboard = () => {
         total_absent,
         attendanceRecord: allAttendance.attendance[0] || null,
       });
+  
       const attendanceRecords = allAttendance.attendance || [];
       const presentIds = attendanceRecords.map((record) => record.employee_id);
-
-      // (Optional) Filter out present and absent client records if needed
+  
+      // Filter present and absent records
       const presentRecords = clientDataResponse.filter((client) =>
         presentIds.includes(client.id)
       );
       const absentRecords = clientDataResponse.filter(
         (client) => !presentIds.includes(client.id)
       );
-
-      const EmpRoaster = await fetchAllRoster(orgId);
-      console.log("Roaster Record:", EmpRoaster);
-
-      const processedClients = clientDataResponse.map((client) => {
-        const clientId = client.id;
-        const clientRoster = EmpRoaster.filter(
-          (record) => Number(record.employee) === Number(clientId)
-        );
-        const rosterByDate = clientRoster.reduce((acc, record) => {
-          const date = record.date;
-          if (!acc[date]) {
-            acc[date] = [];
-          }
-          acc[date].push({
-            employeeName: `${record.first_name} ${record.last_name}`,
-            employeeId: record.employee,
-            first_name: record.first_name,
-            last_name: record.last_name,
-            date: record.date,
-            shiftName: record.shift_name,
-            shiftStartTime: record.start_time,
-            shiftEndTime: record.end_time,
-            shiftId: record.shift,
-          });
-          return acc;
-        }, {});
-
-        return {
-          clientId,
-          clientName: `${client.first_name} ${client.last_name}`,
-          roster: rosterByDate,
-        };
-      });
-
-      console.log("Processed Clients:", processedClients);
-
-      // Build checkIn and checkOut arrays from attendanceRecords
+  
+      // Process check-in/check-out data
       const checkIn = attendanceRecords
         .filter((item) => item.is_check_in === true)
         .map(
@@ -244,8 +214,7 @@ const ClientDashboard = () => {
           })
         );
       setCheckInData(checkIn);
-      console.log("Attendance CheckIn Data:", checkIn);
-
+  
       const checkOut = attendanceRecords
         .filter((item) => item.is_check_in === false)
         .map(
@@ -266,17 +235,45 @@ const ClientDashboard = () => {
           })
         );
       setCheckOutData(checkOut);
-      console.log("Attendance CheckOut Data:", checkOut);
-
-      // Filter out employees who have not checked in
-      const notCheckedInEmployees = clientDataResponse.filter(
-        (client) =>
-          !checkIn.some(
-            (check) => String(check.employee_id) === String(client.id)
-          )
-      );
-      console.log("Not Checked In Employees:", notCheckedInEmployees);
-
+  
+      // Get roster data
+      const EmpRoaster = await fetchAllRoster(orgId);
+      console.log("Roaster Record:", EmpRoaster);
+  
+      // Process client data with roster information
+      const processedClients = clientDataResponse.map((client) => {
+        const clientId = client.id;
+        const clientRoster = EmpRoaster.filter(
+          (record) => Number(record.employee) === Number(clientId)
+        );
+        
+        const rosterByDate = clientRoster.reduce((acc, record) => {
+          const date = record.date;
+          if (!acc[date]) {
+            acc[date] = [];
+          }
+          acc[date].push({
+            employeeName: `${record.first_name} ${record.last_name}`,
+            employeeId: record.employee,
+            first_name: record.first_name,
+            last_name: record.last_name,
+            date: record.date,
+            shiftName: record.shift_name,
+            shiftStartTime: record.start_time,
+            shiftEndTime: record.end_time,
+            shiftId: record.shift,
+          });
+          return acc;
+        }, {});
+  
+        return {
+          clientId,
+          clientName: `${client.first_name} ${client.last_name}`,
+          roster: rosterByDate,
+        };
+      });
+  
+      // Build complete employee records
       const AllEmpRecord = clientDataResponse.map((client) => {
         const empName =
           `${client.first_name || ""} ${client.last_name || ""}`.trim() ||
@@ -285,23 +282,22 @@ const ClientDashboard = () => {
           (pc) => String(pc.clientId) === String(client.id)
         );
         const roster = processedClient ? processedClient.roster : {};
-
+  
         const empCheckInData = checkIn.filter(
           (record) => String(record.employee_id) === String(client.id)
         );
         const empCheckOutData = checkOut.filter(
           (record) => String(record.employee_id) === String(client.id)
         );
+        
         const status = empCheckInData.length > 0 ? "Present" : "Absent";
-        const checkInTime =
-          status === "Present"
-            ? empCheckInData[0]?.attendance_time || "__"
-            : "__";
-        const checkOutTime =
-          status === "Present"
-            ? empCheckOutData[0]?.attendance_time || "__"
-            : "__";
-
+        const checkInTime = status === "Present"
+          ? empCheckInData[0]?.attendance_time || "__"
+          : "__";
+        const checkOutTime = status === "Present"
+          ? empCheckOutData[0]?.attendance_time || "__"
+          : "__";
+  
         return {
           id: client.id,
           empName,
@@ -312,35 +308,29 @@ const ClientDashboard = () => {
           roster,
         };
       });
-      console.log("AllEmpRecord:", AllEmpRecord);
-
-      // Save full record for your table view
+  
       setFullOverallAttendanceRecords(AllEmpRecord);
       setFilteredOverallAttendanceRecords(AllEmpRecord);
-      setNotCheckIn(notCheckedInEmployees);
-
-      // Get HRMS admin data to extract associated site ids
+  
+      // Get associated sites information
       const hrmsAdminData = await getEmployeeJobInfo(empId);
-      const multiple_asso = hrmsAdminData[0].multiple_associated;
-      const siteLocation = hrmsAdminData[0].multiple_associated_info;
-      console.log("siteLocation:", siteLocation);
-
-      const allSites = await getAssociatedSites(orgId);
-      const siteNamesResult = multiple_asso.map((id) => {
-        const matchingSite =
-          Array.isArray(allSites) && allSites.length > 0
-            ? allSites.find((site) => site.id === id)
-            : null;
-        const siteName = matchingSite ? matchingSite.site_name : "Not Found";
-        return { id, siteName };
-      });
+      // The sites are in hrmsAdminData[0].multiple_associated_info array
+      const siteLocation = hrmsAdminData[0]?.multiple_associated_info || [];
+      
+      // Process site information - this is already correct in your code
+      const siteNamesResult = siteLocation.map(site => ({
+        id: site.id,
+        siteName: site.site_name
+      }));
+      
       setMultipleAssos(siteNamesResult);
-
-      const updatedSiteData = await fetchSiteLocationData(
-        siteLocation,
-        selectedDate
-      );
+      console.log("Associated sites:", siteNamesResult);
+  
+      // Update site location data
+      const updatedSiteData = await fetchSiteLocationData(siteLocation, selectedDate);
       console.log("Updated Site Data:", updatedSiteData);
+  
+      // Update charts
       setPieChartData([
         { name: "Head Count", y: total_employee, color: "#f97316" },
         { name: "Present", y: total_present, color: "#10b981" },
@@ -348,8 +338,12 @@ const ClientDashboard = () => {
       ]);
       setBarChartData([total_employee, total_present, total_absent]);
       setCount(total_employee);
+  
     } catch (error) {
       console.error("Error fetching client dashboard:", error);
+      // Handle error state if needed
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -722,12 +716,13 @@ const ClientDashboard = () => {
 
   return (
     <div className="flex flex-col h-screen relative">
+      
       {/* Top Navigation Bar */}
       <nav
         style={{ background: themeColor }}
         className="text-white px-6 py-4 flex justify-between items-center"
       >
-        <div className="text-2xl font-bold">Dashboard</div>
+        <div className="text-2xl font-bold pl-16">Dashboard</div>
         <div className="flex items-center space-x-4">
           {multiple_ass.length === 0 ? (
             <p className="text-grey-500">No site associated</p>
@@ -743,7 +738,7 @@ const ClientDashboard = () => {
           )}
         </div>
       </nav>
-
+      <AdminHRMS/>
       {/* Sidebar & Main Content */}
       <div className="flex flex-1">
         <aside
@@ -759,6 +754,7 @@ const ClientDashboard = () => {
             </span>
           </div>
           <div className="w-full border-b border-gray-400 my-4 group-hover:block hidden"></div>
+          {/* logout */}
           <button
             onClick={handleLogout}
             className="font-semibold flex items-center rounded-md px-2 py-2 hover:bg-white hover:text-black transition-all duration-300 ease-in-out my-2 gap-4"

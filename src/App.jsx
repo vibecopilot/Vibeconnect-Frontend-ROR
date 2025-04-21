@@ -744,7 +744,10 @@ import ComplianceEvidence from "./pages/Setup/ComplianceSetupPages/ComplianceEvi
 import ComplianceDetails from "./pages/Compliance/ComplianceDetails.jsx";
 import ComplianceVendorDashboard from "./pages/Compliance/ComplianceVendorDashboard.jsx";
 import ClientDashboard from "./pages/Employees/ClientDashboard.jsx";
-
+import AddHrmsCommunication from "./pages/HRMS/AddHrmsCommunication.jsx";
+import AddhrmsBroadcast from "./pages/HRMS/AddhrmsBroadcast.jsx";
+import EmployeeHrmsCommunication from "./pages/Employees/EmployeeCommunication/EmployeeHrmsCommunication.jsx";
+import AddHrmsForums from "./pages/HRMS/AddHrmsForums.jsx";
 import { useParams } from "react-router-dom";
 import { getNotification, updateNotificationStatus } from "./api";
 import AddSelfRegistration from "./pages/SubPages/AddSelfRegistration.jsx";
@@ -6937,6 +6940,40 @@ function App() {
               <ClientDashboard />
             </ProtectedRoute>
           }
+        />
+        {/* Hrms Communication Page */}
+        <Route
+        path="/admin/hrms/communication"
+        element={
+          <ProtectedRoute>
+            <AddHrmsCommunication/>
+          </ProtectedRoute>
+        }
+        />
+        <Route
+        path="/admin/hrms/Broadcast"
+        element={
+          <ProtectedRoute>
+            <AddhrmsBroadcast/>
+          </ProtectedRoute>
+        }
+        />
+        <Route
+          path="/employee/EmployeeHrmsCommunication"
+          element={
+            <ProtectedRoute>
+              <EmployeeHrmsCommunication />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+        path="/admin/hrms/formus"
+        element={
+          <ProtectedRoute>
+            <AddHrmsForums/>
+          </ProtectedRoute>
+        }
         />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/otp-qr" element={<OtpAndQr />} />
