@@ -744,7 +744,7 @@ import ComplianceEvidence from "./pages/Setup/ComplianceSetupPages/ComplianceEvi
 import ComplianceDetails from "./pages/Compliance/ComplianceDetails.jsx";
 import ComplianceVendorDashboard from "./pages/Compliance/ComplianceVendorDashboard.jsx";
 import ClientDashboard from "./pages/Employees/ClientDashboard.jsx";
-import AddHrmsCommunication from "./pages/HRMS/AddHrmsCommunication.jsx";
+import AddHrmsCommunication from "../src/pages/HRMS/AddHrmsCommunication.jsx"
 import AddhrmsBroadcast from "./pages/HRMS/AddhrmsBroadcast.jsx";
 import EmployeeHrmsCommunication from "./pages/Employees/EmployeeCommunication/EmployeeHrmsCommunication.jsx";
 import AddHrmsForums from "./pages/HRMS/AddHrmsForums.jsx";
