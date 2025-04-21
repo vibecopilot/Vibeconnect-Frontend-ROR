@@ -302,6 +302,18 @@ function EmployeeDirectory() {
     fetchRoleAccess();
   }, []);
 
+  //Export Employee data 
+    
+  const handleExport = () =>{
+    const url = `https://api.hrms.vibecopilot.ai/user-details/download?organization_id=${orgId}`
+    const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', 'data.json'); 
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  }
+
   return (
     <div className="w-full">
       <AdminHRMS />
@@ -407,7 +419,7 @@ function EmployeeDirectory() {
                   <div className="relative inline-block text-left">
                     <button
                       className=" justify-center w-full flex items-center gap-2 rounded-md border border-gray-300 shadow-sm px-4 py-3 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500"
-                      onClick={handleDownload}
+                      onClick={handleExport}
                     >
                       Export
                       <FaDownload />

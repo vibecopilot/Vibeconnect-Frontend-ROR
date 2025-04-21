@@ -327,7 +327,7 @@ const HRMSDashboard = () => {
               style={{ width: "10px", height: "10px", borderRadius: "5%" }}
             >
               {/* Notification Icon  */}
-              <div className="relative z-20 ">
+              <div className="relative z-20 pl-4">
                 <h2></h2>
                 <button
                   onClick={toggleDrawer}
@@ -342,7 +342,7 @@ const HRMSDashboard = () => {
                       </span>
                     </div>
                   ) : (
-                    <div className="relative mr-2 flex items-center ">
+                    <div className="relative mr-5 flex items-center ">
                       {/* <p className="mx-1 text-m font-semibold text-gray-800">
                         Notification
                       </p> */}
@@ -387,7 +387,7 @@ const HRMSDashboard = () => {
                   </div>
                   {/* Scrollable notifications container */}
                   <div
-                    className="overflow-y-auto"
+                    className="overflow-y-auto pl-4"
                     style={{ maxHeight: "calc(50vh - 120px)" }}
                   >
                     {notificationData.map((notification) => (
