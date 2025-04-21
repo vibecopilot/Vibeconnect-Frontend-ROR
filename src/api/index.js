@@ -4879,7 +4879,7 @@ export const postEmployeeOnBoarding = async (data) => {
   try {
     const response = await HrmsAuth.post(`/employee/`, data, {
       headers: {
-        "Content-Type": "multipart/form-data/",
+        "Content-Type": "multipart/form-data",
       },
     });
     return response.data;
@@ -5261,6 +5261,15 @@ export const getAttendanceRecord = async (orgId, page) => {
     throw error;
   }
 };
+// get export attendance details 
+export const getExportAttendance = async (orgId)=>{
+  try {
+    HrmsAuth.get(`user-details/download?organization_id=${orgId}`)
+  } catch (error) {
+    console.log('Error in exporting ',error.message)
+  }
+}
+
 
 export const getAttendanceRecordFilter = async (orgId, siteId, page) => {
   try {
@@ -7304,6 +7313,43 @@ export const getAssociatedSites = async (orgId) => {
     return response.data;
   } catch (error) {
     console.error("Error getting associated sites :", error);
+    throw error;
+  }
+};
+// get associated sites
+export const getAvailableSites = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/associated/?organization_id=${orgId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching available sites:", error);
+    throw error;
+  }
+};
+
+export const getEmployeeAssociations = async (empId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/associated-organization/?employee_id=${empId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching employee associations:", error);
+    throw error;
+  }
+};
+
+export const updateEmployeeAssociations = async (associationId, data) => {
+  try {
+    const response = await HrmsAuth.patch(
+      `/associated-organization/${associationId}/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating associations:", error);
     throw error;
   }
 };

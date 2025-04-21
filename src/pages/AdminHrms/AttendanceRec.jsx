@@ -24,6 +24,7 @@ import {
   getAssociatedSites,
   getAttendanceRecordFilter,
   fetchByNumeric,
+  getExportAttendance
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import { Link } from "react-router-dom";
@@ -490,6 +491,109 @@ const AttendanceRec = () => {
     fetchRoleAccess();
   }, []);
 
+  //export attendance record in excell
+  // const [exportAllData, setExportAllData]=useState([])
+  // const getAllAttendanceData = async()=>{
+  //   const allAttendanceResp =await getExportAttendance(orgId)
+  //   console.log("attendance response",allAttendanceResp)
+  //   setExportAllData(allAttendanceResp)
+  //   return allAttendanceResp
+  // }
+  // const exportToExcel = async()=>{
+  //   const url = `https://api.hrms.vibecopilot.ai/user-details/download?organization_id=${orgId}`
+  //   const link = document.createElement('a');
+  // link.href = url;
+  // link.setAttribute('download', 'data.json'); // optional, server usually overrides this
+  // document.body.appendChild(link);
+  // link.click();
+  // link.remove();
+     
+  // }
+
+  // calculating the working hrs 
+  // Convert 24-hour time to AM/PM format
+const formatToAmPm = (timeString) => {
+  if (!timeString || timeString === "-") return "-";
+  
+  try {
+    // Handle case where time might already be in AM/PM format
+    if (timeString.includes("AM") || timeString.includes("PM")) {
+      return timeString;
+    }
+    
+    // Parse 24-hour format
+    const [hours, minutes, seconds] = timeString.split(':').map(Number);
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const hours12 = hours % 12 || 12;
+    
+    return `${hours12}:${minutes.toString().padStart(2, '0')} ${period}`;
+  } catch (error) {
+    console.error("Error formatting time:", error);
+    return "-";
+  }
+};
+
+// Convert AM/PM time to 24-hour format for calculations
+const amPmTo24Hour = (timeString) => {
+  if (!timeString || timeString === "-") return null;
+  
+  try {
+    const [time, period] = timeString.split(' ');
+    let [hours, minutes] = time.split(':').map(Number);
+    
+    if (period === 'PM' && hours !== 12) {
+      hours += 12;
+    } else if (period === 'AM' && hours === 12) {
+      hours = 0;
+    }
+    
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  } catch (error) {
+    console.error("Error converting time:", error);
+    return null;
+  }
+};
+// calculating working hrs 
+const calculateWorkingHours = (checkInTime, checkOutTime) => {
+  if (!checkInTime || !checkOutTime || checkInTime === "-" || checkOutTime === "-") {
+    return "-";
+  }
+  
+  try {
+    // Convert AM/PM times to 24-hour format for calculation
+    const checkIn24 = amPmTo24Hour(checkInTime);
+    const checkOut24 = amPmTo24Hour(checkOutTime);
+    
+    if (!checkIn24 || !checkOut24) return "-";
+    
+    // Parse the times
+    const [inHours, inMinutes] = checkIn24.split(':').map(Number);
+    const [outHours, outMinutes] = checkOut24.split(':').map(Number);
+    
+    // Convert to total minutes
+    const totalInMinutes = inHours * 60 + inMinutes;
+    const totalOutMinutes = outHours * 60 + outMinutes;
+    
+    // Calculate difference in minutes
+    let diffMinutes = totalOutMinutes - totalInMinutes;
+    
+    // Handle overnight shifts (if check-out is next day)
+    if (diffMinutes < 0) {
+      diffMinutes += 24 * 60; // Add 24 hours
+    }
+    
+    // Convert back to hours and minutes
+    const hours = Math.floor(diffMinutes / 60);
+    const minutes = diffMinutes % 60;
+    
+    return `${hours}h ${minutes}m`;
+  } catch (error) {
+    console.error("Error calculating working hours:", error);
+    return "-";
+  }
+};
+  
+
   return (
     <div className="flex">
       <AdminHRMS />
@@ -603,6 +707,13 @@ const AttendanceRec = () => {
               }}
             />
           </div>
+          {/* <button
+              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+              // onClick={exportToExcel}
+              style={{ background: themeColor }}
+            >
+              Export
+            </button> */}
 
           {/* Right group: Prev Button + Date Range + Next Button */}
           <div className="flex items-center gap-2">
@@ -623,7 +734,9 @@ const AttendanceRec = () => {
               <FaAngleRight size={20} />
             </button>
           </div>
+          
         </div>
+        
 
         <div className="overflow-x-auto">
           {loading ? (
@@ -1050,15 +1163,16 @@ const AttendanceRec = () => {
                     <p className="font-mono">{selectedAttendanceDate}</p>
                   </div>
 
-                  <div className=" flex justify-between">
-                    <p className="font-medium">Check In Time :</p>
-                    <p>{checkInTime}</p>
-                  </div>
+                  <div className="flex justify-between">
+    <p className="font-medium">Check In Time:</p>
+    <p>{checkInTime ? formatToAmPm(checkInTime) : "-"}</p>
+  </div>
 
-                  <div className=" flex justify-between">
-                    <p className="font-medium">Check Out Time :</p>
-                    <p>{checkOutTime}</p>
-                  </div>
+                  
+  <div className="flex justify-between">
+    <p className="font-medium">Check Out Time:</p>
+    <p>{checkOutTime ? formatToAmPm(checkOutTime) : "-"}</p>
+  </div>
                   <div>
                     {safeLoc.length > 0 && (
                       <>
@@ -1121,7 +1235,14 @@ const AttendanceRec = () => {
                   />
                   <div className=" flex justify-between">
                     <p className="font-medium">Working Hrs :</p>
-                    <p>-</p>
+                    <p>
+      {checkInTime && checkOutTime && checkInTime !== "-" && checkOutTime !== "-"
+        ? calculateWorkingHours(
+            formatToAmPm(checkInTime),
+            formatToAmPm(checkOutTime)
+          )
+        : "-"}
+    </p>
                   </div>
                   <div className=" flex justify-between">
                     <p className="font-medium">Break Hrs :</p>

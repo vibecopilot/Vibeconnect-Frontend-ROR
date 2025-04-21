@@ -14,6 +14,7 @@ import {
 import { AiOutlineFieldTime } from "react-icons/ai";
 import { useSelector } from "react-redux";
 import { PiSignOutBold } from "react-icons/pi";
+import { AiFillNotification } from "react-icons/ai";
 import { RiFileListLine } from "react-icons/ri";
 import { FaRegCalendarTimes } from "react-icons/fa";
 import { FaMoneyBillAlt } from "react-icons/fa";
@@ -42,9 +43,11 @@ import {
 } from "react-icons/tb";
 import { HiOutlineDevicePhoneMobile } from "react-icons/hi2";
 import { getAdminAccess } from "../../api";
+import { IoIosPeople } from "react-icons/io";
 const AdminHRMS = () => {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState("");
+  const [isDashOpen,setIsDashOpen]=useState(false)
   const [isOrgOpen, setIsOrgOpen] = useState(false);
   const [isFlexiOpen, setIsFlexiOpen] = useState(false);
   const [isPerformanceOpen, setIsPerformanceOpen] = useState(false);
@@ -85,6 +88,11 @@ const AdminHRMS = () => {
     navigate("/login");
     window.location.reload();
   };
+  // communication 
+  
+  const toggleDashMenu = () =>{
+    setIsDashOpen(!isDashOpen)
+  }
   const toggleOrgMenu = () => {
     setIsOrgOpen(!isOrgOpen);
   };
@@ -352,6 +360,9 @@ const AdminHRMS = () => {
     fetchRoleAccess();
   }, []);
 
+  // [-- Handle Logout --]
+  
+
   return (
     <section className="flex gap-6 fixed top-0 left-0 bottom-0 h-screen z-30">
       <div
@@ -414,34 +425,95 @@ const AdminHRMS = () => {
                 Notification
               </h2>
             </NavLink> */}
-            <NavLink
-              to="/admin/hrms/dashboard"
-              className={({ isActive }) =>
-                `${
-                  isActive
-                    ? "text-black bg-white flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
-                    : "group flex items-center text-sm gap-3.5 font-medium p-2 "
-                }`
-              }
-            >
+            {/* Dashboard Drop Down */}
+            {(Object.keys(roleAccess).length === 0 ||
+              roleAccess.organization_permissions) && (
               <div>
-                {React.createElement(MdOutlineDashboard, { size: "20" })}
+                <div
+                  onClick={toggleDashMenu}
+                  className="cursor-pointer flex items-center text-sm gap-3.5 font-medium p-2 "
+                >
+                  <div>
+                    {React.createElement(MdOutlineDashboard, { size: "20" })}
+                    {/* <p>Dashboard</p> */}
+                  </div>
+                  <h2
+                    className={`whitespace-pre duration-300 ${
+                      !open && "opacity-0 translate-x-28 overflow-hidden"
+                    }`}
+                  >
+                    Dashboard
+                  </h2>
+                  <div className="ml-auto">
+                    {isDashOpen
+                      ? React.createElement(MdExpandLess, { size: "20" })
+                      : React.createElement(MdExpandMore, { size: "20" })}
+                  </div>
+                </div>
+                {isDashOpen && (
+                  <div className="flex flex-col gap-2">
+                    <NavLink
+                      to="/admin/hrms/dashboard"
+                      className={() =>
+                        `${
+                          isActiveLink(location, routes)
+                            ? "text-black bg-white flex p-2 pl-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                            : "group flex items-center text-sm gap-3.5 font-medium p-2 "
+                        }`
+                      }
+                    >
+                      <div>
+                        {React.createElement(MdOutlineDashboard, { size: "20" })}
+                      </div>
+                      <h2
+                        className={`whitespace-pre duration-100 ${
+                          !open && "opacity-0 translate-x-28 overflow-hidden"
+                        }`}
+                      >
+                        Dashboard
+                      </h2>
+                      <h2
+                        className={`${
+                          open && "hidden"
+                        } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-100 group-hover:w-fit`}
+                      >
+                        Dashboard
+                      </h2>
+                    </NavLink>
+                    <NavLink
+                      to="/admin/hrms/client-dashboard"
+                      className={() =>
+                        `${
+                          isActiveLink(location, routes1)
+                            ? "text-black bg-white flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                            : "group flex items-center text-sm gap-3.5 font-medium p-2 "
+                        }`
+                      }
+                    >
+                      <div>
+                        {React.createElement(IoIosPeople, { size: "20" })}
+                      </div>
+                      <h2
+                        className={`whitespace-pre duration-300 ${
+                          !open && "opacity-0 translate-x-28 overflow-hidden"
+                        }`}
+                      >
+                        Client Dashboard
+                      </h2>
+                      <h2
+                        className={`${
+                          open && "hidden"
+                        } absolute left-48 bg-white font-semibold whitespace-pre  text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+                      >
+                        Client Dashboard
+                      </h2>
+                    </NavLink>
+                   
+                   
+                  </div>
+                )}
               </div>
-              <h2
-                className={`whitespace-pre duration-300 ${
-                  !open && "opacity-0 translate-x-28 overflow-hidden"
-                }`}
-              >
-                Dashboard
-              </h2>
-              <h2
-                className={`${
-                  open && "hidden"
-                } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
-              >
-                Dashboard
-              </h2>
-            </NavLink>
+            )} 
 
             {/* <NavLink
               to="/admin/hrms/alerts"
@@ -1952,7 +2024,7 @@ const AdminHRMS = () => {
                     </div>
                     <h2
                       className={`whitespace-pre duration-300 ${
-                        !open && "opacity-0 translate-x-28 overflow-hidden"
+                        !open && "opacity-0 translate-x-28 overflow-hidden "
                       }`}
                     >
                       CTC Template
@@ -1960,13 +2032,50 @@ const AdminHRMS = () => {
                     <h2
                       className={`${
                         open && "hidden"
-                      } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+                      } absolute left-48 bg-white font-semibold whitespace-pre  text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
                     >
                       CTC Template
                     </h2>
                   </NavLink>
                 </div>
+                
               )}
+              {/* announcement button */}
+              <NavLink
+                    to="/admin/hrms/communication"
+                    className={({ isActive }) =>
+                      `${
+                        isActive
+                          ? "text-black bg-white flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                          : "group flex items-center text-sm gap-3.5 font-medium p-2 "
+                      }`
+                    }
+                  >
+                    <div>
+                      {React.createElement(AiFillNotification, { size: "20" })}
+                    </div>
+                    <h2
+                      className={`whitespace-pre duration-300 ${
+                        !open && "opacity-0 translate-x-28 overflow-hidden "
+                      }`}
+                    >
+                      Communication
+                    </h2>
+                    <h2
+                      className={`${
+                        open && "hidden"
+                      } absolute left-48 bg-white font-semibold whitespace-pre  text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+                    >
+                      Communication
+                    </h2>
+                  </NavLink>
+              <button
+                          onClick={handleLogout}
+                          className="font-semibold flex items-center rounded-md px-2 py-2 hover:bg-white hover:text-black transition-all duration-300 ease-in-out my-2 gap-4"
+                        >
+                          <PiSignOutBold size={20} />
+                          {open && "Logout"}
+                        </button>
             </div>
 
             {/* <NavLink
