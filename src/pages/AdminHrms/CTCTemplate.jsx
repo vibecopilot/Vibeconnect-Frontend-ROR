@@ -85,6 +85,7 @@ const CTCTemplate = () => {
       const res = await showCTCTemplates(hrmsOrgId);
       setFilteredTemplates(res);
       setTemplates(res);
+      console.log(res.data)
     } catch (error) {
       console.log(error);
     }
@@ -98,7 +99,7 @@ const CTCTemplate = () => {
   const handleSearch = (e) => {
     const searchValue = e.target.value;
     setSearchText(searchValue);
-    if (searchValue.trim() === "") {
+    if (searchValue.trim() === "") {  
       setFilteredTemplates(templates);
     } else {
       const filteredResult = templates.filter((template) =>
@@ -211,7 +212,7 @@ const CTCTemplate = () => {
                 <ul style={listItemStyle}>
                   <li>
                     Flexibility Deduction: Include any flexibility deductions.
-                  </li>
+                  </li> 
                 </ul>
               </li>
               <li>
