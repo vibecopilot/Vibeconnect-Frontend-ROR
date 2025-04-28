@@ -4,26 +4,73 @@ import Table from "../../components/table/Table";
 import AdminHRMS from "./AdminHrms";
 import { Link } from "react-router-dom";
 import { PiPlusCircle } from "react-icons/pi";
-import { deleteCTCTemplate, deleteNewCTCTemplate, getCTCTemplate, showCTCTemplates } from "../../api";
+import { deleteCTCTemplate, deleteNewCTCTemplate, getCTCTemplate, showCTCTemplates ,getHrmsCtcTemplate , deleteHrmsCtcTemplate , getAvailableSites} from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import { useSelector } from "react-redux";
 import { GrHelpBook } from "react-icons/gr";
 import { BiEdit } from "react-icons/bi";
 import { FaTrash } from "react-icons/fa";
 import toast from "react-hot-toast";
+import { components } from "react-select";
 
 const CTCTemplate = () => {
   const themeColor = useSelector((state) => state.theme.color);
+  const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
   const listItemStyle = {
     listStyleType: "disc",
     color: "gray",
     fontSize: "14px",
     fontWeight: 500,
   };
+  const [allSites , setAllSites] = useState([]);
+  useEffect(()=>{
+   const fetchAllSites = async () =>{
+    try {
+      const SiteDetails = await getAvailableSites(hrmsOrgId);
+      
+    setAllSites(SiteDetails)
+    } catch (error) {
+      console.log("error getting site data",error)
+    }
+   
+   }
+   fetchAllSites();
+  },[hrmsOrgId])
+  
+  const getSiteNames = (siteIds) => {
+    if (!siteIds || !Array.isArray(siteIds)) return "None";
+    
+    return siteIds
+      .map(id => {
+        
+        const numericId = typeof id === 'string' ? parseInt(id) : id;
+        const site = allSites.find(s => s.id === numericId);
+        return site?.site_name || `ID: ${numericId}`;
+      })
+      .join(", ");
+  };
+
   const columns = [
     {
+      name:"Id",
+      selector:(row) => row.id,
+      sortable:true,
+    },
+    {
       name: "Template Name",
-      selector: (row) => row.name,
+      selector: (row) => row.template_name,
+      sortable: true,
+    },
+    {
+      name: "Associated Sites",
+      cell: (row) => (
+        <div title={getSiteNames(row.associated)} className="whitespace-pre-wrap" >
+          {row.associated?.length > 0 
+            ? getSiteNames(row.associated)
+            : "None"
+          }
+        </div>
+      ),
       sortable: true,
     },
     // {
@@ -69,7 +116,7 @@ const CTCTemplate = () => {
 
   const handleDeleteTemplate = async (id) => {
     try {
-      await deleteNewCTCTemplate(id);
+      await deleteHrmsCtcTemplate(id);
       fetchCTCTemplates();
       toast.success("CTC template deleted successfully");
     } catch (error) {
@@ -79,21 +126,23 @@ const CTCTemplate = () => {
 
   const [templates, setTemplates] = useState([]);
   const [filteredTemplates, setFilteredTemplates] = useState([]);
-  const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
+  
   const fetchCTCTemplates = async () => {
     try {
-      const res = await showCTCTemplates(hrmsOrgId);
-      setFilteredTemplates(res);
+      const res = await getHrmsCtcTemplate(hrmsOrgId);
       setTemplates(res);
-      console.log(res.data)
+      setFilteredTemplates(res);
     } catch (error) {
       console.log(error);
+      toast.error("Failed to load templates");
     }
   };
 
   useEffect(() => {
-    fetchCTCTemplates();
-  }, []);
+    if (allSites.length > 0) { // Only fetch templates after sites are loaded
+      fetchCTCTemplates();
+    }
+  }, [allSites]);
 
   const [searchText, setSearchText] = useState("");
   const handleSearch = (e) => {
@@ -130,7 +179,10 @@ const CTCTemplate = () => {
             Template
           </Link>
         </div>
-        <Table columns={columns} data={filteredTemplates} isPagination={true} />
+        <Table columns={columns} data={filteredTemplates.map(template=>({
+          ...template ,
+          associated_sites_names: getSiteNames(template.associated)
+        }))} isPagination={true} />
       </div>
       <div className="my-4 mx-2 w-fit">
         <div className="flex flex-col bg-gray-50 rounded-md text-wrap  gap-4 my-2 py-2 pl-5 pr-2 w-[18rem]">
