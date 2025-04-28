@@ -72,7 +72,7 @@ const ClientDashboard = () => {
     filteredOverallAttendanceRecords,
     setFilteredOverallAttendanceRecords,
   ] = useState([]);
-console.log(getItemInLocalStorage)
+// console.log(getItemInLocalStorage)
   // Chart States
   const [pieChartData, setPieChartData] = useState([
     { name: "Head Count", y: 0, color: "#f97316" },

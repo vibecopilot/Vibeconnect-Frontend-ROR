@@ -11,7 +11,8 @@ import { colors } from "../../utils/colors";
 import FontSizeSelector from "./FontSizeSelector";
 import { BsFillBrushFill } from "react-icons/bs";
 import Background from "../Background";
-
+import { useLocation } from "react-router-dom";
+import AdminHRMS from "../../pages/AdminHrms/AdminHrms";
 function User() {
   const [user, setUser] = useState("");
   const [userLastName, setUserLastName] = useState("");
@@ -74,13 +75,22 @@ function User() {
   
     getAllowedFeatures();
   }, []);
+  const location = useLocation();
 
   document.title = `Profile - Vibe Connect`;
   return (
     <div className="flex">
-      <div>
-        <Navbar />
-      </div>
+      {
+        location.pathname === "/settings" ? (
+          <div>
+            <Navbar/>
+          </div>
+        ) :(
+          <div>
+            <AdminHRMS/>
+          </div>
+        )
+      }
       <div className=" flex justify-center w-full">
         <div className="flex flex-col justify-center  min-h-screen  mx-10 w-full">
           <div className="bg-gray-200 p-4 flex flex-col w-full">
