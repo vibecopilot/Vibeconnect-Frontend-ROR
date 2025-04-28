@@ -42,9 +42,9 @@ import Communication from "./pages/Communication.jsx";
 import CreateEvent from "./pages/SubPages/CreateEvent.jsx";
 import EventDetails from "./pages/SubPages/details/EventDetails.jsx";
 import CreateBroadcast from "./pages/SubPages/CreateBroadcast.jsx";
-import CreateHrmsBroadcast from "./pages/SubPages/CreateHrmsBroadcast.jsx";
+// import CreateHrmsBroadcast from "./pages/SubPages/CreateHrmsBroadcast.jsx";
 import BroadcastDetails from "./pages/SubPages/details/BroadcastDetails.jsx";
-import BroadcastHrmsDetails from "./pages/SubPages/BroadcastHrmsDetails.jsx";
+// import BroadcastHrmsDetails from "./pages/SubPages/BroadcastHrmsDetails.jsx";
 import MailRoom from "./pages/MailRoom.jsx";
 import CreateInbound from "./pages/SubPages/CreateInbound.jsx";
 import InBoundDetails from "./pages/SubPages/details/InBoundDetails.jsx";
@@ -704,7 +704,7 @@ import EditPPMChecklist from "./pages/SubPages/EditPPMChecklist.jsx";
 import MeterCategoryType from "./pages/Setup/MeterCategoryType/MeterCategoryType.jsx";
 import EditEmployee from "./pages/AdminHrms/EditEmployee.jsx";
 import EditEvent from "./pages/SubPages/EditEvent.jsx";
-import EditHrmsEvent from "./pages/SubPages/EditHrmsEvent.jsx";
+// import EditHrmsEvent from "./pages/SubPages/EditHrmsEvent.jsx";
 import EditBroadcast from "./pages/SubPages/EditBroadcast.jsx";
 import AssociatedSites from "./pages/AdminHrms/AssociatedSites/AssociatedSites.jsx";
 import SetupSeat from "./pages/Setup/SetupSeat.jsx";
@@ -6982,28 +6982,28 @@ function App() {
           }
         />
         <Route
-         path="/admin/hrms/broadcast/details/:id"
-         element={
-          <ProtectedRoute>
-            <BroadcastHrmsDetails/>
-          </ProtectedRoute>
-         }
+        //  path="/admin/hrms/broadcast/details/:id"
+        //  element={
+        //   <ProtectedRoute>
+        //     <BroadcastHrmsDetails/>
+        //   </ProtectedRoute>
+        //  }
         />
         <Route
-         path="/admin/hrms/broadcast/edit-event/:id"
-         element={
-          <ProtectedRoute>
-            <EditHrmsEvent/>
-          </ProtectedRoute>
-         }
+        //  path="/admin/hrms/broadcast/edit-event/:id"
+        //  element={
+        //   <ProtectedRoute>
+        //     <EditHrmsEvent/>
+        //   </ProtectedRoute>
+        //  }
         />
         <Route
-        path="/admin/hrms/broadcast/create-broadcast"
-          element={
-            <ProtectedRoute>
-              <CreateHrmsBroadcast/>
-            </ProtectedRoute>
-          }
+        // path="/admin/hrms/broadcast/create-broadcast"
+        //   element={
+        //     <ProtectedRoute>
+        //       <CreateHrmsBroadcast/>
+        //     </ProtectedRoute>
+        //   }
           />
 
         <Route
