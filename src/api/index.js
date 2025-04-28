@@ -5732,7 +5732,159 @@ export const editFixedAllowanceDetails = async (FAid, data) => {
     throw error;
   }
 };
-export const getFixedDeductions = async (orgId) => {
+// fixed  Hrms allowance 
+export const getHrmsFixedAllowance = async (org_id) =>{
+  try {
+    const response = await HrmsAuth.get(`/ctc-components/?organization_id=${org_id}`)
+    return response.data
+  } catch (error) {
+    console.log("Error getting  Allowance:", error);
+    throw error;
+  }
+}
+
+export const postHrmsFixedAllowance = async (data) =>{
+  try {
+    const response = await HrmsAuth.post('/ctc-components/',data)
+    return response.data
+  } catch (error) {
+    console.log("Error Adding  Allowance",error)
+    throw error
+  }
+}
+
+export const getHrmsFixedAllowanceDetailsId = async (FAid) =>{
+  try {
+    const response = await HrmsAuth.get(`/ctc-components/${FAid}/`)
+    return response.data
+  } catch (error) {
+    console.log("Error Getting Allowance on bases of id ", error)
+    throw error
+  }
+}
+export const editHrmsFixedAllowanceDetails = async (data , FAid) =>{
+  try {
+     const response = await HrmsAuth.patch(`/ctc-components/${FAid}/`,data)
+     return response.data
+  } catch (error) {
+    console.log("Error Editing Allowance",error)
+    throw error
+  }
+}
+export const deleteHrmsFixedAllowance = async (FAid) =>{
+  try {
+    const response = await HrmsAuth.delete(`/ctc-components/${FAid}/`)
+    return response.data
+  } catch (error) {
+    console.log("Error Deleting Allowance", error)
+    throw error
+  }
+}
+
+// fixed hrms deduction 
+export const getHrmsFixedDeduction = async (org_id) =>{
+  try {
+    const response = await HrmsAuth.get(`/ctc-deductions/?organization_id=${org_id}`)
+    return response.data
+  } catch (error) {
+    console.log("Error Getting deduction" , error)
+    throw error
+  }
+}
+export const deleteHrmsFixedDeduction = async (FDid) =>{
+  try {
+    const response = await HrmsAuth.delete(`/ctc-deductions/${FDid}/`)
+    return response.data
+  } catch (error) {
+    console.log('Error Delliting selected Deduction',error)
+    throw error
+  }
+}
+
+export const postHrmsFixedDeduction = async (data) =>{
+  try {
+    const response = await HrmsAuth.post('/ctc-deductions/',data)
+    return response.data
+  } catch (error) {
+    console.log("Error in adding the fixed deduction",error)
+    throw error
+  }
+}
+export const getHrmsFixedDeductionDetailsId = async (FDid) =>{
+  try {
+    const response = await HrmsAuth.get(`/ctc-deductions/${FDid}/`)
+    return response.data
+  } catch (error) {
+    console.log("Error getting the fixed deduction on id ", error)
+    throw error
+  }
+}
+
+export const editHrmsFixedDeduction = async (FDid, data) => {
+  try {
+    const response = await HrmsAuth.patch(`/ctc-deductions/${FDid}/`, data);
+    return response.data;
+  } catch (error) {
+    console.log("error editing the fixed deduction", error);
+    throw error;
+  }
+};
+
+// Hrms New Ctc template 
+
+export const getHrmsCtcTemplate = async (orgId) =>{
+  try {
+    const response = await HrmsAuth.get(`/ctc-template-organization/?organization_id=${orgId}`)
+    return response.data
+  } catch (error) {
+    console.log("Error Getting The Ctc Template Data" , error);
+    throw error
+  }
+}
+
+export const createHrmsCtcTemplate = async (data) =>{
+  try {
+    const response = await HrmsAuth.post(`/ctc-template-organization/`,data)
+    return response.data
+  } catch (error) {
+    console.log("Error creating the Ctc Template ", error)
+    throw error
+  }
+}
+
+export const deleteHrmsCtcTemplate = async (ctc_id) =>{
+try {
+  const response = await HrmsAuth.delete(`/ctc-template-organization/${ctc_id}/`)
+  return response.data
+} catch (error) {
+  console.log("Error in deleting the Ctc template " , error);
+  throw error
+
+}
+}
+
+export const getHrmsCtcTemplateonId = async (ctc_id) =>{
+  try {
+    const response = await HrmsAuth.get(`/ctc-template-organization/${ctc_id}/`)
+    return response.data
+  } catch (error) {
+    console.log("Error Getting Ctc data Id" ,error)
+    throw error
+  }
+}
+
+export const updateHrmsCtcTemplate = async (ctc_id , data) =>{
+  try {
+    const response = await HrmsAuth.patch(`/ctc-template-organization/${ctc_id}/`,data)
+    return response.data
+  } catch (error) {
+    console.log("error updating the ctc",error)
+    throw error 
+  }
+}
+
+
+export const getFixedDeductions = async (orgId) => { 
   try {
     const response = await HrmsAuth.get(
       `/payroll/deduction/?organization_id=${orgId}`
