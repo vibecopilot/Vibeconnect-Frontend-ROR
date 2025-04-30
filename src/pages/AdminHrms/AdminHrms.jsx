@@ -354,7 +354,7 @@ const AdminHRMS = () => {
     const fetchRoleAccess = async () => {
       try {
         const res = await getAdminAccess(orgId, empId);
-          console.log("Role Provided",res[0])
+          
         setRoleAccess(res[0]);
       } catch (error) {
         console.log(error);
@@ -362,7 +362,7 @@ const AdminHRMS = () => {
     };
     fetchRoleAccess();
   }, []);
-   console.log("role access provided",roleAccess)
+   
    const HIDE_PAYROLL_ON_THE_BASESOF_THE_Name = roleAccess?.name === 175
   // [-- Handle Logout --]
 
