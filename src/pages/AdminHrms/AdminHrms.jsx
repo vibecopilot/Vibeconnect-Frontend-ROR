@@ -348,11 +348,13 @@ const AdminHRMS = () => {
   const empId = getItemInLocalStorage("APPROVERID");
   const orgId = getItemInLocalStorage("HRMSORGID");
   const [roleAccess, setRoleAccess] = useState({});
+
+ 
   useEffect(() => {
     const fetchRoleAccess = async () => {
       try {
         const res = await getAdminAccess(orgId, empId);
-
+          
         setRoleAccess(res[0]);
       } catch (error) {
         console.log(error);
@@ -360,7 +362,8 @@ const AdminHRMS = () => {
     };
     fetchRoleAccess();
   }, []);
-
+   
+   const HIDE_PAYROLL_ON_THE_BASESOF_THE_Name = roleAccess?.name === 175
   // [-- Handle Logout --]
 
   return (
@@ -1877,8 +1880,8 @@ const AdminHRMS = () => {
                 )}
               </div>
             )}
-            {(Object.keys(roleAccess).length === 0 ||
-              roleAccess.payroll_permissions) && (
+            
+            {!HIDE_PAYROLL_ON_THE_BASESOF_THE_Name && (
               <div>
                 {/* Payroll Main Menu Item (Toggle) */}
                 <div
@@ -2060,7 +2063,7 @@ const AdminHRMS = () => {
             )}
             {/* Payroll  */}
 
-            <div>
+            {/* <div>
               <div
                 onClick={togglepayMenu}
                 className="cursor-pointer flex items-center text-sm gap-3.5 font-medium p-2 "
@@ -2221,9 +2224,11 @@ const AdminHRMS = () => {
                   </NavLink>
                 </div>
               )}
-            </div>
+            </div> */}
             {/* announcement button */}
             {/* {roleAccess.is_admin && */}
+            {/* Communication */}
+            {!HIDE_PAYROLL_ON_THE_BASESOF_THE_Name && (
             <NavLink
               to="/admin/hrms/broadcast"
               className={({ isActive }) =>
@@ -2252,6 +2257,7 @@ const AdminHRMS = () => {
                 Communication
               </h2>
             </NavLink>
+)}
             {/* } */}
             <div className="border-2 border-x-white border-opacity-65 my-4"></div>
             {/* theme changer */}
