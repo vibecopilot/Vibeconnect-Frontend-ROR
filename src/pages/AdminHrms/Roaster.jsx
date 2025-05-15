@@ -36,7 +36,7 @@ const Roster = () => {
     console.log(schedule);
     setSelectedShift({ employee, date, schedule, mode });
   };
-
+console.log("select shift",selectedShift)
   const toggleModal = () => {
     setIsOpen(!isOpen);
   };

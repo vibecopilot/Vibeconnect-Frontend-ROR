@@ -92,7 +92,7 @@ const HrmsUser = () => {
             </span>
           </p>
 
-          {/* <div className="w-full max-w-md">
+          <div className="w-full max-w-md">
             <div className="mt-4">
               <button
                 onClick={() => setShowPassWord(!showPassword)}
@@ -144,7 +144,7 @@ const HrmsUser = () => {
                 </div>
               )}
             </div>
-          </div> */}
+          </div>
         </div>
 
         <div className="my-2">

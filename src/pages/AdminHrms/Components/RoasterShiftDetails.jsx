@@ -15,6 +15,7 @@ import { useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import { MdClose, MdDeleteForever } from "react-icons/md";
 import { FaCheck } from "react-icons/fa";
+import { error } from "highcharts";
 
 function RoasterShiftDetails({
   employee,
@@ -35,7 +36,7 @@ function RoasterShiftDetails({
   const [formData, setFormData] = useState({
     endOn: "never",
   });
-  console.log(employee.id);
+  console.log("Employee id",employee.id);
   const formatDate = (date) => {
     return new Date(date).toLocaleDateString("en-US", {
       day: "numeric",
@@ -47,7 +48,8 @@ function RoasterShiftDetails({
   console.log(mode);
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
   const [shifts, setShifts] = useState([]);
-  console.log(shiftData, repeat, frequency, formData.endOn, endDate);
+  
+  console.log(shiftData, repeat, frequency, formData.endOn, endDate ,);
   useEffect(() => {
     const fetchRosterRecordDetails = async () => {
       try {
@@ -64,11 +66,12 @@ function RoasterShiftDetails({
         console.log(error);
       }
     };
-
+   
     const fetchRosterShifts = async () => {
       try {
         const res = await getRosterShift(hrmsOrgId);
         setShifts(res);
+        console.log("shift details",res)
       } catch (error) {
         console.log(error);
       }
@@ -177,7 +180,7 @@ function RoasterShiftDetails({
   console.log(formattedDate);
   const handleAddShift = async () => {
     const postData = new FormData();
-    postData.append("employee[]", employee.id);
+    postData.append("employee", employee.id);
     postData.append("date", formattedDate);
     postData.append("shift_type", shiftType);
     postData.append("shift", shiftData);
@@ -276,6 +279,12 @@ function RoasterShiftDetails({
     };
     fetchRoleAccess();
   }, []);
+
+  // if(formData.endOn === "on" && new Date(endDate) <= new Date(schedule)){
+  //   toast.error("End date must be after the current shift date");
+  //   return;
+  // }
+  
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center">
       <div className="bg-white p-6 rounded-xl shadow-lg w-2/3 md:w-1/3">
@@ -341,7 +350,7 @@ function RoasterShiftDetails({
               <option value="">Select Shift</option>
               {shifts.map((shift) => (
                 <option value={shift.id} key={shift.id}>
-                  {shift.name}
+                  {shift.name} start time:{shift.start_time || "no start time"} ,  End Time:{shift.end_time || "no end time"}
                 </option>
               ))}
             </select>
@@ -429,6 +438,7 @@ function RoasterShiftDetails({
                     className="w-full p-2 border rounded-md"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
+                    min={new Date(new Date(schedule).getTime() + 24 * 60 *  1000).toISOString().split('T')[0]}
                   />
                 </div>
               )}

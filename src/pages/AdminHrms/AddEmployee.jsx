@@ -180,10 +180,10 @@ const AddEmployee = () => {
       toast.error("Date of Birth is required!");
       return;
     }
-    if(!formData.pan.trim()){
-      toast.error("Pan Card number is required")
-      return
-    }
+    // if(!formData.pan.trim()){
+    //   toast.error("Pan Card number is required")
+    //   return
+    // }
     if(!formData.aadhar){
       toast.error("Adhar Number is required")
       return
@@ -575,7 +575,7 @@ const AddEmployee = () => {
 
               <div className="grid gap-2 items-center w-full">
                 <label className="block text-sm font-medium text-gray-700">
-                  PAN <span className="text-red-400">*</span>
+                  PAN 
                 </label>
                 <input
                   type="text"
