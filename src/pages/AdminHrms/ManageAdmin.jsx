@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState , useMemo} from "react";
 import { PiPlus, PiPlusCircle } from "react-icons/pi";
 import Table from "../../components/table/Table";
 import { GrHelpBook } from "react-icons/gr";
 import { BiEdit } from "react-icons/bi";
 import UserDetailsList from "./UserDetailsList";
+import MultiSelect from "./Components/MultiSelect";
 import { FaCheck, FaTrash } from "react-icons/fa";
 import {
   deleteManageAdmin,
@@ -17,6 +18,9 @@ import {
   getMyHRMSEmployees,
   postApprovalAuthorities,
   postManageAdmin,
+  getAvailableSites,
+  updateEmployeeAssociations,
+  getEmployeeAssociations
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import Select from "react-select";
@@ -86,7 +90,31 @@ const ManageAdmin = () => {
       ),
     },
   ];
+  // Associated Sites
+  const [availableSites, setAvailableSites] = useState([]);
+  const [selectedSites, setSelectedSites] = useState([]);
+  
+  useEffect(() => {
+    const fetchAvailableSitesData = async () => {
+      try {
+        const sitesData = await getAvailableSites(hrmsOrgId);
+        if (!sitesData) {
+          toast.error("No Sites Available");
+        }
 
+        const formattedSites = sitesData.map((site) => ({
+          value: site.id,
+          label: site.site_name,
+        }));
+        setAvailableSites(formattedSites);
+      } catch (error) {
+        console.log("Error in getting The available sites", error);
+      }
+    };
+    fetchAvailableSitesData();
+  }, [hrmsOrgId]);
+
+    
   const handleDeleteAdmin = async (adminId) => {
     try {
       await deleteManageAdmin(adminId);
@@ -95,6 +123,7 @@ const ManageAdmin = () => {
       console.log(error);
     }
   };
+  
 
   const fetchAllEmployees = async () => {
     try {
@@ -194,6 +223,20 @@ const ManageAdmin = () => {
     }
     try {
       const res = await postManageAdmin(postData);
+      if (selectedSites.length > 0) {
+        const siteIds = selectedSites.map((site) => site.value);
+        console.log(siteIds)
+        const associationData = {
+          multiple_associated: siteIds,
+          organization: hrmsOrgId,
+        };
+
+        await updateEmployeeAssociations(
+          selectedUserOption.value,
+          associationData
+        );
+      }
+
       if (
         employeePermission.can_approve_reject_onboarding_request ||
         access === "Full Access"
@@ -282,6 +325,10 @@ const ManageAdmin = () => {
   //     console.log(error)
   //   }
   // }
+
+  const [selectedSitesEdit , setSelectedSitesEdit] = useState([])
+
+
   const handleEditModal = async (id) => {
     setShowModal1(true);
     setAdminId(id);
@@ -296,6 +343,22 @@ const ManageAdmin = () => {
       console.log(admin);
       setSelectedUserOption(admin || null);
       fetchApproverDetails(admin.value);
+
+      //Fetch associated id and edit 
+      try {
+        const associations  = await getEmployeeAssociations(admin.value)
+        const associatedSites  = associations?.multiple_associated || []
+
+        const formattedSites = associatedSites.map(siteId => {
+          const site = availableSites.find(s => s.value === siteId);
+          return site ? { value: siteId, label: site.label } : null;
+        }).filter(Boolean);
+
+        setSelectedSitesEdit(formattedSites);
+      } catch (error) {
+        console.log("Error Fetching associated Sites" ,error)
+        setSelectedSitesEdit([]);
+      }
 
       // Update your permission states as before…
       const updatedPermissions = { ...permissionAllowed };
@@ -390,6 +453,8 @@ const ManageAdmin = () => {
     editData.append("organization", hrmsOrgId);
     editData.append("access", access);
     editData.append("role", role);
+  
+    // Append permissions based on access type
     if (access === "Full Access") {
       Object.keys(permissionAllowed).forEach((key) => {
         editData.append(key, true);
@@ -399,6 +464,7 @@ const ManageAdmin = () => {
         editData.append(key, permissionAllowed[key]);
       });
     }
+  
     if (access === "Full Access") {
       Object.keys(employeePermission).forEach((key) => {
         editData.append(key, true);
@@ -408,6 +474,7 @@ const ManageAdmin = () => {
         editData.append(key, employeePermission[key]);
       });
     }
+  
     if (access === "Full Access") {
       Object.keys(attendancePermission).forEach((key) => {
         editData.append(key, true);
@@ -417,6 +484,7 @@ const ManageAdmin = () => {
         editData.append(key, attendancePermission[key]);
       });
     }
+  
     if (access === "Full Access") {
       Object.keys(rosterPermission).forEach((key) => {
         editData.append(key, true);
@@ -426,6 +494,7 @@ const ManageAdmin = () => {
         editData.append(key, rosterPermission[key]);
       });
     }
+  
     if (access === "Full Access") {
       Object.keys(leavePermission).forEach((key) => {
         editData.append(key, true);
@@ -435,6 +504,7 @@ const ManageAdmin = () => {
         editData.append(key, leavePermission[key]);
       });
     }
+  
     if (access === "Full Access") {
       Object.keys(dashboardPermission).forEach((key) => {
         editData.append(key, true);
@@ -444,13 +514,33 @@ const ManageAdmin = () => {
         editData.append(key, dashboardPermission[key]);
       });
     }
+  
     if (selectedUserOption && selectedUserOption.value) {
       editData.append("name", selectedUserOption.value);
     } else {
       toast.error("No user selected.");
+      return;
     }
+  
     try {
+      // First update the admin details
       const res = await editManageAdminDetails(adminId, editData);
+  
+      // Then update the associated sites if user is selected
+      if (selectedUserOption && selectedUserOption.value) {
+        const siteIds = selectedSitesEdit.map((site) => site.value);
+        const associationData = {
+          multiple_associated: siteIds,
+          organization: hrmsOrgId,
+        };
+  
+        await updateEmployeeAssociations(
+          selectedUserOption.value,
+          associationData
+        );
+      }
+  
+      // Handle approval authorities logic
       if (!employeePermission.can_approve_reject_onboarding_request) {
         const addApprover = {
           is_active: employeePermission.can_approve_reject_onboarding_request,
@@ -459,12 +549,13 @@ const ManageAdmin = () => {
           type_of_approver: "Employee",
         };
         if (approverDetails.approverSettingId) {
-          const res = await editApprovalAuthoritiesStatus(
+          await editApprovalAuthoritiesStatus(
             approverDetails.approverSettingId,
             addApprover
           );
         }
       }
+  
       if (
         employeePermission.can_approve_reject_onboarding_request ||
         access === "Full Access"
@@ -475,25 +566,27 @@ const ManageAdmin = () => {
           approver_id: selectedUserOption.value,
           type_of_approver: "Employee",
         };
-
+  
         try {
           if (approverDetails.approverSettingId) {
-            const res = await editApprovalAuthoritiesStatus(
+            await editApprovalAuthoritiesStatus(
               approverDetails.approverSettingId,
               addApprover
             );
           } else {
-            const res = await postApprovalAuthorities(addApprover);
+            await postApprovalAuthorities(addApprover);
           }
         } catch (error) {
           console.log(error);
         }
       }
+  
       setShowModal1(false);
       fetchAllAdmin();
       toast.success("Admin access right updated successfully");
     } catch (error) {
       console.log(error);
+      toast.error("Failed to update admin details");
     }
   };
   const [searchText, setSearchText] = useState("");
@@ -688,8 +781,8 @@ const ManageAdmin = () => {
           )}
         </div>
         {showModal && (
-          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-            <div className="bg-white p-4 rounded-xl ">
+          <div className="fixed inset-0 flex items-center justify-center z-50  bg-black bg-opacity-50">
+            <div className="bg-white p-4 rounded-xl w-[80%]">
               <h1 className="text-lg font-semibold border-b flex items-center gap-2 justify-center">
                 <PiPlusCircle /> Add Manage Administrator
               </h1>
@@ -734,6 +827,23 @@ const ManageAdmin = () => {
                     <option value="Full Access">Full Access</option>
                     <option value="Restricted Access">Restricted Access</option>
                   </select>
+                </div>
+                <div className="flex flex-col ">
+                  <label htmlFor="" className="block text-gray-700 font-medium">
+                    Associated Sites :
+                  </label>
+                  
+                  <Select
+                    isMulti
+                    options={availableSites}
+                    value={selectedSites}
+                    onChange={setSelectedSites}
+                    className="basic-multi-select"
+                    classNamePrefix="select"
+                    placeholder="Select sites..."
+                  
+                  />
+                
                 </div>
                 <div className="col-span-3">
                   {access === "Restricted Access" && (
@@ -1123,6 +1233,18 @@ const ManageAdmin = () => {
                     <option value="Restricted Access">Restricted Access</option>
                   </select>
                 </div>
+                <div className="flex flex-col">
+                  <label htmlFor="" className="block text-gray-700 font-medium">Associated Sites :</label>
+                  <Select
+                  isMulti
+                  options={availableSites}
+                  value={selectedSitesEdit}
+                  onChange={setSelectedSitesEdit}
+                  className="basic-multi-select"
+                  classNamePrefix="select"
+    placeholder="Select sites..."
+                  />
+                </div>
                 <div className="col-span-3">
                   {access === "Restricted Access" && (
                     <div className="max-w-full mx-auto">
@@ -1345,6 +1467,7 @@ const ManageAdmin = () => {
                             }
                           />
                         </div>
+                        
                         {/* {dashboardPermission.dashboard_permissions && (
                           <div className="border rounded-b-md">
                             <div className="p-4 flex justify-between items-center border-b last:border-b-0">
@@ -1366,6 +1489,7 @@ const ManageAdmin = () => {
                           </div>
                         )} */}
                       </div>
+                      
                     </div>
                   )}
                 </div>

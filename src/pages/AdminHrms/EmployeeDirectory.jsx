@@ -22,6 +22,8 @@ import {
   getSiteWiseUserDetails,
   getEmployeeJobInfo,
   getAssociatedSites,
+  getStatusChanges,
+  CreateBulkEmployee
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import toast from "react-hot-toast";
@@ -49,6 +51,10 @@ function EmployeeDirectory() {
   const [filteredEmployee, setFilteredEmployees] = useState([]);
   const [empfilterData, setEmpFilterData] = useState([]);
   const [siteSearchText, setSiteSearchText] = useState("");
+  const [selectedEmployees, setSelectedEmployees] = useState([]);
+  const [showUpdateButton, setShowUpdateButton] = useState(false);
+  const [isModalOpen12, setIsModalOpen12] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
 
   const fetchAllEmployees = async () => {
     try {
@@ -302,18 +308,104 @@ function EmployeeDirectory() {
     fetchRoleAccess();
   }, []);
 
-  //Export Employee data 
-    
-  const handleExport = () =>{
-    const url = `https://api.hrms.vibecopilot.ai/user-details/download?organization_id=${orgId}`
-    const link = document.createElement('a');
-  link.href = url;
-  link.setAttribute('download', 'data.json'); 
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  }
+  //Export Employee data
 
+  const handleExport = () => {
+    const url = `https://api.hrms.vibecopilot.ai/user-details/download?organization_id=${orgId}`;
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "data.json");
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  };
+
+  
+
+  const [selectedUserStatus, setSelectedUserStatus] = useState("all");
+  const [isUserStatusDropdownOpen, setIsUserStatusDropdownOpen] =
+    useState(false);
+
+  const handleCheckboxChange = (employeeId, isActive) => {
+    if (!isActive) return;
+
+    setSelectedEmployees((prev) => {
+      if (prev.includes(employeeId)) {
+        return prev.filter((id) => id !== employeeId);
+      } else {
+        return [...prev, employeeId];
+      }
+    });
+  };
+  useEffect(() => {
+    // Show update button if any employees are selected
+    setShowUpdateButton(selectedEmployees.length > 0);
+  }, [selectedEmployees]);
+
+  const handleStatusUpdate = async () => {
+    try {
+      if (selectedEmployees.length === 0) return;
+
+      const payload = {
+        employee_ids: selectedEmployees,
+        status: false, // Setting status to false (inactive)
+      };
+
+      await getStatusChanges(payload);
+
+      // Refresh the employee data
+      await fetchAllEmployees();
+
+      // Clear selection
+      setSelectedEmployees([]);
+      setShowUpdateButton(false);
+
+      toast.success("Employee status updated successfully");
+    } catch (error) {
+      console.error("Error updating employee status:", error);
+      toast.error("Failed to update employee status");
+    }
+  };
+  const downloadExcelFile = () =>{
+    try {
+      const link = document.createElement("a");
+       link.href = "/sample/Employee_Templates.xlsx";
+        link.download = "Employee_Templates.xlsx";
+        document.body.appendChild(link)
+        link.click();
+        document.body.removeChild(link);
+    } catch (error) {
+      toast.error('Error downloading sample file');
+      console.log("Download error",error)
+    }
+  }
+  const handleImport = async () => {
+  try {
+    if (!selectedFile) {
+      toast.error("Please select a file to upload");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+
+    toast.loading("Importing employees...");
+    const response = await CreateBulkEmployee(formData);
+    toast.dismiss();
+
+    if (response.success) {
+      toast.success("Employees imported successfully!");
+      setIsModalOpen12(false);
+      fetchAllEmployees(); // Refresh the employee list
+    } else {
+      toast.success(response.message || "Failed to import employees");
+    }
+  } catch (error) {
+    toast.dismiss();
+    toast.error("Error importing employees");
+    console.error("Import error:", error);
+  }
+};
   return (
     <div className="w-full">
       <AdminHRMS />
@@ -398,6 +490,90 @@ function EmployeeDirectory() {
                         ))}
                       </div>
                     </div>
+                  )}
+                </div>
+                {/* New User Status Dropdown */}
+                <div className="relative group flex gap-2">
+                  <button
+                    onClick={() =>
+                      setIsUserStatusDropdownOpen(!isUserStatusDropdownOpen)
+                    }
+                    className="inline-flex justify-center w-40 px-4 py-3 text-l font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    <span className="mr-2">
+                      {selectedUserStatus === "all" && "All Users"}
+                      {selectedUserStatus === "active" && "Active"}
+                      {selectedUserStatus === "inactive" && "Inactive"}
+                    </span>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="w-5 h-5 ml-2 -mr-1"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M6.293 9.293a1 1 0 011.414 0L10 11.586l2.293-2.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </button>
+
+                  {isUserStatusDropdownOpen && (
+                    <div className="absolute left-0 mt-1 w-40 rounded-md shadow-lg text-black bg-white ring-1 ring-black ring-opacity-5 z-10">
+                      <div className="py-1">
+                        <button
+                          onClick={() => {
+                            setSelectedUserStatus("all");
+                            setIsUserStatusDropdownOpen(false);
+                          }}
+                          className={`block w-full text-left px-4 py-2 ${
+                            selectedUserStatus === "all"
+                              ? "bg-gray-100"
+                              : "hover:bg-gray-100"
+                          }`}
+                        >
+                          All Users
+                        </button>
+                        <button
+                          onClick={() => {
+                            setSelectedUserStatus("active");
+                            setIsUserStatusDropdownOpen(false);
+                          }}
+                          className={`block w-full text-left px-4 py-2 ${
+                            selectedUserStatus === "active"
+                              ? "bg-gray-100 text-black"
+                              : "hover:bg-gray-100"
+                          }`}
+                        >
+                          Active
+                        </button>
+                        <button
+                          onClick={() => {
+                            setSelectedUserStatus("inactive");
+                            setIsUserStatusDropdownOpen(false);
+                          }}
+                          className={`block w-full text-left px-4 py-2 ${
+                            selectedUserStatus === "inactive"
+                              ? "bg-gray-100"
+                              : "hover:bg-gray-100"
+                          }`}
+                        >
+                          Inactive
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {showUpdateButton && (
+                    <button
+                      onClick={handleStatusUpdate}
+                      style={{ background: themeColor }}
+                      className="border-2 font-semibold hover:bg-black hover:text-white duration-150 transition-all border-white p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center mr-1"
+                    >
+                      Mark Inactive
+                    </button>
                   )}
                 </div>
               </div>
@@ -1062,6 +1238,7 @@ function EmployeeDirectory() {
                     Filter
                   </button> */}
                   {roleAccess?.can_add_employee && (
+                    <>
                     <Link
                       to={"/admin/add-employee/basics"}
                       style={{ background: themeColor }}
@@ -1070,12 +1247,83 @@ function EmployeeDirectory() {
                       <PiPlusCircle size={20} />
                       Add Employee
                     </Link>
+                    <button
+      onClick={() => setIsModalOpen12(true)} // New state for the import modal
+      style={{ background: themeColor }}
+      className="border-2 font-semibold hover:bg-black hover:text-white duration-150 transition-all border-white p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center mr-1"
+    >
+      Import Employee
+    </button>
+                    </>
                   )}
+                  
+
+
                 </div>
               </div>
             </div>
           </header>
         </div>
+       {isModalOpen12 && (
+  <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex z-10 justify-center items-center">
+    <div className="bg-white text-black p-5 rounded-md shadow-md w-1/3">
+      <h2 className="text-xl font-semibold mb-4">Import Employees</h2>
+      
+      <div className="mb-4">
+        <p className="font-bold mb-2">Step 1: Download sample template</p>
+        <p className="text-sm mb-2">
+          Download the sample template to ensure proper formatting.
+        </p>
+        <button
+          onClick={downloadExcelFile}
+          style={{ background: themeColor }}
+          className="font-semibold py-2 px-4 rounded text-white mt-2"
+        >
+          Download Sample Template
+        </button>
+      </div>
+      
+      <div className="mb-4">
+        <p className="font-bold mb-2">Step 2: Upload your file</p>
+        <p className="text-sm mb-2">
+          After filling the template, upload it here (Excel files only).
+        </p>
+        <input 
+          type="file" 
+          accept=".xlsx,.xls"
+          onChange={(e) => setSelectedFile(e.target.files[0])}
+          className="block w-full text-sm text-gray-500
+            file:mr-4 file:py-2 file:px-4
+            file:rounded-md file:border-0
+            file:text-sm file:font-semibold
+            file:bg-blue-50 file:text-blue-700
+            hover:file:bg-blue-100"
+        />
+        {selectedFile && (
+          <p className="mt-2 text-sm text-gray-600">
+            Selected file: {selectedFile.name}
+          </p>
+        )}
+      </div>
+      
+      <div className="flex justify-end gap-2 mt-4">
+        <button
+          onClick={() => setIsModalOpen12(false)}
+          className="bg-gray-300 text-gray-700 py-2 px-4 rounded"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleImport}
+          style={{ background: themeColor }}
+          className="font-semibold py-2 px-4 rounded text-white"
+        >
+          Import
+        </button>
+      </div>
+    </div>
+  </div>
+)}
         {isModalOpen && (
           <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex z-10 justify-center items-center">
             <div className="bg-white p-5 rounded-md shadow-md w-1/3">
@@ -1322,9 +1570,15 @@ function EmployeeDirectory() {
                           const matchesSite = selectedSite
                             ? String(employee.site_id) === String(selectedSite)
                             : true;
+                          const matchesStatus =
+                            selectedUserStatus === "all" || // Show all if 'all' is selected
+                            (selectedUserStatus === "active" &&
+                              employee?.status === true) || // Show only active
+                            (selectedUserStatus === "inactive" &&
+                              employee?.status === false); // Show only inactive
 
                           // Return only employees matching both criteria
-                          return matchesSearch && matchesSite;
+                          return matchesSearch && matchesSite && matchesStatus;
                         })
                         .map((employee, index) => (
                           <div
@@ -1335,7 +1589,12 @@ function EmployeeDirectory() {
                                 ? "bg-gradient-to-r from-yellow-400 via-red-300 to-pink-400 border-2 border-pink-400 "
                                 : "bg-gradient-to-r from-yellow-400 via-red-300 to-pink-400 border-2 border-white "
                             } w-80 p-2 m-2 rounded-xl cursor-pointer`}
-                            onClick={() => showEmployeeDetails(employee.id)}
+                            onClick={(e) => {
+                              // Don't show details if checkbox is clicked
+                              if (!e.target.closest('input[type="checkbox"]')) {
+                                showEmployeeDetails(employee.id);
+                              }
+                            }}
                           >
                             <div className="flex items-center w-full">
                               <div className="w-32">
@@ -1364,6 +1623,7 @@ function EmployeeDirectory() {
                                   </div>
                                 )}
                               </div>
+
                               <div className="w-full">
                                 <h2 className="font-semibold">
                                   {employee.first_name} {employee.last_name}
@@ -1380,6 +1640,7 @@ function EmployeeDirectory() {
                                       "not added"}
                                   </p>
                                 </div>
+
                                 <p className="text-sm font-medium text-gray-200">
                                   {employee?.employment_info?.designation ||
                                     "not added"}
@@ -1414,6 +1675,24 @@ function EmployeeDirectory() {
                                         >
                                           <FaTrash size={15} />
                                         </button>
+                                      )}
+                                      {employee?.status && (
+                                        <div className="  ">
+                                          <input
+                                            type="checkbox"
+                                            checked={selectedEmployees.includes(
+                                              employee.id
+                                            )}
+                                            onChange={() =>
+                                              handleCheckboxChange(
+                                                employee.id,
+                                                employee?.status
+                                              )
+                                            }
+                                            onClick={(e) => e.stopPropagation()}
+                                            className="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                          />
+                                        </div>
                                       )}
                                     </div>
                                   )}
@@ -1591,6 +1870,7 @@ function EmployeeDirectory() {
           </div>
         </div>
       </div>
+
       {isDeleteModalOpen && (
         <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-30 backdrop-blur-sm z-20">
           <div className="bg-white overflow-auto max-h-[70%]  md:w-auto w-96 p-4 px-8 flex flex-col rounded-md gap-5">

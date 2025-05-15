@@ -15,6 +15,7 @@ import { AiOutlineFieldTime } from "react-icons/ai";
 import { useSelector } from "react-redux";
 import { PiSignOutBold } from "react-icons/pi";
 import { AiFillNotification } from "react-icons/ai";
+import { AiFillCalendar } from "react-icons/ai";
 import { RiFileListLine } from "react-icons/ri";
 import { FaRegCalendarTimes } from "react-icons/fa";
 import { FaMoneyBillAlt } from "react-icons/fa";
@@ -354,7 +355,7 @@ const AdminHRMS = () => {
     const fetchRoleAccess = async () => {
       try {
         const res = await getAdminAccess(orgId, empId);
-          
+          console.log(res[0])
         setRoleAccess(res[0]);
       } catch (error) {
         console.log(error);
@@ -2257,7 +2258,38 @@ const AdminHRMS = () => {
                 Communication
               </h2>
             </NavLink>
+            
 )}
+        {!HIDE_PAYROLL_ON_THE_BASESOF_THE_Name && (
+           <NavLink
+           to="/admin/hrms/holidays"
+           className={({ isActive }) =>
+             `${
+               isActive
+                 ? "text-black bg-white flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                 : "group flex items-center text-sm gap-3.5 font-medium p-2 "
+             }`
+           }
+         >
+           <div>
+             {React.createElement(AiFillCalendar, { size: "20" })}
+           </div>
+           <h2
+             className={`whitespace-pre duration-300 ${
+               !open && "opacity-0 translate-x-28 overflow-hidden"
+             }`}
+           >
+             Holidays
+           </h2>
+           <h2
+             className={`${
+               open && "hidden"
+             } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+           >
+             Holidays
+           </h2>
+         </NavLink>
+        )}
             {/* } */}
             <div className="border-2 border-x-white border-opacity-65 my-4"></div>
             {/* theme changer */}

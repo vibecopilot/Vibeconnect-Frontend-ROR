@@ -89,6 +89,7 @@ const AddAssociateEmployeeModal = ({ closeModal, fetchEmployeeData }) => {
       };
 
       await updateEmployeeAssociations(associatedId , postData)
+     
       
       toast.success("Employee associations updated successfully");
       fetchEmployeeData();
