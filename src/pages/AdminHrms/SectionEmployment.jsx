@@ -699,13 +699,13 @@ const SectionsEmployment = () => {
               <>
                 {roleAccess?.can_edit_employee && (
                   <div className="flex justify-end ">
-                    <button 
+                    {/* <button 
                       style={{background:themeColor}}
                       onClick={() => setShowAssociateModal(true)}
                       className="bg-blue-500 text-white mb-2 rounded-full flex items-center gap-2 mr-2 py-1 px-2 font-semibold"
                     >
                       Associate Employee
-                    </button>
+                    </button> */}
                     <button
                       style={{ background: themeColor }}
                       onClick={openModal1}

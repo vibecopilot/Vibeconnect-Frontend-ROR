@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import AdminHRMS from "./AdminHrms";
 import { useNavigate } from "react-router-dom";
-import { FaChevronRight, FaProjectDiagram, FaWrench } from "react-icons/fa";
+import { FaChevronRight, FaProjectDiagram, FaTrash, FaWrench } from "react-icons/fa";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import {
   createHrmsCtcTemplate,
@@ -11,7 +11,10 @@ import {
   getAvailableSites
 } from "../../api";
 import toast from "react-hot-toast";
+import { Link } from "react-router-dom";
 import Select from 'react-select'; // Import react-select
+import { Component } from "lucide-react";
+import { BiEdit } from "react-icons/bi";
 
 const CTCGeneralSetting = () => {
   const themeColor = useSelector((state) => state.theme.color);
@@ -79,9 +82,11 @@ const CTCGeneralSetting = () => {
 
       // Fetch and organize components
       const componentsRes = await getHrmsFixedAllowance(hrmsOrgId);
+      console.log("Fixed Allowance Details" , componentsRes)
       const fixedComps = componentsRes.filter(comp => comp.component_type === "fixed");
       const variableComps = componentsRes.filter(comp => comp.component_type === "variable");
       setFixedComponents(fixedComps);
+      
       setVariableComponents(variableComps);
 
       // Fetch and organize deductions
@@ -160,7 +165,7 @@ const CTCGeneralSetting = () => {
     }
   };
 
-  // ... [keep the ComponentSelectionPanel component exactly as it was in your original code]
+  // Custom dropdown component with proper formatting
   const ComponentSelectionPanel = ({
     fixedComponents,
     variableComponents,
@@ -175,18 +180,46 @@ const CTCGeneralSetting = () => {
     onFixedDedChange,
     onVariableDedChange
   }) => {
-    // Function to handle selection changes with toggle behavior
-    const handleSelectionChange = (e, currentSelection, setSelection) => {
-      const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
-      const clickedOption = selectedOptions[selectedOptions.length - 1];
-      
-      if (currentSelection.includes(clickedOption)) {
-        // Remove if already selected
-        setSelection(currentSelection.filter(item => item !== clickedOption));
-      } else {
-        // Add if not selected
-        setSelection([...currentSelection, clickedOption]);
+    // Custom option renderer for consistent formatting
+    const formatOptionLabel = ({ value, label }, { context }) => {
+      // Find the item in the appropriate array based on context
+      let item;
+      if (context === 'fixedComp') {
+        item = fixedComponents.find(c => c.id === value);
+      } else if (context === 'variableComp') {
+        item = variableComponents.find(c => c.id === value);
+      } else if (context === 'fixedDed') {
+        item = fixedDeductions.find(d => d.id === value);
+      } else if (context === 'variableDed') {
+        item = variableDeductions.find(d => d.id === value);
       }
+
+      if (!item) return label;
+
+      return (
+        <div className="flex justify-between w-full">
+          <span className="font-medium">Name: {item.name}</span>
+          {item.value && <span className="text-gray-600 ml-4">Value: {item.value}</span>}
+          {item.percentage_of_ctc && <span className="text-gray-600 ml-4">Percentage: {item.percentage_of_ctc}%</span>}
+        </div>
+      );
+    };
+
+    // Convert selected IDs to react-select format for each section
+    const getSelectedOptions = (ids, source, context) => {
+      return ids.map(id => {
+        const item = source.find(i => i.id === id);
+        return {
+          value: id,
+          label: item?.name || `ID: ${id}`,
+          context
+        };
+      });
+    };
+
+    // Handle selection changes
+    const handleSelectionChange = (selected, setSelection) => {
+      setSelection(selected.map(option => option.value));
     };
 
     // Function to remove selected item
@@ -196,84 +229,100 @@ const CTCGeneralSetting = () => {
 
     return (
       <div className="p-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          {/* Fixed Components */}
+        <div className="grid md:grid-cols-2 gap-4 mb-4">
+          {/* Fixed Allowance */}
           <div className="bg-white p-4 rounded-lg shadow-sm border hover:shadow-md transition-shadow">
             <h3 className="font-semibold text-gray-700 mb-2">Fixed Allowance</h3>
-            <select
-              multiple
-              className="w-full p-2 border rounded-md h-40"
-              value={selectedFixedComps}
-              onChange={(e) => handleSelectionChange(e, selectedFixedComps, onFixedCompChange)}
-            >
-              {fixedComponents.map((component) => (
-                <option key={component.id} value={component.id}>
-                  {component.name}
-                </option>
-              ))}
-            </select>
+            <Select
+              isMulti
+              options={fixedComponents.map(comp => ({
+                value: comp.id,
+                label: comp.name,
+                context: 'fixedComp'
+              }))}
+              value={getSelectedOptions(selectedFixedComps, fixedComponents, 'fixedComp')}
+              onChange={(selected) => handleSelectionChange(selected, onFixedCompChange)}
+              formatOptionLabel={formatOptionLabel}
+              className="react-select-container"
+              classNamePrefix="react-select"
+              placeholder="Select fixed allowances..."
+              closeMenuOnSelect={false}
+              hideSelectedOptions={false}
+            />
             <p className="text-sm text-gray-500 mt-1">
-              {selectedFixedComps.length} selected (Click to toggle selection)
+              {selectedFixedComps.length} selected
             </p>
           </div>
 
-          {/* Variable Components */}
+          {/* Variable Allowance */}
           <div className="bg-white p-4 rounded-lg shadow-sm border hover:shadow-md transition-shadow">
             <h3 className="font-semibold text-gray-700 mb-2">Variable Allowance</h3>
-            <select
-              multiple
-              className="w-full p-2 border rounded-md h-40"
-              value={selectedVariableComps}
-              onChange={(e) => handleSelectionChange(e, selectedVariableComps, onVariableCompChange)}
-            >
-              {variableComponents.map((component) => (
-                <option key={component.id} value={component.id}>
-                  {component.name}
-                </option>
-              ))}
-            </select>
+            <Select
+              isMulti
+              options={variableComponents.map(comp => ({
+                value: comp.id,
+                label: comp.name,
+                context: 'variableComp'
+              }))}
+              value={getSelectedOptions(selectedVariableComps, variableComponents, 'variableComp')}
+              onChange={(selected) => handleSelectionChange(selected, onVariableCompChange)}
+              formatOptionLabel={formatOptionLabel}
+              className="react-select-container"
+              classNamePrefix="react-select"
+              placeholder="Select variable allowances..."
+              closeMenuOnSelect={false}
+              hideSelectedOptions={false}
+            />
             <p className="text-sm text-gray-500 mt-1">
-              {selectedVariableComps.length} selected (Click to toggle selection)
+              {selectedVariableComps.length} selected
             </p>
           </div>
 
           {/* Fixed Deductions */}
           <div className="bg-white p-4 rounded-lg shadow-sm border hover:shadow-md transition-shadow">
             <h3 className="font-semibold text-gray-700 mb-2">Fixed Deductions</h3>
-            <select
-              multiple
-              className="w-full p-2 border rounded-md h-40"
-              value={selectedFixedDeds}
-              onChange={(e) => handleSelectionChange(e, selectedFixedDeds, onFixedDedChange)}
-            >
-              {fixedDeductions.map((deduction) => (
-                <option key={deduction.id} value={deduction.id}>
-                  {deduction.name}
-                </option>
-              ))}
-            </select>
+            <Select
+              isMulti
+              options={fixedDeductions.map(ded => ({
+                value: ded.id,
+                label: ded.name,
+                context: 'fixedDed'
+              }))}
+              value={getSelectedOptions(selectedFixedDeds, fixedDeductions, 'fixedDed')}
+              onChange={(selected) => handleSelectionChange(selected, onFixedDedChange)}
+              formatOptionLabel={formatOptionLabel}
+              className="react-select-container"
+              classNamePrefix="react-select"
+              placeholder="Select fixed deductions..."
+              closeMenuOnSelect={false}
+              hideSelectedOptions={false}
+            />
             <p className="text-sm text-gray-500 mt-1">
-              {selectedFixedDeds.length} selected (Click to toggle selection)
+              {selectedFixedDeds.length} selected
             </p>
           </div>
 
           {/* Variable Deductions */}
           <div className="bg-white p-4 rounded-lg shadow-sm border hover:shadow-md transition-shadow">
             <h3 className="font-semibold text-gray-700 mb-2">Variable Deductions</h3>
-            <select
-              multiple
-              className="w-full p-2 border rounded-md h-40"
-              value={selectedVariableDeds}
-              onChange={(e) => handleSelectionChange(e, selectedVariableDeds, onVariableDedChange)}
-            >
-              {variableDeductions.map((deduction) => (
-                <option key={deduction.id} value={deduction.id}>
-                  {deduction.name}
-                </option>
-              ))}
-            </select>
+            <Select
+              isMulti
+              options={variableDeductions.map(ded => ({
+                value: ded.id,
+                label: ded.name,
+                context: 'variableDed'
+              }))}
+              value={getSelectedOptions(selectedVariableDeds, variableDeductions, 'variableDed')}
+              onChange={(selected) => handleSelectionChange(selected, onVariableDedChange)}
+              formatOptionLabel={formatOptionLabel}
+              className="react-select-container"
+              classNamePrefix="react-select"
+              placeholder="Select variable deductions..."
+              closeMenuOnSelect={false}
+              hideSelectedOptions={false}
+            />
             <p className="text-sm text-gray-500 mt-1">
-              {selectedVariableDeds.length} selected (Click to toggle selection)
+              {selectedVariableDeds.length} selected
             </p>
           </div>
         </div>
@@ -285,36 +334,73 @@ const CTCGeneralSetting = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Components Summary */}
             <div>
-              <h5 className="font-medium text-gray-700 mb-2">Components ({selectedComponents.length})</h5>
-              {selectedComponents.length > 0 ? (
-                <ul className="space-y-1">
+              <h5 className="font-medium text-gray-700 mb-2">
+                Components ({selectedFixedComps.length + selectedVariableComps.length})
+              </h5>
+              {selectedFixedComps.length + selectedVariableComps.length > 0 ? (
+                <ul className="space-y-2">
                   {selectedFixedComps.map(id => {
                     const comp = fixedComponents.find(c => c.id == id);
                     return (
-                      <li key={`fixed-${id}`} className="flex items-center">
+                      <li key={`fixed-${id}`} className="flex items-center bg-white p-2 rounded">
                         <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-2">Fixed</span>
-                        {comp?.name || `ID: ${id}`}
+                        <div className="flex-1">
+                          <div className="font-medium">{comp?.name}</div>
+                          {comp?.value && <div className="text-sm text-gray-600">Value: {comp.value}</div>}
+                        </div>
+                        <div>
+                          <button
+                          onClick={(e)=>{
+                            e.preventDefault(),
+                            e.stopPropagation(),
+                            navigate(`/admin/fixed-allowance`)
+                          }}
+                          title="edit"
+                          >
+                            <BiEdit size={14}/>
+                          </button>
                         <button 
-                          onClick={() => handleRemoveItem(id, onFixedCompChange)}
-                          className="ml-auto text-red-500 hover:text-red-700"
+                          onClick={() =>{ onFixedCompChange(selectedFixedComps.filter(item => item !== id))}}
+                          className="ml-2 text-red-500 hover:text-red-700 p-1"
                         >
-                          ×
+                          <FaTrash size={12}/>
                         </button>
+                        </div>
                       </li>
                     );
                   })}
                   {selectedVariableComps.map(id => {
                     const comp = variableComponents.find(c => c.id == id);
                     return (
-                      <li key={`variable-${id}`} className="flex items-center">
+                      <li key={`variable-${id}`} className="flex items-center bg-white p-2 rounded">
                         <span className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded mr-2">Variable</span>
-                        {comp?.name || `ID: ${id}`}
+                        <div className="flex-1">
+                          <div className="font-medium">{comp?.name}</div>
+                          {comp?.percentage_of_ctc && (
+                            <div className="text-sm text-gray-600">Percentage: {comp.percentage_of_ctc}%</div>
+                          )}
+                        </div>
+                        <div>
+                          <button 
+                           onClick={(e)=>{
+                            e.preventDefault()
+                            e.stopPropagation()
+                            navigate(`/admin/variable-allowance`)
+                           }}
+                           title="edit"
+                          >
+                            <BiEdit size={14}/>
+                          </button>
                         <button 
-                          onClick={() => handleRemoveItem(id, onVariableCompChange)}
-                          className="ml-auto text-red-500 hover:text-red-700"
+                          onClick={() =>{
+                            e.preventDefault()
+                            e.stopPropagation()
+                            onVariableCompChange(selectedVariableComps.filter(item => item !== id))}}
+                          className="ml-2 text-red-500 hover:text-red-700 p-1"
                         >
-                          ×
+                          <FaTrash size={12}/>
                         </button>
+                        </div>
                       </li>
                     );
                   })}
@@ -326,37 +412,84 @@ const CTCGeneralSetting = () => {
 
             {/* Deductions Summary */}
             <div>
-              <h5 className="font-medium text-gray-700 mb-2">Deductions ({selectedDeductions.length})</h5>
-              {selectedDeductions.length > 0 ? (
-                <ul className="space-y-1">
+              <h5 className="font-medium text-gray-700 mb-2">
+                Deductions ({selectedFixedDeds.length + selectedVariableDeds.length})
+              </h5>
+              {selectedFixedDeds.length + selectedVariableDeds.length > 0 ? (
+                <ul className="space-y-2">
                   {selectedFixedDeds.map(id => {
                     const ded = fixedDeductions.find(d => d.id == id);
                     return (
-                      <li key={`fixed-${id}`} className="flex items-center">
+                      <li key={`fixed-${id}`} className="flex items-center bg-white p-2 rounded">
                         <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded mr-2">Fixed</span>
-                        {ded?.name || `ID: ${id}`}
+                        <div className=" flex-1 ">
+                        <div className=" font-medium">{ded?.name}</div>
+                        {ded?.value && (
+                           <div className="text-sm text-gray-600">Value: {ded.value}</div>
+                        )}
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                          onClick={(e) =>{
+                            e.preventDefault();
+                            e.stopPropagation();
+                            navigate(`/admin/fixed-deduction`)
+                          }}
+                          title="edit"
+                          >
+                            <BiEdit size={14}/>
+                          </button>
                         <button 
-                          onClick={() => handleRemoveItem(id, onFixedDedChange)}
-                          className="ml-auto text-red-500 hover:text-red-700"
+                          onClick={(e) =>{
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onFixedDedChange(selectedFixedDeds.filter(item => item !== id))}
+                          }
+                            
+                          className="ml-2 text-red-500 hover:text-red-700 p-1"
                         >
-                          ×
+                          <FaTrash size={12}/>
                         </button>
+                        </div>
                       </li>
                     );
                   })}
                   {selectedVariableDeds.map(id => {
                     const ded = variableDeductions.find(d => d.id == id);
                     return (
-                      <li key={`variable-${id}`} className="flex items-center">
-                        <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded mr-2">Variable</span>
-                        {ded?.name || `ID: ${id}`}
-                        <button 
-                          onClick={() => handleRemoveItem(id, onVariableDedChange)}
-                          className="ml-auto text-red-500 hover:text-red-700"
-                        >
-                          ×
-                        </button>
-                      </li>
+                      <li key={`variable-${id}`} className="flex items-center bg-white p-2 rounded">
+  <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded mr-2">Variable</span>
+  <div className="flex-1">
+    <div className="font-medium">{ded?.name}</div>
+    {ded?.percentage_of_salary && (
+      <div className="text-sm text-gray-600">Percentage: {ded.percentage_of_salary}%</div>
+    )}
+  </div>
+  <div className="flex gap-2">
+    <button
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        navigate(`/admin/variable-deduction`);
+      }}
+      
+      title="Edit"
+    >
+      <BiEdit size={14} />
+    </button>
+    <button 
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onVariableDedChange(selectedVariableDeds.filter(item => item !== id));
+      }}
+      className="text-red-500 hover:text-red-700 p-1"
+      title="Delete"
+    >
+      <FaTrash size={12} />
+    </button>
+  </div>
+</li>
                     );
                   })}
                 </ul>
@@ -380,7 +513,7 @@ const CTCGeneralSetting = () => {
             onClick={handlePostTaxStatutory}
             style={{ background: themeColor }}
             className="px-4 py-2 text-white rounded hover:opacity-90"
-            disabled={isLoading || (!selectedComponents.length && !selectedDeductions.length)}
+            disabled={isLoading || (!selectedFixedComps.length && !selectedVariableComps.length && !selectedFixedDeds.length && !selectedVariableDeds.length)}
           >
             {isLoading ? "Saving..." : "Save & Proceed"}
           </button>
@@ -388,7 +521,6 @@ const CTCGeneralSetting = () => {
       </div>
     );
   };
-
 
   return (
     <div className="flex ml-20">

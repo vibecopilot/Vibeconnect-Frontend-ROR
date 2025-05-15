@@ -752,6 +752,7 @@ import AddHrmsCommunication from "../src/pages/HRMS/AddHrmsCommunication.jsx"
 import AddhrmsBroadcast from "./pages/HRMS/AddhrmsBroadcast.jsx";
 import EmployeeHrmsCommunication from "./pages/Employees/EmployeeCommunication/EmployeeHrmsCommunication.jsx";
 import AddHrmsForums from "./pages/HRMS/AddHrmsForums.jsx";
+import AddHrmsHolidays from "./pages/AdminHrms/AddHrmsHolidays.jsx";
 import { useParams } from "react-router-dom";
 import { getNotification, updateNotificationStatus } from "./api";
 import AddSelfRegistration from "./pages/SubPages/AddSelfRegistration.jsx";
@@ -4899,14 +4900,14 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
-        {/* <Route
+        <Route
           path="/admin/hrms/site-employee"
           element={
             <ProtectedAdminRoutes>
               <SiteEmployee />
             </ProtectedAdminRoutes>
           }
-        /> */}
+        />
         <Route
           path="/admin/add-employee"
           element={
@@ -6973,6 +6974,16 @@ function App() {
           </ProtectedRoute>
         }
         />
+ {/* Hrms Holidays */}
+ <Route
+  path="/admin/hrms/holidays"
+  element={
+    <ProtectedRoute>
+      <AddHrmsHolidays/>
+    </ProtectedRoute>
+  }
+ />
+
         <Route
           path="/employee/EmployeeHrmsCommunication"
           element={

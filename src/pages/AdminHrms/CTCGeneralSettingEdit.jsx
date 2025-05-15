@@ -207,6 +207,19 @@ const CTCGeneralSettingEdit = () => {
     onFixedDedChange,
     onVariableDedChange
   }) => {
+
+    const formatOptionLabel = ({value , label} ,{context}) =>{
+      let item;
+      if(context === 'fixedComp'){
+        item = fixedComponents.find(c => c.id === value);
+      }
+      else if(context === 'variableComp'){
+        item = variableComponents.find(c => c.id === value);
+      }
+      else if(context === 'fixedDed'){
+        item = fixedDeductions.find
+      }
+    }
     // Function to handle selection changes with toggle behavior
     const handleSelectionChange = (e, currentSelection, setSelection) => {
       const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);

@@ -4167,6 +4167,29 @@ export const sendBusinessCard = async (data) => {
   }
 };
 // HRMS
+// Hrms active and inactive user 
+export const getStatusChanges = async (data) =>{
+  try {
+    const response = await HrmsAuth.post(`/employee-bulk/manage-employee-status/`,data)
+    return response.data
+  } catch (error) {
+    console.log("Error changing the status of the employee" , error)
+    throw error
+  }
+}
+export const CreateBulkEmployee = async (FormData) =>{
+  try {
+    const response = await HrmsAuth.post(`/employee/excel-upload/`,FormData,{
+      headers:{
+        'Content-Type':'multipart/form-data'
+      }
+    })
+    return response.data
+  } catch (error) {
+    console.log("Error Creating Bulk user ",error)
+    throw error
+  }
+} 
 export const getAllHrmsOrganisation = async () => {
   try {
     const response = await HrmsAuth.get(`/organization/`, {
@@ -4583,6 +4606,8 @@ export const getMyBankAccounts = async (orgId) => {
     throw error;
   }
 };
+
+
 export const postMyBankAccounts = async (data) => {
   try {
     const response = await HrmsAuth.post(`/organization/bank-accounts/`, data, {
@@ -5638,7 +5663,80 @@ export const editEmployeeEmploymentDetails = async (employmentId, data) => {
     throw error;
   }
 };
+// Holidays 
+export const GetHrmsHolidayDetails = async (orgId) =>{
+  try {
+    const response = await HrmsAuth.get(
+      `/organization/company-holidays?organization_id=${orgId}`
+    )
+    return response.data
+  } catch (error) {
+    console.log("Error Getting The hrms Holdays", error)
+    throw error
+  }
+}
+
+export const AddHolidaysDetails = async (data) =>{
+  try {
+    const response = await HrmsAuth.post(
+      "/organization/company-holidays/",data
+    )
+    return response.data
+  } catch (error) {
+    console.log("Error Adding The holidays" , error)
+    throw error 
+  }
+}
+
+export const GetHrmsHolidayDetailsId = async (id) =>{
+  try {
+    const response = await HrmsAuth.get(
+      `/organization/company-holidays/${id}`
+    )
+    return response.data
+  } catch (error) {
+    console.log("Error Getting holidays on the basis of id" , error)
+    throw error
+  }
+}
+
+export const UpdateHolidaysDetails = async (id , data) =>{
+  try {
+    const response = await HrmsAuth.put(
+      `/organization/company-holidays/${id}/`, data
+    )
+    return response.data
+  } catch (error) {
+    console.log("Error in updating the holidays" , error)
+    throw error
+  }
+}
+
+export const handleDeletHoliday = async (Faid) =>{
+   try {
+      const response = await HrmsAuth.delete(
+        `/organization/company-holidays/${Faid}/`
+      )
+      return response.data
+   } catch (error) {
+    console.log("Error Deleting Holidays",error)
+    throw error
+   }
+}
+
 // payroll
+export const getHrmsPayrollSlipDetails = async (templateId) =>{
+  try {
+    const response = await HrmsAuth.get(
+      `/ctc-template-organization/${templateId}`
+    )
+    return response.data
+  } catch (error) {
+    console.log("Error Getting the Ctc Structure details", error)
+    throw error
+  }
+}
+
 export const getPayrollGeneralSetting = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
@@ -5780,6 +5878,37 @@ export const deleteHrmsFixedAllowance = async (FAid) =>{
     throw error
   }
 }
+// payroll data 
+export const getHrmsPayrolldetails = async (empid  )=>{
+  try {
+    const response = await HrmsAuth.get(`/payrolls/?employee_id=${empid}&status=pending`)
+    return response.data
+  } catch (error) {
+    console.log("Error Getting the payroll details" , error)
+    throw error
+  }
+}
+
+
+export const getCtcProfile = async (empId) =>{
+  try {
+    const response = await HrmsAuth.get(`/ctc-profiles/?employee_id=${empId}`)
+    return response.data
+  } catch (error) {
+    console.log("Error Getting the ctc profile details",error)
+    throw error
+  }
+}
+
+export const deleteCtcProfile = async (FDid) =>{
+  try {
+    const response = await HrmsAuth.delete(`ctc-profiles/${FDid}/`)
+    return response.data
+  } catch (error) {
+    console.log("Error Deleting the ctc Profile details",error)
+    throw error
+  }
+}
 
 // fixed hrms deduction 
 export const getHrmsFixedDeduction = async (org_id) =>{
@@ -5831,7 +5960,15 @@ export const editHrmsFixedDeduction = async (FDid, data) => {
 };
 
 // Hrms New Ctc template 
-
+export const createEmployeeProfile = async (data) =>{
+  try {
+    const response = await HrmsAuth.post(`/ctc-profiles/`,data)
+    return response.data
+  } catch (error) {
+    console.log("Error Creating the employee profile",error)
+    throw error
+  }
+}
 export const getHrmsCtcTemplate = async (orgId) =>{
   try {
     const response = await HrmsAuth.get(`/ctc-template-organization/?organization_id=${orgId}`)
@@ -5841,7 +5978,15 @@ export const getHrmsCtcTemplate = async (orgId) =>{
     throw error
   }
 }
-
+// export const getHrmsCtcTemplate = async(orgId , siteId ) =>{
+//   try {
+//     const response = await HrmsAuth.get(`/ctc-template-organization/?organization_id=${orgId}&associated=${siteId}`)
+//     return response.data
+//   } catch (error) {
+//     console.log("Error Getting the ctc template" , error)
+//     throw error
+//   }
+// }
 export const createHrmsCtcTemplate = async (data) =>{
   try {
     const response = await HrmsAuth.post(`/ctc-template-organization/`,data)
@@ -9381,3 +9526,5 @@ export const postReceiptNumber = async (data) =>
       token: token,
     },
   });
+
+  
