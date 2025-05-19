@@ -31,6 +31,7 @@ const AddNewCTC = ({
     annuallyCTCAmount: "",
     annuallyGrossAmount: "",
     ctcTemplate: "",
+    monthlySalary: 0, 
   });
 
   const [taxData, setTaxData] = useState({
@@ -225,6 +226,7 @@ const AddNewCTC = ({
       selectedTemplate?.components_details &&
       selectedTemplate?.deductions_details
     ) {
+       const monthlySalary = formData.monthlySalary || 0;
       const fixedAllowances = selectedTemplate.components_details.filter(
         (comp) => comp.component_type === "fixed"
       );
@@ -244,7 +246,9 @@ const AddNewCTC = ({
       //   yearly: (item.value || 0) * 12,
       //   percentage: item.percentage_of_ctc || 0
       // }))
-      const formattedFixedAllowances = fixedAllowances.map((item) => ({
+      const formattedFixedAllowances = selectedTemplate.components_details
+      .filter(comp => comp.component_type === "fixed")
+      .map(item => ({
         id: item.id,
         label: item.name,
         monthly: item.value || 0,
@@ -255,8 +259,10 @@ const AddNewCTC = ({
         (sum, item) => sum + (item.value || 0),
         0
       );
-      const formattedVariableAllowances = variableAllowances.map((item) => {
-        const monthlyValue = totalFixedValue * (item.percentage_of_ctc / 100);
+     const formattedVariableAllowances = selectedTemplate.components_details
+      .filter(comp => comp.component_type === "variable")
+      .map(item => {
+        const monthlyValue = monthlySalary * (item.percentage_of_ctc / 100);
         return {
           id: item.id,
           label: item.name,
@@ -266,7 +272,9 @@ const AddNewCTC = ({
         };
       });
 
-      const formattedFixedDeductions = fixedDeductions.map((item) => ({
+      const formattedFixedDeductions = selectedTemplate.deductions_details
+      .filter(ded => ded.deduction_type === "fixed")
+      .map(item => ({
         id: item.id,
         label: item.name,
         monthly: item.value || 0,
@@ -277,9 +285,10 @@ const AddNewCTC = ({
         (sum, item) => sum + item.monthly,
         0
       );
-      const formattedVariableDeductions = variableDeductions.map((item) => {
-        const monthlyValue =
-          totalFixedDeductionValue * (item.percentage_of_salary / 100);
+      const formattedVariableDeductions = selectedTemplate.deductions_details
+      .filter(ded => ded.deduction_type === "variable")
+      .map(item => {
+        const monthlyValue = monthlySalary * (item.percentage_of_salary / 100);
         return {
           id: item.id,
           label: item.name,
@@ -289,44 +298,41 @@ const AddNewCTC = ({
         };
       });
 
-      setFixedAllowanceItems(formattedFixedAllowances);
-      setVariableAllowanceItems(formattedVariableAllowances);
-      setFixedDeductionItems(formattedFixedDeductions);
-      setVariableDeductionItems(formattedVariableDeductions);
+     setFixedAllowanceItems(formattedFixedAllowances);
+    setVariableAllowanceItems(formattedVariableAllowances);
+    setFixedDeductionItems(formattedFixedDeductions);
+    setVariableDeductionItems(formattedVariableDeductions);
 
-      const fixedAllowanceTotal = formattedFixedAllowances.reduce(
-        (sum, item) => sum + item.monthly,
-        0
-      );
-      const variableAllowanceTotal = formattedVariableAllowances.reduce(
-        (sum, item) => sum + item.monthly,
-        0
-      );
-      const fixedDeductionTotal = formattedFixedDeductions.reduce(
-        (sum, item) => sum + item.monthly,
-        0
-      );
-      const variableDeductionTotal = formattedVariableDeductions.reduce(
-        (sum, item) => sum + item.monthly,
-        0
-      );
+          const fixedAllowanceTotal = formattedFixedAllowances.reduce(
+      (sum, item) => sum + item.monthly, 0);
+    const variableAllowanceTotal = formattedVariableAllowances.reduce(
+      (sum, item) => sum + item.monthly, 0);
+    const fixedDeductionTotal = formattedFixedDeductions.reduce(
+      (sum, item) => sum + item.monthly, 0);
+    const variableDeductionTotal = formattedVariableDeductions.reduce(
+      (sum, item) => sum + item.monthly, 0);
+
+      // setTotalFixedMonthly(fixedAllowanceTotal);
+      // setTotalVariableMonthly(variableAllowanceTotal);
+      // setTotalFixedDeductionMonthly(fixedDeductionTotal);
+      // setTotalVariableDeductionMonthly(variableDeductionTotal);
+
+      const grossMonthly = monthlySalary + fixedAllowanceTotal + variableAllowanceTotal;
+    const totalDeduction = fixedDeductionTotal + variableDeductionTotal;
+    const netTakeHome = grossMonthly - totalDeduction;
 
       setTotalFixedMonthly(fixedAllowanceTotal);
-      setTotalVariableMonthly(variableAllowanceTotal);
-      setTotalFixedDeductionMonthly(fixedDeductionTotal);
-      setTotalVariableDeductionMonthly(variableDeductionTotal);
-
-      const grossMonthly = fixedAllowanceTotal + variableAllowanceTotal;
-      const totalDeduction = fixedDeductionTotal + variableDeductionTotal;
-
-      setTotalMonthly(grossMonthly);
-      setTotalYearly(grossMonthly * 12);
-      setTotalDeductionMonthly(totalDeduction);
-      setTotalDeductionYearly(totalDeduction * 12);
-      setNetTakeHomeMonthly(grossMonthly - totalDeduction);
-      setNetTakeHomeYearly((grossMonthly - totalDeduction) * 12);
+    setTotalVariableMonthly(variableAllowanceTotal);
+    setTotalFixedDeductionMonthly(fixedDeductionTotal);
+    setTotalVariableDeductionMonthly(variableDeductionTotal);
+    setTotalMonthly(grossMonthly);
+    setTotalYearly(grossMonthly * 12);
+    setTotalDeductionMonthly(totalDeduction);
+    setTotalDeductionYearly(totalDeduction * 12);
+    setNetTakeHomeMonthly(netTakeHome);
+    setNetTakeHomeYearly(netTakeHome * 12);
     }
-  }, [selectedTemplate]);
+  }, [selectedTemplate , formData.monthlySalary]);
 
   const handleMonthlyChange = (index, value, type, isFixed = true) => {
     if (type === "fixed-allowance") {
@@ -407,24 +413,34 @@ const AddNewCTC = ({
     }
   };
   const outputData = [
-    {
-      description: "Total Gross Salary",
-      monthly: `₹ ${totalMonthly.toLocaleString()}`,
-      yearly: `₹ ${totalYearly.toLocaleString()}`,
-    },
-    {
-      description: "Total Deductions",
-      monthly: `₹ ${totalDeductionMonthly.toLocaleString()}`,
-      yearly: `₹ ${totalDeductionYearly.toLocaleString()}`,
-    },
-    {
-      description: "Net Take Home Salary",
-      monthly: `₹ ${netTakeHomeMonthly.toLocaleString()}`,
-      yearly: `₹ ${netTakeHomeYearly.toLocaleString()}`,
-    },
-  ];
+  {
+    description: "Basic Salary",
+    monthly: `₹ ${formData.monthlySalary.toLocaleString()}`,
+    yearly: `₹ ${(formData.monthlySalary * 12).toLocaleString()}`,
+  },
+  {
+    description: "Total Allowances",
+    monthly: `₹ ${(totalFixedMonthly + totalVariableMonthly).toLocaleString()}`,
+    yearly: `₹ ${((totalFixedMonthly + totalVariableMonthly) * 12).toLocaleString()}`,
+  },
+  {
+    description: "Gross Salary",
+    monthly: `₹ ${totalMonthly.toLocaleString()}`,
+    yearly: `₹ ${totalYearly.toLocaleString()}`,
+  },
+  {
+    description: "Total Deductions",
+    monthly: `₹ ${totalDeductionMonthly.toLocaleString()}`,
+    yearly: `₹ ${totalDeductionYearly.toLocaleString()}`,
+  },
+  {
+    description: "Net Take Home Salary",
+    monthly: `₹ ${netTakeHomeMonthly.toLocaleString()}`,
+    yearly: `₹ ${netTakeHomeYearly.toLocaleString()}`,
+  },
+];
 
-  const handleSaveCTCComponents = async () =>{
+  const handleSaveCTCComponents = async () => {
     try {
       const ctcData = {
         employee_id: empId,
@@ -437,15 +453,14 @@ const AddNewCTC = ({
         total_deduction_monthly: totalDeductionMonthly,
         total_deduction_yearly: totalDeductionYearly,
         net_take_home_monthly: netTakeHomeMonthly,
-        net_take_home_yearly: netTakeHomeYearly
+        net_take_home_yearly: netTakeHomeYearly,
       };
-      
-      setPageChange("table")
 
+      setPageChange("table");
     } catch (error) {
       onsole.error("Failed to save CTC components:", error);
     }
-  }
+  };
   return (
     <div className="flex items-center justify-between w-full mb-5">
       <div className="flex w-full px-4">
@@ -779,6 +794,24 @@ const AddNewCTC = ({
                               {selectedTemplate.template_name}
                             </p>
                           </div>
+                          <div>
+                            <label className="block text-gray-700 font-bold mb-2">
+                              Enter Monthly Salary (₹)
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.monthlySalary}
+                              onChange={(e) =>
+                                setFormData({
+                                  ...formData,
+                                  monthlySalary:
+                                    parseFloat(e.target.value) || 0,
+                                })
+                              }
+                              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                              placeholder="Enter monthly salary amount"
+                            />
+                          </div>
                           <div className="bg-gray-50 p-3 rounded-md text-left flex items-center gap-5 text-xl mb-5">
                             <p className="font-medium text-gray-500">
                               Allowance Details:-{" "}
@@ -879,6 +912,21 @@ const AddNewCTC = ({
                               </div>
                             </div>
                           </div>
+                          <div className="mt-4 flex justify-end">
+        <button
+          style={{ background: themeColor }}
+          className="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-700"
+          onClick={() => {
+            if (formData.monthlySalary > 0) {
+              setPage("CTC Components");
+            } else {
+              toast.error("Please enter a valid monthly salary");
+            }
+          }}
+        >
+          View CTC Breakdown
+        </button>
+      </div>
                         </div>
 
                         {/* Components Card */}

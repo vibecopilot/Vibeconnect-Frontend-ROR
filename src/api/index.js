@@ -4706,10 +4706,12 @@ export const getAdminAccess = async (orgId, empId) => {
   }
 };
 export const getManageAdminDetails = async (adminId) => {
+   const hrmsOrgId = getItemInLocalStorage("HRMSORGID")
   try {
     const response = await HrmsAuth.get(
       `/organization/user-setting/administrator-setting/${adminId}/`,
       {
+        params: { organization_id: hrmsOrgId },
         headers: {
           "Content-Type": "multipart/form-data/",
         },
@@ -7022,6 +7024,16 @@ export const getEmployeeSalaryDetails = async (empId) => {
     throw error;
   }
 };
+
+//  change Employee type = 
+export const  ChangeUserType = async () =>{
+  try {
+     const response = await HrmsAuth.patch(``)
+  } catch (error) {
+    console.log("Error changing user type", error)
+    throw error
+  }
+}
 export const getDataChangeRequest = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
@@ -7637,7 +7649,16 @@ export const getEmployeeAssociations = async (empId) => {
     throw error;
   }
 };
-
+// Hrms update employee password
+export const changeEmployeePassword = async (data) =>{
+  try {
+    const response = await HrmsAuth.post(`/employee/password-reset/`,data)
+    return response.data
+  } catch (error) {
+    console.log("Error in updating the employee password" , error)
+    throw error
+  }
+}
 export const updateEmployeeAssociations = async (associationId, data) => {
   try {
     const response = await HrmsAuth.patch(
@@ -7999,6 +8020,7 @@ export const postCTCComponent = async (data) => {
     throw error;
   }
 };
+// change password of single employee 
 
 export const postRegularizationRequest = async (data) => {
   try {
