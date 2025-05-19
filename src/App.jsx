@@ -130,7 +130,7 @@ import AddInventory from "./pages/SubPages/AddInventory.jsx";
 import AddChecklist from "./pages/SubPages/AddChecklist.jsx";
 import EditChecklist from "./pages/SubPages/EditChecklist.jsx";
 import EditStocks from "./pages/SubPages/EditStocks.jsx";
-
+import ChangePassword from "./pages/AdminHrms/ChangePassword.jsx";
 import DocumentPro from "./pages/DocumentsPro/DocumentPro.jsx";
 import AddProjectTask from "./pages/SubPages/AddProjectTask.jsx";
 import UserSetup from "./pages/Setup/UserSetup.jsx";
@@ -5985,6 +5985,15 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
+        {/* Change Password */}
+        <Route
+  path="/admin/employee-directory/change-password/:id"
+  element={
+    <ProtectedAdminRoutes>
+      <ChangePassword />
+    </ProtectedAdminRoutes>
+  }
+/>
         <Route
           path="/admin/employee-directory/add-new-ctc"
           element={
