@@ -165,6 +165,7 @@ const SectionsPersonal = () => {
   const fetchEmployeeDetails = async () => {
     try {
       const res = await getEmployeeDetails(id);
+      console.log("Complete details of employee", res);
       const rawAadharValue = res?.aadhar_number?.replace(/\D/g, "");
       console.log(rawAadharValue);
       setFormData({
@@ -183,9 +184,9 @@ const SectionsPersonal = () => {
         maritalStatus: res?.marital_status,
         emergencyContactName: res?.emergency_contact_name,
         emergencyContactNo: res?.emergency_contact_no,
-        userType: res?.user_type,
+        userType: res?.user_type || "employee",
         latRequired: res?.lat_long_required,
-        geotag_enabled: res?.geotag_enabled
+        geotag_enabled: res?.geotag_enabled,
       });
     } catch (error) {
       console.log(error);
@@ -291,7 +292,7 @@ const SectionsPersonal = () => {
     editData.append("marital_status", formData.maritalStatus);
     editData.append("emergency_contact_name", formData.emergencyContactName);
     editData.append("emergency_contact_no", formData.emergencyContactNo);
-    editData.append("user_type", formData.userType ? formData.userType : "");
+    editData.append("user_type", formData.userType);
     editData.append("status", formData.status);
     editData.append("organization", hrmsOrgId);
     editData.append("lat_long_required", formData.latRequired);
@@ -473,7 +474,7 @@ const SectionsPersonal = () => {
 
   console.log("roleAccess", roleAccess.role);
 
-  const allowedRoles = ["superadmin", "admin","pms_admin"];
+  const allowedRoles = ["superadmin", "admin", "pms_admin"];
   const normalizedRole = roleAccess?.role?.toLowerCase().replace(/\s/g, "");
   const isAuthorized = allowedRoles.includes(normalizedRole);
 
@@ -670,6 +671,46 @@ const SectionsPersonal = () => {
                       <option value="single">Single</option>
                       <option value="married">Married</option>
                     </select>
+                  </div>
+                  {/* <div>
+                    <label className="block text-sm font-medium text-gray-700">User type</label>
+                     <select
+                     className={`mt-1 p-2 w-full border rounded-md ${
+                        !isEditing ? "bg-gray-200" : ""
+                      }`}
+                       value={formData.userType}
+      onChange={handleChange}
+                      disabled={!isEditing}
+                      
+                     >
+                      <option value="pms_admin">Admin</option>
+                      <option value="employee">Employee</option>
+                     </select>
+                  </div> */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      User type
+                    </label>
+                    {isEditing ? (
+                      <select
+                        className="mt-1 p-2 w-full border rounded-md"
+                        value={formData.userType}
+                        onChange={handleChange}
+                        name="userType"
+                      >
+                        <option value="employee">Employee</option>
+                        <option value="pms_admin">Admin</option>
+                        {/* <option value="pms_admin">PMS Admin</option>
+      <option value="superadmin">Super Admin</option> */}
+                      </select>
+                    ) : (
+                      <div className="mt-1 p-2 w-full border rounded-md bg-gray-200">
+                        {formData.userType === "employee" && "Employee"}
+                        {formData.userType === "pms_admin" && "Admin"}
+                        {/* {formData.userType === "pms_admin" && "PMS Admin"}
+      {formData.userType === "superadmin" && "Super Admin"} */}
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center gap-2">
                     <label className="block text-sm font-medium text-gray-700">
