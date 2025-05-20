@@ -394,6 +394,7 @@ const SectionsEmployment = () => {
         deptId,
         hrmsOrgId
       );
+      console.log("Supervisor details----->",await getReportingSupervisors)
       console.log(reportingSupervisors);
       reportingSupervisors.forEach((department) => {
         setReportSupervisors(department.reporting_supervisor);

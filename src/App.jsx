@@ -131,6 +131,7 @@ import AddChecklist from "./pages/SubPages/AddChecklist.jsx";
 import EditChecklist from "./pages/SubPages/EditChecklist.jsx";
 import EditStocks from "./pages/SubPages/EditStocks.jsx";
 import ChangePassword from "./pages/AdminHrms/ChangePassword.jsx";
+import EmployeeLogs from "./pages/AdminHrms/EmployeeLogs.jsx";
 import DocumentPro from "./pages/DocumentsPro/DocumentPro.jsx";
 import AddProjectTask from "./pages/SubPages/AddProjectTask.jsx";
 import UserSetup from "./pages/Setup/UserSetup.jsx";
@@ -5994,6 +5995,15 @@ function App() {
     </ProtectedAdminRoutes>
   }
 />
+<Route
+path="/admin/employee-directory/employee-logs/:id"
+element={
+  <ProtectedAdminRoutes>
+    <EmployeeLogs/>
+  </ProtectedAdminRoutes>
+}
+/>
+
         <Route
           path="/admin/employee-directory/add-new-ctc"
           element={
