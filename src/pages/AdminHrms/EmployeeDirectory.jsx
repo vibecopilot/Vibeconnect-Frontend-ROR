@@ -1558,12 +1558,15 @@ function EmployeeDirectory() {
                             `${employee.first_name} ${employee.last_name}`.toLowerCase();
                           const employeeCode =
                             employee.employee_code.toLowerCase();
+                            const mobileNumber = 
+                            employee.mobile ? employee.mobile.toString() : "";
                           const searchTextLower = searchText.toLowerCase();
 
                           // Check if the employee matches the search text filter
                           const matchesSearch =
                             fullName.includes(searchTextLower) ||
-                            employeeCode.includes(searchTextLower);
+                            employeeCode.includes(searchTextLower) ||
+                            mobileNumber.includes(searchTextLower);
 
                           // Check if the employee matches the selected site filter.
                           // If no site is selected, site filter passes automatically.
