@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
 import EmployeeSections from "./EmployeeSections";
 import EditEmployeeDirectory from "./EditEmployeeDirectory";
+import { FaEye, FaEyeSlash } from "react-icons/fa"; // Import eye icons
 
 const ChangePassword = () => {
   const { id } = useParams();
@@ -17,18 +18,20 @@ const ChangePassword = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [employeeData, setEmployeeData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Fetch employee data on component mount
   useEffect(() => {
     const fetchEmployeeData = async () => {
       try {
         const data = await getEmployeeDetails(id);
-        console.log("Get Data of employee" , data)
+        console.log("Get Data of employee", data);
         setEmployeeData(data);
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
-          email_id: data.email_id  || "",
-          employee_id: Number(data.id)
+          email_id: data.email_id || "",
+          employee_id: Number(data.id),
         }));
       } catch (error) {
         toast.error("Failed to load employee data");
@@ -40,9 +43,9 @@ const ChangePassword = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -74,7 +77,7 @@ const ChangePassword = () => {
       await changeEmployeePassword(formData);
       toast.success("Password changed successfully!");
       // Reset form after successful submission
-      setFormData(prev => ({ ...prev, new_password: "" }));
+      setFormData((prev) => ({ ...prev, new_password: "" }));
       setConfirmPassword("");
     } catch (error) {
       console.error("Password change error:", error);
@@ -89,62 +92,58 @@ const ChangePassword = () => {
       <EditEmployeeDirectory />
       <div className="flex">
         <EmployeeSections empId={id} />
-        
+
         <div className="w-full mt-5 p-5 rounded-md">
           <div className="bg-white p-6 rounded-lg shadow-md max-w-2xl">
             <h2 className="text-xl font-bold mb-6">Change Password</h2>
-            
+
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Employee ID */}
-              {/* <div>
-                <label className="block text-gray-700 mb-1">Employee ID</label>
-                <input
-                  type="text"
-                  value={id}
-                  readOnly
-                  className="w-full p-2 border rounded bg-gray-100"
-                />
-              </div> */}
-
-              {/* Email */}
-              {/* <div>
-                <label className="block text-gray-700 mb-1">Email</label>
-               <input
-  type="email"
-  name="email_id"
-  value={formData.email_id}
-  onChange={handleChange}
-  required
-  className="w-full p-2 border rounded"
-/>
-              </div> */}
-
               {/* New Password */}
               <div>
                 <label className="block text-gray-700 mb-1">New Password</label>
-                <input
-                  type="password"
-                  name="new_password"
-                  value={formData.new_password}
-                  onChange={handleChange}
-                  required
-                  minLength="8"
-                  className="w-full p-2 border rounded"
-                  placeholder="At least 8 characters"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="new_password"
+                    value={formData.new_password}
+                    onChange={handleChange}
+                    required
+                    minLength="8"
+                    className="w-full p-2 border rounded pr-10"
+                    placeholder="At least 8 characters"
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <FaEyeSlash /> : <FaEye />}
+                  </button>
+                </div>
               </div>
 
               {/* Confirm Password */}
               <div>
-                <label className="block text-gray-700 mb-1">Confirm Password</label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  className="w-full p-2 border rounded"
-                  placeholder="Re-enter your new password"
-                />
+                <label className="block text-gray-700 mb-1">
+                  Confirm Password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    className="w-full p-2 border rounded pr-10"
+                    placeholder="Re-enter your new password"
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
+                    {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                  </button>
+                </div>
               </div>
 
               {/* Submit Button */}
@@ -159,18 +158,6 @@ const ChangePassword = () => {
                 {isLoading ? "Updating..." : "Update Password"}
               </button>
             </form>
-
-            {/* Password Requirements */}
-            {/* <div className="mt-6 p-4 bg-gray-50 rounded-md">
-              <h3 className="font-medium text-gray-700 mb-2">Password Requirements:</h3>
-              <ul className="text-sm text-gray-600 list-disc pl-5 space-y-1">
-                <li>Minimum 8 characters</li>
-                <li>At least one uppercase letter</li>
-                <li>At least one lowercase letter</li>
-                <li>At least one number</li>
-                <li>At least one special character</li>
-              </ul>
-            </div> */}
           </div>
         </div>
       </div>

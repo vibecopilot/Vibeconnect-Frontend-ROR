@@ -165,7 +165,7 @@ const SectionsPersonal = () => {
   const fetchEmployeeDetails = async () => {
     try {
       const res = await getEmployeeDetails(id);
-      console.log("Complete details of employee", res);
+      console.log("Complete details of employee ----->", res);
       const rawAadharValue = res?.aadhar_number?.replace(/\D/g, "");
       console.log(rawAadharValue);
       setFormData({

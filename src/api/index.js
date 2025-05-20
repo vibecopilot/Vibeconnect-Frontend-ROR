@@ -7659,6 +7659,16 @@ export const changeEmployeePassword = async (data) =>{
     throw error
   }
 }
+
+export const EmployeeHrmsLogs = async (orgId , empId) =>{
+  try {
+    const response = await HrmsAuth.get(`/password-reset-history/?organization_id=${orgId}&employee_id=${empId}`)
+    return response.data
+  } catch (error) {
+    console.log("Error in getting employee logs" , error)
+    throw error
+  }
+}
 export const updateEmployeeAssociations = async (associationId, data) => {
   try {
     const response = await HrmsAuth.patch(
