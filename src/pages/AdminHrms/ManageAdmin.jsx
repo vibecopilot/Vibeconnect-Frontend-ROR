@@ -32,7 +32,6 @@ import { MdClose } from "react-icons/md";
 // import { Switch } from "@material-tailwind/react";
 const ManageAdmin = () => {
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
-  console.log("Organization id :-------", hrmsOrgId);
   const [showModal, setShowModal] = useState(false);
   const [showModal1, setShowModal1] = useState(false);
   const [employees, setEmployees] = useState([]);
@@ -226,14 +225,13 @@ const ManageAdmin = () => {
       const res = await postManageAdmin(postData);
       if (selectedSites.length > 0) {
         const siteIds = selectedSites.map((site) => site.value);
-        console.log("Site ID ---->>>>",siteIds);
         const associationData = {
           multiple_associated: siteIds,
           organization: hrmsOrgId,
         };
-           console.log("Seleected user complete details",selectedUserOption)
+           const updateId = associationId || selectedUserOption.value;
         await updateEmployeeAssociations(
-          selectedUserOption.value,
+          updateId,
           associationData
         );
       }
@@ -347,10 +345,7 @@ const handleEditModal = async (id) => {
     if (!adminDetails) {
       throw new Error(`Admin with ID ${id} not found`);
     }
-
-    console.log("Admin to edit:", adminDetails);
-
-    // 3. Set access and role
+   // 3. Set access and role
     setAccess(adminDetails.access || "");
     setRole(adminDetails.role || "");
 
@@ -435,10 +430,10 @@ const handleEditModal = async (id) => {
             associationData.multiple_associated.includes(site.value)
           );
           setSelectedSitesEdit(matchedSites);
-          console.log("Matched sites:", matchedSites);
+         
         } else {
           setSelectedSitesEdit([]);
-          console.log("No associated sites found.");
+      
         }
       } catch (error) {
         console.error("Error fetching associated sites:", error);
@@ -452,7 +447,6 @@ const handleEditModal = async (id) => {
     if (adminDetails.can_approve_reject_onboarding_request && adminDetails.name) {
       try {
         const approverResponse = await fetchApproverDetails(adminDetails.name);
-        console.log("Approver details:", approverResponse);
       } catch (error) {
         console.error("Error fetching approver details:", error);
         toast.error("Failed to load approver details");
@@ -573,9 +567,10 @@ const handleEditModal = async (id) => {
           multiple_associated: siteIds,
           organization: hrmsOrgId,
         };
-         console.log("Handle selected option -----.....",selectedUserOption)
+         
+         const updateId = associationId || selectedUserOption.value;
         await updateEmployeeAssociations(
-          selectedUserOption.value,
+          updateId,
           associationData
         );
       }
@@ -693,7 +688,6 @@ const handleEditModal = async (id) => {
     async function fetchDetails() {
       try {
         const res = await getManageAdminDetails(adminId);
-        console.log("Admin details response: to edit modal", res);
 
         // Update your state based on the response.
         setDashboardPermission({
@@ -782,7 +776,6 @@ const handleEditModal = async (id) => {
       label: "Can approve/reject leave application",
     },
   ];
-  console.log(permissionAllowed);
   // can_add_edit_admins
   const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
   const orgId = getItemInLocalStorage("HRMSORGID");
