@@ -4494,6 +4494,18 @@ export const getMyHRMSEmployeesAllData = async (orgId) => {
     throw error;
   }
 };
+export const getHrmsAllEmployeeData = async (orgId) =>{
+  try {
+    const response = await HrmsAuth.get(
+      `/updated-user-details/?organization_id=${orgId}`
+    )
+    return response.data
+    
+  } catch (error) {
+    console.log("Error Getting the All employee data",error)
+    throw error
+  }
+}
 export const deleteHRMSEmployee = async (empId) => {
   try {
     const response = await HrmsAuth.delete(`/employee/${empId}/`, {
