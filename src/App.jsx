@@ -749,7 +749,7 @@ import ComplianceEvidence from "./pages/Setup/ComplianceSetupPages/ComplianceEvi
 import ComplianceDetails from "./pages/Compliance/ComplianceDetails.jsx";
 import ComplianceVendorDashboard from "./pages/Compliance/ComplianceVendorDashboard.jsx";
 import ClientDashboard from "./pages/Employees/ClientDashboard.jsx";
-import AddHrmsCommunication from "../src/pages/HRMS/AddHrmsCommunication.jsx"
+import AddHrmsCommunication from "../src/pages/HRMS/AddHrmsCommunication.jsx";
 import AddhrmsBroadcast from "./pages/HRMS/AddhrmsBroadcast.jsx";
 import EmployeeHrmsCommunication from "./pages/Employees/EmployeeCommunication/EmployeeHrmsCommunication.jsx";
 import AddHrmsForums from "./pages/HRMS/AddHrmsForums.jsx";
@@ -769,6 +769,19 @@ import ReceiptInvoiceCam from "./pages/ReceiptInvoiceCam.jsx";
 import AddReceiptInvoiceCamBilling from "./pages/SubPages/AddReceiptInvoiceCamBilling.jsx";
 import ReceiptInvoiceDetails from "./pages/SubPages/ReceiptInvoiceDetails.jsx";
 import MycityPrivacy from "./pages/MycityPrivacy.jsx";
+import Survey from "./pages/SubPages/survey/Survey.jsx";
+import AddSurvey from "./pages/SubPages/survey/AddSurvey.jsx";
+import CreateScratchSurvey from "./pages/SubPages/survey/CreateScratchSurvey.jsx";
+import CopySurvey from "./pages/SubPages/survey/CopySurvey.jsx";
+import CopySurveyViewPage from "./pages/SubPages/survey/CopySurveyViewPage.jsx";
+import CopySurveyQuestions from "./pages/SubPages/survey/CopySurveyQuestions.jsx";
+import CreateTemplateSurvey from "./pages/SubPages/survey/CreateTemplateSurvey.jsx";
+import TemplateDetailsSurvey from "./pages/SubPages/survey/TemplateDetailsSurvey.jsx";
+import SampleResultSurvey from "./pages/SubPages/survey/SampleResultSurvey.jsx";
+import EditTemplateSurvey from "./pages/SubPages/survey/EditTemplateSurvey.jsx";
+import SurveyDetails from "./pages/SubPages/survey/SurveyDetails.jsx";
+import AnalyzeResult from "./pages/SubPages/survey/AnalyzeResult.jsx";
+import PreviewSurvey from "./pages/SubPages/survey/PreviewSurvey.jsx";
 
 function App() {
   const { id } = useParams();
@@ -944,13 +957,13 @@ function App() {
         />
         {/* hrms setting  */}
         <Route
-        path="/admin/hrms/settings"
-        element={
-          <ProtectedRoute>
-            {" "}
-            <HrmsUser/>{" "}
-          </ProtectedRoute>
-        }
+          path="/admin/hrms/settings"
+          element={
+            <ProtectedRoute>
+              {" "}
+              <HrmsUser />{" "}
+            </ProtectedRoute>
+          }
         />
 
         <Route
@@ -5988,21 +6001,21 @@ function App() {
         />
         {/* Change Password */}
         <Route
-  path="/admin/employee-directory/change-password/:id"
-  element={
-    <ProtectedAdminRoutes>
-      <ChangePassword />
-    </ProtectedAdminRoutes>
-  }
-/>
-<Route
-path="/admin/employee-directory/employee-logs/:id"
-element={
-  <ProtectedAdminRoutes>
-    <EmployeeLogs/>
-  </ProtectedAdminRoutes>
-}
-/>
+          path="/admin/employee-directory/change-password/:id"
+          element={
+            <ProtectedAdminRoutes>
+              <ChangePassword />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/admin/employee-directory/employee-logs/:id"
+          element={
+            <ProtectedAdminRoutes>
+              <EmployeeLogs />
+            </ProtectedAdminRoutes>
+          }
+        />
 
         <Route
           path="/admin/employee-directory/add-new-ctc"
@@ -6978,30 +6991,30 @@ element={
         />
         {/* Hrms Communication Page */}
         <Route
-        path="/admin/hrms/communication"
-        element={
-          <ProtectedRoute>
-            <AddHrmsCommunication/>
-          </ProtectedRoute>
-        }
+          path="/admin/hrms/communication"
+          element={
+            <ProtectedRoute>
+              <AddHrmsCommunication />
+            </ProtectedRoute>
+          }
         />
         <Route
-        path="/admin/hrms/broadcast"
-        element={
-          <ProtectedRoute>
-            <AddhrmsBroadcast/>
-          </ProtectedRoute>
-        }
+          path="/admin/hrms/broadcast"
+          element={
+            <ProtectedRoute>
+              <AddhrmsBroadcast />
+            </ProtectedRoute>
+          }
         />
- {/* Hrms Holidays */}
- <Route
-  path="/admin/hrms/holidays"
-  element={
-    <ProtectedRoute>
-      <AddHrmsHolidays/>
-    </ProtectedRoute>
-  }
- />
+        {/* Hrms Holidays */}
+        <Route
+          path="/admin/hrms/holidays"
+          element={
+            <ProtectedRoute>
+              <AddHrmsHolidays />
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/employee/EmployeeHrmsCommunication"
@@ -7034,15 +7047,15 @@ element={
         //       <CreateHrmsBroadcast/>
         //     </ProtectedRoute>
         //   }
-          />
+        />
 
         <Route
-        path="/admin/hrms/formus"
-        element={
-          <ProtectedRoute>
-            <AddHrmsForums/>
-          </ProtectedRoute>
-        }
+          path="/admin/hrms/formus"
+          element={
+            <ProtectedRoute>
+              <AddHrmsForums />
+            </ProtectedRoute>
+          }
         />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/otp-qr" element={<OtpAndQr />} />
@@ -7070,6 +7083,111 @@ element={
             <ProtectedRoute>
               <BusinessCard />
             </ProtectedRoute>
+          }
+        />
+        {/* Survey */}
+        <Route
+          path="/admin/survey"
+          element={
+            <ProtectedAdminRoutes>
+              <Survey />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/admin/add-survey"
+          element={
+            <ProtectedAdminRoutes>
+              <AddSurvey />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/admin/create-scratch-survey"
+          element={
+            <ProtectedAdminRoutes>
+              <CreateScratchSurvey />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/admin/copy-survey"
+          element={
+            <ProtectedAdminRoutes>
+              <CopySurvey />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/admin/copy-survey-view-page"
+          element={
+            <ProtectedAdminRoutes>
+              <CopySurveyViewPage />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/admin/copy-survey-question"
+          element={
+            <ProtectedAdminRoutes>
+              <CopySurveyQuestions />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/admin/create-template-survey"
+          element={
+            <ProtectedAdminRoutes>
+              <CreateTemplateSurvey />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/admin/template-detail-survey"
+          element={
+            <ProtectedAdminRoutes>
+              <TemplateDetailsSurvey />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/admin/sample-result-survey"
+          element={
+            <ProtectedAdminRoutes>
+              <SampleResultSurvey />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/admin/edit-template-survey"
+          element={
+            <ProtectedAdminRoutes>
+              <EditTemplateSurvey />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/admin/survey-details/:id"
+          element={
+            <ProtectedAdminRoutes>
+              <SurveyDetails />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/admin/result-analyze-result"
+          element={
+            <ProtectedAdminRoutes>
+              <AnalyzeResult />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/admin/preview-survey"
+          element={
+            <ProtectedAdminRoutes>
+              <PreviewSurvey />
+            </ProtectedAdminRoutes>
           }
         />
         <Route
