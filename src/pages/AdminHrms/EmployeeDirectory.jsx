@@ -16,6 +16,7 @@ import {
   getAdminAccess,
   getMyHRMSEmployees,
   getMyHRMSEmployeesAllData,
+  getHrmsAllEmployeeData,
   getUserDetails,
   hrmsDomain,
   getFullUser,
@@ -27,6 +28,7 @@ import {
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import toast from "react-hot-toast";
+import { error } from "highcharts";
 function EmployeeDirectory() {
   const themeColor = useSelector((state) => state.theme.color);
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
@@ -75,6 +77,19 @@ function EmployeeDirectory() {
   useEffect(() => {
     fetchAllEmployees();
   }, []);
+
+  const fetchAllEmployeesData = async () =>{
+    try {
+      const res = await getHrmsAllEmployeeData(hrmsOrgId)
+      console.log("All updated user data" , res)
+    } catch (error) {
+      console.log("error getting the all employees data",error)
+      
+    }
+  }
+  useEffect(()=>{
+        fetchAllEmployeesData()
+  },[])
 
   useEffect(() => {
     const groupedEmployees = employeesData.reduce((acc, employeeData) => {
