@@ -86,22 +86,8 @@ const AdminHRMS = () => {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('Name');
-    localStorage.removeItem('FEATURES');
-    localStorage.removeItem('HRMS_EMPLOYEE_ID')
-    localStorage.removeItem('user')
-    localStorage.removeItem('UserId')
-    localStorage.removeItem('UNITID')
-    localStorage.removeItem('Building')
-    localStorage.removeItem('categories')
-    localStorage.removeItem('TOKEN')
-    localStorage.removeItem('LASTNAME')
-    localStorage.removeItem('USERTYPE')
-    localStorage.removeItem('COMPANYID')
-    localStorage.removeItem('HRMSORGID')
-    localStorage.removeItem('STATUS')
-    localStorage.removeItem('complaint')
-    localStorage.removeItem('menuState')
+   const keysToRemove = ['Name','FEATURES','HRMS_EMPLOYEE_ID','user','UserId','UNITID','Building','categories','TOKEN','LASTNAME','USERTYPE','COMPANYID','HRMSORGID','STATUS','complaint','menuState','SITEID']
+   keysToRemove.forEach(key => localStorage.removeItem(key))
     navigate("/login");
     window.location.reload();
   };
