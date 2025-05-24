@@ -99,35 +99,17 @@ const Navbar = () => {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("TOKEN");
-    localStorage.removeItem("COMPANYID");
-    localStorage.removeItem("HRMSORGID");
-    localStorage.removeItem("board_id");
-    localStorage.removeItem("menuState");
-    localStorage.removeItem("Name");
-    localStorage.removeItem("LASTNAME");
-    localStorage.removeItem("USERTYPE");
-    localStorage.removeItem("user");
-    localStorage.removeItem("UNITID");
-    localStorage.removeItem("Building");
-    localStorage.removeItem("categories");
-    localStorage.removeItem("SITEID");
-    localStorage.removeItem("STATUS");
-    localStorage.removeItem("complaint");
-    localStorage.removeItem("UserId");
-    localStorage.removeItem("VIBETOKEN");
-    localStorage.removeItem("VIBEUSERID");
-    localStorage.removeItem("VIBEORGID");
-    localStorage.removeItem("FEATURES");
-    localStorage.removeItem("HRMSORGID");
-    localStorage.removeItem("HRMS_EMPLOYEE_ID");
-    persistor.purge(["board"]).then(() => {
-      navigate("/login");
-      // window.location.reload();
-    });
-    // navigate("/login");
-    // window.location.reload();
-  };
+  const keysToRemove = [
+    "TOKEN", "COMPANYID", "HRMSORGID", "board_id", "menuState", "Name",
+    "LASTNAME", "USERTYPE", "user", "UNITID", "Building", "categories",
+    "SITEID", "STATUS", "complaint", "UserId", "VIBETOKEN", "VIBEUSERID",
+    "VIBEORGID", "FEATURES", "HRMS_EMPLOYEE_ID"
+  ];
+
+  keysToRemove.forEach(key => localStorage.removeItem(key));
+
+  navigate("/login");
+};
   const siteId = getItemInLocalStorage("SITEID");
 
   const getAllowedFeatures = () => {
