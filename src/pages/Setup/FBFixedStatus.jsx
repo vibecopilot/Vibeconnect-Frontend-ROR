@@ -144,7 +144,7 @@ const FBFixedStatus = () => {
         {/* <SetupNavbar/> */}
       <div className="w-full flex mx-3 flex-col overflow-hidden my-10">
         <div className="flex md:flex-row flex-col gap-5 justify-between  my-2">
-          <div className="sm:flex grid grid-cols-2 items-center justify-center gap-4 border border-gray-300 rounded-md px-3 p-2 w-auto">
+          {/* <div className="sm:flex grid grid-cols-2 items-center justify-center gap-4 border border-gray-300 rounded-md px-3 p-2 w-auto">
             <div className="flex items-center gap-2">
               <input
                 type="radio"
@@ -185,7 +185,7 @@ const FBFixedStatus = () => {
               />
               <label htmlFor="cancelled" className="text-sm">Cancelled</label>
             </div>
-          </div>
+          </div> */}
           <div className="flex justify-end gap-4">
             <button
               onClick={openModal}
