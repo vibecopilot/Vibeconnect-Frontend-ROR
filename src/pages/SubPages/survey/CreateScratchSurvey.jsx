@@ -12,7 +12,8 @@ import AddDropdownField from "./AddDropdownField";
 import MatrixRatingScale from "./MatrixRatingScale";
 import AddRankingField from "./AddRankingField";
 import AddRangeField from "./AddRangeField";
-import AddMultipleTextBoxesField from "./AddMultipleTextboxesField";
+import AddMultipleTextBoxesField from "./AddMultipleTextBoxesField"
+// import AddMultipleTextBoxesField from "./AddMultipleTextboxesField";
 import AddDateTimeField from "./AddDateTimeField";
 
 function CreateScratchSurvey() {
