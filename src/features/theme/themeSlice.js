@@ -26,26 +26,21 @@
 
 
 
+// src/features/theme/themeSlice.js
 import { createSlice } from "@reduxjs/toolkit";
-
-// 1. Load the theme color from localStorage if it exists
-const storedColor = localStorage.getItem("themeColor");
 
 export const themeSlice = createSlice({
   name: "theme",
   initialState: {
-    color: storedColor || "radial-gradient( circle 897px at 9% 80.3%,  rgba(55,60,245,1) 0%, rgba(234,161,15,0.90) 100.2% )",
+    color: "radial-gradient( circle 897px at 9% 80.3%,  rgba(55,60,245,1) 0%, rgba(234,161,15,0.90) 100.2% )",
   },
   reducers: {
     setColor: (state, action) => {
       state.color = action.payload;
-
-      // 2. Save the selected color to localStorage so it persists
-      localStorage.setItem("themeColor", action.payload);
     },
   },
 });
 
 export const { setColor } = themeSlice.actions;
-
 export default themeSlice.reducer;
+
