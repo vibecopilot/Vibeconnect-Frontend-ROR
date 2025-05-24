@@ -6,14 +6,16 @@ import { useSelector } from "react-redux";
 import EmployeeSections from "./EmployeeSections";
 import EditEmployeeDirectory from "./EditEmployeeDirectory";
 import { FaEye, FaEyeSlash } from "react-icons/fa"; // Import eye icons
-
+import { getItemInLocalStorage } from "../../utils/localStorage";
 const ChangePassword = () => {
+  const Id= getItemInLocalStorage("APPROVERID")
   const { id } = useParams();
   const themeColor = useSelector((state) => state.theme.color);
   const [formData, setFormData] = useState({
     email_id: "",
     new_password: "",
     employee_id: id,
+    reset_by_employee:Id
   });
   const [confirmPassword, setConfirmPassword] = useState("");
   const [employeeData, setEmployeeData] = useState(null);
@@ -32,6 +34,7 @@ const ChangePassword = () => {
           ...prev,
           email_id: data.email_id || "",
           employee_id: Number(data.id),
+         
         }));
       } catch (error) {
         toast.error("Failed to load employee data");
