@@ -69,15 +69,13 @@ const EmployeeLogs = () => {
                                         </div>
                                         <div>
                                             <p className='mt-2'>
-                                                <span className="font-medium">Employee:</span> {log.employee_name}
+                                                <span className="font-medium">Employee:- </span> {log.employee_name}
                                             </p>
                                             <p>
-                                                <span className="font-medium">Reset by:</span> 
+                                                <span className="font-medium">Reset by:- </span> 
                                                 {log.reset_by_name ? log.reset_by_name : 'System'}
                                             </p>
-                                            <p>
-                                                <span className="font-medium">Reason:</span> {log.reason}
-                                            </p>
+                                            
                                         </div>
                                     </div>
                                 ))}
