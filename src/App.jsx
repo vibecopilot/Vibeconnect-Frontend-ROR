@@ -705,7 +705,7 @@ import EditPPMChecklist from "./pages/SubPages/EditPPMChecklist.jsx";
 import MeterCategoryType from "./pages/Setup/MeterCategoryType/MeterCategoryType.jsx";
 import EditEmployee from "./pages/AdminHrms/EditEmployee.jsx";
 import EditEvent from "./pages/SubPages/EditEvent.jsx";
-import FBMainPage from './pages/Setup/FBMainPage.jsx'
+// import FBMainPage from './pages/Setup/FBMainPage.jsx'
 import EditHrmsEvent from "./pages/SubPages/EditHrmsEvent.jsx";
 import EditBroadcast from "./pages/SubPages/EditBroadcast.jsx";
 import AssociatedSites from "./pages/AdminHrms/AssociatedSites/AssociatedSites.jsx";
@@ -738,7 +738,7 @@ import BillingSetup from "./pages/Setup/BillingSetup/BillingSetup.jsx";
 // import FBRestaurtantMenu from "./pages/SubPages/details/FBSubDetails/FBResturantMenu.jsx";
 // import EditRestaurtantBooking from "./pages/SubPages/EditResturantBooking.jsx";
 // import EditRestaurtantOrders from "./pages/SubPages/EditResturantOrders.jsx";
-// import FBMainPage from "./pages/Setup/FBMainPage.jsx";
+import FBMainPage from "./pages/Setup/FBMainPage.jsx";
 import EmployeeDocumentMain from "./pages/Employees/EmployeeDocumentMain.jsx";
 import EditDailyPickup from "./pages/SubPages/Transportation/EditDailyPickup.jsx";
 import Compliance from "./pages/Compliance/Compliance.jsx";
@@ -3048,14 +3048,14 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
-        <Route
+        {/* <Route
           path="/setup/fnb/cuisines"
           element={
             <ProtectedAdminRoutes>
               <FBMainPage />
             </ProtectedAdminRoutes>
           }
-        />
+        /> */}
 
         {/* permit */}
         {/* admin permit */}

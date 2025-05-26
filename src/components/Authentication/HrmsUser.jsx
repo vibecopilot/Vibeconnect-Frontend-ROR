@@ -11,6 +11,7 @@ import { colors } from "../../utils/colors";
 import FontSizeSelector from "./FontSizeSelector";
 import { BsFillBrushFill } from "react-icons/bs";
 import Background from "../Background";
+import ThemeChanger from "../ThemeChanger";
 
 const HrmsUser = () => {
     const [user, setUser] = useState("");
@@ -77,13 +78,18 @@ const HrmsUser = () => {
 
   document.title = `Profile - Vibe Connect`;
   return (
-    <div className="flex">
+   
+       
+    <div className="flex min-h-screen w-full bg-white text-black dark:bg-gray-900 dark:text-white transition-colors">
+        
     <div>
       <AdminHRMS />
     </div>
     <div className=" flex justify-center w-full ml-16">
+      
       <div className="flex flex-col justify-center  min-h-screen  mx-10 w-full">
-        <div className="bg-gray-200 p-4 flex flex-col w-full">
+       {/* <ThemeChanger /> */}
+        <div className=" p-4 flex flex-col w-full">
           <p className="">
             <span className="font-medium">Name : </span>
             <span className="text-lg">
@@ -176,6 +182,7 @@ const HrmsUser = () => {
       </div>
     </div>
   </div>
+ 
   )
 }
 

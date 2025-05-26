@@ -93,28 +93,33 @@ const ManageAdmin = () => {
   // Associated Sites
   const [availableSites, setAvailableSites] = useState([]);
   const [selectedSites, setSelectedSites] = useState([]);
-  const [sitesOptions, setSitesOptions] = useState([]);
-
-  useEffect(() => {
-    const fetchAvailableSitesData = async () => {
-      try {
-        const sitesData = await getAvailableSites(hrmsOrgId);
-        if (!sitesData) {
-          toast.error("No Sites Available");
-        }
-
-        const formattedSites = sitesData.map((site) => ({
-          value: site.id,
-          label: site.site_name,
-        }));
-        setAvailableSites(formattedSites);
-        setSitesOptions(formattedSites);
-      } catch (error) {
-        console.log("Error in getting The available sites", error);
+const [sitesOptions, setSitesOptions] = useState([]);
+ useEffect(() => {
+  const fetchAvailableSitesData = async () => {
+    try {
+      const sitesData = await getAvailableSites(hrmsOrgId);
+      if (!sitesData) {
+        toast.error("No Sites Available");
       }
-    };
-    fetchAvailableSitesData();
-  }, [hrmsOrgId]);
+
+      const formattedSites = sitesData.map((site) => ({
+        value: site.id,
+        label: site.site_name,
+      }));
+      
+      // Add Select All option at the beginning
+      setAvailableSites(formattedSites);
+      setSitesOptions([
+        { value: 'select-all', label: 'Select All' },
+        ...formattedSites
+      ]);
+    } catch (error) {
+      console.log("Error in getting The available sites", error);
+    }
+  };
+  fetchAvailableSitesData();
+}, [hrmsOrgId]);
+
 
   const handleDeleteAdmin = async (adminId) => {
     try {
@@ -868,7 +873,7 @@ const handleEditModal = async (id) => {
                     Associated Sites :
                   </label>
 
-                  <Select
+                  {/* <Select
                     isMulti
                     options={availableSites}
                     value={selectedSites}
@@ -876,7 +881,29 @@ const handleEditModal = async (id) => {
                     placeholder="Select associated sites "
                     className="basic-multi-select "
                     classNamePrefix="select"
-                  />
+                  /> */}
+                  <Select
+  isMulti
+  options={sitesOptions}
+  value={selectedSites}
+  onChange={(selectedOptions) => {
+    // Handle Select All functionality
+    const lastOption = selectedOptions[selectedOptions.length - 1];
+    if (lastOption?.value === 'select-all') {
+      // If Select All was clicked, select all options except the Select All option
+      setSelectedSites(availableSites);
+    } else {
+      // Otherwise, just update with the selected options
+      setSelectedSites(selectedOptions);
+    }
+  }}
+  placeholder="Select associated sites"
+  className="basic-multi-select"
+  classNamePrefix="select"
+  closeMenuOnSelect={false} // Keep menu open when selecting
+  hideSelectedOptions={false} // Show selected options in the dropdown
+  isOptionDisabled={(option) => option.value === 'select-all' && selectedSites.length === availableSites.length}
+/>
                 </div>
                 <div className="col-span-3">
                   {access === "Restricted Access" && (
@@ -1220,12 +1247,12 @@ const handleEditModal = async (id) => {
         )}
         {showModal1 && (
           <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-            <div className="bg-white p-4 rounded-xl min-h-52">
+            <div className="bg-white p-4 rounded-xl w-[80%]">
               <h1 className="text-lg font-semibold border-b flex items-center gap-2 justify-center">
                 <BiEdit /> Edit Manage Administrator
               </h1>
               <div className="grid grid-cols-3 gap-2 max-h-96 overflow-y-auto hide-scrollbar">
-                <div className="flex flex-col col-span-3">
+                <div className="flex flex-col col-span-3 z-50">
                   <label className="block text-gray-700 font-medium ">
                     Select Admin :
                   </label>
@@ -1235,6 +1262,7 @@ const handleEditModal = async (id) => {
                     noOptionsMessage={() => "No Admin Available"}
                     onChange={handleUserChangeSelect}
                     placeholder="Select Admin"
+                    maxMenuHeight={140}
                   />
                 </div>
                 <div className="flex flex-col ">
@@ -1270,7 +1298,7 @@ const handleEditModal = async (id) => {
                   <label htmlFor="" className="block text-gray-700 font-medium">
                     Associated Sites :
                   </label>
-                  <Select
+                  {/* <Select
   isMulti
   options={availableSites}
   value={selectedSitesEdit}
@@ -1281,6 +1309,31 @@ const handleEditModal = async (id) => {
   getOptionLabel={(option) => option.label}
   getOptionValue={(option) => option.value}
   isDisabled={!availableSites.length} // Disable if no sites loaded
+/> */}
+<Select
+  isMulti
+  options={[
+    { value: 'select-all', label: 'Select All' },
+    ...availableSites
+  ]}
+  value={selectedSitesEdit}
+  onChange={(selectedOptions) => {
+    const lastOption = selectedOptions[selectedOptions.length - 1];
+    if (lastOption?.value === 'select-all') {
+      setSelectedSitesEdit(availableSites);
+    } else {
+      setSelectedSitesEdit(selectedOptions);
+    }
+  }}
+  className="basic-multi-select z-50" 
+  classNamePrefix="select"
+  placeholder="Select sites..."
+  getOptionLabel={(option) => option.label}
+  getOptionValue={(option) => option.value}
+  isDisabled={!availableSites.length}
+  closeMenuOnSelect={false}
+  hideSelectedOptions={false}
+  isOptionDisabled={(option) => option.value === 'select-all' && selectedSitesEdit.length === availableSites.length}
 />
                 </div>
                 <div className="col-span-3">
