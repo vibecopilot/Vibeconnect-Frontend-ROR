@@ -167,12 +167,12 @@ function EmployeeDirectory() {
   //   sortable: true,
   //   width: "180px"
   // },
-  {
-    name: "Department",
-    selector: (row) => row.employment_info?.department_name || "N/A",
-    sortable: true,
-    width: "180px"
-  },
+  // {
+  //   name: "Department",
+  //   selector: (row) => row.employment_info?.department_name || "N/A",
+  //   sortable: true,
+  //   width: "180px"
+  // },
   {
     name: "Status",
     selector: (row) => row.employee.status ? "Active" : "Inactive",
