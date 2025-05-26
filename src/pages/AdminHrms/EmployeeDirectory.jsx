@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { BiEdit } from "react-icons/bi";
 import { FaChevronDown, FaDownload, FaTrash, FaUserEdit } from "react-icons/fa";
+import DataTable from "react-data-table-component";
 import AdminHRMS from "./AdminHrms";
 import { Link } from "react-router-dom";
 import { PiPlusCircle } from "react-icons/pi";
@@ -57,6 +58,15 @@ function EmployeeDirectory() {
   const [showUpdateButton, setShowUpdateButton] = useState(false);
   const [isModalOpen12, setIsModalOpen12] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [viewMode,setViewMode] = useState("table")
+  const [tableData,setTableData] = useState([])
+  const [pagination,setPagination] = useState({
+  currentPage: 1,
+  totalPages: 1,
+  count: 0,
+  perPage: 10
+  })
+
 
   const fetchAllEmployees = async () => {
     try {
@@ -78,18 +88,127 @@ function EmployeeDirectory() {
     fetchAllEmployees();
   }, []);
 
-  const fetchAllEmployeesData = async () =>{
+  const fetchTableData  = async (page=1) =>{
     try {
-      const res = await getHrmsAllEmployeeData(hrmsOrgId)
+     
+      const res = await getHrmsAllEmployeeData(hrmsOrgId , page)
       console.log("All updated user data" , res)
+      setTableData(res.results);
+      setPagination({
+          currentPage: page,
+          totalPages: Math.ceil(res.count,pagination.perPage),
+          count: res.count,
+          perPage : pagination.perPage
+      })
     } catch (error) {
       console.log("error getting the all employees data",error)
-      
+      toast.error("Something went wrong to display the data")
     }
   }
+  const handlePageChange  = (page) =>{
+    fetchTableData(page)
+  }
   useEffect(()=>{
-        fetchAllEmployeesData()
+        fetchTableData()
   },[])
+  const employeeColumns = [
+  {
+    name: "Employee ID",
+    selector: (row) => row.employee.id,
+    sortable: true,
+    width: "120px"
+  },
+  {
+    name: "Name",
+    selector: (row) => `${row.employee.first_name} ${row.employee.last_name}`,
+    sortable: true,
+    cell: (row) => (
+      <div className="flex items-center">
+        {row.employee.profile_photo ? (
+          <img
+            src={hrmsDomain + row.employee.profile_photo}
+            alt="Profile"
+            className="rounded-full h-8 w-8 object-cover mr-2"
+          />
+        ) : (
+          <div
+            className="bg-gray-300 rounded-full h-8 w-8 flex items-center justify-center mr-2"
+            style={{ backgroundColor: getRandomColor() }}
+          >
+            {row.employee.first_name.charAt(0)}
+            {row.employee.last_name.charAt(0)}
+          </div>
+        )}
+        <span>
+          {row.employee.first_name} {row.employee.last_name}
+        </span>
+      </div>
+    ),
+    width: "200px",
+   
+  },
+  {
+    name: "Email",
+    selector: (row) => row.employee.email_id,
+    sortable: true,
+    width: "220px"
+  },
+  {
+    name: "Mobile",
+    selector: (row) => row.employee.mobile,
+    sortable: true,
+    width: "150px"
+  },
+  // {
+  //   name: "Designation",
+  //   selector: (row) => row.employment_info?.designation || "N/A",
+  //   sortable: true,
+  //   width: "180px"
+  // },
+  {
+    name: "Department",
+    selector: (row) => row.employment_info?.department_name || "N/A",
+    sortable: true,
+    width: "180px"
+  },
+  {
+    name: "Status",
+    selector: (row) => row.employee.status ? "Active" : "Inactive",
+    sortable: true,
+    cell: (row) => (
+      <span
+        className={`px-2 py-1 rounded-full text-xs ${
+          row.employee.status
+            ? "bg-green-100 text-green-800"
+            : "bg-red-100 text-red-800"
+        }`}
+      >
+        {row.employee.status ? "Active" : "Inactive"}
+      </span>
+    ),
+    width: "120px"
+  },
+  {
+    name: "Actions",
+    cell: (row) => (
+      <div className="flex gap-2">
+        <Link
+          to={`/hrms/employee-directory-Personal/${row.employee.id}`}
+          className="text-blue-500 hover:text-blue-700"
+        >
+          <BiEdit size={18} />
+        </Link>
+        <button
+          onClick={() => handleDeleteModal(row.employee.id)}
+          className="text-red-500 hover:text-red-700"
+        >
+          <FaTrash size={15} />
+        </button>
+      </div>
+    ),
+    width: "100px"
+  }
+];
 
   useEffect(() => {
     const groupedEmployees = employeesData.reduce((acc, employeeData) => {
@@ -179,7 +298,16 @@ function EmployeeDirectory() {
     const searchValue = e.target.value;
     setSearchText(searchValue);
   };
-
+const filteredTableData  = tableData.filter(employee =>{
+  const fullname = `${employee.employee.first_name} ${employee.employee.last_name}`.toLowerCase()
+  const email = employee.employee.email_id.toLowerCase()
+  const mobile = employee.employee.mobile ? employee.employee.mobile.toString() : "";
+  return(
+    fullname.includes(searchText) ||
+    email.includes(searchText) ||
+    mobile.includes(searchText)
+  )
+})
   const handleDropdownChange = (e) => {
     // Convert to string to ensure type consistency
     setSelectedSite(e.target.value);
@@ -605,7 +733,12 @@ function EmployeeDirectory() {
                   onChange={handleSearch}
                   value={searchText}
                 />
-
+                <div className="w-50 font-semibold">
+                  <select name="" id="" value={viewMode} onChange={(e)=>setViewMode(e.target.value)} className="text-black px-5 py-3 rounded">
+                       <option value="table">Table</option>
+                       <option value="card">Card</option>
+                  </select>
+                </div>
                 <div className="flex gap-3">
                   <div className="relative inline-block text-left">
                     <button
@@ -1432,304 +1565,228 @@ function EmployeeDirectory() {
             </div>
           </div>
         )}
-        <div className="flex h-screen ">
-          <div className=" p-4 flex flex-wrap overflow-y-auto mt-2 ml-20 w-[80%] ">
-            {alphabet.map((letter) => (
-              <div key={letter} id={letter} className="w-full">
-                {selectedLetter === null || selectedLetter === letter ? (
-                  <>
-                    <h2 className="text-xl font-mono font-semibold border-b-2 border-dashed my-4">
-                      <span
-                        style={{ background: themeColor }}
-                        className="p-2 rounded-md text-white px-4"
-                      >
-                        {letter}
-                      </span>
-                    </h2>
-
-                    {/* <div className="flex flex-wrap">
-  {empfilterData[letter]
-    ?.filter((employee) => {
-      // Check if the employee matches the search text filter
-      const searchFilter =
-        `${employee.first_name} ${employee.last_name}`
-          .toLowerCase()
-          .includes(searchText.toLowerCase()) ||
-        `${employee.employee_code}`
-          .toLowerCase()
-          .includes(searchText.toLowerCase());
-
-      // Check if the employee matches the selected site filter
-      // If no site is selected (i.e. selectedSite is empty), we return true.
-      const siteFilter = selectedSite
-        ? employee.site_id === selectedSite
-        : true;
-
-      // Both conditions must be met
-      return searchFilter && siteFilter;
-    })
-    .map((employee, index) => (
-      <div
-        key={employee.id}
-        style={{ background: themeColor, color: "white" }}
-        className={`${
-          employeeId === employee.id
-            ? "bg-gradient-to-r from-yellow-400 via-red-300 to-pink-400 border-2 border-pink-400 "
-            : "bg-gradient-to-r from-yellow-400 via-red-300 to-pink-400 border-2 border-white "
-        } w-80 p-2 m-2 rounded-xl cursor-pointer`}
-        onClick={() => {
-          showEmployeeDetails(employee.id);
-        }}
-      >
-        <div className="flex items-center w-full">
-          <div className="w-32">
-            {employee?.profile_photo ? (
-              <img
-                src={hrmsDomain + employee?.profile_photo}
-                alt="Profile"
-                className="rounded-full h-20 w-20 border-4 border-white object-cover mr-4"
-              />
-            ) : (
-              <div
-                className="bg-gray-300 rounded-full text-xl border-white border-4 text-white h-20 w-20 flex items-center font-medium justify-center mr-4"
-                style={{ backgroundColor: getColorForEmployee(index) }}
-              >
-                {employee.first_name
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")}
-                {employee.last_name
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")}
+<div className="flex h-screen">
+          <div className="p-4 flex flex-wrap overflow-y-auto mt-2 ml-20 w-[80%]">
+            {viewMode === "table" ? (
+              <div className="mt-4 w-full">
+                <DataTable
+                  title="Employee Directory"
+                  columns={employeeColumns}
+                  data={filteredTableData}
+                  pagination
+                  paginationServer
+                  paginationTotalRows={pagination.count}
+                  onChangePage={handlePageChange}
+                  paginationPerPage={pagination.perPage}
+                  paginationRowsPerPageOptions={[10, 25, 50, 100]}
+                  onChangeRowsPerPage={(perPage, page) => {
+                    setPagination(prev => ({ ...prev, perPage }));
+                    fetchTableData(page);
+                  }}
+                  selectableRows={roleAccess?.can_edit_employee}
+                  onSelectedRowsChange={({ selectedRows }) => {
+                    setSelectedEmployees(selectedRows.map(row => row.employee.id));
+                  }}
+                  customStyles={{
+                    headRow: {
+                      style: {
+                        background: themeColor,
+                        color: "white",
+                        fontSize: "10px",
+                      },
+                    },
+                    headCells: {
+                      style: {
+                        textTransform: "uppercase",
+                        paddingLeft: "16px",
+                        paddingRight: "16px",
+                        width: "150px",
+                      },
+                    },
+                    cells: {
+                      style: {
+                        paddingLeft: "16px",
+                        paddingRight: "16px",
+                        whiteSpace: "nowrap",
+                        fontSize: "14px",
+                        lineHeight: "24px",
+                        width: "150px",
+                        color: "#4b5260",
+                        fontWeight: 450
+                      },
+                    },
+                  }}
+                />
               </div>
-            )}
-          </div>
-          <div className="w-full">
-            <h2 className="font-semibold">
-              {employee.first_name} {employee.last_name}
-            </h2>
-            <div className="flex items-center gap-1 my-1">
-              <p className="text-sm font-medium text-gray-200">
-                {employee?.employment_info?.employee_code
-                  ? employee?.employment_info?.employee_code
-                  : "not added"}
-              </p>
-              <div className="border border-gray-400 h-5" />
-              <p className="text-sm font-medium text-gray-200">
-                DOJ :{" "}
-                {employee?.employment_info?.joining_date
-                  ? employee?.employment_info?.joining_date
-                  : "not added"}
-              </p>
-            </div>
-            <p className="text-sm font-medium text-gray-200">
-              {employee?.employment_info?.designation
-                ? employee?.employment_info?.designation
-                : "not added"}
-            </p>
-            <div className="flex items-center justify-between mt-2">
-              <p
-                className={`${
-                  employee?.status
-                    ? "bg-green-400 text-white"
-                    : "bg-red-400 text-white"
-                } font-medium w-fit px-2 my-1 rounded-full`}
-              >
-                {employee?.status ? "Active" : "Inactive"}
-              </p>
-              {(roleAccess?.can_edit_employee ||
-                roleAccess?.can_delete_employee) && (
-                <div className="flex gap-2 items-center bg-white p-1 rounded-full px-2">
-                  {roleAccess?.can_edit_employee && (
-                    <Link
-                      className="text-blue-500 hover:text-blue-900"
-                      to={`/hrms/employee-directory-Personal/${employee.id}`}
-                    >
-                      <BiEdit size={18} />
-                    </Link>
-                  )}
-                  {roleAccess?.can_delete_employee && (
-                    <button
-                      onClick={() => handleDeleteModal(employee.id)}
-                      className="text-red-400 hover:text-red-800"
-                    >
-                      <FaTrash size={15} />
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    ))}
-</div> */}
-                    <div className="flex flex-wrap">
-                      {empfilterData[letter]
-                        ?.filter((employee) => {
-                          // Create a lower case version of search text and employee details
-                          const fullName =
-                            `${employee.first_name} ${employee.last_name}`.toLowerCase();
-                          const employeeCode =
-                            employee.employee_code.toLowerCase();
-                            const mobileNumber = 
-                            employee.mobile ? employee.mobile.toString() : "";
-                          const searchTextLower = searchText.toLowerCase();
-
-                          // Check if the employee matches the search text filter
-                          const matchesSearch =
-                            fullName.includes(searchTextLower) ||
-                            employeeCode.includes(searchTextLower) ||
-                            mobileNumber.includes(searchTextLower);
-
-                          // Check if the employee matches the selected site filter.
-                          // If no site is selected, site filter passes automatically.
-                          const matchesSite = selectedSite
-                            ? String(employee.site_id) === String(selectedSite)
-                            : true;
-                          const matchesStatus =
-                            selectedUserStatus === "all" || // Show all if 'all' is selected
-                            (selectedUserStatus === "active" &&
-                              employee?.status === true) || // Show only active
-                            (selectedUserStatus === "inactive" &&
-                              employee?.status === false); // Show only inactive
-
-                          // Return only employees matching both criteria
-                          return matchesSearch && matchesSite && matchesStatus;
-                        })
-                        .map((employee, index) => (
-                          <div
-                            key={employee.id}
-                            style={{ background: themeColor, color: "white" }}
-                            className={`${
-                              employeeId === employee.id
-                                ? "bg-gradient-to-r from-yellow-400 via-red-300 to-pink-400 border-2 border-pink-400 "
-                                : "bg-gradient-to-r from-yellow-400 via-red-300 to-pink-400 border-2 border-white "
-                            } w-80 p-2 m-2 rounded-xl cursor-pointer`}
-                            onClick={(e) => {
-                              // Don't show details if checkbox is clicked
-                              if (!e.target.closest('input[type="checkbox"]')) {
-                                showEmployeeDetails(employee.id);
-                              }
-                            }}
+            ) : (
+              <>
+                {alphabet.map((letter) => (
+                  <div key={letter} id={letter} className="w-full">
+                    {(selectedLetter === null || selectedLetter === letter) && (
+                      <>
+                        <h2 className="text-xl font-mono font-semibold border-b-2 border-dashed my-4">
+                          <span
+                            style={{ background: themeColor }}
+                            className="p-2 rounded-md text-white px-4"
                           >
-                            <div className="flex items-center w-full">
-                              <div className="w-32">
-                                {employee?.profile_photo ? (
-                                  <img
-                                    src={hrmsDomain + employee?.profile_photo}
-                                    alt="Profile"
-                                    className="rounded-full h-20 w-20 border-4 border-white object-cover mr-4"
-                                  />
-                                ) : (
-                                  <div
-                                    className="bg-gray-300 rounded-full text-xl border-white border-4 text-white h-20 w-20 flex items-center font-medium justify-center mr-4"
-                                    style={{
-                                      backgroundColor:
-                                        getColorForEmployee(index),
-                                    }}
-                                  >
-                                    {employee.first_name
-                                      .split(" ")
-                                      .map((n) => n[0])
-                                      .join("")}
-                                    {employee.last_name
-                                      .split(" ")
-                                      .map((n) => n[0])
-                                      .join("")}
+                            {letter}
+                          </span>
+                        </h2>
+                        <div className="flex flex-wrap">
+                          {empfilterData[letter]
+                            ?.filter((employee) => {
+                              const fullName = `${employee.first_name} ${employee.last_name}`.toLowerCase();
+                              const employeeCode = employee.employee_code.toLowerCase();
+                              const mobileNumber = employee.mobile ? employee.mobile.toString() : "";
+                              const searchTextLower = searchText.toLowerCase();
+
+                              const matchesSearch =
+                                fullName.includes(searchTextLower) ||
+                                employeeCode.includes(searchTextLower) ||
+                                mobileNumber.includes(searchTextLower);
+
+                              const matchesSite = selectedSite
+                                ? String(employee.site_id) === String(selectedSite)
+                                : true;
+                              const matchesStatus =
+                                selectedUserStatus === "all" ||
+                                (selectedUserStatus === "active" && employee?.status === true) ||
+                                (selectedUserStatus === "inactive" && employee?.status === false);
+
+                              return matchesSearch && matchesSite && matchesStatus;
+                            })
+                            .map((employee, index) => (
+                              <div
+                                key={employee.id}
+                                style={{ background: themeColor, color: "white" }}
+                                className={`${
+                                  employeeId === employee.id
+                                    ? "bg-gradient-to-r from-yellow-400 via-red-300 to-pink-400 border-2 border-pink-400"
+                                    : "bg-gradient-to-r from-yellow-400 via-red-300 to-pink-400 border-2 border-white"
+                                } w-80 p-2 m-2 rounded-xl cursor-pointer`}
+                                onClick={(e) => {
+                                  if (!e.target.closest('input[type="checkbox"]')) {
+                                    showEmployeeDetails(employee.id);
+                                  }
+                                }}
+                              >
+                                {/* Your existing card content */}
+                                <div className="flex items-center w-full">
+                                  <div className="w-32">
+                                    {employee?.profile_photo ? (
+                                      <img
+                                        src={hrmsDomain + employee?.profile_photo}
+                                        alt="Profile"
+                                        className="rounded-full h-20 w-20 border-4 border-white object-cover mr-4"
+                                      />
+                                    ) : (
+                                      <div
+                                        className="bg-gray-300 rounded-full text-xl border-white border-4 text-white h-20 w-20 flex items-center font-medium justify-center mr-4"
+                                        style={{ backgroundColor: getColorForEmployee(index) }}
+                                      >
+                                        {employee.first_name
+                                          .split(" ")
+                                          .map((n) => n[0])
+                                          .join("")}
+                                        {employee.last_name
+                                          .split(" ")
+                                          .map((n) => n[0])
+                                          .join("")}
+                                      </div>
+                                    )}
                                   </div>
-                                )}
-                              </div>
-
-                              <div className="w-full">
-                                <h2 className="font-semibold">
-                                  {employee.first_name} {employee.last_name}
-                                </h2>
-                                <div className="flex items-center gap-1 my-1">
-                                  <p className="text-sm font-medium text-gray-200">
-                                    {employee?.employment_info?.employee_code ||
-                                      "not added"}
-                                  </p>
-                                  <div className="border border-gray-400 h-5" />
-                                  <p className="text-sm font-medium text-gray-200">
-                                    DOJ :{" "}
-                                    {employee?.employment_info?.joining_date ||
-                                      "not added"}
-                                  </p>
-                                </div>
-
-                                <p className="text-sm font-medium text-gray-200">
-                                  {employee?.employment_info?.designation ||
-                                    "not added"}
-                                </p>
-                                <div className="flex items-center justify-between mt-2">
-                                  <p
-                                    className={`${
-                                      employee?.status
-                                        ? "bg-green-400 text-white"
-                                        : "bg-red-400 text-white"
-                                    } font-medium w-fit px-2 my-1 rounded-full`}
-                                  >
-                                    {employee?.status ? "Active" : "Inactive"}
-                                  </p>
-                                  {(roleAccess?.can_edit_employee ||
-                                    roleAccess?.can_delete_employee) && (
-                                    <div className="flex gap-2 items-center bg-white p-1 rounded-full px-2">
-                                      {roleAccess?.can_edit_employee && (
-                                        <Link
-                                          className="text-blue-500 hover:text-blue-900"
-                                          to={`/hrms/employee-directory-Personal/${employee.id}`}
-                                        >
-                                          <BiEdit size={18} />
-                                        </Link>
-                                      )}
-                                      {roleAccess?.can_delete_employee && (
-                                        <button
-                                          onClick={() =>
-                                            handleDeleteModal(employee.id)
-                                          }
-                                          className="text-red-400 hover:text-red-800"
-                                        >
-                                          <FaTrash size={15} />
-                                        </button>
-                                      )}
-                                      {employee?.status && (
-                                        <div className="  ">
-                                          <input
-                                            type="checkbox"
-                                            checked={selectedEmployees.includes(
-                                              employee.id
-                                            )}
-                                            onChange={() =>
-                                              handleCheckboxChange(
-                                                employee.id,
-                                                employee?.status
-                                              )
-                                            }
-                                            onClick={(e) => e.stopPropagation()}
-                                            className="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                                          />
+                                  <div className="w-full">
+                                    <h2 className="font-semibold">
+                                      {employee.first_name} {employee.last_name}
+                                    </h2>
+                                    <div className="flex items-center gap-1 my-1">
+                                      <p className="text-sm font-medium text-gray-200">
+                                        {employee?.employment_info?.employee_code
+                                          ? employee?.employment_info?.employee_code
+                                          : "not added"}
+                                      </p>
+                                      <div className="border border-gray-400 h-5" />
+                                      <p className="text-sm font-medium text-gray-200">
+                                        DOJ :{" "}
+                                        {employee?.employment_info?.joining_date
+                                          ? employee?.employment_info?.joining_date
+                                          : "not added"}
+                                      </p>
+                                    </div>
+                                    <p className="text-sm font-medium text-gray-200">
+                                      {employee?.employment_info?.designation
+                                        ? employee?.employment_info?.designation
+                                        : "not added"}
+                                    </p>
+                                    <div className="flex items-center justify-between mt-2">
+                                      <p
+                                        className={`${
+                                          employee?.status
+                                            ? "bg-green-400 text-white"
+                                            : "bg-red-400 text-white"
+                                        } font-medium w-fit px-2 my-1 rounded-full`}
+                                      >
+                                        {employee?.status ? "Active" : "Inactive"}
+                                      </p>
+                                      {(roleAccess?.can_edit_employee ||
+                                        roleAccess?.can_delete_employee) && (
+                                        <div className="flex gap-2 items-center bg-white p-1 rounded-full px-2">
+                                          {roleAccess?.can_edit_employee && (
+                                            <Link
+                                              className="text-blue-500 hover:text-blue-900"
+                                              to={`/hrms/employee-directory-Personal/${employee.id}`}
+                                            >
+                                              <BiEdit size={18} />
+                                            </Link>
+                                          )}
+                                          {roleAccess?.can_delete_employee && (
+                                            <button
+                                              onClick={() => handleDeleteModal(employee.id)}
+                                              className="text-red-400 hover:text-red-800"
+                                            >
+                                              <FaTrash size={15} />
+                                            </button>
+                                          )}
+                                          {employee?.status && (
+                                            <div className="">
+                                              <input
+                                                type="checkbox"
+                                                checked={selectedEmployees.includes(
+                                                  employee.id
+                                                )}
+                                                onChange={() =>
+                                                  handleCheckboxChange(
+                                                    employee.id,
+                                                    employee?.status
+                                                  )
+                                                }
+                                                onClick={(e) => e.stopPropagation()}
+                                                className="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                              />
+                                            </div>
+                                          )}
                                         </div>
                                       )}
                                     </div>
-                                  )}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          </div>
-                        ))}
-                    </div>
-                  </>
-                ) : null}
-              </div>
-            ))}
+                            ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </>
+            )}
           </div>
+
+          {/* Keep your alphabet navigation and details panel */}
           <div className="w-10 bg-white text-black p-4 max-h-fit overflow-y-auto hide-scrollbar mb-2">
             <div className="flex flex-col">
               <button
                 onClick={handleAll}
-                className=" p-1 text-sm font-medium text-gray-500"
+                className="p-1 text-sm font-medium text-gray-500"
               >
                 All
               </button>
@@ -1737,7 +1794,7 @@ function EmployeeDirectory() {
                 <button
                   key={letter}
                   onClick={() => handleLetterClick(letter)}
-                  className=" p-1 text-sm font-medium text-gray-500"
+                  className="p-1 text-sm font-medium text-gray-500"
                   title={letter}
                 >
                   {letter}
@@ -1749,7 +1806,7 @@ function EmployeeDirectory() {
             <h1 className="text-2xl font-semibold mb-4">Employee Details</h1>
             {Object.keys(selectedEmployee).length > 0 ? (
               <div className="flex flex-col justify-between gap-10 h-96">
-                {/* <p>{selectedEmployee}</p> */}
+                {/* Your existing details panel content */}
                 <div className="flex flex-col gap-2 border-b border-dashed border-gray-300">
                   <div className="flex items-center border-b border-dashed border-gray-300 p-1">
                     {selectedEmployee?.employee?.profile_photo ? (
@@ -1827,7 +1884,7 @@ function EmployeeDirectory() {
                     </p>
                     <p className="grid grid-cols-2">
                       <span className="font-medium text-sm">Email :</span>{" "}
-                      <span className="font-medium text-xs  break-words">
+                      <span className="font-medium text-xs break-words">
                         {selectedEmployee?.employee?.email_id}
                       </span>
                     </p>
@@ -1836,7 +1893,7 @@ function EmployeeDirectory() {
                 <div className="flex flex-col gap-4">
                   <Link
                     to={`/hrms/employee-directory-Personal/${selectedEmployee?.employee?.id}`}
-                    className="border-2 rounded-full w-full  text-green-400 border-green-400 mt-2 hover:bg-green-50 fov font-semibold py-1 px-4 flex items-center gap-2 justify-center"
+                    className="border-2 rounded-full w-full text-green-400 border-green-400 mt-2 hover:bg-green-50 fov font-semibold py-1 px-4 flex items-center gap-2 justify-center"
                   >
                     <FaUserEdit /> View Profile
                   </Link>
@@ -1854,27 +1911,6 @@ function EmployeeDirectory() {
                         )}
                       </>
                     )}
-                    {/* <button
-                      type="submit"
-                      className="bg-yellow-500 text-white hover:bg-gray-700  py-2 px-5 rounded-full"
-                    >
-                      Hold
-                    </button>
-                    {selectedEmployee?.employee?.status ? (
-                      <button
-                        type="submit"
-                        className="bg-red-500 text-sm font-medium text-white hover:bg-gray-700  py-2 px-4 rounded-full"
-                      >
-                        Deactivate
-                      </button>
-                    ) : (
-                      <button
-                        type="submit"
-                        className="bg-green-500 text-sm font-medium text-white hover:bg-gray-700  py-2 px-4 rounded-full"
-                      >
-                        Activate
-                      </button>
-                    )} */}
                   </div>
                 </div>
               </div>
