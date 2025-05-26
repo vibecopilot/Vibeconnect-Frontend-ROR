@@ -60,6 +60,7 @@ function EmployeeDirectory() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [viewMode,setViewMode] = useState("table")
   const [tableData,setTableData] = useState([])
+  // const [filteredTableData, setFilteredTableData] = useState([]);
   const [pagination,setPagination] = useState({
   currentPage: 1,
   totalPages: 1,
@@ -88,6 +89,7 @@ function EmployeeDirectory() {
     fetchAllEmployees();
   }, []);
 
+  
   const fetchTableData  = async (page=1) =>{
     try {
      
@@ -144,7 +146,7 @@ function EmployeeDirectory() {
         </span>
       </div>
     ),
-    width: "200px",
+    width: "300px",
    
   },
   {
@@ -289,9 +291,9 @@ function EmployeeDirectory() {
     // setSelectedEmployee(null);
   };
 
-  const filteredEmployees = selectedLetter
-    ? groupedEmployees[selectedLetter] || []
-    : employeesData;
+ const filteredEmployees = selectedLetter
+  ? empfilterData[selectedLetter] || []
+  : employeesData;
 
   const [searchText, setSearchText] = useState("");
   const handleSearch = (e) => {
@@ -302,6 +304,8 @@ const filteredTableData  = tableData.filter(employee =>{
   const fullname = `${employee.employee.first_name} ${employee.employee.last_name}`.toLowerCase()
   const email = employee.employee.email_id.toLowerCase()
   const mobile = employee.employee.mobile ? employee.employee.mobile.toString() : "";
+  const matchesLetter = !selectedLetter || 
+employee.employee.first_name.charAt(0).toUpperCase() === selectedLetter;
   return(
     fullname.includes(searchText) ||
     email.includes(searchText) ||
@@ -550,7 +554,7 @@ const filteredTableData  = tableData.filter(employee =>{
   }
 };
   return (
-    <div className="w-full">
+    <div className="w-full h-full">
       <AdminHRMS />
       <div className="flex flex-col ">
         <div className="">
