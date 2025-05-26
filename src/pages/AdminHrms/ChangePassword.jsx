@@ -7,6 +7,7 @@ import EmployeeSections from "./EmployeeSections";
 import EditEmployeeDirectory from "./EditEmployeeDirectory";
 import { FaEye, FaEyeSlash } from "react-icons/fa"; // Import eye icons
 import { getItemInLocalStorage } from "../../utils/localStorage";
+import ThemeChanger from "../../components/ThemeChanger";
 const ChangePassword = () => {
   const Id= getItemInLocalStorage("APPROVERID")
   const { id } = useParams();
@@ -91,9 +92,10 @@ const ChangePassword = () => {
   };
 
   return (
-    <div className="flex flex-col ml-20">
+    <div className="flex flex-col ml-20 min-h-screen w-full bg-white text-black dark:bg-gray-900 dark:text-white transition-colors">
       <EditEmployeeDirectory />
-      <div className="flex">
+      
+      <div className="flex ">
         <EmployeeSections empId={id} />
 
         <div className="w-full mt-5 p-5 rounded-md">

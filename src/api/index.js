@@ -4483,10 +4483,10 @@ export const getMyHRMSAdmins = async (orgId) => {
     throw error;
   }
 };
-export const getMyHRMSEmployeesAllData = async (orgId) => {
+export const getMyHRMSEmployeesAllData = async (orgId , page=1) => {
   try {
     const response = await HrmsAuth.get(
-      `/user-details/?organization_id=${orgId}`,
+      `/user-details/?organization_id=${orgId}&page=${page}`,
       {
         headers: {
           "Content-Type": "multipart/form-data/",
@@ -4499,10 +4499,10 @@ export const getMyHRMSEmployeesAllData = async (orgId) => {
     throw error;
   }
 };
-export const getHrmsAllEmployeeData = async (orgId) =>{
+export const getHrmsAllEmployeeData = async (orgId , page =1) =>{
   try {
     const response = await HrmsAuth.get(
-      `/updated-user-details/?organization_id=${orgId}`
+      `/updated-user-details/?organization_id=${orgId}&page=${page}`
     )
     return response.data
     
