@@ -123,6 +123,7 @@ const Login = () => {
           setItemInLocalStorage("HRMS_SITE_ID", associatedSiteID);
           setItemInLocalStorage("HRMS_EMPLOYEE_ID", hrmsRes.id);
           setItemInLocalStorage("APPROVERID", hrmsRes.id);
+          setItemInLocalStorage("HRMSORGID",hrmsRes.organization)
         } catch (error) {
           console.error("Error getting employee ID:", error);
         }
@@ -141,7 +142,7 @@ const Login = () => {
       const userType = response.data.user.user_type;
       setItemInLocalStorage("USERTYPE", userType);
       setItemInLocalStorage("COMPANYID", response.data.user.company_id);
-      setItemInLocalStorage("HRMSORGID", response.data.user.organization_id);
+      // setItemInLocalStorage("HRMSORGID", response.data.user.organization_id);
       setItemInLocalStorage("STATUS", response.data.statuses);
       setItemInLocalStorage("complaint", response.data.complanits);
 

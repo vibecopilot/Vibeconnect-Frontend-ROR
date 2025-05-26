@@ -134,6 +134,7 @@ console.log("select shift",selectedShift)
   const fetchRosterRecords = async (page) => {
     try {
       const res = await getRosterRecords(hrmsOrgId, page);
+      console.log("roster data --->",res)
       setEmployees(res.results);
       setRosterCount(res.count);
       setPageNumber(page);
