@@ -25,7 +25,7 @@ import {
   getEmployeeJobInfo,
   getAssociatedSites,
   getStatusChanges,
-  CreateBulkEmployee
+  CreateBulkEmployee,
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import toast from "react-hot-toast";
@@ -58,16 +58,15 @@ function EmployeeDirectory() {
   const [showUpdateButton, setShowUpdateButton] = useState(false);
   const [isModalOpen12, setIsModalOpen12] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
-  const [viewMode,setViewMode] = useState("table")
-  const [tableData,setTableData] = useState([])
+  const [viewMode, setViewMode] = useState("table");
+  const [tableData, setTableData] = useState([]);
   // const [filteredTableData, setFilteredTableData] = useState([]);
-  const [pagination,setPagination] = useState({
-  currentPage: 1,
-  totalPages: 1,
-  count: 0,
-  perPage: 10
-  })
-
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    count: 0,
+    perPage: 10,
+  });
 
   const fetchAllEmployees = async () => {
     try {
@@ -89,128 +88,136 @@ function EmployeeDirectory() {
     fetchAllEmployees();
   }, []);
 
-  
-  const fetchTableData  = async (page=1) =>{
+  const fetchTableData = async (page = 1) => {
     try {
-     
-      const res = await getHrmsAllEmployeeData(hrmsOrgId , page)
-      console.log("All updated user data" , res)
+      const res = await getHrmsAllEmployeeData(
+        hrmsOrgId,
+        page,
+        pagination.perPage
+      );
+      console.log("All updated user data", res);
       setTableData(res.results);
       setPagination({
-          currentPage: page,
-          totalPages: Math.ceil(res.count,pagination.perPage),
-          count: res.count,
-          perPage : pagination.perPage
-      })
+        currentPage: page,
+        totalPages: Math.ceil(res.count, pagination.perPage),
+        count: res.count,
+        perPage: pagination.perPage,
+      });
     } catch (error) {
-      console.log("error getting the all employees data",error)
-      toast.error("Something went wrong to display the data")
+      console.log("error getting the all employees data", error);
+      toast.error("Something went wrong to display the data");
     }
-  }
-  const handlePageChange  = (page) =>{
-    fetchTableData(page)
-  }
-  useEffect(()=>{
-        fetchTableData()
-  },[])
+  };
+  const handlePageChange = (page) => {
+    fetchTableData(page);
+  };
+  useEffect(() => {
+    fetchTableData();
+  }, []);
   const employeeColumns = [
-  {
-    name: "Employee ID",
-    selector: (row) => row.employee.id,
-    sortable: true,
-    width: "120px"
-  },
-  {
-    name: "Name",
-    selector: (row) => `${row.employee.first_name} ${row.employee.last_name}`,
-    sortable: true,
-    cell: (row) => (
-      <div className="flex items-center">
-        {row.employee.profile_photo ? (
-          <img
-            src={hrmsDomain + row.employee.profile_photo}
-            alt="Profile"
-            className="rounded-full h-8 w-8 object-cover mr-2"
-          />
-        ) : (
-          <div
-            className="bg-gray-300 rounded-full h-8 w-8 flex items-center justify-center mr-2"
-            style={{ backgroundColor: getRandomColor() }}
-          >
-            {row.employee.first_name.charAt(0)}
-            {row.employee.last_name.charAt(0)}
-          </div>
-        )}
-        <span>
-          {row.employee.first_name} {row.employee.last_name}
+    {
+      name: "Employee ID",
+      selector: (row) => row.employee.id,
+      sortable: true,
+      width: "120px",
+    },
+    {
+      name: "Name",
+      selector: (row) => `${row.employee.first_name} ${row.employee.last_name}`,
+      sortable: true,
+      cell: (row) => (
+        <div className="flex items-center">
+          {row.employee.profile_photo ? (
+            <img
+              src={hrmsDomain + row.employee.profile_photo}
+              alt="Profile"
+              className="rounded-full h-8 w-8 object-cover mr-2"
+            />
+          ) : (
+            <div
+              className="bg-gray-300 rounded-full h-8 w-8 flex items-center justify-center mr-2"
+              style={{ backgroundColor: getRandomColor() }}
+            >
+              {row.employee.first_name.charAt(0)}
+              {row.employee.last_name.charAt(0)}
+            </div>
+          )}
+          <span>
+            {row.employee.first_name} {row.employee.last_name}
+          </span>
+        </div>
+      ),
+      width: "250px",
+    },
+    {
+      name: "Email",
+      selector: (row) => row.employee.email_id,
+      sortable: true,
+      width: "220px",
+    },
+    {
+      name: "Mobile",
+      selector: (row) => row.employee.mobile,
+      sortable: true,
+      width: "150px",
+    },
+    {
+      name: "Site",
+      selector: (row) =>
+        row.employment_info?.associated_organization_name || "N/A",
+      sortable: true,
+      width: "180px",
+    },
+    // {
+    //   name: "Designation",
+    //   selector: (row) => row.employment_info?.designation || "N/A",
+    //   sortable: true,
+    //   width: "180px"
+    // },
+    // {
+    //   name: "Department",
+    //   selector: (row) => row.employment_info?.department_name || "N/A",
+    //   sortable: true,
+    //   width: "180px"
+    // },
+    {
+      name: "Status",
+      selector: (row) => (row.employee.status ? "Active" : "Inactive"),
+      sortable: true,
+      cell: (row) => (
+        <span
+          className={`px-2 py-1 rounded-full text-xs ${
+            row.employee.status
+              ? "bg-green-100 text-green-800"
+              : "bg-red-100 text-red-800"
+          }`}
+        >
+          {row.employee.status ? "Active" : "Inactive"}
         </span>
-      </div>
-    ),
-    width: "300px",
-   
-  },
-  {
-    name: "Email",
-    selector: (row) => row.employee.email_id,
-    sortable: true,
-    width: "220px"
-  },
-  {
-    name: "Mobile",
-    selector: (row) => row.employee.mobile,
-    sortable: true,
-    width: "150px"
-  },
-  // {
-  //   name: "Designation",
-  //   selector: (row) => row.employment_info?.designation || "N/A",
-  //   sortable: true,
-  //   width: "180px"
-  // },
-  // {
-  //   name: "Department",
-  //   selector: (row) => row.employment_info?.department_name || "N/A",
-  //   sortable: true,
-  //   width: "180px"
-  // },
-  {
-    name: "Status",
-    selector: (row) => row.employee.status ? "Active" : "Inactive",
-    sortable: true,
-    cell: (row) => (
-      <span
-        className={`px-2 py-1 rounded-full text-xs ${
-          row.employee.status
-            ? "bg-green-100 text-green-800"
-            : "bg-red-100 text-red-800"
-        }`}
-      >
-        {row.employee.status ? "Active" : "Inactive"}
-      </span>
-    ),
-    width: "120px"
-  },
-  {
-    name: "Actions",
-    cell: (row) => (
-      <div className="flex gap-2">
-        <Link
-          to={`/hrms/employee-directory-Personal/${row.employee.id}`}
-          className="text-blue-500 hover:text-blue-700"
-        >
-          <BiEdit size={18} />
-        </Link>
-        <button
-          onClick={() => handleDeleteModal(row.employee.id)}
-          className="text-red-500 hover:text-red-700"
-        >
-          <FaTrash size={15} />
-        </button>
-      </div>
-    ),
-    width: "100px"
-  }
-];
+      ),
+      width: "120px",
+    },
+    {
+      name: "Actions",
+      cell: (row) => (
+        <div className="flex gap-2">
+          <Link
+            to={`/hrms/employee-directory-Personal/${row.employee.id}`}
+            className="text-blue-500 hover:text-blue-700"
+          >
+            <BiEdit size={18} />
+          </Link>
+          <button
+            onClick={() => handleDeleteModal(row.employee.id)}
+            className="text-red-500 hover:text-red-700"
+          >
+            <FaTrash size={15} />
+          </button>
+        </div>
+      ),
+      width: "100px",
+    },
+  ];
 
   useEffect(() => {
     const groupedEmployees = employeesData.reduce((acc, employeeData) => {
@@ -291,27 +298,31 @@ function EmployeeDirectory() {
     // setSelectedEmployee(null);
   };
 
- const filteredEmployees = selectedLetter
-  ? empfilterData[selectedLetter] || []
-  : employeesData;
+  const filteredEmployees = selectedLetter
+    ? empfilterData[selectedLetter] || []
+    : employeesData;
 
   const [searchText, setSearchText] = useState("");
   const handleSearch = (e) => {
     const searchValue = e.target.value;
     setSearchText(searchValue);
   };
-const filteredTableData  = tableData.filter(employee =>{
-  const fullname = `${employee.employee.first_name} ${employee.employee.last_name}`.toLowerCase()
-  const email = employee.employee.email_id.toLowerCase()
-  const mobile = employee.employee.mobile ? employee.employee.mobile.toString() : "";
-  const matchesLetter = !selectedLetter || 
-employee.employee.first_name.charAt(0).toUpperCase() === selectedLetter;
-  return(
-    fullname.includes(searchText) ||
-    email.includes(searchText) ||
-    mobile.includes(searchText)
-  )
-})
+  const filteredTableData = tableData.filter((employee) => {
+    const fullname =
+      `${employee.employee.first_name} ${employee.employee.last_name}`.toLowerCase();
+    const email = employee.employee.email_id.toLowerCase();
+    const mobile = employee.employee.mobile
+      ? employee.employee.mobile.toString()
+      : "";
+    const matchesLetter =
+      !selectedLetter ||
+      employee.employee.first_name.charAt(0).toUpperCase() === selectedLetter;
+    return (
+      fullname.includes(searchText) ||
+      email.includes(searchText) ||
+      mobile.includes(searchText)
+    );
+  });
   const handleDropdownChange = (e) => {
     // Convert to string to ensure type consistency
     setSelectedSite(e.target.value);
@@ -467,8 +478,6 @@ employee.employee.first_name.charAt(0).toUpperCase() === selectedLetter;
     link.remove();
   };
 
-  
-
   const [selectedUserStatus, setSelectedUserStatus] = useState("all");
   const [isUserStatusDropdownOpen, setIsUserStatusDropdownOpen] =
     useState(false);
@@ -513,46 +522,46 @@ employee.employee.first_name.charAt(0).toUpperCase() === selectedLetter;
       toast.error("Failed to update employee status");
     }
   };
-  const downloadExcelFile = () =>{
+  const downloadExcelFile = () => {
     try {
       const link = document.createElement("a");
-       link.href = "/sample/Employee_Templates.xlsx";
-        link.download = "Employee_Templates.xlsx";
-        document.body.appendChild(link)
-        link.click();
-        document.body.removeChild(link);
+      link.href = "/sample/Employee_Templates.xlsx";
+      link.download = "Employee_Templates.xlsx";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     } catch (error) {
-      toast.error('Error downloading sample file');
-      console.log("Download error",error)
+      toast.error("Error downloading sample file");
+      console.log("Download error", error);
     }
-  }
+  };
   const handleImport = async () => {
-  try {
-    if (!selectedFile) {
-      toast.error("Please select a file to upload");
-      return;
+    try {
+      if (!selectedFile) {
+        toast.error("Please select a file to upload");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+
+      toast.loading("Importing employees...");
+      const response = await CreateBulkEmployee(formData);
+      toast.dismiss();
+
+      if (response.success) {
+        toast.success("Employees imported successfully!");
+        setIsModalOpen12(false);
+        fetchAllEmployees(); // Refresh the employee list
+      } else {
+        toast.success(response.message || "Failed to import employees");
+      }
+    } catch (error) {
+      toast.dismiss();
+      toast.error("Error importing employees");
+      console.error("Import error:", error);
     }
-
-    const formData = new FormData();
-    formData.append('file', selectedFile);
-
-    toast.loading("Importing employees...");
-    const response = await CreateBulkEmployee(formData);
-    toast.dismiss();
-
-    if (response.success) {
-      toast.success("Employees imported successfully!");
-      setIsModalOpen12(false);
-      fetchAllEmployees(); // Refresh the employee list
-    } else {
-      toast.success(response.message || "Failed to import employees");
-    }
-  } catch (error) {
-    toast.dismiss();
-    toast.error("Error importing employees");
-    console.error("Import error:", error);
-  }
-};
+  };
   return (
     <div className="w-full h-full">
       <AdminHRMS />
@@ -712,7 +721,7 @@ employee.employee.first_name.charAt(0).toUpperCase() === selectedLetter;
                       </div>
                     </div>
                   )}
-                  
+
                   {showUpdateButton && (
                     <button
                       onClick={handleStatusUpdate}
@@ -738,9 +747,19 @@ employee.employee.first_name.charAt(0).toUpperCase() === selectedLetter;
                   value={searchText}
                 />
                 <div className="w-50 font-semibold">
-                  <select name="" id="" value={viewMode} onChange={(e)=>setViewMode(e.target.value)} className="text-black px-5 py-3 rounded">
-                       <option value="table">Table</option>
-                       <option value="card">Card</option>
+                  <select
+                    name=""
+                    id=""
+                    value={viewMode}
+                    onChange={(e) => setViewMode(e.target.value)}
+                    className="text-black px-5 py-3 rounded"
+                  >
+                    <option value="table" className="font-semibold">
+                      Table
+                    </option>
+                    <option value="card" className="font-semibold">
+                      Card
+                    </option>
                   </select>
                 </div>
                 <div className="flex gap-3">
@@ -1391,91 +1410,90 @@ employee.employee.first_name.charAt(0).toUpperCase() === selectedLetter;
                   </button> */}
                   {roleAccess?.can_add_employee && (
                     <>
-                    <Link
-                      to={"/admin/add-employee/basics"}
-                      style={{ background: themeColor }}
-                      className="border-2 font-semibold hover:bg-black hover:text-white duration-150 transition-all border-white p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center mr-1"
-                    >
-                      <PiPlusCircle size={20} />
-                      Add Employee
-                    </Link>
-                    <button
-      onClick={() => setIsModalOpen12(true)} // New state for the import modal
-      style={{ background: themeColor }}
-      className="border-2 font-semibold hover:bg-black hover:text-white duration-150 transition-all border-white p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center mr-1"
-    >
-      Import Employee
-    </button>
+                      <Link
+                        to={"/admin/add-employee/basics"}
+                        style={{ background: themeColor }}
+                        className="border-2 font-semibold hover:bg-black hover:text-white duration-150 transition-all border-white p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center mr-1"
+                      >
+                        <PiPlusCircle size={20} />
+                        Add Employee
+                      </Link>
+                      <button
+                        onClick={() => setIsModalOpen12(true)} // New state for the import modal
+                        style={{ background: themeColor }}
+                        className="border-2 font-semibold hover:bg-black hover:text-white duration-150 transition-all border-white p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center mr-1"
+                      >
+                        Import Employee
+                      </button>
                     </>
                   )}
-                  
-
-
                 </div>
               </div>
             </div>
           </header>
         </div>
-       {isModalOpen12 && (
-  <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex z-10 justify-center items-center">
-    <div className="bg-white text-black p-5 rounded-md shadow-md w-1/3">
-      <h2 className="text-xl font-semibold mb-4">Import Employees</h2>
-      
-      <div className="mb-4">
-        <p className="font-bold mb-2">Step 1: Download sample template</p>
-        <p className="text-sm mb-2">
-          Download the sample template to ensure proper formatting.
-        </p>
-        <button
-          onClick={downloadExcelFile}
-          style={{ background: themeColor }}
-          className="font-semibold py-2 px-4 rounded text-white mt-2"
-        >
-          Download Sample Template
-        </button>
-      </div>
-      
-      <div className="mb-4">
-        <p className="font-bold mb-2">Step 2: Upload your file</p>
-        <p className="text-sm mb-2">
-          After filling the template, upload it here (Excel files only).
-        </p>
-        <input 
-          type="file" 
-          accept=".xlsx,.xls"
-          onChange={(e) => setSelectedFile(e.target.files[0])}
-          className="block w-full text-sm text-gray-500
+        {isModalOpen12 && (
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex z-10 justify-center items-center">
+            <div className="bg-white text-black p-5 rounded-md shadow-md w-1/3">
+              <h2 className="text-xl font-semibold mb-4">Import Employees</h2>
+
+              <div className="mb-4">
+                <p className="font-bold mb-2">
+                  Step 1: Download sample template
+                </p>
+                <p className="text-sm mb-2">
+                  Download the sample template to ensure proper formatting.
+                </p>
+                <button
+                  onClick={downloadExcelFile}
+                  style={{ background: themeColor }}
+                  className="font-semibold py-2 px-4 rounded text-white mt-2"
+                >
+                  Download Sample Template
+                </button>
+              </div>
+
+              <div className="mb-4">
+                <p className="font-bold mb-2">Step 2: Upload your file</p>
+                <p className="text-sm mb-2">
+                  After filling the template, upload it here (Excel files only).
+                </p>
+                <input
+                  type="file"
+                  accept=".xlsx,.xls"
+                  onChange={(e) => setSelectedFile(e.target.files[0])}
+                  className="block w-full text-sm text-gray-500
             file:mr-4 file:py-2 file:px-4
             file:rounded-md file:border-0
             file:text-sm file:font-semibold
             file:bg-blue-50 file:text-blue-700
             hover:file:bg-blue-100"
-        />
-        {selectedFile && (
-          <p className="mt-2 text-sm text-gray-600">
-            Selected file: {selectedFile.name}
-          </p>
+                />
+                {selectedFile && (
+                  <p className="mt-2 text-sm text-gray-600">
+                    Selected file: {selectedFile.name}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-2 mt-4">
+                <button
+                  onClick={() => setIsModalOpen12(false)}
+                  className="bg-gray-300 text-gray-700 py-2 px-4 rounded"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleImport}
+                  style={{ background: themeColor }}
+                  className="font-semibold py-2 px-4 rounded text-white"
+                >
+                  Import
+                </button>
+              </div>
+            </div>
+          </div>
         )}
-      </div>
-      
-      <div className="flex justify-end gap-2 mt-4">
-        <button
-          onClick={() => setIsModalOpen12(false)}
-          className="bg-gray-300 text-gray-700 py-2 px-4 rounded"
-        >
-          Cancel
-        </button>
-        <button
-          onClick={handleImport}
-          style={{ background: themeColor }}
-          className="font-semibold py-2 px-4 rounded text-white"
-        >
-          Import
-        </button>
-      </div>
-    </div>
-  </div>
-)}
         {isModalOpen && (
           <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex z-10 justify-center items-center">
             <div className="bg-white p-5 rounded-md shadow-md w-1/3">
@@ -1569,14 +1587,48 @@ employee.employee.first_name.charAt(0).toUpperCase() === selectedLetter;
             </div>
           </div>
         )}
-<div className="flex h-screen">
+        <div className="flex h-screen">
           <div className="p-4 flex flex-wrap overflow-y-auto mt-2 ml-20 w-[80%]">
             {viewMode === "table" ? (
               <div className="mt-4 w-full">
                 <DataTable
                   title="Employee Directory"
                   columns={employeeColumns}
-                  data={filteredTableData}
+                  data={tableData.filter((employee) => {
+                    // Search text filtering
+                    const fullName =
+                      `${employee.employee.first_name} ${employee.employee.last_name}`.toLowerCase();
+                    const employeeCode =
+                      employee.employment_info?.employee_code?.toLowerCase() ||
+                      "";
+                    const mobileNumber = employee.employee.mobile
+                      ? employee.employee.mobile.toString()
+                      : "";
+                    const searchTextLower = searchText.toLowerCase();
+
+                    const matchesSearch =
+                      fullName.includes(searchTextLower) ||
+                      employeeCode.includes(searchTextLower) ||
+                      mobileNumber.includes(searchTextLower);
+
+                    // Site filtering - using employee.site_id exactly like in card view
+                    const matchesSite = selectedSite
+                      ? employee.employment_info?.associated_organization_id?.toString() ===
+                        selectedSite.toString()
+                      : true;
+                    // Status filtering
+                    const matchesStatus =
+                      selectedUserStatus === "all" ||
+                      (selectedUserStatus === "active" &&
+                        employee.employee?.status === true) ||
+                      (selectedUserStatus === "inactive" &&
+                        employee.employee?.status === false);
+
+                    return matchesSearch && matchesSite && matchesStatus;
+                  })}
+                  onRowClicked={(row) => showEmployeeDetails(row.employee.id)}
+                  pointerOnHover
+                  highlightOnHover
                   pagination
                   paginationServer
                   paginationTotalRows={pagination.count}
@@ -1584,19 +1636,21 @@ employee.employee.first_name.charAt(0).toUpperCase() === selectedLetter;
                   paginationPerPage={pagination.perPage}
                   paginationRowsPerPageOptions={[10, 25, 50, 100]}
                   onChangeRowsPerPage={(perPage, page) => {
-                    setPagination(prev => ({ ...prev, perPage }));
+                    setPagination((prev) => ({ ...prev, perPage }));
                     fetchTableData(page);
                   }}
                   selectableRows={roleAccess?.can_edit_employee}
                   onSelectedRowsChange={({ selectedRows }) => {
-                    setSelectedEmployees(selectedRows.map(row => row.employee.id));
+                    setSelectedEmployees(
+                      selectedRows.map((row) => row.employee.id)
+                    );
                   }}
                   customStyles={{
                     headRow: {
                       style: {
                         background: themeColor,
                         color: "white",
-                        fontSize: "10px",
+                        fontSize: "15px",
                       },
                     },
                     headCells: {
@@ -1616,7 +1670,7 @@ employee.employee.first_name.charAt(0).toUpperCase() === selectedLetter;
                         lineHeight: "24px",
                         width: "150px",
                         color: "#4b5260",
-                        fontWeight: 450
+                        fontWeight: 450,
                       },
                     },
                   }}
@@ -1639,9 +1693,13 @@ employee.employee.first_name.charAt(0).toUpperCase() === selectedLetter;
                         <div className="flex flex-wrap">
                           {empfilterData[letter]
                             ?.filter((employee) => {
-                              const fullName = `${employee.first_name} ${employee.last_name}`.toLowerCase();
-                              const employeeCode = employee.employee_code.toLowerCase();
-                              const mobileNumber = employee.mobile ? employee.mobile.toString() : "";
+                              const fullName =
+                                `${employee.first_name} ${employee.last_name}`.toLowerCase();
+                              const employeeCode =
+                                employee.employee_code.toLowerCase();
+                              const mobileNumber = employee.mobile
+                                ? employee.mobile.toString()
+                                : "";
                               const searchTextLower = searchText.toLowerCase();
 
                               const matchesSearch =
@@ -1650,26 +1708,36 @@ employee.employee.first_name.charAt(0).toUpperCase() === selectedLetter;
                                 mobileNumber.includes(searchTextLower);
 
                               const matchesSite = selectedSite
-                                ? String(employee.site_id) === String(selectedSite)
+                                ? String(employee.site_id) ===
+                                  String(selectedSite)
                                 : true;
                               const matchesStatus =
                                 selectedUserStatus === "all" ||
-                                (selectedUserStatus === "active" && employee?.status === true) ||
-                                (selectedUserStatus === "inactive" && employee?.status === false);
+                                (selectedUserStatus === "active" &&
+                                  employee?.status === true) ||
+                                (selectedUserStatus === "inactive" &&
+                                  employee?.status === false);
 
-                              return matchesSearch && matchesSite && matchesStatus;
+                              return (
+                                matchesSearch && matchesSite && matchesStatus
+                              );
                             })
                             .map((employee, index) => (
                               <div
                                 key={employee.id}
-                                style={{ background: themeColor, color: "white" }}
+                                style={{
+                                  background: themeColor,
+                                  color: "white",
+                                }}
                                 className={`${
                                   employeeId === employee.id
                                     ? "bg-gradient-to-r from-yellow-400 via-red-300 to-pink-400 border-2 border-pink-400"
                                     : "bg-gradient-to-r from-yellow-400 via-red-300 to-pink-400 border-2 border-white"
                                 } w-80 p-2 m-2 rounded-xl cursor-pointer`}
                                 onClick={(e) => {
-                                  if (!e.target.closest('input[type="checkbox"]')) {
+                                  if (
+                                    !e.target.closest('input[type="checkbox"]')
+                                  ) {
                                     showEmployeeDetails(employee.id);
                                   }
                                 }}
@@ -1679,14 +1747,19 @@ employee.employee.first_name.charAt(0).toUpperCase() === selectedLetter;
                                   <div className="w-32">
                                     {employee?.profile_photo ? (
                                       <img
-                                        src={hrmsDomain + employee?.profile_photo}
+                                        src={
+                                          hrmsDomain + employee?.profile_photo
+                                        }
                                         alt="Profile"
                                         className="rounded-full h-20 w-20 border-4 border-white object-cover mr-4"
                                       />
                                     ) : (
                                       <div
                                         className="bg-gray-300 rounded-full text-xl border-white border-4 text-white h-20 w-20 flex items-center font-medium justify-center mr-4"
-                                        style={{ backgroundColor: getColorForEmployee(index) }}
+                                        style={{
+                                          backgroundColor:
+                                            getColorForEmployee(index),
+                                        }}
                                       >
                                         {employee.first_name
                                           .split(" ")
@@ -1705,15 +1778,18 @@ employee.employee.first_name.charAt(0).toUpperCase() === selectedLetter;
                                     </h2>
                                     <div className="flex items-center gap-1 my-1">
                                       <p className="text-sm font-medium text-gray-200">
-                                        {employee?.employment_info?.employee_code
-                                          ? employee?.employment_info?.employee_code
+                                        {employee?.employment_info
+                                          ?.employee_code
+                                          ? employee?.employment_info
+                                              ?.employee_code
                                           : "not added"}
                                       </p>
                                       <div className="border border-gray-400 h-5" />
                                       <p className="text-sm font-medium text-gray-200">
                                         DOJ :{" "}
                                         {employee?.employment_info?.joining_date
-                                          ? employee?.employment_info?.joining_date
+                                          ? employee?.employment_info
+                                              ?.joining_date
                                           : "not added"}
                                       </p>
                                     </div>
@@ -1730,7 +1806,9 @@ employee.employee.first_name.charAt(0).toUpperCase() === selectedLetter;
                                             : "bg-red-400 text-white"
                                         } font-medium w-fit px-2 my-1 rounded-full`}
                                       >
-                                        {employee?.status ? "Active" : "Inactive"}
+                                        {employee?.status
+                                          ? "Active"
+                                          : "Inactive"}
                                       </p>
                                       {(roleAccess?.can_edit_employee ||
                                         roleAccess?.can_delete_employee) && (
@@ -1745,7 +1823,9 @@ employee.employee.first_name.charAt(0).toUpperCase() === selectedLetter;
                                           )}
                                           {roleAccess?.can_delete_employee && (
                                             <button
-                                              onClick={() => handleDeleteModal(employee.id)}
+                                              onClick={() =>
+                                                handleDeleteModal(employee.id)
+                                              }
                                               className="text-red-400 hover:text-red-800"
                                             >
                                               <FaTrash size={15} />
@@ -1764,7 +1844,9 @@ employee.employee.first_name.charAt(0).toUpperCase() === selectedLetter;
                                                     employee?.status
                                                   )
                                                 }
-                                                onClick={(e) => e.stopPropagation()}
+                                                onClick={(e) =>
+                                                  e.stopPropagation()
+                                                }
                                                 className="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                                               />
                                             </div>
