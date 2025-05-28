@@ -98,6 +98,8 @@ function EmployeeDirectory() {
       pagination.perPage
     );
 
+    const allSites = await getAssociatedSites(orgId);
+      setAllSites(allSites);
     // Update ALL employees data (merge with existing to avoid duplicates)
     setAllEmployeesData(prev => {
       const newEmployees = res.results.filter(newEmp => 
@@ -134,15 +136,15 @@ function EmployeeDirectory() {
 }, [viewMode]);
   const PaginationControls = () => {
   return (
-    <div className="flex justify-between items-center mt-4">
-      <div>
+    <div className="flex justify-between items-center mt-4  mb-8 font-semibold text-gray-700">
+      {/* <div>
         Showing {pagination.perPage * (pagination.currentPage - 1) + 1} to{" "}
         {Math.min(
           pagination.perPage * pagination.currentPage,
           pagination.count
         )}{" "}
         of {pagination.count} entries
-      </div>
+      </div> */}
       <div className="flex gap-1">
         <button
           onClick={() => fetchTableData(1)}
@@ -199,7 +201,7 @@ function EmployeeDirectory() {
           Last
         </button> */}
       </div>
-      <select
+      {/* <select
         value={pagination.perPage}
         onChange={(e) => {
           setPagination((prev) => ({
@@ -215,7 +217,7 @@ function EmployeeDirectory() {
             Show {size}
           </option>
         ))}
-      </select>
+      </select> */}
     </div>
   );
 };
