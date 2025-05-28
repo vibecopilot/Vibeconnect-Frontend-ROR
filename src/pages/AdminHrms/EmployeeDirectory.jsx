@@ -67,47 +67,158 @@ function EmployeeDirectory() {
     count: 0,
     perPage: 10,
   });
+  const [allEmployeesData , setAllEmployeesData ] = useState([])
+  // const currentPage
 
-  const fetchAllEmployees = async () => {
-    try {
-      toast.loading("Loading employees Please wait!");
-      const res = await getMyHRMSEmployeesAllData(hrmsOrgId);
-      console.log("complete hrmsemployeedata :", res);
-      setEmployeesData(res);
-      toast.dismiss();
-      const allSites = await getAssociatedSites(orgId);
-      setAllSites(allSites);
-    } catch (error) {
-      console.log(error);
-      toast.dismiss();
-      toast.error("Something went wrong");
-    }
-  };
+  // const fetchAllEmployees = async () => {
+  //   try {
+  //     toast.loading("Loading employees Please wait!");
+  //     const res = await getMyHRMSEmployeesAllData(hrmsOrgId);
+  //     console.log("complete hrmsemployeedata :", res);
+  //     setEmployeesData(res);
+  //     toast.dismiss();
+  //     const allSites = await getAssociatedSites(orgId);
+  //     setAllSites(allSites);
+  //   } catch (error) {
+  //     console.log(error);
+  //     toast.dismiss();
+  //     toast.error("Something went wrong");
+  //   }
+  // };
 
-  useEffect(() => {
-    fetchAllEmployees();
-  }, []);
+  // useEffect(() => {
+  //   fetchAllEmployees();
+  // }, []);
 
   const fetchTableData = async (page = 1) => {
-    try {
-      const res = await getHrmsAllEmployeeData(
-        hrmsOrgId,
-        page,
-        pagination.perPage
+  try {
+    const res = await getHrmsAllEmployeeData(
+      hrmsOrgId,
+      page,
+      pagination.perPage
+    );
+
+    // Update ALL employees data (merge with existing to avoid duplicates)
+    setAllEmployeesData(prev => {
+      const newEmployees = res.results.filter(newEmp => 
+        !prev.some(existingEmp => 
+          existingEmp.employee.id === newEmp.employee.id
+        )
       );
-      console.log("All updated user data", res);
+      return [...prev, ...newEmployees];
+    });
+
+    // For table view: show only current page
+    if (viewMode === "table") {
       setTableData(res.results);
-      setPagination({
-        currentPage: page,
-        totalPages: Math.ceil(res.count, pagination.perPage),
-        count: res.count,
-        perPage: pagination.perPage,
-      });
-    } catch (error) {
-      console.log("error getting the all employees data", error);
-      toast.error("Something went wrong to display the data");
     }
-  };
+    // Card view will use allEmployeesData directly
+
+    setPagination({
+      currentPage: page,
+      totalPages: Math.ceil(res.count / pagination.perPage), // Fixed division
+      count: res.count,
+      perPage: pagination.perPage,
+    });
+
+  } catch (error) {
+    toast.error("Failed to load employee data");
+    console.error("Fetch error:", error);
+  }
+};
+  useEffect(()=>{
+    fetchTableData()
+  },[])
+  useEffect(() => {
+  if (tableData.length === 0) fetchTableData();
+}, [viewMode]);
+  const PaginationControls = () => {
+  return (
+    <div className="flex justify-between items-center mt-4">
+      <div>
+        Showing {pagination.perPage * (pagination.currentPage - 1) + 1} to{" "}
+        {Math.min(
+          pagination.perPage * pagination.currentPage,
+          pagination.count
+        )}{" "}
+        of {pagination.count} entries
+      </div>
+      <div className="flex gap-1">
+        <button
+          onClick={() => fetchTableData(1)}
+          disabled={pagination.currentPage === 1}
+          className="px-3 py-1 border rounded disabled:opacity-50"
+        >
+          First
+        </button>
+        <button
+          onClick={() => fetchTableData(pagination.currentPage - 1)}
+          disabled={pagination.currentPage === 1}
+          className="px-3 py-1 border rounded disabled:opacity-50"
+        >
+          Previous
+        </button>
+        {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+          let pageNum;
+          if (pagination.totalPages <= 5) {
+            pageNum = i + 1;
+          } else if (pagination.currentPage <= 3) {
+            pageNum = i + 1;
+          } else if (pagination.currentPage >= pagination.totalPages - 2) {
+            pageNum = pagination.totalPages - 4 + i;
+          } else {
+            pageNum = pagination.currentPage - 2 + i;
+          }
+          
+          return (
+            <button
+              key={pageNum}
+              onClick={() => fetchTableData(pageNum)}
+              className={`px-3 py-1 border rounded ${
+                pagination.currentPage === pageNum
+                  ? "bg-blue-500 text-white"
+                  : ""
+              }`}
+            >
+              {pageNum}
+            </button>
+          );
+        })}
+        <button
+          onClick={() => fetchTableData(pagination.currentPage + 1)}
+          disabled={pagination.currentPage === pagination.totalPages}
+          className="px-3 py-1 border rounded disabled:opacity-50"
+        >
+          Next
+        </button>
+        {/* <button
+          onClick={() => fetchTableData(pagination.totalPages)}
+          disabled={pagination.currentPage === pagination.totalPages}
+          className="px-3 py-1 border rounded disabled:opacity-50"
+        >
+          Last
+        </button> */}
+      </div>
+      <select
+        value={pagination.perPage}
+        onChange={(e) => {
+          setPagination((prev) => ({
+            ...prev,
+            perPage: Number(e.target.value),
+          }));
+          fetchTableData(1);
+        }}
+        className="border rounded px-2 py-1"
+      >
+        {[10, 25, 50, 100].map((size) => (
+          <option key={size} value={size}>
+            Show {size}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+};
   const handlePageChange = (page) => {
     fetchTableData(page);
   };
@@ -220,7 +331,7 @@ function EmployeeDirectory() {
   ];
 
   useEffect(() => {
-    const groupedEmployees = employeesData.reduce((acc, employeeData) => {
+    const groupedEmployees = allEmployeesData.reduce((acc, employeeData) => {
       const employee = employeeData.employee;
       if (employee && employee.first_name) {
         const firstLetter = employee.first_name[0].toUpperCase();
@@ -248,7 +359,7 @@ function EmployeeDirectory() {
       return acc;
     }, {});
     setEmpFilterData(groupedEmployees);
-  }, [employeesData]);
+  }, [allEmployeesData]);
 
   const [isOpen, setIsOpen] = useState(false);
   const toggleDropdown = () => {
@@ -510,12 +621,12 @@ function EmployeeDirectory() {
       await getStatusChanges(payload);
 
       // Refresh the employee data
-      await fetchAllEmployees();
+      await fetchTableData();
 
       // Clear selection
       setSelectedEmployees([]);
       setShowUpdateButton(false);
-
+      
       toast.success("Employee status updated successfully");
     } catch (error) {
       console.error("Error updating employee status:", error);
@@ -1678,191 +1789,219 @@ function EmployeeDirectory() {
               </div>
             ) : (
               <>
-                {alphabet.map((letter) => (
-                  <div key={letter} id={letter} className="w-full">
-                    {(selectedLetter === null || selectedLetter === letter) && (
-                      <>
-                        <h2 className="text-xl font-mono font-semibold border-b-2 border-dashed my-4">
-                          <span
-                            style={{ background: themeColor }}
-                            className="p-2 rounded-md text-white px-4"
-                          >
-                            {letter}
-                          </span>
-                        </h2>
-                        <div className="flex flex-wrap">
-                          {empfilterData[letter]
-                            ?.filter((employee) => {
-                              const fullName =
-                                `${employee.first_name} ${employee.last_name}`.toLowerCase();
-                              const employeeCode =
-                                employee.employee_code.toLowerCase();
-                              const mobileNumber = employee.mobile
-                                ? employee.mobile.toString()
-                                : "";
-                              const searchTextLower = searchText.toLowerCase();
+                {viewMode === "card" && (
+  <>
+    {/* Alphabet navigation - only show if not filtered by search */}
+    {/* {!searchText && (
+      <div className="w-full bg-white p-2 mb-4 rounded shadow">
+        <div className="flex flex-wrap justify-center gap-1">
+          <button
+            onClick={handleAll}
+            className={`px-3 py-1 rounded ${
+              selectedLetter === null
+                ? 'bg-blue-500 text-white'
+                : 'bg-gray-200 hover:bg-gray-300'
+            }`}
+          >
+            All
+          </button>
+          {alphabet.map((letter) => (
+            <button
+              key={letter}
+              onClick={() => handleLetterClick(letter)}
+              className={`px-3 py-1 rounded ${
+                selectedLetter === letter
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-200 hover:bg-gray-300'
+              }`}
+            >
+              {letter}
+            </button>
+          ))}
+        </div>
+      </div>
+    )} */}
 
-                              const matchesSearch =
-                                fullName.includes(searchTextLower) ||
-                                employeeCode.includes(searchTextLower) ||
-                                mobileNumber.includes(searchTextLower);
+    {/* Employee cards */}
+    <div className="flex flex-wrap">
+      {alphabet.map((letter) => (
+        <div key={letter} id={letter} className="w-full">
+          {(selectedLetter === null || selectedLetter === letter) && (
+            <>
+              {empfilterData[letter]?.length > 0 && (
+                <h2 className="text-xl font-mono font-semibold border-b-2 border-dashed my-4">
+                  <span
+                    style={{ background: themeColor }}
+                    className="p-2 rounded-md text-white px-4"
+                  >
+                    {letter}
+                  </span>
+                </h2>
+              )}
+              <div className="flex flex-wrap">
+                {empfilterData[letter]
+                  ?.filter((employee) => {
+                    const fullName =
+                      `${employee.first_name} ${employee.last_name}`.toLowerCase();
+                    const employeeCode =
+                      employee.employee_code?.toLowerCase() || '';
+                    const mobileNumber = employee.mobile
+                      ? employee.mobile.toString()
+                      : '';
+                    const searchTextLower = searchText.toLowerCase();
 
-                              const matchesSite = selectedSite
-                                ? String(employee.site_id) ===
-                                  String(selectedSite)
-                                : true;
-                              const matchesStatus =
-                                selectedUserStatus === "all" ||
-                                (selectedUserStatus === "active" &&
-                                  employee?.status === true) ||
-                                (selectedUserStatus === "inactive" &&
-                                  employee?.status === false);
+                    const matchesSearch =
+                      fullName.includes(searchTextLower) ||
+                      employeeCode.includes(searchTextLower) ||
+                      mobileNumber.includes(searchTextLower);
 
-                              return (
-                                matchesSearch && matchesSite && matchesStatus
-                              );
-                            })
-                            .map((employee, index) => (
-                              <div
-                                key={employee.id}
-                                style={{
-                                  background: themeColor,
-                                  color: "white",
-                                }}
-                                className={`${
-                                  employeeId === employee.id
-                                    ? "bg-gradient-to-r from-yellow-400 via-red-300 to-pink-400 border-2 border-pink-400"
-                                    : "bg-gradient-to-r from-yellow-400 via-red-300 to-pink-400 border-2 border-white"
-                                } w-80 p-2 m-2 rounded-xl cursor-pointer`}
-                                onClick={(e) => {
-                                  if (
-                                    !e.target.closest('input[type="checkbox"]')
-                                  ) {
-                                    showEmployeeDetails(employee.id);
-                                  }
-                                }}
-                              >
-                                {/* Your existing card content */}
-                                <div className="flex items-center w-full">
-                                  <div className="w-32">
-                                    {employee?.profile_photo ? (
-                                      <img
-                                        src={
-                                          hrmsDomain + employee?.profile_photo
-                                        }
-                                        alt="Profile"
-                                        className="rounded-full h-20 w-20 border-4 border-white object-cover mr-4"
-                                      />
-                                    ) : (
-                                      <div
-                                        className="bg-gray-300 rounded-full text-xl border-white border-4 text-white h-20 w-20 flex items-center font-medium justify-center mr-4"
-                                        style={{
-                                          backgroundColor:
-                                            getColorForEmployee(index),
-                                        }}
-                                      >
-                                        {employee.first_name
-                                          .split(" ")
-                                          .map((n) => n[0])
-                                          .join("")}
-                                        {employee.last_name
-                                          .split(" ")
-                                          .map((n) => n[0])
-                                          .join("")}
-                                      </div>
-                                    )}
-                                  </div>
-                                  <div className="w-full">
-                                    <h2 className="font-semibold">
-                                      {employee.first_name} {employee.last_name}
-                                    </h2>
-                                    <div className="flex items-center gap-1 my-1">
-                                      <p className="text-sm font-medium text-gray-200">
-                                        {employee?.employment_info
-                                          ?.employee_code
-                                          ? employee?.employment_info
-                                              ?.employee_code
-                                          : "not added"}
-                                      </p>
-                                      <div className="border border-gray-400 h-5" />
-                                      <p className="text-sm font-medium text-gray-200">
-                                        DOJ :{" "}
-                                        {employee?.employment_info?.joining_date
-                                          ? employee?.employment_info
-                                              ?.joining_date
-                                          : "not added"}
-                                      </p>
-                                    </div>
-                                    <p className="text-sm font-medium text-gray-200">
-                                      {employee?.employment_info?.designation
-                                        ? employee?.employment_info?.designation
-                                        : "not added"}
-                                    </p>
-                                    <div className="flex items-center justify-between mt-2">
-                                      <p
-                                        className={`${
-                                          employee?.status
-                                            ? "bg-green-400 text-white"
-                                            : "bg-red-400 text-white"
-                                        } font-medium w-fit px-2 my-1 rounded-full`}
-                                      >
-                                        {employee?.status
-                                          ? "Active"
-                                          : "Inactive"}
-                                      </p>
-                                      {(roleAccess?.can_edit_employee ||
-                                        roleAccess?.can_delete_employee) && (
-                                        <div className="flex gap-2 items-center bg-white p-1 rounded-full px-2">
-                                          {roleAccess?.can_edit_employee && (
-                                            <Link
-                                              className="text-blue-500 hover:text-blue-900"
-                                              to={`/hrms/employee-directory-Personal/${employee.id}`}
-                                            >
-                                              <BiEdit size={18} />
-                                            </Link>
-                                          )}
-                                          {roleAccess?.can_delete_employee && (
-                                            <button
-                                              onClick={() =>
-                                                handleDeleteModal(employee.id)
-                                              }
-                                              className="text-red-400 hover:text-red-800"
-                                            >
-                                              <FaTrash size={15} />
-                                            </button>
-                                          )}
-                                          {employee?.status && (
-                                            <div className="">
-                                              <input
-                                                type="checkbox"
-                                                checked={selectedEmployees.includes(
-                                                  employee.id
-                                                )}
-                                                onChange={() =>
-                                                  handleCheckboxChange(
-                                                    employee.id,
-                                                    employee?.status
-                                                  )
-                                                }
-                                                onClick={(e) =>
-                                                  e.stopPropagation()
-                                                }
-                                                className="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                                              />
-                                            </div>
-                                          )}
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
+                    const matchesSite = selectedSite
+                      ? String(employee.site_id) === String(selectedSite)
+                      : true;
+                    const matchesStatus =
+                      selectedUserStatus === "all" ||
+                      (selectedUserStatus === "active" &&
+                        employee?.status === true) ||
+                      (selectedUserStatus === "inactive" &&
+                        employee?.status === false);
+
+                    return matchesSearch && matchesSite && matchesStatus;
+                  })
+                  .map((employee, index) => (
+                    <div
+                      key={employee.id}
+                      style={{
+                        background: themeColor,
+                        color: "white",
+                      }}
+                      className={`${
+                        employeeId === employee.id
+                          ? "bg-gradient-to-r from-yellow-400 via-red-300 to-pink-400 border-2 border-pink-400"
+                          : "bg-gradient-to-r from-yellow-400 via-red-300 to-pink-400 border-2 border-white"
+                      } w-80 p-2 m-2 rounded-xl cursor-pointer`}
+                      onClick={(e) => {
+                        if (!e.target.closest('input[type="checkbox"]')) {
+                          showEmployeeDetails(employee.id);
+                        }
+                      }}
+                    >
+                      <div className="flex items-center w-full">
+                        <div className="w-32">
+                          {employee?.profile_photo ? (
+                            <img
+                              src={hrmsDomain + employee?.profile_photo}
+                              alt="Profile"
+                              className="rounded-full h-20 w-20 border-4 border-white object-cover mr-4"
+                            />
+                          ) : (
+                            <div
+                              className="bg-gray-300 rounded-full text-xl border-white border-4 text-white h-20 w-20 flex items-center font-medium justify-center mr-4"
+                              style={{
+                                backgroundColor: getColorForEmployee(index),
+                              }}
+                            >
+                              {employee.first_name
+                                .split(" ")
+                                .map((n) => n[0])
+                                .join("")}
+                              {employee.last_name
+                                .split(" ")
+                                .map((n) => n[0])
+                                .join("")}
+                            </div>
+                          )}
                         </div>
-                      </>
-                    )}
-                  </div>
-                ))}
+                        <div className="w-full">
+                          <h2 className="font-semibold">
+                            {employee.first_name} {employee.last_name}
+                          </h2>
+                          <div className="flex items-center gap-1 my-1">
+                            <p className="text-sm font-medium text-gray-200">
+                              {employee?.employment_info?.employee_code
+                                ? employee?.employment_info?.employee_code
+                                : "not added"}
+                            </p>
+                            <div className="border border-gray-400 h-5" />
+                            <p className="text-sm font-medium text-gray-200">
+                              DOJ:{" "}
+                              {employee?.employment_info?.joining_date
+                                ? employee?.employment_info?.joining_date
+                                : "not added"}
+                            </p>
+                          </div>
+                          <p className="text-sm font-medium text-gray-200">
+                            {employee?.employment_info?.designation
+                              ? employee?.employment_info?.designation
+                              : "not added"}
+                          </p>
+                          <div className="flex items-center justify-between mt-2">
+                            <p
+                              className={`${
+                                employee?.status
+                                  ? "bg-green-400 text-white"
+                                  : "bg-red-400 text-white"
+                              } font-medium w-fit px-2 my-1 rounded-full`}
+                            >
+                              {employee?.status ? "Active" : "Inactive"}
+                            </p>
+                            {(roleAccess?.can_edit_employee ||
+                              roleAccess?.can_delete_employee) && (
+                              <div className="flex gap-2 items-center bg-white p-1 rounded-full px-2">
+                                {roleAccess?.can_edit_employee && (
+                                  <Link
+                                    className="text-blue-500 hover:text-blue-900"
+                                    to={`/hrms/employee-directory-Personal/${employee.id}`}
+                                  >
+                                    <BiEdit size={18} />
+                                  </Link>
+                                )}
+                                {roleAccess?.can_delete_employee && (
+                                  <button
+                                    onClick={() =>
+                                      handleDeleteModal(employee.id)
+                                    }
+                                    className="text-red-400 hover:text-red-800"
+                                  >
+                                    <FaTrash size={15} />
+                                  </button>
+                                )}
+                                {employee?.status && (
+                                  <div className="">
+                                    <input
+                                      type="checkbox"
+                                      checked={selectedEmployees.includes(
+                                        employee.id
+                                      )}
+                                      onChange={() =>
+                                        handleCheckboxChange(
+                                          employee.id,
+                                          employee?.status
+                                        )
+                                      }
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                    />
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </>
+          )}
+        </div>
+      ))}
+    </div>
+
+    {/* Pagination controls */}
+    <PaginationControls />
+  </>
+)}
+
               </>
             )}
           </div>
