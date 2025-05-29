@@ -16,11 +16,10 @@ import {
   getEmployeeJobInfo,
   getAssociatedSite,
   getAssociatedSites,
-  fetchAllRoster,
-  // getTotalAttendance,
-  // getAttendance,
   getSiteWiseAttendance,
   getAssociatedOrgDash,
+  getCountOfClientDashboard,
+  getAssocaitedSitesAttendance
 } from "../../api/index";
 import { persistor } from "../../store/store";
 import { useNavigate } from "react-router-dom";
@@ -32,23 +31,21 @@ import {
 
 const ClientDashboard = () => {
   const navigate = useNavigate();
+  const employee_id = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
 
   const [isLoading, setIsLoading] = useState(false);
-
-  // UI States
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
   const [isCalendarVisible, setIsCalendarVisible] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedData, setSelectedData] = useState(null);
   const [open, setOpen] = useState(false);
   const [isPieChart, setIsPieChart] = useState(true);
-  // Data States
-  const [clientData, setClientData] = useState(null); // overall client data array
-  const [multiple_ass, setMultipleAssos] = useState([]); // Array of objects: { id, siteName }
-  const [selectedSite, setSelectedSite] = useState("");
-  const [siteWiseData, setSiteWiseData] = useState([]); // List of employees for selected site
+  const [clientData, setClientData] = useState(null);
+  const [multiple_ass, setMultipleAssos] = useState([]);
+const [selectedSite, setSelectedSite] = useState(null);
+const [selectedSiteName, setSelectedSiteName] = useState(null);
+  const [siteWiseData, setSiteWiseData] = useState([]);
   const [count, setCount] = useState(0);
-  // overallAttendance holds the attendance for ALL sites when no site is selected.
   const [overallAttendance, setOverallAttendance] = useState(null);
   const [checkInData, setCheckInData] = useState([]);
   const [checkOutData, setCheckOutData] = useState([]);
@@ -56,67 +53,70 @@ const ClientDashboard = () => {
   const [showTable, setShowTable] = useState(false);
   const [showCheckIn, setShowCheckIn] = useState();
   const [showNotCheck, setShowNotCheckIn] = useState();
-  // Table and absent record states
+  const [showAllSites, setShowAllSites] = useState(false);
+  const [attendanceCount, setAttendanceCount] = useState({
+    total_employees: 0,
+    site_count: 0,
+    present_count: 0,
+    attendance_date: ""
+  });
   const [attendanceTableRecords, setAttendanceTableRecords] = useState([]);
   const [absentRecord, setAbsentRecord] = useState(null);
-
-  // New state variables to keep the full list and the filtered list.
-  const [fullSiteAttendanceRecords, setFullSiteAttendanceRecords] = useState(
-    []
-  );
-  const [filteredSiteAttendanceRecords, setFilteredSiteAttendanceRecords] =
-    useState([]);
-  const [fullOverallAttendanceRecords, setFullOverallAttendanceRecords] =
-    useState([]);
-  const [
-    filteredOverallAttendanceRecords,
-    setFilteredOverallAttendanceRecords,
-  ] = useState([]);
-// console.log(getItemInLocalStorage)
-  // Chart States
+  const [fullSiteAttendanceRecords, setFullSiteAttendanceRecords] = useState([]);
+  const [filteredSiteAttendanceRecords, setFilteredSiteAttendanceRecords] = useState([]);
+  const [fullOverallAttendanceRecords, setFullOverallAttendanceRecords] = useState([]);
+  const [filteredOverallAttendanceRecords, setFilteredOverallAttendanceRecords] = useState([]);
   const [pieChartData, setPieChartData] = useState([
     { name: "Head Count", y: 0, color: "#f97316" },
     { name: "Present", y: 0, color: "#10b981" },
     { name: "Absent", y: 0, color: "#3b82f6" },
   ]);
   const [barChartData, setBarChartData] = useState([0, 0, 0]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [Location, setLocation] = useState([]);
+  // const [selectedSiteName, setSelectedSiteName] = useState(null);
 
-  // User Info
   const lastName = JSON.parse(localStorage.getItem("LASTNAME") || '""');
   const firstName = JSON.parse(localStorage.getItem("Name") || '""');
   const fullName = `${firstName} ${lastName}`.trim();
   const themeColor = useSelector((state) => state.theme.color);
 
-  // -------------------------------
-  // LOGOUT HANDLER
-  // -------------------------------
   const handleLogout = () => {
-    [
-      "TOKEN",
-      "COMPANYID",
-      "HRMS_EMPLOYEE_ID",
-      // ... other keys as needed
-    ].forEach((key) => localStorage.removeItem(key));
+    ["TOKEN", "COMPANYID", "HRMS_EMPLOYEE_ID"].forEach((key) => localStorage.removeItem(key));
     persistor.purge(["board"]).then(() => {
       navigate("/login");
     });
   };
-  const [Location, setLocation] = useState([]);
 
-  async function fetchSiteLocationData(siteLocation, selectedDate) {
+  const fetchAttendanceCount = async (dateParam = selectedDate) => {
+    try {
+      const empId = localStorage.getItem("HRMS_EMPLOYEE_ID");
+      if (!empId) return;
+
+      const formattedDate = `${dateParam.getFullYear()}-${String(
+        dateParam.getMonth() + 1
+      ).padStart(2, "0")}-${String(dateParam.getDate()).padStart(2, "0")}`;
+
+      const response = await getCountOfClientDashboard(empId, formattedDate);
+      setAttendanceCount(response);
+      return response;
+    } catch (error) {
+      console.error("Error fetching attendance count:", error);
+      return null;
+    }
+  };
+
+  const fetchSiteLocationData = async (siteLocation, selectedDate) => {
     try {
       const formattedDate = `${selectedDate.getFullYear()}-${String(
         selectedDate.getMonth() + 1
       ).padStart(2, "0")}-${String(selectedDate.getDate()).padStart(2, "0")}`;
 
-      console.log("siteLocation:", siteLocation);
       const updatedSites = await Promise.all(
         siteLocation.map(async (site) => {
-          // Call the API for each site's id with the formatted date
           const siteRes = await getSiteWiseAttendance(site.id, formattedDate);
           const presentCount = siteRes.attended_employee_count;
           const totalEmployeeCount = siteRes.total_employees;
-          // Calculate absent count as the difference
           const absentCount = totalEmployeeCount - presentCount;
 
           return {
@@ -129,19 +129,16 @@ const ClientDashboard = () => {
         })
       );
 
-      console.log("updatedSites:", updatedSites);
       setLocation(updatedSites);
       return updatedSites;
     } catch (error) {
       console.error("Error fetching site data:", error);
       throw error;
     }
-  }
+  };
 
-  // Update your handleSiteDateChange to call fetchSiteLocationData:
   const handleSiteDateChange = async (date) => {
     setSelectedDate(date);
-    // Call fetchSiteLocationData with your current site locations and the new date
     await fetchSiteLocationData(Location, date);
     await fetchClientDashboardData(date);
   };
@@ -151,49 +148,39 @@ const ClientDashboard = () => {
       setIsLoading(true);
       const empId = localStorage.getItem("HRMS_EMPLOYEE_ID");
       const orgId = localStorage.getItem("HRMSORGID");
-  
+
       if (!empId || !orgId) {
         throw new Error("Employee ID or Organization ID not found");
       }
-  
-      // Fetch client dashboard data and set state
-      const clientDataResponse = await getClientDashboard(empId);
+
+      const formattedDate = `${dateParam.getFullYear()}-${String(
+        dateParam.getMonth() + 1
+      ).padStart(2, "0")}-${String(dateParam.getDate()).padStart(2, "0")}`;
+
+      const [clientDataResponse, countResponse, allAttendance, hrmsAdminData] = await Promise.all([
+        getClientDashboard(empId),
+        fetchAttendanceCount(dateParam),
+        getAssociatedOrgDash(empId, formattedDate),
+        getEmployeeJobInfo(empId)
+      ]);
+
       setClientData(clientDataResponse);
-      console.log("Client data:", clientDataResponse);
-  
-      // Format the date as YYYY-MM-DD
-      const year = dateParam.getFullYear();
-      const month = String(dateParam.getMonth() + 1).padStart(2, "0");
-      const day = String(dateParam.getDate()).padStart(2, "0");
-      const todayDate = `${year}-${month}-${day}`;
-  
-      // Fetch overall attendance data
-      const allAttendance = await getAssociatedOrgDash(empId, todayDate);
+      setAttendanceCount(countResponse);
+
       const total_employee = allAttendance.total_employees || 0;
       const total_present = allAttendance.total_present || 0;
       const total_absent = Math.max(total_employee - total_present, 0);
-      console.log("Overall Attendance Data:", allAttendance);
-  
-      // Store overall attendance in state
+
       setOverallAttendance({
         total_employee,
         total_present,
         total_absent,
         attendanceRecord: allAttendance.attendance[0] || null,
       });
-  
+
       const attendanceRecords = allAttendance.attendance || [];
       const presentIds = attendanceRecords.map((record) => record.employee_id);
-  
-      // Filter present and absent records
-      const presentRecords = clientDataResponse.filter((client) =>
-        presentIds.includes(client.id)
-      );
-      const absentRecords = clientDataResponse.filter(
-        (client) => !presentIds.includes(client.id)
-      );
-  
-      // Process check-in/check-out data
+
       const checkIn = attendanceRecords
         .filter((item) => item.is_check_in === true)
         .map(
@@ -214,7 +201,7 @@ const ClientDashboard = () => {
           })
         );
       setCheckInData(checkIn);
-  
+
       const checkOut = attendanceRecords
         .filter((item) => item.is_check_in === false)
         .map(
@@ -235,54 +222,12 @@ const ClientDashboard = () => {
           })
         );
       setCheckOutData(checkOut);
-  
-      // Get roster data
-      const EmpRoaster = await fetchAllRoster(orgId);
-      console.log("Roaster Record:", EmpRoaster);
-  
-      // Process client data with roster information
-      const processedClients = clientDataResponse.map((client) => {
-        const clientId = client.id;
-        const clientRoster = EmpRoaster.filter(
-          (record) => Number(record.employee) === Number(clientId)
-        );
-        
-        const rosterByDate = clientRoster.reduce((acc, record) => {
-          const date = record.date;
-          if (!acc[date]) {
-            acc[date] = [];
-          }
-          acc[date].push({
-            employeeName: `${record.first_name} ${record.last_name}`,
-            employeeId: record.employee,
-            first_name: record.first_name,
-            last_name: record.last_name,
-            date: record.date,
-            shiftName: record.shift_name,
-            shiftStartTime: record.start_time,
-            shiftEndTime: record.end_time,
-            shiftId: record.shift,
-          });
-          return acc;
-        }, {});
-  
-        return {
-          clientId,
-          clientName: `${client.first_name} ${client.last_name}`,
-          roster: rosterByDate,
-        };
-      });
-  
-      // Build complete employee records
+
       const AllEmpRecord = clientDataResponse.map((client) => {
         const empName =
           `${client.first_name || ""} ${client.last_name || ""}`.trim() ||
           "N/A";
-        const processedClient = processedClients.find(
-          (pc) => String(pc.clientId) === String(client.id)
-        );
-        const roster = processedClient ? processedClient.roster : {};
-  
+
         const empCheckInData = checkIn.filter(
           (record) => String(record.employee_id) === String(client.id)
         );
@@ -297,40 +242,29 @@ const ClientDashboard = () => {
         const checkOutTime = status === "Present"
           ? empCheckOutData[0]?.attendance_time || "__"
           : "__";
-  
+
         return {
           id: client.id,
           empName,
           status,
-          date: todayDate,
+          date: formattedDate,
           checkInTime,
           checkOutTime,
-          roster,
         };
       });
-  
+
       setFullOverallAttendanceRecords(AllEmpRecord);
       setFilteredOverallAttendanceRecords(AllEmpRecord);
-  
-      // Get associated sites information
-      const hrmsAdminData = await getEmployeeJobInfo(empId);
-      // The sites are in hrmsAdminData[0].multiple_associated_info array
+
       const siteLocation = hrmsAdminData[0]?.multiple_associated_info || [];
-      
-      // Process site information - this is already correct in your code
       const siteNamesResult = siteLocation.map(site => ({
         id: site.id,
         siteName: site.site_name
       }));
       
       setMultipleAssos(siteNamesResult);
-      console.log("Associated sites:", siteNamesResult);
-  
-      // Update site location data
-      const updatedSiteData = await fetchSiteLocationData(siteLocation, selectedDate);
-      console.log("Updated Site Data:", updatedSiteData);
-  
-      // Update charts
+      await fetchSiteLocationData(siteLocation, selectedDate);
+
       setPieChartData([
         { name: "Head Count", y: total_employee, color: "#f97316" },
         { name: "Present", y: total_present, color: "#10b981" },
@@ -338,92 +272,33 @@ const ClientDashboard = () => {
       ]);
       setBarChartData([total_employee, total_present, total_absent]);
       setCount(total_employee);
-  
+
     } catch (error) {
       console.error("Error fetching client dashboard:", error);
-      // Handle error state if needed
     } finally {
       setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchClientDashboardData();
-  }, []);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const renderCell = (data) => {
-    if (isLoading) return "Loading...";
-    return data !== undefined && data !== null ? data : "Fetching Data..";
-  };
-
-  const handleLocation = () => {
-    setIsModalOpen(true);
-  };
-
   const fetchSiteData = async (siteId, dateParam = selectedDate) => {
     try {
-      // 1. Fetch the list of employees for the selected site.
-      const siteRes = await getAssociatedSite(siteId);
-      setSiteWiseData(siteRes);
-      const empId = localStorage.getItem("HRMS_EMPLOYEE_ID");
-      const orgId = localStorage.getItem("HRMSORGID");
-      const EmpRoasterRec = await fetchAllRoster(orgId);
-      const processedClients = siteRes.map((client) => {
-        const clientId = client.id;
+      const formattedDate = `${dateParam.getFullYear()}-${String(
+        dateParam.getMonth() + 1
+      ).padStart(2, "0")}-${String(dateParam.getDate()).padStart(2, "0")}`;
 
-        const clientRoster = EmpRoasterRec.filter(
-          (record) => Number(record.employee) === Number(clientId)
-        );
-        const roasterByDate = clientRoster.reduce((acc, record) => {
-          const date = record.date;
+      const attendanceRes = await getAssocaitedSitesAttendance(
+        siteId, 
+        formattedDate, 
+        formattedDate
+      );
+      
+      const attendanceData = attendanceRes.results;
+      const attendanceRecords = attendanceData.attendance_data || [];
 
-          // Initialize the date group if it doesn't exist.
-          if (!acc[date]) {
-            acc[date] = [];
-          }
-
-          // Create an object with the desired fields.
-          acc[date].push({
-            employeeName: `${record.first_name} ${record.last_name}`,
-            employeeId: record.employee,
-            first_name: record.first_name,
-            last_name: record.last_name,
-            date: record.date,
-            shiftName: record.shift_name,
-            shiftStartTime: record.start_time,
-            shiftEndTime: record.end_time,
-            shiftId: record.shift,
-          });
-
-          return acc;
-        }, {}); // Start with an empty object for grouping
-
-        // Return a new object that combines client info with the processed roster.
-        return {
-          clientId,
-          clientName: `${client.first_name} ${client.last_name}`,
-          roster: roasterByDate,
-        };
-      });
-      console.log("Processed Clients Site Wise:", processedClients);
-
-      // 2. Format the date as YYYY-MM-DD.
-      const year = dateParam.getFullYear();
-      const month = String(dateParam.getMonth() + 1).padStart(2, "0");
-      const day = String(dateParam.getDate()).padStart(2, "0");
-      const todayDate = `${year}-${month}-${day}`;
-
-      // 3. Fetch attendance data for the site using the formatted date.
-      const attendanceRes = await getSiteWiseAttendance(siteId, todayDate);
-      const AttendanceRecord = attendanceRes.attendance_data || [];
-      console.log("Attendance records:", AttendanceRecord);
-
-      // 4. Calculate head count, present and absent counts.
-      const headCount = attendanceRes.total_employees || 0;
-      const presentCount = attendanceRes.attended_employee_count || 0;
+      const headCount = attendanceData.total_employees || 0;
+      const presentCount = attendanceData.attended_employee_count || 0;
       const absentCount = headCount - presentCount;
 
-      // 5. Update site-specific charts and count.
       setPieChartData([
         { name: "Head Count", y: headCount, color: "#f97316" },
         { name: "Present", y: presentCount, color: "#10b981" },
@@ -432,127 +307,51 @@ const ClientDashboard = () => {
       setBarChartData([headCount, presentCount, absentCount]);
       setCount(headCount);
 
-      // 6. Build a mapping for employee names from the site's employee list.
-      const employeeMap = siteRes.reduce((acc, employee) => {
-        const name =
-          `${employee.first_name || ""} ${employee.last_name || ""}`.trim() ||
-          "N/A";
-        acc[String(employee.id)] = name;
-        return acc;
-      }, {});
-
-      // 7. Build a fallback mapping for employee names from attendance records.
-      const attendanceNameMap = AttendanceRecord.reduce((acc, record) => {
-        if (record.employee) {
-          const name = `${record.first_name || ""} ${
-            record.last_name || ""
-          }`.trim();
-          if (name) {
-            acc[String(record.employee)] = name;
-          }
+      const employeeRecords = {};
+      
+      attendanceRecords.forEach(record => {
+        const empId = record.employee;
+        if (!employeeRecords[empId]) {
+          employeeRecords[empId] = {
+            id: empId,
+            empName: `${record.employee__first_name || ''} ${record.employee__last_name || ''}`.trim() || 'N/A',
+            checkInTime: null,
+            checkOutTime: null,
+            status: 'Absent',
+            userImage: record.user_image
+          };
         }
-        return acc;
-      }, {});
 
-      // 8. Build the attendance table records.
-      const tableRecords = siteRes.map((employee) => {
-        // Get the employee name from either mapping.
-        const empName =
-          employeeMap[String(employee.id)] ||
-          attendanceNameMap[String(employee.id)] ||
-          "N/A";
-
-        // Filter attendance records for this employee for today's date.
-        const empAttendance = AttendanceRecord.filter(
-          (record) =>
-            String(record.employee) === String(employee.id) &&
-            record.attendance_time.startsWith(todayDate)
-        );
-        const status = empAttendance.length > 0 ? "Present" : "Absent";
-        const checkInRecord = empAttendance.find(
-          (rec) => rec.is_check_in === true
-        );
-        const checkOutRecord = empAttendance.find(
-          (rec) => rec.is_check_in === false
-        );
-        const checkInTime = checkInRecord
-          ? checkInRecord.attendance_time
-          : "__";
-        const checkOutTime = checkOutRecord
-          ? checkOutRecord.attendance_time
-          : "__";
-        // Get the processed roster info for this employee for today's date
-        const processedClient = processedClients.find(
-          (pc) => String(pc.clientId) === String(employee.id)
-        );
-        const rosterForDate =
-          processedClient && processedClient.roster
-            ? processedClient.roster[todayDate]
-            : null;
-
-        // Extract roaster fields from the roster data
-        const roasterName =
-          rosterForDate && rosterForDate.length > 0
-            ? rosterForDate[0].shiftName
-            : "No Shift";
-        const roasterStartTime =
-          rosterForDate && rosterForDate.length > 0
-            ? rosterForDate[0].shiftStartTime
-            : "__";
-        const roasterEndTime =
-          rosterForDate && rosterForDate.length > 0
-            ? rosterForDate[0].shiftEndTime
-            : "__";
-
-        return {
-          id: employee.id,
-          empName,
-          gender: employee.gender,
-          date: todayDate,
-          checkInTime,
-          checkOutTime,
-          status,
-          roasterName, // new field
-          roasterStartTime, // new field
-          roasterEndTime, // new field
-        };
+        if (record.is_check_in) {
+          employeeRecords[empId].checkInTime = record.attendance_time;
+          employeeRecords[empId].status = 'Present';
+        } else {
+          employeeRecords[empId].checkOutTime = record.attendance_time;
+        }
       });
 
-      console.log("tableRecords:", tableRecords);
+      const tableRecords = Object.values(employeeRecords).map(record => ({
+        ...record,
+        shiftName: 'No Shift',
+      }));
+
       setAttendanceTableRecords(tableRecords);
       setFullSiteAttendanceRecords(tableRecords);
       setFilteredSiteAttendanceRecords(tableRecords);
 
-      // 9. Build the list of absent employees (if needed).
-      const presentEmployeeIDs = AttendanceRecord.filter((record) =>
-        record.attendance_time.startsWith(todayDate)
-      ).map((record) => String(record.employee));
-      console.log("Present Employee IDs:", presentEmployeeIDs);
+      const presentEmployeeIds = attendanceRecords
+        .filter(record => record.is_check_in)
+        .map(record => record.employee);
+      
+      setAbsentRecord({
+        absentrecord: tableRecords.filter(record => !presentEmployeeIds.includes(record.id))
+      });
 
-      const absentEmployees = siteRes
-        .filter((employee) => !presentEmployeeIDs.includes(String(employee.id)))
-        .map((employee) => {
-          const empName =
-            employeeMap[String(employee.id)] ||
-            attendanceNameMap[String(employee.id)] ||
-            "N/A";
-          return {
-            employee: employee.id,
-            empName,
-          };
-        });
-      console.log("Absent Employees:", absentEmployees);
-
-      setAbsentRecord({ absentrecord: absentEmployees });
-      console.log("Site Data:", siteRes);
     } catch (error) {
-      console.log("Error fetching site data:", error);
+      console.error("Error fetching site attendance data:", error);
     }
   };
 
-  useEffect(() => {
-    fetchSiteData();
-  }, []);
   const handlePresentEmpSiteWise = () => {
     const presentRecords = fullSiteAttendanceRecords.filter(
       (record) => record.status === "Present"
@@ -560,7 +359,6 @@ const ClientDashboard = () => {
     setFilteredSiteAttendanceRecords(presentRecords);
   };
 
-  // Filter the full site records to show only Absent employees
   const handleAbsentEmpSiteWise = () => {
     const absentRecords = fullSiteAttendanceRecords.filter(
       (record) => record.status === "Absent"
@@ -586,64 +384,33 @@ const ClientDashboard = () => {
     setFilteredOverallAttendanceRecords(absentRecords);
   };
 
-  // Reset the filter to show all records
   const handleAllEmpSiteWise = () => {
     setFilteredSiteAttendanceRecords(fullSiteAttendanceRecords);
   };
 
-  const handleChange = (event) => {
+  const handleChange = async (event) => {
     const selectedSiteId = event.target.value;
-    setSelectedSite(selectedSiteId);
+    
+    setSelectedSite(selectedSiteId || null);
     if (selectedSiteId) {
-      // When a site is selected, load its data.
-      fetchSiteData(selectedSiteId, selectedDate);
+      await fetchSiteData(selectedSiteId, selectedDate);
     } else {
-      // fetchClientDashboardData();
-
+      await fetchClientDashboardData(selectedDate);
+      setFilteredOverallAttendanceRecords(fullOverallAttendanceRecords);
+      
       if (overallAttendance) {
         setCount(overallAttendance.total_employee);
         setPieChartData([
-          {
-            name: "Head Count",
-            y: overallAttendance.total_employee,
-            color: "#f97316",
-          },
-          {
-            name: "Present",
-            y: overallAttendance.total_present,
-            color: "#10b981",
-          },
-          {
-            name: "Absent",
-            y: overallAttendance.total_absent,
-            color: "#3b82f6",
-          },
+          { name: "Head Count", y: overallAttendance.total_employee, color: "#f97316" },
+          { name: "Present", y: overallAttendance.total_present, color: "#10b981" },
+          { name: "Absent", y: overallAttendance.total_absent, color: "#3b82f6" }
         ]);
         setBarChartData([
           overallAttendance.total_employee,
           overallAttendance.total_present,
-          overallAttendance.total_absent,
+          overallAttendance.total_absent
         ]);
-      } else {
-        // Fallback if overallAttendance is not set
-        setCount(clientData ? clientData.length : 0);
-        setPieChartData([
-          {
-            name: "Head Count",
-            y: clientData ? clientData.length : 0,
-            color: "#f97316",
-          },
-          { name: "Present", y: 0, color: "#10b981" },
-          { name: "Absent", y: 0, color: "#3b82f6" },
-        ]);
-        setBarChartData([clientData ? clientData.length : 0, 0, 0]);
       }
-      console.log(
-        "filteredOverallAttendanceRecords:",
-        filteredOverallAttendanceRecords
-      );
-      setAttendanceTableRecords([]);
-      setAbsentRecord(null);
     }
   };
 
@@ -652,28 +419,8 @@ const ClientDashboard = () => {
     setIsCalendarVisible(false);
     if (selectedSite) {
       fetchSiteData(selectedSite, date);
-    } else if (overallAttendance) {
+    } else {
       fetchClientDashboardData(date);
-
-      // Update overall charts if no site is selected
-      setPieChartData([
-        {
-          name: "Head Count",
-          y: overallAttendance.total_employee,
-          color: "#f97316",
-        },
-        {
-          name: "Present",
-          y: overallAttendance.total_present,
-          color: "#10b981",
-        },
-        { name: "Absent", y: overallAttendance.total_absent, color: "#3b82f6" },
-      ]);
-      setBarChartData([
-        overallAttendance.total_employee,
-        overallAttendance.total_present,
-        overallAttendance.total_absent,
-      ]);
     }
   };
 
@@ -681,9 +428,6 @@ const ClientDashboard = () => {
     setSelectedData(event.point.name);
   };
 
-  // -------------------------------
-  // CHART OPTIONS
-  // -------------------------------
   const pieOptions = {
     chart: { type: "pie" },
     title: { text: "Head Count Status" },
@@ -714,10 +458,21 @@ const ClientDashboard = () => {
     tooltip: { pointFormat: "{series.name}: <b>{point.y}</b>" },
   };
 
+  useEffect(() => {
+    fetchClientDashboardData();
+  }, []);
+
+  const renderCell = (data) => {
+    if (isLoading) return "Loading...";
+    return data !== undefined && data !== null ? data : "Fetching Data..";
+  };
+
+  const handleLocation = () => {
+    setIsModalOpen(true);
+  };
+
   return (
     <div className="flex flex-col h-screen relative">
-      
-      {/* Top Navigation Bar */}
       <nav
         style={{ background: themeColor }}
         className="text-white px-6 py-4 flex justify-between items-center"
@@ -727,7 +482,11 @@ const ClientDashboard = () => {
           {multiple_ass.length === 0 ? (
             <p className="text-grey-500">No site associated</p>
           ) : (
-            <select className="text-black px-6 py-2" onChange={handleChange}>
+            <select 
+              className="text-black px-6 py-2" 
+              onChange={handleChange}
+              value={selectedSite || ""}
+            >
               <option value="">Select All Sites</option>
               {multiple_ass.map((asso, index) => (
                 <option key={index} value={asso.id}>
@@ -739,7 +498,7 @@ const ClientDashboard = () => {
         </div>
       </nav>
       <AdminHRMS/>
-      {/* Sidebar & Main Content */}
+      
       <div className="flex flex-1">
         <aside
           style={{ background: themeColor }}
@@ -754,7 +513,6 @@ const ClientDashboard = () => {
             </span>
           </div>
           <div className="w-full border-b border-gray-400 my-4 group-hover:block hidden"></div>
-          {/* logout */}
           <button
             onClick={handleLogout}
             className="font-semibold flex items-center rounded-md px-2 py-2 hover:bg-white hover:text-black transition-all duration-300 ease-in-out my-2 gap-4"
@@ -765,11 +523,8 @@ const ClientDashboard = () => {
         </aside>
 
         <div className="flex-1 p-6 bg-gray-100">
-          {/* Data Boxes */}
-
           <div className="grid grid-cols-6 gap-2 mb-4">
             {selectedSite ? (
-              // When a site is selected, show site-specific counts:
               <>
                 <div className="shadow-lg p-2 rounded-lg transition-colors duration-300 cursor-pointer text-center">
                   <h3 className="font-semibold text-lg">Head Count</h3>
@@ -784,117 +539,114 @@ const ClientDashboard = () => {
                   <p>{barChartData[2]}</p>
                 </div>
               </>
-            ) : overallAttendance ? (
-              // When no site is selected and overallAttendance is available, show overall counts:
+            ) : (
               <>
                 <div
                   className="shadow-lg p-2 rounded-lg transition-colors duration-300 cursor-pointer text-center"
                   onClick={handleLocation}
                 >
                   <h3 className="font-semibold text-lg">Site Location</h3>
-                  <p>{Location.length}</p>
+                  <p>{attendanceCount.site_count}</p>
                 </div>
-                {/*  */}
-                {/* Modal for displaying Location data */}
-                {isModalOpen && (
-                  <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-                    <div className="bg-white rounded-lg p-6 w-full md:w-2/3 lg:w-2/3 h-[80%]">
-                      <div className="flex justify-between">
-                        <div className="justify-start">
-                          <h2 className="text-xl py-1  font-bold mb-4">
-                            Site Locations
-                          </h2>
-                        </div>
-                        <div className="mb-2">
-                          <input
-                            type="date"
-                            onChange={(e) =>
-                              handleSiteDateChange(new Date(e.target.value))
-                            }
-                            defaultValue={
-                              selectedDate.toISOString().split("T")[0]
-                            }
-                            className="p-2 border rounded"
-                          />
-                        </div>
-                      </div>
-                      {/* Date picker inside modal header */}
-
-                      <div className="flex flex-col w-full h-[80%] overflow-scroll text-gray-700 bg-white shadow-md rounded-xl bg-clip-border">
-                        <table className="w-full text-left table-auto min-w-max">
-                          <thead className="p-4 border-b border-blue-gray-100 bg-blue-gray-50">
-                            <tr>
-                              <th className="border  p-2">Site ID</th>
-                              <th className="border p-2">Site Name</th>
-                              <th className="border p-2">Present Emp Count </th>
-                              <th className="border p-2">Absent Emp Count</th>
-                              <th className="border p-2">Total Emp Count</th>
-                            </tr>
-                          </thead>
-
-                          <tbody className="">
-                            {Location.map((loc) => (
-                              <tr key={loc.id}>
-                                <td className="border  p-1 px-2">
-                                  {renderCell(loc.id)}
-                                </td>
-                                <td className="border p-2">
-                                  {renderCell(loc.siteName)}
-                                </td>
-                                <td className="border p-2">
-                                  {renderCell(loc.presentCount)}
-                                </td>
-                                <td className="border p-2">
-                                  {renderCell(loc.absentCount)}
-                                </td>
-                                <td className="border p-2">
-                                  {renderCell(loc.totalEmployeeCount)}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                      <div className="flex justify-center">
-                        <button
-                          onClick={() => setIsModalOpen(false)}
-                          className="my-2 px-8 py-2 text-l bg-blue-500  text-white rounded"
-                        >
-                          Close
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                {/*  */}
+                
                 <div className="shadow-lg p-2 rounded-lg transition-colors duration-300 cursor-pointer text-center">
                   <h3 className="font-semibold text-lg">Total Head Count</h3>
-                  <p>{overallAttendance.total_employee}</p>
+                  <p>{attendanceCount.total_employees}</p>
                 </div>
 
                 <div className="shadow-lg p-2 rounded-lg transition-colors duration-300 cursor-pointer text-center">
                   <h3 className="font-semibold text-lg">Total Present</h3>
-                  <p>{overallAttendance.total_present}</p>
+                  <p>{attendanceCount.multiple_associated_present_today}</p>
                 </div>
 
                 <div className="shadow-lg p-2 rounded-lg transition-colors duration-300 cursor-pointer text-center">
                   <h3 className="font-semibold text-lg">Total Absent</h3>
-                  <p>{overallAttendance.total_absent}</p>
+                  <p>{attendanceCount.total_employees - attendanceCount.multiple_associated_present_today}</p>
                 </div>
               </>
-            ) : (
-              // Fallback: if overallAttendance isn't available, show head count only.
-              <div className="shadow-lg p-2 rounded-lg transition-colors duration-300 cursor-pointer">
-                <h3 className="font-semibold text-lg">Head Count</h3>
-                <p>{clientData ? clientData.length : 0}</p>
-              </div>
             )}
           </div>
 
-          {/* Chart Container */}
-          <div className="grid grid-cols-1 gap-4 relative">
-            {/* Charts */}
+          {isModalOpen && (
+            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+              <div className="bg-white rounded-lg p-6 w-full md:w-2/3 lg:w-2/3 h-[80%]">
+                <div className="flex justify-between">
+                  <div className="justify-start">
+                    <h2 className="text-xl py-1 font-bold mb-4">Site Locations</h2>
+                  </div>
+                  <div className="mb-2">
+                    <input
+                      type="date"
+                      onChange={(e) => handleSiteDateChange(new Date(e.target.value))}
+                      defaultValue={selectedDate.toISOString().split("T")[0]}
+                      className="p-2 border rounded"
+                    />
+                  </div>
+                </div>
 
+                <div className="grid grid-cols-3 gap-4 mb-4">
+                  <div className="shadow-lg p-2 rounded-lg text-center">
+                    <h3 className="font-semibold">Total Sites</h3>
+                    <p>{attendanceCount.site_count}</p>
+                  </div>
+                  <div className="shadow-lg p-2 rounded-lg text-center">
+                    <h3 className="font-semibold">Total Employees</h3>
+                    <p>{attendanceCount.total_employees}</p>
+                  </div>
+                  <div className="shadow-lg p-2 rounded-lg text-center">
+                    <h3 className="font-semibold">Present Today</h3>
+                    <p>{attendanceCount.present_count}</p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col w-full h-[60%] overflow-scroll text-gray-700 bg-white shadow-md rounded-xl bg-clip-border">
+                  <table className="w-full text-left table-auto min-w-max">
+                    <thead className="p-4 border-b border-blue-gray-100 bg-blue-gray-50">
+                      <tr>
+                        <th className="border p-2">Site ID</th>
+                        <th className="border p-2">Site Name</th>
+                        <th className="border p-2">Present Emp Count</th>
+                        <th className="border p-2">Absent Emp Count</th>
+                        <th className="border p-2">Total Emp Count</th>
+                      </tr>
+                    </thead>
+
+                    <tbody className="">
+                      {Location.map((loc) => (
+                        <tr key={loc.id}>
+                          <td className="border p-1 px-2">
+                            {renderCell(loc.id)}
+                          </td>
+                          <td className="border p-2">
+                            {renderCell(loc.siteName)}
+                          </td>
+                          <td className="border p-2">
+                            {renderCell(loc.presentCount)}
+                          </td>
+                          <td className="border p-2">
+                            {renderCell(loc.absentCount)}
+                          </td>
+                          <td className="border p-2">
+                            {renderCell(loc.totalEmployeeCount)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="flex justify-center">
+                  <button
+                    onClick={() => setIsModalOpen(false)}
+                    className="my-2 px-8 py-2 text-l bg-blue-500 text-white rounded"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 gap-4 relative">
             <div className="bg-white shadow-lg p-2 rounded-lg mt-4">
               <div className="text-end">
                 <input
@@ -957,142 +709,20 @@ const ClientDashboard = () => {
                 </button>
               </div>
             )}
-            {/* No Site Selected  */}
-            {!selectedSite && (
-              <div className="bg-white shadow-lg p-4 rounded-lg mt-4">
-                <h3 className="font-bold text-center text-xl mb-4">
-                  Overall Attendance Details
-                </h3>
-                {/* Filter Buttons */}
-                <div className="mb-4 flex gap-4">
-                  <button
-                    onClick={handleOverallAll}
-                    className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
-                  >
-                    All
-                  </button>
-                  <button
-                    onClick={handleOverallPresent}
-                    className="px-4 py-2 bg-green-300 rounded hover:bg-green-400"
-                  >
-                    Present
-                  </button>
-                  <button
-                    onClick={handleOverallAbsent}
-                    className="px-4 py-2 bg-red-300 rounded hover:bg-red-400"
-                  >
-                    Absent
-                  </button>
-                </div>
-                <table className="text-left w-full border-collapse">
-                  <thead>
-                    <tr>
-                      <th className="border px-4 py-2">Name</th>
-                      <th className="border text-center px-4 py-2">Status</th>
-                      <th className="border text-center px-4 py-2">
-                        Check in Time
-                      </th>
-                      <th className="border text-center px-4 py-2">
-                        Check out Time
-                      </th>
-                      <th className="border text-center px-4 py-2">
-                        Shift Name
-                      </th>
-                      <th className="border text-center px-4 py-2">
-                        Shift Start Time
-                      </th>
-                      <th className="border text-center px-4 py-2">
-                        Shift End Time
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredOverallAttendanceRecords.length > 0 ? (
-                      filteredOverallAttendanceRecords.map((record) => (
-                        <tr key={record.id}>
-                          <td className="border px-4 py-2">{record.empName}</td>
-                          <td
-                            className={`border text-center px-4 py-2 ${
-                              record.status === "Absent"
-                                ? "text-red-500"
-                                : "text-green-500"
-                            }`}
-                          >
-                            {record.status}
-                          </td>
-                          <td className="border text-center px-4 py-2 text-green-500">
-                            {record.checkInTime
-                              ? formatTime(record.checkInTime)
-                              : "__"}
-                          </td>
-                          <td className="border text-center px-4 py-2 text-red-500">
-                            {record.checkOutTime
-                              ? formatTime(record.checkOutTime)
-                              : "__"}
-                          </td>
-                          <td className="border px-4 py-2 text-center">
-                            {record.roster &&
-                            record.roster[record.date] &&
-                            record.roster[record.date].length > 0
-                              ? record.roster[record.date][0].shiftName
-                              : "No Shift"}
-                          </td>
-                          <td className="border px-4 py-2 text-center">
-                            {record.roster &&
-                            record.roster[record.date] &&
-                            record.roster[record.date].length > 0
-                              ? convertTo12HourFormat(
-                                  record.roster[record.date][0].shiftStartTime
-                                )
-                              : "__"}
-                          </td>
-                          <td className="border px-4 py-2 text-center">
-                            {record.roster &&
-                            record.roster[record.date] &&
-                            record.roster[record.date].length > 0
-                              ? convertTo12HourFormat(
-                                  record.roster[record.date][0].shiftEndTime
-                                )
-                              : "__"}
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td className="border px-4 py-2" colSpan="7">
-                          No attendance records found.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            )}
 
-            {/* Site Selected Attendance Table */}
-            {selectedSite && (
+            {!selectedSite && (
               <div className="bg-white shadow-lg p-4 rounded-lg mt-4">
                 <h3 className="font-bold text-center text-xl mb-4">
                   Attendance Details
                 </h3>
-                {/* Filter Buttons */}
                 <div className="mb-4 flex gap-4">
-                  <button
-                    onClick={handleAllEmpSiteWise}
-                    className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
-                  >
+                  <button onClick={handleOverallAll} className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">
                     All
                   </button>
-                  <button
-                    onClick={handlePresentEmpSiteWise}
-                    className="px-4 py-2 bg-green-300 rounded hover:bg-green-400"
-                  >
+                  <button onClick={handleOverallPresent} className="px-4 py-2 bg-green-300 rounded hover:bg-green-400">
                     Present
                   </button>
-                  <button
-                    onClick={handleAbsentEmpSiteWise}
-                    className="px-4 py-2 bg-red-300 rounded hover:bg-red-400"
-                  >
+                  <button onClick={handleOverallAbsent} className="px-4 py-2 bg-red-300 rounded hover:bg-red-400">
                     Absent
                   </button>
                 </div>
@@ -1100,70 +730,87 @@ const ClientDashboard = () => {
                 <table className="w-full border-collapse">
                   <thead>
                     <tr>
-                      <th className="border px-4 py-2">Name</th>
-                      <th className="border text-center px-4 py-2">Status</th>
-                      <th className="border text-center px-4 py-2">
-                        Check in Time
-                      </th>
-                      <th className="border text-center px-4 py-2">
-                        Check out Time
-                      </th>
-                      <th className="border text-center px-4 py-2">
-                        Shift Name
-                      </th>
-                      <th className="border text-center px-4 py-2">
-                        Shift Start Time
-                      </th>
-                      <th className="border text-center px-4 py-2">
-                        Shift End Time
-                      </th>
+                      <th className="border px-4 py-2">Employee</th>
+                      <th className="border px-4 py-2">Status</th>
+                      <th className="border px-4 py-2">Check In</th>
+                      <th className="border px-4 py-2">Check Out</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredSiteAttendanceRecords.length > 0 ? (
-                      filteredSiteAttendanceRecords.map((record) => (
-                        <tr key={record.id}>
-                          <td className="border px-4 py-2">{record.empName}</td>
-
-                          <td
-                            className={`text-center border px-4 py-2 ${
-                              record.status === "Absent"
-                                ? "text-red-500"
-                                : "text-green-500"
-                            }`}
-                          >
-                            {record.status}
-                          </td>
-                          <td className="border text-center px-4 py-2 text-green-500">
-                            {/* {record.checkInTime} */}
-                            {record.checkInTime
-                              ? formatTime(record.checkInTime)
-                              : "__"}
-                          </td>
-                          <td className="border text-center px-4 py-2 text-red-500">
-                            {/* {record.checkOutTime} */}
-                            {record.checkInTime
-                              ? formatTime(record.checkOutTime)
-                              : "__"}
-                          </td>
-                          <td className="border px-4 py-2 text-center">
-                            {record.roasterName}
-                          </td>
-                          <td className="border px-4 py-2 text-center">
-                            {convertTo12HrFormat(record.roasterStartTime)}
-                          </td>
-                          <td className="border px-4 py-2 text-center">
-                            {convertTo12HrFormat(record.roasterEndTime)}
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td className="border px-4 py-2" colSpan="3">
-                          No attendance records found.
+                    {filteredOverallAttendanceRecords.map((record) => (
+                      <tr key={record.id}>
+                        <td className="border px-4 py-2">{record.empName}</td>
+                        <td className={`border px-4 py-2 text-center ${
+                          record.status === 'Absent' ? 'text-red-500' : 'text-green-500'
+                        }`}>
+                          {record.status}
+                        </td>
+                        <td className="border px-4 py-2 text-center">
+                          {record.checkInTime ? formatTime(record.checkInTime) : '__'}
+                        </td>
+                        <td className="border px-4 py-2 text-center">
+                          {record.checkOutTime ? formatTime(record.checkOutTime) : '__'}
                         </td>
                       </tr>
-                    )}
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {selectedSite && (
+              <div className="bg-white shadow-lg p-4 rounded-lg mt-4">
+                <h3 className="font-bold text-center text-xl mb-4">
+                  Site Attendance Details
+                </h3>
+                <div className="mb-4 flex gap-4">
+                  <button onClick={handleAllEmpSiteWise} className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">
+                    All
+                  </button>
+                  <button onClick={handlePresentEmpSiteWise} className="px-4 py-2 bg-green-300 rounded hover:bg-green-400">
+                    Present
+                  </button>
+                  <button onClick={handleAbsentEmpSiteWise} className="px-4 py-2 bg-red-300 rounded hover:bg-red-400">
+                    Absent
+                  </button>
+                </div>
+
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr>
+                      <th className="border px-4 py-2">Employee</th>
+                      <th className="border px-4 py-2">Status</th>
+                      <th className="border px-4 py-2">Check In</th>
+                      <th className="border px-4 py-2">Check Out</th>
+                      <th className="border px-4 py-2">Image</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredSiteAttendanceRecords.map((record) => (
+                      <tr key={record.id}>
+                        <td className="border px-4 py-2">{record.empName}</td>
+                        <td className={`border px-4 py-2 text-center ${
+                          record.status === 'Absent' ? 'text-red-500' : 'text-green-500'
+                        }`}>
+                          {record.status}
+                        </td>
+                        <td className="border px-4 py-2 text-center">
+                          {record.checkInTime ? formatTime(record.checkInTime) : '__'}
+                        </td>
+                        <td className="border px-4 py-2 text-center">
+                          {record.checkOutTime ? formatTime(record.checkOutTime) : '__'}
+                        </td>
+                        <td className="border px-4 py-2 text-center">
+                          {record.userImage ? (
+                            <img 
+                              src={record.userImage} 
+                              alt="Employee" 
+                              className="w-10 h-10 rounded-full mx-auto"
+                            />
+                          ) : 'No Image'}
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
@@ -1171,620 +818,8 @@ const ClientDashboard = () => {
           </div>
         </div>
       </div>
-
-      {/* Modal for Site Selection (if needed) */}
-      {isDropdownVisible && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="relative bg-white rounded-lg p-4 w-[300px]">
-            <button
-              onClick={() => setIsDropdownVisible(false)}
-              className="absolute top-2 right-2 text-gray-600 hover:text-gray-900 font-bold text-xl"
-            >
-              &times;
-            </button>
-            <h3 className="text-xl text-center font-bold mb-4">
-              {selectedSite
-                ? `Site: ${
-                    multiple_ass.find((s) => s.id === selectedSite)?.siteName
-                  }`
-                : "No Site Selected"}
-            </h3>
-            {selectedSite ? (
-              <div>
-                <p className="mb-4 text-sm text-center">
-                  Site already selected.
-                </p>
-                <button
-                  onClick={() => {
-                    setIsDropdownVisible(false);
-                    setIsPieChart(false);
-                  }}
-                  className="w-full px-4 py-2 bg-blue-500 text-white rounded"
-                >
-                  Go to Bar Chart
-                </button>
-              </div>
-            ) : (
-              <div>
-                <ul>
-                  {multiple_ass.map((site) => (
-                    <li
-                      key={site.id}
-                      className="cursor-pointer p-2 hover:bg-gray-200"
-                      onClick={() => {
-                        setSelectedSite(site.id);
-                        fetchSiteData(site.id);
-                        setIsDropdownVisible(false);
-                        setIsPieChart(false);
-                      }}
-                    >
-                      {site.siteName}
-                    </li>
-                  ))}
-                </ul>
-                <button
-                  onClick={() => setIsDropdownVisible(false)}
-                  className="mt-4 px-4 py-2 bg-red-500 text-white rounded"
-                >
-                  Cancel
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 };
 
 export default ClientDashboard;
-
-// -------------------------------
-// FETCH SITE DATA AND ATTENDANCE (for a selected site)
-// -------------------------------
-// const fetchSiteData = async (siteId, dateParam = selectedDate) => {
-//   try {
-//     // console.log("Selected Site ID:", siteId);
-//     // Fetch the list of employees for the selected site
-//     const siteRes = await getAssociatedSite(siteId);
-//     setSiteWiseData(siteRes);
-
-//     // Format the date as YYYY-MM-DD
-//     const year = dateParam.getFullYear();
-//     const month = String(dateParam.getMonth() + 1).padStart(2, "0");
-//     const day = String(dateParam.getDate()).padStart(2, "0");
-//     const todayDate = `${year}-${month}-${day}`;
-//     // console.log("Formatted Date:", todayDate);
-
-//     // Fetch attendance data for the site using the formatted date
-//     const attendanceRes = await getSiteWiseAttendance(siteId, todayDate);
-//     // console.log("Site Wise Attendance Data:", attendanceRes);
-
-//     const presentRecord = attendanceRes.attendance_data;
-//     console.log("Attendance records:", presentRecord);
-
-//     const headCount = attendanceRes.total_employees || 0;
-//     const presentCount = attendanceRes.attended_employee_count || 0;
-//     const absentCount = headCount - presentCount;
-
-//     // Update site-specific charts and count
-//     setPieChartData([
-//       { name: "Head Count", y: headCount, color: "#f97316" },
-//       { name: "Present", y: presentCount, color: "#10b981" },
-//       { name: "Absent", y: absentCount, color: "#3b82f6" },
-//     ]);
-//     setBarChartData([headCount, presentCount, absentCount]);
-//     setCount(headCount);
-
-//     // Build a mapping for employee names from siteRes
-//     const employeeMap = siteRes.reduce((acc, employee) => {
-//       const name =
-//         `${employee.first_name || ""} ${employee.last_name || ""}`.trim() ||
-//         "N/A";
-//       acc[String(employee.id)] = name;
-//       return acc;
-//     }, {});
-//     // console.log("Employee Map:", employeeMap);
-
-//     // Build a mapping from attendance records for employee names (as a fallback)
-//     const attendanceNameMap = presentRecord.reduce((acc, record) => {
-//       if (record.employee) {
-//         const name = `${record.first_name || ""} ${
-//           record.last_name || ""
-//         }`.trim();
-//         if (name) {
-//           acc[String(record.employee)] = name;
-//         }
-//       }
-//       return acc;
-//     }, {});
-//     // console.log("Attendance Name Map:", attendanceNameMap);
-
-//     const presentEmployeeDetails = presentRecord
-//       .filter((record) => record.attendance_time.startsWith(todayDate))
-//       .map((record) => ({
-//         employee: String(record.employee),
-//         empName:
-//           `${record.first_name || ""} ${record.last_name || ""}`.trim() ||
-//           "N/A",
-//       }));
-//     // console.log("Present Employee Details:", presentEmployeeDetails);
-
-//     const presentEmployeeIDs = presentEmployeeDetails.map(
-//       (detail) => detail.employee
-//     );
-//     // console.log("Present Employee IDs:", presentEmployeeIDs);
-
-//     // Build absent record (employees not in the present list)
-//     const absentEmployees = siteRes
-//       .filter((employee) => !presentEmployeeIDs.includes(String(employee.id)))
-//       .map((employee) => {
-//         const empName =
-//           employeeMap[String(employee.id)] ||
-//           attendanceNameMap[String(employee.id)] ||
-//           "N/A";
-//         return {
-//           employee: employee.id,
-//           empName,
-//         };
-//       });
-//     const absentRecordObj = { absentrecord: absentEmployees };
-//     setAbsentRecord(absentRecordObj);
-//     console.log("Site Data:", siteRes);
-
-//     // Build the attendance table records
-//     const tableRecords = siteRes.map((employee) => {
-//       const empName =
-//         employeeMap[String(employee.id)] ||
-//         attendanceNameMap[String(employee.id)] ||
-//         "N/A";
-//       const status = presentEmployeeIDs.includes(String(employee.id))
-//         ? "Present"
-//         : "Absent";
-//       return {
-//         id: employee.id,
-//         empName,
-//         status,
-//         date: todayDate,
-//       };
-//     });
-//     // console.log("Attendance Table Records:", tableRecords);
-//     setAttendanceTableRecords(tableRecords);
-//     setFullSiteAttendanceRecords(tableRecords);
-//     setFilteredSiteAttendanceRecords(tableRecords);
-//     console.log(tableRecords);
-//   } catch (error) {
-//     console.log("Error fetching site data:", error);
-//   }
-// };
-
-// const fetchSiteData = async (siteId, dateParam = selectedDate) => {
-//   try {
-//     // Fetch the list of employees for the selected site
-//     const siteRes = await getAssociatedSite(siteId);
-//     console.log("All record:", siteRes);
-//     setSiteWiseData(siteRes);
-
-//     // Format the date as YYYY-MM-DD
-//     const year = dateParam.getFullYear();
-//     const month = String(dateParam.getMonth() + 1).padStart(2, "0");
-//     const day = String(dateParam.getDate()).padStart(2, "0");
-//     const todayDate = `${year}-${month}-${day}`;
-
-//     // Fetch attendance data for the site using the formatted date
-//     const attendanceRes = await getSiteWiseAttendance(siteId, todayDate);
-//     const presentRecord = attendanceRes.attendance_data;
-//     console.log("Attendance records:", presentRecord);
-
-//     const headCount = attendanceRes.total_employees || 0;
-//     const presentCount = attendanceRes.attended_employee_count || 0;
-//     const absentCount = headCount - presentCount;
-
-//     // Update site-specific charts and count
-//     setPieChartData([
-//       { name: "Head Count", y: headCount, color: "#f97316" },
-//       { name: "Present", y: presentCount, color: "#10b981" },
-//       { name: "Absent", y: absentCount, color: "#3b82f6" },
-//     ]);
-//     setBarChartData([headCount, presentCount, absentCount]);
-//     setCount(headCount);
-
-//     // Build a mapping for employee names from siteRes
-//     const employeeMap = siteRes.reduce((acc, employee) => {
-//       const name =
-//         `${employee.first_name || ""} ${employee.last_name || ""}`.trim() ||
-//         "N/A";
-//       acc[String(employee.id)] = [id=employee.id,empName= name ];
-//       // acc[String(employee.id)] = name;
-//       return acc;
-//     }, {});
-
-//     console.log("EmployeeMap:", employeeMap);
-
-//     // Build a fallback mapping from attendance records
-//     const attendanceNameMap = presentRecord.reduce((acc, record) => {
-//       if (record.employee) {
-//         const name = `${record.first_name || ""} ${
-//           record.last_name || ""
-//         }`.trim();
-//         if (name) {
-//           acc[String(record.employee)] = name;
-//         }
-//       }
-//       return acc;
-//     }, {});
-
-//     // Build the attendance table records with check‑in/out times
-//     const tableRecords = siteRes.map((employee) => {
-//       const empName =
-//         employeeMap[String(employee.id)] ||
-//         attendanceNameMap[String(employee.id)] ||
-//         "N/A";
-
-//       // Get attendance records for this employee (filter by today's date)
-//       const empAttendance = presentRecord.filter(
-//         (record) =>
-//           String(record.employee) === String(employee.id) &&
-//           record.attendance_time.startsWith(todayDate)
-//       );
-
-//       const checkInTime =
-//         empAttendance.find((rec) => rec.is_check_in === true)
-//           ?.attendance_time || null;
-//       const checkOutTime =
-//         empAttendance.find((rec) => rec.is_check_in === false)
-//           ?.attendance_time || null;
-
-//       const status = empAttendance.length > 0 ? "Present" : "Absent";
-
-//       return {
-//         id: employee.id,
-//         empName,
-//         gender: employee.gender,
-//         date: todayDate,
-//         checkInTime,
-//         checkOutTime,
-//         status,
-//       };
-//     });
-//     setAttendanceTableRecords(tableRecords);
-//     setFullSiteAttendanceRecords(tableRecords);
-//     setFilteredSiteAttendanceRecords(tableRecords);
-//     console.log("Attendance Table Records:", tableRecords);
-
-//     // Build absent record (if needed)
-//     const presentEmployeeIDs = presentRecord
-//       .filter((record) => record.attendance_time.startsWith(todayDate))
-//       .map((record) => String(record.employee));
-
-//     const absentEmployees = siteRes
-//       .filter((employee) => !presentEmployeeIDs.includes(String(employee.id)))
-//       .map((employee) => {
-//         const empName =
-//           employeeMap[String(employee.id)] ||
-//           attendanceNameMap[String(employee.id)] ||
-//           "N/A";
-//         return {
-//           employee: employee.id,
-//           empName,
-//         };
-//       });
-//     setAbsentRecord({ absentrecord: absentEmployees });
-//     console.log("Site Data:", siteRes);
-//   } catch (error) {
-//     console.log("Error fetching site data:", error);
-//   }
-// };
-
-// const fetchSiteData = async (siteId, dateParam = selectedDate) => {
-//   try {
-//     // Fetch the list of employees for the selected site
-//     const siteRes = await getAssociatedSite(siteId);
-//     setSiteWiseData(siteRes);
-
-//     // Format the date as YYYY-MM-DD
-//     const year = dateParam.getFullYear();
-//     const month = String(dateParam.getMonth() + 1).padStart(2, "0");
-//     const day = String(dateParam.getDate()).padStart(2, "0");
-//     const todayDate = `${year}-${month}-${day}`;
-
-//     // Fetch attendance data for the site using the formatted date
-//     const attendanceRes = await getSiteWiseAttendance(siteId, todayDate);
-//     const AttendanceRecord = attendanceRes.attendance_data || [];
-//     console.log("Attendance records:", AttendanceRecord);
-
-//     const headCount = attendanceRes.total_employees || 0;
-//     const presentCount = attendanceRes.attended_employee_count || 0;
-//     const absentCount = headCount - presentCount;
-
-//     // Update site-specific charts and count
-//     setPieChartData([
-//       { name: "Head Count", y: headCount, color: "#f97316" },
-//       { name: "Present", y: presentCount, color: "#10b981" },
-//       { name: "Absent", y: absentCount, color: "#3b82f6" },
-//     ]);
-//     setBarChartData([headCount, presentCount, absentCount]);
-//     setCount(headCount);
-
-//     // Build a mapping for employee names from siteRes
-//     const employeeMap = siteRes.reduce((acc, employee) => {
-//       const name =
-//         `${employee.first_name || ""} ${employee.last_name || ""}`.trim() ||
-//         "N/A";
-//       acc[String(employee.id)] = name;
-//       return acc;
-//     }, {});
-
-//     // Build a fallback mapping from attendance records
-//     const attendanceNameMap = AttendanceRecord.reduce((acc, record) => {
-//       if (record.employee) {
-//         const name = `${record.first_name || ""} ${
-//           record.last_name || ""
-//         }`.trim();
-//         if (name) {
-//           acc[String(record.employee)] = name;
-//         }
-//       }
-//       return acc;
-//     }, {});
-
-//     // Build the attendance table records with check‑in/out times
-//     const tableRecords = siteRes.map((employee) => {
-//       const empName =
-//         employeeMap[String(employee.id)] ||
-//         attendanceNameMap[String(employee.id)] ||
-//         "N/A";
-
-//       // Get attendance records for this employee (filter by today's date)
-//       const empAttendance = AttendanceRecord.filter(
-//         (record) =>
-//           String(record.employee) === String(employee.id) &&
-//           record.attendance_time.startsWith(todayDate)
-//       );
-
-//       // Determine status: Present if at least one record exists
-//       const status = empAttendance.length > 0 ? "Present" : "Absent";
-
-//       // If the employee is present, extract times; otherwise, use a placeholder "__"
-//       const checkInTime =
-//         status === "Present"
-//           ? empAttendance.find((rec) => rec.is_check_in === true)
-//               ?.attendance_time || "__"
-//           : "__";
-//       const checkOutTime =
-//         status === "Present"
-//           ? empAttendance.find((rec) => rec.is_check_in === false)
-//               ?.attendance_time || "__"
-//           : "__";
-
-//       const shiftName =
-//         empAttendance.length > 0 ? empAttendance[0].shiftName : "No Shift";
-
-//       return {
-//         id: employee.id,
-//         empName,
-//         gender: employee.gender,
-//         date: todayDate,
-//         checkInTime,
-//         checkOutTime,
-//         status,
-//         shiftName, // Added shiftName to the record
-//       };
-//     });
-//     console.log("tablerecord:", tableRecords);
-//     setAttendanceTableRecords(tableRecords);
-//     setFullSiteAttendanceRecords(tableRecords);
-//     setFilteredSiteAttendanceRecords(tableRecords);
-
-//     // Build absent record (if needed)
-//     const presentEmployeeIDs = AttendanceRecord
-//       .filter((record) => record.attendance_time.startsWith(todayDate))
-//       .map((record) => String(record.employee));
-
-//     console.log("present Employee ID:",presentEmployeeIDs)
-
-//     const absentEmployees = siteRes
-//       .filter((employee) => !presentEmployeeIDs.includes(String(employee.id)))
-//       .map((employee) => {
-//         const empName =
-//           employeeMap[String(employee.id)] ||
-//           attendanceNameMap[String(employee.id)] ||
-//           "N/A";
-//         return {
-//           employee: employee.id,
-//           empName,
-//         };
-//       });
-//     console.log("absent Employee ID:",absentEmployees)
-
-//     setAbsentRecord({ absentrecord: absentEmployees });
-//     console.log("Site Data:", siteRes);
-//   } catch (error) {
-//     console.log("Error fetching site data:", error);
-//   }
-// };
-
-// -------------------------------
-// HANDLERS
-// -------------------------------
-
-// FETCH OVERALL CLIENT DATA ON MOUNT
-
-// const fetchClientDashboardData = async (dateParam = selectedDate) => {
-//   try {
-//     const empId = localStorage.getItem("HRMS_EMPLOYEE_ID");
-//     const orgId = localStorage.getItem("HRMSORGID");
-
-//     // Fetch client dashboard data and set state
-//     const clientDataResponse = await getClientDashboard(empId);
-//     setClientData(clientDataResponse);
-//     console.log(clientDataResponse);
-//     // Format the date as YYYY-MM-DD
-//     const year = dateParam.getFullYear();
-//     const month = String(dateParam.getMonth() + 1).padStart(2, "0");
-//     const day = String(dateParam.getDate()).padStart(2, "0");
-//     const todayDate = `${year}-${month}-${day}`;
-
-//     // Fetch overall attendance which contains total_employee and total_present
-//     const allAttendance = await getAssociatedOrgDash(empId, todayDate);
-//     const total_employee = allAttendance.total_employees || 0;
-//     const total_present = allAttendance.total_present || 0;
-//     const total_absent = Math.max(total_employee - total_present, 0);
-//     const attendanceRecord = allAttendance.attendance[0] || 0;
-//     console.log("getAssociatedOrgDash:", allAttendance);
-
-//     // Store overall attendance
-//     setOverallAttendance({
-//       total_employee,
-//       total_present,
-//       total_absent,
-//       attendanceRecord,
-//     });
-
-//     const attendanceRecords = allAttendance.attendance || [];
-
-//     // Create an array of IDs from attendance records for quick lookup.
-//     const presentIds = attendanceRecords.map((record) => record.employee_id);
-
-//     // Filter clients who are present
-//     const presentRecords = clientDataResponse.filter((client) =>
-//       presentIds.includes(client.id)
-//     );
-
-//     // Filter clients who are absent (i.e., their id is not in the presentIds array)
-//     const absentRecords = clientDataResponse.filter(
-//       (client) => !presentIds.includes(client.id)
-//     );
-
-//     console.log("Present Records:", presentRecords);
-//     console.log("Absent Records:", absentRecords);
-
-//     // setting all present emp data in the checkIndata state
-//     const checkIn = allAttendance.attendance
-//       .filter((item) => item.is_check_in === true)
-//       .map(
-//         ({
-//           is_check_in,
-//           attendance_time,
-//           first_name,
-//           last_name,
-//           employee,
-//         }) => ({
-//           is_check_in,
-//           attendance_time,
-//           first_name,
-//           last_name,
-//           employee,
-//         })
-//       );
-
-//     setCheckInData(checkIn);
-//     console.log("Attendance CheckIn Data:", checkIn);
-
-//     const checkOut = allAttendance.attendance
-//       .filter((item) => item.is_check_in === false)
-//       .map(
-//         ({
-//           is_check_in,
-//           attendance_time,
-//           first_name,
-//           last_name,
-//           employee,
-//         }) => ({
-//           is_check_in,
-//           attendance_time,
-//           first_name,
-//           last_name,
-//           employee,
-//         })
-//       );
-
-//     setCheckOutData(checkOut);
-//     console.log("Attendance Checkout Data:", checkOut);
-
-//     const notCheckedInEmployees = clientDataResponse.filter(
-//       (employee) =>
-//         !checkIn.some(
-//           (check) => Number(check.id) === Number(employee.vibe_id)
-//         )
-//     );
-
-//     console.log("OverallEmpTableRecord:", clientDataResponse);
-
-//     const AllEmpRecord = clientDataResponse.map((client) => {
-//       // Build employee full name (fallback to "N/A" if missing)
-//       const empName =
-//         `${client.first_name || ""} ${client.last_name || ""}`.trim() ||
-//         "N/A";
-
-//       // Get attendance records for this employee based on matching employee id
-//       const empCheckInData = checkIn.filter(
-//         (record) => String(record.employee) === String(client.id)
-//       );
-//       const empCheckOutData = checkOut.filter(
-//         (record) => String(record.employee) === String(client.id)
-//       );
-
-//       // Determine status: if any check-in exists, mark as "Present"
-//       const status = empCheckInData.length > 0 ? "Present" : "Absent";
-
-//       // If the employee is present, extract times; otherwise, set placeholder "__"
-//       const checkInTime =
-//         status === "Present"
-//           ? empCheckInData.find((rec) => rec.is_check_in === true)
-//               ?.attendance_time || "__"
-//           : "__";
-//       const checkOutTime =
-//         status === "Present"
-//           ? empCheckOutData.find((rec) => rec.is_check_in === false)
-//               ?.attendance_time || "__"
-//           : "__";
-
-//       return {
-//         id: client.id,
-//         empName,
-//         status,
-//         date: todayDate,
-//         checkInTime,
-//         checkOutTime,
-//       };
-//     });
-
-//     console.log("All emoRecord:", AllEmpRecord);
-//     // Save full & filtered records (initially unfiltered)
-//     setFullOverallAttendanceRecords(AllEmpRecord);
-//     setFilteredOverallAttendanceRecords(AllEmpRecord);
-//     setNotCheckIn(notCheckedInEmployees);
-
-//     // Get HRMS admin data to extract associated site ids
-//     const hrmsAdminData = await getEmployeeJobInfo(empId);
-//     const multiple_asso = hrmsAdminData[0].multiple_associated;
-//     // console.log("Array for associated sites:", multiple_asso);
-
-//     // Fetch ALL sites for the organization
-//     const allSites = await getAssociatedSites(orgId);
-//     // console.log("All sites from API:", allSites);
-
-//     const siteNamesResult = multiple_asso.map((id) => {
-//       const matchingSite =
-//         Array.isArray(allSites) && allSites.length > 0
-//           ? allSites.find((site) => site.id === id)
-//           : null;
-//       const siteName = matchingSite ? matchingSite.site_name : "Not Found";
-//       return { id, siteName };
-//     });
-//     // console.log("Fetched site names:", siteNamesResult);
-//     setMultipleAssos(siteNamesResult);
-
-//     // Update the charts with overall attendance values
-//     setPieChartData([
-//       { name: "Head Count", y: total_employee, color: "#f97316" },
-//       { name: "Present", y: total_present, color: "#10b981" },
-//       { name: "Absent", y: total_absent, color: "#3b82f6" },
-//     ]);
-//     setBarChartData([total_employee, total_present, total_absent]);
-//     setCount(total_employee);
-//   } catch (error) {
-//     console.error("Error fetching client dashboard:", error);
-//   }
-// };
