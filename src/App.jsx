@@ -782,6 +782,7 @@ import EditTemplateSurvey from "./pages/SubPages/survey/EditTemplateSurvey.jsx";
 import SurveyDetails from "./pages/SubPages/survey/SurveyDetails.jsx";
 import AnalyzeResult from "./pages/SubPages/survey/AnalyzeResult.jsx";
 import PreviewSurvey from "./pages/SubPages/survey/PreviewSurvey.jsx";
+import FBMainPage from "./pages/Setup/FBMainPage.jsx";
 
 function App() {
   const { id } = useParams();
@@ -3060,14 +3061,14 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
-        {/* <Route
+        <Route
           path="/setup/fnb/cuisines"
           element={
             <ProtectedAdminRoutes>
-              <FBMainPage />
+              <FBMainPage/>
             </ProtectedAdminRoutes>
           }
-        /> */}
+        />
 
         {/* permit */}
         {/* admin permit */}
