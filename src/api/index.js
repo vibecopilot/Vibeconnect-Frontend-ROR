@@ -8180,6 +8180,46 @@ export const getSiteWiseAttendance = async (siteId, date) => {
     throw error;
   }
 };
+export const getCountOfClientDashboard = async (empId ,startDate)=>{
+  try {
+    const response = await HrmsAuth.get(
+          `/associated-organization-dashboard/attendance-count/?employee_id=${empId}&start_date=${startDate}`,
+          {
+            headers:{
+              "Content-Type":"multipart/form-data/"
+            }
+          }
+    );
+    return response.data
+  } catch (error) {
+    console.error("Error getting the total counts" , error)
+    throw error
+  }
+}
+// export const getEmployeeAttendanceDetails = async (siteId ,  ) =>{
+//   try {
+//     const response = await 
+//   } catch (error) {
+//     console.log("Error getting the employee attendance report",error)
+//     throw error
+//   }
+// }
+export const getAssocaitedSitesAttendance = async (siteId , startDate,endDate) =>{
+  try {
+    const response = await HrmsAuth.get(
+      `/associated-wise/attendance/${siteId}/?start_date=${startDate}&end_date=${endDate}`,
+      {
+        headers:{
+          "Content-Type":"multipart/form-data/"
+        }
+      }
+    )
+    return response.data
+  } catch (error) {
+    console.log("Error getting the total counts",error);
+    throw error
+  }
+}
 export const getEmployeeRoster = async (empId) => {
   try {
     const response = await HrmsAuth.get(

@@ -92,6 +92,7 @@ function EmployeeDirectory() {
 
   const fetchTableData = async (page = 1) => {
   try {
+    // toast.loading("Loading Employee Data..")
     const res = await getHrmsAllEmployeeData(
       hrmsOrgId,
       page,
@@ -114,7 +115,6 @@ function EmployeeDirectory() {
     if (viewMode === "table") {
       setTableData(res.results);
     }
-    // Card view will use allEmployeesData directly
 
     setPagination({
       currentPage: page,
