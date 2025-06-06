@@ -9637,4 +9637,20 @@ export const getClientDashboardSummary = async (
   }
 };
 
+export const downloadSummaryData = async (siteId, orgId, start_date) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/employee/attendance-report/download-excel/?start_date=${start_date}&end_date=${start_date}&organization_id=${orgId}&site_id=${siteId}`,
+      {
+        responseType: "blob", // Important for file download
+      }
+    );
+    return response;
+  } catch (error) {
+    console.error("Error downloading Summary:", error);
+    throw error;
+  }
+};
+
+
 
