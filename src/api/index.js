@@ -9616,4 +9616,25 @@ export const postReceiptNumber = async (data) =>
     },
   });
 
-  
+export const getClientDashboardSummary = async (
+  empId,
+  pageNumber,
+  start_date
+) => {
+  try {
+    const response = await HrmsAuth.get(
+      `associated-wise/attendance-summary/?employee_id=${empId}&page=${pageNumber}&start_date=${start_date}&end_date=${start_date}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data; // Ensure it returns data
+  } catch (error) {
+    console.error("Error getting Summary:", error);
+    return []; // Return empty array on error
+  }
+};
+
+
