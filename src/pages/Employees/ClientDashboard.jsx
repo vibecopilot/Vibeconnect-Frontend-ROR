@@ -21,6 +21,7 @@ import {
   getCountOfClientDashboard,
   getAssocaitedSitesAttendance,
   getClientDashboardSummary,
+  downloadSummaryData,
 } from "../../api/index";
 import { persistor } from "../../store/store";
 import { useNavigate } from "react-router-dom";
@@ -30,6 +31,9 @@ import {
   convertTo12HrFormat,
 } from "../../utils/dateUtils";
 import { Pagination } from "antd";
+import { BsFileExcel } from "react-icons/bs";
+import { RiFileExcel2Line } from "react-icons/ri";
+import toast from "react-hot-toast";
 
 
 const ClientDashboard = () => {
@@ -165,8 +169,7 @@ const ClientDashboard = () => {
     await fetchSiteLocationData(Location, date);
     await fetchClientDashboardData(date);
   };
-
-
+  const orgId = localStorage.getItem("HRMSORGID");
   const fetchClientDashboardData = async (dateParam = selectedDate) => {
     try {
       setIsLoading(true);
@@ -567,9 +570,8 @@ const ClientDashboard = () => {
   const [pageNumber, setPageNumber] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [currentSummaryPage, setCurrentSummaryPage] = useState("");
-  const paginationHandler = (page) => {
-    setPageNumber(page - 1);
-  };
+
+
   useEffect(() => {
     if (summaryDate) {
       fetchDashboardSummary();
@@ -591,6 +593,42 @@ const ClientDashboard = () => {
 
       setCurrentSummaryPage(res.current_page);
     } catch (error) {
+      console.log(error);
+    }
+  };
+
+
+  const handleDownloadSummaryReport = async (
+    siteId,
+    orgId,
+    start_date,
+    siteName
+  ) => {
+    const toastId = toast.loading("Download report please wait!!!");
+    try {
+      const res = await downloadSummaryData(siteId, orgId, start_date);
+      const blob = new Blob([res.data], { type: res.headers["content-type"] });
+
+
+      const link = document.createElement("a");
+      const url = window.URL.createObjectURL(blob);
+      link.href = url;
+
+
+      link.download = `${siteName}-${start_date}.xlsx`;
+
+
+      document.body.appendChild(link);
+      link.click();
+
+
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.dismiss(toastId);
+      toast.success("Success");
+    } catch (error) {
+      toast.dismiss(toastId);
+      toast.error("Failed to download report ❌");
       console.log(error);
     }
   };
@@ -653,15 +691,15 @@ const ClientDashboard = () => {
           <div className="grid grid-cols-6 gap-2 mb-4">
             {selectedSite ? (
               <>
-                <div className="shadow-lg p-2 rounded-lg transition-colors duration-300 cursor-pointer text-center">
+                <div className="border bg-white p-4 p-2 rounded-lg transition-colors duration-300 cursor-pointer text-center">
                   <h3 className="font-semibold text-lg">Head Count</h3>
                   <p>{count}</p>
                 </div>
-                <div className="shadow-lg p-2 rounded-lg transition-colors duration-300 cursor-pointer text-center">
+                <div className="border bg-white p-4 rounded-lg transition-colors duration-300 cursor-pointer text-center">
                   <h3 className="font-semibold text-lg">Present</h3>
                   <p>{barChartData[1]}</p>
                 </div>
-                <div className="shadow-lg p-2 rounded-lg transition-colors duration-300 cursor-pointer text-center">
+                <div className="border bg-white p-4 rounded-lg transition-colors duration-300 cursor-pointer text-center">
                   <h3 className="font-semibold text-lg">Absent</h3>
                   <p>{barChartData[2]}</p>
                 </div>
@@ -747,7 +785,7 @@ const ClientDashboard = () => {
                 </div>
 
 
-                <div className="flex flex-col w-full h-[65%] overflow-scroll text-gray-700 bg-white  rounded-xl bg-clip-border">
+                <div className="flex flex-col w-full h-[65%] hide-scrollbar overflow-scroll text-gray-700 bg-white rounded-xl bg-clip-border">
                   <table className="w-full text-left table-auto min-w-max border-collapse">
                     <thead className="p-4 border-b border-blue-gray-100 bg-blue-gray-50">
                       <tr>
@@ -762,6 +800,7 @@ const ClientDashboard = () => {
                         <th className="border p-2 font-medium">
                           Total Emp Count
                         </th>
+                        <th className="border p-2 font-medium">Action</th>
                       </tr>
                     </thead>
 
@@ -770,13 +809,33 @@ const ClientDashboard = () => {
                       {dashboardSummary.map((summary) => (
                         <tr key={summary.site_id}>
                           <td className="border p-1 px-2">{summary.site_id}</td>
-                          <td className="border p-2">{summary.site_name}</td>
+                          <td
+                            className="border p-2 max-w-96 text-wrap"
+                            title={summary.site_name}
+                          >
+                            {summary.site_name}
+                          </td>
                           <td className="border p-2">
                             {summary.present_count}
                           </td>
                           <td className="border p-2">{summary.absent_count}</td>
                           <td className="border p-2">
                             {summary.total_employees}
+                          </td>
+                          <td className="border p-2">
+                            <button
+                              className="bg-green-400 p-2 px-4 text-sm font-medium rounded-md text-white flex items-center gap-2"
+                              onClick={() =>
+                                handleDownloadSummaryReport(
+                                  summary.site_id,
+                                  orgId,
+                                  summaryDate,
+                                  summary.site_name
+                                )
+                              }
+                            >
+                              <RiFileExcel2Line size={18} /> Report
+                            </button>
                           </td>
                         </tr>
                       ))}
@@ -951,24 +1010,43 @@ const ClientDashboard = () => {
                 <h3 className="font-bold text-center text-xl mb-4">
                   Site Attendance Details
                 </h3>
-                <div className="mb-4 flex gap-4">
+                <div className="mb-4 flex justify-between">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleAllEmpSiteWise}
+                      className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+                    >
+                      All
+                    </button>
+                    <button
+                      onClick={handlePresentEmpSiteWise}
+                      className="px-4 py-2 bg-green-300 rounded hover:bg-green-400"
+                    >
+                      Present
+                    </button>
+                    <button
+                      onClick={handleAbsentEmpSiteWise}
+                      className="px-4 py-2 bg-red-300 rounded hover:bg-red-400"
+                    >
+                      Absent
+                    </button>
+                  </div>
+
+
                   <button
-                    onClick={handleAllEmpSiteWise}
-                    className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+                    className="bg-green-400 p-2 px-4 text-sm font-medium rounded-md text-white flex items-center gap-2"
+                    onClick={() =>
+                      handleDownloadSummaryReport(
+                        selectedSite,
+                        orgId,
+                        selectedDate.toISOString().split("T")[0],
+                        // summary.site_name
+                        multiple_ass.find((site) => site.id == selectedSite)
+                          ?.siteName
+                      )
+                    }
                   >
-                    All
-                  </button>
-                  <button
-                    onClick={handlePresentEmpSiteWise}
-                    className="px-4 py-2 bg-green-300 rounded hover:bg-green-400"
-                  >
-                    Present
-                  </button>
-                  <button
-                    onClick={handleAbsentEmpSiteWise}
-                    className="px-4 py-2 bg-red-300 rounded hover:bg-red-400"
-                  >
-                    Absent
+                    <RiFileExcel2Line size={18} /> Report
                   </button>
                 </div>
 
