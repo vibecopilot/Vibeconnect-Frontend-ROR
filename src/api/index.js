@@ -9652,5 +9652,21 @@ export const downloadSummaryData = async (siteId, orgId, start_date) => {
   }
 };
 
+export const downloadAllSiteData = async (empId, start_date) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/site-admin/attendance-all/employee-excel/?employee_id=${empId}&date=${start_date}`,
+      {
+        responseType: "blob", // Important for file download
+      }
+    );
+    return response;
+  } catch (error) {
+    console.error("Error downloading Summary:", error);
+    throw error;
+  }
+};
+
+
 
 

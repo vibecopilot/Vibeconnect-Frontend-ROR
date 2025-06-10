@@ -22,6 +22,7 @@ import {
   getAssocaitedSitesAttendance,
   getClientDashboardSummary,
   downloadSummaryData,
+  downloadAllSiteData,
 } from "../../api/index";
 import { persistor } from "../../store/store";
 import { useNavigate } from "react-router-dom";
@@ -632,6 +633,35 @@ const ClientDashboard = () => {
       console.log(error);
     }
   };
+  const handleDownloadAllSitesReport = async (date) => {
+    const toastId = toast.loading("Download report please wait!!!");
+    try {
+      const res = await downloadAllSiteData(empId, date);
+      const blob = new Blob([res.data], { type: res.headers["content-type"] });
+
+
+      const link = document.createElement("a");
+      const url = window.URL.createObjectURL(blob);
+      link.href = url;
+
+
+      link.download = `All Sites -${date}.xlsx`;
+
+
+      document.body.appendChild(link);
+      link.click();
+
+
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.dismiss(toastId);
+      toast.success("Success");
+    } catch (error) {
+      toast.dismiss(toastId);
+      toast.error("Failed to download report ❌");
+      console.log(error);
+    }
+  };
 
 
   return (
@@ -943,28 +973,38 @@ const ClientDashboard = () => {
                 <h3 className="font-bold text-center text-xl mb-4">
                   Attendance Details
                 </h3>
-                <div className="mb-4 flex gap-4">
+                <div className="flex items-center justify-between">
+                  <div className="mb-4 flex gap-4">
+                    <button
+                      onClick={handleOverallAll}
+                      className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+                    >
+                      All
+                    </button>
+                    <button
+                      onClick={handleOverallPresent}
+                      className="px-4 py-2 bg-green-300 rounded hover:bg-green-400"
+                    >
+                      Present
+                    </button>
+                    <button
+                      onClick={handleOverallAbsent}
+                      className="px-4 py-2 bg-red-300 rounded hover:bg-red-400"
+                    >
+                      Absent
+                    </button>
+                  </div>
                   <button
-                    onClick={handleOverallAll}
-                    className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+                    className="bg-green-400 p-2 px-4 text-sm font-medium rounded-md text-white flex items-center gap-2"
+                    onClick={() =>
+                      handleDownloadAllSitesReport(
+                        selectedDate.toISOString().split("T")[0]
+                      )
+                    }
                   >
-                    All
-                  </button>
-                  <button
-                    onClick={handleOverallPresent}
-                    className="px-4 py-2 bg-green-300 rounded hover:bg-green-400"
-                  >
-                    Present
-                  </button>
-                  <button
-                    onClick={handleOverallAbsent}
-                    className="px-4 py-2 bg-red-300 rounded hover:bg-red-400"
-                  >
-                    Absent
+                    <RiFileExcel2Line size={18} /> Report
                   </button>
                 </div>
-
-
                 <table className="w-full border-collapse">
                   <thead>
                     <tr>
