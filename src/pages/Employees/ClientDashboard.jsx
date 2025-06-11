@@ -37,11 +37,9 @@ import { BsFileExcel } from "react-icons/bs";
 import { RiFileExcel2Line } from "react-icons/ri";
 import toast from "react-hot-toast";
 
-
-const ClientDashboard = () => {
+    const ClientDashboard = () => {
   const navigate = useNavigate();
   const employee_id = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
-
 
   const [isLoading, setIsLoading] = useState(false);
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
@@ -94,12 +92,10 @@ const ClientDashboard = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [Location, setLocation] = useState([]);
 
-
   const lastName = JSON.parse(localStorage.getItem("LASTNAME") || '""');
   const firstName = JSON.parse(localStorage.getItem("Name") || '""');
   const fullName = `${firstName} ${lastName}`.trim();
   const themeColor = useSelector((state) => state.theme.color);
-
 
   const handleLogout = () => {
     ["TOKEN", "COMPANYID", "HRMS_EMPLOYEE_ID"].forEach((key) =>
@@ -110,12 +106,10 @@ const ClientDashboard = () => {
     });
   };
 
-
   const empId = localStorage.getItem("HRMS_EMPLOYEE_ID");
   const fetchAttendanceCount = async () => {
     try {
       if (!empId) return;
-
 
       const response = await getCountOfClientDashboard(empId, selectedDate);
       setAttendanceCount(response);
@@ -146,14 +140,11 @@ const ClientDashboard = () => {
     }
   }, [selectedSite]);
 
-
   const orgId = localStorage.getItem("HRMSORGID");
-
 
   const handleSliceClick = (event) => {
     setSelectedData(event.point.name);
   };
-
 
   const pieOptions = useMemo(
     () => ({
@@ -172,7 +163,6 @@ const ClientDashboard = () => {
     [pieChartData]
   );
 
-
   const barChartOptions = {
     chart: { type: "column" },
     title: { text: "Head Count Status" },
@@ -189,26 +179,21 @@ const ClientDashboard = () => {
     tooltip: { pointFormat: "{series.name}: <b>{point.y}</b>" },
   };
 
-
   const renderCell = (data) => {
     if (isLoading) return "Loading...";
     return data !== undefined && data !== null ? data : "Fetching Data..";
   };
 
-
   const handleLocation = () => {
     setIsModalOpen(true);
   };
 
-
   const [sites, setSites] = useState([]);
-
 
   const fetchAssociatedSites = async () => {
     try {
       const res = await getEmployeeAssociations(empId);
       console.log(res);
-
 
       if (Array.isArray(res) && res.length > 0) {
         const associatedSites = res[0].multiple_associated_info || [];
@@ -225,7 +210,6 @@ const ClientDashboard = () => {
     fetchAssociatedSites();
   }, []);
 
-
   const [dashboardSummary, setDashboardSummary] = useState([]);
   const [aggregateSummary, setAggregateSummary] = useState(null);
   const today = new Date();
@@ -235,13 +219,11 @@ const ClientDashboard = () => {
   const [totalPages, setTotalPages] = useState(0);
   const [currentSummaryPage, setCurrentSummaryPage] = useState("");
 
-
   useEffect(() => {
     if (summaryDate) {
       fetchDashboardSummary();
     }
   }, [isModalOpen, pageNumber, summaryDate]);
-
 
   const fetchDashboardSummary = async () => {
     try {
@@ -255,13 +237,11 @@ const ClientDashboard = () => {
       setAggregateSummary(res.results);
       setTotalPages(res.total_pages);
 
-
       setCurrentSummaryPage(res.current_page);
     } catch (error) {
       console.log(error);
     }
   };
-
 
   const handleDownloadSummaryReport = async (
     siteId,
@@ -274,18 +254,14 @@ const ClientDashboard = () => {
       const res = await downloadSummaryData(siteId, orgId, start_date);
       const blob = new Blob([res.data], { type: res.headers["content-type"] });
 
-
       const link = document.createElement("a");
       const url = window.URL.createObjectURL(blob);
       link.href = url;
 
-
       link.download = `${siteName ? siteName : siteId}-${start_date}.xlsx`;
-
 
       document.body.appendChild(link);
       link.click();
-
 
       link.remove();
       window.URL.revokeObjectURL(url);
@@ -303,18 +279,14 @@ const ClientDashboard = () => {
       const res = await downloadAllSiteData(empId, date);
       const blob = new Blob([res.data], { type: res.headers["content-type"] });
 
-
       const link = document.createElement("a");
       const url = window.URL.createObjectURL(blob);
       link.href = url;
 
-
       link.download = `All Sites -${date}.xlsx`;
-
 
       document.body.appendChild(link);
       link.click();
-
 
       link.remove();
       window.URL.revokeObjectURL(url);
@@ -326,7 +298,6 @@ const ClientDashboard = () => {
       console.log(error);
     }
   };
-
 
   const [allSitesAttendance, setAllSiteAttendance] = useState([]);
   const [totalAllDataPages, setTotalAllDataPages] = useState(0);
@@ -340,8 +311,6 @@ const ClientDashboard = () => {
         totalAllPageNumber + 1,
         selectedAllSitesStatus
       );
-      console.log(response);
-
 
       setTotalAllDataPages(response.data.total_pages);
       setAllSiteAttendance(response.data.results);
@@ -350,10 +319,16 @@ const ClientDashboard = () => {
     }
   };
   useEffect(() => {
-    fetchAllSitesAttendance();
-    console.log(selectedData);
-  }, [totalAllPageNumber, selectedDate, empId, selectedAllSitesStatus]);
-
+    if (!selectedSite) {
+      fetchAllSitesAttendance();
+    }
+  }, [
+    totalAllPageNumber,
+    selectedDate,
+    empId,
+    selectedAllSitesStatus,
+    selectedSite,
+  ]);
 
   const [siteWiseAttendance, setSiteWiseAttendance] = useState([]);
   const [siteWisePageNumber, setSiteWisePageNumber] = useState(0);
@@ -402,11 +377,9 @@ const ClientDashboard = () => {
     }
   };
 
-
   useEffect(() => {
     fetchSiteWiseAttendance();
   }, [selectedSite, selectedDate, siteWisePageNumber, siteWiseStatus]);
-
 
   return (
     <div className="flex flex-col h-screen relative">
@@ -421,7 +394,12 @@ const ClientDashboard = () => {
           ) : (
             <select
               className="text-black px-6 py-2"
-              onChange={(e) => setSelectedSite(e.target.value)}
+              onChange={(e) => {
+                setSelectedSite(e.target.value),
+                  setSiteWisePageNumber(0),
+                  setSiteWiseStatus("all"),
+                  setTotalAllPageNumber(0);
+              }}
               value={selectedSite || ""}
             >
               <option value="">Select All Sites</option>
@@ -435,7 +413,6 @@ const ClientDashboard = () => {
         </div>
       </nav>
       <AdminHRMS />
-
 
       <div className="flex flex-1">
         <aside
@@ -459,7 +436,6 @@ const ClientDashboard = () => {
             {open && "Logout"}
           </button>
         </aside>
-
 
         <div className="flex-1 p-6 bg-gray-100">
           <div className="grid grid-cols-6 gap-2 mb-4">
@@ -488,18 +464,15 @@ const ClientDashboard = () => {
                   <p>{attendanceCount?.site_count}</p>
                 </div>
 
-
                 <div className="border bg-white p-4 rounded-lg transition-colors duration-300 text-center">
                   <h3 className="font-semibold text-lg">Total Head Count</h3>
                   <p>{attendanceCount?.total_employees}</p>
                 </div>
 
-
                 <div className="border bg-white p-4 rounded-lg transition-colors duration-300 cursor-pointer text-center">
                   <h3 className="font-semibold text-lg">Total Present</h3>
                   <p>{attendanceCount?.multiple_associated_present_today}</p>
                 </div>
-
 
                 <div className="border bg-white p-4 rounded-lg transition-colors duration-300 cursor-pointer text-center">
                   <h3 className="font-semibold text-lg">Total Absent</h3>
@@ -511,7 +484,6 @@ const ClientDashboard = () => {
               </>
             )}
           </div>
-
 
           {isModalOpen && (
             <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
@@ -531,7 +503,6 @@ const ClientDashboard = () => {
                     />
                   </div>
                 </div>
-
 
                 <div className="grid grid-cols-4 gap-4 mb-4">
                   <div className="border p-2 rounded-lg text-center">
@@ -558,7 +529,6 @@ const ClientDashboard = () => {
                   </div>
                 </div>
 
-
                 <div className="flex flex-col w-full h-[65%] hide-scrollbar overflow-scroll text-gray-700 bg-white rounded-xl bg-clip-border">
                   <table className="w-full text-left table-auto min-w-max border-collapse">
                     <thead className="p-4 border-b border-blue-gray-100 bg-blue-gray-50">
@@ -577,7 +547,6 @@ const ClientDashboard = () => {
                         <th className="border p-2 font-medium">Action</th>
                       </tr>
                     </thead>
-
 
                     <tbody className="">
                       {dashboardSummary.map((summary) => (
@@ -645,7 +614,6 @@ const ClientDashboard = () => {
             </div>
           )}
 
-
           <div className="grid grid-cols-1 gap-4 relative">
             <div className="bg-white p-2 rounded-lg mt-4">
               <div className="text-end">
@@ -695,7 +663,6 @@ const ClientDashboard = () => {
               )}
             </div>
 
-
             {isCalendarVisible && (
               <div className="absolute top-20 right-10 bg-white rounded-lg p-4 border border-gray-200 z-50 w-[300px] h-[300px]">
                 <Calendar
@@ -703,7 +670,6 @@ const ClientDashboard = () => {
                   value={selectedDate}
                   className="react-calendar p-0 w-full h-full overflow-y-auto"
                 />
-
 
                 <button
                   onClick={() => setIsCalendarVisible(false)}
@@ -713,7 +679,6 @@ const ClientDashboard = () => {
                 </button>
               </div>
             )}
-
 
             {!selectedSite && (
               <div className="bg-white p-4 rounded-lg mt-4">
@@ -778,10 +743,12 @@ const ClientDashboard = () => {
                             : "--"}
                         </td>
                         <td className="border px-4 py-2 text-center">
-                          {!record?.attendance[0]?.is_check_in
+                          {record?.attendance?.length > 0 &&
+                          record.attendance[record.attendance.length - 1]
+                            ?.is_check_in === false
                             ? formatTime(
                                 record.attendance[record.attendance.length - 1]
-                                  ?.attendance_time
+                                  .attendance_time
                               )
                             : "--"}
                         </td>
@@ -808,7 +775,6 @@ const ClientDashboard = () => {
                 )}
               </div>
             )}
-
 
             {selectedSite && (
               <div className="bg-white shadow-lg p-4 rounded-lg mt-4">
@@ -837,7 +803,6 @@ const ClientDashboard = () => {
                     </button>
                   </div>
 
-
                   <button
                     className="bg-green-400 p-2 px-4 text-sm font-medium rounded-md text-white flex items-center gap-2"
                     onClick={() =>
@@ -845,7 +810,6 @@ const ClientDashboard = () => {
                         selectedSite,
                         orgId,
                         selectedDate,
-
 
                         multiple_ass.find((site) => site.id == selectedSite)
                           ?.siteName
@@ -855,7 +819,6 @@ const ClientDashboard = () => {
                     <RiFileExcel2Line size={18} /> Report
                   </button>
                 </div>
-
 
                 <table className="w-full border-collapse">
                   <thead>
@@ -885,10 +848,12 @@ const ClientDashboard = () => {
                             : "--"}
                         </td>
                         <td className="border px-4 py-2 text-center">
-                          {!record?.attendance[0]?.is_check_in
+                          {record?.attendance?.length > 0 &&
+                          record.attendance[record.attendance.length - 1]
+                            ?.is_check_in === false
                             ? formatTime(
                                 record.attendance[record.attendance.length - 1]
-                                  ?.attendance_time
+                                  .attendance_time
                               )
                             : "--"}
                         </td>
@@ -922,8 +887,4 @@ const ClientDashboard = () => {
   );
 };
 
-
 export default ClientDashboard;
-
-
-
