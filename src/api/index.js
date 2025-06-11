@@ -4172,29 +4172,32 @@ export const sendBusinessCard = async (data) => {
   }
 };
 // HRMS
-// Hrms active and inactive user 
-export const getStatusChanges = async (data) =>{
+// Hrms active and inactive user
+export const getStatusChanges = async (data) => {
   try {
-    const response = await HrmsAuth.post(`/employee-bulk/manage-employee-status/`,data)
-    return response.data
+    const response = await HrmsAuth.post(
+      `/employee-bulk/manage-employee-status/`,
+      data
+    );
+    return response.data;
   } catch (error) {
-    console.log("Error changing the status of the employee" , error)
-    throw error
+    console.log("Error changing the status of the employee", error);
+    throw error;
   }
-}
-export const CreateBulkEmployee = async (FormData) =>{
+};
+export const CreateBulkEmployee = async (FormData) => {
   try {
-    const response = await HrmsAuth.post(`/employee/excel-upload/`,FormData,{
-      headers:{
-        'Content-Type':'multipart/form-data'
-      }
-    })
-    return response.data
+    const response = await HrmsAuth.post(`/employee/excel-upload/`, FormData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data;
   } catch (error) {
-    console.log("Error Creating Bulk user ",error)
-    throw error
+    console.log("Error Creating Bulk user ", error);
+    throw error;
   }
-} 
+};
 export const getAllHrmsOrganisation = async () => {
   try {
     const response = await HrmsAuth.get(`/organization/`, {
@@ -4483,7 +4486,7 @@ export const getMyHRMSAdmins = async (orgId) => {
     throw error;
   }
 };
-export const getMyHRMSEmployeesAllData = async (orgId , page=1) => {
+export const getMyHRMSEmployeesAllData = async (orgId, page = 1) => {
   try {
     const response = await HrmsAuth.get(
       `/user-details/?organization_id=${orgId}&page=${page}`,
@@ -4499,18 +4502,17 @@ export const getMyHRMSEmployeesAllData = async (orgId , page=1) => {
     throw error;
   }
 };
-export const getHrmsAllEmployeeData = async (orgId , page =1) =>{
+export const getHrmsAllEmployeeData = async (orgId, page = 1) => {
   try {
     const response = await HrmsAuth.get(
       `/updated-user-details/?organization_id=${orgId}&page=${page}`
-    )
-    return response.data
-    
+    );
+    return response.data;
   } catch (error) {
-    console.log("Error Getting the All employee data",error)
-    throw error
+    console.log("Error Getting the All employee data", error);
+    throw error;
   }
-}
+};
 export const deleteHRMSEmployee = async (empId) => {
   try {
     const response = await HrmsAuth.delete(`/employee/${empId}/`, {
@@ -4624,7 +4626,6 @@ export const getMyBankAccounts = async (orgId) => {
   }
 };
 
-
 export const postMyBankAccounts = async (data) => {
   try {
     const response = await HrmsAuth.post(`/organization/bank-accounts/`, data, {
@@ -4723,7 +4724,7 @@ export const getAdminAccess = async (orgId, empId) => {
   }
 };
 export const getManageAdminDetails = async (adminId) => {
-   const hrmsOrgId = getItemInLocalStorage("HRMSORGID")
+  const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
   try {
     const response = await HrmsAuth.get(
       `/organization/user-setting/administrator-setting/${adminId}/`,
@@ -5305,15 +5306,14 @@ export const getAttendanceRecord = async (orgId, page) => {
     throw error;
   }
 };
-// get export attendance details 
-export const getExportAttendance = async (orgId)=>{
+// get export attendance details
+export const getExportAttendance = async (orgId) => {
   try {
-    HrmsAuth.get(`user-details/download?organization_id=${orgId}`)
+    HrmsAuth.get(`user-details/download?organization_id=${orgId}`);
   } catch (error) {
-    console.log('Error in exporting ',error.message)
+    console.log("Error in exporting ", error.message);
   }
-}
-
+};
 
 export const getAttendanceRecordFilter = async (orgId, siteId, page) => {
   try {
@@ -5682,79 +5682,79 @@ export const editEmployeeEmploymentDetails = async (employmentId, data) => {
     throw error;
   }
 };
-// Holidays 
-export const GetHrmsHolidayDetails = async (orgId) =>{
+// Holidays
+export const GetHrmsHolidayDetails = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
       `/organization/company-holidays?organization_id=${orgId}`
-    )
-    return response.data
+    );
+    return response.data;
   } catch (error) {
-    console.log("Error Getting The hrms Holdays", error)
-    throw error
+    console.log("Error Getting The hrms Holdays", error);
+    throw error;
   }
-}
+};
 
-export const AddHolidaysDetails = async (data) =>{
+export const AddHolidaysDetails = async (data) => {
   try {
     const response = await HrmsAuth.post(
-      "/organization/company-holidays/",data
-    )
-    return response.data
+      "/organization/company-holidays/",
+      data
+    );
+    return response.data;
   } catch (error) {
-    console.log("Error Adding The holidays" , error)
-    throw error 
+    console.log("Error Adding The holidays", error);
+    throw error;
   }
-}
+};
 
-export const GetHrmsHolidayDetailsId = async (id) =>{
+export const GetHrmsHolidayDetailsId = async (id) => {
   try {
-    const response = await HrmsAuth.get(
-      `/organization/company-holidays/${id}`
-    )
-    return response.data
+    const response = await HrmsAuth.get(`/organization/company-holidays/${id}`);
+    return response.data;
   } catch (error) {
-    console.log("Error Getting holidays on the basis of id" , error)
-    throw error
+    console.log("Error Getting holidays on the basis of id", error);
+    throw error;
   }
-}
+};
 
-export const UpdateHolidaysDetails = async (id , data) =>{
+export const UpdateHolidaysDetails = async (id, data) => {
   try {
     const response = await HrmsAuth.put(
-      `/organization/company-holidays/${id}/`, data
-    )
-    return response.data
+      `/organization/company-holidays/${id}/`,
+      data
+    );
+    return response.data;
   } catch (error) {
-    console.log("Error in updating the holidays" , error)
-    throw error
+    console.log("Error in updating the holidays", error);
+    throw error;
   }
-}
+};
 
-export const handleDeletHoliday = async (Faid) =>{
-   try {
-      const response = await HrmsAuth.delete(
-        `/organization/company-holidays/${Faid}/`
-      )
-      return response.data
-   } catch (error) {
-    console.log("Error Deleting Holidays",error)
-    throw error
-   }
-}
+export const handleDeletHoliday = async (Faid) => {
+  try {
+    const response = await HrmsAuth.delete(
+      `/organization/company-holidays/${Faid}/`
+    );
+    return response.data;
+  } catch (error) {
+    console.log("Error Deleting Holidays", error);
+    throw error;
+  }
+};
 
 // payroll
-export const getHrmsPayrollSlipDetails = async (templateId) =>{
+export const getHrmsPayrollSlipDetails = async (templateId) => {
   try {
     const response = await HrmsAuth.get(
       `/ctc-template-organization/${templateId}`
-    )
-    return response.data
+    );
+    return response.data;
   } catch (error) {
-    console.log("Error Getting the Ctc Structure details", error)
-    throw error
+    console.log("Error Getting the Ctc Structure details", error);
+    throw error;
   }
-}
+};
 
 export const getPayrollGeneralSetting = async (orgId) => {
   try {
@@ -5849,124 +5849,129 @@ export const editFixedAllowanceDetails = async (FAid, data) => {
     throw error;
   }
 };
-// fixed  Hrms allowance 
-export const getHrmsFixedAllowance = async (org_id) =>{
+// fixed  Hrms allowance
+export const getHrmsFixedAllowance = async (org_id) => {
   try {
-    const response = await HrmsAuth.get(`/ctc-components/?organization_id=${org_id}`)
-    return response.data
+    const response = await HrmsAuth.get(
+      `/ctc-components/?organization_id=${org_id}`
+    );
+    return response.data;
   } catch (error) {
     console.log("Error getting  Allowance:", error);
     throw error;
   }
-}
+};
 
-export const postHrmsFixedAllowance = async (data) =>{
+export const postHrmsFixedAllowance = async (data) => {
   try {
-    const response = await HrmsAuth.post('/ctc-components/',data)
-    return response.data
+    const response = await HrmsAuth.post("/ctc-components/", data);
+    return response.data;
   } catch (error) {
-    console.log("Error Adding  Allowance",error)
-    throw error
+    console.log("Error Adding  Allowance", error);
+    throw error;
   }
-}
+};
 
-export const getHrmsFixedAllowanceDetailsId = async (FAid) =>{
+export const getHrmsFixedAllowanceDetailsId = async (FAid) => {
   try {
-    const response = await HrmsAuth.get(`/ctc-components/${FAid}/`)
-    return response.data
+    const response = await HrmsAuth.get(`/ctc-components/${FAid}/`);
+    return response.data;
   } catch (error) {
-    console.log("Error Getting Allowance on bases of id ", error)
-    throw error
+    console.log("Error Getting Allowance on bases of id ", error);
+    throw error;
   }
-}
-export const editHrmsFixedAllowanceDetails = async (data , FAid) =>{
+};
+export const editHrmsFixedAllowanceDetails = async (data, FAid) => {
   try {
-     const response = await HrmsAuth.patch(`/ctc-components/${FAid}/`,data)
-     return response.data
+    const response = await HrmsAuth.patch(`/ctc-components/${FAid}/`, data);
+    return response.data;
   } catch (error) {
-    console.log("Error Editing Allowance",error)
-    throw error
+    console.log("Error Editing Allowance", error);
+    throw error;
   }
-}
-export const deleteHrmsFixedAllowance = async (FAid) =>{
+};
+export const deleteHrmsFixedAllowance = async (FAid) => {
   try {
-    const response = await HrmsAuth.delete(`/ctc-components/${FAid}/`)
-    return response.data
+    const response = await HrmsAuth.delete(`/ctc-components/${FAid}/`);
+    return response.data;
   } catch (error) {
-    console.log("Error Deleting Allowance", error)
-    throw error
+    console.log("Error Deleting Allowance", error);
+    throw error;
   }
-}
-// payroll data 
-export const getHrmsPayrolldetails = async (empid  )=>{
+};
+// payroll data
+export const getHrmsPayrolldetails = async (empid) => {
   try {
-    const response = await HrmsAuth.get(`/payrolls/?employee_id=${empid}&status=pending`)
-    return response.data
+    const response = await HrmsAuth.get(
+      `/payrolls/?employee_id=${empid}&status=pending`
+    );
+    return response.data;
   } catch (error) {
-    console.log("Error Getting the payroll details" , error)
-    throw error
+    console.log("Error Getting the payroll details", error);
+    throw error;
   }
-}
+};
 
+export const getCtcProfile = async (empId) => {
+  try {
+    const response = await HrmsAuth.get(`/ctc-profiles/?employee_id=${empId}`);
+    return response.data;
+  } catch (error) {
+    console.log("Error Getting the ctc profile details", error);
+    throw error;
+  }
+};
 
-export const getCtcProfile = async (empId) =>{
+export const deleteCtcProfile = async (FDid) => {
   try {
-    const response = await HrmsAuth.get(`/ctc-profiles/?employee_id=${empId}`)
-    return response.data
+    const response = await HrmsAuth.delete(`ctc-profiles/${FDid}/`);
+    return response.data;
   } catch (error) {
-    console.log("Error Getting the ctc profile details",error)
-    throw error
+    console.log("Error Deleting the ctc Profile details", error);
+    throw error;
   }
-}
+};
 
-export const deleteCtcProfile = async (FDid) =>{
+// fixed hrms deduction
+export const getHrmsFixedDeduction = async (org_id) => {
   try {
-    const response = await HrmsAuth.delete(`ctc-profiles/${FDid}/`)
-    return response.data
+    const response = await HrmsAuth.get(
+      `/ctc-deductions/?organization_id=${org_id}`
+    );
+    return response.data;
   } catch (error) {
-    console.log("Error Deleting the ctc Profile details",error)
-    throw error
+    console.log("Error Getting deduction", error);
+    throw error;
   }
-}
+};
+export const deleteHrmsFixedDeduction = async (FDid) => {
+  try {
+    const response = await HrmsAuth.delete(`/ctc-deductions/${FDid}/`);
+    return response.data;
+  } catch (error) {
+    console.log("Error Delliting selected Deduction", error);
+    throw error;
+  }
+};
 
-// fixed hrms deduction 
-export const getHrmsFixedDeduction = async (org_id) =>{
+export const postHrmsFixedDeduction = async (data) => {
   try {
-    const response = await HrmsAuth.get(`/ctc-deductions/?organization_id=${org_id}`)
-    return response.data
+    const response = await HrmsAuth.post("/ctc-deductions/", data);
+    return response.data;
   } catch (error) {
-    console.log("Error Getting deduction" , error)
-    throw error
+    console.log("Error in adding the fixed deduction", error);
+    throw error;
   }
-}
-export const deleteHrmsFixedDeduction = async (FDid) =>{
+};
+export const getHrmsFixedDeductionDetailsId = async (FDid) => {
   try {
-    const response = await HrmsAuth.delete(`/ctc-deductions/${FDid}/`)
-    return response.data
+    const response = await HrmsAuth.get(`/ctc-deductions/${FDid}/`);
+    return response.data;
   } catch (error) {
-    console.log('Error Delliting selected Deduction',error)
-    throw error
+    console.log("Error getting the fixed deduction on id ", error);
+    throw error;
   }
-}
-
-export const postHrmsFixedDeduction = async (data) =>{
-  try {
-    const response = await HrmsAuth.post('/ctc-deductions/',data)
-    return response.data
-  } catch (error) {
-    console.log("Error in adding the fixed deduction",error)
-    throw error
-  }
-}
-export const getHrmsFixedDeductionDetailsId = async (FDid) =>{
-  try {
-    const response = await HrmsAuth.get(`/ctc-deductions/${FDid}/`)
-    return response.data
-  } catch (error) {
-    console.log("Error getting the fixed deduction on id ", error)
-    throw error
-  }
-}
+};
 
 export const editHrmsFixedDeduction = async (FDid, data) => {
   try {
@@ -5978,25 +5983,27 @@ export const editHrmsFixedDeduction = async (FDid, data) => {
   }
 };
 
-// Hrms New Ctc template 
-export const createEmployeeProfile = async (data) =>{
+// Hrms New Ctc template
+export const createEmployeeProfile = async (data) => {
   try {
-    const response = await HrmsAuth.post(`/ctc-profiles/`,data)
-    return response.data
+    const response = await HrmsAuth.post(`/ctc-profiles/`, data);
+    return response.data;
   } catch (error) {
-    console.log("Error Creating the employee profile",error)
-    throw error
+    console.log("Error Creating the employee profile", error);
+    throw error;
   }
-}
-export const getHrmsCtcTemplate = async (orgId) =>{
+};
+export const getHrmsCtcTemplate = async (orgId) => {
   try {
-    const response = await HrmsAuth.get(`/ctc-template-organization/?organization_id=${orgId}`)
-    return response.data
+    const response = await HrmsAuth.get(
+      `/ctc-template-organization/?organization_id=${orgId}`
+    );
+    return response.data;
   } catch (error) {
-    console.log("Error Getting The Ctc Template Data" , error);
-    throw error
+    console.log("Error Getting The Ctc Template Data", error);
+    throw error;
   }
-}
+};
 // export const getHrmsCtcTemplate = async(orgId , siteId ) =>{
 //   try {
 //     const response = await HrmsAuth.get(`/ctc-template-organization/?organization_id=${orgId}&associated=${siteId}`)
@@ -6006,49 +6013,54 @@ export const getHrmsCtcTemplate = async (orgId) =>{
 //     throw error
 //   }
 // }
-export const createHrmsCtcTemplate = async (data) =>{
+export const createHrmsCtcTemplate = async (data) => {
   try {
-    const response = await HrmsAuth.post(`/ctc-template-organization/`,data)
-    return response.data
+    const response = await HrmsAuth.post(`/ctc-template-organization/`, data);
+    return response.data;
   } catch (error) {
-    console.log("Error creating the Ctc Template ", error)
-    throw error
+    console.log("Error creating the Ctc Template ", error);
+    throw error;
   }
-}
+};
 
-export const deleteHrmsCtcTemplate = async (ctc_id) =>{
-try {
-  const response = await HrmsAuth.delete(`/ctc-template-organization/${ctc_id}/`)
-  return response.data
-} catch (error) {
-  console.log("Error in deleting the Ctc template " , error);
-  throw error
-
-}
-}
-
-export const getHrmsCtcTemplateonId = async (ctc_id) =>{
+export const deleteHrmsCtcTemplate = async (ctc_id) => {
   try {
-    const response = await HrmsAuth.get(`/ctc-template-organization/${ctc_id}/`)
-    return response.data
+    const response = await HrmsAuth.delete(
+      `/ctc-template-organization/${ctc_id}/`
+    );
+    return response.data;
   } catch (error) {
-    console.log("Error Getting Ctc data Id" ,error)
-    throw error
+    console.log("Error in deleting the Ctc template ", error);
+    throw error;
   }
-}
+};
 
-export const updateHrmsCtcTemplate = async (ctc_id , data) =>{
+export const getHrmsCtcTemplateonId = async (ctc_id) => {
   try {
-    const response = await HrmsAuth.patch(`/ctc-template-organization/${ctc_id}/`,data)
-    return response.data
+    const response = await HrmsAuth.get(
+      `/ctc-template-organization/${ctc_id}/`
+    );
+    return response.data;
   } catch (error) {
-    console.log("error updating the ctc",error)
-    throw error 
+    console.log("Error Getting Ctc data Id", error);
+    throw error;
   }
-}
+};
 
+export const updateHrmsCtcTemplate = async (ctc_id, data) => {
+  try {
+    const response = await HrmsAuth.patch(
+      `/ctc-template-organization/${ctc_id}/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.log("error updating the ctc", error);
+    throw error;
+  }
+};
 
-export const getFixedDeductions = async (orgId) => { 
+export const getFixedDeductions = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
       `/payroll/deduction/?organization_id=${orgId}`
@@ -7042,15 +7054,15 @@ export const getEmployeeSalaryDetails = async (empId) => {
   }
 };
 
-//  change Employee type = 
-export const  ChangeUserType = async () =>{
+//  change Employee type =
+export const ChangeUserType = async () => {
   try {
-     const response = await HrmsAuth.patch(``)
+    const response = await HrmsAuth.patch(``);
   } catch (error) {
-    console.log("Error changing user type", error)
-    throw error
+    console.log("Error changing user type", error);
+    throw error;
   }
-}
+};
 export const getDataChangeRequest = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
@@ -7381,7 +7393,88 @@ export const getClientDashboard = async (id) => {
     return []; // Return empty array on error
   }
 };
-
+export const getClientDashboardSummary = async (
+  empId,
+  pageNumber,
+  start_date
+) => {
+  try {
+    const response = await HrmsAuth.get(
+      `associated-wise/attendance-summary/?employee_id=${empId}&page=${pageNumber}&start_date=${start_date}&end_date=${start_date}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data; // Ensure it returns data
+  } catch (error) {
+    console.error("Error getting Summary:", error);
+    return []; // Return empty array on error
+  }
+};
+export const downloadSummaryData = async (siteId, orgId, start_date) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/employee/attendance-report/download-excel/?start_date=${start_date}&end_date=${start_date}&organization_id=${orgId}&site_id=${siteId}`,
+      {
+        responseType: "blob", // Important for file download
+      }
+    );
+    return response;
+  } catch (error) {
+    console.error("Error downloading Summary:", error);
+    throw error;
+  }
+};
+export const downloadAllSiteData = async (empId, start_date) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/site-admin/attendance-all/employee-excel/?employee_id=${empId}&date=${start_date}`,
+      {
+        responseType: "blob", // Important for file download
+      }
+    );
+    return response;
+  } catch (error) {
+    console.error("Error downloading Summary:", error);
+    throw error;
+  }
+};
+// new api
+export const getAllSitesAttendance = async (empId, date, page, status) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/associated-organizations/mutiple-site-new/?employee_id=${empId}&date=${date}&&page=${page}&status=${status}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response;
+  } catch (error) {
+    console.error("Error getting all sites data:", error);
+    throw error;
+  }
+};
+export const getSiteWiseAttendanceData = async (siteId, date, page, status) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/associated-wise/attendance-new/${siteId}/?start_date=${date}&end_date=${date}&page=${page}&status=${status}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response;
+  } catch (error) {
+    console.error("Error getting site wise data:", error);
+    throw error;
+  }
+};
+// new api
 export const getAssociatedOrgDash = async (empId, date) => {
   try {
     const res = await HrmsAuth.get(
@@ -7667,25 +7760,27 @@ export const getEmployeeAssociations = async (empId) => {
   }
 };
 // Hrms update employee password
-export const changeEmployeePassword = async (data) =>{
+export const changeEmployeePassword = async (data) => {
   try {
-    const response = await HrmsAuth.post(`/employee/password-reset/`,data)
-    return response.data
+    const response = await HrmsAuth.post(`/employee/password-reset/`, data);
+    return response.data;
   } catch (error) {
-    console.log("Error in updating the employee password" , error)
-    throw error
+    console.log("Error in updating the employee password", error);
+    throw error;
   }
-}
+};
 
-export const EmployeeHrmsLogs = async (orgId , empId) =>{
+export const EmployeeHrmsLogs = async (orgId, empId) => {
   try {
-    const response = await HrmsAuth.get(`/password-reset-history/?organization_id=${orgId}&employee_id=${empId}`)
-    return response.data
+    const response = await HrmsAuth.get(
+      `/password-reset-history/?organization_id=${orgId}&employee_id=${empId}`
+    );
+    return response.data;
   } catch (error) {
-    console.log("Error in getting employee logs" , error)
-    throw error
+    console.log("Error in getting employee logs", error);
+    throw error;
   }
-}
+};
 export const updateEmployeeAssociations = async (associationId, data) => {
   try {
     const response = await HrmsAuth.patch(
@@ -8047,7 +8142,7 @@ export const postCTCComponent = async (data) => {
     throw error;
   }
 };
-// change password of single employee 
+// change password of single employee
 
 export const postRegularizationRequest = async (data) => {
   try {
@@ -8185,46 +8280,50 @@ export const getSiteWiseAttendance = async (siteId, date) => {
     throw error;
   }
 };
-export const getCountOfClientDashboard = async (empId ,startDate)=>{
+export const getCountOfClientDashboard = async (empId, startDate) => {
   try {
     const response = await HrmsAuth.get(
-          `/associated-organization-dashboard/attendance-count/?employee_id=${empId}&start_date=${startDate}`,
-          {
-            headers:{
-              "Content-Type":"multipart/form-data/"
-            }
-          }
+      `/associated-organization-dashboard/attendance-count/?employee_id=${empId}&start_date=${startDate}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
     );
-    return response.data
+    return response.data;
   } catch (error) {
-    console.error("Error getting the total counts" , error)
-    throw error
+    console.error("Error getting the total counts", error);
+    throw error;
   }
-}
+};
 // export const getEmployeeAttendanceDetails = async (siteId ,  ) =>{
 //   try {
-//     const response = await 
+//     const response = await
 //   } catch (error) {
 //     console.log("Error getting the employee attendance report",error)
 //     throw error
 //   }
 // }
-export const getAssocaitedSitesAttendance = async (siteId , startDate,endDate) =>{
+export const getAssocaitedSitesAttendance = async (
+  siteId,
+  startDate,
+  endDate
+) => {
   try {
     const response = await HrmsAuth.get(
       `/associated-wise/attendance/${siteId}/?start_date=${startDate}&end_date=${endDate}`,
       {
-        headers:{
-          "Content-Type":"multipart/form-data/"
-        }
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
       }
-    )
-    return response.data
+    );
+    return response.data;
   } catch (error) {
-    console.log("Error getting the total counts",error);
-    throw error
+    console.log("Error getting the total counts", error);
+    throw error;
   }
-}
+};
 export const getEmployeeRoster = async (empId) => {
   try {
     const response = await HrmsAuth.get(
@@ -9615,58 +9714,3 @@ export const postReceiptNumber = async (data) =>
       token: token,
     },
   });
-
-export const getClientDashboardSummary = async (
-  empId,
-  pageNumber,
-  start_date
-) => {
-  try {
-    const response = await HrmsAuth.get(
-      `associated-wise/attendance-summary/?employee_id=${empId}&page=${pageNumber}&start_date=${start_date}&end_date=${start_date}`,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data/",
-        },
-      }
-    );
-    return response.data; // Ensure it returns data
-  } catch (error) {
-    console.error("Error getting Summary:", error);
-    return []; // Return empty array on error
-  }
-};
-
-export const downloadSummaryData = async (siteId, orgId, start_date) => {
-  try {
-    const response = await HrmsAuth.get(
-      `/employee/attendance-report/download-excel/?start_date=${start_date}&end_date=${start_date}&organization_id=${orgId}&site_id=${siteId}`,
-      {
-        responseType: "blob", // Important for file download
-      }
-    );
-    return response;
-  } catch (error) {
-    console.error("Error downloading Summary:", error);
-    throw error;
-  }
-};
-
-export const downloadAllSiteData = async (empId, start_date) => {
-  try {
-    const response = await HrmsAuth.get(
-      `/site-admin/attendance-all/employee-excel/?employee_id=${empId}&date=${start_date}`,
-      {
-        responseType: "blob", // Important for file download
-      }
-    );
-    return response;
-  } catch (error) {
-    console.error("Error downloading Summary:", error);
-    throw error;
-  }
-};
-
-
-
-
