@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import { RxExit } from "react-icons/rx";
@@ -14,8 +14,6 @@ import { DNA } from "react-loader-spinner";
 import {
   getClientDashboard,
   getEmployeeJobInfo,
-  getAssociatedSite,
-  getAssociatedSites,
   getSiteWiseAttendance,
   getAssociatedOrgDash,
   getCountOfClientDashboard,
@@ -23,6 +21,9 @@ import {
   getClientDashboardSummary,
   downloadSummaryData,
   downloadAllSiteData,
+  getAllSitesAttendance,
+  getSiteWiseAttendanceData,
+  getEmployeeAssociations,
 } from "../../api/index";
 import { persistor } from "../../store/store";
 import { useNavigate } from "react-router-dom";
@@ -45,14 +46,16 @@ const ClientDashboard = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
   const [isCalendarVisible, setIsCalendarVisible] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const today = new Date();
+    return today.toISOString().split("T")[0]; // "2025-06-10" format
+  });
   const [selectedData, setSelectedData] = useState(null);
   const [open, setOpen] = useState(false);
   const [isPieChart, setIsPieChart] = useState(true);
   const [clientData, setClientData] = useState(null);
   const [multiple_ass, setMultipleAssos] = useState([]);
   const [selectedSite, setSelectedSite] = useState(null);
-  const [selectedSiteName, setSelectedSiteName] = useState(null);
   const [siteWiseData, setSiteWiseData] = useState([]);
   const [count, setCount] = useState(0);
   const [overallAttendance, setOverallAttendance] = useState(null);
@@ -90,7 +93,6 @@ const ClientDashboard = () => {
   const [barChartData, setBarChartData] = useState([0, 0, 0]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [Location, setLocation] = useState([]);
-  // const [selectedSiteName, setSelectedSiteName] = useState(null);
 
 
   const lastName = JSON.parse(localStorage.getItem("LASTNAME") || '""');
@@ -110,404 +112,42 @@ const ClientDashboard = () => {
 
 
   const empId = localStorage.getItem("HRMS_EMPLOYEE_ID");
-  const fetchAttendanceCount = async (dateParam = selectedDate) => {
+  const fetchAttendanceCount = async () => {
     try {
       if (!empId) return;
 
 
-      const formattedDate = `${dateParam.getFullYear()}-${String(
-        dateParam.getMonth() + 1
-      ).padStart(2, "0")}-${String(dateParam.getDate()).padStart(2, "0")}`;
-
-
-      const response = await getCountOfClientDashboard(empId, formattedDate);
+      const response = await getCountOfClientDashboard(empId, selectedDate);
       setAttendanceCount(response);
-      return response;
+      console.log(response);
+      setPieChartData([
+        { name: "Head Count", y: response.total_employees, color: "#f97316" },
+        {
+          name: "Present",
+          y: response.multiple_associated_present_today,
+          color: "#10b981",
+        },
+        {
+          name: "Absent",
+          y:
+            response.total_employees -
+            response.multiple_associated_present_today,
+          color: "#3b82f6",
+        },
+      ]);
     } catch (error) {
       console.error("Error fetching attendance count:", error);
       return null;
     }
   };
-
-
-  const fetchSiteLocationData = async (siteLocation, selectedDate) => {
-    try {
-      const formattedDate = `${selectedDate.getFullYear()}-${String(
-        selectedDate.getMonth() + 1
-      ).padStart(2, "0")}-${String(selectedDate.getDate()).padStart(2, "0")}`;
-
-
-      const updatedSites = await Promise.all(
-        siteLocation.map(async (site) => {
-          const siteRes = await getSiteWiseAttendance(site.id, formattedDate);
-          const presentCount = siteRes.attended_employee_count;
-          const totalEmployeeCount = siteRes.total_employees;
-          const absentCount = totalEmployeeCount - presentCount;
-
-
-          return {
-            id: site.id,
-            siteName: site.site_name,
-            presentCount,
-            totalEmployeeCount,
-            absentCount,
-          };
-        })
-      );
-
-
-      setLocation(updatedSites);
-      return updatedSites;
-    } catch (error) {
-      console.error("Error fetching site data:", error);
-      throw error;
+  useEffect(() => {
+    if (!selectedSite) {
+      fetchAttendanceCount();
     }
-  };
+  }, [selectedSite]);
 
 
-  const handleSiteDateChange = async (date) => {
-    setSelectedDate(date);
-    await fetchSiteLocationData(Location, date);
-    await fetchClientDashboardData(date);
-  };
   const orgId = localStorage.getItem("HRMSORGID");
-  const fetchClientDashboardData = async (dateParam = selectedDate) => {
-    try {
-      setIsLoading(true);
-      const empId = localStorage.getItem("HRMS_EMPLOYEE_ID");
-      const orgId = localStorage.getItem("HRMSORGID");
-
-
-      if (!empId || !orgId) {
-        throw new Error("Employee ID or Organization ID not found");
-      }
-
-
-      const formattedDate = `${dateParam.getFullYear()}-${String(
-        dateParam.getMonth() + 1
-      ).padStart(2, "0")}-${String(dateParam.getDate()).padStart(2, "0")}`;
-
-
-      const [clientDataResponse, countResponse, allAttendance, hrmsAdminData] =
-        await Promise.all([
-          getClientDashboard(empId),
-          fetchAttendanceCount(dateParam),
-          getAssociatedOrgDash(empId, formattedDate),
-          getEmployeeJobInfo(empId),
-        ]);
-
-
-      setClientData(clientDataResponse);
-      setAttendanceCount(countResponse);
-
-
-      const total_employee = allAttendance.total_employees || 0;
-      const total_present = allAttendance.total_present || 0;
-      const total_absent = Math.max(total_employee - total_present, 0);
-
-
-      setOverallAttendance({
-        total_employee,
-        total_present,
-        total_absent,
-        attendanceRecord: allAttendance.attendance[0] || null,
-      });
-
-
-      const attendanceRecords = allAttendance.attendance || [];
-      const presentIds = attendanceRecords.map((record) => record.employee_id);
-
-
-      const checkIn = attendanceRecords
-        .filter((item) => item.is_check_in === true)
-        .map(
-          ({
-            is_check_in,
-            attendance_time,
-            first_name,
-            last_name,
-            employee_id,
-            shift,
-          }) => ({
-            is_check_in,
-            attendance_time,
-            first_name,
-            last_name,
-            employee_id,
-            shiftName: shift?.shift_name || "No Shift",
-          })
-        );
-      setCheckInData(checkIn);
-
-
-      const checkOut = attendanceRecords
-        .filter((item) => item.is_check_in === false)
-        .map(
-          ({
-            is_check_in,
-            attendance_time,
-            first_name,
-            last_name,
-            employee_id,
-            shift,
-          }) => ({
-            is_check_in,
-            attendance_time,
-            first_name,
-            last_name,
-            employee_id,
-            shiftName: shift?.shift_name || "No Shift",
-          })
-        );
-      setCheckOutData(checkOut);
-
-
-      const AllEmpRecord = clientDataResponse.map((client) => {
-        const empName =
-          `${client.first_name || ""} ${client.last_name || ""}`.trim() ||
-          "N/A";
-
-
-        const empCheckInData = checkIn.filter(
-          (record) => String(record.employee_id) === String(client.id)
-        );
-        const empCheckOutData = checkOut.filter(
-          (record) => String(record.employee_id) === String(client.id)
-        );
-
-
-        const status = empCheckInData.length > 0 ? "Present" : "Absent";
-        const checkInTime =
-          status === "Present"
-            ? empCheckInData[0]?.attendance_time || "__"
-            : "__";
-        const checkOutTime =
-          status === "Present"
-            ? empCheckOutData[0]?.attendance_time || "__"
-            : "__";
-
-
-        return {
-          id: client.id,
-          empName,
-          status,
-          date: formattedDate,
-          checkInTime,
-          checkOutTime,
-        };
-      });
-
-
-      setFullOverallAttendanceRecords(AllEmpRecord);
-      setFilteredOverallAttendanceRecords(AllEmpRecord);
-
-
-      const siteLocation = hrmsAdminData[0]?.multiple_associated_info || [];
-      const siteNamesResult = siteLocation.map((site) => ({
-        id: site.id,
-        siteName: site.site_name,
-      }));
-
-
-      setMultipleAssos(siteNamesResult);
-      await fetchSiteLocationData(siteLocation, selectedDate);
-
-
-      setPieChartData([
-        { name: "Head Count", y: total_employee, color: "#f97316" },
-        { name: "Present", y: total_present, color: "#10b981" },
-        { name: "Absent", y: total_absent, color: "#3b82f6" },
-      ]);
-      setBarChartData([total_employee, total_present, total_absent]);
-      setCount(total_employee);
-    } catch (error) {
-      console.error("Error fetching client dashboard:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-
-  const fetchSiteData = async (siteId, dateParam = selectedDate) => {
-    try {
-      const formattedDate = `${dateParam.getFullYear()}-${String(
-        dateParam.getMonth() + 1
-      ).padStart(2, "0")}-${String(dateParam.getDate()).padStart(2, "0")}`;
-
-
-      const attendanceRes = await getAssocaitedSitesAttendance(
-        siteId,
-        formattedDate,
-        formattedDate
-      );
-
-
-      const attendanceData = attendanceRes.results;
-      const attendanceRecords = attendanceData.attendance_data || [];
-
-
-      const headCount = attendanceData.total_employees || 0;
-      const presentCount = attendanceData.attended_employee_count || 0;
-      const absentCount = headCount - presentCount;
-
-
-      setPieChartData([
-        { name: "Head Count", y: headCount, color: "#f97316" },
-        { name: "Present", y: presentCount, color: "#10b981" },
-        { name: "Absent", y: absentCount, color: "#3b82f6" },
-      ]);
-      setBarChartData([headCount, presentCount, absentCount]);
-      setCount(headCount);
-
-
-      const employeeRecords = {};
-
-
-      attendanceRecords.forEach((record) => {
-        const empId = record.employee;
-        if (!employeeRecords[empId]) {
-          employeeRecords[empId] = {
-            id: empId,
-            empName:
-              `${record.employee__first_name || ""} ${
-                record.employee__last_name || ""
-              }`.trim() || "N/A",
-            checkInTime: null,
-            checkOutTime: null,
-            status: "Absent",
-            userImage: record.user_image,
-          };
-        }
-
-
-        if (record.is_check_in) {
-          employeeRecords[empId].checkInTime = record.attendance_time;
-          employeeRecords[empId].status = "Present";
-        } else {
-          employeeRecords[empId].checkOutTime = record.attendance_time;
-        }
-      });
-
-
-      const tableRecords = Object.values(employeeRecords).map((record) => ({
-        ...record,
-        shiftName: "No Shift",
-      }));
-
-
-      setAttendanceTableRecords(tableRecords);
-      setFullSiteAttendanceRecords(tableRecords);
-      setFilteredSiteAttendanceRecords(tableRecords);
-
-
-      const presentEmployeeIds = attendanceRecords
-        .filter((record) => record.is_check_in)
-        .map((record) => record.employee);
-
-
-      setAbsentRecord({
-        absentrecord: tableRecords.filter(
-          (record) => !presentEmployeeIds.includes(record.id)
-        ),
-      });
-    } catch (error) {
-      console.error("Error fetching site attendance data:", error);
-    }
-  };
-
-
-  const handlePresentEmpSiteWise = () => {
-    const presentRecords = fullSiteAttendanceRecords.filter(
-      (record) => record.status === "Present"
-    );
-    setFilteredSiteAttendanceRecords(presentRecords);
-  };
-
-
-  const handleAbsentEmpSiteWise = () => {
-    const absentRecords = fullSiteAttendanceRecords.filter(
-      (record) => record.status === "Absent"
-    );
-    setFilteredSiteAttendanceRecords(absentRecords);
-  };
-
-
-  const handleOverallAll = () => {
-    setFilteredOverallAttendanceRecords(fullOverallAttendanceRecords);
-  };
-
-
-  const handleOverallPresent = () => {
-    const presentRecords = fullOverallAttendanceRecords.filter(
-      (record) => record.status === "Present"
-    );
-    setFilteredOverallAttendanceRecords(presentRecords);
-  };
-
-
-  const handleOverallAbsent = () => {
-    const absentRecords = fullOverallAttendanceRecords.filter(
-      (record) => record.status === "Absent"
-    );
-    setFilteredOverallAttendanceRecords(absentRecords);
-  };
-
-
-  const handleAllEmpSiteWise = () => {
-    setFilteredSiteAttendanceRecords(fullSiteAttendanceRecords);
-  };
-
-
-  const handleChange = async (event) => {
-    const selectedSiteId = event.target.value;
-
-
-    setSelectedSite(selectedSiteId || null);
-    if (selectedSiteId) {
-      await fetchSiteData(selectedSiteId, selectedDate);
-    } else {
-      await fetchClientDashboardData(selectedDate);
-      setFilteredOverallAttendanceRecords(fullOverallAttendanceRecords);
-
-
-      if (overallAttendance) {
-        setCount(overallAttendance.total_employee);
-        setPieChartData([
-          {
-            name: "Head Count",
-            y: overallAttendance.total_employee,
-            color: "#f97316",
-          },
-          {
-            name: "Present",
-            y: overallAttendance.total_present,
-            color: "#10b981",
-          },
-          {
-            name: "Absent",
-            y: overallAttendance.total_absent,
-            color: "#3b82f6",
-          },
-        ]);
-        setBarChartData([
-          overallAttendance.total_employee,
-          overallAttendance.total_present,
-          overallAttendance.total_absent,
-        ]);
-      }
-    }
-  };
-
-
-  const handleDateChange = (date) => {
-    setSelectedDate(date);
-    setIsCalendarVisible(false);
-    if (selectedSite) {
-      fetchSiteData(selectedSite, date);
-    } else {
-      fetchClientDashboardData(date);
-    }
-  };
 
 
   const handleSliceClick = (event) => {
@@ -515,19 +155,22 @@ const ClientDashboard = () => {
   };
 
 
-  const pieOptions = {
-    chart: { type: "pie" },
-    title: { text: "Head Count Status" },
-    plotOptions: {
-      pie: {
-        allowPointSelect: true,
-        cursor: "pointer",
-        dataLabels: { enabled: true },
-        events: { click: handleSliceClick },
+  const pieOptions = useMemo(
+    () => ({
+      chart: { type: "pie" },
+      title: { text: "Head Count Status" },
+      plotOptions: {
+        pie: {
+          allowPointSelect: true,
+          cursor: "pointer",
+          dataLabels: { enabled: true },
+          events: { click: handleSliceClick },
+        },
       },
-    },
-    series: [{ name: "Employees", data: pieChartData }],
-  };
+      series: [{ name: "Employees", data: pieChartData }],
+    }),
+    [pieChartData]
+  );
 
 
   const barChartOptions = {
@@ -547,11 +190,6 @@ const ClientDashboard = () => {
   };
 
 
-  useEffect(() => {
-    fetchClientDashboardData();
-  }, []);
-
-
   const renderCell = (data) => {
     if (isLoading) return "Loading...";
     return data !== undefined && data !== null ? data : "Fetching Data..";
@@ -561,6 +199,31 @@ const ClientDashboard = () => {
   const handleLocation = () => {
     setIsModalOpen(true);
   };
+
+
+  const [sites, setSites] = useState([]);
+
+
+  const fetchAssociatedSites = async () => {
+    try {
+      const res = await getEmployeeAssociations(empId);
+      console.log(res);
+
+
+      if (Array.isArray(res) && res.length > 0) {
+        const associatedSites = res[0].multiple_associated_info || [];
+        console.log(associatedSites);
+        setSites(associatedSites);
+      } else {
+        setSites([]);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(() => {
+    fetchAssociatedSites();
+  }, []);
 
 
   const [dashboardSummary, setDashboardSummary] = useState([]);
@@ -587,6 +250,7 @@ const ClientDashboard = () => {
         pageNumber + 1,
         summaryDate
       );
+      console.log(res);
       setDashboardSummary(res.results.data);
       setAggregateSummary(res.results);
       setTotalPages(res.total_pages);
@@ -616,7 +280,7 @@ const ClientDashboard = () => {
       link.href = url;
 
 
-      link.download = `${siteName}-${start_date}.xlsx`;
+      link.download = `${siteName ? siteName : siteId}-${start_date}.xlsx`;
 
 
       document.body.appendChild(link);
@@ -664,6 +328,86 @@ const ClientDashboard = () => {
   };
 
 
+  const [allSitesAttendance, setAllSiteAttendance] = useState([]);
+  const [totalAllDataPages, setTotalAllDataPages] = useState(0);
+  const [totalAllPageNumber, setTotalAllPageNumber] = useState(0);
+  const [selectedAllSitesStatus, setSelectedAllSiteStatus] = useState("all");
+  const fetchAllSitesAttendance = async () => {
+    try {
+      const response = await getAllSitesAttendance(
+        empId,
+        selectedDate,
+        totalAllPageNumber + 1,
+        selectedAllSitesStatus
+      );
+      console.log(response);
+
+
+      setTotalAllDataPages(response.data.total_pages);
+      setAllSiteAttendance(response.data.results);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(() => {
+    fetchAllSitesAttendance();
+    console.log(selectedData);
+  }, [totalAllPageNumber, selectedDate, empId, selectedAllSitesStatus]);
+
+
+  const [siteWiseAttendance, setSiteWiseAttendance] = useState([]);
+  const [siteWisePageNumber, setSiteWisePageNumber] = useState(0);
+  const [siteWiseTotalPages, setSiteWiseTotalPages] = useState(0);
+  const [siteWiseStatus, setSiteWiseStatus] = useState("all");
+  const [siteWiseHeadCount, setSiteWiseHeadCount] = useState(0);
+  const [siteWisePresent, setSiteWisePresent] = useState(0);
+  const [siteWiseAbsent, setSiteWiseAbsent] = useState(0);
+  const fetchSiteWiseAttendance = async () => {
+    try {
+      if (selectedSite) {
+        const res = await getSiteWiseAttendanceData(
+          selectedSite,
+          selectedDate,
+          siteWisePageNumber + 1,
+          siteWiseStatus
+        );
+        console.log("running");
+        if (res.status === 200) {
+          setSiteWiseAttendance(res?.data?.results?.data);
+          setSiteWiseHeadCount(res?.data?.results?.site_employee_count);
+          setSiteWisePresent(res?.data?.results?.present_count);
+          setSiteWiseAbsent(res?.data?.results?.absent_count);
+          setSiteWiseTotalPages(res?.data?.total_pages);
+          setPieChartData([
+            {
+              name: "Head Count",
+              y: res?.data?.results?.site_employee_count,
+              color: "#f97316",
+            },
+            {
+              name: "Present",
+              y: res?.data?.results?.present_count,
+              color: "#10b981",
+            },
+            {
+              name: "Absent",
+              y: res?.data?.results?.absent_count,
+              color: "#3b82f6",
+            },
+          ]);
+        }
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+
+  useEffect(() => {
+    fetchSiteWiseAttendance();
+  }, [selectedSite, selectedDate, siteWisePageNumber, siteWiseStatus]);
+
+
   return (
     <div className="flex flex-col h-screen relative">
       <nav
@@ -672,18 +416,18 @@ const ClientDashboard = () => {
       >
         <div className="text-2xl font-bold pl-16">Dashboard</div>
         <div className="flex items-center space-x-4">
-          {multiple_ass.length === 0 ? (
+          {sites.length === 0 ? (
             <p className="text-grey-500">No site associated</p>
           ) : (
             <select
               className="text-black px-6 py-2"
-              onChange={handleChange}
+              onChange={(e) => setSelectedSite(e.target.value)}
               value={selectedSite || ""}
             >
               <option value="">Select All Sites</option>
-              {multiple_ass.map((asso, index) => (
-                <option key={index} value={asso.id}>
-                  {asso.siteName}
+              {sites.map((site, index) => (
+                <option key={site.id} value={site.id}>
+                  {site.site_name}
                 </option>
               ))}
             </select>
@@ -721,17 +465,17 @@ const ClientDashboard = () => {
           <div className="grid grid-cols-6 gap-2 mb-4">
             {selectedSite ? (
               <>
-                <div className="border bg-white p-4 p-2 rounded-lg transition-colors duration-300 cursor-pointer text-center">
+                <div className="border bg-white p-4  rounded-lg transition-colors duration-300 cursor-pointer text-center">
                   <h3 className="font-semibold text-lg">Head Count</h3>
-                  <p>{count}</p>
+                  <p>{siteWiseHeadCount}</p>
                 </div>
                 <div className="border bg-white p-4 rounded-lg transition-colors duration-300 cursor-pointer text-center">
                   <h3 className="font-semibold text-lg">Present</h3>
-                  <p>{barChartData[1]}</p>
+                  <p>{siteWisePresent}</p>
                 </div>
                 <div className="border bg-white p-4 rounded-lg transition-colors duration-300 cursor-pointer text-center">
                   <h3 className="font-semibold text-lg">Absent</h3>
-                  <p>{barChartData[2]}</p>
+                  <p>{siteWiseAbsent}</p>
                 </div>
               </>
             ) : (
@@ -760,8 +504,8 @@ const ClientDashboard = () => {
                 <div className="border bg-white p-4 rounded-lg transition-colors duration-300 cursor-pointer text-center">
                   <h3 className="font-semibold text-lg">Total Absent</h3>
                   <p>
-                    {attendanceCount?.total_employees -
-                      attendanceCount?.multiple_associated_present_today}
+                    {(attendanceCount?.total_employees ?? 0) -
+                      (attendanceCount?.multiple_associated_present_today ?? 0)}
                   </p>
                 </div>
               </>
@@ -906,11 +650,12 @@ const ClientDashboard = () => {
             <div className="bg-white p-2 rounded-lg mt-4">
               <div className="text-end">
                 <input
-                  type="text"
-                  value={selectedDate.toLocaleDateString()}
-                  readOnly
-                  onClick={() => setIsCalendarVisible(true)}
-                  className="cursor-pointer pl-2 bg-transparent text-lg font-semibold border border-gray-500 focus:outline-none"
+                  type="date"
+                  name=""
+                  value={selectedDate}
+                  id=""
+                  className=" top-10 right-10 bg-white rounded-lg p-2 border border-gray-200 z-50 w-[300px] "
+                  onChange={(e) => setSelectedDate(e.target.value)}
                 />
               </div>
               {isPieChart ? (
@@ -919,7 +664,7 @@ const ClientDashboard = () => {
                     highcharts={Highcharts}
                     options={pieOptions}
                   />
-                  <div className="text-center mt-4">
+                  {/* <div className="text-center mt-4">
                     <a
                       href="#"
                       onClick={(e) => {
@@ -930,7 +675,7 @@ const ClientDashboard = () => {
                     >
                       Site View
                     </a>
-                  </div>
+                  </div> */}
                 </>
               ) : (
                 <>
@@ -954,10 +699,12 @@ const ClientDashboard = () => {
             {isCalendarVisible && (
               <div className="absolute top-20 right-10 bg-white rounded-lg p-4 border border-gray-200 z-50 w-[300px] h-[300px]">
                 <Calendar
-                  onChange={handleDateChange}
+                  // onChange={handleDateChange}
                   value={selectedDate}
                   className="react-calendar p-0 w-full h-full overflow-y-auto"
                 />
+
+
                 <button
                   onClick={() => setIsCalendarVisible(false)}
                   className="mt-4 text-sm py-1 px-2 bg-red-500 rounded-lg text-white"
@@ -976,19 +723,19 @@ const ClientDashboard = () => {
                 <div className="flex items-center justify-between">
                   <div className="mb-4 flex gap-4">
                     <button
-                      onClick={handleOverallAll}
+                      onClick={() => setSelectedAllSiteStatus("all")}
                       className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
                     >
                       All
                     </button>
                     <button
-                      onClick={handleOverallPresent}
+                      onClick={() => setSelectedAllSiteStatus("present")}
                       className="px-4 py-2 bg-green-300 rounded hover:bg-green-400"
                     >
                       Present
                     </button>
                     <button
-                      onClick={handleOverallAbsent}
+                      onClick={() => setSelectedAllSiteStatus("absent")}
                       className="px-4 py-2 bg-red-300 rounded hover:bg-red-400"
                     >
                       Absent
@@ -996,11 +743,7 @@ const ClientDashboard = () => {
                   </div>
                   <button
                     className="bg-green-400 p-2 px-4 text-sm font-medium rounded-md text-white flex items-center gap-2"
-                    onClick={() =>
-                      handleDownloadAllSitesReport(
-                        selectedDate.toISOString().split("T")[0]
-                      )
-                    }
+                    onClick={() => handleDownloadAllSitesReport(selectedDate)}
                   >
                     <RiFileExcel2Line size={18} /> Report
                   </button>
@@ -1008,39 +751,61 @@ const ClientDashboard = () => {
                 <table className="w-full border-collapse">
                   <thead>
                     <tr>
-                      <th className="border px-4 py-2">Employee</th>
-                      <th className="border px-4 py-2">Status</th>
-                      <th className="border px-4 py-2">Check In</th>
-                      <th className="border px-4 py-2">Check Out</th>
+                      <th className="border px-4 py-2 font-medium">Employee</th>
+                      <th className="border px-4 py-2 font-medium">Status</th>
+                      <th className="border px-4 py-2 font-medium">Check In</th>
+                      <th className="border px-4 py-2 font-medium">
+                        Check Out
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredOverallAttendanceRecords.map((record) => (
+                    {allSitesAttendance?.map((record) => (
                       <tr key={record.id}>
-                        <td className="border px-4 py-2">{record.empName}</td>
+                        <td className="border px-4 py-2">{`${record?.first_name} ${record?.last_name}`}</td>
                         <td
                           className={`border px-4 py-2 text-center ${
-                            record.status === "Absent"
-                              ? "text-red-500"
-                              : "text-green-500"
+                            record?.attendance.length > 0
+                              ? "text-green-500"
+                              : "text-red-500"
                           }`}
                         >
-                          {record.status}
+                          {record?.attendance.length > 0 ? "Present" : "Absent"}
                         </td>
                         <td className="border px-4 py-2 text-center">
-                          {record.checkInTime
-                            ? formatTime(record.checkInTime)
-                            : "__"}
+                          {record?.attendance[0]?.is_check_in
+                            ? formatTime(record?.attendance[0]?.attendance_time)
+                            : "--"}
                         </td>
                         <td className="border px-4 py-2 text-center">
-                          {record.checkOutTime
-                            ? formatTime(record.checkOutTime)
-                            : "__"}
+                          {!record?.attendance[0]?.is_check_in
+                            ? formatTime(
+                                record.attendance[record.attendance.length - 1]
+                                  ?.attendance_time
+                              )
+                            : "--"}
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+                {allSitesAttendance.length > 0 && (
+                  <div
+                    className={
+                      "w-full mt- flex justify-end border rounded-md p-2"
+                    }
+                  >
+                    <Pagination
+                      current={totalAllPageNumber + 1}
+                      total={totalAllDataPages * 10}
+                      pageSize={10}
+                      onChange={(page) => {
+                        setTotalAllPageNumber(page - 1);
+                      }}
+                      showSizeChanger={false}
+                    />
+                  </div>
+                )}
               </div>
             )}
 
@@ -1053,19 +818,19 @@ const ClientDashboard = () => {
                 <div className="mb-4 flex justify-between">
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={handleAllEmpSiteWise}
+                      onClick={() => setSiteWiseStatus("all")}
                       className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
                     >
                       All
                     </button>
                     <button
-                      onClick={handlePresentEmpSiteWise}
+                      onClick={() => setSiteWiseStatus("present")}
                       className="px-4 py-2 bg-green-300 rounded hover:bg-green-400"
                     >
                       Present
                     </button>
                     <button
-                      onClick={handleAbsentEmpSiteWise}
+                      onClick={() => setSiteWiseStatus("absent")}
                       className="px-4 py-2 bg-red-300 rounded hover:bg-red-400"
                     >
                       Absent
@@ -1079,8 +844,9 @@ const ClientDashboard = () => {
                       handleDownloadSummaryReport(
                         selectedSite,
                         orgId,
-                        selectedDate.toISOString().split("T")[0],
-                        // summary.site_name
+                        selectedDate,
+
+
                         multiple_ass.find((site) => site.id == selectedSite)
                           ?.siteName
                       )
@@ -1098,47 +864,55 @@ const ClientDashboard = () => {
                       <th className="border px-4 py-2">Status</th>
                       <th className="border px-4 py-2">Check In</th>
                       <th className="border px-4 py-2">Check Out</th>
-                      <th className="border px-4 py-2">Image</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredSiteAttendanceRecords.map((record) => (
-                      <tr key={record.id}>
-                        <td className="border px-4 py-2">{record.empName}</td>
+                    {siteWiseAttendance?.map((record) => (
+                      <tr key={record.employee_id}>
+                        <td className="border px-4 py-2">{`${record?.first_name} ${record?.last_name}`}</td>
                         <td
                           className={`border px-4 py-2 text-center ${
-                            record.status === "Absent"
-                              ? "text-red-500"
-                              : "text-green-500"
+                            record?.attendance.length > 0
+                              ? "text-green-500"
+                              : "text-red-500"
                           }`}
                         >
-                          {record.status}
+                          {record?.attendance.length > 0 ? "Present" : "Absent"}
                         </td>
                         <td className="border px-4 py-2 text-center">
-                          {record.checkInTime
-                            ? formatTime(record.checkInTime)
-                            : "__"}
+                          {record?.attendance[0]?.is_check_in
+                            ? formatTime(record?.attendance[0]?.attendance_time)
+                            : "--"}
                         </td>
                         <td className="border px-4 py-2 text-center">
-                          {record.checkOutTime
-                            ? formatTime(record.checkOutTime)
-                            : "__"}
-                        </td>
-                        <td className="border px-4 py-2 text-center">
-                          {record.userImage ? (
-                            <img
-                              src={record.userImage}
-                              alt="Employee"
-                              className="w-10 h-10 rounded-full mx-auto"
-                            />
-                          ) : (
-                            "No Image"
-                          )}
+                          {!record?.attendance[0]?.is_check_in
+                            ? formatTime(
+                                record.attendance[record.attendance.length - 1]
+                                  ?.attendance_time
+                              )
+                            : "--"}
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+                {siteWiseAttendance?.length > 0 && (
+                  <div
+                    className={
+                      "w-full mt- flex justify-end border rounded-md p-2"
+                    }
+                  >
+                    <Pagination
+                      current={siteWisePageNumber + 1}
+                      total={siteWiseTotalPages * 10}
+                      pageSize={10}
+                      onChange={(page) => {
+                        setSiteWisePageNumber(page - 1);
+                      }}
+                      showSizeChanger={false}
+                    />
+                  </div>
+                )}
               </div>
             )}
           </div>
