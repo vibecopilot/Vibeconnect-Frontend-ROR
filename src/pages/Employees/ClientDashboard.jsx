@@ -37,7 +37,7 @@ import { BsFileExcel } from "react-icons/bs";
 import { RiFileExcel2Line } from "react-icons/ri";
 import toast from "react-hot-toast";
 
-    const ClientDashboard = () => {
+const ClientDashboard = () => {
   const navigate = useNavigate();
   const employee_id = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
 
