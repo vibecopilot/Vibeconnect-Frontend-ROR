@@ -246,7 +246,7 @@ const AssociateAssetChecklist = () => {
     const [selectedUsers, setSelectedUsers] = useState([]);
     console.log("Association Data", associationData);
 
-    const userName = associationData?.assigned_to
+    const userName = associationData?.assigned_to;
     const assetName = associationData?.asset_name;
 
     const { id } = useParams();
@@ -268,27 +268,44 @@ const AssociateAssetChecklist = () => {
       }
     }, [associationData]);
     useEffect(() => {
-  if (show) {
-    setSelectedAssets([]);
-    setSelectedUsers([]);
-  }
-}, [show]);
+      if (show) {
+        setSelectedAssets([]);
+        setSelectedUsers([]);
+      }
+    }, [show]);
     const handleSubmit = async () => {
       const assetId =
         selectedAssets && selectedAssets.length > 0
           ? selectedAssets.map((a) => a.value)
-          : [associationData.asset_id];
+          : associationData.asset_id
+          ? [associationData.asset_id]
+          : [];
 
       const assignedTo =
         selectedUsers && selectedUsers.length > 0
           ? selectedUsers.map((u) => u.value)
           : Array.isArray(associationData.assigned_to)
           ? associationData.assigned_to
-          : [associationData.assigned_to];
+          : associationData.assigned_to
+          ? [associationData.assigned_to]
+          : [];
 
-      const checklistIdd = id; // from useParams or props
-      console.log("Asset ID:", assetId);
-      console.log("Checklist ID:", checklistIdd);
+      const checklistIdd = id;
+
+      if (!assetId || assetId.length === 0) {
+        toast.error("Please select at least one asset.");
+        return;
+      }
+
+      if (!assignedTo || assignedTo.length === 0) {
+        toast.error("Please assign to at least one user.");
+        return;
+      }
+
+      if (!checklistIdd) {
+        toast.error("Checklist ID is missing.");
+        return;
+      }
 
       const payload = {
         asset_ids: assetId,
@@ -317,7 +334,7 @@ const AssociateAssetChecklist = () => {
             Edit Association:{" "}
             <p className="text-sm text-gray-500">
               {assetName} - {userName}
-              </p>
+            </p>
           </h2>
           <div className="mb-4">
             <label className="font-semibold">
