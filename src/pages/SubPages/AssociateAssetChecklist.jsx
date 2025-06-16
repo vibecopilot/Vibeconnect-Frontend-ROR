@@ -249,6 +249,27 @@ const AssociateAssetChecklist = () => {
     const userName = associationData?.assigned_to;
     const assetName = associationData?.asset_name;
 
+    const validateForm = ({ asset_ids, assigned_to, checklist_id }) => {
+      toast.dismiss(); // clear previous toasts
+
+      if (!asset_ids || asset_ids.length === 0) {
+        toast.error("Please select at least one asset and assign to at least one user.");
+        return false;
+      }
+
+      if (!assigned_to || assigned_to.length === 0) {
+        toast.error("Please assign to at least one user.");
+        return false;
+      }
+
+      if (!checklist_id) {
+        toast.error("Checklist ID is missing.");
+        return false;
+      }
+
+      return true; // if everything passes
+    };
+
     const { id } = useParams();
     console.log("IDDDDDD", id);
     useEffect(() => {
@@ -292,26 +313,15 @@ const AssociateAssetChecklist = () => {
 
       const checklistIdd = id;
 
-      if (!assetId || assetId.length === 0) {
-        toast.error("Please select at least one asset.");
-        return;
-      }
-
-      if (!assignedTo || assignedTo.length === 0) {
-        toast.error("Please assign to at least one user.");
-        return;
-      }
-
-      if (!checklistIdd) {
-        toast.error("Checklist ID is missing.");
-        return;
-      }
-
       const payload = {
         asset_ids: assetId,
         assigned_to: assignedTo,
         checklist_id: checklistIdd,
       };
+
+      if (!validateForm(payload)) {
+        return;
+      }
 
       try {
         const update = await updateActivity(associationData.id, payload);
@@ -338,7 +348,7 @@ const AssociateAssetChecklist = () => {
           </h2>
           <div className="mb-4">
             <label className="font-semibold">
-              Asset <span>*</span>{" "}
+              Asset <span className="red-500">*</span>{" "}
             </label>
             <Select
               isMulti
@@ -349,13 +359,14 @@ const AssociateAssetChecklist = () => {
           </div>
           <div className="mb-4">
             <label className="font-semibold">
-              Assigned To <span>*</span>
+              Assigned To <span className="red-500">*</span>
             </label>
             <Select
               isMulti
+              required
               options={assignedTo}
               value={selectedUsers}
-              onChange={(selected) => setSelectedUsers(selected)}
+              onChange={setSelectedUsers}
             />
           </div>
           <div className="flex justify-end gap-2">
