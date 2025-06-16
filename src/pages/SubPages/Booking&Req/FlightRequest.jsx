@@ -9,30 +9,65 @@ import Navbar from "../../../components/Navbar";
 import { BiEdit } from "react-icons/bi";
 import { TiTick } from "react-icons/ti";
 import { IoAddCircleOutline, IoClose } from "react-icons/io5";
-import { getFlightTicketRequest } from "../../../api";
+import {
+  getFlightTicketRequest,
+  getFilterFlightTicketRequest,
+  flightApproval,
+} from "../../../api";
 import BookingRequestNav from "./BookingRequestnav";
 
 const FlightRequest = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [FlightrequestsData, setFlightrequestsData] = useState([]);
+  const [approved, setApproved] = useState(true);
   const themeColor = useSelector((state) => state.theme.color);
+
   useEffect(() => {
     const fetchFlightRequest = async () => {
       try {
-        const response = await getFlightTicketRequest();
-        const flightreqresp = response.data.sort((a, b) => {
+        let flightreqresp;
+        if (selectedStatus === "all") {
+          const response = await getFlightTicketRequest();
+          flightreqresp = response.data;
+        } else {
+          const response = await getFilterFlightTicketRequest(approved);
+          flightreqresp = response.data;
+        }
+
+        // Sorting flightreqresp by created_at in descending order
+        flightreqresp = flightreqresp.sort((a, b) => {
           return new Date(b.created_at) - new Date(a.created_at);
         });
-        console.log("response from api", flightreqresp);
 
+        console.log("response from API", flightreqresp);
+
+        // Assuming you want to set the sorted flight request data
         setFlightrequestsData(flightreqresp);
       } catch (err) {
         console.error("Failed to fetch flight request data:", err);
       }
     };
 
-    fetchFlightRequest(); // Call the API
-  }, []);
+    fetchFlightRequest();
+  }, [selectedStatus, approved]);
+
+  // useEffect(() => {
+  //   const fetchFlightRequest = async () => {
+  //     try {
+  //       const response = await getFlightTicketRequest();
+  //       const flightreqresp = response.data.sort((a, b) => {
+  //         return new Date(b.created_at) - new Date(a.created_at);
+  //       });
+  //       console.log("response from api", flightreqresp);
+
+  //       setFlightrequestsData(flightreqresp);
+  //     } catch (err) {
+  //       console.error("Failed to fetch flight request data:", err);
+  //     }
+  //   };
+
+  //   fetchFlightRequest(); // Call the API
+  // }, []);
 
   // Handle status change function
   const handleStatusChange = (status) => {
@@ -40,6 +75,22 @@ const FlightRequest = () => {
     // Implement logic to filter data based on status
   };
 
+  const handleApproval = async (id, decision) => {
+    const approveData = new FormData();
+    approveData.append("flight_request[booking_status]", decision);
+    try {
+      const res = await flightApproval(id, approveData);
+      console.log(approveData);
+      setApproved((prev) => !prev);
+      if (decision === true) {
+        toast.success("Booking successfully");
+      } else {
+        toast.success("Approval denied");
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
   // Define columns for the table
   const columns = [
     {
@@ -55,11 +106,11 @@ const FlightRequest = () => {
         </div>
       ),
     },
-    {
-      name: "Employee ID",
-      selector: (row) => row.employee_id,
-      sortable: true,
-    },
+    // {
+    //   name: "Employee ID",
+    //   selector: (row) => row.employee_id,
+    //   sortable: true,
+    // },
     {
       name: "Employee Name",
       selector: (row) => row.employee_name,
@@ -91,12 +142,12 @@ const FlightRequest = () => {
       sortable: true,
     },
     {
-      name: "Ticket Confirmation Number",
-      selector: (row) => row.ticket_confirmation_number,
+      name: "Mobile Number",
+      selector: (row) => row.mobile_no,
       sortable: true,
     },
     {
-      name: "Booking Confirmation Email",
+      name: "Email",
       selector: (row) => row.booking_confirmation_email,
       sortable: true,
     },
@@ -106,9 +157,12 @@ const FlightRequest = () => {
       sortable: true,
     },
     {
-      name: "Passenger Name",
-      selector: (row) => row.passenger_name,
-      sortable: true,
+      name: "Additional Passengers",
+      selector: (row) =>
+        row.additional_passengers
+          ?.map((passenger) => passenger.name)
+          .join(", ") || "No Passengers",
+      sortable: false, // Sorting might not be straightforward for multiple names
     },
     {
       name: "Passport Information",
@@ -117,31 +171,45 @@ const FlightRequest = () => {
     },
     {
       name: "Manager Approval",
-      selector: (row) => (row.manager_approval ? "Approved" : "Not Approved"),
-      sortable: true,
-    },
-
-    {
-      name: "Booking Status",
-      selector: (row) => row.booking_status,
+      selector: (row) => (row.manager_approval ? "Yes" : "No"),
       sortable: true,
     },
 
     // {
-    //   name: "Approval",
-    //   selector: (row) =>
-
-    //       <div className="flex justify-center gap-2">
-    //         <button className="text-green-400 font-medium hover:bg-green-400 hover:text-white transition-all duration-200 p-1 rounded-full">
-    //           <TiTick size={20} />
-    //         </button>
-    //         <button className="text-red-400 font-medium hover:bg-red-400 hover:text-white transition-all duration-200 p-1 rounded-full">
-    //           <IoClose size={20} />
-    //         </button>
-    //       </div>
-    //     ,
+    //   name: "Booking Status",
+    //   selector: (row) => row.booking_status,
     //   sortable: true,
     // },
+
+    {
+      name: "Approval",
+      selector: (row) =>
+        row.booking_status === "pending" ? (
+          <div className="flex justify-center gap-2">
+            <button
+              className="text-green-400 font-medium hover:bg-green-400 hover:text-white transition-all duration-200 p-1 rounded-full"
+              onClick={() => handleApproval(row.id, true)}
+            >
+              <TiTick size={20} />
+            </button>
+            <button
+              className="text-red-400 font-medium hover:bg-red-400 hover:text-white transition-all duration-200 p-1 rounded-full"
+              onClick={() => handleApproval(row.id, false)}
+            >
+              <IoClose size={20} />
+            </button>
+          </div>
+        ) : row.booking_status === "true" ? (
+          <span className="text-green-600 font-medium">
+            <TiTick size={20} />
+          </span>
+        ) : row.booking_status === "false" ? (
+          <span className="text-red-600 font-medium">
+            <IoClose size={20} />
+          </span>
+        ) : null,
+      sortable: true,
+    },
   ];
 
   return (
@@ -151,14 +219,16 @@ const FlightRequest = () => {
         <BookingRequestNav />
         <div className="w-full flex mx-3 flex-col overflow-hidden mb-4">
           <div className="flex md:flex-row flex-col gap-5 justify-between mt-10 my-2">
-            <div className="sm:flex grid grid-cols-2 items-center justify-center  gap-4 border border-gray-300 rounded-md px-3 p-2 w-auto">
+            <div className="sm:flex grid grid-cols-2 items-center justify-center gap-4 border border-gray-300 rounded-md px-3 p-2 w-auto">
               <div className="flex items-center gap-2">
                 <input
                   type="radio"
                   id="all"
                   name="status"
                   checked={selectedStatus === "all"}
-                  onChange={() => handleStatusChange("all")}
+                  onChange={() => {
+                    setSelectedStatus("all");
+                  }}
                 />
                 <label htmlFor="all" className="text-sm">
                   All
@@ -167,39 +237,60 @@ const FlightRequest = () => {
               <div className="flex items-center gap-2">
                 <input
                   type="radio"
-                  id="upcoming"
+                  id="Approved"
                   name="status"
-                  checked={selectedStatus === "upcoming"}
-                  onChange={() => handleStatusChange("upcoming")}
+                  checked={selectedStatus === "Approved"}
+                  onChange={() => {
+                    setSelectedStatus("Approved");
+                    setApproved(true);
+                  }}
                 />
-                <label htmlFor="upcoming" className="text-sm">
-                  Upcoming
+                <label htmlFor="Approved" className="text-sm">
+                  Approved
                 </label>
               </div>
               <div className="flex items-center gap-2">
                 <input
                   type="radio"
-                  id="completed"
+                  id="pending"
                   name="status"
-                  checked={selectedStatus === "completed"}
-                  onChange={() => handleStatusChange("completed")}
+                  checked={selectedStatus === "pending"}
+                  onChange={() => {
+                    setSelectedStatus("pending");
+                    setApproved("pending");
+                  }}
                 />
-                <label htmlFor="completed" className="text-sm">
-                  Completed
+                <label htmlFor="pending" className="text-sm">
+                  Pending
                 </label>
               </div>
               <div className="flex items-center gap-2">
                 <input
                   type="radio"
-                  id="cancelled"
+                  id="Rejected"
                   name="status"
-                  checked={selectedStatus === "cancelled"}
-                  onChange={() => handleStatusChange("cancelled")}
+                  checked={selectedStatus === "Rejected"}
+                  onChange={() => {
+                    setSelectedStatus("Rejected");
+                    setApproved(false);
+                  }}
                 />
-                <label htmlFor="cancelled" className="text-sm">
-                  Cancelled
+                <label htmlFor="Rejected" className="text-sm">
+                  Rejected
                 </label>
               </div>
+              {/* <div className="flex items-center gap-2">
+              <input
+                type="radio"
+                id="cancelled"
+                name="status"
+                checked={selectedStatus === "cancelled"}
+                onChange={() => setSelectedStatus("cancelled")}
+              />
+              <label htmlFor="cancelled" className="text-sm">
+                Cancelled
+              </label>
+            </div> */}
             </div>
             <span className="mr-4">
               <Link

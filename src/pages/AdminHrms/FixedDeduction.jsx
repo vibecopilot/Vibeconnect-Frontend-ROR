@@ -3,35 +3,55 @@ import { PiPlusCircle } from "react-icons/pi";
 import Table from "../../components/table/Table";
 import PayrollSettingDetailsList from "./PayrollSettingDetailsList";
 import { GrHelpBook } from "react-icons/gr";
-import {
-  deleteFixedDeductions,
-  getFixedAllowance,
-  getFixedDeductions,
-  postFixedDeductions,
-} from "../../api";
-import { getItemInLocalStorage } from "../../utils/localStorage";
+import { useSelector } from "react-redux";
 import { MdClose } from "react-icons/md";
 import { FaCheck, FaTrash } from "react-icons/fa";
 import toast from "react-hot-toast";
 import { BiEdit } from "react-icons/bi";
+import {
+  getHrmsFixedDeduction,
+  deleteHrmsFixedDeduction,
+  postHrmsFixedDeduction,
+  
+} from "../../api";
+import { getItemInLocalStorage } from "../../utils/localStorage";
 import EditFixedDeductionModal from "./Modals/EditFixedDeductionModal";
 
 const FixedDeduction = () => {
+  const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
+  const themeColor = useSelector((state) => state.theme.color);
+
   const listItemStyle = {
     listStyleType: "disc",
     color: "black",
     fontSize: "14px",
     fontWeight: 500,
   };
+
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [isEditModal, setIsEditModal] = useState(false);
-  const [customLabel, setCustomLabel] = useState("");
-  const [effectAttendance, setEffectAttendance] = useState(false);
+  const [EditId, setEditId] = useState("");
+  const [deductions, setDeductions] = useState([]);
+  const [filteredDeductions, setFilteredDeductions] = useState([]);
+  const [formData, setFormData] = useState({
+    name: "",
+    deduction_type: "fixed",
+    percentage_of_salary: "0.00",
+    value: "0.00",
+    organization: hrmsOrgId
+  });
+
   const columns = [
     {
-      name: "Custom Label",
-      selector: (row) => row.custom_label,
+      name: "Name",
+      selector: (row) => row.name,
       sortable: true,
+    },
+    {
+      name: "Value",
+      selector: (row) => row.value,
+      sortable: true,
+      cell: (row) => `₹${parseFloat(row.value).toLocaleString('en-IN')}`
     },
     {
       name: "Action",
@@ -41,84 +61,110 @@ const FixedDeduction = () => {
             className="text-blue-400"
             onClick={() => handleEditModal(row.id)}
           >
-            <BiEdit size={18} />{" "}
+            <BiEdit size={18} />
           </button>
           <button
             className="text-red-400"
-            onClick={() => handleDeleteFixedAllowance(row.id)}
+            onClick={() => handleDeleteFixedDeduction(row.id)}
           >
-            <FaTrash size={15} />
+            <FaTrash size={18} />
           </button>
         </div>
       ),
     },
   ];
-  const [EditId, setEditId] = useState("");
+
+  const fetchFixedDeduction = async () => {
+    try {
+      const res = await getHrmsFixedDeduction(hrmsOrgId);
+      const fixedDeductions = res.filter(item => item.deduction_type === "fixed");
+      setDeductions(res);
+      setFilteredDeductions(fixedDeductions);
+    } catch (error) {
+      console.error('Error fetching fixed deductions:', error);
+      toast.error("Failed to fetch fixed deductions");
+    }
+  };
+
+  useEffect(() => {
+    fetchFixedDeduction();
+    window.scrollTo(0, 0);
+  }, []);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleAddFixedDeduction = async () => {
+    const { name, value } = formData;
+  
+    if (!name) {
+      toast.error("Please enter a name.");
+      return;
+    }
+  
+    if (!value) {
+      toast.error("Please enter a value.");
+      return;
+    }
+  
+    try {
+      const postData = {
+        name: formData.name,
+        deduction_type: "fixed",
+        percentage_of_salary: formData.percentage_of_salary || "0.00",
+        value: formData.value,
+        organization: hrmsOrgId
+      };
+  
+      await postHrmsFixedDeduction(postData);
+      setModalIsOpen(false);
+      toast.success("Fixed Deduction added successfully");
+      fetchFixedDeduction();
+      
+      // Reset form
+      setFormData({
+        name: "",
+        deduction_type: "fixed",
+        percentage_of_salary: "0.00",
+        value: "0.00",
+        organization: hrmsOrgId
+      });
+    } catch (error) {
+      console.error("Error adding deduction:", error);
+      toast.error("Failed to add fixed deduction");
+    }
+  };
+
   const handleEditModal = (id) => {
     setIsEditModal(true);
     setEditId(id);
   };
 
-  const handleDeleteFixedAllowance = async (FDId) => {
+  const handleDeleteFixedDeduction = async (FDId) => {
     try {
-      await deleteFixedDeductions(FDId);
+      await deleteHrmsFixedDeduction(FDId);
       fetchFixedDeduction();
       toast.success("Fixed Deduction deleted successfully");
     } catch (error) {
-      console.log(error);
+      console.error(error);
+      toast.error("Failed to delete fixed deduction");
     }
   };
 
   const openModal = () => setModalIsOpen(true);
   const closeModal = () => setModalIsOpen(false);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    closeModal();
-  };
-  const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
-  const [deductions, setDeduction] = useState([]);
-  const [filteredDeductions, setFilteredDeduction] = useState([]);
-  const fetchFixedDeduction = async () => {
-    try {
-      const res = await getFixedDeductions(hrmsOrgId);
-      setDeduction(res);
-      setFilteredDeduction(res);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-  useEffect(() => {
-    fetchFixedDeduction();
-  }, []);
-  const handleAddFixedDeduction = async () => {
-    if (!customLabel) {
-      return toast.error("Please provide custom label");
-    }
-
-    const postData = new FormData();
-    postData.append("custom_label", customLabel);
-    postData.append("attendance_affects_eligibility", effectAttendance);
-    postData.append("organization", hrmsOrgId);
-    try {
-      const res = await postFixedDeductions(postData);
-      fetchFixedDeduction();
-      setModalIsOpen(false);
-      toast.success("Deduction added successfully");
-    } catch (error) {
-      console.log(error);
-      toast.error("Error creating deduction");
-    }
-  };
-
   return (
     <section className="flex ml-20">
       <PayrollSettingDetailsList />
+      
       <div className="w-2/3 flex m-3 flex-col overflow-hidden">
-        <div className="flex justify-between my-2 gap-2">
+        <div className="flex justify-between gap-2 my-2">
           <input
             type="text"
             placeholder="Search by name"
@@ -126,12 +172,14 @@ const FixedDeduction = () => {
           />
           <button
             onClick={openModal}
-            className="border-2 font-semibold hover:bg-black hover:text-white duration-150 transition-all border-black p-2 rounded-md text-black cursor-pointer text-center flex items-center gap-2 justify-center"
+            style={{ background: themeColor }}
+            className="border-2 font-semibold hover:bg-black hover:text-white duration-150 transition-all p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
           >
             <PiPlusCircle size={20} />
             Add
           </button>
         </div>
+        
         <Table
           columns={columns}
           data={filteredDeductions}
@@ -139,50 +187,71 @@ const FixedDeduction = () => {
         />
       </div>
 
+      {/* Add New Deduction Modal */}
       {modalIsOpen && (
-        <div className="fixed inset-0 z-50 flex items-center overflow-y-auto justify-center bg-gray-500 bg-opacity-50">
-          <div className="max-h-screen h-30 bg-white p-2 w-[30rem] px-3 rounded-lg shadow-lg overflow-y-auto">
-            <h2 className="text-2xl font-bold mb-4">Add New Deduction</h2>
+        <div className="fixed inset-0 z-50 flex items-center overflow-y-auto justify-center bg-black bg-opacity-50">
+          <div className="max-h-[100%] bg-white p-8 w-2/3 rounded-lg shadow-lg">
+            <h2 className="text-2xl font-bold border-b mb-2">Add New Fixed Deduction</h2>
             <div>
-              <div className="mb-4">
-                <label className="block mb-2 font-medium">
-                  What would you want to call this deduction?{" "}
-                  <span className="text-red-400">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={customLabel}
-                  onChange={(e) => setCustomLabel(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                  placeholder="Custom label"
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block mb-2 font-medium">
-                  Do you want attendance to effect the eligibility?{" "}
-                  <span className="text-red-400">*</span>
-                </label>
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="affectAttendance"
-                      id="yes"
-                      checked={effectAttendance}
-                      onChange={() => setEffectAttendance(true)}
-                    />
-                    <label htmlFor="yes">Yes</label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="affectAttendance"
-                      id="no"
-                      checked={!effectAttendance}
-                      onChange={() => setEffectAttendance(false)}
-                    />
-                    <label htmlFor="yes">No</label>
-                  </div>
+              <div className="grid md:grid-cols-2 gap-5 my-5 max-h-96 overflow-y-auto p-1">
+                <div className="grid gap-2 items-center w-full">
+                  <label className="block mb-1 font-semibold">
+                    Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full p-2 border border-gray-300 text-black rounded"
+                    value={formData.name}
+                    onChange={handleChange}
+                    name="name"
+                    placeholder="Deduction name"
+                    required
+                  />
+                </div>
+
+                <div className="grid gap-2 items-center w-full bg-gray-100 opacity-55">
+                  <label className="block mb-1 font-semibold">
+                    Deduction Type
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full p-2 border border-gray-300 rounded "
+                    value="Fixed"
+                    readOnly
+                    disabled
+                  />
+                </div>
+
+                <div className="grid gap-2 items-center w-full bg-gray-100 opacity-55">
+                  <label className="block mb-1 font-semibold bg-">
+                    Percentage of Salary
+                  </label>
+                  <input
+                    type="number"
+                    className="w-full p-2 border border-gray-300  rounded"
+                    value={formData.percentage_of_salary}
+                    onChange={handleChange}
+                    name="percentage_of_salary"
+                    placeholder="0.00"
+                    step="0.01"
+                    disabled
+                  />
+                </div>
+
+                <div className="grid gap-2 items-center w-full">
+                  <label className="block mb-1 font-semibold">
+                    Value <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    className="w-full p-2 border border-gray-300 rounded"
+                    value={formData.value}
+                    onChange={handleChange}
+                    name="value"
+                    placeholder="0.00"
+                    step="0.01"
+                    required
+                  />
                 </div>
               </div>
               <div className="flex mt-2 justify-end gap-2 p-1 border-t">
@@ -205,79 +274,43 @@ const FixedDeduction = () => {
           </div>
         </div>
       )}
+
       {isEditModal && (
         <EditFixedDeductionModal
           EditId={EditId}
+          closeModal={() => setIsEditModal(false)}
           fetchFixedDeduction={fetchFixedDeduction}
-          closeModal={()=>setIsEditModal(false)}
         />
       )}
+
       <div className="my-4 mx-2 w-fit">
-        <div className="flex flex-col mt-4 mr-2 bg-gray-50 rounded-md text-wrap  gap-4 my-2 py-2 pl-5 pr-2 w-[18rem]">
-          <div className="flex  gap-4 font-medium">
+        <div className="flex flex-col mt-4 mr-2 bg-gray-50 rounded-md text-wrap gap-4 my-2 py-2 pl-5 pr-2 w-[18rem]">
+          <div className="flex gap-4 font-medium">
             <GrHelpBook size={20} />
             <h2>Help Center</h2>
           </div>
-          <div className=" ">
-            {/* <p className="font-medium">Help Center</p> */}
+          <div>
             <ul style={listItemStyle} className="flex flex-col gap-2">
               <li>
-                <ul style={listItemStyle}>
-                  <li>
-                    Here you can create fixed deductions which want to get
-                    deducted automatically every month from employee salary.{" "}
-                  </li>
-                </ul>
+                Here you can create fixed deductions which want to get
+                deducted automatically every month from employee salary.
               </li>
               <li>
-                <ul style={listItemStyle}>
-                  <li>
-                    Some of the fixed deductions like Insurance, Canteen, Food
-                    Coupon etc.{" "}
-                  </li>
-                </ul>
+                Some of the fixed deductions like Insurance, Canteen, Food
+                Coupon etc.
               </li>
               <li>
-                <ul style={listItemStyle}>
-                  <li>
-                    These deduction can be with or without linked with
-                    attendance or Payable days{" "}
-                  </li>
-                </ul>
-              </li>
-
-              <li>
-                <p>
-                  {/* <a href="#" className="text-blue-400">
-                      Click Here{" "}
-                    </a> */}
-                  You can deductions too can be mapped to the employee CTC
-                  details and CTC calculator{" "}
-                </p>
+                These deduction can be with or without linked with
+                attendance or Payable days
               </li>
               <li>
-                <p>
-                  {/* <a href="#" className="text-blue-400">
-                      Click Here{" "}
-                    </a> */}
-                  You can change allowances setting anytime but once payroll is
-                  processed won’t be deleted.{" "}
-                </p>
+                You can deductions too can be mapped to the employee CTC
+                details and CTC calculator
               </li>
-              {/* <li>
-                  <p>
-                    <a href="#" className="text-blue-400">
-                      Click Here{" "}
-                    </a>
-These allowance can be with or without linked with attendance or Payable days          </p>
-                </li>
-                <li>
-                  <p>
-                    <a href="#" className="text-blue-400">
-                      Click Here{" "}
-                    </a>
-You can change allowances setting anytime but once payroll is processed won’t be deleted.        </p>
-                </li> */}
+              <li>
+                You can change deductions setting anytime but once payroll is
+                processed won't be deleted.
+              </li>
             </ul>
           </div>
         </div>

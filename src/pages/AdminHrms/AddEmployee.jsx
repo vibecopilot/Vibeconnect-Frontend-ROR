@@ -157,6 +157,13 @@ const AddEmployee = () => {
       toast.error("A valid 10-digit Mobile Number is required!");
       return;
     }
+    if(
+      !formData.emergencyContactNumber.trim() ||
+      formData.emergencyContactNumber.length !== 10 ||
+      !/^\d+$/.test(formData.emergencyContactNumber)
+    ){
+      // toast.error("A Valid 10-digit Contact Number is required")
+    }
     if (!formData.password) {
       toast.error("Password is required!");
       return;
@@ -172,6 +179,14 @@ const AddEmployee = () => {
     if (!formData.dob) {
       toast.error("Date of Birth is required!");
       return;
+    }
+    // if(!formData.pan.trim()){
+    //   toast.error("Pan Card number is required")
+    //   return
+    // }
+    if(!formData.aadhar){
+      toast.error("Adhar Number is required")
+      return
     }
 
     const dob = new Date(formData.dob);
@@ -224,6 +239,7 @@ const AddEmployee = () => {
         const famRes = await postEmployeeFamily(postFamily);
       } catch (error) {
         console.log(error);
+
       }
       const postAddress = new FormData();
       postAddress.append("employee", empRes.employee.id);
@@ -251,20 +267,40 @@ const AddEmployee = () => {
       setDisableSave(true);
       toast.success("Basic Info saved Successfully");
     } catch (error) {
-      // console.log(error);
-      // toast.error("Failed to add employee. Please try again.");
-      if (error.response && error.response.data && error.response.data.errors) {
-        // Loop through all errors and display them
-        const errorMessages = error.response.data.errors;
-        Object.keys(errorMessages).forEach((key) => {
-          errorMessages[key].forEach((msg) => {
-            toast.error(`${key}: ${msg}`);
+      // NEW ERROR HANDLING CODE STARTS HERE
+      if (error.response && error.response.data) {
+        // Check for duplicate email error (common format)
+        if (
+          (error.response.data.email_id && 
+           error.response.data.email_id.includes("employee with this email id already exists.")) ||
+          (error.response.data.error && 
+           error.response.data.error.includes("email already exists"))
+        ) {
+          toast.error("This email is already registered. Please use a different email.");
+        } 
+        // Handle field-specific validation errors
+        else if (error.response.data.errors) {
+          const errorMessages = error.response.data.errors;
+          Object.keys(errorMessages).forEach((key) => {
+            errorMessages[key].forEach((msg) => {
+              toast.error(`${key}: ${msg}`);
+            });
           });
-        });
+        }
+        // Handle other API error formats
+        else if (error.response.data.detail) {
+          toast.error(error.response.data.detail);
+        }
+        // Fallback for other error formats
+        else {
+          toast.error("Failed to add employee. Please check your details and try again.");
+        }
       } else {
-        toast.error("Failed to add employee. Please try again.");
+        // Network errors or other unexpected errors
+        toast.error("Failed to connect to server. Please try again.");
       }
-      console.log(error);
+      console.error("Add Employee Error:", error);
+      // NEW ERROR HANDLING CODE ENDS HERE
     }
   };
 
@@ -476,7 +512,8 @@ const AddEmployee = () => {
                       !/[0-9]/.test(e.key) &&
                       e.key !== "Backspace" &&
                       e.key !== "ArrowLeft" &&
-                      e.key !== "ArrowRight"
+                      e.key !== "ArrowRight" &&
+                      e.key !== "Tab"
                     ) {
                       e.preventDefault();
                     }
@@ -538,7 +575,7 @@ const AddEmployee = () => {
 
               <div className="grid gap-2 items-center w-full">
                 <label className="block text-sm font-medium text-gray-700">
-                  PAN
+                  PAN 
                 </label>
                 <input
                   type="text"
@@ -552,7 +589,7 @@ const AddEmployee = () => {
               </div>
               <div className="grid gap-2 items-center w-full">
                 <label className="block text-sm font-medium text-gray-700">
-                  Aadhar No.
+                  Aadhar No. <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="text"
@@ -621,13 +658,15 @@ const AddEmployee = () => {
                   value={formData.emergencyContactNumber}
                   onChange={handleChange}
                   name="emergencyContactNumber"
+                  maxLength={10}
                   pattern="[0-9]*"
                   onKeyDown={(e) => {
                     if (
                       !/[0-9]/.test(e.key) &&
                       e.key !== "Backspace" &&
                       e.key !== "ArrowLeft" &&
-                      e.key !== "ArrowRight"
+                      e.key !== "ArrowRight" &&
+                      e.key !== "Tab"
                     ) {
                       e.preventDefault();
                     }

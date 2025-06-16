@@ -7,14 +7,14 @@ import { BsEye } from "react-icons/bs";
 import { BiEdit } from "react-icons/bi";
 import { PiPlusCircle } from "react-icons/pi";
 import { useSelector } from "react-redux";
-import { getIncidents } from "../api";
+import { getIncidents,getIncidentData } from "../api";
 import { dateFormatSTD } from "../utils/dateUtils";
 
 const Incidents = () => {
   const column = [
     {
       name: "view",
-
+              
       cell: (row) => (
         <div className="flex items-center gap-4">
           <Link to={`/admin/incidents-details/${row.id}`}>
@@ -31,33 +31,38 @@ const Incidents = () => {
     // { name: "Description", selector: (row) => row.Description, sortable: true },
     // { name: "Site", selector: (row) => row.Site, sortable: true },
     // { name: "Region", selector: (row) => row.Region, sortable: true },
-    { name: "Building ", selector: (row) => row.Tower, sortable: true },
+    { name: "Building ", selector: (row) => row.
+      building_name, sortable: true },
     {
       name: "Incident Time",
       selector: (row) => dateFormatSTD(row.time_and_date),
       sortable: true,
     },
     { name: "Level", selector: (row) => row.incident_level, sortable: true },
-    { name: "Category", selector: (row) => row.Category, sortable: true },
+    { name: "Category", selector: (row) => row.primary_incident_category, sortable: true },
     {
-      name: "Sub Category",
-      selector: (row) => row.SubCategory,
-      sortable: true,
-    },
-    {
-      name: "Support Required",
-      selector: (row) => row.SupportRequired,
-      sortable: true,
-    },
-    { name: "Assigned To", selector: (row) => row.AssignedTo, sortable: true },
+    name: "Sub Category",
+    selector: (row) => row.primary_incident_sub_category,
+    sortable: true,
+  },
     {
       name: "Support Required",
-      selector: (row) => row.SupportRequired,
+      selector: (row) => row.support_required ? "Yes" : "No",
       sortable: true,
     },
+    // { name: "Assigned To", selector: (row) => row.AssignedTo, sortable: true },
+    // {
+    //   name: "Support Required",
+    //   selector: (row) => row.SupportRequired,
+    //   sortable: true,
+    // },
     {
       name: "CurrentStatus",
-      selector: (row) => row.CurrentStatus,
+      selector: (row) => (
+        <div className="text-center pl-9">
+          {row.status}
+        </div>
+      ),
       sortable: true,
     },
   ];
@@ -69,6 +74,7 @@ const Incidents = () => {
     try {
       const res = await getIncidents();
       setIncidents(res.data);
+      console.log(res.data)
       setFilteredIncidents(res.data);
     } catch (error) {
       console.log(error);

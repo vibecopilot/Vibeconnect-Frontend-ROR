@@ -14,11 +14,14 @@ import {
 import { AiOutlineFieldTime } from "react-icons/ai";
 import { useSelector } from "react-redux";
 import { PiSignOutBold } from "react-icons/pi";
+import { AiFillNotification } from "react-icons/ai";
+import { AiFillCalendar } from "react-icons/ai";
 import { RiFileListLine } from "react-icons/ri";
 import { FaRegCalendarTimes } from "react-icons/fa";
 import { FaMoneyBillAlt } from "react-icons/fa";
 import { MdAlarm } from "react-icons/md";
 import { FaRegRegistered } from "react-icons/fa";
+import { IoMdSettings } from "react-icons/io";
 import { IoPeopleOutline, IoCashOutline } from "react-icons/io5";
 // import { PiSignOutBold } from "react-icons/pi";
 import { IoSettingsOutline } from "react-icons/io5";
@@ -42,9 +45,11 @@ import {
 } from "react-icons/tb";
 import { HiOutlineDevicePhoneMobile } from "react-icons/hi2";
 import { getAdminAccess } from "../../api";
+import { IoIosPeople } from "react-icons/io";
 const AdminHRMS = () => {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState("");
+  const [isDashOpen, setIsDashOpen] = useState(false);
   const [isOrgOpen, setIsOrgOpen] = useState(false);
   const [isFlexiOpen, setIsFlexiOpen] = useState(false);
   const [isPerformanceOpen, setIsPerformanceOpen] = useState(false);
@@ -81,9 +86,15 @@ const AdminHRMS = () => {
   }, []);
 
   const handleLogout = () => {
-    localStorage.clear();
+   const keysToRemove = ['Name','FEATURES','HRMS_EMPLOYEE_ID','user','UserId','UNITID','Building','categories','TOKEN','LASTNAME','USERTYPE','COMPANYID','HRMSORGID','STATUS','complaint','menuState','SITEID']
+   keysToRemove.forEach(key => localStorage.removeItem(key))
     navigate("/login");
     window.location.reload();
+  };
+  // communication
+
+  const toggleDashMenu = () => {
+    setIsDashOpen(!isDashOpen);
   };
   const toggleOrgMenu = () => {
     setIsOrgOpen(!isOrgOpen);
@@ -339,11 +350,13 @@ const AdminHRMS = () => {
   const empId = getItemInLocalStorage("APPROVERID");
   const orgId = getItemInLocalStorage("HRMSORGID");
   const [roleAccess, setRoleAccess] = useState({});
+
+ 
   useEffect(() => {
     const fetchRoleAccess = async () => {
       try {
         const res = await getAdminAccess(orgId, empId);
-
+          console.log(res[0])
         setRoleAccess(res[0]);
       } catch (error) {
         console.log(error);
@@ -351,6 +364,9 @@ const AdminHRMS = () => {
     };
     fetchRoleAccess();
   }, []);
+   
+   const HIDE_PAYROLL_ON_THE_BASESOF_THE_Name = roleAccess?.name === 175
+  // [-- Handle Logout --]
 
   return (
     <section className="flex gap-6 fixed top-0 left-0 bottom-0 h-screen z-30">
@@ -414,34 +430,95 @@ const AdminHRMS = () => {
                 Notification
               </h2>
             </NavLink> */}
-            <NavLink
-              to="/admin/hrms/dashboard"
-              className={({ isActive }) =>
-                `${
-                  isActive
-                    ? "text-black bg-white flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
-                    : "group flex items-center text-sm gap-3.5 font-medium p-2 "
-                }`
-              }
-            >
+            {/* Dashboard Drop Down */}
+            {(Object.keys(roleAccess).length === 0 ||
+              roleAccess.organization_permissions) && (
               <div>
-                {React.createElement(MdOutlineDashboard, { size: "20" })}
+                <div
+                  onClick={toggleDashMenu}
+                  className="cursor-pointer flex items-center text-sm gap-3.5 font-medium p-2 "
+                >
+                  <div>
+                    {React.createElement(MdOutlineDashboard, { size: "20" })}
+                    {/* <p>Dashboard</p> */}
+                  </div>
+                  <h2
+                    className={`whitespace-pre duration-300 ${
+                      !open && "opacity-0 translate-x-28 overflow-hidden"
+                    }`}
+                  >
+                    Dashboard
+                  </h2>
+                  <div className="ml-auto">
+                    {isDashOpen
+                      ? React.createElement(MdExpandLess, { size: "20" })
+                      : React.createElement(MdExpandMore, { size: "20" })}
+                  </div>
+                </div>
+                {isDashOpen && (
+                  <div className="flex flex-col gap-2">
+                    <NavLink
+                      to="/admin/hrms/dashboard"
+                      className={() =>
+                        `${
+                          isActiveLink(location, routes)
+                            ? "text-black bg-white flex p-2 pl-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                            : "group flex items-center text-sm gap-3.5 font-medium p-2 "
+                        }`
+                      }
+                    >
+                      <div>
+                        {React.createElement(MdOutlineDashboard, {
+                          size: "20",
+                        })}
+                      </div>
+                      <h2
+                        className={`whitespace-pre duration-100 ${
+                          !open && "opacity-0 translate-x-28 overflow-hidden"
+                        }`}
+                      >
+                        Dashboard
+                      </h2>
+                      <h2
+                        className={`${
+                          open && "hidden"
+                        } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-100 group-hover:w-fit`}
+                      >
+                        Dashboard
+                      </h2>
+                    </NavLink>
+                    <NavLink
+                      to="/admin/hrms/client-dashboard"
+                      className={() =>
+                        `${
+                          isActiveLink(location, routes1)
+                            ? "text-black bg-white flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                            : "group flex items-center text-sm gap-3.5 font-medium p-2 "
+                        }`
+                      }
+                    >
+                      <div>
+                        {React.createElement(IoIosPeople, { size: "20" })}
+                      </div>
+                      <h2
+                        className={`whitespace-pre duration-300 ${
+                          !open && "opacity-0 translate-x-28 overflow-hidden"
+                        }`}
+                      >
+                        Client Dashboard
+                      </h2>
+                      <h2
+                        className={`${
+                          open && "hidden"
+                        } absolute left-48 bg-white font-semibold whitespace-pre  text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+                      >
+                        Client Dashboard
+                      </h2>
+                    </NavLink>
+                  </div>
+                )}
               </div>
-              <h2
-                className={`whitespace-pre duration-300 ${
-                  !open && "opacity-0 translate-x-28 overflow-hidden"
-                }`}
-              >
-                Dashboard
-              </h2>
-              <h2
-                className={`${
-                  open && "hidden"
-                } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
-              >
-                Dashboard
-              </h2>
-            </NavLink>
+            )}
 
             {/* <NavLink
               to="/admin/hrms/alerts"
@@ -1805,8 +1882,190 @@ const AdminHRMS = () => {
                 )}
               </div>
             )}
+            
+            {!HIDE_PAYROLL_ON_THE_BASESOF_THE_Name && (
+              <div>
+                {/* Payroll Main Menu Item (Toggle) */}
+                <div
+                  onClick={togglepayMenu}
+                  className="cursor-pointer flex items-center text-sm gap-3.5 font-medium p-2"
+                >
+                  <div>
+                    {React.createElement(FaMoneyBillAlt, { size: "20" })}
+                  </div>
+                  <h2
+                    className={`whitespace-pre duration-300 ${
+                      !open && "opacity-0 translate-x-28 overflow-hidden"
+                    }`}
+                  >
+                    Payroll
+                  </h2>
+                  <div className="ml-auto">
+                    {ispayOpen
+                      ? React.createElement(MdExpandLess, { size: "20" })
+                      : React.createElement(MdExpandMore, { size: "20" })}
+                  </div>
+                </div>
 
-            <div>
+                {/* Payroll Submenu (Only visible when expanded) */}
+                {ispayOpen && (
+                  <div className="flex flex-col gap-2 mt-1">
+                    {/* Run Payroll */}
+                    <NavLink
+                      to="/admin/hrms/run-payroll"
+                      className={({ isActive }) =>
+                        `${
+                          isActive
+                            ? "text-black bg-white flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                            : "group flex items-center text-sm gap-3.5 font-medium p-2"
+                        }`
+                      }
+                    >
+                      <div>
+                        {React.createElement(IoSettingsOutline, { size: "20" })}
+                      </div>
+                      <h2
+                        className={`whitespace-pre duration-300 ${
+                          !open && "opacity-0 translate-x-28 overflow-hidden"
+                        }`}
+                      >
+                        Run Payroll
+                      </h2>
+                      <h2
+                        className={`${
+                          open && "hidden"
+                        } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+                      >
+                        Run Payroll
+                      </h2>
+                    </NavLink>
+
+                    {/* Payslip & Form 16s */}
+                    <NavLink
+                      to="/admin/pay-slip"
+                      className={({ isActive }) =>
+                        `${
+                          isActive
+                            ? "text-black bg-white flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                            : "group flex items-center text-sm gap-3.5 font-medium p-2"
+                        }`
+                      }
+                    >
+                      <div>
+                        {React.createElement(IoSettingsOutline, { size: "20" })}
+                      </div>
+                      <h2
+                        className={`whitespace-pre duration-300 ${
+                          !open && "opacity-0 translate-x-28 overflow-hidden"
+                        }`}
+                      >
+                        Payslip & Form 16s
+                      </h2>
+                      <h2
+                        className={`${
+                          open && "hidden"
+                        } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+                      >
+                        Payslip & Form 16s
+                      </h2>
+                    </NavLink>
+
+                    {/* Loan Application */}
+                    <NavLink
+                      to="/admin/hrms/loan-app"
+                      className={({ isActive }) =>
+                        `${
+                          isActive
+                            ? "text-black bg-white flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                            : "group flex items-center text-sm gap-3.5 font-medium p-2"
+                        }`
+                      }
+                    >
+                      <div>
+                        {React.createElement(FaUserCog, { size: "20" })}
+                      </div>
+                      <h2
+                        className={`whitespace-pre duration-300 ${
+                          !open && "opacity-0 translate-x-28 overflow-hidden"
+                        }`}
+                      >
+                        Loan Application
+                      </h2>
+                      <h2
+                        className={`${
+                          open && "hidden"
+                        } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+                      >
+                        Loan Application
+                      </h2>
+                    </NavLink>
+
+                    {/* Payroll Setting */}
+                    <NavLink
+                      to="/admin/hrms/payroll-setting"
+                      className={({ isActive }) =>
+                        `${
+                          isActiveLink(location, routes8)
+                            ? "text-black bg-white flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                            : "group flex items-center text-sm gap-3.5 font-medium p-2"
+                        }`
+                      }
+                    >
+                      <div>
+                        {React.createElement(IoSettingsOutline, { size: "20" })}
+                      </div>
+                      <h2
+                        className={`whitespace-pre duration-300 ${
+                          !open && "opacity-0 translate-x-28 overflow-hidden"
+                        }`}
+                      >
+                        Payroll Setting
+                      </h2>
+                      <h2
+                        className={`${
+                          open && "hidden"
+                        } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+                      >
+                        Payroll Setting
+                      </h2>
+                    </NavLink>
+
+                    {/* CTC Template */}
+                    <NavLink
+                      to="/admin/hrms/ctc/"
+                      className={({ isActive }) =>
+                        `${
+                          isActive
+                            ? "text-black bg-white flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                            : "group flex items-center text-sm gap-3.5 font-medium p-2"
+                        }`
+                      }
+                    >
+                      <div>
+                        {React.createElement(ImFileText2, { size: "20" })}
+                      </div>
+                      <h2
+                        className={`whitespace-pre duration-300 ${
+                          !open && "opacity-0 translate-x-28 overflow-hidden"
+                        }`}
+                      >
+                        CTC Template
+                      </h2>
+                      <h2
+                        className={`${
+                          open && "hidden"
+                        } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+                      >
+                        CTC Template
+                      </h2>
+                    </NavLink>
+                  </div>
+                )}
+              </div>
+            )}
+            {/* Payroll  */}
+
+            {/* <div>
               <div
                 onClick={togglepayMenu}
                 className="cursor-pointer flex items-center text-sm gap-3.5 font-medium p-2 "
@@ -1952,7 +2211,7 @@ const AdminHRMS = () => {
                     </div>
                     <h2
                       className={`whitespace-pre duration-300 ${
-                        !open && "opacity-0 translate-x-28 overflow-hidden"
+                        !open && "opacity-0 translate-x-28 overflow-hidden "
                       }`}
                     >
                       CTC Template
@@ -1960,14 +2219,117 @@ const AdminHRMS = () => {
                     <h2
                       className={`${
                         open && "hidden"
-                      } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+                      } absolute left-48 bg-white font-semibold whitespace-pre  text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
                     >
                       CTC Template
                     </h2>
                   </NavLink>
                 </div>
               )}
+            </div> */}
+            {/* announcement button */}
+            {/* {roleAccess.is_admin && */}
+            {/* Communication */}
+            {!HIDE_PAYROLL_ON_THE_BASESOF_THE_Name && (
+            <NavLink
+              to="/admin/hrms/broadcast"
+              className={({ isActive }) =>
+                `${
+                  isActive
+                    ? "text-black bg-white flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                    : "group flex items-center text-sm gap-3.5 font-medium p-2 "
+                }`
+              }
+            >
+              <div>
+                {React.createElement(AiFillNotification, { size: "20" })}
+              </div>
+              <h2
+                className={`whitespace-pre duration-300 ${
+                  !open && "opacity-0 translate-x-28 overflow-hidden "
+                }`}
+              >
+                Communication
+              </h2>
+              <h2
+                className={`${
+                  open && "hidden"
+                } absolute left-48 bg-white font-semibold whitespace-pre  text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+              >
+                Communication
+              </h2>
+            </NavLink>
+            
+)}
+        {!HIDE_PAYROLL_ON_THE_BASESOF_THE_Name && (
+           <NavLink
+           to="/admin/hrms/holidays"
+           className={({ isActive }) =>
+             `${
+               isActive
+                 ? "text-black bg-white flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                 : "group flex items-center text-sm gap-3.5 font-medium p-2 "
+             }`
+           }
+         >
+           <div>
+             {React.createElement(AiFillCalendar, { size: "20" })}
+           </div>
+           <h2
+             className={`whitespace-pre duration-300 ${
+               !open && "opacity-0 translate-x-28 overflow-hidden"
+             }`}
+           >
+             Holidays
+           </h2>
+           <h2
+             className={`${
+               open && "hidden"
+             } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+           >
+             Holidays
+           </h2>
+         </NavLink>
+        )}
+            {/* } */}
+            <div className="border-2 border-x-white border-opacity-65 my-4"></div>
+            {/* theme changer */}
+            <div className="">
+              <NavLink
+                to="/admin/hrms/settings" // Update this path to your actual settings route
+                className={({ isActive }) =>
+                  `${
+                    isActive
+                      ? "text-black bg-white flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                      : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md"
+                  }`
+                }
+              >
+                <div>{React.createElement(IoMdSettings, { size: "20" })}</div>
+                <h2
+                  className={`whitespace-pre duration-300 ${
+                    !open && "opacity-0 translate-x-28 overflow-hidden"
+                  }`}
+                >
+                  Settings
+                </h2>
+                <h2
+                  className={`${
+                    open && "hidden"
+                  } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+                >
+                  Settings
+                </h2>
+              </NavLink>
             </div>
+
+            <button
+              onClick={handleLogout}
+              className="font-semibold flex items-center rounded-md px-2 py-2 hover:bg-white hover:text-black transition-all duration-300 ease-in-out my-2 gap-4"
+            >
+              <PiSignOutBold size={20} />
+              {open && "Logout"}
+            </button>
 
             {/* <NavLink
               to="/admin/reports/"

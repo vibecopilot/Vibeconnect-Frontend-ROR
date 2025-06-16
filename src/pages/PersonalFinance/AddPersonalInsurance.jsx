@@ -65,9 +65,9 @@ function AddPersonalInsurance() {
           <div>
               <label className="block mb-1">Name</label>
               <input
-                type="number"
+                type="name"
                 placeholder="Enter Name"
-                value={personalInfo.age}
+                value={personalInfo.name}
                 onChange={(e) => setPersonalInfo({ ...personalInfo, age: e.target.value })}
                 className="border p-2 w-full"
                 required

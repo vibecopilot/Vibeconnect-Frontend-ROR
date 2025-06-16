@@ -6,6 +6,7 @@ import { PiFiles, PiSignOutBold } from "react-icons/pi";
 import { getItemInLocalStorage } from "../utils/localStorage";
 import { FaMoneyBillTrendUp } from "react-icons/fa6";
 import image from "/profile.png";
+
 import {
   BsBroadcast,
   BsBuilding,
@@ -68,7 +69,7 @@ import { IoIosPeople, IoMdSettings } from "react-icons/io";
 import { IoSettings } from "react-icons/io5";
 import { useSelector } from "react-redux";
 import { ImFileText2 } from "react-icons/im";
-import { FcMoneyTransfer } from "react-icons/fc";
+import { FcMoneyTransfer, FcSurvey } from "react-icons/fc";
 import { GrCertificate } from "react-icons/gr";
 import { persistor } from "../store/store";
 import { LiaMoneyBillWaveAltSolid } from "react-icons/lia";
@@ -98,35 +99,17 @@ const Navbar = () => {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("TOKEN");
-    localStorage.removeItem("COMPANYID");
-    localStorage.removeItem("HRMSORGID");
-    localStorage.removeItem("board_id");
-    localStorage.removeItem("menuState");
-    localStorage.removeItem("Name");
-    localStorage.removeItem("LASTNAME");
-    localStorage.removeItem("USERTYPE");
-    localStorage.removeItem("user");
-    localStorage.removeItem("UNITID");
-    localStorage.removeItem("Building");
-    localStorage.removeItem("categories");
-    localStorage.removeItem("SITEID");
-    localStorage.removeItem("STATUS");
-    localStorage.removeItem("complaint");
-    localStorage.removeItem("UserId");
-    localStorage.removeItem("VIBETOKEN");
-    localStorage.removeItem("VIBEUSERID");
-    localStorage.removeItem("VIBEORGID");
-    localStorage.removeItem("FEATURES");
-    localStorage.removeItem("HRMSORGID");
-    localStorage.removeItem("HRMS_EMPLOYEE_ID");
-    persistor.purge(["board"]).then(() => {
-      navigate("/login");
-      // window.location.reload();
-    });
-    // navigate("/login");
-    // window.location.reload();
-  };
+  const keysToRemove = [
+    "TOKEN", "COMPANYID", "HRMSORGID", "board_id", "menuState", "Name",
+    "LASTNAME", "USERTYPE", "user", "UNITID", "Building", "categories",
+    "SITEID", "STATUS", "complaint", "UserId", "VIBETOKEN", "VIBEUSERID",
+    "VIBEORGID", "FEATURES", "HRMS_EMPLOYEE_ID"
+  ];
+
+  keysToRemove.forEach(key => localStorage.removeItem(key));
+
+  navigate("/login");
+};
   const siteId = getItemInLocalStorage("SITEID");
 
   const getAllowedFeatures = () => {
@@ -983,9 +966,7 @@ const Navbar = () => {
                       }`
                     }
                   >
-                    <div>
-                      {React.createElement(IoSettings, { size: "20" })}
-                    </div>
+                    <div>{React.createElement(IoSettings, { size: "20" })}</div>
                     <h2
                       className={`whitespace-pre duration-300 ${
                         !open && "opacity-0 translate-x-28 overflow-hidden"
@@ -1122,6 +1103,67 @@ const Navbar = () => {
                     </h2>
                   </NavLink>
                 )}
+
+                {feat.includes("transport") && (
+                  <NavLink
+                    to={"/admin/mom"}
+                    className={({ isActive }) =>
+                      ` ${
+                        isActive
+                          ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
+                          : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
+                      }`
+                    }
+                  >
+                    <div>{React.createElement(FaCar, { size: "20" })}</div>
+
+                    <h2
+                      className={`whitespace-pre duration-300 ${
+                        !open && "opacity-0 translate-x-28 overflow-hidden"
+                      }`}
+                    >
+                      MOM
+                    </h2>
+                    <h2
+                      className={`${
+                        open && "hidden"
+                      } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
+                    >
+                      MOM
+                    </h2>
+                  </NavLink>
+                )}
+
+                {/* {feat.includes("MOM") && (
+                  <NavLink
+                    to={"/admin/Mom"}
+                    className={({ isActive }) =>
+                      ` ${
+                        isActive
+                          ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
+                          : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
+                      }`
+                    }
+                  >
+                    <div>{React.createElement(FaCar, { size: "20" })}</div>
+
+                    <h2
+                      className={`whitespace-pre duration-300 ${
+                        !open && "opacity-0 translate-x-28 overflow-hidden"
+                      }`}
+                    >
+                      MOM
+                    </h2>
+                    <h2
+                      className={`${
+                        open && "hidden"
+                      } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
+                    >
+                      MOM
+                    </h2>
+                  </NavLink>
+                )} */}
+
                 {feat.includes("integration") && (
                   <NavLink
                     to={"/integration"}
@@ -1402,7 +1444,7 @@ const Navbar = () => {
                 )}
                 {feat.includes("cam_bill") && (
                   <NavLink
-                    to={"/admin/cam-billing"}
+                    to={"/cam_bill/billing"}
                     className={({ isActive }) =>
                       ` ${
                         isActive
@@ -1411,9 +1453,7 @@ const Navbar = () => {
                       }`
                     }
                   >
-                    <div>
-                      {React.createElement(FaParking, { size: "20" })}
-                    </div>
+                    <div>{React.createElement(FaParking, { size: "20" })}</div>
 
                     <h2
                       className={`whitespace-pre duration-300 ${
@@ -1431,6 +1471,33 @@ const Navbar = () => {
                     </h2>
                   </NavLink>
                 )}
+                <NavLink
+                  to={"/admin/survey"}
+                  className={({ isActive }) =>
+                    ` ${
+                      isActive
+                        ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
+                        : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
+                    }`
+                  }
+                >
+                  <div>{React.createElement(FcSurvey, { size: "20" })}</div>
+
+                  <h2
+                    className={`whitespace-pre duration-300 ${
+                      !open && "opacity-0 translate-x-28 overflow-hidden"
+                    }`}
+                  >
+                    Survey
+                  </h2>
+                  <h2
+                    className={`${
+                      open && "hidden"
+                    } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
+                  >
+                    Survey
+                  </h2>
+                </NavLink>
                 {feat.includes("parking") && (
                   <NavLink
                     to={"/admin/parking"}
@@ -1442,9 +1509,7 @@ const Navbar = () => {
                       }`
                     }
                   >
-                    <div>
-                      {React.createElement(FaParking, { size: "20" })}
-                    </div>
+                    <div>{React.createElement(FaParking, { size: "20" })}</div>
 
                     <h2
                       className={`whitespace-pre duration-300 ${
@@ -1975,6 +2040,36 @@ const Navbar = () => {
                   </h2>
                 </NavLink>
               )}
+              {feat.includes("document_pro") && (
+                <NavLink
+                  to={"/insurance"}
+                  className={({ isActive }) =>
+                    ` ${
+                      isActive
+                        ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
+                        : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
+                    }`
+                  }
+                >
+                  <div>
+                    {React.createElement(MdOutlinePolicy, { size: "20" })}
+                  </div>
+                  <h2
+                    className={`whitespace-pre duration-300 ${
+                      !open && "opacity-0 translate-x-28 overflow-hidden"
+                    }`}
+                  >
+                    Insurance
+                  </h2>
+                  <h2
+                    className={`${
+                      open && "hidden"
+                    } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
+                  >
+                    Insurance
+                  </h2>
+                </NavLink>
+              )}
               {/* {feat.includes("document_pro") && ( */}
               <NavLink
                 to={"/employee/documents"}
@@ -2167,9 +2262,7 @@ const Navbar = () => {
                     }`
                   }
                 >
-                  <div>
-                    {React.createElement(FaParking, { size: "20" })}
-                  </div>
+                  <div>{React.createElement(FaParking, { size: "20" })}</div>
 
                   <h2
                     className={`whitespace-pre duration-300 ${

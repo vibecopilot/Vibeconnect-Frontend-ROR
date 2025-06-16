@@ -12,8 +12,9 @@ import {
   postNewGoods,
   postNewVisitor,
   postVisitorInDevice,
+  getExpectedMobile,
 } from "../../../api";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import FileInputBox from "../../../containers/Inputs/FileInputBox";
 import Select from "react-select";
 import Webcam from "react-webcam";
@@ -33,14 +34,58 @@ const EmployeeAddVisitor = () => {
   const [staffCategories, setStaffCategories] = useState([]);
   const [showWebcam, setShowWebcam] = useState(false);
   const [capturedImage, setCapturedImage] = useState(null);
+  const [searchParams] = useSearchParams();
+  const [data, setData] = useState({});
+  const mobileNo = searchParams.get("mobileNumber");
+  console.log(mobileNo);
+  const [time, setTime] = useState(new Date());
+  let expDate = "";
+  let expTime = "";
+  useEffect(() => {
+    const newTime = new Date();
+    setTime((prevTime) => {
+      expDate = `${newTime.getDate()}-${
+        newTime.getMonth() + 1
+      }-${newTime.getFullYear()}`;
+      console.log("Updated Date:", expDate);
+      expTime = `${newTime.getHours()}:${newTime.getMinutes()}`;
+      console.log("Updated Time:", expTime);
+
+      return newTime; // Update state only if needed
+    });
+  }, []); //
+  const getData = async (mobileNo) => {
+    try {
+      const response = await getExpectedMobile(mobileNo);
+      console.log(response.data);
+      const visitorHostUserId = response?.data?.hosts?.[0]?.user_id || "";
+      setFormData({
+        ...formData,
+        visitorName: response.data.name,
+        purpose: response.data.purpose,
+        passNumber: response.data.pass_number,
+        comingFrom: response.data.coming_from,
+        vehicleNumber: response.data.vehicle_number,
+        host: visitorHostUserId,
+      });
+    } catch (error) {
+      console.error(error);
+      toast.error("Add New number");
+    }
+  };
+
+  useEffect(() => {
+    getData(mobileNo);
+  }, [mobileNo]);
+
   const [formData, setFormData] = useState({
     visitorName: "",
-    mobile: "",
+    mobile: mobileNo,
     purpose: "",
     comingFrom: "",
     vehicleNumber: "",
-    expectedDate: "",
-    expectedTime: "",
+    expDate: new Date().toISOString().split("T")[0],
+    expTime: new Date().toLocaleTimeString().slice(0, 5),
     hostApproval: false,
     goodsInward: false,
     host: "",
@@ -51,7 +96,6 @@ const EmployeeAddVisitor = () => {
     goodsAttachments: [],
     slotNumber: "",
   });
-  console.log(formData);
   const themeColor = useSelector((state) => state.theme.color);
   const handleFrequencyChange = (e) => {
     setSelectedFrequency(e.target.value);
@@ -114,12 +158,16 @@ const EmployeeAddVisitor = () => {
   };
 
   const createNewVisitor = async () => {
+    const loadingToast = toast.loading("Please wait...");
     if (formData.visitorName === "") {
       return toast.error("Provide Visitor name");
     }
-    if (formData.purpose === "") {
-      return toast.error("Provide Purpose");
+    if (formData.host === "") {
+      return toast.error("Provide Host name");
     }
+    // if (formData.purpose === "") {
+    //   return toast.error("Provide Purpose");
+    // }
     if (formData.mobile === "") {
       return toast.error("Provide Visitor Mobile Number");
     }
@@ -140,11 +188,15 @@ const EmployeeAddVisitor = () => {
       if (capturedImage) {
         const response = await fetch(capturedImage);
         const blob = await response.blob();
-        postData.append("visitor[profile_pic]", blob, "visitor_image.jpg");
+        const file = URL.createObjectURL(blob);
+        const fileObject = new File([blob], "visitor_image.jpg", {
+          type: blob.type,
+        });
+        postData.append("visitor[profile_picture]", fileObject);
       }
     } else {
       if (imageFile) {
-        postData.append("visitor[profile_pic]", imageFile, "visitor_image");
+        postData.append("visitor[profile_picture]", imageFile, "visitor_image");
       }
     }
     postData.append("visitor[contact_no]", formData.mobile);
@@ -157,8 +209,8 @@ const EmployeeAddVisitor = () => {
     postData.append("visitor[end_pass]", passEndDate);
     postData.append("visitor[coming_from]", formData.comingFrom);
     postData.append("visitor[vehicle_number]", formData.vehicleNumber);
-    postData.append("visitor[expected_date]", formData.expectedDate);
-    postData.append("visitor[expected_time]", formData.expectedTime);
+    postData.append("visitor[expected_date]", formData.expDate);
+    postData.append("visitor[expected_time]", formData.expTime);
     postData.append("visitor[skip_host_approval]", formData.hostApproval);
     postData.append("visitor[goods_inwards]", formData.goodsInward);
     postData.append("visitor[visit_type]", selectedVisitorType);
@@ -237,11 +289,12 @@ const EmployeeAddVisitor = () => {
       // } catch (error) {
       //   console.log(error);
       // }
-
+      toast.dismiss(loadingToast);
       navigate("/employee/passes/visitors");
       toast.success("Visitor Added Successfully");
     } catch (error) {
       console.log(error);
+      toast.dismiss(loadingToast);
     }
   };
 
@@ -310,8 +363,14 @@ const EmployeeAddVisitor = () => {
     fetchVisitorCategory();
   }, []);
   const handleHostChange = (selectedOption) => {
-    setFormData({ ...formData, host: selectedOption?.value || "" });
+    setFormData((prevData) => ({
+      ...prevData,
+      host: selectedOption?.value || "",
+    }));
   };
+  // const handleHostChange = (selectedOption) => {
+  //   setFormData({ ...formData, host: selectedOption?.value || "" });
+  // };
   const handleOpenCamera = () => {
     setShowWebcam(true);
   };
@@ -504,7 +563,7 @@ const EmployeeAddVisitor = () => {
           {/* )} */}
         </div>
 
-        <div className="grid md:grid-cols-3 gap-5">
+        <div className="grid md:grid-cols-3 gap-5 mb-5">
           {selectedVisitorType === "Support Staff" && (
             <div className="grid gap-2 items-center w-full">
               <label htmlFor="" className="font-medium">
@@ -528,7 +587,8 @@ const EmployeeAddVisitor = () => {
           {behalf !== "Cab" && (
             <div className="grid gap-2 items-center w-full">
               <label htmlFor="visitorName" className="font-semibold">
-                Visitor Name:
+                Visitor Name:{" "}
+                <span className="text-red-500 font-medium px-1">*</span>
               </label>
               <input
                 value={formData.visitorName}
@@ -546,6 +606,7 @@ const EmployeeAddVisitor = () => {
               <div className="grid gap-2 items-center w-full">
                 <label htmlFor="mobileNumber" className="font-semibold">
                   Mobile Number:
+                  <span className="text-red-500 font-medium px-1">*</span>
                 </label>
                 <input
                   type="number"
@@ -561,10 +622,17 @@ const EmployeeAddVisitor = () => {
                 <div className="grid gap-2 items-center w-full">
                   <label htmlFor="" className="font-medium">
                     Host :
+                    <span className="text-red-500 font-medium px-1">*</span>
                   </label>
                   <Select
                     options={hosts}
-                    // value={hostOptions.find((option) => option.value === formData.host)}
+                    value={
+                      hosts.find((option) => option.value === formData.host) ||
+                      null
+                    }
+                    // value={hostOptions.find(
+                    //   (option) => option.value === formData.host
+                    // )}
                     onChange={handleHostChange}
                     placeholder="Select Person to meet"
                     isClearable
@@ -599,7 +667,8 @@ const EmployeeAddVisitor = () => {
           {behalf !== "Delivery" && behalf !== "Cab" && (
             <div className="grid gap-2 items-center w-full">
               <label htmlFor="comingFrom" className="font-semibold">
-                Coming from:
+                Coming from:{" "}
+                <span className="text-red-500 font-medium px-1">*</span>
               </label>
               <input
                 type="text"
@@ -636,9 +705,9 @@ const EmployeeAddVisitor = () => {
               type="date"
               id="expectedDate"
               className="border border-gray-400 p-2 rounded-md"
-              value={formData.expectedDate}
+              value={formData.expDate || new Date().toISOString().split("T")[0]}
               onChange={handleChange}
-              name="expectedDate"
+              name="expDate"
               min={new Date().toISOString().split("T")[0]}
             />
           </div>
@@ -649,11 +718,13 @@ const EmployeeAddVisitor = () => {
             </label>
             <input
               type="time"
+              name="expTime"
               id="expectedTime"
+              value={
+                formData.expTime || new Date().toLocaleTimeString().slice(0, 5)
+              }
               className="border border-gray-400 p-2 rounded-md"
               onChange={handleChange}
-              name="expectedTime"
-              value={formData.expectedTime}
             />
           </div>
 
@@ -680,7 +751,7 @@ const EmployeeAddVisitor = () => {
           )}
         </div>
         <span className="my-2">
-          {userType !== "security_guard" && (
+          {/* {userType !== "security_guard" && (
             <>
               <input
                 type="checkbox"
@@ -697,7 +768,23 @@ const EmployeeAddVisitor = () => {
               &nbsp;<label htmlFor="">Skip Host Approval</label>
               &nbsp;&nbsp;&nbsp;
             </>
-          )}
+          )} */}
+          <>
+            <input
+              type="checkbox"
+              value={formData.hostApproval}
+              checked={formData.hostApproval}
+              onChange={() =>
+                setFormData((prevState) => ({
+                  ...prevState,
+                  hostApproval: !prevState.hostApproval,
+                }))
+              }
+              id="hostApproval"
+            />
+            &nbsp;<label htmlFor="">Skip Host Approval</label>
+            &nbsp;&nbsp;&nbsp;
+          </>
           <input
             type="checkbox"
             id="goods"
