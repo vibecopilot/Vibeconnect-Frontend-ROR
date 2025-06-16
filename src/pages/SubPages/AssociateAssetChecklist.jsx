@@ -101,7 +101,7 @@ const AssociateAssetChecklist = () => {
     },
     {
       name: "Assigned To",
-      selector: (row) => row.user_name,
+      selector: (row) => row.assigned_to,
       sortable: true,
     },
     {
