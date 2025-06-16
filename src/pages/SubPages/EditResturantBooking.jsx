@@ -11,16 +11,16 @@ import { getRestaurtantTableBookings } from "../../api";
 
 const EditRestaurtantBooking = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
-  const themeColor = useSelector((state)=> state.theme.color)
-  const {id} = useParams();
+  const themeColor = useSelector((state) => state.theme.color);
+  const { id } = useParams();
 
-  const [tablebooking,settablebooking]=useState([]);
+  const [tablebooking, settablebooking] = useState([]);
   const columns = [
     // {
     //   name: "Action",
     //   cell: (row) => (
     //     <div className="flex items-center gap-4">
-    //       <Link 
+    //       <Link
     //       to={`/admin/histdetails/${row.id}`}
     //       >
     //         <BsEye size={15} />
@@ -38,48 +38,53 @@ const EditRestaurtantBooking = () => {
       selector: (row) => row.restaurant_name,
       sortable: true,
     },
-      {
-        name: "Name",
-        selector: (row) => row.created_by,
-        sortable: true,
-      },
+    {
+      name: "Name",
+      selector: (row) => row.created_by,
+      sortable: true,
+    },
 
-      {
-        name: "Booked On",
-        selector: (row) => {
-          const date = new Date(row.created_at);
-          const formattedDate = date.toISOString().split("T")[0]; // Extracts "YYYY-MM-DD"
-          const formattedTime = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); // Extracts "HH:mm"
-          return `${formattedDate} ${formattedTime}`; // Combines date and time
-        },
-        sortable: true,
+    {
+      name: "Booked On",
+      selector: (row) => {
+        const date = new Date(row.created_at);
+        const formattedDate = date.toISOString().split("T")[0]; // Extracts "YYYY-MM-DD"
+        const formattedTime = date.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }); // Extracts "HH:mm"
+        return `${formattedDate} ${formattedTime}`; // Combines date and time
       },
-      
-      {
-        name: "Schedule on",
-        selector: (row) => row.ondate+" "+new Date(row.ontime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        sortable: true,
-      },
-     
-      
-      {
-        name: "Guest",
-        selector: (row) => row.no_of_person,
-        sortable: true,
-      },
-      {
-        name: "Status",
-        selector: (row) => row.status,
-        sortable: true,
-      },
-      {
-        name: "Additional Request",
-        selector: (row) => row.Additional_Request,
-        sortable: true,
-      },
+      sortable: true,
+    },
 
+    {
+      name: "Schedule on",
+      selector: (row) =>
+        row.ondate +
+        " " +
+        new Date(row.ontime).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      sortable: true,
+    },
 
-   
+    {
+      name: "Guest",
+      selector: (row) => row.no_of_person,
+      sortable: true,
+    },
+    {
+      name: "Status",
+      selector: (row) => row.status,
+      sortable: true,
+    },
+    {
+      name: "Additional Request",
+      selector: (row) => row.Additional_Request,
+      sortable: true,
+    },
   ];
   useEffect(() => {
     const fetchTableBookings = async () => {
@@ -99,29 +104,23 @@ const EditRestaurtantBooking = () => {
 
     fetchTableBookings();
   }, [id]);
-  
+
   const data = [
     {
-        id: 1,
-        Vehicle_Number: '789',
-        Name:"mp",
-        Booked_on:"23/4/2024",
-        Schedule_on:"23/4/2024",
-        Guest:4,
-        Status:"pending",
-        Additional_Request:"seat book",
-
-
+      id: 1,
+      Vehicle_Number: "789",
+      Name: "mp",
+      Booked_on: "23/4/2024",
+      Schedule_on: "23/4/2024",
+      Guest: 4,
+      Status: "pending",
+      Additional_Request: "seat book",
     },
-
-
-
-
   ];
 
   return (
     <section className="flex">
-<FBDetails/>
+      <FBDetails />
       <div className=" w-full flex mx-3 flex-col overflow-hidden">
         <div className="flex md:flex-row flex-col gap-5 justify-end mt-10 my-2">
           {/* <div className="sm:flex grid grid-cols-2 items-center justify-center  gap-4 border border-gray-300 rounded-md px-3 p-2 w-auto">
@@ -206,19 +205,12 @@ const EditRestaurtantBooking = () => {
             <button className="border-2 font-semibold hover:bg-black hover:text-white transition-all border-black p-2 rounded-md text-black cursor-pointer text-center flex items-center gap-2 justify-center" style={{ height: '1cm' }}>
                 Out
             </button> */}
-        </span>
+          </span>
         </div>
-        <Table
-
-          columns={columns}
-          data={tablebooking}
-
-        
-
-        />
+        <Table columns={columns} data={tablebooking} />
       </div>
     </section>
   );
 };
 
-export default EditRestaurtantBooking
+export default EditRestaurtantBooking;

@@ -21,6 +21,7 @@ const Compliance = () => {
       const sortedData = res?.data?.sort((a, b) => {
         return b.created_at - a.created_at;
       });
+      console.log("sortedData:",sortedData)
       setCompliances(sortedData);
     } catch (error) {
       console.log(error);
@@ -45,23 +46,23 @@ const Compliance = () => {
     },
     {
       name: "Site",
-      selector: (row) => row.site_name,
+      selector: (row) => row.site_name || "N/A",
       sortable: true,
       width: "200px",
     },
     {
       name: "Compliance Name",
-      selector: (row) => row.name,
+      selector: (row) => row.name || "N/A",
       sortable: true,
     },
     {
       name: "Vendor",
-      selector: (row) => row.assign_to_name,
+      selector: (row) => row.assign_to_name || "N/A",
       sortable: true,
     },
     {
       name: "Auditor",
-      selector: (row) => row.reviewer_name,
+      selector: (row) => row.reviewer_name|| "N/A",
       sortable: true,
     },
     // {
@@ -71,12 +72,12 @@ const Compliance = () => {
     // },
     {
       name: "Due days",
-      selector: (row) => `${row.due_in_days} days`,
+      selector: (row) => `${row.due_in_days} days` || "N/A",
       sortable: true,
     },
     {
       name: "Priority",
-      selector: (row) => row.priority,
+      selector: (row) => row.priority || "N/A",
       sortable: true,
     },
     {

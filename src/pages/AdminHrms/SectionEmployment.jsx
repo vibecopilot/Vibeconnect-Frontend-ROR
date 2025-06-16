@@ -25,6 +25,7 @@ import {
 } from "../../api";
 import toast from "react-hot-toast";
 import { PiPlus } from "react-icons/pi";
+import AddAssociateEmployeeModal from "./Modals/AddAssociateSites";
 import AddEmployeeAsset from "./Modals/AddEmployeeAsset";
 import EditEmployeeAsset from "./Modals/EditEmployeeAsset";
 import { FaRegAddressCard, FaTrash } from "react-icons/fa";
@@ -44,6 +45,7 @@ const SectionsEmployment = () => {
   const [isEditing, setIsEditing] = useState(false);
 
   const [modalIsOpen, setModalIsOpen] = useState(false);
+  const [showAssociateModal, setShowAssociateModal] = useState(false);
   const [modalIsOpen1, setModalIsOpen1] = useState(false);
   const [modalIsOpen2, setModalIsOpen2] = useState(false);
   const [assetModal, setAssetModal] = useState(false);
@@ -392,6 +394,7 @@ const SectionsEmployment = () => {
         deptId,
         hrmsOrgId
       );
+      console.log("Supervisor details----->",await getReportingSupervisors)
       console.log(reportingSupervisors);
       reportingSupervisors.forEach((department) => {
         setReportSupervisors(department.reporting_supervisor);
@@ -697,6 +700,13 @@ const SectionsEmployment = () => {
               <>
                 {roleAccess?.can_edit_employee && (
                   <div className="flex justify-end ">
+                    {/* <button 
+                      style={{background:themeColor}}
+                      onClick={() => setShowAssociateModal(true)}
+                      className="bg-blue-500 text-white mb-2 rounded-full flex items-center gap-2 mr-2 py-1 px-2 font-semibold"
+                    >
+                      Associate Employee
+                    </button> */}
                     <button
                       style={{ background: themeColor }}
                       onClick={openModal1}
@@ -883,6 +893,12 @@ const SectionsEmployment = () => {
               infoId={jobInfoId}
             />
           )}
+          {showAssociateModal && (
+           <AddAssociateEmployeeModal
+          closeModal={() => setShowAssociateModal(false)}
+          fetchEmployeeData={fetchJobInfo}
+        />
+      )}
 
           {assetModal && (
             <AddEmployeeAsset

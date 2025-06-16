@@ -5,6 +5,7 @@ import { useSelector } from "react-redux";
 import { PiPlusCircle } from "react-icons/pi";
 import { MdClose } from "react-icons/md";
 import { FaCheck, FaRegAddressCard } from "react-icons/fa";
+import {CustomDropdown} from "../../../utils/CustomDropdown";
 import {
   getAdminAccess,
   getEmployeeAssociatedSites,
@@ -23,6 +24,16 @@ import { BsEye } from "react-icons/bs";
 import { dateFormatSTD } from "../../../utils/dateUtils";
 import Accordion from "../Components/Accordion";
 const PendingUniformRequest = () => {
+  const [requests, setRequests] = useState([]);
+  const [filteredRequests, setFilteredRequests] = useState([]);
+  const [allSites, setAllSites] = useState([]);
+  const [selectedSite, setSelectedSite] = useState("");
+  const themeColor = useSelector((state) => state.theme.color);
+  const [addRequest, setAddRequest] = useState(false);
+  const [employees, setEmployees] = useState([]);
+  const [searchText, setSearchText] = useState("");
+  const [selectedOption, setSelectedOption] = useState({});
+
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
   const columns = [
     {
@@ -133,9 +144,6 @@ const PendingUniformRequest = () => {
     }
   };
 
-  const themeColor = useSelector((state) => state.theme.color);
-  const [addRequest, setAddRequest] = useState(false);
-  const [employees, setEmployees] = useState([]);
   useEffect(() => {
     const fetchAllEmployees = async () => {
       try {
@@ -154,7 +162,6 @@ const PendingUniformRequest = () => {
     fetchAllEmployees();
   }, []);
 
-  const [selectedOption, setSelectedOption] = useState({});
   const handleEmployeeChange = (option) => {
     setSelectedOption(option);
   };
@@ -187,12 +194,6 @@ const PendingUniformRequest = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const [requests, setRequests] = useState([]);
-  const [filteredRequests, setFilteredRequests] = useState([]);
-
-  const [allSites, setAllSites] = useState([]);
-  const [selectedSite, setSelectedSite] = useState("");
-
   const fetchUniformRequests = async () => {
     try {
       const res = await getUniformRequest(hrmsOrgId);
@@ -201,14 +202,18 @@ const PendingUniformRequest = () => {
       setFilteredRequests(filteredData);
 
       const allSites = await getAssociatedSites(orgId);
-      console.log("allSites:",allSites)
+      console.log("allSites:", allSites);
       // Extract unique associated organization names
-      const uniqueSites = [
-        ...new Set(
-          allSites.map((item) => item.site_name)
-        ),
-      ];
-      console.log("Unique Sites:", uniqueSites); // Check uniqueSites value
+      const uniqueSites = Array.from(
+        new Map(
+          allSites.map((item, index) => [
+            item.site_name,
+            { index, site_name: item.site_name },
+          ])
+        ).values()
+      );
+
+      console.log("Unique Sites:", uniqueSites);
       setAllSites(uniqueSites);
     } catch (error) {
       console.log(error);
@@ -219,7 +224,24 @@ const PendingUniformRequest = () => {
     fetchUniformRequests();
   }, []);
 
-  const [searchText, setSearchText] = useState("");
+  useEffect(() => {
+    if (selectedSite && selectedSite.site_name !== "Select All Sites") {
+      console.log("Selected Site:", selectedSite);
+      console.log("Selected Site Data:", requests);
+      const newFiltered = requests.filter((item) =>
+        item.associated_organization_name
+          .toLowerCase()
+          .includes(selectedSite.site_name.toLowerCase())
+      );
+
+      console.log("newFiltered:", newFiltered);
+      setFilteredRequests(newFiltered);
+    } else {
+      // If no specific site is selected, show all requests
+      setFilteredRequests(requests);
+    }
+  }, [selectedSite, requests]);
+
   const handleSearch = (e) => {
     const searchValue = e.target.value;
     setSearchText(searchValue);
@@ -317,18 +339,15 @@ const PendingUniformRequest = () => {
             onChange={handleSearch}
           />
           {/* DROPDOWN */}
-          <select
-            onChange={handleDropdownChange}
-            className="border border-gray-400 w-full placeholder:text-sm rounded-lg p-2"
-            value={selectedSite}
-          >
-            <option value="All">All Sites</option>
-            {allSites.map((site, index) => (
-              <option key={index} value={site}>
-                {site}
-              </option>
-            ))}
-          </select>
+          <CustomDropdown
+            AllSites={allSites}
+            selectedValue={selectedSite}
+            onSelect={(site) =>
+              site.site_name === "Select All Sites"
+                ? setSelectedSite(null) // Reset filter
+                : setSelectedSite(site)
+            }
+          />
           <div className="flex gap-2">
             {/* <button
               className="px-4 py-2 bg-blue-600 text-white rounded-md"
@@ -350,6 +369,7 @@ const PendingUniformRequest = () => {
           data={filteredRequests}
           // selectableRow={true}
           isPagination={true}
+          selectableRows={true}
           //   onSelectedRows={handleSelectedRows}
         />
       </div>

@@ -3,139 +3,9 @@ import React, { useEffect, useState } from "react";
 import Highcharts from "highcharts";
 import { getTotalHRMSEmployeeCount } from "../../../api";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
-// import Highcharts from "highcharts";
-
-// const EmployeeCount = () => {
-//   const [totalEmployees, setTotalEmployees] = useState({});
-//   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
-//   const fetchEmployeeCount = async () => {
-//     try {
-//       const res = await getTotalHRMSEmployeeCount(hrmsOrgId);
-//       setTotalEmployees(res);
-//     } catch (error) {
-//       console.log(error);
-//     }
-//   };
-//   useEffect(() => {
-//     fetchEmployeeCount();
-//   }, []);
-
-//   const generatePieChartOptions = (title, data) => {
-//     return {
-//       chart: {
-//         type: "column",
-//         borderRadius: 30,
-//       },
-//       title: {
-//         text: title,
-//         style: {
-//             fontSize: "16px",
-//             fontWeight: "600",
-//             color: "gray"
-//           },
-//       },
-//       plotOptions: {
-//         pie: {
-//           innerSize: "80%",
-//         },
-//       },
-//       credits: {
-//         enabled: false,
-//       },
-//       series: [
-//         {
-//           name: title,
-//           colorByPoint: true,
-//           data: Object.keys(data).map((key) => ({
-//             name: key,
-//             y: data[key],
-//           })),
-//         },
-//       ],
-//     };
-//   };
-
-//   return (
-//     <div className="ml-4">
-//       <HighchartsReact
-//         highcharts={Highcharts}
-//         options={generatePieChartOptions("Employee head count", totalEmployees)}
-//       />
-//     </div>
-//   );
-// };
-
-// export default EmployeeCount;
-
-// const EmployeeCount = ({ dashboardData, siteId }) => {
-//   const [totalEmployees, setTotalEmployees] = useState({});
-//   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
-
-//   const fetchEmployeeCount = async () => {
-//     try {
-//       if (dashboardData) {
-//         const employeeCount = dashboardData.gender[0] + dashboardData.gender[1];
-//         setTotalEmployees("employeeCount:",employeeCount.data);
-//       } else {
-//         const res = siteId
-//           ? await getTotalHRMSEmployeeCount(hrmsOrgId, siteId)
-//           : await getTotalHRMSEmployeeCount(hrmsOrgId);
-//         setTotalEmployees(res);
-//       }
-//     } catch (error) {
-//       console.log(error);
-//     }
-//     console.log("totalEmployees:", totalEmployees);
-//   };
-
-//   useEffect(() => {
-//     fetchEmployeeCount();
-//   }, [siteId]);
-
-//   const generateChartOptions = (title, data) => ({
-//     chart: {
-//       type: "column",
-//       borderRadius: 30,
-//     },
-//     title: {
-//       text: title,
-//       style: {
-//         fontSize: "16px",
-//         fontWeight: "600",
-//         color: "gray",
-//       },
-//     },
-//     plotOptions: {
-//       column: {
-//         dataLabels: {
-//           enabled: true,
-//         },
-//       },
-//     },
-//     credits: { enabled: false },
-//     series: [
-//       {
-//         name: title,
-//         colorByPoint: true,
-//         data: Object.keys(data).map((key) => ({
-//           name: key,
-//           y: data[key],
-//         })),
-//       },
-//     ],
-//   });
-
-//   return (
-//     <div className="ml-4">
-//       <HighchartsReact
-//         highcharts={Highcharts}
-//         options={generateChartOptions("Employee head count", totalEmployees)}
-//       />
-//     </div>
-//   );
-// };
-
-// export default EmployeeCount;
+import { FaDownload } from "react-icons/fa";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 const EmployeeCount = ({ dashboardData, siteId }) => {
   const [totalEmployees, setTotalEmployees] = useState({});
@@ -151,12 +21,16 @@ const EmployeeCount = ({ dashboardData, siteId }) => {
         // });
         setTotalEmployees({ Total: total });
       } else {
-        if (!siteId || siteId.trim() === "" || siteId === "all") {
+        if (
+          !siteId ||
+          siteId.site_name === "Select All Sites" ||
+          siteId === "all"
+        ) {
           const res = await getTotalHRMSEmployeeCount(hrmsOrgId);
           setTotalEmployees(res || []);
         } else {
           // const res = await getTotalHRMSEmployeeCount(hrmsOrgId, siteId);
-          setTotalEmployees(res || [0]);
+          setTotalEmployees([0]);
         }
       }
     } catch (error) {
@@ -222,12 +96,45 @@ const EmployeeCount = ({ dashboardData, siteId }) => {
     };
   };
 
+  const downloadBarChart = () => {
+    const input = document.getElementById("barchart-content");
+    html2canvas(input).then((canvas) => {
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("portrait", "mm", "a6");
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const margin = 10;
+      const availableWidth = pageWidth - margin * 1;
+      // Calculate the height preserving the aspect ratio
+      const originalImgHeight = (canvas.height * availableWidth) / canvas.width;
+      const increasedImgHeight = originalImgHeight * 1;
+      pdf.addImage(
+        imgData,
+        "PNG",
+        margin,
+        margin,
+        availableWidth,
+        increasedImgHeight
+      );
+      pdf.save("pirchart.pdf");
+    });
+  };
+
   return (
-    <div className="ml-4">
-      <HighchartsReact
-        highcharts={Highcharts}
-        options={generateChartOptions("Employee head count", totalEmployees)}
-      />
+    <div className="ml-10 bg-white p-4 rounded-lg shadow-xl">
+      <div className="flex gap-2 mt-4">
+        <button
+          className="flex items-center my-1 gap-2 px-4 py-2 bg-slate-300  hover:bg-blue-400 text-white rounded-lg text-sm font-medium transition-all duration-200 shadow-sm"
+          onClick={downloadBarChart}
+        >
+          <FaDownload />
+        </button>
+      </div>
+      <div className="mt-4 mx-10 px-5 py-1" id="barchart-content">
+        <HighchartsReact
+          highcharts={Highcharts}
+          options={generateChartOptions("Employee head count", totalEmployees)}
+        />
+      </div>
     </div>
   );
 };

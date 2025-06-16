@@ -170,7 +170,7 @@ const Fitness = () => {
                   selectedStatus === "upcomming" ||
                   selectedStatus === "upcomming"
                 }
-                // onChange={() => handleStatusChange("open")}
+                onChange={() => handleStatusChange("open")}
               />
               <label htmlFor="open" className="text-sm">
                 upcomming

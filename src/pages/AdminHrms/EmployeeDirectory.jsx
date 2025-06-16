@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { BiEdit } from "react-icons/bi";
 import { FaChevronDown, FaDownload, FaTrash, FaUserEdit } from "react-icons/fa";
+import DataTable from "react-data-table-component";
 import AdminHRMS from "./AdminHrms";
 import { Link } from "react-router-dom";
 import { PiPlusCircle } from "react-icons/pi";
@@ -8,20 +9,27 @@ import { PiPlusCircle } from "react-icons/pi";
 import { useSelector } from "react-redux";
 import FileInputBox from "../../containers/Inputs/FileInputBox";
 import InviteEmployeeModal from "./InviteEmployeeModal";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+import convert from "xml-js";
 import {
   deleteHRMSEmployee,
   getAdminAccess,
   getMyHRMSEmployees,
   getMyHRMSEmployeesAllData,
+  getHrmsAllEmployeeData,
   getUserDetails,
   hrmsDomain,
   getFullUser,
   getSiteWiseUserDetails,
   getEmployeeJobInfo,
   getAssociatedSites,
+  getStatusChanges,
+  CreateBulkEmployee,
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import toast from "react-hot-toast";
+import { error } from "highcharts";
 function EmployeeDirectory() {
   const themeColor = useSelector((state) => state.theme.color);
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
@@ -45,28 +53,287 @@ function EmployeeDirectory() {
   const [selectedSite, setSelectedSite] = useState("");
   const [filteredEmployee, setFilteredEmployees] = useState([]);
   const [empfilterData, setEmpFilterData] = useState([]);
-  const fetchAllEmployees = async () => {
-    try {
-      toast.loading("Loading employees Please wait!");
-      const res = await getMyHRMSEmployeesAllData(hrmsOrgId);
-      console.log("complete hrmsemployeedata :", res);
-      setEmployeesData(res);
-      toast.dismiss();
-      const allSites = await getAssociatedSites(orgId);
+  const [siteSearchText, setSiteSearchText] = useState("");
+  const [selectedEmployees, setSelectedEmployees] = useState([]);
+  const [showUpdateButton, setShowUpdateButton] = useState(false);
+  const [isModalOpen12, setIsModalOpen12] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [viewMode, setViewMode] = useState("table");
+  const [tableData, setTableData] = useState([]);
+  // const [filteredTableData, setFilteredTableData] = useState([]);
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    count: 0,
+    perPage: 10,
+  });
+  const [allEmployeesData , setAllEmployeesData ] = useState([])
+  // const currentPage
+
+  // const fetchAllEmployees = async () => {
+  //   try {
+  //     toast.loading("Loading employees Please wait!");
+  //     const res = await getMyHRMSEmployeesAllData(hrmsOrgId);
+  //     console.log("complete hrmsemployeedata :", res);
+  //     setEmployeesData(res);
+  //     toast.dismiss();
+  //     const allSites = await getAssociatedSites(orgId);
+  //     setAllSites(allSites);
+  //   } catch (error) {
+  //     console.log(error);
+  //     toast.dismiss();
+  //     toast.error("Something went wrong");
+  //   }
+  // };
+
+  // useEffect(() => {
+  //   fetchAllEmployees();
+  // }, []);
+
+  const fetchTableData = async (page = 1) => {
+  try {
+    // toast.loading("Loading Employee Data..")
+    const res = await getHrmsAllEmployeeData(
+      hrmsOrgId,
+      page,
+      pagination.perPage
+    );
+
+    const allSites = await getAssociatedSites(orgId);
       setAllSites(allSites);
-    } catch (error) {
-      console.log(error);
-      toast.dismiss();
-      toast.error("Something went wrong");
+    // Update ALL employees data (merge with existing to avoid duplicates)
+    setAllEmployeesData(prev => {
+      const newEmployees = res.results.filter(newEmp => 
+        !prev.some(existingEmp => 
+          existingEmp.employee.id === newEmp.employee.id
+        )
+      );
+      return [...prev, ...newEmployees];
+    });
+
+    // For table view: show only current page
+    if (viewMode === "table") {
+      setTableData(res.results);
     }
+
+    setPagination({
+      currentPage: page,
+      totalPages: Math.ceil(res.count / pagination.perPage), // Fixed division
+      count: res.count,
+      perPage: pagination.perPage,
+    });
+
+  } catch (error) {
+    toast.error("Failed to load employee data");
+    console.error("Fetch error:", error);
+  }
+};
+  useEffect(()=>{
+    fetchTableData()
+  },[])
+  useEffect(() => {
+  if (tableData.length === 0) fetchTableData();
+}, [viewMode]);
+  const PaginationControls = () => {
+  return (
+    <div className="flex justify-between items-center mt-4  mb-8 font-semibold text-gray-700">
+      {/* <div>
+        Showing {pagination.perPage * (pagination.currentPage - 1) + 1} to{" "}
+        {Math.min(
+          pagination.perPage * pagination.currentPage,
+          pagination.count
+        )}{" "}
+        of {pagination.count} entries
+      </div> */}
+      <div className="flex gap-1">
+        <button
+          onClick={() => fetchTableData(1)}
+          disabled={pagination.currentPage === 1}
+          className="px-3 py-1 border rounded disabled:opacity-50"
+        >
+          First
+        </button>
+        <button
+          onClick={() => fetchTableData(pagination.currentPage - 1)}
+          disabled={pagination.currentPage === 1}
+          className="px-3 py-1 border rounded disabled:opacity-50"
+        >
+          Previous
+        </button>
+        {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+          let pageNum;
+          if (pagination.totalPages <= 5) {
+            pageNum = i + 1;
+          } else if (pagination.currentPage <= 3) {
+            pageNum = i + 1;
+          } else if (pagination.currentPage >= pagination.totalPages - 2) {
+            pageNum = pagination.totalPages - 4 + i;
+          } else {
+            pageNum = pagination.currentPage - 2 + i;
+          }
+          
+          return (
+            <button
+              key={pageNum}
+              onClick={() => fetchTableData(pageNum)}
+              className={`px-3 py-1 border rounded ${
+                pagination.currentPage === pageNum
+                  ? "bg-blue-500 text-white"
+                  : ""
+              }`}
+            >
+              {pageNum}
+            </button>
+          );
+        })}
+        <button
+          onClick={() => fetchTableData(pagination.currentPage + 1)}
+          disabled={pagination.currentPage === pagination.totalPages}
+          className="px-3 py-1 border rounded disabled:opacity-50"
+        >
+          Next
+        </button>
+        {/* <button
+          onClick={() => fetchTableData(pagination.totalPages)}
+          disabled={pagination.currentPage === pagination.totalPages}
+          className="px-3 py-1 border rounded disabled:opacity-50"
+        >
+          Last
+        </button> */}
+      </div>
+      {/* <select
+        value={pagination.perPage}
+        onChange={(e) => {
+          setPagination((prev) => ({
+            ...prev,
+            perPage: Number(e.target.value),
+          }));
+          fetchTableData(1);
+        }}
+        className="border rounded px-2 py-1"
+      >
+        {[10, 25, 50, 100].map((size) => (
+          <option key={size} value={size}>
+            Show {size}
+          </option>
+        ))}
+      </select> */}
+    </div>
+  );
+};
+  const handlePageChange = (page) => {
+    fetchTableData(page);
   };
-
   useEffect(() => {
-    fetchAllEmployees();
+    fetchTableData();
   }, []);
+  const employeeColumns = [
+    {
+      name: "Employee ID",
+      selector: (row) => row.employee.id,
+      sortable: true,
+      width: "120px",
+    },
+    {
+      name: "Name",
+      selector: (row) => `${row.employee.first_name} ${row.employee.last_name}`,
+      sortable: true,
+      cell: (row) => (
+        <div className="flex items-center">
+          {row.employee.profile_photo ? (
+            <img
+              src={hrmsDomain + row.employee.profile_photo}
+              alt="Profile"
+              className="rounded-full h-8 w-8 object-cover mr-2"
+            />
+          ) : (
+            <div
+              className="bg-gray-300 rounded-full h-8 w-8 flex items-center justify-center mr-2"
+              style={{ backgroundColor: getRandomColor() }}
+            >
+              {row.employee.first_name.charAt(0)}
+              {row.employee.last_name.charAt(0)}
+            </div>
+          )}
+          <span>
+            {row.employee.first_name} {row.employee.last_name}
+          </span>
+        </div>
+      ),
+      width: "250px",
+    },
+    {
+      name: "Email",
+      selector: (row) => row.employee.email_id,
+      sortable: true,
+      width: "220px",
+    },
+    {
+      name: "Mobile",
+      selector: (row) => row.employee.mobile,
+      sortable: true,
+      width: "150px",
+    },
+    {
+      name: "Site",
+      selector: (row) =>
+        row.employment_info?.associated_organization_name || "N/A",
+      sortable: true,
+      width: "180px",
+    },
+    // {
+    //   name: "Designation",
+    //   selector: (row) => row.employment_info?.designation || "N/A",
+    //   sortable: true,
+    //   width: "180px"
+    // },
+    // {
+    //   name: "Department",
+    //   selector: (row) => row.employment_info?.department_name || "N/A",
+    //   sortable: true,
+    //   width: "180px"
+    // },
+    {
+      name: "Status",
+      selector: (row) => (row.employee.status ? "Active" : "Inactive"),
+      sortable: true,
+      cell: (row) => (
+        <span
+          className={`px-2 py-1 rounded-full text-xs ${
+            row.employee.status
+              ? "bg-green-100 text-green-800"
+              : "bg-red-100 text-red-800"
+          }`}
+        >
+          {row.employee.status ? "Active" : "Inactive"}
+        </span>
+      ),
+      width: "120px",
+    },
+    {
+      name: "Actions",
+      cell: (row) => (
+        <div className="flex gap-2">
+          <Link
+            to={`/hrms/employee-directory-Personal/${row.employee.id}`}
+            className="text-blue-500 hover:text-blue-700"
+          >
+            <BiEdit size={18} />
+          </Link>
+          <button
+            onClick={() => handleDeleteModal(row.employee.id)}
+            className="text-red-500 hover:text-red-700"
+          >
+            <FaTrash size={15} />
+          </button>
+        </div>
+      ),
+      width: "100px",
+    },
+  ];
 
   useEffect(() => {
-    const groupedEmployees = employeesData.reduce((acc, employeeData) => {
+    const groupedEmployees = allEmployeesData.reduce((acc, employeeData) => {
       const employee = employeeData.employee;
       if (employee && employee.first_name) {
         const firstLetter = employee.first_name[0].toUpperCase();
@@ -94,13 +361,31 @@ function EmployeeDirectory() {
       return acc;
     }, {});
     setEmpFilterData(groupedEmployees);
-  }, [employeesData]);
+  }, [allEmployeesData]);
 
   const [isOpen, setIsOpen] = useState(false);
   const toggleDropdown = () => {
     setIsOpen(!isOpen);
   };
+  const [isSiteDropdownOpen, setIsSiteDropdownOpen] = useState(false);
+  const siteDropdownRef = useRef(null);
   const dropdownRef = useRef(null);
+  useEffect(() => {
+    const handleSiteClickOutside = (event) => {
+      if (
+        siteDropdownRef.current &&
+        !siteDropdownRef.current.contains(event.target)
+      ) {
+        setIsSiteDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleSiteClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleSiteClickOutside);
+    };
+  }, []);
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -116,7 +401,6 @@ function EmployeeDirectory() {
   }, [dropdownRef]);
 
   const alphabet = `ABCDEFGHIJKLMNOPQRSTUVWXYZ`.split("");
-  // const alphabet = ["All", ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split("")];
 
   const handleLetterClick = (letter) => {
     setSelectedLetter(letter);
@@ -127,10 +411,8 @@ function EmployeeDirectory() {
     // setSelectedEmployee(null);
   };
 
-  // console.log("This is emp group :",groupedEmployees)
-
   const filteredEmployees = selectedLetter
-    ? groupedEmployees[selectedLetter] || []
+    ? empfilterData[selectedLetter] || []
     : employeesData;
 
   const [searchText, setSearchText] = useState("");
@@ -138,116 +420,92 @@ function EmployeeDirectory() {
     const searchValue = e.target.value;
     setSearchText(searchValue);
   };
-
+  const filteredTableData = tableData.filter((employee) => {
+    const fullname =
+      `${employee.employee.first_name} ${employee.employee.last_name}`.toLowerCase();
+    const email = employee.employee.email_id.toLowerCase();
+    const mobile = employee.employee.mobile
+      ? employee.employee.mobile.toString()
+      : "";
+    const matchesLetter =
+      !selectedLetter ||
+      employee.employee.first_name.charAt(0).toUpperCase() === selectedLetter;
+    return (
+      fullname.includes(searchText) ||
+      email.includes(searchText) ||
+      mobile.includes(searchText)
+    );
+  });
   const handleDropdownChange = (e) => {
     // Convert to string to ensure type consistency
     setSelectedSite(e.target.value);
   };
+  const handleDownload = async () => {
+    try {
+      // Fetch XML data based on condition
+      const xmlData = !selectedSite
+        ? await getFullUser(orgId)
+        : await getSiteWiseUserDetails(selectedSite);
 
-  const [fullUserDetaisl, setFullUserDetails] = useState([]);
-  const [allSiteUser, setAllSiteUser] = useState([]);
+      console.log(xmlData);
 
-  // const handleDownload = async () => {
-  //   try {
-  //     let res;
-  //     if (!selectedSite) {
-  //       // If no site is selected, fetch full user details
-  //       res = await getFullUser(orgId);
-  //       setFullUserDetails(res);
-  //     } else {
-  //       // If a site is selected, fetch site-specific user details
-  //       res = await getSiteWiseUserDetails(selectedSite);
-  //       setAllSiteUser(res);
-  //     }
+      // Convert to string if necessary
+      const xmlStr =
+        typeof xmlData === "string"
+          ? xmlData
+          : new XMLSerializer().serializeToString(xmlData);
 
-  //     // Convert JSON data to a worksheet
-  //     const worksheet = allSiteUser.json_to_sheet(res);
+      let dataForExcel;
 
-  //     // Create a new workbook and append the worksheet
-  //     const workbook = allSiteUser.book_new();
-  //     allSiteUser.book_append_sheet(workbook, worksheet, "Data");
+      // Try to convert XML to JSON
+      try {
+        const jsonStr = convert.xml2json(xmlStr, {
+          compact: true,
+          ignoreComment: true,
+        });
+        const jsonData = JSON.parse(jsonStr);
+        dataForExcel =
+          jsonData.users && jsonData.users.user
+            ? Array.isArray(jsonData.users.user)
+              ? jsonData.users.user
+              : [jsonData.users.user]
+            : [jsonData];
+      } catch (conversionError) {
+        console.error(
+          "XML to JSON conversion failed, using raw XML",
+          conversionError
+        );
+        // Fallback: Put the raw XML into a cell
+        dataForExcel = [{ rawXml: xmlStr }];
+      }
 
-  //     // Generate Excel file in binary array format
-  //     const excelBuffer = allSiteUser.write(workbook, {
-  //       bookType: "xlsx",
-  //       type: "array",
-  //     });
+      // Create Excel workbook from data
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(
+        wb,
+        XLSX.utils.json_to_sheet(dataForExcel),
+        "Data"
+      );
 
-  //     // Create a Blob from the buffer
-  //     const data = new Blob([excelBuffer], {
-  //       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8",
-  //     });
+      // Write workbook to binary array and create a Blob
+      const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+      const blob = new Blob([excelBuffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8",
+      });
 
-  //     // Trigger the file download
-  //     saveAs(data, "data.xlsx");
-  //   } catch (error) {
-  //     console.error("Download failed:", error);
-  //   }
-  // };
-
- // Helper function to sanitize XML string
-// const sanitizeXml = (xml) => {
-//   let sanitized = xml;
-//   // Fix unescaped ampersands
-//   sanitized = sanitized.replace(/&(?!amp;|lt;|gt;|quot;|apos;)/g, '&amp;');
-//   // Fix attributes without a value by adding empty quotes
-//   sanitized = sanitized.replace(/(\w+)=\s*(?=[>\s])/g, '$1=""');
-//   return sanitized;
-// };
-
-// const handleDownload = async () => {
-//   try {
-//     let res;
-//     if (!selectedSite) {
-//       res = await getFullUser(orgId);
-//       setFullUserDetails(res);
-//     } else {
-//       res = await getSiteWiseUserDetails(selectedSite);
-//       setAllSiteUser(res);
-//     }
-
-//     // Convert response to string if needed
-//     const xmlString =
-//       typeof res === "string" ? res : new XMLSerializer().serializeToString(res);
-
-//     // Sanitize XML to fix invalid entities and attributes without values
-//     const sanitizedXml = sanitizeXml(xmlString);
-//     console.log("Sanitized XML:", sanitizedXml);
-
-//     // Convert sanitized XML to JSON
-//     const options = { compact: true, ignoreComment: true, spaces: 4 };
-//     const jsonStr = convert.xml2json(sanitizedXml, options);
-//     const jsonData = JSON.parse(jsonStr);
-//     console.log("Parsed JSON:", jsonData);
-
-//     // Extract the array from JSON based on your XML structure.
-//     // Adjust the extraction as needed; here's an example:
-//     let dataArray = [];
-//     if (jsonData.users && jsonData.users.user) {
-//       dataArray = Array.isArray(jsonData.users.user)
-//         ? jsonData.users.user
-//         : [jsonData.users.user];
-//     } else {
-//       dataArray = [jsonData];
-//     }
-//     console.log("Data array:", dataArray);
-
-//     // Convert JSON data to a worksheet
-//     const worksheet = XLSX.utils.json_to_sheet(dataArray);
-//     const workbook = XLSX.utils.book_new();
-//     XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
-
-//     // Generate Excel file as binary array
-//     const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
-//     const blob = new Blob([excelBuffer], {
-//       type:
-//         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8",
-//     });
-//     saveAs(blob, "data.xlsx");
-//   } catch (error) {
-//     console.error("Download failed:", error);
-//   }
-// };
+      // Download the Excel file using the anchor method
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "data.xlsx";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Download failed:", error);
+    }
+  };
   function getRandomColor() {
     const colors = [
       "#8B0000",
@@ -321,8 +579,104 @@ function EmployeeDirectory() {
     fetchRoleAccess();
   }, []);
 
+  //Export Employee data
+
+  const handleExport = () => {
+    const url = `https://api.hrms.vibecopilot.ai/user-details/download?organization_id=${orgId}`;
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "data.json");
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  };
+
+  const [selectedUserStatus, setSelectedUserStatus] = useState("all");
+  const [isUserStatusDropdownOpen, setIsUserStatusDropdownOpen] =
+    useState(false);
+
+  const handleCheckboxChange = (employeeId, isActive) => {
+    if (!isActive) return;
+
+    setSelectedEmployees((prev) => {
+      if (prev.includes(employeeId)) {
+        return prev.filter((id) => id !== employeeId);
+      } else {
+        return [...prev, employeeId];
+      }
+    });
+  };
+  useEffect(() => {
+    // Show update button if any employees are selected
+    setShowUpdateButton(selectedEmployees.length > 0);
+  }, [selectedEmployees]);
+
+  const handleStatusUpdate = async () => {
+    try {
+      if (selectedEmployees.length === 0) return;
+
+      const payload = {
+        employee_ids: selectedEmployees,
+        status: false, // Setting status to false (inactive)
+      };
+
+      await getStatusChanges(payload);
+
+      // Refresh the employee data
+      await fetchTableData();
+
+      // Clear selection
+      setSelectedEmployees([]);
+      setShowUpdateButton(false);
+      
+      toast.success("Employee status updated successfully");
+    } catch (error) {
+      console.error("Error updating employee status:", error);
+      toast.error("Failed to update employee status");
+    }
+  };
+  const downloadExcelFile = () => {
+    try {
+      const link = document.createElement("a");
+      link.href = "/sample/Employee_Templates.xlsx";
+      link.download = "Employee_Templates.xlsx";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      toast.error("Error downloading sample file");
+      console.log("Download error", error);
+    }
+  };
+  const handleImport = async () => {
+    try {
+      if (!selectedFile) {
+        toast.error("Please select a file to upload");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+
+      toast.loading("Importing employees...");
+      const response = await CreateBulkEmployee(formData);
+      toast.dismiss();
+
+      if (response.success) {
+        toast.success("Employees imported successfully!");
+        setIsModalOpen12(false);
+        fetchAllEmployees(); // Refresh the employee list
+      } else {
+        toast.success(response.message || "Failed to import employees");
+      }
+    } catch (error) {
+      toast.dismiss();
+      toast.error("Error importing employees");
+      console.error("Import error:", error);
+    }
+  };
   return (
-    <div className="w-full">
+    <div className="w-full h-full">
       <AdminHRMS />
       <div className="flex flex-col ">
         <div className="">
@@ -333,24 +687,167 @@ function EmployeeDirectory() {
             <div className="flex justify-between items-center  gap-2 ">
               <div className="flex ">
                 <h1 className="text-lg pl-5 font-bold">Employee Directory</h1>
-                {/* <p className="pl-5">
-                  Employee personal details are noted under this section.
-                </p> */}
               </div>
               {/* Dropdown */}
               <div className="flex gap-2">
-                <select
-                  onChange={handleDropdownChange}
-                  className="border p-3 text-black rounded-md w-64"
-                >
-                  <option value="">Select All Sites</option>
-                  {AllSites.map((site) => (
-                    <option key={site.id} value={String(site.id)}>
-                      {site.site_name}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative group" ref={dropdownRef}>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsSiteDropdownOpen(!isSiteDropdownOpen);
+                    }}
+                    id="site-dropdown-button"
+                    className=" inline-flex  justify-center w-80 px-10 py-3 text-l font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    <span className="mr-2">
+                      {selectedSite
+                        ? AllSites.find(
+                            (site) => String(site.id) === selectedSite
+                          )?.site_name
+                        : "Select All Sites"}
+                    </span>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="w-5 h-5 ml-2 -mr-1"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M6.293 9.293a1 1 0 011.414 0L10 11.586l2.293-2.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </button>
+
+                  {isSiteDropdownOpen && (
+                    <div
+                      id="site-dropdown-menu"
+                      className="absolute left-1/2 transform -translate-x-1/2 mt-1 w-80 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10"
+                    >
+                      {/* Search Input for Sites */}
+                      <div className="sticky top-0 bg-white px-1 py-2 border-b">
+                        <input
+                          id="site-search-input"
+                          type="text"
+                          placeholder="Search sites"
+                          autoComplete="off"
+                          value={siteSearchText}
+                          onChange={(e) => setSiteSearchText(e.target.value)}
+                          className="block w-full px-4 py-2 text-gray-800 border rounded-md border-gray-300 focus:outline-none"
+                        />
+                      </div>
+                      <div className="max-h-72 overflow-y-auto ">
+                        {/* Filtered site items */}
+                        {AllSites.filter((site) =>
+                          site.site_name
+                            .toLowerCase()
+                            .includes(siteSearchText.toLowerCase())
+                        ).map((site) => (
+                          <button
+                            key={site.id}
+                            onClick={() => {
+                              setSelectedSite(String(site.id));
+                              setIsSiteDropdownOpen(false);
+                              setSiteSearchText("");
+                            }}
+                            className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 active:bg-blue-100 cursor-pointer rounded-md"
+                          >
+                            {site.site_name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {/* New User Status Dropdown */}
+                <div className="relative group flex gap-2">
+                  <button
+                    onClick={() =>
+                      setIsUserStatusDropdownOpen(!isUserStatusDropdownOpen)
+                    }
+                    className="inline-flex justify-center w-40 px-4 py-3 text-l font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    <span className="mr-2">
+                      {selectedUserStatus === "all" && "All Users"}
+                      {selectedUserStatus === "active" && "Active"}
+                      {selectedUserStatus === "inactive" && "Inactive"}
+                    </span>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="w-5 h-5 ml-2 -mr-1"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M6.293 9.293a1 1 0 011.414 0L10 11.586l2.293-2.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </button>
+
+                  {isUserStatusDropdownOpen && (
+                    <div className="absolute left-0 mt-1 w-40 rounded-md shadow-lg text-black bg-white ring-1 ring-black ring-opacity-5 z-10">
+                      <div className="py-1">
+                        <button
+                          onClick={() => {
+                            setSelectedUserStatus("all");
+                            setIsUserStatusDropdownOpen(false);
+                          }}
+                          className={`block w-full text-left px-4 py-2 ${
+                            selectedUserStatus === "all"
+                              ? "bg-gray-100"
+                              : "hover:bg-gray-100"
+                          }`}
+                        >
+                          All Users
+                        </button>
+                        <button
+                          onClick={() => {
+                            setSelectedUserStatus("active");
+                            setIsUserStatusDropdownOpen(false);
+                          }}
+                          className={`block w-full text-left px-4 py-2 ${
+                            selectedUserStatus === "active"
+                              ? "bg-gray-100 text-black"
+                              : "hover:bg-gray-100"
+                          }`}
+                        >
+                          Active
+                        </button>
+                        <button
+                          onClick={() => {
+                            setSelectedUserStatus("inactive");
+                            setIsUserStatusDropdownOpen(false);
+                          }}
+                          className={`block w-full text-left px-4 py-2 ${
+                            selectedUserStatus === "inactive"
+                              ? "bg-gray-100"
+                              : "hover:bg-gray-100"
+                          }`}
+                        >
+                          Inactive
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {showUpdateButton && (
+                    <button
+                      onClick={handleStatusUpdate}
+                      style={{ background: themeColor }}
+                      className="border-2 font-semibold hover:bg-black hover:text-white duration-150 transition-all border-white p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center mr-1"
+                    >
+                      Mark Inactive
+                    </button>
+                  )}
+                </div>
               </div>
+              {/* </div>
+              </div> */}
 
               {/* Show selected site */}
               {/* {selectedSite && <p>Selected Site ID: {selectedSite}</p>} */}
@@ -362,12 +859,27 @@ function EmployeeDirectory() {
                   onChange={handleSearch}
                   value={searchText}
                 />
-
+                <div className="w-50 font-semibold">
+                  <select
+                    name=""
+                    id=""
+                    value={viewMode}
+                    onChange={(e) => setViewMode(e.target.value)}
+                    className="text-black px-5 py-3 rounded"
+                  >
+                    <option value="table" className="font-semibold">
+                      Table
+                    </option>
+                    <option value="card" className="font-semibold">
+                      Card
+                    </option>
+                  </select>
+                </div>
                 <div className="flex gap-3">
                   <div className="relative inline-block text-left">
                     <button
                       className=" justify-center w-full flex items-center gap-2 rounded-md border border-gray-300 shadow-sm px-4 py-3 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500"
-                      // onClick={handleDownload}
+                      onClick={handleExport}
                     >
                       Export
                       <FaDownload />
@@ -1010,20 +1522,91 @@ function EmployeeDirectory() {
                     Filter
                   </button> */}
                   {roleAccess?.can_add_employee && (
-                    <Link
-                      to={"/admin/add-employee/basics"}
-                      style={{ background: themeColor }}
-                      className="border-2 font-semibold hover:bg-black hover:text-white duration-150 transition-all border-white p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center mr-1"
-                    >
-                      <PiPlusCircle size={20} />
-                      Add Employee
-                    </Link>
+                    <>
+                      <Link
+                        to={"/admin/add-employee/basics"}
+                        style={{ background: themeColor }}
+                        className="border-2 font-semibold hover:bg-black hover:text-white duration-150 transition-all border-white p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center mr-1"
+                      >
+                        <PiPlusCircle size={20} />
+                        Add Employee
+                      </Link>
+                      <button
+                        onClick={() => setIsModalOpen12(true)} // New state for the import modal
+                        style={{ background: themeColor }}
+                        className="border-2 font-semibold hover:bg-black hover:text-white duration-150 transition-all border-white p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center mr-1"
+                      >
+                        Import Employee
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
             </div>
           </header>
         </div>
+        {isModalOpen12 && (
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex z-10 justify-center items-center">
+            <div className="bg-white text-black p-5 rounded-md shadow-md w-1/3">
+              <h2 className="text-xl font-semibold mb-4">Import Employees</h2>
+
+              <div className="mb-4">
+                <p className="font-bold mb-2">
+                  Step 1: Download sample template
+                </p>
+                <p className="text-sm mb-2">
+                  Download the sample template to ensure proper formatting.
+                </p>
+                <button
+                  onClick={downloadExcelFile}
+                  style={{ background: themeColor }}
+                  className="font-semibold py-2 px-4 rounded text-white mt-2"
+                >
+                  Download Sample Template
+                </button>
+              </div>
+
+              <div className="mb-4">
+                <p className="font-bold mb-2">Step 2: Upload your file</p>
+                <p className="text-sm mb-2">
+                  After filling the template, upload it here (Excel files only).
+                </p>
+                <input
+                  type="file"
+                  accept=".xlsx,.xls"
+                  onChange={(e) => setSelectedFile(e.target.files[0])}
+                  className="block w-full text-sm text-gray-500
+            file:mr-4 file:py-2 file:px-4
+            file:rounded-md file:border-0
+            file:text-sm file:font-semibold
+            file:bg-blue-50 file:text-blue-700
+            hover:file:bg-blue-100"
+                />
+                {selectedFile && (
+                  <p className="mt-2 text-sm text-gray-600">
+                    Selected file: {selectedFile.name}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-2 mt-4">
+                <button
+                  onClick={() => setIsModalOpen12(false)}
+                  className="bg-gray-300 text-gray-700 py-2 px-4 rounded"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleImport}
+                  style={{ background: themeColor }}
+                  className="font-semibold py-2 px-4 rounded text-white"
+                >
+                  Import
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         {isModalOpen && (
           <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex z-10 justify-center items-center">
             <div className="bg-white p-5 rounded-md shadow-md w-1/3">
@@ -1117,270 +1700,320 @@ function EmployeeDirectory() {
             </div>
           </div>
         )}
-        <div className="flex h-screen ">
-          <div className=" p-4 flex flex-wrap overflow-y-auto mt-2 ml-20 w-[80%] ">
-            {alphabet.map((letter) => (
-              <div key={letter} id={letter} className="w-full">
-                {selectedLetter === null || selectedLetter === letter ? (
-                  <>
-                    <h2 className="text-xl font-mono font-semibold border-b-2 border-dashed my-4">
-                      <span
-                        style={{ background: themeColor }}
-                        className="p-2 rounded-md text-white px-4"
-                      >
-                        {letter}
-                      </span>
-                    </h2>
+        <div className="flex h-screen">
+          <div className="p-4 flex flex-wrap overflow-y-auto mt-2 ml-20 w-[80%]">
+            {viewMode === "table" ? (
+              <div className="mt-4 w-full">
+                <DataTable
+                  title="Employee Directory"
+                  columns={employeeColumns}
+                  data={tableData.filter((employee) => {
+                    // Search text filtering
+                    const fullName =
+                      `${employee.employee.first_name} ${employee.employee.last_name}`.toLowerCase();
+                    const employeeCode =
+                      employee.employment_info?.employee_code?.toLowerCase() ||
+                      "";
+                    const mobileNumber = employee.employee.mobile
+                      ? employee.employee.mobile.toString()
+                      : "";
+                    const searchTextLower = searchText.toLowerCase();
 
-                    {/* <div className="flex flex-wrap">
-  {empfilterData[letter]
-    ?.filter((employee) => {
-      // Check if the employee matches the search text filter
-      const searchFilter =
-        `${employee.first_name} ${employee.last_name}`
-          .toLowerCase()
-          .includes(searchText.toLowerCase()) ||
-        `${employee.employee_code}`
-          .toLowerCase()
-          .includes(searchText.toLowerCase());
+                    const matchesSearch =
+                      fullName.includes(searchTextLower) ||
+                      employeeCode.includes(searchTextLower) ||
+                      mobileNumber.includes(searchTextLower);
 
-      // Check if the employee matches the selected site filter
-      // If no site is selected (i.e. selectedSite is empty), we return true.
-      const siteFilter = selectedSite
-        ? employee.site_id === selectedSite
-        : true;
+                    // Site filtering - using employee.site_id exactly like in card view
+                    const matchesSite = selectedSite
+                      ? employee.employment_info?.associated_organization_id?.toString() ===
+                        selectedSite.toString()
+                      : true;
+                    // Status filtering
+                    const matchesStatus =
+                      selectedUserStatus === "all" ||
+                      (selectedUserStatus === "active" &&
+                        employee.employee?.status === true) ||
+                      (selectedUserStatus === "inactive" &&
+                        employee.employee?.status === false);
 
-      // Both conditions must be met
-      return searchFilter && siteFilter;
-    })
-    .map((employee, index) => (
-      <div
-        key={employee.id}
-        style={{ background: themeColor, color: "white" }}
-        className={`${
-          employeeId === employee.id
-            ? "bg-gradient-to-r from-yellow-400 via-red-300 to-pink-400 border-2 border-pink-400 "
-            : "bg-gradient-to-r from-yellow-400 via-red-300 to-pink-400 border-2 border-white "
-        } w-80 p-2 m-2 rounded-xl cursor-pointer`}
-        onClick={() => {
-          showEmployeeDetails(employee.id);
-        }}
-      >
-        <div className="flex items-center w-full">
-          <div className="w-32">
-            {employee?.profile_photo ? (
-              <img
-                src={hrmsDomain + employee?.profile_photo}
-                alt="Profile"
-                className="rounded-full h-20 w-20 border-4 border-white object-cover mr-4"
-              />
-            ) : (
-              <div
-                className="bg-gray-300 rounded-full text-xl border-white border-4 text-white h-20 w-20 flex items-center font-medium justify-center mr-4"
-                style={{ backgroundColor: getColorForEmployee(index) }}
-              >
-                {employee.first_name
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")}
-                {employee.last_name
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")}
+                    return matchesSearch && matchesSite && matchesStatus;
+                  })}
+                  onRowClicked={(row) => showEmployeeDetails(row.employee.id)}
+                  pointerOnHover
+                  highlightOnHover
+                  pagination
+                  paginationServer
+                  paginationTotalRows={pagination.count}
+                  onChangePage={handlePageChange}
+                  paginationPerPage={pagination.perPage}
+                  paginationRowsPerPageOptions={[10, 25, 50, 100]}
+                  onChangeRowsPerPage={(perPage, page) => {
+                    setPagination((prev) => ({ ...prev, perPage }));
+                    fetchTableData(page);
+                  }}
+                  selectableRows={roleAccess?.can_edit_employee}
+                  onSelectedRowsChange={({ selectedRows }) => {
+                    setSelectedEmployees(
+                      selectedRows.map((row) => row.employee.id)
+                    );
+                  }}
+                  customStyles={{
+                    headRow: {
+                      style: {
+                        background: themeColor,
+                        color: "white",
+                        fontSize: "15px",
+                      },
+                    },
+                    headCells: {
+                      style: {
+                        textTransform: "uppercase",
+                        paddingLeft: "16px",
+                        paddingRight: "16px",
+                        width: "150px",
+                      },
+                    },
+                    cells: {
+                      style: {
+                        paddingLeft: "16px",
+                        paddingRight: "16px",
+                        whiteSpace: "nowrap",
+                        fontSize: "14px",
+                        lineHeight: "24px",
+                        width: "150px",
+                        color: "#4b5260",
+                        fontWeight: 450,
+                      },
+                    },
+                  }}
+                />
               </div>
-            )}
-          </div>
-          <div className="w-full">
-            <h2 className="font-semibold">
-              {employee.first_name} {employee.last_name}
-            </h2>
-            <div className="flex items-center gap-1 my-1">
-              <p className="text-sm font-medium text-gray-200">
-                {employee?.employment_info?.employee_code
-                  ? employee?.employment_info?.employee_code
-                  : "not added"}
-              </p>
-              <div className="border border-gray-400 h-5" />
-              <p className="text-sm font-medium text-gray-200">
-                DOJ :{" "}
-                {employee?.employment_info?.joining_date
-                  ? employee?.employment_info?.joining_date
-                  : "not added"}
-              </p>
-            </div>
-            <p className="text-sm font-medium text-gray-200">
-              {employee?.employment_info?.designation
-                ? employee?.employment_info?.designation
-                : "not added"}
-            </p>
-            <div className="flex items-center justify-between mt-2">
-              <p
-                className={`${
-                  employee?.status
-                    ? "bg-green-400 text-white"
-                    : "bg-red-400 text-white"
-                } font-medium w-fit px-2 my-1 rounded-full`}
-              >
-                {employee?.status ? "Active" : "Inactive"}
-              </p>
-              {(roleAccess?.can_edit_employee ||
-                roleAccess?.can_delete_employee) && (
-                <div className="flex gap-2 items-center bg-white p-1 rounded-full px-2">
-                  {roleAccess?.can_edit_employee && (
-                    <Link
-                      className="text-blue-500 hover:text-blue-900"
-                      to={`/hrms/employee-directory-Personal/${employee.id}`}
-                    >
-                      <BiEdit size={18} />
-                    </Link>
-                  )}
-                  {roleAccess?.can_delete_employee && (
-                    <button
-                      onClick={() => handleDeleteModal(employee.id)}
-                      className="text-red-400 hover:text-red-800"
-                    >
-                      <FaTrash size={15} />
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
+            ) : (
+              <>
+                {viewMode === "card" && (
+  <>
+    {/* Alphabet navigation - only show if not filtered by search */}
+    {/* {!searchText && (
+      <div className="w-full bg-white p-2 mb-4 rounded shadow">
+        <div className="flex flex-wrap justify-center gap-1">
+          <button
+            onClick={handleAll}
+            className={`px-3 py-1 rounded ${
+              selectedLetter === null
+                ? 'bg-blue-500 text-white'
+                : 'bg-gray-200 hover:bg-gray-300'
+            }`}
+          >
+            All
+          </button>
+          {alphabet.map((letter) => (
+            <button
+              key={letter}
+              onClick={() => handleLetterClick(letter)}
+              className={`px-3 py-1 rounded ${
+                selectedLetter === letter
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-200 hover:bg-gray-300'
+              }`}
+            >
+              {letter}
+            </button>
+          ))}
         </div>
       </div>
-    ))}
-</div> */}
-                    <div className="flex flex-wrap">
-                      {empfilterData[letter]
-                        ?.filter((employee) => {
-                          // Create a lower case version of search text and employee details
-                          const fullName =
-                            `${employee.first_name} ${employee.last_name}`.toLowerCase();
-                          const employeeCode =
-                            employee.employee_code.toLowerCase();
-                          const searchTextLower = searchText.toLowerCase();
+    )} */}
 
-                          // Check if the employee matches the search text filter
-                          const matchesSearch =
-                            fullName.includes(searchTextLower) ||
-                            employeeCode.includes(searchTextLower);
+    {/* Employee cards */}
+    <div className="flex flex-wrap">
+      {alphabet.map((letter) => (
+        <div key={letter} id={letter} className="w-full">
+          {(selectedLetter === null || selectedLetter === letter) && (
+            <>
+              {empfilterData[letter]?.length > 0 && (
+                <h2 className="text-xl font-mono font-semibold border-b-2 border-dashed my-4">
+                  <span
+                    style={{ background: themeColor }}
+                    className="p-2 rounded-md text-white px-4"
+                  >
+                    {letter}
+                  </span>
+                </h2>
+              )}
+              <div className="flex flex-wrap">
+                {empfilterData[letter]
+                  ?.filter((employee) => {
+                    const fullName =
+                      `${employee.first_name} ${employee.last_name}`.toLowerCase();
+                    const employeeCode =
+                      employee.employee_code?.toLowerCase() || '';
+                    const mobileNumber = employee.mobile
+                      ? employee.mobile.toString()
+                      : '';
+                    const searchTextLower = searchText.toLowerCase();
 
-                          // Check if the employee matches the selected site filter.
-                          // If no site is selected, site filter passes automatically.
-                          const matchesSite = selectedSite
-                            ? String(employee.site_id) === String(selectedSite)
-                            : true;
+                    const matchesSearch =
+                      fullName.includes(searchTextLower) ||
+                      employeeCode.includes(searchTextLower) ||
+                      mobileNumber.includes(searchTextLower);
 
-                          // Return only employees matching both criteria
-                          return matchesSearch && matchesSite;
-                        })
-                        .map((employee, index) => (
-                          <div
-                            key={employee.id}
-                            style={{ background: themeColor, color: "white" }}
-                            className={`${
-                              employeeId === employee.id
-                                ? "bg-gradient-to-r from-yellow-400 via-red-300 to-pink-400 border-2 border-pink-400 "
-                                : "bg-gradient-to-r from-yellow-400 via-red-300 to-pink-400 border-2 border-white "
-                            } w-80 p-2 m-2 rounded-xl cursor-pointer`}
-                            onClick={() => showEmployeeDetails(employee.id)}
-                          >
-                            <div className="flex items-center w-full">
-                              <div className="w-32">
-                                {employee?.profile_photo ? (
-                                  <img
-                                    src={hrmsDomain + employee?.profile_photo}
-                                    alt="Profile"
-                                    className="rounded-full h-20 w-20 border-4 border-white object-cover mr-4"
-                                  />
-                                ) : (
-                                  <div
-                                    className="bg-gray-300 rounded-full text-xl border-white border-4 text-white h-20 w-20 flex items-center font-medium justify-center mr-4"
-                                    style={{
-                                      backgroundColor:
-                                        getColorForEmployee(index),
-                                    }}
+                    const matchesSite = selectedSite
+                      ? String(employee.site_id) === String(selectedSite)
+                      : true;
+                    const matchesStatus =
+                      selectedUserStatus === "all" ||
+                      (selectedUserStatus === "active" &&
+                        employee?.status === true) ||
+                      (selectedUserStatus === "inactive" &&
+                        employee?.status === false);
+
+                    return matchesSearch && matchesSite && matchesStatus;
+                  })
+                  .map((employee, index) => (
+                    <div
+                      key={employee.id}
+                      style={{
+                        background: themeColor,
+                        color: "white",
+                      }}
+                      className={`${
+                        employeeId === employee.id
+                          ? "bg-gradient-to-r from-yellow-400 via-red-300 to-pink-400 border-2 border-pink-400"
+                          : "bg-gradient-to-r from-yellow-400 via-red-300 to-pink-400 border-2 border-white"
+                      } w-80 p-2 m-2 rounded-xl cursor-pointer`}
+                      onClick={(e) => {
+                        if (!e.target.closest('input[type="checkbox"]')) {
+                          showEmployeeDetails(employee.id);
+                        }
+                      }}
+                    >
+                      <div className="flex items-center w-full">
+                        <div className="w-32">
+                          {employee?.profile_photo ? (
+                            <img
+                              src={hrmsDomain + employee?.profile_photo}
+                              alt="Profile"
+                              className="rounded-full h-20 w-20 border-4 border-white object-cover mr-4"
+                            />
+                          ) : (
+                            <div
+                              className="bg-gray-300 rounded-full text-xl border-white border-4 text-white h-20 w-20 flex items-center font-medium justify-center mr-4"
+                              style={{
+                                backgroundColor: getColorForEmployee(index),
+                              }}
+                            >
+                              {employee.first_name
+                                .split(" ")
+                                .map((n) => n[0])
+                                .join("")}
+                              {employee.last_name
+                                .split(" ")
+                                .map((n) => n[0])
+                                .join("")}
+                            </div>
+                          )}
+                        </div>
+                        <div className="w-full">
+                          <h2 className="font-semibold">
+                            {employee.first_name} {employee.last_name}
+                          </h2>
+                          <div className="flex items-center gap-1 my-1">
+                            <p className="text-sm font-medium text-gray-200">
+                              {employee?.employment_info?.employee_code
+                                ? employee?.employment_info?.employee_code
+                                : "not added"}
+                            </p>
+                            <div className="border border-gray-400 h-5" />
+                            <p className="text-sm font-medium text-gray-200">
+                              DOJ:{" "}
+                              {employee?.employment_info?.joining_date
+                                ? employee?.employment_info?.joining_date
+                                : "not added"}
+                            </p>
+                          </div>
+                          <p className="text-sm font-medium text-gray-200">
+                            {employee?.employment_info?.designation
+                              ? employee?.employment_info?.designation
+                              : "not added"}
+                          </p>
+                          <div className="flex items-center justify-between mt-2">
+                            <p
+                              className={`${
+                                employee?.status
+                                  ? "bg-green-400 text-white"
+                                  : "bg-red-400 text-white"
+                              } font-medium w-fit px-2 my-1 rounded-full`}
+                            >
+                              {employee?.status ? "Active" : "Inactive"}
+                            </p>
+                            {(roleAccess?.can_edit_employee ||
+                              roleAccess?.can_delete_employee) && (
+                              <div className="flex gap-2 items-center bg-white p-1 rounded-full px-2">
+                                {roleAccess?.can_edit_employee && (
+                                  <Link
+                                    className="text-blue-500 hover:text-blue-900"
+                                    to={`/hrms/employee-directory-Personal/${employee.id}`}
                                   >
-                                    {employee.first_name
-                                      .split(" ")
-                                      .map((n) => n[0])
-                                      .join("")}
-                                    {employee.last_name
-                                      .split(" ")
-                                      .map((n) => n[0])
-                                      .join("")}
+                                    <BiEdit size={18} />
+                                  </Link>
+                                )}
+                                {roleAccess?.can_delete_employee && (
+                                  <button
+                                    onClick={() =>
+                                      handleDeleteModal(employee.id)
+                                    }
+                                    className="text-red-400 hover:text-red-800"
+                                  >
+                                    <FaTrash size={15} />
+                                  </button>
+                                )}
+                                {employee?.status && (
+                                  <div className="">
+                                    <input
+                                      type="checkbox"
+                                      checked={selectedEmployees.includes(
+                                        employee.id
+                                      )}
+                                      onChange={() =>
+                                        handleCheckboxChange(
+                                          employee.id,
+                                          employee?.status
+                                        )
+                                      }
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                    />
                                   </div>
                                 )}
                               </div>
-                              <div className="w-full">
-                                <h2 className="font-semibold">
-                                  {employee.first_name} {employee.last_name}
-                                </h2>
-                                <div className="flex items-center gap-1 my-1">
-                                  <p className="text-sm font-medium text-gray-200">
-                                    {employee?.employment_info?.employee_code ||
-                                      "not added"}
-                                  </p>
-                                  <div className="border border-gray-400 h-5" />
-                                  <p className="text-sm font-medium text-gray-200">
-                                    DOJ :{" "}
-                                    {employee?.employment_info?.joining_date ||
-                                      "not added"}
-                                  </p>
-                                </div>
-                                <p className="text-sm font-medium text-gray-200">
-                                  {employee?.employment_info?.designation ||
-                                    "not added"}
-                                </p>
-                                <div className="flex items-center justify-between mt-2">
-                                  <p
-                                    className={`${
-                                      employee?.status
-                                        ? "bg-green-400 text-white"
-                                        : "bg-red-400 text-white"
-                                    } font-medium w-fit px-2 my-1 rounded-full`}
-                                  >
-                                    {employee?.status ? "Active" : "Inactive"}
-                                  </p>
-                                  {(roleAccess?.can_edit_employee ||
-                                    roleAccess?.can_delete_employee) && (
-                                    <div className="flex gap-2 items-center bg-white p-1 rounded-full px-2">
-                                      {roleAccess?.can_edit_employee && (
-                                        <Link
-                                          className="text-blue-500 hover:text-blue-900"
-                                          to={`/hrms/employee-directory-Personal/${employee.id}`}
-                                        >
-                                          <BiEdit size={18} />
-                                        </Link>
-                                      )}
-                                      {roleAccess?.can_delete_employee && (
-                                        <button
-                                          onClick={() =>
-                                            handleDeleteModal(employee.id)
-                                          }
-                                          className="text-red-400 hover:text-red-800"
-                                        >
-                                          <FaTrash size={15} />
-                                        </button>
-                                      )}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
+                            )}
                           </div>
-                        ))}
+                        </div>
+                      </div>
                     </div>
-                  </>
-                ) : null}
+                  ))}
               </div>
-            ))}
+            </>
+          )}
+        </div>
+      ))}
+    </div>
+
+    {/* Pagination controls */}
+    <PaginationControls />
+  </>
+)}
+
+              </>
+            )}
           </div>
+
+          {/* Keep your alphabet navigation and details panel */}
           <div className="w-10 bg-white text-black p-4 max-h-fit overflow-y-auto hide-scrollbar mb-2">
             <div className="flex flex-col">
               <button
                 onClick={handleAll}
-                className=" p-1 text-sm font-medium text-gray-500"
+                className="p-1 text-sm font-medium text-gray-500"
               >
                 All
               </button>
@@ -1388,7 +2021,7 @@ function EmployeeDirectory() {
                 <button
                   key={letter}
                   onClick={() => handleLetterClick(letter)}
-                  className=" p-1 text-sm font-medium text-gray-500"
+                  className="p-1 text-sm font-medium text-gray-500"
                   title={letter}
                 >
                   {letter}
@@ -1400,7 +2033,7 @@ function EmployeeDirectory() {
             <h1 className="text-2xl font-semibold mb-4">Employee Details</h1>
             {Object.keys(selectedEmployee).length > 0 ? (
               <div className="flex flex-col justify-between gap-10 h-96">
-                {/* <p>{selectedEmployee}</p> */}
+                {/* Your existing details panel content */}
                 <div className="flex flex-col gap-2 border-b border-dashed border-gray-300">
                   <div className="flex items-center border-b border-dashed border-gray-300 p-1">
                     {selectedEmployee?.employee?.profile_photo ? (
@@ -1478,7 +2111,7 @@ function EmployeeDirectory() {
                     </p>
                     <p className="grid grid-cols-2">
                       <span className="font-medium text-sm">Email :</span>{" "}
-                      <span className="font-medium text-xs  break-words">
+                      <span className="font-medium text-xs break-words">
                         {selectedEmployee?.employee?.email_id}
                       </span>
                     </p>
@@ -1487,7 +2120,7 @@ function EmployeeDirectory() {
                 <div className="flex flex-col gap-4">
                   <Link
                     to={`/hrms/employee-directory-Personal/${selectedEmployee?.employee?.id}`}
-                    className="border-2 rounded-full w-full  text-green-400 border-green-400 mt-2 hover:bg-green-50 fov font-semibold py-1 px-4 flex items-center gap-2 justify-center"
+                    className="border-2 rounded-full w-full text-green-400 border-green-400 mt-2 hover:bg-green-50 fov font-semibold py-1 px-4 flex items-center gap-2 justify-center"
                   >
                     <FaUserEdit /> View Profile
                   </Link>
@@ -1505,27 +2138,6 @@ function EmployeeDirectory() {
                         )}
                       </>
                     )}
-                    {/* <button
-                      type="submit"
-                      className="bg-yellow-500 text-white hover:bg-gray-700  py-2 px-5 rounded-full"
-                    >
-                      Hold
-                    </button>
-                    {selectedEmployee?.employee?.status ? (
-                      <button
-                        type="submit"
-                        className="bg-red-500 text-sm font-medium text-white hover:bg-gray-700  py-2 px-4 rounded-full"
-                      >
-                        Deactivate
-                      </button>
-                    ) : (
-                      <button
-                        type="submit"
-                        className="bg-green-500 text-sm font-medium text-white hover:bg-gray-700  py-2 px-4 rounded-full"
-                      >
-                        Activate
-                      </button>
-                    )} */}
                   </div>
                 </div>
               </div>
@@ -1539,6 +2151,7 @@ function EmployeeDirectory() {
           </div>
         </div>
       </div>
+
       {isDeleteModalOpen && (
         <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-30 backdrop-blur-sm z-20">
           <div className="bg-white overflow-auto max-h-[70%]  md:w-auto w-96 p-4 px-8 flex flex-col rounded-md gap-5">

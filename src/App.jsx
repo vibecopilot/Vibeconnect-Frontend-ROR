@@ -42,7 +42,9 @@ import Communication from "./pages/Communication.jsx";
 import CreateEvent from "./pages/SubPages/CreateEvent.jsx";
 import EventDetails from "./pages/SubPages/details/EventDetails.jsx";
 import CreateBroadcast from "./pages/SubPages/CreateBroadcast.jsx";
+// import CreateHrmsBroadcast from "./pages/SubPages/CreateHrmsBroadcast.jsx";
 import BroadcastDetails from "./pages/SubPages/details/BroadcastDetails.jsx";
+// import BroadcastHrmsDetails from "./pages/SubPages/BroadcastHrmsDetails.jsx";
 import MailRoom from "./pages/MailRoom.jsx";
 import CreateInbound from "./pages/SubPages/CreateInbound.jsx";
 import InBoundDetails from "./pages/SubPages/details/InBoundDetails.jsx";
@@ -61,6 +63,7 @@ import MyTickets from "./pages/MyTickets.jsx";
 import UserTicket from "./pages/SubPages/UserTicket.jsx";
 import DetailsEdit from "./pages/SubPages/details/DetailsEdit.jsx";
 import User from "./components/Authentication/User.jsx";
+import HrmsUser from "./components/Authentication/HrmsUser.jsx";
 import UserDetails from "./pages/SubPages/details/UserDetails.jsx";
 import AddAMC from "./pages/SubPages/AddAMC.jsx";
 import EditAsset from "./pages/SubPages/EditAsset.jsx";
@@ -127,7 +130,8 @@ import AddInventory from "./pages/SubPages/AddInventory.jsx";
 import AddChecklist from "./pages/SubPages/AddChecklist.jsx";
 import EditChecklist from "./pages/SubPages/EditChecklist.jsx";
 import EditStocks from "./pages/SubPages/EditStocks.jsx";
-
+import ChangePassword from "./pages/AdminHrms/ChangePassword.jsx";
+import EmployeeLogs from "./pages/AdminHrms/EmployeeLogs.jsx";
 import DocumentPro from "./pages/DocumentsPro/DocumentPro.jsx";
 import AddProjectTask from "./pages/SubPages/AddProjectTask.jsx";
 import UserSetup from "./pages/Setup/UserSetup.jsx";
@@ -197,6 +201,7 @@ import PermitPendingApprovalDetails from "./pages/SubPages/details/PermitPending
 import ScheduleAuditDetails from "./pages/SubPages/details/ScheduleAuditDetails.jsx";
 import ChecklistDetails from "./pages/SubPages/details/ChecklistDetails.jsx";
 import PermitSetup from "./pages/Setup/PermitSetup.jsx";
+import PermitEntity from "./pages/Setup/SetupSubPages/PermitEntity.jsx";
 import LetterOfIndent from "./pages/LetterOfIndent.jsx";
 import AddLoi from "./pages/SubPages/AddLoi.jsx";
 import EditLoiPO from "./pages/SubPages/details/EditLoiPo.jsx";
@@ -346,6 +351,7 @@ import GroupJoinDetails from "./pages/SubPages/details/GroupJoinDetails.jsx";
 import AdminHRMS from "./pages/AdminHrms/AdminHrms.jsx";
 import HRMSDashboard from "./pages/AdminHrms/HRMSDashboard.jsx";
 import { getItemInLocalStorage } from "./utils/localStorage.js";
+// import CustomDropdown from "./utils/CustomDropdown.jsx";
 import { API_URL, getColorCode, getVibeBackground } from "./api/index.js";
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
@@ -699,6 +705,7 @@ import EditPPMChecklist from "./pages/SubPages/EditPPMChecklist.jsx";
 import MeterCategoryType from "./pages/Setup/MeterCategoryType/MeterCategoryType.jsx";
 import EditEmployee from "./pages/AdminHrms/EditEmployee.jsx";
 import EditEvent from "./pages/SubPages/EditEvent.jsx";
+// import EditHrmsEvent from "./pages/SubPages/EditHrmsEvent.jsx";
 import EditBroadcast from "./pages/SubPages/EditBroadcast.jsx";
 import AssociatedSites from "./pages/AdminHrms/AssociatedSites/AssociatedSites.jsx";
 import SetupSeat from "./pages/Setup/SetupSeat.jsx";
@@ -713,47 +720,69 @@ import UniformApplication from "./pages/AdminHrms/UniformApplication.jsx";
 import CopyChecklistPPM from "./pages/SubPages/CopyChecklistPPM.jsx";
 import CopyChecklistService from "./pages/SubPages/CopyChecklistService.jsx";
 // import EmployeeSavedForum from "./pages/EmployeeSavedForum.jsx";
-// import BillingSetup from "./pages/Setup/BillingSetup/BillingSetup.jsx";
-// import AddCAMBillingSetup from "./pages/Setup/BillingSetup/AddCAMBillingSetup.jsx";
-// import CAMBilling from "./pages/CAMBilling.jsx";
-// import BillingSetup from "./pages/Setup/BillingSetup/BillingSetup.jsx";
-// import CAMBilling from "./pages/CAMBilling.jsx";
+import CAMBilling from "./pages/CAMBilling.jsx";
 import BillingAddress from "./pages/Setup/BillingSetup/BillingAddress.jsx";
 import EditBillingAddress from "./pages/Setup/BillingSetup/EditBillingAddress.jsx";
 import AddCAMBilling from "./pages/SubPages/AddCAMBilling.jsx";
 import CAMBillingDetails from "./pages/SubPages/details/CAMBillingDetails.jsx";
 import CreateInvoiceReceipt from "./pages/SubPages/details/CreateInvoiceReceipt.jsx";
+import BillingSetup from "./pages/Setup/BillingSetup/BillingSetup.jsx";
 // import FBRestaurtantEdit from "./pages/SubPages/FBResturantEdit.jsx";
 // import PantryDetails from "./pages/SubPages/details/PantryDetails.jsx";
 // import FBCuisinesSetup from "./pages/Setup/FBCuisinesSetup.jsx";
-// import FBRestaurtantDetails from "./pages/SubPages/details/FBSubDetails/FBResturantsDetails.jsx";
-// import FBStatusSetup from "./pages/SubPages/details/FBStatusSetup.jsx";
-// import EditCategorySetup from "./pages/SubPages/EditCategorySetup.jsx";
-// import EditSubCategorySetup from "./pages/SubPages/EditSubCategorySetup.jsx";
-// import FBRestaurtantMenu from "./pages/SubPages/details/FBSubDetails/FBResturantMenu.jsx";
-// import EditRestaurtantBooking from "./pages/SubPages/EditResturantBooking.jsx";
-// import EditRestaurtantOrders from "./pages/SubPages/EditResturantOrders.jsx";
+import FBRestaurtantDetails from "./pages/SubPages/details/FBSubDetails/FBResturantsDetails.jsx";
+import FBStatusSetup from "./pages/SubPages/details/FBStatusSetup.jsx";
+import EditCategorySetup from "./pages/SubPages/EditCategorySetup.jsx";
+import EditSubCategorySetup from "./pages/SubPages/EditSubCategorySetup.jsx";
+import FBRestaurtantMenu from "./pages/SubPages/details/FBSubDetails/FBResturantMenu.jsx";
+import EditRestaurtantBooking from "./pages/SubPages/EditResturantBooking.jsx";
+import EditRestaurtantOrders from "./pages/SubPages/EditResturantOrders.jsx";
 // import FBMainPage from "./pages/Setup/FBMainPage.jsx";
 import EmployeeDocumentMain from "./pages/Employees/EmployeeDocumentMain.jsx";
-// import EditDailyPickup from "./pages/SubPages/Transportation/EditDailyPickup.jsx";
-// import Compliance from "./pages/Compliance/Compliance.jsx";
-// import ComplianceSetup from "./pages/Setup/ComplianceSetupPages/ComplianceSetup.jsx";
-// import AddCompliance from "./pages/Compliance/AddCompliance.jsx";
-// import SiteEmployee from "./pages/AdminHrms/Employee/SiteEmployee.jsx";
+import EditDailyPickup from "./pages/SubPages/Transportation/EditDailyPickup.jsx";
+import Compliance from "./pages/Compliance/Compliance.jsx";
+import ComplianceSetup from "./pages/Setup/ComplianceSetupPages/ComplianceSetup.jsx";
+import AddCompliance from "./pages/Compliance/AddCompliance.jsx";
+import SiteEmployee from "./pages/AdminHrms/Employee/SiteEmployee.jsx";
 import ComplianceVendor from "./pages/Compliance/ComplianceVendor.jsx";
 import ComplianceEvidence from "./pages/Setup/ComplianceSetupPages/ComplianceEvidence.jsx";
 import ComplianceDetails from "./pages/Compliance/ComplianceDetails.jsx";
 import ComplianceVendorDashboard from "./pages/Compliance/ComplianceVendorDashboard.jsx";
 import ClientDashboard from "./pages/Employees/ClientDashboard.jsx";
-
+import AddHrmsCommunication from "../src/pages/HRMS/AddHrmsCommunication.jsx";
+import AddhrmsBroadcast from "./pages/HRMS/AddhrmsBroadcast.jsx";
+import EmployeeHrmsCommunication from "./pages/Employees/EmployeeCommunication/EmployeeHrmsCommunication.jsx";
+import AddHrmsForums from "./pages/HRMS/AddHrmsForums.jsx";
+import AddHrmsHolidays from "./pages/AdminHrms/AddHrmsHolidays.jsx";
 import { useParams } from "react-router-dom";
 import { getNotification, updateNotificationStatus } from "./api";
 import AddSelfRegistration from "./pages/SubPages/AddSelfRegistration.jsx";
 import EditSelfRegistration from "./pages/SubPages/EditSelfRegistration.jsx";
 import SelfRegistrationDetails from "./pages/SubPages/SelfRegistrationDetails.jsx";
 // new admin hrms
-import Privacy from "./pages/Privacy/Privacy.jsx"
+import Privacy from "./pages/Privacy/Privacy.jsx";
 import PrivacyPolicy from "./pages/Setup/Abous/PrivacyPolicy.jsx";
+import OtpAndQr from "./pages/OtpAndQr.jsx";
+import Mom from "./pages/Mom/Mom.jsx";
+import NewMom from "./pages/Mom/NewMom.jsx";
+import ReceiptInvoiceCam from "./pages/ReceiptInvoiceCam.jsx";
+import AddReceiptInvoiceCamBilling from "./pages/SubPages/AddReceiptInvoiceCamBilling.jsx";
+import ReceiptInvoiceDetails from "./pages/SubPages/ReceiptInvoiceDetails.jsx";
+import MycityPrivacy from "./pages/MycityPrivacy.jsx";
+import Survey from "./pages/SubPages/survey/Survey.jsx";
+import AddSurvey from "./pages/SubPages/survey/AddSurvey.jsx";
+import CreateScratchSurvey from "./pages/SubPages/survey/CreateScratchSurvey.jsx";
+import CopySurvey from "./pages/SubPages/survey/CopySurvey.jsx";
+import CopySurveyViewPage from "./pages/SubPages/survey/CopySurveyViewPage.jsx";
+import CopySurveyQuestions from "./pages/SubPages/survey/CopySurveyQuestions.jsx";
+import CreateTemplateSurvey from "./pages/SubPages/survey/CreateTemplateSurvey.jsx";
+import TemplateDetailsSurvey from "./pages/SubPages/survey/TemplateDetailsSurvey.jsx";
+import SampleResultSurvey from "./pages/SubPages/survey/SampleResultSurvey.jsx";
+import EditTemplateSurvey from "./pages/SubPages/survey/EditTemplateSurvey.jsx";
+import SurveyDetails from "./pages/SubPages/survey/SurveyDetails.jsx";
+import AnalyzeResult from "./pages/SubPages/survey/AnalyzeResult.jsx";
+import PreviewSurvey from "./pages/SubPages/survey/PreviewSurvey.jsx";
+import FBMainPage from "./pages/Setup/FBMainPage.jsx";
 
 function App() {
   const { id } = useParams();
@@ -846,7 +875,6 @@ function App() {
   //   return () => clearInterval(interval);
   // }, [empId]);
 
-
   //updated
   // useEffect(() => {
   //   // First check if user has client dashboard access
@@ -928,6 +956,17 @@ function App() {
             </ProtectedRoute>
           }
         />
+        {/* hrms setting  */}
+        <Route
+          path="/admin/hrms/settings"
+          element={
+            <ProtectedRoute>
+              {" "}
+              <HrmsUser />{" "}
+            </ProtectedRoute>
+          }
+        />
+
         <Route
           path="/attendance"
           element={
@@ -1232,22 +1271,24 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
-        {/* <Route
+        {/* { */}
+        <Route
           path="/compliance"
           element={
             <ProtectedAdminRoutes>
               <Compliance />
             </ProtectedAdminRoutes>
           }
-        /> */}
-        {/* <Route
+        />
+        {/* } */}
+        <Route
           path="/compliance/add-compliance"
           element={
             <ProtectedAdminRoutes>
               <AddCompliance />
             </ProtectedAdminRoutes>
           }
-        /> */}
+        />
         <Route
           path="/tickets/details/:id"
           element={
@@ -1593,6 +1634,30 @@ function App() {
           element={
             <ProtectedAdminRoutes>
               <Forum />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/communication/forum/saved_forum"
+          element={
+            <ProtectedAdminRoutes>
+              <SavedForums />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/communication/forum/hidden_forum"
+          element={
+            <ProtectedAdminRoutes>
+              <HiddenForums />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/communication/forum/reported_forum"
+          element={
+            <ProtectedAdminRoutes>
+              <ReportForum />
             </ProtectedAdminRoutes>
           }
         />
@@ -2996,14 +3061,14 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
-        {/* <Route
+        <Route
           path="/setup/fnb/cuisines"
           element={
             <ProtectedAdminRoutes>
-              <FBMainPage />
+              <FBMainPage/>
             </ProtectedAdminRoutes>
           }
-        /> */}
+        />
 
         {/* permit */}
         {/* admin permit */}
@@ -3185,14 +3250,14 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
-        {/* <Route
+        <Route
           path="/admin/fb-details/:id"
           element={
             <ProtectedAdminRoutes>
               <FBRestaurtantDetails />
             </ProtectedAdminRoutes>
           }
-        /> */}
+        />
         {/* <Route
           path="/admin/fb-edit/:id"
           element={
@@ -3201,6 +3266,14 @@ function App() {
             </ProtectedAdminRoutes>
           }
         /> */}
+        <Route
+          path="/fnb/status-setup/:id"
+          element={
+            <ProtectedAdminRoutes>
+              <FBStatusSetup />
+            </ProtectedAdminRoutes>
+          }
+        />
         {/* <Route
           path="/fnb/status-setup/:id"
           element={
@@ -3209,54 +3282,46 @@ function App() {
             </ProtectedAdminRoutes>
           }
         /> */}
-        {/* <Route
-          path="/fnb/status-setup/:id"
-          element={
-            <ProtectedAdminRoutes>
-              <FBStatusSetup />
-            </ProtectedAdminRoutes>
-          }
-        /> */}
-        {/* <Route
+        <Route
           path="/fnb/category-setup/:id"
           element={
             <ProtectedAdminRoutes>
               <EditCategorySetup />
             </ProtectedAdminRoutes>
           }
-        /> */}
-        {/* <Route
+        />
+        <Route
           path="/fnb/sub-category-setup/:id"
           element={
             <ProtectedAdminRoutes>
               <EditSubCategorySetup />
             </ProtectedAdminRoutes>
           }
-        /> */}
-        {/* <Route
+        />
+        <Route
           path="/fnb/restaurtant-menu/:id"
           element={
             <ProtectedAdminRoutes>
               <FBRestaurtantMenu />
             </ProtectedAdminRoutes>
           }
-        /> */}
-        {/* <Route
+        />
+        <Route
           path="/admin/restaurtant-bookings/:id"
           element={
             <ProtectedAdminRoutes>
               <EditRestaurtantBooking />
             </ProtectedAdminRoutes>
           }
-        /> */}
-        {/* <Route
+        />
+        <Route
           path="/admin/restaurtant-orders/:id"
           element={
             <ProtectedAdminRoutes>
               <EditRestaurtantOrders />
             </ProtectedAdminRoutes>
           }
-        /> */}
+        />
         <Route
           path="/admin/fb-res-menu/:id"
           element={
@@ -3332,14 +3397,14 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
-        {/* <Route
+        <Route
           path="/admin/setup-compliance"
           element={
             <ProtectedAdminRoutes>
               <ComplianceSetup />
             </ProtectedAdminRoutes>
           }
-        /> */}
+        />
         {/* Meter Types */}
         <Route
           path="/admin/setup-meter-type"
@@ -3602,6 +3667,7 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
+        {/*  */}
 
         {/* booking & Req */}
         <Route
@@ -4849,14 +4915,14 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
-        {/* <Route
+        <Route
           path="/admin/hrms/site-employee"
           element={
             <ProtectedAdminRoutes>
               <SiteEmployee />
             </ProtectedAdminRoutes>
           }
-        /> */}
+        />
         <Route
           path="/admin/add-employee"
           element={
@@ -5276,7 +5342,73 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
-
+        {/* Transportation */}
+        <Route
+          path="/admin/transportation"
+          element={
+            <ProtectedAdminRoutes>
+              <Transportation />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/admin/transportation/book-pickup"
+          element={
+            <ProtectedAdminRoutes>
+              <BookPickup />
+            </ProtectedAdminRoutes>
+          }
+        />
+        {/* Insurance */}
+        <Route
+          path="/insurance"
+          element={
+            <ProtectedAdminRoutes>
+              <Insurance />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/insurance/add-policy"
+          element={
+            <ProtectedAdminRoutes>
+              <AddPersonalInsurance />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="insurance/add-existing-policy"
+          element={
+            <ProtectedAdminRoutes>
+              <AddPersonalInsurance />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/insurance"
+          element={
+            <ProtectedAdminRoutes>
+              <Insurance />
+            </ProtectedAdminRoutes>
+          }
+        />
+        {/* Fitness */}
+        <Route
+          path="/admin/fitness"
+          element={
+            <ProtectedRoute>
+              <Fitness />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/book-fitness"
+          element={
+            <ProtectedRoute>
+              <BookFitness />
+            </ProtectedRoute>
+          }
+        />
         {/*personal financial */}
         <Route
           path="/personal-finance"
@@ -5868,6 +6000,24 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
+        {/* Change Password */}
+        <Route
+          path="/admin/employee-directory/change-password/:id"
+          element={
+            <ProtectedAdminRoutes>
+              <ChangePassword />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/admin/employee-directory/employee-logs/:id"
+          element={
+            <ProtectedAdminRoutes>
+              <EmployeeLogs />
+            </ProtectedAdminRoutes>
+          }
+        />
+
         <Route
           path="/admin/employee-directory/add-new-ctc"
           element={
@@ -6517,12 +6667,7 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
-        <Route
-          path="/setup/privacy_policy"
-          element={
-              <PrivacyPolicy /> 
-          }
-        />
+        <Route path="/setup/privacy_policy" element={<PrivacyPolicy />} />
         <Route
           path="/admin/skill-grow/create-course-details"
           element={
@@ -6713,26 +6858,28 @@ function App() {
             </ProtectedRoute>
           }
         />
-        {/* <Route
+        <Route
           path="/admin/billing-setup"
           element={
             <ProtectedAdminRoutes>
               <BillingSetup />
             </ProtectedAdminRoutes>
           }
-        /> */}
-
-        {/* CAM Billing */}
-        {/* <Route
-          path="/admin/cam-billing"
+        />
+        <Route
+          path="/cam_bill"
+          element={<Navigate to="/cam_bill/billing" replace />}
+        />
+        <Route
+          path="/cam_bill/billing"
           element={
             <ProtectedAdminRoutes>
               <CAMBilling />
             </ProtectedAdminRoutes>
           }
-        /> */}
+        />
         <Route
-          path="/admin/add-cam-billing"
+          path="/cam_bill/add"
           element={
             <ProtectedAdminRoutes>
               <AddCAMBilling />
@@ -6740,7 +6887,7 @@ function App() {
           }
         />
         <Route
-          path="/admin/cam-billing-details/:id"
+          path="/cam_bill/details/:id"
           element={
             <ProtectedAdminRoutes>
               <CAMBillingDetails />
@@ -6748,10 +6895,34 @@ function App() {
           }
         />
         <Route
-          path="/admin/create-invoice-receipt"
+          path="/cam_bill/create-invoice-receipt/:id"
           element={
             <ProtectedAdminRoutes>
               <CreateInvoiceReceipt />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/cam_bill/reciept-invoice"
+          element={
+            <ProtectedAdminRoutes>
+              <ReceiptInvoiceCam />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/cam_bill/receipt-invoice/add"
+          element={
+            <ProtectedAdminRoutes>
+              <AddReceiptInvoiceCamBilling />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/cam_bill/receipt-invoice/details/:id"
+          element={
+            <ProtectedAdminRoutes>
+              <ReceiptInvoiceDetails />
             </ProtectedAdminRoutes>
           }
         />
@@ -6819,13 +6990,213 @@ function App() {
             </ProtectedRoute>
           }
         />
+        {/* Hrms Communication Page */}
         <Route
-          path="/privacy"
+          path="/admin/hrms/communication"
           element={
-              <Privacy />
+            <ProtectedRoute>
+              <AddHrmsCommunication />
+            </ProtectedRoute>
           }
         />
+        <Route
+          path="/admin/hrms/broadcast"
+          element={
+            <ProtectedRoute>
+              <AddhrmsBroadcast />
+            </ProtectedRoute>
+          }
+        />
+        {/* Hrms Holidays */}
+        <Route
+          path="/admin/hrms/holidays"
+          element={
+            <ProtectedRoute>
+              <AddHrmsHolidays />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/employee/EmployeeHrmsCommunication"
+          element={
+            <ProtectedRoute>
+              <EmployeeHrmsCommunication />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+        //  path="/admin/hrms/broadcast/details/:id"
+        //  element={
+        //   <ProtectedRoute>
+        //     <BroadcastHrmsDetails/>
+        //   </ProtectedRoute>
+        //  }
+        />
+        <Route
+        //  path="/admin/hrms/broadcast/edit-event/:id"
+        //  element={
+        //   <ProtectedRoute>
+        //     <EditHrmsEvent/>
+        //   </ProtectedRoute>
+        //  }
+        />
+        <Route
+        // path="/admin/hrms/broadcast/create-broadcast"
+        //   element={
+        //     <ProtectedRoute>
+        //       <CreateHrmsBroadcast/>
+        //     </ProtectedRoute>
+        //   }
+        />
+
+        <Route
+          path="/admin/hrms/formus"
+          element={
+            <ProtectedRoute>
+              <AddHrmsForums />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/otp-qr" element={<OtpAndQr />} />
+
+        <Route
+          path="/admin/mom"
+          element={
+            <ProtectedRoute>
+              <Mom />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/new-mom"
+          element={
+            <ProtectedRoute>
+              <NewMom />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/business-card"
+          element={
+            <ProtectedRoute>
+              <BusinessCard />
+            </ProtectedRoute>
+          }
+        />
+        {/* Survey */}
+        <Route
+          path="/admin/survey"
+          element={
+            <ProtectedAdminRoutes>
+              <Survey />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/admin/add-survey"
+          element={
+            <ProtectedAdminRoutes>
+              <AddSurvey />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/admin/create-scratch-survey"
+          element={
+            <ProtectedAdminRoutes>
+              <CreateScratchSurvey />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/admin/copy-survey"
+          element={
+            <ProtectedAdminRoutes>
+              <CopySurvey />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/admin/copy-survey-view-page"
+          element={
+            <ProtectedAdminRoutes>
+              <CopySurveyViewPage />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/admin/copy-survey-question"
+          element={
+            <ProtectedAdminRoutes>
+              <CopySurveyQuestions />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/admin/create-template-survey"
+          element={
+            <ProtectedAdminRoutes>
+              <CreateTemplateSurvey />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/admin/template-detail-survey"
+          element={
+            <ProtectedAdminRoutes>
+              <TemplateDetailsSurvey />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/admin/sample-result-survey"
+          element={
+            <ProtectedAdminRoutes>
+              <SampleResultSurvey />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/admin/edit-template-survey"
+          element={
+            <ProtectedAdminRoutes>
+              <EditTemplateSurvey />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/admin/survey-details/:id"
+          element={
+            <ProtectedAdminRoutes>
+              <SurveyDetails />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/admin/result-analyze-result"
+          element={
+            <ProtectedAdminRoutes>
+              <AnalyzeResult />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/admin/preview-survey"
+          element={
+            <ProtectedAdminRoutes>
+              <PreviewSurvey />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/privacy-policy-adani-realty"
+          element={<MycityPrivacy />}
+        />
       </Routes>
+
       <Footer />
     </>
   );

@@ -8,6 +8,9 @@ import {
   getLocationCount,
 } from "../../../api";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
+import { FaDownload} from "react-icons/fa";
 
 const DepartmentCount = ({ dashboardData, siteId }) => {
   const [selectedOption, setSelectedOption] = useState("Department");
@@ -23,7 +26,11 @@ const DepartmentCount = ({ dashboardData, siteId }) => {
     try {
       let res;
       // Use org-level API if no site is selected or siteId equals "all"
-      if (!siteId || siteId.trim() === "" || siteId === "all") {
+      if (
+        !siteId ||
+        siteId.site_name === "Select All Sites" ||
+        siteId === "all"
+      ) {
         res = await getDepartmentCount(hrmsOrgId);
       } else {
         // When a specific site is selected, use dashboardData if available,
@@ -68,7 +75,11 @@ const DepartmentCount = ({ dashboardData, siteId }) => {
     setErrorMsg("");
     try {
       let res;
-      if (!siteId || siteId.trim() === "" || siteId === "all") {
+      if (
+        !siteId ||
+        siteId.site_name === "Select All Sites" ||
+        siteId === "all"
+      ) {
         res = await getLocationCount(hrmsOrgId);
       } else if (dashboardData && dashboardData.location_wise) {
         res = dashboardData.location_wise;
@@ -90,7 +101,11 @@ const DepartmentCount = ({ dashboardData, siteId }) => {
     setErrorMsg("");
     try {
       let res;
-      if (!siteId || siteId.trim() === "" || siteId === "all") {
+      if (
+        !siteId ||
+        siteId.site_name === "Select All Sites" ||
+        siteId === "all"
+      ) {
         res = await getGenderCount(hrmsOrgId);
       } else if (dashboardData && dashboardData.gender_wise) {
         res = dashboardData.gender_wise;
@@ -266,23 +281,53 @@ const DepartmentCount = ({ dashboardData, siteId }) => {
     };
   }
 
+  const downloadPieChart = () => {
+    const input = document.getElementById("piechart-content");
+    html2canvas(input).then((canvas) => {
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("portrait", "mm", "a6");
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 1;
+      const availableWidth = pageWidth - margin * 1;
+      const imgHeight = pageHeight * 0.9;
+      pdf.addImage(imgData, "PNG", margin, margin, availableWidth, imgHeight);
+      pdf.save("pirchart.pdf");
+    });
+  };
   return (
-    <div className="ml-4">
-      <div className="flex justify-between m-2">
-        <h2 className="text-gray-500 font-medium">
-          Employee count by {selectedOption.toLowerCase()}
-        </h2>
-        <select
-          value={selectedOption}
-          onChange={(e) => setSelectedOption(e.target.value)}
-          className="border border-gray-300 rounded p-1"
-        >
-          <option value="Department">Department</option>
-          <option value="Location">Location</option>
-          <option value="Gender">Gender</option>
-        </select>
+    <div className="ml-10 bg-white p-4 rounded-lg shadow-xl">
+      {/* Row 1: Heading (Left) and Select (Right) */}
+      <div className="flex justify-between items-center mb-4">
+        <div>
+          <h2 className="text-gray-600 font-semibold text-lg">
+            Employee Head Count
+          </h2>
+        </div>
+        <div className="flex gap-2 mt-4">
+          <div>
+            <select
+              value={selectedOption}
+              onChange={(e) => setSelectedOption(e.target.value)}
+              className="border border-gray-300 rounded-lg p-1 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            >
+              <option value="Department">Department</option>
+              <option value="Location">Location</option>
+              <option value="Gender">Gender</option>
+            </select>
+          </div>
+          <div className="mb-4">
+            <button
+              className="flex items-center gap-2 px-4 py-2 bg-slate-300  hover:bg-blue-400 text-white rounded-lg text-sm font-medium transition-all duration-200 shadow-sm"
+              onClick={downloadPieChart}
+            >
+              <FaDownload />
+            </button>
+          </div>
+        </div>
       </div>
-      <div>
+      {/* Row 3: Chart */}
+      <div className="mt-4" id="piechart-content">
         <HighchartsReact highcharts={Highcharts} options={chartOptions} />
       </div>
     </div>
@@ -290,3 +335,34 @@ const DepartmentCount = ({ dashboardData, siteId }) => {
 };
 
 export default DepartmentCount;
+
+// <div className="ml-4 w-90 bg-white p-4 rounded-lg shadow-md">
+//   {/* Header with Title and Select */}
+//   <div className="flex justify-between items-center mb-4">
+//     <h2 className="text-gray-600 font-semibold text-lg">
+//       Employee count by {selectedOption.toLowerCase()}
+//     </h2>
+//     <select
+//       value={selectedOption}
+//       onChange={(e) => setSelectedOption(e.target.value)}
+//       className="border border-gray-300 rounded-lg p-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
+//     >
+//       <option value="Department">Department</option>
+//       <option value="Location">Location</option>
+//       <option value="Gender">Gender</option>
+//     </select>
+//   </div>
+
+//   {/* Download Button */}
+//   <button
+//     className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-all duration-200 shadow-sm"
+//     onClick={downloadPieChart}
+//   >
+//     PieCharts <FaDownload className="text-white" />
+//   </button>
+
+//   {/* Chart Section */}
+//   <div className="mt-4">
+//     <HighchartsReact highcharts={Highcharts} options={chartOptions} />
+//   </div>
+// </div>;

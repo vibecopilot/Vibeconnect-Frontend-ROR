@@ -32,18 +32,18 @@ const EmployeeVisitorDetails = () => {
       console.log(error);
     }
   };
-   const fetchVisitorDeviceLogs = async () => {
-        try {
-          const logsResp = await getVisitorLogs(id);
-          setLogs(logsResp?.data?.data);
-          console.log(logsResp.data.data);
-        } catch (error) {
-          console.log(error);
-        }
-      };
+  const fetchVisitorDeviceLogs = async () => {
+    try {
+      const logsResp = await getVisitorLogs(id);
+      setLogs(logsResp?.data?.data);
+      console.log(logsResp.data.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
   useEffect(() => {
     fetchVisitorDetails();
-    fetchVisitorDeviceLogs()
+    fetchVisitorDeviceLogs();
   }, [id]);
 
   const themeColor = useSelector((state) => state.theme.color);
@@ -125,6 +125,24 @@ const EmployeeVisitorDetails = () => {
     }
   };
   const userType = getItemInLocalStorage("USERTYPE");
+  // const visitorLogColumn = [
+  //   {
+  //     name: "Sr. no.",
+  //     selector: (row, index) => index + 1,
+  //     sortable: true,
+  //   },
+  //   {
+  //     name: " Check in",
+  //     selector: (row) => (row.check_in ? dateTimeFormat(row.check_in) : ""),
+  //     sortable: true,
+  //   },
+  //   {
+  //     name: " Check out",
+  //     selector: (row) => (row.check_in ? dateTimeFormat(row.check_out) : null),
+  //     sortable: true,
+  //   },
+  // ];
+
   const visitorLogColumn = [
     {
       name: "Sr. no.",
@@ -132,13 +150,25 @@ const EmployeeVisitorDetails = () => {
       sortable: true,
     },
     {
-      name: " Check in",
-      selector: (row) => (row.check_in ? dateTimeFormat(row.check_in) : ""),
+      name: "Created At",
+      selector: (row) =>
+        row.created_at ? dateTimeFormat(row.created_at) : null,
       sortable: true,
     },
     {
-      name: " Check out",
-      selector: (row) => (row.check_in ? dateTimeFormat(row.check_out) : null),
+      name: "Check in",
+      selector: (row) =>
+        row.visits_log?.length > 0 && row.visits_log[0].check_in
+          ? dateTimeFormat(row.visits_log[0].check_in)
+          : "",
+      sortable: true,
+    },
+    {
+      name: "Check out",
+      selector: (row) =>
+        row.visits_log?.length > 0 && row.visits_log[0].check_out
+          ? dateTimeFormat(row.visits_log[0].check_out)
+          : "",
       sortable: true,
     },
   ];
@@ -208,8 +238,8 @@ const EmployeeVisitorDetails = () => {
           {details.profile_picture && details.profile_picture !== null ? (
             // details.visitor_files.map((doc, index) => (
             <img
-              src={domainPrefix + details.profile_picture.url}
-              alt=""
+              src={domainPrefix + details.profile_picture}
+              alt="img"
               className="w-48 h-48 rounded-full cursor-pointer"
               onClick={() =>
                 window.open(
@@ -365,24 +395,31 @@ const EmployeeVisitorDetails = () => {
         )}
       </div>
       <div className="my-4">
-            <h2 className="font-medium border-b text-lg border-gray-400 px-2 ">
-              Visitor Device Log
-            </h2>
-            <div className="m-4">
-              {/* {details.visits_log && details.visits_log.length !== 0 ? ( */}
-                <Table columns={visitorDeviceLogColumn} data={logs} />
-              {/* ) : (
+        <h2 className="font-medium border-b text-lg border-gray-400 px-2 ">
+          Visitor Device Log
+        </h2>
+        <div className="m-4">
+          {/* {details.visits_log && details.visits_log.length !== 0 ? ( */}
+          <Table columns={visitorDeviceLogColumn} data={logs} />
+          {/* ) : (
                 <p className="text-center">No Log Yet</p>
               )} */}
-            </div>
-          </div>
+        </div>
+      </div>
       <div className="mb-10">
         <h2 className="font-medium border-b-2 text-lg border-black px-2 mb-2">
           Visitor Log
         </h2>
-        <div className="mx-4">
+        {/* <div className="mx-4">
           {details?.visits_log && details?.visits_log?.length !== 0 ? (
             <Table columns={visitorLogColumn} data={details?.visits_log} />
+          ) : (
+            <p className="text-center">No Log Yet</p>
+          )}
+        </div> */}
+        <div className="mx-4">
+          {details?.logs && details?.logs?.length !== 0 ? (
+            <Table columns={visitorLogColumn} data={details?.logs} />
           ) : (
             <p className="text-center">No Log Yet</p>
           )}

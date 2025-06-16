@@ -6,7 +6,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import Table from "../../../components/table/Table";
 import { useSelector } from "react-redux";
 import { BiPlus } from "react-icons/bi";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { BsEye } from "react-icons/bs";
 import AddRegularizationReq from "./AddRegularizationReq";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
@@ -14,7 +14,9 @@ import Webcam from "react-webcam";
 import {
   getEmployeeAttendanceOfMonth,
   getEmployeeAttendanceOfToday,
+  getEmployeeDetails,
   markEmployeeAttendance,
+  getAssociatedSiteOnly,
 } from "../../../api";
 import toast from "react-hot-toast";
 import { PiPlus, PiPlusCircleBold, PiPlusCircleDuotone } from "react-icons/pi";
@@ -23,8 +25,17 @@ const MyWorkSpace = () => {
   const [dateRange, setDateRange] = useState([null, null]);
   const [startDate, endDate] = dateRange;
   const [addRegularization, setAddRegularization] = useState(false);
-
   const [showDetails, setShowDetails] = useState(false);
+  const [regDate, setRegDate] = useState("");
+  const themeColor = useSelector((state) => state.theme.color);
+  const hrmsEmployeeId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
+  const [employeeLocation, setEmployeeLocation] = useState({});
+  const [showCamera, setShowCamera] = useState(false);
+  const [checkIn, setCheckIn] = useState(false);
+  const [employeeImage, setEmployeeImage] = useState([]);
+  const webcamRef = useRef(null);
+  const { id } = useParams();
+  const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
 
   const column = [
     {
@@ -114,7 +125,7 @@ const MyWorkSpace = () => {
       ),
     },
   ];
-  const [regDate, setRegDate] = useState("");
+
   const handleRegModal = (selectedDate) => {
     setRegDate(selectedDate);
     setAddRegularization(true);
@@ -180,54 +191,189 @@ const MyWorkSpace = () => {
   const absentCount = filteredData.filter(
     (item) => item.status === "Absent"
   ).length;
-  const themeColor = useSelector((state) => state.theme.color);
-  const hrmsEmployeeId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
-  const [showCamera, setShowCamera] = useState(false);
-  const [checkIn, setCheckIn] = useState(false);
-  const [employeeImage, setEmployeeImage] = useState([]);
-  const webcamRef = useRef(null);
+
   const videoConstraints = {
     width: 1280,
     height: 720,
     facingMode: "user",
   };
 
-  const captureImage = (checkInStatus) => {
-    const imageSrc = webcamRef.current.getScreenshot();
-    setEmployeeImage(imageSrc);
-    setCheckIn(checkInStatus);
-    handleMarkAttendance();
+  const [goeTag, setgeoTag] = useState(false);
+  // const [siteId ,setSiteId] = useState();
+  const siteId = getItemInLocalStorage("HRMS_SITE_ID");
+  const [qrCodeStatus, setqrCodeStatus] = useState(false);
+  const [qrCodeUrl, setqrCodeUrl] = useState(false);
+  const [siteLocation, setSiteLocation] = useState({});
+
+  const fetchEmployeeDetails = async () => {
+    try {
+      const res = await getEmployeeDetails(empId);
+      console.log("Employee Details:", res);
+      console.log("Employee geotag_enabled:", res.geotag_enabled);
+      setgeoTag(res.geotag_enabled);
+    } catch (error) {
+      console.log("Error fetching employee details:", error);
+    }
   };
 
-  const handleMarkAttendance = async () => {
+  // Helper: Calculate distance between two coordinates using the Haversine formula
+  const getDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371e3; // Earth's radius in meters
+    const toRad = (x) => (x * Math.PI) / 180;
+    const φ1 = toRad(lat1);
+    const φ2 = toRad(lat2);
+    const Δφ = toRad(lat2 - lat1);
+    const Δλ = toRad(lon2 - lon1);
+    const a =
+      Math.sin(Δφ / 2) ** 2 +
+      Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
+
+  const allowedDistance = 100; // Allowed range in meters
+
+  const captureImage = (checkInStatus) => {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        console.log("Latitude is:", latitude, longitude);
+        const imageSrc = webcamRef.current.getScreenshot();
+
+        // Validate that the imageSrc is a non-empty string
+        if (
+          !imageSrc ||
+          typeof imageSrc !== "string" ||
+          imageSrc.trim() === ""
+        ) {
+          toast.error("Image capture failed. Please try again.");
+          return;
+        }
+
+        setEmployeeImage(imageSrc);
+        setCheckIn(checkInStatus);
+        const currentLocation = { latitude, longitude };
+        setEmployeeLocation(currentLocation);
+        handleMarkAttendance(currentLocation);
+      },
+      (error) => {
+        console.log("Error getting location:", error);
+        // If geotag is enabled, don't proceed without valid location.
+        if (goeTag) {
+          toast.error("Failed to fetch location. Cannot mark attendance.");
+          return;
+        }
+        // If geotag is disabled, proceed without location.
+        const imageSrc = webcamRef.current.getScreenshot();
+        if (
+          !imageSrc ||
+          typeof imageSrc !== "string" ||
+          imageSrc.trim() === ""
+        ) {
+          toast.error("Image capture failed. Please try again.");
+          return;
+        }
+        setEmployeeImage(imageSrc);
+        setCheckIn(checkInStatus);
+        handleMarkAttendance();
+      }
+    );
+  };
+
+  // Convert dataURI to Blob for employee image
+  const dataURItoBlob = (dataURI) => {
+    if (typeof dataURI !== "string") {
+      console.error("Expected a data URI string, but got:", dataURI);
+      toast.error("Invalid image data Click Again");
+      return null;
+    }
+    const byteString = atob(dataURI.split(",")[1]);
+    const mimeString = dataURI.split(",")[0].split(":")[1].split(";")[0];
+    const ab = new ArrayBuffer(byteString.length);
+    const ia = new Uint8Array(ab);
+    for (let i = 0; i < byteString.length; i++) {
+      ia[i] = byteString.charCodeAt(i);
+    }
+    return new Blob([ab], { type: mimeString });
+  };
+
+
+  const handleMarkAttendance = async (currentLocationParam) => {
+    const currentLocation = currentLocationParam || employeeLocation;
+
+    if (goeTag) {
+      if (
+        !currentLocation ||
+        !currentLocation.latitude ||
+        !currentLocation.longitude
+      ) {
+        toast.error("Employee location not available.");
+        return;
+      }
+      if (!siteLocation || !siteLocation.latitude || !siteLocation.longitude) {
+        toast.error("Site location not available.");
+        return;
+      }
+      const distance = getDistance(
+        currentLocation.latitude,
+        currentLocation.longitude,
+        siteLocation.latitude,
+        siteLocation.longitude
+      );
+      if (distance > allowedDistance) {
+        toast.error("Unable to mark attendance. Emp out of range");
+        return;
+      }
+    }
+
     const postAttendance = new FormData();
     postAttendance.append("is_check_in", checkIn);
     postAttendance.append("employee", hrmsEmployeeId);
-    const dataURItoBlob = (dataURI) => {
-      const byteString = atob(dataURI.split(",")[1]);
-      const mimeString = dataURI.split(",")[0].split(":")[1].split(";")[0];
-      const ab = new ArrayBuffer(byteString.length);
-      const ia = new Uint8Array(ab);
-      for (let i = 0; i < byteString.length; i++) {
-        ia[i] = byteString.charCodeAt(i);
-      }
-      return new Blob([ab], { type: mimeString });
-    };
+
     const imageBlob = dataURItoBlob(employeeImage);
+    if (!imageBlob) return; // Prevent submission if image conversion fails
+
     postAttendance.append("user_image", imageBlob);
+
+    if (
+      currentLocation &&
+      currentLocation.latitude &&
+      currentLocation.longitude
+    ) {
+      postAttendance.append("latitude", currentLocation.latitude);
+      postAttendance.append("longitude", currentLocation.longitude);
+    }
+
     try {
       const response = await markEmployeeAttendance(postAttendance);
-      // alert("Attendance marked successfully!");
       toast.success("Attendance marked successfully!");
+      console.log("SetAttendance Record:", response);
       setShowCamera(false);
-      fetchAttendance()
+      fetchAttendance();
     } catch (error) {
       console.error("Error marking attendance:", error);
-      toast.error(
-        "Failed to mark attendance. Please ensure good lighting and scan the face."
-      );
+      toast.error("Failed to mark attendance. Please try again.");
     }
   };
+  const fetchAssociatedSite = async () => {
+    try {
+      const res = await getAssociatedSiteOnly(siteId);
+      console.log("Associated Site:", res);
+      console.log("Site latitude:", res.latitude);
+      console.log("Site longitude:", res.longitude);
+      // Ensure you access the correct properties from res
+      setSiteLocation({ latitude: res.latitude, longitude: res.longitude });
+      setqrCodeStatus(res.qr_code_status);
+      setqrCodeUrl(res.qr_code);
+    } catch (error) {
+      console.log("Error fetching the associated site:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchEmployeeDetails();
+    fetchAssociatedSite();
+  }, []);
 
   const [attendanceData, setAttendanceData] = useState([]);
   const [month, setMonth] = useState("");
@@ -252,11 +398,13 @@ const MyWorkSpace = () => {
               ? new Date(record.attendance_time).toLocaleTimeString()
               : "Invalid Time",
             checkIn: record.is_check_in ? "Check-In" : "Check-Out",
+            latitude: record.latitude || "N/A",
+            longitude: record.longitude || "N/A",
           })),
         });
       });
     });
-    console.log(consolidatedRows);
+    console.log("consolidatedRow data:", consolidatedRows);
     return consolidatedRows;
   };
 
@@ -402,7 +550,10 @@ const MyWorkSpace = () => {
         <Table columns={column} data={consolidatedData} />
       </div>
       {addRegularization && (
-        <AddRegularizationReq onclose={() => setAddRegularization(false)} regDate={regDate} />
+        <AddRegularizationReq
+          onclose={() => setAddRegularization(false)}
+          regDate={regDate}
+        />
       )}
       {addRegReq && <AddRegRequest setAddRegReq={setAddRegReq} />}
     </section>
@@ -410,3 +561,208 @@ const MyWorkSpace = () => {
 };
 
 export default MyWorkSpace;
+
+// old version
+// const handleMarkAttendance = async () => {
+//   const postAttendance = new FormData();
+//   postAttendance.append("is_check_in", checkIn);
+//   postAttendance.append("employee", hrmsEmployeeId);
+//   const dataURItoBlob = (dataURI) => {
+//     const byteString = atob(dataURI.split(",")[1]);
+//     const mimeString = dataURI.split(",")[0].split(":")[1].split(";")[0];
+//     const ab = new ArrayBuffer(byteString.length);
+//     const ia = new Uint8Array(ab);
+//     for (let i = 0; i < byteString.length; i++) {
+//       ia[i] = byteString.charCodeAt(i);
+//     }
+//     return new Blob([ab], { type: mimeString });
+//   };
+//   const imageBlob = dataURItoBlob(employeeImage);
+//   postAttendance.append("user_image", imageBlob);
+//   try {
+//     const response = await markEmployeeAttendance(postAttendance);
+//     // alert("Attendance marked successfully!");
+//     toast.success("Attendance marked successfully!");
+//     setShowCamera(false);
+//     fetchAttendance();
+//   } catch (error) {
+//     console.error("Error marking attendance:", error);
+//     toast.error(
+//       "Failed to mark attendance. Please ensure good lighting and scan the face."
+//     );
+//   }
+// };
+  // const captureImage = (checkInStatus) => {
+  //   // geolocation
+  //   navigator.geolocation.getCurrentPosition(
+  //     (position) => {
+  //       const { latitude, longitude } = position.coords;
+  //       console.log("Latitude is :", latitude, longitude);
+  //       const imageSrc = webcamRef.current.getScreenshot();
+  //       setEmployeeImage(imageSrc);
+  //       setCheckIn(checkInStatus);
+  //       setEmployeeLocation({ latitude, longitude });
+  //       handleMarkAttendance();
+  //     },
+  //     (error) => {
+  //       console.log("Error getting location:", error);
+  //       const imageSrc = webcamRef.current.getScreenshot();
+  //       setEmployeeImage(imageSrc);
+  //       setCheckIn(checkInStatus);
+  //       handleMarkAttendance();
+  //     }
+  //   );
+  // };
+
+    // const fetchEmployeeDetails = async () => {
+  //   try {
+  //     const res = await getEmployeeDetails(empId);
+  //     console.log("Employee Details:", res);
+  //     console.log("Employee geotag_enabled:", res.geotag_enabled);
+
+  //     setgeoTag(res.geotag_enabled);
+  //   } catch (error) {
+  //     console.log("Error fetching employee details:", error);
+  //   }
+  // };
+
+  // const fetchAssociatedSite = async () => {
+  //   try {
+  //     const res = await getAssociatedSiteOnly(siteId);
+  //     console.log("res:",res);
+  //     console.log("Associated qr code res:",res.qr_code_status);
+  //     console.log(" Associated latitude:", res.latitude);
+  //     console.log("Associated  longitude:", res.longitude);
+  //     setSiteLocation({latitude, longitude})
+  //     setqrCodeStatus(res.qr_code_status)
+  //     setqrCodeUrl(res.qr_code)
+  //   } catch (error) {
+  //     console.log("error fetching the associated site:", error);
+  //   }
+  // };
+
+  // useEffect(() => {
+  //   fetchEmployeeDetails();
+  //   fetchAssociatedSite();
+  // }, []);
+
+  // const handleMarkAttendance = async (locationData) => {
+  //   const postAttendance = new FormData();
+  //   postAttendance.append("is_check_in", checkIn);
+  //   postAttendance.append("employee", hrmsEmployeeId);
+
+  //   // Append image
+  //   const dataURItoBlob = (dataURI) => {
+  //     const byteString = atob(dataURI.split(",")[1]);
+  //     const mimeString = dataURI.split(",")[0].split(":")[1].split(";")[0];
+  //     const ab = new ArrayBuffer(byteString.length);
+  //     const ia = new Uint8Array(ab);
+  //     for (let i = 0; i < byteString.length; i++) {
+  //       ia[i] = byteString.charCodeAt(i);
+  //     }
+  //     return new Blob([ab], { type: mimeString });
+  //   };
+  //   const imageBlob = dataURItoBlob(employeeImage);
+  //   postAttendance.append("user_image", imageBlob);
+
+  //   // Append location if available
+  //   if (employeeLocation.latitude && employeeLocation.longitude) {
+  //     postAttendance.append("latitude", employeeLocation.latitude);
+  //     postAttendance.append("longitude", employeeLocation.longitude);
+  //   }
+
+  //   try {
+  //     const response = await markEmployeeAttendance(postAttendance);
+  //     toast.success("Attendance marked successfully!");
+  //     console.log("SetAttendance Record:", response);
+  //     setShowCamera(false);
+  //     fetchAttendance();
+  //   } catch (error) {
+  //     console.error("Error marking attendance:", error);
+  //     toast.error("Failed to mark attendance. Please try again.");
+  //   }
+  // };
+  // Updated captureImage: Pass the location directly to handleMarkAttendance
+  // const captureImage = (checkInStatus) => {
+  //   navigator.geolocation.getCurrentPosition(
+  //     (position) => {
+  //       const { latitude, longitude } = position.coords;
+  //       console.log("Latitude is :", latitude, longitude);
+  //       const imageSrc = webcamRef.current.getScreenshot();
+  //       setEmployeeImage(imageSrc);
+  //       setCheckIn(checkInStatus);
+  //       const currentLocation = { latitude, longitude };
+  //       setEmployeeLocation(currentLocation); // Update state if needed elsewhere
+  //       handleMarkAttendance(currentLocation);
+  //     },
+  //     (error) => {
+  //       console.log("Error getting location:", error);
+  //       const imageSrc = webcamRef.current.getScreenshot();
+  //       setEmployeeImage(imageSrc);
+  //       setCheckIn(checkInStatus);
+  //       // In error case, attempt marking attendance without location
+  //       handleMarkAttendance();
+  //     }
+  //   );
+  // };
+  
+  // const handleMarkAttendance = async (currentLocationParam) => {
+  //   // Use the passed location if available, otherwise use state (which might be stale)
+  //   const currentLocation = currentLocationParam || employeeLocation;
+
+  //   // If geotag is enabled, validate location before proceeding
+  //   if (goeTag) {
+  //     if (
+  //       !currentLocation ||
+  //       !currentLocation.latitude ||
+  //       !currentLocation.longitude
+  //     ) {
+  //       toast.error("Employee location not available.");
+  //       return;
+  //     }
+  //     if (!siteLocation || !siteLocation.latitude || !siteLocation.longitude) {
+  //       toast.error("Site location not available.");
+  //       return;
+  //     }
+  //     const distance = getDistance(
+  //       currentLocation.latitude,
+  //       currentLocation.longitude,
+  //       siteLocation.latitude,
+  //       siteLocation.longitude
+  //     );
+  //     if (distance > allowedDistance) {
+  //       toast.error("Unable to mark attendance. Emp out of range");
+  //       return;
+  //     }
+  //   }
+
+  //   // Proceed to mark attendance
+  //   const postAttendance = new FormData();
+  //   postAttendance.append("is_check_in", checkIn);
+  //   postAttendance.append("employee", hrmsEmployeeId);
+
+  //   const imageBlob = dataURItoBlob(employeeImage);
+  //   postAttendance.append("user_image", imageBlob);
+
+  //   if (
+  //     currentLocation &&
+  //     currentLocation.latitude &&
+  //     currentLocation.longitude
+  //   ) {
+  //     postAttendance.append("latitude", currentLocation.latitude);
+  //     postAttendance.append("longitude", currentLocation.longitude);
+  //   }
+
+  //   try {
+  //     const response = await markEmployeeAttendance(postAttendance);
+  //     toast.success("Attendance marked successfully!");
+  //     console.log("SetAttendance Record:", response);
+  //     setShowCamera(false);
+  //     fetchAttendance();
+  //   } catch (error) {
+  //     console.error("Error marking attendance:", error);
+  //     toast.error("Failed to mark attendance. Please try again.");
+  //   }
+  // };
+
+  // Fetch associated site - ensure you set the site location properly

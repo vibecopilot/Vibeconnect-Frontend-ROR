@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import DataTable from "react-data-table-component";
 import { BiExport } from "react-icons/bi";
 import { ImEye } from "react-icons/im";
 import { IoAddCircleOutline } from "react-icons/io5";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import Switch from "../../Buttons/Switch";
 import Navbar from "../../components/Navbar";
 import Table from "../../components/table/Table";
@@ -12,8 +12,37 @@ import { BsEye } from "react-icons/bs";
 import SeatBooking from "./SeatBooking";
 import SetupSeatBooking from "./SetupSeatBooking";
 import SetupNavbar from "../../components/navbars/SetupNavbar";
+import {getFacilitySetup}from "../../api"
 
 const SetupBookingFacility = () => {
+  const id = useParams()
+  const [setupData, setSetupData] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
+  
+ useEffect(() => {
+     const fetchIncidentsCategory = async () => {
+       try {
+         const res = await getFacilitySetup(id);
+         setSetupData(res.data);
+         console.log(setupData);
+       } catch (error) {
+         console.log(error);
+       }
+     };
+ 
+     fetchIncidentsCategory(id, );
+   }, []);
+
+  // const fetchFacilitySetup = async () => {
+  //   try {
+  //     const response = await getFacilitySetup(id);
+  //     const data = response.data;
+  //     return data;
+  //   } catch (error) {
+  //     console.error(error);
+  //     return [];
+  //   }
+  // };
   const [searchText, setSearchText] = useState("");
 
   const setupColumn = [
@@ -29,10 +58,10 @@ const SetupBookingFacility = () => {
     { name: "ID", selector: (row) => row.id, sortable: true },
     {
       name: "Name",
-      selector: (row) => row.facility,
+      selector: (row) => row.fac_name,
       sortable: true,
     },
-    { name: "Type", selector: (row) => row.type, sortable: true },
+    { name: "Type", selector: (row) => row.fac_type, sortable: true },
     { name: "Department", selector: (row) => row.department, sortable: true },
     {
       name: "Book By",
@@ -51,7 +80,7 @@ const SetupBookingFacility = () => {
     },
     {
       name: "Created On",
-      selector: (row) => row.createdOn,
+      selector: (row) => row.created_at,
       sortable: true,
     },
     // {
@@ -66,35 +95,35 @@ const SetupBookingFacility = () => {
     // },
   ];
 
-  const setupData = [
-    {
-      id: 1,
-      action: <ImEye />,
-      facility: "fac1",
-      type: "Bookable",
-      department: "Electrical",
-      bookBy: "slot",
-      bookBefore: "date/time",
-      advBooking: "date/time",
-      createdOn: "23/04/2024 - time",
-      createdBy: "user",
-      // status: <Switch checked={"checked"} />,
-    },
-    {
-      id: 2,
-      action: <ImEye />,
-      facility: "Test",
-      type: "Bookable",
-      department: "Electrical",
-      bookBy: "slot",
-      bookBefore: "date/time",
-      advBooking: "date/time",
-      createdOn: "23/04/2024 - time",
-      createdBy: "user",
-      // status: <Switch />,
-    },
-  ];
-  const [filteredData, setFilteredData] = useState(setupData);
+  // const setupData = [
+  //   {
+  //     id: 1,
+  //     action: <ImEye />,
+  //     facility: "fac1",
+  //     type: "Bookable",
+  //     department: "Electrical",
+  //     bookBy: "slot",
+  //     bookBefore: "date/time",
+  //     advBooking: "date/time",
+  //     createdOn: "23/04/2024 - time",
+  //     createdBy: "user",
+  //     // status: <Switch checked={"checked"} />,
+  //   },
+  //   {
+  //     id: 2,
+  //     action: <ImEye />,
+  //     facility: "Test",
+  //     type: "Bookable",
+  //     department: "Electrical",
+  //     bookBy: "slot",
+  //     bookBefore: "date/time",
+  //     advBooking: "date/time",
+  //     createdOn: "23/04/2024 - time",
+  //     createdBy: "user",
+  //     // status: <Switch />,
+  //   },
+  // ];
+  //const [filteredData, setFilteredData] = useState(setupData);
   const handleSearch = (event) => {
     const searchValue = event.target.value;
     setSearchText(searchValue);
@@ -164,7 +193,7 @@ const SetupBookingFacility = () => {
             </div>
             <Table
               columns={setupColumn}
-              data={filteredData}
+              data={setupData}
               // customStyles={customStyle}
             />
           </>

@@ -9,6 +9,7 @@ import {
   FaChevronRight,
   FaRedo,
 } from "react-icons/fa";
+import { FaLocationDot } from "react-icons/fa6";
 import ToggleSwitch from "../../Buttons/ToggleSwitch";
 import EmployeeDetailView from "./EmployeeDetailView";
 import {
@@ -23,6 +24,7 @@ import {
   getAssociatedSites,
   getAttendanceRecordFilter,
   fetchByNumeric,
+  getExportAttendance
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import { Link } from "react-router-dom";
@@ -32,6 +34,7 @@ import toast from "react-hot-toast";
 import { Pagination } from "antd";
 import Accordion from "./Components/Accordion";
 import Table from "../../components/table/Table";
+import { CustomDropdown } from "../../utils/CustomDropdown";
 
 const getDateRange = (startDate) => {
   const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -81,7 +84,15 @@ const AttendanceRec = () => {
   const [selectedLastName, setSelectedLastName] = useState("");
   const [allSites, setAllSites] = useState([]);
   const [selectedSite, setSelectedSite] = useState("all");
+  const [checkInTime, setCheckInTime] = useState("");
+  const [checkOutTime, setCheckOutTime] = useState("");
+  const [checkOutLogs, setCheckOutLogs] = useState([]);
+  const [isPresent, setIsPresent] = useState(false);
+  const [selectedAttendanceDate, setSelectedAttendanceDate] = useState("");
+  const [empDesignation, setEmpDesignation] = useState("");
+  const [searchText, setSearchText] = useState("");
   const employeesPerPage = 10;
+
   const [regData, setRegData] = useState({
     requestType: "",
     checkInTime: "",
@@ -95,10 +106,6 @@ const AttendanceRec = () => {
   // Pagination logic
   const indexOfLastEmployee = currentPage * employeesPerPage;
   const indexOfFirstEmployee = indexOfLastEmployee - employeesPerPage;
-  // const currentEmployees = employees.slice(
-  //   indexOfFirstEmployee,
-  //   indexOfLastEmployee
-  // );
 
   const handleNextPage = () => {
     if (indexOfLastEmployee < employees.length) {
@@ -120,7 +127,6 @@ const AttendanceRec = () => {
     previous: null,
   });
 
-  // Default
   const fetchEmployeeAttendance = async (page) => {
     setLoading(true);
     try {
@@ -147,17 +153,13 @@ const AttendanceRec = () => {
     fetchEmployeeAttendance(pageNumber);
   }, []);
 
-  // const handlePageChange = (page) => {
-  //   setPageNumber(page); // Update state for pageNumber
-  //   fetchEmployeeAttendance(page); // Fetch data for the new page
-  // };
-
   const handlePageChange = (page) => {
+    console.log("Pagination new page:", page);
     setPageNumber(page);
-    if (selectedSite === "all" || selectedSite.trim() === "") {
+    if (!selectedSite || selectedSite.site_name === "Select All Sites") {
       fetchEmployeeAttendance(page);
     } else {
-      fetchFilteredEmployeeAttendance(page, selectedSite);
+      fetchFilteredEmployeeAttendance(page, selectedSite.id);
     }
   };
 
@@ -192,30 +194,13 @@ const AttendanceRec = () => {
     }
     return "";
   };
-  // const getAttendanceStatus = (employee, date) => {
-  //   const today = new Date();
-  //   const record = employee.attendance_records.find(
-  //     (record) => new Date(record.date).toDateString() === date.toDateString()
-  //   );
-  //   const isPastDate = date < today;
-  //   if (isPastDate) {
-  //     return record ? (record.is_present ? "Present" : "Absent") : "Absent";
-  //   }
-  //   return "";
-  // };
-
   const changeWeek = (direction) => {
     const newDate = new Date(startDate);
     newDate.setDate(newDate.getDate() + (direction === "next" ? 7 : -7));
     setStartDate(newDate);
   };
-  console.log("EMPLOYEES:", employees);
+  // console.log("EMPLOYEES:", employees);
 
-  // Handle search
-
-  const [searchText, setSearchText] = useState("");
-
-  // Load associated sites on component mount (or when orgId changes)
   useEffect(() => {
     const fetchSites = async () => {
       try {
@@ -230,12 +215,10 @@ const AttendanceRec = () => {
     fetchSites();
   }, [hrmsOrgId]);
 
-  // New function to fetch filtered attendance records with pagination
   const fetchFilteredEmployeeAttendance = async (page, siteId) => {
     setLoading(true);
     try {
       // Call your filtered endpoint with the provided siteId
-      // e.g., /employees/attendance-bulk?organization_id={hrmsOrgId}&associated_organization_id={siteId}&page={page}
       const res = await getAttendanceRecordFilter(hrmsOrgId, siteId, page);
       const data = res.results;
       setAttendanceCount(res.count);
@@ -254,20 +237,6 @@ const AttendanceRec = () => {
     }
   };
 
-  // Handle dropdown changes for filtering by site
-  const handleDropdown = (e) => {
-    const siteId = e.target.value;
-    setSelectedSite(siteId);
-
-    if (siteId === "all" || siteId.trim() === "") {
-      // For "all", revert to the default attendance list (page 1)
-      fetchEmployeeAttendance(1);
-    } else {
-      // For a specific site, call the filtered attendance API (page 1)
-      fetchFilteredEmployeeAttendance(1, siteId);
-    }
-  };
-
   const handleSearch = async (e) => {
     const value = e.target.value;
     setSearchText(value);
@@ -280,7 +249,6 @@ const AttendanceRec = () => {
 
     try {
       let result;
-
       if (/^\d+$/.test(value)) {
         // Numeric search.
         result = await fetchByAssociatedOrganization(hrmsOrgId, value);
@@ -288,12 +256,10 @@ const AttendanceRec = () => {
         // Name-based search.
         result = await fetchByName(hrmsOrgId, value);
       }
-
-      // Log the full response to inspect its structure.
       console.log("result:", result);
 
-      // Since your response has a "results" key, extract the employee array from it.
       const employeesData = Array.isArray(result.results) ? result.results : [];
+      console.log("EmployeeData :", employeesData);
       setFilteredEmployees(employeesData);
     } catch (error) {
       console.error("Error fetching attendance records:", error);
@@ -387,12 +353,6 @@ const AttendanceRec = () => {
       toast.error("Failed to submit the regularization request");
     }
   };
-  const [checkInTime, setCheckInTime] = useState("");
-  const [checkOutTime, setCheckOutTime] = useState("");
-  const [checkOutLogs, setCheckOutLogs] = useState([]);
-  const [isPresent, setIsPresent] = useState(false);
-  const [selectedAttendanceDate, setSelectedAttendanceDate] = useState("");
-  const [empDesignation, setEmpDesignation] = useState("");
   const fetchEmployeeFullDetails = async (empId) => {
     try {
       const res = await getUserDetails(empId);
@@ -404,44 +364,90 @@ const AttendanceRec = () => {
     }
   };
 
+  // Changes
+  const navigateToLocation = (latitude, longitude) => {
+    const url = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+    window.open(url, "_blank");
+  };
+
+  const [emplocation, setEmployeeLocation] = useState([]);
+  const safeLoc = Array.isArray(emplocation) ? emplocation : [];
+  const firstLocation = safeLoc[0] ?? {};
+  const validLocations = safeLoc.filter(
+    (loc) => loc?.latitude && loc?.longitude
+  );
+  const lastValidLocation = validLocations[validLocations.length - 1] ?? null;
+
   const fetchTodayAttendance = async (empId, dateString) => {
     await fetchEmployeeFullDetails(empId);
     try {
       const date = new Date(dateString);
       const formattedDate = date.toISOString().slice(0, 10);
+      const formattedEnd = date.toISOString().slice(0, 10);
       setSelectedAttendanceDate(formattedDate);
-      const res = await getEmployeeAttendanceOfToday(empId, formattedDate);
-      if (res.length > 0) {
+      const res = await getEmployeeAttendanceOfToday(
+        empId,
+        formattedDate,
+        formattedEnd
+      );
+      console.log("attendance record for emp:", res);
+      if (res && res.length > 0) {
         const checkInRecord = res.find((record) => record.is_check_in === true);
-        setIsPresent(checkInRecord.is_check_in);
-        const checkOutRecord = res
-          .reverse()
-          .find((record) => record.is_check_in === false);
-        // const checkInTime = checkInRecord
-        //   ? formatTimeToAmPmUTC(checkInRecord.attendance_time)
-        //   : null;
+        setIsPresent(checkInRecord ? checkInRecord.is_check_in : false);
+        const reversedRes = [...res].reverse();
+        const checkOutRecord = reversedRes.find(
+          (record) => record.is_check_in === false
+        );
+        console.log("CheckOutRecord:", checkOutRecord);
+
         const checkInTime = checkInRecord
           ? new Date(checkInRecord.attendance_time).toLocaleTimeString()
           : null;
-        // const checkOutTime = checkOutRecord
-        //   ? formatTimeToAmPmUTC(checkInRecord.attendance_time)
-        //   : null;
         const checkOutTime = checkOutRecord
           ? new Date(checkOutRecord.attendance_time).toLocaleTimeString()
           : null;
+        console.log("CheckOutTime:", checkOutTime);
+
+        // const checkOutTime = checkOutRecord
+        //   ? new Date(checkOutRecord.attendance_time).toLocaleTimeString()
+        //   : null;
+        // console.log("checkOutTime:", checkOutTime);
+
+        // const checkInTime = checkInRecord
+        //   ? formatTimeToAmPmUTC(checkInRecord.attendance_time)
+        //   : null;
+        // const checkOutTime = checkOutRecord
+        //   ? formatTimeToAmPmUTC(checkInRecord.attendance_time)
+        //   : null;
+        const validLocations = res.filter(
+          ({ latitude, longitude }) => latitude != null && longitude != null
+        );
+        const location =
+          validLocations.length > 0
+            ? validLocations.map(({ latitude, longitude }) => ({
+                latitude,
+                longitude,
+              }))
+            : null;
+        if (!location) {
+          console.warn("No valid location data available.", location);
+        }
+
         setCheckInTime(checkInTime || "-");
         setCheckOutTime(checkOutTime || "-");
+        setEmployeeLocation(location);
         setCheckOutLogs(res);
         console.log(res);
       } else {
         setCheckInTime("");
         setCheckOutTime("");
-
         setIsPresent(false);
+        setEmployeeLocation([]); // Clear out location data.
       }
     } catch (error) {
       console.log("Error fetching attendance:", error);
     }
+    console.log("employeeLocation:", emplocation);
   };
 
   const checkOutLogsColumn = [
@@ -471,6 +477,7 @@ const AttendanceRec = () => {
   const empId = getItemInLocalStorage("HRMS_EMPLOYEE_ID");
   const orgId = getItemInLocalStorage("HRMSORGID");
   const [roleAccess, setRoleAccess] = useState({});
+
   useEffect(() => {
     const fetchRoleAccess = async () => {
       try {
@@ -483,6 +490,109 @@ const AttendanceRec = () => {
     };
     fetchRoleAccess();
   }, []);
+
+  //export attendance record in excell
+  // const [exportAllData, setExportAllData]=useState([])
+  // const getAllAttendanceData = async()=>{
+  //   const allAttendanceResp =await getExportAttendance(orgId)
+  //   console.log("attendance response",allAttendanceResp)
+  //   setExportAllData(allAttendanceResp)
+  //   return allAttendanceResp
+  // }
+  // const exportToExcel = async()=>{
+  //   const url = `https://api.hrms.vibecopilot.ai/user-details/download?organization_id=${orgId}`
+  //   const link = document.createElement('a');
+  // link.href = url;
+  // link.setAttribute('download', 'data.json'); // optional, server usually overrides this
+  // document.body.appendChild(link);
+  // link.click();
+  // link.remove();
+     
+  // }
+
+  // calculating the working hrs 
+  // Convert 24-hour time to AM/PM format
+const formatToAmPm = (timeString) => {
+  if (!timeString || timeString === "-") return "-";
+  
+  try {
+    // Handle case where time might already be in AM/PM format
+    if (timeString.includes("AM") || timeString.includes("PM")) {
+      return timeString;
+    }
+    
+    // Parse 24-hour format
+    const [hours, minutes, seconds] = timeString.split(':').map(Number);
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const hours12 = hours % 12 || 12;
+    
+    return `${hours12}:${minutes.toString().padStart(2, '0')} ${period}`;
+  } catch (error) {
+    console.error("Error formatting time:", error);
+    return "-";
+  }
+};
+
+// Convert AM/PM time to 24-hour format for calculations
+const amPmTo24Hour = (timeString) => {
+  if (!timeString || timeString === "-") return null;
+  
+  try {
+    const [time, period] = timeString.split(' ');
+    let [hours, minutes] = time.split(':').map(Number);
+    
+    if (period === 'PM' && hours !== 12) {
+      hours += 12;
+    } else if (period === 'AM' && hours === 12) {
+      hours = 0;
+    }
+    
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  } catch (error) {
+    console.error("Error converting time:", error);
+    return null;
+  }
+};
+// calculating working hrs 
+const calculateWorkingHours = (checkInTime, checkOutTime) => {
+  if (!checkInTime || !checkOutTime || checkInTime === "-" || checkOutTime === "-") {
+    return "-";
+  }
+  
+  try {
+    // Convert AM/PM times to 24-hour format for calculation
+    const checkIn24 = amPmTo24Hour(checkInTime);
+    const checkOut24 = amPmTo24Hour(checkOutTime);
+    
+    if (!checkIn24 || !checkOut24) return "-";
+    
+    // Parse the times
+    const [inHours, inMinutes] = checkIn24.split(':').map(Number);
+    const [outHours, outMinutes] = checkOut24.split(':').map(Number);
+    
+    // Convert to total minutes
+    const totalInMinutes = inHours * 60 + inMinutes;
+    const totalOutMinutes = outHours * 60 + outMinutes;
+    
+    // Calculate difference in minutes
+    let diffMinutes = totalOutMinutes - totalInMinutes;
+    
+    // Handle overnight shifts (if check-out is next day)
+    if (diffMinutes < 0) {
+      diffMinutes += 24 * 60; // Add 24 hours
+    }
+    
+    // Convert back to hours and minutes
+    const hours = Math.floor(diffMinutes / 60);
+    const minutes = diffMinutes % 60;
+    
+    return `${hours}h ${minutes}m`;
+  } catch (error) {
+    console.error("Error calculating working hours:", error);
+    return "-";
+  }
+};
+  
 
   return (
     <div className="flex">
@@ -572,48 +682,44 @@ const AttendanceRec = () => {
           </div>
         </div>
 
-        <div className="flex justify-between items-center my-4 gap-4">
-          {/* <div>
-            <Link className="font-medium" to={"/admin/hrms/dashboard"}>
-              Home
-            </Link>{" "}
-            {"/ "}
-            <Link className="font-medium" to={""}>
-              Attendance
-            </Link>{" "}
-            {"/ "}
-            <Link className="font-medium" to={""}>
-              Attendance Record
-            </Link>{" "}
-            {"/ "}
-          </div> */}
-          <div className="flex items-center gap-2">
-            {/* Dropdown for Associated Sites */}
-            <select
-              value={selectedSite}
-              onChange={handleDropdown}
-              className="border border-gray-400 p-2 rounded-md"
-            >
-              <option value="all">All Sites Attendance Record </option>
-              {allSites &&
-                allSites.map((site) => (
-                  <option key={site.id} value={site.id}>
-                    {site.site_name}
-                  </option>
-                ))}
-            </select>
-
+        <div className="flex items-center justify-between my-4 gap-4">
+          {/* Left group: Dropdown + Search */}
+          <div className="flex items-center gap-4">
             <input
               type="text"
               value={searchText}
               onChange={handleSearch}
-              id=""
-              className="border border-gray-400 w-96 p-2 rounded-md"
+              className="border border-gray-400 p-2 rounded-md w-96"
               placeholder="Search by employee name"
             />
+
+            <CustomDropdown
+              AllSites={allSites}
+              selectedValue={selectedSite}
+              onSelect={(site) => {
+                if (site.site_name === "Select All Sites") {
+                  setSelectedSite(null);
+                  fetchEmployeeAttendance(1);
+                } else {
+                  setSelectedSite(site);
+                  fetchFilteredEmployeeAttendance(1, site.id);
+                }
+              }}
+            />
+          </div>
+          {/* <button
+              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+              // onClick={exportToExcel}
+              style={{ background: themeColor }}
+            >
+              Export
+            </button> */}
+
+          {/* Right group: Prev Button + Date Range + Next Button */}
+          <div className="flex items-center gap-2">
             <button
               onClick={() => changeWeek("prev")}
-              className=" font-bold  p-2 rounded border-2 text-black border-black"
+              className="font-bold p-2 rounded border-2 text-black border-black"
             >
               <FaAngleLeft />
             </button>
@@ -623,12 +729,15 @@ const AttendanceRec = () => {
             </span>
             <button
               onClick={() => changeWeek("next")}
-              className=" font-bold  p-2 rounded border-2 text-black border-black"
+              className="font-bold p-2 rounded border-2 text-black border-black"
             >
               <FaAngleRight size={20} />
             </button>
           </div>
+          
         </div>
+        
+
         <div className="overflow-x-auto">
           {loading ? (
             <div className="flex justify-center items-center h-full">
@@ -1005,6 +1114,8 @@ const AttendanceRec = () => {
           </div>
         </div>
       )}
+
+      {/* Selected Employee Details Modal */}
       {selectedEmpAttendance && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center">
           <div className="bg-white px-6 py-4 rounded-xl shadow-lg min-w-96 max-h-[35rem] overflow-auto hide-scrollbar">
@@ -1044,6 +1155,7 @@ const AttendanceRec = () => {
                     </div>
                   )}
                 </div>
+                {/* Modal */}
                 <div className="flex flex-col gap-2 my-2">
                   <div className="w-full border-b flex justify-between items-center">
                     <p className="font-medium">Attendance Details </p>
@@ -1051,15 +1163,63 @@ const AttendanceRec = () => {
                     <p className="font-mono">{selectedAttendanceDate}</p>
                   </div>
 
-                  <div className=" flex justify-between">
-                    <p className="font-medium">Check In :</p>
-                    <p>{checkInTime}</p>
+                  <div className="flex justify-between">
+    <p className="font-medium">Check In Time:</p>
+    <p>{checkInTime ? formatToAmPm(checkInTime) : "-"}</p>
+  </div>
+
+                  
+  <div className="flex justify-between">
+    <p className="font-medium">Check Out Time:</p>
+    <p>{checkOutTime ? formatToAmPm(checkOutTime) : "-"}</p>
+  </div>
+                  <div>
+                    {safeLoc.length > 0 && (
+                      <>
+                        {/* Display first location */}
+                        <div className="flex justify-between">
+                          <h3 className="font-medium">Check In Location :</h3>
+                          <button
+                            className="flex items-center space-x-1"
+                            onClick={() =>
+                              navigateToLocation(
+                                firstLocation.latitude,
+                                firstLocation.longitude
+                              )
+                            }
+                          >
+                            <span className="text-slate-900">Map</span>
+                            <FaLocationDot />
+                          </button>
+                        </div>
+                        {/* Display last location */}
+                        <div>
+                          {lastValidLocation ? (
+                            <div className="flex justify-between my-2">
+                              <h3 className="font-medium">
+                                Check Out Location:
+                              </h3>
+                              <button
+                                className="flex items-center space-x-1"
+                                onClick={() =>
+                                  navigateToLocation(
+                                    lastValidLocation.latitude,
+                                    lastValidLocation.longitude
+                                  )
+                                }
+                              >
+                                <span className="text-slate-900">Map</span>
+                                <FaLocationDot />
+                              </button>
+                            </div>
+                          ) : (
+                            <p>No valid Checkout Location Found.</p>
+                          )}
+                        </div>
+                      </>
+                    )}
                   </div>
 
-                  <div className=" flex justify-between">
-                    <p className="font-medium">Check Out :</p>
-                    <p>{checkOutTime}</p>
-                  </div>
                   <Accordion
                     icon={MdOutlinePunchClock}
                     title={"Attendance logs"}
@@ -1075,7 +1235,14 @@ const AttendanceRec = () => {
                   />
                   <div className=" flex justify-between">
                     <p className="font-medium">Working Hrs :</p>
-                    <p>-</p>
+                    <p>
+      {checkInTime && checkOutTime && checkInTime !== "-" && checkOutTime !== "-"
+        ? calculateWorkingHours(
+            formatToAmPm(checkInTime),
+            formatToAmPm(checkOutTime)
+          )
+        : "-"}
+    </p>
                   </div>
                   <div className=" flex justify-between">
                     <p className="font-medium">Break Hrs :</p>

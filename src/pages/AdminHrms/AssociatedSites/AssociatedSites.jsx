@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Table from "../../../components/table/Table";
 import { BiEdit } from "react-icons/bi";
-import { BsEye ,BsDownload } from "react-icons/bs";
+import { BsEye, BsDownload } from "react-icons/bs";
 import {
   PiPlusCircle,
   PiPlusCircleBold,
@@ -148,7 +148,7 @@ const AssociatedSites = () => {
                 qrDownload(`https://api.hrms.vibecopilot.ai/${row.qr_code}`)
               }
             >
-               <BsDownload size={15} />
+              <BsDownload size={15} />
             </button>
           )}
         </div>
@@ -195,6 +195,7 @@ const AssociatedSites = () => {
         status: res?.status,
         radius: res?.radius,
         aadhar: res?.aadhar_required,
+        qr_code_status: res?.qr_code_status,
         BVG: res?.pan_required,
         esic: res?.esic_required,
         pan: res?.bvg_required,
@@ -286,7 +287,7 @@ const AssociatedSites = () => {
         latitude: "",
         longitude: "",
         radius: "",
-
+        qr_code_status: false,
         aadhar: false,
         BVG: false,
         esic: false,
@@ -346,17 +347,24 @@ const AssociatedSites = () => {
     editData.append("organization", hrmsOrgId);
     editData.append("company_id_ror", rorCompanyId);
     editData.append("site_id_ror", rorSiteId);
+    editData.append("qr_code_status", siteDetails.qr_code_status);
 
     try {
-      const res = await putAssociatedSiteDetails(siteId, editData);
+      await putAssociatedSiteDetails(siteId, editData);
       toast.success("Site updated successfully");
-      fetchAssociatedSites();
+      // Update the associatedSites array:
+      setAssociatedSites((prev) =>
+        prev.map((site) =>
+          site.id === siteId
+            ? { ...site, qr_code_status: siteDetails.qr_code_status }
+            : site
+        )
+      );
       setIsModalOpen(false);
     } catch (error) {
       console.log(error);
     }
   };
-
   const [searchText, setSearchText] = useState("");
   const handleSearch = (e) => {
     const searchValue = e.target.value;
@@ -435,6 +443,25 @@ const AssociatedSites = () => {
                     setSiteDetails({
                       ...siteDetails,
                       status: !siteDetails.status,
+                    })
+                  }
+                />
+                {/* <p>Active</p> */}
+                {/* </div> */}
+              </div>
+              <div className="flex justify-between items-center gap-1 border-b  py-2">
+                <label htmlFor="" className="font-medium">
+                  QR Code
+                </label>
+                {/* <div className="flex items-center gap-2">
+
+                 <p>Inactive</p> */}
+                <Switch
+                  checked={siteDetails.qr_code_status}
+                  onChange={() =>
+                    setSiteDetails({
+                      ...siteDetails,
+                      qr_code_status: !siteDetails.qr_code_status,
                     })
                   }
                 />

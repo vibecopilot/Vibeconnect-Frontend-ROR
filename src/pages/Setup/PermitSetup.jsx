@@ -7,6 +7,7 @@ import PermitHazardCategoryTable from "./SetupSubPages/PermitHazardCategoryTable
 import PermitRiskTable from "./SetupSubPages/PermitRiskTable";
 import SetupNavbar from "../../components/navbars/SetupNavbar";
 import PermitSafetyEquipment from "./SetupSubPages/PermitSafetyEquipment";
+  import PermitEntity from "./SetupSubPages/PermitEntity";
 const PermitSetup = () => {
   const [page, setPage] = useState("Permit Type");
   return (
@@ -69,6 +70,15 @@ const PermitSetup = () => {
             >
               Permit Safety Equipment
             </h2>
+            <h2
+              className={`p-1 ${
+                page === "Permit Entity" &&
+                "bg-white font-medium text-blue-500 shadow-custom-all-sides"
+              } rounded-t-md px-4 cursor-pointer transition-all duration-300 ease-linear`}
+              onClick={() => setPage("Permit Entity")}
+            >
+              Permit Entity
+            </h2>
           </div>
         </div>
         <div>
@@ -82,6 +92,7 @@ const PermitSetup = () => {
           {page === "Permit Hazard Category" && <PermitHazardCategoryTable />}
           {page === "Permit Risk" && <PermitRiskTable />}
           {page === "Permit Safety Equipment" && <PermitSafetyEquipment />}
+          {page === "Permit Entity" && <PermitEntity />}
         </div>
       </div>
     </div>
