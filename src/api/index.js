@@ -767,6 +767,24 @@ export const postAssetAssociation = async (data) =>
     },
   });
 
+export const deleteAssetAssociation = async (id) =>
+  axiosInstance.delete(`/activities/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+
+export const updateActivity = async (id, data) =>
+  axiosInstance.put(`/activities/${id}`, data, {
+    params: {
+      token: token,
+    },
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+  });
+
 export const getRoutineTask = async () =>
   axiosInstance.get("/activities.json?q[checklist_ctype_eq]=routine", {
     params: {
