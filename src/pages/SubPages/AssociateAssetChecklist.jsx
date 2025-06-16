@@ -244,7 +244,13 @@ const AssociateAssetChecklist = () => {
   }) => {
     const [selectedAssets, setSelectedAssets] = useState([]);
     const [selectedUsers, setSelectedUsers] = useState([]);
+    console.log("Association Data", associationData);
 
+    const userName = associationData?.assigned_to
+    const assetName = associationData?.asset_name;
+
+    const { id } = useParams();
+    console.log("IDDDDDD", id);
     useEffect(() => {
       if (associationData) {
         setSelectedAssets([
@@ -261,24 +267,33 @@ const AssociateAssetChecklist = () => {
         ]);
       }
     }, [associationData]);
-
+    useEffect(() => {
+  if (show) {
+    setSelectedAssets([]);
+    setSelectedUsers([]);
+  }
+}, [show]);
     const handleSubmit = async () => {
-      const assetId = selectedAssets
-        ? [selectedAssets.value] 
-        : associationData.asset_id;
+      const assetId =
+        selectedAssets && selectedAssets.length > 0
+          ? selectedAssets.map((a) => a.value)
+          : [associationData.asset_id];
 
-      const assignedTo = selectedUsers
-        ? [selectedUsers.value] 
-        : associationData.assigned_to;
+      const assignedTo =
+        selectedUsers && selectedUsers.length > 0
+          ? selectedUsers.map((u) => u.value)
+          : Array.isArray(associationData.assigned_to)
+          ? associationData.assigned_to
+          : [associationData.assigned_to];
 
-      const checklistId = associationData.checklist_id;
+      const checklistIdd = id; // from useParams or props
+      console.log("Asset ID:", assetId);
+      console.log("Checklist ID:", checklistIdd);
 
       const payload = {
-        activity: {
-          asset_id: assetId,
-          checklist_id: checklistId,
-          assigned_to: assignedTo,
-        },
+        asset_ids: assetId,
+        assigned_to: assignedTo,
+        checklist_id: checklistIdd,
       };
 
       try {
@@ -298,18 +313,29 @@ const AssociateAssetChecklist = () => {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
         <div className="bg-white rounded-lg p-6 w-[400px]">
-          <h2 className="text-lg font-semibold mb-4">Edit Association</h2>
+          <h2 className="text-lg font-semibold mb-4">
+            Edit Association:{" "}
+            <p className="text-sm text-gray-500">
+              {assetName} - {userName}
+              </p>
+          </h2>
           <div className="mb-4">
-            <label className="font-semibold">Asset</label>
+            <label className="font-semibold">
+              Asset <span>*</span>{" "}
+            </label>
             <Select
+              isMulti
               options={assets}
               value={selectedAssets}
               onChange={setSelectedAssets}
             />
           </div>
           <div className="mb-4">
-            <label className="font-semibold">Assigned To</label>
+            <label className="font-semibold">
+              Assigned To <span>*</span>
+            </label>
             <Select
+              isMulti
               options={assignedTo}
               value={selectedUsers}
               onChange={(selected) => setSelectedUsers(selected)}
