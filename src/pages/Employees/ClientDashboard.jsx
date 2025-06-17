@@ -11,6 +11,7 @@ import { useSelector } from "react-redux";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import { PiSignOutBold } from "react-icons/pi";
 import { DNA } from "react-loader-spinner";
+import Select from "react-select";
 import {
   getClientDashboard,
   getEmployeeJobInfo,
@@ -197,15 +198,28 @@ const ClientDashboard = () => {
 
       if (Array.isArray(res) && res.length > 0) {
         const associatedSites = res[0].multiple_associated_info || [];
-        console.log(associatedSites);
-        setSites(associatedSites);
+
+        const allSites = associatedSites.map((site) => ({
+          value: site.id,
+          label: site.site_name,
+        }));
+
+        // Add "All Sites" option at the beginning
+        const sitesWithAllOption = [
+          { label: "All Sites", value: null },
+          ...allSites,
+        ];
+
+        setSites(sitesWithAllOption);
       } else {
-        setSites([]);
+        // Only "All Sites" when no sites from API
+        setSites([{ label: "All Sites", value: null }]);
       }
     } catch (error) {
       console.log(error);
     }
   };
+
   useEffect(() => {
     fetchAssociatedSites();
   }, []);
@@ -392,23 +406,36 @@ const ClientDashboard = () => {
           {sites.length === 0 ? (
             <p className="text-grey-500">No site associated</p>
           ) : (
-            <select
-              className="text-black px-6 py-2"
-              onChange={(e) => {
-                setSelectedSite(e.target.value),
-                  setSiteWisePageNumber(0),
-                  setSiteWiseStatus("all"),
-                  setTotalAllPageNumber(0);
+            <Select
+              options={sites}
+              onChange={(selectedOption) => {
+                setSelectedSite(selectedOption?.value || null);
+                setSiteWisePageNumber(0);
+                setSiteWiseStatus("all");
+                setTotalAllPageNumber(0);
               }}
-              value={selectedSite || ""}
-            >
-              <option value="">Select All Sites</option>
-              {sites.map((site, index) => (
-                <option key={site.id} value={site.id}>
-                  {site.site_name}
-                </option>
-              ))}
-            </select>
+              noOptionsMessage={() => "No sites Available"}
+              placeholder="Select Site"
+              maxMenuHeight={500}
+              className="z-50 w-96 text-black"
+            />
+            // <select
+            //   className="text-black px-6 py-2"
+            //   onChange={(e) => {
+            //     setSelectedSite(e.target.value),
+            //       setSiteWisePageNumber(0),
+            //       setSiteWiseStatus("all"),
+            //       setTotalAllPageNumber(0);
+            //   }}
+            //   value={selectedSite || ""}
+            // >
+            //   <option value="">Select All Sites</option>
+            //   {sites.map((site, index) => (
+            //     <option key={site.id} value={site.id}>
+            //       {site.site_name}
+            //     </option>
+            //   ))}
+            // </select>
           )}
         </div>
       </nav>
