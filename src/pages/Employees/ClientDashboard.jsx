@@ -198,19 +198,28 @@ const ClientDashboard = () => {
 
       if (Array.isArray(res) && res.length > 0) {
         const associatedSites = res[0].multiple_associated_info || [];
+
         const allSites = associatedSites.map((site) => ({
           value: site.id,
           label: site.site_name,
         }));
 
-        setSites(allSites);
+        // Add "All Sites" option at the beginning
+        const sitesWithAllOption = [
+          { label: "All Sites", value: null },
+          ...allSites,
+        ];
+
+        setSites(sitesWithAllOption);
       } else {
-        setSites([]);
+        // Only "All Sites" when no sites from API
+        setSites([{ label: "All Sites", value: null }]);
       }
     } catch (error) {
       console.log(error);
     }
   };
+
   useEffect(() => {
     fetchAssociatedSites();
   }, []);
@@ -400,7 +409,7 @@ const ClientDashboard = () => {
             <Select
               options={sites}
               onChange={(selectedOption) => {
-                setSelectedSite(selectedOption.value);
+                setSelectedSite(selectedOption?.value || null);
                 setSiteWisePageNumber(0);
                 setSiteWiseStatus("all");
                 setTotalAllPageNumber(0);
