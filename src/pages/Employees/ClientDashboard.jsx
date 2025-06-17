@@ -138,7 +138,7 @@ const ClientDashboard = () => {
     if (!selectedSite) {
       fetchAttendanceCount();
     }
-  }, [selectedSite]);
+  }, [selectedSite, selectedDate]);
 
   const orgId = localStorage.getItem("HRMSORGID");
 
