@@ -146,6 +146,24 @@ const SectionsPersonal = () => {
     latRequired: true,
     geotag_enabled: false,
   });
+  const [originalData, setOriginalData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    mobile: "",
+    gender: "",
+    dob: "",
+    pan: "",
+    aadhar: "",
+    maritalStatus: "",
+    bloodGroup: "",
+    emergencyContactName: "",
+    emergencyContactNo: "",
+    userType: "",
+    status: false,
+    latRequired: true,
+    geotag_enabled: false,
+  });
   const [familyData, setFamilyData] = useState({
     fatherName: "",
     motherName: "",
@@ -170,6 +188,26 @@ const SectionsPersonal = () => {
       console.log(rawAadharValue);
       setFormData({
         ...formData,
+        firstName: res?.first_name,
+        lastName: res?.last_name,
+        email: res?.email_id,
+        mobile: res?.mobile,
+        gender: res?.gender,
+        dob: res?.date_of_birth,
+        pan: res?.pan,
+        bloodGroup: res?.blood_group,
+        status: res?.status,
+        // aadhar: rawAadharValue.match(/.{1,4}/g)?.join("-") || "",
+        aadhar: rawAadharValue?.match(/.{1,4}/g)?.join("-") || "",
+        maritalStatus: res?.marital_status,
+        emergencyContactName: res?.emergency_contact_name,
+        emergencyContactNo: res?.emergency_contact_no,
+        userType: res?.user_type || "employee",
+        latRequired: res?.lat_long_required,
+        geotag_enabled: res?.geotag_enabled,
+      });
+      setOriginalData({
+        ...originalData,
         firstName: res?.first_name,
         lastName: res?.last_name,
         email: res?.email_id,
@@ -280,23 +318,64 @@ const SectionsPersonal = () => {
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
   const handleEditEmployeeBasicInfo = async () => {
     const editData = new FormData();
-    editData.append("first_name", formData.firstName);
-    editData.append("last_name", formData.lastName);
-    editData.append("email_id", formData.email);
-    editData.append("mobile", formData.mobile);
-    editData.append("gender", formData.gender);
-    editData.append("date_of_birth", formData.dob);
-    editData.append("blood_group", formData.bloodGroup);
-    editData.append("pan", formData.pan);
-    editData.append("aadhar_number", formData.aadhar.replace(/\D/g, ""));
-    editData.append("marital_status", formData.maritalStatus);
-    editData.append("emergency_contact_name", formData.emergencyContactName);
-    editData.append("emergency_contact_no", formData.emergencyContactNo);
-    editData.append("user_type", formData.userType);
-    editData.append("status", formData.status);
-    editData.append("organization", hrmsOrgId);
-    editData.append("lat_long_required", formData.latRequired);
-    editData.append("geotag_enabled", formData.geotag_enabled);
+
+    const appendIfChanged = (key, newValue, oldValue) => {
+      if (newValue !== oldValue) {
+        editData.append(key, newValue);
+      }
+    };
+
+    appendIfChanged("first_name", formData.firstName, originalData.firstName);
+    appendIfChanged("last_name", formData.lastName, originalData.lastName);
+    appendIfChanged("email_id", formData.email, originalData.email);
+    appendIfChanged("mobile", formData.mobile, originalData.mobile);
+    appendIfChanged("gender", formData.gender, originalData.gender);
+    appendIfChanged("date_of_birth", formData.dob, originalData.dob);
+    appendIfChanged(
+      "blood_group",
+      formData.bloodGroup,
+      originalData.bloodGroup
+    );
+    appendIfChanged("pan", formData.pan || null, originalData.pan || null);
+    appendIfChanged(
+      "aadhar_number",
+      formData.aadhar.replace(/\D/g, ""),
+      originalData.aadhar.replace(/\D/g, "")
+    );
+    appendIfChanged(
+      "marital_status",
+      formData.maritalStatus,
+      originalData.maritalStatus
+    );
+    appendIfChanged(
+      "emergency_contact_name",
+      formData.emergencyContactName,
+      originalData.emergencyContactName
+    );
+    appendIfChanged(
+      "emergency_contact_no",
+      formData.emergencyContactNo,
+      originalData.emergencyContactNo
+    );
+    appendIfChanged("user_type", formData.userType, originalData.userType);
+    appendIfChanged("status", formData.status, originalData.status);
+    appendIfChanged("organization", hrmsOrgId, originalData.organization);
+    appendIfChanged(
+      "lat_long_required",
+      formData.latRequired,
+      originalData.latRequired
+    );
+    appendIfChanged(
+      "geotag_enabled",
+      formData.geotag_enabled,
+      originalData.geotag_enabled
+    );
+
+    if ([...editData.entries()].length === 0) {
+      toast.info("No changes detected.");
+      return;
+    }
+
     try {
       const res = await editEmployeeDetails(id, editData);
       setIsEditing(false);
@@ -304,7 +383,7 @@ const SectionsPersonal = () => {
       toast.success("Personal details updated successfully");
     } catch (error) {
       console.log(error);
-      toast.error("Something went wrong please try again");
+      toast.error("Something went wrong. Please try again.");
     }
   };
 
@@ -681,7 +760,7 @@ const SectionsPersonal = () => {
                        value={formData.userType}
       onChange={handleChange}
                       disabled={!isEditing}
-                      
+
                      >
                       <option value="pms_admin">Admin</option>
                       <option value="employee">Employee</option>
