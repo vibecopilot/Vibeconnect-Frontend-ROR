@@ -244,16 +244,41 @@ const AssociateAssetChecklist = () => {
   }) => {
     const [selectedAssets, setSelectedAssets] = useState([]);
     const [selectedUsers, setSelectedUsers] = useState([]);
-    console.log("Association Data", associationData);
+    const { id } = useParams();
+    console.log("iddd", id);
 
-    const userName = associationData?.assigned_to;
-    const assetName = associationData?.asset_name;
+    useEffect(() => {
+      if (associationData) {
+        // Pre-fill selected assets and users based on associationData
+        setSelectedAssets(
+          associationData.asset_id
+            ? [
+                {
+                  label: associationData.asset_name,
+                  value: associationData.asset_id,
+                },
+              ]
+            : []
+        );
+        setSelectedUsers(
+          associationData.users_with_ids
+            ? associationData.users_with_ids.map((user) => ({
+                label: user.user_name,
+                value: user.user_id,
+              }))
+            : []
+        );
+      }
+    }, [associationData]);
+
+    const checklist_id = associationData?.checklist_id || id; // Use checklist_id from associationData or fallback to id
+
 
     const validateForm = ({ asset_ids, assigned_to, checklist_id }) => {
-      toast.dismiss(); // clear previous toasts
+      toast.dismiss(); // Clear previous toasts
 
       if (!asset_ids || asset_ids.length === 0) {
-        toast.error("Please select at least one asset and assign to at least one user.");
+        toast.error("Please select at least one asset.");
         return false;
       }
 
@@ -267,56 +292,18 @@ const AssociateAssetChecklist = () => {
         return false;
       }
 
-      return true; // if everything passes
+      return true; // If everything passes
     };
 
-    const { id } = useParams();
-    console.log("IDDDDDD", id);
-    useEffect(() => {
-      if (associationData) {
-        setSelectedAssets([
-          {
-            label: associationData.asset_name,
-            value: associationData.asset_id,
-          },
-        ]);
-        setSelectedUsers([
-          {
-            label: associationData.user_name,
-            value: associationData.assigned_to_id,
-          },
-        ]);
-      }
-    }, [associationData]);
-    useEffect(() => {
-      if (show) {
-        setSelectedAssets([]);
-        setSelectedUsers([]);
-      }
-    }, [show]);
+
     const handleSubmit = async () => {
-      const assetId =
-        selectedAssets && selectedAssets.length > 0
-          ? selectedAssets.map((a) => a.value)
-          : associationData.asset_id
-          ? [associationData.asset_id]
-          : [];
-
-      const assignedTo =
-        selectedUsers && selectedUsers.length > 0
-          ? selectedUsers.map((u) => u.value)
-          : Array.isArray(associationData.assigned_to)
-          ? associationData.assigned_to
-          : associationData.assigned_to
-          ? [associationData.assigned_to]
-          : [];
-
-      const checklistIdd = id;
+      const assetIds = selectedAssets.map((asset) => asset.value);
+      const userIds = selectedUsers.map((user) => user.value);
 
       const payload = {
-        asset_ids: assetId,
-        assigned_to: assignedTo,
-        checklist_id: checklistIdd,
+        asset_ids: assetIds,
+        assigned_to: userIds,
+        checklist_id: checklist_id, // Use checklist_id from associationData
       };
 
       if (!validateForm(payload)) {
@@ -324,14 +311,14 @@ const AssociateAssetChecklist = () => {
       }
 
       try {
-        const update = await updateActivity(associationData.id, payload);
-        console.log("update", update);
-        toast.success("Association updated");
-        onUpdate();
-        onClose();
+        const update = await updateActivity(id, payload);
+        console.log("Update response:", update);
+        toast.success("Association updated successfully.");
+        onUpdate(); // Trigger data refresh
+        onClose(); // Close the modal
       } catch (err) {
-        toast.error("Failed to update");
-        console.error(err);
+        console.error("Failed to update association:", err);
+        toast.error("Failed to update association.");
       }
     };
 
@@ -340,16 +327,9 @@ const AssociateAssetChecklist = () => {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
         <div className="bg-white rounded-lg p-6 w-[400px]">
-          <h2 className="text-lg font-semibold mb-4">
-            Edit Association:{" "}
-            <p className="text-sm text-gray-500">
-              {assetName} - {userName}
-            </p>
-          </h2>
+          <h2 className="text-lg font-semibold mb-4">Edit Association</h2>
           <div className="mb-4">
-            <label className="font-semibold">
-              Asset <span className="red-500">*</span>{" "}
-            </label>
+            <label className="font-semibold">Asset</label>
             <Select
               isMulti
               options={assets}
@@ -358,12 +338,9 @@ const AssociateAssetChecklist = () => {
             />
           </div>
           <div className="mb-4">
-            <label className="font-semibold">
-              Assigned To <span className="red-500">*</span>
-            </label>
+            <label className="font-semibold">Assigned To</label>
             <Select
               isMulti
-              required
               options={assignedTo}
               value={selectedUsers}
               onChange={setSelectedUsers}
