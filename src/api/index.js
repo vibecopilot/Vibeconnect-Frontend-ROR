@@ -5129,7 +5129,7 @@ export const getEmployeeDetails = async (empId) => {
 
 export const editEmployeeDetails = async (empId, data) => {
   try {
-    const response = await HrmsAuth.put(`/employee/${empId}/`, data, {
+    const response = await HrmsAuth.patch(`/employee/${empId}/`, data, {
       headers: {
         "Content-Type": "multipart/form-data/",
       },
