@@ -38,6 +38,7 @@ import {
   CreateBulkEmployee,
   getHrmsFilteredEmployeeData,
   getEmployeeAssociations,
+  downloadAllEmployeeData,
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import toast from "react-hot-toast";
@@ -570,14 +571,30 @@ function EmployeeDirectory() {
 
   //Export Employee data
 
-  const handleExport = () => {
-    const url = `https://api.hrms.vibecopilot.ai/user-details/download?organization_id=${orgId}`;
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", "data.json");
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
+  const handleExport = async () => {
+    const toastId = toast.loading("Download report please wait!!!");
+    try {
+      const res = await downloadAllEmployeeData(orgId);
+      const blob = new Blob([res.data], { type: res.headers["content-type"] });
+
+      const link = document.createElement("a");
+      const url = window.URL.createObjectURL(blob);
+      link.href = url;
+
+      link.download = `All Employees.xlsx`;
+
+      document.body.appendChild(link);
+      link.click();
+
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.dismiss(toastId);
+      toast.success("Success");
+    } catch (error) {
+      toast.dismiss(toastId);
+      toast.error("Failed to download report ❌");
+      console.log(error);
+    }
   };
 
   const [selectedUserStatus, setSelectedUserStatus] = useState("all");
@@ -668,7 +685,7 @@ function EmployeeDirectory() {
       if (response.success) {
         toast.success("Employees imported successfully!");
         setIsModalOpen12(false);
-        fetchAllEmployees(); // Refresh the employee list
+        fetchAllSitesEmployee();
       } else {
         toast.success(response.message || "Failed to import employees");
       }
@@ -861,8 +878,12 @@ function EmployeeDirectory() {
                         className="rounded-md text-black w-full"
                       >
                         <option value="">Select Status</option>
-                        <option value="true">Activate</option>
-                        <option value="false">Deactivate</option>
+                        {status === "inactive" && (
+                          <option value="true">Activate</option>
+                        )}
+                        {status === "active" && (
+                          <option value="false">Deactivate</option>
+                        )}
                       </select>
                       <button
                         onClick={handleStatusUpdate}
@@ -984,7 +1005,7 @@ function EmployeeDirectory() {
                   columns={employeeColumns}
                   data={filteredEmployeeData}
                   pagination={false}
-                  selectableRow={true}
+                  selectableRow={status === "all" ? false : true}
                   onSelectedRows={handleCheckboxChange}
                 />
                 {filteredEmployeeData.length > 0 && (
@@ -1390,6 +1411,66 @@ function EmployeeDirectory() {
                 onClick={() => setIsDeleteModalOpen(false)}
               >
                 Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {isModalOpen12 && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex z-10 justify-center items-center">
+          <div className="bg-white text-black p-5 rounded-md shadow-md w-1/3">
+            <h2 className="text-xl font-semibold mb-4">Import Employees</h2>
+
+            <div className="mb-4">
+              <p className="font-bold mb-2">Step 1: Download sample template</p>
+              <p className="text-sm mb-2">
+                Download the sample template to ensure proper formatting.
+              </p>
+              <button
+                onClick={downloadExcelFile}
+                style={{ background: themeColor }}
+                className="font-semibold py-2 px-4 rounded text-white mt-2"
+              >
+                Download Sample Template
+              </button>
+            </div>
+
+            <div className="mb-4">
+              <p className="font-bold mb-2">Step 2: Upload your file</p>
+              <p className="text-sm mb-2">
+                After filling the template, upload it here (Excel files only).
+              </p>
+              <input
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={(e) => setSelectedFile(e.target.files[0])}
+                className="block w-full text-sm text-gray-500
+            file:mr-4 file:py-2 file:px-4
+            file:rounded-md file:border-0
+            file:text-sm file:font-semibold
+            file:bg-blue-50 file:text-blue-700
+            hover:file:bg-blue-100"
+              />
+              {selectedFile && (
+                <p className="mt-2 text-sm text-gray-600">
+                  Selected file: {selectedFile.name}
+                </p>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                onClick={() => setIsModalOpen12(false)}
+                className="bg-gray-300 text-gray-700 py-2 px-4 rounded"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleImport}
+                style={{ background: themeColor }}
+                className="font-semibold py-2 px-4 rounded text-white"
+              >
+                Import
               </button>
             </div>
           </div>
