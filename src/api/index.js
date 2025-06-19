@@ -7476,6 +7476,20 @@ export const downloadSummaryData = async (siteId, orgId, start_date) => {
     throw error;
   }
 };
+export const downloadAllEmployeeData = async (orgId) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/user-details/download?organization_id=${orgId}`,
+      {
+        responseType: "blob",
+      }
+    );
+    return response;
+  } catch (error) {
+    console.error("Error downloading allData:", error);
+    throw error;
+  }
+};
 export const downloadAllSiteData = async (empId, start_date) => {
   try {
     const response = await HrmsAuth.get(
