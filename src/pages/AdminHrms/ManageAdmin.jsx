@@ -93,33 +93,32 @@ const ManageAdmin = () => {
   // Associated Sites
   const [availableSites, setAvailableSites] = useState([]);
   const [selectedSites, setSelectedSites] = useState([]);
-const [sitesOptions, setSitesOptions] = useState([]);
- useEffect(() => {
-  const fetchAvailableSitesData = async () => {
-    try {
-      const sitesData = await getAvailableSites(hrmsOrgId);
-      if (!sitesData) {
-        toast.error("No Sites Available");
+  const [sitesOptions, setSitesOptions] = useState([]);
+  useEffect(() => {
+    const fetchAvailableSitesData = async () => {
+      try {
+        const sitesData = await getAvailableSites(hrmsOrgId);
+        if (!sitesData) {
+          toast.error("No Sites Available");
+        }
+
+        const formattedSites = sitesData.map((site) => ({
+          value: site.id,
+          label: site.site_name,
+        }));
+
+        // Add Select All option at the beginning
+        setAvailableSites(formattedSites);
+        setSitesOptions([
+          { value: "select-all", label: "Select All" },
+          ...formattedSites,
+        ]);
+      } catch (error) {
+        console.log("Error in getting The available sites", error);
       }
-
-      const formattedSites = sitesData.map((site) => ({
-        value: site.id,
-        label: site.site_name,
-      }));
-      
-      // Add Select All option at the beginning
-      setAvailableSites(formattedSites);
-      setSitesOptions([
-        { value: 'select-all', label: 'Select All' },
-        ...formattedSites
-      ]);
-    } catch (error) {
-      console.log("Error in getting The available sites", error);
-    }
-  };
-  fetchAvailableSitesData();
-}, [hrmsOrgId]);
-
+    };
+    fetchAvailableSitesData();
+  }, [hrmsOrgId]);
 
   const handleDeleteAdmin = async (adminId) => {
     try {
@@ -234,11 +233,8 @@ const [sitesOptions, setSitesOptions] = useState([]);
           multiple_associated: siteIds,
           organization: hrmsOrgId,
         };
-           const updateId = associationId || selectedUserOption.value;
-        await updateEmployeeAssociations(
-          updateId,
-          associationData
-        );
+        const updateId = associationId || selectedUserOption.value;
+        await updateEmployeeAssociations(updateId, associationData);
       }
 
       if (
@@ -334,135 +330,150 @@ const [sitesOptions, setSitesOptions] = useState([]);
 
   const [associationId, setAssociationId] = useState(null); // Add this state at the top of your component
 
-const handleEditModal = async (id) => {
-  try {
-    // 1. Open modal and set admin ID
-    setShowModal1(true);
-    setAdminId(id);
+  const handleEditModal = async (id) => {
+    try {
+      // 1. Open modal and set admin ID
+      setShowModal1(true);
+      setAdminId(id);
+      fetchUserAccess();
+      // 2. Fetch admin details by ID
+      const response = await getManageAdminDetails(id);
+      if (!response || !response.length) {
+        throw new Error("No admin data found");
+      }
 
-    // 2. Fetch admin details by ID
-    const response = await getManageAdminDetails(id);
-    if (!response || !response.length) {
-      throw new Error("No admin data found");
-    }
+      const adminDetails = response.find((admin) => admin.id === id);
+      if (!adminDetails) {
+        throw new Error(`Admin with ID ${id} not found`);
+      }
+      // 3. Set access and role
+      setAccess(adminDetails.access || "");
+      setRole(adminDetails.role || "");
 
-    const adminDetails = response.find((admin) => admin.id === id);
-    if (!adminDetails) {
-      throw new Error(`Admin with ID ${id} not found`);
-    }
-   // 3. Set access and role
-    setAccess(adminDetails.access || "");
-    setRole(adminDetails.role || "");
+      // 4. Set selected employee in dropdown
+      const selectedEmployee = employees.find(
+        (emp) => String(emp.value) === String(adminDetails.name)
+      );
+      if (!selectedEmployee && adminDetails.name) {
+        console.warn("Employee not found in dropdown:", adminDetails.name);
+      }
+      setSelectedUserOption(selectedEmployee || null);
 
-    // 4. Set selected employee in dropdown
-    const selectedEmployee = employees.find(
-      (emp) => String(emp.value) === String(adminDetails.name)
-    );
-    if (!selectedEmployee && adminDetails.name) {
-      console.warn("Employee not found in dropdown:", adminDetails.name);
-    }
-    setSelectedUserOption(selectedEmployee || null);
+      // 5. Set permissions
+      console.log(adminDetails);
+      setPermissionAllowed({
+        organization_permissions: !!adminDetails.organization_permissions,
+        can_edit_basic_info: !!adminDetails.can_edit_basic_info,
+        can_edit_address_info: !!adminDetails.can_edit_address_info,
+        can_add_edit_locations: !!adminDetails.can_add_edit_locations,
+        can_add_edit_department: !!adminDetails.can_add_edit_department,
+        can_add_edit_associated_sites:
+          !!adminDetails.can_add_edit_associated_sites,
+        can_add_edit_company_holiday:
+          !!adminDetails.can_add_edit_company_holiday,
+        can_add_edit_bank_account: !!adminDetails.can_add_edit_bank_account,
+        can_add_edit_admins: !!adminDetails.can_add_edit_admins,
+      });
 
-    // 5. Set permissions
-    setPermissionAllowed({
-      organization_permissions: !!adminDetails.organization_permissions,
-      can_edit_basic_info: !!adminDetails.can_edit_basic_info,
-      can_edit_address_info: !!adminDetails.can_edit_address_info,
-      can_add_edit_locations: !!adminDetails.can_add_edit_locations,
-      can_add_edit_department: !!adminDetails.can_add_edit_department,
-      can_add_edit_associated_sites: !!adminDetails.can_add_edit_associated_sites,
-      can_add_edit_company_holiday: !!adminDetails.can_add_edit_company_holiday,
-      can_add_edit_bank_account: !!adminDetails.can_add_edit_bank_account,
-      can_add_edit_admins: !!adminDetails.can_add_edit_admins,
-    });
+      setEMployeePermission({
+        employee_permissions: !!adminDetails.employee_permissions,
+        can_edit_employee: !!adminDetails.can_edit_employee,
+        can_delete_employee: !!adminDetails.can_delete_employee,
+        can_approve_reject_onboarding_request:
+          !!adminDetails.can_approve_reject_onboarding_request,
+        can_add_employee: !!adminDetails.can_add_employee,
+        can_approve_reject_uniform_request:
+          !!adminDetails.can_approve_reject_uniform_request,
+        can_approve_reject_separation_request:
+          !!adminDetails.can_approve_reject_separation_request,
+        can_initiate_separation: !!adminDetails.can_initiate_separation,
+      });
 
-    setEMployeePermission({
-      employee_permissions: !!adminDetails.employee_permissions,
-      can_edit_employee: !!adminDetails.can_edit_employee,
-      can_delete_employee: !!adminDetails.can_delete_employee,
-      can_approve_reject_onboarding_request: !!adminDetails.can_approve_reject_onboarding_request,
-      can_add_employee: !!adminDetails.can_add_employee,
-      can_approve_reject_uniform_request: !!adminDetails.can_approve_reject_uniform_request,
-      can_approve_reject_separation_request: !!adminDetails.can_approve_reject_separation_request,
-      can_initiate_separation: !!adminDetails.can_initiate_separation,
-    });
+      setAttendancePermission({
+        attendance_permissions: !!adminDetails.attendance_permissions,
+        can_approve_reject_regularisation:
+          !!adminDetails.can_approve_reject_regularisation,
+        can_apply_regularization_on_behalf_of_employee:
+          !!adminDetails.can_apply_regularization_on_behalf_of_employee,
+      });
 
-    setAttendancePermission({
-      attendance_permissions: !!adminDetails.attendance_permissions,
-      can_approve_reject_regularisation: !!adminDetails.can_approve_reject_regularisation,
-      can_apply_regularization_on_behalf_of_employee: !!adminDetails.can_apply_regularization_on_behalf_of_employee,
-    });
+      setRosterPermission({
+        roster_permissions: !!adminDetails.roster_permissions,
+        can_assign_edit_delete_shifts:
+          !!adminDetails.can_assign_edit_delete_shifts,
+        can_edit_delete_roster_shift:
+          !!adminDetails.can_edit_delete_roster_shift,
+      });
 
-    setRosterPermission({
-      roster_permissions: !!adminDetails.roster_permissions,
-      can_assign_edit_delete_shifts: !!adminDetails.can_assign_edit_delete_shifts,
-      can_edit_delete_roster_shift: !!adminDetails.can_edit_delete_roster_shift,
-    });
+      setLeavePermission({
+        leave_permissions: !!adminDetails.leave_permissions,
+        can_add_leave_on_behalf_of_employee:
+          !!adminDetails.can_add_leave_on_behalf_of_employee,
+        can_add_edit_delete_leave_category:
+          !!adminDetails.can_add_edit_delete_leave_category,
+        can_approve_reject_leave: !!adminDetails.can_approve_reject_leave,
+      });
+      console.log(adminDetails);
+      setDashboardPermission({
+        dashboard_permissions: !!adminDetails.dashboard_permissions,
+        can_view_dashboard: !!adminDetails.can_view_dashboard,
+        client_dashboard: !!adminDetails.client_dashboard,
+      });
 
-    setLeavePermission({
-      leave_permissions: !!adminDetails.leave_permissions,
-      can_add_leave_on_behalf_of_employee: !!adminDetails.can_add_leave_on_behalf_of_employee,
-      can_add_edit_delete_leave_category: !!adminDetails.can_add_edit_delete_leave_category,
-      can_approve_reject_leave: !!adminDetails.can_approve_reject_leave,
-    });
+      // 6. Fetch associated sites if name is present
+      if (adminDetails.name) {
+        try {
+          const siteResponse = await getEmployeeAssociations(adminDetails.name);
+          console.log("Site associations API response:", siteResponse);
 
-    setDashboardPermission({
-      dashboard_permissions: !!adminDetails.dashboard_permissions,
-      can_view_dashboard: !!adminDetails.can_view_dashboard,
-      client_dashboard: !!adminDetails.client_dashboard,
-    });
+          const associationData =
+            Array.isArray(siteResponse) && siteResponse.length > 0
+              ? siteResponse[0]
+              : null;
 
-    // 6. Fetch associated sites if name is present
-    if (adminDetails.name) {
-      try {
-        const siteResponse = await getEmployeeAssociations(adminDetails.name);
-        console.log("Site associations API response:", siteResponse);
-       
-        
-          const associationData = Array.isArray(siteResponse) && siteResponse.length > 0 
-          ? siteResponse[0] 
-          : null;
-          
-        // Store the association ID for later updates
-        if (associationData?.id) {
-          setAssociationId(associationData.id);
-        } else {
-          setAssociationId(null);
-        }
+          // Store the association ID for later updates
+          if (associationData?.id) {
+            setAssociationId(associationData.id);
+          } else {
+            setAssociationId(null);
+          }
 
-        if (associationData?.multiple_associated_info?.length > 0) {
-          const matchedSites = sitesOptions.filter((site) =>
-            associationData.multiple_associated.includes(site.value)
-          );
-          setSelectedSitesEdit(matchedSites);
-         
-        } else {
+          if (associationData?.multiple_associated_info?.length > 0) {
+            const matchedSites = sitesOptions.filter((site) =>
+              associationData.multiple_associated.includes(site.value)
+            );
+            setSelectedSitesEdit(matchedSites);
+          } else {
+            setSelectedSitesEdit([]);
+          }
+        } catch (error) {
+          console.error("Error fetching associated sites:", error);
           setSelectedSitesEdit([]);
-      
+          setAssociationId(null);
+          toast.error("Failed to load associated sites");
         }
-      } catch (error) {
-        console.error("Error fetching associated sites:", error);
-        setSelectedSitesEdit([]);
-        setAssociationId(null);
-        toast.error("Failed to load associated sites");
       }
-    }
 
-    // 7. Fetch approver details if permission is granted
-    if (adminDetails.can_approve_reject_onboarding_request && adminDetails.name) {
-      try {
-        const approverResponse = await fetchApproverDetails(adminDetails.name);
-      } catch (error) {
-        console.error("Error fetching approver details:", error);
-        toast.error("Failed to load approver details");
+      // 7. Fetch approver details if permission is granted
+      if (
+        adminDetails.can_approve_reject_onboarding_request &&
+        adminDetails.name
+      ) {
+        try {
+          const approverResponse = await fetchApproverDetails(
+            adminDetails.name
+          );
+        } catch (error) {
+          console.error("Error fetching approver details:", error);
+          toast.error("Failed to load approver details");
+        }
       }
+    } catch (error) {
+      console.error("Error in handleEditModal:", error);
+      toast.error(`Failed to load admin details: ${error.message}`);
+      setShowModal1(false);
     }
-  } catch (error) {
-    console.error("Error in handleEditModal:", error);
-    toast.error(`Failed to load admin details: ${error.message}`);
-    setShowModal1(false);
-  }
-};
+  };
 
   const [approverDetails, setApproverDetails] = useState({
     approverSettingId: "",
@@ -485,7 +496,6 @@ const handleEditModal = async (id) => {
       console.log(error);
     }
   };
-  console.log(approverDetails);
 
   const handleEditAdmin = async () => {
     const editData = new FormData();
@@ -572,12 +582,9 @@ const handleEditModal = async (id) => {
           multiple_associated: siteIds,
           organization: hrmsOrgId,
         };
-         
-         const updateId = associationId || selectedUserOption.value;
-        await updateEmployeeAssociations(
-          updateId,
-          associationData
-        );
+
+        const updateId = associationId || selectedUserOption.value;
+        await updateEmployeeAssociations(updateId, associationData);
       }
 
       // Handle approval authorities logic
@@ -687,19 +694,22 @@ const handleEditModal = async (id) => {
     can_view_dashboard: false,
     client_dashboard: false, // Added for your dashboard toggle.
   });
+  console.log(rosterPermission);
+  console.log(dashboardPermission);
   const [Dashboard, setDashboard] = useState(false);
 
   useEffect(() => {
     async function fetchDetails() {
       try {
         const res = await getManageAdminDetails(adminId);
-
+        console.log(res);
         // Update your state based on the response.
-        setDashboardPermission({
-          dashboard_permissions: res.dashboard_permissions,
-          can_view_dashboard: res.can_view_dashboard,
-          client_dashboard: res.client_dashboard,
-        });
+        // setDashboardPermission({
+        //   dashboard_permissions: res.dashboard_permissions,
+        //   can_view_dashboard: res.can_view_dashboard,
+
+        //   client_dashboard: res.client_dashboard,
+        // });
       } catch (error) {
         console.error("Error fetching admin details:", error);
       }
@@ -786,6 +796,7 @@ const handleEditModal = async (id) => {
   const orgId = getItemInLocalStorage("HRMSORGID");
   const [roleAccess, setRoleAccess] = useState({});
   useEffect(() => {
+    console.log("test");
     const fetchRoleAccess = async () => {
       try {
         const res = await getAdminAccess(orgId, empId);
@@ -797,6 +808,15 @@ const handleEditModal = async (id) => {
     };
     fetchRoleAccess();
   }, []);
+  const fetchUserAccess = async (employeeId) => {
+    try {
+      const res = await getAdminAccess(orgId, "883");
+      console.log(res);
+      // setRoleAccess(res[0]);
+    } catch (error) {
+      console.log(error);
+    }
+  };
   return (
     <section className="flex gap-1 ml-20">
       <UserDetailsList />
@@ -883,27 +903,31 @@ const handleEditModal = async (id) => {
                     classNamePrefix="select"
                   /> */}
                   <Select
-  isMulti
-  options={sitesOptions}
-  value={selectedSites}
-  onChange={(selectedOptions) => {
-    // Handle Select All functionality
-    const lastOption = selectedOptions[selectedOptions.length - 1];
-    if (lastOption?.value === 'select-all') {
-      // If Select All was clicked, select all options except the Select All option
-      setSelectedSites(availableSites);
-    } else {
-      // Otherwise, just update with the selected options
-      setSelectedSites(selectedOptions);
-    }
-  }}
-  placeholder="Select associated sites"
-  className="basic-multi-select"
-  classNamePrefix="select"
-  closeMenuOnSelect={false} // Keep menu open when selecting
-  hideSelectedOptions={false} // Show selected options in the dropdown
-  isOptionDisabled={(option) => option.value === 'select-all' && selectedSites.length === availableSites.length}
-/>
+                    isMulti
+                    options={sitesOptions}
+                    value={selectedSites}
+                    onChange={(selectedOptions) => {
+                      // Handle Select All functionality
+                      const lastOption =
+                        selectedOptions[selectedOptions.length - 1];
+                      if (lastOption?.value === "select-all") {
+                        // If Select All was clicked, select all options except the Select All option
+                        setSelectedSites(availableSites);
+                      } else {
+                        // Otherwise, just update with the selected options
+                        setSelectedSites(selectedOptions);
+                      }
+                    }}
+                    placeholder="Select associated sites"
+                    className="basic-multi-select"
+                    classNamePrefix="select"
+                    closeMenuOnSelect={false} // Keep menu open when selecting
+                    hideSelectedOptions={false} // Show selected options in the dropdown
+                    isOptionDisabled={(option) =>
+                      option.value === "select-all" &&
+                      selectedSites.length === availableSites.length
+                    }
+                  />
                 </div>
                 <div className="col-span-3">
                   {access === "Restricted Access" && (
@@ -1310,31 +1334,35 @@ const handleEditModal = async (id) => {
   getOptionValue={(option) => option.value}
   isDisabled={!availableSites.length} // Disable if no sites loaded
 /> */}
-<Select
-  isMulti
-  options={[
-    { value: 'select-all', label: 'Select All' },
-    ...availableSites
-  ]}
-  value={selectedSitesEdit}
-  onChange={(selectedOptions) => {
-    const lastOption = selectedOptions[selectedOptions.length - 1];
-    if (lastOption?.value === 'select-all') {
-      setSelectedSitesEdit(availableSites);
-    } else {
-      setSelectedSitesEdit(selectedOptions);
-    }
-  }}
-  className="basic-multi-select z-50" 
-  classNamePrefix="select"
-  placeholder="Select sites..."
-  getOptionLabel={(option) => option.label}
-  getOptionValue={(option) => option.value}
-  isDisabled={!availableSites.length}
-  closeMenuOnSelect={false}
-  hideSelectedOptions={false}
-  isOptionDisabled={(option) => option.value === 'select-all' && selectedSitesEdit.length === availableSites.length}
-/>
+                  <Select
+                    isMulti
+                    options={[
+                      { value: "select-all", label: "Select All" },
+                      ...availableSites,
+                    ]}
+                    value={selectedSitesEdit}
+                    onChange={(selectedOptions) => {
+                      const lastOption =
+                        selectedOptions[selectedOptions.length - 1];
+                      if (lastOption?.value === "select-all") {
+                        setSelectedSitesEdit(availableSites);
+                      } else {
+                        setSelectedSitesEdit(selectedOptions);
+                      }
+                    }}
+                    className="basic-multi-select z-50"
+                    classNamePrefix="select"
+                    placeholder="Select sites..."
+                    getOptionLabel={(option) => option.label}
+                    getOptionValue={(option) => option.value}
+                    isDisabled={!availableSites.length}
+                    closeMenuOnSelect={false}
+                    hideSelectedOptions={false}
+                    isOptionDisabled={(option) =>
+                      option.value === "select-all" &&
+                      selectedSitesEdit.length === availableSites.length
+                    }
+                  />
                 </div>
                 <div className="col-span-3">
                   {access === "Restricted Access" && (
