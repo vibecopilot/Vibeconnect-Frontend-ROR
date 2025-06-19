@@ -4513,6 +4513,37 @@ export const getHrmsAllEmployeeData = async (orgId, page = 1) => {
     throw error;
   }
 };
+
+export const getHrmsFilteredEmployeeData = async (
+  empId,
+  page,
+  status = "active",
+  siteId = "",
+  nameSearch = "",
+  idSearch = ""
+) => {
+  try {
+    const params = new URLSearchParams();
+
+    params.append("employee", empId);
+    params.append("page", page);
+
+    if (status) params.append("status", status);
+    if (siteId) params.append("site_id", siteId);
+    if (nameSearch) params.append("name", nameSearch);
+    if (idSearch) params.append("id", idSearch);
+
+    const response = await HrmsAuth.get(
+      `/admin-site/employee-detailed-list/?${params.toString()}`
+    );
+
+    return response.data;
+  } catch (error) {
+    console.log("Error Getting the filtered employee data", error);
+    throw error;
+  }
+};
+
 export const deleteHRMSEmployee = async (empId) => {
   try {
     const response = await HrmsAuth.delete(`/employee/${empId}/`, {
