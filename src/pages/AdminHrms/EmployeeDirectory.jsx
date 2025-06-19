@@ -1,6 +1,15 @@
 import React, { useEffect, useRef, useState } from "react";
 import { BiEdit } from "react-icons/bi";
-import { FaChevronDown, FaDownload, FaTrash, FaUserEdit } from "react-icons/fa";
+import {
+  FaChevronDown,
+  FaDownload,
+  FaIdCard,
+  FaSearch,
+  FaTable,
+  FaTrash,
+  FaUpload,
+  FaUserEdit,
+} from "react-icons/fa";
 import DataTable from "react-data-table-component";
 import AdminHRMS from "./AdminHrms";
 import { Link } from "react-router-dom";
@@ -12,6 +21,7 @@ import InviteEmployeeModal from "./InviteEmployeeModal";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import convert from "xml-js";
+import Select from "react-select";
 import {
   deleteHRMSEmployee,
   getAdminAccess,
@@ -26,10 +36,15 @@ import {
   getAssociatedSites,
   getStatusChanges,
   CreateBulkEmployee,
+  getHrmsFilteredEmployeeData,
+  getEmployeeAssociations,
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import toast from "react-hot-toast";
 import { error } from "highcharts";
+import { Pagination } from "antd";
+import Table from "../../components/table/Table";
+import { BsFileExcel } from "react-icons/bs";
 function EmployeeDirectory() {
   const themeColor = useSelector((state) => state.theme.color);
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
@@ -49,7 +64,7 @@ function EmployeeDirectory() {
   const [employeesData, setEmployeesData] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState({});
   const [selectedLetter, setSelectedLetter] = useState(null);
-  const [AllSites, setAllSites] = useState([]); // Array of objects: { id, siteName }
+  const [AllSites, setAllSites] = useState([]);
   const [selectedSite, setSelectedSite] = useState("");
   const [filteredEmployee, setFilteredEmployees] = useState([]);
   const [empfilterData, setEmpFilterData] = useState([]);
@@ -67,77 +82,56 @@ function EmployeeDirectory() {
     count: 0,
     perPage: 10,
   });
-  const [allEmployeesData , setAllEmployeesData ] = useState([])
-  // const currentPage
-
-  // const fetchAllEmployees = async () => {
-  //   try {
-  //     toast.loading("Loading employees Please wait!");
-  //     const res = await getMyHRMSEmployeesAllData(hrmsOrgId);
-  //     console.log("complete hrmsemployeedata :", res);
-  //     setEmployeesData(res);
-  //     toast.dismiss();
-  //     const allSites = await getAssociatedSites(orgId);
-  //     setAllSites(allSites);
-  //   } catch (error) {
-  //     console.log(error);
-  //     toast.dismiss();
-  //     toast.error("Something went wrong");
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   fetchAllEmployees();
-  // }, []);
+  const [allEmployeesData, setAllEmployeesData] = useState([]);
 
   const fetchTableData = async (page = 1) => {
-  try {
-    // toast.loading("Loading Employee Data..")
-    const res = await getHrmsAllEmployeeData(
-      hrmsOrgId,
-      page,
-      pagination.perPage
-    );
-
-    const allSites = await getAssociatedSites(orgId);
-      setAllSites(allSites);
-    // Update ALL employees data (merge with existing to avoid duplicates)
-    setAllEmployeesData(prev => {
-      const newEmployees = res.results.filter(newEmp => 
-        !prev.some(existingEmp => 
-          existingEmp.employee.id === newEmp.employee.id
-        )
+    try {
+      // toast.loading("Loading Employee Data..")
+      const res = await getHrmsAllEmployeeData(
+        hrmsOrgId,
+        page,
+        pagination.perPage
       );
-      return [...prev, ...newEmployees];
-    });
 
-    // For table view: show only current page
-    if (viewMode === "table") {
-      setTableData(res.results);
+      const allSites = await getAssociatedSites(orgId);
+      setAllSites(allSites);
+
+      setAllEmployeesData((prev) => {
+        const newEmployees = res.results.filter(
+          (newEmp) =>
+            !prev.some(
+              (existingEmp) => existingEmp.employee.id === newEmp.employee.id
+            )
+        );
+        return [...prev, ...newEmployees];
+      });
+
+      // For table view: show only current page
+      if (viewMode === "table") {
+        setTableData(res.results);
+      }
+
+      setPagination({
+        currentPage: page,
+        totalPages: Math.ceil(res.count / pagination.perPage), // Fixed division
+        count: res.count,
+        perPage: pagination.perPage,
+      });
+    } catch (error) {
+      toast.error("Failed to load employee data");
+      console.error("Fetch error:", error);
     }
-
-    setPagination({
-      currentPage: page,
-      totalPages: Math.ceil(res.count / pagination.perPage), // Fixed division
-      count: res.count,
-      perPage: pagination.perPage,
-    });
-
-  } catch (error) {
-    toast.error("Failed to load employee data");
-    console.error("Fetch error:", error);
-  }
-};
-  useEffect(()=>{
-    fetchTableData()
-  },[])
+  };
   useEffect(() => {
-  if (tableData.length === 0) fetchTableData();
-}, [viewMode]);
+    fetchTableData();
+  }, []);
+  useEffect(() => {
+    if (tableData.length === 0) fetchTableData();
+  }, [viewMode]);
   const PaginationControls = () => {
-  return (
-    <div className="flex justify-between items-center mt-4  mb-8 font-semibold text-gray-700">
-      {/* <div>
+    return (
+      <div className="flex justify-between items-center mt-4  mb-8 font-semibold text-gray-700">
+        {/* <div>
         Showing {pagination.perPage * (pagination.currentPage - 1) + 1} to{" "}
         {Math.min(
           pagination.perPage * pagination.currentPage,
@@ -145,63 +139,66 @@ function EmployeeDirectory() {
         )}{" "}
         of {pagination.count} entries
       </div> */}
-      <div className="flex gap-1">
-        <button
-          onClick={() => fetchTableData(1)}
-          disabled={pagination.currentPage === 1}
-          className="px-3 py-1 border rounded disabled:opacity-50"
-        >
-          First
-        </button>
-        <button
-          onClick={() => fetchTableData(pagination.currentPage - 1)}
-          disabled={pagination.currentPage === 1}
-          className="px-3 py-1 border rounded disabled:opacity-50"
-        >
-          Previous
-        </button>
-        {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
-          let pageNum;
-          if (pagination.totalPages <= 5) {
-            pageNum = i + 1;
-          } else if (pagination.currentPage <= 3) {
-            pageNum = i + 1;
-          } else if (pagination.currentPage >= pagination.totalPages - 2) {
-            pageNum = pagination.totalPages - 4 + i;
-          } else {
-            pageNum = pagination.currentPage - 2 + i;
-          }
-          
-          return (
-            <button
-              key={pageNum}
-              onClick={() => fetchTableData(pageNum)}
-              className={`px-3 py-1 border rounded ${
-                pagination.currentPage === pageNum
-                  ? "bg-blue-500 text-white"
-                  : ""
-              }`}
-            >
-              {pageNum}
-            </button>
-          );
-        })}
-        <button
-          onClick={() => fetchTableData(pagination.currentPage + 1)}
-          disabled={pagination.currentPage === pagination.totalPages}
-          className="px-3 py-1 border rounded disabled:opacity-50"
-        >
-          Next
-        </button>
-        {/* <button
+        <div className="flex gap-1">
+          <button
+            onClick={() => fetchTableData(1)}
+            disabled={pagination.currentPage === 1}
+            className="px-3 py-1 border rounded disabled:opacity-50"
+          >
+            First
+          </button>
+          <button
+            onClick={() => fetchTableData(pagination.currentPage - 1)}
+            disabled={pagination.currentPage === 1}
+            className="px-3 py-1 border rounded disabled:opacity-50"
+          >
+            Previous
+          </button>
+          {Array.from(
+            { length: Math.min(5, pagination.totalPages) },
+            (_, i) => {
+              let pageNum;
+              if (pagination.totalPages <= 5) {
+                pageNum = i + 1;
+              } else if (pagination.currentPage <= 3) {
+                pageNum = i + 1;
+              } else if (pagination.currentPage >= pagination.totalPages - 2) {
+                pageNum = pagination.totalPages - 4 + i;
+              } else {
+                pageNum = pagination.currentPage - 2 + i;
+              }
+
+              return (
+                <button
+                  key={pageNum}
+                  onClick={() => fetchTableData(pageNum)}
+                  className={`px-3 py-1 border rounded ${
+                    pagination.currentPage === pageNum
+                      ? "bg-blue-500 text-white"
+                      : ""
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              );
+            }
+          )}
+          <button
+            onClick={() => fetchTableData(pagination.currentPage + 1)}
+            disabled={pagination.currentPage === pagination.totalPages}
+            className="px-3 py-1 border rounded disabled:opacity-50"
+          >
+            Next
+          </button>
+          {/* <button
           onClick={() => fetchTableData(pagination.totalPages)}
           disabled={pagination.currentPage === pagination.totalPages}
           className="px-3 py-1 border rounded disabled:opacity-50"
         >
           Last
         </button> */}
-      </div>
-      {/* <select
+        </div>
+        {/* <select
         value={pagination.perPage}
         onChange={(e) => {
           setPagination((prev) => ({
@@ -218,9 +215,9 @@ function EmployeeDirectory() {
           </option>
         ))}
       </select> */}
-    </div>
-  );
-};
+      </div>
+    );
+  };
   const handlePageChange = (page) => {
     fetchTableData(page);
   };
@@ -264,7 +261,9 @@ function EmployeeDirectory() {
     },
     {
       name: "Email",
-      selector: (row) => row.employee.email_id,
+      selector: (row) => (
+        <p className="text-wrap text-xs">{row.employee.email_id}</p>
+      ),
       sortable: true,
       width: "220px",
     },
@@ -272,34 +271,25 @@ function EmployeeDirectory() {
       name: "Mobile",
       selector: (row) => row.employee.mobile,
       sortable: true,
-      width: "150px",
     },
     {
       name: "Site",
-      selector: (row) =>
-        row.employment_info?.associated_organization_name || "N/A",
+      selector: (row) => (
+        <p className="text-wrap text-xs">
+          {row.employment_info?.associated_organization_name || "N/A"}
+        </p>
+      ),
       sortable: true,
       width: "180px",
     },
-    // {
-    //   name: "Designation",
-    //   selector: (row) => row.employment_info?.designation || "N/A",
-    //   sortable: true,
-    //   width: "180px"
-    // },
-    // {
-    //   name: "Department",
-    //   selector: (row) => row.employment_info?.department_name || "N/A",
-    //   sortable: true,
-    //   width: "180px"
-    // },
+
     {
       name: "Status",
       selector: (row) => (row.employee.status ? "Active" : "Inactive"),
       sortable: true,
       cell: (row) => (
         <span
-          className={`px-2 py-1 rounded-full text-xs ${
+          className={`px-4 py-1 rounded-full text-xs ${
             row.employee.status
               ? "bg-green-100 text-green-800"
               : "bg-red-100 text-red-800"
@@ -308,27 +298,26 @@ function EmployeeDirectory() {
           {row.employee.status ? "Active" : "Inactive"}
         </span>
       ),
-      width: "120px",
     },
     {
       name: "Actions",
       cell: (row) => (
-        <div className="flex gap-2">
+        <div className="flex gap-2 justify-center">
           <Link
             to={`/hrms/employee-directory-Personal/${row.employee.id}`}
             className="text-blue-500 hover:text-blue-700"
           >
-            <BiEdit size={18} />
+            <BiEdit size={16} />
           </Link>
           <button
             onClick={() => handleDeleteModal(row.employee.id)}
             className="text-red-500 hover:text-red-700"
           >
-            <FaTrash size={15} />
+            <FaTrash size={14} />
           </button>
         </div>
       ),
-      width: "100px",
+      width: "200px",
     },
   ];
 
@@ -595,40 +584,54 @@ function EmployeeDirectory() {
   const [isUserStatusDropdownOpen, setIsUserStatusDropdownOpen] =
     useState(false);
 
-  const handleCheckboxChange = (employeeId, isActive) => {
-    if (!isActive) return;
+  // const handleCheckboxChange = (employeeId, isActive) => {
+  //   if (!isActive) return;
+  //   console.log(employeeId);
 
-    setSelectedEmployees((prev) => {
-      if (prev.includes(employeeId)) {
-        return prev.filter((id) => id !== employeeId);
-      } else {
-        return [...prev, employeeId];
-      }
-    });
+  //   setSelectedEmployees((prev) => {
+  //     if (prev.includes(employeeId)) {
+  //       return prev.filter((id) => id !== employeeId);
+  //     } else {
+  //       return [...prev, employeeId];
+  //     }
+  //   });
+  // };
+
+  const handleCheckboxChange = (selectedRows) => {
+    const selectedIds = selectedRows.map((row) => row.employee.id);
+    setSelectedEmployees(selectedIds);
   };
   useEffect(() => {
     // Show update button if any employees are selected
-    setShowUpdateButton(selectedEmployees.length > 0);
+    console.log(selectedEmployees);
+    setShowUpdateButton(selectedEmployees?.length > 0);
   }, [selectedEmployees]);
+
+  const [employeeStatus, setEmployeeStatus] = useState(true);
 
   const handleStatusUpdate = async () => {
     try {
       if (selectedEmployees.length === 0) return;
-
+      const statusBool =
+        employeeStatus === "true"
+          ? true
+          : employeeStatus === "false"
+          ? false
+          : employeeStatus;
       const payload = {
         employee_ids: selectedEmployees,
-        status: false, // Setting status to false (inactive)
+        status: statusBool,
       };
 
       await getStatusChanges(payload);
-
+      setSelectedEmployees([]);
+      setShowUpdateButton(false);
       // Refresh the employee data
+      await fetchAllSitesEmployee();
       await fetchTableData();
 
       // Clear selection
-      setSelectedEmployees([]);
-      setShowUpdateButton(false);
-      
+
       toast.success("Employee status updated successfully");
     } catch (error) {
       console.error("Error updating employee status:", error);
@@ -675,6 +678,135 @@ function EmployeeDirectory() {
       console.error("Import error:", error);
     }
   };
+
+  // new code
+  const [selectedSiteId, setSelectedSiteId] = useState(null);
+  const [sites, setSites] = useState([]);
+  const fetchAssociatedSites = async () => {
+    try {
+      const res = await getEmployeeAssociations(empId);
+      console.log(res);
+
+      if (Array.isArray(res) && res.length > 0) {
+        const associatedSites = res[0].multiple_associated_info || [];
+
+        const allSites = associatedSites.map((site) => ({
+          value: site.id,
+          label: site.site_name,
+        }));
+
+        const sitesWithAllOption = [
+          { label: "All Sites", value: null },
+          ...allSites,
+        ];
+
+        setSites(sitesWithAllOption);
+      } else {
+        setSites([{ label: "All Sites", value: null }]);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchAssociatedSites();
+  }, []);
+
+  const [filteredEmployeeData, setFilteredEmployeeData] = useState([]);
+  const [totalFilteredPage, setTotalFilteredPages] = useState([]);
+  const [pageNumber, setPageNumber] = useState(0);
+  const [status, setStatus] = useState("all");
+  const fetchAllSitesEmployee = async () => {
+    try {
+      toast.loading("Loading data please wait!!");
+      const res = await getHrmsFilteredEmployeeData(
+        empId,
+        pageNumber + 1,
+        status,
+        selectedSiteId,
+        newSearchText
+      );
+
+      setFilteredEmployeeData(res.results);
+      setTotalFilteredPages(res.total_pages);
+      toast.dismiss();
+      toast.success("Data loaded successfully!!");
+    } catch (error) {
+      console.log(error);
+      toast.dismiss();
+    }
+  };
+
+  const [newSearchText, setNewSearchText] = useState("");
+  const [resetTrigger, setResetTrigger] = useState(false);
+
+  useEffect(() => {
+    fetchAllSitesEmployee();
+  }, [pageNumber, selectedSiteId, status, resetTrigger]);
+
+  const handleSearchClick = async () => {
+    setPageNumber(0);
+    try {
+      toast.loading("Loading data please wait!!");
+      const isIdSearch = /^\d+$/.test(newSearchText.trim());
+      const nameSearch = isIdSearch ? "" : newSearchText.trim();
+      const idSearch = isIdSearch ? newSearchText.trim() : "";
+      const res = await getHrmsFilteredEmployeeData(
+        empId,
+        pageNumber + 1,
+        status,
+        selectedSiteId,
+        nameSearch,
+        idSearch
+      );
+      setFilteredEmployeeData(res.results);
+      setTotalFilteredPages(res.total_pages);
+      toast.dismiss();
+      toast.success("Data loaded successfully!!");
+    } catch (error) {
+      console.error("Search error:", error);
+      toast.dismiss();
+    }
+  };
+  const handleResetFilter = async () => {
+    setPageNumber(0);
+    setNewSearchText("");
+    setSelectedSiteId(null);
+    try {
+      toast.loading("Loading data please wait!!");
+      const res = await getHrmsFilteredEmployeeData(
+        empId,
+        pageNumber + 1,
+        "all",
+        "",
+        // "",
+        ""
+      );
+      setFilteredEmployeeData(res.results);
+      setTotalFilteredPages(res.total_pages);
+      toast.dismiss();
+      toast.success("Data Reset successfully!!");
+    } catch (error) {
+      console.error("Search error:", error);
+      toast.dismiss();
+    }
+  };
+
+  const [isActionOpen, setIsActionOpen] = useState(false);
+  const actionRef = useRef(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (actionRef.current && !actionRef.current.contains(event.target)) {
+        setIsActionOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
   return (
     <div className="w-full h-full">
       <AdminHRMS />
@@ -684,1471 +816,559 @@ function EmployeeDirectory() {
             style={{ background: themeColor }}
             className="text-white  py-2 ml-20"
           >
-            <div className="flex justify-between items-center  gap-2 ">
+            <div className="flex justify-around items-center  gap-2 ">
               <div className="flex ">
-                <h1 className="text-lg pl-5 font-bold">Employee Directory</h1>
+                <h1 className=" pl-5 font-bold">Employee Directory</h1>
               </div>
               {/* Dropdown */}
               <div className="flex gap-2">
-                <div className="relative group" ref={dropdownRef}>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setIsSiteDropdownOpen(!isSiteDropdownOpen);
-                    }}
-                    id="site-dropdown-button"
-                    className=" inline-flex  justify-center w-80 px-10 py-3 text-l font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  >
-                    <span className="mr-2">
-                      {selectedSite
-                        ? AllSites.find(
-                            (site) => String(site.id) === selectedSite
-                          )?.site_name
-                        : "Select All Sites"}
-                    </span>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="w-5 h-5 ml-2 -mr-1"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                      aria-hidden="true"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M6.293 9.293a1 1 0 011.414 0L10 11.586l2.293-2.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </button>
-
-                  {isSiteDropdownOpen && (
-                    <div
-                      id="site-dropdown-menu"
-                      className="absolute left-1/2 transform -translate-x-1/2 mt-1 w-80 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10"
-                    >
-                      {/* Search Input for Sites */}
-                      <div className="sticky top-0 bg-white px-1 py-2 border-b">
-                        <input
-                          id="site-search-input"
-                          type="text"
-                          placeholder="Search sites"
-                          autoComplete="off"
-                          value={siteSearchText}
-                          onChange={(e) => setSiteSearchText(e.target.value)}
-                          className="block w-full px-4 py-2 text-gray-800 border rounded-md border-gray-300 focus:outline-none"
-                        />
-                      </div>
-                      <div className="max-h-72 overflow-y-auto ">
-                        {/* Filtered site items */}
-                        {AllSites.filter((site) =>
-                          site.site_name
-                            .toLowerCase()
-                            .includes(siteSearchText.toLowerCase())
-                        ).map((site) => (
-                          <button
-                            key={site.id}
-                            onClick={() => {
-                              setSelectedSite(String(site.id));
-                              setIsSiteDropdownOpen(false);
-                              setSiteSearchText("");
-                            }}
-                            className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 active:bg-blue-100 cursor-pointer rounded-md"
-                          >
-                            {site.site_name}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+                <div className="flex items-center space-x-4">
+                  {sites.length === 0 ? (
+                    <p className="text-grey-500">No site associated</p>
+                  ) : (
+                    <Select
+                      options={sites}
+                      onChange={(selectedOption) => {
+                        setSelectedSiteId(selectedOption?.value || null);
+                      }}
+                      noOptionsMessage={() => "No sites Available"}
+                      placeholder="Select Site"
+                      maxMenuHeight={500}
+                      className="z-50 w-96 text-black"
+                    />
                   )}
                 </div>
-                {/* New User Status Dropdown */}
+
                 <div className="relative group flex gap-2">
-                  <button
-                    onClick={() =>
-                      setIsUserStatusDropdownOpen(!isUserStatusDropdownOpen)
-                    }
-                    className="inline-flex justify-center w-40 px-4 py-3 text-l font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  <select
+                    name=""
+                    id=""
+                    className="bg-white rounded-md p-2 px-4 border text-black w-full"
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value)}
                   >
-                    <span className="mr-2">
-                      {selectedUserStatus === "all" && "All Users"}
-                      {selectedUserStatus === "active" && "Active"}
-                      {selectedUserStatus === "inactive" && "Inactive"}
-                    </span>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="w-5 h-5 ml-2 -mr-1"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                      aria-hidden="true"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M6.293 9.293a1 1 0 011.414 0L10 11.586l2.293-2.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </button>
+                    <option value="all">All Employees</option>
+                    <option value="active">Active Employees</option>
+                    <option value="inactive">Inactive Employees</option>
+                  </select>
 
-                  {isUserStatusDropdownOpen && (
-                    <div className="absolute left-0 mt-1 w-40 rounded-md shadow-lg text-black bg-white ring-1 ring-black ring-opacity-5 z-10">
-                      <div className="py-1">
-                        <button
-                          onClick={() => {
-                            setSelectedUserStatus("all");
-                            setIsUserStatusDropdownOpen(false);
-                          }}
-                          className={`block w-full text-left px-4 py-2 ${
-                            selectedUserStatus === "all"
-                              ? "bg-gray-100"
-                              : "hover:bg-gray-100"
-                          }`}
-                        >
-                          All Users
-                        </button>
-                        <button
-                          onClick={() => {
-                            setSelectedUserStatus("active");
-                            setIsUserStatusDropdownOpen(false);
-                          }}
-                          className={`block w-full text-left px-4 py-2 ${
-                            selectedUserStatus === "active"
-                              ? "bg-gray-100 text-black"
-                              : "hover:bg-gray-100"
-                          }`}
-                        >
-                          Active
-                        </button>
-                        <button
-                          onClick={() => {
-                            setSelectedUserStatus("inactive");
-                            setIsUserStatusDropdownOpen(false);
-                          }}
-                          className={`block w-full text-left px-4 py-2 ${
-                            selectedUserStatus === "inactive"
-                              ? "bg-gray-100"
-                              : "hover:bg-gray-100"
-                          }`}
-                        >
-                          Inactive
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {showUpdateButton && (
-                    <button
-                      onClick={handleStatusUpdate}
-                      style={{ background: themeColor }}
-                      className="border-2 font-semibold hover:bg-black hover:text-white duration-150 transition-all border-white p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center mr-1"
-                    >
-                      Mark Inactive
-                    </button>
+                  {showUpdateButton && viewMode === "table" && (
+                    <>
+                      <select
+                        onChange={(e) =>
+                          setEmployeeStatus(e.target.value === "true")
+                        }
+                        className="rounded-md text-black w-full"
+                      >
+                        <option value="">Select Status</option>
+                        <option value="true">Activate</option>
+                        <option value="false">Deactivate</option>
+                      </select>
+                      <button
+                        onClick={handleStatusUpdate}
+                        className="bg-green-400 rounded-md p-2 "
+                      >
+                        Submit
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
               {/* </div>
               </div> */}
 
-              {/* Show selected site */}
-              {/* {selectedSite && <p>Selected Site ID: {selectedSite}</p>} */}
               <div className="flex gap-2">
                 <input
                   type="text"
                   placeholder="Search by Name"
-                  className="border p-3 text-black rounded-md w-64"
-                  onChange={handleSearch}
-                  value={searchText}
+                  className="border p-2 text-black rounded-md w-64"
+                  onChange={(e) => setNewSearchText(e.target.value)}
+                  value={newSearchText}
                 />
-                <div className="w-50 font-semibold">
-                  <select
-                    name=""
-                    id=""
-                    value={viewMode}
-                    onChange={(e) => setViewMode(e.target.value)}
-                    className="text-black px-5 py-3 rounded"
+                <button
+                  onClick={handleSearchClick}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-md"
+                >
+                  <FaSearch />
+                </button>
+                <button
+                  onClick={handleResetFilter}
+                  className="bg-gray-100 text-black px-4 py-2 rounded-md"
+                >
+                  Reset
+                </button>
+
+                <div className="relative" ref={actionRef}>
+                  <button
+                    className="bg-[#4169e1] hover:bg-[#3455b7] text-white px-4 py-2 rounded-md flex items-center transition-colors duration-200"
+                    onClick={() => setIsActionOpen(!isActionOpen)}
                   >
-                    <option value="table" className="font-semibold">
-                      Table
-                    </option>
-                    <option value="card" className="font-semibold">
-                      Card
-                    </option>
-                  </select>
+                    Actions
+                    <FaChevronDown
+                      className={`ml-2 transition-transform duration-200 ${
+                        isOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+
+                  {isActionOpen && (
+                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg border border-gray-200 z-50 animate-slideDown">
+                      <div className="py-1">
+                        {roleAccess?.can_add_employee && (
+                          <>
+                            <Link
+                              to={"/admin/add-employee/basics"}
+                              className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 flex items-center transition-colors duration-150 gap-2 "
+                            >
+                              <PiPlusCircle size={20} />
+                              Add Employee
+                            </Link>
+                            <button
+                              onClick={() => setIsModalOpen12(true)}
+                              className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 flex items-center gap-2 transition-colors duration-150"
+                            >
+                              <FaUpload />
+                              Import Employee
+                            </button>
+                          </>
+                        )}
+                        <button
+                          className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 flex items-center transition-colors duration-150 gap-2"
+                          onClick={handleExport}
+                        >
+                          <FaDownload />
+                          Export
+                        </button>
+                        {viewMode === "card" ? (
+                          <button
+                            onClick={() => setViewMode("table")}
+                            className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 flex items-center transition-colors duration-150 gap-2"
+                          >
+                            <FaTable />
+                            Table
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => setViewMode("card")}
+                            className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 flex items-center transition-colors duration-150 gap-2"
+                          >
+                            <FaIdCard />
+                            Card
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="flex gap-3">
-                  <div className="relative inline-block text-left">
-                    <button
-                      className=" justify-center w-full flex items-center gap-2 rounded-md border border-gray-300 shadow-sm px-4 py-3 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500"
-                      onClick={handleExport}
-                    >
-                      Export
-                      <FaDownload />
-                    </button>
-                    {/* <button
-                      onClick={toggleDropdown}
-                      className=" justify-center w-full flex items-center gap-2 rounded-md border border-gray-300 shadow-sm px-4 py-3 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500"
-                    >
-                      Actions
-                      <FaChevronDown />
-                    </button> */}
-
-                    {isOpen && (
-                      <div
-                        ref={dropdownRef}
-                        className="origin-top-right absolute right-0 mt-2 w-72 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5"
-                      >
-                        <div
-                          className="py-1"
-                          role="menu"
-                          aria-orientation="vertical"
-                          aria-labelledby="options-menu"
-                        >
-                          <p
-                            href="#"
-                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                            role="menuitem"
-                          >
-                            <button onClick={() => setIsModalOpen1(true)}>
-                              Upload Investments
-                            </button>
-                          </p>
-                          <p
-                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                            role="menuitem"
-                          >
-                            {/* Upload Statutory Settings */}
-                            <button onClick={() => setIsModalOpen2(true)}>
-                              Upload Statutory Settings
-                            </button>
-                          </p>
-                          <p
-                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                            role="menuitem"
-                          >
-                            {/* Upload Documents */}
-                            <button onClick={() => setIsModalOpen3(true)}>
-                              Upload Documents
-                            </button>
-                          </p>
-                          <p
-                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                            role="menuitem"
-                          >
-                            {/* Bulk Update Employee Data */}
-                            <button onClick={() => setIsModalOpen4(true)}>
-                              Bulk Update Employee Data
-                            </button>
-                          </p>
-                          <p
-                            href="#"
-                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                            role="menuitem"
-                          >
-                            {/* Bulk Add New Employees */}
-                            <button onClick={() => setIsModalOpen5(true)}>
-                              Bulk Add New Employees
-                            </button>
-                          </p>
-                          <p
-                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                            role="menuitem"
-                          >
-                            <button onClick={() => setIsModalOpen5(true)}>
-                              Bulk Add New Self Onboard Employees
-                            </button>
-                          </p>
-                          <a
-                            href="#"
-                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                            role="menuitem"
-                          >
-                            <button onClick={() => setIsModalOpen6(true)}>
-                              Bulk Add Employee Multi-row Data
-                            </button>
-                          </a>
-                          <a
-                            href="#"
-                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                            role="menuitem"
-                          >
-                            {/* Bulk Update Payment Information */}
-                            <button onClick={() => setIsModalOpen7(true)}>
-                              Bulk Update Payment Information
-                            </button>
-                          </a>
-                          <a
-                            href="#"
-                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                            role="menuitem"
-                          >
-                            {/* Bulk Add Employees Contract */}
-                            <button onClick={() => setIsModalOpen8(true)}>
-                              Bulk Add Employees Contract
-                            </button>
-                          </a>
-                          <a
-                            href="#"
-                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                            role="menuitem"
-                          >
-                            {/* Upload Perqs */}
-                            <button onClick={() => setIsModalOpen9(true)}>
-                              Upload Perqs
-                            </button>
-                          </a>
-                          <a
-                            href="#"
-                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                            role="menuitem"
-                          >
-                            {/* Bulk Termination */}
-                            <button onClick={() => setIsModalOpen10(true)}>
-                              Bulk Termination
-                            </button>
-                          </a>
-                          <a
-                            href="#"
-                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                            role="menuitem"
-                          >
-                            <button onClick={() => setIsModalOpen11(true)}>
-                              {" "}
-                              Invite Employees
-                            </button>
-                          </a>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                  <div className="relative inline-block text-left"></div>
                   <InviteEmployeeModal
                     isOpen={isModalOpen11}
                     onClose={() => setIsModalOpen11(false)}
                   />
-                  {isModalOpen1 && (
-                    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex z-10 justify-center items-center">
-                      <div className="bg-white text-black p-5 rounded-md shadow-md w-2/3">
-                        <h2 className="text-xl font-semibold mb-4">
-                          Upload Employee Investment Declarations for 2024-2025
-                        </h2>
-                        <p className="font-bold">
-                          Step 1: Select type of upload *
-                        </p>
-                        <p>
-                          Declared Investment Declarations - Upload all the
-                          Investment Details declared by your employees.
-                        </p>
-                        <p>
-                          Verified Investment Declarations - Upload all the
-                          employee Investment Details that have been physically
-                          verified.
-                        </p>
-                        <select
-                          name=""
-                          id=""
-                          className="border p-2 border-black w-full mt-2 rounded-md"
-                        >
-                          <option value="">Select type of Upload</option>
-                          <option value="">
-                            Declared Investment Declarations
-                          </option>
-                          <option value="">
-                            Verified Investment Declarations
-                          </option>
-                        </select>
-                        <p className="mt-2 font-bold">
-                          Step 2: Download the investments global format
-                        </p>
-                        <p>
-                          Include the investment declarations of all employees.
-                        </p>
-                        <button
-                          style={{ background: themeColor }}
-                          className="font-semibold py-2 px-4 rounded text-white mt-2"
-                        >
-                          Download
-                        </button>
-                        <p className="fonr-bold mb-2 mt-2">
-                          Step 3: Make the necessary changes in the downloaded
-                          format template and upload *
-                        </p>
-                        <FileInputBox />
-                        <div className="flex justify-center gap-2">
-                          <button
-                            onClick={() => setIsModalOpen1(false)}
-                            style={{ background: themeColor }}
-                            className="font-semibold py-2 px-4 rounded text-white mt-2"
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            style={{ background: themeColor }}
-                            className="font-semibold py-2 px-4 rounded text-white mt-2"
-                          >
-                            Upload
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  {isModalOpen4 && (
-                    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex z-10 justify-center items-center">
-                      <div className="bg-white text-black p-5 rounded-md shadow-md w-2/3">
-                        <h2 className="text-xl font-semibold mb-4">
-                          Upload Employee Information
-                        </h2>
-                        <p className="font-bold">
-                          Step 1: Select what data you want to update
-                        </p>
-
-                        <select
-                          name=""
-                          id=""
-                          className="border p-2 border-black w-full mt-2 rounded-md"
-                        >
-                          <option value="">Select Sections</option>
-                          <option value="">Salary Info</option>
-                          <option value="">Address Info</option>{" "}
-                        </select>
-                        <p className="mt-2 font-bold">
-                          Step 2: Download employee information global format
-                        </p>
-                        <p>
-                          Includes all your Employees with their available
-                          details.
-                        </p>
-                        <button
-                          style={{ background: themeColor }}
-                          className="font-semibold py-2 px-4 rounded text-white mt-2"
-                        >
-                          Download
-                        </button>
-                        <p className="fonr-bold mb-2 mt-2">
-                          Step 3: Make the necessary changes in the downloaded
-                          file and upload *
-                        </p>
-                        <FileInputBox />
-                        <div className="flex justify-center gap-2">
-                          <button
-                            onClick={() => setIsModalOpen4(false)}
-                            style={{ background: themeColor }}
-                            className="font-semibold py-2 px-4 rounded text-white mt-2"
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            style={{ background: themeColor }}
-                            className="font-semibold py-2 px-4 rounded text-white mt-2"
-                          >
-                            Upload
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  {isModalOpen2 && (
-                    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex z-10 justify-center items-center">
-                      <div className="bg-white text-black p-5 rounded-md shadow-md w-2/3">
-                        <h2 className="text-xl font-semibold mb-4">
-                          Upload Employee Statutory Setting
-                        </h2>
-                        <p className="font-bold">
-                          Step 1: Download employee information global format
-                        </p>
-
-                        <button
-                          style={{ background: themeColor }}
-                          className="font-semibold py-2 px-4 rounded text-white mt-2"
-                        >
-                          Download
-                        </button>
-                        <p className="fonr-bold mb-2 mt-2">
-                          Step 2: Make the necessary changes in the downloaded
-                          file and upload *
-                        </p>
-                        <FileInputBox />
-                        <div className="flex justify-center gap-2">
-                          <button
-                            onClick={() => setIsModalOpen2(false)}
-                            style={{ background: themeColor }}
-                            className="font-semibold py-2 px-4 rounded text-white mt-2"
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            style={{ background: themeColor }}
-                            className="font-semibold py-2 px-4 rounded text-white mt-2"
-                          >
-                            Upload
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  {isModalOpen5 && (
-                    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex z-10 justify-center items-center">
-                      <div className="bg-white text-black p-5 rounded-md shadow-md w-2/3">
-                        <h2 className="text-xl font-semibold mb-4">
-                          Upload Employee Information
-                        </h2>
-                        <p className="font-bold">
-                          Step 1: Download employee information global format
-                        </p>
-
-                        <button
-                          style={{ background: themeColor }}
-                          className="font-semibold py-2 px-4 rounded text-white mt-2"
-                        >
-                          Download
-                        </button>
-                        <p className="fonr-bold mb-2 mt-2">
-                          Step 2: Make the necessary changes in the downloaded
-                          file and upload *
-                        </p>
-                        <FileInputBox />
-                        <div className="flex justify-center gap-2">
-                          <button
-                            onClick={() => setIsModalOpen5(false)}
-                            style={{ background: themeColor }}
-                            className="font-semibold py-2 px-4 rounded text-white mt-2"
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            style={{ background: themeColor }}
-                            className="font-semibold py-2 px-4 rounded text-white mt-2"
-                          >
-                            Upload
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  {isModalOpen6 && (
-                    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex z-10 justify-center items-center">
-                      <div className="bg-white text-black p-5 rounded-md shadow-md w-2/3">
-                        <h2 className="text-xl font-semibold mb-4">
-                          Upload Employee Information
-                        </h2>
-                        <p className="font-bold">
-                          Step 1: Select what data you want to update *
-                        </p>
-                        <select
-                          className="border p-2 border-black mt-2 mb-2 rounded-md w-full"
-                          name=""
-                          id=""
-                        >
-                          <option value="">
-                            Select Custom Multi-Row Table
-                          </option>
-                        </select>
-                        <p className="font-bold">
-                          Step 2: Download employee information global format
-                        </p>
-                        <p>
-                          Includes all your Employees with their available
-                          details.
-                        </p>
-
-                        <button
-                          style={{ background: themeColor }}
-                          className="font-semibold py-2 px-4 rounded text-white mt-2"
-                        >
-                          Download
-                        </button>
-                        <p className="fonr-bold mb-2 mt-2">
-                          Step 3: Make the necessary changes in the downloaded
-                          file and upload *
-                        </p>
-                        <FileInputBox />
-                        <div className="flex justify-center gap-2">
-                          <button
-                            onClick={() => setIsModalOpen6(false)}
-                            style={{ background: themeColor }}
-                            className="font-semibold py-2 px-4 rounded text-white mt-2"
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            style={{ background: themeColor }}
-                            className="font-semibold py-2 px-4 rounded text-white mt-2"
-                          >
-                            Upload
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  {isModalOpen7 && (
-                    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex z-10 justify-center items-center">
-                      <div className="bg-white text-black p-5 rounded-md shadow-md w-2/3">
-                        <h2 className="text-xl font-semibold mb-4">
-                          Upload Employee Payment Information
-                        </h2>
-                        <p className="font-bold">
-                          Step 1: Download employee information global format
-                        </p>
-                        <p>
-                          Includes all your Employees with their available
-                          details.
-                        </p>
-
-                        <button
-                          style={{ background: themeColor }}
-                          className="font-semibold py-2 px-4 rounded text-white mt-2"
-                        >
-                          Download
-                        </button>
-                        <p className="fonr-bold mb-2 mt-2">
-                          Step 2: Make the necessary changes in the downloaded
-                          file and upload *
-                        </p>
-                        <FileInputBox />
-                        <div className="flex justify-center gap-2">
-                          <button
-                            onClick={() => setIsModalOpen7(false)}
-                            style={{ background: themeColor }}
-                            className="font-semibold py-2 px-4 rounded text-white mt-2"
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            style={{ background: themeColor }}
-                            className="font-semibold py-2 px-4 rounded text-white mt-2"
-                          >
-                            Upload
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  {isModalOpen8 && (
-                    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex z-10 justify-center items-center">
-                      <div className="bg-white text-black p-5 rounded-md shadow-md w-2/3">
-                        <h2 className="text-xl font-semibold mb-4">
-                          Upload Employee Contract Data
-                        </h2>
-                        <p className="font-bold">
-                          Step 1: Download employee information global format
-                        </p>
-                        <p>
-                          Includes all your Employees with their available
-                          details.
-                        </p>
-
-                        <button
-                          style={{ background: themeColor }}
-                          className="font-semibold py-2 px-4 rounded text-white mt-2"
-                        >
-                          Download
-                        </button>
-                        <p className="fonr-bold mb-2 mt-2">
-                          Step 2: Make the necessary changes in the downloaded
-                          file and upload *
-                        </p>
-                        <FileInputBox />
-                        <div className="flex justify-center gap-2">
-                          <button
-                            onClick={() => setIsModalOpen8(false)}
-                            style={{ background: themeColor }}
-                            className="font-semibold py-2 px-4 rounded text-white mt-2"
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            style={{ background: themeColor }}
-                            className="font-semibold py-2 px-4 rounded text-white mt-2"
-                          >
-                            Upload
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  {isModalOpen9 && (
-                    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex z-10 justify-center items-center">
-                      <div className="bg-white text-black p-5 rounded-md shadow-md w-2/3">
-                        <h2 className="text-xl font-semibold mb-4">
-                          Upload Employee Perqs for 2024-2025
-                        </h2>
-                        <p className="font-bold">
-                          Step 1: Download employee information global format
-                        </p>
-                        {/* <p>Includes all your Employees with their available details.</p> */}
-
-                        <button
-                          style={{ background: themeColor }}
-                          className="font-semibold py-2 px-4 rounded text-white mt-2"
-                        >
-                          Download
-                        </button>
-                        <p className="fonr-bold mb-2 mt-2">
-                          Step 2: Make the necessary changes in the downloaded
-                          file and upload *
-                        </p>
-                        <FileInputBox />
-                        <div className="flex justify-center gap-2">
-                          <button
-                            onClick={() => setIsModalOpen9(false)}
-                            style={{ background: themeColor }}
-                            className="font-semibold py-2 px-4 rounded text-white mt-2"
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            style={{ background: themeColor }}
-                            className="font-semibold py-2 px-4 rounded text-white mt-2"
-                          >
-                            Upload
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  {isModalOpen10 && (
-                    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex z-10 justify-center items-center">
-                      <div className="bg-white text-black p-5 rounded-md shadow-md w-2/3">
-                        <h2 className="text-xl font-semibold mb-4">
-                          Bulk Termination
-                        </h2>
-                        <p className="font-bold">
-                          Step 1: Download employee information global format
-                        </p>
-                        <p>
-                          Includes all your Employees with their available
-                          details.
-                        </p>
-
-                        <button
-                          style={{ background: themeColor }}
-                          className="font-semibold py-2 px-4 rounded text-white mt-2"
-                        >
-                          Download
-                        </button>
-                        <p className="fonr-bold mb-2 mt-2">
-                          Step 2: Make the necessary changes in the downloaded
-                          file and upload *
-                        </p>
-                        <FileInputBox />
-                        <div className="flex justify-center gap-2">
-                          <button
-                            onClick={() => setIsModalOpen10(false)}
-                            style={{ background: themeColor }}
-                            className="font-semibold py-2 px-4 rounded text-white mt-2"
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            style={{ background: themeColor }}
-                            className="font-semibold py-2 px-4 rounded text-white mt-2"
-                          >
-                            Upload
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  {isModalOpen3 && (
-                    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex z-10 justify-center items-center">
-                      <div className="bg-white text-black p-5 rounded-md shadow-md w-1/3">
-                        <h2 className="text-xl font-semibold mb-4">
-                          Bulk Upload Employee Documents
-                        </h2>
-                        <div className="grid grid-cols-1 gap-2">
-                          <div className="grid gap-2">
-                            <label htmlFor="">Select Document Type *</label>
-                            <select
-                              className="border p-2 border-black rounded-md"
-                              name=""
-                              id=""
-                            >
-                              <option value="">Select</option>
-                            </select>
-                          </div>
-                          <div className="grid gap-2">
-                            <label htmlFor="">Document name format *</label>
-                            <select
-                              className="border p-2 border-black rounded-md"
-                              name=""
-                              id=""
-                            >
-                              <option value="">Select</option>
-                              <option value="">PAN</option>
-                              <option value="">Aadhar</option>
-                            </select>
-                          </div>
-                        </div>
-                        {/* <p className='font-bold'>Step 1: Download employee information global format</p> */}
-
-                        {/* <button style={{ background: themeColor }} className='font-semibold py-2 px-4 rounded text-white mt-2'>Download</button> */}
-                        <p className="fonr-bold mb-2 mt-2">
-                          Upload Documents *
-                        </p>
-                        <FileInputBox />
-
-                        <p>Acceptable format: .zip</p>
-                        <label htmlFor="">Notify Employees by Email</label>
-                        <div className="flex gap-4">
-                          <div className="flex gap-2">
-                            <input name="group1" type="radio" />
-                            <label htmlFor="">Yes</label>
-                          </div>
-                          <div className="flex gap-2">
-                            <input name="group1" type="radio" />
-                            <label htmlFor="">No</label>
-                          </div>
-                        </div>
-                        <div className="flex justify-center gap-2">
-                          <button
-                            onClick={() => setIsModalOpen3(false)}
-                            style={{ background: themeColor }}
-                            className="font-semibold py-2 px-4 rounded text-white mt-2"
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            style={{ background: themeColor }}
-                            className="font-semibold py-2 px-4 rounded text-white mt-2"
-                          >
-                            Upload
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  {/* <button
-                    onClick={() => setIsModalOpen(true)}
-                    className="bg-black text-white hover:bg-gray-700 font-semibold  px-4 rounded-md"
-                  >
-                    Filter
-                  </button> */}
-                  {roleAccess?.can_add_employee && (
-                    <>
-                      <Link
-                        to={"/admin/add-employee/basics"}
-                        style={{ background: themeColor }}
-                        className="border-2 font-semibold hover:bg-black hover:text-white duration-150 transition-all border-white p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center mr-1"
-                      >
-                        <PiPlusCircle size={20} />
-                        Add Employee
-                      </Link>
-                      <button
-                        onClick={() => setIsModalOpen12(true)} // New state for the import modal
-                        style={{ background: themeColor }}
-                        className="border-2 font-semibold hover:bg-black hover:text-white duration-150 transition-all border-white p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center mr-1"
-                      >
-                        Import Employee
-                      </button>
-                    </>
-                  )}
                 </div>
               </div>
             </div>
           </header>
         </div>
-        {isModalOpen12 && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex z-10 justify-center items-center">
-            <div className="bg-white text-black p-5 rounded-md shadow-md w-1/3">
-              <h2 className="text-xl font-semibold mb-4">Import Employees</h2>
 
-              <div className="mb-4">
-                <p className="font-bold mb-2">
-                  Step 1: Download sample template
-                </p>
-                <p className="text-sm mb-2">
-                  Download the sample template to ensure proper formatting.
-                </p>
-                <button
-                  onClick={downloadExcelFile}
-                  style={{ background: themeColor }}
-                  className="font-semibold py-2 px-4 rounded text-white mt-2"
-                >
-                  Download Sample Template
-                </button>
-              </div>
-
-              <div className="mb-4">
-                <p className="font-bold mb-2">Step 2: Upload your file</p>
-                <p className="text-sm mb-2">
-                  After filling the template, upload it here (Excel files only).
-                </p>
-                <input
-                  type="file"
-                  accept=".xlsx,.xls"
-                  onChange={(e) => setSelectedFile(e.target.files[0])}
-                  className="block w-full text-sm text-gray-500
-            file:mr-4 file:py-2 file:px-4
-            file:rounded-md file:border-0
-            file:text-sm file:font-semibold
-            file:bg-blue-50 file:text-blue-700
-            hover:file:bg-blue-100"
-                />
-                {selectedFile && (
-                  <p className="mt-2 text-sm text-gray-600">
-                    Selected file: {selectedFile.name}
-                  </p>
-                )}
-              </div>
-
-              <div className="flex justify-end gap-2 mt-4">
-                <button
-                  onClick={() => setIsModalOpen12(false)}
-                  className="bg-gray-300 text-gray-700 py-2 px-4 rounded"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleImport}
-                  style={{ background: themeColor }}
-                  className="font-semibold py-2 px-4 rounded text-white"
-                >
-                  Import
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-        {isModalOpen && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex z-10 justify-center items-center">
-            <div className="bg-white p-5 rounded-md shadow-md w-1/3">
-              {/* <h2 className="text-xl font-semibold mb-4">Add Department</h2> */}
-              <div className="mb-4">
-                <label
-                  htmlFor="departmentName"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Branch Location
-                </label>
-                <select
-                  type="text"
-                  id="departmentName"
-                  // value={departmentName}
-                  // onChange={(e) => setDepartmentName(e.target.value)}
-                  className="mt-1 block w-full border border-gray-400 p-2 rounded-md"
-                  // placeholder="Enter Department Name"
-                >
-                  <option value="">Mumbai</option>
-                </select>
-              </div>
-              <div className="mb-4">
-                <label
-                  htmlFor="headOfDepartment"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Joining Month
-                </label>
-                <select
-                  id="headOfDepartment"
-                  // value={headOfDepartment}
-                  // onChange={(e) => setHeadOfDepartment(e.target.value)}
-                  className="mt-1 block w-full border border-gray-400 p-2 rounded-md"
-                >
-                  <option value="" disabled>
-                    January
-                  </option>
-                </select>
-              </div>
-              <div className="mb-4">
-                <label
-                  htmlFor="headOfDepartment"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Employee Status
-                </label>
-                <select
-                  id="headOfDepartment"
-                  // value={headOfDepartment}
-                  // onChange={(e) => setHeadOfDepartment(e.target.value)}
-                  className="mt-1 block w-full border border-gray-400 p-2 rounded-md"
-                >
-                  <option value="" disabled>
-                    pending
-                  </option>
-                </select>
-              </div>
-              <div className="mb-4">
-                <label
-                  htmlFor="headOfDepartment"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Employee Department
-                </label>
-                <select
-                  id="headOfDepartment"
-                  // value={headOfDepartment}
-                  // onChange={(e) => setHeadOfDepartment(e.target.value)}
-                  className="mt-1 block w-full border border-gray-400 p-2 rounded-md"
-                >
-                  <option value="" disabled>
-                    HR
-                  </option>
-                </select>
-              </div>
-              <div className="flex justify-end">
-                <button
-                  onClick={() => setIsModalOpen(false)}
-                  className="bg-gray-300 text-gray-700 p-2 rounded-md mr-2"
-                >
-                  Clear
-                </button>
-                <button
-                  // onClick={handleAddDepartment}
-                  className="bg-blue-500 text-white p-2 rounded-md"
-                >
-                  Apply
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
         <div className="flex h-screen">
-          <div className="p-4 flex flex-wrap overflow-y-auto mt-2 ml-20 w-[80%]">
+          <div
+            className={`p-4 flex flex-wrap overflow-y-auto mt-2 ml-20 ${
+              viewMode === "table" ? "w-full" : "w-[80%]"
+            } `}
+          >
             {viewMode === "table" ? (
-              <div className="mt-4 w-full">
-                <DataTable
-                  title="Employee Directory"
+              <div className=" w-full">
+                <Table
                   columns={employeeColumns}
-                  data={tableData.filter((employee) => {
-                    // Search text filtering
-                    const fullName =
-                      `${employee.employee.first_name} ${employee.employee.last_name}`.toLowerCase();
-                    const employeeCode =
-                      employee.employment_info?.employee_code?.toLowerCase() ||
-                      "";
-                    const mobileNumber = employee.employee.mobile
-                      ? employee.employee.mobile.toString()
-                      : "";
-                    const searchTextLower = searchText.toLowerCase();
-
-                    const matchesSearch =
-                      fullName.includes(searchTextLower) ||
-                      employeeCode.includes(searchTextLower) ||
-                      mobileNumber.includes(searchTextLower);
-
-                    // Site filtering - using employee.site_id exactly like in card view
-                    const matchesSite = selectedSite
-                      ? employee.employment_info?.associated_organization_id?.toString() ===
-                        selectedSite.toString()
-                      : true;
-                    // Status filtering
-                    const matchesStatus =
-                      selectedUserStatus === "all" ||
-                      (selectedUserStatus === "active" &&
-                        employee.employee?.status === true) ||
-                      (selectedUserStatus === "inactive" &&
-                        employee.employee?.status === false);
-
-                    return matchesSearch && matchesSite && matchesStatus;
-                  })}
-                  onRowClicked={(row) => showEmployeeDetails(row.employee.id)}
-                  pointerOnHover
-                  highlightOnHover
-                  pagination
-                  paginationServer
-                  paginationTotalRows={pagination.count}
-                  onChangePage={handlePageChange}
-                  paginationPerPage={pagination.perPage}
-                  paginationRowsPerPageOptions={[10, 25, 50, 100]}
-                  onChangeRowsPerPage={(perPage, page) => {
-                    setPagination((prev) => ({ ...prev, perPage }));
-                    fetchTableData(page);
-                  }}
-                  selectableRows={roleAccess?.can_edit_employee}
-                  onSelectedRowsChange={({ selectedRows }) => {
-                    setSelectedEmployees(
-                      selectedRows.map((row) => row.employee.id)
-                    );
-                  }}
-                  customStyles={{
-                    headRow: {
-                      style: {
-                        background: themeColor,
-                        color: "white",
-                        fontSize: "15px",
-                      },
-                    },
-                    headCells: {
-                      style: {
-                        textTransform: "uppercase",
-                        paddingLeft: "16px",
-                        paddingRight: "16px",
-                        width: "150px",
-                      },
-                    },
-                    cells: {
-                      style: {
-                        paddingLeft: "16px",
-                        paddingRight: "16px",
-                        whiteSpace: "nowrap",
-                        fontSize: "14px",
-                        lineHeight: "24px",
-                        width: "150px",
-                        color: "#4b5260",
-                        fontWeight: 450,
-                      },
-                    },
-                  }}
+                  data={filteredEmployeeData}
+                  pagination={false}
+                  selectableRow={true}
+                  onSelectedRows={handleCheckboxChange}
                 />
+                {filteredEmployeeData.length > 0 && (
+                  <div
+                    className={
+                      "w-full flex justify-end border-t rounded-md p-2"
+                    }
+                  >
+                    <Pagination
+                      current={pageNumber + 1}
+                      total={totalFilteredPage * 10}
+                      pageSize={10}
+                      onChange={(page) => {
+                        setPageNumber(page - 1);
+                      }}
+                      showSizeChanger={false}
+                    />
+                  </div>
+                )}
               </div>
             ) : (
               <>
                 {viewMode === "card" && (
-  <>
-    {/* Alphabet navigation - only show if not filtered by search */}
-    {/* {!searchText && (
-      <div className="w-full bg-white p-2 mb-4 rounded shadow">
-        <div className="flex flex-wrap justify-center gap-1">
-          <button
-            onClick={handleAll}
-            className={`px-3 py-1 rounded ${
-              selectedLetter === null
-                ? 'bg-blue-500 text-white'
-                : 'bg-gray-200 hover:bg-gray-300'
-            }`}
-          >
-            All
-          </button>
-          {alphabet.map((letter) => (
-            <button
-              key={letter}
-              onClick={() => handleLetterClick(letter)}
-              className={`px-3 py-1 rounded ${
-                selectedLetter === letter
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-200 hover:bg-gray-300'
-              }`}
-            >
-              {letter}
-            </button>
-          ))}
-        </div>
-      </div>
-    )} */}
+                  <>
+                    <div className="flex flex-wrap">
+                      {alphabet.map((letter) => (
+                        <div key={letter} id={letter} className="w-full">
+                          {(selectedLetter === null ||
+                            selectedLetter === letter) && (
+                            <>
+                              {empfilterData[letter]?.length > 0 && (
+                                <h2 className="text-xl font-mono font-semibold border-b-2 border-dashed my-4">
+                                  <span
+                                    style={{ background: themeColor }}
+                                    className="p-2 rounded-md text-white px-4"
+                                  >
+                                    {letter}
+                                  </span>
+                                </h2>
+                              )}
+                              <div className="flex flex-wrap">
+                                {empfilterData[letter]
+                                  ?.filter((employee) => {
+                                    const fullName =
+                                      `${employee.first_name} ${employee.last_name}`.toLowerCase();
+                                    const employeeCode =
+                                      employee.employee_code?.toLowerCase() ||
+                                      "";
+                                    const mobileNumber = employee.mobile
+                                      ? employee.mobile.toString()
+                                      : "";
+                                    const searchTextLower =
+                                      searchText.toLowerCase();
 
-    {/* Employee cards */}
-    <div className="flex flex-wrap">
-      {alphabet.map((letter) => (
-        <div key={letter} id={letter} className="w-full">
-          {(selectedLetter === null || selectedLetter === letter) && (
-            <>
-              {empfilterData[letter]?.length > 0 && (
-                <h2 className="text-xl font-mono font-semibold border-b-2 border-dashed my-4">
-                  <span
-                    style={{ background: themeColor }}
-                    className="p-2 rounded-md text-white px-4"
-                  >
-                    {letter}
-                  </span>
-                </h2>
-              )}
-              <div className="flex flex-wrap">
-                {empfilterData[letter]
-                  ?.filter((employee) => {
-                    const fullName =
-                      `${employee.first_name} ${employee.last_name}`.toLowerCase();
-                    const employeeCode =
-                      employee.employee_code?.toLowerCase() || '';
-                    const mobileNumber = employee.mobile
-                      ? employee.mobile.toString()
-                      : '';
-                    const searchTextLower = searchText.toLowerCase();
+                                    const matchesSearch =
+                                      fullName.includes(searchTextLower) ||
+                                      employeeCode.includes(searchTextLower) ||
+                                      mobileNumber.includes(searchTextLower);
 
-                    const matchesSearch =
-                      fullName.includes(searchTextLower) ||
-                      employeeCode.includes(searchTextLower) ||
-                      mobileNumber.includes(searchTextLower);
+                                    const matchesSite = selectedSite
+                                      ? String(employee.site_id) ===
+                                        String(selectedSite)
+                                      : true;
+                                    const matchesStatus =
+                                      selectedUserStatus === "all" ||
+                                      (selectedUserStatus === "active" &&
+                                        employee?.status === true) ||
+                                      (selectedUserStatus === "inactive" &&
+                                        employee?.status === false);
 
-                    const matchesSite = selectedSite
-                      ? String(employee.site_id) === String(selectedSite)
-                      : true;
-                    const matchesStatus =
-                      selectedUserStatus === "all" ||
-                      (selectedUserStatus === "active" &&
-                        employee?.status === true) ||
-                      (selectedUserStatus === "inactive" &&
-                        employee?.status === false);
-
-                    return matchesSearch && matchesSite && matchesStatus;
-                  })
-                  .map((employee, index) => (
-                    <div
-                      key={employee.id}
-                      style={{
-                        background: themeColor,
-                        color: "white",
-                      }}
-                      className={`${
-                        employeeId === employee.id
-                          ? "bg-gradient-to-r from-yellow-400 via-red-300 to-pink-400 border-2 border-pink-400"
-                          : "bg-gradient-to-r from-yellow-400 via-red-300 to-pink-400 border-2 border-white"
-                      } w-80 p-2 m-2 rounded-xl cursor-pointer`}
-                      onClick={(e) => {
-                        if (!e.target.closest('input[type="checkbox"]')) {
-                          showEmployeeDetails(employee.id);
-                        }
-                      }}
-                    >
-                      <div className="flex items-center w-full">
-                        <div className="w-32">
-                          {employee?.profile_photo ? (
-                            <img
-                              src={hrmsDomain + employee?.profile_photo}
-                              alt="Profile"
-                              className="rounded-full h-20 w-20 border-4 border-white object-cover mr-4"
-                            />
-                          ) : (
-                            <div
-                              className="bg-gray-300 rounded-full text-xl border-white border-4 text-white h-20 w-20 flex items-center font-medium justify-center mr-4"
-                              style={{
-                                backgroundColor: getColorForEmployee(index),
-                              }}
-                            >
-                              {employee.first_name
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")}
-                              {employee.last_name
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")}
-                            </div>
+                                    return (
+                                      matchesSearch &&
+                                      matchesSite &&
+                                      matchesStatus
+                                    );
+                                  })
+                                  .map((employee, index) => (
+                                    <div
+                                      key={employee.id}
+                                      style={{
+                                        background: themeColor,
+                                        color: "white",
+                                      }}
+                                      className={`${
+                                        employeeId === employee.id
+                                          ? "bg-gradient-to-r from-yellow-400 via-red-300 to-pink-400 border-2 border-pink-400"
+                                          : "bg-gradient-to-r from-yellow-400 via-red-300 to-pink-400 border-2 border-white"
+                                      } w-80 p-2 m-2 rounded-xl cursor-pointer`}
+                                      onClick={(e) => {
+                                        if (
+                                          !e.target.closest(
+                                            'input[type="checkbox"]'
+                                          )
+                                        ) {
+                                          showEmployeeDetails(employee.id);
+                                        }
+                                      }}
+                                    >
+                                      <div className="flex items-center w-full">
+                                        <div className="w-32">
+                                          {employee?.profile_photo ? (
+                                            <img
+                                              src={
+                                                hrmsDomain +
+                                                employee?.profile_photo
+                                              }
+                                              alt="Profile"
+                                              className="rounded-full h-20 w-20 border-4 border-white object-cover mr-4"
+                                            />
+                                          ) : (
+                                            <div
+                                              className="bg-gray-300 rounded-full text-xl border-white border-4 text-white h-20 w-20 flex items-center font-medium justify-center mr-4"
+                                              style={{
+                                                backgroundColor:
+                                                  getColorForEmployee(index),
+                                              }}
+                                            >
+                                              {employee.first_name
+                                                .split(" ")
+                                                .map((n) => n[0])
+                                                .join("")}
+                                              {employee.last_name
+                                                .split(" ")
+                                                .map((n) => n[0])
+                                                .join("")}
+                                            </div>
+                                          )}
+                                        </div>
+                                        <div className="w-full">
+                                          <h2 className="font-semibold">
+                                            {employee.first_name}{" "}
+                                            {employee.last_name}
+                                          </h2>
+                                          <div className="flex items-center gap-1 my-1">
+                                            <p className="text-sm font-medium text-gray-200">
+                                              {employee?.employment_info
+                                                ?.employee_code
+                                                ? employee?.employment_info
+                                                    ?.employee_code
+                                                : "not added"}
+                                            </p>
+                                            <div className="border border-gray-400 h-5" />
+                                            <p className="text-sm font-medium text-gray-200">
+                                              DOJ:{" "}
+                                              {employee?.employment_info
+                                                ?.joining_date
+                                                ? employee?.employment_info
+                                                    ?.joining_date
+                                                : "not added"}
+                                            </p>
+                                          </div>
+                                          <p className="text-sm font-medium text-gray-200">
+                                            {employee?.employment_info
+                                              ?.designation
+                                              ? employee?.employment_info
+                                                  ?.designation
+                                              : "not added"}
+                                          </p>
+                                          <div className="flex items-center justify-between mt-2">
+                                            <p
+                                              className={`${
+                                                employee?.status
+                                                  ? "bg-green-400 text-white"
+                                                  : "bg-red-400 text-white"
+                                              } font-medium w-fit px-2 my-1 rounded-full`}
+                                            >
+                                              {employee?.status
+                                                ? "Active"
+                                                : "Inactive"}
+                                            </p>
+                                            {(roleAccess?.can_edit_employee ||
+                                              roleAccess?.can_delete_employee) && (
+                                              <div className="flex gap-2 items-center bg-white p-1 rounded-full px-2">
+                                                {roleAccess?.can_edit_employee && (
+                                                  <Link
+                                                    className="text-blue-500 hover:text-blue-900"
+                                                    to={`/hrms/employee-directory-Personal/${employee.id}`}
+                                                  >
+                                                    <BiEdit size={18} />
+                                                  </Link>
+                                                )}
+                                                {roleAccess?.can_delete_employee && (
+                                                  <button
+                                                    onClick={() =>
+                                                      handleDeleteModal(
+                                                        employee.id
+                                                      )
+                                                    }
+                                                    className="text-red-400 hover:text-red-800"
+                                                  >
+                                                    <FaTrash size={15} />
+                                                  </button>
+                                                )}
+                                                {employee?.status && (
+                                                  <div className="">
+                                                    <input
+                                                      type="checkbox"
+                                                      checked={selectedEmployees.includes(
+                                                        employee.id
+                                                      )}
+                                                      onChange={() =>
+                                                        handleCheckboxChange(
+                                                          employee.id,
+                                                          employee?.status
+                                                        )
+                                                      }
+                                                      onClick={(e) =>
+                                                        e.stopPropagation()
+                                                      }
+                                                      className="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                                    />
+                                                  </div>
+                                                )}
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                              </div>
+                            </>
                           )}
                         </div>
-                        <div className="w-full">
-                          <h2 className="font-semibold">
-                            {employee.first_name} {employee.last_name}
-                          </h2>
-                          <div className="flex items-center gap-1 my-1">
-                            <p className="text-sm font-medium text-gray-200">
-                              {employee?.employment_info?.employee_code
-                                ? employee?.employment_info?.employee_code
-                                : "not added"}
-                            </p>
-                            <div className="border border-gray-400 h-5" />
-                            <p className="text-sm font-medium text-gray-200">
-                              DOJ:{" "}
-                              {employee?.employment_info?.joining_date
-                                ? employee?.employment_info?.joining_date
-                                : "not added"}
-                            </p>
-                          </div>
-                          <p className="text-sm font-medium text-gray-200">
-                            {employee?.employment_info?.designation
-                              ? employee?.employment_info?.designation
-                              : "not added"}
-                          </p>
-                          <div className="flex items-center justify-between mt-2">
-                            <p
-                              className={`${
-                                employee?.status
-                                  ? "bg-green-400 text-white"
-                                  : "bg-red-400 text-white"
-                              } font-medium w-fit px-2 my-1 rounded-full`}
-                            >
-                              {employee?.status ? "Active" : "Inactive"}
-                            </p>
-                            {(roleAccess?.can_edit_employee ||
-                              roleAccess?.can_delete_employee) && (
-                              <div className="flex gap-2 items-center bg-white p-1 rounded-full px-2">
-                                {roleAccess?.can_edit_employee && (
-                                  <Link
-                                    className="text-blue-500 hover:text-blue-900"
-                                    to={`/hrms/employee-directory-Personal/${employee.id}`}
-                                  >
-                                    <BiEdit size={18} />
-                                  </Link>
-                                )}
-                                {roleAccess?.can_delete_employee && (
-                                  <button
-                                    onClick={() =>
-                                      handleDeleteModal(employee.id)
-                                    }
-                                    className="text-red-400 hover:text-red-800"
-                                  >
-                                    <FaTrash size={15} />
-                                  </button>
-                                )}
-                                {employee?.status && (
-                                  <div className="">
-                                    <input
-                                      type="checkbox"
-                                      checked={selectedEmployees.includes(
-                                        employee.id
-                                      )}
-                                      onChange={() =>
-                                        handleCheckboxChange(
-                                          employee.id,
-                                          employee?.status
-                                        )
-                                      }
-                                      onClick={(e) => e.stopPropagation()}
-                                      className="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                                    />
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
+                      ))}
                     </div>
-                  ))}
-              </div>
-            </>
-          )}
-        </div>
-      ))}
-    </div>
 
-    {/* Pagination controls */}
-    <PaginationControls />
-  </>
-)}
-
+                    {/* Pagination controls */}
+                    <PaginationControls />
+                  </>
+                )}
               </>
             )}
           </div>
 
           {/* Keep your alphabet navigation and details panel */}
-          <div className="w-10 bg-white text-black p-4 max-h-fit overflow-y-auto hide-scrollbar mb-2">
-            <div className="flex flex-col">
-              <button
-                onClick={handleAll}
-                className="p-1 text-sm font-medium text-gray-500"
-              >
-                All
-              </button>
-              {alphabet.map((letter) => (
-                <button
-                  key={letter}
-                  onClick={() => handleLetterClick(letter)}
-                  className="p-1 text-sm font-medium text-gray-500"
-                  title={letter}
-                >
-                  {letter}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="w-[25rem] max-h-[30rem] p-4 bg-gray-50 m-1 rounded-xl text-gray-600">
-            <h1 className="text-2xl font-semibold mb-4">Employee Details</h1>
-            {Object.keys(selectedEmployee).length > 0 ? (
-              <div className="flex flex-col justify-between gap-10 h-96">
-                {/* Your existing details panel content */}
-                <div className="flex flex-col gap-2 border-b border-dashed border-gray-300">
-                  <div className="flex items-center border-b border-dashed border-gray-300 p-1">
-                    {selectedEmployee?.employee?.profile_photo ? (
-                      <img
-                        src={
-                          hrmsDomain + selectedEmployee?.employee?.profile_photo
-                        }
-                        alt="Profile"
-                        className="rounded-full h-20 w-20 border-4 border-white object-cover mr-4"
-                      />
-                    ) : (
-                      <div
-                        className="bg-gray-300 rounded-full text-white h-16 w-16 flex items-center font-medium justify-center mr-4"
-                        style={{
-                          background: themeColor,
-                        }}
-                      >
-                        {selectedEmployee?.employee?.first_name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
-                        {selectedEmployee?.employee?.last_name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
-                      </div>
-                    )}
-                    <div className="flex flex-col gap-1">
-                      <h2 className="text-xl font-medium">
-                        {selectedEmployee?.employee?.first_name}{" "}
-                        {selectedEmployee?.employee?.last_name}
-                      </h2>
-                      <p className="text-sm font-medium">
-                        {selectedEmployee?.employment_info?.designation}
-                      </p>
-                      <p className="text-sm font-medium">
-                        Department :{" "}
-                        {selectedEmployee?.employment_info?.department_name}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-4">
-                    <p className="grid grid-cols-2 items-center">
-                      <span className="font-medium text-sm">Status :</span>{" "}
-                      <span
-                        className={`${
-                          selectedEmployee?.employee?.status
-                            ? "bg-green-400 text-white"
-                            : "bg-red-400 text-white"
-                        } rounded-full w-fit px-4`}
-                      >
-                        {selectedEmployee?.employee?.status
-                          ? "Active"
-                          : "Inactive"}
-                      </span>
-                    </p>
-                    <div className="grid grid-cols-2">
-                      <span className="font-medium text-sm">
-                        Branch Location :
-                      </span>{" "}
-                      <span className="font-medium text-xs">
-                        <p>
-                          {
-                            selectedEmployee?.employment_info
-                              ?.branch_location_name
-                          }
-                        </p>
-                      </span>
-                    </div>
-                    <p className="grid grid-cols-2">
-                      <span className="font-medium text-sm">Phone : </span>{" "}
-                      <span className="font-medium text-xs">
-                        {selectedEmployee?.employee?.mobile}
-                      </span>
-                    </p>
-                    <p className="grid grid-cols-2">
-                      <span className="font-medium text-sm">Email :</span>{" "}
-                      <span className="font-medium text-xs break-words">
-                        {selectedEmployee?.employee?.email_id}
-                      </span>
-                    </p>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-4">
-                  <Link
-                    to={`/hrms/employee-directory-Personal/${selectedEmployee?.employee?.id}`}
-                    className="border-2 rounded-full w-full text-green-400 border-green-400 mt-2 hover:bg-green-50 fov font-semibold py-1 px-4 flex items-center gap-2 justify-center"
+          {viewMode !== "table" && (
+            <>
+              <div className="w-10 bg-white text-black p-4 max-h-fit overflow-y-auto hide-scrollbar mb-2">
+                <div className="flex flex-col">
+                  <button
+                    onClick={handleAll}
+                    className="p-1 text-sm font-medium text-gray-500"
                   >
-                    <FaUserEdit /> View Profile
-                  </Link>
-                  <div className="flex justify-center gap-3">
-                    {roleAccess?.can_initiate_separation && (
-                      <>
-                        {selectedEmployee?.employee?.status && (
-                          <Link
-                            to={`/hrms/separation/separate-application/resignation/${selectedEmployee?.employee?.id}`}
-                            style={{ background: themeColor }}
-                            className="bg-black text-white hover:bg-gray-700 w-full text-center py-2 px-4 rounded-full"
-                          >
-                            Separate
-                          </Link>
-                        )}
-                      </>
-                    )}
-                  </div>
+                    All
+                  </button>
+                  {alphabet.map((letter) => (
+                    <button
+                      key={letter}
+                      onClick={() => handleLetterClick(letter)}
+                      className="p-1 text-sm font-medium text-gray-500"
+                      title={letter}
+                    >
+                      {letter}
+                    </button>
+                  ))}
                 </div>
               </div>
-            ) : (
-              <div className="flex items-center justify-center h-full">
-                <p className="text-gray-600 text-center">
-                  Select employee from the list to get employee details.
-                </p>
+
+              <div className="w-[25rem] max-h-[30rem] p-4 bg-gray-50 m-1 rounded-xl text-gray-600">
+                <h1 className="text-2xl font-semibold mb-4">
+                  Employee Details
+                </h1>
+                {Object.keys(selectedEmployee).length > 0 ? (
+                  <div className="flex flex-col justify-between gap-10 h-96">
+                    {/* Your existing details panel content */}
+                    <div className="flex flex-col gap-2 border-b border-dashed border-gray-300">
+                      <div className="flex items-center border-b border-dashed border-gray-300 p-1">
+                        {selectedEmployee?.employee?.profile_photo ? (
+                          <img
+                            src={
+                              hrmsDomain +
+                              selectedEmployee?.employee?.profile_photo
+                            }
+                            alt="Profile"
+                            className="rounded-full h-20 w-20 border-4 border-white object-cover mr-4"
+                          />
+                        ) : (
+                          <div
+                            className="bg-gray-300 rounded-full text-white h-16 w-16 flex items-center font-medium justify-center mr-4"
+                            style={{
+                              background: themeColor,
+                            }}
+                          >
+                            {selectedEmployee?.employee?.first_name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")}
+                            {selectedEmployee?.employee?.last_name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")}
+                          </div>
+                        )}
+                        <div className="flex flex-col gap-1">
+                          <h2 className="text-xl font-medium">
+                            {selectedEmployee?.employee?.first_name}{" "}
+                            {selectedEmployee?.employee?.last_name}
+                          </h2>
+                          <p className="text-sm font-medium">
+                            {selectedEmployee?.employment_info?.designation}
+                          </p>
+                          <p className="text-sm font-medium">
+                            Department :{" "}
+                            {selectedEmployee?.employment_info?.department_name}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-4">
+                        <p className="grid grid-cols-2 items-center">
+                          <span className="font-medium text-sm">Status :</span>{" "}
+                          <span
+                            className={`${
+                              selectedEmployee?.employee?.status
+                                ? "bg-green-400 text-white"
+                                : "bg-red-400 text-white"
+                            } rounded-full w-fit px-4`}
+                          >
+                            {selectedEmployee?.employee?.status
+                              ? "Active"
+                              : "Inactive"}
+                          </span>
+                        </p>
+                        <div className="grid grid-cols-2">
+                          <span className="font-medium text-sm">
+                            Branch Location :
+                          </span>{" "}
+                          <span className="font-medium text-xs">
+                            <p>
+                              {
+                                selectedEmployee?.employment_info
+                                  ?.branch_location_name
+                              }
+                            </p>
+                          </span>
+                        </div>
+                        <p className="grid grid-cols-2">
+                          <span className="font-medium text-sm">Phone : </span>{" "}
+                          <span className="font-medium text-xs">
+                            {selectedEmployee?.employee?.mobile}
+                          </span>
+                        </p>
+                        <p className="grid grid-cols-2">
+                          <span className="font-medium text-sm">Email :</span>{" "}
+                          <span className="font-medium text-xs break-words">
+                            {selectedEmployee?.employee?.email_id}
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-4">
+                      <Link
+                        to={`/hrms/employee-directory-Personal/${selectedEmployee?.employee?.id}`}
+                        className="border-2 rounded-full w-full text-green-400 border-green-400 mt-2 hover:bg-green-50 fov font-semibold py-1 px-4 flex items-center gap-2 justify-center"
+                      >
+                        <FaUserEdit /> View Profile
+                      </Link>
+                      <div className="flex justify-center gap-3">
+                        {roleAccess?.can_initiate_separation && (
+                          <>
+                            {selectedEmployee?.employee?.status && (
+                              <Link
+                                to={`/hrms/separation/separate-application/resignation/${selectedEmployee?.employee?.id}`}
+                                style={{ background: themeColor }}
+                                className="bg-black text-white hover:bg-gray-700 w-full text-center py-2 px-4 rounded-full"
+                              >
+                                Separate
+                              </Link>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <p className="text-gray-600 text-center">
+                      Select employee from the list to get employee details.
+                    </p>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            </>
+          )}
         </div>
       </div>
 
