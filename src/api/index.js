@@ -767,15 +767,17 @@ export const postAssetAssociation = async (data) =>
     },
   });
 
-export const deleteAssetAssociation = async (id) =>
-  axiosInstance.delete(`/activities/${id}.json`, {
+export const deleteAssetAssociation = async ({ checklist_id, asset_id }) =>
+  axiosInstance.delete("/activities/bulk_destroy.json", {
     params: {
+      checklist_id,
+      asset_id: asset_id,
       token: token,
     },
   });
 
 export const updateActivity = async (id, data) =>
-  axiosInstance.put(`/activities/${id}`, data, {
+  axiosInstance.put(`/activities/bulk_update.json`, data, {
     params: {
       token: token,
     },
