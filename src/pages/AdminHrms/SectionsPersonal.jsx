@@ -12,7 +12,9 @@ import {
   editEmployeeFamilyDetails,
   editPaymentInfoDetails,
   getAdminAccess,
+  getAvailableSites,
   getEmployeeAddressDetails,
+  getEmployeeAssociations,
   getEmployeeDetails,
   getEmployeeFamilyDetails,
   getEmployeePaymentInfo,
@@ -22,6 +24,7 @@ import {
   postEmployeeAddress,
   postEmployeeFamily,
   postEmployeePaymentInfo,
+  updateEmployeeAssociations,
 } from "../../api";
 import { useParams } from "react-router-dom";
 import { getItemInLocalStorage } from "../../utils/localStorage";
@@ -30,7 +33,7 @@ import Accordion from "./Components/Accordion";
 import { RiContactsBook2Line } from "react-icons/ri";
 import { MdClose, MdFamilyRestroom, MdOutlinePayment } from "react-icons/md";
 import { IoHomeOutline } from "react-icons/io5";
-import { FaCheck, FaHome } from "react-icons/fa";
+import { FaCheck, FaHome, FaSitemap } from "react-icons/fa";
 import { PiPlusCircle } from "react-icons/pi";
 import { Switch } from "antd";
 
@@ -557,6 +560,110 @@ const SectionsPersonal = () => {
   const normalizedRole = roleAccess?.role?.toLowerCase().replace(/\s/g, "");
   const isAuthorized = allowedRoles.includes(normalizedRole);
 
+  const [associatedSites, setAssociatedSites] = useState([]);
+  const [baseSite, setBaseSite] = useState("");
+  const [baseSiteId, setBaseSiteId] = useState("");
+  const [selectedSitesEdit, setSelectedSitesEdit] = useState([]);
+  const fetchAssociatedSites = async () => {
+    try {
+      const res = await getEmployeeAssociations(id);
+      const associatedSites = res[0]?.multiple_associated_info || [];
+      setBaseSite(res[0]?.associated_organization_name);
+      setBaseSiteId(res[0]?.associated_organization);
+      setAssociatedSites(associatedSites);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(() => {
+    fetchAssociatedSites();
+  }, []);
+
+  const AssociationColumn = [
+    { name: "Site ID", selector: (row) => row?.id, sortable: true },
+    { name: "Site Name", selector: (row) => row?.site_name, sortable: true },
+  ];
+
+  const [availableSites, setAvailableSites] = useState([]);
+  const [selectedSites, setSelectedSites] = useState([]);
+  const [sitesOptions, setSitesOptions] = useState([]);
+  useEffect(() => {
+    const fetchAvailableSitesData = async () => {
+      try {
+        const sitesData = await getAvailableSites(hrmsOrgId);
+        if (!sitesData) {
+          toast.error("No Sites Available");
+        }
+
+        const formattedSites = sitesData.map((site) => ({
+          value: site.id,
+          label: site.site_name,
+        }));
+
+        setAvailableSites(formattedSites);
+        setSitesOptions([
+          { value: "select-all", label: "Select All" },
+          ...formattedSites,
+        ]);
+      } catch (error) {
+        console.log("Error in getting The available sites", error);
+      }
+    };
+    fetchAvailableSitesData();
+  }, [hrmsOrgId]);
+
+  const [associationId, setAssociationId] = useState(null);
+  const [editSite, setEditSite] = useState(false);
+  const handleEditSiteAssociation = async () => {
+    setEditSite(true);
+    try {
+      const siteResponse = await getEmployeeAssociations(id);
+      console.log("Site associations API response:", siteResponse);
+
+      const associationData =
+        Array.isArray(siteResponse) && siteResponse.length > 0
+          ? siteResponse[0]
+          : null;
+
+      // Store the association ID for later updates
+      if (associationData?.id) {
+        setAssociationId(associationData.id);
+      } else {
+        setAssociationId(null);
+      }
+
+      if (associationData?.multiple_associated_info?.length > 0) {
+        const matchedSites = sitesOptions.filter((site) =>
+          associationData.multiple_associated.includes(site.value)
+        );
+        setSelectedSitesEdit(matchedSites);
+      } else {
+        setSelectedSitesEdit([]);
+      }
+    } catch (error) {
+      console.error("Error fetching associated sites:", error);
+      setSelectedSitesEdit([]);
+      setAssociationId(null);
+      toast.error("Failed to load associated sites");
+    }
+  };
+
+  const handleSubmitSiteAssociation = async () => {
+    try {
+      const siteIds = selectedSitesEdit.map((site) => site.value);
+      const associationData = {
+        multiple_associated: siteIds,
+        organization: hrmsOrgId,
+      };
+
+      await updateEmployeeAssociations(associationId, associationData);
+      toast.success("Site Association updated successfully");
+      setEditSite(false);
+      fetchAssociatedSites();
+    } catch (error) {
+      console.log(error);
+    }
+  };
   return (
     <div className="flex flex-col ml-20">
       <EditEmployeeDirectory />
@@ -1103,6 +1210,85 @@ const SectionsPersonal = () => {
               </div>
             }
           />
+          <Accordion
+            icon={FaSitemap}
+            title={"Site Association"}
+            content={
+              <div>
+                <div>
+                  <div className="flex items-center justify-between my-2">
+                    <h2 className="text-lg ">
+                      Base site:{" "}
+                      <span className="font-medium">{baseSite} - </span>{" "}
+                      <span className="font-medium">{`(${baseSiteId})`}</span>{" "}
+                    </h2>
+                    {!editSite && (
+                      <button
+                        className="bg-blue-500 text-white mb-2 hover:bg-gray-700 font-semibold py-2 px-4 rounded-full flex items-center gap-2 "
+                        onClick={handleEditSiteAssociation}
+                      >
+                        Edit
+                      </button>
+                    )}
+                  </div>
+                  {editSite && (
+                    <div className="flex items-center gap-4 w-full my-2">
+                      <Select
+                        isMulti
+                        options={[
+                          { value: "select-all", label: "Select All" },
+                          ...availableSites,
+                        ]}
+                        value={selectedSitesEdit}
+                        onChange={(selectedOptions) => {
+                          const lastOption =
+                            selectedOptions[selectedOptions.length - 1];
+                          if (lastOption?.value === "select-all") {
+                            setSelectedSitesEdit(availableSites);
+                          } else {
+                            setSelectedSitesEdit(selectedOptions);
+                          }
+                        }}
+                        className="basic-multi-select z-50 w-full"
+                        classNamePrefix="select"
+                        placeholder="Select sites..."
+                        getOptionLabel={(option) => option.label}
+                        getOptionValue={(option) => option.value}
+                        isDisabled={!availableSites.length}
+                        closeMenuOnSelect={false}
+                        hideSelectedOptions={false}
+                        isOptionDisabled={(option) =>
+                          option.value === "select-all" &&
+                          selectedSitesEdit.length === availableSites.length
+                        }
+                      />
+                      <div className="flex items-center gap-4">
+                        <button
+                          type="button"
+                          className="border-2 rounded-full p-1 transition-all duration-150 hover:bg-opacity-30 border-green-400  px-4 text-green-400 mb-2 hover:bg-green-300 font-semibold flex items-center gap-2 "
+                          onClick={handleSubmitSiteAssociation}
+                        >
+                          <FaCheck /> Save
+                        </button>
+                        <button
+                          type="button"
+                          className="border-2 rounded-full p-1 border-red-400  px-4 text-red-400 mb-2 hover:bg-opacity-30 hover:bg-red-300 font-semibold flex items-center gap-2 "
+                          onClick={() => setEditSite(false)}
+                        >
+                          <MdClose /> Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <Table
+                  columns={AssociationColumn}
+                  data={associatedSites}
+                  // isPagination={false}
+                />
+              </div>
+            }
+          />
 
           {modalIsOpen && (
             <div className="fixed inset-0 z-50 flex items-center overflow-y-auto justify-center bg-gray-500 bg-opacity-50">
@@ -1218,22 +1404,6 @@ const SectionsPersonal = () => {
               <div className="max-h-screen bg-white p-8 w-96 rounded-lg shadow-lg overflow-y-auto">
                 <div>
                   <h2 className="text-2xl font-bold mb-4">Add Payment Type</h2>
-                  {/* <div className="flex flex-col gap-2">
-                    <label
-                      htmlFor=""
-                      className="block text-sm font-medium text-gray-700"
-                    >
-                      Payment Type
-                    </label>
-                    <Select
-                      id="paymentType"
-                      options={paymentOptions}
-                      isMulti // Enables multiple selection
-                      value={selectedOptions}
-                      onChange={handleSelectChange}
-                      placeholder="Select payment type(s)"
-                    />
-                  </div> */}
 
                   <div className="mt-2">
                     <label className="block text-sm font-medium text-gray-700">
