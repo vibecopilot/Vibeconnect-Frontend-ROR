@@ -80,24 +80,30 @@ const AssociateAssetChecklist = () => {
 
   // console.log("id:", id);
 
-  const deleteActivity = async (id) => {
-    const confirmDelete = window.confirm("Please Confim To Delete Activity?");
+  const deleteActivity = async (activity) => {
+    const confirmDelete = window.confirm("Please Confirm To Delete Activity?");
     if (!confirmDelete) return;
 
-    const checkID = id;
-    console.log("asset_id:", checkID);
+    const { asset_id } = activity;
+
+    // console.log("activity:", activity);
+    const checklist_id = id;
+    console.log("checklist_id:", checklist_id);
+    console.log("asset_id:", asset_id);
 
     try {
-      const resp = await deleteAssetAssociation(checkID);
+      const resp = await deleteAssetAssociation({
+        checklist_id,
+        asset_id,
+      });
       console.log("Deleted successfully!", resp);
       toast.success("Deleted successfully!");
-      setAssociation((prev) => prev.filter((a) => a.id !== id));
+      setAssociation((prev) => prev.filter((a) => a.id !== activity.id));
     } catch (err) {
       console.error("Delete failed:", err);
       alert("Failed to delete.");
     }
   };
-
   const column = [
     {
       name: "Asset Name",
@@ -124,7 +130,7 @@ const AssociateAssetChecklist = () => {
           </button>
           <button
             className="text-red-500 hover:text-red-700"
-            onClick={() => deleteActivity(row.id)}
+            onClick={() => deleteActivity(row)}
           >
             <BsTrash />
           </button>
@@ -184,6 +190,11 @@ const AssociateAssetChecklist = () => {
 
   console.log("Assiciation - Response", association);
 
+    const associatedAssetIds = association.map((a) => a.asset_id);
+    const availableAssets = assets.filter(
+      (asset) => !associatedAssetIds.includes(asset.value)
+    );
+    
   var handleChangeSelect = (selectedOption) => {
     setSelectedOption(selectedOption);
   };
@@ -332,6 +343,8 @@ const AssociateAssetChecklist = () => {
 
     if (!show) return null;
 
+  
+
     return (
       <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
         <div className="bg-white rounded-lg p-6 w-[400px]">
@@ -416,9 +429,8 @@ const AssociateAssetChecklist = () => {
                 closeMenuOnSelect={false}
                 isMulti
                 onChange={handleChangeSelect}
-                options={assets}
+                options={availableAssets} // Use filtered assets here
                 noOptionsMessage={() => "No Assets Available"}
-                //   maxMenuHeight={90}
                 placeholder="Select Assets"
                 value={selectedOption}
               />
