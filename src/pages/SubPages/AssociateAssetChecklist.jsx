@@ -78,13 +78,18 @@ const AssociateAssetChecklist = () => {
     }
   }, [groupId]);
 
+  // console.log("id:", id);
+
   const deleteActivity = async (id) => {
     const confirmDelete = window.confirm("Please Confim To Delete Activity?");
     if (!confirmDelete) return;
 
+    const checkID = id;
+    console.log("asset_id:", checkID);
+
     try {
-      const resp = await deleteAssetAssociation(id);
-      // alert("Deleted successfully!", resp);
+      const resp = await deleteAssetAssociation(checkID);
+      console.log("Deleted successfully!", resp);
       toast.success("Deleted successfully!");
       setAssociation((prev) => prev.filter((a) => a.id !== id));
     } catch (err) {
@@ -142,12 +147,12 @@ const AssociateAssetChecklist = () => {
     };
     const fetchAssignedTo = async () => {
       const assignedToList = await getAssignedTo();
-      console.log(assignedToList.data);
+      // console.log(assignedToList.data);
       const user = assignedToList.data.map((u) => ({
         value: u.id,
         label: `${u.firstname} ${u.lastname}`,
       }));
-      console.log(user);
+      // console.log(user);
       setAssignedTo(user);
     };
 
@@ -158,7 +163,12 @@ const AssociateAssetChecklist = () => {
         const sortedData = assoResp.data.associated_with.sort(
           (a, b) => new Date(a.created_at) - new Date(b.created_at)
         );
-        setAssociation(sortedData);
+        setAssociation(
+          sortedData.map((item) => ({
+            ...item,
+            id: item.id || item.asset_id,
+          }))
+        );
       } catch (error) {
         console.log(error);
         toast.error("Failed to fetch associated checklist data.");
@@ -273,7 +283,6 @@ const AssociateAssetChecklist = () => {
 
     const checklist_id = associationData?.checklist_id || id; // Use checklist_id from associationData or fallback to id
 
-
     const validateForm = ({ asset_ids, assigned_to, checklist_id }) => {
       toast.dismiss(); // Clear previous toasts
 
@@ -294,7 +303,6 @@ const AssociateAssetChecklist = () => {
 
       return true; // If everything passes
     };
-
 
     const handleSubmit = async () => {
       const assetIds = selectedAssets.map((asset) => asset.value);
