@@ -9,6 +9,8 @@ import {
   getAssociatedSites,
   getRosterRecordsFilter,
   postRosterAssign,
+  getEmployeeAssociations,
+  postRosterAssignBulk,
 } from "../../../api";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
 import DatePicker from "react-multi-date-picker";
@@ -21,6 +23,7 @@ const AddAssignRosterShift = ({ onClose, fetchRosterRecords }) => {
   const [filteredEmployees, setFilteredEmployees] = useState([]);
   const [filteredEmp, setFilteredEmp] = useState([]);
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
+  const empId = localStorage.getItem("HRMS_EMPLOYEE_ID");
   const [allSites, setAllSites] = useState([]);
   const [shifts, setShifts] = useState([]);
   const [empData, setEmpData] = useState([]);
@@ -33,16 +36,24 @@ const AddAssignRosterShift = ({ onClose, fetchRosterRecords }) => {
     endDate: "",
   });
   console.log(empData);
+
   useEffect(() => {
     const fetchSites = async () => {
       try {
-        const sites = await getAssociatedSites(hrmsOrgId);
-        console.log("Site name :", sites);
-        const formattedSites = sites.map((item) => ({
-          value: item.id,
-          label: item.client_name,
-        }));
-        setAllSites(formattedSites);
+        const res = await getEmployeeAssociations(empId);
+
+        console.log("Site name :", res);
+        if (Array.isArray(res) && res.length > 0) {
+          const associatedSites = res[0].multiple_associated_info || [];
+          const allSites = associatedSites.map((site) => ({
+            value: site.id,
+            label: site.site_name,
+          }));
+
+          setAllSites(allSites);
+        } else {
+          setAllSites([]);
+        }
       } catch (error) {
         console.error("Error fetching sites:", error);
       }
@@ -242,20 +253,17 @@ const AddAssignRosterShift = ({ onClose, fetchRosterRecords }) => {
     console.log("line 240", selectedDay); // Output the result
   }
   const handleAddShift = async () => {
-    // const postData = new FormData();
-    // postData.append(`employee`, [...selectedOptions]);
-    // postData.append("date", formattedDate);
-    // postData.append("shift_type", formData.shiftType);
-    // postData.append("shift", formData.selectedShift);
-    // postData.append("repeat", repeat);
-    // postData.append("frequency", formData.frequency);
-    // postData.append("selected_weekday", dayNumber);
-    // postData.append("nth_weekday", indexNumber);
-    // postData.append("ends_on", formData.endOn);
-    // postData.append("end_date", formData.endDate);
-    // console.log("line 256", postData);
+    if (!selectedOptionSite) {
+      return toast.error("Please select site");
+    }
+    if (!formData.shiftType) {
+      return toast.error("Please select shift type");
+    }
     const postData = {
-      employee: [...selectedOptions], // Ensuring an array remains an array
+      organization: hrmsOrgId,
+      employee_ids: [...selectedOptions],
+      site_id: selectedOptionSite.value,
+
       date: formattedDate,
       shift_type: formData.shiftType,
       shift: formData.selectedShift,
@@ -266,9 +274,10 @@ const AddAssignRosterShift = ({ onClose, fetchRosterRecords }) => {
       ends_on: formData.endOn,
       end_date: formData.endDate,
     };
+
     try {
-      const res = await postRosterAssign(postData);
-      console.log("line 258", res);
+      const res = await postRosterAssignBulk(postData);
+
       onClose();
       toast.success("New Shift Added Successfully");
       fetchRosterRecords();

@@ -6458,6 +6458,15 @@ export const postRosterAssign = async (data) => {
     throw error;
   }
 };
+export const postRosterAssignBulk = async (data) => {
+  try {
+    const response = await HrmsAuth.post(`/roster/assign-shift-all/`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error post roster shift:", error);
+    throw error;
+  }
+};
 
 export const getRosterShiftDetails = async (shiftId) => {
   try {
