@@ -5,6 +5,7 @@ import {
   getAssociatedSiteDetails,
   getAssociatedSites,
   getEmployeeAssociatedSites,
+  getEmployeeAssociations,
   getSiteWiseEmployee,
 } from "../../../api";
 import Table from "../../../components/table/Table";
@@ -14,6 +15,7 @@ import { useSelector } from "react-redux";
 import Select from "react-select";
 
 const SiteEmployee = () => {
+  const empId = localStorage.getItem("HRMS_EMPLOYEE_ID");
   const associatedSiteId = getItemInLocalStorage("HRMS_SITE_ID");
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
   const [employees, setEmployees] = useState([]);
@@ -36,24 +38,34 @@ const SiteEmployee = () => {
       console.log(error);
     }
   };
-  const [sites, setSites] = useState([]);
-  const fetchAssociatedSites = async () => {
+
+  useEffect(() => {
+    fetchSiteWiseEmployee(associatedSiteId);
+    fetchSiteDetails();
+  }, []);
+  const [newSites, setNewSites] = useState([]);
+  const fetchSiteAssociation = async () => {
     try {
-      const res = await getAssociatedSites(hrmsOrgId);
-      const ActiveSites = res.filter((site) => site.status);
-      const allSites = ActiveSites.map((site) => ({
-        value: site.id,
-        label: site.site_name,
-      }));
-      setSites(allSites);
+      const res = await getEmployeeAssociations(empId);
+      console.log(res);
+
+      if (Array.isArray(res) && res.length > 0) {
+        const associatedSites = res[0].multiple_associated_info || [];
+        const allSites = associatedSites.map((site) => ({
+          value: site.id,
+          label: site.site_name,
+        }));
+
+        setNewSites(allSites);
+      } else {
+        setNewSites([]);
+      }
     } catch (error) {
       console.log(error);
     }
   };
   useEffect(() => {
-    fetchSiteWiseEmployee(associatedSiteId);
-    fetchSiteDetails();
-    fetchAssociatedSites();
+    fetchSiteAssociation();
   }, []);
 
   const columns = [
@@ -119,7 +131,7 @@ const SiteEmployee = () => {
         >
           <p className="font-medium">Employees on site "{siteName}"</p>
           <Select
-            options={sites}
+            options={newSites}
             onChange={handleAssociatedSiteChange}
             noOptionsMessage={() => "No sites Available"}
             placeholder="Select Site"
