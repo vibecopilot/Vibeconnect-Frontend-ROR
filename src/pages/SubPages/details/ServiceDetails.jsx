@@ -8,13 +8,13 @@ import {
   getSoftserviceActivityDetails,
 } from "../../../api";
 import { FaQrcode, FaRegFileAlt } from "react-icons/fa";
-import AssetQrCode from "./assetSubDetails/AssetQrCode";
 import Table from "../../../components/table/Table";
 import { dateTimeFormat } from "../../../utils/dateUtils";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { BsEye } from "react-icons/bs";
 import { HiArrowLeft, HiArrowRight } from "react-icons/hi";
+import SoftServiceQr from "./assetSubDetails/SoftServiceQr";
 
 const ServiceDetails = () => {
   const [selectedDate, setSelectedDate] = useState(
@@ -283,7 +283,7 @@ const ServiceDetails = () => {
               <p className="text-center w-full">No Attachments</p>
             )}
           </div>
-          
+
           <div className="flex justify-center items-center  md:p-0 p-2">
             <div className="w-full my-2">
               <div className="flex items-center gap-4 border-b border-gray-200">
@@ -468,12 +468,13 @@ const ServiceDetails = () => {
         </div>
       </div>
       {qrCode && (
-            <AssetQrCode
-              assetName={details.name}
-              onClose={() => setQrCode(false)}
-              QR={domainPrefix + details.qr_code_image_url}
-            />
-          )}
+        <SoftServiceQr
+          assetName={details.name}
+          onClose={() => setQrCode(false)}
+          QR={domainPrefix + details.qr_code_image_url}
+          softId={details.id}
+        />
+      )}
     </section>
   );
 };
