@@ -753,7 +753,10 @@ const AddChecklist = () => {
 
                     {/* Questions */}
                     {section.questions.map((question, questionIndex) => (
-                      <div key={questionIndex} className="border border-gray-400 rounded-md p-3 mb-3">
+                      <div
+                        key={questionIndex}
+                        className="border border-gray-400 rounded-md p-3 mb-3"
+                      >
                         <div className="grid gap-4">
                           <input
                             type="text"
@@ -1215,8 +1218,8 @@ const AddChecklist = () => {
                 </div>
               </div>
 
-              <div className="flex flex-col gap-4 ">
-                <div>
+              <div className="flex flex-col gap-4 ml-20">
+                <div className="ml-20">
                   <label className="font-semibold">Supervisors</label>
                   <Select
                     value={selectedOptionssupervisior}
@@ -1228,7 +1231,7 @@ const AddChecklist = () => {
                   />
                 </div>
 
-                <div className="flex flex-col ">
+                <div className="flex flex-col ml-20">
                   <label className="font-semibold">Supplier</label>
                   <select
                     className="border p-1 px-4 border-gray-500 rounded-md"
