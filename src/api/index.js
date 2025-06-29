@@ -787,12 +787,68 @@ export const updateActivity = async (id, data) =>
     },
   });
 
-export const getRoutineTask = async () =>
-  axiosInstance.get("/activities.json?q[checklist_ctype_eq]=routine", {
-    params: {
-      token: token,
-    },
+// export const getRoutineTask = async () =>
+//   axiosInstance.get("/activities.json?q[checklist_ctype_eq]=routine", {
+//     params: {
+//       token: token,
+//     },
+//   });
+
+// In your api file
+// ...existing code...
+
+// Update your API function to format dates properly
+export const getRoutineTask = async (
+  startDate = null,
+  endDate = null,
+  status = null
+) => {
+  const params = {
+    token: token,
+  };
+  if (startDate) {
+    const formattedStartDate = new Date(startDate).toISOString().split("T")[0];
+    params["q[start_date_gteq]"] = formattedStartDate;
+  }
+  if (endDate) {
+    const formattedEndDate = new Date(endDate).toISOString().split("T")[0];
+    params["q[start_date_lteq]"] = formattedEndDate;
+  }
+  if (status && status !== "all") {
+    params["q[status_eq]"] = status;
+  }
+
+  return axiosInstance.get("/activities.json?q[checklist_ctype_eq]=routine", {
+    params: params,
   });
+};
+
+
+export const getRoutineTaskStatus = async (status = null, startDate = null, endDate = null) => {
+  const token = localStorage.getItem("token");
+
+  const params = {
+    token,
+  };
+
+  if (status) {
+    params["q[status_eq]"] = status;
+  }
+
+  if (startDate) {
+    params["q[start_time_gteq]"] = startDate;
+  }
+
+  if (endDate) {
+    params["q[start_time_lteq]"] = endDate;
+  }
+
+  const response = await axiosInstance.get("/activities/routine_task_counts.json", { params });
+
+  return response.data;
+};
+
+// ...existing code...
 export const getPPMTask = async () =>
   axiosInstance.get("/activities.json?q[checklist_ctype_eq]=ppm", {
     params: {
