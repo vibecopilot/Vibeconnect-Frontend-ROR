@@ -5,7 +5,12 @@ import Table from "../components/table/Table";
 import { BsEye } from "react-icons/bs";
 import { MdDeleteForever } from "react-icons/md";
 import { BiEdit } from "react-icons/bi";
-import { API_URL, getRoutineTask, getVibeBackground } from "../api";
+import {
+  API_URL,
+  getRoutineTask,
+  getRoutineTaskStatus,
+  getVibeBackground,
+} from "../api";
 import toast from "react-hot-toast";
 import { getItemInLocalStorage } from "../utils/localStorage";
 import Navbar from "../components/Navbar";
@@ -32,22 +37,23 @@ const RoutineTask = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+
   const [statusCounts, setStatusCounts] = useState({
     all: 0,
     open: 0,
     pending: 0,
     overdue: 0,
-    completed: 0,
+    complete: 0, // Note: API returns 'complete' not 'completed'
   });
   const [isLoading, setIsLoading] = useState(false);
 
   // Status filter options
   const statusOptions = [
     { key: "all", label: "All", color: "bg-blue-500" },
-    { key: "open", label: "Open", color: "bg-green-500" },
+    // { key: "open", label: "Open", color: "bg-green-500" },
     { key: "pending", label: "Pending", color: "bg-yellow-500" },
     { key: "overdue", label: "Overdue", color: "bg-red-500" },
-    { key: "completed", label: "Completed", color: "bg-purple-500" },
+    { key: "complete", label: "Complete", color: "bg-purple-500" }, // Changed from 'completed'
   ];
 
   // Update the fetch function to always use current dates if none provided
@@ -92,11 +98,11 @@ const RoutineTask = () => {
   const calculateStatusCounts = (data) => {
     const counts = {
       all: data.length,
-      open: data.filter((t) => t.status.toLowerCase() === "open").length,
+      // open: data.filter((t) => t.status.toLowerCase() === "open").length,
       pending: data.filter((t) => t.status.toLowerCase() === "pending").length,
       overdue: data.filter((t) => t.status.toLowerCase() === "overdue").length,
-      completed: data.filter((t) => t.status.toLowerCase() === "completed")
-        .length,
+      complete: data.filter((t) => t.status.toLowerCase() === "complete")
+        .length, // Changed to 'complete'
     };
     setStatusCounts(counts);
   };
@@ -110,8 +116,27 @@ const RoutineTask = () => {
     setStartDate(today.toISOString().split("T")[0]);
     setEndDate(tomorrow.toISOString().split("T")[0]);
 
-    // Fetch all data initially
-    fetchRoutineTask();
+    // Use the same API function as status filtering for consistency
+    const fetchInitialData = async () => {
+      try {
+        const data = await getRoutineTaskStatus(); // No status = all data
+        setTasks(data.activities);
+        setFilteredData(data.activities);
+
+        // Set initial counts including 'all'
+        const initialCounts = {
+          ...data.counts,
+          all: data.activities.length,
+        };
+        setStatusCounts(initialCounts);
+
+        console.log("Initial data:", data);
+      } catch (error) {
+        console.error("Error fetching initial data:", error);
+      }
+    };
+
+    fetchInitialData();
   }, []);
 
   const dateFormat = (dateString) => {
@@ -159,7 +184,7 @@ const RoutineTask = () => {
               ? "bg-yellow-500"
               : row.status.toLowerCase() === "overdue"
               ? "bg-red-500"
-              : row.status.toLowerCase() === "completed"
+              : row.status.toLowerCase() === "complete" // Changed to 'complete'
               ? "bg-purple-500"
               : "bg-gray-500"
           }`}
@@ -223,40 +248,85 @@ const RoutineTask = () => {
   };
 
   // Filter by status with backend call
-  const handleStatusChange = async (status) => {
-    setSelectedStatus(status);
-    const statusParam = status === "all" ? null : status;
-    const startParam = startDate || null;
-    const endParam = endDate || null;
+  const handleStatusChange = async (statusKey) => {
+    setSelectedStatus(statusKey);
+    setIsLoading(true);
 
-    await fetchRoutineTask(startParam, endParam, statusParam);
-    applyClientFilters(status, startDate, endDate, searchText);
-  };
+    try {
+      const data = await getRoutineTaskStatus(
+        statusKey === "all" ? null : statusKey,
+        startDate || null,
+        endDate || null
+      );
 
-  // Filter by date range
-  const handleDateFilter = async () => {
-    if (startDate && endDate) {
-      const formattedStartDate = new Date(startDate)
-        .toISOString()
-        .split("T")[0];
-      const formattedEndDate = new Date(endDate).toISOString().split("T")[0];
-      const statusParam = selectedStatus === "all" ? null : selectedStatus;
+      setTasks(data.activities);
+      setFilteredData(data.activities);
 
-      await fetchRoutineTask(formattedStartDate, formattedEndDate, statusParam);
-      applyClientFilters(selectedStatus, startDate, endDate, searchText);
-    } else {
-      toast.error("Please select both start and end dates");
+      const updatedCounts = {
+        ...data.counts,
+        all: data.activities.length,
+      };
+      setStatusCounts(updatedCounts);
+    } catch (error) {
+      toast.error("Failed to load activities.");
+      console.error(error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Clear all filters
+  const handleDateFilter = async () => {
+    setIsLoading(true);
+
+    try {
+      const data = await getRoutineTaskStatus(
+        selectedStatus === "all" ? null : selectedStatus,
+        startDate || null,
+        endDate || null
+      );
+
+      setTasks(data.activities);
+      setFilteredData(data.activities);
+
+      const updatedCounts = {
+        ...data.counts,
+        all: data.activities.length,
+      };
+      setStatusCounts(updatedCounts);
+    } catch (error) {
+      toast.error("Failed to load activities.");
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleClearFilters = async () => {
     setStartDate("");
     setEndDate("");
     setSelectedStatus("all");
-    setSearchText("");
-    await fetchRoutineTask(); // Fetch all data without filters
+    setIsLoading(true);
+
+    try {
+      const data = await getRoutineTaskStatus();
+
+      setTasks(data.activities);
+      setFilteredData(data.activities);
+
+      const updatedCounts = {
+        ...data.counts,
+        all: data.activities.length,
+      };
+      setStatusCounts(updatedCounts);
+    } catch (error) {
+      toast.error("Failed to clear filters.");
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  console.log("counts Status", statusCounts);
 
   // Apply client-side filters (for search)
   const applyClientFilters = (status, start, end, search) => {
@@ -356,35 +426,31 @@ const RoutineTask = () => {
         </div>
 
         {/* Status Filter Boxes */}
-        <div className="flex flex-wrap gap-4 my-4">
+        <div className="flex flex-wrap gap-4 my-4 justify-center">
           {statusOptions.map((status) => (
             <div
               key={status.key}
               onClick={() => handleStatusChange(status.key)}
-              className={`shadow-xl cursor-pointer rounded-xl border-2 sm:w-18 sm:px-6 px-2 py-1 flex flex-col items-center transition-all duration-300 hover:scale-105 ${
+              className={`shadow-xl cursor-pointer rounded-xl border-2 sm:w-32 sm:px-4 px-2 py-2 flex flex-col items-center transition-all duration-300 hover:scale-105 ${
                 selectedStatus === status.key
                   ? "bg-blue-100 border-blue-500 transform scale-105"
                   : "bg-white border-gray-300 hover:border-blue-300"
               }`}
+              title={`Show ${status.label} activities`}
+              role="button"
+              tabIndex={0}
             >
               <span className="font-medium text-sm capitalize text-gray-700">
                 {status.label}
               </span>
               <span className="font-bold text-sm text-blue-600">
-                {statusCounts[status.key]}
+                {statusCounts[status.key] || 0}
               </span>
-              {/* <span className="text-xs text-gray-500 mt-1"> */}
-              {/* {statusCounts.all > 0
-                  ? `${(
-                      (statusCounts[status.key] / statusCounts.all) *
-                      100
-                    ).toFixed(1)}%`
-                  : "0%"} */}
-              {/* </span> */}
             </div>
           ))}
 
-          <div className="flex gap-2 items-center">
+          {/* Move date inputs outside the status boxes */}
+          <div className="flex flex-col gap-1 items-center">
             <label className="text-sm font-medium">Start Date:</label>
             <input
               type="date"
@@ -392,7 +458,9 @@ const RoutineTask = () => {
               onChange={(e) => setStartDate(e.target.value)}
               className="border-2 p-2 border-gray-300 rounded-lg"
             />
+          </div>
 
+          <div className="flex flex-col gap-1 items-center">
             <label className="text-sm font-medium">End Date:</label>
             <input
               type="date"
@@ -401,21 +469,23 @@ const RoutineTask = () => {
               className="border-2 p-2 border-gray-300 rounded-lg"
             />
           </div>
+          <div className="flex flex-col">
+            <button
+              onClick={handleDateFilter}
+              disabled={isLoading}
+              className="bg-blue-500 hover:bg-blue-700 disabled:bg-blue-300 text-white font-bold py-1 px-2 mb-2 rounded self-center"
+            >
+              {isLoading ? "Loading..." : "Apply Date Filter"}
+            </button>
 
-          <button
-            onClick={handleDateFilter}
-            disabled={isLoading}
-            className="bg-gray-500 hover:bg-gray-700 disabled:bg-blue-300 text-white font-bold py-1 px-2 rounded"
-          >
-            {isLoading ? "Loading..." : "Filter"}
-          </button>
-          <button
-            onClick={handleClearFilters}
-            disabled={isLoading}
-            className="bg-red-400 hover:bg-red-700 disabled:bg-red-300 text-white font-bold py-1 px-2 rounded"
-          >
-            Clear Filter
-          </button>
+            <button
+              onClick={handleClearFilters}
+              disabled={isLoading}
+              className="bg-red-500 hover:bg-red-700 disabled:bg-red-300 text-white font-bold py-1 px-2 rounded self-center"
+            >
+              Clear Filters
+            </button>
+          </div>
         </div>
 
         {/* Loading indicator */}
