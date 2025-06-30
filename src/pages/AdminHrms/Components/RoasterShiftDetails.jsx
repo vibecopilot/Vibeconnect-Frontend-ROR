@@ -36,7 +36,7 @@ function RoasterShiftDetails({
   const [formData, setFormData] = useState({
     endOn: "never",
   });
-  console.log("Employee id",employee.id);
+  console.log("Employee id", employee.id);
   const formatDate = (date) => {
     return new Date(date).toLocaleDateString("en-US", {
       day: "numeric",
@@ -48,8 +48,8 @@ function RoasterShiftDetails({
   console.log(mode);
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
   const [shifts, setShifts] = useState([]);
-  
-  console.log(shiftData, repeat, frequency, formData.endOn, endDate ,);
+
+  console.log(shiftData, repeat, frequency, formData.endOn, endDate);
   useEffect(() => {
     const fetchRosterRecordDetails = async () => {
       try {
@@ -66,12 +66,12 @@ function RoasterShiftDetails({
         console.log(error);
       }
     };
-   
+
     const fetchRosterShifts = async () => {
       try {
         const res = await getRosterShift(hrmsOrgId);
         setShifts(res);
-        console.log("shift details",res)
+        console.log("shift details", res);
       } catch (error) {
         console.log(error);
       }
@@ -212,7 +212,7 @@ function RoasterShiftDetails({
     // editData.append("selected_weekday", dayNumber);
     // editData.append("nth_weekday", indexNumber);
     editData.append("ends_on", formData.endOn);
-    editData.append("end_date", endDate);
+    editData.append("end_date", formattedDate);
     try {
       const res = await editRosterAssign(date.id, editData);
       onClose();
@@ -284,7 +284,7 @@ function RoasterShiftDetails({
   //   toast.error("End date must be after the current shift date");
   //   return;
   // }
-  
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center">
       <div className="bg-white p-6 rounded-xl shadow-lg w-2/3 md:w-1/3">
@@ -350,7 +350,8 @@ function RoasterShiftDetails({
               <option value="">Select Shift</option>
               {shifts.map((shift) => (
                 <option value={shift.id} key={shift.id}>
-                  {shift.name} start time:{shift.start_time || "no start time"} ,  End Time:{shift.end_time || "no end time"}
+                  {shift.name} start time:{shift.start_time || "no start time"}{" "}
+                  , End Time:{shift.end_time || "no end time"}
                 </option>
               ))}
             </select>
@@ -438,7 +439,11 @@ function RoasterShiftDetails({
                     className="w-full p-2 border rounded-md"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
-                    min={new Date(new Date(schedule).getTime() + 24 * 60 *  1000).toISOString().split('T')[0]}
+                    min={
+                      new Date(new Date(schedule).getTime() + 24 * 60 * 1000)
+                        .toISOString()
+                        .split("T")[0]
+                    }
                   />
                 </div>
               )}
