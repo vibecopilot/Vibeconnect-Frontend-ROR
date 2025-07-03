@@ -10,12 +10,12 @@ import { getItemInLocalStorage } from "../../utils/localStorage";
 import toast from "react-hot-toast";
 import EditVariableDeductionModal from "./Modals/EditVariableDeductionModal";
 import {
-  
   getHrmsFixedDeduction,
   postHrmsFixedDeduction,
-  deleteHrmsFixedDeduction
+  deleteHrmsFixedDeduction,
+  getHrmsFilteredDeduction,
 } from "../../api";
-
+import { Pagination } from "antd";
 
 const VariableDeduction = () => {
   const listItemStyle = {
@@ -28,8 +28,7 @@ const VariableDeduction = () => {
   const [isEditModal, setIsEditModal] = useState(false);
   const [deductions, setDeductions] = useState([]);
   const [filteredDeductions, setFilteredDeductions] = useState([]);
-  const [searchText, setSearchText] = useState("");
-  
+
   const columns = [
     {
       name: "Name",
@@ -77,11 +76,11 @@ const VariableDeduction = () => {
       name: "",
       deduction_type: "variable",
       percentage_of_salary: "",
-      value: "0"
+      value: "0",
     });
     setErrors({
       name: false,
-      percentage_of_salary: false
+      percentage_of_salary: false,
     });
     setModalIsOpen(true);
   };
@@ -106,66 +105,79 @@ const VariableDeduction = () => {
     name: "",
     deduction_type: "variable",
     percentage_of_salary: "",
-    value: "0"
+    value: "0",
   });
 
   const [errors, setErrors] = useState({
     name: false,
-    percentage_of_salary: false
+    percentage_of_salary: false,
   });
-
+  const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
   const validateForm = () => {
     const newErrors = {
       name: formData.name.trim() === "",
-      percentage_of_salary: formData.percentage_of_salary === "" || 
-                          isNaN(formData.percentage_of_salary) || 
-                          Number(formData.percentage_of_salary) < 0 || 
-                          Number(formData.percentage_of_salary) > 100
+      percentage_of_salary:
+        formData.percentage_of_salary === "" ||
+        isNaN(formData.percentage_of_salary) ||
+        Number(formData.percentage_of_salary) < 0 ||
+        Number(formData.percentage_of_salary) > 100,
     };
-    
+
     setErrors(newErrors);
-    return !Object.values(newErrors).some(error => error);
+    return !Object.values(newErrors).some((error) => error);
   };
 
+  const [pageNumber, setPageNumber] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [searchText, setSearchText] = useState("");
   const fetchVariableDeductions = async () => {
     try {
-      const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
-      const res = await getHrmsFixedDeduction(hrmsOrgId);
-      
-      const variableDeductions = res.filter((item) => item.deduction_type === "variable");
-      
-      setFilteredDeductions(variableDeductions);
-      setDeductions(variableDeductions);
+      const res = await getHrmsFilteredDeduction(
+        hrmsOrgId,
+        "variable",
+        pageNumber + 1,
+        searchText
+      );
+      const results = res?.results;
+      const fixedDeductions = results.filter(
+        (item) => item.deduction_type === "variable"
+      );
+      setDeductions(results);
+      setFilteredDeductions(fixedDeductions);
+      setTotalPages(res?.total_pages);
     } catch (error) {
-      console.log(error);
+      console.error("Error fetching variable deductions:", error);
+      toast.error("Failed to fetch variable deductions");
     }
   };
 
   useEffect(() => {
     fetchVariableDeductions();
-  }, []);
+    window.scrollTo(0, 0);
+  }, [pageNumber, searchText]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
-    
+
     // Clear error when user starts typing
     if (value.trim() !== "") {
-      setErrors({...errors, [name]: false});
+      setErrors({ ...errors, [name]: false });
     }
   };
 
   const handleBlur = (e) => {
     const { name, value } = e.target;
     if (name === "name") {
-      setErrors({...errors, [name]: value.trim() === ""});
+      setErrors({ ...errors, [name]: value.trim() === "" });
     } else if (name === "percentage_of_salary") {
       setErrors({
-        ...errors, 
-        [name]: value === "" || 
-                isNaN(value) || 
-                Number(value) < 0 || 
-                Number(value) > 100
+        ...errors,
+        [name]:
+          value === "" ||
+          isNaN(value) ||
+          Number(value) < 0 ||
+          Number(value) > 100,
       });
     }
   };
@@ -195,19 +207,6 @@ const VariableDeduction = () => {
     }
   };
 
-  const handleSearch = (e) => {
-    const searchValue = e.target.value;
-    setSearchText(searchValue);
-    if (searchValue.trim() === "") {
-      setFilteredDeductions(deductions);
-    } else {
-      const filteredResults = deductions.filter((item) =>
-        item.name.toLowerCase().includes(searchValue.toLowerCase())
-      );
-      setFilteredDeductions(filteredResults);
-    }
-  };
-
   return (
     <section className="flex ml-20">
       <PayrollSettingDetailsList />
@@ -218,7 +217,7 @@ const VariableDeduction = () => {
             placeholder="Search by name"
             className="border border-gray-400 w-full placeholder:text-sm rounded-md p-2"
             value={searchText}
-            onChange={handleSearch}
+            onChange={(e) => setSearchText(e.target.value)}
           />
           <button
             onClick={openModal}
@@ -228,11 +227,20 @@ const VariableDeduction = () => {
             Add
           </button>
         </div>
-        <Table
-          columns={columns}
-          data={filteredDeductions}
-          isPagination={true}
-        />
+        <Table columns={columns} data={filteredDeductions} pagination={false} />
+        {filteredDeductions.length > 0 && (
+          <div className={"w-full mt- flex justify-end border rounded-md p-2"}>
+            <Pagination
+              current={pageNumber + 1}
+              total={totalPages * 10}
+              pageSize={10}
+              onChange={(page) => {
+                setPageNumber(page - 1);
+              }}
+              showSizeChanger={false}
+            />
+          </div>
+        )}
       </div>
 
       {modalIsOpen && (
@@ -260,7 +268,9 @@ const VariableDeduction = () => {
                     required
                   />
                   {errors.name && (
-                    <p className="text-red-500 text-sm mt-1">Name is required</p>
+                    <p className="text-red-500 text-sm mt-1">
+                      Name is required
+                    </p>
                   )}
                 </div>
 
@@ -288,7 +298,9 @@ const VariableDeduction = () => {
                     onChange={handleChange}
                     onBlur={handleBlur}
                     className={`w-full p-2 border rounded ${
-                      errors.percentage_of_salary ? "border-red-500" : "border-gray-300"
+                      errors.percentage_of_salary
+                        ? "border-red-500"
+                        : "border-gray-300"
                     }`}
                     placeholder="Enter percentage (0-100)"
                     min="0"
@@ -298,8 +310,8 @@ const VariableDeduction = () => {
                   />
                   {errors.percentage_of_salary && (
                     <p className="text-red-500 text-sm mt-1">
-                      {formData.percentage_of_salary === "" 
-                        ? "Percentage is required" 
+                      {formData.percentage_of_salary === ""
+                        ? "Percentage is required"
                         : "Must be between 0 and 100"}
                     </p>
                   )}
@@ -325,7 +337,7 @@ const VariableDeduction = () => {
           </div>
         </div>
       )}
-      
+
       {isEditModal && (
         <EditVariableDeductionModal
           EditId={editId}
@@ -333,7 +345,7 @@ const VariableDeduction = () => {
           fetchVariableDeductions={fetchVariableDeductions}
         />
       )}
-      
+
       <div className="my-4 mx-2 w-fit">
         <div className="flex flex-col mt-4 mr-1 bg-gray-50 rounded-md text-wrap  gap-4 my-2 py-2 pl-5 pr-2 w-[18rem]">
           <div className="flex  gap-4 font-medium">
@@ -360,9 +372,7 @@ const VariableDeduction = () => {
               </li>
               <li>
                 <ul style={listItemStyle}>
-                  <li>
-                    These can also be mapped to the employee CTC.
-                  </li>
+                  <li>These can also be mapped to the employee CTC.</li>
                 </ul>
               </li>
               <li>
