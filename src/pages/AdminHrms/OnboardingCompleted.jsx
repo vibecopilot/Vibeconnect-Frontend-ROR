@@ -14,7 +14,6 @@ import { dateFormatSTD } from "../../utils/dateUtils";
 const OnBoardingCompleted = () => {
   const [employees, setEmployees] = useState([]); // Original data
   const [filteredEmployees, setFilteredEmployees] = useState([]); // Filtered data for the table
-  const [searchText, setSearchText] = useState(""); // Search input text
 
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
   const approverID = getItemInLocalStorage("APPROVERID");
@@ -28,7 +27,7 @@ const OnBoardingCompleted = () => {
       );
       setEmployees(sortedEmployees);
       setFilteredEmployees(sortedEmployees);
-      console.log(filteredEmployees) // Initialize filtered data
+      console.log(filteredEmployees); // Initialize filtered data
     } catch (error) {
       console.log(error);
     }
@@ -51,20 +50,20 @@ const OnBoardingCompleted = () => {
   //   }
   // };
 
-
-  const handleSearch = (event) => {
-    const searchValue = event.target.value;
+  const [searchText, setSearchText] = useState("");
+  const handleSearch = (e) => {
+    const searchValue = e.target.value;
     setSearchText(searchValue);
+
     if (searchValue.trim() === "") {
       setFilteredEmployees(employees);
     } else {
-      const filteredResults = employees.filter((item) =>
-        item.employee_name.toLowerCase().includes(searchValue.toLowerCase())
+      const filtered = employees.filter((item) =>
+        item.employee_name?.toLowerCase().includes(searchValue.toLowerCase())
       );
-      setFilteredEmployees(filteredResults);
+      setFilteredEmployees(filtered);
     }
   };
-
 
   useEffect(() => {
     fetchAllEmployees();

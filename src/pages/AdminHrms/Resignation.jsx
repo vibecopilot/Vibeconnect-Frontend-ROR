@@ -9,7 +9,7 @@ import {
   postResignations,
   putAdditionalResignationDetails,
 } from "../../api";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { FaCheck } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
 import { getItemInLocalStorage } from "../../utils/localStorage";
@@ -80,6 +80,18 @@ const Resignation = () => {
   console.log(formData);
   const navigate = useNavigate();
   const handleResignationSubmission = async () => {
+    if (!formData.applicateDate) {
+      return toast.error("Enter applicate date");
+    }
+    if (!formData.separationReason) {
+      return toast.error("Enter separation reason ");
+    }
+    if (!formData.lastWorkingDate) {
+      return toast.error("Enter last working date");
+    }
+    if (!formData.fnfMonth) {
+      return toast.error("Enter fnf Month ");
+    }
     const resignationData = new FormData();
     resignationData.append("employee", id);
     resignationData.append(
@@ -187,7 +199,6 @@ const Resignation = () => {
     setAddInfo({ ...addInfo, [e.target.name]: e.target.value });
   };
 
-  
   return (
     <div className="flex justify-between">
       <AdminHRMS />
@@ -574,7 +585,7 @@ const Resignation = () => {
             {/* <div className="grid gap-2 items-center w-full">
               <label className=" font-medium flex items-center gap-2 ">
                 Leave Encashment/Recovery Days{" "}
-                
+
                 <FaCircleInfo title="Enter the leave encashment days which you would like to show in F&F" />
               </label>
               <input
@@ -588,7 +599,7 @@ const Resignation = () => {
             {/* <div className="grid gap-2 items-center w-full">
               <label className="font-medium flex items-center gap-2">
                 Leave Encashment/Recovery Amount{" "}
-               
+
                 <FaCircleInfo title="Enter the leave encashment amount you would like to pay in F&F" />
               </label>
               <input
@@ -761,12 +772,13 @@ const Resignation = () => {
             >
               <FaCheck /> Submit
             </button>
-            <button
-              type="submit"
+            <Link
+              to={"/hrms/separation/separation-request"}
+              type="button"
               className="border-red-500 border-2 px-4 p-2 rounded-md text-red-500 flex items-center gap-2"
             >
               <MdClose /> Cancel
-            </button>
+            </Link>
           </div>
         </div>
       </div>
@@ -810,26 +822,26 @@ const Resignation = () => {
 
               {/* <li>
                 <p>
-                 
+
                   Control the leave encashment/recovery, gratuity eligibility,
                   and notice period recovery.{" "}
                 </p>
               </li> */}
               {/* <li>
                 <p>
-                 
+
                   View/Edit/Cancel Separation Applications{" "}
                 </p>
               </li> */}
               {/* <li>
                 <p>
-                 
+
                   Download FNF Payslip{" "}
                 </p>
               </li> */}
               {/* <li>
                 <p>
-                 
+
                   Download Resignation details{" "}
                 </p>
               </li> */}

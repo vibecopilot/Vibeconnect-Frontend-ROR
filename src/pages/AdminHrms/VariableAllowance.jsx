@@ -15,12 +15,14 @@ import {
   postVariableAllowance,
   getHrmsFixedAllowance,
   postHrmsFixedAllowance,
-  deleteHrmsFixedAllowance
+  deleteHrmsFixedAllowance,
+  getHrmsFilteredAllowance,
 } from "../../api";
 import { BiEdit } from "react-icons/bi";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import toast from "react-hot-toast";
 import EditVariableAllowanceModal from "./Modals/EditVariableAllowanceModal";
+import { Pagination } from "antd";
 
 const VariableAllowance = () => {
   const listItemStyle = {
@@ -36,8 +38,10 @@ const VariableAllowance = () => {
   const [locations, setLocations] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [VariableAllowance, setVariableAllowance] = useState([]);
-  const [filteredVariableAllowances, setFilteredVariableAllowances] = useState([]);
-  
+  const [filteredVariableAllowances, setFilteredVariableAllowances] = useState(
+    []
+  );
+
   const columns = [
     {
       name: "Custom Label",
@@ -85,11 +89,11 @@ const VariableAllowance = () => {
       name: "",
       component_type: "variable",
       percentage_of_ctc: "",
-      value: "0"
+      value: "0",
     });
     setErrors({
       name: false,
-      percentage_of_ctc: false
+      percentage_of_ctc: false,
     });
     setModalIsOpen(true);
   };
@@ -114,63 +118,93 @@ const VariableAllowance = () => {
     name: "",
     component_type: "variable",
     percentage_of_ctc: "",
-    value: "0"
+    value: "0",
   });
 
   const [errors, setErrors] = useState({
     name: false,
-    percentage_of_ctc: false
+    percentage_of_ctc: false,
   });
 
   const validateForm = () => {
     const newErrors = {
       name: formData.name.trim() === "",
-      percentage_of_ctc: formData.percentage_of_ctc === "" || 
-                        isNaN(formData.percentage_of_ctc) || 
-                        Number(formData.percentage_of_ctc) < 0 || 
-                        Number(formData.percentage_of_ctc) > 100
+      percentage_of_ctc:
+        formData.percentage_of_ctc === "" ||
+        isNaN(formData.percentage_of_ctc) ||
+        Number(formData.percentage_of_ctc) < 0 ||
+        Number(formData.percentage_of_ctc) > 100,
     };
-    
+
     setErrors(newErrors);
-    return !Object.values(newErrors).some(error => error);
+    return !Object.values(newErrors).some((error) => error);
   };
 
+  const [pageNumber, setPageNumber] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [searchText, setSearchText] = useState("");
   const fetchVariableAllowance = async () => {
     try {
-      const res = await getHrmsFixedAllowance(hrmsOrgId);
-      const VariableAllowance = res.filter((item) => item.component_type === "variable");
-      setFilteredVariableAllowances(VariableAllowance);
-      setVariableAllowance(VariableAllowance);
+      const res = await getHrmsFilteredAllowance(
+        hrmsOrgId,
+        "variable",
+        pageNumber + 1,
+        searchText
+      );
+      const results = res?.results;
+      const variableComponent = results.filter(
+        (item) => item.component_type === "variable"
+      );
+      setFilteredVariableAllowances(variableComponent);
+      setVariableAllowance(results);
+      setTotalPages(res?.total_pages);
     } catch (error) {
-      console.log(error);
+      console.log("Error get fixed allowance ", error);
     }
   };
 
   useEffect(() => {
+    // fetchFixedAllowance();
     fetchVariableAllowance();
-  }, []);
+  }, [pageNumber, searchText]);
+
+  // const fetchVariableAllowance = async () => {
+  //   try {
+  //     const res = await getHrmsFixedAllowance(hrmsOrgId);
+  //     const VariableAllowance = res.filter((item) => item.component_type === "variable");
+  //     setFilteredVariableAllowances(VariableAllowance);
+  //     setVariableAllowance(VariableAllowance);
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // };
+
+  // useEffect(() => {
+  //   fetchVariableAllowance();
+  // }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
-    
+
     // Clear error when user starts typing
     if (value.trim() !== "") {
-      setErrors({...errors, [name]: false});
+      setErrors({ ...errors, [name]: false });
     }
   };
 
   const handleBlur = (e) => {
     const { name, value } = e.target;
     if (name === "name") {
-      setErrors({...errors, [name]: value.trim() === ""});
+      setErrors({ ...errors, [name]: value.trim() === "" });
     } else if (name === "percentage_of_ctc") {
       setErrors({
-        ...errors, 
-        [name]: value === "" || 
-                isNaN(value) || 
-                Number(value) < 0 || 
-                Number(value) > 100
+        ...errors,
+        [name]:
+          value === "" ||
+          isNaN(value) ||
+          Number(value) < 0 ||
+          Number(value) > 100,
       });
     }
   };
@@ -201,20 +235,6 @@ const VariableAllowance = () => {
     }
   };
 
-  const [searchText, setSearchText] = useState("");
-  const handleSearch = (e) => {
-    const searchValue = e.target.value;
-    setSearchText(searchValue);
-    if (searchValue.trim() === "") {
-      setFilteredVariableAllowances(VariableAllowance);
-    } else {
-      const filteredResults = VariableAllowance.filter((item) =>
-        item.name.toLowerCase().includes(searchValue.toLowerCase())
-      );
-      setFilteredVariableAllowances(filteredResults);
-    }
-  };
-
   return (
     <section className="flex ml-20">
       <PayrollSettingDetailsList />
@@ -223,9 +243,9 @@ const VariableAllowance = () => {
           <input
             type="text"
             placeholder="Search by name"
-            className="border border-gray-400 w-full placeholder:text-sm rounded-md p-2"
+            className="border border-gray-400 w-full placeholder:text-sm rounded-lg p-2"
             value={searchText}
-            onChange={handleSearch}
+            onChange={(e) => setSearchText(e.target.value)}
           />
           <button
             onClick={openModal}
@@ -238,8 +258,21 @@ const VariableAllowance = () => {
         <Table
           columns={columns}
           data={filteredVariableAllowances}
-          isPagination={true}
+          pagination={false}
         />
+        {filteredVariableAllowances.length > 0 && (
+          <div className={"w-full mt- flex justify-end border rounded-md p-2"}>
+            <Pagination
+              current={pageNumber + 1}
+              total={totalPages * 10}
+              pageSize={10}
+              onChange={(page) => {
+                setPageNumber(page - 1);
+              }}
+              showSizeChanger={false}
+            />
+          </div>
+        )}
       </div>
 
       {modalIsOpen && (
@@ -267,7 +300,9 @@ const VariableAllowance = () => {
                     required
                   />
                   {errors.name && (
-                    <p className="text-red-500 text-sm mt-1">Name is required</p>
+                    <p className="text-red-500 text-sm mt-1">
+                      Name is required
+                    </p>
                   )}
                 </div>
 
@@ -295,7 +330,9 @@ const VariableAllowance = () => {
                     onChange={handleChange}
                     onBlur={handleBlur}
                     className={`w-full p-2 border rounded ${
-                      errors.percentage_of_ctc ? "border-red-500" : "border-gray-300"
+                      errors.percentage_of_ctc
+                        ? "border-red-500"
+                        : "border-gray-300"
                     }`}
                     placeholder="Enter percentage (0-100)"
                     min="0"
@@ -305,8 +342,8 @@ const VariableAllowance = () => {
                   />
                   {errors.percentage_of_ctc && (
                     <p className="text-red-500 text-sm mt-1">
-                      {formData.percentage_of_ctc === "" 
-                        ? "Percentage is required" 
+                      {formData.percentage_of_ctc === ""
+                        ? "Percentage is required"
                         : "Must be between 0 and 100"}
                     </p>
                   )}
@@ -332,15 +369,15 @@ const VariableAllowance = () => {
           </div>
         </div>
       )}
-      
+
       {isEditModal && (
-        <EditVariableAllowanceModal 
+        <EditVariableAllowanceModal
           EditId={editId}
           closeModal={() => setIsEditModal(false)}
           fetchVariableAllowance={fetchVariableAllowance}
         />
       )}
-      
+
       <div className="my-4 mx-2 w-fit">
         <div className="flex flex-col mt-4 mr-1 bg-gray-50 rounded-md text-wrap  gap-4 my-2 py-2 pl-5 pr-2 w-[18rem]">
           <div className="flex  gap-4 font-medium">
