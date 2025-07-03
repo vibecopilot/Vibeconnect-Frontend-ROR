@@ -5957,6 +5957,22 @@ export const editFixedAllowanceDetails = async (FAid, data) => {
   }
 };
 // fixed  Hrms allowance
+export const getHrmsFilteredAllowance = async (
+  org_id,
+  type,
+  pageNumber,
+  search
+) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/ctc-components/?organization_id=${org_id}&component_type=${type}&page=${pageNumber}&search=${search}`
+    );
+    return response.data;
+  } catch (error) {
+    console.log("Error getting  Allowance:", error);
+    throw error;
+  }
+};
 export const getHrmsFixedAllowance = async (org_id) => {
   try {
     const response = await HrmsAuth.get(
@@ -6040,6 +6056,17 @@ export const deleteCtcProfile = async (FDid) => {
 };
 
 // fixed hrms deduction
+export const getHrmsFilteredDeduction = async (org_id, type, page, search) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/ctc-deductions/?organization_id=${org_id}&deduction_type=${type}&page=${page}&search=${search}`
+    );
+    return response.data;
+  } catch (error) {
+    console.log("Error Getting deduction", error);
+    throw error;
+  }
+};
 export const getHrmsFixedDeduction = async (org_id) => {
   try {
     const response = await HrmsAuth.get(
@@ -6097,6 +6124,17 @@ export const createEmployeeProfile = async (data) => {
     return response.data;
   } catch (error) {
     console.log("Error Creating the employee profile", error);
+    throw error;
+  }
+};
+export const getHrmsCtcFiltereTemplate = async (orgId, page, search, site) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/ctc-template-organization/?organization_id=${orgId}&page=${page}&search=${search}&associated=${site}`
+    );
+    return response.data;
+  } catch (error) {
+    console.log("Error Getting The Ctc Template Data", error);
     throw error;
   }
 };

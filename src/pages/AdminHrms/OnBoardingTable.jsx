@@ -137,11 +137,21 @@ const OnBoardingTable = () => {
     };
     fetchRoleAccess();
   }, []);
-   const [searchText ,setSearchText] = useState("");
-  const handleSearch  = (e) =>{
-    const searchValue  =e.target.value;
-     setSearchText(searchValue);
-  }
+  const [searchText, setSearchText] = useState("");
+  const handleSearch = (e) => {
+    const searchValue = e.target.value;
+    setSearchText(searchValue);
+
+    if (searchValue.trim() === "") {
+      setFilteredNotifications(notifications);
+    } else {
+      const filtered = notifications.filter((item) =>
+        item.employee_name?.toLowerCase().includes(searchValue.toLowerCase())
+      );
+      setFilteredNotifications(filtered);
+    }
+  };
+
   return (
     <section className="flex">
       <div className=" w-full flex  flex-col overflow-hidden">
@@ -150,8 +160,9 @@ const OnBoardingTable = () => {
             type="text"
             placeholder="Search by name "
             className="border border-gray-400 w-[30rem] placeholder:text-sm rounded-lg p-2"
-              value={searchText}
-              onChange={handleSearch}
+            value={searchText}
+            name="searchText"
+            onChange={handleSearch}
           />
           {roleAccess?.can_add_employee && (
             <div className="flex justify-end">

@@ -14,16 +14,18 @@ import {
   postFixedAllowance,
   getHrmsFixedAllowance,
   postHrmsFixedAllowance,
-  deleteHrmsFixedAllowance
+  deleteHrmsFixedAllowance,
+  getHrmsFilteredAllowance,
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import toast from "react-hot-toast";
 import { BiEdit } from "react-icons/bi";
 import EditFixedAllowanceModal from "./Modals/EditFixedAllowanceModal";
+import { Pagination } from "antd";
 
 const FixedAllowance = () => {
-    const hrmsOrgId = getItemInLocalStorage("HRMSORGID")
-    const themeColor = useSelector((state)=>state.theme.color)
+  const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
+  const themeColor = useSelector((state) => state.theme.color);
   const listItemStyle = {
     listStyleType: "disc",
     color: "gray",
@@ -35,11 +37,11 @@ const FixedAllowance = () => {
 
   const [selectedOption, setSelectedOption] = useState(null);
   const [formData, setFormData] = useState({
-    name:"",
-    component_type:"fixed",
+    name: "",
+    component_type: "fixed",
     percentage_of_ctc: "0.00",
     value: "0.00",
-    organization: hrmsOrgId
+    organization: hrmsOrgId,
   });
 
   const options = [
@@ -67,7 +69,7 @@ const FixedAllowance = () => {
     //       {row.component_type}
     //     </span>
     //   )
-    // }, 
+    // },
     // {
     //   name: "Percentage of CTC",
     //   selector: (row) => row.percentage_of_ctc,
@@ -79,7 +81,7 @@ const FixedAllowance = () => {
       name: "Value",
       selector: (row) => row.value,
       sortable: true,
-      cell: (row) => `₹${parseFloat(row.value).toLocaleString('en-IN')}`
+      cell: (row) => `₹${parseFloat(row.value).toLocaleString("en-IN")}`,
     },
     // {
     //   name: "PT",
@@ -146,7 +148,7 @@ const FixedAllowance = () => {
     try {
       await deleteHrmsFixedAllowance(FAId);
       // fetchFixedAllowance();
-      fetchHrmsFixedAllowance()
+      fetchHrmsFixedAllowance();
       toast.success("Fixed Allowance deleted successfully");
     } catch (error) {
       console.log(error);
@@ -166,66 +168,78 @@ const FixedAllowance = () => {
   //     console.log(error);
   //   }
   // };
-  const [showOnlyFixed , setShowOnlyFixed] = useState(true)
-  const fetchHrmsFixedAllowance = async ()=>{
+
+  const [showOnlyFixed, setShowOnlyFixed] = useState(true);
+  const [pageNumber, setPageNumber] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [searchText, setSearchText] = useState("");
+  const fetchHrmsFixedAllowance = async () => {
     try {
-      const res = await getHrmsFixedAllowance(hrmsOrgId)
-      const fixedComponents = res.filter((item)=> item.component_type === "fixed");
+      const res = await getHrmsFilteredAllowance(
+        hrmsOrgId,
+        "fixed",
+        pageNumber + 1,
+        searchText
+      );
+      const results = res?.results;
+      const fixedComponents = results.filter(
+        (item) => item.component_type === "fixed"
+      );
       setFilteredFixedAllowances(fixedComponents);
-      setFixedAllowances(res);
-      
+      setFixedAllowances(results);
+      setTotalPages(res?.total_pages);
     } catch (error) {
-      console.log('Error get fixed allowance ', error)
+      console.log("Error get fixed allowance ", error);
     }
-  }
-  
+  };
+
   useEffect(() => {
     // fetchFixedAllowance();
     fetchHrmsFixedAllowance();
-  }, []);
-  // post data 
+  }, [pageNumber, searchText]);
+  // post data
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleAddFixedAllowance = async () => {
     const { name, value } = formData;
-  
+
     if (!name) {
       toast.error("Please enter a name.");
       return;
     }
-  
+
     if (!value) {
       toast.error("Please enter a value.");
       return;
     }
-  
+
     try {
       const postData = {
         name: formData.name,
         component_type: "fixed",
         percentage_of_ctc: formData.percentage_of_ctc || "0.00",
         value: formData.value,
-        organization: hrmsOrgId
+        organization: hrmsOrgId,
       };
-  
+
       await postHrmsFixedAllowance(postData);
       setModalIsOpen(false);
       toast.success("Fixed Allowance added successfully");
       fetchHrmsFixedAllowance();
-      
+
       // Reset form
       setFormData({
         name: "",
         component_type: "fixed",
         percentage_of_ctc: "0.00",
         value: "0.00",
-        organization: hrmsOrgId
+        organization: hrmsOrgId,
       });
     } catch (error) {
       console.error("Error adding allowance:", error);
@@ -241,6 +255,8 @@ const FixedAllowance = () => {
             type="text"
             placeholder="Search by name"
             className="border border-gray-400 w-full placeholder:text-sm rounded-lg p-2"
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
           />
           <button
             onClick={openModal}
@@ -254,99 +270,110 @@ const FixedAllowance = () => {
         <Table
           columns={columns}
           data={filteredFixedAllowances}
-          isPagination={true}
+          pagination={false}
         />
+        {filteredFixedAllowances.length > 0 && (
+          <div className={"w-full mt- flex justify-end border rounded-md p-2"}>
+            <Pagination
+              current={pageNumber + 1}
+              total={totalPages * 10}
+              pageSize={10}
+              onChange={(page) => {
+                setPageNumber(page - 1);
+              }}
+              showSizeChanger={false}
+            />
+          </div>
+        )}
       </div>
 
       {modalIsOpen && (
-  <div className="fixed inset-0 z-50 flex items-center overflow-y-auto justify-center bg-black bg-opacity-50">
-    <div className="max-h-[100%] bg-white p-8 w-2/3 rounded-lg shadow-lg ">
-      <h2 className="text-2xl font-bold border-b mb-2">Add New Fixed Allowance</h2>
-      <div>
-        <div className="grid md:grid-cols-2 gap-5 my-5 max-h-96 overflow-y-auto p-1">
-          <div className="grid gap-2 items-center w-full">
-            <label className="block mb-1 font-semibold">
-              Name <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              className="w-full p-2 border border-gray-300 rounded"
-              value={formData.name}
-              onChange={handleChange}
-              name="name"
-              placeholder="Allowance name"
-            />
-          </div>
+        <div className="fixed inset-0 z-50 flex items-center overflow-y-auto justify-center bg-black bg-opacity-50">
+          <div className="max-h-[100%] bg-white p-8 w-2/3 rounded-lg shadow-lg ">
+            <h2 className="text-2xl font-bold border-b mb-2">
+              Add New Fixed Allowance
+            </h2>
+            <div>
+              <div className="grid md:grid-cols-2 gap-5 my-5 max-h-96 overflow-y-auto p-1">
+                <div className="grid gap-2 items-center w-full">
+                  <label className="block mb-1 font-semibold">
+                    Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full p-2 border border-gray-300 rounded"
+                    value={formData.name}
+                    onChange={handleChange}
+                    name="name"
+                    placeholder="Allowance name"
+                  />
+                </div>
 
-          <div className="grid gap-2 items-center w-full">
-            <label className="block mb-1 font-semibold bg-gray-100 opacity-55">
-              Component Type
-            </label>
-            <input
-              type="text"
-              className="w-full p-2 border border-gray-300 rounded bg-gray-100 opacity-55"
-              value="Fixed"
-              readOnly
-              disabled
-            />
-            <input
-              type="hidden"
-              name="component_type"
-              value="fixed"
-            />
-          </div>
+                <div className="grid gap-2 items-center w-full">
+                  <label className="block mb-1 font-semibold bg-gray-100 opacity-55">
+                    Component Type
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full p-2 border border-gray-300 rounded bg-gray-100 opacity-55"
+                    value="Fixed"
+                    readOnly
+                    disabled
+                  />
+                  <input type="hidden" name="component_type" value="fixed" />
+                </div>
 
-          <div className="grid gap-2 items-center w-full">
-            <label className="block mb-1 font-semibold bg-gray-100 opacity-55">
-              Percentage of CTC
-            </label>
-            <input
-              type="number"
-              className="w-full p-2 border border-gray-300 bg-gray-100 opacity-55 rounded"
-              value={formData.percentage_of_ctc}
-              onChange={handleChange}
-              name="percentage_of_ctc"
-              placeholder="0.00"
-              step="0.01"
-              disabled
-            />
-          </div>
+                <div className="grid gap-2 items-center w-full">
+                  <label className="block mb-1 font-semibold bg-gray-100 opacity-55">
+                    Percentage of CTC
+                  </label>
+                  <input
+                    type="number"
+                    className="w-full p-2 border border-gray-300 bg-gray-100 opacity-55 rounded"
+                    value={formData.percentage_of_ctc}
+                    onChange={handleChange}
+                    name="percentage_of_ctc"
+                    placeholder="0.00"
+                    step="0.01"
+                    disabled
+                  />
+                </div>
 
-          <div className="grid gap-2 items-center w-full">
-            <label className="block mb-1 font-semibold">
-              Value <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="number"
-              className="w-full p-2 border border-gray-300 rounded"
-              value={formData.value}
-              onChange={handleChange}
-              name="value"
-              placeholder="0.00"
-              step="0.01"
-            />
+                <div className="grid gap-2 items-center w-full">
+                  <label className="block mb-1 font-semibold">
+                    Value <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    className="w-full p-2 border border-gray-300 rounded"
+                    value={formData.value}
+                    onChange={handleChange}
+                    name="value"
+                    placeholder="0.00"
+                    step="0.01"
+                  />
+                </div>
+              </div>
+              <div className="flex mt-2 justify-end gap-2 p-1 border-t">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="border-2 font-semibold hover:bg-red-400 hover:text-red-500 hover:bg-opacity-30 flex items-center gap-2 duration-150 transition-all border-red-400 rounded-full p-1 px-3 text-red-400"
+                >
+                  <MdClose /> Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleAddFixedAllowance}
+                  className="border-2 font-semibold hover:bg-green-400 hover:text-green-500 hover:bg-opacity-30 flex items-center gap-2  duration-150 transition-all border-green-400 rounded-full p-1 px-3 text-green-400"
+                >
+                  <FaCheck /> Save
+                </button>
+              </div>
+            </div>
           </div>
         </div>
-        <div className="flex mt-2 justify-end gap-2 p-1 border-t">
-          <button
-            type="button"
-            onClick={closeModal}
-            className="border-2 font-semibold hover:bg-red-400 hover:text-red-500 hover:bg-opacity-30 flex items-center gap-2 duration-150 transition-all border-red-400 rounded-full p-1 px-3 text-red-400"
-          >
-            <MdClose /> Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleAddFixedAllowance}
-            className="border-2 font-semibold hover:bg-green-400 hover:text-green-500 hover:bg-opacity-30 flex items-center gap-2  duration-150 transition-all border-green-400 rounded-full p-1 px-3 text-green-400"
-          >
-            <FaCheck /> Save
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-)}
+      )}
       {isEditModal && (
         <EditFixedAllowanceModal
           EditId={EditId}

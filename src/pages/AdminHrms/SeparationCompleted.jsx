@@ -97,6 +97,7 @@ const SeparationCompleted = () => {
   ];
 
   const [filteredResignationData, setFilteredResignationData] = useState([]);
+  const [resignationData, setResignationData] = useState([]);
   const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
   const fetchResignations = async () => {
     try {
@@ -105,7 +106,7 @@ const SeparationCompleted = () => {
         (separation) => separation.status !== "Pending"
       );
       setFilteredResignationData(pendingSeparation);
-      // setResignationData(pendingSeparation);
+      setResignationData(pendingSeparation);
     } catch (error) {
       console.log(error);
     }
@@ -122,6 +123,20 @@ const SeparationCompleted = () => {
     setRegId(id);
     setEmpId(empId);
   };
+  const [searchText, setSearchText] = useState("");
+  const handleSearch = (e) => {
+    const searchValue = e.target.value;
+    setSearchText(searchValue);
+
+    if (searchValue.trim() === "") {
+      setFilteredResignationData(resignationData);
+    } else {
+      const filtered = resignationData.filter((item) =>
+        item.employee_name?.toLowerCase().includes(searchValue.toLowerCase())
+      );
+      setFilteredResignationData(filtered);
+    }
+  };
   return (
     <section className="flex">
       <div className="w-full flex m-2 flex-col overflow-hidden">
@@ -130,6 +145,8 @@ const SeparationCompleted = () => {
             type="text"
             placeholder="Search by name"
             className="border border-gray-400 w-full placeholder:text-sm rounded-md p-2"
+            onChange={handleSearch}
+            value={searchText}
           />
         </div>
         {isModalOpen1 && (
