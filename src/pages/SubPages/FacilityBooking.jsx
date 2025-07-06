@@ -3,71 +3,491 @@ import Collapsible from "react-collapsible";
 import CustomTrigger from "../../containers/CustomTrigger";
 import SeatTimeSlot, { initialSelectedTimes } from "./SeatTimeSlot";
 import Select from "react-select";
-import { getAssignedTo } from "../../api";
+import {
+  getAllUnits,
+  getAssignedTo,
+  getFacilitySlots,
+  getFacitilitySetup,
+  getLogin,
+  getSetupUsers,
+  getSiteData,
+  postAmenitiesBooking,
+} from "../../api";
 import { useSelector } from "react-redux";
 import Navbar from "../../components/Navbar";
 import { FaCheck } from "react-icons/fa";
+import { getItemInLocalStorage } from "../../utils/localStorage";
+import { error } from "highcharts";
+import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 const FacilityBooking = () => {
+  const navigate = useNavigate();
   const today = new Date();
   const year = today.getFullYear();
   const month = String(today.getMonth() + 1).padStart(2, "0");
   const day = String(today.getDate()).padStart(2, "0");
   const formattedDate = `${year}-${month}-${day}`;
-  const [selectedSlot, setSelectedSlot] = useState(null);
-  const [behalf, setBehalf] = useState("self");
+  const [selectedSlot, setSelectedSlot] = useState([]);
+  const [slots, setSlots] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isTermOpen, setIsTermOpen] = useState(false);
-  const [selectedTimes, setSelectedTimes] = useState(initialSelectedTimes);
-  const [timeSelected, setTimeSelected] = useState(false);
   const [time, setTime] = useState("");
-  const [users, setUsers] = useState([]);
   const [date, setDate] = useState(formattedDate);
   const [facility, setFacility] = useState("");
+  const [userOptions, setUserOptions] = useState([]);
+  const [facilities, setFacilities] = useState([]);
+  const [terms, setTerms] = useState("No terms available.");
+  const [gstNo, setGstNo] = useState(null);
+  const [amountt, setAmountt] = useState("");
+  const [cancellationPolicy, setCancellationPolicy] = useState(
+    "No cancellation policy available."
+  );
   const [paymentMode, setPaymentMode] = useState("post");
+  const siteId = getItemInLocalStorage("SITEID");
+  // const [userOptions, setUserOptions] = useState([]);
   const [formData, setFormData] = useState({
-    building_id: "",
-    floor_id: "",
-    seat_date: formattedDate,
+    amenity_id: "",
+    amenity_slot_id: "",
     user_id: "",
+    booking_date: "",
+    site_id: siteId,
+    amount: "",
+    gst_no: 0,
+    member_adult: 0,
+    member_child: 0,
+    guest_adult: 0,
+    guest_child: 0,
+    tenant_adult: 0,
+    tenant_child: 0,
+    no_of_members: 0,
+    no_of_guests: 0,
+    payment_mode: "post",
+    no_of_tenants: 0,
   });
-  const handleButtonClick = (selectedTime) => {
-    setSelectedTimes((prevState) => {
-      const newState = {
-        ...prevState,
-        [selectedTime]: !prevState[selectedTime],
-      };
 
-      // Determine if any time slot is selected
-      const anyTimeSelected = Object.values(newState).some(
-        (isSelected) => isSelected
-      );
+  const [units, setUnits] = useState([]); // To store units
 
-      // Update the state for timeSelected and time
-      setTimeSelected(anyTimeSelected);
-      setTime(anyTimeSelected ? selectedTime : "");
+  const [prices, setPrices] = useState({
+    member_price_adult: 0,
+    member_price_child: 0,
+    guest_price_adult: 0,
+    guest_price_child: 0,
+    tenant_price_adult: 0,
+    tenant_price_child: 0,
+  });
 
-      return newState;
-    });
+  console.log("formData", formData);
+
+  //Use Effect
+
+  const fetchUnits = async () => {
+    try {
+      const response = await getAllUnits(); // Fetch all units
+      console.log("Units:", response);
+      setUnits(response.data); // Store the units in state
+    } catch (error) {
+      console.error("Error fetching units:", error);
+    }
+  };
+
+  // const getBookingAmount = (facility, amountt, formData) => {
+  //   if (facility?.fac_type === "request" && facility?.postpaid === true) {
+  //     return amountt !== undefined && amountt !== null ? amountt : "";
+  //   } else {
+  //     return formData?.amount !== undefined && formData?.amount !== null ? formData.amount : "";
+  //   }
+  // };
+
+const calculateBookingAmount = (facility, formData) => {
+  if (facility?.fac_type === "request" && facility?.postpaid === true) {
+    const fixedAmount = Number(facility?.fixed_amount) || 0;
+    const taxPercentage = Number(facility?.gst_no) || 0;
+    console.log("taxPercentage Amount:", taxPercentage);
+    const taxAmount = (fixedAmount * taxPercentage) / 100;
+    const totalAmount = fixedAmount + taxAmount;
+    console.log("Fixed Amount:", totalAmount);
+    return totalAmount;
+  } else {
+    return formData?.amount ?? "";
+  }
+};
+
+  useEffect(() => {
+    fetchFacilities();
+    if (!formData.booking_date) {
+      setFormData((prevData) => ({
+        ...prevData,
+        booking_date: today,
+      }));
+    }
+    fetchUsers();
+    fetchUnits();
+  }, []);
+
+  const handlePaymentChange = (mode) => {
+    setPaymentMode(mode);
+    setFormData({ ...formData, payment_mode: mode });
   };
 
   useEffect(() => {
-    const fetchAssignedTo = async () => {
-      try {
-        const response = await getAssignedTo();
-        const transformedUsers = response.data.map((user) => ({
-          value: user.id,
-          label: `${user.firstname} ${user.lastname}`,
-        }));
-        setUsers(transformedUsers);
-        // setUsers(response.data);
-        console.log(response);
-      } catch (error) {
-        console.error("Error fetching assigned users:", error);
+    const bookingAmount = calculateBookingAmount(facility, formData);
+    console.log("Booking Amount:", bookingAmount);
+    setAmountt(bookingAmount);
+  }, [facility, formData]);
+
+  // Calculate GST based on total amount before tax
+  const calculateGST = (amount, gstNo) => {
+    return (amount * gstNo) / 100;
+  };
+
+  const fetchFacilities = async () => {
+    try {
+      const response = await getFacitilitySetup(); // Assuming getFacilitySetup is an API call
+      // console.log("Booking Setups", response);
+
+      setFacilities(response.data);
+    } catch (error) {
+      console.log("Error Fetching facilities", error);
+    }
+  };
+
+  console.log("Slots", slots);
+
+  const formatTime = (hr, min) => {
+    const safeMin = min ?? 0;
+    return `${hr}:${safeMin.toString().padStart(2, "0")}`;
+  };
+
+
+
+  const fetchSlotsForFacility = async (facilityId, selectedDate) => {
+    try {
+      const response = await getFacilitySlots(facilityId, selectedDate); // API Call
+
+      if (response?.data?.slots) {
+        const now = new Date();
+        const currentHr = now.getHours();
+        const currentMin = now.getMinutes();
+        const selectedDt = new Date(selectedDate);
+        const isToday = selectedDt.toDateString() === now.toDateString();
+
+        const formattedSlots = response.data.slots
+          .filter((slot) => {
+            if (isToday) {
+              return (
+                slot.start_hr > currentHr ||
+                (slot.start_hr === currentHr && slot.start_min > currentMin)
+              );
+            }
+            return true; // Include all slots for future dates
+          })
+          .map((slot) => ({
+            ...slot,
+            slot_str: `${formatTime(
+              slot.start_hr,
+              slot.start_min
+            )} to ${formatTime(slot.end_hr, slot.end_min)}`,
+          }));
+
+        setSlots(formattedSlots); // Update slots state
+      } else {
+        console.log("No Slots Found");
+        setSlots([]);
       }
-    };
-    fetchAssignedTo();
-    console.log(users);
-  }, []);
+    } catch (error) {
+      console.log("Error Fetching Slots", error);
+      setSlots([]); // Reset slots if there's an error
+    }
+  };
+
+  //fetch terms ,cancel, gst, member price
+  const fetchTermsPolicy = async (facilityId) => {
+    try {
+      const response = await getFacitilitySetup();
+      if (response?.data) {
+        const selectedFacility = response.data.find(
+          (facility) => facility.id === parseInt(facilityId, 10)
+        );
+        // console.log("Selected Facility:", selectedFacility);
+        const newPrices = {
+          member_price_adult: selectedFacility.member_price_adult || 0,
+          member_price_child: selectedFacility.member_price_child || 0,
+          guest_price_adult: selectedFacility.guest_price_adult || 0,
+          guest_price_child: selectedFacility.guest_price_child || 0,
+          tenant_price_adult: selectedFacility.tenant_price_adult || 0,
+          tenant_price_child: selectedFacility.tenant_price_child || 0,
+        };
+        // console.log("Selected Facility:", selectedFacility);
+
+        //Update formData without resetting value
+        setFormData((prevFormData) => ({
+          ...prevFormData,
+          gst_no: selectedFacility.gst_no,
+          prices: newPrices,
+        }));
+        // console.log("new p", newPrices);
+
+        setPrices((prevPrices) => {
+          if (JSON.stringify(prevPrices) !== JSON.stringify(newPrices)) {
+            // console.log("Price set for selected facility", selectedFacility);
+            return newPrices;
+          }
+          return prevPrices;
+        });
+        if (selectedFacility) {
+          setTerms(selectedFacility.terms || "No terms available.");
+          setCancellationPolicy(
+            selectedFacility.cancellation_policy ||
+              "No cancellation policy available."
+          );
+        } else {
+          console.log("Facility not found.");
+          setTerms("No terms available.");
+          setCancellationPolicy("No cancellation policy available.");
+        }
+      } else {
+        console.log("Error in fetching data.");
+        setTerms("No terms available.");
+        setCancellationPolicy("No cancellation policy available.");
+      }
+    } catch (error) {
+      console.log("Error fetching facility data:", error);
+      setTerms("Error loading terms.");
+      setCancellationPolicy("Error loading cancellation policy.");
+    }
+  };
+
+  const handleInputChange = (field, value) => {
+    const updatedFormData = { ...formData, [field]: parseInt(value) };
+    const memberTotal =
+      updatedFormData.member_adult * prices.member_price_adult +
+      updatedFormData.member_child * prices.member_price_child;
+    const guestTotal =
+      updatedFormData.guest_adult * prices.guest_price_adult +
+      updatedFormData.guest_child * prices.guest_price_child;
+    const tenantTotal =
+      updatedFormData.tenant_adult * prices.tenant_price_adult +
+      updatedFormData.tenant_child * prices.tenant_price_child;
+    const totalBeforeTax = memberTotal + guestTotal + tenantTotal;
+    // Assuming `tax_no` comes from the fetched data (e.g., tax rate is 12%)
+    const taxAmount = calculateGST(totalBeforeTax, formData.gst_no || 0); // If no tax, use 0
+    console.log("tax amm", taxAmount);
+    const finalAmount = totalBeforeTax + taxAmount;
+    // Update formData and the total amount
+    setFormData({
+      ...updatedFormData,
+      amount: finalAmount,
+      tax: taxAmount, // Store the calculated tax in formData for reference
+    });
+  };
+
+  const handleSlotChange = (e) => {
+    const selectedSlotId = e.target.value;
+    setSelectedSlot(selectedSlotId); // Update selected slot state
+    setFormData((prevData) => ({
+      ...prevData,
+      amenity_slot_id: selectedSlotId, // Update formData with selected slot
+    }));
+  };
+
+  const handleDateChange = (e) => {
+    const selectedDate = e.target.value;
+    setDate(selectedDate); // Update date state
+
+    setFormData((prevData) => ({
+      ...prevData,
+      booking_date: selectedDate,
+    }));
+
+    fetchSlotsForFacility(facility?.id, selectedDate); // Fetch slots
+  };
+
+  // const handleButtonClick = (selectedTime) => {
+  //   setSelectedTimes((prevState) => {
+  //     const newState = {
+  //       ...prevState,
+  //       [selectedTime]: !prevState[selectedTime],
+  //     };
+
+  //     // Determine if any time slot is selected
+  //     const anyTimeSelected = Object.values(newState).some(
+  //       (isSelected) => isSelected
+  //     );
+
+  //     // Update the state for timeSelected and time
+  //     setTimeSelected(anyTimeSelected);
+  //     setTime(anyTimeSelected ? selectedTime : "");
+
+  //     return newState;
+  //   });
+  // };
+
+  const postBookFacility = async () => {
+    const postData = new FormData();
+    if (!formData.user_id || !formData.amenity_slot_id) {
+      toast.error("All Details are mandatory!");
+      return;
+    }
+
+    try {
+      // Append all necessary fields dynamically
+
+      // const bookingAmount = getBookingAmount(facility, amountt, formData);
+      // console.log("Booking Amount:", bookingAmount);
+      postData.append("amenity_booking[site_id]", formData.site_id || "");
+      postData.append("amenity_booking[user_id]", formData.user_id || "");
+      postData.append("amenity_booking[amenity_id]", formData.amenity_id || "");
+      postData.append(
+        "amenity_booking[amenity_slot_id]",
+        formData.amenity_slot_id || ""
+      );
+      postData.append(
+        "amenity_booking[booking_date]",
+        formData.booking_date || ""
+      );
+      postData.append(
+        "amenity_booking[payment_mode]",
+        formData.payment_mode || ""
+      );
+      postData.append("amenity_booking[amount]", amountt || "");
+      postData.append(
+        "amenity_booking[guest_adult]",
+        formData.guest_adult || ""
+      );
+      postData.append(
+        "amenity_booking[guest_child]",
+        formData.guest_child || ""
+      );
+      postData.append(
+        "amenity_booking[member_adult]",
+        formData.member_adult || ""
+      );
+      postData.append(
+        "amenity_booking[member_child]",
+        formData.member_child || ""
+      );
+
+      // Debugging: Log the entire FormData
+      for (const [key, value] of postData.entries()) {
+        console.log(`${key}: ${value}`);
+      }
+
+      // API call
+      const response = await postAmenitiesBooking(postData);
+
+      // Handle the response
+      console.log("Booking response:", response);
+      toast.success("Booking successful!");
+      navigate("/bookings");
+    } catch (error) {
+      // Handle errors
+      console.error("Error in booking:", error);
+      alert("Error in booking. Please try again.", error);
+    }
+  };
+  console.log("uuu", units);
+  const fetchUsers = async () => {
+    try {
+      const response = await getSetupUsers();
+      console.log("Users:", response);
+
+      const transformedUsers = response.data.map((user) => {
+        console.log("User:", user);
+        // Ensure user.user_sites is defined
+        const userSite = user?.user_sites?.[0];
+
+        if (!userSite) {
+          console.warn(`No user site found for user ${user.id}`);
+          return {
+            value: user.id,
+            label: `${user.firstname} ${user.lastname} - Unknown Unit - ${
+              user?.user_sites?.[0]?.ownership || "Unknown Ownership"
+            }`,
+          };
+        }
+
+        const unit = units.find((unit) => unit?.id === userSite?.unit_id);
+        console.log("Found unit:", unit);
+
+        return {
+          value: user.id,
+          label: `${user.firstname} ${user.lastname} -${
+            unit ? unit.building_name : "Unknown Unit"
+          } - ${unit ? unit.name : "Unknown Unit"} - ${
+            unit ? unit.floor_name : "Unknown Unit"
+          }`,
+        };
+      });
+
+      setUserOptions(transformedUsers);
+      console.log("Fetched Users:", transformedUsers);
+    } catch (error) {
+      console.error("Error fetching assigned users:", error);
+    }
+  };
+
+  useEffect(() => {}, []);
+
+  useEffect(() => {
+    if (units.length > 0) {
+      fetchUsers();
+    }
+  }, [units]);
+
+  const handleFacilityChange = (e) => {
+    const selectedFacilityId = e.target.value;
+    setSelectedSlot(""); // Reset selected slot
+
+    fetchSlotsForFacility(selectedFacilityId, date); // Fetch slots
+
+    fetchTermsPolicy(selectedFacilityId); // Fetch Terms
+
+    const selectedFacility = facilities.find(
+      (facility) => facility.id === parseInt(selectedFacilityId)
+    );
+    setFacility(selectedFacility);
+
+    setFormData((prevData) => ({
+      ...prevData,
+      amenity_id: selectedFacilityId,
+    }));
+  };
+
+  const handleSelectChange = (e) => {
+    const selectedUserId = e.target.value;
+    setFormData((prevData) => ({
+      ...prevData,
+      user_id: selectedUserId, // Update user_id in the formData state
+    }));
+  };
+
+  const [searchText, setSearchText] = useState("");
+  const [isDropdownOpen, setDropdownOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null); // Store the selected user
+  const filteredOptions = userOptions.filter((user) =>
+    user.label.toLowerCase().includes(searchText.toLowerCase())
+  );
+
+  const handleUserSelect = (value) => {
+    const user = userOptions.find((option) => option.value === value);
+    setFormData({ ...formData, user_id: value });
+    setDropdownOpen(false);
+    setSearchText(user.label);
+  };
+
+  const [searchFATerm, setSearchFATerm] = useState(""); // State for search input
+  const [showDropdown, setShowDropdown] = useState(false); // State for dropdown visibility
+
+  const filteredFacilities = facilities.filter((facility) =>
+    facility.fac_name.toLowerCase().includes(searchFATerm.toLowerCase())
+  ); // Filter facilities based on search term
+
+  const handleFacSelect = (facility) => {
+    setSearchFATerm(facility.fac_name); // Update the search input with the selected facility name
+    setShowDropdown(false); // Close dropdown
+    handleFacilityChange({ target: { value: facility.id } }); // Pass selected facility ID to handler
+  };
+
   const themeColor = useSelector((state) => state.theme.color);
   return (
     <section className="flex">
@@ -81,130 +501,138 @@ const FacilityBooking = () => {
             >
               Book Facility
             </h2>
-            {/* <div className="md:grid flex flex-col grid-cols-4 items-center">
-              <p className="font-semibold">For :</p>
-              <div className="flex gap-5">
-                <p
-                  className={`border-2 p-1 px-6 border-black font-medium rounded-full cursor-pointer ${
-                    behalf === "self" && "bg-black text-white"
-                  }`}
-                  onClick={() => setBehalf("self")}
-                >
-                  Self
-                </p>
-                <p
-                  className={`border-2 p-1 px-6 border-black font-medium rounded-full cursor-pointer ${
-                    behalf === "others" && "bg-black text-white"
-                  }`}
-                  onClick={() => setBehalf("others")}
-                >
-                  Others
-                </p>
-              </div>
-            </div> */}
-            {/* <div>
-              {behalf === "others" && (
-                <>
-                  <label htmlFor="" className="font-medium">
-                    Select User
-                  </label>
-                  <Select
-                    options={users}
-                    placeholder="Select User"
-                    value={formData.on_behalf}
-                    onChange={(selectedOption) =>
-                      setFormData({ ...formData, on_behalf: selectedOption })
-                    }
-                    className="w-full my-2"
-                  />
-                </>
-              )}
-            </div> */}
             <div className="grid grid-cols-4 gap-2">
-              <div className="flex flex-col gap-1">
+              <div className="relative mt-3 p-2">
+                <label htmlFor="facility" className="font-semibold">
+                  Select Facility:
+                </label>
+
+                {/* Search input */}
+                <input
+                  type="text"
+                  value={searchFATerm}
+                  onChange={(e) => setSearchFATerm(e.target.value)} // Update search term
+                  onFocus={() => setShowDropdown(true)} // Show dropdown on focus
+                  className="border p-[6px] px-4 border-gray-500 rounded-md w-60"
+                  placeholder="Search Facility"
+                />
+                {/* Dropdown */}
+                {showDropdown && (
+                  <div className="absolute z-10 mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-y-auto w-full">
+                    {filteredFacilities.length > 0 ? (
+                      filteredFacilities.map((facility) => (
+                        <div
+                          key={facility.id}
+                          onClick={() => handleFacSelect(facility)} // Handle selection
+                          className="p-2 hover:bg-gray-100 cursor-pointer"
+                        >
+                          {facility.fac_name}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-2 text-gray-500">No results found</div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* <div className="flex flex-col gap-1">
                 <p className="font-semibold">Facility :</p>
                 <select
-                  className="border p-2 px-4 border-gray-500 rounded-md "
-                  value={facility}
-                  onChange={(e) => setFacility(e.target.value)}
+                  className="border p-2 px-4 border-gray-500 rounded-md"
+                  value={formData.facility}
+                  onChange={handleFacilityChange}
                 >
                   <option value="">Select Facility</option>
-                  <option value="user1">Conference Room</option>
-                  <option value="User2">Cabin</option>
+                  {facilities.map((facilityItem) => (
+                    <option key={facilityItem.id} value={facilityItem.id}>
+                      {facilityItem.fac_name}
+                    </option>
+                  ))}
                 </select>
+              </div> */}
+
+              <div className="mt-3 relative p-2">
+                <label htmlFor="users" className="font-semibold">
+                  Select User:
+                </label>
+                <input
+                  type="text"
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                  onFocus={() => setDropdownOpen(true)}
+                  placeholder="Search User"
+                  className="border p-[6px] px-4 border-gray-500 rounded-md w-60"
+                />
+                {isDropdownOpen && (
+                  <ul className="absolute bg-white border border-gray-300 rounded-md mt-1 max-h-40 overflow-y-auto w-full">
+                    {filteredOptions.length > 0 ? (
+                      filteredOptions.map((user, index) => (
+                        <li
+                          key={index}
+                          onClick={() => handleUserSelect(user.value)}
+                          className="p-2 hover:bg-gray-200 cursor-pointer"
+                        >
+                          {user.label}
+                        </li>
+                      ))
+                    ) : (
+                      <li className="p-2 text-gray-500">No results found</li>
+                    )}
+                  </ul>
+                )}
               </div>
-              <div className="flex flex-col gap-1">
-                <p className="font-semibold">Building :</p>
-                <select
-                  className="border p-2 px-4 border-gray-500 rounded-md"
-                  value={facility}
-                  onChange={(e) => setFacility(e.target.value)}
-                >
-                  <option value="">Select Building</option>
-                  {/* <option value="user1">Conference Room</option>
-                  <option value="User2">Cabin</option> */}
-                </select>
-              </div>
-              <div className="flex flex-col gap-1">
-                <p className="font-semibold">Floor :</p>
-                <select
-                  className="border p-2 px-4 border-gray-500 rounded-md"
-                  value={facility}
-                  onChange={(e) => setFacility(e.target.value)}
-                >
-                  <option value="">Select Floor</option>
-                </select>
-              </div>
-              <div className="flex flex-col gap-1">
-                <p className="font-semibold"> Unit :</p>
-                <select
-                  className="border p-2 px-4 border-gray-500 rounded-md"
-                  value={facility}
-                  onChange={(e) => setFacility(e.target.value)}
-                >
-                  <option value="">Select unit</option>
-                  {/* <option value="user1">Conference Room</option>
-                  <option value="User2">Cabin</option> */}
-                </select>
-              </div>
-              <div className="flex flex-col gap-1">
+
+              {/* <div className="flex flex-col gap-1">
                 <p className="font-semibold">User :</p>
+                
                 <select
                   className="border p-2 px-4 border-gray-500 rounded-md"
-                  value={facility}
-                  onChange={(e) => setFacility(e.target.value)}
+                  value={formData.user_id}
+                  onChange={handleSelectChange}
                 >
-                  <option value="">Select user</option>
-                  {/* <option value="user1">Conference Room</option>
-                  <option value="User2">Cabin</option> */}
+                  <option value="">Select User</option>
+                  {userOptions.map((user, index) => (
+                    <option key={index} value={user.value}>
+                      {user.label}
+                    </option>
+                  ))}
                 </select>
-              </div>
-              <div className="flex flex-col gap-1">
-                <label htmlFor="" className="font-semibold">
-                  Select Date :
+              </div> */}
+
+              <div className="relative mt-3 p-2">
+                <label htmlFor="bookingDate" className="font-semibold">
+                  Select Date:
                 </label>
                 <input
                   type="date"
-                  name=""
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  id=""
+                  id="bookingDate"
+                  name="bookingDate"
+                  value={date} // Default to today's date
+                  onChange={handleDateChange}
                   className="border p-[6px] px-4 border-gray-500 rounded-md w-60"
                 />
               </div>
             </div>
-
-            {facility !== "" && (
-              <div className="my-5">
-                <h2 className="border-b text-xl border-black font-semibold">
-                  Select Slot
-                </h2>
-                <SeatTimeSlot
-                  handleButtonClick={handleButtonClick}
-                  selectedTimes={selectedTimes}
-                />
-              </div>
-            )}
+            <div className="grid grid-cols-4 gap-2 mt-2 p-2">
+              {facility !== "" && slots.length > 0 && (
+                <div className="flex flex-col gap-1">
+                  <p className="font-semibold">Select Slot :</p>
+                  <select
+                    className="border p-[6px] px-4 border-gray-500 rounded-md w-60"
+                    value={selectedSlot}
+                    onChange={handleSlotChange}
+                  >
+                    <option value="">Select Slot</option>
+                    {slots.map((slot) => (
+                      <option key={slot.id} value={slot.id}>
+                        {slot.slot_str} {/* Use formatted slot_str here */}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
             <div className="my-2">
               <h2 className="border-b text-xl border-black font-semibold">
                 Payment Mode
@@ -217,7 +645,7 @@ const FacilityBooking = () => {
                       className={`border-2 p-1 px-6 border-black font-medium rounded-full cursor-pointer ${
                         paymentMode === "post" && "bg-black text-white"
                       }`}
-                      onClick={() => setPaymentMode("post")}
+                      onClick={() => handlePaymentChange("post")}
                     >
                       Post Paid
                     </p>
@@ -225,7 +653,7 @@ const FacilityBooking = () => {
                       className={`border-2 p-1 px-6 border-black font-medium rounded-full cursor-pointer ${
                         paymentMode === "pre" && "bg-black text-white"
                       }`}
-                      onClick={() => setPaymentMode("pre")}
+                      onClick={() => handlePaymentChange("pre")}
                     >
                       Prepaid
                     </p>
@@ -242,7 +670,10 @@ const FacilityBooking = () => {
                 )} */}
               </div>
             </div>
-            <div className="flex flex-col my-2">
+            <div className="border-b text-xl border-black font-semibold">
+              Members
+            </div>
+            {/* <div className="flex flex-col my-2">
               <label htmlFor="" className="font-semibold">
                 Comment :
               </label>
@@ -251,14 +682,180 @@ const FacilityBooking = () => {
                 id=""
                 cols="30"
                 rows="2"
-                className="border p-1 px-4 border-gray-500 rounded-md"
+                className="border p-1 px-1 border-gray-500 rounded-md"
               />
+            </div> */}
+            <div className=" ">
+              <div className="grid grid-cols-3 gap-4 my-2">
+                {/* Member Fields */}
+                <div className="flex flex-col items-center border-b border-black pb-2 space-y-2">
+                  <label htmlFor="" className="font-semibold">
+                    Member:
+                  </label>
+                  <div className="flex items-center space-x-2">
+                    <label htmlFor="member_adult" className="text-sm">
+                      Adult
+                    </label>
+                    <input
+                      name="member_adult"
+                      type="number"
+                      className="flex-1 p-2 border border-gray-300 rounded"
+                      placeholder="No. of Member Adult"
+                      value={formData.member_adult}
+                      onChange={(e) =>
+                        handleInputChange("member_adult", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <label htmlFor="member_child" className="text-sm">
+                      Child
+                    </label>
+                    <input
+                      name="member_child"
+                      id="member_child"
+                      type="number"
+                      className="flex-1 p-2 border border-gray-300 rounded"
+                      placeholder="No. of Member Child"
+                      value={formData.member_child}
+                      onChange={(e) =>
+                        handleInputChange("member_child", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div>
+                    Total:{" "}
+                    {formData.member_adult * prices.member_price_adult +
+                      formData.member_child * prices.member_price_child}
+                  </div>
+                </div>
+
+                {/* Guest Fields */}
+                <div className="flex flex-col items-center border-b border-black pb-2 space-y-2">
+                  <label htmlFor="" className="font-semibold">
+                    Guest:
+                  </label>
+                  <div className="flex items-center space-x-2">
+                    <label htmlFor="guest_adult" className="text-sm">
+                      Adult
+                    </label>
+                    <input
+                      name="guest_adult"
+                      type="number"
+                      id="guest_adult"
+                      className="flex-1 p-2 border border-gray-300 rounded"
+                      placeholder="No. of Guest Adult"
+                      value={formData.guest_adult}
+                      onChange={(e) =>
+                        handleInputChange("guest_adult", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <label htmlFor="guest_child" className="text-sm">
+                      Child
+                    </label>
+                    <input
+                      name="guest_child"
+                      id="guest_child"
+                      type="number"
+                      placeholder="No. of Guest Child"
+                      className="flex-1 p-2 border border-grey-300 rounded"
+                      value={formData.guest_child}
+                      onChange={(e) =>
+                        handleInputChange("guest_child", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div>
+                    Total:{" "}
+                    {formData.guest_adult * prices.guest_price_adult +
+                      formData.guest_child * prices.guest_price_child}
+                  </div>
+                </div>
+
+                {/* Tenant Fields */}
+                <div className="flex flex-col items-center border-b border-black pb-2 space-y-2">
+                  <label htmlFor="" className="font-semibold">
+                    Tenant:
+                  </label>
+                  <div className="flex items-center space-x-2">
+                    <label htmlFor="tenant_adult" className="text-sm">
+                      Adult
+                    </label>
+                    <input
+                      name="tenant_adult"
+                      id="tenant_adult"
+                      type="number"
+                      className="border rounded border-grey-300 p-2 flex"
+                      placeholder="No. of Tenant Adult"
+                      value={formData.tenant_adult}
+                      onChange={(e) =>
+                        handleInputChange("tenant_adult", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <label htmlFor="tenant_child" className="text-sm">
+                      Child
+                    </label>
+                    <input
+                      name="tenant_child"
+                      id="tenant_child"
+                      type="number"
+                      placeholder="No. Of Tenant Child"
+                      className="flex p-2 border border-grey-300 rounded"
+                      value={formData.tenant_child}
+                      onChange={(e) =>
+                        handleInputChange("tenant_child", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div>
+                    Total:{" "}
+                    {formData.tenant_adult * prices.tenant_price_adult +
+                      formData.tenant_child * prices.tenant_price_child}
+                  </div>
+                </div>
+              </div>
+
+              {/* Final Amount */}
+              <div className="flex items-center space-x-2 justify-end">
+                <label htmlFor="gst" className="font-bold">
+                  Gst (%):
+                </label>
+                <input
+                  type="text"
+                  id="tax"
+                  name="tax"
+                  value={formData.gst_no} // Display tax amount
+                  disabled
+                  className="flex p-2 border border-grey-300 rounded"
+                />
+              </div>
+              <div className="flex items-center space-x-2 justify-end">
+                <label htmlFor="amount" className="font-bold">
+                  Total Amount:{" "}
+                </label>
+                <input
+                  type="text"
+                  id="amount"
+                  name="amount"
+                  value={amountt ? amountt : formData.amount || 0} // Conditional display
+                  disabled
+                  className="flex p-2 border border-grey-300 rounded"
+                />
+              </div>
             </div>
             <div className="flex justify-center">
-              <button className="p-2 px-4 flex items-center gap-2 bg-green-400 text-white rounded-md font-medium transition-all duration-300">
+              <button
+                onClick={postBookFacility} // Trigger the handleSubmit function on click
+                className="p-2 px-4 flex items-center gap-2 bg-green-400 text-white rounded-md font-medium transition-all duration-300"
+              >
                 <FaCheck /> Submit
               </button>
             </div>
+
             <Collapsible
               readOnly
               trigger={
@@ -271,16 +868,7 @@ const FacilityBooking = () => {
               className="bg-gray-100 my-4 p-2 rounded-md font-bold "
             >
               <div className="grid  bg-gray-100  rounded-md gap-5 p-4">
-                <li className="font-medium">
-                  {" "}
-                  Cancellations made between 48 and 168 hours (2 to 7 days)
-                  before the booking time will incur a 50% cancellation fee.
-                </li>
-                <li className="font-medium">
-                  {" "}
-                  Cancellations made less than 48 hours before the booking time
-                  will not be refunded.
-                </li>
+                <li className="font-medium">{cancellationPolicy}</li>
               </div>
             </Collapsible>
             <Collapsible
@@ -295,15 +883,7 @@ const FacilityBooking = () => {
               className="bg-gray-100 my-4 p-2 rounded-md font-bold "
             >
               <div className="grid  bg-gray-100 rounded-md gap-5 p-4">
-                <li className="font-medium">
-                  The facility must be used for the purpose stated at the time
-                  of booking. Any change in purpose requires prior approval.
-                </li>
-                <li className="font-medium">
-                  The booking party is responsible for any damage caused to the
-                  facility during the booking period. Any repair costs will be
-                  charged to the booking party.
-                </li>
+                <li className="font-medium">{terms}</li>
               </div>
             </Collapsible>
           </div>
@@ -314,4 +894,4 @@ const FacilityBooking = () => {
 };
 
 export default FacilityBooking;
-"http://13.215.74.38//complaint_modes.jsontoken=efe990d24b0379af8ba3d0a986ac802796bc2e0db15552&q[of_atype]=complaint"
+("http://13.215.74.38//complaint_modes.jsontoken=efe990d24b0379af8ba3d0a986ac802796bc2e0db15552&q[of_atype]=complaint");
