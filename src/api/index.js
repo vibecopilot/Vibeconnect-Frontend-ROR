@@ -776,6 +776,56 @@ export const deleteAssetAssociation = async ({ checklist_id, asset_id }) =>
     },
   });
 
+ export const getFacitilitySetup = async () => {
+  try {
+    const response = await axiosInstance.get(`/amenities.json`, {
+      params: {
+        token: token,
+      },
+      headers: {
+        "Cache-Control": "no-cache",
+        Pragma: "no-cache",
+        Expires: "0",
+      },
+    });
+    return response;
+  } catch (error) {
+    console.error("Error fetching facility setup:", error);
+    throw error;
+  }
+};
+
+
+export const getAmenitiesBooking = async () => {
+  return axiosInstance.get(`/amenity_bookings.json`, {
+    params: {
+      token: token,
+    },
+    // headers: {
+    //   "Cache-Control": "no-cache",
+    //   Pragma: "no-cache", // Older HTTP/1.0 caches
+    //   Expires: "0", // Immediately expires the cached response
+    // },
+  });
+};
+
+export const getFacilitySlots = async (facilityId, selectedDate) =>
+  axiosInstance.get(`/slots/available.json`, {
+    params: {
+      token: token,
+      amenity_id: facilityId,
+      date: selectedDate,
+    },
+  });
+
+
+  export const postAmenitiesBooking = async (data) =>
+  axiosInstance.post(`/amenity_bookings.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+
 export const updateActivity = async (id, data) =>
   axiosInstance.put(`/activities/bulk_update.json`, data, {
     params: {
