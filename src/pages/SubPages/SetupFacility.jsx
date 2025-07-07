@@ -13,23 +13,40 @@ import { useNavigate } from "react-router-dom";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 
 const SetupFacility = () => {
-    const siteId = getItemInLocalStorage("SITEID");
-  
+  const siteId = getItemInLocalStorage("SITEID");
+
   const [allowMultipleSlots, setAllowMultipleSlots] = useState("no");
 
   const handleSelectChange = (e) => {
     setAllowMultipleSlots(e.target.value);
   };
   // const id = useParams().id;
-  const id = getItemInLocalStorage("SITEID")
+  // const id = getItemInLocalStorage("SITEID")
   const [isTenant, setIsTenant] = useState(false);
   const themeColor = useSelector((state) => state.theme.color);
   const [formData, setFormData] = useState({
     type: "bookable",
-    name:"",
-    description:"",
+    name: "",
+    description: "",
+    fac_name: "",
+    fac_type: "bookable",
+    tenant: false,
+    terms: "",
+    min_people: "",
+    max_people: "",
+    member_charges: "",
+    member: false,
+    guest: false,
+    covers: "",
+    member_price_adult: "",
+    member_price_child: "",
+    guest_price_adult: "",
+    guest_price_child: "",
+    tenant_price_adult: "",
+    tenant_price_child: "",
+    cancellation_policy: "",
     attachments: [],
-    cover_images:[]
+    cover_images: [],
   });
   const handleFileChange = (files, fieldName) => {
     // Changed to receive 'files' directly
@@ -46,8 +63,6 @@ const SetupFacility = () => {
   };
   const navigate = useNavigate();
   const handleSubmit = async () => {
-   
-
     const sendData = new FormData();
     sendData.append("amenity[site_id]", siteId);
     sendData.append("amenity[name]", formData.name);
@@ -81,6 +96,9 @@ const SetupFacility = () => {
       concurrentSlots: "",
       slotBy: "",
       wrapTime: "",
+      day: "",
+      isActive: false,
+      isBookable: false,
     },
   ]);
 
@@ -96,6 +114,9 @@ const SetupFacility = () => {
         concurrentSlots: "",
         slotBy: "",
         wrapTime: "",
+        day: "",
+        isActive: false,
+        isBookable: false,
       },
     ]);
   };
@@ -174,73 +195,124 @@ const SetupFacility = () => {
   const [blockData, setBlockData] = useState({
     blockBy: "",
   });
- 
-
-  
 
   const handleAddFacility = async (e) => {
-    // if (formData.companyName === "") {
-    //   return toast.error("Please Provide Company name");
-    // }
-    e.preventDefault()
+    e.preventDefault();
+
     const bookBeforeArray = [
-      `${bookBefore.days} days, ${bookBefore.hours} hours, ${bookBefore.minutes} minutes`,
-      bookBefore,
-      null
+      `${bookBefore.days || 0} days, ${bookBefore.hours || 0} hours, ${
+        bookBefore.minutes || 0
+      } minutes`,
+      JSON.stringify(bookBefore),
+      null,
     ];
+
     const sendData = new FormData();
-    sendData.append("amenity[site_id]", formData.site_id);
-    sendData.append("amenity[fac_name]", formData.fac_name);
-    sendData.append("amenity[tenant]", formData.tenant);
-    sendData.append("amenity[description]", formData.description);
-    sendData.append("amenity[terms]", formData.terms);
-    sendData.append("amenity[min_people]", formData.min_people);
-    sendData.append("amenity[max_people]", formData.max_people);
-    sendData.append("amenity[member_charges]", formData.member_charges);
-    //sendData.append("amenity[member_price_adult]", formData.member_price_adult);
-   // sendData.append("amenity[member_price_child]", formData.member_price_child);
-    sendData.append("amenity[memeber]", formData.member);
-    sendData.append("amenity[guest]", formData.guest);
-    sendData.append("amenity[covers]", formData.covers)
+    // Fix: Use siteId from localStorage instead of formData.site_id
+    sendData.append("amenity[site_id]", siteId);
+    sendData.append("amenity[fac_name]", formData.fac_name || "");
+    sendData.append("amenity[tenant]", formData.tenant || false);
+    sendData.append("amenity[description]", formData.description || "");
+    sendData.append("amenity[terms]", formData.terms || "");
+    sendData.append(
+      "amenity[cancellation_policy]",
+      formData.cancellation_policy || ""
+    );
+    sendData.append("amenity[min_people]", formData.min_people || "");
+    sendData.append("amenity[max_people]", formData.max_people || "");
+    sendData.append("amenity[member_charges]", formData.member_charges || "");
+    sendData.append("amenity[member]", formData.member || false);
+    sendData.append("amenity[guest]", formData.guest || false);
 
+    // Add pricing fields
+    sendData.append(
+      "amenity[member_price_adult]",
+      formData.member_price_adult || ""
+    );
+    sendData.append(
+      "amenity[member_price_child]",
+      formData.member_price_child || ""
+    );
+    sendData.append(
+      "amenity[guest_price_adult]",
+      formData.guest_price_adult || ""
+    );
+    sendData.append(
+      "amenity[guest_price_child]",
+      formData.guest_price_child || ""
+    );
+    sendData.append(
+      "amenity[tenant_price_adult]",
+      formData.tenant_price_adult || ""
+    );
+    sendData.append(
+      "amenity[tenant_price_child]",
+      formData.tenant_price_child || ""
+    );
 
-    sendData.append("amenity[terms]", formData.terms)
     sendData.append("book_before[0]", bookBeforeArray[0]);
     sendData.append("book_before[1]", bookBeforeArray[1]);
-    sendData.append("book_before[2]", bookBeforeArray[2]);
-
-    sendData.append("amenity[fac_type]", formData.fac_type);
-    sendData.append("amenity_slots_attributes[start_hr]", slots.startTime);
-    sendData.append("amenity[startTime]", timeValues.time1);
-    sendData.append("amenity[endTime]", timeValues.time2);
-    sendData.append("amenity[cancelTime]", timeValues.time3);
-
-    sendData.append("amenity_slots_attributes[end_hr]", slots.endTime);
-    sendData.append("amenity_slots_attributes[day]", slots.day);
-    sendData.append("amenity_slots_attributes[is_active]", slots.isActive);
-    sendData.append("amenity_slots_attributes[is_bookable]", slots.isBookable);
-
-    // if (formData.attachments) {
-    //   Array.from(formData.attachments).forEach((file) => {
-    //     sendData.append("amenity[attachments]", file);
-    //   });
-    // }
-    try {
-      const response = await postFacilitySetup(formData);
-      
-      if (response.ok) {
-        const data = await response.json();
+    sendData.append("book_before[2]", bookBeforeArray[2]);    sendData.append("amenity[fac_type]", formData.fac_type || "bookable");
+    
+    // Add multiple slots data with correct parameter names
+    slots.forEach((slot, index) => {
+      if (slot.startTime && slot.endTime) {
+        // Convert time format from "HH:MM" to separate hour and minute
+        const [startHour, startMin] = slot.startTime.split(':');
+        const [endHour, endMin] = slot.endTime.split(':');
         
-        console.log(data);
-         toast.success("Facility added successfully");
-        history.push("/setup/facility");
-      } else {
-        const error = await response.json();
-        console.error(error);
-        toast.error("Error adding facility");
-      }
+        sendData.append(`amenity[amenity_slots_attributes][${index}][start_hr]`, startHour || "");
+        sendData.append(`amenity[amenity_slots_attributes][${index}][start_min]`, startMin || "");
+        sendData.append(`amenity[amenity_slots_attributes][${index}][end_hr]`, endHour || "");
+        sendData.append(`amenity[amenity_slots_attributes][${index}][end_min]`, endMin || "");
+        
+        // Handle break times if provided
+        if (slot.breakTimeStart && slot.breakTimeEnd) {
+          const [breakStartHour, breakStartMin] = slot.breakTimeStart.split(':');
+          const [breakEndHour, breakEndMin] = slot.breakTimeEnd.split(':');
+          sendData.append(`amenity[amenity_slots_attributes][${index}][break_start_hr]`, breakStartHour || "");
+          sendData.append(`amenity[amenity_slots_attributes][${index}][break_start_min]`, breakStartMin || "");
+          sendData.append(`amenity[amenity_slots_attributes][${index}][break_end_hr]`, breakEndHour || "");
+          sendData.append(`amenity[amenity_slots_attributes][${index}][break_end_min]`, breakEndMin || "");
+        }
+        
+        sendData.append(`amenity[amenity_slots_attributes][${index}][concurrent_slots]`, slot.concurrentSlots || "1");
+        sendData.append(`amenity[amenity_slots_attributes][${index}][slot_duration]`, slot.slotBy || "60");
+        sendData.append(`amenity[amenity_slots_attributes][${index}][wrap_up_time]`, slot.wrapTime || "0");
+        sendData.append(`amenity[amenity_slots_attributes][${index}][is_active]`, slot.isActive ? "1" : "0");
+        sendData.append(`amenity[amenity_slots_attributes][${index}][is_bookable]`, slot.isBookable ? "1" : "0");
+      }    });
+    
+    // Remove these unpermitted parameters
+    // sendData.append("amenity[startTime]", timeValues.time1 || "00:00");
+    // sendData.append("amenity[endTime]", timeValues.time2 || "00:00");
+    // sendData.append("amenity[cancelTime]", timeValues.time3 || "00:00");
+
+    // Fix the file attachments - check if they exist and are arrays
+    if (formData.attachments && formData.attachments.length > 0) {
+      Array.from(formData.attachments).forEach((file) => {
+        sendData.append("attachments[]", file);
+      });
+    }
+
+    // Add cover images
+    if (formData.cover_images && formData.cover_images.length > 0) {
+      Array.from(formData.cover_images).forEach((file) => {
+        sendData.append("cover_images[]", file);
+      });
+    }
+
+    try {
+      toast.loading("Please wait!");
+      const response = await postFacilitySetup(sendData);
+
+      toast.dismiss();
+      toast.success("Facility added successfully");
+      navigate("/setup/facility");
+      console.log(response);
     } catch (error) {
       console.error(error);
+      toast.dismiss();
       toast.error("Error adding facility");
     }
   };
@@ -260,23 +332,30 @@ const SetupFacility = () => {
           Setup New Facility
         </h1>
 
-        <div className="flex  gap-4 my-4">
+        {/* Update the radio button section to set fac_type */}
+        <div className="flex gap-4 my-4">
           <div className="flex gap-2 items-center">
-            <input type="radio"
-          name="type"
-          id="bookable"
-          checked={selectedType === "bookable"}
-          onChange={handleChange} />
+            <input
+              type="radio"
+              name="fac_type"
+              id="bookable"
+              value="bookable"
+              checked={formData.fac_type === "bookable"}
+              onChange={handleChange1}
+            />
             <label htmlFor="bookable" className="text-lg">
               Bookable
             </label>
           </div>
           <div className="flex gap-2 items-center">
-            <input  type="radio"
-          name="type"
-          id="request"
-          checked={selectedType === "request"}
-          onChange={handleChange} />
+            <input
+              type="radio"
+              name="fac_type"
+              id="request"
+              value="request"
+              checked={formData.fac_type === "request"}
+              onChange={handleChange1}
+            />
             <label htmlFor="request" className="text-lg">
               Request
             </label>
@@ -440,7 +519,16 @@ const SetupFacility = () => {
             <div className="grid grid-cols-4 items-center border-b">
               <div className="flex justify-center my-2">
                 <label htmlFor="">
-                  <input type="checkbox" name="member" id="" checked={formData.member} onChange={(e)=> setFormData({...formData,member:e.target.checked}) } /> Member
+                  <input
+                    type="checkbox"
+                    name="member"
+                    id=""
+                    checked={formData.member}
+                    onChange={(e) =>
+                      setFormData({ ...formData, member: e.target.checked })
+                    }
+                  />{" "}
+                  Member
                 </label>
               </div>
               <div className="flex justify-center my-2">
@@ -453,7 +541,12 @@ const SetupFacility = () => {
                     name="member_price_adult"
                     id=""
                     value={formData.member_price_adult}
-                    onChange={(e) => setFormData({...formData,member_price_adult:e.target.value})}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        member_price_adult: e.target.value,
+                      })
+                    }
                     className="border border-gray-400 rounded-r-md p-2 outline-none"
                     placeholder="₹100"
                   />
@@ -469,7 +562,12 @@ const SetupFacility = () => {
                     name="member_price_child"
                     id=""
                     value={formData.member_price_child}
-                    onChange={(e)=> setFormData({...formData, member_price_child: e.target.value})}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        member_price_child: e.target.value,
+                      })
+                    }
                     className="border border-gray-400 rounded-r-md p-2 outline-none"
                     placeholder="₹100"
                   />
@@ -555,9 +653,15 @@ const SetupFacility = () => {
             <div className="grid grid-cols-4 items-center border-b">
               <div className="flex justify-center my-2">
                 <label htmlFor="" className="flex items-center gap-2">
-                  <input type="checkbox" name="guest" checked={formData.guest}
-                  onChange={(e)=> setFormData({...formData,guest:e.target.checked})}
-                  id="" />
+                  <input
+                    type="checkbox"
+                    name="guest"
+                    checked={formData.guest}
+                    onChange={(e) =>
+                      setFormData({ ...formData, guest: e.target.checked })
+                    }
+                    id=""
+                  />
                   Guest
                 </label>
               </div>
@@ -571,7 +675,12 @@ const SetupFacility = () => {
                     name="guest_price_adult"
                     id=""
                     value={formData.guest_price_adult}
-                    onChange={(e)=> setFormData({...formData,guest_price_adult:e.target.value})}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        guest_price_adult: e.target.value,
+                      })
+                    }
                     className="border border-gray-400 rounded-r-md p-2 outline-none"
                     placeholder="₹100"
                   />
@@ -587,7 +696,12 @@ const SetupFacility = () => {
                     name="guest_price_child"
                     id=""
                     value={formData.guest_price_child}
-                    onChange={(e)=> setFormData({...formData,guest_price_child:e.target.value})}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        guest_price_child: e.target.value,
+                      })
+                    }
                     className="border border-gray-400 rounded-r-md p-2 outline-none"
                     placeholder="₹100"
                   />
@@ -623,7 +737,9 @@ const SetupFacility = () => {
                     id=""
                     value={formData.tenant}
                     // checked={isTenant}
-                    onChange={(e)=> setFormData({...formData,tenant:e.target.checked}) }
+                    onChange={(e) =>
+                      setFormData({ ...formData, tenant: e.target.checked })
+                    }
                   />
                   Tenant
                 </label>
@@ -638,7 +754,12 @@ const SetupFacility = () => {
                     name="tenant_price_adult"
                     id=""
                     value={formData.tenant_price_adult}
-                    onChange={(e)=> setFormData({...formData,tenant_price_adult:e.target.value}) }
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        tenant_price_adult: e.target.value,
+                      })
+                    }
                     className="border border-gray-400 rounded-r-md p-2 outline-none"
                     placeholder="₹100"
                   />
@@ -654,8 +775,12 @@ const SetupFacility = () => {
                     name="tenant_price_child"
                     id=""
                     value={formData.tenant_price_child}
-                  onChange={(e)=> setFormData({...formData,tenant_price_child:e.target.value}) }
-                    
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        tenant_price_child: e.target.value,
+                      })
+                    }
                     className="border border-gray-400 rounded-r-md p-2 outline-none"
                     placeholder="₹100"
                   />
@@ -691,7 +816,9 @@ const SetupFacility = () => {
                   type="number"
                   name="min_people"
                   value={formData.min_people}
-                  onChange={(e) => setFormData({ ...formData, min_people: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, min_people: e.target.value })
+                  }
                   id=""
                   className="border rounded-md p-2"
                   placeholder="Minimum person allowed"
@@ -706,7 +833,9 @@ const SetupFacility = () => {
                   name="max_people"
                   id=""
                   value={formData.max_people}
-                  onChange={(e)=> setFormData({...formData, max_people: e.target.value})}
+                  onChange={(e) =>
+                    setFormData({ ...formData, max_people: e.target.value })
+                  }
                   className="border rounded-md p-2"
                   placeholder="Maximum person allowed"
                 />
@@ -745,7 +874,12 @@ const SetupFacility = () => {
                 name="bookBefore[days]"
                 id=""
                 value={bookBefore.days}
-                onChange={(e) => setBookBefore({...bookBefore, days: e.target.value|| "day"})}
+                onChange={(e) =>
+                  setBookBefore({
+                    ...bookBefore,
+                    days: e.target.value || "day",
+                  })
+                }
                 className="border border-gray-400 rounded-md p-2 outline-none w-full"
                 placeholder="Day"
               />
@@ -756,7 +890,12 @@ const SetupFacility = () => {
                 name="bookBefore[hours]"
                 id=""
                 value={bookBefore.hours}
-                onChange={(e) => setBookBefore({...bookBefore, hours:e.target.value||"Hour" })}
+                onChange={(e) =>
+                  setBookBefore({
+                    ...bookBefore,
+                    hours: e.target.value || "Hour",
+                  })
+                }
                 className="border border-gray-400 rounded-md p-2 outline-none w-full"
                 placeholder="Hour"
               />
@@ -767,7 +906,12 @@ const SetupFacility = () => {
                 name="bookBefore[minutes]"
                 id=""
                 value={bookBefore.minutes}
-                onChange={(e) => setBookBefore({...bookBefore, minutes: parseInt(e.target.value) ||"Mins" })}
+                onChange={(e) =>
+                  setBookBefore({
+                    ...bookBefore,
+                    minutes: parseInt(e.target.value) || "Mins",
+                  })
+                }
                 className="border border-gray-400 rounded-md w-full p-2 outline-none"
                 placeholder="Mins"
               />
