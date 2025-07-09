@@ -21,12 +21,14 @@ import {
   getAvailableSites,
   updateEmployeeAssociations,
   getEmployeeAssociations,
+  getUserSettingsIdDetails,
+  getUserSettingsList,
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import Select from "react-select";
 import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
-import { Switch } from "antd";
+import { Pagination, Switch } from "antd";
 import Organisation from "../SubPages/Organisation";
 import { MdClose } from "react-icons/md";
 // import { Switch } from "@material-tailwind/react";
@@ -145,17 +147,24 @@ const ManageAdmin = () => {
   };
 
   const [AdminList, setAdminList] = useState([]);
+  const [totalPages, setTotalPages] = useState(0);
+  const [pageNumber, setPageNumber] = useState(0);
+  const [searchText, setSearchText] = useState("");
   const fetchAllAdmin = async () => {
     try {
-      const adminRes = await getManageAdmin(hrmsOrgId);
-      setAdminList(adminRes);
-      setFilteredAdmin(adminRes);
+      const res = await getUserSettingsList(pageNumber + 1, searchText);
+      console.log(res);
+      setAdminList(res?.results);
+      setFilteredAdmin(res?.results);
+      setTotalPages(res?.total_pages);
     } catch (error) {
       console.log(error);
     }
   };
   useEffect(() => {
     fetchAllAdmin();
+  }, [pageNumber, searchText]);
+  useEffect(() => {
     fetchAllEmployees();
   }, []);
   const [access, setAccess] = useState("");
@@ -260,71 +269,6 @@ const ManageAdmin = () => {
     }
   };
   const [adminId, setAdminId] = useState("");
-  // const handleEditModal = async (id) => {
-  //   setShowModal1(true)
-  //   setAdminId(id)
-  //   try {
-  //     const res = await getManageAdminDetails(id)
-  //     console.log(res)
-  //     setAccess(res.access)
-  //     setRole(res.role)
-  //     // const admin = employees.find((employee) => employee.value === res.name);
-  //     const admin = employees.find((employee) => String(employee.value) === String(res.name))
-
-  //     console.log(admin)
-  //     setSelectedUserOption(admin || null)
-  //     fetchApproverDetails(admin.value)
-  //     const updatedPermissions = { ...permissionAllowed }
-  //     Object.keys(permissionAllowed).forEach((key) => {
-  //       if (res[key] !== undefined) {
-  //         updatedPermissions[key] = res[key]
-  //       }
-  //     })
-  //     setPermissionAllowed(updatedPermissions)
-
-  //     const updatedEmployeePermissions = { ...employeePermission }
-  //     Object.keys(employeePermission).forEach((key) => {
-  //       if (res[key] !== undefined) {
-  //         updatedEmployeePermissions[key] = res[key]
-  //       }
-  //     })
-  //     setEMployeePermission(updatedEmployeePermissions)
-
-  //     const updatedAttendancePermissions = { ...attendancePermission }
-  //     Object.keys(attendancePermission).forEach((key) => {
-  //       if (res[key] !== undefined) {
-  //         updatedAttendancePermissions[key] = res[key]
-  //       }
-  //     })
-  //     setAttendancePermission(updatedAttendancePermissions)
-
-  //     const updatedRosterPermission = { ...rosterPermission }
-  //     Object.keys(rosterPermission).forEach((key) => {
-  //       if (res[key] !== undefined) {
-  //         updatedRosterPermission[key] = res[key]
-  //       }
-  //     })
-  //     setRosterPermission(updatedRosterPermission)
-
-  //     const updatedLeavePermission = { ...leavePermission }
-  //     Object.keys(leavePermission).forEach((key) => {
-  //       if (res[key] !== undefined) {
-  //         updatedLeavePermission[key] = res[key]
-  //       }
-  //     })
-  //     setLeavePermission(updatedLeavePermission)
-
-  //     const updatedDashboardPermission = { ...dashboardPermission }
-  //     Object.keys(dashboardPermission).forEach((key) => {
-  //       if (res[key] !== undefined) {
-  //         updatedDashboardPermission[key] = res[key]
-  //       }
-  //     })
-  //     setDashboardPermission(updatedDashboardPermission)
-  //   } catch (error) {
-  //     console.log(error)
-  //   }
-  // }
 
   const [selectedSitesEdit, setSelectedSitesEdit] = useState([]);
 
@@ -332,17 +276,17 @@ const ManageAdmin = () => {
 
   const handleEditModal = async (id) => {
     try {
-      // 1. Open modal and set admin ID
       setShowModal1(true);
       setAdminId(id);
-      fetchUserAccess();
+      // fetchUserAccess(id);
       // 2. Fetch admin details by ID
-      const response = await getManageAdminDetails(id);
-      if (!response || !response.length) {
+      const response = await getUserSettingsIdDetails(id);
+      if (!response) {
         throw new Error("No admin data found");
       }
 
-      const adminDetails = response.find((admin) => admin.id === id);
+      const adminDetails = response;
+      // const adminDetails = response.find((admin) => admin.id === id);
       if (!adminDetails) {
         throw new Error(`Admin with ID ${id} not found`);
       }
@@ -636,21 +580,7 @@ const ManageAdmin = () => {
       toast.error("Failed to update admin details");
     }
   };
-  const [searchText, setSearchText] = useState("");
-  const handleSearch = (e) => {
-    const searchValue = e.target.value;
-    setSearchText(searchValue);
-    if (searchValue.trim() === "") {
-      setFilteredAdmin(AdminList);
-    } else {
-      const filteredResult = AdminList.filter((admin) =>
-        `${admin.first_name} ${admin.last_name}`
-          .toLowerCase()
-          .includes(searchValue.toLowerCase())
-      );
-      setFilteredAdmin(filteredResult);
-    }
-  };
+
   const themeColor = useSelector((state) => state.theme.color);
   const [permissionAllowed, setPermissionAllowed] = useState({
     organization_permissions: false,
@@ -698,24 +628,24 @@ const ManageAdmin = () => {
   console.log(dashboardPermission);
   const [Dashboard, setDashboard] = useState(false);
 
-  useEffect(() => {
-    async function fetchDetails() {
-      try {
-        const res = await getManageAdminDetails(adminId);
-        console.log(res);
-        // Update your state based on the response.
-        // setDashboardPermission({
-        //   dashboard_permissions: res.dashboard_permissions,
-        //   can_view_dashboard: res.can_view_dashboard,
+  // useEffect(() => {
+  //   async function fetchDetails() {
+  //     try {
+  //       const res = await getManageAdminDetails(adminId);
+  //       console.log(res);
+  //       // Update your state based on the response.
+  //       // setDashboardPermission({
+  //       //   dashboard_permissions: res.dashboard_permissions,
+  //       //   can_view_dashboard: res.can_view_dashboard,
 
-        //   client_dashboard: res.client_dashboard,
-        // });
-      } catch (error) {
-        console.error("Error fetching admin details:", error);
-      }
-    }
-    if (adminId) fetchDetails();
-  }, [adminId]);
+  //       //   client_dashboard: res.client_dashboard,
+  //       // });
+  //     } catch (error) {
+  //       console.error("Error fetching admin details:", error);
+  //     }
+  //   }
+  //   if (adminId) fetchDetails();
+  // }, [adminId]);
   const permissionLabels = [
     {
       key: "can_edit_basic_info",
@@ -810,7 +740,7 @@ const ManageAdmin = () => {
   }, []);
   const fetchUserAccess = async (employeeId) => {
     try {
-      const res = await getAdminAccess(orgId, "883");
+      const res = await getAdminAccess(orgId, employeeId);
       console.log(res);
       // setRoleAccess(res[0]);
     } catch (error) {
@@ -827,7 +757,9 @@ const ManageAdmin = () => {
             placeholder="Search by name "
             className="border border-gray-400 w-full placeholder:text-sm rounded-lg p-2"
             value={searchText}
-            onChange={handleSearch}
+            onChange={(e) => {
+              setSearchText(e.target.value), setPageNumber(0);
+            }}
           />
           {roleAccess?.can_add_edit_admins && (
             <button
@@ -1630,7 +1562,20 @@ const ManageAdmin = () => {
           </div>
         )}
 
-        <Table columns={columns} data={filteredAdmin} isPagination={true} />
+        <Table columns={columns} data={filteredAdmin} pagination={false} />
+        {filteredAdmin.length > 0 && (
+          <div className={"w-full mt- flex justify-end border rounded-md p-2"}>
+            <Pagination
+              current={pageNumber + 1}
+              total={totalPages * 10}
+              pageSize={10}
+              onChange={(page) => {
+                setPageNumber(page - 1);
+              }}
+              showSizeChanger={false}
+            />
+          </div>
+        )}
       </div>
       <div className="my-4 mx-2 w-fit">
         <div className="flex flex-col mt-4 mr-2 bg-gray-50 rounded-md text-wrap  gap-4 my-2 py-2 pl-5 pr-2 w-[18rem]">

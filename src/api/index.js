@@ -4772,6 +4772,40 @@ export const getManageAdminDetails = async (adminId) => {
     throw error;
   }
 };
+export const getUserSettingsIdDetails = async (adminId) => {
+  const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
+  try {
+    const response = await HrmsAuth.get(
+      `/organization/user-setting/administrator-setting-new/${adminId}/`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting Admin detail:", error);
+    throw error;
+  }
+};
+export const getUserSettingsList = async (pageNumber, search) => {
+  const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
+  try {
+    const response = await HrmsAuth.get(
+      `/organization/user-setting/administrator-setting-new/?organization_id=${hrmsOrgId}&page=${pageNumber}&search=${search}`,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data/",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting Admin detail:", error);
+    throw error;
+  }
+};
 export const editManageAdminDetails = async (adminId, data) => {
   try {
     const response = await HrmsAuth.put(
@@ -5968,6 +6002,15 @@ export const getCtcProfile = async (empId) => {
     throw error;
   }
 };
+export const updateCtcProfile = async (profileId, data) => {
+  try {
+    const response = await HrmsAuth.patch(`/ctc-profiles/${profileId}/`, data);
+    return response.data;
+  } catch (error) {
+    console.log("Error updating the ctc profile details", error);
+    throw error;
+  }
+};
 
 export const deleteCtcProfile = async (FDid) => {
   try {
@@ -6062,10 +6105,10 @@ export const getHrmsCtcFiltereTemplate = async (orgId, page, search, site) => {
     throw error;
   }
 };
-export const getHrmsCtcTemplate = async (orgId) => {
+export const getHrmsCtcTemplate = async (orgId, siteId) => {
   try {
     const response = await HrmsAuth.get(
-      `/ctc-template-organization/?organization_id=${orgId}`
+      `/ctc-template-organization/?organization_id=${orgId}&associated=${siteId}`
     );
     return response.data;
   } catch (error) {
@@ -6125,6 +6168,18 @@ export const updateHrmsCtcTemplate = async (ctc_id, data) => {
     return response.data;
   } catch (error) {
     console.log("error updating the ctc", error);
+    throw error;
+  }
+};
+export const assignHrmsCtcTemplate = async (data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/api/assign-ctc-template/site/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.log("error assigning the ctc", error);
     throw error;
   }
 };
