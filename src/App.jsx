@@ -783,6 +783,7 @@ import SurveyDetails from "./pages/SubPages/survey/SurveyDetails.jsx";
 import AnalyzeResult from "./pages/SubPages/survey/AnalyzeResult.jsx";
 import PreviewSurvey from "./pages/SubPages/survey/PreviewSurvey.jsx";
 import FBMainPage from "./pages/Setup/FBMainPage.jsx";
+import EventPage from "./extra/EventPage.jsx";
 
 function App() {
   const { id } = useParams();
@@ -1691,6 +1692,12 @@ function App() {
             <ProtectedRoute>
               <EventDetails />
             </ProtectedRoute>
+          }
+        />
+         <Route
+          path="/event/:id/event-details"
+          element={
+              <EventPage />
           }
         />
         <Route
@@ -3065,7 +3072,7 @@ function App() {
           path="/setup/fnb/cuisines"
           element={
             <ProtectedAdminRoutes>
-              <FBMainPage/>
+              <FBMainPage />
             </ProtectedAdminRoutes>
           }
         />
