@@ -1531,6 +1531,19 @@ export const getEmployeeAttendance = async (userId) =>
 
 // Events
 
+// Check in Events
+export const checkEventUser = async (id, mobile) => {
+  return axiosInstance.post(`/events/${id}/check_otp.json`, { mobile });
+};
+
+// Verify Users
+export const verifyOtpToCheckIn = async (id, otp, mobile) => {
+  return axiosInstance.post(`/events/${id}/check_in.json`, {
+    mobile,
+    otp,
+  });
+};
+
 export const getEvents = async () =>
   axiosInstance.get("/events.json", {
     params: {
