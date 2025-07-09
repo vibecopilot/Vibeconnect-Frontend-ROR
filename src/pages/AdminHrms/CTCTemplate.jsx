@@ -15,6 +15,8 @@ import {
   getAvailableSites,
   getHrmsCtcFiltereTemplate,
   getEmployeeAssociations,
+  getHrmsCtcTemplateonId,
+  assignHrmsCtcTemplate,
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import { useSelector } from "react-redux";
@@ -59,7 +61,25 @@ const CTCTemplate = () => {
       })
       .join(", ");
   };
-
+  const [assign, setAssign] = useState(false);
+  const [tempId, setTempId] = useState("");
+  const [associatedSites, setAssociatedSites] = useState([]);
+  const [selectedOption, setSelectedOption] = useState([]);
+  const handleAssignModal = async (id) => {
+    setAssign(true);
+    setTempId(id);
+    try {
+      const res = await getHrmsCtcTemplateonId(id);
+      const sites = res?.associated_details?.map((details) => ({
+        value: details?.id,
+        label: details?.name,
+      }));
+      console.log(sites);
+      setAssociatedSites(sites);
+    } catch (error) {
+      console.log(error);
+    }
+  };
   const columns = [
     {
       name: "Id",
@@ -111,6 +131,12 @@ const CTCTemplate = () => {
           <Link to={`/admin/hrms/ctc/ctc-template/edit/${row.id}`}>
             <BiEdit size={15} />
           </Link>
+          <button
+            className="bg-green-500  px-4 text-white rounded-full"
+            onClick={() => handleAssignModal(row.id)}
+          >
+            Assign
+          </button>
           <button
             className="text-red-400"
             onClick={() => handleDeleteTemplate(row.id)}
@@ -197,7 +223,30 @@ const CTCTemplate = () => {
   useEffect(() => {
     fetchAssociatedSites();
   }, []);
+  // {
+  //   "site_id": [4,6],
+  //   "ctc_template_id": 56
 
+  // }
+  const handleAssign = async () => {
+    if (selectedOption.length === 0) {
+      return toast.error("Please select Sites");
+    }
+    try {
+      const payload = {
+        ctc_template_id: tempId,
+        site_id: selectedOption.map((option) => option.value),
+      };
+
+      await assignHrmsCtcTemplate(payload);
+      toast.success("Templated Assigned successfully");
+      setAssign(false);
+      fetchCTCTemplates();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  console.log(selectedOption);
   return (
     <section className="flex ml-20">
       <AdminHRMS />
@@ -356,6 +405,44 @@ const CTCTemplate = () => {
           </div>
         </div>
       </div>
+
+      {assign && (
+        <div className="fixed inset-0 flex items-center justify-center z-50  bg-black bg-opacity-50">
+          <div className="bg-white p-4 rounded-xl w-fit">
+            <h1 className="text-lg font-semibold border-b flex items-center gap-2 justify-center">
+              <PiPlusCircle /> Assign Template
+            </h1>
+            <div className="grid gap-2 max-h-96  py-2 hide-scrollbar">
+              <Select
+                options={associatedSites}
+                onChange={(selectedOption) => {
+                  setSelectedOption(selectedOption);
+                  console.log(selectedOption);
+                }}
+                isMulti
+                noOptionsMessage={() => "No sites Available"}
+                placeholder="Select Site"
+                maxMenuHeight={500}
+                className="z-50 w-96 text-black"
+              />
+              <div className="flex items-center justify-end gap-2">
+                <button
+                  className="bg-red-400 text-white rounded-full p-2 px-4"
+                  onClick={() => setAssign(false)}
+                >
+                  Cancel{" "}
+                </button>
+                <button
+                  className="bg-green-400 text-white rounded-full p-2 px-4"
+                  onClick={handleAssign}
+                >
+                  Submit{" "}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 };
