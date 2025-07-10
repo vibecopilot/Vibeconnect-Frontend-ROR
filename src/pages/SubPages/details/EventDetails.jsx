@@ -51,14 +51,14 @@ const EventDetails = () => {
           <div className="my-5 flex flex-col sm:grid gap-2 grid-cols-12  border-2 sm:mx-5 p-2 rounded-md border-gray-400">
             {eventDetails.event_image &&
               eventDetails.event_image.length > 0 && (
-                <div className="rounded-md col-span-6 sm:max-h-[28rem] w-full">
+                <div className="rounded-md col-span-4 sm:max-h-[28rem] w-full">
                   {isImage(
                     domainPrefix + eventDetails.event_image[0].document
                   ) ? (
                     <img
                       src={domainPrefix + eventDetails.event_image[0].document}
                       alt="event image"
-                      className="rounded-md col-span-6 sm:max-h-[28rem] w-full cursor-pointer"
+                      className="rounded-md col-span-4 sm:max-h-[28rem] w-full cursor-pointer"
                       onClick={() =>
                         window.open(
                           domainPrefix + eventDetails.event_image[0].document,
@@ -79,7 +79,7 @@ const EventDetails = () => {
                   )}
                 </div>
               )}
-            <div className="col-span-6 py-2 px-4 rounded-md bg-blue-50">
+            <div className={`py-2 px-4 rounded-md bg-blue-50 ${eventDetails.event_image && eventDetails.event_image.length > 0 ? 'col-span-6' : 'col-span-8'}`}>
               <h1 className="text-2xl font-semibold text-center">
                 {eventDetails.event_name}
               </h1>
@@ -123,6 +123,24 @@ const EventDetails = () => {
                 </div>
               </div>
             </div>
+            {eventDetails.qr_code && (
+              <div className="col-span-2 flex ml-4 flex-col items-center justify-center">
+                <h2 className="text-lg font-semibold mb-2">QR Code</h2>
+                <div className="border-dotted border-2 rounded-md border-gray-400 p-2">
+                  <img
+                    src={domainPrefix + eventDetails.qr_code}
+                    alt="Event QR Code"
+                    className="w-42 h-42 cursor-pointer"
+                    onClick={() =>
+                      window.open(
+                        domainPrefix + eventDetails.qr_code,
+                        "_blank"
+                      )
+                    }
+                  />
+                </div>
+              </div>
+            )}
           </div>
           <div className="flex flex-col gap-4 mx-10 m-5">
             <div className="flex flex-col gap-2">
@@ -138,8 +156,8 @@ const EventDetails = () => {
                     Shared With (Member)
                   </h1>
                   <div className="border-dotted border-2 rounded-md border-gray-400 p-2 flex flex-wrap gap-2">
-                    {eventDetails?.users?.map((user) => (
-                      <div className="bg-green-500 text-white rounded-md px-4 p-1">
+                    {eventDetails?.users?.map((user, index) => (
+                      <div key={index} className="bg-green-500 text-white rounded-md px-4 p-1">
                         <p>{user?.name}</p>
                       </div>
                     ))}
