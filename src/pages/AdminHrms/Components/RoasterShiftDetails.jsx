@@ -26,7 +26,7 @@ function RoasterShiftDetails({
   fetchRosterRecords,
   mode,
 }) {
-  const [shiftType, setShiftType] = useState("Full Day Weekly Off");
+  const [shiftType, setShiftType] = useState("");
   const [shiftData, setShiftData] = useState("");
   const [branchLocation, setBranchLocation] = useState("");
   const [employeeData, setEmployeeData] = useState([]);
@@ -179,6 +179,15 @@ function RoasterShiftDetails({
   const formattedDate = schedule.toISOString().split("T")[0];
   console.log(formattedDate);
   const handleAddShift = async () => {
+    if (shiftType === "") {
+      return toast.error("Please select Shift Type");
+    }
+    if (shiftData === "") {
+      return toast.error("Please select Shift ");
+    }
+    if (repeat && frequency === "") {
+      return toast.error("Please select Frequency");
+    }
     const postData = new FormData();
     postData.append("employee", employee.id);
     postData.append("date", formattedDate);
@@ -201,6 +210,15 @@ function RoasterShiftDetails({
   };
 
   const handleEditShift = async () => {
+    if (shiftType === "") {
+      return toast.error("Please select Shift Type");
+    }
+    if (shiftData === "") {
+      return toast.error("Please select Shift ");
+    }
+    if (repeat && frequency === "") {
+      return toast.error("Please select Frequency");
+    }
     const editData = new FormData();
     // editData.append("employee", employee.id);
     // editData.append("id", date.id);
@@ -325,7 +343,9 @@ function RoasterShiftDetails({
           </div>
 
           <div className="mb-4">
-            <label className="block mb-2 font-medium">Select Type</label>
+            <label className="block mb-2 font-medium">
+              Select Type <span className="text-red-500">*</span>
+            </label>
             <select
               className="w-full p-2 border rounded-md"
               value={shiftType}
@@ -339,7 +359,9 @@ function RoasterShiftDetails({
           </div>
 
           <div className="mb-4">
-            <label className="block mb-2 font-medium">Select Shift</label>
+            <label className="block mb-2 font-medium">
+              Select Shift <span className="text-red-500">*</span>
+            </label>
             <select
               className="w-full p-2 border rounded"
               value={shiftData}
@@ -383,7 +405,7 @@ function RoasterShiftDetails({
             <div>
               <div className="flex flex-col">
                 <label htmlFor="" className="font-medium">
-                  Select Frequency
+                  Select Frequency <span className="text-red-500">*</span>
                 </label>
                 <select
                   name=""
@@ -451,7 +473,7 @@ function RoasterShiftDetails({
           )}
         </div>
         <div className="flex justify-around items-center px-4 p-1 border-t">
-          {roleAccess?.can_assign_edit_delete_shifts && (
+          {roleAccess?.can_assign_edit_delete_shifts && mode !== "add" && (
             <button
               className="px-4 py-2 border-2 border-red-500 text-red-500 rounded-full flex items-center gap-2"
               onClick={() => handleDeleteRosterRecord()}

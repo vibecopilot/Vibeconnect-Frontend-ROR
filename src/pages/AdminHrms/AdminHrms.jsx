@@ -86,8 +86,26 @@ const AdminHRMS = () => {
   }, []);
 
   const handleLogout = () => {
-   const keysToRemove = ['Name','FEATURES','HRMS_EMPLOYEE_ID','user','UserId','UNITID','Building','categories','TOKEN','LASTNAME','USERTYPE','COMPANYID','HRMSORGID','STATUS','complaint','menuState','SITEID']
-   keysToRemove.forEach(key => localStorage.removeItem(key))
+    const keysToRemove = [
+      "Name",
+      "FEATURES",
+      "HRMS_EMPLOYEE_ID",
+      "user",
+      "UserId",
+      "UNITID",
+      "Building",
+      "categories",
+      "TOKEN",
+      "LASTNAME",
+      "USERTYPE",
+      "COMPANYID",
+      "HRMSORGID",
+      "STATUS",
+      "complaint",
+      "menuState",
+      "SITEID",
+    ];
+    keysToRemove.forEach((key) => localStorage.removeItem(key));
     navigate("/login");
     window.location.reload();
   };
@@ -351,12 +369,11 @@ const AdminHRMS = () => {
   const orgId = getItemInLocalStorage("HRMSORGID");
   const [roleAccess, setRoleAccess] = useState({});
 
- 
   useEffect(() => {
     const fetchRoleAccess = async () => {
       try {
         const res = await getAdminAccess(orgId, empId);
-          console.log(res[0])
+        console.log(res[0]);
         setRoleAccess(res[0]);
       } catch (error) {
         console.log(error);
@@ -364,8 +381,8 @@ const AdminHRMS = () => {
     };
     fetchRoleAccess();
   }, []);
-   
-   const HIDE_PAYROLL_ON_THE_BASESOF_THE_Name = roleAccess?.name === 175
+
+  const HIDE_PAYROLL_ON_THE_BASESOF_THE_Name = roleAccess?.name === 175;
   // [-- Handle Logout --]
 
   return (
@@ -1287,7 +1304,7 @@ const AdminHRMS = () => {
               >
                 <div>
                   {React.createElement(FaMoneyBillWheat, { size: "20" })}
-                  
+
                 </div>
                 <h2
                   className={`whitespace-pre duration-300 ${
@@ -1424,7 +1441,7 @@ const AdminHRMS = () => {
               >
                 <div>
                   {React.createElement(GrDocumentPerformance, { size: "20" })}
-                  
+
                 </div>
                 <h2
                   className={`whitespace-pre duration-300 ${
@@ -1882,7 +1899,7 @@ const AdminHRMS = () => {
                 )}
               </div>
             )}
-            
+
             {!HIDE_PAYROLL_ON_THE_BASESOF_THE_Name && (
               <div>
                 {/* Payroll Main Menu Item (Toggle) */}
@@ -1959,14 +1976,14 @@ const AdminHRMS = () => {
                           !open && "opacity-0 translate-x-28 overflow-hidden"
                         }`}
                       >
-                        Payslip & Form 16s
+                        Payslip
                       </h2>
                       <h2
                         className={`${
                           open && "hidden"
                         } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
                       >
-                        Payslip & Form 16s
+                        Payslip
                       </h2>
                     </NavLink>
 
@@ -2231,66 +2248,63 @@ const AdminHRMS = () => {
             {/* {roleAccess.is_admin && */}
             {/* Communication */}
             {!HIDE_PAYROLL_ON_THE_BASESOF_THE_Name && (
-            <NavLink
-              to="/admin/hrms/broadcast"
-              className={({ isActive }) =>
-                `${
-                  isActive
-                    ? "text-black bg-white flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
-                    : "group flex items-center text-sm gap-3.5 font-medium p-2 "
-                }`
-              }
-            >
-              <div>
-                {React.createElement(AiFillNotification, { size: "20" })}
-              </div>
-              <h2
-                className={`whitespace-pre duration-300 ${
-                  !open && "opacity-0 translate-x-28 overflow-hidden "
-                }`}
+              <NavLink
+                to="/admin/hrms/broadcast"
+                className={({ isActive }) =>
+                  `${
+                    isActive
+                      ? "text-black bg-white flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                      : "group flex items-center text-sm gap-3.5 font-medium p-2 "
+                  }`
+                }
               >
-                Communication
-              </h2>
-              <h2
-                className={`${
-                  open && "hidden"
-                } absolute left-48 bg-white font-semibold whitespace-pre  text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+                <div>
+                  {React.createElement(AiFillNotification, { size: "20" })}
+                </div>
+                <h2
+                  className={`whitespace-pre duration-300 ${
+                    !open && "opacity-0 translate-x-28 overflow-hidden "
+                  }`}
+                >
+                  Communication
+                </h2>
+                <h2
+                  className={`${
+                    open && "hidden"
+                  } absolute left-48 bg-white font-semibold whitespace-pre  text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+                >
+                  Communication
+                </h2>
+              </NavLink>
+            )}
+            {!HIDE_PAYROLL_ON_THE_BASESOF_THE_Name && (
+              <NavLink
+                to="/admin/hrms/holidays"
+                className={({ isActive }) =>
+                  `${
+                    isActive
+                      ? "text-black bg-white flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+                      : "group flex items-center text-sm gap-3.5 font-medium p-2 "
+                  }`
+                }
               >
-                Communication
-              </h2>
-            </NavLink>
-            
-)}
-        {!HIDE_PAYROLL_ON_THE_BASESOF_THE_Name && (
-           <NavLink
-           to="/admin/hrms/holidays"
-           className={({ isActive }) =>
-             `${
-               isActive
-                 ? "text-black bg-white flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
-                 : "group flex items-center text-sm gap-3.5 font-medium p-2 "
-             }`
-           }
-         >
-           <div>
-             {React.createElement(AiFillCalendar, { size: "20" })}
-           </div>
-           <h2
-             className={`whitespace-pre duration-300 ${
-               !open && "opacity-0 translate-x-28 overflow-hidden"
-             }`}
-           >
-             Holidays
-           </h2>
-           <h2
-             className={`${
-               open && "hidden"
-             } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
-           >
-             Holidays
-           </h2>
-         </NavLink>
-        )}
+                <div>{React.createElement(AiFillCalendar, { size: "20" })}</div>
+                <h2
+                  className={`whitespace-pre duration-300 ${
+                    !open && "opacity-0 translate-x-28 overflow-hidden"
+                  }`}
+                >
+                  Holidays
+                </h2>
+                <h2
+                  className={`${
+                    open && "hidden"
+                  } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+                >
+                  Holidays
+                </h2>
+              </NavLink>
+            )}
             {/* } */}
             <div className="border-2 border-x-white border-opacity-65 my-4"></div>
             {/* theme changer */}
