@@ -784,6 +784,8 @@ import AnalyzeResult from "./pages/SubPages/survey/AnalyzeResult.jsx";
 import PreviewSurvey from "./pages/SubPages/survey/PreviewSurvey.jsx";
 import FBMainPage from "./pages/Setup/FBMainPage.jsx";
 import EventPage from "./extra/EventPage.jsx";
+import ParkingConfigurationSetup from "./pages/Setup/ParkingSetupPages/ParkingConfigurationSetup.jsx";
+import RmbAttendance from "./pages/RMBAttendance.jsx";
 
 function App() {
   const { id } = useParams();
@@ -971,10 +973,19 @@ function App() {
         <Route
           path="/attendance"
           element={
-            <ProtectedAdminRoutes>
-              {" "}
+            // <ProtectedAdminRoutes>
+              // {" "}
               <Attendance />
-            </ProtectedAdminRoutes>
+            // </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/rmb-attendance"
+          element={
+            // <ProtectedAdminRoutes>
+              // {" "}
+              <RmbAttendance />
+            // </ProtectedAdminRoutes>
           }
         />
         {/* setup */}
@@ -1694,12 +1705,7 @@ function App() {
             </ProtectedRoute>
           }
         />
-         <Route
-          path="/event/:id/event-details"
-          element={
-              <EventPage />
-          }
-        />
+        <Route path="/event/:id/event-details" element={<EventPage />} />
         <Route
           path="/communication/broadcast/create-broadcast"
           element={
@@ -1733,6 +1739,24 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
+        {/* Setup Parking */}
+        <Route
+          path="/admin/parking-setup"
+          element={
+            <ProtectedAdminRoutes>
+              <ParkingSetup />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/admin/add-parking-config"
+          element={
+            <ProtectedAdminRoutes>
+              <ParkingConfigurationSetup />
+            </ProtectedAdminRoutes>
+          }
+        />
+
         <Route
           path="/admin/book-parking"
           element={
