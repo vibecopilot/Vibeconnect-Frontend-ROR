@@ -1823,7 +1823,7 @@ const Navbar = () => {
               )}
               {feat.includes("face_recognition") && (
                 <NavLink
-                  to={"/employee-attendance"}
+                  to={siteId === 68 ? "/rmb-attendance" : "/employee-attendance"}
                   className={({ isActive }) =>
                     ` ${
                       isActive

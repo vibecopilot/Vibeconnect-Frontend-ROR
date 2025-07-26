@@ -14,6 +14,8 @@ import AxiosDigestAuth from "@mhoc/axios-digest-auth";
 // export const hrmsDomain = "http://13.126.205.205";
 const token = getItemInLocalStorage("TOKEN");
 export const domainPrefix = "https://admin.vibecopilot.ai";
+// export const domainPrefix = "http://localhost:3000";
+
 // export const domainPrefix = "http://13.215.74.38";
 export const login = async (data) => axiosInstance.post("/login.json", data);
 
@@ -1510,6 +1512,17 @@ export const getAttendance = async (orgId, page) => {
     throw error;
   }
 };
+
+// RMB Attendance
+export const RmbAttendance = async (page = 1, perPage = 10) =>
+  axiosInstance.get(`/event_users.json`, {
+    params: {
+      token: token,
+      rmb: true,
+      page: page,
+      per_page: perPage,
+    },
+  });
 
 // export const getClientAttendance = async(siteId, today)
 // try {
