@@ -778,7 +778,19 @@ export const deleteAssetAssociation = async ({ checklist_id, asset_id }) =>
     },
   });
 
- export const getFacitilitySetup = async () => {
+export const deleteServiceAssociation = async ({
+  checklist_id,
+  soft_service_id,
+}) =>
+  axiosInstance.delete("/activities/bulk_destroy.json", {
+    params: {
+      checklist_id,
+      soft_service_id: soft_service_id,
+      token: token,
+    },
+  });
+
+export const getFacitilitySetup = async () => {
   try {
     const response = await axiosInstance.get(`/amenities.json`, {
       params: {
@@ -796,7 +808,6 @@ export const deleteAssetAssociation = async ({ checklist_id, asset_id }) =>
     throw error;
   }
 };
-
 
 export const getAmenitiesBooking = async () => {
   return axiosInstance.get(`/amenity_bookings.json`, {
@@ -820,8 +831,7 @@ export const getFacilitySlots = async (facilityId, selectedDate) =>
     },
   });
 
-
-  export const postAmenitiesBooking = async (data) =>
+export const postAmenitiesBooking = async (data) =>
   axiosInstance.post(`/amenity_bookings.json`, data, {
     params: {
       token: token,
@@ -875,8 +885,11 @@ export const getRoutineTask = async (
   });
 };
 
-
-export const getRoutineTaskStatus = async (status = null, startDate = null, endDate = null) => {
+export const getRoutineTaskStatus = async (
+  status = null,
+  startDate = null,
+  endDate = null
+) => {
   const token = localStorage.getItem("token");
 
   const params = {
@@ -895,7 +908,10 @@ export const getRoutineTaskStatus = async (status = null, startDate = null, endD
     params["q[start_time_lteq]"] = endDate;
   }
 
-  const response = await axiosInstance.get("/activities/routine_task_counts.json", { params });
+  const response = await axiosInstance.get(
+    "/activities/routine_task_counts.json",
+    { params }
+  );
 
   return response.data;
 };
