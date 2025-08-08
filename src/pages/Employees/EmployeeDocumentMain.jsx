@@ -6,23 +6,20 @@ import EmployeeDocumentPro from "./EmployeeDocumentPro";
 import EmployeeDocumentCommon from "./EmployeeDocumentCommon";
 import EmployeeSharedwithMe from "./EmployeeSharedwithMe";
 
-
 // import DocumentPro from "./DocumentPro";
 // import DocumentCommon from "./DocumentCommon";
 // import SharedwithMe from "./SharedwithMe";
 
 const EmployeeDocumentMain = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
-  const [page, setPage] = useState("Personal")
-
-
+  const [page, setPage] = useState("Personal");
 
   return (
     <section className="flex">
-      <Navbar/>
+      <Navbar />
       <div className=" w-full flex mx-3 flex-col overflow-hidden">
-      <div className="flex justify-center my-2 w-full">
-      <div className="sm:flex grid grid-cols-2 sm:flex-row gap-5 font-medium p-1 sm:rounded-full rounded-md bg-gray-200">
+        <div className="flex justify-center my-2 w-full">
+          <div className="sm:flex grid grid-cols-2 sm:flex-row gap-5 font-medium p-1 sm:rounded-full rounded-md bg-gray-200">
             <h2
               className={`p-1 ${
                 page === "Personal" &&
@@ -30,7 +27,7 @@ const EmployeeDocumentMain = () => {
               } rounded-full px-4 cursor-pointer text-center transition-all duration-300 ease-linear`}
               onClick={() => setPage("Personal")}
             >
-             Personal
+              Personal
             </h2>
             <h2
               className={`p-1 ${
@@ -52,12 +49,13 @@ const EmployeeDocumentMain = () => {
             </h2>
           </div>
         </div>
-        {page === "Personal" && <>
-     <EmployeeDocumentPro/>
-
-         </>}
-         {page === "Common" && <EmployeeDocumentCommon/>}
-         {page === "share" && <EmployeeSharedwithMe/>}
+        {page === "Personal" && (
+          <>
+            <EmployeeDocumentPro />
+          </>
+        )}
+        {page === "Common" && <EmployeeDocumentCommon />}
+        {page === "share" && <EmployeeSharedwithMe />}
       </div>
     </section>
   );
