@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 // import { toast } from "react-toastify";
-import { deleteFilePersonal, deleteFolderPersonal, getFolderDocumentCommon, getFolderDocumentPersonal, getSetupUsers, getSubFolderDocumentCommon, postFileDocumentCommon, postFolderDocumentCommon, postFolderDocumentPersonal, postSharePersonal } from "../../api";
+import { deleteFilePersonal, deleteFolderPersonal, domainPrefix, getFolderDocumentCommon, getFolderDocumentPersonal, getSetupUsers, getSubFolderDocumentCommon, postFileDocumentCommon, postFolderDocumentCommon, postFolderDocumentPersonal, postSharePersonal } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import { FaEllipsisV, FaFile, FaFolder, FaPlus, FaUpload } from "react-icons/fa";
 import { useSelector } from "react-redux";
@@ -543,7 +543,7 @@ const openFolder = async (folder) => {
   >
     {file && file.document_url ? (
            <a
-             href={`http://13.215.74.38/${file.document_url}`}
+             href={`${domainPrefix}/${file.document_url}`}
              target="_blank"
              rel="noopener noreferrer"
              className="flex flex-col items-center"
