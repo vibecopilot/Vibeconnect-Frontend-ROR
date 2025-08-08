@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import {
   deleteFilePersonal,
   deleteFolderPersonal,
+  domainPrefix,
   getFolderDocumentCommon,
   getFolderDocumentPersonal,
   getSetupUsers,
@@ -576,7 +577,7 @@ const EmployeeDocumentCommon = () => {
               >
                 {file && file.document_url ? (
                   <a
-                    href={`http://13.215.74.38/${file.document_url}`}
+                    href={`${domainPrefix}/${file.document_url}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex flex-col items-center"
