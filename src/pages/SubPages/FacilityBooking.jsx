@@ -54,26 +54,71 @@ const FacilityBooking = () => {
     amount: "",
     gst_no: 0,
     member_adult: 0,
-    member_child: 0,
+    // member_child: 0,
     guest_adult: 0,
-    guest_child: 0,
-    tenant_adult: 0,
-    tenant_child: 0,
+    // guest_child: 0,
+    // tenant_adult: 0,
+    // tenant_child: 0,
     no_of_members: 0,
     no_of_guests: 0,
     payment_mode: "post",
-    no_of_tenants: 0,
+    // no_of_tenants: 0,
+    min_people: 0,
+    max_people: 0,
   });
+
+  const [paymentMethods, setPaymentMethods] = useState({
+    postpaid: false,
+    prepaid: false,
+    pay_on_facility: false,
+    complimentary: false,
+  });
+
+  const paymentMethodMap = {
+    post: "postpaid",
+    pre: "prepaid",
+    facility: "pay_on_facility",
+    complimentary: "complimentary",
+  };
+
+  const handlePaymentChange = (mode, { silent = false } = {}) => {
+    const key = paymentMethodMap[mode];
+    if (!paymentMethods[key]) {
+      if (!silent) {
+        alert(
+          `${
+            mode.charAt(0).toUpperCase() + mode.slice(1)
+          } is not available for this facility`
+        );
+      }
+      return;
+    }
+    setPaymentMode(mode);
+  };
+
+  useEffect(() => {
+    if (!paymentMethods || !paymentMethodMap) return;
+
+    const priorityOrder = ["post", "pre", "facility", "complimentary"];
+
+    for (const mode of priorityOrder) {
+      const key = paymentMethodMap[mode];
+      if (paymentMethods[key]) {
+        handlePaymentChange(mode, { silent: true });
+        break;
+      }
+    }
+  }, [paymentMethods]);
 
   const [units, setUnits] = useState([]); // To store units
 
   const [prices, setPrices] = useState({
     member_price_adult: 0,
-    member_price_child: 0,
+    // member_price_child: 0,
     guest_price_adult: 0,
-    guest_price_child: 0,
-    tenant_price_adult: 0,
-    tenant_price_child: 0,
+    // guest_price_child: 0,
+    // tenant_price_adult: 0,
+    // tenant_price_child: 0,
   });
 
   console.log("formData", formData);
@@ -98,19 +143,19 @@ const FacilityBooking = () => {
   //   }
   // };
 
-const calculateBookingAmount = (facility, formData) => {
-  if (facility?.fac_type === "request" && facility?.postpaid === true) {
-    const fixedAmount = Number(facility?.fixed_amount) || 0;
-    const taxPercentage = Number(facility?.gst_no) || 0;
-    console.log("taxPercentage Amount:", taxPercentage);
-    const taxAmount = (fixedAmount * taxPercentage) / 100;
-    const totalAmount = fixedAmount + taxAmount;
-    console.log("Fixed Amount:", totalAmount);
-    return totalAmount;
-  } else {
-    return formData?.amount ?? "";
-  }
-};
+  const calculateBookingAmount = (facility, formData) => {
+    if (facility?.fixed_amount) {
+      const fixedAmount = Number(facility?.fixed_amount) || 0;
+      const taxPercentage = Number(facility?.gst) || 0;
+      console.log("taxPercentage Amount:", taxPercentage);
+      const taxAmount = (fixedAmount * taxPercentage) / 100;
+      const totalAmount = fixedAmount + taxAmount;
+      console.log("Fixed Amount:", totalAmount);
+      return totalAmount;
+    } else {
+      return formData?.amount ?? "";
+    }
+  };
 
   useEffect(() => {
     fetchFacilities();
@@ -124,10 +169,18 @@ const calculateBookingAmount = (facility, formData) => {
     fetchUnits();
   }, []);
 
-  const handlePaymentChange = (mode) => {
-    setPaymentMode(mode);
-    setFormData({ ...formData, payment_mode: mode });
-  };
+  //  const handlePaymentChange = (mode) => {
+  //    const key = paymentMethodMap[mode];
+  //    if (!paymentMethods[key]) {
+  //      toast.info(
+  //        `${
+  //          mode.charAt(0).toUpperCase() + mode.slice(1)
+  //        } is not available for this facility`
+  //      );
+  //      return;
+  //    }
+  //    setPaymentMode(mode);
+  //  };
 
   useEffect(() => {
     const bookingAmount = calculateBookingAmount(facility, formData);
@@ -157,8 +210,6 @@ const calculateBookingAmount = (facility, formData) => {
     const safeMin = min ?? 0;
     return `${hr}:${safeMin.toString().padStart(2, "0")}`;
   };
-
-
 
   const fetchSlotsForFacility = async (facilityId, selectedDate) => {
     try {
@@ -200,6 +251,7 @@ const calculateBookingAmount = (facility, formData) => {
     }
   };
 
+  const [testFacility, setTestFacility] = useState([]);
   //fetch terms ,cancel, gst, member price
   const fetchTermsPolicy = async (facilityId) => {
     try {
@@ -208,14 +260,28 @@ const calculateBookingAmount = (facility, formData) => {
         const selectedFacility = response.data.find(
           (facility) => facility.id === parseInt(facilityId, 10)
         );
+        setTestFacility(selectedFacility);
+
+        setPaymentMethods({
+          postpaid: selectedFacility.postpaid ?? false,
+          prepaid: selectedFacility.prepaid ?? false,
+          pay_on_facility: selectedFacility.pay_on_facility ?? false,
+          complimentary: selectedFacility.complimentary ?? "",
+        });
+
+        setFormData((prev) => ({
+          ...prev,
+          gst_no: selectedFacility.gst_no,
+          prices: newPrices,
+        }));
         // console.log("Selected Facility:", selectedFacility);
         const newPrices = {
-          member_price_adult: selectedFacility.member_price_adult || 0,
-          member_price_child: selectedFacility.member_price_child || 0,
-          guest_price_adult: selectedFacility.guest_price_adult || 0,
-          guest_price_child: selectedFacility.guest_price_child || 0,
-          tenant_price_adult: selectedFacility.tenant_price_adult || 0,
-          tenant_price_child: selectedFacility.tenant_price_child || 0,
+          member_price_adult: selectedFacility.member_price_adult ?? 0,
+          // member_price_child: selectedFacility.member_price_child ?? 0,
+          guest_price_adult: selectedFacility.guest_price_adult ?? 0,
+          // guest_price_child: selectedFacility.guest_price_child ?? 0,
+          // tenant_price_adult: selectedFacility.tenant_price_adult ?? 0,
+          // tenant_price_child: selectedFacility.tenant_price_child ?? 0,
         };
         // console.log("Selected Facility:", selectedFacility);
 
@@ -257,18 +323,49 @@ const calculateBookingAmount = (facility, formData) => {
     }
   };
 
+  console.log("Data coming from API", testFacility);
+  console.log("Payment methods", paymentMethods);
+
   const handleInputChange = (field, value) => {
-    const updatedFormData = { ...formData, [field]: parseInt(value) };
+    const updatedFormData = { ...formData, [field]: parseInt(value) || 0 };
+
+    // Calculate total number of people
+    const totalPeople =
+      updatedFormData.member_adult +
+      // updatedFormData.member_child +
+      updatedFormData.guest_adult;
+    // updatedFormData.guest_child +
+    // updatedFormData.tenant_adult +
+    // updatedFormData.tenant_child;
+
+    // Validate against max_people limit
+    if (facility?.max_people && totalPeople > facility.max_people) {
+      toast.error(
+        `Total number of people (${totalPeople}) cannot exceed the maximum limit of ${facility.max_people} for this facility.`
+      );
+      return; // Don't update the state if validation fails
+    }
+
+    // Validate against min_people limit
+    if (
+      facility?.min_people &&
+      totalPeople < facility.min_people &&
+      totalPeople > 0
+    ) {
+      toast.error(
+        `Total number of people (${totalPeople}) must be at least ${facility.min_people} for this facility.`
+      );
+    }
+
     const memberTotal =
-      updatedFormData.member_adult * prices.member_price_adult +
-      updatedFormData.member_child * prices.member_price_child;
-    const guestTotal =
-      updatedFormData.guest_adult * prices.guest_price_adult +
-      updatedFormData.guest_child * prices.guest_price_child;
-    const tenantTotal =
-      updatedFormData.tenant_adult * prices.tenant_price_adult +
-      updatedFormData.tenant_child * prices.tenant_price_child;
-    const totalBeforeTax = memberTotal + guestTotal + tenantTotal;
+      updatedFormData.member_adult * prices.member_price_adult;
+    //+ updatedFormData.member_child * prices.member_price_child;
+    const guestTotal = updatedFormData.guest_adult * prices.guest_price_adult;
+    //  + updatedFormData.guest_child * prices.guest_price_child;
+    // const tenantTotal =
+    //   updatedFormData.tenant_adult * prices.tenant_price_adult;
+    //   + updatedFormData.tenant_child * prices.tenant_price_child;
+    const totalBeforeTax = memberTotal + guestTotal; //+ tenantTotal;
     // Assuming `tax_no` comes from the fetched data (e.g., tax rate is 12%)
     const taxAmount = calculateGST(totalBeforeTax, formData.gst_no || 0); // If no tax, use 0
     console.log("tax amm", taxAmount);
@@ -324,8 +421,48 @@ const calculateBookingAmount = (facility, formData) => {
 
   const postBookFacility = async () => {
     const postData = new FormData();
-    if (!formData.user_id || !formData.amenity_slot_id) {
-      toast.error("All Details are mandatory!");
+    // if (!formData.user_id || !formData.amenity_slot_id) {
+    //   toast.error("All Details are mandatory!");
+    //   return;
+    // }
+    const today = new Date();
+    const selectedDate = new Date(formData.booking_date);
+    today.setHours(0, 0, 0, 0);
+    selectedDate.setHours(0, 0, 0, 0);
+    if (!formData.user_id) {
+      toast.error("Username is required!");
+      return;
+    } else if (!formData.amenity_id) {
+      toast.error("Facility name is required!");
+      return;
+    } else if (selectedDate < today) {
+      toast.error("Booking date cannot be in the past.");
+      return;
+    } else if (formData.member_adult <= 0 && formData.guest_adult <= 0) {
+      toast.error("At least one member or guest must be added.");
+      return; // <-- this was missing
+    }
+    // Calculate total number of people for final validation
+    const totalPeople =
+      formData.member_adult +
+      // formData.member_child +
+      formData.guest_adult;
+    // formData.guest_child +
+    // formData.tenant_adult +
+    // formData.tenant_child;
+
+    // Final validation before submission
+    if (facility?.max_people && totalPeople > facility.max_people) {
+      toast.error(
+        `Total number of people (${totalPeople}) cannot exceed the maximum limit of ${facility.max_people} for this facility.`
+      );
+      return;
+    }
+
+    if (facility?.min_people && totalPeople < facility.min_people) {
+      toast.error(
+        `Total number of people (${totalPeople}) must be at least ${facility.min_people} for this facility.`
+      );
       return;
     }
 
@@ -366,7 +503,15 @@ const calculateBookingAmount = (facility, formData) => {
         "amenity_booking[member_child]",
         formData.member_child || ""
       );
+       postData.append(
+         "amenity_booking[amenity_slot_id]",
+         formData.amenity_slot_id || ""
+       );
 
+      postData.append(
+        "amenity_booking[amount]",
+        formData.amount || ""
+      );
       // Debugging: Log the entire FormData
       for (const [key, value] of postData.entries()) {
         console.log(`${key}: ${value}`);
@@ -389,10 +534,10 @@ const calculateBookingAmount = (facility, formData) => {
   const fetchUsers = async () => {
     try {
       const response = await getSetupUsers();
-      console.log("Users:", response);
+      // console.log("Users:", response);
 
       const transformedUsers = response.data.map((user) => {
-        console.log("User:", user);
+        // console.log("User:", user);
         // Ensure user.user_sites is defined
         const userSite = user?.user_sites?.[0];
 
@@ -420,7 +565,7 @@ const calculateBookingAmount = (facility, formData) => {
       });
 
       setUserOptions(transformedUsers);
-      console.log("Fetched Users:", transformedUsers);
+      // console.log("Fetched Users:", transformedUsers);
     } catch (error) {
       console.error("Error fetching assigned users:", error);
     }
@@ -433,6 +578,8 @@ const calculateBookingAmount = (facility, formData) => {
       fetchUsers();
     }
   }, [units]);
+
+  console.log("facility", facility);
 
   const handleFacilityChange = (e) => {
     const selectedFacilityId = e.target.value;
@@ -475,9 +622,17 @@ const calculateBookingAmount = (facility, formData) => {
     setSearchText(user.label);
   };
 
+  const handleUserSelectObject = (user) => {
+    setSelectedUser(setFormData({ ...formData, user_id: user.value }));
+    setDropdownOpen(false);
+    setSearchText(user.label);
+  };
+
   const [searchFATerm, setSearchFATerm] = useState(""); // State for search input
   const [showDropdown, setShowDropdown] = useState(false); // State for dropdown visibility
+  const [facilityError, setFacilityError] = useState("");
 
+  console.log("Line 536 filters", facilities);
   const filteredFacilities = facilities.filter((facility) =>
     facility.fac_name.toLowerCase().includes(searchFATerm.toLowerCase())
   ); // Filter facilities based on search term
@@ -488,6 +643,15 @@ const calculateBookingAmount = (facility, formData) => {
     handleFacilityChange({ target: { value: facility.id } }); // Pass selected facility ID to handler
   };
 
+  useEffect(() => {
+    // console.log("searched facility",searchFATerm)
+    if (searchFATerm && filteredFacilities.length === 0) {
+      setFacilityError("No facilities match your search.");
+    } else {
+      setFacilityError("");
+    }
+  }, [searchFATerm, filteredFacilities]);
+
   const themeColor = useSelector((state) => state.theme.color);
   return (
     <section className="flex">
@@ -496,7 +660,7 @@ const calculateBookingAmount = (facility, formData) => {
         <div className="flex flex-col items-center mb-10">
           <div className="md:border rounded-md my-2 p-4">
             <h2
-              style={{ background: themeColor }}
+              style={{ background: "rgb(17, 24, 39)" }}
               className="text-xl p-2 rounded-md font-semibold text-center mb-4 text-white "
             >
               Book Facility
@@ -511,11 +675,32 @@ const calculateBookingAmount = (facility, formData) => {
                 <input
                   type="text"
                   value={searchFATerm}
-                  onChange={(e) => setSearchFATerm(e.target.value)} // Update search term
+                  onChange={(e) => {
+                    setSearchFATerm(e.target.value);
+                    setShowDropdown(true); //Show dropdown while typing
+                  }}
                   onFocus={() => setShowDropdown(true)} // Show dropdown on focus
+                  onBlur={() => setTimeout(() => setShowDropdown(false), 100)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      const matchedFacility = filteredFacilities.find((fac) =>
+                        fac.fac_name
+                          .toLowerCase()
+                          .includes(searchFATerm.toLowerCase())
+                      );
+                      if (matchedFacility) {
+                        handleFacSelect(matchedFacility); // Select first partial match
+                      }
+                    }
+                  }}
                   className="border p-[6px] px-4 border-gray-500 rounded-md w-60"
                   placeholder="Search Facility"
                 />
+                {facilityError && (
+                  <div className="text-red-500 text-sm mt-2">
+                    {facilityError}
+                  </div>
+                )}
                 {/* Dropdown */}
                 {showDropdown && (
                   <div className="absolute z-10 mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-y-auto w-full">
@@ -523,7 +708,7 @@ const calculateBookingAmount = (facility, formData) => {
                       filteredFacilities.map((facility) => (
                         <div
                           key={facility.id}
-                          onClick={() => handleFacSelect(facility)} // Handle selection
+                          onMouseDown={() => handleFacSelect(facility)} // Handle selection
                           className="p-2 hover:bg-gray-100 cursor-pointer"
                         >
                           {facility.fac_name}
@@ -552,15 +737,34 @@ const calculateBookingAmount = (facility, formData) => {
                 </select>
               </div> */}
 
-              <div className="mt-3 relative p-2">
+              <div
+                className="mt-3 relative p-2"
+                onMouseLeave={() => setDropdownOpen(false)}
+              >
                 <label htmlFor="users" className="font-semibold">
                   Select User:
                 </label>
                 <input
                   type="text"
                   value={searchText}
-                  onChange={(e) => setSearchText(e.target.value)}
+                  onChange={(e) => {
+                    setSearchText(e.target.value);
+                    setDropdownOpen(true);
+                  }}
                   onFocus={() => setDropdownOpen(true)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      const matchedUser = filteredOptions.find((user) =>
+                        user.label
+                          .toLowerCase()
+                          .includes(searchText.toLowerCase())
+                      );
+                      if (matchedUser) {
+                        // Passing full user object
+                        handleUserSelectObject(matchedUser);
+                      }
+                    }
+                  }}
                   placeholder="Search User"
                   className="border p-[6px] px-4 border-gray-500 rounded-md w-60"
                 />
@@ -608,6 +812,7 @@ const calculateBookingAmount = (facility, formData) => {
                   type="date"
                   id="bookingDate"
                   name="bookingDate"
+                  min={new Date().toISOString().split("T")[0]}
                   value={date} // Default to today's date
                   onChange={handleDateChange}
                   className="border p-[6px] px-4 border-gray-500 rounded-md w-60"
@@ -637,10 +842,10 @@ const calculateBookingAmount = (facility, formData) => {
               <h2 className="border-b text-xl border-black font-semibold">
                 Payment Mode
               </h2>
-              <div>
+              {/* <div>
                 <div className=" flex flex-col md:flex-row  items-center my-2 w-full">
-                  {/* <p className="font-semibold">For :</p> */}
-                  <div className="flex gap-5 w-full">
+                  {/* <p className="font-semibold">For :</p> 
+                  <div className="flex gap-5 w-full mt-4">
                     <p
                       className={`border-2 p-1 px-6 border-black font-medium rounded-full cursor-pointer ${
                         paymentMode === "post" && "bg-black text-white"
@@ -657,6 +862,26 @@ const calculateBookingAmount = (facility, formData) => {
                     >
                       Prepaid
                     </p>
+                    <p
+                      className={`border-2 p-1 px-6 border-black font-medium rounded-full cursor-pointer ${
+                        paymentMode === "pay_on_facility"
+                          ? "bg-black text-white"
+                          : ""
+                      }`}
+                      onClick={() => handlePaymentChange("pay_on_facility")}
+                    >
+                      Pay on facility
+                    </p>
+                    <p
+                      className={`border-2 p-1 px-6 border-black font-medium rounded-full cursor-pointer ${
+                        paymentMode === "complimentary"
+                          ? "bg-black text-white"
+                          : ""
+                      }`}
+                      onClick={() => handlePaymentChange("complimentary")}
+                    >
+                      Complimentary
+                    </p>
                   </div>
                 </div>
                 {/* {paymentMode === "pre" && (
@@ -667,12 +892,70 @@ const calculateBookingAmount = (facility, formData) => {
                       className="border border-gray-400 p-1 px-4 rounded-md"
                     />
                   </div>
-                )} */}
+                )} 
+              </div> */}
+              <div>
+                <div className="flex flex-col md:flex-row items-center my-2 w-full">
+                  <div className="flex gap-5 w-full mt-4">
+                    {[
+                      { label: "Post Paid", value: "post" },
+                      { label: "Prepaid", value: "pre" },
+                      { label: "Pay on facility", value: "facility" },
+                      { label: "Complimentary", value: "complimentary" },
+                    ].map(({ label, value }) => {
+                      const key = paymentMethodMap[value];
+                      const isEnabled = paymentMethods[key];
+                      const isSelected = paymentMode === value;
+
+                      return (
+                        <div key={value} className="relative group">
+                          <p
+                            className={`border-2 p-1 px-6 border-black font-medium rounded-full transition-all duration-200 ${
+                              isSelected ? "bg-black text-white" : ""
+                            } ${
+                              !isEnabled
+                                ? "opacity-50 cursor-not-allowed"
+                                : "cursor-pointer"
+                            }`}
+                            onClick={() => handlePaymentChange(value)}
+                          >
+                            {label}
+                          </p>
+                          {!isEnabled && (
+                            <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                              Not available for this facility
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             </div>
             <div className="border-b text-xl border-black font-semibold">
               Members
             </div>
+            {facility && (facility.min_people || facility.max_people) && (
+              <div className="bg-blue-50 p-3 rounded-md mb-4">
+                <div className="text-sm font-medium text-blue-800">
+                  Facility Capacity:
+                  {facility.min_people && ` Min: ${facility.min_people} people`}
+                  {facility.min_people && facility.max_people && " | "}
+                  {facility.max_people && ` Max: ${facility.max_people} people`}
+                </div>
+                <div className="text-sm text-blue-600">
+                  Current Total:{" "}
+                  {(formData.member_adult || 0) +
+                    // (formData.member_child || 0) +
+                    (formData.guest_adult || 0)}
+                  {/* (formData.guest_child || 0)}
+                     (formData.tenant_adult || 0}+
+                     (formData.tenant_child || 0)} */}{" "}
+                  people
+                </div>
+              </div>
+            )}
             {/* <div className="flex flex-col my-2">
               <label htmlFor="" className="font-semibold">
                 Comment :
@@ -707,7 +990,7 @@ const calculateBookingAmount = (facility, formData) => {
                       }
                     />
                   </div>
-                  <div className="flex items-center space-x-2">
+                  {/* <div className="flex items-center space-x-2">
                     <label htmlFor="member_child" className="text-sm">
                       Child
                     </label>
@@ -722,11 +1005,10 @@ const calculateBookingAmount = (facility, formData) => {
                         handleInputChange("member_child", e.target.value)
                       }
                     />
-                  </div>
+                  </div> */}
                   <div>
-                    Total:{" "}
-                    {formData.member_adult * prices.member_price_adult +
-                      formData.member_child * prices.member_price_child}
+                    Total: {formData.member_adult * prices.member_price_adult}
+                    {/* + formData.member_child * prices.member_price_child} */}
                   </div>
                 </div>
 
@@ -751,7 +1033,7 @@ const calculateBookingAmount = (facility, formData) => {
                       }
                     />
                   </div>
-                  <div className="flex items-center space-x-2">
+                  {/* <div className="flex items-center space-x-2">
                     <label htmlFor="guest_child" className="text-sm">
                       Child
                     </label>
@@ -766,16 +1048,15 @@ const calculateBookingAmount = (facility, formData) => {
                         handleInputChange("guest_child", e.target.value)
                       }
                     />
-                  </div>
+                  </div> */}
                   <div>
-                    Total:{" "}
-                    {formData.guest_adult * prices.guest_price_adult +
-                      formData.guest_child * prices.guest_price_child}
+                    Total: {formData.guest_adult * prices.guest_price_adult}
+                    {/* + formData.guest_child * prices.guest_price_child} */}
                   </div>
                 </div>
 
                 {/* Tenant Fields */}
-                <div className="flex flex-col items-center border-b border-black pb-2 space-y-2">
+                {/* <div className="flex flex-col items-center border-b border-black pb-2 space-y-2">
                   <label htmlFor="" className="font-semibold">
                     Tenant:
                   </label>
@@ -816,7 +1097,7 @@ const calculateBookingAmount = (facility, formData) => {
                     {formData.tenant_adult * prices.tenant_price_adult +
                       formData.tenant_child * prices.tenant_price_child}
                   </div>
-                </div>
+                </div> */}
               </div>
 
               {/* Final Amount */}
@@ -883,7 +1164,7 @@ const calculateBookingAmount = (facility, formData) => {
               className="bg-gray-100 my-4 p-2 rounded-md font-bold "
             >
               <div className="grid  bg-gray-100 rounded-md gap-5 p-4">
-                <li className="font-medium">{terms}</li>
+                <li className="font-medium">{facility.terms}</li>
               </div>
             </Collapsible>
           </div>
@@ -894,4 +1175,3 @@ const calculateBookingAmount = (facility, formData) => {
 };
 
 export default FacilityBooking;
-("http://13.215.74.38//complaint_modes.jsontoken=efe990d24b0379af8ba3d0a986ac802796bc2e0db15552&q[of_atype]=complaint");
