@@ -29,6 +29,7 @@ const FacilityBooking = () => {
   const formattedDate = `${year}-${month}-${day}`;
   const [selectedSlot, setSelectedSlot] = useState([]);
   const [slots, setSlots] = useState([]);
+  const [blockedDates, setBlockedDates] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isTermOpen, setIsTermOpen] = useState(false);
   const [time, setTime] = useState("");
@@ -145,8 +146,9 @@ const FacilityBooking = () => {
 
   const calculateBookingAmount = (facility, formData) => {
     if (facility?.fixed_amount) {
+      console.log("Fixed amount of facility", facility.fixed_amount)
       const fixedAmount = Number(facility?.fixed_amount) || 0;
-      const taxPercentage = Number(facility?.gst) || 0;
+      const taxPercentage = Number(facility?.gst_no) || 0;
       console.log("taxPercentage Amount:", taxPercentage);
       const taxAmount = (fixedAmount * taxPercentage) / 100;
       const totalAmount = fixedAmount + taxAmount;
@@ -241,9 +243,18 @@ const FacilityBooking = () => {
           }));
 
         setSlots(formattedSlots); // Update slots state
+
+        // Block date if no valid slots remain
+        if (formattedSlots.length === 0) {
+          setBlockedDates((prev) =>
+            prev.includes(selectedDate) ? prev : [...prev, selectedDate]
+          );
+        }
+          return formattedSlots;
       } else {
         console.log("No Slots Found");
         setSlots([]);
+        return []; 
       }
     } catch (error) {
       console.log("Error Fetching Slots", error);
@@ -387,16 +398,43 @@ const FacilityBooking = () => {
     }));
   };
 
-  const handleDateChange = (e) => {
-    const selectedDate = e.target.value;
-    setDate(selectedDate); // Update date state
+  const formatDate = (dateObj) => {
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+    const day = String(dateObj.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
 
-    setFormData((prevData) => ({
-      ...prevData,
-      booking_date: selectedDate,
-    }));
+  const handleDateChange = async (e) => {
+    const rawDate = e.target.value;
+    const selectedDateObj = new Date(rawDate);
+    const formattedDate = formatDate(selectedDateObj);
 
-    fetchSlotsForFacility(facility?.id, selectedDate); // Fetch slots
+    setDate(formattedDate);
+
+    if (facility) {
+      const response = await fetchSlotsForFacility(facility.id, formattedDate);
+      console.log("Raw API response:", response);
+
+      const slots = Array.isArray(response) ? response : response?.slots || [];
+
+      if (slots.length === 0) {
+        toast.error("No slots available for this date.");
+        setSlots([]);
+        setDate(""); // optional reset
+        setFormData((prevData) => ({
+          ...prevData,
+          booking_date: "",
+        }));
+        return;
+      }
+
+      setSlots(slots);
+      setFormData((prevData) => ({
+        ...prevData,
+        booking_date: formattedDate,
+      }));
+    }
   };
 
   // const handleButtonClick = (selectedTime) => {
@@ -442,6 +480,12 @@ const FacilityBooking = () => {
       toast.error("At least one member or guest must be added.");
       return; // <-- this was missing
     }
+    // Slot validation based on availability
+    if (Array.isArray(slots) && slots.length > 0 && !formData.amenity_slot_id) {
+      toast.error("Please select a slot for this facility.");
+      return;
+    }
+
     // Calculate total number of people for final validation
     const totalPeople =
       formData.member_adult +
@@ -503,15 +547,12 @@ const FacilityBooking = () => {
         "amenity_booking[member_child]",
         formData.member_child || ""
       );
-       postData.append(
-         "amenity_booking[amenity_slot_id]",
-         formData.amenity_slot_id || ""
-       );
-
       postData.append(
-        "amenity_booking[amount]",
-        formData.amount || ""
+        "amenity_booking[amenity_slot_id]",
+        formData.amenity_slot_id || ""
       );
+
+      postData.append("amenity_booking[amount]", formData.amount || "");
       // Debugging: Log the entire FormData
       for (const [key, value] of postData.entries()) {
         console.log(`${key}: ${value}`);
@@ -820,7 +861,7 @@ const FacilityBooking = () => {
               </div>
             </div>
             <div className="grid grid-cols-4 gap-2 mt-2 p-2">
-              {facility !== "" && slots.length > 0 && (
+              {facility !== "" && Array.isArray(slots) && slots.length > 0 && (
                 <div className="flex flex-col gap-1">
                   <p className="font-semibold">Select Slot :</p>
                   <select
