@@ -788,6 +788,7 @@ import FBMainPage from "./pages/Setup/FBMainPage.jsx";
 import EventPage from "./extra/EventPage.jsx";
 import ParkingConfigurationSetup from "./pages/Setup/ParkingSetupPages/ParkingConfigurationSetup.jsx";
 import RmbAttendance from "./pages/RMBAttendance.jsx";
+import FBRestaurtantEdit from "./pages/SubPages/FBResturantEdit.jsx";
 
 function App() {
   const { id } = useParams();
@@ -3299,14 +3300,14 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
-        {/* <Route
+        <Route
           path="/admin/fb-edit/:id"
           element={
             <ProtectedAdminRoutes>
               <FBRestaurtantEdit />
             </ProtectedAdminRoutes>
           }
-        /> */}
+        />
         <Route
           path="/fnb/status-setup/:id"
           element={
