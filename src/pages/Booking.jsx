@@ -201,7 +201,7 @@ const Booking = () => {
               } rounded-full px-4 cursor-pointer text-center transition-all duration-300 ease-linear`}
               onClick={() => setPage("meetingBooking")}
             >
-              Amenities Bookings
+              Workspace Bookings
             </h2>
           </div>
         </div>

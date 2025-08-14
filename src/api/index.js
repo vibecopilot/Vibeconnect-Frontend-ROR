@@ -478,6 +478,20 @@ export const getFacilitySetup = async (data) =>
     },
   });
 
+export const getFacitilitySetupId = async (id) =>
+  axiosInstance.get(`/amenities/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+
+export const updateFacitilitySetup = async (data, id) =>
+  axiosInstance.put(`/amenities/${id}.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+
 export const getIssueType = async () =>
   axiosInstance.get(`pms/admin/complaint_issue_types.json`, {
     params: {
@@ -819,6 +833,14 @@ export const getAmenitiesBooking = async () => {
     //   Pragma: "no-cache", // Older HTTP/1.0 caches
     //   Expires: "0", // Immediately expires the cached response
     // },
+  });
+};
+
+export const getAmenitiesBookingById = async (id) => {
+  return axiosInstance.get(`/amenity_bookings.json/${id}`, {
+    params: {
+      token: token,
+    },
   });
 };
 
@@ -8081,6 +8103,54 @@ export const changeEmployeePassword = async (data) => {
     return response.data;
   } catch (error) {
     console.log("Error in updating the employee password", error);
+    throw error;
+  }
+};
+export const generateSiteWiseSlip = async (data) => {
+  try {
+    const response = await HrmsAuth.post(`/api/generate-payroll/site/`, data);
+    return response.data;
+  } catch (error) {
+    console.log("Error in generating slips", error);
+    throw error;
+  }
+};
+export const getSiteWiseSalarySlip = async (
+  siteId,
+  month,
+  year,
+  status,
+  search,
+  page
+) => {
+  try {
+    const response = await HrmsAuth.get(
+      `/api/payroll/site-wise/${siteId}/?month=${month}&year=${year}&status=${status}&search=${search}&page=${page}`
+    );
+    return response.data;
+  } catch (error) {
+    console.log("Error in getting slips", error);
+    throw error;
+  }
+};
+export const updatePaymentStatus = async (payrollId, data) => {
+  try {
+    const response = await HrmsAuth.patch(`/payrolls/${payrollId}/`, data);
+    return response.data;
+  } catch (error) {
+    console.log("Error in updating slips", error);
+    throw error;
+  }
+};
+export const updateBulkPaymentStatus = async (data) => {
+  try {
+    const response = await HrmsAuth.patch(
+      `/api/payroll/site-wise/update-payment/`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.log("Error in updating slips", error);
     throw error;
   }
 };
