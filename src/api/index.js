@@ -478,6 +478,20 @@ export const getFacilitySetup = async (data) =>
     },
   });
 
+export const getFacitilitySetupId = async (id) =>
+  axiosInstance.get(`/amenities/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+
+export const updateFacitilitySetup = async (data, id) =>
+  axiosInstance.put(`/amenities/${id}.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+
 export const getIssueType = async () =>
   axiosInstance.get(`pms/admin/complaint_issue_types.json`, {
     params: {
@@ -819,6 +833,14 @@ export const getAmenitiesBooking = async () => {
     //   Pragma: "no-cache", // Older HTTP/1.0 caches
     //   Expires: "0", // Immediately expires the cached response
     // },
+  });
+};
+
+export const getAmenitiesBookingById = async (id) => {
+  return axiosInstance.get(`/amenity_bookings.json/${id}`, {
+    params: {
+      token: token,
+    },
   });
 };
 

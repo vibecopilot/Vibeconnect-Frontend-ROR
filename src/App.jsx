@@ -37,6 +37,8 @@ import Materials from "./pages/Materials.jsx";
 import Booking from "./pages/Booking.jsx";
 import FacilityBooking from "./pages/SubPages/FacilityBooking.jsx";
 import BookingDetails from "./pages/SubPages/details/BookingDetails.jsx";
+import EditAmenitySetup from "./pages/SubPages/EditAmenitySetup.jsx";
+import BookingFacilityDetails from "./pages/SubPages/BookingFacilityDetails.jsx";
 import SetupFacility from "./pages/SubPages/SetupFacility.jsx";
 import Communication from "./pages/Communication.jsx";
 import CreateEvent from "./pages/SubPages/CreateEvent.jsx";
@@ -1406,6 +1408,14 @@ function App() {
           path="/bookings/booking-details/:id"
           element={<BookingDetails />}
         />
+        <Route
+            path="/setup/facility-details/:id"
+            element={<BookingFacilityDetails />}
+          />
+        <Route
+            path="/setup/facility-details/edit/:id"
+            element={<EditAmenitySetup />}
+          />
         <Route
           path="/setup/facility"
           element={

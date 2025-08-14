@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import DataTable from "react-data-table-component";
-import { BiExport } from "react-icons/bi";
+import { BiEdit, BiExport } from "react-icons/bi";
 import { ImEye } from "react-icons/im";
 import { IoAddCircleOutline } from "react-icons/io5";
 import { Link, useParams } from "react-router-dom";
@@ -49,9 +49,14 @@ const SetupBookingFacility = () => {
     {
       name: "Action",
       cell: (row) => (
-        <Link to={`/bookings/booking-details/${row.id}`}>
-          <BsEye />
-        </Link>
+        <div className="flex items-center gap-2 px-2 py-2 mt-1">
+          <Link to={`/setup/facility-details/${row.id}`}>
+            <BsEye />
+          </Link>
+          <Link to={`/setup/facility-details/edit/${row.id}`}>
+            <BiEdit size={15} />
+          </Link>
+        </div>
       ),
       sortable: true,
     },
@@ -128,7 +133,7 @@ const SetupBookingFacility = () => {
     const searchValue = event.target.value;
     setSearchText(searchValue);
     const filteredResults = setupData.filter((item) =>
-      item.facility.toLowerCase().includes(searchValue.toLowerCase())
+      item.fac_name.toLowerCase().includes(searchValue.toLowerCase())
     );
     setFilteredData(filteredResults);
   };
@@ -138,7 +143,7 @@ const SetupBookingFacility = () => {
   const [page, setPage] = useState("facility");
   return (
     <div className="flex">
-     <SetupNavbar/>
+      <SetupNavbar />
 
       <div className="w-full flex mx-3 flex-col overflow-hidden">
         <div className="flex justify-center my-2">
@@ -150,7 +155,7 @@ const SetupBookingFacility = () => {
               } rounded-full px-4 cursor-pointer text-center  transition-all duration-300 ease-linear`}
               onClick={() => setPage("facility")}
             >
-              Facility
+              Workspace booking
             </h2>
             <h2
               className={`p-1 ${
@@ -193,15 +198,13 @@ const SetupBookingFacility = () => {
             </div>
             <Table
               columns={setupColumn}
-              data={setupData}
+              data={searchText ? filteredData : setupData}
               // customStyles={customStyle}
             />
           </>
         )}
 
-        {page === "seatBooking" && (
-         <SetupSeatBooking/>
-        )}
+        {page === "seatBooking" && <SetupSeatBooking />}
       </div>
     </div>
   );
