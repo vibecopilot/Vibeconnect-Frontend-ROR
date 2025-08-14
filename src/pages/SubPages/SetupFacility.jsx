@@ -24,13 +24,22 @@ const SetupFacility = () => {
   // const id = getItemInLocalStorage("SITEID")
   const [isTenant, setIsTenant] = useState(false);
   const themeColor = useSelector((state) => state.theme.color);
+  const [facilityError, setFacilityError] = useState("");
+  const [activeError, setActiveError] = useState("");
+  const [shareError, setShareError] = useState("");
+  const [billingError, setBillingError] = useState("");
   const [formData, setFormData] = useState({
     type: "bookable",
     name: "",
     description: "",
     fac_name: "",
     fac_type: "bookable",
-    tenant: false,
+    active: "", //active yes or no
+    shareable: "", //shareable yes or no
+    billing: "",
+    // tenant: false,
+    flat: false,
+    flat_charges: "",
     terms: "",
     min_people: "",
     max_people: "",
@@ -39,15 +48,29 @@ const SetupFacility = () => {
     guest: false,
     covers: "",
     member_price_adult: "",
-    member_price_child: "",
+    // member_price_child: "",
     guest_price_adult: "",
-    guest_price_child: "",
-    tenant_price_adult: "",
-    tenant_price_child: "",
+    // guest_price_child: "",
+    // tenant_price_adult: "",
+    // tenant_price_child: "",
+    prepaid: false,
+    postpaid: false,
+    pay_on_facility: false,
+    complimentary: false,
+    gst_no:"",
     cancellation_policy: "",
+    slots: [
+      {
+        start_hr: "",
+        end_hr: "",
+        start_min: "",
+        end_min: "",
+      },
+    ],
     attachments: [],
     cover_images: [],
   });
+
   const handleFileChange = (files, fieldName) => {
     // Changed to receive 'files' directly
     setFormData({
@@ -60,65 +83,279 @@ const SetupFacility = () => {
   const handleChange1 = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
-  };
-  const navigate = useNavigate();
-  const handleSubmit = async () => {
-    const sendData = new FormData();
-    sendData.append("amenity[site_id]", siteId);
-    sendData.append("amenity[name]", formData.name);
-    sendData.append("amenity[description]", formData.description);
-    formData.attachments.forEach((file, index) => {
-      sendData.append(`attachments[]`, file);
-    });
-    formData.cover_images.forEach((file, index) => {
-      sendData.append(`cover_images[]`, file);
-    });
-    try {
-      toast.loading("please wait!");
-      const response = await postFacilitySetup(sendData);
-      toast.dismiss();
-      toast.success("New Facility Setup Added Successfully!");
-      navigate(`/setup/facility`);
-      console.log(response);
-    } catch (error) {
-      console.log(error);
-      toast.dismiss();
-      toast.error("Error Adding New Facility");
+    if (name === "fac_name" && value.trim().length === 0) {
+      setFacilityError("This field is required");
+    } else {
+      setFacilityError("");
     }
   };
-  const [slots, setSlots] = useState([
-    {
-      id: 1,
-      startTime: "",
-      breakTimeStart: "",
-      breakTimeEnd: "",
-      endTime: "",
-      concurrentSlots: "",
-      slotBy: "",
-      wrapTime: "",
-      day: "",
-      isActive: false,
-      isBookable: false,
-    },
-  ]);
+
+  const handleDropdownChange1 = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (name === "active" && value === "") {
+      setActiveError("Please select an option");
+    } else {
+      setActiveError("");
+    }
+  };
+
+  const handleDropdownChange2 = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (name === "shareable" && value === "") {
+      setShareError("Please select an option");
+    } else {
+      setShareError("");
+    }
+  };
+
+  const handleDropdownChange3 = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (name === "billing" && value === "") {
+      setBillingError("Please select an option");
+    } else {
+      setBillingError("");
+    }
+
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handlePaymentCheckbox = (e) => {
+    const { name, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: checked,
+    }));
+  };
+  
+  const validateUserPaymentSelection = (formData) => {
+    const paymentModes = [
+      "postpaid",
+      "prepaid",
+      "pay_on_facility",
+      "complimentary",
+    ];
+
+    const isAnySelected = paymentModes.some((mode) => formData[mode] === true);
+
+    if (!isAnySelected) {
+      toast.error("Please select at least one payment option.");
+      return false;
+    }
+
+    return true;
+  };
+
+  console.log('Formdata',formData)
+
+  const handleOnSubmit = (e) => {
+    e.preventDefault();
+
+    let invalidFields = [];
+    let formIsValid = true;
+
+    const requiredFields = [
+      { key: "fac_name", label: "Facility Name" },
+      { key: "active", label: "Active" },
+      { key: "shareable", label: "Shareable" },
+    ];
+
+    const numericFields = [
+      { key: "min_people", label: "Minimum people" },
+      { key: "max_people", label: "Maximum people" },
+      { key: "flat_charges", label: "Flat amount" },
+      { key: "member_price_adult", label: "Member adult price" },
+      { key: "guest_price_adult", label: "Guest adult price" },
+    ];
+
+    const isMemberSelected = formData.member;
+    const isGuestSelected = formData.guest;
+    const isFlatSelected = formData.flat === true; // assuming flat is a checkbox
+    const hasFlatAmount = formData.flat_charges?.toString().trim() !== "";
+    const hasMemberAmount =
+      formData.member_price_adult?.toString().trim() !== "";
+    const hasGuestAmount = formData.guest_price_adult?.toString().trim() !== "";
+
+    //Check if at least one pricing category is selected
+    if (!isMemberSelected && !isGuestSelected && !isFlatSelected) {
+      toast.error("Please select at least one category (member/guest/flat).");
+      formIsValid = false;
+    }
+
+    //If flat is selected, flat amount must be provided
+    if (isFlatSelected && !hasFlatAmount) {
+      toast.error("Please enter flat charges.");
+      formIsValid = false;
+    }
+
+    //If member is selected, member amount must be provided
+    if (isMemberSelected && !hasMemberAmount) {
+      toast.error("Please enter member price.");
+      formIsValid = false;
+    }
+
+    //If guest is selected, guest amount must be provided
+    if (isGuestSelected && !hasGuestAmount) {
+      toast.error("Please enter guest price.");
+      formIsValid = false;
+    }
+
+    //Payment mode check
+    const isPaymentValid = validateUserPaymentSelection(formData);
+    if (!isPaymentValid) {
+      formIsValid = false;
+    }
+
+    //Required fields check
+    requiredFields.forEach(({ key, label }) => {
+      if (!formData[key] || formData[key].toString().trim() === "") {
+        invalidFields.push(label);
+      }
+    });
+
+    //Numeric fields check
+    numericFields.forEach(({ key, label }) => {
+      const value = Number(formData[key]);
+
+      // Skip validation for member/guest/flat prices if not selected
+      if (
+        (key === "flat_charges" && !formData.flat) ||
+        (key === "member_price_adult" && !formData.member) ||
+        (key === "guest_price_adult" && !formData.guest)
+      ) {
+        return; // skip this field
+      }
+
+      if (isNaN(value) || value <= 0) {
+        invalidFields.push(label);
+      }
+    });
+
+    if (invalidFields.length > 0) {
+      toast.error(
+        `Form is not valid. Please enter ${invalidFields.join(", ")}`
+      );
+      formIsValid = false;
+    }
+
+    //Slot configuration check
+    if (!formData.slots || formData.slots.length === 0) {
+      toast.error("Please configure at least one slot.");
+      formIsValid = false;
+    }
+
+    // const timeToMinutes = (timeStr) => {
+    //   const [hours, minutes] = timeStr.split(":").map(Number);
+    //   return hours * 60 + minutes;
+    // };
+
+    // formData.slots.forEach((slot) => {
+    //   if (
+    //     !slot.startTime ||
+    //     !slot.endTime ||
+    //     slot.startTime.trim() === "" ||
+    //     slot.endTime.trim() === ""
+    //   ) {
+    //     toast.error("All slots must have a valid start and end time.");
+    //     formIsValid = false;
+    //   } else {
+    //     const startMinutes = timeToMinutes(slot.startTime);
+    //     const endMinutes = timeToMinutes(slot.endTime);
+    //     if (startMinutes >= endMinutes) {
+    //       toast.error("Start time must be before end time.");
+    //       formIsValid = false;
+    //     }
+    //   }
+    // });
+
+    //Final submission trigger
+    if (formIsValid) {
+      handleAddFacility(e);
+    }
+  };
+
+  const navigate = useNavigate();
+  // const handleSubmit = async () => {
+  //   const sendData = new FormData();
+  //   sendData.append("amenity[site_id]", siteId);
+  //   sendData.append("amenity[name]", formData.name);
+  //   sendData.append("amenity[description]", formData.description);
+  //   formData.attachments.forEach((file, index) => {
+  //     sendData.append(`attachments[]`, file);
+  //   });
+  //   formData.cover_images.forEach((file, index) => {
+  //     sendData.append(`cover_images[]`, file);
+  //   });
+  //   try {
+  //     toast.loading("please wait!");
+  //     const response = await postFacilitySetup(sendData);
+  //     toast.dismiss();
+  //     toast.success("New Facility Setup Added Successfully!");
+  //     navigate(`/setup/facility`);
+  //     console.log(response);
+  //   } catch (error) {
+  //     console.log(error);
+  //     toast.dismiss();
+  //     toast.error("Error Adding New Facility");
+  //   }
+  // };
+  // const [slots, setSlots] = useState([
+  //   {
+  //     id: 1,
+  //     startTime: "",
+  //     breakTimeStart: "",
+  //     breakTimeEnd: "",
+  //     endTime: "",
+  //     concurrentSlots: "",
+  //     slotBy: "",
+  //     wrapTime: "",
+  //     day: "",
+  //     isActive: false,
+  //     isBookable: false,
+  //   },
+  // ]);
+
+  // const handleAddSlot = () => {
+  //   setSlots([
+  //     ...slots,
+  //     {
+  //       id: slots.length + 1,
+  //       startTime: "",
+  //       breakTimeStart: "",
+  //       breakTimeEnd: "",
+  //       endTime: "",
+  //       concurrentSlots: "",
+  //       slotBy: "",
+  //       wrapTime: "",
+  //       day: "",
+  //       isActive: false,
+  //       isBookable: false,
+  //     },
+  //   ]);
+  // };
 
   const handleAddSlot = () => {
-    setSlots([
-      ...slots,
-      {
-        id: slots.length + 1,
-        startTime: "",
-        breakTimeStart: "",
-        breakTimeEnd: "",
-        endTime: "",
-        concurrentSlots: "",
-        slotBy: "",
-        wrapTime: "",
-        day: "",
-        isActive: false,
-        isBookable: false,
-      },
-    ]);
+    setFormData((prevState) => ({
+      ...prevState,
+      slots: [
+        ...prevState.slots,
+        {
+          start_hr: "", // Hour for start time
+          start_min: "", // Minute for start time
+          end_hr: "", // Hour for end time
+          end_min: "", // Minute for end time
+        },
+      ],
+    }));
+  };
+
+  const handleRemoveSlot = (index) => {
+    setFormData((prevState) => ({
+      ...prevState,
+      slots: prevState.slots.filter((_, i) => i !== index),
+    }));
   };
 
   const handleFacTypeChange = (e) => {
@@ -130,9 +367,9 @@ const SetupFacility = () => {
     hours: 0,
     minutes: 0,
   });
-  const handleRemoveSlot = (id) => {
-    setSlots(slots.filter((slot) => slot.id !== id));
-  };
+  // const handleRemoveSlot = (id) => {
+  //   setSlots(slots.filter((slot) => slot.id !== id));
+  // };
 
   const handleInputChange = (id, field, value) => {
     setSlots(
@@ -196,6 +433,20 @@ const SetupFacility = () => {
     blockBy: "",
   });
 
+  const handleSlotTimeChange = (index, timeType, timeValue) => {
+    const [hours, minutes] = timeValue.split(":");
+
+    setFormData((prevState) => {
+      const updatedSlots = [...prevState.slots];
+      updatedSlots[index] = {
+        ...updatedSlots[index],
+        [`${timeType}_hr`]: hours,
+        [`${timeType}_min`]: minutes,
+      };
+      return { ...prevState, slots: updatedSlots };
+    });
+  };
+
   const handleAddFacility = async (e) => {
     e.preventDefault();
 
@@ -211,7 +462,8 @@ const SetupFacility = () => {
     // Fix: Use siteId from localStorage instead of formData.site_id
     sendData.append("amenity[site_id]", siteId);
     sendData.append("amenity[fac_name]", formData.fac_name || "");
-    sendData.append("amenity[tenant]", formData.tenant || false);
+    sendData.append("amenity[fac_type]", formData.fac_type || "");
+    // sendData.append("amenity[tenant]", formData.tenant || false);
     sendData.append("amenity[description]", formData.description || "");
     sendData.append("amenity[terms]", formData.terms || "");
     sendData.append(
@@ -223,66 +475,121 @@ const SetupFacility = () => {
     sendData.append("amenity[member_charges]", formData.member_charges || "");
     sendData.append("amenity[member]", formData.member || false);
     sendData.append("amenity[guest]", formData.guest || false);
-
+    sendData.append("amenity[is_fixed]", formData.flat || false);
+    sendData.append("amenity[fixed_amount]", formData.flat_charges || "");
+    sendData.append("amenity[postpaid]", formData.postpaid || false);
+    sendData.append("amenity[prepaid]", formData.prepaid || false);
+    sendData.append("amenity[pay_on_facility]", formData.pay_on_facility || false);
+    sendData.append("amenity[complimentary]", formData.complimentary || false);
+    sendData.append("amenity[gst_no]", formData.gst_no || 18 );
     // Add pricing fields
     sendData.append(
       "amenity[member_price_adult]",
       formData.member_price_adult || ""
     );
-    sendData.append(
-      "amenity[member_price_child]",
-      formData.member_price_child || ""
-    );
+    // sendData.append(
+    //   "amenity[member_price_child]",
+    //   formData.member_price_child || ""
+    // );
     sendData.append(
       "amenity[guest_price_adult]",
       formData.guest_price_adult || ""
     );
-    sendData.append(
-      "amenity[guest_price_child]",
-      formData.guest_price_child || ""
-    );
-    sendData.append(
-      "amenity[tenant_price_adult]",
-      formData.tenant_price_adult || ""
-    );
-    sendData.append(
-      "amenity[tenant_price_child]",
-      formData.tenant_price_child || ""
-    );
-
+    // sendData.append(
+    //   "amenity[guest_price_child]",
+    //   formData.guest_price_child || ""
+    // );
+    // sendData.append(
+    //   "amenity[tenant_price_adult]",
+    //   formData.tenant_price_adult || ""
+    // );
+    // sendData.append(
+    //   "amenity[tenant_price_child]",
+    //   formData.tenant_price_child || ""
+    // );
     sendData.append("book_before[0]", bookBeforeArray[0]);
     sendData.append("book_before[1]", bookBeforeArray[1]);
-    sendData.append("book_before[2]", bookBeforeArray[2]);    sendData.append("amenity[fac_type]", formData.fac_type || "bookable");
-    
+    sendData.append("book_before[2]", bookBeforeArray[2]);
+    sendData.append("amenity[fac_type]", formData.fac_type || "bookable");
+
     // Add multiple slots data with correct parameter names
-    slots.forEach((slot, index) => {
-      if (slot.startTime && slot.endTime) {
-        // Convert time format from "HH:MM" to separate hour and minute
-        const [startHour, startMin] = slot.startTime.split(':');
-        const [endHour, endMin] = slot.endTime.split(':');
-        
-        sendData.append(`amenity[amenity_slots_attributes][${index}][start_hr]`, startHour || "");
-        sendData.append(`amenity[amenity_slots_attributes][${index}][start_min]`, startMin || "");
-        sendData.append(`amenity[amenity_slots_attributes][${index}][end_hr]`, endHour || "");
-        sendData.append(`amenity[amenity_slots_attributes][${index}][end_min]`, endMin || "");
-        
-        // Handle break times if provided
-        if (slot.breakTimeStart && slot.breakTimeEnd) {
-          const [breakStartHour, breakStartMin] = slot.breakTimeStart.split(':');
-          const [breakEndHour, breakEndMin] = slot.breakTimeEnd.split(':');
-          sendData.append(`amenity[amenity_slots_attributes][${index}][break_start_hr]`, breakStartHour || "");
-          sendData.append(`amenity[amenity_slots_attributes][${index}][break_start_min]`, breakStartMin || "");
-          sendData.append(`amenity[amenity_slots_attributes][${index}][break_end_hr]`, breakEndHour || "");
-          sendData.append(`amenity[amenity_slots_attributes][${index}][break_end_min]`, breakEndMin || "");
-        }
-        
-        sendData.append(`amenity[amenity_slots_attributes][${index}][concurrent_slots]`, slot.concurrentSlots || "1");
-        sendData.append(`amenity[amenity_slots_attributes][${index}][slot_duration]`, slot.slotBy || "60");
-        sendData.append(`amenity[amenity_slots_attributes][${index}][wrap_up_time]`, slot.wrapTime || "0");
-        sendData.append(`amenity[amenity_slots_attributes][${index}][is_active]`, slot.isActive ? "1" : "0");
-        sendData.append(`amenity[amenity_slots_attributes][${index}][is_bookable]`, slot.isBookable ? "1" : "0");
-      }    });
-    
+    // formData.slots.forEach((slot, index) => {
+    //   if (slot.startTime && slot.endTime) {
+    //     // Convert time format from "HH:MM" to separate hour and minute
+    //     const [startHour, startMin] = slot.startTime.split(":");
+    //     const [endHour, endMin] = slot.endTime.split(":");
+
+    //     sendData.append(
+    //       `amenity[amenity_slots_attributes][${index}][start_hr]`,
+    //       startHour || ""
+    //     );
+    //     sendData.append(
+    //       `amenity[amenity_slots_attributes][${index}][start_min]`,
+    //       startMin || ""
+    //     );
+    //     sendData.append(
+    //       `amenity[amenity_slots_attributes][${index}][end_hr]`,
+    //       endHour || ""
+    //     );
+    //     sendData.append(
+    //       `amenity[amenity_slots_attributes][${index}][end_min]`,
+    //       endMin || ""
+    //     );
+
+    //     // Handle break times if provided
+    //     // if (slot.breakTimeStart && slot.breakTimeEnd) {
+    //     //   const [breakStartHour, breakStartMin] =
+    //     //     slot.breakTimeStart.split(":");
+    //     //   const [breakEndHour, breakEndMin] = slot.breakTimeEnd.split(":");
+    //     //   sendData.append(
+    //     //     `amenity[amenity_slots_attributes][${index}][break_start_hr]`,
+    //     //     breakStartHour || ""
+    //     //   );
+    //     //   sendData.append(
+    //     //     `amenity[amenity_slots_attributes][${index}][break_start_min]`,
+    //     //     breakStartMin || ""
+    //     //   );
+    //     //   sendData.append(
+    //     //     `amenity[amenity_slots_attributes][${index}][break_end_hr]`,
+    //     //     breakEndHour || ""
+    //     //   );
+    //     //   sendData.append(
+    //     //     `amenity[amenity_slots_attributes][${index}][break_end_min]`,
+    //     //     breakEndMin || ""
+    //     //   );
+    //     // }
+
+    //     // sendData.append(
+    //     //   `amenity[amenity_slots_attributes][${index}][concurrent_slots]`,
+    //     //   slot.concurrentSlots || "1"
+    //     // );
+    //     // sendData.append(
+    //     //   `amenity[amenity_slots_attributes][${index}][slot_duration]`,
+    //     //   slot.slotBy || "60"
+    //     // );
+    //     // sendData.append(
+    //     //   `amenity[amenity_slots_attributes][${index}][wrap_up_time]`,
+    //     //   slot.wrapTime || "0"
+    //     // );
+    //     // sendData.append(
+    //     //   `amenity[amenity_slots_attributes][${index}][is_active]`,
+    //     //   slot.isActive ? "1" : "0"
+    //     // );
+    //     // sendData.append(
+    //     //   `amenity[amenity_slots_attributes][${index}][is_bookable]`,
+    //     //   slot.isBookable ? "1" : "0"
+    //     // );
+    //   }
+    // });
+
+     formData.slots.forEach((slot, index) => {
+       Object.entries(slot).forEach(([key, value]) => {
+         sendData.append(
+           `amenity[amenity_slots_attributes][${index}][${key}]`,
+           value
+         );
+       });
+     });
     // Remove these unpermitted parameters
     // sendData.append("amenity[startTime]", timeValues.time1 || "00:00");
     // sendData.append("amenity[endTime]", timeValues.time2 || "00:00");
@@ -316,11 +623,16 @@ const SetupFacility = () => {
       toast.error("Error adding facility");
     }
   };
-  const [selectedType, setSelectedType] = useState("bookable");
 
   const handleChange = (event) => {
-    setSelectedType(event.target.id);
+    const { name, value } = event.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
+
+
   return (
     <section className="flex">
       <Navbar />
@@ -341,7 +653,7 @@ const SetupFacility = () => {
               id="bookable"
               value="bookable"
               checked={formData.fac_type === "bookable"}
-              onChange={handleChange1}
+              onChange={handleChange}
             />
             <label htmlFor="bookable" className="text-lg">
               Bookable
@@ -354,7 +666,7 @@ const SetupFacility = () => {
               id="request"
               value="request"
               checked={formData.fac_type === "request"}
-              onChange={handleChange1}
+              onChange={handleChange}
             />
             <label htmlFor="request" className="text-lg">
               Request
@@ -375,53 +687,75 @@ const SetupFacility = () => {
                 type="text"
                 name="fac_name"
                 onChange={handleChange1}
+                onBlur={handleChange1}
                 id=""
                 value={formData.fac_name}
                 className="border border-gray-400 rounded-md p-2"
                 placeholder="Facility name"
               />
+              {facilityError && (
+                <div className="text-red-500 text-sm mt-2">{facilityError}</div>
+              )}
             </div>
             <div className="flex flex-col gap-1">
               <label htmlFor="" className="font-medium">
                 Active
               </label>
               <select
-                name=""
-                id=""
+                name="active"
+                id="active"
+                value={formData.active}
+                onChange={handleDropdownChange1}
+                onBlur={handleDropdownChange1}
                 className="border rounded-md border-gray-400 p-2 "
               >
                 <option value="">Select</option>
                 <option value="yes">Yes</option>
                 <option value="no">No</option>
               </select>
+              {activeError && (
+                <div className="text-red-500 text-sm mt-2">{activeError}</div>
+              )}
             </div>
             <div className="flex flex-col gap-1">
               <label htmlFor="" className="font-medium">
                 Shareable
               </label>
               <select
-                name=""
-                id=""
+                name="shareable"
+                id="shareable"
+                value={formData.shareable}
                 className="border rounded-md border-gray-400 p-2"
+                onChange={handleDropdownChange2}
+                onBlur={handleDropdownChange2}
               >
                 <option value="">Select </option>
-                <option value="">Yes</option>
-                <option value="">No</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
               </select>
+              {shareError && (
+                <div className="text-red-500 text-sm mt-2">{shareError}</div>
+              )}
             </div>
             <div className="flex flex-col gap-1">
               <label htmlFor="" className="font-medium">
                 Link to billing
               </label>
               <select
-                name=""
-                id=""
+                name="billing"
+                id="billing"
+                value={formData.billing}
                 className="border rounded-md border-gray-400 p-2"
+                onChange={handleDropdownChange3}
+                onBlur={handleDropdownChange3}
               >
                 <option value="">Select </option>
-                <option value="">Yes</option>
-                <option value="">No</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
               </select>
+              {billingError && (
+                <div className="text-red-500 text-sm mt-2">{billingError}</div>
+              )}
             </div>
           </div>
           <div>
@@ -513,7 +847,7 @@ const SetupFacility = () => {
             <div className="grid grid-cols-4 border-b border-gray-400">
               <p className="text-center font-medium">Member Type</p>
               <p className="text-center font-medium">Adult</p>
-              <p className="text-center font-medium"> Child</p>
+              <p className="text-center font-medium"> Flat amount</p>
               <p className="text-center font-medium">Configure Payment</p>
             </div>
             <div className="grid grid-cols-4 items-center border-b">
@@ -533,13 +867,14 @@ const SetupFacility = () => {
               </div>
               <div className="flex justify-center my-2">
                 <div className="flex items-center">
-                  <div className="rounded-l-md border p-2 border-gray-400">
+                  {/* <div className="rounded-l-md border p-2 border-gray-400">
                     <input type="checkbox" name="" id="" />
-                  </div>
+                  </div> */}
                   <input
-                    type="text"
+                    type="number"
                     name="member_price_adult"
                     id=""
+                    min={0}
                     value={formData.member_price_adult}
                     onChange={(e) =>
                       setFormData({
@@ -547,7 +882,13 @@ const SetupFacility = () => {
                         member_price_adult: e.target.value,
                       })
                     }
-                    className="border border-gray-400 rounded-r-md p-2 outline-none"
+                    required={formData.member === true}
+                    // className="border border-gray-400 rounded-r-md p-2 outline-none"
+                    className={`border border-gray-400 rounded p-2 outline-none ${
+                      !formData.member
+                        ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                        : ""
+                    }`}
                     placeholder="₹100"
                   />
                 </div>
@@ -555,20 +896,35 @@ const SetupFacility = () => {
               <div className="flex justify-center my-2">
                 <div className="flex items-center">
                   <div className="rounded-l-md border p-2 border-gray-400">
-                    <input type="checkbox" name="" id="" />
+                    <input
+                      type="checkbox"
+                      name="flat"
+                      id="flat"
+                      onChange={(e) => {
+                        const isChecked = e.target.checked;
+                        setFormData({ ...formData, flat: isChecked });
+                      }}
+                    />
                   </div>
                   <input
-                    type="text"
-                    name="member_price_child"
-                    id=""
-                    value={formData.member_price_child}
+                    type="number"
+                    name="flat_charges"
+                    id="flat_charges"
+                    min={0}
+                    value={formData.flat_charges}
                     onChange={(e) =>
                       setFormData({
                         ...formData,
-                        member_price_child: e.target.value,
+                        flat_charges: e.target.value,
                       })
                     }
-                    className="border border-gray-400 rounded-r-md p-2 outline-none"
+                    disabled={!formData.flat}
+                    // className="border border-gray-400 rounded-r-md p-2 outline-none"
+                    className={`border border-gray-400 rounded-r-md p-2 outline-none ${
+                      !formData.flat
+                        ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                        : ""
+                    }`}
                     placeholder="₹100"
                   />
                 </div>
@@ -577,24 +933,52 @@ const SetupFacility = () => {
                 <div className="grid grid-cols-2 gap-2">
                   <div className="flex flex-col">
                     <label htmlFor="" className="flex items-center gap-2">
-                      <input type="checkbox" name="" id="" /> Postpaid
+                      <input
+                        type="checkbox"
+                        name="postpaid"
+                        id="postpaid"
+                        checked={formData.postpaid}
+                        onChange={handlePaymentCheckbox}
+                      />{" "}
+                      Postpaid
                     </label>
                     <label htmlFor="" className="flex items-center gap-2">
-                      <input type="checkbox" name="" id="" /> Prepaid
+                      <input
+                        type="checkbox"
+                        name="prepaid"
+                        id="prepaid"
+                        checked={formData.prepaid}
+                        onChange={handlePaymentCheckbox}
+                      />{" "}
+                      Prepaid
                     </label>
                   </div>
                   <div className="flex flex-col">
                     <label htmlFor="" className="flex items-center gap-2 ">
-                      <input type="checkbox" name="" id="" /> Pay on facility
+                      <input
+                        type="checkbox"
+                        name="pay_on_facility"
+                        id="pay_on_facility"
+                        checked={formData.pay_on_facility}
+                        onChange={handlePaymentCheckbox}
+                      />{" "}
+                      Pay on facility
                     </label>
                     <label htmlFor="" className="flex items-center gap-2">
-                      <input type="checkbox" name="" id="" /> Complimentary
+                      <input
+                        type="checkbox"
+                        name="complimentary"
+                        id="complimentary"
+                        checked={formData.complimentary}
+                        onChange={handlePaymentCheckbox}
+                      />{" "}
+                      Complimentary
                     </label>
                   </div>
                 </div>
               </div>
             </div>
-            <div className="grid grid-cols-4 items-center border-b ">
+            {/* <div className="grid grid-cols-4 items-center border-b ">
               <div className="flex justify-center my-2">
                 <label htmlFor="" className="flex items-center gap-2">
                   <input type="checkbox" name="" id="" />
@@ -649,7 +1033,7 @@ const SetupFacility = () => {
                   </div>
                 </div>
               </div>
-            </div>
+            </div> */}
             <div className="grid grid-cols-4 items-center border-b">
               <div className="flex justify-center my-2">
                 <label htmlFor="" className="flex items-center gap-2">
@@ -667,9 +1051,9 @@ const SetupFacility = () => {
               </div>
               <div className="flex justify-center my-2">
                 <div className="flex items-center">
-                  <div className="rounded-l-md border p-2 border-gray-400">
+                  {/* <div className="rounded-l-md border p-2 border-gray-400">
                     <input type="checkbox" name="" id="" />
-                  </div>
+                  </div> */}
                   <input
                     type="text"
                     name="guest_price_adult"
@@ -681,12 +1065,20 @@ const SetupFacility = () => {
                         guest_price_adult: e.target.value,
                       })
                     }
-                    className="border border-gray-400 rounded-r-md p-2 outline-none"
+                    disabled={!formData.guest}
+                    required={formData.guest === true}
+                    // className="border border-gray-400 rounded-r-md p-2 outline-none"
+                    className={`border border-gray-400 rounded p-2 outline-none ${
+                      !formData.guest
+                        ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                        : ""
+                    }`}
                     placeholder="₹100"
                   />
                 </div>
               </div>
-              <div className="flex justify-center my-2">
+              <div></div>
+              {/* <div className="flex justify-center my-2">
                 <div className="flex items-center">
                   <div className="rounded-l-md border p-2 border-gray-400">
                     <input type="checkbox" name="" id="" />
@@ -706,8 +1098,8 @@ const SetupFacility = () => {
                     placeholder="₹100"
                   />
                 </div>
-              </div>
-              <div className="flex justify-center my-2">
+              </div> */}
+              {/* <div className="flex justify-center my-2">
                 <div className="grid grid-cols-2 gap-2">
                   <div className="flex flex-col">
                     <label htmlFor="" className="flex items-center gap-2">
@@ -726,9 +1118,9 @@ const SetupFacility = () => {
                     </label>
                   </div>
                 </div>
-              </div>
+              </div> */}
             </div>
-            <div className="grid grid-cols-4 items-center border-b ">
+            {/* <div className="grid grid-cols-4 items-center border-b ">
               <div className="flex justify-center my-2">
                 <label htmlFor="" className="flex items-center gap-2">
                   <input
@@ -806,7 +1198,7 @@ const SetupFacility = () => {
                   </div>
                 </div>
               </div>
-            </div>
+            </div> */}
             <div className="grid grid-cols-3 gap-4">
               <div className="my-2 flex flex-col gap-2">
                 <label htmlFor="" className="font-medium">
@@ -815,6 +1207,7 @@ const SetupFacility = () => {
                 <input
                   type="number"
                   name="min_people"
+                  min={0}
                   value={formData.min_people}
                   onChange={(e) =>
                     setFormData({ ...formData, min_people: e.target.value })
@@ -832,6 +1225,7 @@ const SetupFacility = () => {
                   type="number"
                   name="max_people"
                   id=""
+                  min={0}
                   value={formData.max_people}
                   onChange={(e) =>
                     setFormData({ ...formData, max_people: e.target.value })
@@ -846,10 +1240,18 @@ const SetupFacility = () => {
                 </label>
                 <input
                   type="number"
-                  name=""
-                  id=""
-                  className="border rounded-md p-2"
+                  name="gst_no"
+                  id="gst_no"
+                  className="border border-gray-400 rounded p-2 outline-none"
                   placeholder="GST(%)"
+                  min={18}
+                  value={formData.gst_no || ""}
+                  onChange={(e) =>
+                    setFormData((prevState) => ({
+                      ...prevState,
+                      gst_no: e.target.value, // ✅ Correctly updates gst in formData
+                    }))
+                  }
                 />
               </div>
             </div>
@@ -872,6 +1274,7 @@ const SetupFacility = () => {
               <input
                 type="number"
                 name="bookBefore[days]"
+                min={0}
                 id=""
                 value={bookBefore.days}
                 onChange={(e) =>
@@ -888,6 +1291,7 @@ const SetupFacility = () => {
               <input
                 type="number"
                 name="bookBefore[hours]"
+                min={0}
                 id=""
                 value={bookBefore.hours}
                 onChange={(e) =>
@@ -905,6 +1309,7 @@ const SetupFacility = () => {
                 type="number"
                 name="bookBefore[minutes]"
                 id=""
+                min={0}
                 value={bookBefore.minutes}
                 onChange={(e) =>
                   setBookBefore({
@@ -925,27 +1330,30 @@ const SetupFacility = () => {
             </div>
             <div className="flex justify-center my-2 w-full">
               <input
-                type="text"
+                type="number"
                 name=""
                 id=""
+                min={0}
                 className="border border-gray-400 rounded-md p-2 outline-none w-full"
                 placeholder="Day"
               />
             </div>
             <div className="flex justify-center my-2 w-full">
               <input
-                type="text"
+                type="number"
                 name=""
                 id=""
+                min={0}
                 className="border border-gray-400 rounded-md p-2 outline-none w-full"
                 placeholder="Hour"
               />
             </div>
             <div className="flex justify-center my-2 w-full">
               <input
-                type="text"
+                type="number"
                 name=""
                 id=""
+                min={0}
                 className="border border-gray-400 rounded-md w-full p-2 outline-none"
                 placeholder="Mins"
               />
@@ -959,34 +1367,37 @@ const SetupFacility = () => {
             </div>
             <div className="flex justify-center my-2 w-full">
               <input
-                type="text"
+                type="number"
                 name=""
                 id=""
+                min={0}
                 className="border border-gray-400 rounded-md p-2 outline-none w-full"
                 placeholder="Day"
               />
             </div>
             <div className="flex justify-center my-2 w-full">
               <input
-                type="text"
+                type="number"
                 name=""
                 id=""
+                min={0}
                 className="border border-gray-400 rounded-md p-2 outline-none w-full"
                 placeholder="Hour"
               />
             </div>
             <div className="flex justify-center my-2 w-full">
               <input
-                type="text"
+                type="number"
                 name=""
                 id=""
+                min={0}
                 className="border border-gray-400 rounded-md w-full p-2 outline-none"
                 placeholder="Mins"
               />
             </div>
           </div>
         </div>
-        <div className="w-full mt-2">
+        {/* <div className="w-full mt-2">
           <h2
             htmlFor=""
             className="font-medium border-b border-black w-full text-lg"
@@ -1055,9 +1466,9 @@ const SetupFacility = () => {
                 Add Rule
               </button>
             </div>
-            {/* </div> */}
+            {/* </div> *
           </div>
-        </div>
+        </div> */}
         <div className="my-4">
           <h2 className="border-b border-black text-lg mb-1 font-medium">
             Cover Images
@@ -1098,10 +1509,10 @@ const SetupFacility = () => {
             Configure Slot
           </h2>
 
-          {slots.map((slot) => (
+          {formData.slots.map((slot, index) => (
             <div
-              key={slot.id}
-              className="grid grid-cols-8 gap-2 bg-white my-2 rounded-lg "
+              key={index}
+              className="grid grid-cols-3 gap-2 bg-white my-2 rounded-lg"
             >
               <div className="flex flex-col">
                 <label htmlFor="" className="font-medium">
@@ -1110,111 +1521,31 @@ const SetupFacility = () => {
                 <input
                   type="time"
                   placeholder="Start Time"
-                  value={slot.startTime}
+                  value={`${slot.start_hr}:${slot.start_min}`}
                   onChange={(e) =>
-                    handleInputChange(slot.id, "startTime", e.target.value)
+                    handleSlotTimeChange(index, "start", e.target.value)
                   }
                   className="border border-gray-300 rounded-md p-2 w-full sm:w-auto"
                 />
               </div>
-              <div className="flex flex-col">
+              <div className="flex flex-col mx-3">
                 <label htmlFor="" className="font-medium">
-                  Break Time{" "}
-                  <span className="text-sm font-medium text-gray-400">
-                    (start)
-                  </span>
-                </label>
-                <input
-                  type="time"
-                  placeholder="Break Start"
-                  value={slot.breakTimeStart}
-                  onChange={(e) =>
-                    handleInputChange(slot.id, "breakTimeStart", e.target.value)
-                  }
-                  className="border border-gray-300 rounded-md p-2 w-full sm:w-auto"
-                />
-              </div>
-              <div className="flex-col flex">
-                <label htmlFor="" className="font-medium">
-                  Break Time{" "}
-                  <span className="text-sm font-medium text-gray-400">
-                    (end)
-                  </span>
-                </label>
-                <input
-                  type="time"
-                  placeholder="Break End"
-                  value={slot.breakTimeEnd}
-                  onChange={(e) =>
-                    handleInputChange(slot.id, "breakTimeEnd", e.target.value)
-                  }
-                  className="border border-gray-300 rounded-md p-2 w-full sm:w-auto"
-                />
-              </div>
-              <div className="flex flex-col">
-                <label htmlFor="" className="font-medium">
-                  End Time{" "}
+                  End Time
                 </label>
                 <input
                   type="time"
                   placeholder="End Time"
-                  value={slot.endTime}
+                  value={`${slot.end_hr}:${slot.end_min}`}
                   onChange={(e) =>
-                    handleInputChange(slot.id, "endTime", e.target.value)
+                    handleSlotTimeChange(index, "end", e.target.value)
                   }
                   className="border border-gray-300 rounded-md p-2 w-full sm:w-auto"
                 />
               </div>
-              <div className="flex flex-col">
-                <label htmlFor="" className="font-medium">
-                  Concurrent Slots
-                </label>
-                <input
-                  type="number"
-                  placeholder="Concurrent Slots"
-                  value={slot.concurrentSlots}
-                  onChange={(e) =>
-                    handleInputChange(
-                      slot.id,
-                      "concurrentSlots",
-                      e.target.value
-                    )
-                  }
-                  className="border border-gray-300 rounded-md p-2 w-full sm:w-auto"
-                />
-              </div>
-              <div className="flex flex-col">
-                <label htmlFor="" className="font-medium">
-                  Slots by
-                </label>
-                <input
-                  type="text"
-                  placeholder="Slot by"
-                  value={slot.slotBy}
-                  onChange={(e) =>
-                    handleInputChange(slot.id, "slotBy", e.target.value)
-                  }
-                  className="border border-gray-300 rounded-md p-2 w-full sm:w-auto"
-                />
-              </div>
-              <div className="flex flex-col">
-                <label htmlFor="" className="font-medium">
-                  Wrap Time
-                </label>
-                <input
-                  type="text"
-                  placeholder="Wrap Time"
-                  value={slot.wrapTime}
-                  onChange={(e) =>
-                    handleInputChange(slot.id, "wrapTime", e.target.value)
-                  }
-                  className="border border-gray-300 rounded-md p-2 w-full sm:w-auto"
-                />
-              </div>
-              <div className="flex items-end justify-end">
+              <div className="flex item-end">
                 <button
                   type="button"
-                  onClick={() => handleRemoveSlot(slot.id)}
+                  onClick={() => handleRemoveSlot(index)}
                   className="text-red-600 hover:text-red-800 p-2"
                 >
                   <FaTrash size={20} />
@@ -1404,7 +1735,7 @@ const SetupFacility = () => {
         </div>
         <div className="flex justify-center my-2">
           <button
-            onClick={handleAddFacility}
+            onClick={handleOnSubmit}
             style={{ background: themeColor }}
             className=" text-white p-2 px-4 font-semibold rounded-md flex items-center gap-2"
           >
