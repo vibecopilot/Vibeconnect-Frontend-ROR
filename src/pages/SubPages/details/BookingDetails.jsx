@@ -1,6 +1,7 @@
 import React from "react";
 import { useSelector } from "react-redux";
 import Table from "../../../components/table/Table";
+import { getAmenitiesBookingById   } from "../../../api";
 
 const BookingDetails = () => {
   const themeColor = useSelector((state) => state.theme.color);
