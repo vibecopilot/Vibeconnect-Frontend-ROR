@@ -1,10 +1,34 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import Table from "../../../components/table/Table";
-import { getAmenitiesBookingById   } from "../../../api";
+import { getItemInLocalStorage } from "../../../utils/localStorage";
+import { getAmenitiesBookingById } from "../../../api";
 
 const BookingDetails = () => {
   const themeColor = useSelector((state) => state.theme.color);
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  const formattedDate = `${year}-${month}-${day}`;
+  const [facility, setFacility] = useState("");
+  const siteId = getItemInLocalStorage("SITEID");
+  const [formData, setFormData] = useState({
+    amenity_id: "",
+    amenity_slot_id: "",
+    user_id: "",
+    booking_date: "",
+    site_id: siteId,
+    amount: "",
+    gst_no: 0,
+    member_adult: 0,
+    guest_adult: 0,
+    no_of_members: 0,
+    no_of_guests: 0,
+    payment_mode: "post",
+    min_people: 0,
+    max_people: 0,
+  });
   return (
     <section>
       <div
