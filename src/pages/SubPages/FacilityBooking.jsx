@@ -198,9 +198,9 @@ const FacilityBooking = () => {
   const fetchFacilities = async () => {
     try {
       const response = await getFacitilitySetup(); // Assuming getFacilitySetup is an API call
-      // console.log("Booking Setups", response);
+      // console.log("Booking Setups", response.data.amenities);
 
-      setFacilities(response.data);
+      setFacilities(response.data.amenities);
     } catch (error) {
       console.log("Error Fetching facilities", error);
     }
@@ -268,7 +268,7 @@ const FacilityBooking = () => {
     try {
       const response = await getFacitilitySetup();
       if (response?.data) {
-        const selectedFacility = response.data.find(
+        const selectedFacility = response.data.amenities.find(
           (facility) => facility.id === parseInt(facilityId, 10)
         );
         setTestFacility(selectedFacility);

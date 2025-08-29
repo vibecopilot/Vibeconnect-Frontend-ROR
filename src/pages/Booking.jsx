@@ -28,13 +28,13 @@ const Booking = () => {
 
         // Fetch Bookings
         const bookingsResponse = await getAmenitiesBooking();
-        // console.log("Bookings Response:", bookingsResponse);
-        setBookings(bookingsResponse?.data || []);
+        console.log("Bookings Response:", bookingsResponse.data.amenity_bookings);
+        setBookings(bookingsResponse?.data.amenity_bookings || []);
 
         // Fetch Facility Setup
         const facilityResponse = await getFacitilitySetup();
-        // console.log("Facility Setup Response:", facilityResponse);
-        setBookingFacility(facilityResponse?.data || []);
+        console.log("Facility Setup Response:", facilityResponse.data.amenities);
+        setBookingFacility(facilityResponse?.data.amenities || []);
 
         setLoading(false);
       } catch (error) {
