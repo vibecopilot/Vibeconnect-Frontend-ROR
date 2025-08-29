@@ -12,25 +12,25 @@ import { BsEye } from "react-icons/bs";
 import SeatBooking from "./SeatBooking";
 import SetupSeatBooking from "./SetupSeatBooking";
 import SetupNavbar from "../../components/navbars/SetupNavbar";
-import {getFacilitySetup}from "../../api"
+import { getFacitilitySetup } from "../../api";
 
 const SetupBookingFacility = () => {
-  const id = useParams()
+  // const id = useParams()
   const [setupData, setSetupData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   
  useEffect(() => {
      const fetchIncidentsCategory = async () => {
        try {
-         const res = await getFacilitySetup(id);
-         setSetupData(res.data);
-         console.log(setupData);
+         const res = await getFacitilitySetup();
+         setSetupData(res.data.amenities);
+        //  console.log("Response received", res.data.amenities);
        } catch (error) {
          console.log(error);
        }
      };
  
-     fetchIncidentsCategory(id, );
+     fetchIncidentsCategory();
    }, []);
 
   // const fetchFacilitySetup = async () => {
