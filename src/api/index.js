@@ -150,6 +150,14 @@ export const getVendors = async () =>
       token: token,
     },
   });
+
+export const getVendorById= async (id) =>
+  axiosInstance.get("/vendors.json", {
+    params: {
+      token: token,
+      "q[id_eq]":id,
+    },
+  });
 export const getVendorCategory = async () =>
   axiosInstance.get("/vendor_categories.json", {
     params: {
@@ -341,7 +349,12 @@ export const getGRN = async () =>
       token: token,
     },
   });
-
+export const getGRNById = async (id) =>
+  axiosInstance.get(`/grn_details/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
 export const postHelpDeskResolutionEscalationSetup = async (data) =>
   axiosInstance.post(`/pms/admin/create_escalation.json`, data, {
     params: {
