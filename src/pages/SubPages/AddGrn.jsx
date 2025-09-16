@@ -212,20 +212,22 @@ const AddGrn = () => {
     };
   return (
     <section>
-      
-            <div className=" flex  ">
-                <Navbar/>
-                <div className='md:mx-20 my-2 mb-10 sm:border border-gray-400 p-5 px-10 rounded-lg w-full'>
-        <h2 className="text-center text-xl font-bold p-2 bg-black rounded-full text-white mb-4" style={{ background: themeColor }}>
-                        NEW GRN
-                    </h2>
-        <div className="border-2 flex flex-col my-5 mx-3 p-4 gap-4 rounded-md border-gray-400">
+      <div className=" flex  ">
+        <Navbar />
+        <div className="md:mx-20 my-2 mb-10 sm:border border-gray-400 p-5 px-10 rounded-lg w-full">
+          <h2
+            className="text-center text-xl font-bold p-2 bg-black rounded-full text-white mb-4"
+            style={{ background: themeColor }}
+          >
+            NEW GRN
+          </h2>
+          <div className="border-2 flex flex-col my-5 mx-3 p-4 gap-4 rounded-md border-gray-400">
             <h2 className="text-lg border-black font-semibold text-center">
-                GRN DETAILS
+              GRN DETAILS
             </h2>
             <div className="flex sm:flex-row flex-col justify-around items-center">
-                <div className="grid md:grid-cols-3 item-start gap-x-4 gap-y-8 w-full">
-                    <div className="flex flex-col">
+              <div className="grid md:grid-cols-3 item-start gap-x-4 gap-y-8 w-full">
+                {/* <div className="flex flex-col">
                         <label htmlFor="" className="font-semibold">
                             Purchase Order :
                         </label>
@@ -239,16 +241,18 @@ const AddGrn = () => {
                           <option value="">10020 - 4500000235</option>
                           <option value="">10020 - 4500000235</option>
                         </select>
-                    </div>
-                    <div className="flex flex-col">
-                        <label htmlFor="" className="font-semibold ">
-                            Supplier :
-                        </label>
-                        <select
+                    </div> */}
+                <div className="flex flex-col space-y-2">
+                  <label htmlFor="vendor_id" className="font-semibold">
+                    Supplier:
+                  </label>
+
+                  <select
                     className="border p-1 px-4 border-gray-500 rounded-md"
                     value={formData.vendor_id}
                     onChange={handleChange}
                     name="vendor_id"
+                    id="vendor_id"
                   >
                     <option value="">Select Supplier</option>
                     {vendors.map((vendor) => (
@@ -257,176 +261,180 @@ const AddGrn = () => {
                       </option>
                     ))}
                   </select>
-                    </div>
-                    <div className="flex flex-col">
-                        <label htmlFor="" className="font-semibold ">
-                            Payment Mode
-                        </label>
-                        <select
-                           name="payment_mode"
-                           id=""
-                           value={formData.payment_mode}
-                           onChange={handleChange}
-                           className="border p-1 px-4 border-gray-500 rounded-md"
-                        >
-                          <option value="">Select Payment Mode</option>
-                          <option value="Cheque">Cheque</option>
-                          <option value="RTGS">RTGS</option>
-                        </select>
-                    </div>
-                    <div className="flex flex-col">
-                        <label htmlFor="" className="font-semibold">
-                            Invoice Number
-                        </label>
-                        <input
-                          type="text"
-                          name="invoice_number"
-                          placeholder="Enter Number"
-                          value={formData.invoice_number}
-                           onChange={handleChange}
-                          className="border p-1 px-4 border-gray-500 rounded-md"
-                        />
-                    </div>
-                    <div className="flex flex-col">
-                        <label htmlFor="" className="font-semibold">
-                            Related To
-                        </label>
-                        <input
-                          type="text"
-                          name="related_to"
-                          placeholder="Enter Text"
-                          value={formData.related_to}
-                           onChange={handleChange}
-                          className="border p-1 px-4 border-gray-500 rounded-md"
-                        />
-                    </div>
-                    <div className="flex flex-col">
-                        <label htmlFor="" className="font-semibold">
-                            Invoice Amount
-                        </label>
-                        <input
-                          type="text"
-                          name="invoice_amount"
-                          placeholder="Enter Number"
-                          value={formData.invoice_amount}
-                           onChange={handleChange}
-                          className="border p-1 px-4 border-gray-500 rounded-md"
-                        />
-                    </div>
-                    <div className="flex flex-col">
-                        <label htmlFor="" className="font-semibold">
-                            Invoice Date
-                        </label>
-                        <input
-                          type="date"
-                          name="invoice_date"
-                          placeholder="Enter Date"
-                          value={formData.invoice_date}
-                           onChange={handleChange}
-                          className="border p-1 px-4 border-gray-500 rounded-md"
-                        />
-                    </div>
-                    <div className="flex flex-col">
-                        <label htmlFor="" className="font-semibold">
-                            Posting Date
-                        </label>
-                        <input
-                          type="date"
-                          name="posting_date"
-                          placeholder="Enter Date"
-                          value={formData.posting_date}
-                           onChange={handleChange}
-                          className="border p-1 px-4 border-gray-500 rounded-md"
-                        />
-                    </div>
-                    <div className="flex flex-col">
-                        <label htmlFor="" className="font-semibold">
-                            Other Expense
-                        </label>
-                        <input
-                          type="text"
-                          name="other_expenses"
-                          placeholder="Other Expense"
-                          value={formData.other_expenses}
-                          onChange={handleChange}
-                          className="border p-1 px-4 border-gray-500 rounded-md"
-                        />
-                    </div>
-                    <div className="flex flex-col">
-                        <label htmlFor="" className="font-semibold">
-                            Loading Expense
-                        </label>
-                        <input
-                          type="text"
-                          name="loading_expenses"
-                          placeholder="Enter Number"
-                          value={formData.loading_expenses}
-                          onChange={handleChange}
-                          className="border p-1 px-4 border-gray-500 rounded-md"
-                        />
-                    </div>
-                    <div className="flex flex-col">
-                        <label htmlFor="" className="font-semibold">
-                            Adjustment Amount
-                        </label>
-                        <input
-                          type="text"
-                          name="adjustment_amount"
-                          placeholder="Enter Number"
-                          value={formData.adjustment_amount}
-                          onChange={handleChange}
-                          className="border p-1 px-4 border-gray-500 rounded-md"
-                        />
-                    </div>
-                    
+
+                  <button
+                    type="button"
+                    onClick={() => navigate("/suppliers/add-supplier")}
+                    className="self-start mt-1 text-sm text-blue-600 hover:underline"
+                  >
+                    + Add New Supplier
+                  </button>
                 </div>
-                
+                <div className="flex flex-col">
+                  <label htmlFor="" className="font-semibold ">
+                    Payment Mode
+                  </label>
+                  <select
+                    name="payment_mode"
+                    id=""
+                    value={formData.payment_mode}
+                    onChange={handleChange}
+                    className="border p-1 px-4 border-gray-500 rounded-md"
+                  >
+                    <option value="">Select Payment Mode</option>
+                    <option value="Cheque">Cheque</option>
+                    <option value="RTGS">RTGS</option>
+                  </select>
+                </div>
+                <div className="flex flex-col">
+                  <label htmlFor="" className="font-semibold">
+                    Invoice Number
+                  </label>
+                  <input
+                    type="text"
+                    name="invoice_number"
+                    placeholder="Enter Number"
+                    value={formData.invoice_number}
+                    onChange={handleChange}
+                    className="border p-1 px-4 border-gray-500 rounded-md"
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label htmlFor="" className="font-semibold">
+                    Related To
+                  </label>
+                  <input
+                    type="text"
+                    name="related_to"
+                    placeholder="Enter Text"
+                    value={formData.related_to}
+                    onChange={handleChange}
+                    className="border p-1 px-4 border-gray-500 rounded-md"
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label htmlFor="" className="font-semibold">
+                    Invoice Amount
+                  </label>
+                  <input
+                    type="text"
+                    name="invoice_amount"
+                    placeholder="Enter Number"
+                    value={formData.invoice_amount}
+                    onChange={handleChange}
+                    className="border p-1 px-4 border-gray-500 rounded-md"
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label htmlFor="" className="font-semibold">
+                    Invoice Date
+                  </label>
+                  <input
+                    type="date"
+                    name="invoice_date"
+                    placeholder="Enter Date"
+                    value={formData.invoice_date}
+                    onChange={handleChange}
+                    className="border p-1 px-4 border-gray-500 rounded-md"
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label htmlFor="" className="font-semibold">
+                    Posting Date
+                  </label>
+                  <input
+                    type="date"
+                    name="posting_date"
+                    placeholder="Enter Date"
+                    value={formData.posting_date}
+                    onChange={handleChange}
+                    className="border p-1 px-4 border-gray-500 rounded-md"
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label htmlFor="" className="font-semibold">
+                    Other Expense
+                  </label>
+                  <input
+                    type="text"
+                    name="other_expenses"
+                    placeholder="Other Expense"
+                    value={formData.other_expenses}
+                    onChange={handleChange}
+                    className="border p-1 px-4 border-gray-500 rounded-md"
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label htmlFor="" className="font-semibold">
+                    Loading Expense
+                  </label>
+                  <input
+                    type="text"
+                    name="loading_expenses"
+                    placeholder="Enter Number"
+                    value={formData.loading_expenses}
+                    onChange={handleChange}
+                    className="border p-1 px-4 border-gray-500 rounded-md"
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label htmlFor="" className="font-semibold">
+                    Adjustment Amount
+                  </label>
+                  <input
+                    type="text"
+                    name="adjustment_amount"
+                    placeholder="Enter Number"
+                    value={formData.adjustment_amount}
+                    onChange={handleChange}
+                    className="border p-1 px-4 border-gray-500 rounded-md"
+                  />
+                </div>
+              </div>
             </div>
             <div className="flex flex-col">
-                        <label htmlFor="" className="font-semibold">
-                            Notes
-                        </label>
-                        <textarea
-                          name="notes"
-                          id=""
-                          cols="5"
-                          rows="3"
-                          value={formData.notes}
-                          onChange={handleChange}
-                          placeholder='Notes'
-                          className="border p-1 px-4 border-gray-500 rounded-md"
-                        />
-                    </div>  
-        </div>
-        <div className="border-2 flex flex-col my-5 mx-3 p-4 gap-4 rounded-md border-gray-400">
+              <label htmlFor="" className="font-semibold">
+                Notes
+              </label>
+              <textarea
+                name="notes"
+                id=""
+                cols="5"
+                rows="3"
+                value={formData.notes}
+                onChange={handleChange}
+                placeholder="Notes"
+                className="border p-1 px-4 border-gray-500 rounded-md"
+              />
+            </div>
+          </div>
+          <div className="border-2 flex flex-col my-5 mx-3 p-4 gap-4 rounded-md border-gray-400">
             <h2 className=" text-lg border-black font-semibold text-center">
-                INVENTORY DETAILS
+              INVENTORY DETAILS
             </h2>
             <div className="">
-                
-
-            {inventories.map((inventory, invIndex) => (
-
-        <div key={invIndex} className="mb-8">
-          <div className="grid md:grid-cols-3 item-start gap-x-4 gap-y-8 w-full">
-          <div className="flex flex-col">
-          <label className="font-semibold">Inventory Type</label>
-          <select
-        type="text"
-        name="inventory_type"
-        value={inventory.inventory_type || ''}
-        className="border p-1 px-4 border-gray-500 rounded-md"
-        onChange={(e) => handleInventoryChange(invIndex, e)}
-      >
-        <option value="">Select Inventory</option>
-        {/* Map over the fetched inventory data */}
-        {invent.map((supplier) => (
-          <option value={supplier.id} key={supplier.id}>
-            {supplier.name}
-          </option>
-        ))}
-      </select></div>
-          {/* <div className="flex flex-col">
+              {inventories.map((inventory, invIndex) => (
+                <div key={invIndex} className="mb-8">
+                  <div className="grid md:grid-cols-3 item-start gap-x-4 gap-y-8 w-full">
+                    <div className="flex flex-col">
+                      <label className="font-semibold">Inventory Type</label>
+                      <select
+                        type="text"
+                        name="inventory_type"
+                        value={inventory.inventory_type || ""}
+                        className="border p-1 px-4 border-gray-500 rounded-md"
+                        onChange={(e) => handleInventoryChange(invIndex, e)}
+                      >
+                        <option value="">Select Inventory</option>
+                        {/* Map over the fetched inventory data */}
+                        {invent.map((supplier) => (
+                          <option value={supplier.id} key={supplier.id}>
+                            {supplier.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    {/* <div className="flex flex-col">
           <label className="font-semibold">Item</label>
           <select
             type="text"
@@ -444,272 +452,296 @@ const AddGrn = () => {
           ))}
 
           </select></div> */}
-          <div className="flex flex-col ">
-                        <label htmlFor="" className="font-semibold ">
-                            Expected Quantity
-                        </label>
-                        <input
-                          type="text"
-                          name="expected_quantity"
-                          placeholder="Expected Quantity"
-                          value={inventory.expected_quantity}
-                          onChange={(e) => handleInventoryChange(invIndex, e)}
-                          className="border p-1 px-4 border-gray-500 rounded-md"
-                        />
+                    <div className="flex flex-col ">
+                      <label htmlFor="" className="font-semibold ">
+                        Expected Quantity
+                      </label>
+                      <input
+                        type="text"
+                        name="expected_quantity"
+                        placeholder="Expected Quantity"
+                        value={inventory.expected_quantity}
+                        onChange={(e) => handleInventoryChange(invIndex, e)}
+                        className="border p-1 px-4 border-gray-500 rounded-md"
+                      />
                     </div>
                     <div className="flex flex-col">
-                        <label htmlFor="" className="font-semibold ">
-                            Received Quantity
-                        </label>
-                        <input
-                          type="text"
-                          name="received_quantity"
-                          placeholder="Received Quantity"
-                          value={inventory.received_quantity}
-                          onChange={(e) => handleInventoryChange(invIndex, e)}
-                          className="border p-1 px-4 border-gray-500 rounded-md"
-                        />
+                      <label htmlFor="" className="font-semibold ">
+                        Received Quantity
+                      </label>
+                      <input
+                        type="text"
+                        name="received_quantity"
+                        placeholder="Received Quantity"
+                        value={inventory.received_quantity}
+                        onChange={(e) => handleInventoryChange(invIndex, e)}
+                        className="border p-1 px-4 border-gray-500 rounded-md"
+                      />
                     </div>
                     <div className="flex flex-col">
-                        <label htmlFor="" className="font-semibold">
-                            Approved Quantity
-                        </label>
-                        <input
-                          type="text"
-                          name="approved_quantity"
-                          placeholder="Approved Quantity"
-                          value={inventory.approved_quantity}
-                          onChange={(e) => handleInventoryChange(invIndex, e)}
-                          className="border p-1 px-4 border-gray-500 rounded-md"
-                        />
+                      <label htmlFor="" className="font-semibold">
+                        Approved Quantity
+                      </label>
+                      <input
+                        type="text"
+                        name="approved_quantity"
+                        placeholder="Approved Quantity"
+                        value={inventory.approved_quantity}
+                        onChange={(e) => handleInventoryChange(invIndex, e)}
+                        className="border p-1 px-4 border-gray-500 rounded-md"
+                      />
                     </div>
                     <div className="flex flex-col">
-                        <label htmlFor="" className="font-semibold">
-                            Rejected Quantity
-                        </label>
-                        <input
-                          type="text"
-                          name="rejected_quantity"
-                          placeholder="Rejected Quantity"
-                          value={inventory.rejected_quantity}
-                          onChange={(e) => handleInventoryChange(invIndex, e)}
-                          className="border p-1 px-4 border-gray-500 rounded-md"
-                        />
+                      <label htmlFor="" className="font-semibold">
+                        Rejected Quantity
+                      </label>
+                      <input
+                        type="text"
+                        name="rejected_quantity"
+                        placeholder="Rejected Quantity"
+                        value={inventory.rejected_quantity}
+                        onChange={(e) => handleInventoryChange(invIndex, e)}
+                        className="border p-1 px-4 border-gray-500 rounded-md"
+                      />
                     </div>
                     <div className="flex flex-col">
-                        <label htmlFor="" className="font-semibold">
-                            Rate
-                        </label>
-                        <input
-                          type="text"
-                          name="rate"
-                          placeholder="9300.0"
-                          value={inventory.rate}
-                          onChange={(e) => handleInventoryChange(invIndex, e)}
-                          className="border p-1 px-4 border-gray-500 rounded-md"
-                        />
+                      <label htmlFor="" className="font-semibold">
+                        Rate
+                      </label>
+                      <input
+                        type="text"
+                        name="rate"
+                        placeholder="9300.0"
+                        value={inventory.rate}
+                        onChange={(e) => handleInventoryChange(invIndex, e)}
+                        className="border p-1 px-4 border-gray-500 rounded-md"
+                      />
                     </div>
                     <div className="flex flex-col">
-                        <label htmlFor="" className="font-semibold">
-                            CGST Rate
-                        </label>
-                        <input
-                          type="text"
-                          name="csgt_rate"
-                          placeholder="Enter Number"
-                          value={inventory.csgt_rate}
-                          onChange={(e) => handleInventoryChange(invIndex, e)}
-                          className="border p-1 px-4 border-gray-500 rounded-md"
-                        />
+                      <label htmlFor="" className="font-semibold">
+                        CGST Rate
+                      </label>
+                      <input
+                        type="text"
+                        name="csgt_rate"
+                        placeholder="Enter Number"
+                        value={inventory.csgt_rate}
+                        onChange={(e) => handleInventoryChange(invIndex, e)}
+                        className="border p-1 px-4 border-gray-500 rounded-md"
+                      />
                     </div>
                     <div className="flex flex-col">
-                        <label htmlFor="" className="font-semibold">
-                            CGST Amount
-                        </label>
-                        <input
-                          type="text"
-                          name="csgt_amt"
-                          placeholder="0.00"
-                          value={inventory.csgt_amt}
-                          onChange={(e) => handleInventoryChange(invIndex, e)}
-                          className="border p-1 px-4 border-gray-500 rounded-md"
-                        />
+                      <label htmlFor="" className="font-semibold">
+                        CGST Amount
+                      </label>
+                      <input
+                        type="text"
+                        name="csgt_amt"
+                        placeholder="0.00"
+                        value={inventory.csgt_amt}
+                        onChange={(e) => handleInventoryChange(invIndex, e)}
+                        className="border p-1 px-4 border-gray-500 rounded-md"
+                      />
                     </div>
                     <div className="flex flex-col">
-                        <label htmlFor="" className="font-semibold">
-                            SGST Rate
-                        </label>
-                        <input
-                          type="text"
-                          name="sgst_rate"
-                          placeholder="Enter Number"
-                          value={inventory.sgst_rate}
-                          onChange={(e) => handleInventoryChange(invIndex, e)}
-                          className="border p-1 px-4 border-gray-500 rounded-md"
-                        />
+                      <label htmlFor="" className="font-semibold">
+                        SGST Rate
+                      </label>
+                      <input
+                        type="text"
+                        name="sgst_rate"
+                        placeholder="Enter Number"
+                        value={inventory.sgst_rate}
+                        onChange={(e) => handleInventoryChange(invIndex, e)}
+                        className="border p-1 px-4 border-gray-500 rounded-md"
+                      />
                     </div>
                     <div className="flex flex-col">
-                        <label htmlFor="" className="font-semibold">
-                            SGST Amount
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="0.00"
-                          name="sgst_amt"
-                          value={inventory.sgst_amt}
-                          onChange={(e) => handleInventoryChange(invIndex, e)}
-                          className="border p-1 px-4 border-gray-500 rounded-md"
-                        />
+                      <label htmlFor="" className="font-semibold">
+                        SGST Amount
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="0.00"
+                        name="sgst_amt"
+                        value={inventory.sgst_amt}
+                        onChange={(e) => handleInventoryChange(invIndex, e)}
+                        className="border p-1 px-4 border-gray-500 rounded-md"
+                      />
                     </div>
                     <div className="flex flex-col">
-                        <label htmlFor="" className="font-semibold">
-                            IGST Rate
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="Enter Number"
-                          name="igst_rate"
-                          value={inventory.igst_rate}
-                          onChange={(e) => handleInventoryChange(invIndex, e)}
-                          className="border p-1 px-4 border-gray-500 rounded-md"
-                        />
+                      <label htmlFor="" className="font-semibold">
+                        IGST Rate
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Enter Number"
+                        name="igst_rate"
+                        value={inventory.igst_rate}
+                        onChange={(e) => handleInventoryChange(invIndex, e)}
+                        className="border p-1 px-4 border-gray-500 rounded-md"
+                      />
                     </div>
                     <div className="flex flex-col">
-                        <label htmlFor="" className="font-semibold">
-                            IGST Amount
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="0.00"
-                          name="igst_amt"
-                          value={inventory.igst_amt}
-                          onChange={(e) => handleInventoryChange(invIndex, e)}
-                          className="border p-1 px-4 border-gray-500 rounded-md"
-                        />
+                      <label htmlFor="" className="font-semibold">
+                        IGST Amount
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="0.00"
+                        name="igst_amt"
+                        value={inventory.igst_amt}
+                        onChange={(e) => handleInventoryChange(invIndex, e)}
+                        className="border p-1 px-4 border-gray-500 rounded-md"
+                      />
                     </div>
-                   
-                    <div className="flex flex-col">
-                        <label htmlFor="" className="font-semibold">
-                            TCS Rate
-                        </label>
-                        <input
-                          type="text"
-                          name="tcs_rate"
-                          placeholder="0"
-                          value={inventory.tcs_rate}
-                          onChange={(e) => handleInventoryChange(invIndex, e)}
-                          className="border p-1 px-4 border-gray-500 rounded-md"
-                        />
-                    </div>
-                    <div className="flex flex-col">
-                        <label htmlFor="" className="font-semibold">
-                            TCS Amount
-                        </label>
-                        <input
-                          type="text"
-                          name="tcs_amt"
-                          placeholder="0.00"
-                          value={inventory.tcs_amt}
-                          onChange={(e) => handleInventoryChange(invIndex, e)}
-                          className="border p-1 px-4 border-gray-500 rounded-md"
-                        />
-                    </div>
-                    <div className="flex flex-col">
-                        <label htmlFor="" className="font-semibold">
-                            Total Taxes
-                        </label>
-                        <input
-                          type="text"
-                          name="tax_amt"
-                          placeholder="0"
-                          value={inventory.tax_amt}
-                          onChange={(e) => handleInventoryChange(invIndex, e)}
-                          className="border p-1 px-4 border-gray-500 rounded-md"
-                        />
-                    </div>
-                    <div className="flex flex-col">
-                        <label htmlFor="" className="font-semibold">
-                            Amount
-                        </label>
-                        <input
-                          type="text"
-                          name="inventory_amount"
-                          placeholder="0.00"
-                          value={inventory.inventory_amount}
-                          onChange={(e) => handleInventoryChange(invIndex, e)}
-                          className="border p-1 px-4 border-gray-500 rounded-md"
-                        />
-                    </div> 
-                    <div className="flex flex-col">
-                        <label htmlFor="" className="font-semibold">
-                            Total Amount
-                        </label>
-                        <input
-                          type="text"
-                          name="total_amount"
-                          placeholder="0"
-                          value={inventory.total_amount}
-                          onChange={(e) => handleInventoryChange(invIndex, e)}
-                          className="border p-1 px-4 border-gray-500 rounded-md"
-                        />
-                    </div> 
-                    </div>
-          {inventory.batches.map((batch, batchIndex) => (
-            <div key={batchIndex} className="my-2">
-              <input
-                type="text"
-                placeholder="Enter Batch No."
-                value={batch.value}
-                className="border p-1 px-4 border-gray-500 rounded-md"
 
-                onChange={(e) =>
-                  handleBatchChange(invIndex, batchIndex, e.target.value)
-                }
-              />
-              <button onClick={() => handleDeleteBatch(invIndex, batchIndex)} className="ml-2">
-                <FaTrash />
+                    <div className="flex flex-col">
+                      <label htmlFor="" className="font-semibold">
+                        TCS Rate
+                      </label>
+                      <input
+                        type="text"
+                        name="tcs_rate"
+                        placeholder="0"
+                        value={inventory.tcs_rate}
+                        onChange={(e) => handleInventoryChange(invIndex, e)}
+                        className="border p-1 px-4 border-gray-500 rounded-md"
+                      />
+                    </div>
+                    <div className="flex flex-col">
+                      <label htmlFor="" className="font-semibold">
+                        TCS Amount
+                      </label>
+                      <input
+                        type="text"
+                        name="tcs_amt"
+                        placeholder="0.00"
+                        value={inventory.tcs_amt}
+                        onChange={(e) => handleInventoryChange(invIndex, e)}
+                        className="border p-1 px-4 border-gray-500 rounded-md"
+                      />
+                    </div>
+                    <div className="flex flex-col">
+                      <label htmlFor="" className="font-semibold">
+                        Total Taxes
+                      </label>
+                      <input
+                        type="text"
+                        name="tax_amt"
+                        placeholder="0"
+                        value={inventory.tax_amt}
+                        onChange={(e) => handleInventoryChange(invIndex, e)}
+                        className="border p-1 px-4 border-gray-500 rounded-md"
+                      />
+                    </div>
+                    <div className="flex flex-col">
+                      <label htmlFor="" className="font-semibold">
+                        Amount
+                      </label>
+                      <input
+                        type="text"
+                        name="inventory_amount"
+                        placeholder="0.00"
+                        value={inventory.inventory_amount}
+                        onChange={(e) => handleInventoryChange(invIndex, e)}
+                        className="border p-1 px-4 border-gray-500 rounded-md"
+                      />
+                    </div>
+                    <div className="flex flex-col">
+                      <label htmlFor="" className="font-semibold">
+                        Total Amount
+                      </label>
+                      <input
+                        type="text"
+                        name="total_amount"
+                        placeholder="0"
+                        value={inventory.total_amount}
+                        onChange={(e) => handleInventoryChange(invIndex, e)}
+                        className="border p-1 px-4 border-gray-500 rounded-md"
+                      />
+                    </div>
+                  </div>
+                  {inventory.batches.map((batch, batchIndex) => (
+                    <div key={batchIndex} className="my-2">
+                      <input
+                        type="text"
+                        placeholder="Enter Batch No."
+                        value={batch.value}
+                        className="border p-1 px-4 border-gray-500 rounded-md"
+                        onChange={(e) =>
+                          handleBatchChange(
+                            invIndex,
+                            batchIndex,
+                            e.target.value
+                          )
+                        }
+                      />
+                      <button
+                        onClick={() => handleDeleteBatch(invIndex, batchIndex)}
+                        className="ml-2"
+                      >
+                        <FaTrash />
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    className="text-white p-1 text-lg w-32 rounded-md"
+                    style={{ background: themeColor }}
+                    onClick={() => handleAddBatchField(invIndex)}
+                  >
+                    Add Batch
+                  </button>
+                  <button
+                    type="button"
+                    className="text-white p-1 text-lg w-64 ml-2 rounded-md"
+                    style={{ background: themeColor }}
+                    onClick={() => handleDeleteInventory(invIndex)}
+                  >
+                    Delete Inventory
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button
+              type="button"
+              className="text-white p-1 text-lg w-32 rounded-md"
+              style={{ background: themeColor }}
+              onClick={handleAddInventory}
+            >
+              Add Inventory
+            </button>
+          </div>
+
+          <div className="my-3 mx-5">
+            <h2 className=" text-lg border-black font-semibold text-start my-5">
+              ATTACHMENTS*
+            </h2>
+            <FileInputBox />
+          </div>
+          <div>
+            <div className="my-3 mx-5 text-end">
+              <button
+                className="bg-black text-white p-2 text-small rounded-md "
+                style={{ background: themeColor }}
+              >
+                Total Amount: ₹ {calculateTotalAmount()}
               </button>
             </div>
-          ))}
-          <button type="button" className="text-white p-1 text-lg w-32 rounded-md"
-        style={{ background: themeColor }} onClick={() => handleAddBatchField(invIndex)}>
-            Add Batch
-          </button>
-          <button type="button" className="text-white p-1 text-lg w-64 ml-2 rounded-md" style={{ background: themeColor }} onClick={() => handleDeleteInventory(invIndex)}>
-            Delete Inventory
-          </button>
-        </div>
-
-      ))}
-      
-            </div> 
-            <button type="button" className="text-white p-1 text-lg w-32 rounded-md"
-        style={{ background: themeColor }} onClick={handleAddInventory}>
-        Add Inventory
-      </button>
-        </div>
-        
-        <div className='my-3 mx-5'>
-            <h2 className=" text-lg border-black font-semibold text-start my-5">
-                ATTACHMENTS*
-            </h2>
-            <FileInputBox/>
-        </div>
-        <div>
-            <div className='my-3 mx-5 text-end'>
-                <button className="bg-black text-white p-2 text-small rounded-md " style={{ background: themeColor }}>
-                Total Amount: ₹ {calculateTotalAmount()}
-                </button>
+            <div className="my-10 mx-5 text-center">
+              <button
+                onClick={handleSubmit}
+                className="bg-black text-white px-8  py-2 text-small rounded-md "
+              >
+                Submit
+              </button>
             </div>
-            <div className='my-10 mx-5 text-center'>
-                <button onClick={handleSubmit} className="bg-black text-white px-8  py-2 text-small rounded-md ">
-                    Submit
-                </button>
-            </div>
+          </div>
         </div>
-        </div></div>
+      </div>
     </section>
-  )
+  );
 }
 
 export default AddGrn
