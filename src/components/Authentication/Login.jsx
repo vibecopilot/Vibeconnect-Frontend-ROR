@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
 import { useNavigate } from "react-router-dom";
@@ -7,8 +7,8 @@ import {
   getEmployeeAssociatedSites,
   getHRMSEmployeeID,
   login,
-  vibeLogin,
-  getAdminAccess, // newly imported API call
+  getAdminAccess,
+  vibeBGImages, // newly imported API call
 } from "../../api";
 import { setItemInLocalStorage, getItemInLocalStorage } from "../../utils/localStorage";
 
@@ -24,9 +24,11 @@ const Login = () => {
   const [page, setPage] = useState("login");
 
   // New states for role access
-  const [userName, setUsername] = useState("");
   const [roleAccess, setRoleAccess] = useState({});
   const [clientDashboardVisible, setClientDashboardVisible] = useState(false);
+
+  // State for background image
+  const [bgImage, setBgImage] = useState(wave);
 
   // Handle input change
   const onChange = (e) => {
@@ -153,29 +155,6 @@ const Login = () => {
       // -------------------------------
       const approverId = getItemInLocalStorage("APPROVERID");
       const hrmsOrgId = getItemInLocalStorage("HRMSORGID");
-      // if (hrmsOrgId && approverId) {
-      //   try {
-      //     const accessRes = await getAdminAccess(hrmsOrgId, approverId);
-      //     if (accessRes && accessRes.length > 0) {
-      //       const clientDashboardAccess =
-      //         accessRes[0].client_dashboard === true || accessRes[0].client_dashboard === "true";
-      //       // Save full role access details in state if needed
-      //       setRoleAccess(accessRes[0]);
-      //       setClientDashboardVisible(clientDashboardAccess);
-      //       setUsername(accessRes[0].employee_name);
-      //       console.log("Client Dashboard Visibility:", clientDashboardAccess);
-      //       if (clientDashboardAccess) {
-      //         toast.dismiss();
-      //         navigate("/admin/hrms/client-dashboard");
-      //         window.location.reload();
-      //         return; // Stop further navigation
-      //       }
-      //     }
-      //   } catch (error) {
-      //     console.error("Error fetching admin access:", error);
-      //   }
-      // }
-
       if (hrmsOrgId && approverId) {
         try {
           const accessRes = await getAdminAccess(hrmsOrgId, approverId);
@@ -185,7 +164,6 @@ const Login = () => {
             // Save full role access details in state if needed
             setRoleAccess(accessRes[0]);
             setClientDashboardVisible(clientDashboardAccess);
-            setUsername(accessRes[0].employee_name);
             
             // Store clientDashboardVisible in localStorage so App.jsx can check it
             localStorage.setItem('CLIENT_DASHBOARD_VISIBLE', clientDashboardAccess);
@@ -235,11 +213,88 @@ const Login = () => {
     showPassword(!password);
   };
 
+  // Fetch background image from API and set it with 6-hour interval caching
+  useEffect(() => {
+    const fetchBackgroundImage = async () => {
+      try {
+        // Check if we have a cached image and timestamp
+        const cachedImage = localStorage.getItem('VibeBg');
+        const cachedTimestamp = localStorage.getItem('VibeBgTimestamp');
+        const currentTime = new Date().getTime();
+        const sixHours = 6 * 60 * 60 * 1000; // 6 hours in milliseconds
+
+        // If we have cached image and it's less than 6 hours old, use it
+        if (cachedImage && cachedTimestamp && (currentTime - parseInt(cachedTimestamp)) < sixHours) {
+          setBgImage(cachedImage);
+          return;
+        }
+
+        // Fetch new image from API
+        const aks = await vibeBGImages();
+        const resp = aks.data;
+        console.log("API response:", resp);
+
+        if (resp && resp.data && resp.data.length > 0) {
+          // Filter only images with key "VibeBg"
+          const vibeBgImages = resp.data.filter(item => item.key === "VibeBg");
+          console.log("Filtered VibeBg images:", vibeBgImages);
+          
+          if (vibeBgImages.length > 0) {
+            // Calculate which image to show based on 6-hour intervals
+            const dayStartTime = new Date();
+            dayStartTime.setHours(0, 0, 0, 0); // Start of the day
+            const timeSinceDayStart = currentTime - dayStartTime.getTime();
+            const sixHourInterval = Math.floor(timeSinceDayStart / sixHours);
+            const imageIndex = sixHourInterval % vibeBgImages.length; // Cycle through available images
+            
+            const selectedImage = vibeBgImages[imageIndex];
+            const newImageUrl = selectedImage.image;
+            
+            console.log(`Using image ${imageIndex + 1} of ${vibeBgImages.length} for 6-hour interval ${sixHourInterval}`);
+            console.log("Selected image URL:", newImageUrl);
+            
+            setBgImage(newImageUrl);
+            
+            // Cache the new image and timestamp
+            localStorage.setItem('VibeBg', newImageUrl);
+            localStorage.setItem('VibeBgTimestamp', currentTime.toString());
+          } else {
+            console.log("No VibeBg images found, using cached or default");
+            if (cachedImage) {
+              setBgImage(cachedImage);
+            } else {
+              setBgImage(wave);
+            }
+          }
+        } else if (cachedImage) {
+          // If API fails but we have a cached image, use it
+          setBgImage(cachedImage);
+        } else {
+          // Fallback to default wave image
+          setBgImage(wave);
+        }
+      } catch (error) {
+        console.error("Error fetching background image:", error);
+        
+        // Try to use cached image as fallback
+        const cachedImage = localStorage.getItem('VibeBg');
+        if (cachedImage) {
+          setBgImage(cachedImage);
+        } else {
+          // Final fallback to default wave image
+          setBgImage(wave);
+        }
+      }
+    };
+    
+    fetchBackgroundImage();
+  }, []);
+
   return (
     <div
       className="h-screen relative"
       style={{
-        backgroundImage: `url(${wave})`,
+        backgroundImage: `url(${bgImage})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         background: "blur",
