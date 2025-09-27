@@ -20,6 +20,7 @@ export const domainPrefix = "https://admin.vibecopilot.ai";
 export const login = async (data) => axiosInstance.post("/login.json", data);
 
 export const getLogin = async () => axiosInstance.get("/login.json");
+export const vibeBGImages = async () => axiosInstance.get("/api/employee/get_bg_image.json")
 // dashboard
 export const getTicketDashboard = async () =>
   axiosInstance.get("/pms/admin/complaints/complaints_dashboard.json", {
