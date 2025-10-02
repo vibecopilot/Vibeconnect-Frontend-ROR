@@ -984,15 +984,22 @@ export const getAssetPPMs = async (assetId) =>
     }
   );
 
-export const getSoftServiceStatus = async (data) =>
-  axiosInstance.get(
-    `/activities.json?q[soft_service_id_null]=0&q[status_eq]=${data}`,
-    {
-      params: {
-        token: token,
-      },
-    }
-  );
+export const getSoftServiceStatus = async (data, startDate = null, endDate = null) => {
+  let url = `/activities.json?q[soft_service_id_null]=0&q[status_eq]=${data}`;
+  
+  if (startDate) {
+    url += `&q[start_time_gteq]=${startDate}`;
+  }
+  if (endDate) {
+    url += `&q[start_time_lteq]=${endDate}`;
+  }
+  
+  return axiosInstance.get(url, {
+    params: {
+      token: token,
+    },
+  });
+};
 export const getPPMCalendar = async (startdate, enddate) =>
   axiosInstance.get(
     `/activities/calendar_data.json&q[checklist_ctype_eq]=ppm?startdate=${startdate}&enddate=${enddate}`,
@@ -1927,15 +1934,22 @@ export const getServicesPPMDetails = async (id) =>
   });
 
 //
-export const getServicesRoutineList = async (page, perpage) =>
-  axiosInstance.get(
-    `/activities.json?q[soft_service_id_null]=0&per_page=${perpage}&page=${page}`,
-    {
-      params: {
-        token: token,
-      },
-    }
-  );
+export const getServicesRoutineList = async (page, perpage, startDate = null, endDate = null) => {
+  let url = `/activities.json?q[soft_service_id_null]=0&per_page=${perpage}&page=${page}`;
+  
+  if (startDate) {
+    url += `&q[start_time_gteq]=${startDate}`;
+  }
+  if (endDate) {
+    url += `&q[start_time_lteq]=${endDate}`;
+  }
+  
+  return axiosInstance.get(url, {
+    params: {
+      token: token,
+    },
+  });
+};
 export const getServicesTaskList = async () =>
   axiosInstance.get(`/soft_services/soft_services_dashboard.json?`, {
     params: {
