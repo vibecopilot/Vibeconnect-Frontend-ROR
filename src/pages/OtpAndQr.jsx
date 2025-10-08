@@ -18,15 +18,14 @@ const OtpAndQr = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!id) return; // Prevent API call if id is null
+      if (!id) return;
       try {
         const response = await getUserOtp(id);
         setUserData(response.data);
         setOtpDigits(response.data.otp.toString().split(""));
-        setQrCodeImageUrl(response.data.qr_code_image_url);
-
+        setQrCodeImageUrl(response.data.qr_code);
         console.log("OTP Digits:", response.data.otp.toString().split(""));
-        console.log("QR Code URL:", response.data.qr_code_image_url);
+        console.log("QR Code URL:", response.data.qr_code);
       } catch (error) {
         console.error("Error fetching OTP data:", error);
       }
@@ -63,7 +62,11 @@ const OtpAndQr = () => {
               /> */}
               <div className="relative h-12 w-12 rounded-full overflow-hidden mr-3">
                 <img
-                  src={userData.profile_picture}
+                  src={
+                    userData?.profile_picture
+                      ? userData.profile_picture
+                      : "/profile.png"
+                  }
                   alt="Profile Picture"
                   width={48}
                   height={48}
@@ -102,33 +105,47 @@ const OtpAndQr = () => {
 
           {/* Date section */}
           <div className="flex justify-between mb-6">
-            <div className="bg-yellow-100 rounded-lg p-2 text-center w-[45%]">
-              <p className="text-xs font-medium">Start Date</p>
-              <p className="text-sm font-bold">
-                {new Date(userData.created_at).toLocaleDateString()}
-              </p>
-            </div>
+            {userData.pass_start_date && userData.pass_end_date ? (
+              <>
+                {/* Start Date */}
+                <div className="bg-yellow-100 rounded-lg p-2 text-center w-[30%]">
+                  <p className="text-xs font-medium">Start Date</p>
+                  <p className="text-sm font-bold">
+                    {new Date(userData.pass_start_date).toLocaleDateString()}
+                  </p>
+                </div>
 
-            {/* Company logo */}
-            {/* <div className="flex items-center justify-center">
-              <div className="h-12 w-12 rounded-full border-2 border-gray-300 flex items-center justify-center">
-                <span className="font-serif text-xl">V</span>
+                {/* End Date */}
+                <div className="bg-yellow-100 rounded-lg p-2 text-center w-[30%]">
+                  <p className="text-xs font-medium">End Date</p>
+                  <p className="text-sm font-bold">
+                    {new Date(userData.pass_end_date).toLocaleDateString()}
+                  </p>
+                </div>
+
+                {/* Expected Date */}
+                <div className="bg-yellow-100 rounded-lg p-2 text-center w-[30%]">
+                  <p className="text-xs font-medium">Expected Date</p>
+                  <p className="text-sm font-bold">
+                    {new Date(userData.expected_date).toLocaleDateString()}
+                  </p>
+                </div>
+              </>
+            ) : (
+              // Show only Expected Date if no start/end dates
+              <div className="bg-yellow-100 rounded-lg p-2 text-center w-full">
+                <p className="text-xs font-medium">Expected Date</p>
+                <p className="text-sm font-bold">
+                  {new Date(userData.expected_date).toLocaleDateString()}
+                </p>
               </div>
-            </div> */}
-
-            <div className="bg-yellow-100 rounded-lg p-2 text-center w-[45%]">
-              <p className="text-xs font-medium">End Date</p>
-              <p className="text-sm font-bold">
-                {new Date(userData.created_at).toLocaleDateString()}
-              </p>
-            </div>
+            )}
           </div>
 
           {/* Company details */}
           <div className="text-center mb-6">
-            <p className="text-sm text-gray-500">Company Details</p>
-            <h2 className="text-xl font-bold">The Capital</h2>
-            <p className="text-xs text-gray-500">+1 Companies</p>
+            <p className="text-sm text-gray-500">Site Details</p>
+            <h2 className="text-xl font-bold">{userData?.site_name}</h2>
           </div>
 
           {/* QR code section */}
