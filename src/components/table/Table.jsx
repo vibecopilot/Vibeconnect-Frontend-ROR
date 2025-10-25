@@ -16,7 +16,10 @@ const Table = ({
   customStyles,
   onChangePage,
   selectableRow,
-  onSelectedRows 
+  onSelectedRows,
+  paginationServer = false,
+  paginationTotalRows = 0,
+  onChangeRowsPerPage
 }) => {
   const themeColor = useSelector((state) => state.theme.color);
 
@@ -74,12 +77,14 @@ const Table = ({
         data={data}
         customStyles={customStyles || customStyle}
         pagination={pagination}
-        // paginationServer
+        paginationServer={paginationServer}
+        paginationTotalRows={paginationTotalRows}
         fixedHeader
         selectableRowsHighlight
         selectableRows={selectableRow}
         highlightOnHover
         onChangePage={onChangePage}
+        onChangeRowsPerPage={onChangeRowsPerPage}
         onSelectedRowsChange={handleSelectedRowsChange}
       />
     </div>
