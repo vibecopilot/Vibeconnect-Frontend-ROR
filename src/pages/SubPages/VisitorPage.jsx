@@ -16,7 +16,7 @@ import {
   visitorApproval,
 } from "../../api";
 import { BsEye } from "react-icons/bs";
-import { BiEdit } from "react-icons/bi";
+import { BiEdit, BiFilterAlt } from "react-icons/bi";
 
 import Webcam from "react-webcam";
 import { formatTime } from "../../utils/dateUtils";
@@ -43,11 +43,82 @@ const VisitorPage = () => {
   const [filteredData, setFilteredData] = useState([]);
   const [histories, setHistories] = useState([]);
   const [filteredHistory, setFilteredHistory] = useState([]);
+  
+  // Refetch trigger for approvals
+  const [refetchTrigger, setRefetchTrigger] = useState(0);
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [loading, setLoading] = useState(false);
+  
+  // Pagination states for each section
+  const [approvalPage, setApprovalPage] = useState(1);
+  const [approvalRowsPerPage, setApprovalRowsPerPage] = useState(10);
+  const [approvalTotalPages, setApprovalTotalPages] = useState(1);
+  const [approvalTotalRecords, setApprovalTotalRecords] = useState(0);
+  
+  const [historyPage, setHistoryPage] = useState(1);
+  const [historyRowsPerPage, setHistoryRowsPerPage] = useState(10);
+  const [historyTotalPages, setHistoryTotalPages] = useState(1);
+  const [historyTotalRecords, setHistoryTotalRecords] = useState(0);
+
+  // Filter states for All visitors
+  const [showFilters, setShowFilters] = useState(false);
+  const [filterDateFrom, setFilterDateFrom] = useState("");
+  const [filterDateTo, setFilterDateTo] = useState("");
+  const [filterMobile, setFilterMobile] = useState("");
+  const [filterHost, setFilterHost] = useState("");
 
   const webcamRef = useRef(null);
   const handleClick = (visitorType) => {
     setSelectedVisitor(visitorType);
+    setSearchText(""); // Reset search when switching visitor type
+    setCurrentPage(1); // Reset to first page when changing visitor type
   };
+  
+  // Reset pagination when changing page tab
+  const handlePageChange = (newPage) => {
+    setPage(newPage);
+    setCurrentPage(1); // Reset to first page when changing tabs
+  };
+  
+  // Apply filters
+  const handleApplyFilters = () => {
+    setCurrentPage(1); // Reset to first page when applying filters
+  };
+  
+  // Clear filters
+  const handleClearFilters = () => {
+    setFilterDateFrom("");
+    setFilterDateTo("");
+    setFilterMobile("");
+    setFilterHost("");
+    setCurrentPage(1);
+  };
+  
+  // Update filtered data when page or visitor type changes
+  useEffect(() => {
+    if (page === "Visitor In") {
+      if (selectedVisitor === "expected") {
+        const expectedIn = visitorIn.filter(
+          (visit) => visit.user_type !== "security_guard"
+        );
+        setFilteredData(expectedIn);
+      } else {
+        const unexpectedIn = visitorIn.filter(
+          (visit) => visit.user_type === "security_guard"
+        );
+        setFilteredUnexpectedVisitor(unexpectedIn);
+      }
+    } else if (page === "all") {
+      // Data is already filtered in the initial fetch
+      setFilteredExpectedVisitor(expectedVisitor);
+      setFilteredUnexpectedVisitor(unexpectedVisitor);
+    }
+  }, [page, selectedVisitor, visitorIn, expectedVisitor, unexpectedVisitor]);
   const dateFormat = (dateString) => {
     const date = new Date(dateString);
     return date.toDateString();
@@ -59,57 +130,230 @@ const VisitorPage = () => {
   useEffect(() => {
     const fetchExpectedVisitor = async () => {
       try {
-        const visitorResp = await getExpectedVisitor();
-        // if (visitorResp?.data) {
-        //   const filteredVisitors = visitorResp.data.filter(
-        //     (visitor) => visitor.frequency_type !== null
-        //   );
-
-        //   console.log("Filtered Visitors:", filteredVisitors);
-
-        //   // Use filteredVisitors as needed
-        // } else {
-        //   console.warn("Unexpected API response:", visitorResp);
-        // }
-        const sortedVisitor = visitorResp.data.sort((a, b) => {
+        setLoading(true);
+        
+        // Determine filters based on current page and selected visitor type
+        let filters = {};
+        
+        if (page === "Visitor In") {
+          filters.visitorInOut = "IN";
+          if (selectedVisitor === "expected") {
+            filters.userTypeNotEq = "security_guard";
+          } else {
+            filters.userType = "security_guard";
+          }
+        } else if (page === "Visitor Out") {
+          filters.visitorInOut = "OUT";
+          if (selectedVisitor === "expected") {
+            filters.userTypeNotEq = "security_guard";
+          } else {
+            filters.userType = "security_guard";
+          }
+        } else if (page === "all") {
+          // No visitor_in_out filter for "all" page
+          if (selectedVisitor === "expected") {
+            filters.userTypeNotEq = "security_guard";
+          } else {
+            filters.userType = "security_guard";
+          }
+          
+          // Add additional filters for "All" page
+          if (filterDateFrom) {
+            filters.dateFrom = filterDateFrom;
+          }
+          if (filterDateTo) {
+            filters.dateTo = filterDateTo;
+          }
+          if (filterMobile) {
+            filters.mobile = filterMobile;
+          }
+          if (filterHost) {
+            filters.host = filterHost;
+          }
+        }
+        
+        const visitorResp = await getExpectedVisitor(currentPage, rowsPerPage, filters);
+        
+        console.log("Raw API Response:", visitorResp);
+        console.log("Response data:", visitorResp.data);
+        
+        // Check if data exists and get the actual array
+        let visitorData = [];
+        let paginationInfo = {};
+        
+        if (visitorResp && visitorResp.data) {
+          // Check if data is directly an array
+          if (Array.isArray(visitorResp.data)) {
+            visitorData = visitorResp.data;
+          }
+          // Check if data has visitors property (most common structure)
+          else if (visitorResp.data.visitors && Array.isArray(visitorResp.data.visitors)) {
+            visitorData = visitorResp.data.visitors;
+            // Extract pagination info from root level
+            paginationInfo = {
+              currentPage: visitorResp.data.current_page || visitorResp.data.page || currentPage,
+              totalPages: visitorResp.data.total_pages || Math.ceil((visitorResp.data.total_count || visitorResp.data.total || 0) / rowsPerPage),
+              totalRecords: visitorResp.data.total_count || visitorResp.data.total || 0,
+              perPage: visitorResp.data.per_page || rowsPerPage,
+            };
+          }
+          // Check if data has a nested data property with pagination
+          else if (visitorResp.data.data && Array.isArray(visitorResp.data.data)) {
+            visitorData = visitorResp.data.data;
+            // Extract pagination info
+            paginationInfo = {
+              currentPage: visitorResp.data.current_page || visitorResp.data.page || currentPage,
+              totalPages: visitorResp.data.total_pages || Math.ceil((visitorResp.data.total_count || visitorResp.data.total || 0) / rowsPerPage),
+              totalRecords: visitorResp.data.total_count || visitorResp.data.total || 0,
+              perPage: visitorResp.data.per_page || rowsPerPage,
+            };
+          }
+          else {
+            console.error("Unexpected data structure:", visitorResp.data);
+            console.log("Available keys:", Object.keys(visitorResp.data));
+            setLoading(false);
+            return;
+          }
+        }
+        
+        console.log("Extracted pagination info:", paginationInfo);
+        
+        // Update pagination states
+        if (paginationInfo.totalPages) {
+          setTotalPages(paginationInfo.totalPages);
+          setTotalRecords(paginationInfo.totalRecords);
+        }
+        
+        if (visitorData.length === 0) {
+          console.warn("No visitor data found");
+          // Set empty arrays
+          setVisitor([]);
+          setAll([]);
+          setVisitorIn([]);
+          setVisitorOut([]);
+          setFilteredData([]);
+          setUnexpectedVisitor([]);
+          setFilteredUnexpectedVisitor([]);
+          setExpectedVisitor([]);
+          setFilteredExpectedVisitor([]);
+          setLoading(false);
+          return;
+        }
+        
+        console.log("Visitor Data Array:", visitorData);
+        
+        const sortedVisitor = visitorData.sort((a, b) => {
           return new Date(b.created_at) - new Date(a.created_at);
         });
-        const filteredUnexpectedVisitor = sortedVisitor.filter(
-          (visit) => visit.user_type === "security_guard"
-        );
-        const filteredExpectedVisitor = sortedVisitor.filter(
-          (visit) => visit.user_type !== "security_guard"
-        );
-        const filteredVisitorIn = sortedVisitor.filter(
-          (visit) => visit.visitor_in_out === "IN"
-        );
-        const filteredVisitorOut = sortedVisitor.filter(
-          (visit) => visit.visitor_in_out === "OUT"
-        );
-        setVisitor(sortedVisitor);
-        setAll(sortedVisitor);
-        setVisitorIn(filteredVisitorIn);
-        console.log(filteredVisitorIn);
-        setVisitorOut(filteredVisitorOut);
-        setFilteredData(sortedVisitor);
-        setUnexpectedVisitor(filteredUnexpectedVisitor);
-        setFilteredUnexpectedVisitor(filteredUnexpectedVisitor);
-        setExpectedVisitor(filteredExpectedVisitor);
-        setFilteredExpectedVisitor(filteredExpectedVisitor);
-        console.log(sortedVisitor);
+        
+        console.log("Sorted Visitors:", sortedVisitor);
+        
+        // Set data based on current page
+        if (page === "Visitor In") {
+          setVisitorIn(sortedVisitor);
+          if (selectedVisitor === "expected") {
+            setFilteredData(sortedVisitor);
+            setFilteredExpectedVisitor(sortedVisitor);
+          } else {
+            setFilteredUnexpectedVisitor(sortedVisitor);
+          }
+        } else if (page === "Visitor Out") {
+          setVisitorOut(sortedVisitor);
+        } else if (page === "all") {
+          setAll(sortedVisitor);
+          if (selectedVisitor === "expected") {
+            setFilteredExpectedVisitor(sortedVisitor);
+            setExpectedVisitor(sortedVisitor);
+          } else {
+            setFilteredUnexpectedVisitor(sortedVisitor);
+            setUnexpectedVisitor(sortedVisitor);
+          }
+        }
+        
+        setLoading(false);
       } catch (error) {
-        console.log(error);
+        console.error("Error fetching visitor data:", error);
+        setLoading(false);
       }
     };
+    
     const fetchVisitorHistory = async () => {
       try {
-        const historyResp = await getVisitorHistory();
-        const sortedVisitor = historyResp.data.sort((a, b) => {
+        const historyResp = await getVisitorHistory(historyPage, historyRowsPerPage);
+        
+        let historyData = [];
+        let historyPaginationInfo = {};
+        
+        if (Array.isArray(historyResp.data)) {
+          historyData = historyResp.data;
+        } else if (historyResp.data.visitors && Array.isArray(historyResp.data.visitors)) {
+          historyData = historyResp.data.visitors;
+          historyPaginationInfo = {
+            totalPages: historyResp.data.total_pages,
+            totalRecords: historyResp.data.total_count || historyResp.data.total || 0,
+          };
+        } else if (historyResp.data.data && Array.isArray(historyResp.data.data)) {
+          historyData = historyResp.data.data;
+          historyPaginationInfo = {
+            totalPages: historyResp.data.total_pages,
+            totalRecords: historyResp.data.total_count || historyResp.data.total || 0,
+          };
+        }
+        
+        // Update pagination states
+        if (historyPaginationInfo.totalPages) {
+          setHistoryTotalPages(historyPaginationInfo.totalPages);
+          setHistoryTotalRecords(historyPaginationInfo.totalRecords);
+        }
+        
+        const sortedVisitor = historyData.sort((a, b) => {
           return new Date(b.created_at) - new Date(a.created_at);
         });
         setHistories(sortedVisitor);
         setFilteredHistory(sortedVisitor);
-        console.log(sortedVisitor);
+        console.log("History data:", sortedVisitor);
+        console.log("History pagination:", historyPaginationInfo);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    
+    const fetchApprovals = async () => {
+      try {
+        const approvalResp = await getVisitorApprovals(approvalPage, approvalRowsPerPage);
+        
+        let approvalData = [];
+        let approvalPaginationInfo = {};
+        
+        if (Array.isArray(approvalResp.data)) {
+          approvalData = approvalResp.data;
+        } else if (approvalResp.data.visitors && Array.isArray(approvalResp.data.visitors)) {
+          approvalData = approvalResp.data.visitors;
+          approvalPaginationInfo = {
+            totalPages: approvalResp.data.total_pages,
+            totalRecords: approvalResp.data.total_count || approvalResp.data.total || 0,
+          };
+        } else if (approvalResp.data.data && Array.isArray(approvalResp.data.data)) {
+          approvalData = approvalResp.data.data;
+          approvalPaginationInfo = {
+            totalPages: approvalResp.data.total_pages,
+            totalRecords: approvalResp.data.total_count || approvalResp.data.total || 0,
+          };
+        }
+        
+        // Update pagination states
+        if (approvalPaginationInfo.totalPages) {
+          setApprovalTotalPages(approvalPaginationInfo.totalPages);
+          setApprovalTotalRecords(approvalPaginationInfo.totalRecords);
+        }
+        
+        const sortedApproval = approvalData.sort((a, b) => {
+          return new Date(b.created_at) - new Date(a.created_at);
+        });
+        setApprovals(sortedApproval);
+        setFilteredApproval(sortedApproval);
+        console.log("Approval data:", sortedApproval);
+        console.log("Approval pagination:", approvalPaginationInfo);
       } catch (error) {
         console.log(error);
       }
@@ -118,19 +362,8 @@ const VisitorPage = () => {
     fetchApprovals();
     fetchExpectedVisitor();
     fetchVisitorHistory();
-  }, []);
-  const fetchApprovals = async () => {
-    try {
-      const approvalResp = await getVisitorApprovals();
-      const sortedApproval = approvalResp.data.sort((a, b) => {
-        return new Date(b.created_at) - new Date(a.created_at);
-      });
-      setApprovals(sortedApproval);
-      setFilteredApproval(sortedApproval);
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  }, [currentPage, rowsPerPage, approvalPage, approvalRowsPerPage, historyPage, historyRowsPerPage, page, selectedVisitor, refetchTrigger, filterDateFrom, filterDateTo, filterMobile, filterHost]);
+  
   const VisitorColumns = [
     {
       name: "Action",
@@ -254,34 +487,78 @@ const VisitorPage = () => {
     setSearchText(searchValue);
 
     if (searchValue.trim() === "") {
-      if (selectedVisitor === "expected") {
-        setFilteredData(visitorIn);
-      } else {
-        setFilteredUnexpectedVisitor(unexpectedVisitor);
+      // Reset to appropriate data based on current page and visitor type
+      if (page === "Visitor In") {
+        if (selectedVisitor === "expected") {
+          const expectedIn = visitorIn.filter(
+            (visit) => visit.user_type !== "security_guard"
+          );
+          setFilteredData(expectedIn);
+        } else {
+          const unexpectedIn = visitorIn.filter(
+            (visit) => visit.user_type === "security_guard"
+          );
+          setFilteredUnexpectedVisitor(unexpectedIn);
+        }
+      } else if (page === "all") {
+        if (selectedVisitor === "expected") {
+          setFilteredExpectedVisitor(expectedVisitor);
+        } else {
+          setFilteredUnexpectedVisitor(unexpectedVisitor);
+        }
       }
     } else {
-      if (selectedVisitor === "expected") {
-        const filteredResults = visitorIn.filter(
-          (item) =>
-            item.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-            (item.vehicle_number &&
-              item.vehicle_number
-                .toLowerCase()
-                .includes(searchValue.toLowerCase()))
-        );
-
-        setFilteredData(filteredResults);
-      } else {
-        const filteredResults = unexpectedVisitor.filter(
-          (item) =>
-            item.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-            (item.vehicle_number &&
-              item.vehicle_number
-                .toLowerCase()
-                .includes(searchValue.toLowerCase()))
-        );
-
-        setFilteredUnexpectedVisitor(filteredResults);
+      // Search based on current page and visitor type
+      if (page === "Visitor In") {
+        if (selectedVisitor === "expected") {
+          const expectedIn = visitorIn.filter(
+            (visit) => visit.user_type !== "security_guard"
+          );
+          const filteredResults = expectedIn.filter(
+            (item) =>
+              item.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+              (item.vehicle_number &&
+                item.vehicle_number
+                  .toLowerCase()
+                  .includes(searchValue.toLowerCase()))
+          );
+          setFilteredData(filteredResults);
+        } else {
+          const unexpectedIn = visitorIn.filter(
+            (visit) => visit.user_type === "security_guard"
+          );
+          const filteredResults = unexpectedIn.filter(
+            (item) =>
+              item.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+              (item.vehicle_number &&
+                item.vehicle_number
+                  .toLowerCase()
+                  .includes(searchValue.toLowerCase()))
+          );
+          setFilteredUnexpectedVisitor(filteredResults);
+        }
+      } else if (page === "all") {
+        if (selectedVisitor === "expected") {
+          const filteredResults = expectedVisitor.filter(
+            (item) =>
+              item.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+              (item.vehicle_number &&
+                item.vehicle_number
+                  .toLowerCase()
+                  .includes(searchValue.toLowerCase()))
+          );
+          setFilteredExpectedVisitor(filteredResults);
+        } else {
+          const filteredResults = unexpectedVisitor.filter(
+            (item) =>
+              item.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+              (item.vehicle_number &&
+                item.vehicle_number
+                  .toLowerCase()
+                  .includes(searchValue.toLowerCase()))
+          );
+          setFilteredUnexpectedVisitor(filteredResults);
+        }
       }
     }
   };
@@ -382,7 +659,7 @@ const VisitorPage = () => {
     try {
       const res = await visitorApproval(id, approveData);
       console.log(res);
-      fetchApprovals();
+      setRefetchTrigger(prev => prev + 1); // Trigger refetch
       if (decision === true) {
         toast.success("Visitor approved successfully");
       } else {
@@ -506,7 +783,7 @@ const VisitorPage = () => {
     },
     {
       name: "Name",
-      selector: (row, index) => row.name,
+      selector: (row) => row.name,
       sortable: true,
     },
     {
@@ -548,6 +825,8 @@ const VisitorPage = () => {
     }
   };
 
+
+
   return (
     <div className="visitors-page">
       <section className="flex">
@@ -562,7 +841,7 @@ const VisitorPage = () => {
                     ? "text-blue-500 font-medium  shadow-custom-all-sides"
                     : "text-black"
                 } rounded-t-md  cursor-pointer text-center text-sm flex items-center justify-center transition-all duration-300`}
-                onClick={() => setPage("all")}
+                onClick={() => handlePageChange("all")}
               >
                 All
               </h2>
@@ -572,7 +851,7 @@ const VisitorPage = () => {
                     ? "text-blue-500 font-medium  shadow-custom-all-sides"
                     : "text-black"
                 } rounded-t-md  cursor-pointer text-center text-sm flex items-center justify-center transition-all duration-300`}
-                onClick={() => setPage("Visitor In")}
+                onClick={() => handlePageChange("Visitor In")}
               >
                 Visitor In
               </h2>
@@ -582,7 +861,7 @@ const VisitorPage = () => {
                     ? "text-blue-500 font-medium  shadow-custom-all-sides"
                     : "text-black"
                 }  rounded-t-md  rounded-sm cursor-pointer text-center text-sm flex items-center justify-center transition-all duration-300`}
-                onClick={() => setPage("Visitor Out")}
+                onClick={() => handlePageChange("Visitor Out")}
               >
                 Visitor Out
               </h2>
@@ -592,7 +871,7 @@ const VisitorPage = () => {
                     ? "text-blue-500 font-medium  shadow-custom-all-sides"
                     : "text-black"
                 }  rounded-t-md  rounded-sm cursor-pointer text-center text-sm flex items-center justify-center transition-all duration-300`}
-                onClick={() => setPage("approval")}
+                onClick={() => handlePageChange("approval")}
               >
                 Approvals
               </h2>
@@ -602,7 +881,7 @@ const VisitorPage = () => {
                     ? "text-blue-500 font-medium  shadow-custom-all-sides"
                     : "text-black"
                 }  rounded-t-md rounded-sm cursor-pointer text-center text-sm flex items-center justify-center transition-all duration-300`}
-                onClick={() => setPage("History")}
+                onClick={() => handlePageChange("History")}
               >
                 History
               </h2>
@@ -612,7 +891,7 @@ const VisitorPage = () => {
                     ? "text-blue-500 font-medium  shadow-custom-all-sides"
                     : "text-black"
                 }  rounded-t-md rounded-sm cursor-pointer text-center text-sm flex items-center justify-center transition-all duration-300`}
-                onClick={() => setPage("logs")}
+                onClick={() => handlePageChange("logs")}
               >
                 Logs
               </h2>
@@ -622,7 +901,7 @@ const VisitorPage = () => {
                     ? "text-blue-500 font-medium  shadow-custom-all-sides"
                     : "text-black"
                 }  rounded-t-md rounded-sm cursor-pointer text-center text-sm flex items-center justify-center transition-all duration-300`}
-                onClick={() => setPage("self-registration")}
+                onClick={() => handlePageChange("self-registration")}
               >
                 Self-Registration
               </h2>
@@ -630,46 +909,127 @@ const VisitorPage = () => {
           </div>
 
           {page === "all" && (
-            <div className="grid md:grid-cols-3 gap-2 items-center">
-              <input
-                type="text"
-                className="border border-gray-300 p-2 rounded-md placeholder:text-sm"
-                value={searchAll}
-                onChange={handleSearchAll}
-                placeholder="Search using Visitor name, Host, vehicle number"
-              />
-              <div className="border md:flex-row flex-col flex p-2 rounded-md text-center border-black">
-                <span
-                  className={` md:border-r px-2 border-gray-300 cursor-pointer hover:underline ${
-                    selectedVisitor === "expected"
-                      ? "text-blue-600 underline"
-                      : ""
-                  } text-center`}
-                  onClick={() => handleClick("expected")}
-                >
-                  <span>Expected visitor</span>
-                </span>
-                <span
-                  className={`cursor-pointer hover:underline ${
-                    selectedVisitor === "unexpected"
-                      ? "text-blue-600 underline"
-                      : ""
-                  } text-center`}
-                  onClick={() => handleClick("unexpected")}
-                >
-                  &nbsp; <span>Unexpected visitor</span>
-                </span>
+            <div className="flex flex-col gap-3">
+              {/* Search and Expected/Unexpected Toggle */}
+              <div className="grid md:grid-cols-3 gap-2 items-center">
+                <input
+                  type="text"
+                  className="border border-gray-300 p-2 rounded-md placeholder:text-sm"
+                  value={searchAll}
+                  onChange={handleSearchAll}
+                  placeholder="Search using Visitor name, Host, vehicle number"
+                />
+                <div className="border md:flex-row flex-col flex p-2 rounded-md text-center border-black">
+                  <span
+                    className={` md:border-r px-2 border-gray-300 cursor-pointer hover:underline ${
+                      selectedVisitor === "expected"
+                        ? "text-blue-600 underline"
+                        : ""
+                    } text-center`}
+                    onClick={() => handleClick("expected")}
+                  >
+                    <span>Expected visitor</span>
+                  </span>
+                  <span
+                    className={`cursor-pointer hover:underline ${
+                      selectedVisitor === "unexpected"
+                        ? "text-blue-600 underline"
+                        : ""
+                    } text-center`}
+                    onClick={() => handleClick("unexpected")}
+                  >
+                    &nbsp; <span>Unexpected visitor</span>
+                  </span>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <button
+                    onClick={() => setShowFilters(!showFilters)}
+                    className="font-semibold border-2 border-black hover:bg-gray-100 duration-150 transition-all p-2 rounded-md cursor-pointer text-center flex items-center gap-2 justify-center"
+                  >
+                    <BiFilterAlt size={20} />
+                    {showFilters ? "Hide Filters" : "Show Filters"}
+                  </button>
+                  <Link
+                    to={"/admin/add-new-visitor"}
+                    style={{ background: themeColor }}
+                    className=" font-semibold  hover:text-white duration-150 transition-all p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
+                  >
+                    <PiPlusCircle size={20} />
+                    Add New Visitor
+                  </Link>
+                </div>
               </div>
-              <div className="flex justify-end">
-                <Link
-                  to={"/admin/add-new-visitor"}
-                  style={{ background: themeColor }}
-                  className=" font-semibold  hover:text-white duration-150 transition-all p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
-                >
-                  <PiPlusCircle size={20} />
-                  Add New Visitor
-                </Link>
-              </div>
+
+              {/* Advanced Filters */}
+              {showFilters && (
+                <div className="border border-gray-300 rounded-md p-4 bg-gray-50">
+                  <h3 className="font-semibold mb-3 text-gray-700">Advanced Filters</h3>
+                  <div className="grid md:grid-cols-4 gap-3">
+                    {/* Date From */}
+                    <div className="flex flex-col">
+                      <label className="text-sm font-medium text-gray-600 mb-1">Date From</label>
+                      <input
+                        type="date"
+                        value={filterDateFrom}
+                        onChange={(e) => setFilterDateFrom(e.target.value)}
+                        className="border border-gray-300 p-2 rounded-md text-sm"
+                      />
+                    </div>
+
+                    {/* Date To */}
+                    <div className="flex flex-col">
+                      <label className="text-sm font-medium text-gray-600 mb-1">Date To</label>
+                      <input
+                        type="date"
+                        value={filterDateTo}
+                        onChange={(e) => setFilterDateTo(e.target.value)}
+                        className="border border-gray-300 p-2 rounded-md text-sm"
+                      />
+                    </div>
+
+                    {/* Mobile Number */}
+                    <div className="flex flex-col">
+                      <label className="text-sm font-medium text-gray-600 mb-1">Mobile Number</label>
+                      <input
+                        type="text"
+                        value={filterMobile}
+                        onChange={(e) => setFilterMobile(e.target.value)}
+                        placeholder="Enter mobile number"
+                        className="border border-gray-300 p-2 rounded-md text-sm placeholder:text-sm"
+                      />
+                    </div>
+
+                    {/* Host Name */}
+                    <div className="flex flex-col">
+                      <label className="text-sm font-medium text-gray-600 mb-1">Host Name</label>
+                      <input
+                        type="text"
+                        value={filterHost}
+                        onChange={(e) => setFilterHost(e.target.value)}
+                        placeholder="Enter host name"
+                        className="border border-gray-300 p-2 rounded-md text-sm placeholder:text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Filter Action Buttons */}
+                  <div className="flex gap-2 mt-4">
+                    <button
+                      onClick={handleApplyFilters}
+                      style={{ background: themeColor }}
+                      className="px-4 py-2 text-white rounded-md font-medium hover:opacity-90 transition-all"
+                    >
+                      Apply Filters
+                    </button>
+                    <button
+                      onClick={handleClearFilters}
+                      className="px-4 py-2 border-2 border-gray-300 rounded-md font-medium hover:bg-gray-100 transition-all"
+                    >
+                      Clear Filters
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
           {page === "Visitor In" && (
@@ -761,7 +1121,14 @@ const VisitorPage = () => {
                 value={searchHIstoryText}
                 onChange={handleSearchHistory}
               />
-              <Table columns={historyColumn} data={filteredHistory} />
+              <Table 
+                columns={historyColumn} 
+                data={filteredHistory}
+                paginationServer
+                paginationTotalRows={historyTotalRecords}
+                onChangePage={setHistoryPage}
+                onChangeRowsPerPage={setHistoryRowsPerPage}
+              />
             </div>
           )}
           {page === "logs" && (
@@ -785,7 +1152,14 @@ const VisitorPage = () => {
                 value={searchApprovalText}
                 onChange={handleSearchApproval}
               />
-              <Table columns={approvalColumn} data={FilteredApproval} />
+              <Table 
+                columns={approvalColumn} 
+                data={FilteredApproval}
+                paginationServer
+                paginationTotalRows={approvalTotalRecords}
+                onChangePage={setApprovalPage}
+                onChangeRowsPerPage={setApprovalRowsPerPage}
+              />
             </div>
           )}
           {page === "self-registration" && (
@@ -795,14 +1169,24 @@ const VisitorPage = () => {
           )}
           <div className="my-4">
             {selectedVisitor === "expected" && page === "Visitor In" && (
-              <Table columns={VisitorColumns} data={visitorIn} />
+              <Table 
+                columns={VisitorColumns} 
+                data={filteredData}
+                paginationServer
+                paginationTotalRows={totalRecords}
+                onChangePage={setCurrentPage}
+                onChangeRowsPerPage={setRowsPerPage}
+              />
             )}
             {selectedVisitor === "unexpected" && page === "Visitor In" && (
               <Table
                 columns={VisitorColumns}
                 data={FilteredUnexpectedVisitor}
+                paginationServer
+                paginationTotalRows={totalRecords}
+                onChangePage={setCurrentPage}
+                onChangeRowsPerPage={setRowsPerPage}
               />
-              // <p className="font-medium text-center">No Records</p>
             )}
             {/* all */}
             <div className="">
@@ -810,14 +1194,21 @@ const VisitorPage = () => {
                 <Table
                   columns={VisitorColumns}
                   data={FilteredExpectedVisitor}
+                  paginationServer
+                  paginationTotalRows={totalRecords}
+                  onChangePage={setCurrentPage}
+                  onChangeRowsPerPage={setRowsPerPage}
                 />
               )}
               {selectedVisitor === "unexpected" && page === "all" && (
                 <Table
                   columns={VisitorColumns}
                   data={FilteredUnexpectedVisitor}
+                  paginationServer
+                  paginationTotalRows={totalRecords}
+                  onChangePage={setCurrentPage}
+                  onChangeRowsPerPage={setRowsPerPage}
                 />
-                // <p className="font-medium text-center">No Records</p>
               )}
             </div>
           </div>
