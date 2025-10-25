@@ -2340,12 +2340,44 @@ export const getExpectedMobile = async (mobile) =>
       token: token,
     },
   });
-export const getExpectedVisitor = async () =>
-  axiosInstance.get(`/visitors.json`, {
-    params: {
-      token: token,
-    },
-  });
+export const getExpectedVisitor = async (page = 1, perPage = 10, filters = {}) => {
+  const params = {
+    token: token,
+    page: page,
+    per_page: perPage,
+  };
+  
+  // Add dynamic filters
+  if (filters.visitorInOut) {
+    params['q[visitor_in_out_eq]'] = filters.visitorInOut;
+  }
+  if (filters.userType) {
+    params['q[user_type_eq]'] = filters.userType;
+  }
+  if (filters.userTypeNotEq) {
+    params['q[user_type_not_eq]'] = filters.userTypeNotEq;
+  }
+  
+  // Add date range filters
+  if (filters.dateFrom) {
+    params['q[expected_date_gteq]'] = filters.dateFrom; // greater than or equal
+  }
+  if (filters.dateTo) {
+    params['q[expected_date_lteq]'] = filters.dateTo; // less than or equal
+  }
+  
+  // Add mobile number filter
+  if (filters.mobile) {
+    params['q[contact_no_cont]'] = filters.mobile; // contains
+  }
+  
+  // Add host filter (searching through host.user relationship)
+  if (filters.host) {
+    params['q[host_user_firstname_or_host_user_lastname_cont]'] = filters.host;
+  }
+  
+  return axiosInstance.get(`/visitors.json`, { params });
+};
 export const getExpectedUserVisitor = async () =>
   axiosInstance.get(`/visitors/user.json`, {
     params: {
@@ -2389,10 +2421,12 @@ export const getParkingConfig = async () =>
       token: token,
     },
   });
-export const getVisitorApprovals = async () =>
+export const getVisitorApprovals = async (page = 1, perPage = 10) =>
   axiosInstance.get(`/visitors/approval_form.json`, {
     params: {
       token: token,
+      page: page,
+      per_page: perPage,
     },
   });
 export const visitorApproval = async (id, data) =>
@@ -2401,10 +2435,12 @@ export const visitorApproval = async (id, data) =>
       token: token,
     },
   });
-export const getVisitorHistory = async () =>
+export const getVisitorHistory = async (page = 1, perPage = 10) =>
   axiosInstance.get(`/visitors/approval_history.json`, {
     params: {
       token: token,
+      page: page,
+      per_page: perPage,
     },
   });
 export const getVisitorDetails = async (id) =>
