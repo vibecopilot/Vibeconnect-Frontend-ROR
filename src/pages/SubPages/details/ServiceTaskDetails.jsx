@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getServicesTaskDetails } from "../../../api";
+import { domainPrefix, getServicesTaskDetails } from "../../../api";
 import { useParams } from "react-router-dom";
 
 const ServiceTaskDetails = () => {
@@ -64,7 +64,45 @@ const ServiceTaskDetails = () => {
                 <div className="flex gap-4 items-center bg-green-200 p-2 rounded-md">
                   <p className="font-medium">Answer :</p>
                   <p>{task.value}</p>
-              </div>
+                </div>
+
+                {/* Question Attachments */}
+                {task.question_attachments && task.question_attachments.length > 0 && (
+                  <div className="flex flex-col gap-2">
+                    <p className="font-medium">Question Attachments:</p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                      {task.question_attachments.map((attachment, idx) => (
+                        <div key={attachment.id || idx} className="relative">
+                          <img
+                            src={domainPrefix + attachment.document}
+                            alt={`Question attachment ${idx + 1}`}
+                            className="w-full h-32 object-cover rounded-md border border-gray-300 cursor-pointer hover:opacity-80"
+                            onClick={() => window.open(attachment.document, '_blank')}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Submission Attachments */}
+                {task.submission_attachments && task.submission_attachments.length > 0 && (
+                  <div className="flex flex-col gap-2">
+                    <p className="font-medium">Submission Attachments:</p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                      {task.submission_attachments.map((attachment, idx) => (
+                        <div key={attachment.id || idx} className="relative">
+                          <img
+                            src={domainPrefix + attachment.document}
+                            alt={`Submission attachment ${idx + 1}`}
+                            className="w-full h-32 object-cover rounded-md border border-gray-300 cursor-pointer hover:opacity-80"
+                            onClick={() => window.open(attachment.document, '_blank')}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 </div>
               </>
             
