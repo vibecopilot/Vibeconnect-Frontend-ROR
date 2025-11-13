@@ -797,6 +797,7 @@ import {
   CreateInvoice,
   Ledgers,
   JournalEntries,
+  CreateJournalEntry,
   Reports,
   AccountingSettings
 } from "./pages/Accounting";
@@ -7284,6 +7285,14 @@ function App() {
           element={
             <ProtectedAdminRoutes>
               <JournalEntries />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/accounting/journal-entries/create"
+          element={
+            <ProtectedAdminRoutes>
+              <CreateJournalEntry />
             </ProtectedAdminRoutes>
           }
         />
