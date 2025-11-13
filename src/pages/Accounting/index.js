@@ -8,6 +8,7 @@ export { default as AccountingSettings } from './AccountingSettings';
 
 // Forms
 export { default as CreateInvoice } from './CreateInvoice';
+export { default as CreateJournalEntry } from './CreateJournalEntry';
 
 // Modals
 export { default as CreateLedgerModal } from './CreateLedgerModal';
