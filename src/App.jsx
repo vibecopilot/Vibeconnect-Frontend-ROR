@@ -790,6 +790,18 @@ import ParkingConfigurationSetup from "./pages/Setup/ParkingSetupPages/ParkingCo
 import RmbAttendance from "./pages/RMBAttendance.jsx";
 import FBRestaurtantEdit from "./pages/SubPages/FBResturantEdit.jsx";
 
+// Accounting Module Imports
+import {
+  AccountingDashboard,
+  Invoices,
+  CreateInvoice,
+  Ledgers,
+  JournalEntries,
+  Reports,
+  AccountingSettings
+} from "./pages/Accounting";
+import TrialBalanceReport from "./pages/Accounting/Reports/TrialBalanceReport.jsx";
+
 function App() {
   const { id } = useParams();
   const themeColor = useSelector((state) => state.theme.color);
@@ -7233,6 +7245,73 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
+
+        {/* Accounting Module Routes */}
+        <Route
+          path="/accounting"
+          element={
+            <ProtectedAdminRoutes>
+              <AccountingDashboard />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/accounting/invoices"
+          element={
+            <ProtectedAdminRoutes>
+              <Invoices />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/accounting/invoices/create"
+          element={
+            <ProtectedAdminRoutes>
+              <CreateInvoice />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/accounting/ledgers"
+          element={
+            <ProtectedAdminRoutes>
+              <Ledgers />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/accounting/journal-entries"
+          element={
+            <ProtectedAdminRoutes>
+              <JournalEntries />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/accounting/reports"
+          element={
+            <ProtectedAdminRoutes>
+              <Reports />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/accounting/reports/trial-balance"
+          element={
+            <ProtectedAdminRoutes>
+              <TrialBalanceReport />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/accounting/settings"
+          element={
+            <ProtectedAdminRoutes>
+              <AccountingSettings />
+            </ProtectedAdminRoutes>
+          }
+        />
+
         <Route
           path="/privacy-policy-adani-realty"
           element={<MycityPrivacy />}
