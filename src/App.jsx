@@ -802,6 +802,22 @@ import {
   AccountingSettings
 } from "./pages/Accounting";
 import TrialBalanceReport from "./pages/Accounting/Reports/TrialBalanceReport.jsx";
+import FitOutList from "./pages/FitOut/FitOutList.jsx";
+import FitOutSetup from "./pages/FitOut/FitOutSetup.jsx";
+import FitOutSetupPage from "./pages/FitOut/FitOutSetupPage.jsx";
+import FitOutRequestPage from "./pages/FitOut/FitOutRequestPage.jsx";
+import RequestListPage from "./pages/FitOut/RequestListPage.jsx";
+import FitOutChecklistPage from "./pages/FitOut/FitOutChecklistPage.jsx";
+import ChecklistForm from "./pages/FitOut/ChecklistForm.jsx";
+import SnagAnswerDetails from "./pages/FitOut/SnagAnswerDetails.jsx";
+import FitoutChecklistList from "./pages/FitOut/FitoutChecklistList.jsx";
+import Osr from "./pages/OSR/Osr.jsx";
+import OSRDashboard from "./pages/OSR/OSRDashboard.jsx";
+import OrsSetup from "./pages/OSR/OsrSetup.jsx";
+import ServiceBooking from "./pages/OSR/ServiceBooking.jsx";
+import UnitConfigurations from "./pages/OSR/UnitConfig.jsx";
+import AdminBookings from "./pages/OSR/OsrBookings.jsx";
+import MyBookings from "./pages/OSR/ResidentialBookings.jsx";
 
 function App() {
   const { id } = useParams();
@@ -3876,6 +3892,59 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+{/*  Fit-Out OSR */ }
+          <Route
+            path="/fitout/list"
+            element={
+              <ProtectedRoute>
+                <FitOutList />
+              </ProtectedRoute>
+            }
+          />
+
+             <Route path="/fitout/setup" element={<FitOutSetup />} />
+          <Route path="/fitout/setup/page" element={<FitOutSetupPage />} />
+          <Route
+            path="/fitout/request/create"
+            element={<FitOutRequestPage />}
+          />
+          <Route path="/fitout/request/list" element={<RequestListPage />} />
+          <Route
+            path="/fitout/checklist/create"
+            element={<FitOutChecklistPage />}
+          />
+          <Route
+            path="/fitout/checklist/form/:id"
+            element={<ChecklistForm />}
+          />
+          <Route
+            path="/fitout/checklist/answer-details/:id"
+            element={<SnagAnswerDetails />}
+          />
+          <Route
+            path="/fitout/snag-answer-details/:id"
+            element={<SnagAnswerDetails />}
+          />
+
+          <Route
+            path="/fitout/checklist/list"
+            element={<FitoutChecklistList />}
+          />{/*  */}
+
+
+{/* OSR */}
+
+         <Route path="/additional-service" element={<Osr />} />
+          <Route path="/ors-dashboard" element={<OSRDashboard />} />
+          <Route path="/ors-setups" element={<OrsSetup />} />
+           <Route path="/service-booking" element={<ServiceBooking />} />
+          <Route
+            path="/admin/unit-configurations"
+            element={<UnitConfigurations />}
+          />
+          <Route path="/admin/bookings" element={<AdminBookings />} />
+          <Route path="/residential/bookings" element={<MyBookings />} />
 
         {/* admin booking & req */}
         <Route
