@@ -108,42 +108,51 @@ const OtpAndQr = () => {
 
           {/* Date section */}
           <div className="flex justify-between mb-6">
-            {userData.pass_start_date && userData.pass_end_date ? (
-              <>
-                {/* Start Date */}
-                <div className="bg-yellow-100 rounded-lg p-2 text-center w-[30%]">
-                  <p className="text-xs font-medium">Start Date</p>
-                  <p className="text-sm font-bold">
-                    {new Date(userData.pass_start_date).toLocaleDateString()}
-                  </p>
-                </div>
+  {userData.pass_start_date && userData.pass_end_date ? (
+    <>
+      {/* Start Date */}
+      <div className="bg-yellow-100 rounded-lg p-2 text-center w-[30%]">
+        <p className="text-xs font-medium">Start Date</p>
+        <p className="text-sm font-bold">
+          {new Date(userData.pass_start_date).toLocaleDateString()}
+        </p>
+      </div>
 
-                {/* End Date */}
-                <div className="bg-yellow-100 rounded-lg p-2 text-center w-[30%]">
-                  <p className="text-xs font-medium">End Date</p>
-                  <p className="text-sm font-bold">
-                    {new Date(userData.pass_end_date).toLocaleDateString()}
-                  </p>
-                </div>
+      {/* End Date */}
+      <div className="bg-yellow-100 rounded-lg p-2 text-center w-[30%]">
+        <p className="text-xs font-medium">End Date</p>
+        <p className="text-sm font-bold">
+          {new Date(userData.pass_end_date).toLocaleDateString()}
+        </p>
+      </div>
 
-                {/* Expected Date */}
-                <div className="bg-yellow-100 rounded-lg p-2 text-center w-[30%]">
-                  <p className="text-xs font-medium">Expected Date</p>
-                  <p className="text-sm font-bold">
-                    {new Date(userData.expected_date).toLocaleDateString()}
-                  </p>
-                </div>
-              </>
-            ) : (
-              // Show only Expected Date if no start/end dates
-              <div className="bg-yellow-100 rounded-lg p-2 text-center w-full">
-                <p className="text-xs font-medium">Expected Date</p>
-                <p className="text-sm font-bold">
-                  {new Date(userData.expected_date).toLocaleDateString()}
-                </p>
-              </div>
-            )}
-          </div>
+      {/* Expected or Created At */}
+      <div className="bg-yellow-100 rounded-lg p-2 text-center w-[30%]">
+        <p className="text-xs font-medium">
+          {userData.expected_date ? "Expected Date" : "Created At"}
+        </p>
+        <p className="text-sm font-bold">
+          {new Date(
+            userData?.expected_date || userData?.created_at
+          ).toLocaleDateString()}
+        </p>
+      </div>
+    </>
+  ) : (
+    // Show only Expected/Created At when no start/end dates
+    <div className="bg-yellow-100 rounded-lg p-2 text-center w-full">
+      <p className="text-xs font-medium">
+        {userData.expected_date ? "Expected Date" : "Created At"}
+      </p>
+      <p className="text-sm font-bold">
+        {new Date(
+          userData.expected_date || userData.created_at
+        ).toLocaleDateString()}
+      </p>
+    </div>
+  )}
+</div>
+
 
           {/* Company details */}
           <div className="text-center mb-6">
