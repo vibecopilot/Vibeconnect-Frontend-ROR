@@ -34,6 +34,9 @@ const OtpAndQr = () => {
     fetchData();
   }, [id]);
 
+  const ProfilePic = domainPrefix + userData.profile_picture;
+  const QrCodePic = domainPrefix + userData.qr_code;
+
   return (
     <div className="flex flex-col items-center min-h-screen bg-gray-100 pt-3 pb-8">
       {/* Mobile frame */}
@@ -63,8 +66,8 @@ const OtpAndQr = () => {
               <div className="relative h-12 w-12 rounded-full overflow-hidden mr-3">
                 <img
                   src={
-                    userData?.profile_picture
-                      ? userData.profile_picture
+                    ProfilePic
+                      ? ProfilePic
                       : "/profile.png"
                   }
                   alt="Profile Picture"
@@ -158,7 +161,7 @@ const OtpAndQr = () => {
                   // src={domainPrifix+qrCodeImageUrl[0].}
                   //  src={qrCodeImageUrl}
 
-                  src={domainPrefix + qrCodeImageUrl}
+                  src={QrCodePic}
                   alt="QR Code"
                   width={140}
                   height={140}
