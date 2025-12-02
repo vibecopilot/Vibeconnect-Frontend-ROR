@@ -1,70 +1,48 @@
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { getVisitorAlertConfig, updateVisitorAlertConfig } from "../api";
+
+// LocalStorage key constant
+const STORAGE_KEY = "VISITOR_ALERT_CONFIG";
+
+const defaultConfig = {
+  enabled: false,
+  value: 4, // default threshold
+  unit: "hours", // hours | days
+};
 
 const VisitorAlertSettings = () => {
-  const [enabled, setEnabled] = useState(false);
-  const [value, setValue] = useState(4);
-  const [unit, setUnit] = useState("hours");
+  const [enabled, setEnabled] = useState(defaultConfig.enabled);
+  const [value, setValue] = useState(defaultConfig.value);
+  const [unit, setUnit] = useState(defaultConfig.unit);
   const [loaded, setLoaded] = useState(false);
-  const [saving, setSaving] = useState(false);
 
-  // Load config from backend
+  // Load persisted config
   useEffect(() => {
-    loadConfig();
-  }, []);
-
-  const loadConfig = async () => {
     try {
-      const response = await getVisitorAlertConfig();
-      if (response.data) {
-        setEnabled(!!response.data.enabled);
-        setValue(response.data.value || 4);
-        setUnit(response.data.unit || "hours");
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === "object") {
+          setEnabled(!!parsed.enabled);
+          setValue(parsed.value || defaultConfig.value);
+          setUnit(parsed.unit || defaultConfig.unit);
+        }
       }
-    } catch (error) {
-      console.error("Failed to load visitor alert config", error);
-      toast.error("Failed to load settings");
+    } catch (e) {
+      console.error("Failed to parse visitor alert config", e);
     } finally {
       setLoaded(true);
     }
-  };
+  }, []);
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (!value || value <= 0) {
       toast.error("Please enter a valid threshold value");
       return;
     }
-
-    setSaving(true);
-    try {
-      const config = { enabled, value: parseInt(value, 10), unit };
-      await updateVisitorAlertConfig(config);
-      toast.success("Visitor alert settings saved successfully");
-    } catch (error) {
-      console.error("Failed to save visitor alert config", error);
-      toast.error("Failed to save settings");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleReset = async () => {
-    const defaultConfig = { enabled: false, value: 4, unit: "hours" };
-    setEnabled(defaultConfig.enabled);
-    setValue(defaultConfig.value);
-    setUnit(defaultConfig.unit);
-
-    setSaving(true);
-    try {
-      await updateVisitorAlertConfig(defaultConfig);
-      toast.success("Settings reset to default");
-    } catch (error) {
-      console.error("Failed to reset settings", error);
-      toast.error("Failed to reset settings");
-    } finally {
-      setSaving(false);
-    }
+    const config = { enabled, value, unit };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+    toast.success("Visitor alert settings saved");
   };
 
   return (
@@ -112,15 +90,20 @@ const VisitorAlertSettings = () => {
       <div className="flex gap-2">
         <button
           onClick={handleSave}
-          disabled={!loaded || saving}
+          disabled={!loaded}
           className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-md disabled:opacity-50"
         >
-          {saving ? "Saving..." : "Save Settings"}
+          Save Settings
         </button>
         <button
-          onClick={handleReset}
-          disabled={saving}
-          className="px-4 py-2 border border-gray-300 hover:bg-gray-100 text-sm rounded-md disabled:opacity-50"
+          onClick={() => {
+            setEnabled(defaultConfig.enabled);
+            setValue(defaultConfig.value);
+            setUnit(defaultConfig.unit);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultConfig));
+            toast.success("Settings reset");
+          }}
+          className="px-4 py-2 border border-gray-300 hover:bg-gray-100 text-sm rounded-md"
         >
           Reset
         </button>
