@@ -269,6 +269,187 @@ export const getHelpDeskCategoriesSetup = async () =>
     },
   });
 
+
+//FitOut Checklist
+export const postFitoutChecklist = async (data) =>
+  axiosInstance.post(`/snag_checklists.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+
+export const getFitoutChecklist = async () =>
+  axiosInstance.get(`/snag_checklists.json`, {
+    params: {
+      token: token,
+    },
+  });
+
+//FitOut Request
+export const postFitoutRequest = async (data) =>
+  axiosInstance.post(`/fitout_request.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const getFitoutRequest = async (page, per_page) =>
+  axiosInstance.get(`/fitout_request.json`, {
+    params: {
+      token: token,
+      per_page: per_page,
+      page: page,
+    },
+  });
+
+export const getFitoutRequestById = async (id) =>
+  axiosInstance.get(`/fitout_request/${id}.json`, {
+    params: {
+      token: getToken(),
+    },
+  });
+
+export const updateStatusFitoutRequest = async (id, data) =>
+  axiosInstance.put(`/fitout_request/${id}.json`, data, {
+    params: {
+      token: getToken(),
+    },
+  });
+
+export const getFitOutCategoriesSetup = async () =>
+  axiosInstance.get(`/fit_out_setup_categories.json`, {
+    params: {
+      token: token,
+    },
+  });
+
+export const postFitoutDocsUpload = async (data) =>
+  axiosInstance.post(`/fitout_documents.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+
+export const getFitoutDocs = async () =>
+  axiosInstance.get(`/fitout_documents.json`, {
+    params: {
+      token: token,
+    },
+  });  
+export const getFitoutCategoriesSetupDetails = async (id) =>
+  axiosInstance.get(`/fit_out_setup_categories/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+
+ export const postFitoutCategoriesSetup = async (data) =>
+  axiosInstance.post(`/fit_out_setup_categories.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+
+export const putFitoutCategoriesSetup = async (catId, data) =>
+  axiosInstance.put(`/fit_out_setup_categories/${catId}.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+
+export const destroyFitoutCategory = async (catId) =>
+  axiosInstance.delete(`/fit_out_setup_categories/${catId}.json`, {
+    params: {
+      token: token,
+    },
+  });
+  
+ export const postFitOutSubCategoriesSetup = async (data) =>
+  axiosInstance.post(`/fitout_subcategories.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+  
+  export const getFitoutSubCategoriesSetupDetails = async (id) =>
+  axiosInstance.get(`/fitout_subcategories/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+
+  export const getFitoutStatusSetup = async () =>
+  axiosInstance.get(`/fitout_statuses.json`, {
+    params: {
+      token: getToken(),
+    },
+  });
+  export const getFitOutStatus = async (id) =>
+  axiosInstance.get(`/fitout_statuses/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+
+export const editFitOutStatus = async (id, data) =>
+  axiosInstance.put(`/fitout_statuses/${id}.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+  export const postFitOutStatus = async (data) =>
+  axiosInstance.post(`/fitout_statuses.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+  export const getFitoutSubCategoriesSetup = async () =>
+  axiosInstance.get(`/fitout_subcategories.json`, {
+    params: {
+      token: token,
+    },
+  });
+  export const getAllVendors = async () =>
+  axiosInstance.get("/vendors/all_vendors.json", {
+    params: {
+      token: token,
+    },
+  });
+
+  export const postSnagAnswer = async (data) =>
+  axiosInstance.post(`/snag_answers.json`, data, {
+    params: {
+      token: getToken(),
+    },
+  });
+
+export const getSnagAnswer = async (data) =>
+  axiosInstance.get(`/snag_answers.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+  export const getSnagChecklistByCategory = async (categoryId) => {
+  return axiosInstance.get("/snag_checklists.json", {
+    params: {
+      token: getToken(),
+      "q[snag_audit_category_id_eq]": categoryId,
+    },
+  });
+};
+export const getSnagAnswersByResource = async (categoryTypeId) => {
+  return axiosInstance.get("/snag_answers.json", {
+    params: {
+      token: token,
+      "q[resource_id_eq]": categoryTypeId,
+    },
+  });
+};
+export const getSnagChecklistID = async (data) =>
+  axiosInstance.post(`/snag_checklists.json`, data, {
+    params: {
+      token: getToken(),
+    },
+  });
 // ticket download section
 export const getTicketStatusDownload = async () =>
   axiosInstance.get(`/pms/admin/complaints/export_complaints.xlsx?`, {
