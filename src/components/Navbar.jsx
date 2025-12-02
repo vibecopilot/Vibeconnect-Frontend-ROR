@@ -31,6 +31,7 @@ import {
 import { HiMiniTicket, HiMiniUser } from "react-icons/hi2";
 import {
   RiBillLine,
+  RiReservedLine,
   RiSettings4Line,
   RiUserLocationFill,
 } from "react-icons/ri";
@@ -65,6 +66,7 @@ import {
   FaTasks,
   FaUser,
   FaUserFriends,
+  FaWrench,
 } from "react-icons/fa";
 import { IoIosPeople, IoMdSettings } from "react-icons/io";
 import { IoSettings } from "react-icons/io5";
@@ -755,6 +757,68 @@ const Navbar = () => {
                     >
                       Insurance
 clear                    </h2>
+                  </NavLink>
+                )}
+                 {feat.includes("additional-service-OSR") && (
+                  <NavLink
+                    to={"/ors-dashboard"}
+                    className={({ isActive }) =>
+                      ` ${
+                        isActive
+                          ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
+                          : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
+                      }`
+                    }
+                  >
+                    <div>
+                      {React.createElement(RiReservedLine, { size: "20" })}
+                    </div>
+                    <h2
+                      className={`whitespace-pre duration-300 ${
+                        !open && "opacity-0 translate-x-28 overflow-hidden"
+                      }`}
+                    >
+                      Additional Services(OSR)
+                    </h2>
+                    <h2
+                      className={`${
+                        open && "hidden"
+                      } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
+                    >
+                      Additional Services(OSR)
+                    </h2>
+                  </NavLink>
+                )}
+                  {feat.includes("fitout") && (
+                  <NavLink
+                    to={"/fitout/setup/page"}
+                    className={({ isActive }) =>
+                      ` ${
+                        isActive
+                          ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
+                          : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
+                      }`
+                    }
+                  >
+                    <div>
+                      {React.createElement(FaWrench, {
+                        size: "20",
+                      })}
+                    </div>
+                    <h2
+                      className={`whitespace-pre duration-300 ${
+                        !open && "opacity-0 translate-x-28 overflow-hidden"
+                      }`}
+                    >
+                      Fit Out
+                    </h2>
+                    <h2
+                      className={`${
+                        open && "hidden"
+                      } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
+                    >
+                      Fit Out
+                    </h2>
                   </NavLink>
                 )}
                 {feat.includes("document_pro") && (
