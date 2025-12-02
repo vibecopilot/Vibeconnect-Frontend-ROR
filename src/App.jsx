@@ -802,6 +802,9 @@ import {
   AccountingSettings
 } from "./pages/Accounting";
 import TrialBalanceReport from "./pages/Accounting/Reports/TrialBalanceReport.jsx";
+// Visitor overstay alert polling
+import { getExpectedVisitor } from "./api";
+import VisitorAlertSetup from "./pages/Setup/VisitorAlertSetup.jsx";
 
 function App() {
   const { id } = useParams();
@@ -845,6 +848,65 @@ function App() {
   const [notificationData, setNotificationData] = useState([]);
   const empId = getItemInLocalStorage("APPROVERID");
   const navigate = useNavigate();
+
+  // Visitor overstay alert polling logic
+  useEffect(() => {
+    const raw = localStorage.getItem("VISITOR_ALERT_CONFIG");
+    if (!raw) return;
+    let config;
+    try {
+      config = JSON.parse(raw);
+    } catch (e) {
+      return;
+    }
+    if (!config.enabled) return;
+
+    const extractVisitors = (resp) => {
+      if (!resp || !resp.data) return [];
+      if (Array.isArray(resp.data)) return resp.data;
+      if (resp.data.visitors && Array.isArray(resp.data.visitors)) return resp.data.visitors;
+      if (resp.data.data && Array.isArray(resp.data.data)) return resp.data.data;
+      return [];
+    };
+
+    const thresholdHours = config.unit === "hours" ? config.value : config.value * 24;
+
+    const poll = async () => {
+      try {
+        const resp = await getExpectedVisitor(1, 100, { visitorInOut: "IN" });
+        const visitors = extractVisitors(resp);
+        const now = Date.now();
+        visitors.forEach((v) => {
+          let checkInTime;
+          if (v.visits_log && v.visits_log.length > 0) {
+            const entry = v.visits_log.find((l) => l.check_in);
+            if (entry) checkInTime = entry.check_in;
+          }
+            // Fallback to expected date/time if actual check-in not available
+          if (!checkInTime && v.expected_date && v.expected_time) {
+            checkInTime = `${v.expected_date}T${v.expected_time}`;
+          }
+          if (!checkInTime) return;
+          const diffHours = (now - new Date(checkInTime).getTime()) / 3600000;
+          if (diffHours >= thresholdHours) {
+            const alertKey = `VISITOR_ALERT_SHOWN_${v.id}_${thresholdHours}`;
+            if (!sessionStorage.getItem(alertKey)) {
+              toast.error(
+                `Visitor ${v.name} is still IN for ${diffHours.toFixed(1)}h (> ${thresholdHours}h). Notify host & security to checkout.`
+              );
+              sessionStorage.setItem(alertKey, "1");
+            }
+          }
+        });
+      } catch (e) {
+        console.error("Visitor alert polling error", e);
+      }
+    };
+
+    poll();
+    const interval = setInterval(poll, 5 * 60 * 1000); // every 5 minutes
+    return () => clearInterval(interval);
+  }, []);
 
   const handleClick = (notificationId) => {
     console.log(notificationData);
@@ -1010,6 +1072,15 @@ function App() {
           element={
             <ProtectedAdminRoutes>
               <Setup />
+            </ProtectedAdminRoutes>
+          }
+        />
+
+        <Route
+          path="/setup/alerts"
+          element={
+            <ProtectedAdminRoutes>
+              <VisitorAlertSetup />
             </ProtectedAdminRoutes>
           }
         />
