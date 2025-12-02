@@ -2504,6 +2504,21 @@ export const editVisitorCategory = async (id, data) =>
     },
   });
 
+// Visitor Alert Config APIs
+export const getVisitorAlertConfig = async () =>
+  axiosInstance.get("/visitor_alert_config.json", {
+    params: {
+      token: token,
+    },
+  });
+
+export const updateVisitorAlertConfig = async (data) =>
+  axiosInstance.post("/visitor_alert_config.json", data, {
+    params: {
+      token: token,
+    },
+  });
+
 export const postLOI = async (data) =>
   axiosInstance.post(`/loi_details.json`, data, {
     params: {
