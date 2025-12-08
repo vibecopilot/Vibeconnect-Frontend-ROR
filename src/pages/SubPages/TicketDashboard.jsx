@@ -10,7 +10,7 @@ import toast from "react-hot-toast";
 const TicketDashboard = () => {
   const [totalTickets, setTotalTickets] = useState("");
   const [statusData, setStatusData] = useState({});
-  //const [statusData, setStatusData] = useState({});
+
   useEffect(() => {
     const fetchTicketInfo = async () => {
       try {
@@ -24,6 +24,7 @@ const TicketDashboard = () => {
     };
     fetchTicketInfo();
   }, []);
+
   const getRandomColor = () => {
     const letters = "0123456789ABCDEF";
     let color = "#";
@@ -84,24 +85,26 @@ const TicketDashboard = () => {
   return (
     <div>
       <div className="flex items-center gap-6 overflow-auto p-2 ">
+        
         <div className="bg-white min-w-44 shadow-custom-all-sides p-4 rounded-md flex flex-col items-center text-gray-500 text-sm w-fit font-medium">
           <div className="flex gap-2">
-            <span>Tickets Created{" "}</span>
+            <span>Tickets Created </span>
             <button onClick={handleTicketStatusDownload}>
               <FaDownload />
             </button>
           </div>
           <span className="font-medium text-base text-black">
             {totalTickets}
-          </span>{" "}
+          </span>
         </div>
-        {Object.entries(statusData)?.map(([key, value]) => (
+
+        {Object.entries(statusData || {}).map(([key, value]) => (
           <div
             key={key}
             className="bg-white min-w-44 shadow-custom-all-sides p-4 font-medium rounded-md flex flex-col items-center text-gray-500 text-sm w-fit"
           >
             <div className="flex gap-2">
-              <span>{key} </span>
+              <span>{key}</span>
               <button onClick={() => handleStatusDownload(key)}>
                 <FaDownload />
               </button>
@@ -109,6 +112,7 @@ const TicketDashboard = () => {
             <span className="font-medium text-base text-black">{value}</span>
           </div>
         ))}
+
       </div>
     </div>
   );
