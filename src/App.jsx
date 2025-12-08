@@ -138,6 +138,7 @@ import DocumentPro from "./pages/DocumentsPro/DocumentPro.jsx";
 import AddProjectTask from "./pages/SubPages/AddProjectTask.jsx";
 import UserSetup from "./pages/Setup/UserSetup.jsx";
 import UserSetupDetails from "./pages/SubPages/details/UserSetupDetails.jsx";
+import EditUser from "./pages/SubPages/EditUser.jsx";
 import EmployeeProjectManagement from "./pages/Employees/EmployeeProjectManagement.jsx";
 import EmployeeCreateProject from "./pages/Employees/EmployeeSubPages/EmployeeCreateProject.jsx";
 import EditProject from "./pages/SubPages/EditProject.jsx";
@@ -1281,12 +1282,22 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
+        
         <Route
-          path="/setup/users-details"
+          path="/setup/users-details/:id"
           element={
             <ProtectedAdminRoutes>
               <UserSetupDetails />
             </ProtectedAdminRoutes>
+          }
+        />
+
+        <Route
+          path="/setup/edit-user/:id"
+          element={
+          <ProtectedAdminRoutes>
+          <EditUser />
+          </ProtectedAdminRoutes>
           }
         />
 
