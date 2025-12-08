@@ -13,12 +13,10 @@ import {
 import { useNavigate } from "react-router-dom";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
 
-// Mock implementation for getSites, assuming it returns site data
 const getSites = () => Promise.resolve({ data: [] });
 
 const AddUser = () => {
   const navigate = useNavigate();
-  // siteId is used in the final payload
   const siteId = getItemInLocalStorage("SITEID");
 
   const [sites, setSites] = useState([]);
@@ -398,6 +396,21 @@ const AddUser = () => {
   </select>
 </div>
 
+<div>
+  <label className="text-sm font-medium block mb-1">Ownership Type *</label>
+  <select
+    name="ownership_type"
+    value={formData.ownership_type}
+    onChange={handleChange}
+    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+    required
+  >
+    <option value="">Select Ownership Type</option>
+    <option value="owner">Owner</option>
+    <option value="tenant">Tenant</option>
+  </select>
+</div>
+
               {/* Resident Status (The Occupancy Type for API: 'owner' or 'tenant') */}
               <div>
                 <label className="text-sm font-medium block mb-1">Status *</label>
@@ -409,8 +422,9 @@ const AddUser = () => {
                   required
                 >
                   <option value="">Select Status</option>
-                  <option value="owner">Owner</option>
-                  <option value="tenant">Tenant</option>
+                  <option value="owner">Pending</option>
+                  <option value="tenant">Complete</option>
+                  <option value="tenant">Rejected</option>
                 </select>
               </div>
               
@@ -506,33 +520,63 @@ const AddUser = () => {
           </div>
           
           {/* ---------------- ADDITIONAL INFO ---------------- */}
-          <div className="border-t border-gray-300 p-6">
-            <h3 className="text-xl font-bold text-gray-700 mb-4 pb-2 border-b border-gray-200">
-              Additional Info & Utilities
-            </h3>
+<div className="border-t border-gray-300 p-6">
+  <h3 className="text-xl font-bold text-gray-700 mb-4 pb-2 border-b border-gray-200">
+    Additional Info & Utilities
+  </h3>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[
-                { label: "Birth Date", name: "birth_date", type: "date" },
-                { label: "Anniversary", name: "anniversary", type: "date" },
-                { label: "Alternate Email", name: "alternateEmail", type: "email" },
-                { label: "Intercom Number", name: "intercomNumber" },
-                { label: "Landline Number", name: "landlineNumber" },
-                { label: "EV Connection (Yes/No)", name: "evConnection" },
-              
-              ].map((f) => (
-                <div key={f.name}>
-                  <label className="text-sm font-medium block mb-1">{f.label}</label>
-                  <input
-                    type={f.type || "text"}
-                    name={f.name}
-                    value={formData[f.name]}
-                    onChange={handleChange}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
-                  />
-                </div>
-              ))}
-            </div>
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    {[
+      { label: "Birth Date", name: "birth_date", type: "date" },
+      { label: "Anniversary", name: "anniversary", type: "date" },
+      { label: "Alternate Email", name: "alternateEmail", type: "email" },
+      { label: "Intercom Number", name: "intercomNumber" },
+      { label: "Landline Number", name: "landlineNumber" },
+
+      // ✅ Fixed EV Connection (Now supports dropdown)
+      { 
+        label: "EV Connection", 
+        name: "evConnection", 
+        type: "select",
+        options: [
+          { value: "", label: "Select EV Connection" },
+          { value: "yes", label: "Yes" },
+          { value: "no", label: "No" },
+        ],
+      },
+
+    ].map((f) => (
+      <div key={f.name}>
+        <label className="text-sm font-medium block mb-1">{f.label}</label>
+
+        {f.type === "select" ? (
+          <select
+            name={f.name}
+            value={formData[f.name]}
+            onChange={handleChange}
+            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+            required
+          >
+            {f.options.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <input
+            type={f.type || "text"}
+            name={f.name}
+            value={formData[f.name]}
+            onChange={handleChange}
+            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+          />
+        )}
+      </div>
+    ))}
+  </div>
+
+
           </div>
           
           {/* Submit Button */}
