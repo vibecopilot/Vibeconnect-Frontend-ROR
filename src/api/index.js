@@ -1563,6 +1563,19 @@ export const getSetupUsers = async () =>
       token: token,
     },
   });
+export const putSetupUser = async (userId, data) =>
+  axiosInstance.put(`/users/${userId}.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+
+  export const addUserToAnotherFlat = async (payload) => {
+    axiosInstance.post("/users/add-flat", payload);
+  };
+
+  
+
 export const getHostList = async (siteId) =>
   axiosInstance.get(`/visitors/fetch_potential_hosts.json?site_id=${siteId}`, {
     params: {
@@ -1581,6 +1594,9 @@ export const postSetupUsers = async (data) =>
       token: token,
     },
   });
+
+// export const updateUser = (id, data) => axios.put(`/users/${id}`, data);
+
 export const getVehicleParking = async () =>
   axiosInstance.get(`/parking_configurations.json`, {
     params: {
