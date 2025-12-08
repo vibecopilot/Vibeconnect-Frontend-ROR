@@ -118,42 +118,35 @@ const UserSetup = () => {
 
   // ✅ Table columns
   const userColumn = [
-    {
-      name: "Action",
-      cell: (row) => (
-        <div
-          className="flex items-center gap-4"
-          role="cell"
-          data-column-id="1"
-          data-tag="allowRowEvents"
-        >
-          <Link
-            to={`/setup/users-details/${siteId}/${row.id}`}
-            className="text-gray-700 hover:text-indigo-600 transition-all"
-            title="View User Details"
-          >
-            <BsEye
-              size={15}
-              className="cursor-pointer hover:scale-110 duration-200"
-            />
-          </Link>
+  {
+    name: "Action",
+    cell: (row) => (
+      <div className="flex items-center gap-4">
 
-          <Link
-            to={`/setup/users-edit/${siteId}/${row.id}`}
-            state={{ user: row }}
-            className="text-gray-700 hover:text-blue-600 transition-all"
-            title="Edit User"
-          >
-            <FiEdit
-              size={15}
-              className="cursor-pointer hover:scale-110 duration-200"
-            />
-          </Link>
-        </div>
-      ),
-      width: "120px",
-    },
-    { name: "Name", selector: (row) => `${row.firstname} ${row.lastname}` },
+        {/* View User Details */}
+        <Link
+          to={`/setup/users-details/${row.id}`}
+          className="text-gray-700 hover:text-indigo-600 transition-all"
+          title="View User Details"
+        >
+          <BsEye size={15} className="cursor-pointer hover:scale-110 duration-200" />
+        </Link>
+
+        {/* Edit User */}
+        <Link
+          to={`/setup/edit-user/${row.id}`}
+          state={{ user: row }}
+          className="text-gray-700 hover:text-blue-600 transition-all"
+          title="Edit User"
+        >
+          <FiEdit size={15} className="cursor-pointer hover:scale-110 duration-200" />
+        </Link>
+
+      </div>
+    ),
+    width: "120px",
+  },
+  { name: "Name", selector: (row) => `${row.firstname} ${row.lastname}` },
     { name: "Mobile", selector: (row) => row.mobile },
     { name: "Email", selector: (row) => row.email },
     { name: "Ownership Type", selector: (row) => row.Ownership_Types },
