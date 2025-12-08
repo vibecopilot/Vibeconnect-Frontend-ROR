@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import SetupNavbar from "../../../components/navbars/SetupNavbar";
-import { getSetupUsers, addUserToAnotherFlat, putSetupUser } from "../../../api"; 
+import { getSetupUsers, addUserToAnotherFlat, putSetupUser } from "../../../api";
 
 const UserSetupDetails = () => {
   const { siteId, id } = useParams();
@@ -39,16 +39,13 @@ const UserSetupDetails = () => {
     fetchUserDetails();
   }, [fetchUserDetails]);
 
-
   /* ===========================
         UPDATE STATUS
   ============================ */
   const updateStatus = async (status) => {
     try {
-      // UI Update
       setUser((prev) => ({ ...prev, user_status: status }));
 
-      // API Update (you can change API if yours is different)
       await putSetupUser(id, { ...user, user_status: status });
 
       toast.success(status ? "User Activated" : "User Deactivated");
@@ -58,20 +55,31 @@ const UserSetupDetails = () => {
     }
   };
 
-
   /* ===========================
         ADD TO ANOTHER FLAT
   ============================ */
+
   const [addFlatForm, setAddFlatForm] = useState({
+    site: siteId || "",
+    building: "",
+    unit: "",
+
+    // Flat Details
     tower: "",
     flatNumber: "",
+
+    // Residency Details
     residentType: "Owner",
     livesHere: "Yes",
     allowFitout: "",
     status: "",
     isPrimary: "",
+
+    // Contact
     landlineNumber: "",
     intercomNumber: "",
+
+    // Business Info
     gstNumber: "",
     panNumber: "",
   });
@@ -110,7 +118,7 @@ const UserSetupDetails = () => {
       lives_here: addFlatForm.livesHere === "Yes",
       allow_fitout: addFlatForm.allowFitout,
       status: addFlatForm.status,
-      is_primary: addFlatForm.isPrimary,
+      is_primary: addFlatForm.isPrimary === "Yes",
       landline_number: addFlatForm.landlineNumber,
       intercom_number: addFlatForm.intercomNumber,
       gst_number: addFlatForm.gstNumber,
@@ -191,7 +199,6 @@ const UserSetupDetails = () => {
                   <div className="mt-2 flex gap-3">
 
                     <button
-                      // onClick={() => updateStatus(true)}
                       className={`px-2 py-1.5 text-sm rounded-lg border font-medium
                         ${user.user_status
                           ? "bg-green-600 text-white border-green-700"
@@ -202,7 +209,6 @@ const UserSetupDetails = () => {
                     </button>
 
                     <button
-                      // onClick={() => updateStatus(false)}
                       className={`px-2 py-1.5 text-sm rounded-lg border font-medium
                         ${!user.user_status
                           ? "bg-red-600 text-white border-red-700"
@@ -242,7 +248,6 @@ const UserSetupDetails = () => {
                 <InfoBox label="Phase" value={user.user_phase} />
                 <InfoBox label="GST Number" value={user.gst_number} />
                 <InfoBox label="PAN Number" value={user.pan_number} />
-
                 <InfoBox label="Building" value={user.building?.name} />
                 <InfoBox label="Floor" value={user.floor?.name} />
                 <InfoBox label="Unit" value={user.unit?.name} />
@@ -271,7 +276,6 @@ const UserSetupDetails = () => {
                 <InfoBox
                   label="Created On"
                   value={user.created_at ? new Date(user.created_at).toLocaleString() : "N/A"}
-                  
                 />
                 <InfoBox
                   label="Updated On"
@@ -282,7 +286,6 @@ const UserSetupDetails = () => {
           </div>
         </main>
       </section>
-
 
       {/* ADD FLAT MODAL */}
       {showAddFlatModal && (
@@ -368,7 +371,6 @@ const UserSetupDetails = () => {
     </>
   );
 };
-
 
 /* ===========================
       REUSABLE COMPONENTS
