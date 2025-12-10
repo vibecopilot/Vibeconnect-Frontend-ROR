@@ -43,6 +43,8 @@ const EditVisitor = () => {
     host: "",
     passNumber: "",
     notes: "",
+    drivingLicense: false,       
+    consignmentForm: false,
   });
 
   const { id } = useParams();
@@ -218,6 +220,8 @@ const EditVisitor = () => {
     postData.append("visitor[expected_time]", formData.expectedTime);
     postData.append("visitor[skip_host_approval]", formData.hostApproval);
     postData.append("visitor[goods_inwards]", formData.goodsInward);
+    postData.append("visitor[driving_license]", formData.drivingLicense);
+    postData.append("visitor[consignment_form]", formData.consignmentForm);
     postData.append("visitor[visit_type]", selectedVisitorType);
     postData.append("visitor[frequency]", selectedFrequency);
     selectedWeekdays.forEach((day) => {
@@ -573,6 +577,38 @@ const EditVisitor = () => {
               }
             />
             &nbsp;&nbsp;<label htmlFor="goods">Goods Inwards</label>
+
+             <label className="flex items-center gap-2">
+     <input
+      type="checkbox"
+      id="drivingLicense"
+      checked={formData.drivingLicense}
+      onChange={() =>
+        setFormData(prev => ({
+          ...prev,
+          drivingLicense: !prev.drivingLicense,
+        }))
+      }
+    />
+    <span>License</span>
+  </label>
+
+  {/* Consignment Checkbox */}
+  <label className="flex items-center gap-2">
+    <input
+      type="checkbox"
+      id="consignmentForm"
+      checked={formData.consignmentForm}
+      onChange={() =>
+        setFormData(prev => ({
+          ...prev,
+          consignmentForm: !prev.consignmentForm,
+        }))
+      }
+    />
+    <span>Consignment</span>
+  </label> 
+
           </span>
         </div>
         <h2 className="font-medium border-b-2 mt-5 border-black">
