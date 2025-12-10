@@ -219,8 +219,6 @@ const UserSetupDetails = () => {
                     </button>
                   </div>
                 </div>
-
-                <InfoBox label="Lives Here" value={user.lives_here ? "Yes" : "No"} />
               </div>
             </section>
 
@@ -288,86 +286,153 @@ const UserSetupDetails = () => {
       </section>
 
       {/* ADD FLAT MODAL */}
-      {showAddFlatModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          {/* overlay */}
-          <div
-            className="absolute inset-0 bg-black opacity-40"
-            onClick={closeAddFlatModal}
-          />
+     {showAddFlatModal && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center">
+    
+    {/* Overlay */}
+    <div
+      className="absolute inset-0 bg-black opacity-40"
+      onClick={closeAddFlatModal}
+    />
 
-          <div className="relative z-10 w-full max-w-3xl mx-4 bg-white rounded-2xl shadow-xl overflow-auto">
-            <div className="flex items-center justify-between p-4 border-b">
-              <h3 className="text-lg font-semibold text-gray-800">Add to Another Flat</h3>
-              <button onClick={closeAddFlatModal} className="text-gray-500 hover:text-gray-800">
-                ✕
-              </button>
-            </div>
+    <div className="relative z-10 w-full max-w-3xl mx-4 bg-white rounded-2xl shadow-xl overflow-auto">
+      
+      <div className="flex items-center justify-between p-4 border-b">
+        <h3 className="text-lg font-semibold text-gray-800">Add to Another Flat</h3>
+        <button onClick={closeAddFlatModal} className="text-gray-500 hover:text-gray-800">
+          ✕
+        </button>
+      </div>
 
-            <form onSubmit={handleAddFlatSubmit} className="p-6 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {renderInputOrSelect("Tower", "tower", "select", addFlatForm, handleFormChange, [
-                  { value: "", label: "Select" },
-                  { value: "VC Tower", label: "VC Tower" },
-                ])}
+      <form onSubmit={handleAddFlatSubmit} className="p-6 space-y-6">
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-                {renderInputOrSelect("Flat Number", "flatNumber", "text", addFlatForm, handleFormChange)}
+          {/* TOWER */}
+          {renderInputOrSelect(
+            "Tower",
+            "tower",
+            "select",
+            addFlatForm,
+            handleFormChange,
+            [
+              { value: "", label: "Select" },
+              { value: "VC Tower", label: "VC Tower" },
+            ]
+          )}
 
-                {renderInputOrSelect("Resident Type", "residentType", "select", addFlatForm, handleFormChange, [
-                  { value: "Owner", label: "Owner" },
-                  { value: "Tenant", label: "Tenant" },
-                  { value: "Other", label: "Other" },
-                ])}
+          {/* FLOOR — disabled until tower selected */}
+          {renderInputOrSelect(
+            "Floor",
+            "Floor",
+            "select",
+            addFlatForm,
+            handleFormChange,
+            [
+              { value: "", label: "Select" },
+              { value: "1", label: "1" },
+              { value: "2", label: "2" },
+              { value: "3", label: "3" },
+            ],
+            addFlatForm.tower === ""  // DISABLE FLOOR if no tower selected
+          )}
 
-                {renderInputOrSelect("Lives Here", "livesHere", "select", addFlatForm, handleFormChange, [
-                  { value: "Yes", label: "Yes" },
-                  { value: "No", label: "No" },
-                ])}
+          {/* UNIT NUMBER — disabled until floor selected */}
+          {renderInputOrSelect(
+            "Unit Number",
+            "flatNumber",
+            "text",
+            addFlatForm,
+            handleFormChange,
+            [],
+            addFlatForm.Floor === ""  // DISABLE UNIT NUMBER until floor selected
+          )}
 
-                {renderInputOrSelect("Allow Fitout", "allowFitout", "select", addFlatForm, handleFormChange, [
-                  { value: "", label: "Select" },
-                  { value: "Allowed", label: "Allowed" },
-                  { value: "Not Allowed", label: "Not Allowed" },
-                ])}
+          {/* OWNERSHIP */}
+          {renderInputOrSelect(
+            "Ownership Type",
+            "ownershiptype",
+            "select",
+            addFlatForm,
+            handleFormChange,
+            [
+              { value: "", label: "Select" },
+              { value: "Owner", label: "Owner" },
+              { value: "Tenant", label: "Tenant" },
+              { value: "Builder", label: "Builder" },
+            ]
+          )}
 
-                {renderInputOrSelect("Status", "status", "select", addFlatForm, handleFormChange, [
-                  { value: "", label: "Select" },
-                  { value: "Active", label: "Active" },
-                  { value: "Inactive", label: "Inactive" },
-                ])}
+          {/* OCCUPIED */}
+          {renderInputOrSelect(
+            "Occupied",
+            "Occupied",
+            "select",
+            addFlatForm,
+            handleFormChange,
+            [
+              { value: "", label: "Select" },
+              { value: "Yes", label: "Yes" },
+              { value: "No", label: "No" },
+            ]
+          )}
 
-                {renderInputOrSelect("Is Primary", "isPrimary", "select", addFlatForm, handleFormChange, [
-                  { value: "", label: "Select" },
-                  { value: "Yes", label: "Yes" },
-                  { value: "No", label: "No" },
-                ])}
+          {/* STATUS */}
+          {renderInputOrSelect(
+            "Status",
+            "status",
+            "select",
+            addFlatForm,
+            handleFormChange,
+            [
+              { value: "", label: "Select" },
+              { value: "Approved", label: "Approved" },
+              { value: "Pending", label: "Pending" },
+              { value: "Rejected", label: "Rejected" },
+            ]
+          )}
 
-                {renderInputOrSelect("Landline Number", "landlineNumber", "text", addFlatForm, handleFormChange)}
-                {renderInputOrSelect("Intercom Number", "intercomNumber", "text", addFlatForm, handleFormChange)}
-                {renderInputOrSelect("GST Number", "gstNumber", "text", addFlatForm, handleFormChange)}
-                {renderInputOrSelect("PAN Number", "panNumber", "text", addFlatForm, handleFormChange)}
-              </div>
+          {/* MEMBERSHIP */}
+          {renderInputOrSelect(
+            "Membership Type",
+            "membershiptype",
+            "select",
+            addFlatForm,
+            handleFormChange,
+            [
+              { value: "Primary", label: "Primary" },
+              { value: "Secondary", label: "Secondary" },
+            ]
+          )}
+          
+          {renderInputOrSelect("GST Number", "gstNumber", "text", addFlatForm, handleFormChange)}
+          {renderInputOrSelect("PAN Number", "panNumber", "text", addFlatForm, handleFormChange)}
 
-              <div className="flex justify-end gap-3 pt-2 border-t">
-                <button
-                  type="button"
-                  onClick={closeAddFlatModal}
-                  className="px-4 py-2 text-sm rounded-lg border bg-white hover:bg-gray-100"
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="submit"
-                  className="px-4 py-2 text-sm rounded-lg bg-green-600 text-white hover:bg-green-700"
-                >
-                  Submit
-                </button>
-              </div>
-            </form>
-          </div>
         </div>
-      )}
+
+        {/* BUTTONS */}
+        <div className="flex justify-end gap-3 pt-2 border-t">
+          <button
+            type="button"
+            onClick={closeAddFlatModal}
+            className="px-4 py-2 text-sm rounded-lg border bg-white hover:bg-gray-100"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="submit"
+            className="px-4 py-2 text-sm rounded-lg bg-green-600 text-white hover:bg-green-700"
+          >
+            Submit
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+)}
+
     </>
   );
 };

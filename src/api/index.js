@@ -2594,18 +2594,57 @@ export const getExpectedUserVisitor = async () =>
       token: token,
     },
   });
+
+  
+
+//   export const getRegisteredVehicle = async (params = {}) => {
+//   return axiosInstance.get(`/registered_vehicles.json`, {
+//     params: {
+//       token: token,
+//       ...params
+//     },
+//     headers: {
+//       "Content-Type": "application/json"
+//     }
+//   });
+// };
+
+// POST create a vehicle visit
+export const createRegisteredVehicleVisit = async (payload) => {
+  return axiosInstance.post(
+    `/registered_vehicle.json`,
+    {
+      registered_vehicle_visit: payload
+    },
+    {
+      params: { token },
+      headers: {
+        "Content-Type": "application/json"
+      }
+    }
+  );
+};
+
+
+
 export const getRegisteredVehicle = async () =>
   axiosInstance.get(`/registered_vehicles.json`, {
     params: {
       token: token,
     },
+  })
+export const getRegisteredVehicleHistory = async (page = 1) =>
+  axiosInstance.get(`/registered_vehicles_history.json`, {
+    params: { page, token },
   });
+
 export const getRegisteredVehicleDetails = async (id) =>
   axiosInstance.get(`/registered_vehicles/${id}.json`, {
     params: {
       token: token,
     },
   });
+  
 export const getPatrollingHistory = async () =>
   axiosInstance.get(`/patrolling_histories.json`, {
     params: {
