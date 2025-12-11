@@ -1031,13 +1031,27 @@ export const getAmenitiesBooking = async () => {
   });
 };
 
-export const getAmenitiesBookingById = async (id) => {
-  return axiosInstance.get(`/amenity_bookings.json/${id}`, {
+// export const getAmenitiesBookingById = async (id) => {
+//   return axiosInstance.get(`/amenity_bookings.json/${id}`, {
+//     params: {
+//       token: token,
+//     },
+//   });
+// };
+
+// export const getAmenitiesBookingById = (id) => {
+//   return axiosInstance.get(`/amenity_bookings/${id}.json`, {
+//     params: { token }
+//   });
+// };
+export const getAmenitiesBookingById = (id) => {
+  return axiosInstance.get(`/amenity_bookings/${id}.json`, {
     params: {
-      token: token,
+      token: localStorage.getItem("TOKEN"),
     },
   });
 };
+
 
 export const getFacilitySlots = async (facilityId, selectedDate) =>
   axiosInstance.get(`/slots/available.json`, {

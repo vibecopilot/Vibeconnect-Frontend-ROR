@@ -57,7 +57,7 @@ const RVehicles = () => {
                 list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
                 setVehicles(list);
-                // **IMP:** total_pages को API रिस्पॉन्स से सेट करें
+                
                 setTotalPages(data.total_pages || 1); 
 
             } catch (err) {
