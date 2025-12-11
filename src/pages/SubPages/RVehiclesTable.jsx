@@ -375,7 +375,7 @@ const RVehiclesTable = () => {
           responsive
           columns={columns}
           data={filteredVehicles}
-          isPagination={false} // we will handle pagination manually
+          isPagination={false}
         />
 
         {/* Pagination UI */}
