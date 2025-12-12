@@ -97,7 +97,6 @@ const UserEdit = () => {
     email,
     mobile,
     user_status,
-    lives_here,
     email_1,
     landline_number,
     intercom_number,
@@ -171,14 +170,6 @@ const UserEdit = () => {
                     </button>
                   </div>
                 </div>
-
-                <SelectBox
-                  label="Lives Here"
-                  name="lives_here"
-                  value={lives_here ? "Yes" : "No"}
-                  onChange={handleSelectChange}
-                  options={["Yes", "No"]}
-                />
               </Grid3>
             </Section>
 
