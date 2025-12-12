@@ -15,9 +15,9 @@ const Booking = () => {
   const [searchText, setSearchText] = useState("");
   const [modal, showModal] = useState(false);
   const [page, setPage] = useState("meetingBooking");
-  const [bookings, setBookings] = useState([]); // State to hold booking data
-  const [loading, setLoading] = useState(false); // Loading state
-  const [error, setError] = useState(null); // Error state
+  const [bookings, setBookings] = useState([]); 
+  const [loading, setLoading] = useState(false); 
+  const [error, setError] = useState(null); 
   const [bookingFacility, setBookingFacility] = useState([]);
   const themeColor = "rgb(3, 19 37)";
 

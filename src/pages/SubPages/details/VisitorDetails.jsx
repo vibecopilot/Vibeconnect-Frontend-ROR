@@ -1,361 +1,226 @@
 import React, { useEffect, useState } from "react";
-import Detail from "../../../containers/Detail";
 import image from "/profile.png";
-import { domainPrefix, getVisitorDetails, getVisitorLogs } from "../../../api";
+import { domainPrefix, getVisitorDetails } from "../../../api";
 import { Link, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import Table from "../../../components/table/Table";
 import { BiEdit, BiQr } from "react-icons/bi";
 import Navbar from "../../../components/Navbar";
 import VisitorQRCode from "../../../containers/modals/VisitorQRCode";
-import { dateFormatSTD } from "../../../utils/dateUtils";
 
 const VisitorDetails = () => {
   const [details, setDetails] = useState({});
-  const [logs, setLogs] = useState([]);
+  const [deviceLogs, setDeviceLogs] = useState([]);
+  const [visitorLogs, setVisitorLogs] = useState([]);
+  const [qrModal, setQrmodal] = useState(false);
+
   const { id } = useParams();
+  const themeColor = useSelector((state) => state.theme.color);
+
+  // Pagination
+  const [devicePage, setDevicePage] = useState(1);
+  const [visitorPage, setVisitorPage] = useState(1);
+  const ITEMS_PER_PAGE = 5;
+
   useEffect(() => {
     const fetchVisitorDetails = async () => {
       try {
-        const detailsResp = await getVisitorDetails(id);
-        setDetails(detailsResp.data);
-        console.log(detailsResp.data);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    const fetchVisitorDeviceLogs = async () => {
-      try {
-        const logsResp = await getVisitorLogs(id);
-        setLogs(logsResp?.data?.data);
-        console.log(logsResp.data.data);
+        const res = await getVisitorDetails(id);
+        const data = res.data;
+        setDetails(data);
+
+        setDeviceLogs(data.logs || []);
+
+        let merged = [];
+        data.logs?.forEach((log) => {
+          log.visits_log?.forEach((entry) => {
+            merged.push({
+              ...entry,
+              name: log.name,
+              contact_no: log.contact_no,
+              vehicle_number: log.vehicle_number,
+            });
+          });
+        });
+
+        setVisitorLogs(merged);
       } catch (error) {
         console.log(error);
       }
     };
     fetchVisitorDetails();
-    fetchVisitorDeviceLogs();
   }, [id]);
 
-  const themeColor = useSelector((state) => state.theme.color);
   const dateFormat = (dateString) => {
     const date = new Date(dateString);
-    return date.toDateString();
+    return isNaN(date) ? "-" : date.toDateString();
   };
+
   const dateTimeFormat = (dateString) => {
-    if (!dateString) {
-      return " ";
-    }
-
+    if (!dateString) return "-";
     const date = new Date(dateString);
-
-    if (isNaN(date)) {
-      return " ";
-    }
-
-    return date.toLocaleString();
+    return isNaN(date) ? "-" : date.toLocaleString();
   };
 
-  const VisitorColumns = [
-    // {
-    //   name: "Action",
-    //   cell: (row) => (
-    //     <div className="flex items-center gap-4">
-    //       <Link to={`/admin/passes/visitors/visitor-details/${row.id}`}>
-    //         <BsEye size={15} />
-    //       </Link>
-    //       <Link to={`/edit/${row.id}`}>
-    //         <BiEdit size={15} />
-    //       </Link>
-    //     </div>
-    //   ),
-    // },
-    {
-      name: " Name",
-      selector: (row) => row.name,
-      sortable: true,
-    },
-    {
-      name: " Mobile No.",
-      selector: (row) => row.contact_no,
-      sortable: true,
-    },
-    {
-      name: "Created On",
-      selector: (row) => dateFormat(row.created_at),
-      sortable: true,
-    },
+  const paginatedDeviceLogs = deviceLogs.slice(
+    (devicePage - 1) * ITEMS_PER_PAGE,
+    devicePage * ITEMS_PER_PAGE
+  );
+
+  const paginatedVisitorLogs = visitorLogs.slice(
+    (visitorPage - 1) * ITEMS_PER_PAGE,
+    visitorPage * ITEMS_PER_PAGE
+  );
+
+  const deviceTotalPages =
+    Math.ceil(deviceLogs.length / ITEMS_PER_PAGE) || 1;
+  const visitorTotalPages =
+    Math.ceil(visitorLogs.length / ITEMS_PER_PAGE) || 1;
+
+  const visitorDeviceLogColumn = [
+    { name: "Sr. No.", selector: (row, index) => index + 1 },
+    { name: "Name", selector: (row) => row.name },
+    { name: "Check In", selector: (row) => dateTimeFormat(row.in_time || row.start_pass) },
+    { name: "Check Out", selector: (row) => dateTimeFormat(row.out_time || row.end_pass) },
   ];
 
   const visitorLogColumn = [
-    {
-      name: "Sr. no.",
-      selector: (row, index) => index + 1,
-      sortable: true,
-    },
-    {
-      name: " Check in",
-      selector: (row) => (row.check_in ? dateTimeFormat(row.check_in) : ""),
-      sortable: true,
-    },
-    {
-      name: " Check out",
-      selector: (row) => (row.check_in ? dateTimeFormat(row.check_out) : null),
-      sortable: true,
-    },
+    { name: "Sr. No.", selector: (row, index) => index + 1 },
+    { name: "Visitor Name", selector: (row) => row.name },
+    { name: "Check In", selector: (row) => dateTimeFormat(row.check_in) },
+    { name: "Check Out", selector: (row) => dateTimeFormat(row.check_out) },
   ];
-  const visitorDeviceLogColumn = [
-    {
-      name: "Sr. no.",
-      selector: (row, index) => index + 1,
-      sortable: true,
-    },
-    {
-      name: "Name",
-      selector: (row, index) => row.name,
-      sortable: true,
-    },
-    {
-      name: " Check in",
-      selector: (row) => (row.in_time ? dateTimeFormat(row.in_time) : ""),
-      sortable: true,
-    },
-    {
-      name: " Check out",
-      selector: (row) => (row.out_time ? dateTimeFormat(row.out_time) : null),
-      sortable: true,
-    },
+
+  const visitorExtraColumns = [
+    { name: "Name", selector: (row) => row.name },
+    { name: "Mobile No", selector: (row) => row.contact_no },
+    { name: "Created On", selector: (row) => dateFormat(row.created_at) },
   ];
-  const [qrModal, setQrmodal] = useState(false);
+
   return (
     <section className="flex">
       <Navbar />
-      <div className=" w-full flex mx-3 flex-col overflow-hidden">
-        <div className="flex flex-col gap-2">
-          <h2
-            style={{
-              background: themeColor,
-            }}
-            className="text-center rounded-full w-full text-white font-semibold text-lg p-2 px-4 mt-2 "
-          >
-            Visitor Details
-          </h2>
-          <div className="flex justify-end gap-2 mx-2 mt-1">
-            <button
-              onClick={() => setQrmodal(true)}
-              className="border-2 border-black rounded-full px-2 p-1 flex items-center gap-2"
-            >
-              <BiQr /> QR code
-            </button>
-            <Link
-              to={`/admin/passes/visitors/edit-visitor/${id}`}
-              className="border-2 border-black rounded-full px-2 p-1 flex items-center gap-2"
-            >
-              <BiEdit /> Edit Details
-            </Link>
-          </div>
-          <div className="flex justify-center">
-            {details.profile_picture && details.profile_picture !== null ? (
-              // details.visitor_files.map((doc, index) => (
-              <img
-                src={domainPrefix + details.profile_picture.url}
-                alt=""
-                className="w-48 h-48 rounded-full cursor-pointer"
-                onClick={() =>
-                  window.open(
-                    domainPrefix + details.profile_picture.url,
-                    "_blank"
-                  )
-                }
-              />
-            ) : (
-              // ))
-              <img src={image} alt="" className="w-48 h-48" />
-            )}
-          </div>
-          <div className="md:grid  px-4 flex flex-col grid-cols-3 gap-5 gap-x-4">
-            {/* <div className="grid grid-cols-2 ">
-            <p className="font-semibold text-sm">Site Name : </p>
-            <p className="">{details.site_name}</p>
-          </div> */}
-            {details.visit_type && (
-              <div className="grid grid-cols-2 ">
-                <p className="font-semibold text-sm">Visitor Type : </p>
-                <p className="">{details.visit_type}</p>
-              </div>
-            )}
-            {details?.visit_type === "Support Staff" && (
-              <div className="grid grid-cols-2 ">
-                <p className="font-semibold text-sm">Staff Category : </p>
-                <p className="">{details?.visitor_staff_category?.name}</p>
-              </div>
-            )}
-            {details.name !== null && (
-              <div className="grid grid-cols-2 ">
-                <p className="font-semibold text-sm">Visitor's Name : </p>
-                <p className="">{details?.name}</p>
-              </div>
-            )}
-            {details.contact_no !== null && (
-              <div className="grid grid-cols-2 ">
-                <p className="font-semibold text-sm">Mobile No. : </p>
-                <p className="">{details?.contact_no}</p>
-              </div>
-            )}
-            {/* <div className="grid grid-cols-2 ">
-            <p className="font-semibold text-sm">OTP : </p>
-            <p className="">{details.otp}</p>
-          </div> */}
-            {details.purpose !== null && (
-              <div className="grid grid-cols-2 ">
-                <p className="font-semibold text-sm">Purpose : </p>
-                <p className="">{details?.purpose}</p>
-              </div>
-            )}
-            {details.coming_from !== null && (
-              <div className="grid grid-cols-2 ">
-                <p className="font-semibold text-sm">Coming From : </p>
-                <p className="">{details?.coming_from}</p>
-              </div>
-            )}
-            {details.vehicle_number !== null && (
-              <div className="grid grid-cols-2 ">
-                <p className="font-semibold text-sm">Vehicle No. : </p>
-                <p className="">{details?.vehicle_number}</p>
-              </div>
-            )}
-            {details.expected_date !== null && (
-              <div className="grid grid-cols-2 ">
-                <p className="font-semibold text-sm">Expected Date : </p>
-                <p className="">{details?.expected_date}</p>
-              </div>
-            )}
-            {details.expected_time !== null && (
-              <div className="grid grid-cols-2 ">
-                <p className="font-semibold text-sm">Expected Time : </p>
-                <p className="">{details?.expected_time}</p>
-              </div>
-            )}
-            {details.goods_inwards && (
-              <div className="grid grid-cols-2 ">
-                <p className="font-semibold text-sm">Goods Inward : </p>
-                <p className="">{details?.goods_inwards ? "Yes" : "No"}</p>
-              </div>
-            )}
-            {details.skip_host_approval && (
-              <div className="grid grid-cols-2 ">
-                <p className="font-semibold text-sm">
-                  Host Approval Needed ? :{" "}
-                </p>
-                <p className="">{details?.skip_host_approval ? "No" : "Yes"}</p>
-              </div>
-            )}
-            {/* {details.frequency === "Frequently" && ( */}
-            {details.start_pass !== null && (
-              <div className="grid grid-cols-2 ">
-                <p className="font-semibold text-sm">Pass Start Date : </p>
-                <p className="">
-                  {details.start_pass
-                    ? dateTimeFormat(details?.start_pass)
-                    : "-"}
-                </p>
-              </div>
-            )}
-            {/* )} */}
-            {/* {details.frequency === "Frequently" && ( */}
-            {details.end_pass !== null && (
-              <div className="grid grid-cols-2 ">
-                <p className="font-semibold text-sm">Pass End Date : </p>
-                <p className="">
-                  {details.end_pass ? dateTimeFormat(details?.end_pass) : "-"}
-                </p>
-              </div>
-            )}
 
-            {/* )} */}
-            {details.hosts !== null && (
-              <div className="grid grid-cols-2 ">
-                <p className="font-semibold text-sm">Host : </p>
-                {details?.hosts?.map((host) => (
-                  <p>{host?.full_name}</p>
+      <div className="w-full flex mx-3 flex-col overflow-hidden">
+        <h2
+          style={{ background: themeColor }}
+          className="text-center rounded-full text-white font-semibold text-lg p-2 mt-2"
+        >
+          Visitor Details
+        </h2>
+
+        <div className="flex justify-end gap-2 mx-2 mt-1">
+          <button
+            onClick={() => setQrmodal(true)}
+            className="border-2 border-black rounded-full px-2 p-1 flex items-center gap-2"
+          >
+            <BiQr /> QR Code
+          </button>
+
+          <Link
+            to={`/admin/passes/visitors/edit-visitor/${id}`}
+            className="border-2 border-black rounded-full px-2 p-1 flex items-center gap-2"
+          >
+            <BiEdit /> Edit Details
+          </Link>
+        </div>
+
+        <div className="flex justify-center mt-2">
+          {details.profile_picture ? (
+            <img
+              src={domainPrefix + details.profile_picture.url}
+              className="w-48 h-48 rounded-full cursor-pointer"
+              onClick={() =>
+                window.open(domainPrefix + details.profile_picture.url)
+              }
+            />
+          ) : (
+            <img src={image} className="w-48 h-48" />
+          )}
+        </div>
+
+        {/* All Visitor Details */}
+        <div className="grid md:grid-cols-3 px-4 gap-5 gap-x-4 mt-4">
+          {details.visit_type && <Info label="Visitor Type" value={details.visit_type} />}
+          {details?.visit_type === "Support Staff" && (
+            <Info label="Staff Category" value={details?.visitor_staff_category?.name} />
+          )}
+          {details.name && <Info label="Visitor Name" value={details.name} />}
+          {details.contact_no && <Info label="Mobile No." value={details.contact_no} />}
+          {details.purpose && <Info label="Purpose" value={details.purpose} />}
+          {details.coming_from && <Info label="Coming From" value={details.coming_from} />}
+          {details.vehicle_number && <Info label="Vehicle No." value={details.vehicle_number} />}
+          {details.expected_date && <Info label="Expected Date" value={details.expected_date} />}
+          {details.expected_time && <Info label="Expected Time" value={details.expected_time} />}
+          {details.goods_inwards !== null && (
+            <Info label="Goods Inward" value={details.goods_inwards ? "Yes" : "No"} />
+          )}
+          {details.skip_host_approval !== null && (
+            <Info label="Host Approval Needed" value={details.skip_host_approval ? "No" : "Yes"} />
+          )}
+          {details.start_pass && (
+            <Info label="Pass Start Date" value={dateTimeFormat(details.start_pass)} />
+          )}
+          {details.end_pass && (
+            <Info label="Pass End Date" value={dateTimeFormat(details.end_pass)} />
+          )}
+          {details.hosts && (
+            <div className="grid grid-cols-2">
+              <p className="font-semibold text-sm">Host :</p>
+              <div>
+                {details.hosts.map((host, i) => (
+                  <p key={i}>{host.full_name}</p>
                 ))}
               </div>
-            )}
-            {details.created_by_name !== null && (
-              <div className="grid grid-cols-2 ">
-                <p className="font-semibold text-sm">Created by : </p>
-                {details.created_by_name && (
-                  <p className="">
-                    {details?.created_by_name.firstname}{" "}
-                    {details?.created_by_name.lastname}
-                  </p>
-                )}
-              </div>
-            )}
-            {details.created_at !== null && (
-              <div className="grid grid-cols-2 ">
-                <p className="font-semibold text-sm">Created On : </p>
-                <p className="">{dateFormat(details.created_at)}</p>
-              </div>
-            )}
-            {/* {details.created_at !== null && (
-              <div className="grid grid-cols-2 ">
-                <p className="font-semibold text-sm">Created On : </p>
-                <p className="">{dateFormat(details.created_at)}</p>
-              </div>
-            )} */}
-            {details.updated_at !== null && (
-              <div className="grid grid-cols-2 ">
-                <p className="font-semibold text-sm">Updated On : </p>
-                <p className="">{dateFormat(details.updated_at)}</p>
-              </div>
-            )}
-            {details.frequency === "Frequently" && (
-              <div className="grid grid-cols-2 ">
-                <p className="font-semibold text-sm">Permitted Days : </p>
-                <p className="">{details.working_days.join(", ")}</p>
-              </div>
-            )}
-          </div>
-
-          <div className="my-4 ">
-            <h2 className="font-medium border-b text-lg border-gray-400 px-2 ">
-              Additional Visitors Info
-            </h2>
-            <div className="m-4  ">
-              {details.extra_visitors && details.extra_visitors.length !== 0 ? (
-                <Table columns={VisitorColumns} data={details.extra_visitors} />
-              ) : (
-                <p className="text-center">No Additional Visitor Added</p>
-              )}
             </div>
-          </div>
-          <div className="my-4">
-            <h2 className="font-medium border-b text-lg border-gray-400 px-2 ">
-              Visitor Device Log
-            </h2>
-            <div className="m-4">
-              {/* {details.visits_log && details.visits_log.length !== 0 ? ( */}
-              <Table columns={visitorDeviceLogColumn} data={logs} />
-              {/* ) : (
-                <p className="text-center">No Log Yet</p>
-              )} */}
-            </div>
-          </div>
-          <div className="my-4">
-            <h2 className="font-medium border-b text-lg border-gray-400 px-2 ">
-              Visitor Log
-            </h2>
-            <div className="m-4">
-              {details.visits_log && details.visits_log.length !== 0 ? (
-                <Table columns={visitorLogColumn} data={details.visits_log} />
-              ) : (
-                <p className="text-center">No Log Yet</p>
-              )}
-            </div>
-          </div>
+          )}
+          {details.created_by_name && (
+            <Info
+              label="Created By"
+              value={`${details.created_by_name.firstname} ${details.created_by_name.lastname}`}
+            />
+          )}
+          {details.created_at && (
+            <Info label="Created On" value={dateFormat(details.created_at)} />
+          )}
+          {details.updated_at && (
+            <Info label="Updated On" value={dateFormat(details.updated_at)} />
+          )}
+          {details.frequency === "Frequently" && (
+            <Info label="Permitted Days" value={details.working_days?.join(", ")} />
+          )}
         </div>
+
+        {/* Additional Visitors */}
+        <Section title="Additional Visitors Info">
+          {details.extra_visitors?.length ? (
+            <Table columns={visitorExtraColumns} data={details.extra_visitors} />
+          ) : (
+            <p className="text-center">No Additional Visitor Added</p>
+          )}
+        </Section>
+
+        {/* Device Log
+        <Section title="Visitor Device Log">
+          <Table columns={visitorDeviceLogColumn} data={paginatedDeviceLogs} />
+          <Pagination
+            page={devicePage}
+            totalPages={deviceTotalPages}
+            setPage={setDevicePage}
+          />
+        </Section> */}
+
+        {/* Visitor Log */}
+        <Section title="Visitor Log">
+          <Table columns={visitorLogColumn} data={paginatedVisitorLogs} />
+          <Pagination
+            page={visitorPage}
+            totalPages={visitorTotalPages}
+            setPage={setVisitorPage}
+          />
+        </Section>
       </div>
+
       {qrModal && (
         <VisitorQRCode
           QR={domainPrefix + details.qr_code_image_url}
@@ -365,5 +230,27 @@ const VisitorDetails = () => {
     </section>
   );
 };
+
+// Small UI components
+const Info = ({ label, value }) => (
+  <div className="grid grid-cols-2">
+    <p className="font-semibold text-sm">{label} :</p>
+    <p>{value}</p>
+  </div>
+);
+
+const Section = ({ title, children }) => (
+  <div className="my-4">
+    <h2 className="font-medium border-b text-lg border-gray-400 px-2">
+      {title}
+    </h2>
+    <div className="m-4">{children}</div>
+  </div>
+);
+
+const Pagination = ({ page, totalPages, setPage }) => (
+  <div className="flex justify-center mt-3 gap-4">
+  </div>
+);
 
 export default VisitorDetails;

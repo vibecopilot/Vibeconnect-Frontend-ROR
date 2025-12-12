@@ -47,19 +47,20 @@ const VisitorPage = () => {
   // Refetch trigger for approvals
   const [refetchTrigger, setRefetchTrigger] = useState(0);
   
-  // Pagination states
+  // General Pagination states (used for All, Visitor In, Visitor Out)
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [loading, setLoading] = useState(false);
   
-  // Pagination states for each section
+  // Pagination states for Approvals
   const [approvalPage, setApprovalPage] = useState(1);
   const [approvalRowsPerPage, setApprovalRowsPerPage] = useState(10);
   const [approvalTotalPages, setApprovalTotalPages] = useState(1);
   const [approvalTotalRecords, setApprovalTotalRecords] = useState(0);
   
+  // Pagination states for History (FIXED FOR PAGINATION)
   const [historyPage, setHistoryPage] = useState(1);
   const [historyRowsPerPage, setHistoryRowsPerPage] = useState(10);
   const [historyTotalPages, setHistoryTotalPages] = useState(1);
@@ -82,7 +83,9 @@ const VisitorPage = () => {
   // Reset pagination when changing page tab
   const handlePageChange = (newPage) => {
     setPage(newPage);
-    setCurrentPage(1); // Reset to first page when changing tabs
+    setCurrentPage(1); // Reset primary page
+    setApprovalPage(1); // Reset approval page
+    setHistoryPage(1); // Reset history page
   };
   
   // Apply filters
@@ -219,9 +222,13 @@ const VisitorPage = () => {
         console.log("Extracted pagination info:", paginationInfo);
         
         // Update pagination states
-        if (paginationInfo.totalPages) {
+        if (paginationInfo.totalRecords) {
           setTotalPages(paginationInfo.totalPages);
           setTotalRecords(paginationInfo.totalRecords);
+        } else {
+           // Default total pages/records if API doesn't return them for some reason
+           setTotalPages(1);
+           setTotalRecords(visitorData.length);
         }
         
         if (visitorData.length === 0) {
@@ -277,33 +284,54 @@ const VisitorPage = () => {
       }
     };
     
+    // START: FIXED FUNCTION FOR HISTORY PAGINATION
     const fetchVisitorHistory = async () => {
       try {
+        // API call uses historyPage and historyRowsPerPage (which is 10 by default)
         const historyResp = await getVisitorHistory(historyPage, historyRowsPerPage);
         
         let historyData = [];
         let historyPaginationInfo = {};
         
-        if (Array.isArray(historyResp.data)) {
-          historyData = historyResp.data;
-        } else if (historyResp.data.visitors && Array.isArray(historyResp.data.visitors)) {
-          historyData = historyResp.data.visitors;
-          historyPaginationInfo = {
-            totalPages: historyResp.data.total_pages,
-            totalRecords: historyResp.data.total_count || historyResp.data.total || 0,
-          };
-        } else if (historyResp.data.data && Array.isArray(historyResp.data.data)) {
-          historyData = historyResp.data.data;
-          historyPaginationInfo = {
-            totalPages: historyResp.data.total_pages,
-            totalRecords: historyResp.data.total_count || historyResp.data.total || 0,
-          };
+        if (historyResp && historyResp.data) {
+          if (Array.isArray(historyResp.data)) {
+            historyData = historyResp.data;
+             // Default to 1 page if no explicit pagination is returned
+             historyPaginationInfo = {
+                totalPages: 1, 
+                totalRecords: historyResp.data.length || 0,
+             };
+          } else if (historyResp.data.visitors && Array.isArray(historyResp.data.visitors)) {
+            historyData = historyResp.data.visitors;
+            historyPaginationInfo = {
+              totalPages: historyResp.data.total_pages || Math.ceil((historyResp.data.total_count || historyResp.data.total || 0) / historyRowsPerPage),
+              totalRecords: historyResp.data.total_count || historyResp.data.total || 0,
+            };
+          } else if (historyResp.data.data && Array.isArray(historyResp.data.data)) {
+            historyData = historyResp.data.data;
+            historyPaginationInfo = {
+              totalPages: historyResp.data.total_pages || Math.ceil((historyResp.data.total_count || historyResp.data.total || 0) / historyRowsPerPage),
+              totalRecords: historyResp.data.total_count || historyResp.data.total || 0,
+            };
+          } else if (historyResp.data.approval_history && Array.isArray(historyResp.data.approval_history)) {
+             // Handle a specific structure (e.g., from an 'approval_history' key)
+             historyData = historyResp.data.approval_history;
+             historyPaginationInfo = {
+                totalPages: historyResp.data.total_pages || Math.ceil((historyResp.data.total_count || historyResp.data.total || historyResp.data.approval_history.length || 0) / historyRowsPerPage),
+                totalRecords: historyResp.data.total_count || historyResp.data.total || historyResp.data.approval_history.length || 0,
+             };
+          }
         }
+
         
-        // Update pagination states
-        if (historyPaginationInfo.totalPages) {
+        // Update total records and total pages based on the API response
+        if (historyPaginationInfo.totalRecords) {
           setHistoryTotalPages(historyPaginationInfo.totalPages);
           setHistoryTotalRecords(historyPaginationInfo.totalRecords);
+        } else {
+          // Fallback if no pagination data is returned
+          setHistoryTotalPages(1);
+          setHistoryTotalRecords(historyData.length);
         }
         
         const sortedVisitor = historyData.sort((a, b) => {
@@ -314,9 +342,12 @@ const VisitorPage = () => {
         console.log("History data:", sortedVisitor);
         console.log("History pagination:", historyPaginationInfo);
       } catch (error) {
-        console.log(error);
+        console.log("Error fetching visitor history:", error);
+        setHistoryTotalRecords(0); 
+        setFilteredHistory([]); 
       }
     };
+    // END: FIXED FUNCTION FOR HISTORY PAGINATION
     
     const fetchApprovals = async () => {
       try {
@@ -325,26 +356,35 @@ const VisitorPage = () => {
         let approvalData = [];
         let approvalPaginationInfo = {};
         
-        if (Array.isArray(approvalResp.data)) {
-          approvalData = approvalResp.data;
-        } else if (approvalResp.data.visitors && Array.isArray(approvalResp.data.visitors)) {
-          approvalData = approvalResp.data.visitors;
-          approvalPaginationInfo = {
-            totalPages: approvalResp.data.total_pages,
-            totalRecords: approvalResp.data.total_count || approvalResp.data.total || 0,
-          };
-        } else if (approvalResp.data.data && Array.isArray(approvalResp.data.data)) {
-          approvalData = approvalResp.data.data;
-          approvalPaginationInfo = {
-            totalPages: approvalResp.data.total_pages,
-            totalRecords: approvalResp.data.total_count || approvalResp.data.total || 0,
-          };
+        if (approvalResp && approvalResp.data) {
+          if (Array.isArray(approvalResp.data)) {
+            approvalData = approvalResp.data;
+             approvalPaginationInfo = {
+                totalPages: 1,
+                totalRecords: approvalResp.data.length || 0,
+             };
+          } else if (approvalResp.data.visitors && Array.isArray(approvalResp.data.visitors)) {
+            approvalData = approvalResp.data.visitors;
+            approvalPaginationInfo = {
+              totalPages: approvalResp.data.total_pages || Math.ceil((approvalResp.data.total_count || approvalResp.data.total || 0) / approvalRowsPerPage),
+              totalRecords: approvalResp.data.total_count || approvalResp.data.total || 0,
+            };
+          } else if (approvalResp.data.data && Array.isArray(approvalResp.data.data)) {
+            approvalData = approvalResp.data.data;
+            approvalPaginationInfo = {
+              totalPages: approvalResp.data.total_pages || Math.ceil((approvalResp.data.total_count || approvalResp.data.total || 0) / approvalRowsPerPage),
+              totalRecords: approvalResp.data.total_count || approvalResp.data.total || 0,
+            };
+          }
         }
         
         // Update pagination states
-        if (approvalPaginationInfo.totalPages) {
+        if (approvalPaginationInfo.totalRecords) {
           setApprovalTotalPages(approvalPaginationInfo.totalPages);
           setApprovalTotalRecords(approvalPaginationInfo.totalRecords);
+        } else {
+          setApprovalTotalPages(1);
+          setApprovalTotalRecords(approvalData.length);
         }
         
         const sortedApproval = approvalData.sort((a, b) => {
@@ -355,7 +395,9 @@ const VisitorPage = () => {
         console.log("Approval data:", sortedApproval);
         console.log("Approval pagination:", approvalPaginationInfo);
       } catch (error) {
-        console.log(error);
+        console.log("Error fetching approvals:", error);
+        setApprovalTotalRecords(0);
+        setFilteredApproval([]);
       }
     };
 
@@ -1109,7 +1151,15 @@ const VisitorPage = () => {
                   </span>
                 </div>
               </div>
-              <Table columns={VisitorColumns} data={visitorOut} />
+              <Table 
+                columns={VisitorColumns} 
+                data={visitorOut}
+                paginationServer
+                paginationTotalRows={totalRecords}
+                onChangePage={setCurrentPage}
+                paginationPerPage={rowsPerPage} // <-- Fixed per page
+                paginationRowsPerPageOptions={[rowsPerPage]} // <-- Optional: Fix options
+              />
             </div>
           )}
           {page === "History" && (
@@ -1121,13 +1171,15 @@ const VisitorPage = () => {
                 value={searchHIstoryText}
                 onChange={handleSearchHistory}
               />
+              {/* FIXED: Removed onChangeRowsPerPage to fix per_page=10 and added paginationPerPage */}
               <Table 
                 columns={historyColumn} 
                 data={filteredHistory}
                 paginationServer
                 paginationTotalRows={historyTotalRecords}
                 onChangePage={setHistoryPage}
-                onChangeRowsPerPage={setHistoryRowsPerPage}
+                paginationPerPage={historyRowsPerPage} // <-- Fixed per page
+                paginationRowsPerPageOptions={[historyRowsPerPage]} // <-- Optional: Fix options
               />
             </div>
           )}
@@ -1158,7 +1210,8 @@ const VisitorPage = () => {
                 paginationServer
                 paginationTotalRows={approvalTotalRecords}
                 onChangePage={setApprovalPage}
-                onChangeRowsPerPage={setApprovalRowsPerPage}
+                paginationPerPage={approvalRowsPerPage} // <-- Fixed per page
+                paginationRowsPerPageOptions={[approvalRowsPerPage]} // <-- Optional: Fix options
               />
             </div>
           )}
@@ -1175,7 +1228,8 @@ const VisitorPage = () => {
                 paginationServer
                 paginationTotalRows={totalRecords}
                 onChangePage={setCurrentPage}
-                onChangeRowsPerPage={setRowsPerPage}
+                paginationPerPage={rowsPerPage} // <-- Fixed per page
+                paginationRowsPerPageOptions={[rowsPerPage]} // <-- Optional: Fix options
               />
             )}
             {selectedVisitor === "unexpected" && page === "Visitor In" && (
@@ -1185,7 +1239,8 @@ const VisitorPage = () => {
                 paginationServer
                 paginationTotalRows={totalRecords}
                 onChangePage={setCurrentPage}
-                onChangeRowsPerPage={setRowsPerPage}
+                paginationPerPage={rowsPerPage} // <-- Fixed per page
+                paginationRowsPerPageOptions={[rowsPerPage]} // <-- Optional: Fix options
               />
             )}
             {/* all */}
@@ -1197,7 +1252,8 @@ const VisitorPage = () => {
                   paginationServer
                   paginationTotalRows={totalRecords}
                   onChangePage={setCurrentPage}
-                  onChangeRowsPerPage={setRowsPerPage}
+                  paginationPerPage={rowsPerPage} // <-- Fixed per page
+                  paginationRowsPerPageOptions={[rowsPerPage]} // <-- Optional: Fix options
                 />
               )}
               {selectedVisitor === "unexpected" && page === "all" && (
@@ -1207,7 +1263,8 @@ const VisitorPage = () => {
                   paginationServer
                   paginationTotalRows={totalRecords}
                   onChangePage={setCurrentPage}
-                  onChangeRowsPerPage={setRowsPerPage}
+                  paginationPerPage={rowsPerPage} // <-- Fixed per page
+                  paginationRowsPerPageOptions={[rowsPerPage]} // <-- Optional: Fix options
                 />
               )}
             </div>

@@ -35,7 +35,6 @@ const UserSetup = () => {
           email: user.email || "",
           Ownership_Types: user.user_sites?.[0]?.ownership_type || "N/A",
           Phase: user.user_phase || "N/A",
-          Occupied: user.lives_here ? "Yes" : "No",
           Status: user.user_status ? "Active" : "Inactive",
           Vehical: user.vehicle || "N/A",
           App_Downloaded: user.is_downloaded ? "Yes" : "No",

@@ -1,62 +1,121 @@
 import React, { useEffect, useState } from "react";
-//import Navbar from '../../components/Navbar'
-import { PiPlusCircle } from "react-icons/pi";
-import { Link } from "react-router-dom";
 import RVehiclesTable from "./RVehiclesTable";
-import RVehiclesHistory from "./RVehiclesHistory";
 import Navbar from "../../components/Navbar";
 import Passes from "../Passes";
-import { getRegisteredVehicle } from "../../api";
+import { getRegisteredVehicle } from "../../api"; 
 
 const RVehicles = () => {
-  const [page, setPage] = useState("All");
+    const [page, setPage] = useState("All");
+    const [vehicles, setVehicles] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
-  const [selectedVisitor, setSelectedVisitor] = useState(null);
- 
-  return (
-    <div className="visitors-page">
-      <section className="flex">
-        <Navbar />
-        <div className=" w-full flex mx-3 flex-col overflow-hidden">
-          <Passes />
-          <div className="flex   m-2 w-full">
-            <div className="gap-5 text-lg font-semibold w-full  border-b border-gray-300 ">
-              <div className="flex w-full space-x-4 ">
-                <h2
-                  className={`p-2 ${
-                    page === "All"
-                      ? "text-blue-500 bg-white shadow-custom-all-sides rounded-t-md"
-                      : "text-black"
-                  }   px-4 cursor-pointer text-center text-sm`}
-                  onClick={() => setPage("All")}
-                >
-                  All
-                </h2>
-                <h2
-                  className={`p-2 ${
-                    page === "History"
-                      ? "text-blue-500 bg-white shadow-custom-all-sides rounded-t-md"
-                      : "text-black"
-                  }  px-4 cursor-pointer text-center text-sm`}
-                  onClick={() => setPage("History")}
-                >
-                  History
-                </h2>
-              </div>
-            </div>
-          </div>
+    const [currentPageNum, setCurrentPageNum] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
 
-          {page === "All" && <RVehiclesTable />}
+    const handlePageChange = (newPage) => {
+      if (newPage >= 1 && newPage <= totalPages) {
+        setCurrentPageNum(newPage);
+      }
+    };
 
-          {page === "History" && (
-            <div>
-              <RVehiclesHistory />
-            </div>
-          )}
+    useEffect(() => {
+        const fetchData = async () => {
+            setLoading(true);
+            setError(null);
+            setVehicles([]); 
+
+            try {
+                let response;
+                let data;
+                let listKey; 
+
+               
+                let params = {
+                    page: currentPageNum,
+                    per_page: 10,
+                };
+    
+                if (page === "Visitor In") {
+                    params["q[entry_exit_status_eq]"] = "IN";
+                }
+                if (page === "Visitor Out") {
+                    params["q[entry_exit_status_eq]"] = "OUT";
+                }
+                
+                // API Call
+                response = await getRegisteredVehicle(params);
+                data = response?.data || {};
+
+               
+                listKey = "visitor_device_logs"; 
+             
+                
+                let list = data[listKey] || [];
+                
+                // Sort by date newest first
+                list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+                setVehicles(list);
+                
+                setTotalPages(data.total_pages || 1); 
+
+            } catch (err) {
+                console.error("Fetch error:", err);
+                setError("Failed to fetch visitor device logs.");
+                setVehicles([]);
+                setTotalPages(1);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, [page, currentPageNum]); 
+
+    return (
+        <div className="visitors-page">
+            <section className="flex">
+                <Navbar />
+
+                <div className="w-full flex mx-3 flex-col overflow-hidden">
+                    <Passes />
+
+                    {/* Tabs */}
+                    <div className="flex m-2 w-full border-b border-gray-300">
+                        {["All", "Visitor In", "Visitor Out", "History"].map((tab) => (
+                            <h2
+                                key={tab}
+                                className={`p-2 px-4 text-sm cursor-pointer ${
+                                    page === tab
+                                        ? "text-blue-500 bg-white shadow-custom-all-sides rounded-t-md"
+                                        : "text-black"
+                                }`}
+                                onClick={() => {
+                                    if (page !== tab) {
+                                        setPage(tab);
+                                        setCurrentPageNum(1);
+                                    }
+                                }}
+                            >
+                                {tab}
+                            </h2>
+                        ))}
+                    </div>
+
+                    {/* Table View */}
+                    <RVehiclesTable
+                        data={vehicles}
+                        loading={loading}
+                        error={error}
+                        currentPageNum={currentPageNum}
+                        totalPages={totalPages}
+                        onPageChange={handlePageChange}
+                    />
+                </div>
+            </section>
         </div>
-      </section>
-    </div>
-  );
+    );
 };
 
 export default RVehicles;
