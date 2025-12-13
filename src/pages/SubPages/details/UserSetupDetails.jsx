@@ -10,9 +10,17 @@ const UserSetupDetails = () => {
   const [showAddFlatModal, setShowAddFlatModal] = useState(false);
   const navigate = useNavigate();
 
-  /* ===========================
-        FETCH USER
-  ============================ */
+  /* ADDED: PROFILE IMAGE PREVIEW STATE */
+  const [profilePreview, setProfilePreview] = useState(null);
+
+  /* ADDED: HANDLE FILE UPLOAD */
+  const handleProfileUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setProfilePreview(URL.createObjectURL(file));
+    }
+  };
+
   const fetchUserDetails = useCallback(async () => {
     try {
       const res = await getSetupUsers();
@@ -39,9 +47,6 @@ const UserSetupDetails = () => {
     fetchUserDetails();
   }, [fetchUserDetails]);
 
-  /* ===========================
-        UPDATE STATUS
-  ============================ */
   const updateStatus = async (status) => {
     try {
       setUser((prev) => ({ ...prev, user_status: status }));
@@ -55,31 +60,19 @@ const UserSetupDetails = () => {
     }
   };
 
-  /* ===========================
-        ADD TO ANOTHER FLAT
-  ============================ */
-
   const [addFlatForm, setAddFlatForm] = useState({
     site: siteId || "",
     building: "",
     unit: "",
-
-    // Flat Details
     tower: "",
     flatNumber: "",
-
-    // Residency Details
     residentType: "Owner",
     livesHere: "Yes",
     allowFitout: "",
     status: "",
     isPrimary: "",
-
-    // Contact
     landlineNumber: "",
     intercomNumber: "",
-
-    // Business Info
     gstNumber: "",
     panNumber: "",
   });
@@ -108,12 +101,12 @@ const UserSetupDetails = () => {
     e.preventDefault();
 
     if (!addFlatForm.tower) return toast.error("Please select a Tower");
-    if (!addFlatForm.flatNumber) return toast.error("Please enter a Flat Number");
+    if (!addFlatForm.flatNumber) return toast.error("Please enter a Floor");
 
     const payload = {
       user_id: id,
       tower: addFlatForm.tower,
-      flat_number: addFlatForm.flatNumber,
+      floor: addFlatForm.floor,
       resident_type: addFlatForm.residentType,
       lives_here: addFlatForm.livesHere === "Yes",
       allow_fitout: addFlatForm.allowFitout,
@@ -150,36 +143,67 @@ const UserSetupDetails = () => {
 
   return (
     <>
-      {/* MAIN PAGE */}
       <section className="flex flex-col md:flex-row bg-[#F9FAFB] min-h-screen">
         <SetupNavbar />
 
         <main className="flex-1 px-4 sm:px-6 lg:px-8 py-8 overflow-auto">
           <div className="w-full bg-white shadow-md rounded-2xl border p-6 sm:p-8">
 
-            {/* HEADER */}
             <div className="flex flex-col md:flex-row justify-between mb-8 gap-4">
               <div>
-                <h1 className="text-3xl font-bold text-gray-800">User Details</h1>
-                <p className="text-gray-600 text-sm">View complete information of this user</p>
+                <h1 className="text-1xl font-bold text-gray-500">User Details</h1>
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex gap-3 items-center">
                 <button
                   onClick={() => navigate(-1)}
-                  className="px-3 text-sm border text-gray-700 bg-white rounded-lg hover:bg-gray-100"
+                  className="px-3 py-2 text-sm border border-gray-300 text-gray-700 bg-white rounded-lg hover:bg-gray-100 transition"
                 >
                   ← Back
                 </button>
 
                 <button
                   onClick={openAddFlatModal}
-                  className="px-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-800"
+                  className="px-3 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition"
                 >
                   Add To Another Flat
                 </button>
               </div>
             </div>
+
+            {/* PROFILE SECTION ADDED HERE */}
+            <div className="flex justify-center mb-10">
+              <div className="flex flex-col items-center">
+                <div className="w-[140px] h-[140px] rounded-full bg-gray-100 border-4 border-indigo-300 shadow-lg overflow-hidden">
+                  <img
+                    src={
+                      profilePreview ||
+                      user.profile_picture || 
+                      "https://www.pngitem.com/pimgs/m/137-1370051_avatar-generic-avatar-hd-png-download.png"
+                    }
+                    alt="profile"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => document.getElementById("profileUpload").click()}
+                  className="text-3xl mt-3 text-indigo-600 hover:text-indigo-800 transition"
+                >
+                  📷
+                </button>
+
+                <input
+                  type="file"
+                  id="profileUpload"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleProfileUpload}
+                />
+              </div>
+            </div>
+            {/* END PROFILE SECTION */}
 
             {/* BASIC INFO */}
             <section className="mb-8">
@@ -286,160 +310,154 @@ const UserSetupDetails = () => {
       </section>
 
       {/* ADD FLAT MODAL */}
-     {showAddFlatModal && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center">
-    
-    {/* Overlay */}
-    <div
-      className="absolute inset-0 bg-black opacity-40"
-      onClick={closeAddFlatModal}
-    />
+      {showAddFlatModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
 
-    <div className="relative z-10 w-full max-w-3xl mx-4 bg-white rounded-2xl shadow-xl overflow-auto">
-      
-      <div className="flex items-center justify-between p-4 border-b">
-        <h3 className="text-lg font-semibold text-gray-800">Add to Another Flat</h3>
-        <button onClick={closeAddFlatModal} className="text-gray-500 hover:text-gray-800">
-          ✕
-        </button>
-      </div>
-
-      <form onSubmit={handleAddFlatSubmit} className="p-6 space-y-6">
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-          {/* TOWER */}
-          {renderInputOrSelect(
-            "Tower",
-            "tower",
-            "select",
-            addFlatForm,
-            handleFormChange,
-            [
-              { value: "", label: "Select" },
-              { value: "VC Tower", label: "VC Tower" },
-            ]
-          )}
-
-          {/* FLOOR — disabled until tower selected */}
-          {renderInputOrSelect(
-            "Floor",
-            "Floor",
-            "select",
-            addFlatForm,
-            handleFormChange,
-            [
-              { value: "", label: "Select" },
-              { value: "1", label: "1" },
-              { value: "2", label: "2" },
-              { value: "3", label: "3" },
-            ],
-            addFlatForm.tower === ""  // DISABLE FLOOR if no tower selected
-          )}
-
-          {/* UNIT NUMBER — disabled until floor selected */}
-          {renderInputOrSelect(
-            "Unit Number",
-            "flatNumber",
-            "text",
-            addFlatForm,
-            handleFormChange,
-            [],
-            addFlatForm.Floor === ""  // DISABLE UNIT NUMBER until floor selected
-          )}
-
-          {/* OWNERSHIP */}
-          {renderInputOrSelect(
-            "Ownership Type",
-            "ownershiptype",
-            "select",
-            addFlatForm,
-            handleFormChange,
-            [
-              { value: "", label: "Select" },
-              { value: "Owner", label: "Owner" },
-              { value: "Tenant", label: "Tenant" },
-              { value: "Builder", label: "Builder" },
-            ]
-          )}
-
-          {/* OCCUPIED */}
-          {renderInputOrSelect(
-            "Occupied",
-            "Occupied",
-            "select",
-            addFlatForm,
-            handleFormChange,
-            [
-              { value: "", label: "Select" },
-              { value: "Yes", label: "Yes" },
-              { value: "No", label: "No" },
-            ]
-          )}
-
-          {/* STATUS */}
-          {renderInputOrSelect(
-            "Status",
-            "status",
-            "select",
-            addFlatForm,
-            handleFormChange,
-            [
-              { value: "", label: "Select" },
-              { value: "Approved", label: "Approved" },
-              { value: "Pending", label: "Pending" },
-              { value: "Rejected", label: "Rejected" },
-            ]
-          )}
-
-          {/* MEMBERSHIP */}
-          {renderInputOrSelect(
-            "Membership Type",
-            "membershiptype",
-            "select",
-            addFlatForm,
-            handleFormChange,
-            [
-              { value: "Primary", label: "Primary" },
-              { value: "Secondary", label: "Secondary" },
-            ]
-          )}
-          
-          {renderInputOrSelect("GST Number", "gstNumber", "text", addFlatForm, handleFormChange)}
-          {renderInputOrSelect("PAN Number", "panNumber", "text", addFlatForm, handleFormChange)}
-
-        </div>
-
-        {/* BUTTONS */}
-        <div className="flex justify-end gap-3 pt-2 border-t">
-          <button
-            type="button"
+          {/* Overlay */}
+          <div
+            className="absolute inset-0 bg-black opacity-40"
             onClick={closeAddFlatModal}
-            className="px-4 py-2 text-sm rounded-lg border bg-white hover:bg-gray-100"
-          >
-            Cancel
-          </button>
+          />
 
-          <button
-            type="submit"
-            className="px-4 py-2 text-sm rounded-lg bg-green-600 text-white hover:bg-green-700"
-          >
-            Submit
-          </button>
+          <div className="relative z-10 w-full max-w-3xl mx-4 bg-white rounded-2xl shadow-xl overflow-auto">
+
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="text-lg font-semibold text-gray-800">Add to Another Flat</h3>
+              <button onClick={closeAddFlatModal} className="text-gray-500 hover:text-gray-800">
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleAddFlatSubmit} className="p-6 space-y-6">
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                {renderInputOrSelect(
+                  "Tower",
+                  "tower",
+                  "select",
+                  addFlatForm,
+                  handleFormChange,
+                  [
+                    { value: "", label: "Select" },
+                    { value: "VC Tower", label: "VC Tower" },
+                  ]
+                )}
+
+                {renderInputOrSelect(
+                  "Floor",
+                  "Floor",
+                  "select",
+                  addFlatForm,
+                  handleFormChange,
+                  [
+                    { value: "", label: "Select" },
+                    { value: "1", label: "1" },
+                    { value: "2", label: "2" },
+                    { value: "3", label: "3" },
+                  ],
+                  addFlatForm.tower === ""
+                )}
+
+                {renderInputOrSelect(
+                  "Unit Number",
+                  "flatNumber",
+                  "select",
+                  addFlatForm,
+                  handleFormChange,
+                  [
+                    { value: "", label: "Select" },
+                    { value: "101", label: "101" },
+                    { value: "102", label: "102" },
+                    { value: "201", label: "201" },
+                    { value: "202", label: "202" },
+                  ],
+                  addFlatForm.floor === ""
+                )}
+
+                {renderInputOrSelect(
+                  "Ownership Type",
+                  "ownershiptype",
+                  "select",
+                  addFlatForm,
+                  handleFormChange,
+                  [
+                    { value: "", label: "Select" },
+                    { value: "Owner", label: "Owner" },
+                    { value: "Tenant", label: "Tenant" },
+                    { value: "Builder", label: "Builder" },
+                  ]
+                )}
+
+                {renderInputOrSelect(
+                  "Occupied",
+                  "Occupied",
+                  "select",
+                  addFlatForm,
+                  handleFormChange,
+                  [
+                    { value: "", label: "Select" },
+                    { value: "Yes", label: "Yes" },
+                    { value: "No", label: "No" },
+                  ]
+                )}
+
+                {renderInputOrSelect(
+                  "Status",
+                  "status",
+                  "select",
+                  addFlatForm,
+                  handleFormChange,
+                  [
+                    { value: "", label: "Select" },
+                    { value: "Approved", label: "Approved" },
+                    { value: "Pending", label: "Pending" },
+                    { value: "Rejected", label: "Rejected" },
+                  ]
+                )}
+
+                {renderInputOrSelect(
+                  "Membership Type",
+                  "membershiptype",
+                  "select",
+                  addFlatForm,
+                  handleFormChange,
+                  [
+                    { value: "Primary", label: "Primary" },
+                    { value: "Secondary", label: "Secondary" },
+                  ]
+                )}
+
+                {renderInputOrSelect("GST Number", "gstNumber", "text", addFlatForm, handleFormChange)}
+                {renderInputOrSelect("PAN Number", "panNumber", "text", addFlatForm, handleFormChange)}
+
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2 border-t">
+                <button
+                  type="button"
+                  onClick={closeAddFlatModal}
+                  className="px-4 py-2 text-sm rounded-lg border bg-white hover:bg-gray-100"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  className="px-4 py-2 text-sm rounded-lg bg-green-600 text-white hover:bg-green-700"
+                >
+                  Submit
+                </button>
+              </div>
+
+            </form>
+          </div>
         </div>
-
-      </form>
-    </div>
-  </div>
-)}
+      )}
 
     </>
   );
 };
-
-/* ===========================
-      REUSABLE COMPONENTS
-=========================== */
 
 const InfoBox = ({ label, value, color = "text-gray-700" }) => (
   <div className="bg-gray-50 p-4 rounded-lg shadow-sm hover:shadow transition">
