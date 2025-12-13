@@ -2641,12 +2641,25 @@ export const createRegisteredVehicleVisit = async (payload) => {
 
 
 
+ export const getVehicleHistory = async (params) => {
+  return axiosInstance.get(`/registered_vehicle_visits.json`, {
+    params: {
+      ...params,
+      token, 
+    },
+  });
+};
+
+
+
+
 export const getRegisteredVehicle = async () =>
   axiosInstance.get(`/registered_vehicles.json`, {
     params: {
       token: token,
     },
   })
+
 export const getRegisteredVehicleHistory = async (page = 1) =>
   axiosInstance.get(`/registered_vehicles_history.json`, {
     params: { page, token },
