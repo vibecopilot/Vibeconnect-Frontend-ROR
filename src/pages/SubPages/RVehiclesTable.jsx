@@ -202,65 +202,86 @@
 // };
 
 // export default RVehiclesTable;
-
-
 import React, { useEffect, useState } from "react";
 import { PiPlusCircle } from "react-icons/pi";
 import { Link } from "react-router-dom";
-import DataTable from "react-data-table-component";
 import { BsEye } from "react-icons/bs";
 import { BiEdit } from "react-icons/bi";
-import { TiTick } from "react-icons/ti";
-import { IoClose } from "react-icons/io5";
 import { useSelector } from "react-redux";
 import Table from "../../components/table/Table";
-import qr from "/QR.png";
-import { getRegisteredVehicle } from "../../api";
+import { getRegisteredVehicle, getVehicleHistory } from "../../api";
 
-const RVehiclesTable = () => {
-  const [selectedStatus, setSelectedStatus] = useState("all");
+const RVehiclesTable = ({ mode = "registered" }) => {
   const themeColor = useSelector((state) => state.theme.color);
 
-  const [registeredVehicles, setRegisteredVehicles] = useState([]);
-  const [filteredVehicles, setFilteredVehicles] = useState([]);
+  const [records, setRecords] = useState([]);
   const [searchText, setSearchText] = useState("");
 
   const [currentPageNum, setCurrentPageNum] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Fetch paginated vehicles
+  // Fetch Data
   useEffect(() => {
-    const fetchRegisteredVehicle = async () => {
+    const fetchData = async () => {
       try {
-        const response = await getRegisteredVehicle({
+        let response;
+
+        const params = {
           page: currentPageNum,
           per_page: 10,
-        });
+        };
+
+        // MODE SWITCH
+        if (mode === "history") {
+          response = await getVehicleHistory(params);
+        } else {
+          response = await getRegisteredVehicle(params);
+        }
 
         const data = response?.data || {};
-        const list = data.registered_vehicles || [];
 
-        // sort newest first
-        const sortedData = list.sort(
-          (a, b) => new Date(b.created_at) - new Date(a.created_at)
-        );
+        let list =
+          mode === "history"
+            ? data.vehicle_logs || []
+            : data.registered_vehicles || [];
 
-        setRegisteredVehicles(sortedData);
-        setFilteredVehicles(sortedData);
+        // Sort newest first
+        list = list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
+        setRecords(list);
         setTotalPages(data.total_pages || 1);
-
-        console.log("Fetched Vehicles:", sortedData);
       } catch (error) {
         console.log("Error fetching:", error);
       }
     };
 
-    fetchRegisteredVehicle();
-  }, [currentPageNum]);
+    fetchData();
+  }, [currentPageNum, mode]);
 
-  // Table Columns
-  const columns = [
+  // Search Handler
+  const filteredData = records.filter((item) => {
+    if (!searchText.trim()) return true;
+
+    return (
+      item.vehicle_number?.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.vehicle_type?.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.slot_name?.toLowerCase().includes(searchText.toLowerCase())
+    );
+  });
+
+  // Pagination handlers
+  const handleNext = () => {
+    if (currentPageNum < totalPages) setCurrentPageNum(currentPageNum + 1);
+  };
+
+  const handlePrev = () => {
+    if (currentPageNum > 1) setCurrentPageNum(currentPageNum - 1);
+  };
+
+  // ==============================
+  // REGISTERED VEHICLE COLUMNS
+  // ==============================
+  const registeredColumns = [
     {
       name: "Action",
       cell: (row) => (
@@ -273,133 +294,103 @@ const RVehiclesTable = () => {
           </Link>
         </div>
       ),
+      width: "120px",
+    },
+    { name: "Vehicle Number", selector: (row) => row.vehicle_number },
+    { name: "Category", selector: (row) => row.category },
+    { name: "Parking Slot", selector: (row) => row.slot_name },
+    { name: "Vehicle Category", selector: (row) => row.vehicle_category },
+    { name: "Vehicle Type", selector: (row) => row.vehicle_type },
+    { name: "Sticker Number", selector: (row) => row.sticker_number },
+    { name: "Registration Number", selector: (row) => row.registration_number },
+    { name: "Insurance Number", selector: (row) => row.insurance_number },
+  ];
+
+  // ==============================
+  // HISTORY COLUMNS
+  // ==============================
+  const historyColumns = [
+    {
+      name: "Sr. No",
+      cell: (row, index) => (currentPageNum - 1) * 10 + (index + 1),
+      width: "80px",
+    },
+    { name: "Vehicle Number", selector: (row) => row.vehicle_number },
+    { name: "Vehicle Type", selector: (row) => row.vehicle_type },
+    { name: "Vehicle Category", selector: (row) => row.vehicle_category },
+    {
+      name: "Check-In",
+      selector: (row) =>
+        row.check_in ? new Date(row.check_in).toLocaleString() : "-",
     },
     {
-      name: "Vehicle Number",
-      selector: (row) => row.vehicle_number,
-      sortable: true,
-    },
-    {
-      name: "Category",
-      selector: (row) => row.category,
-      sortable: true,
-    },
-    {
-      name: "Parking Slot",
-      selector: (row) => row.slot_name,
-      sortable: true,
-    },
-    {
-      name: "Vehicle Category",
-      selector: (row) => row.vehicle_category,
-      sortable: true,
-    },
-    {
-      name: "Vehicle Type",
-      selector: (row) => row.vehicle_type,
-      sortable: true,
-    },
-    {
-      name: "Sticker Number",
-      selector: (row) => row.sticker_number,
-      sortable: true,
-    },
-    {
-      name: "Registration Number",
-      selector: (row) => row.registration_number,
-      sortable: true,
-    },
-    {
-      name: "Insurance Number",
-      selector: (row) => row.insurance_number,
-      sortable: true,
+      name: "Check-Out",
+      selector: (row) =>
+        row.check_out ? new Date(row.check_out).toLocaleString() : "-",
     },
   ];
 
-  // Search handler
-  const handleSearch = (e) => {
-    const value = e.target.value;
-    setSearchText(value);
-
-    if (value.trim() === "") {
-      setFilteredVehicles(registeredVehicles);
-    } else {
-      const filtered = registeredVehicles.filter(
-        (item) =>
-          item.vehicle_number?.toLowerCase().includes(value.toLowerCase()) ||
-          item.slot_name?.toLowerCase().includes(value.toLowerCase()) ||
-          item.sticker_number?.toLowerCase().includes(value.toLowerCase())
-      );
-
-      setFilteredVehicles(filtered);
-    }
-  };
-
-  // Pagination next/prev
-  const handleNext = () => {
-    if (currentPageNum < totalPages) setCurrentPageNum(currentPageNum + 1);
-  };
-
-  const handlePrev = () => {
-    if (currentPageNum > 1) setCurrentPageNum(currentPageNum - 1);
-  };
+  const columns = mode === "history" ? historyColumns : registeredColumns;
 
   return (
     <section className="flex">
       <div className="w-full flex mx-3 flex-col overflow-hidden">
-
+        
         {/* Search + Add Button */}
         <div className="flex md:flex-row flex-col gap-5 justify-between my-2">
           <input
             type="text"
             value={searchText}
-            onChange={handleSearch}
+            onChange={(e) => setSearchText(e.target.value)}
             className="border-gray-300 border rounded-md p-2 w-full placeholder:text-sm"
-            placeholder="Search by parking slot, sticker number, vehicle number"
+            placeholder="Search vehicle..."
           />
 
-          <span className="flex gap-4">
+          {mode !== "history" && (
             <Link
               to={"/admin/add-rvehicles"}
-              className="border-2 font-semibold hover:bg-black hover:text-white transition-all p-2 rounded-md text-white cursor-pointer flex items-center gap-2 justify-center"
+              className="border-2 font-semibold hover:bg-black hover:text-white transition-all p-2 rounded-md text-white flex items-center gap-2 justify-center"
               style={{ background: themeColor }}
             >
               <PiPlusCircle size={20} />
               Add
             </Link>
-          </span>
+          )}
         </div>
 
-        {/* Table */}
+        {/* TABLE */}
         <Table
           responsive
           columns={columns}
-          data={filteredVehicles}
+          data={filteredData}
           isPagination={false}
         />
 
-        {/* Pagination UI */}
-        {/* <div className="flex justify-between items-center mt-4 px-2">
-          <button
-            onClick={handlePrev}
-            disabled={currentPageNum === 1}
-            className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50"
-          >
-            Previous
-          </button>
+        {/* PAGINATION (ONLY FOR HISTORY) */}
+        {mode === "history" && (
+          <div className="flex justify-between items-center mt-4 px-2">
+            <button
+              onClick={handlePrev}
+              disabled={currentPageNum === 1}
+              className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50"
+            >
+              Previous
+            </button>
 
-          <p>
-            Page {currentPageNum} of {totalPages}
-          </p>
+            <p>
+              Page {currentPageNum} of {totalPages}
+            </p>
 
-          <button
-            onClick={handleNext}
-            disabled={currentPageNum === totalPages}
-            className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50"
-          >
-            Next
-          </button>
-        </div> */}
+            <button
+              onClick={handleNext}
+              disabled={currentPageNum === totalPages}
+              className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+        )}
+
       </div>
     </section>
   );
