@@ -242,14 +242,18 @@ const AddNewVisitor = () => {
       postData.append("visitor[profile_pic]", blob, "visitor_image.jpg")
     }
 
-    formData.goodsAttachments.forEach((file) => {
-      postData.append(`visitor[goods_attachments][]`, file, file.name)
+    // Send license attachments with category_type
+    formData.licenseAttachments.forEach((file, index) => {
+      postData.append(`visitor[visitor_files][${index}][file]`, file, file.name)
+      postData.append(`visitor[visitor_files][${index}][category_type]`, "license")
     })
-    formData.licenseAttachments.forEach((file) => {
-      postData.append(`visitor[license_attachments][]`, file, file.name)
-    })
-    formData.consignmentAttachments.forEach((file) => {
-      postData.append(`visitor[consignment_attachments][]`, file, file.name)
+    
+    // Send consignment attachments with category_type
+    const consignmentStartIndex = formData.licenseAttachments.length
+    formData.consignmentAttachments.forEach((file, index) => {
+      const fileIndex = consignmentStartIndex + index
+      postData.append(`visitor[visitor_files][${fileIndex}][file]`, file, file.name)
+      postData.append(`visitor[visitor_files][${fileIndex}][category_type]`, "consignment")
     })
 
     selectedWeekdays.forEach((day) => {
@@ -291,8 +295,8 @@ const AddNewVisitor = () => {
 
       if (formData.goodsInward && formData.noOfGoods && visitResp.data.id) {
           const postGoods = new FormData()
-          formData.goodsAttachments.forEach((docs) => {
-            postGoods.append("goods_files[]", docs)
+          formData.goodsAttachments.forEach((file) => {
+            postGoods.append("goods_files[]", file, file.name)
           })
           postGoods.append("goods_in_out[visitor_id]", visitResp.data.id)
           postGoods.append("goods_in_out[no_of_goods]", formData.noOfGoods)
