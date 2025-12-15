@@ -9,7 +9,6 @@ import { useNavigate } from "react-router-dom"
 import Webcam from "react-webcam"
 import FileInputBox from "../containers/Inputs/FileInputBox" 
 
-
 const AddNewVisitor = () => {
   const siteId = getItemInLocalStorage("SITEID")
   const userId = getItemInLocalStorage("UserId")
