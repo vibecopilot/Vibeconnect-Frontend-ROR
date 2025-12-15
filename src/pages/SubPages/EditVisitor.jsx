@@ -9,7 +9,8 @@ import {
   editVisitorDetails,
   getSetupUsers,
   getVisitorDetails,
-  postNewVisitor,
+  getVisitorStaffCategory, 
+  getParkingConfig, 
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import { useNavigate, useParams } from "react-router-dom";
@@ -28,6 +29,8 @@ const EditVisitor = () => {
   const [selectedFrequency, setSelectedFrequency] = useState("Once");
   const [selectedVisitorType, setSelectedVisitorType] = useState("Guest");
   const [hosts, setHosts] = useState([]);
+  const [staffCategories, setStaffCategories] = useState([]); 
+  const [slots, setSlots] = useState([]); 
   const [passStartDate, setPassStartDate] = useState("");
   const [passEndDate, setPassEndDate] = useState("");
   const [formData, setFormData] = useState({
@@ -40,14 +43,30 @@ const EditVisitor = () => {
     expectedTime: "",
     hostApproval: false,
     goodsInward: false,
+    license: false, 
+    consignment: false, 
     host: "",
     passNumber: "",
+    supportCategory: "", 
+    slotNumber: "", 
+    noOfGoods: "", 
+    goodsDescription: "", 
     notes: "",
-    drivingLicense: false,       
-    consignmentForm: false,
   });
+  const [details, setDetails] = useState({}); 
+  const [selectedWeekdays, setSelectedWeekdays] = useState([]); 
+  const [weekdaysMap, setWeekdaysMap] = useState([
+    { day: "Mon", index: 0, isActive: false },
+    { day: "Tue", index: 1, isActive: false },
+    { day: "Wed", index: 2, isActive: false },
+    { day: "Thu", index: 3, isActive: false },
+    { day: "Fri", index: 4, isActive: false },
+    { day: "Sat", index: 5, isActive: false },
+    { day: "Sun", index: 6, isActive: false },
+  ]);
 
   const { id } = useParams();
+  
   useEffect(() => {
     const fetchVisitorDetails = async () => {
       try {
@@ -55,19 +74,28 @@ const EditVisitor = () => {
         const editDetail = detailsResp.data;
         setDetails(detailsResp.data);
         console.log(editDetail);
-        setFormData({
-          ...formData,
+        
+        setFormData((prevFormData) => ({
+          ...prevFormData,
           visitorName: editDetail.name,
           mobile: editDetail.contact_no,
           purpose: editDetail.purpose,
-          host: editDetail.created_by_id,
+          host: editDetail.vhost_id || "",
           comingFrom: editDetail.coming_from,
           vehicleNumber: editDetail.vehicle_number,
           expectedDate: editDetail.expected_date,
           expectedTime: editDetail.expected_time,
-          hostApproval: editDetail.skip_host_approval,
-          goodsInward: editDetail.goods_inwards,
-        });
+          hostApproval: editDetail.skip_host_approval || false,
+          goodsInward: editDetail.goods_inwards || false,
+          license: editDetail.license_doc || false, 
+          consignment: editDetail.consignment_doc || false, 
+          passNumber: editDetail.pass_number || "", 
+          supportCategory: editDetail.visitor_staff_category_id || "", 
+          slotNumber: editDetail.parking_slot_id || "", 
+          noOfGoods: editDetail.goods_inward_info?.no_of_goods || "",
+          goodsDescription: editDetail.goods_inward_info?.description || "",
+        }));
+
         if (editDetail.extra_visitors) {
           setVisitors(
             editDetail.extra_visitors.map((visitor) => ({
@@ -79,53 +107,65 @@ const EditVisitor = () => {
         }
         setSelectedVisitorType(editDetail.visit_type);
         setSelectedFrequency(editDetail.frequency);
-        const formattedStartPass = new Date(editDetail.start_pass)
-          .toISOString()
-          .split("T")[0];
-        const formattedEndPass = new Date(editDetail.end_pass)
-          .toISOString()
-          .split("T")[0];
-        setPassStartDate(formattedStartPass);
-        setPassEndDate(formattedEndPass);
-        setSelectedWeekdays(editDetail.working_days);
+
+        const formatPassTime = (dateString) => {
+            if (!dateString) return "";
+            const date = new Date(dateString);
+            return date.toISOString().slice(0, 16); 
+        };
+
+        setPassStartDate(formatPassTime(editDetail.start_pass));
+        setPassEndDate(formatPassTime(editDetail.end_pass));
+        setSelectedWeekdays(editDetail.working_days || []);
+        
         console.log(detailsResp.data);
       } catch (error) {
         console.log(error);
       }
     };
+
+    const fetchInitialData = async () => {
+      try {
+        const [usersResp, visitorCat, parkingRes] = await Promise.all([
+          getSetupUsers(),
+          getVisitorStaffCategory(),
+          getParkingConfig(),
+        ]);
+        setHosts(usersResp.data);
+        setStaffCategories(visitorCat.data.categories);
+        setSlots(parkingRes.data);
+      } catch (error) {
+        console.error("Error fetching initial lists:", error);
+        toast.error("Failed to load hosts, categories, or parking slots.");
+      }
+    };
+
     fetchVisitorDetails();
+    fetchInitialData();
   }, [id]);
-  console.log(formData);
+
+  // console.log(formData); // Keep existing
   const handleFrequencyChange = (e) => {
     setSelectedFrequency(e.target.value);
   };
   const handleVisitorTypeChange = (e) => {
     setSelectedVisitorType(e.target.value);
+    if (e.target.value !== "Support Staff") {
+        setFormData(prev => ({ ...prev, supportCategory: "" }))
+    }
   };
-  console.log(passEndDate);
-  console.log(passStartDate);
-  console.log(formData.expectedDate);
+  // console.log(passEndDate); // Keep existing
+  // console.log(passStartDate); // Keep existing
+  // console.log(formData.expectedDate); // Keep existing
 
   const currentDates = new Date();
   const year = currentDates.getFullYear();
   const month = String(currentDates.getMonth() + 1).padStart(2, "0");
   const day = String(currentDates.getDate()).padStart(2, "0");
   const todayDate = `${year}-${month}-${day}`;
-  const [selectedWeekdays, setSelectedWeekdays] = useState([]);
-  const [details, setDetails] = useState({});
-  const [weekdaysMap, setWeekdaysMap] = useState([
-    { day: "Mon", index: 0, isActive: false },
-    { day: "Tue", index: 1, isActive: false },
-    { day: "Wed", index: 2, isActive: false },
-    { day: "Thu", index: 3, isActive: false },
-    { day: "Fri", index: 4, isActive: false },
-    { day: "Sat", index: 5, isActive: false },
-    { day: "Sun", index: 6, isActive: false },
-  ]);
-  console.log(selectedWeekdays);
+  
 
   const handleWeekdaySelection = (weekday) => {
-    console.log(`Selected day: ${weekday}`);
 
     const index = weekdaysMap.find((dayObj) => dayObj.day === weekday)?.index;
 
@@ -138,7 +178,6 @@ const EditVisitor = () => {
 
       setWeekdaysMap(updatedWeekdaysMap);
 
-      // Update the selected weekdays list
       setSelectedWeekdays((prevSelectedWeekdays) =>
         prevSelectedWeekdays.includes(weekday)
           ? prevSelectedWeekdays.filter((day) => day !== weekday)
@@ -151,12 +190,6 @@ const EditVisitor = () => {
     setVisitors([...visitors, { name: "", mobile: "" }]);
   };
 
-  // const handleInputChange = (index, event) => {
-  //   const { name, value } = event.target;
-  //   const newVisitors = [...visitors];
-  //   newVisitors[index][name] = value;
-  //   setVisitors(newVisitors);
-  // };
   const handleInputChange = (index, event) => {
     const { name, value } = event.target;
     const updatedVisitors = [...visitors];
@@ -167,11 +200,6 @@ const EditVisitor = () => {
     setVisitors(updatedVisitors);
   };
 
-  // const handleRemoveVisitor = (index) => {
-  //   const newVisitors = [...visitors];
-  //   newVisitors.splice(index, 1);
-  //   setVisitors(newVisitors);
-  // };
   const handleRemoveVisitor = (index) => {
     setVisitors((prevVisitors) => {
       const updatedVisitors = [...prevVisitors];
@@ -194,8 +222,13 @@ const EditVisitor = () => {
   const themeColor = useSelector((state) => state.theme.color);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value, type, checked } = e.target;
+    setFormData({ 
+      ...formData, 
+      [name]: type === 'checkbox' ? checked : value 
+    });
   };
+
   const navigate = useNavigate();
   const handleEditVisitor = async () => {
     if (
@@ -203,13 +236,14 @@ const EditVisitor = () => {
       formData.purpose === "" ||
       formData.mobile === ""
     ) {
-      return toast.error("All fields are Required");
+      return toast.error("Visitor Name, Mobile, and Purpose are Required");
     }
 
     const postData = new FormData();
     postData.append("visitor[site_id]", siteId);
-    postData.append("visitor[created_by_id]", formData.host);
+    postData.append("visitor[vhost_id]", formData.host); 
     postData.append("visitor[name]", formData.visitorName);
+    postData.append("visitor[visitor_staff_category_id]", formData.supportCategory); 
     postData.append("visitor[contact_no]", formData.mobile);
     postData.append("visitor[purpose]", formData.purpose);
     postData.append("visitor[start_pass]", passStartDate);
@@ -220,13 +254,17 @@ const EditVisitor = () => {
     postData.append("visitor[expected_time]", formData.expectedTime);
     postData.append("visitor[skip_host_approval]", formData.hostApproval);
     postData.append("visitor[goods_inwards]", formData.goodsInward);
-    postData.append("visitor[driving_license]", formData.drivingLicense);
-    postData.append("visitor[consignment_form]", formData.consignmentForm);
+    postData.append("visitor[license_doc]", formData.license); 
+    postData.append("visitor[consignment_doc]", formData.consignment); 
     postData.append("visitor[visit_type]", selectedVisitorType);
     postData.append("visitor[frequency]", selectedFrequency);
+    postData.append("visitor[pass_number]", formData.passNumber); 
+    postData.append("visitor[parking_slot]", formData.slotNumber); 
+
     selectedWeekdays.forEach((day) => {
       postData.append("visitor[working_days][]", day);
     });
+    
     visitors.forEach((extraVisitor, index) => {
       if (extraVisitor.id) {
         postData.append(
@@ -249,23 +287,34 @@ const EditVisitor = () => {
         );
       }
     });
+    
+    if (imageFile) {
+        postData.append("visitor[profile_pic]", imageFile, imageFile.name);
+    }
+
     try {
+      toast.loading("Updating visitor details...", { id: 'editVisitor' });
       const visitResp = await editVisitorDetails(id, postData);
       console.log(visitResp);
-      navigate(`/admin/passes/visitors/visitor-details/${visitResp.data.id}`);
+      toast.dismiss('editVisitor');
       toast.success("Visitor Edited Successfully")
+      navigate(`/admin/passes/visitors/visitor-details/${visitResp.data.id}`);
     } catch (error) {
+      toast.dismiss('editVisitor');
+      toast.error("Failed to update visitor. Please check form data.");
       console.log(error);
     }
   };
-  useEffect(() => {
-    const fetchUsers = async () => {
-      const usersResp = await getSetupUsers();
-      setHosts(usersResp.data);
-      console.log(usersResp);
-    };
-    fetchUsers();
-  }, []);
+  
+
+  const handlePassStartDateChange = (event) => {
+    setPassStartDate(event.target.value)
+  }
+
+  const handlePassEndDateChange = (event) => {
+    setPassEndDate(event.target.value)
+  }
+
 
   return (
     <section className="flex">
@@ -286,35 +335,29 @@ const EditVisitor = () => {
           onClick={handleImageClick}
           className="cursor-pointer flex justify-center items-center my-4"
         >
-          {/* {imageFile ? (
+          {details.profile_picture ? (
+              <img
+                src={domainPrefix + details.profile_picture.url}
+                alt="Profile"
+                className="w-48 h-48 rounded-full cursor-pointer"
+                onClick={(e) => { e.stopPropagation(); window.open(domainPrefix + details.profile_picture.url, "_blank"); }}
+              />
+          ) : (
+             <img src={image} alt="" className="w-48 h-48" />
+          )}
+          {imageFile && (
             <img
               src={URL.createObjectURL(imageFile)}
-              alt="Uploaded"
-              className="border-4 border-gray-300 rounded-full w-40 h-40 object-cover"
-            />
-          ) : (
-            <img
-              src={image}
-              alt="Default"
-              className="border-4 border-gray-300 rounded-full w-40 h-40 object-cover"
+              alt="New Profile"
+              className="border-4 border-gray-300 rounded-full w-40 h-40 object-cover absolute"
+              style={{ zIndex: 10 }}
             />
           )}
-          <input
-            type="file"
-            ref={inputRef}
-            onChange={handleImageChange}
-            style={{ display: "none" }}
-          /> */}
-           {details.visitor_files && details.visitor_files.length > 0 ? (
-              details.visitor_files.map((doc, index) => (  
-                <img src={domainPrefix + doc.document} alt="" className="w-48 h-48 rounded-full cursor-pointer"  onClick={() => window.open(domainPrefix + doc.document, "_blank")}/>
-               ))
-            ) : (
-            <img src={image} alt="" className="w-48 h-48" />
-          )}
+          <input type="file" ref={inputRef} onChange={handleImageChange} style={{ display: "none" }} />
+
         </div>
 
-        <div className="flex md:flex-row flex-col  my-5 gap-10">
+        <div className="flex md:flex-row flex-col my-5 gap-10">
           <div className="flex gap-2 flex-col">
             <h2 className="font-semibold">Visitor Type :</h2>
             <div className="flex items-center gap-5">
@@ -322,7 +365,7 @@ const EditVisitor = () => {
                 <input
                   type="radio"
                   id="Guest"
-                  name="attendance"
+                  name="visitorType"
                   value="Guest"
                   checked={selectedVisitorType === "Guest"}
                   onChange={handleVisitorTypeChange}
@@ -335,7 +378,7 @@ const EditVisitor = () => {
                 <input
                   type="radio"
                   id="staff"
-                  name="attendance"
+                  name="visitorType"
                   value="Support Staff"
                   checked={selectedVisitorType === "Support Staff"}
                   onChange={handleVisitorTypeChange}
@@ -365,13 +408,13 @@ const EditVisitor = () => {
               <div className="flex items-center gap-2">
                 <input
                   type="radio"
-                  id="Frequently"
+                  id="frequently"
                   name="frequency"
                   value="Frequently"
                   checked={selectedFrequency === "Frequently"}
                   onChange={handleFrequencyChange}
                 />
-                <label htmlFor="Frequently" className="font-semibold ">
+                <label htmlFor="frequently" className="font-semibold">
                   Frequently
                 </label>
               </div>
@@ -379,31 +422,40 @@ const EditVisitor = () => {
           </div>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-5">
-          {selectedVisitorType === "Support Staff" && (
-            <div className="grid gap-2 items-center w-full">
-              <label htmlFor="" className="font-medium">
-                Support Category :
-              </label>
-              <select className="border border-gray-400 p-2 rounded-md">
-                <option value="">Select Support Staff Category</option>
-                <option value="">Test Category</option>
-                <option value="">Test Category - 2</option>
-                <option value="">Test Category - 3</option>
-              </select>
+        {selectedVisitorType === "Support Staff" && (
+            <div className="grid gap-2 items-center w-1/3 mb-4">
+                <label htmlFor="supportCategory" className="font-medium">
+                    Select Support Category:
+                </label>
+                <select
+                    id="supportCategory"
+                    name="supportCategory"
+                    value={formData.supportCategory}
+                    onChange={handleChange}
+                    className="border border-gray-400 p-2 rounded-md"
+                    required={selectedVisitorType === "Support Staff"}
+                >
+                    <option value="">Select Category</option>
+                    {staffCategories.map((category) => (
+                        <option value={category.id} key={category.id}>
+                            {category.name}
+                        </option>
+                    ))}
+                </select>
             </div>
-          )}
+        )}
 
+        <div className="grid md:grid-cols-3 gap-5">
           <div className="grid gap-2 items-center w-full">
             <label htmlFor="visitorName" className="font-semibold">
               Visitor Name:
             </label>
             <input
               type="text"
+              id="visitorName"
               value={formData.visitorName}
               onChange={handleChange}
               name="visitorName"
-              id="visitorName"
               className="border border-gray-400 p-2 rounded-md"
               placeholder="Enter Visitor Name"
             />
@@ -411,7 +463,7 @@ const EditVisitor = () => {
 
           <div className="grid gap-2 items-center w-full">
             <label htmlFor="mobileNumber" className="font-semibold">
-              Mobile Number :
+              Mobile Number:
             </label>
             <input
               type="number"
@@ -425,10 +477,26 @@ const EditVisitor = () => {
           </div>
 
           <div className="grid gap-2 items-center w-full">
-            <label htmlFor="" className="font-medium">
-              Host :
+            <label htmlFor="purpose" className="font-semibold">
+              Purpose:
+            </label>
+            <input
+              type="text"
+              id="purpose"
+              value={formData.purpose}
+              onChange={handleChange}
+              name="purpose"
+              className="border border-gray-400 p-2 rounded-md"
+              placeholder="Enter Purpose"
+            />
+          </div>
+
+          <div className="grid gap-2 items-center w-full">
+            <label htmlFor="host" className="font-medium">
+              Host:
             </label>
             <select
+              id="host"
               className="border border-gray-400 p-2 rounded-md"
               value={formData.host}
               onChange={handleChange}
@@ -444,15 +512,15 @@ const EditVisitor = () => {
           </div>
 
           <div className="grid gap-2 items-center w-full">
-            <label htmlFor="additionalVisitor" className="font-semibold">
+            <label htmlFor="passNumber" className="font-semibold">
               Pass Number
             </label>
             <input
               value={formData.passNumber}
               onChange={handleChange}
               name="passNumber"
-              type="number"
-              id="additionalVisitor"
+              type="text"
+              id="passNumber"
               className="border border-gray-400 p-2 rounded-md"
               placeholder="Enter Pass number"
             />
@@ -489,6 +557,26 @@ const EditVisitor = () => {
           </div>
 
           <div className="grid gap-2 items-center w-full">
+            <label htmlFor="slotNumber" className="font-semibold">
+              Select Parking Slot:
+            </label>
+            <select
+              id="slotNumber"
+              name="slotNumber"
+              value={formData.slotNumber}
+              onChange={handleChange}
+              className="border border-gray-400 p-2 rounded-md"
+            >
+              <option value="">Select Slot</option>
+              {slots.map((slot) => (
+                <option value={slot.id} key={slot.id}>
+                  {slot.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid gap-2 items-center w-full">
             <label htmlFor="notes" className="font-semibold">
               Notes:
             </label>
@@ -509,11 +597,12 @@ const EditVisitor = () => {
             </label>
             <input
               type="date"
+              id="expectedDate"
               value={formData.expectedDate}
               onChange={handleChange}
               name="expectedDate"
-              id="expectedDate"
-              className="border border-gray-400 p-2 rounded-md"
+              min={todayDate}
+              className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full"
             />
           </div>
 
@@ -523,165 +612,171 @@ const EditVisitor = () => {
             </label>
             <input
               type="time"
+              id="expectedTime"
               value={formData.expectedTime}
               onChange={handleChange}
               name="expectedTime"
-              id="expectedTime"
-              className="border border-gray-400 p-2 rounded-md"
+              className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full"
             />
-          </div>
-
-          <div className="grid gap-2 items-center w-full">
-            <label htmlFor="purpose" className="font-semibold">
-              Visit Purpose:
-            </label>
-            <select
-              id="purpose"
-              value={formData.purpose}
-              onChange={handleChange}
-              name="purpose"
-              className="border border-gray-400 p-2 rounded-md"
-            >
-              <option value="">Select Purpose</option>
-              <option value="Meeting">Meeting</option>
-              <option value="Delivery">Delivery</option>
-              <option value="Personal">Personal</option>
-              <option value="Fitout Staff">Fitout Staff</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-
-          <span>
-            <input
-              type="checkbox"
-              id="approval"
-              checked={formData.hostApproval}
-              onChange={() =>
-                setFormData((prevState) => ({
-                  ...prevState,
-                  hostApproval: !prevState.hostApproval,
-                }))
-              }
-            />
-            &nbsp;<label htmlFor="approval">Skip Host Approval</label>
-            &nbsp;&nbsp;&nbsp;
-            <input
-              type="checkbox"
-              id="goods"
-              checked={formData.goodsInward}
-              onChange={() =>
-                setFormData((prevState) => ({
-                  ...prevState,
-                  goodsInward: !prevState.goodsInward,
-                }))
-              }
-            />
-            &nbsp;&nbsp;<label htmlFor="goods">Goods Inwards</label>
-
-             <label className="flex items-center gap-2">
-     <input
-      type="checkbox"
-      id="drivingLicense"
-      checked={formData.drivingLicense}
-      onChange={() =>
-        setFormData(prev => ({
-          ...prev,
-          drivingLicense: !prev.drivingLicense,
-        }))
-      }
-    />
-    <span>License</span>
-  </label>
-
-  {/* Consignment Checkbox */}
-  <label className="flex items-center gap-2">
-    <input
-      type="checkbox"
-      id="consignmentForm"
-      checked={formData.consignmentForm}
-      onChange={() =>
-        setFormData(prev => ({
-          ...prev,
-          consignmentForm: !prev.consignmentForm,
-        }))
-      }
-    />
-    <span>Consignment</span>
-  </label> 
-
-          </span>
-        </div>
-        <h2 className="font-medium border-b-2 mt-5 border-black">
-          Additional Visitor
-        </h2>
-        <div className="grid md:grid-cols-3 gap-3 mt-5">
-          {visitors
-            .filter((visitor) => visitor._destroy !== "1")
-            .map((visitor, index) => (
-              <div key={index}>
-                <div className="grid gap-2 items-center w-full">
-                  <label htmlFor="" className="font-semibold">
-                    Name:
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Name"
-                    name="name"
-                    className="border border-gray-400 p-2 rounded-md"
-                    value={visitor.name}
-                    onChange={(event) => handleInputChange(index, event)}
-                  />
-                </div>
-                &nbsp;&nbsp;
-                <div className="grid gap-2 items-center w-full">
-                  <label htmlFor="" className="font-semibold">
-                    Mobile:
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Mobile Number"
-                    name="mobile"
-                    className="border border-gray-400 p-2 rounded-md"
-                    value={visitor.mobile}
-                    onChange={(event) => handleInputChange(index, event)}
-                  />
-                  <button onClick={() => handleRemoveVisitor(index)}>
-                    <FaTrash />
-                  </button>
-                  &nbsp;
-                </div>
-              </div>
-            ))}
-
-          <div>
-            <button
-              onClick={handleAddVisitor}
-              className="bg-black text-white hover:bg-gray-700 font-semibold py-2 px-4 rounded"
-            >
-              Add Additional Visitor
-            </button>
           </div>
         </div>
-        {selectedFrequency === "Frequently" && (
-          <div className="flex flex-col gap-2 my-2">
-            <div className="grid md:grid-cols-3 gap-4 ">
-              <div className="flex flex-col">
-                <p className="font-medium"> Pass Valid From :</p>
+
+        <div className="flex flex-wrap gap-8 items-center mt-6 border-t pt-4 border-gray-200">
+            <label className="flex items-center gap-2 cursor-pointer text-base font-semibold">
                 <input
-                  type="date"
-                  min={todayDate}
+                    type="checkbox"
+                    id="hostApproval"
+                    name="hostApproval"
+                    checked={formData.hostApproval}
+                    onChange={handleChange}
+                    className="form-checkbox h-4 w-4 text-blue-600 rounded border-gray-400"
+                />
+                Skip Host Approval
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer text-base font-semibold">
+                <input
+                    type="checkbox"
+                    id="goodsInward"
+                    name="goodsInward"
+                    checked={formData.goodsInward}
+                    onChange={handleChange}
+                    className="form-checkbox h-4 w-4 text-blue-600 rounded border-gray-400"
+                />
+                Goods Inward
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer text-base font-semibold">
+                <input
+                    type="checkbox"
+                    id="license"
+                    name="license"
+                    checked={formData.license}
+                    onChange={handleChange}
+                    className="form-checkbox h-4 w-4 text-blue-600 rounded border-gray-400"
+                />
+                License Document
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer text-base font-semibold">
+                <input
+                    type="checkbox"
+                    id="consignment"
+                    name="consignment"
+                    checked={formData.consignment}
+                    onChange={handleChange}
+                    className="form-checkbox h-4 w-4 text-blue-600 rounded border-gray-400"
+                />
+                Consignment Document
+            </label>
+        </div>
+
+        {formData.goodsInward && (
+            <div className="p-4 border border-blue-200 rounded-lg bg-blue-50 space-y-4 mt-6">
+                <h3 className="font-bold text-lg text-blue-800 border-b pb-2 mb-4">Goods Information (Edit)</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="flex flex-col gap-1.5">
+                        <label htmlFor="noOfGoods" className="font-semibold text-gray-700 text-sm">No. of Goods:</label>
+                        <input
+                            type="number"
+                            name="noOfGoods"
+                            id="noOfGoods"
+                            className="border border-gray-300 p-2.5 rounded-lg text-sm"
+                            placeholder="Enter Number"
+                            value={formData.noOfGoods}
+                            onChange={handleChange}
+                        />
+                    </div>
+                    <div className="col-span-1 sm:col-span-2 flex flex-col gap-1.5">
+                        <label htmlFor="goodsDescription" className="font-semibold text-gray-700 text-sm">Description:</label>
+                        <textarea
+                            name="goodsDescription"
+                            id="goodsDescription"
+                            value={formData.goodsDescription}
+                            onChange={handleChange}
+                            className="border border-gray-300 p-2.5 rounded-lg text-sm"
+                            rows={1}
+                            placeholder="Enter Description of Goods"
+                        ></textarea>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        <div className="my-5">
+            <h2 className="font-semibold">Additional Visitors:</h2>
+            <div className="flex flex-col gap-5 my-5">
+            {visitors.map((visitor, index) => (
+                visitor._destroy !== "1" && (
+                <div key={index} className="flex gap-5 items-center w-full">
+                    <div className="grid gap-2 items-center w-full">
+                    <label htmlFor="" className="font-semibold">
+                        Name:
+                    </label>
+                    <input
+                        type="text"
+                        placeholder="Name"
+                        name="name"
+                        className="border border-gray-400 p-2 rounded-md"
+                        value={visitor.name}
+                        onChange={(event) => handleInputChange(index, event)}
+                    />
+                    </div>
+                    &nbsp;&nbsp;
+                    <div className="grid gap-2 items-center w-full">
+                    <label htmlFor="" className="font-semibold">
+                        Mobile:
+                    </label>
+                    <input
+                        type="text"
+                        placeholder="Mobile Number"
+                        name="mobile"
+                        className="border border-gray-400 p-2 rounded-md"
+                        value={visitor.mobile}
+                        onChange={(event) => handleInputChange(index, event)}
+                    />
+                    <button onClick={(e) => { e.preventDefault(); handleRemoveVisitor(index); }} type="button">
+                        <FaTrash />
+                    </button>
+                    &nbsp;
+                    </div>
+                </div>
+                )
+            ))}
+            </div>
+            <div>
+            <button 
+                onClick={handleAddVisitor} 
+                className="bg-black text-white hover:bg-gray-700 font-semibold py-2 px-4 rounded"
+                type="button" 
+            >
+                Add Visitor
+            </button>
+            </div>
+        </div>
+
+        {selectedFrequency === "Frequently" && (
+          <div className="flex flex-col gap-5 border border-gray-400 p-4 rounded-md">
+            <h2 className="font-semibold">Pass Validity:</h2>
+            <div className="grid md:grid-cols-2 gap-5">
+              <div className="grid gap-2 items-center w-full">
+                <label htmlFor="passStartDate" className="font-semibold">
+                  Pass Start Date/Time:
+                </label>
+                <input
+                  type="datetime-local"
+                  id="passStartDate"
                   value={passStartDate}
-                  onChange={(event) => setPassStartDate(event.target.value)}
+                  onChange={handlePassStartDateChange}
                   className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full"
                 />
               </div>
-              <div className="flex flex-col">
-                <p className="font-medium">Pass Valid To :</p>
+              <div className="grid gap-2 items-center w-full">
+                <label htmlFor="passEndDate" className="font-semibold">
+                  Pass End Date/Time:
+                </label>
                 <input
-                  type="date"
-                  min={todayDate}
-                  value={passEndDate ? passEndDate : todayDate}
-                  onChange={(event) => setPassEndDate(event.target.value)}
+                  type="datetime-local"
+                  id="passEndDate"
+                  value={passEndDate}
+                  onChange={handlePassEndDateChange}
                   className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full"
                 />
               </div>
@@ -694,8 +789,8 @@ const EditVisitor = () => {
                   key={weekdayObj.day}
                   className={` rounded-md p-2 px-4 shadow-custom-all-sides font-medium ${
                     selectedWeekdays?.includes(weekdayObj.day)
-                      ? // &&
-                        // weekdayObj.isActive
+                      ? 
+                        
                         "bg-green-400 text-white "
                       : ""
                   }`}
@@ -703,6 +798,7 @@ const EditVisitor = () => {
                     e.preventDefault();
                     handleWeekdaySelection(weekdayObj.day);
                   }}
+                  type="button" 
                 >
                   <a>{weekdayObj.day}</a>
                 </button>
@@ -715,6 +811,7 @@ const EditVisitor = () => {
           <button
             onClick={handleEditVisitor}
             className="bg-black text-white hover:bg-gray-700 font-semibold py-2 px-4 rounded"
+            type="button"
           >
             Save
           </button>

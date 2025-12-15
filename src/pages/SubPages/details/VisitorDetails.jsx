@@ -116,7 +116,6 @@ const VisitorDetails = () => {
           >
             <BiQr /> QR Code
           </button>
-
           <Link
             to={`/admin/passes/visitors/edit-visitor/${id}`}
             className="border-2 border-black rounded-full px-2 p-1 flex items-center gap-2"
@@ -139,64 +138,115 @@ const VisitorDetails = () => {
           )}
         </div>
 
-        {/* All Visitor Details */}
         <div className="grid md:grid-cols-3 px-4 gap-5 gap-x-4 mt-4">
-          {details.visit_type && <Info label="Visitor Type" value={details.visit_type} />}
-          {details?.visit_type === "Support Staff" && (
-            <Info label="Staff Category" value={details?.visitor_staff_category?.name} />
+          {details.visit_type && (
+            <Info label="Visitor Type" value={details.visit_type} />
+          )}
+          {details.visitor_staff_category && details.visitor_staff_category.name && (
+            <Info label="Support Category" value={details.visitor_staff_category.name} />
           )}
           {details.name && <Info label="Visitor Name" value={details.name} />}
-          {details.contact_no && <Info label="Mobile No." value={details.contact_no} />}
+          {details.contact_no && (
+            <Info label="Contact No." value={details.contact_no} />
+          )}
           {details.purpose && <Info label="Purpose" value={details.purpose} />}
-          {details.coming_from && <Info label="Coming From" value={details.coming_from} />}
-          {details.vehicle_number && <Info label="Vehicle No." value={details.vehicle_number} />}
-          {details.expected_date && <Info label="Expected Date" value={details.expected_date} />}
-          {details.expected_time && <Info label="Expected Time" value={details.expected_time} />}
-          {details.goods_inwards !== null && (
-            <Info label="Goods Inward" value={details.goods_inwards ? "Yes" : "No"} />
+          {details.coming_from && (
+            <Info label="Coming From" value={details.coming_from} />
           )}
-          {details.skip_host_approval !== null && (
-            <Info label="Host Approval Needed" value={details.skip_host_approval ? "No" : "Yes"} />
+          {details.vehicle_number && (
+            <Info label="Vehicle Number" value={details.vehicle_number} />
           )}
-          {details.start_pass && (
-            <Info label="Pass Start Date" value={dateTimeFormat(details.start_pass)} />
-          )}
-          {details.end_pass && (
-            <Info label="Pass End Date" value={dateTimeFormat(details.end_pass)} />
-          )}
-          {details.hosts && (
-            <div className="grid grid-cols-2">
-              <p className="font-semibold text-sm">Host :</p>
-              <div>
-                {details.hosts.map((host, i) => (
-                  <p key={i}>{host.full_name}</p>
-                ))}
-              </div>
-            </div>
-          )}
-          {details.created_by_name && (
+          {details.expected_date && (
             <Info
-              label="Created By"
-              value={`${details.created_by_name.firstname} ${details.created_by_name.lastname}`}
+              label="Expected Date"
+              value={dateFormat(details.expected_date)}
             />
           )}
-          {details.created_at && (
-            <Info label="Created On" value={dateFormat(details.created_at)} />
+          {details.expected_time && (
+            <Info label="Expected Time" value={details.expected_time} />
           )}
-          {details.updated_at && (
-            <Info label="Updated On" value={dateFormat(details.updated_at)} />
+          {details.frequency && (
+            <Info label="Visiting Frequency" value={details.frequency} />
           )}
-          {details.frequency === "Frequently" && (
-            <Info label="Permitted Days" value={details.working_days?.join(", ")} />
+          {details.pass_number && (
+            <Info label="Pass Number" value={details.pass_number} />
           )}
+          {details.parking_slot && details.parking_slot.name && (
+            <Info label="Parking Slot" value={details.parking_slot.name} />
+          )}
+          
+          {details.vhost && details.vhost.name && (
+            <Info label="Host Name" value={details.vhost.name} />
+          )}
+          
+          {details.frequency === "Frequently" && details.start_pass && (
+            <Info
+              label="Pass Start Date/Time"
+              value={dateTimeFormat(details.start_pass)}
+            />
+          )}
+          {details.frequency === "Frequently" && details.end_pass && (
+            <Info
+              label="Pass End Date/Time"
+              value={dateTimeFormat(details.end_pass)}
+            />
+          )}
+          <BooleanInfo
+            label="Skip Host Approval"
+            value={details.skip_host_approval}
+          />
+          <BooleanInfo label="Goods Inward" value={details.goods_inwards} />
+          <BooleanInfo
+            label="License Document"
+            value={details.license_doc}
+          />
+          <BooleanInfo
+            label="Consignment Document"
+            value={details.consignment_doc}
+          />
+          {details.working_days && details.working_days.length > 0 && (
+            <Info
+              label="Permitted Days"
+              value={details.working_days.join(", ")}
+            />
+          )}
+          
         </div>
 
-        {/* Additional Visitors */}
-        <Section title="Additional Visitors Info">
-          {details.extra_visitors?.length ? (
+        {details.goods_inwards && (
+            <Section title="Goods Inward Details">
+                <div className="grid md:grid-cols-3 px-4 gap-5 gap-x-4">
+                    {details.goods_inward_info?.no_of_goods && (
+                        <Info label="No. of Goods" value={details.goods_inward_info.no_of_goods} />
+                    )}
+                    {details.goods_inward_info?.description && (
+                        <Info label="Description" value={details.goods_inward_info.description} />
+                    )}
+                    {details.goods_inward_info?.goods_files && details.goods_inward_info.goods_files.length > 0 && (
+                        <Info label="Attachments" value={<a href={domainPrefix + details.goods_inward_info.goods_files[0].url} target="_blank" className="text-blue-500 underline">View Files ({details.goods_inward_info.goods_files.length})</a>} />
+                    )}
+                </div>
+            </Section>
+        )}
+
+        {(details.license_doc || details.consignment_doc) && (
+            <Section title="Visitor Documents">
+                <div className="grid md:grid-cols-3 px-4 gap-5 gap-x-4">
+                    {details.license_doc && details.visitor_files?.filter(f => f.category_type === 'license').length > 0 && (
+                        <Info label="License Files" value={<a href={domainPrefix + details.visitor_files.filter(f => f.category_type === 'license')[0].url} target="_blank" className="text-blue-500 underline">View Files ({details.visitor_files.filter(f => f.category_type === 'license').length})</a>} />
+                    )}
+                    {details.consignment_doc && details.visitor_files?.filter(f => f.category_type === 'consignment').length > 0 && (
+                        <Info label="Consignment Files" value={<a href={domainPrefix + details.visitor_files.filter(f => f.category_type === 'consignment')[0].url} target="_blank" className="text-blue-500 underline">View Files ({details.visitor_files.filter(f => f.category_type === 'consignment').length})</a>} />
+                    )}
+                </div>
+            </Section>
+        )}
+
+        <Section title="Additional Visitors">
+          {details.extra_visitors && details.extra_visitors.length > 0 ? (
             <Table columns={visitorExtraColumns} data={details.extra_visitors} />
           ) : (
-            <p className="text-center">No Additional Visitor Added</p>
+            <p className="px-2 text-gray-500">No Additional Visitor Added</p>
           )}
         </Section>
 
@@ -213,11 +263,6 @@ const VisitorDetails = () => {
         {/* Visitor Log */}
         <Section title="Visitor Log">
           <Table columns={visitorLogColumn} data={paginatedVisitorLogs} />
-          <Pagination
-            page={visitorPage}
-            totalPages={visitorTotalPages}
-            setPage={setVisitorPage}
-          />
         </Section>
       </div>
 
@@ -231,11 +276,17 @@ const VisitorDetails = () => {
   );
 };
 
-// Small UI components
 const Info = ({ label, value }) => (
   <div className="grid grid-cols-2">
     <p className="font-semibold text-sm">{label} :</p>
     <p>{value}</p>
+  </div>
+);
+
+const BooleanInfo = ({ label, value }) => (
+  <div className="grid grid-cols-2">
+    <p className="font-semibold text-sm">{label} :</p>
+    <p>{value ? "Yes" : "No"}</p>
   </div>
 );
 
@@ -244,12 +295,7 @@ const Section = ({ title, children }) => (
     <h2 className="font-medium border-b text-lg border-gray-400 px-2">
       {title}
     </h2>
-    <div className="m-4">{children}</div>
-  </div>
-);
-
-const Pagination = ({ page, totalPages, setPage }) => (
-  <div className="flex justify-center mt-3 gap-4">
+    <div className="p-2">{children}</div>
   </div>
 );
 
