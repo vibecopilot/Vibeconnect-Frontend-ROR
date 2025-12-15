@@ -4,13 +4,14 @@ import { IoAddCircleOutline } from "react-icons/io5";
 import { ImEye } from "react-icons/im";
 import { Link } from "react-router-dom";
 import { getItemInLocalStorage } from "../../utils/localStorage";
-import { getBroadCast } from "../../api";
+import { getBroadCast,updateBroadcastEnableStatus } from "../../api";
 import Table from "../../components/table/Table";
 import { useSelector } from "react-redux";
 import { BsEye } from "react-icons/bs";
 import Navbar from "../../components/Navbar";
 import Communication from "../Communication";
 import { BiEdit } from "react-icons/bi";
+import { toast } from "react-hot-toast";
 
 const Broadcast = () => {
   const [searchText, setSearchText] = useState("");
@@ -35,6 +36,43 @@ const Broadcast = () => {
   const dateFormat = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString();
+  };
+
+
+const handleToggle = async (id) => {
+    const item = broadcast.find((b) => b.id === id);
+    if (!item) return;
+
+    const previousStatus = item.enabled;
+    const newStatus = !previousStatus;
+
+    const updateLocal = (status) => {
+      setBroadcast((prev) =>
+        prev.map((b) =>
+          b.id === id ? { ...b, enabled: status } : b
+        )
+      );
+
+      setFilteredData((prev) =>
+        prev.map((b) =>
+          b.id === id ? { ...b, enabled: status } : b
+        )
+      );
+    };
+
+    // Update UI instantly
+    updateLocal(newStatus);
+
+    try {
+      // API call to update the status
+      await updateBroadcastEnableStatus(id, newStatus);
+      toast.success(newStatus ? "Broadcast Enabled" : "Broadcast Disabled");
+    } catch (err) {
+      toast.error("Failed to update");console.log("API CALL FUNCTION =>", updateBroadcastEnableStatus.toString());
+
+
+      updateLocal(previousStatus); // revert on failure
+    }
   };
 
   const column = [
@@ -79,6 +117,24 @@ const Broadcast = () => {
       selector: (row) => row.status,
       sortable: true,
     },
+     {
+      name: "Enable / Disable",
+      cell: (row) => (
+        <label className="relative inline-flex items-center cursor-pointer">
+          <input
+            type="checkbox"
+            className="sr-only peer"
+            checked={row.enabled}
+            onChange={() => handleToggle(row.id)}
+          />
+
+          <div className="w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-green-600 transition-all"></div>
+
+          <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full peer-checked:translate-x-full transition-all"></div>
+        </label>
+      ),
+      sortable: false,
+    }
   ];
 
   const handleSearch = (event) => {
