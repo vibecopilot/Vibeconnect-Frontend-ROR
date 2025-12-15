@@ -136,21 +136,21 @@ const TicketCostApprovalSetup = () => {
 
            
               <div className=" gap-50 w-2/3  ml-10 mb-5">
-                <table class="w-full border-collapse">
+                <table className="w-full border-collapse">
                   <thead>
                     <tr>
-                      <th class="border border-gray-300 bg-gray-100 px-4 py-2">
+                      <th className="border border-gray-300 bg-gray-100 px-4 py-2">
                         Levels
                       </th>
-                      <th class="border border-gray-300 bg-gray-100 px-4 py-2">
+                      <th className="border border-gray-300 bg-gray-100 px-4 py-2">
                         Approvers
                       </th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr>
-                      <td class="border border-gray-300 px-4 py-2 text-center">L1</td>
-                      <td class="border border-gray-300 px-4 py-2 text-center">
+                      <td className="border border-gray-300 px-4 py-2 text-center">L1</td>
+                      <td className="border border-gray-300 px-4 py-2 text-center">
                         <select
                           name=""
                           id=""
@@ -161,8 +161,8 @@ const TicketCostApprovalSetup = () => {
                       </td>
                     </tr>
                     <tr>
-                      <td class="border border-gray-300 px-4 py-2 text-center">L2</td>
-                      <td class="border border-gray-300 px-4 py-2 text-center">
+                      <td className="border border-gray-300 px-4 py-2 text-center">L2</td>
+                      <td className="border border-gray-300 px-4 py-2 text-center">
                       <select
                           name=""
                           id=""
@@ -173,8 +173,8 @@ const TicketCostApprovalSetup = () => {
                       </td>
                     </tr>
                     <tr>
-                      <td class="border border-gray-300 px-4 py-2 text-center">L3</td>
-                      <td class="border border-gray-300 px-4 py-2 text-center">
+                      <td className="border border-gray-300 px-4 py-2 text-center">L3</td>
+                      <td className="border border-gray-300 px-4 py-2 text-center">
                       <select
                           name=""
                           id=""
@@ -185,8 +185,8 @@ const TicketCostApprovalSetup = () => {
                       </td>
                     </tr>
                     <tr>
-                      <td class="border border-gray-300 px-4 py-2 text-center">L4</td>
-                      <td class="border border-gray-300 px-4 py-2 text-center">
+                      <td className="border border-gray-300 px-4 py-2 text-center">L4</td>
+                      <td className="border border-gray-300 px-4 py-2 text-center">
                       <select
                           name=""
                           id=""
@@ -197,8 +197,8 @@ const TicketCostApprovalSetup = () => {
                       </td>
                     </tr>
                     <tr>
-                      <td class="border border-gray-300 px-4 py-2 text-center">L5</td>
-                      <td class="border border-gray-300 px-4 py-2 text-center">
+                      <td className="border border-gray-300 px-4 py-2 text-center">L5</td>
+                      <td className="border border-gray-300 px-4 py-2 text-center">
                       <select
                           name=""
                           id=""
@@ -281,21 +281,21 @@ const TicketCostApprovalSetup = () => {
 
            
               <div className=" gap-50 w-2/3  ml-10 mb-5">
-                <table class="w-full border-collapse">
+                <table className="w-full border-collapse">
                   <thead>
                     <tr>
-                      <th class="border border-gray-300 bg-gray-100 px-4 py-2">
+                      <th className="border border-gray-300 bg-gray-100 px-4 py-2">
                         Levels
                       </th>
-                      <th class="border border-gray-300 bg-gray-100 px-4 py-2">
+                      <th className="border border-gray-300 bg-gray-100 px-4 py-2">
                         Approvers
                       </th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr>
-                      <td class="border border-gray-300 px-4 py-2 text-center">L1</td>
-                      <td class="border border-gray-300 px-4 py-2 text-center">
+                      <td className="border border-gray-300 px-4 py-2 text-center">L1</td>
+                      <td className="border border-gray-300 px-4 py-2 text-center">
                         <select
                           name=""
                           id=""
@@ -306,8 +306,8 @@ const TicketCostApprovalSetup = () => {
                       </td>
                     </tr>
                     <tr>
-                      <td class="border border-gray-300 px-4 py-2 text-center">L2</td>
-                      <td class="border border-gray-300 px-4 py-2 text-center">
+                      <td className="border border-gray-300 px-4 py-2 text-center">L2</td>
+                      <td className="border border-gray-300 px-4 py-2 text-center">
                       <select
                           name=""
                           id=""
@@ -318,8 +318,8 @@ const TicketCostApprovalSetup = () => {
                       </td>
                     </tr>
                     <tr>
-                      <td class="border border-gray-300 px-4 py-2 text-center">L3</td>
-                      <td class="border border-gray-300 px-4 py-2 text-center">
+                      <td className="border border-gray-300 px-4 py-2 text-center">L3</td>
+                      <td className="border border-gray-300 px-4 py-2 text-center">
                       <select
                           name=""
                           id=""
@@ -330,8 +330,8 @@ const TicketCostApprovalSetup = () => {
                       </td>
                     </tr>
                     <tr>
-                      <td class="border border-gray-300 px-4 py-2 text-center">L4</td>
-                      <td class="border border-gray-300 px-4 py-2 text-center">
+                      <td className="border border-gray-300 px-4 py-2 text-center">L4</td>
+                      <td className="border border-gray-300 px-4 py-2 text-center">
                       <select
                           name=""
                           id=""
@@ -342,8 +342,8 @@ const TicketCostApprovalSetup = () => {
                       </td>
                     </tr>
                     <tr>
-                      <td class="border border-gray-300 px-4 py-2 text-center">L5</td>
-                      <td class="border border-gray-300 px-4 py-2 text-center">
+                      <td className="border border-gray-300 px-4 py-2 text-center">L5</td>
+                      <td className="border border-gray-300 px-4 py-2 text-center">
                       <select
                           name=""
                           id=""
