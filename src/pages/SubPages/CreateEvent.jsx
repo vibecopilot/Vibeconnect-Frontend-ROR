@@ -5,7 +5,7 @@ import FileInputBox from "../../containers/Inputs/FileInputBox";
 import { useSelector } from "react-redux";
 import Navbar from "../../components/Navbar";
 import { getItemInLocalStorage } from "../../utils/localStorage";
-import { postEvents, getAssignedTo, getGroups, getSetupUsers } from "../../api";
+import { postEvents, getAssignedTo, getGroups, getSetupUsers,getBuildings } from "../../api";
 import Select from "react-select";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -13,10 +13,18 @@ import { format } from "date-fns";
 import toast from "react-hot-toast";
 import { useNavigate, useParams } from "react-router-dom";
 import { FaCheck } from "react-icons/fa";
+import ReactQuill from "react-quill";
 
 const CreateEvent = () => {
   const siteId = getItemInLocalStorage("SITEID");
   const [share, setShare] = useState("all");
+  const [selectedUnit, setSelectedUnit] = useState(null);
+  const [units, setUnits] = useState([]);
+  const [selectedOwnership, setSelectedOwnership] = useState("");
+  const [selectedMembers, setSelectedMembers] = useState([]);
+  const [filteredMembers, setFilteredMembers] = useState([]);
+   const [members, setMembers] = useState([]);
+
   const [users, setUsers] = useState([]);
   const [selectedOption, setSelectedOption] = useState([]);
   const [formData, setFormData] = useState({
@@ -56,6 +64,9 @@ const CreateEvent = () => {
     const fetchUsers = async () => {
       try {
         const response = await getSetupUsers();
+         const unitsRes = await getBuildings();
+        console.log("userSites", unitsRes);
+        setUnits(unitsRes.data);
         const transformedUsers = response.data.map((user) => ({
           value: user.id,
           label: `${user.firstname} ${user.lastname}`,
@@ -174,8 +185,65 @@ const CreateEvent = () => {
         currentDate.getHours() * 60 + currentDate.getMinutes();
       return selectedTime >= currentTime; // Future time
     } else {
-      return false; // Past date
+      return false; // Past date
     }
+  };
+
+    const handleFilter = () => {
+    console.log(
+      "Selected Building ID:",
+      selectedUnit,
+      "Selected Ownership:",
+      selectedOwnership
+    );
+    console.log("Members Before Filtering:", members);
+
+    const filtered = members.filter((member) => {
+      // Check if the user belongs to the selected building
+      const buildingMatch =
+        !selectedUnit || Number(member.building_id ?? member.building?.id) ===  Number(selectedUnit);
+
+      console.log(
+        "building_id type:",
+        typeof member.building_id,
+        member.building_id
+      );
+
+      // Check if any of the user's sites match the selected ownership
+      const ownershipMatch =
+        !selectedOwnership ||
+        member.userSites.some(
+          (site) =>
+            site.ownership?.toLowerCase() === selectedOwnership.toLowerCase()
+        );
+
+      console.log(
+        "User:",
+        member.name,
+        "Building Match:",
+        buildingMatch,
+        "Ownership Match:",
+        ownershipMatch
+      );
+
+      return buildingMatch && ownershipMatch;
+    });
+
+    console.log("Filtered Members:", filtered);
+    setFilteredMembers(filtered);
+    toast.success("Filter applied");
+  };
+
+   const handleSelectEdit = (selectedOption) => {
+    setSelectedMembers(selectedOption); // Update state for selected members
+
+    const selectedUserIds = selectedOption.map((option) => option.value); // Extract user IDs
+    console.log("akshay", selectedUserIds);
+
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      user_ids: selectedUserIds.join(","), // Store user IDs as a comma-separated string
+    }));
   };
 
   const handleFileChange = (files, fieldName) => {
@@ -261,14 +329,16 @@ const CreateEvent = () => {
               <label htmlFor="" className="font-medium">
                 Description:
               </label>
-              <textarea
-                name="description"
+              <ReactQuill
+                theme="snow"
                 value={formData.description}
-                onChange={handleChange}
-                id=""
-                rows="3"
+                // onChange={handleChange}
+                 onChange={(value) =>
+                  setFormData({ ...formData, description: value })
+                }
                 placeholder="Enter Description"
-                className="border-gray-400 border px-2 p-1 rounded-md"
+                className="bg-white"
+                style={{ minHeight: "120px" }}
               />
             </div>
 
@@ -345,19 +415,62 @@ const CreateEvent = () => {
                   </h2>
                 </div>
                 <div className="my-5 flex w-full">
-                  {share === "individual" && (
-                    <Select
-                      options={users}
-                      closeMenuOnSelect={false}
-                      placeholder="Select User"
-                      isMulti
-                      value={users.filter((user) =>
-                        formData.user_ids.includes(user.value)
-                      )}
-                      onChange={handleSelectChange}
-                      className="w-full"
-                    />
-                  )}
+              {share === "individual" && (
+                  <div className="flex flex-col gap-2 mt-2 w-full">
+                    {/* First Row: Unit Select, Ownership Select, and Filter Button */}
+                    <div className="flex gap-2 items-end">
+                      {/* Unit Select Dropdown */}
+                      <select
+                        className="border p-3 border-gray-300 rounded-md flex-1"
+                        value={selectedUnit || ""}
+                        onChange={(e) =>
+                          setSelectedUnit(Number(e.target.value))
+                        }
+                      >
+                        <option value="">Select Tower</option>
+                        {units.map((unit) => (
+                          <option key={unit.id} value={unit.id}>
+                            {unit.name}
+                          </option>
+                        ))}
+                      </select>
+
+                      {/* Ownership Select Dropdown */}
+                      <select
+                        className="border p-3 border-gray-300 rounded-md flex-1"
+                        value={selectedOwnership}
+                        onChange={(e) => setSelectedOwnership(e.target.value)}
+                      >
+                        <option value="">Select Ownership</option>
+                        <option value="tenant">Tenant</option>
+                        <option value="owner">Owner</option>
+                      </select>
+
+                      {/* Filter Button */}
+                      <button
+                        style={{ background: themeColor }}
+                        onClick={handleFilter}
+                        className="bg-blue-500 text-white px-4 py-2 rounded-md"
+                      >
+                        Filter
+                      </button>
+                    </div>
+                    <div className="w-full mt-3 mb-3">
+                      <Select
+                        options={filteredMembers.map((member) => ({
+                          value: member.id,
+                          label: member.name,
+                        }))}
+                        className="w-full"
+                        isMulti // Enables multi-select functionality
+                        title="Select Members"
+                        value={selectedMembers} // This should be the selected state
+                        onChange={handleSelectEdit} // Correct event handler
+                        placeholder="Select Members"
+                      />
+                    </div>
+                  </div>
+                )}
                   {share === "groups" && (
                     // <Select
                     //   options={groups}

@@ -352,7 +352,7 @@ setShowEditModal(true)
           </div>
         )}
         {page === "Operational Days" && (
-          <div class=" w-full  my-2">
+          <div className=" w-full  my-2">
             {/* <button
               onClick={openModal}
               className="border-2 font-semibold mt-5 ml-10 hover:bg-black hover:text-white transition-all border-black p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
@@ -363,26 +363,26 @@ setShowEditModal(true)
             <table className="w-full">
               <thead style={{background: themeColor}} className="text-white">
                 <tr>
-                  <th class="px-4 py-2"></th>
-                  <th class="px-4 py-2">Operational Days</th>
-                  <th class="px-4 py-2">Start Time</th>
-                  <th class="px-4 py-2">End Time</th>
+                  <th className="px-4 py-2"></th>
+                  <th className="px-4 py-2">Operational Days</th>
+                  <th className="px-4 py-2">Start Time</th>
+                  <th className="px-4 py-2">End Time</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td class="border px-4 py-2 text-center">
+                  <td className="border px-4 py-2 text-center">
                     <input type="checkbox" />
                   </td>
-                  <td class="border px-4 py-2 text-center">Monday</td>
-                  <td class="border px-4 py-2 text-center">
+                  <td className="border px-4 py-2 text-center">Monday</td>
+                  <td className="border px-4 py-2 text-center">
                     <input
                       type="time"
                       value="13:45"
                       className="border border-gray-400 p-1 w-40 rounded-md"
                     />
                   </td>
-                  <td class="border px-4 py-2 text-center">
+                  <td className="border px-4 py-2 text-center">
                     <input
                       type="time"
                       value="19:45"
@@ -397,18 +397,18 @@ setShowEditModal(true)
               <td class="border px-4 py-2 text-center"><input type="time" className="border border-gray-400 p-2 rounded-md"/></td> */}
                 </tr>
                 <tr>
-                  <td class="border px-4 py-2 text-center">
+                  <td className="border px-4 py-2 text-center">
                     <input type="checkbox" />
                   </td>
-                  <td class="border px-4 py-2 text-center">Tuesday</td>
-                  <td class="border px-4 py-2 text-center">
+                  <td className="border px-4 py-2 text-center">Tuesday</td>
+                  <td className="border px-4 py-2 text-center">
                     <input
                       type="time"
                       value="13:45"
                       className="border border-gray-400 p-1 w-40 rounded-md"
                     />
                   </td>
-                  <td class="border px-4 py-2 text-center">
+                  <td className="border px-4 py-2 text-center">
                     <input
                       type="time"
                       value="16:45"
@@ -422,18 +422,18 @@ setShowEditModal(true)
               <td class="border px-4 py-2 text-center"><input type="time" className="border border-gray-400 p-2 rounded-md"/></td> */}
                 </tr>
                 <tr>
-                  <td class="border px-4 py-2 text-center">
+                  <td className="border px-4 py-2 text-center">
                     <input type="checkbox" />
                   </td>
-                  <td class="border px-4 py-2 text-center">Wednesday</td>
-                  <td class="border px-4 py-2 text-center">
+                  <td className="border px-4 py-2 text-center">Wednesday</td>
+                  <td className="border px-4 py-2 text-center">
                     <input
                       type="time"
                       value="15:45"
                       className="border border-gray-400 p-1 w-40 rounded-md"
                     />
                   </td>
-                  <td class="border px-4 py-2 text-center">
+                  <td className="border px-4 py-2 text-center">
                     <input
                       type="time"
                       value="16:45"
@@ -447,18 +447,18 @@ setShowEditModal(true)
               <td class="border px-4 py-2 text-center"><input type="time" className="border border-gray-400 p-2 rounded-md"/></td> */}
                 </tr>
                 <tr>
-                  <td class="border px-4 py-2 text-center">
+                  <td className="border px-4 py-2 text-center">
                     <input type="checkbox" />
                   </td>
-                  <td class="border px-4 py-2 text-center">Thursday</td>
-                  <td class="border px-4 py-2 text-center">
+                  <td className="border px-4 py-2 text-center">Thursday</td>
+                  <td className="border px-4 py-2 text-center">
                     <input
                       type="time"
                       value="14:45"
                       className="border border-gray-400 p-1 w-40 rounded-md"
                     />
                   </td>
-                  <td class="border px-4 py-2 text-center">
+                  <td className="border px-4 py-2 text-center">
                     <input
                       type="time"
                       value="06:45"
@@ -472,18 +472,18 @@ setShowEditModal(true)
               <td class="border px-4 py-2 text-center"><input type="time" className="border border-gray-400 p-2 rounded-md"/></td> */}
                 </tr>
                 <tr>
-                  <td class="border px-4 py-2 text-center">
+                  <td className="border px-4 py-2 text-center">
                     <input type="checkbox" />
                   </td>
-                  <td class="border px-4 py-2 text-center">Friday</td>
-                  <td class="border px-4 py-2 text-center">
+                  <td className="border px-4 py-2 text-center">Friday</td>
+                  <td className="border px-4 py-2 text-center">
                     <input
                       type="time"
                       value="09:45"
                       className="border border-gray-400 p-1 w-40 rounded-md"
                     />
                   </td>
-                  <td class="border px-4 py-2 text-center">
+                  <td className="border px-4 py-2 text-center">
                     <input
                       type="time"
                       value="13:45"
@@ -497,18 +497,18 @@ setShowEditModal(true)
               <td class="border px-4 py-2 text-center"><input type="time" className="border border-gray-400 p-2 rounded-md"/></td> */}
                 </tr>
                 <tr>
-                  <td class="border px-4 py-2 text-center">
+                  <td className="border px-4 py-2 text-center">
                     <input type="checkbox" />
                   </td>
-                  <td class="border px-4 py-2 text-center">Saturday</td>
-                  <td class="border px-4 py-2 text-center">
+                  <td className="border px-4 py-2 text-center">Saturday</td>
+                  <td className="border px-4 py-2 text-center">
                     <input
                       type="time"
                       value="08:45"
                       className="border border-gray-400 p-1 w-40 rounded-md"
                     />
                   </td>
-                  <td class="border px-4 py-2 text-center">
+                  <td className="border px-4 py-2 text-center">
                     <input
                       type="time"
                       value="13:45"
@@ -523,18 +523,18 @@ setShowEditModal(true)
             */}
                 </tr>
                 <tr>
-                  <td class="border px-4 py-2 text-center">
+                  <td className="border px-4 py-2 text-center">
                     <input type="checkbox" />
                   </td>
-                  <td class="border px-4 py-2 text-center">Sunday</td>
-                  <td class="border px-4 py-2 text-center">
+                  <td className="border px-4 py-2 text-center">Sunday</td>
+                  <td className="border px-4 py-2 text-center">
                     <input
                       type="time"
                       value="12:45"
                       className="border border-gray-400 p-1 w-40 rounded-md"
                     />
                   </td>
-                  <td class="border px-4 py-2 text-center">
+                  <td className="border px-4 py-2 text-center">
                     <input
                       type="time"
                       value="13:45"
