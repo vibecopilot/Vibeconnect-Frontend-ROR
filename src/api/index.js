@@ -11,6 +11,7 @@ export const hrmsDomain = "https://api.hrms.vibecopilot.ai/";
 import DigestFetch from "digest-fetch";
 // import DigestAuth from "@mhoc/axios-digest-auth";
 import AxiosDigestAuth from "@mhoc/axios-digest-auth";
+import { notification } from "antd";
 // export const hrmsDomain = "http://13.126.205.205";
 const token = getItemInLocalStorage("TOKEN");
 export const domainPrefix = "https://admin.vibecopilot.ai";
@@ -8963,6 +8964,80 @@ export const getSiteWiseUserDetails = async (siteId) => {
   }
 };
 
+
+
+// ticket cost approval
+
+export const getCostApprovalUsers = async (siteId) => {
+  try {
+    const response = await HrmsAuth.get(
+     `/users?site_id=${siteId}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting cost approval users", error);
+    throw error;
+  }
+};
+export const getCostApprovalRules = async (type,siteId) => {
+  try {
+    const response = await HrmsAuth.get(
+       `/cost-approvals?type=${type}&site_id=${siteId}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting cost approval rules", error);
+    throw error;
+  }
+};
+export const createCostApprovalRule = async (data) => {
+  try {
+    const response = await HrmsAuth.post(
+      `/cost-approvals`,
+      data,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error creating cost approval rule", error);
+    throw error;
+  }
+};
+export const deleteCostApprovalRule = async (ruleId) => {
+  try {
+    const response = await HrmsAuth.delete(
+      `/cost-approvals/${ruleId}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting cost approval rule", error);
+    throw error;
+  }
+};
+
+
+
+
+
 export const markEmployeeAttendance = async (data) => {
   try {
     const response = await HrmsAuth.post(`/employee/attendance/`, data, {
@@ -9103,7 +9178,7 @@ export const getApprovalNotifications = async (approverId) => {
       `/approval-notifications/approver/${approverId}/`,
 
       {
-        headers: {
+        headers: { 
           "Content-Type": "multipart/form-data/",
         },
       }
@@ -9114,6 +9189,15 @@ export const getApprovalNotifications = async (approverId) => {
     throw error;
   }
 };
+
+// export cost handleApproverChange= async(notification.data) => {
+//   try{
+//     const response= await HrmsAuth.get(
+//       `/pms/admin/`
+//     )
+//   }
+// }
+
 export const postApproveOrRejectEmployee = async (notificationId, data) => {
   try {
     const response = await HrmsAuth.patch(

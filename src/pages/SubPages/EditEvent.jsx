@@ -1,12 +1,11 @@
-import React, { useEffect, useRef, useState } from "react";
+import  { useEffect, useRef, useState } from "react";
 import FileInput from "../../Buttons/FileInput";
-import Switch from "../../Buttons/Switch";
+// import Switch from "../../Buttons/Switch";
 import FileInputBox from "../../containers/Inputs/FileInputBox";
 import { useSelector } from "react-redux";
 import Navbar from "../../components/Navbar";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import {
-  postEvents,
   getAssignedTo,
   getEventsDetails,
   editEventDetails,
@@ -24,7 +23,7 @@ const EditEvent = () => {
   const siteId = getItemInLocalStorage("SITEID");
   const [share, setShare] = useState("all");
   const [users, setUsers] = useState([]);
-  const [selectedOption, setSelectedOption] = useState([]);
+  // const [selectedOption, setSelectedOption] = useState([]);
   const [formData, setFormData] = useState({
     site_id: siteId,
     event_name: "",

@@ -44,14 +44,15 @@ const TicketCategorySetup = () => {
   const handleToggleCategoryPage1 = () => {
     setShowSubCategoryPage((prevState) => !prevState);
   };
-  const addFaq = () => {
-    setFaqs([...faqs, { question: "", answer: "" }]);
-  };
 
-  const deleteFaq = (index) => {
-    const newFaqs = faqs.filter((_, i) => i !== index);
-    setFaqs(newFaqs);
-  };
+  // const addFaq = () => {
+  //   setFaqs([...faqs, { question: "", answer: "" }]);
+  // };
+
+  // const deleteFaq = (index) => {
+  //   const newFaqs = faqs.filter((_, i) => i !== index);
+  //   setFaqs(newFaqs);
+  // };
 
   const handleFaqChange = (index, type, value) => {
     const newFaqs = faqs.map((faq, i) => {
@@ -62,6 +63,7 @@ const TicketCategorySetup = () => {
     });
     setFaqs(newFaqs);
   };
+
   const [isOpen, setIsOpen] = useState({
     building: false,
     wing: false,
@@ -252,7 +254,7 @@ const TicketCategorySetup = () => {
 
   const [isModalOpen1, setIsModalOpen1] = useState(false);
   const [catId, setCatId] = useState(null);
-const [subCatId, setSubCatId] = useState(null)
+const [, setSubCatId] = useState(null)
   const openCatEditModal = async (id) => {
     const fetchCatDetails = await getHelpDeskCategoriesSetupDetails(id);
     setCatId(id);

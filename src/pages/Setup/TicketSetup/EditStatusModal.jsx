@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import  { useEffect, useState } from "react";
 import ModalWrapper from "../../../containers/modals/ModalWrapper";
 import { BiEditAlt } from "react-icons/bi";
 import { useSelector } from "react-redux";

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import  { useEffect, useState } from "react";
 import DataTable from "react-data-table-component";
 import { IoAddCircleOutline } from "react-icons/io5";
 import { ImEye } from "react-icons/im";
@@ -12,7 +12,7 @@ import Navbar from "../../../components/Navbar";
 const EmployeeBroadcast = () => {
   const [searchText, setSearchText] = useState("");
   const [user, setUser] = useState("");
-  const [broadcast, setBroadcast] = useState([]);
+  // const [broadcast, setBroadcast] = useState([]);
 
   useEffect(() => {
     const userType = getItemInLocalStorage("USERTYPE");

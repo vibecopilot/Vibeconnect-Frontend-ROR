@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from "react";
+import  { useEffect, useState } from "react";
 import TicketCategorySetup from "./TicketCategorySetup";
 import { useSelector } from "react-redux";
 import Table from "../../../components/table/Table";
 import { BiEdit } from "react-icons/bi";
 import { Link } from "react-router-dom";
-import { ColorPicker, Space } from "antd";
+import { ColorPicker } from "antd";
 import FileInputBox from "../../../containers/Inputs/FileInputBox";
 import { FaTrash } from "react-icons/fa";
 import { getHelpDeskStatusSetup, postHelpDeskStatusSetup } from "../../../api";
@@ -50,9 +50,9 @@ const [showEditModal, setShowEditModal] = useState(false)
     fetchTicketStatus();
   }, [statusAdded]);
 
-  const handleColorChange = (newColor) => {
-    setColor(newColor.hex);
-  };
+  // const handleColorChange = (newColor) => {
+  //   setColor(newColor.hex);
+  // };
 
   const togglePicker = () => {
     setShowPicker(!showPicker);

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import  { useEffect, useState } from "react";
 import DataTable from "react-data-table-component";
 import { IoAddCircleOutline } from "react-icons/io5";
 import { ImEye } from "react-icons/im";
@@ -11,11 +11,11 @@ import { useSelector } from "react-redux";
 import Communication from "../Communication";
 import Navbar from "../../components/Navbar";
 import { BiEdit } from "react-icons/bi";
-import { toast } from "react-hot-toast";
+import { toast } from "react-hot-toast"
 
 const Events = () => {
   const [searchText, setSearchText] = useState("");
-  const [filter, setFilter] = useState(false);
+  // const [filter, setFilter] = useState(false);
   const [user, setUser] = useState("");
   const [events, setEvents] = useState([]);
   const [filteredData, setFilteredData] = useState([]);

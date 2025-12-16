@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import  { useEffect, useState } from "react";
 // import TicketCategorySetup from './TicketCategorySetup';
 import { useSelector } from "react-redux";
 // import Table from "../../components/table/Table";
@@ -13,18 +13,18 @@ import toast from "react-hot-toast";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
 import { getSetupUsers, postHelpDeskCategoriesSetup } from "../../../api";
 const TicketCategoryPage = ({ handleToggleCategoryPage, setCatAdded }) => {
-  const [isChecked, setIsChecked] = useState(false);
+  // const [isChecked, setIsChecked] = useState(false);
   const [engineers, setEngineers] = useState([]);
-  const [categoryAdded, setCategoryAdded] = useState(false)
+  // const [categoryAdded, setCategoryAdded] = useState(false)
   const [formData, setFormData] = useState({
     category: "",
     engineer: [],
     minTat: "",
   });
 
-  const handleCheckboxChange = () => {
-    // setIsChecked(!isChecked);
-  };
+  // const handleCheckboxChange = () => {
+  //   // setIsChecked(!isChecked);
+  // };
 
   const [faqs, setFaqs] = useState([{ question: "", answer: "" }]);
   const themeColor = useSelector((state) => state.theme.color);

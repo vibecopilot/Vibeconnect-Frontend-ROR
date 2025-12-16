@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import  { useState } from "react";
 
 import TicketSetupPage from "./TicketSetupPage";
 import TicketEscalationSetup from "./TicketEsclationSetup";

@@ -1,6 +1,25 @@
 import React from 'react'
+import { FaTimes } from "react-icons/fa";
+import { useState } from "react";
+const [formData, setFormData] = useState({
+  category: "",
+  minTat: "",
+});
+
+
 
 const EditCategoryModal = () => {
+
+  const handleChange = (e) => {
+  const { name, value } = e.target;
+  setFormData((prev) => ({
+    ...prev,
+    [name]: value,
+  }));
+};
+
+
+
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50">
             <div

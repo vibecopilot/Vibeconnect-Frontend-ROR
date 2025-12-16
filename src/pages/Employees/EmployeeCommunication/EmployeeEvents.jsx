@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import  { useEffect, useState } from "react";
 import DataTable from "react-data-table-component";
 import { IoAddCircleOutline } from "react-icons/io5";
 import { ImEye } from "react-icons/im";
@@ -12,7 +12,7 @@ import Navbar from "../../../components/Navbar";
 
 const EmployeeEvents = () => {
   const [searchText, setSearchText] = useState("");
-  const [filter, setFilter] = useState(false);
+  // const [filter, setFilter] = useState(false);
   const [user, setUser] = useState("");
   const [events, setEvents] = useState([]);
   const [filteredData, setFilteredData] = useState([]);

@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
+import  { useEffect, useState } from "react";
 import Navbar from "../../components/Navbar";
 import Select from "react-select";
-import { FaCheck, FaTrash } from "react-icons/fa";
+import { FaCheck,  } from "react-icons/fa";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
@@ -11,10 +11,10 @@ import { MdClose } from "react-icons/md";
 function CreatePolls() {
   const themeColor = useSelector((state) => state.theme.color);
   const [pollInput, setPollInput] = useState("");
-  const [assignedTo, setAssignedTo] = useState([]);
-  const [selectedUserOption, setSelectedUserOption] = useState([]);
+  const [, setAssignedTo] = useState([]);
+  const [, setSelectedUserOption] = useState([]);
   const [pollsOption, setPollsOption] = useState([]);
-  const [currentDate, setCurrentDate] = useState("");
+  const [, setCurrentDate] = useState("");
 
   const [share, setShare] = useState("all");
   const [selectedOwnership, setSelectedOwnership] = useState("");
