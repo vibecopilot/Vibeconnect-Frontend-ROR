@@ -4,13 +4,14 @@ import { IoAddCircleOutline } from "react-icons/io5";
 import { ImEye } from "react-icons/im";
 import { Link } from "react-router-dom";
 import { getItemInLocalStorage } from "../../utils/localStorage";
-import { getEvents } from "../../api";
+import { getEvents,updateEventEnableStatus  } from "../../api";
 import { BsEye } from "react-icons/bs";
 import Table from "../../components/table/Table";
 import { useSelector } from "react-redux";
 import Communication from "../Communication";
 import Navbar from "../../components/Navbar";
 import { BiEdit } from "react-icons/bi";
+import { toast } from "react-hot-toast";
 
 const Events = () => {
   const [searchText, setSearchText] = useState("");
@@ -38,6 +39,40 @@ const Events = () => {
     const date = new Date(dateString);
     return date.toLocaleDateString();
   };
+
+    // 🔥 FIXED: Toggle without moving row
+ const handleToggle = async (id) => {
+  const eventItem = events.find((e) => e.id === id);
+  if (!eventItem) return;
+
+  const previousStatus = eventItem.important;
+  const newStatus = !previousStatus;
+
+  const updateLocal = (status) => {
+    setEvents((prev) =>
+      prev.map((ev) =>
+        ev.id === id ? { ...ev, important: status } : ev
+      )
+    );
+
+    setFilteredData((prev) =>
+      prev.map((ev) =>
+        ev.id === id ? { ...ev, important: status } : ev
+      )
+    );
+  };
+
+  // Update UI immediately
+  updateLocal(newStatus);
+
+  try {
+    await updateEventEnableStatus(id, newStatus);
+    toast.success(newStatus ? "Event Enabled" : "Event Disabled");
+  } catch (err) {
+    toast.error("Failed to update");
+    updateLocal(previousStatus); // revert
+  }
+};
 
   const column = [
     {
@@ -90,6 +125,22 @@ const Events = () => {
     {
       name: "Created On",
       selector: (row) => dateFormat(row.created_at),
+      sortable: true,
+    },
+    {
+        name: "Enable / Disable",
+      cell: (row) => (
+        <label className="relative inline-flex items-center cursor-pointer">
+          <input
+            type="checkbox"
+            className="sr-only peer"
+            checked={row.important}
+            onChange={() => handleToggle(row.id)}
+          />
+          <div className="w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-green-600 transition-all"></div>
+          <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full peer-checked:translate-x-full transition-all"></div>
+        </label>
+      ),
       sortable: true,
     },
   ];
