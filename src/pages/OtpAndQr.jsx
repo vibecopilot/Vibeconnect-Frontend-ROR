@@ -34,8 +34,8 @@ const OtpAndQr = () => {
     fetchData();
   }, [id]);
 
-  const ProfilePic = domainPrefix + userData.profile_picture;
-  const QrCodePic = domainPrefix + userData.qr_code;
+  const ProfilePic = userData.profile_picture ? domainPrefix + userData.profile_picture : "/visitor.png";
+  const QrCodePic = userData.qr_code ? domainPrefix + userData.qr_code : null;
 
   return (
     <div className="flex flex-col items-center min-h-screen bg-gray-100 pt-3 pb-8">
@@ -56,57 +56,42 @@ const OtpAndQr = () => {
           {/* Visitor card */}
           <div className="bg-white rounded-xl shadow-md p-4 mb-6 flex items-center">
             <div className="relative h-12 w-12 rounded-full overflow-hidden mr-3">
-              {/* <Image
-                src="/placeholder.svg?height=48&width=48"
-                alt="Profile"
-                width={48}
-                height={48}
-                className="object-cover"
-              /> */}
-              <div className="relative h-12 w-12 rounded-full overflow-hidden mr-3">
-                <img
-                  src={
-                    ProfilePic
-                      ? ProfilePic
-                      : "/profile.png"
-                  }
-                  alt="Profile Picture"
-                  width={48}
-                  height={48}
-                  className="object-cover"
-                />
-              </div>
+              <img
+                src={ProfilePic}
+                alt="Profile Picture"
+                className="w-full h-full object-cover"
+              />
             </div>
             <div className="flex-1 space-y-1">
-              <h2 className="font-bold text-lg">
-                {" "}
-                Name : <span>{userData.name}</span>
-              </h2>
-              <p className="font-medium text-xs">
-                Purpose:
-                <span className="font-normal text-gray-600 mx-1">
-                  {userData.purpose}
-                </span>
-              </p>
-              <p className="font-medium text-xs">
-                Type:{" "}
-                <span className="font-normal text-gray-600 mx-1">
-                  {userData.visit_type}
-                </span>
-              </p>
-              <p className="font-medium text-xs">
-                Host:
-                <span className="font-normal text-gray-600 mx-1">
-                  {userData.hosts?.length ? userData.hosts[0].full_name : "N/A"}
-                </span>
-              </p>
-            </div>
-            <div className="text-xs text-gray-500">
-              {userData.wing} {userData.floor}
-            </div>
-          </div>
+                      <h2 className="font-bold text-lg">
+                      {" "}
+                      Name : <span>{userData.name}</span>
+                      </h2>
+                      <p className="font-medium text-xs">
+                      Purpose:
+                      <span className="font-normal text-gray-600 mx-1">
+                        {userData.purpose}
+                      </span>
+                      </p>
+                      <p className="font-medium text-xs">
+                      Type:{" "}
+                      <span className="font-normal text-gray-600 mx-1">
+                        {userData.visit_type}
+                      </span>
+                      </p>
+                      <p className="font-medium text-xs">
+                      Host:
+                      <span className="font-normal text-gray-600 mx-1">
+                        {userData.hosts?.length ? userData.hosts[0].full_name : "N/A"}
+                      </span>
+                      </p>
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {userData.wing} {userData.floor}
+                    </div>
+                    </div>
 
-          {/* Date section */}
+                    {/* Date section */}
           <div className="flex justify-between mb-6">
   {userData.pass_start_date && userData.pass_end_date ? (
     <>
