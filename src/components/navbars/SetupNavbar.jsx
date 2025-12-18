@@ -908,43 +908,55 @@ const SetupNavbar = () => {
               </NavLink>
             </li>
           )}  
-
-
-
           
-          {feat.includes("other_project") && (
-            <li>
-              <NavLink
-                to={`/admin/other-project`}
-                className={({ isActive }) =>
-                  `${
-                    isActive
-                      ? "text-white bg-blue-500 flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
-                      : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-100 rounded-md"
-                  }`
-                }
-              >
-                <div>{React.createElement(ImFolder, { size: "20" })}</div>
+{feat.includes("other_projects") && (
+  <li>
+    <NavLink
+      to="/setup/other-project"
+      className={({ isActive }) =>
+        isActive
+          ? "text-white bg-blue-500 flex p-2 gap-3.5 rounded-md group items-center text-sm font-medium"
+          : "group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-100 rounded-md"
+      }
+    >
+      <div>
+        <svg
+          stroke="currentColor"
+          fill="currentColor"
+          strokeWidth="0"
+          version="1.1"
+          viewBox="0 0 16 16"
+          height="20"
+          width="20"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path d="M14.341 3.579c-0.347-0.473-0.831-1.027-1.362-1.558s-1.085-1.015-1.558-1.362c-0.806-0.591-1.197-0.659-1.421-0.659h-7.75c-0.689 0-1.25 0.561-1.25 1.25v13.5c0 0.689 0.561 1.25 1.25 1.25h11.5c0.689 0 1.25-0.561 1.25-1.25v-9.75c0-0.224-0.068-0.615-0.659-1.421zM12.271 2.729c0.48 0.48 0.856 0.912 1.134 1.271h-2.406v-2.405c0.359 0.278 0.792 0.654 1.271 1.134zM14 14.75c0 0.136-0.114 0.25-0.25 0.25h-11.5c-0.135 0-0.25-0.114-0.25-0.25v-13.5c0-0.135 0.115-0.25 0.25-0.25 0 0 7.749-0 7.75 0v3.5c0 0.276 0.224 0.5 0.5 0.5h3.5v9.75z"></path>
+          <path d="M11.5 13h-7c-0.276 0-0.5-0.224-0.5-0.5s0.224-0.5 0.5-0.5h7c0.276 0 0.5 0.224 0.5 0.5s-0.224 0.5-0.5 0.5z"></path>
+          <path d="M11.5 11h-7c-0.276 0-0.5-0.224-0.5-0.5s0.224-0.5 0.5-0.5h7c0.276 0 0.5 0.224 0.5 0.5s-0.224 0.5-0.5 0.5z"></path>
+          <path d="M11.5 9h-7c-0.276 0-0.5-0.224-0.5-0.5s0.224-0.5 0.5-0.5h7c0.276 0 0.5 0.224 0.5 0.5s-0.224 0.5-0.5 0.5z"></path>
+        </svg>
+      </div>
 
-                <h2
-                  className={`whitespace-pre duration-300 ${
-                    !open && "opacity-0 translate-x-28 overflow-hidden"
-                  }`}
-                >
-                  Other Project
-                </h2>
+      <h2
+        className={`whitespace-pre duration-300 ${
+          !open && "opacity-0 translate-x-28 overflow-hidden"
+        }`}
+      >
+        Other Project
+      </h2>
 
-                <h2
-                  className={`${
-                    open && "hidden"
-                  } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden
-                    group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
-                >
-                  Other Project
-                </h2>
-              </NavLink>
-            </li>
-          )}
+      <h2
+        className={`${
+          open && "hidden"
+        } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden
+        group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit`}
+      >
+        Other Project
+      </h2>
+    </NavLink>
+  </li>
+)}
+
 
 
         </ul>
