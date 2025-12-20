@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
-// import TicketSetupPage from "../SubPages/TicketSetupPage";
+// import TicketSetupPage from "../SubPages/TicketSetupPage"; // Original import
 import { BiEdit } from "react-icons/bi";
 import Select from "react-select";
 import { useSelector } from "react-redux";
-import Table from "../../../components/table/Table";
+import Table from "../../../components/table/Table"; // Original import
 import { FaClone, FaTrash } from "react-icons/fa";
 
-import { RiContactsBook2Line } from "react-icons/ri";
+import { RiContactsBook2Line } from "react-icons/ri"; // Original import
 import {
   deleteEscalationRule,
   getHelpDeskCategoriesSetup,
@@ -18,7 +18,52 @@ import {
 import toast from "react-hot-toast";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
 
+// Initial state for new resolution escalation entries
+const initialResolutionEscalationData = {
+  E1: {
+    users: [],
+    p1: { days: "", hrs: "", min: "" },
+    p2: { days: "", hrs: "", min: "" },
+    p3: { days: "", hrs: "", min: "" },
+    p4: { days: "", hrs: "", min: "" },
+    p5: { days: "", hrs: "", min: "" },
+  },
+  E2: {
+    users: [],
+    p1: { days: "", hrs: "", min: "" },
+    p2: { days: "", hrs: "", min: "" },
+    p3: { days: "", hrs: "", min: "" },
+    p4: { days: "", hrs: "", min: "" },
+    p5: { days: "", hrs: "", min: "" },
+  },
+  E3: {
+    users: [],
+    p1: { days: "", hrs: "", min: "" },
+    p2: { days: "", hrs: "", min: "" },
+    p3: { days: "", hrs: "", min: "" },
+    p4: { days: "", hrs: "", min: "" },
+    p5: { days: "", hrs: "", min: "" },
+  },
+  E4: {
+    users: [],
+    p1: { days: "", hrs: "", min: "" },
+    p2: { days: "", hrs: "", min: "" },
+    p3: { days: "", hrs: "", min: "" },
+    p4: { days: "", hrs: "", min: "" },
+    p5: { days: "", hrs: "", min: "" },
+  },
+  E5: {
+    users: [],
+    p1: { days: "", hrs: "", min: "" },
+    p2: { days: "", hrs: "", min: "" },
+    p3: { days: "", hrs: "", min: "" },
+    p4: { days: "", hrs: "", min: "" },
+    p5: { days: "", hrs: "", min: "" },
+  },
+};
+
 const TicketEscalationSetup = () => {
+  // Original states for modals (kept for reference, although new state is used for dynamic content)
   const [showModal, setShowModal] = useState(false);
   const [showModal1, setShowModal1] = useState(false);
   const [showModal3, setShowModal3] = useState(false);
@@ -29,12 +74,30 @@ const TicketEscalationSetup = () => {
   const closeModal1 = () => setShowModal1(false);
   const openModal3 = () => setShowModal3(true);
   const closeModal3 = () => setShowModal3(false);
+  // End of Original Modal States
+
+  // State for Dynamic Modals (Rule data)
+  const [editingRule, setEditingRule] = useState(null); // Holds the Response rule object for editing
+  const [cloningRule, setCloningRule] = useState(null); // Holds the rule object for cloning
+  const [editingResolutionRule, setEditingResolutionRule] = useState(null); // For the Resolution Edit modal
+  
+  // State for holding and managing edited data in modals
+  const [editResponseData, setEditResponseData] = useState({ 
+    id: null,
+    category: null, 
+    escalations: {} 
+  }); 
+  const [editResolutionData, setEditResolutionData] = useState({ 
+    id: null,
+    category: null, 
+    escalations: initialResolutionEscalationData
+  });
+
   const [page, setPage] = useState("Response");
   const themeColor = useSelector((state) => state.theme.color);
   const [categories, setCategories] = useState([]);
   const [resEscalationAdded, setResEscalationAdded] = useState(false);
-  const [resolutionEscalationAdded, setResolutionEscalationAdded] =
-    useState(false);
+  const [resolutionEscalationAdded, setResolutionEscalationAdded] = useState(false); // Original state
   const [selectedOptions, setSelectedOptions] = useState({
     categories: [],
     escalations: {
@@ -46,59 +109,38 @@ const TicketEscalationSetup = () => {
     },
   });
   const [selectedResolutionOptions, setSelectedResolutionOptions] = useState({
-    escalations: {
-      E1: {
-        users: [],
-        p1: { days: "", hrs: "", min: "" },
-        p2: { days: "", hrs: "", min: "" },
-        p3: { days: "", hrs: "", min: "" },
-        p4: { days: "", hrs: "", min: "" },
-        p5: { days: "", hrs: "", min: "" },
-      },
-      E2: {
-        users: [],
-        p1: { days: "", hrs: "", min: "" },
-        p2: { days: "", hrs: "", min: "" },
-        p3: { days: "", hrs: "", min: "" },
-        p4: { days: "", hrs: "", min: "" },
-        p5: { days: "", hrs: "", min: "" },
-      },
-      E3: {
-        users: [],
-        p1: { days: "", hrs: "", min: "" },
-        p2: { days: "", hrs: "", min: "" },
-        p3: { days: "", hrs: "", min: "" },
-        p4: { days: "", hrs: "", min: "" },
-        p5: { days: "", hrs: "", min: "" },
-      },
-      E4: {
-        users: [],
-        p1: { days: "", hrs: "", min: "" },
-        p2: { days: "", hrs: "", min: "" },
-        p3: { days: "", hrs: "", min: "" },
-        p4: { days: "", hrs: "", min: "" },
-        p5: { days: "", hrs: "", min: "" },
-      },
-      E5: {
-        users: [],
-        p1: { days: "", hrs: "", min: "" },
-        p2: { days: "", hrs: "", min: "" },
-        p3: { days: "", hrs: "", min: "" },
-        p4: { days: "", hrs: "", min: "" },
-        p5: { days: "", hrs: "", min: "" },
-      },
-    },
+    escalations: initialResolutionEscalationData,
   });
   const [responseEscalation, setResponseEscalation] = useState([]);
   const [resolutionEscalation, setResolutionEscalation] = useState([]);
   const [users, setUsers] = useState([]);
+  const siteId = getItemInLocalStorage("SITEID");
 
+  /**
+   * Converts days, hours, and minutes object to total minutes.
+   * @param {object} time - {days, hrs, min}
+   * @returns {number} Total minutes.
+   */
   const convertToMinutes = ({ days, hrs, min }) => {
-    const daysInMinutes = parseInt(days) * 24 * 60 || 0;
-    const hrsInMinutes = parseInt(hrs) * 60 || 0;
-    const minutes = parseInt(min) || 0;
-    return daysInMinutes + hrsInMinutes + minutes;
+    const d = parseInt(days) || 0;
+    const h = parseInt(hrs) || 0;
+    const m = parseInt(min) || 0;
+    return (d * 24 * 60) + (h * 60) + m;
   };
+
+  /**
+   * Converts total minutes to a formatted string.
+   * @param {number} totalMinutes - Total minutes.
+   * @returns {string} Formatted time string.
+   */
+  const formatTime = (totalMinutes) => {
+    const minutes = parseInt(totalMinutes) || 0;
+    const days = Math.floor(minutes / (24 * 60));
+    const hours = Math.floor((minutes % (24 * 60)) / 60);
+    const minutesLeft = minutes % 60;
+    return `${days} day, ${hours} hr, ${minutesLeft} min`;
+  };
+
   useEffect(() => {
     const fetchAllCategories = async () => {
       try {
@@ -138,18 +180,109 @@ const TicketEscalationSetup = () => {
         const FilteredResolution = escResp.data.complaint_workers.filter(
           (res) => res.esc_type === "resolution"
         );
-        console.log(FilteredResolution);
         setResponseEscalation(FilteredResponse);
         setResolutionEscalation(FilteredResolution);
       } catch (error) {
         console.log(error);
       }
     };
+    
+    // Only fetch if a category/escalation was added/deleted/updated
+    if (resEscalationAdded || resolutionEscalationAdded) {
+      fetchEscalation();
+      setResEscalationAdded(false);
+      setResolutionEscalationAdded(false);
+    }
+
     fetchAllCategories();
     fetchEscalation();
     fetchSetupUsers();
-  }, [resEscalationAdded]);
+  }, [resEscalationAdded, resolutionEscalationAdded]); // Dependency to re-fetch after C/U/D operations
 
+  // --- Modal Control and State Initialization ---
+  const openEditModal = (rule) => {
+  setEditingRule(rule);
+
+  const initialEscalations = {
+    E1: [],
+    E2: [],
+    E3: [],
+    E4: [],
+    E5: [],
+  };
+
+  rule.escalations.forEach((level) => {
+    const userIds = level.escalate_to_users_ids || [];
+    const userNames = level.escalate_to_users_names || [];
+
+    initialEscalations[level.name] = userIds.map((id, index) => ({
+      value: id,
+      label: userNames[index] || `User ID ${id}`,
+    }));
+  });
+
+  setEditResponseData({
+    id: rule.id,
+    category: {
+      value: rule.category?.id,
+      label: rule.category?.name,
+    },
+    escalations: initialEscalations,
+  });
+};
+
+  const closeEditModal = () => setEditingRule(null);
+  const openCloneModal = (rule) => setCloningRule(rule);
+  const closeCloneModal = () => setCloningRule(null);
+  
+  const openResolutionEditModal = (rule) => {
+    setEditingResolutionRule(rule);
+    // Initialize state for Resolution Edit Modal
+    // Deep copy the initial structure to avoid mutation
+    const initialEscalations = JSON.parse(JSON.stringify(initialResolutionEscalationData)); 
+    
+    rule.escalations.forEach(level => {
+        const levelName = level.name;
+        
+        // --- Map users ---
+        const userIds = level.escalate_to_users_ids || [];
+        const userNames = level.escalate_to_users_names || [];
+        
+        // Map users to { value, label } format
+        const users = userIds.map((id, index) => ({
+            value: id,
+            label: userNames[index] || `User ID ${id}` // Fallback label
+        })) || [];
+        
+        // --- Map time (P1-P5) ---
+        const timeFields = {};
+        ["p1", "p2", "p3", "p4", "p5"].forEach(pField => {
+            const totalMinutes = level[pField] || 0;
+            const days = Math.floor(totalMinutes / (24 * 60));
+            const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
+            const min = totalMinutes % 60;
+            // Convert to string to work with input type="text"
+            timeFields[pField] = { days: String(days), hrs: String(hours), min: String(min) };
+        });
+
+        // Merge users and time data into the correct level
+        initialEscalations[levelName] = { 
+            users, 
+            ...timeFields 
+        };
+    });
+    
+    setEditResolutionData({
+        id: rule.id,
+        category: { value: rule.category?.id, label: rule.category?.name },
+        escalations: initialEscalations,
+    });
+  };
+  const closeResolutionEditModal = () => setEditingResolutionRule(null);
+  
+  // --- Change Handlers for Main Forms ---
+
+  // Handler for Response Escalation form select inputs (Categories and Users)
   const handleChange = (selected, type, level = null) => {
     if (type === "categories") {
       setSelectedOptions((prevOptions) => ({
@@ -166,203 +299,8 @@ const TicketEscalationSetup = () => {
       }));
     }
   };
-  console.log(selectedOptions);
-  const columns = [
-    {
-      name: "Category Type",
-      selector: (row) => row.type,
-      sortable: true,
-    },
-    {
-      name: "Levels",
-      selector: (row) => row.Levels,
-      sortable: true,
-    },
-    {
-      name: "Escalation To",
-      selector: (row) => row.to,
-      sortable: true,
-    },
-  ];
-  const columns1 = [
-    {
-      name: "Category Type",
-      selector: (row) => row.type,
-      sortable: true,
-    },
-    {
-      name: "Levels",
-      selector: (row) => row.Levels,
-      sortable: true,
-    },
-    {
-      name: "Escalation To",
-      selector: (row) => row.to,
-      sortable: true,
-    },
-    {
-      name: "P1",
-      selector: (row) => row.P1,
-      sortable: true,
-    },
-    {
-      name: "P2",
-      selector: (row) => row.P2,
-      sortable: true,
-    },
-    {
-      name: "P3",
-      selector: (row) => row.P3,
-      sortable: true,
-    },
-    {
-      name: "P4",
-      selector: (row) => row.P4,
-      sortable: true,
-    },
-    {
-      name: "P5",
-      selector: (row) => row.P5,
-      sortable: true,
-    },
-  ];
-  const data1 = [
-    {
-      type: "plumbing",
-      Levels: "E1",
-      to: "Deepak Gupta",
-      P1: "0 day, 0 hour, 2 minute",
-      P2: "0 day, 0 hour, 2 minute",
-      P3: "0 day, 0 hour, 2 minute",
-      P4: "0 day, 0 hour, 2 minute",
-      P5: "0 day, 0 hour, 2 minute",
-    },
-    {
-      type: "plumbing",
-      Levels: "E2",
-      to: "Deepak Gupta",
-      P1: "0 day, 0 hour, 2 minute",
-      P2: "0 day, 0 hour, 2 minute",
-      P3: "0 day, 0 hour, 2 minute",
-      P4: "0 day, 0 hour, 2 minute",
-      P5: "0 day, 0 hour, 2 minute",
-    },
-    {
-      type: "plumbing",
-      Levels: "E3",
-      to: "Deepak Gupta",
-      P1: "0 day, 0 hour, 2 minute",
-      P2: "0 day, 0 hour, 2 minute",
-      P3: "0 day, 0 hour, 2 minute",
-      P4: "0 day, 0 hour, 2 minute",
-      P5: "0 day, 0 hour, 2 minute",
-    },
-    {
-      type: "plumbing",
-      Levels: "E4",
-      to: "Deepak Gupta",
-      P1: "0 day, 0 hour, 2 minute",
-      P2: "0 day, 0 hour, 2 minute",
-      P3: "0 day, 0 hour, 2 minute",
-      P4: "0 day, 0 hour, 2 minute",
-      P5: "0 day, 0 hour, 2 minute",
-    },
-    {
-      type: "plumbing",
-      Levels: "E5",
-      to: "Deepak Gupta",
-      P1: "0 day, 0 hour, 2 minute",
-      P2: "0 day, 0 hour, 2 minute",
-      P3: "0 day, 0 hour, 2 minute",
-      P4: "0 day, 0 hour, 2 minute",
-      P5: "0 day, 0 hour, 2 minute",
-    },
-  ];
-  const data = [
-    {
-      type: "plumbing",
-      Levels: "E1",
-      to: "Deepak Gupta",
-    },
-    {
-      type: "plumbing",
-      Levels: "E2",
-      to: "Deepak Gupta",
-    },
-    {
-      type: "plumbing",
-      Levels: "E3",
-      to: "Deepak Gupta",
-    },
-    {
-      type: "plumbing",
-      Levels: "E4",
-      to: "Deepak Gupta",
-    },
-    {
-      type: "plumbing",
-      Levels: "E5",
-      to: "Deepak Gupta",
-    },
-  ];
 
-  const formatTime = (minutes) => {
-    const days = Math.floor(minutes / (24 * 60));
-    const hours = Math.floor((minutes % (24 * 60)) / 60);
-    const minutesLeft = minutes % 60;
-    return `${days} day, ${hours} hr, ${minutesLeft} min`;
-  };
-
-  const siteId = getItemInLocalStorage("SITEID");
-  const handleSaveResponseEscalation = async () => {
-    if (selectedOptions.categories.length === 0) {
-      return toast.error("Please Provide Escalation Data");
-    }
-    toast.loading("Creating Response Escalation Please wait!");
-    const formData = new FormData();
-    formData.append("complaint_worker[society_id]", siteId);
-    formData.append("complaint_worker[esc_type]", "response");
-    formData.append("complaint_worker[of_phase]", "pms");
-    formData.append("complaint_worker[of_atype]", "Pms::Site");
-    selectedOptions.categories.forEach((category) => {
-      formData.append("category_ids[]", category.value);
-    });
-    Object.entries(selectedOptions.escalations).forEach(([level, users]) => {
-      formData.append(`escalation_matrix[${level.toLowerCase()}][name]`, level);
-      users.forEach((user, index) => {
-        formData.append(
-          `escalation_matrix[${level.toLowerCase()}][escalate_to_users][]`,
-          user.value
-        );
-      });
-    });
-
-    try {
-      const res = await postHelpDeskEscalationSetup(formData);
-      setResEscalationAdded(true);
-      toast.dismiss();
-      toast.success("Response Escalation Created Successfully");
-      setSelectedOptions((prevData) => ({
-        ...prevData,
-        categories: [],
-        escalations: {
-          E1: [],
-          E2: [],
-          E3: [],
-          E4: [],
-          E5: [],
-        },
-      }));
-    } catch (error) {
-      console.log(error);
-      toast.dismiss();
-    } finally {
-      setTimeout(() => {
-        setResEscalationAdded(false);
-      }, 500);
-    }
-  };
-
+  // Handler for Resolution Escalation form (Escalation Users select)
   const handleUserChange = (selected, level) => {
     setSelectedResolutionOptions((prev) => ({
       ...prev,
@@ -375,9 +313,12 @@ const TicketEscalationSetup = () => {
       },
     }));
   };
-  console.log(selectedResolutionOptions);
 
+  // Handler for Resolution Escalation form (P1-P5 time inputs)
   const handlePChange = (value, level, pField, fieldType) => {
+    // Only allow numeric input
+    if (value && !/^\d*$/.test(value)) return;
+    
     setSelectedResolutionOptions((prevState) => ({
       ...prevState,
       escalations: {
@@ -392,135 +333,292 @@ const TicketEscalationSetup = () => {
       },
     }));
   };
+  
+  // --- Change Handlers for Edit Modals ---
 
-  const initialData = {
-    E1: {
-      users: [],
-      p1: { days: "", hrs: "", min: "" },
-      p2: { days: "", hrs: "", min: "" },
-      p3: { days: "", hrs: "", min: "" },
-      p4: { days: "", hrs: "", min: "" },
-      p5: { days: "", hrs: "", min: "" },
-    },
-    E2: {
-      users: [],
-      p1: { days: "", hrs: "", min: "" },
-      p2: { days: "", hrs: "", min: "" },
-      p3: { days: "", hrs: "", min: "" },
-      p4: { days: "", hrs: "", min: "" },
-      p5: { days: "", hrs: "", min: "" },
-    },
-    E3: {
-      users: [],
-      p1: { days: "", hrs: "", min: "" },
-      p2: { days: "", hrs: "", min: "" },
-      p3: { days: "", hrs: "", min: "" },
-      p4: { days: "", hrs: "", min: "" },
-      p5: { days: "", hrs: "", min: "" },
-    },
-    E4: {
-      users: [],
-      p1: { days: "", hrs: "", min: "" },
-      p2: { days: "", hrs: "", min: "" },
-      p3: { days: "", hrs: "", min: "" },
-      p4: { days: "", hrs: "", min: "" },
-      p5: { days: "", hrs: "", min: "" },
-    },
-    E5: {
-      users: [],
-      p1: { days: "", hrs: "", min: "" },
-      p2: { days: "", hrs: "", min: "" },
-      p3: { days: "", hrs: "", min: "" },
-      p4: { days: "", hrs: "", min: "" },
-      p5: { days: "", hrs: "", min: "" },
-    },
+  // Handler for Response Escalation Edit Modal select inputs (Users only)
+  const handleEditResponseUserChange = (selected, level) => {
+    setEditResponseData((prev) => ({
+        ...prev,
+        escalations: {
+            ...prev.escalations,
+            [level]: selected,
+        },
+    }));
   };
 
-  const handleSaveResolutionEscalation = async () => {
+  // Handler for Resolution Escalation Edit Modal (Escalation Users select)
+  const handleEditResolutionUserChange = (selected, level) => {
+    setEditResolutionData((prev) => ({
+        ...prev,
+        escalations: {
+            ...prev.escalations,
+            [level]: {
+                ...prev.escalations[level],
+                users: selected,
+            },
+        },
+    }));
+  };
+
+  // Handler for Resolution Escalation Edit Modal (P1-P5 time inputs)
+  const handleEditResolutionTimeChange = (value, level, pField, fieldType) => {
+    // Only allow numeric input
+    if (value && !/^\d*$/.test(value)) return;
+
+    setEditResolutionData((prevState) => ({
+        ...prevState,
+        escalations: {
+            ...prevState.escalations,
+            [level]: {
+                ...prevState.escalations[level],
+                [pField]: {
+                    ...prevState.escalations[level][pField],
+                    [fieldType]: value,
+                },
+            },
+        },
+    }));
+  };
+  
+  // --- API Call Handlers (Create/Update/Delete) ---
+
+  const handleSaveResponseEscalation = async () => {
     if (selectedOptions.categories.length === 0) {
-      return toast.error("Please Provide Escalation Data");
+      return toast.error("Please select at least one Category");
     }
-    toast.loading("Creating Response Escalation Please wait!");
+    toast.loading("Creating Response Escalation. Please wait!");
     const formData = new FormData();
     formData.append("complaint_worker[society_id]", siteId);
-    formData.append("complaint_worker[esc_type]", "resolution");
+    formData.append("complaint_worker[esc_type]", "response");
     formData.append("complaint_worker[of_phase]", "pms");
     formData.append("complaint_worker[of_atype]", "Pms::Site");
+    
     selectedOptions.categories.forEach((category) => {
       formData.append("category_ids[]", category.value);
     });
-    // Object.entries(selectedOptions.escalations).forEach(([level, users]) => {
-    //   formData.append(`escalation_matrix[${level.toLowerCase()}][name]`, level);
-    //   users.forEach((user, index) => {
-    //     formData.append(
-    //       `escalation_matrix[${level.toLowerCase()}][escalate_to_users][]`,
-    //       user.value
-    //     );
-    //   });
-    // });
-    Object.entries(selectedResolutionOptions.escalations).forEach(
-      ([level, data]) => {
-        formData.append(
-          `escalation_matrix[${level.toLowerCase()}][name]`,
-          level
-        );
-        data.users.forEach((user) => {
+
+    Object.entries(selectedOptions.escalations).forEach(([level, users]) => {
+      if (users.length > 0) { // Only send levels that have users selected
+        formData.append(`escalation_matrix[${level.toLowerCase()}][name]`, level);
+        users.forEach((user) => {
           formData.append(
             `escalation_matrix[${level.toLowerCase()}][escalate_to_users][]`,
             user.value
           );
         });
-        ["p1", "p2", "p3", "p4", "p5"].forEach((pField) => {
-          const totalMinutes = convertToMinutes(data[pField]);
+      }
+    });
+
+    try {
+      await postHelpDeskEscalationSetup(formData); 
+      setResEscalationAdded(true);
+      toast.dismiss();
+      toast.success("Response Escalation Created Successfully");
+      // Reset form options
+      setSelectedOptions({
+        categories: [],
+        escalations: { E1: [], E2: [], E3: [], E4: [], E5: [] },
+      });
+      
+    } catch (error) {
+      console.error(error);
+      toast.dismiss();
+      toast.error("Failed to create Response Escalation.");
+    } 
+  };
+  
+  const handleUpdateResponseEscalation = async () => {
+    if (!editResponseData.id) return toast.error("Rule ID not found for update.");
+    toast.loading("Updating Response Escalation. Please wait!");
+    
+    const formData = new FormData();
+    formData.append("id", editResponseData.id); // Crucial for update
+    formData.append("complaint_worker[society_id]", siteId);
+    formData.append("complaint_worker[esc_type]", "response");
+    formData.append("complaint_worker[of_phase]", "pms");
+    formData.append("complaint_worker[of_atype]", "Pms::Site");
+    
+    // Only one category is supported in the current edit flow.
+    formData.append("category_ids[]", editResponseData.category.value);
+
+    Object.entries(editResponseData.escalations).forEach(([level, users]) => {
+      if (users && users.length > 0) { 
+        formData.append(`escalation_matrix[${level.toLowerCase()}][name]`, level);
+        users.forEach((user) => {
           formData.append(
-            `escalation_matrix[${level.toLowerCase()}][${pField}]`,
-            totalMinutes
+            `escalation_matrix[${level.toLowerCase()}][escalate_to_users][]`,
+            user.value
           );
         });
+      }
+    });
+
+    try {
+      // Assuming postHelpDeskEscalationSetup handles PUT/PATCH when ID is present
+      await postHelpDeskEscalationSetup(formData); 
+      setResEscalationAdded(true);
+      closeEditModal();
+      toast.dismiss();
+      toast.success("Response Escalation Updated Successfully");
+    } catch (error) {
+      console.error(error);
+      toast.dismiss();
+      toast.error("Failed to update Response Escalation.");
+    } 
+  };
+
+  const handleSaveResolutionEscalation = async () => {
+    if (selectedOptions.categories.length === 0) {
+      return toast.error("Please select at least one Category");
+    }
+    toast.loading("Creating Resolution Escalation. Please wait!");
+    const formData = new FormData();
+    formData.append("complaint_worker[society_id]", siteId);
+    formData.append("complaint_worker[esc_type]", "resolution");
+    formData.append("complaint_worker[of_phase]", "pms");
+    formData.append("complaint_worker[of_atype]", "Pms::Site");
+    
+    selectedOptions.categories.forEach((category) => {
+      formData.append("category_ids[]", category.value);
+    });
+
+    Object.entries(selectedResolutionOptions.escalations).forEach(
+      ([level, data]) => {
+        // Check if there's any user or time setting for this level
+        const hasUsers = data.users.length > 0;
+        const hasTime = ["p1", "p2", "p3", "p4", "p5"].some(pField => 
+          convertToMinutes(data[pField]) > 0
+        );
+
+        if (hasUsers || hasTime) {
+          formData.append(
+            `escalation_matrix[${level.toLowerCase()}][name]`,
+            level
+          );
+          
+          data.users.forEach((user) => {
+            formData.append(
+              `escalation_matrix[${level.toLowerCase()}][escalate_to_users][]`,
+              user.value
+            );
+          });
+
+          ["p1", "p2", "p3", "p4", "p5"].forEach((pField) => {
+            const totalMinutes = convertToMinutes(data[pField]);
+            formData.append(
+              `escalation_matrix[${level.toLowerCase()}][${pField}]`,
+              totalMinutes
+            );
+          });
+        }
       }
     );
 
     try {
-      const res = await postHelpDeskResolutionEscalationSetup(formData);
-      setResEscalationAdded(true);
+      await postHelpDeskResolutionEscalationSetup(formData);
+      setResolutionEscalationAdded(true);
       toast.dismiss();
       toast.success("Resolution Escalation Created Successfully");
+      // Reset form options
       setSelectedOptions((prevData) => ({
         ...prevData,
         categories: [],
       }));
-      setSelectedResolutionOptions((prevData) => ({
-        ...prevData,
-        escalations: initialData,
-      }));
+      setSelectedResolutionOptions({
+        escalations: initialResolutionEscalationData,
+      });
+      
     } catch (error) {
-      console.log(error);
+      console.error(error);
       toast.dismiss();
-    } finally {
-      setTimeout(() => {
-        setResEscalationAdded(false);
-      }, 500);
-    }
+      toast.error("Failed to create Resolution Escalation.");
+    } 
+  };
+  
+  const handleUpdateResolutionEscalation = async () => {
+    if (!editResolutionData.id) return toast.error("Rule ID not found for update.");
+    toast.loading("Updating Resolution Escalation. Please wait!");
+    
+    const formData = new FormData();
+    formData.append("id", editResolutionData.id); // Crucial for update
+    formData.append("complaint_worker[society_id]", siteId);
+    formData.append("complaint_worker[esc_type]", "resolution");
+    formData.append("complaint_worker[of_phase]", "pms");
+    formData.append("complaint_worker[of_atype]", "Pms::Site");
+    
+    // Only one category is supported in the current edit flow.
+    formData.append("category_ids[]", editResolutionData.category.value);
+
+    Object.entries(editResolutionData.escalations).forEach(
+      ([level, data]) => {
+        // Check if there's any user or time setting for this level
+        const hasUsers = data.users.length > 0;
+        const hasTime = ["p1", "p2", "p3", "p4", "p5"].some(pField => 
+          convertToMinutes(data[pField]) > 0
+        );
+
+        if (hasUsers || hasTime) {
+          formData.append(
+            `escalation_matrix[${level.toLowerCase()}][name]`,
+            level
+          );
+          
+          data.users.forEach((user) => {
+            formData.append(
+              `escalation_matrix[${level.toLowerCase()}][escalate_to_users][]`,
+              user.value
+            );
+          });
+
+          ["p1", "p2", "p3", "p4", "p5"].forEach((pField) => {
+            const totalMinutes = convertToMinutes(data[pField]);
+            formData.append(
+              `escalation_matrix[${level.toLowerCase()}][${pField}]`,
+              totalMinutes
+            );
+          });
+        }
+      }
+    );
+
+    try {
+      // Assuming postHelpDeskResolutionEscalationSetup handles PUT/PATCH when ID is present
+      await postHelpDeskResolutionEscalationSetup(formData);
+      setResolutionEscalationAdded(true);
+      closeResolutionEditModal();
+      toast.dismiss();
+      toast.success("Resolution Escalation Updated Successfully");
+    } catch (error) {
+      console.error(error);
+      toast.dismiss();
+      toast.error("Failed to update Resolution Escalation.");
+    } 
   };
 
+
   const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this escalation rule?")) {
+        return;
+    }
     try {
-      toast.loading("Deleting Escalation Rule Please wait!");
-      const deleteResp = await deleteEscalationRule(id);
+      toast.loading("Deleting Escalation Rule. Please wait!");
+      await deleteEscalationRule(id);
       toast.dismiss();
-      setResEscalationAdded(true);
-      toast.success("Escalation Rule Deleted SuccessFully");
+      setResEscalationAdded(true); // Trigger re-fetch
+      toast.success("Escalation Rule Deleted Successfully");
     } catch (error) {
-      console.log(error);
+      console.error(error);
       toast.dismiss();
-    } finally {
-      setTimeout(() => {
-        setResEscalationAdded(false);
-      }, 500);
+      toast.error("Failed to delete Escalation Rule.");
     }
   };
+  
+  // --- JSX Rendering ---
+
   return (
     <div className="w-full my-2 flex overflow-hidden flex-col">
+      {/* Tab Switcher */}
       <div className="flex w-full">
         <div className=" flex gap-2 p-1 pb-0 border-b border-gray-300 w-full">
           <h2
@@ -541,20 +639,16 @@ const TicketEscalationSetup = () => {
           >
             Resolution Escalation
           </h2>
-          {/* <h2
-          className={`p-1 ${
-            page === "Cost Approval" &&
-            "bg-white font-medium text-blue-500 shadow-custom-all-sides"
-          } rounded-t-md px-4 cursor-pointer transition-all duration-300 ease-linear`}
-          onClick={() => setPage("Cost Approval")}
-        >
-          Cost Approval
-        </h2> */}
         </div>
       </div>
+      
+      {/* Content Area */}
       <div>
+        {/* === Response Escalation Tab === */}
         {page === "Response" && (
           <div className=" mt-2 px-2">
+            
+            {/* --- Response Escalation Setup Form (Create) --- */}
             <div className="flex flex-col my-2">
               <Select
                 id="categories"
@@ -563,8 +657,6 @@ const TicketEscalationSetup = () => {
                 onChange={(selected) => handleChange(selected, "categories")}
                 options={categories}
                 placeholder="Select Categories"
-                // className="basic-multi-select w-64"
-                // classNamePrefix="select"
               />
 
               <div className=" w-full my-2">
@@ -590,11 +682,12 @@ const TicketEscalationSetup = () => {
                           <Select
                             id={`select-${level}`}
                             isMulti
-                            value={selectedOptions[level]}
+                            value={selectedOptions.escalations[level]}
                             onChange={(selected) =>
                               handleChange(selected, "escalations", level)
                             }
                             options={users}
+                            placeholder="Select Users"
                           />
                         </td>
                       </tr>
@@ -605,7 +698,7 @@ const TicketEscalationSetup = () => {
                 &nbsp;
                 <div className="flex justify-center">
                   <button
-                    className="font-semibold hover:bg-black hover:text-white transition-all  p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
+                    className="font-semibold hover:bg-black hover:text-white transition-all p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
                     style={{ background: themeColor }}
                     onClick={handleSaveResponseEscalation}
                   >
@@ -614,68 +707,32 @@ const TicketEscalationSetup = () => {
                 </div>
               </div>
             </div>
-            {/* <div className="flex gap-3 ">
-              <div className="text-center mt-1">
-                <label
-                  htmlFor=""
-                  className="font-semibold"
-                  style={{ fontSize: "20px" }}
-                >
-                  Filter
-                </label>
-              </div>
-
-              <select
-                name=""
-                id=""
-                className="border  rounded-md border-black w-64"
-              >
-                <option value="">Housekeeping</option>
-                <option value="">Technical</option>
-              </select>
-              <button
-                className=" font-semibold hover:bg-green-500 hover:text-white transition-all border-green-500 px-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
-                style={{ background: themeColor }}
-              >
-                Apply
-              </button>
-              <button
-                className=" font-semibold  hover:text-white transition-all  px-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
-                style={{ background: themeColor }}
-              >
-                Reset
-              </button>
-            </div> */}
+            
+            {/* --- Response Escalation List --- */}
             <div className="w-full">
               <div>
                 {responseEscalation.map((category, index) => (
-                  <div key={index} className="category-table">
-                    <div className="flex gap-2 justify-between w-full border-b border-gray-300">
-                      <p className="font-semibold ">Rule {index + 1} </p>
-                      <div className="flex gap-2 items-center">
-                        <button onClick={openModal}>
+                  <div key={category.id || index} className="category-table my-4 border p-2 rounded-md shadow-sm">
+                    <div className="flex gap-2 justify-between w-full border-b border-gray-300 pb-2 mb-2">
+                      <p className="font-semibold ">Rule {index + 1} - Category: {category.category?.name || 'N/A'}</p>
+                      <div className="flex gap-2 items-center text-xl">
+                        <button onClick={() => openEditModal(category)} title="Edit Rule">
                           <BiEdit />
                         </button>
-                        <button onClick={openModal1}>
+                        <button onClick={() => openCloneModal(category)} title="Clone Rule">
                           <FaClone />
                         </button>
-                        <button onClick={() => handleDelete(category.id)}>
+                        <button onClick={() => handleDelete(category.id)} title="Delete Rule" className="text-red-500">
                           <FaTrash />
                         </button>
                       </div>
                     </div>
-                    <table className="table-auto w-full border-collapse border border-gray-200 my-4 rounded-md overflow-x-auto">
+                    <table className="table-auto w-full border-collapse border border-gray-200 rounded-md overflow-x-auto">
                       <thead
                         style={{ background: themeColor }}
                         className="bg-gray-100 rounded-md"
                       >
                         <tr>
-                          <th
-                            className="border border-gray-200 px-4 py-2 text-white"
-                            style={{ width: "20%" }}
-                          >
-                            Category
-                          </th>
                           <th
                             className="border border-gray-200 px-4 py-2 text-white"
                             style={{ width: "30%" }}
@@ -684,7 +741,7 @@ const TicketEscalationSetup = () => {
                           </th>
                           <th
                             className="border border-gray-200 px-4 py-2 text-white"
-                            style={{ width: "50%" }}
+                            style={{ width: "70%" }}
                           >
                             Escalation To
                           </th>
@@ -693,15 +750,6 @@ const TicketEscalationSetup = () => {
                       <tbody>
                         {category.escalations.map((level, levelIndex) => (
                           <tr key={levelIndex}>
-                            {levelIndex === 0 && (
-                              <td
-                                className="border border-gray-200 py-2 text-center font-medium"
-                                rowSpan={category.escalations.length}
-                                style={{ width: "20%" }}
-                              >
-                                {category.category.name}
-                              </td>
-                            )}
                             <td
                               className="border border-gray-200 px-4 py-2 text-center font-medium"
                               style={{ width: "30%" }}
@@ -710,7 +758,7 @@ const TicketEscalationSetup = () => {
                             </td>
                             <td
                               className="border border-gray-200 px-4 py-2 text-sm"
-                              style={{ width: "50%" }}
+                              style={{ width: "70%" }}
                             >
                               {Array.isArray(level.escalate_to_users_names)
                                 ? level.escalate_to_users_names.join(", ")
@@ -726,190 +774,19 @@ const TicketEscalationSetup = () => {
             </div>
           </div>
         )}
-        {showModal1 && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white p-5 rounded-lg w-96">
-              {/* <h1>Clone Data</h1> */}
-              <h2 className="text-xl text-center font-semibold mb-4">
-                Clone Data
-              </h2>
-              <div className="grid grid-cols-1">
-                <div className="grid gap-2 w-full">
-                  <label htmlFor="">Regions</label>
-                  <select name="" id="" className="border p-2 ">
-                    <option value="">Pune</option>
-                    <option value="">kolkata</option>
-                  </select>
-                </div>
-                <div className="grid gap-2 mt-2 w-full">
-                  <label htmlFor="">Zones</label>
-                  <select name="" id="" className="border p-2 ">
-                    <option value="">west zone</option>
-                    <option value="">East</option>
-                  </select>
-                </div>
-              </div>
-              <div className="flex justify-center gap-2 mt-2">
-                <button
-                  className="border-2 font-semibold hover:bg-black hover:text-white transition-all border-black p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
-                  style={{ background: themeColor }}
-                >
-                  Clone
-                </button>
-                <button
-                  onClick={closeModal1}
-                  className="border-2 font-semibold hover:bg-black hover:text-white transition-all border-black p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
-                  style={{ background: themeColor }}
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-        {showModal && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white p-5 rounded-lg w-2/3">
-              <div className="flex  flex-col gap-2">
-                <div>
-                  <h1 className="font-semibold mb-2 text-center">Edit</h1>
-                  <Select
-                    id="categories"
-                    isMulti
-                    value={selectedOptions}
-                    onChange={(selected) =>
-                      handleChange(selected, "categories")
-                    }
-                    options={categories}
-                    className="basic-multi-select w-64"
-                    classNamePrefix="select"
-                  />
-                </div>
-
-                {/* <select name="" id=""  className="border p-2 rounded-md border-black w-60 absolute right-0 "></select> */}
-
-                <div className=" w-full  mb-2">
-                  <table className="w-full border-collapse">
-                    <thead>
-                      <tr>
-                        <th className="border border-gray-300 bg-gray-100 px-4 py-2">
-                          Levels
-                        </th>
-                        <th className="border border-gray-300 bg-gray-100 px-4 py-2">
-                          Escalation To
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td className="border border-gray-300 px-4 py-2 text-center">
-                          E1
-                        </td>
-                        <td className="border border-gray-300 px-4 py-2 text-center">
-                          <select
-                            name=""
-                            id=""
-                            className="border p-2 rounded-md border-black w-full"
-                          >
-                            <option value="">Rohit</option>{" "}
-                            <option value="">Ramesh</option>
-                          </select>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="border border-gray-300 px-4 py-2 text-center">
-                          E2
-                        </td>
-                        <td className="border border-gray-300 px-4 py-2 text-center">
-                          <select
-                            name=""
-                            id=""
-                            className="border p-2 rounded-md border-black w-full"
-                          >
-                            <option value="">Rohit</option>{" "}
-                            <option value="">Ramesh</option>
-                          </select>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="border border-gray-300 px-4 py-2 text-center">
-                          E3
-                        </td>
-                        <td className="border border-gray-300 px-4 py-2 text-center">
-                          <select
-                            name=""
-                            id=""
-                            className="border p-2 rounded-md border-black w-full"
-                          >
-                            <option value="">Rohit</option>{" "}
-                            <option value="">Ramesh</option>
-                          </select>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="border border-gray-300 px-4 py-2 text-center">
-                          E4
-                        </td>
-                        <td className="border border-gray-300 px-4 py-2 text-center">
-                          <select
-                            name=""
-                            id=""
-                            className="border p-2 rounded-md border-black w-full"
-                          >
-                            <option value="">Rohit</option>{" "}
-                            <option value="">Ramesh</option>
-                          </select>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="border border-gray-300 px-4 py-2 text-center">
-                          E5
-                        </td>
-                        <td className="border border-gray-300 px-4 py-2 text-center">
-                          <select
-                            name=""
-                            id=""
-                            className="border p-2 rounded-md border-black w-full"
-                          >
-                            <option value="">Rohit</option>{" "}
-                            <option value="">Ramesh</option>
-                          </select>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                  <hr />
-                  &nbsp;
-                  <div className="flex gap-2 justify-center">
-                    <button
-                      className="border-2 font-semibold hover:bg-black hover:text-white transition-all border-black p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
-                      style={{ background: themeColor, height: "1cm" }}
-                    >
-                      Update
-                    </button>
-                    <button
-                      onClick={closeModal}
-                      className="border-2 font-semibold hover:bg-black hover:text-white transition-all border-black p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
-                      style={{ background: themeColor, height: "1cm" }}
-                    >
-                      Close
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        
+        {/* === Resolution Escalation Tab === */}
         {page === "Resolution" && (
           <div className=" m-2">
-            <div className=" flex flex-col  my-2 ">
+            
+            {/* --- Resolution Escalation Setup Form (Create) --- */}
+            <div className=" flex flex-col my-2 ">
               <Select
                 isMulti
                 noOptionsMessage={() => "Categories not available..."}
                 onChange={(selected) => handleChange(selected, "categories")}
                 options={categories}
                 value={selectedOptions.categories}
-                // classNamePrefix="select"
                 placeholder="Select Categories"
               />
               <div className=" w-full overflow-auto ">
@@ -937,7 +814,7 @@ const TicketEscalationSetup = () => {
                   <tbody>
                     {["E1", "E2", "E3", "E4", "E5"].map((level) => (
                       <tr key={level}>
-                        <td className="border border-gray-300 px-4 py-2">
+                        <td className="border border-gray-300 px-4 py-2 text-center">
                           {level}
                         </td>
                         <td className="border border-gray-300 px-4 py-2 min-w-60">
@@ -950,18 +827,19 @@ const TicketEscalationSetup = () => {
                               handleUserChange(selected, level)
                             }
                             options={users}
+                            placeholder="Select Users"
                           />
                         </td>
                         {["p1", "p2", "p3", "p4", "p5"].map((pField) => (
                           <td
                             key={pField}
-                            className="border border-gray-300 px-4 py-2"
+                            className="border border-gray-300 px-2 py-2"
                           >
-                            <div className="flex gap-2">
+                            <div className="flex gap-1 justify-center">
                               <input
                                 type="text"
-                                className="w-12 h-30 border border-gray-300 rounded-sm px-2 py-1 placeholder:text-sm"
-                                placeholder="Days"
+                                className="w-12 border border-gray-300 rounded-sm px-1 py-1 text-sm text-center"
+                                placeholder="D"
                                 value={
                                   selectedResolutionOptions.escalations[level][
                                     pField
@@ -976,21 +854,11 @@ const TicketEscalationSetup = () => {
                                   )
                                 }
                                 pattern="[0-9]*"
-                                onKeyDown={(e) => {
-                                  if (
-                                    !/[0-9]/.test(e.key) &&
-                                    e.key !== "Backspace" &&
-                                    e.key !== "ArrowLeft" &&
-                                    e.key !== "ArrowRight"
-                                  ) {
-                                    e.preventDefault();
-                                  }
-                                }}
                               />
                               <input
                                 type="text"
-                                className="w-12 h-30 border border-gray-300 rounded-sm px-2 py-1 placeholder:text-sm"
-                                placeholder="Hrs"
+                                className="w-12 border border-gray-300 rounded-sm px-1 py-1 text-sm text-center"
+                                placeholder="H"
                                 pattern="[0-9]*"
                                 value={
                                   selectedResolutionOptions.escalations[level][
@@ -1005,21 +873,11 @@ const TicketEscalationSetup = () => {
                                     "hrs"
                                   )
                                 }
-                                onKeyDown={(e) => {
-                                  if (
-                                    !/[0-9]/.test(e.key) &&
-                                    e.key !== "Backspace" &&
-                                    e.key !== "ArrowLeft" &&
-                                    e.key !== "ArrowRight"
-                                  ) {
-                                    e.preventDefault();
-                                  }
-                                }}
                               />
                               <input
                                 type="text"
-                                className="w-12 h-30 border border-gray-300 rounded-sm px-2 py-1 placeholder:text-sm"
-                                placeholder="Min"
+                                className="w-12 border border-gray-300 rounded-sm px-1 py-1 text-sm text-center"
+                                placeholder="M"
                                 pattern="[0-9]*"
                                 value={
                                   selectedResolutionOptions.escalations[level][
@@ -1034,16 +892,6 @@ const TicketEscalationSetup = () => {
                                     "min"
                                   )
                                 }
-                                onKeyDown={(e) => {
-                                  if (
-                                    !/[0-9]/.test(e.key) &&
-                                    e.key !== "Backspace" &&
-                                    e.key !== "ArrowLeft" &&
-                                    e.key !== "ArrowRight"
-                                  ) {
-                                    e.preventDefault();
-                                  }
-                                }}
                               />
                             </div>
                           </td>
@@ -1065,706 +913,28 @@ const TicketEscalationSetup = () => {
               </div>
             </div>
 
-            {showModal3 && (
-              <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-                <div className="bg-white p-5 rounded-lg w-2/4">
-                  <h2 className="text-xl text-center font-semibold mb-4">
-                    Edit
-                  </h2>
-                  <div className=" flex flex-col gap-2 font-medium">
-                    <div>
-                      <select
-                        name=""
-                        id=""
-                        className="border p-2 rounded-md border-black w-64 h-10 "
-                      >
-                        <option value="">Select</option>
-                        <option value="">pantry</option>
-                        <option value="">Housekeeping</option>
-                        <option value="">others</option>
-                      </select>
-                    </div>
-                    <div>
-                      <table className="border-collapse">
-                        <thead>
-                          <tr>
-                            <th className="border border-gray-300 bg-gray-100 px-4 py-2">
-                              Levels
-                            </th>
-                            <th className="border border-gray-300 bg-gray-100 px-4 py-2">
-                              Escalation To
-                            </th>
-                            <th className="border border-gray-300 bg-gray-100 px-4 py-2">
-                              P1
-                            </th>
-                            <th className="border border-gray-300 bg-gray-100 px-4 py-2">
-                              P2
-                            </th>
-                            <th className="border border-gray-300 bg-gray-100 px-4 py-2">
-                              P3
-                            </th>
-                            <th className="border border-gray-300 bg-gray-100 px-4 py-2">
-                              P4
-                            </th>
-                            <th className="border border-gray-300 bg-gray-100 px-4 py-2">
-                              P5
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr>
-                            <td className="border border-gray-300 px-4 py-2">
-                              E1
-                            </td>
-                            <td className="border border-gray-300 px-4 py-2">
-                              <Select
-                                // id={`select-${level}`}
-                                isMulti
-                                value={selectedOptions}
-                                onChange={(selected) =>
-                                  handleChange(selected, "escalations", e1)
-                                }
-                                options={users}
-                              />
-                            </td>
-                            <td className="border border-gray-300 px-4 py-2">
-                              <div className="flex gap-2">
-                                <input
-                                  type="text"
-                                  className="w-12 h-30 border border-gray-300 rounded-md px-2 py-1 placeholder:text-sm"
-                                  placeholder="Days"
-                                  pattern="[0-9]*"
-                                  onKeyDown={(e) => {
-                                    if (
-                                      !/[0-9]/.test(e.key) &&
-                                      e.key !== "Backspace" &&
-                                      e.key !== "ArrowLeft" &&
-                                      e.key !== "ArrowRight"
-                                    ) {
-                                      e.preventDefault();
-                                    }
-                                  }}
-                                />
-                              </div>
-                            </td>
-                            <td className="border border-gray-300 px-4 py-2">
-                              <div className="flex gap-2">
-                                <input
-                                  type="text"
-                                  className="w-12 h-30 border border-gray-300 rounded-md px-2 py-1 placeholder:text-sm"
-                                  placeholder="Days"
-                                  pattern="[0-9]*"
-                                  onKeyDown={(e) => {
-                                    if (
-                                      !/[0-9]/.test(e.key) &&
-                                      e.key !== "Backspace" &&
-                                      e.key !== "ArrowLeft" &&
-                                      e.key !== "ArrowRight"
-                                    ) {
-                                      e.preventDefault();
-                                    }
-                                  }}
-                                />
-                              </div>
-                            </td>
-                            <td className="border border-gray-300 px-4 py-2">
-                              <div className="flex gap-2">
-                                <input
-                                  type="text"
-                                  className="w-12 h-30 border border-gray-300 rounded-md px-2 py-1 placeholder:text-sm"
-                                  placeholder="Days"
-                                  pattern="[0-9]*"
-                                  onKeyDown={(e) => {
-                                    if (
-                                      !/[0-9]/.test(e.key) &&
-                                      e.key !== "Backspace" &&
-                                      e.key !== "ArrowLeft" &&
-                                      e.key !== "ArrowRight"
-                                    ) {
-                                      e.preventDefault();
-                                    }
-                                  }}
-                                />
-                              </div>
-                            </td>
-                            <td className="border border-gray-300 px-4 py-2">
-                              <div className="flex gap-2">
-                                <input
-                                  type="text"
-                                  className="w-12 h-30 border border-gray-300 rounded-md px-2 py-1 placeholder:text-sm"
-                                  placeholder="Days"
-                                  pattern="[0-9]*"
-                                  onKeyDown={(e) => {
-                                    if (
-                                      !/[0-9]/.test(e.key) &&
-                                      e.key !== "Backspace" &&
-                                      e.key !== "ArrowLeft" &&
-                                      e.key !== "ArrowRight"
-                                    ) {
-                                      e.preventDefault();
-                                    }
-                                  }}
-                                />
-                              </div>
-                            </td>
-                            <td className="border border-gray-300 px-4 py-2">
-                              <div className="flex gap-2">
-                                <input
-                                  type="text"
-                                  className="w-12 h-30 border border-gray-300 rounded-md px-2 py-1 placeholder:text-sm"
-                                  placeholder="Days"
-                                  pattern="[0-9]*"
-                                  onKeyDown={(e) => {
-                                    if (
-                                      !/[0-9]/.test(e.key) &&
-                                      e.key !== "Backspace" &&
-                                      e.key !== "ArrowLeft" &&
-                                      e.key !== "ArrowRight"
-                                    ) {
-                                      e.preventDefault();
-                                    }
-                                  }}
-                                />
-                              </div>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td className="border border-gray-300 px-4 py-2">
-                              E2
-                            </td>
-                            <td className="border border-gray-300 px-4 py-2">
-                              <select
-                                name=""
-                                id=""
-                                className="border p-2 rounded-md border-black w-48"
-                              >
-                                <option value="">Mittu</option>
-                                <option value="">Panda</option>
-                              </select>
-                            </td>
-                            <td className="border border-gray-300 px-4 py-2">
-                              <div className="flex gap-2">
-                                <input
-                                  type="text"
-                                  className="w-12 h-30 border border-gray-300 rounded-md px-2 py-1 placeholder:text-sm"
-                                  placeholder="Days"
-                                  pattern="[0-9]*"
-                                  onKeyDown={(e) => {
-                                    if (
-                                      !/[0-9]/.test(e.key) &&
-                                      e.key !== "Backspace" &&
-                                      e.key !== "ArrowLeft" &&
-                                      e.key !== "ArrowRight"
-                                    ) {
-                                      e.preventDefault();
-                                    }
-                                  }}
-                                />
-                              </div>
-                            </td>
-
-                            <td className="border border-gray-300 px-4 py-2">
-                              <div className="flex gap-2">
-                                <input
-                                  type="text"
-                                  className="w-12 h-30 border border-gray-300 rounded-md px-2 py-1 placeholder:text-sm"
-                                  placeholder="Days"
-                                  pattern="[0-9]*"
-                                  onKeyDown={(e) => {
-                                    if (
-                                      !/[0-9]/.test(e.key) &&
-                                      e.key !== "Backspace" &&
-                                      e.key !== "ArrowLeft" &&
-                                      e.key !== "ArrowRight"
-                                    ) {
-                                      e.preventDefault();
-                                    }
-                                  }}
-                                />
-                              </div>
-                            </td>
-                            <td className="border border-gray-300 px-4 py-2">
-                              <div className="flex gap-2">
-                                <input
-                                  type="text"
-                                  className="w-12 h-30 border border-gray-300 rounded-md px-2 py-1 placeholder:text-sm"
-                                  placeholder="Days"
-                                  pattern="[0-9]*"
-                                  onKeyDown={(e) => {
-                                    if (
-                                      !/[0-9]/.test(e.key) &&
-                                      e.key !== "Backspace" &&
-                                      e.key !== "ArrowLeft" &&
-                                      e.key !== "ArrowRight"
-                                    ) {
-                                      e.preventDefault();
-                                    }
-                                  }}
-                                />
-                              </div>
-                            </td>
-                            <td className="border border-gray-300 px-4 py-2">
-                              <div className="flex gap-2">
-                                <input
-                                  type="text"
-                                  className="w-12 h-30 border border-gray-300 rounded-md px-2 py-1 placeholder:text-sm"
-                                  placeholder="Days"
-                                  pattern="[0-9]*"
-                                  onKeyDown={(e) => {
-                                    if (
-                                      !/[0-9]/.test(e.key) &&
-                                      e.key !== "Backspace" &&
-                                      e.key !== "ArrowLeft" &&
-                                      e.key !== "ArrowRight"
-                                    ) {
-                                      e.preventDefault();
-                                    }
-                                  }}
-                                />
-                              </div>
-                            </td>
-                            <td className="border border-gray-300 px-4 py-2">
-                              <div className="flex gap-2">
-                                <input
-                                  type="text"
-                                  className="w-12 h-30 border border-gray-300 rounded-md px-2 py-1 placeholder:text-sm"
-                                  placeholder="Days"
-                                  pattern="[0-9]*"
-                                  onKeyDown={(e) => {
-                                    if (
-                                      !/[0-9]/.test(e.key) &&
-                                      e.key !== "Backspace" &&
-                                      e.key !== "ArrowLeft" &&
-                                      e.key !== "ArrowRight"
-                                    ) {
-                                      e.preventDefault();
-                                    }
-                                  }}
-                                />
-                              </div>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td className="border border-gray-300 px-4 py-2">
-                              E3
-                            </td>
-                            <td className="border border-gray-300 px-4 py-2">
-                              <select
-                                name=""
-                                id=""
-                                className="border p-2 rounded-md border-black w-48"
-                              >
-                                <option value="">Mittu</option>
-                                <option value="">Panda</option>
-                              </select>
-                            </td>
-
-                            <td className="border border-gray-300 px-4 py-2">
-                              <div className="flex gap-2">
-                                <input
-                                  type="text"
-                                  className="w-12 h-30 border border-gray-300 rounded-md px-2 py-1 placeholder:text-sm"
-                                  placeholder="Days"
-                                  pattern="[0-9]*"
-                                  onKeyDown={(e) => {
-                                    if (
-                                      !/[0-9]/.test(e.key) &&
-                                      e.key !== "Backspace" &&
-                                      e.key !== "ArrowLeft" &&
-                                      e.key !== "ArrowRight"
-                                    ) {
-                                      e.preventDefault();
-                                    }
-                                  }}
-                                />
-                              </div>
-                            </td>
-                            <td className="border border-gray-300 px-4 py-2">
-                              <div className="flex gap-2">
-                                <input
-                                  type="text"
-                                  className="w-12 h-30 border border-gray-300 rounded-md px-2 py-1 placeholder:text-sm"
-                                  placeholder="Days"
-                                  pattern="[0-9]*"
-                                  onKeyDown={(e) => {
-                                    if (
-                                      !/[0-9]/.test(e.key) &&
-                                      e.key !== "Backspace" &&
-                                      e.key !== "ArrowLeft" &&
-                                      e.key !== "ArrowRight"
-                                    ) {
-                                      e.preventDefault();
-                                    }
-                                  }}
-                                />
-                              </div>
-                            </td>
-                            <td className="border border-gray-300 px-4 py-2">
-                              <div className="flex gap-2">
-                                <input
-                                  type="text"
-                                  className="w-12 h-30 border border-gray-300 rounded-md px-2 py-1 placeholder:text-sm"
-                                  placeholder="Days"
-                                  pattern="[0-9]*"
-                                  onKeyDown={(e) => {
-                                    if (
-                                      !/[0-9]/.test(e.key) &&
-                                      e.key !== "Backspace" &&
-                                      e.key !== "ArrowLeft" &&
-                                      e.key !== "ArrowRight"
-                                    ) {
-                                      e.preventDefault();
-                                    }
-                                  }}
-                                />
-                              </div>
-                            </td>
-                            <td className="border border-gray-300 px-4 py-2">
-                              <div className="flex gap-2">
-                                <input
-                                  type="text"
-                                  className="w-12 h-30 border border-gray-300 rounded-md px-2 py-1 placeholder:text-sm"
-                                  placeholder="Days"
-                                  pattern="[0-9]*"
-                                  onKeyDown={(e) => {
-                                    if (
-                                      !/[0-9]/.test(e.key) &&
-                                      e.key !== "Backspace" &&
-                                      e.key !== "ArrowLeft" &&
-                                      e.key !== "ArrowRight"
-                                    ) {
-                                      e.preventDefault();
-                                    }
-                                  }}
-                                />
-                              </div>
-                            </td>
-                            <td className="border border-gray-300 px-4 py-2">
-                              <div className="flex gap-2">
-                                <input
-                                  type="text"
-                                  className="w-12 h-30 border border-gray-300 rounded-md px-2 py-1 placeholder:text-sm"
-                                  placeholder="Days"
-                                  pattern="[0-9]*"
-                                  onKeyDown={(e) => {
-                                    if (
-                                      !/[0-9]/.test(e.key) &&
-                                      e.key !== "Backspace" &&
-                                      e.key !== "ArrowLeft" &&
-                                      e.key !== "ArrowRight"
-                                    ) {
-                                      e.preventDefault();
-                                    }
-                                  }}
-                                />
-                              </div>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td className="border border-gray-300 px-4 py-2">
-                              E4
-                            </td>
-                            <td className="border border-gray-300 px-4 py-2">
-                              <select
-                                name=""
-                                id=""
-                                className="border p-2 rounded-md border-black w-48"
-                              >
-                                <option value="">Mittu</option>
-                                <option value="">Panda</option>
-                              </select>
-                            </td>
-
-                            <td className="border border-gray-300 px-4 py-2">
-                              <div className="flex gap-2">
-                                <input
-                                  type="text"
-                                  className="w-12 h-30 border border-gray-300 rounded-md px-2 py-1 placeholder:text-sm"
-                                  placeholder="Days"
-                                  pattern="[0-9]*"
-                                  onKeyDown={(e) => {
-                                    if (
-                                      !/[0-9]/.test(e.key) &&
-                                      e.key !== "Backspace" &&
-                                      e.key !== "ArrowLeft" &&
-                                      e.key !== "ArrowRight"
-                                    ) {
-                                      e.preventDefault();
-                                    }
-                                  }}
-                                />
-                              </div>
-                            </td>
-                            <td className="border border-gray-300 px-4 py-2">
-                              <div className="flex gap-2">
-                                <input
-                                  type="text"
-                                  className="w-12 h-30 border border-gray-300 rounded-md px-2 py-1 placeholder:text-sm"
-                                  placeholder="Days"
-                                  pattern="[0-9]*"
-                                  onKeyDown={(e) => {
-                                    if (
-                                      !/[0-9]/.test(e.key) &&
-                                      e.key !== "Backspace" &&
-                                      e.key !== "ArrowLeft" &&
-                                      e.key !== "ArrowRight"
-                                    ) {
-                                      e.preventDefault();
-                                    }
-                                  }}
-                                />
-                              </div>
-                            </td>
-                            <td className="border border-gray-300 px-4 py-2">
-                              <div className="flex gap-2">
-                                <input
-                                  type="text"
-                                  className="w-12 h-30 border border-gray-300 rounded-md px-2 py-1 placeholder:text-sm"
-                                  placeholder="Days"
-                                  pattern="[0-9]*"
-                                  onKeyDown={(e) => {
-                                    if (
-                                      !/[0-9]/.test(e.key) &&
-                                      e.key !== "Backspace" &&
-                                      e.key !== "ArrowLeft" &&
-                                      e.key !== "ArrowRight"
-                                    ) {
-                                      e.preventDefault();
-                                    }
-                                  }}
-                                />
-                              </div>
-                            </td>
-                            <td className="border border-gray-300 px-4 py-2">
-                              <div className="flex gap-2">
-                                <input
-                                  type="text"
-                                  className="w-12 h-30 border border-gray-300 rounded-md px-2 py-1 placeholder:text-sm"
-                                  placeholder="Days"
-                                  pattern="[0-9]*"
-                                  onKeyDown={(e) => {
-                                    if (
-                                      !/[0-9]/.test(e.key) &&
-                                      e.key !== "Backspace" &&
-                                      e.key !== "ArrowLeft" &&
-                                      e.key !== "ArrowRight"
-                                    ) {
-                                      e.preventDefault();
-                                    }
-                                  }}
-                                />
-                              </div>
-                            </td>
-                            <td className="border border-gray-300 px-4 py-2">
-                              <div className="flex gap-2">
-                                <input
-                                  type="text"
-                                  className="w-12 h-30 border border-gray-300 rounded-md px-2 py-1 placeholder:text-sm"
-                                  placeholder="Days"
-                                  pattern="[0-9]*"
-                                  onKeyDown={(e) => {
-                                    if (
-                                      !/[0-9]/.test(e.key) &&
-                                      e.key !== "Backspace" &&
-                                      e.key !== "ArrowLeft" &&
-                                      e.key !== "ArrowRight"
-                                    ) {
-                                      e.preventDefault();
-                                    }
-                                  }}
-                                />
-                              </div>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td className="border border-gray-300 px-4 py-2">
-                              E5
-                            </td>
-                            <td className="border border-gray-300 px-4 py-2">
-                              <select
-                                name=""
-                                id=""
-                                className="border p-2 rounded-md border-black w-48"
-                              >
-                                {" "}
-                                <option value="">Mittu</option>
-                                <option value="">Panda</option>
-                              </select>
-                            </td>
-
-                            <td className="border border-gray-300 px-4 py-2">
-                              <div className="flex gap-2">
-                                <input
-                                  type="text"
-                                  className="w-12 h-30 border border-gray-300 rounded-md px-2 py-1 placeholder:text-sm"
-                                  placeholder="Days"
-                                  pattern="[0-9]*"
-                                  onKeyDown={(e) => {
-                                    if (
-                                      !/[0-9]/.test(e.key) &&
-                                      e.key !== "Backspace" &&
-                                      e.key !== "ArrowLeft" &&
-                                      e.key !== "ArrowRight"
-                                    ) {
-                                      e.preventDefault();
-                                    }
-                                  }}
-                                />
-                              </div>
-                            </td>
-                            <td className="border border-gray-300 px-4 py-2">
-                              <div className="flex gap-2">
-                                <input
-                                  type="text"
-                                  className="w-12 h-30 border border-gray-300 rounded-md px-2 py-1 placeholder:text-sm"
-                                  placeholder="Days"
-                                  pattern="[0-9]*"
-                                  onKeyDown={(e) => {
-                                    if (
-                                      !/[0-9]/.test(e.key) &&
-                                      e.key !== "Backspace" &&
-                                      e.key !== "ArrowLeft" &&
-                                      e.key !== "ArrowRight"
-                                    ) {
-                                      e.preventDefault();
-                                    }
-                                  }}
-                                />
-                              </div>
-                            </td>
-                            <td className="border border-gray-300 px-4 py-2">
-                              <div className="flex gap-2">
-                                <input
-                                  type="text"
-                                  className="w-12 h-30 border border-gray-300 rounded-md px-2 py-1 placeholder:text-sm"
-                                  placeholder="Days"
-                                  pattern="[0-9]*"
-                                  onKeyDown={(e) => {
-                                    if (
-                                      !/[0-9]/.test(e.key) &&
-                                      e.key !== "Backspace" &&
-                                      e.key !== "ArrowLeft" &&
-                                      e.key !== "ArrowRight"
-                                    ) {
-                                      e.preventDefault();
-                                    }
-                                  }}
-                                />
-                              </div>
-                            </td>
-                            <td className="border border-gray-300 px-4 py-2">
-                              <div className="flex gap-2">
-                                <input
-                                  type="text"
-                                  className="w-12 h-30 border border-gray-300 rounded-md px-2 py-1 placeholder:text-sm"
-                                  placeholder="Days"
-                                  pattern="[0-9]*"
-                                  onKeyDown={(e) => {
-                                    if (
-                                      !/[0-9]/.test(e.key) &&
-                                      e.key !== "Backspace" &&
-                                      e.key !== "ArrowLeft" &&
-                                      e.key !== "ArrowRight"
-                                    ) {
-                                      e.preventDefault();
-                                    }
-                                  }}
-                                />
-                              </div>
-                            </td>
-                            <td className="border border-gray-300 px-4 py-2">
-                              <div className="flex gap-2">
-                                <input
-                                  type="text"
-                                  className="w-12 h-30 border border-gray-300 rounded-md px-2 py-1 placeholder:text-sm"
-                                  placeholder="Days"
-                                  pattern="[0-9]*"
-                                  onKeyDown={(e) => {
-                                    if (
-                                      !/[0-9]/.test(e.key) &&
-                                      e.key !== "Backspace" &&
-                                      e.key !== "ArrowLeft" &&
-                                      e.key !== "ArrowRight"
-                                    ) {
-                                      e.preventDefault();
-                                    }
-                                  }}
-                                />
-                              </div>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                    <div className="flex gap-2 justify-center">
-                      <button
-                        className="border-2 font-semibold hover:bg-black hover:text-white transition-all border-black p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
-                        style={{ background: themeColor }}
-                      >
-                        Update
-                      </button>
-                      <button
-                        onClick={closeModal3}
-                        className="border-2 font-semibold hover:bg-black hover:text-white transition-all border-black p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
-                        style={{ background: themeColor }}
-                      >
-                        Close
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-            {/* <div className="border-b " /> */}
-            {/* <div className="flex gap-3">
-              <div className="text-center mt-1">
-                <label htmlFor="" className="font-semibold">
-                  Filter
-                </label>
-              </div>
-
-              <select
-                name=""
-                id=""
-                className="border p-1 rounded-md border-black w-64"
-              >
-                <option value="">Housekeeping</option>
-                <option value="">Technical</option>
-              </select>
-              <button
-                className="font-semibold hover:bg-green-500 hover:text-white transition-all p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
-                style={{ background: themeColor }}
-              >
-                Apply
-              </button>
-              <button
-                className="font-semibold hover:bg-blue-500 hover:text-white transition-all p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
-                style={{ background: themeColor }}
-              >
-                Reset
-              </button>
-            </div> */}
+            {/* --- Resolution Escalation List --- */}
             <div className="overflow-x-scroll w-full">
               <div>
                 {resolutionEscalation.map((category, index) => (
-                  <div key={index} className="category-table">
-                    <div className="flex gap-2 justify-between w-full border-b birder-gray-300">
-                      <p className="font-semibold ">Rule {index + 1}</p>
-                      <div className="flex gap-4 items-center px-4">
-                        <button onClick={openModal}>
+                  <div key={category.id || index} className="category-table my-4 border p-2 rounded-md shadow-sm">
+                    <div className="flex gap-2 justify-between w-full border-b birder-gray-300 pb-2 mb-2">
+                      <p className="font-semibold ">Rule {index + 1} - Category: {category.category?.name || 'N/A'}</p>
+                      <div className="flex gap-4 items-center px-4 text-xl">
+                        <button onClick={() => openResolutionEditModal(category)} title="Edit Rule">
                           <BiEdit />
                         </button>
-                        <button onClick={openModal1}>
+                        <button onClick={() => openCloneModal(category)} title="Clone Rule">
                           <FaClone />
                         </button>
                         <button
                           onClick={() => handleDelete(category.id)}
                           className="text-red-500"
+                          title="Delete Rule"
                         >
                           <FaTrash />
                         </button>
                       </div>
-                      {/* <MdHelp/> */}
                     </div>
                     <table className="table-auto w-full border-collapse border border-gray-200 my-4 rounded-md overflow-x-auto ">
                       <thead
@@ -1782,19 +952,19 @@ const TicketEscalationSetup = () => {
                             Escalation To
                           </th>
                           <th className="border border-gray-200 px-4 py-2 text-sm  text-white">
-                            P1
+                            P1 (D/H/M)
                           </th>
                           <th className="border border-gray-200 px-4 py-2 text-sm  text-white">
-                            P2
+                            P2 (D/H/M)
                           </th>
                           <th className="border border-gray-200 px-4 py-2 text-sm  text-white">
-                            P3
+                            P3 (D/H/M)
                           </th>
                           <th className="border border-gray-200 px-4 py-2 text-sm  text-white">
-                            P4
+                            P4 (D/H/M)
                           </th>
                           <th className="border border-gray-200 px-4 py-2 text-sm  text-white">
-                            P5
+                            P5 (D/H/M)
                           </th>
                         </tr>
                       </thead>
@@ -1805,6 +975,7 @@ const TicketEscalationSetup = () => {
                               <td
                                 className="border border-gray-200 py-2 text-center font-medium"
                                 rowSpan={category.escalations.length}
+                                style={{ minWidth: '150px' }} // Adjusted for better viewing
                               >
                                 {category.category.name}
                               </td>
@@ -1817,21 +988,12 @@ const TicketEscalationSetup = () => {
                                 ? level.escalate_to_users_names.join(" , ")
                                 : "N/A"}
                             </td>
-                            <td className="border border-gray-200 px-4 py-2 text-center text-sm font-medium">
-                              {formatTime(level.p1)}
-                            </td>
-                            <td className="border border-gray-200 px-4 py-2 text-center text-sm font-medium">
-                              {formatTime(level.p2)}
-                            </td>
-                            <td className="border border-gray-200 px-4 py-2 text-center text-sm font-medium">
-                              {formatTime(level.p3)}
-                            </td>
-                            <td className="border border-gray-200 px-4 py-2 text-center text-sm font-medium">
-                              {formatTime(level.p4)}
-                            </td>
-                            <td className="border border-gray-200 px-4 py-2 text-center text-sm font-medium">
-                              {formatTime(level.p5)}
-                            </td>
+                            {/* Displaying time for P1-P5 */}
+                            {["p1", "p2", "p3", "p4", "p5"].map(pField => (
+                                <td key={pField} className="border border-gray-200 px-4 py-2 text-center text-xs font-medium min-w-36">
+                                    {formatTime(level[pField])}
+                                </td>
+                            ))}
                           </tr>
                         ))}
                       </tbody>
@@ -1843,6 +1005,229 @@ const TicketEscalationSetup = () => {
           </div>
         )}
       </div>
+
+      {/* --- Response/Resolution Clone Modal (showModal1) --- */}
+      {cloningRule && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-5 rounded-lg w-96">
+            <h2 className="text-xl text-center font-semibold mb-4">
+              Clone Rule - Category: {cloningRule.category?.name || 'N/A'}
+            </h2>
+            <div className="grid grid-cols-1">
+              {/* These selectors are static placeholders. In a real app, they'd control where the rule is cloned to. */}
+              <div className="grid gap-2 w-full">
+                <label htmlFor="clone-region">Regions</label>
+                <select id="clone-region" name="" className="border p-2 ">
+                  <option value="">Pune</option>
+                  <option value="">kolkata</option>
+                </select>
+              </div>
+              <div className="grid gap-2 mt-2 w-full">
+                <label htmlFor="clone-zone">Zones</label>
+                <select id="clone-zone" name="" className="border p-2 ">
+                  <option value="">west zone</option>
+                  <option value="">East</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex justify-center gap-2 mt-4">
+              <button
+                className="border-2 font-semibold hover:bg-black hover:text-white transition-all border-black p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
+                style={{ background: themeColor }}
+                // NOTE: Add actual cloning logic here
+              >
+                Clone
+              </button>
+              <button
+                onClick={closeCloneModal}
+                className="border-2 font-semibold hover:bg-black hover:text-white transition-all border-black p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
+                style={{ background: themeColor }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- Response Escalation Edit Modal (showModal) --- */}
+      {editingRule && editingRule.esc_type === 'response' && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-5 rounded-lg w-2/3 max-w-xl">
+            <div className="flex flex-col gap-2">
+              <h1 className="font-semibold mb-2 text-center">Edit Response Escalation: {editResponseData.category?.label || 'N/A'}</h1>
+              
+              <Select
+                id="edit-category"
+                value={editResponseData.category} // Display the current category
+                onChange={(selected) => console.log('Category change not implemented for edit:', selected)}
+                options={categories}
+                className="basic-multi-select w-full mb-4"
+                classNamePrefix="select"
+                placeholder="Select Categories"
+                isDisabled={true} // Usually, category is fixed when editing a rule
+              />
+
+              <div className=" w-full mb-2">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr>
+                      <th className="border border-gray-300 bg-gray-100 px-4 py-2">
+                        Levels
+                      </th>
+                      <th className="border border-gray-300 bg-gray-100 px-4 py-2">
+                        Escalation To
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {/* Iterate over E1-E5 levels, using editResponseData for state */}
+                    {["E1", "E2", "E3", "E4", "E5"].map(levelName => (
+                        <tr key={levelName}>
+                        <td className="border border-gray-300 px-4 py-2 text-center">
+                          {levelName}
+                        </td>
+                        <td className="border border-gray-300 px-4 py-2 text-center">
+                            <Select
+                                isMulti
+                                value={editResponseData.escalations[levelName] || []}
+                                options={users}
+                                onChange={(selected) => handleEditResponseUserChange(selected, levelName)}
+                                placeholder="Select Users" // Added placeholder as requested
+                            />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <hr />
+                &nbsp;
+                <div className="flex gap-2 justify-center">
+                  <button
+                    className="border-2 font-semibold hover:bg-black hover:text-white transition-all border-black p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
+                    style={{ background: themeColor }}
+                    onClick={handleUpdateResponseEscalation} // New Update Logic
+                  >
+                    Update
+                  </button>
+                  <button
+                    onClick={closeEditModal}
+                    className="border-2 font-semibold hover:bg-black hover:text-white transition-all border-black p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
+                    style={{ background: themeColor }}
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* --- Resolution Escalation Edit Modal (showModal3) --- */}
+      {editingResolutionRule && editingResolutionRule.esc_type === 'resolution' && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-5 rounded-lg w-2/4 max-w-3xl">
+            <h2 className="text-xl text-center font-semibold mb-4">
+              Edit Resolution Escalation: {editResolutionData.category?.label || 'N/A'}
+            </h2>
+            <div className=" flex flex-col gap-2 font-medium overflow-x-auto">
+              
+              <Select
+                value={editResolutionData.category}
+                options={categories}
+                className="basic-single-select w-64 mb-4"
+                placeholder="Select Category"
+                isDisabled={true} // Category is fixed when editing a rule
+              />
+              
+              <div>
+                <table className="border-collapse w-full">
+                  <thead>
+                    <tr>
+                      <th className="border border-gray-300 bg-gray-100 px-4 py-2 text-white">Levels</th>
+                      <th className="border border-gray-300 bg-gray-100 px-4 py-2 text-white">Escalation To</th>
+                      {["P1", "P2", "P3", "P4", "P5"].map(p => (
+                          <th key={p} className="border border-gray-300 bg-gray-100 px-4 py-2 text-white">{p} (D/H/M)</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {/* Iterate over E1-E5 levels, using editResolutionData for state */}
+                    {["E1", "E2", "E3", "E4", "E5"].map((levelName) => (
+                      <tr key={levelName}>
+                        <td className="border border-gray-300 px-4 py-2 text-center">
+                          {levelName}
+                        </td>
+                        <td className="border border-gray-300 px-4 py-2 min-w-48">
+                          <Select
+                            isMulti
+                            value={editResolutionData.escalations[levelName]?.users || []}
+                            onChange={(selected) => handleEditResolutionUserChange(selected, levelName)}
+                            options={users}
+                            placeholder="Select Users" // Added placeholder
+                          />
+                        </td>
+                        {/* P1-P5 inputs for editing */}
+                        {["p1", "p2", "p3", "p4", "p5"].map(pField => {
+                            const timeData = editResolutionData.escalations[levelName]?.[pField] || { days: "", hrs: "", min: "" };
+                            
+                            return (
+                                <td key={pField} className="border border-gray-300 px-2 py-2">
+                                    <div className="flex gap-1 justify-center">
+                                        <input 
+                                            type="text" 
+                                            className="w-10 border border-gray-300 rounded-sm px-1 py-1 text-sm text-center" 
+                                            placeholder="D" 
+                                            value={timeData.days} 
+                                            onChange={(e) => handleEditResolutionTimeChange(e.target.value, levelName, pField, "days")}
+                                            pattern="[0-9]*"
+                                        />
+                                        <input 
+                                            type="text" 
+                                            className="w-10 border border-gray-300 rounded-sm px-1 py-1 text-sm text-center" 
+                                            placeholder="H" 
+                                            value={timeData.hrs}
+                                            onChange={(e) => handleEditResolutionTimeChange(e.target.value, levelName, pField, "hrs")}
+                                            pattern="[0-9]*"
+                                        />
+                                        <input 
+                                            type="text" 
+                                            className="w-10 border border-gray-300 rounded-sm px-1 py-1 text-sm text-center" 
+                                            placeholder="M" 
+                                            value={timeData.min}
+                                            onChange={(e) => handleEditResolutionTimeChange(e.target.value, levelName, pField, "min")}
+                                            pattern="[0-9]*"
+                                        />
+                                    </div>
+                                </td>
+                            );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="flex gap-2 justify-center mt-4">
+                <button
+                  className="border-2 font-semibold hover:bg-black hover:text-white transition-all border-black p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
+                  style={{ background: themeColor }}
+                  onClick={handleUpdateResolutionEscalation} // New Update Logic
+                >
+                  Update
+                </button>
+                <button
+                  onClick={closeResolutionEditModal}
+                  className="border-2 font-semibold hover:bg-black hover:text-white transition-all border-black p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
+                  style={{ background: themeColor }}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
