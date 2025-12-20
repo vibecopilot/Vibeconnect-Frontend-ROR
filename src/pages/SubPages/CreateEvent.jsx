@@ -5,7 +5,14 @@ import FileInputBox from "../../containers/Inputs/FileInputBox";
 import { useSelector } from "react-redux";
 import Navbar from "../../components/Navbar";
 import { getItemInLocalStorage } from "../../utils/localStorage";
-import { postEvents, getAssignedTo, getGroups, getSetupUsers,getBuildings } from "../../api";
+import {
+  postEvents,
+  getAssignedTo,
+  getGroups,
+  getSetupUsers,
+  getAllUnits,
+  getBuildings,
+} from "../../api";
 import Select from "react-select";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -13,40 +20,126 @@ import { format } from "date-fns";
 import toast from "react-hot-toast";
 import { useNavigate, useParams } from "react-router-dom";
 import { FaCheck } from "react-icons/fa";
+import MultiSelect from "../AdminHrms/Components/MultiSelect";
 import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
 
 const CreateEvent = () => {
   const siteId = getItemInLocalStorage("SITEID");
+  const userID = getItemInLocalStorage("UserId");
   const [share, setShare] = useState("all");
-  const [selectedUnit, setSelectedUnit] = useState(null);
-  const [units, setUnits] = useState([]);
+  const [groups, setGroups] = useState([]);
+  const [selectedGroup, setSelectedGroup] = useState("");
+  const [groupMembers, setGroupMembers] = useState([]);
+  const [ownership, setOwnership] = useState([]);
   const [selectedOwnership, setSelectedOwnership] = useState("");
+  const [selectedFloor, setselectedFloor] = useState("");
+  const [selectedUnit, setSelectedUnit] = useState(null);
+  const [users, setUsers] = useState([]);
+  // const [selectedUnits, setSelectedUnits] = useState([]);
+  const [members, setMembers] = useState([]);
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [filteredMembers, setFilteredMembers] = useState([]);
-   const [members, setMembers] = useState([]);
-
-  const [users, setUsers] = useState([]);
+  const [units, setUnits] = useState([]);
   const [selectedOption, setSelectedOption] = useState([]);
+  const [selectedOptions, setSelectedOptions] = useState([]);
   const [formData, setFormData] = useState({
     site_id: siteId,
+    created_by: userID,
     event_name: "",
     venue: "",
     description: "",
     start_date_time: "",
     end_date_time: "",
     user_ids: "",
-    event_image: [],
+    group_id: null,
+    group_name: "",
+    event_images: [],
     shared: "",
     email_enabled: false,
     rsvp_enabled: false,
     important: false,
-    group_ids: "",
+    group_member: [],
   });
   console.log(formData);
   const fileInputRef = useRef(null);
   const themeColor = useSelector((state) => state.theme.color);
   const datePickerRef = useRef(null);
   const currentDate = new Date();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const usersRes = await getSetupUsers();
+        const unitsRes = await getBuildings();
+        console.log("userSites", unitsRes);
+        setUnits(unitsRes.data);
+        console.log("usersRes", usersRes);
+        const employeesList = usersRes.data.map((emp) => ({
+          id: emp.id,
+          name: `${emp.firstname} ${emp.lastname}`,
+          building_id: emp.building_id || emp.building?.id || null, //for some users id is null
+          userSites: emp.user_sites || [],
+          building: emp.building || {},
+        }));
+
+        setMembers(employeesList);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const handleFilter = () => {
+    console.log(
+      "Selected Building ID:",
+      selectedUnit,
+      "Selected Ownership:",
+      selectedOwnership
+    );
+    console.log("Members Before Filtering:", members);
+
+    const filtered = members.filter((member) => {
+      const buildingId = Number(member.building_id ?? member.building?.id);
+      
+      // If no filters selected, include all
+      if (!selectedUnit && !selectedOwnership) {
+        return true;
+      }
+
+      // If only building is selected
+      if (selectedUnit && !selectedOwnership) {
+        return buildingId === Number(selectedUnit);
+      }
+
+      // If only ownership is selected
+      if (!selectedUnit && selectedOwnership) {
+        return member.userSites.some(
+          (site) => site.ownership?.toLowerCase() === selectedOwnership.toLowerCase()
+        );
+      }
+
+      // If both filters are selected
+      // Check if user belongs to the building AND has a site with the selected ownership
+      if (buildingId !== Number(selectedUnit)) {
+        return false;
+      }
+
+      return member.userSites.some(
+        (site) => site.ownership?.toLowerCase() === selectedOwnership.toLowerCase()
+      );
+    });
+
+    console.log("Filtered Members:", filtered);
+    setFilteredMembers(filtered);
+    
+    if (filtered.length === 0) {
+      toast.error("No users found matching the selected filters");
+    } else {
+      toast.success(`Filter applied - ${filtered.length} user(s) found`);
+    }
+  };
 
   const handleStartDateChange = (date) => {
     setFormData({ ...formData, start_date_time: date });
@@ -59,39 +152,124 @@ const CreateEvent = () => {
   const formatDateTime = (date) => {
     return format(date, "yyyy-MM-dd HH:mm:ss");
   };
-  const [groups, setGroups] = useState([]);
+
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     try {
+  //       const usersRes = await getSetupUsers();
+  //       const unitsRes = await getAllUnits();
+
+  //       setUnits(unitsRes.data);
+
+  //       const employeesList = usersRes.data.map((emp) => ({
+  //         id: emp.id,
+  //         name: `${emp.firstname} ${emp.lastname}`,
+  //         userSites: emp.user_sites || [],
+  //       }));
+
+  //       setMembers(employeesList);
+  //       setFilteredMembers(employeesList);
+  //     } catch (error) {
+  //       console.error("Error fetching data:", error);
+  //     }
+  //   };
+  //   fetchData();
+  // }, []);
+
+  // const handleFilter = () => {
+  //   console.log(
+  //     "Selected Unit:",
+  //     selectedUnit,
+  //     "Selected Ownership:",
+  //     selectedOwnership
+  //   );
+  //   console.log("Members Before Filtering:", members);
+
+  //   const filtered = members.filter((member) =>
+  //     member.userSites.some((site) => {
+  //       console.log("Checking Site:", site);
+  //       const unitMatch =
+  //         !selectedUnit || Number(site.unit_id) === Number(selectedUnit);
+  //       const ownershipMatch =
+  //         !selectedOwnership ||
+  //         site.ownership?.toLowerCase() === selectedOwnership.toLowerCase();
+  //       console.log(
+  //         "Unit Match:",
+  //         unitMatch,
+  //         "Ownership Match:",
+  //         ownershipMatch
+  //       );
+  //       return unitMatch && ownershipMatch;
+  //     })
+  //   );
+  //   console.log("Filtered Members:", filtered);
+  //   setFilteredMembers(filtered);
+  // };
+
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         const response = await getSetupUsers();
-         const unitsRes = await getBuildings();
-        console.log("userSites", unitsRes);
-        setUnits(unitsRes.data);
         const transformedUsers = response.data.map((user) => ({
           value: user.id,
           label: `${user.firstname} ${user.lastname}`,
         }));
         setUsers(transformedUsers);
-        console.log(response);
+        console.log("users Resp: ", response);
       } catch (error) {
         console.error("Error fetching assigned users:", error);
       }
     };
-    const fetchGroups = async () => {
-      try {
-        const res = await getGroups();
-        // const transformedUsers = res.data.map((user) => ({
-        //   value: user.id,
-        //   label: user.group_name,
-        // }));
-        setGroups(res.data);
-      } catch (error) {
-        console.log(error);
-      }
-    };
+
+    if (share === "groups") {
+      fetchGroups();
+    }
+
     fetchUsers();
-    fetchGroups();
-  }, []);
+  }, [share]);
+
+  useEffect(() => {
+    const filtered = members.filter((user) =>
+      user.userSites.some(
+        (site) =>
+          (!selectedUnit || site.unit_id === selectedUnit) &&
+          (!ownership || site.ownership === ownership)
+      )
+    );
+
+    setFilteredMembers(filtered);
+  }, [selectedUnit, ownership, members]);
+
+  const fetchGroups = async () => {
+    try {
+      const response = await getGroups(); // Assuming your API to get groups
+      setGroups(response.data || []); // Adjust based on actual API response structure
+      console.log("group", response);
+    } catch (error) {
+      console.error("Error fetching groups:", error);
+    }
+  };
+
+  console.log("ggp", groups);
+
+  // const handleGroupChange = (event) => {
+  //   const groupId = parseInt(event.target.value, 10) || 0; // Default to 0 if value is invalid
+  //   setSelectedGroup(event.target.value);
+  //   setFormData({ ...formData, group_id: groupId });
+  // };
+
+  const handleGroupChange = (event) => {
+    const groupId = parseInt(event.target.value, 10) || 0;
+    const selectedGroupObj = groups.find((group) => group.id === groupId);
+
+    setSelectedGroup(event.target.value);
+    setFormData({ ...formData, group_id: groupId });
+
+    // Set members directly from selected group object
+    setGroupMembers(selectedGroupObj?.group_members || []);
+  };
+
+  console.log("Group member", groupMembers);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -120,21 +298,31 @@ const CreateEvent = () => {
       );
       formDataSend.append("event[venue]", formData.venue);
       formDataSend.append("event[user_ids]", formData.user_ids);
-      formDataSend.append("event[group_id]", formData.group_ids);
       formDataSend.append("event[shared]", share);
       formDataSend.append("event[email_enabled]", formData.email_enabled);
       formDataSend.append("event[rsvp_enabled]", formData.rsvp_enabled);
       formDataSend.append("event[important]", formData.important);
+      if (share === "all") {
+        formDataSend.append("event[shared]", "all");
+      } else if (share === "individual") {
+        formDataSend.append("event[shared]", "individual");
+        formDataSend.append("event[user_ids]", formData.user_ids);
+      } else if (share === "groups") {
+        formDataSend.append("event[shared]", "groups");
+        formDataSend.append("event[group_id]", formData.group_id);
+        formDataSend.append("event[group_name]", formData.group_name);
+      }
       // formDataSend.append("event[important]", formData.important);
 
       // formData.user_ids.forEach((user_id) => {
       //   formDataSend.append("event[user_ids]", user_id);
       // });
 
-      formData.event_image.forEach((file) => {
-        formDataSend.append("attachfiles[]", file);
-      });
-
+      if (formData.event_images && formData.event_images.length > 0) {
+        formData.event_images.forEach((file, index) => {
+          formDataSend.append(`event[event_images][]`, file);
+        });
+      }
       const response = await postEvents(formDataSend);
       toast.success("Event Created Successfully");
       console.log("Response:", response.data);
@@ -154,87 +342,45 @@ const CreateEvent = () => {
 
     setFormData({ ...formData, user_ids: userIdsString });
   };
-  const handleSelectGroupChange = (selectedOptions) => {
-    // const selectedIds = selectedOptions
-    //   ? selectedOptions.map((option) => option.value)
-    //   : [];
-    // const userIdsString = selectedIds.join(",");
 
-    // setFormData({ ...formData, group_ids: userIdsString });
-    setFormData({ ...formData, group_ids: selectedOptions.value });
-  };
-
-  const handleFileAttachment = (event) => {
-    const selectedFiles = event.target.files;
-    const newAttachments = Array.from(selectedFiles);
-    setFormData({ ...formData, event_image: newAttachments });
+  const handleFileAttachment = (input) => {
+    let files = [];
+    // If called from an event, extract files from event.target
+    if (input && input.target && input.target.files) {
+      files = Array.from(input.target.files);
+    } else if (Array.isArray(input)) {
+      files = input;
+    } else if (input) {
+      files = [input];
+    }
+    setFormData({ ...formData, event_images: files });
   };
 
   const filterTime = (time) => {
     const selectedDate = new Date(time);
     const currentDate = new Date();
 
-    // Compare selected date with current date
     if (selectedDate.getTime() > currentDate.getTime()) {
-      return true; // Future date
+      return true;
     } else if (selectedDate.getTime() === currentDate.getTime()) {
-      // If selected date is today, compare times
       const selectedTime =
         selectedDate.getHours() * 60 + selectedDate.getMinutes();
       const currentTime =
         currentDate.getHours() * 60 + currentDate.getMinutes();
-      return selectedTime >= currentTime; // Future time
+      return selectedTime >= currentTime;
     } else {
-      return false; // Past date
+      return false;
     }
   };
 
-    const handleFilter = () => {
-    console.log(
-      "Selected Building ID:",
-      selectedUnit,
-      "Selected Ownership:",
-      selectedOwnership
-    );
-    console.log("Members Before Filtering:", members);
-
-    const filtered = members.filter((member) => {
-      // Check if the user belongs to the selected building
-      const buildingMatch =
-        !selectedUnit || Number(member.building_id ?? member.building?.id) ===  Number(selectedUnit);
-
-      console.log(
-        "building_id type:",
-        typeof member.building_id,
-        member.building_id
-      );
-
-      // Check if any of the user's sites match the selected ownership
-      const ownershipMatch =
-        !selectedOwnership ||
-        member.userSites.some(
-          (site) =>
-            site.ownership?.toLowerCase() === selectedOwnership.toLowerCase()
-        );
-
-      console.log(
-        "User:",
-        member.name,
-        "Building Match:",
-        buildingMatch,
-        "Ownership Match:",
-        ownershipMatch
-      );
-
-      return buildingMatch && ownershipMatch;
+  const handleFileChange = (files, fieldName) => {
+    setFormData({
+      ...formData,
+      [fieldName]: Array.isArray(files) ? files : [files],
     });
-
-    console.log("Filtered Members:", filtered);
-    setFilteredMembers(filtered);
-    toast.success("Filter applied");
   };
 
-   const handleSelectEdit = (selectedOption) => {
+  const handleSelectEdit = (selectedOption) => {
     setSelectedMembers(selectedOption); // Update state for selected members
 
     const selectedUserIds = selectedOption.map((option) => option.value); // Extract user IDs
@@ -246,13 +392,6 @@ const CreateEvent = () => {
     }));
   };
 
-  const handleFileChange = (files, fieldName) => {
-    setFormData({
-      ...formData,
-      [fieldName]: files,
-    });
-  };
-  console.log(groups);
   return (
     <section className="flex">
       <div className="hidden md:block">
@@ -262,7 +401,7 @@ const CreateEvent = () => {
         <div className="flex justify-center">
           <div className=" my-5 mb-10 border w-full max-w-[70rem] border-gray-400 p-2 rounded-lg ">
             <h2
-              style={{ background: themeColor }}
+              style={{ background: "rgb(17, 24, 39)" }}
               className="text-center text-xl font-medium p-2  rounded-md text-white"
             >
               Create Event
@@ -300,6 +439,8 @@ const CreateEvent = () => {
                 />
               </div>
               <div className="flex items-center gap-2 w-full">
+                {/* <div > */}
+                {/* <p className="font-medium mb-2">Start Time:</p> */}
                 <DatePicker
                   selected={formData.start_date_time}
                   onChange={handleStartDateChange}
@@ -332,8 +473,7 @@ const CreateEvent = () => {
               <ReactQuill
                 theme="snow"
                 value={formData.description}
-                // onChange={handleChange}
-                 onChange={(value) =>
+                onChange={(value) =>
                   setFormData({ ...formData, description: value })
                 }
                 placeholder="Enter Description"
@@ -341,7 +481,6 @@ const CreateEvent = () => {
                 style={{ minHeight: "120px" }}
               />
             </div>
-
             <div className="flex gap-4 my-5">
               <div className="flex gap-2 items-center">
                 <input
@@ -375,14 +514,12 @@ const CreateEvent = () => {
                 </label>
               </div>
             </div>
-
             {/* <input
               ref={fileInputRef}
               type="file"
               multiple
               onChange={handleFileAttachment}
             /> */}
-
             <div className="">
               <h2 className="border-b t border-black my-5 text-lg font-semibold">
                 Share With
@@ -414,8 +551,7 @@ const CreateEvent = () => {
                     Groups
                   </h2>
                 </div>
-                <div className="my-5 flex w-full">
-              {share === "individual" && (
+                {share === "individual" && (
                   <div className="flex flex-col gap-2 mt-2 w-full">
                     {/* First Row: Unit Select, Ownership Select, and Filter Button */}
                     <div className="flex gap-2 items-end">
@@ -471,37 +607,55 @@ const CreateEvent = () => {
                     </div>
                   </div>
                 )}
-                  {share === "groups" && (
-                    // <Select
-                    //   options={groups}
-                    //   closeMenuOnSelect={false}
-                    //   placeholder="Select Group"
-                    //   // value={groups.filter((user) =>
-                    //   //   formData.group_ids.includes(user.value)
-                    //   // )}
-                    //   onChange={handleSelectGroupChange}
-                    //   // isMulti
-                    //   className="w-full"
-                    // />
+                {share === "groups" && (
+                  <div className="flex flex-col gap-2 mt-2 w-full">
+                    <label htmlFor="groupSelect" className="font-medium mb-1">
+                      Select Group
+                    </label>
                     <select
-                      name="group_ids"
-                      id=""
-                      className="w-full border rounded-md p-2"
-                      onChange={handleChange}
-                      value={formData.group_ids}
+                      id="groupSelect"
+                      className="border p-3 border-gray-300 rounded-md"
+                      value={selectedGroup}
+                      onChange={handleGroupChange}
                     >
                       <option value="">Select Group</option>
                       {groups.map((group) => (
-                        <option value={group.id} key={group.id}>
+                        <option key={group.id} value={group.id}>
                           {group.group_name}
                         </option>
                       ))}
                     </select>
-                  )}
-                </div>
+
+                    {/* Display group members as per group selection */}
+                    {selectedGroup && (
+                      <div className="mt-4 p-4 border rounded-md bg-gray-50">
+                        <h2 className="text-lg font-semibold mb-2">
+                          Group Members
+                        </h2>
+
+                        {groupMembers.length > 0 ? (
+                          <div className="space-y-2">
+                            {groupMembers.map((member, index) => (
+                              <div
+                                key={index}
+                                className="p-2 border rounded bg-white shadow-sm"
+                              >
+                                {member.user_name}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-600">
+                            No members exist inside this group.
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
-            <div className="mb-4">
+            <div className="mb-4 mt-2">
               <h2 className="border-b text-xl border-black font-semibold">
                 RSVP
               </h2>
@@ -541,8 +695,8 @@ const CreateEvent = () => {
                 Upload Attachments
               </h2>
               <FileInputBox
-                fieldName={"event_image"}
-                handleChange={(files) => handleFileChange(files, "event_image")}
+                fieldName={"event_images"}
+                handleChange={handleFileAttachment} // Ensuring it calls the correct handler
                 fileType="image/*"
               />
             </div>
