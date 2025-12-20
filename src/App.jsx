@@ -20,7 +20,7 @@ import Entity from "./pages/SubPages/Entity.jsx";
 import Building from "./pages/SubPages/Building.jsx";
 import Wing from "./pages/SubPages/Wing.jsx";
 import Area from "./pages/SubPages/Area.jsx";
-// import OtherProject from "./pages/SubPages/OtherProject.jsx";
+import OtherProject from "./pages/Setup/OtherProject/OtherProject.jsx";
 import Floor from "./pages/SubPages/Floor.jsx";
 import Unit from "./pages/SubPages/Unit.jsx";
 import Room from "./pages/SubPages/Room.jsx";
@@ -1227,15 +1227,14 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
-        {/* <Route
-          path="/setup/other-project"
-          element={
-            <ProtectedAdminRoutes>
-              <OtherProject />
-            </ProtectedAdminRoutes>
-          }
-        /> */}
-
+<Route
+  path="/setup/other-project"
+  element={
+    <ProtectedAdminRoutes>
+      <OtherProject />
+    </ProtectedAdminRoutes>
+  }
+/>
         <Route
           path="/setup/account/floor"
           element={
