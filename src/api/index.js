@@ -10469,3 +10469,26 @@ export const postReceiptNumber = async (data) =>
       token: token,
     },
   });
+
+
+  
+export const getOtherProject = () =>
+  axiosInstance.get("/other_projects.json", {
+    headers: {
+      "Cache-Control": "no-cache",
+      Pragma: "no-cache",
+      Expires: "0",
+    },
+  });
+
+export const postOtherProject = (data) =>
+  axiosInstance.post("/other_projects.json", data);
+
+export const putOtherProject = (id, data) =>
+  axiosInstance.put(`/other_projects/${id}.json`, data);
+
+export const deleteOtherProject = (id) =>
+  axiosInstance.delete(`/other_projects/${id}.json`);
+
+export const postProjectLike = (data) =>
+  axiosInstance.post("/likes/create_other_project_like.json", data);
