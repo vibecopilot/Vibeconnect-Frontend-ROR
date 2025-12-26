@@ -796,8 +796,7 @@ const EditServiceChecklist = () => {
             </select></div>
             <div>
             <button
-                                     className="p-1 border-2 border-red-500 text-white hover:bg-white hover:text-red-500 bg-red-500 px-4 transition-all duration-300 rounded-md "
-
+              className="p-1 border-2 border-red-500 text-white hover:bg-white hover:text-red-500 bg-red-500 px-4 transition-all duration-300 rounded-md "
               onClick={() => removeSection(sectionIndex)}
             >
               <IoClose/>

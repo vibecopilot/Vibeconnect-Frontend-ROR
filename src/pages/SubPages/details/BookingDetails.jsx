@@ -1,128 +1,9 @@
-// import React, { useState, useEffect } from "react";
-// import { useSelector } from "react-redux";
-// import Table from "../../../components/table/Table";
-// import { getItemInLocalStorage } from "../../../utils/localStorage";
-// import { getAmenitiesBookingById } from "../../../api";
-
-// const BookingDetails = () => {
-//   const themeColor = useSelector((state) => state.theme.color);
-//   const today = new Date();
-//   const year = today.getFullYear();
-//   const month = String(today.getMonth() + 1).padStart(2, "0");
-//   const day = String(today.getDate()).padStart(2, "0");
-//   const formattedDate = `${year}-${month}-${day}`;
-//   const [facility, setFacility] = useState("");
-//   const siteId = getItemInLocalStorage("SITEID");
-//   const [formData, setFormData] = useState({
-//     amenity_id: "",
-//     amenity_slot_id: "",
-//     user_id: "",
-//     booking_date: "",
-//     site_id: siteId,
-//     amount: "",
-//     gst_no: 0,
-//     member_adult: 0,
-//     guest_adult: 0,
-//     no_of_members: 0,
-//     no_of_guests: 0,
-//     payment_mode: "post",
-//     min_people: 0,
-//     max_people: 0,
-//   });
-//   return (
-//     <section>
-//       <div
-//         style={{ background: themeColor }}
-//         className="flex  justify-center bg-black m-2 p-2 rounded-md"
-//       >
-//         <h2 className="text-xl font-semibold text-center text-white ">
-//           Booking Details
-//         </h2>
-//       </div>
-//       <div className="flex flex-col  w-full p-2">
-//         <div className="flex justify-between items-center w-full">
-//           <h1 className="w-full font-medium text-lg">Test Meeting Room</h1>
-//           <div className=" flex justify-end gap-2 w-full">
-//             <p className="text-end bg-red-900 rounded-md text-white p-2">
-//               Capture Payment
-//             </p>
-//             <p className="text-end bg-yellow-500 rounded-md text-white p-2">
-//               Request Payment
-//             </p>
-//           </div>
-//         </div>
-//         <div className="grid grid-cols-4 w-full gap-5 my-2 bg-blue-50 border rounded-xl p-2">
-//           <div className="grid grid-cols-2 gap-2 items-center">
-//             <p className=" font-medium">Booking ID : </p>
-//             <p className=" ">5431 </p>
-//           </div>
-//           <div className="grid grid-cols-2 gap-2 items-center">
-//             <p className="font-medium">Status : </p>
-//             <p className="bg-green-400 text-white p-1 rounded-md text-center">
-//               Confirmed
-//             </p>
-//           </div>
-//           <div className="grid grid-cols-2 gap-2 items-center">
-//             <p className="font-medium">Scheduled Date : </p>
-//             <p className="">11/11/2024</p>
-//           </div>
-
-//           <div className="grid grid-cols-2 gap-2 items-center">
-//             <p className="font-medium">Selected Slot: </p>
-//             <p className="">04:00 PM to 04:45 PM</p>
-//           </div>
-//           <div className="grid grid-cols-2 gap-2 items-center">
-//             <p className="font-medium">Booked on : </p>
-//             <p className="">08/11/24</p>
-//           </div>
-//           <div className="grid grid-cols-2 gap-2 items-center">
-//             <p className="font-medium">Booked by : </p>
-//             <p className="">Kunal sah</p>
-//           </div>
-//           <div className="grid grid-cols-2 gap-2 items-center">
-//             <p className="font-medium">GST : </p>
-//             <p className="">₹ 1.8</p>
-//           </div>
-//           <div className="grid grid-cols-2 gap-2 items-center">
-//             <p className="font-medium">Payable Amount : </p>
-//             <p className="">₹ 11.8</p>
-//           </div>
-//           <div className="grid grid-cols-2 gap-2 items-center">
-//             <p className="font-medium">Transaction ID : </p>
-//             <p className=""></p>
-//           </div>
-//           <div className="grid grid-cols-2 gap-2 items-center">
-//             <p className="font-medium">Payment Status : </p>
-//             <p className="bg-yellow-500 text-white text-center p-1 rounded-md">
-//               Pending
-//             </p>
-//           </div>
-//           <div className="grid grid-cols-2 gap-2 items-center">
-//             <p className="font-medium">Payment Method : </p>
-//             <p>Pay on facility</p>
-//           </div>
-//           <div className="grid grid-cols-2 gap-2 items-center">
-//             <p className="font-medium">Amount Paid : </p>
-//             <p>₹ 0.0</p>
-//           </div>
-//         </div>
-//         <div>
-//           <h2 className="border-b font-medium">Member details</h2>
-//           <Table />
-//         </div>
-//       </div>
-//     </section>
-//   );
-// };
-
-// export default BookingDetails;
-
-
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import Navbar from "../../../components/Navbar";
 import { getAmenitiesBookingById } from "../../../api";
+import toast from "react-hot-toast";
 
 const BookingDetails = () => {
   const { id } = useParams();
@@ -130,9 +11,15 @@ const BookingDetails = () => {
 
   const [booking, setBooking] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  // ADD MODAL STATE
   const [showCaptureModal, setShowCaptureModal] = useState(false);
+  const [paidAmount, setPaidAmount] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("");
+  const [transactionId, setTransactionId] = useState("");
+  const [paymentDate, setPaymentDate] = useState(
+    new Date().toISOString().substring(0, 10)
+  );
+  const [remarks, setRemarks] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     loadBooking();
@@ -142,11 +29,65 @@ const BookingDetails = () => {
     try {
       const response = await getAmenitiesBookingById(id);
       console.log("API RESPONSE:", response.data);
-      setBooking(response.data); // API returns a single object
+      setBooking(response.data);
     } catch (err) {
       console.error("Error loading booking:", err);
+      toast.error("Failed to load booking");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCapturePaymentSubmit = async () => {
+    if (!paidAmount || !paymentMethod || !transactionId || !paymentDate) {
+      return toast.error("Please fill all required fields");
+    }
+
+    if (Number(paidAmount) <= 0) {
+      return toast.error("Paid amount must be greater than 0");
+    }
+
+    try {
+      setSubmitting(true);
+
+      const formData = new FormData();
+      formData.append("payment[resource_id]", booking.id);
+      formData.append("payment[resource_type]", "AmenityBooking");
+      formData.append("payment[total_amount]", booking.amount);
+      formData.append("payment[paid_amount]", paidAmount);
+      formData.append("payment[payment_method]", paymentMethod.toLowerCase());
+      formData.append("payment[transaction_id]", transactionId);
+      formData.append("payment[paymen_date]", paymentDate);
+      formData.append("payment[notes]", remarks || "");
+
+      const response = await fetch(
+        "https://admin.vibecopilot.ai/payments.json?token=efe990d24b0379af8b5ba3d0a986ac802796bc2e0db15552",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Payment API error:", errorText);
+        throw new Error("Payment API failed");
+      }
+
+      toast.success("Payment captured successfully");
+      setShowCaptureModal(false);
+
+      setPaidAmount("");
+      setPaymentMethod("");
+      setTransactionId("");
+      setRemarks("");
+
+      loadBooking();
+    } catch (error) {
+      console.error("Capture payment error:", error);
+      toast.error("Failed to capture payment");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -179,10 +120,15 @@ const BookingDetails = () => {
           <h2 className="text-lg font-semibold">{amenity?.fac_name}</h2>
 
           <div className="flex gap-3">
-            {/* OPEN MODAL */}
             <button
-              onClick={() => setShowCaptureModal(true)}
-              className="bg-red-600 text-white px-4 py-2 rounded"
+              onClick={() => {
+                setPaidAmount(booking.amount);
+                setShowCaptureModal(true);
+              }}
+              disabled={!!payment}
+              className={`px-4 py-2 rounded text-white ${
+                payment ? "bg-gray-400 cursor-not-allowed" : "bg-red-600"
+              }`}
             >
               Capture Payment
             </button>
@@ -193,7 +139,6 @@ const BookingDetails = () => {
           </div>
         </div>
 
-        {/* BOOKING GRID */}
         <div className="grid grid-cols-4 gap-4 bg-gray-100 p-4 rounded mt-4">
           <Field label="Booking ID" value={booking.id} />
           <Field label="Status" value={booking.status} />
@@ -209,113 +154,90 @@ const BookingDetails = () => {
           <Field label="Amount Paid" value={`₹ ${payment?.paid_amount ?? 0}`} />
         </div>
 
-        {/* PAYMENT */}
-        {payment && (
-          <div className="mt-6">
-            <h3 className="font-semibold border-b pb-1">Payment Details</h3>
-            <div className="grid grid-cols-4 gap-4 p-4 bg-blue-50 rounded mt-2">
-              <Field label="Method" value={payment.payment_method} />
-              <Field label="Paid" value={`₹ ${payment.paid_amount}`} />
-              <Field label="Transaction" value={payment.transaction_id} />
-              <Field label="Payment Date" value={formatDate(payment.paymen_date)} />
+        {showCaptureModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded shadow-lg w-[420px] relative">
+              <h2 className="text-xl font-semibold mb-4">Capture Payment</h2>
+
+              <label className="font-semibold">Total Amount</label>
+              <input
+                value={booking.amount}
+                disabled
+                className="w-full border p-2 rounded bg-gray-100 mt-1"
+              />
+
+              <label className="font-semibold mt-3 block">Paid Amount *</label>
+              <input
+                type="number"
+                value={paidAmount}
+                onChange={(e) => setPaidAmount(e.target.value)}
+                className="w-full border p-2 rounded mt-1"
+              />
+
+              <label className="font-semibold mt-3 block">Payment Method *</label>
+              <select
+                value={paymentMethod}
+                onChange={(e) => setPaymentMethod(e.target.value)}
+                className="w-full border p-2 rounded mt-1"
+              >
+                <option value="">Select Payment Method</option>
+                <option value="CASH">Cash</option>
+                <option value="ONLINE">Online</option>
+                <option value="UPI">UPI</option>
+                <option value="CARD">Card</option>
+              </select>
+
+              <label className="font-semibold mt-3 block">Transaction ID *</label>
+              <input
+                type="text"
+                value={transactionId}
+                onChange={(e) => setTransactionId(e.target.value)}
+                className="w-full border p-2 rounded mt-1"
+              />
+
+              <label className="font-semibold mt-3 block">Date *</label>
+              <input
+                type="date"
+                value={paymentDate}
+                onChange={(e) => setPaymentDate(e.target.value)}
+                className="w-full border p-2 rounded mt-1"
+              />
+
+              <label className="font-semibold mt-3 block">Remarks</label>
+              <textarea
+                value={remarks}
+                onChange={(e) => setRemarks(e.target.value)}
+                className="w-full border p-2 rounded mt-1"
+                rows={2}
+              />
+
+              <div className="flex justify-end gap-3 mt-5">
+                <button
+                  onClick={() => setShowCaptureModal(false)}
+                  className="px-4 py-2 bg-gray-400 text-white rounded"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={handleCapturePaymentSubmit}
+                  disabled={submitting}
+                  className="px-4 py-2 bg-blue-600 text-white rounded"
+                >
+                  {submitting ? "Submitting..." : "Submit"}
+                </button>
+              </div>
+
+              <button
+                className="absolute top-3 right-3 text-gray-600"
+                onClick={() => setShowCaptureModal(false)}
+              >
+                ✕
+              </button>
             </div>
           </div>
         )}
-
-        {/* AMENITY */}
-        <div className="mt-6">
-          <h3 className="font-semibold border-b pb-1">Amenity Details</h3>
-          <div className="grid grid-cols-4 gap-4 p-4 bg-green-50 rounded mt-2">
-            <Field label="Name" value={amenity?.fac_name} />
-            <Field label="Min People" value={amenity?.min_people} />
-            <Field label="Max People" value={amenity?.max_people} />
-            <Field label="Facility Type" value={amenity?.fac_type} />
-          </div>
-        </div>
       </div>
-
-      {/* ================================================================================= */}
-      {/* CAPTURE PAYMENT MODAL */}
-      {/* ================================================================================= */}
-      {showCaptureModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded shadow-lg w-[420px] relative">
-            <h2 className="text-xl font-semibold mb-4">Capture Payment</h2>
-
-            {/* TOTAL AMOUNT */}
-            <label className="font-semibold">Total Amount</label>
-            <input
-              value={booking.amount}
-              disabled
-              className="w-full border p-2 rounded bg-gray-100 mt-1"
-            />
-
-            {/* PAID AMOUNT */}
-            <label className="font-semibold mt-3 block">Paid Amount *</label>
-            <input
-              type="number"
-              defaultValue={booking.amount}
-              className="w-full border p-2 rounded mt-1"
-            />
-
-            {/* PAYMENT METHOD */}
-            <label className="font-semibold mt-3 block">Payment Method *</label>
-            <select className="w-full border p-2 rounded mt-1">
-              <option value="">Select Payment Method</option>
-              <option value="CASH">Cash</option>
-              <option value="ONLINE">Online</option>
-              <option value="UPI">UPI</option>
-              <option value="CARD">Card</option>
-            </select>
-
-            {/* TRANSACTION ID */}
-            <label className="font-semibold mt-3 block">Transaction ID *</label>
-            <input
-              type="text"
-              className="w-full border p-2 rounded mt-1"
-              placeholder="Enter Transaction ID"
-            />
-
-            {/* DATE */}
-            <label className="font-semibold mt-3 block">Date *</label>
-            <input
-              type="date"
-              className="w-full border p-2 rounded mt-1"
-              defaultValue={new Date().toISOString().substring(0, 10)}
-            />
-
-            {/* REMARKS */}
-            <label className="font-semibold mt-3 block">Remarks</label>
-            <textarea
-              className="w-full border p-2 rounded mt-1"
-              placeholder="Notes"
-              rows={2}
-            ></textarea>
-
-            {/* BUTTONS */}
-            <div className="flex justify-end gap-3 mt-5">
-              <button
-                onClick={() => setShowCaptureModal(false)}
-                className="px-4 py-2 bg-gray-400 text-white rounded"
-              >
-                Cancel
-              </button>
-
-              <button className="px-4 py-2 bg-blue-600 text-white rounded">
-                Submit
-              </button>
-            </div>
-
-            {/* CLOSE ICON */}
-            <button
-              className="absolute top-3 right-3 text-gray-600"
-              onClick={() => setShowCaptureModal(false)}
-            >
-              ✕
-            </button>
-          </div>
-        </div>
-      )}
     </section>
   );
 };

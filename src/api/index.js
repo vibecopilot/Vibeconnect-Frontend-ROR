@@ -571,7 +571,7 @@ export const getHelpDeskStatusDetailsSetup = async (id) =>
     }
   );
 export const editHelpDeskStatusDetailsSetup = async (id, data) =>
-  axiosInstance.put(
+  axiosInstance.patch(
     `/pms/admin/helpdesk_categories/complaint_statuses/${id}.json`,
     data,
     {
@@ -580,6 +580,8 @@ export const editHelpDeskStatusDetailsSetup = async (id, data) =>
       },
     }
   );
+
+  
 export const postHelpDeskStatusSetup = async (data) =>
   axiosInstance.post(`/pms/admin/create_complaint_statuses.json`, data, {
     params: {
@@ -2681,6 +2683,10 @@ export const createRegisteredVehicleVisit = async (payload) => {
 
 
 
+
+
+
+
 export const getRegisteredVehicle = async () =>
   axiosInstance.get(`/registered_vehicles.json`, {
     params: {
@@ -2770,30 +2776,100 @@ export const getVisitorCategory = async () =>
 export const postVisitorCategory = async (data) =>
   axiosInstance.post("/visitor_staff_categories.json", data, {
     params: {
+      token: "e6fbf77f4fbb5a72c4150e495c961972f0f14059d8a6670f",
+    }, 
+  });
+
+export const deleteVisitorCategory = async (id) =>
+  axiosInstance.delete(`/visitor_categories/${id}.json`, {
+    params: {
       token: token,
     },
   });
 
-export const deleteVisitorCategory = async (id) =>
-  axiosInstance.delete(`/visitor_staff_categories/${id}.json`, {
+  export const getVisitorSubCategory = () =>
+  axiosInstance.get("/visitor_sub_categories.json", {
     params: {
-      token: token,
+      token: "140494b3f6c6431bc0964ee3458411ccaa10f7617b197b35",
+    },
+  });
+
+export const deleteVisitorSubCategory = (id) =>
+  axiosInstance.delete(`/visitor_sub_categories/${id}.json`, {
+    params: {
+      token: "140494b3f6c6431bc0964ee3458411ccaa10f7617b197b35",
+    },
+  });
+
+export const postVisitorSubCategory = async (data) =>
+  axiosInstance.post("/visitor_sub_categories.json", data, {
+    params: {
+      token: "140494b3f6c6431bc0964ee3458411ccaa10f7617b197b35",
+    },
+  });
+
+export const getVisitorSubCategoryDetails = async (id) =>
+  axiosInstance.get(`/visitor_sub_categories/${id}.json`, {
+    params: {
+      token: "140494b3f6c6431bc0964ee3458411ccaa10f7617b197b35",
+    },
+  });
+
+export const editVisitorSubCategory = async (id, data) =>
+  axiosInstance.patch(`/visitor_sub_categories/${id}.json`, data, {
+    params: {
+      token: "140494b3f6c6431bc0964ee3458411ccaa10f7617b197b35",
     },
   });
 
 export const getVisitorCategoryDetails = async (id) =>
   axiosInstance.get(`/visitor_staff_categories/${id}.json`, {
     params: {
-      token: token,
+      token: "e6fbf77f4fbb5a72c4150e495c961972f0f14059d8a6670f",
     },
   });
 
 export const editVisitorCategory = async (id, data) =>
   axiosInstance.patch(`/visitor_staff_categories/${id}.json`, data, {
     params: {
-      token: token,
+      token: "e6fbf77f4fbb5a72c4150e495c961972f0f14059d8a6670f",
     },
   });
+
+export const getVisitorCategoryTypeDetails = async (id) =>
+  axiosInstance.get(`/visitor_categories/${id}.json`, {
+    params: {
+      token: "140494b3f6c6431bc0964ee3458411ccaa10f7617b197b35",
+    },
+  });
+
+// ✅ LIST (EDIT MODAL USES THIS)
+export const getVisitorCategories = () => {
+  return axiosInstance.get("/visitor_categories/json", {
+    params: {
+      token: "140494b3f6c6431bc0964ee3458411ccaa10f7617b197b35"
+    }
+  });
+};
+
+// ✅ CREATE
+export const postVisitorCategoryType = (data) => {
+  return axiosInstance.post("/visitor_categories.json", data, {
+    params: {
+      token: "140494b3f6c6431bc0964ee3458411ccaa10f7617b197b35"
+    }
+  });
+};
+
+// ✅ UPDATE
+export const editVisitorCategoryType = (id, data) => {
+  return axiosInstance.put(`/visitor_categories/${id}.json`, data, {
+    params: {
+      token: "140494b3f6c6431bc0964ee3458411ccaa10f7617b197b35"
+    }
+  });
+};
+
 
 // Visitor Alert Config APIs
 export const getVisitorAlertConfig = async () =>
@@ -10492,3 +10568,13 @@ export const deleteOtherProject = (id) =>
 
 export const postProjectLike = (data) =>
   axiosInstance.post("/likes/create_other_project_like.json", data);
+
+
+// export const getVisitorCategory = () => api.get("/visitor_categories");
+// export const deleteVisitorCategory = (id) =>
+//   api.delete(`/visitor_categories/${id}`);
+
+// export const getVisitorSubCategory = () =>
+//   api.get("/visitor_sub_categories");
+// export const deleteVisitorSubCategory = (id) =>
+//   api.delete(`/visitor_sub_categories/${id}`);
