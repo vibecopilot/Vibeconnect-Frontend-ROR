@@ -3,7 +3,7 @@ name: Deploy Frontend (Vite)
 on:
   push:
     branches:
-      - main
+      - server
       # change to master if your repo uses master
 
 jobs:
