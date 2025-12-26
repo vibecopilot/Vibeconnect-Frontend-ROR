@@ -229,15 +229,25 @@ const VisitorDetails = () => {
             </Section>
         )}
 
-        {(details.license_doc || details.consignment_doc) && (
+        {(details.visitor_files && details.visitor_files.length > 0) && (
             <Section title="Visitor Documents">
                 <div className="grid md:grid-cols-3 px-4 gap-5 gap-x-4">
-                    {details.license_doc && details.visitor_files?.filter(f => f.category_type === 'license').length > 0 && (
-                        <Info label="License Files" value={<a href={domainPrefix + details.visitor_files.filter(f => f.category_type === 'license')[0].url} target="_blank" className="text-blue-500 underline">View Files ({details.visitor_files.filter(f => f.category_type === 'license').length})</a>} />
-                    )}
-                    {details.consignment_doc && details.visitor_files?.filter(f => f.category_type === 'consignment').length > 0 && (
-                        <Info label="Consignment Files" value={<a href={domainPrefix + details.visitor_files.filter(f => f.category_type === 'consignment')[0].url} target="_blank" className="text-blue-500 underline">View Files ({details.visitor_files.filter(f => f.category_type === 'consignment').length})</a>} />
-                    )}
+                    {details.visitor_files.map((file, index) => (
+                        <Info 
+                            key={index}
+                            label={`${file.category_type ? file.category_type.charAt(0).toUpperCase() + file.category_type.slice(1) : 'Document'} File`} 
+                            value={
+                                <a 
+                                    href={domainPrefix + file.document} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="text-blue-500 underline"
+                                >
+                                    View File
+                                </a>
+                            } 
+                        />
+                    ))}
                 </div>
             </Section>
         )}
