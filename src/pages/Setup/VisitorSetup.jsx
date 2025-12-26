@@ -1,12 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { IoAddCircleOutline } from "react-icons/io5";
 import { BiEdit } from "react-icons/bi";
 import { RiDeleteBin5Line } from "react-icons/ri";
-import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 import toast from "react-hot-toast";
+import axios from "axios";
 
-import Navbar from "../../components/Navbar";
 import SetupNavbar from "../../components/navbars/SetupNavbar";
 import Table from "../../components/table/Table";
 
@@ -16,204 +15,317 @@ import EditVisitorSetupModal from "../../containers/modals/EditVisitorSetupModal
 import VehicleParkingSetup from "./VehicleParkingSetupModal/VehicleParkingSetup";
 import DeviceConfiguration from "./VehicleParkingSetupModal/DeviceConfiguration";
 
-import {
-  getVisitorCategory,
-  deleteVisitorCategory,
-} from "../../api";
-
-/* ================================
-   VISITOR SETUP MAIN COMPONENT
-================================ */
 function VisitorSetup() {
   const themeColor = useSelector((state) => state.theme.color);
 
   const [page, setPage] = useState("deviceConfig");
   const [searchText, setSearchText] = useState("");
 
-  const [categories, setCategories] = useState([]);
-  const [filteredData, setFilteredData] = useState([]);
+  // ================= STAFF CATEGORIES =================
+  const [staffCategories, setStaffCategories] = useState([]);
+  const [filteredStaffCategories, setFilteredStaffCategories] = useState([]);
 
+  // ================= VISITOR CATEGORIES =================
+  const [visitorCategories, setVisitorCategories] = useState([]);
+  const [filteredVisitorCategories, setFilteredVisitorCategories] = useState([]);
+
+  // ================= SUB CATEGORIES =================
+  const [subCategories, setSubCategories] = useState([]);
+  const [filteredSubCategories, setFilteredSubCategories] = useState([]);
+
+  // ================= MODALS =================
   const [visitorSetupModal, setVisitorSetupModal] = useState(false);
+  const [addVisitorCategoryModal, setAddVisitorCategoryModal] = useState(false);
+  const [addVisitorSubCategoryModal, setAddVisitorSubCategoryModal] = useState(false);
   const [editVisitorSetupModal, setEditVisitorSetupModal] = useState(false);
+
   const [catId, setCatId] = useState("");
+  const [editType, setEditType] = useState("");
   const [reload, setReload] = useState(false);
 
-  /* ================================
-     FETCH VISITOR CATEGORIES
-  ================================ */
-  const fetchVisitorCategories = async () => {
+  /* ================= FETCH STAFF CATEGORIES ================= */
+  const fetchStaffCategories = async () => {
     try {
-      const res = await getVisitorCategory();
-      setCategories(res.data.categories);
-      setFilteredData(res.data.categories);
-    } catch (error) {
-      console.error(error);
+      const res = await axios.get(
+        "https://admin.vibecopilot.ai/visitor_staff_categories.json?token=e6fbf77f4fbb5a72c4150e495c961972f0f14059d8a6670f"
+      );
+      const list = Array.isArray(res?.data?.staff_categories)
+        ? res.data.staff_categories
+        : [];
+      setStaffCategories(list);
+      setFilteredStaffCategories(list);
+    } catch {
+      setStaffCategories([]);
+      setFilteredStaffCategories([]);
     }
   };
 
-  useEffect(() => {
-    fetchVisitorCategories();
-  }, [reload]);
+  /* ================= FETCH VISITOR CATEGORIES ================= */
+  const fetchVisitorCategories = async () => {
+    try {
+      const res = await axios.get(
+        "https://admin.vibecopilot.ai/visitor_categories.json?token=140494b3f6c6431bc0964ee3458411ccaa10f7617b197b35"
+      );
+      const list = Array.isArray(res?.data) ? res.data : [];
+      setVisitorCategories(list);
+      setFilteredVisitorCategories(list);
+    } catch {
+      setVisitorCategories([]);
+      setFilteredVisitorCategories([]);
+    }
+  };
 
-  /* ================================
-     SEARCH
-  ================================ */
+  /* ================= FETCH SUB CATEGORIES ================= */
+  const fetchVisitorSubCategories = async () => {
+    try {
+      const res = await axios.get(
+        "https://admin.vibecopilot.ai/visitor_sub_categories.json?token=140494b3f6c6431bc0964ee3458411ccaa10f7617b197b35"
+      );
+      const list = Array.isArray(res?.data) ? res.data : [];
+      setSubCategories(list);
+      setFilteredSubCategories(list);
+    } catch {
+      setSubCategories([]);
+      setFilteredSubCategories([]);
+    }
+  };
+
+  /* ================= EFFECT ================= */
+  useEffect(() => {
+    if (page === "visitor") fetchStaffCategories();
+
+    if (page === "visitorCategory") fetchVisitorCategories();
+
+    if (page === "visitorSubCategory") {
+      fetchVisitorCategories();       // ✅ REQUIRED FIX
+      fetchVisitorSubCategories();
+    }
+  }, [page, reload]);
+
+  /* ================= SEARCH ================= */
   const handleSearch = (e) => {
-    const value = e.target.value;
+    const value = e.target.value.toLowerCase();
     setSearchText(value);
 
-    if (!value.trim()) {
-      setFilteredData(categories);
-    } else {
-      setFilteredData(
-        categories.filter((c) =>
-          c.name.toLowerCase().includes(value.toLowerCase())
-        )
+    if (page === "visitor") {
+      setFilteredStaffCategories(
+        staffCategories.filter((c) => c?.name?.toLowerCase().includes(value))
+      );
+    }
+
+    if (page === "visitorCategory") {
+      setFilteredVisitorCategories(
+        visitorCategories.filter((c) => c?.name?.toLowerCase().includes(value))
+      );
+    }
+
+    if (page === "visitorSubCategory") {
+      setFilteredSubCategories(
+        subCategories.filter((c) => c?.name?.toLowerCase().includes(value))
       );
     }
   };
 
-  /* ================================
-     DELETE CATEGORY
-  ================================ */
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure?")) return;
-    try {
-      await deleteVisitorCategory(id);
-      toast.success("Category deleted");
-      setReload((p) => !p);
-    } catch (err) {
-      toast.error("Delete failed");
-    }
-  };
+  /* ================= LOOKUP MAP ================= */
+  const visitorCategoryMap = useMemo(() => {
+    const map = {};
+    visitorCategories.forEach((v) => {
+      map[v.id] = v.name;
+    });
+    return map;
+  }, [visitorCategories]);
 
-  /* ================================
-     TABLE COLUMNS
-  ================================ */
-  const categoryColumns = [
-    {
-      name: "Sr No",
-      selector: (_, index) => index + 1,
-    },
-    {
-      name: "Category Name",
-      selector: (row) => row.name,
-    },
+  /* ================= TABLE COLUMNS ================= */
+  const staffCategoryColumns = [
+    { name: "Sr No", selector: (_, i) => i + 1 },
+    { name: "Category Name", selector: (row) => row?.name },
+    { name: "Staff Count", selector: (row) => row?.staffs_count || 0 },
     {
       name: "Action",
-      selector: (row) => (
+      cell: (row) => (
         <div className="flex gap-3">
-          <button onClick={() => handleEdit(row.id)}>
-            <BiEdit size={16} />
-          </button>
-          <button onClick={() => handleDelete(row.id)}>
-            <RiDeleteBin5Line size={16} />
-          </button>
+          <BiEdit onClick={() => {
+            setEditType("staffCategory");
+            setCatId(row.id);
+            setEditVisitorSetupModal(true);
+          }} />
+          <RiDeleteBin5Line onClick={async () => {
+            if (!window.confirm("Are you sure?")) return;
+            await axios.delete(
+              `https://admin.vibecopilot.ai/visitor_staff_categories/${row.id}.json?token=e6fbf77f4fbb5a72c4150e495c961972f0f14059d8a6670f`
+            );
+            toast.success("Staff category deleted");
+            setReload((p) => !p);
+          }} />
         </div>
       ),
     },
   ];
 
-  const handleEdit = (id) => {
-    setCatId(id);
-    setEditVisitorSetupModal(true);
-  };
+  const visitorCategoryColumns = [
+    { name: "Sr No", selector: (_, i) => i + 1 },
+    { name: "Name", selector: (row) => row?.name },
+    { name: "Code", selector: (row) => row?.code },
+    {
+      name: "Icon",
+      cell: (row) =>
+        row?.icon ? (
+          <img src={row.icon} className="w-8 h-8 object-contain" />
+        ) : (
+          "-"
+        ),
+    },
+    {
+      name: "Action",
+      cell: (row) => (
+        <div className="flex gap-3">
+          <BiEdit onClick={() => {
+            setEditType("visitorCategory");
+            setCatId(row.id);
+            setEditVisitorSetupModal(true);
+          }} />
+          <RiDeleteBin5Line onClick={async () => {
+            if (!window.confirm("Are you sure?")) return;
+            await axios.delete(
+              `https://admin.vibecopilot.ai/visitor_categories/${row.id}.json?token=140494b3f6c6431bc0964ee3458411ccaa10f7617b197b35`
+            );
+            toast.success("Visitor category deleted");
+            setReload((p) => !p);
+          }} />
+        </div>
+      ),
+    },
+  ];
+
+  const subCategoryColumns = [
+    { name: "Sr No", selector: (_, i) => i + 1 },
+    { name: "Sub Category", selector: (row) => row?.name },
+    {
+      name: "Visitor Category",
+      selector: (row) => visitorCategoryMap[row.visitor_category_id] || "-",
+    },
+    {
+      name: "Icon",
+      cell: (row) =>
+        row?.iconv2 ? (
+          <img src={row.iconv2} className="w-8 h-8 object-contain" />
+        ) : (
+          "-"
+        ),
+    },
+    {
+      name: "Action",
+      cell: (row) => (
+        <div className="flex gap-3">
+          <BiEdit onClick={() => {
+            setEditType("visitorSubCategory");
+            setCatId(row.id);
+            setEditVisitorSetupModal(true);
+          }} />
+          <RiDeleteBin5Line onClick={async () => {
+            if (!window.confirm("Are you sure?")) return;
+            await axios.delete(
+              `https://admin.vibecopilot.ai/visitor_sub_categories/${row.id}.json?token=140494b3f6c6431bc0964ee3458411ccaa10f7617b197b35`
+            );
+            toast.success("Sub category deleted");
+            setReload((p) => !p);
+          }} />
+        </div>
+      ),
+    },
+  ];
 
   return (
     <section className="flex w-full">
       <SetupNavbar />
 
-      <div className="w-full flex flex-col mx-3 overflow-hidden">
-        {/* ===================== TABS ===================== */}
-        <div className="flex gap-2 p-2 border-b-2 border-gray-200">
+      <div className="w-full mx-3">
+        <div className="flex gap-2 border-b p-2">
           {[
             ["deviceConfig", "Device Configuration"],
-            ["visitor", "Staff Category"],
+            ["visitor", "Staff Categories"],
             ["vehicleParking", "Parking Slot"],
-            ["visitorCategory", "Visitor Category"],
+            ["visitorCategory", "Visitor Categories"],
             ["visitorSubCategory", "Visitor Sub Category"],
           ].map(([key, label]) => (
             <h2
               key={key}
-              className={`p-1 px-4 cursor-pointer rounded-t-md transition-all ${
-                page === key
-                  ? "bg-white text-blue-500 font-medium shadow-custom-all-sides"
-                  : ""
-              }`}
               onClick={() => setPage(key)}
+              className={`px-4 py-1 cursor-pointer ${
+                page === key ? "bg-white text-blue-500 font-semibold" : ""
+              }`}
             >
               {label}
             </h2>
           ))}
         </div>
 
-        {/* ===================== BREADCRUMB ===================== */}
-        <div className="flex gap-2 my-2">
-          <Link className="font-medium text-gray-600" to="/setup">
-            Setup
-          </Link>
-          <span>{">"}</span>
-          <Link className="font-medium text-gray-600" to="/setup/visitor-setup">
-            Visitor Setup
-          </Link>
-        </div>
+        {(page === "visitor" || page === "visitorCategory" || page === "visitorSubCategory") && (
+          <div className="flex justify-between my-3">
+            <input
+              value={searchText}
+              onChange={handleSearch}
+              className="border p-2 rounded-md w-96"
+              placeholder="Search..."
+            />
 
-        {/* ===================== VISITOR CATEGORY ===================== */}
-        {(page === "visitor" || page === "visitorCategory") && (
-          <>
-            <div className="flex justify-between my-3">
-              <input
-                value={searchText}
-                onChange={handleSearch}
-                placeholder="Search category"
-                className="border p-2 rounded-md w-96"
-              />
+            {page === "visitor" && (
               <button
                 onClick={() => setVisitorSetupModal(true)}
-                className="text-white px-4 py-2 rounded-md flex items-center gap-2"
                 style={{ background: themeColor }}
+                className="text-white px-4 py-2 rounded flex gap-2"
               >
-                <IoAddCircleOutline size={20} /> Add
+                <IoAddCircleOutline size={20} /> Add Staff
               </button>
-            </div>
+            )}
 
-            <Table
-              columns={categoryColumns}
-              data={filteredData}
-              isPagination
-            />
-          </>
-        )}
-
-        {/* ===================== VISITOR SUB CATEGORY ===================== */}
-        {page === "visitorSubCategory" && (
-          <div className="p-4">
-            <button
-              className="px-4 py-2 text-white rounded-md"
-              style={{ background: themeColor }}
-            >
-              Add Sub Category
-            </button>
+            {page === "visitorCategory" && (
+              <button
+                onClick={() => setAddVisitorCategoryModal(true)}
+                style={{ background: themeColor }}
+                className="text-white px-4 py-2 rounded flex gap-2"
+              >
+                <IoAddCircleOutline size={20} /> Add Visitor
+              </button>
+            )}
           </div>
         )}
 
-        {/* ===================== VEHICLE PARKING ===================== */}
-        {page === "vehicleParking" && <VehicleParkingSetup />}
+        {page === "visitor" && (
+          <Table columns={staffCategoryColumns} data={filteredStaffCategories} />
+        )}
 
-        {/* ===================== DEVICE CONFIG ===================== */}
+        {page === "visitorCategory" && (
+          <Table columns={visitorCategoryColumns} data={filteredVisitorCategories} />
+        )}
+
+        {page === "visitorSubCategory" && (
+          <Table columns={subCategoryColumns} data={filteredSubCategories} />
+        )}
+
+        {page === "vehicleParking" && <VehicleParkingSetup />}
         {page === "deviceConfig" && <DeviceConfiguration />}
 
-        {/* ===================== MODALS ===================== */}
         {visitorSetupModal && (
           <AddVisitorSetupModal
+            type="staffCategory"
             setAdded={() => setReload((p) => !p)}
             onclose={() => setVisitorSetupModal(false)}
+          />
+        )}
+
+        {addVisitorCategoryModal && (
+          <AddVisitorSetupModal
+            type="visitorCategory"
+            setAdded={() => setReload((p) => !p)}
+            onclose={() => setAddVisitorCategoryModal(false)}
           />
         )}
 
         {editVisitorSetupModal && (
           <EditVisitorSetupModal
             catId={catId}
+            editType={editType}
             setAdded={() => setReload((p) => !p)}
             onclose={() => setEditVisitorSetupModal(false)}
           />

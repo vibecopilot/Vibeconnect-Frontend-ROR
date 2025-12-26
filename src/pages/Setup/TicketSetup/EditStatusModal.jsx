@@ -3,12 +3,16 @@ import ModalWrapper from "../../../containers/modals/ModalWrapper";
 import { BiEditAlt } from "react-icons/bi";
 import { useSelector } from "react-redux";
 import { ColorPicker } from "antd";
-import { editHelpDeskStatusDetailsSetup, getHelpDeskStatusDetailsSetup } from "../../../api";
+import {
+  editHelpDeskStatusDetailsSetup,
+  getHelpDeskStatusDetailsSetup,
+} from "../../../api";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
 import toast from "react-hot-toast";
 
 const EditStatusModal = ({ onClose, id, setStatusAdded }) => {
   const themeColor = useSelector((state) => state.theme.color);
+
   const [formData, setFormData] = useState({
     status: "",
     fixedState: "",
@@ -16,114 +20,161 @@ const EditStatusModal = ({ onClose, id, setStatusAdded }) => {
     order: "",
   });
 
+  const [loading, setLoading] = useState(false);
+
+  const siteID = getItemInLocalStorage("SITEID");
+
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [e.target.name]: e.target.value,
-    });
+    }));
+  };
+
+  // Color picker handler
+  const handleColorChange = (_, hex) => {
+    setFormData((prev) => ({ ...prev, color: hex }));
   };
 
   useEffect(() => {
+    if (!id) return;
+
     const fetchStatusDetails = async () => {
       try {
-        const detailsResp = await getHelpDeskStatusDetailsSetup(id);
-        const detail = detailsResp.data;
+        const res = await getHelpDeskStatusDetailsSetup(id);
+        const detail = res.data;
+
         setFormData({
-          ...formData,
-          status: detail.name,
-          color: detail.color_code,
-          fixedState: detail.fixed_state,
-          order: detail.position,
+          status: detail.name || "",
+          fixedState: detail.fixed_state || "",
+          color: detail.color_code || "",
+          order: detail.position || "",
         });
       } catch (error) {
-        console.log(error);
+        console.error("Fetch Error:", error);
+        toast.error("Failed to load status details");
       }
     };
+
     fetchStatusDetails();
-  },[id]);
-  const siteID = getItemInLocalStorage("SITEID");
-  const handleEditStatus = async()=>{
-    const postStatus = new FormData();
-    postStatus.append("complaint_status[of_phase]", "pms");
-    postStatus.append("complaint_status[society_id]", siteID);
-    postStatus.append("complaint_status[name]", formData.status);
-    postStatus.append("complaint_status[fixed_state]", formData.fixedState);
-    postStatus.append("complaint_status[color_code]", formData.color);
-    postStatus.append("complaint_status[position]", formData.order);
-    try {
-      const resp = await editHelpDeskStatusDetailsSetup(id, postStatus)
-      
-      setStatusAdded(true);
-      toast.success("Status Edited Successfully");
-      setFormData({
-        ...formData,
-        color: "",
-        status: "",
-        fixedState: "",
-        order: "",
-      });
-    } catch (error) {
-      console.log(error);
-      toast.error("Something went wrong");
-    } finally {
-      setTimeout(() => {
-        setStatusAdded(false);
-      }, 500);
+  }, [id]);
+
+  const handleEditStatus = async () => {
+    console.log("Save clicked", { id, formData, siteID }); // Enhanced debug
+
+    if (!id) {
+      toast.error("Invalid Status ID");
+      return;
     }
-  }
-  console.log(formData)
+
+    if (!formData.status.trim()) {
+      toast.error("Status name is required");
+      return;
+    }
+
+    setLoading(true);
+
+    const payload = {
+      complaint_status: {
+        of_phase: "pms",
+        society_id: siteID,
+        name: formData.status,
+        fixed_state: formData.fixedState,
+        color_code: formData.color,
+        position: parseInt(formData.order) || 0, // Ensure number
+      },
+    };
+
+    try {
+      const res = await editHelpDeskStatusDetailsSetup(id, payload);
+      console.log("Update success:", res);
+
+      toast.success("Status updated successfully");
+      setStatusAdded(true);
+      onClose();
+    } catch (error) {
+      console.error("Update Error Details:", {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        message: error.message,
+      });
+
+      const errorMsg = error.response?.data?.errors 
+        ? JSON.stringify(error.response.data.errors)
+        : error.response?.status === 404 
+          ? "Status not found or update endpoint unavailable"
+          : "Update failed";
+
+      toast.error(errorMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <ModalWrapper onclose={onClose}>
       <div>
-        <h2 className="font-medium text-xl flex items-center gap-4 border-b border-gray-300">
+        <h2 className="font-medium text-xl flex items-center gap-4 border-b border-gray-300 pb-2">
           <BiEditAlt /> Edit Status
         </h2>
+
         <div className="m-2">
           <div className="grid md:grid-cols-2 gap-4 m-2">
             <input
               type="text"
               placeholder="Enter status"
-              className="border p-2 rounded-md border-gray-300"
+              className="border p-2 rounded-md border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={formData.status}
               onChange={handleChange}
               name="status"
             />
+
             <select
               name="fixedState"
               onChange={handleChange}
               value={formData.fixedState}
-              id=""
-              className="border p-2 rounded-md border-gray-300"
+              className="border p-2 rounded-md border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Select Fixed State</option>
-              <option value="closed">Closed</option>
               <option value="open">Open</option>
+              <option value="closed">Closed</option>
               <option value="complete">Complete</option>
             </select>
 
-            <ColorPicker
-              value={formData.color}
-              onChange={(color) =>
-                setFormData({ ...formData, color: color.toHexString() })
-              }
-              size="large"
-            />
+            <div className="flex items-center">
+              <ColorPicker
+                value={formData.color || "#1677ff"}
+                format="hex"
+                onChange={handleColorChange}
+                size="large"
+              />
+              <span className="ml-2 text-sm text-gray-600 font-mono">
+                {formData.color || "#1677ff"}
+              </span>
+            </div>
 
             <input
               type="number"
               placeholder="Enter order"
-              className="border p-2 rounded-md border-gray-300"
+              className="border p-2 rounded-md border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={formData.order}
               onChange={handleChange}
               name="order"
+              min="0"
             />
           </div>
+
           <button
-            className=" font-medium hover:text-white transition-all w-full p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
-            style={{ background: themeColor }}
+            className="font-medium transition-all w-full p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center mt-4"
+            style={{
+              background: themeColor,
+              opacity: loading ? 0.7 : 1,
+            }}
             onClick={handleEditStatus}
+            disabled={loading}
           >
-            Save
+            {loading ? "Saving..." : "Save Changes"}
           </button>
         </div>
       </div>
