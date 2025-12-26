@@ -3,10 +3,10 @@ import React, { useEffect, useState } from "react";
 import { BiEdit } from "react-icons/bi";
 import Select from "react-select";
 import { useSelector } from "react-redux";
-import Table from "../../../components/table/Table"; // Original import
+import Table from "../../../components/table/Table"; 
 import { FaClone, FaTrash } from "react-icons/fa";
 
-import { RiContactsBook2Line } from "react-icons/ri"; // Original import
+import { RiContactsBook2Line } from "react-icons/ri"; 
 import {
   deleteEscalationRule,
   getHelpDeskCategoriesSetup,
@@ -18,7 +18,6 @@ import {
 import toast from "react-hot-toast";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
 
-// Initial state for new resolution escalation entries
 const initialResolutionEscalationData = {
   E1: {
     users: [],
@@ -63,7 +62,6 @@ const initialResolutionEscalationData = {
 };
 
 const TicketEscalationSetup = () => {
-  // Original states for modals (kept for reference, although new state is used for dynamic content)
   const [showModal, setShowModal] = useState(false);
   const [showModal1, setShowModal1] = useState(false);
   const [showModal3, setShowModal3] = useState(false);
@@ -74,14 +72,11 @@ const TicketEscalationSetup = () => {
   const closeModal1 = () => setShowModal1(false);
   const openModal3 = () => setShowModal3(true);
   const closeModal3 = () => setShowModal3(false);
-  // End of Original Modal States
 
-  // State for Dynamic Modals (Rule data)
-  const [editingRule, setEditingRule] = useState(null); // Holds the Response rule object for editing
-  const [cloningRule, setCloningRule] = useState(null); // Holds the rule object for cloning
-  const [editingResolutionRule, setEditingResolutionRule] = useState(null); // For the Resolution Edit modal
+  const [editingRule, setEditingRule] = useState(null); 
+  const [cloningRule, setCloningRule] = useState(null); 
+  const [editingResolutionRule, setEditingResolutionRule] = useState(null); 
   
-  // State for holding and managing edited data in modals
   const [editResponseData, setEditResponseData] = useState({ 
     id: null,
     category: null, 
@@ -97,7 +92,7 @@ const TicketEscalationSetup = () => {
   const themeColor = useSelector((state) => state.theme.color);
   const [categories, setCategories] = useState([]);
   const [resEscalationAdded, setResEscalationAdded] = useState(false);
-  const [resolutionEscalationAdded, setResolutionEscalationAdded] = useState(false); // Original state
+  const [resolutionEscalationAdded, setResolutionEscalationAdded] = useState(false); 
   const [selectedOptions, setSelectedOptions] = useState({
     categories: [],
     escalations: {
@@ -117,7 +112,6 @@ const TicketEscalationSetup = () => {
   const siteId = getItemInLocalStorage("SITEID");
 
   /**
-   * Converts days, hours, and minutes object to total minutes.
    * @param {object} time - {days, hrs, min}
    * @returns {number} Total minutes.
    */
@@ -158,9 +152,7 @@ const TicketEscalationSetup = () => {
     const fetchSetupUsers = async () => {
       try {
         const UsersResp = await getSetupUsers();
-        const filteredUser = UsersResp.data.filter(
-          (userAdmin) => userAdmin.user_type === "pms_admin"
-        );
+        const filteredUser = UsersResp.data;
         const transformedUsers = filteredUser.map((user) => ({
           value: user.id,
           label: `${user.firstname} ${user.lastname}`,
@@ -187,7 +179,6 @@ const TicketEscalationSetup = () => {
       }
     };
     
-    // Only fetch if a category/escalation was added/deleted/updated
     if (resEscalationAdded || resolutionEscalationAdded) {
       fetchEscalation();
       setResEscalationAdded(false);
@@ -197,9 +188,8 @@ const TicketEscalationSetup = () => {
     fetchAllCategories();
     fetchEscalation();
     fetchSetupUsers();
-  }, [resEscalationAdded, resolutionEscalationAdded]); // Dependency to re-fetch after C/U/D operations
+  }, [resEscalationAdded, resolutionEscalationAdded]); 
 
-  // --- Modal Control and State Initialization ---
   const openEditModal = (rule) => {
   setEditingRule(rule);
 
@@ -215,10 +205,14 @@ const TicketEscalationSetup = () => {
     const userIds = level.escalate_to_users_ids || [];
     const userNames = level.escalate_to_users_names || [];
 
-    initialEscalations[level.name] = userIds.map((id, index) => ({
+    initialEscalations[level.name] = userIds.map((id, index) => {
+      const globalUser = users.find(u => u.value === id);
+      
+      return {
       value: id,
-      label: userNames[index] || `User ID ${id}`,
-    }));
+      label: userNames[index] || (globalUser ? globalUser.label : `User ID ${id}`),
+      };
+    });
   });
 
   setEditResponseData({
@@ -229,6 +223,7 @@ const TicketEscalationSetup = () => {
     },
     escalations: initialEscalations,
   });
+  setShowModal(true);
 };
 
   const closeEditModal = () => setEditingRule(null);
@@ -237,37 +232,34 @@ const TicketEscalationSetup = () => {
   
   const openResolutionEditModal = (rule) => {
     setEditingResolutionRule(rule);
-    // Initialize state for Resolution Edit Modal
-    // Deep copy the initial structure to avoid mutation
     const initialEscalations = JSON.parse(JSON.stringify(initialResolutionEscalationData)); 
     
     rule.escalations.forEach(level => {
         const levelName = level.name;
         
-        // --- Map users ---
         const userIds = level.escalate_to_users_ids || [];
         const userNames = level.escalate_to_users_names || [];
         
-        // Map users to { value, label } format
-        const users = userIds.map((id, index) => ({
+        const levelUsers = userIds.map((id, index) => {
+          const globalUser = users.find(u => u.value === id);
+          
+          return {
             value: id,
-            label: userNames[index] || `User ID ${id}` // Fallback label
-        })) || [];
+            label: userNames[index] || (globalUser ? globalUser.label : `User ID ${id}`),
+          };
+        }) || [];
         
-        // --- Map time (P1-P5) ---
         const timeFields = {};
         ["p1", "p2", "p3", "p4", "p5"].forEach(pField => {
             const totalMinutes = level[pField] || 0;
             const days = Math.floor(totalMinutes / (24 * 60));
             const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
             const min = totalMinutes % 60;
-            // Convert to string to work with input type="text"
             timeFields[pField] = { days: String(days), hrs: String(hours), min: String(min) };
         });
 
-        // Merge users and time data into the correct level
         initialEscalations[levelName] = { 
-            users, 
+            users: levelUsers, 
             ...timeFields 
         };
     });
@@ -280,9 +272,7 @@ const TicketEscalationSetup = () => {
   };
   const closeResolutionEditModal = () => setEditingResolutionRule(null);
   
-  // --- Change Handlers for Main Forms ---
 
-  // Handler for Response Escalation form select inputs (Categories and Users)
   const handleChange = (selected, type, level = null) => {
     if (type === "categories") {
       setSelectedOptions((prevOptions) => ({
@@ -1090,7 +1080,7 @@ const TicketEscalationSetup = () => {
                         <td className="border border-gray-300 px-4 py-2 text-center">
                             <Select
                                 isMulti
-                                value={editResponseData.escalations[levelName] || []}
+                                value={editResponseData.escalations[levelName]}
                                 options={users}
                                 onChange={(selected) => handleEditResponseUserChange(selected, levelName)}
                                 placeholder="Select Users" // Added placeholder as requested
