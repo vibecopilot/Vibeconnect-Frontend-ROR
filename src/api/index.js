@@ -1829,6 +1829,19 @@ export const verifyOtpToCheckIn = async (id, otp, mobile) => {
   });
 };
 
+export const updateEventEnableStatus = (id, enabled) =>
+  axiosInstance.put(
+    `/events/${id}.json`,
+    {
+      event: {
+        important: enabled,  // <-- correct field
+      },
+    },
+    {
+      params: { token },
+    }
+  );
+
 export const getEvents = async () =>
   axiosInstance.get("/events.json", {
     params: {
@@ -1919,6 +1932,21 @@ export const postBroadCast = async (data) =>
       token: token,
     },
   });
+
+
+export const updateBroadcastEnableStatus = (id, status) =>
+  axiosInstance.put(
+    `/notices/${id}.json`,
+    {
+      notice: {
+        enabled: status
+      }
+    },
+    {
+      params: { token }
+    }
+  );
+    
 
 export const getBroadcastDetails = async (id) =>
   axiosInstance.get(`/notices/${id}.json`, {

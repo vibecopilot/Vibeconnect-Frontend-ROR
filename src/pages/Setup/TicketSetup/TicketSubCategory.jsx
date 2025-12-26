@@ -101,40 +101,53 @@ const TicketSubCategory = ({ handleToggleCategoryPage1 , setCAtAdded }) => {
     };
     fetchCategory();
   }, []);
-  const handleAddSubCat = async () => {
-    if (formData.category === "" || formData.subCategory.length === 0) {
-      return toast.error("All fields are required!");
-    }
 
-    const sendData = new FormData();
-    sendData.append(
-      "helpdesk_sub_category[helpdesk_category_id]",
-      formData.category
-    );
-    // formData.subCategory.forEach((tag) => {
-    //   sendData.append("sub_category_tags[]", tag);
-    // });
-    const subCategoryString = formData.subCategory.join(",");
-    sendData.append("sub_category_tags[]", subCategoryString);
 
-    try {
-      const resp = await postHelpDeskSubCategoriesSetup(sendData);
-      console.log(resp);
-      toast.success("Sub Category Added Successfully");
-      setCAtAdded(true);
-      setFormData({
-        ...formData,
-        category:"",
-        subCategory:[]
-      })
-    } catch (error) {
-      console.log(error);
-    } finally {
-      setTimeout(() => {
-        setCAtAdded(false);
-      }, 500);
-    }
-  };
+  
+const handleAddSubCat = async () => {
+  // ✅ auto-push inputValue if user didn't press Enter
+  if (inputValue.trim()) {
+    setFormData((prev) => ({
+      ...prev,
+      subCategory: [...prev.subCategory, inputValue.trim()],
+    }));
+    setInputValue("");
+  }
+
+  // ⏳ Wait for state update
+  const updatedSubCategory =
+    inputValue.trim()
+      ? [...formData.subCategory, inputValue.trim()]
+      : formData.subCategory;
+
+  if (formData.category === "" || updatedSubCategory.length === 0) {
+    return toast.error("All fields are required!");
+  }
+
+  const sendData = new FormData();
+  sendData.append(
+    "helpdesk_sub_category[helpdesk_category_id]",
+    formData.category
+  );
+  sendData.append("sub_category_tags[]", updatedSubCategory.join(","));
+
+  try {
+    await postHelpDeskSubCategoriesSetup(sendData);
+    toast.success("Sub Category Added Successfully");
+
+    setCAtAdded(true);
+    handleToggleCategoryPage1();
+
+    setFormData({ category: "", subCategory: [] });
+  } catch (error) {
+    console.log(error);
+  } finally {
+    setTimeout(() => setCAtAdded(false), 500);
+  }
+};
+
+
+
   const [inputValue, setInputValue] = useState("");
 
   const AddSubCat = (e) => {
@@ -180,9 +193,9 @@ const TicketSubCategory = ({ handleToggleCategoryPage1 , setCAtAdded }) => {
         <div className="flex  gap-2">
           <button
             style={{ background: themeColor }}
-            type="submit"
+            type="button"
             className="px-4 py-2 bg-blue-500 text-white rounded-md"
-            onClick={handleAddSubCat}
+           onClick={handleAddSubCat}
           >
             Submit
           </button>

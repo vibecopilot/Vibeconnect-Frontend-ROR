@@ -194,7 +194,11 @@ const TicketCategorySetup = () => {
     },
     {
       name: "Assignee",
-      selector: (row) => row.Assignee,
+      // selector: (row) => row.Assignee,
+       selector: (row) =>
+    row.assigned_to
+      ? `${row.assigned_to.firstname} ${row.assigned_to.lastname}`
+      : "-",
       sortable: true,
     },
     {
@@ -342,8 +346,16 @@ const [subCatId, setSubCatId] = useState(null)
     sendData.append("helpdesk_category[of_phase]", "pms");
     sendData.append("helpdesk_category[name]", formData.category);
     sendData.append("helpdesk_category[tat]", formData.minTat);
+    sendData.append("helpdesk_category[assigned_to]", formData.engineer
+);
+
     try {
       const resp = await editHelpDeskCategoriesSetupDetails(catId, sendData);
+      setIsCatEditModalOpen(false);
+
+          // ✅ REFRESH TABLE
+    setCatAdded(true);
+    setTimeout(() => setCatAdded(false), 300);
       console.log(resp);
     } catch (error) {
       console.log(error);
