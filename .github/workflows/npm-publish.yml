@@ -39,5 +39,5 @@ jobs:
             echo "🏗️ Building frontend"
             npm run build || exit 1
 
-            echo "✅ Frontend deployed successfully"
+            echo "✅ VibeConnect deployed successfully"
           EOF
