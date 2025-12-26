@@ -162,215 +162,75 @@ const TicketSetupPage = () => {
       </div>
 
       {page === "Category Type" && <TicketCategorySetup />}
-              <input
-                type="number"
-                placeholder="Enter order"
-                className="border p-2 rounded-md border-gray-300"
-                value={formData.order}
-                onChange={handleChange}
-                name="order"
-              />
-              <button
-                className=" font-medium hover:text-white transition-all w-full p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
-                style={{ background: themeColor }}
-                onClick={handleAddStatus}
-              >
-                Add
-              </button>
-            </div>
-            <Table
-              responsive
-              //   selectableRows
-              columns={statusColumns}
-              data={statuses}
-              isPagination={true}
-            />{" "}
-            {/* <div className="flex gap-10">
-              <label className="font-semibold mt-2" htmlFor="">
-                Allow User to reopen ticket after closure
-              </label>
-              <select
-                className="border p-2 rounded-md w-64 border-black"
-                name=""
-                id=""
-              >
-                <option value="">Select time period</option>
-                <option value="">Days</option>
-                <option value="">Hrs</option>
-                <option value="">Months</option>
-              </select>
-              <input
-                type="text"
-                className="border p-2 rounded-md border-black"
-                placeholder="2"
-              />
-              <button
-                className="border-2 font-semibold hover:bg-black hover:text-white transition-all border-black p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
-                style={{ background: themeColor }}
-              >
-                Update
-              </button>
-            </div> */}
-          </div>
-        )}
-        {page === "Operational Days" && (
-          <div className=" w-full  my-2">
-            {/* <button
-              onClick={openModal}
-              className="border-2 font-semibold mt-5 ml-10 hover:bg-black hover:text-white transition-all border-black p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
+
+      {page === "Status" && (
+        <div className="m-2">
+          <div className="grid md:grid-cols-5 gap-2 my-2">
+            <input
+              type="text"
+              placeholder="Enter status"
+              className="border p-2 rounded-md"
+              value={formData.status}
+              onChange={handleChange}
+              name="status"
+            />
+
+            <select
+              name="fixedState"
+              onChange={handleChange}
+              value={formData.fixedState}
+              className="border p-2 rounded-md"
+            >
+              <option value="">Select Fixed State</option>
+              <option value="closed">Closed</option>
+              <option value="open">Open</option>
+              <option value="complete">Complete</option>
+            </select>
+
+            <ColorPicker
+              value={formData.color}
+              onChange={(c) =>
+                setFormData({ ...formData, color: c.toHexString() })
+              }
+            />
+
+            <input
+              type="number"
+              placeholder="Enter order"
+              className="border p-2 rounded-md"
+              value={formData.order}
+              onChange={handleChange}
+              name="order"
+            />
+
+            <button
+              type="button"
+              className="text-white p-2 rounded-md"
               style={{ background: themeColor }}
               onClick={handleAddStatus}
             >
-              Import
-            </button> */}
-            <table className="w-full">
-              <thead style={{background: themeColor}} className="text-white">
-                <tr>
-                  <th className="px-4 py-2"></th>
-                  <th className="px-4 py-2">Operational Days</th>
-                  <th className="px-4 py-2">Start Time</th>
-                  <th className="px-4 py-2">End Time</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td className="border px-4 py-2 text-center">
-                    <input type="checkbox" />
-                  </td>
-                  <td className="border px-4 py-2 text-center">Monday</td>
-                  <td className="border px-4 py-2 text-center">
-                    <input
-                      type="time"
-                      value="13:45"
-                      className="border border-gray-400 p-1 w-40 rounded-md"
-                    />
-                  </td>
-                  <td className="border px-4 py-2 text-center">
-                    <input
-                      type="time"
-                      value="19:45"
-                      className="border border-gray-400 p-1 w-40 rounded-md"
-                    />
-                  </td>
-                  {/* <td class="border px-4 py-2 text-center"><input type="time" className="border border-gray-400 p-2 rounded-md"/></td>
-              <td class="border px-4 py-2 text-center"><input type="time" className="border border-gray-400 p-2 rounded-md"/></td>
-      
-              <td class="border px-4 py-2 text-center"><input type="checkbox"/></td>
-              <td class="border px-4 py-2 text-center"><input type="checkbox"/></td>
-              <td class="border px-4 py-2 text-center"><input type="time" className="border border-gray-400 p-2 rounded-md"/></td> */}
-                </tr>
-                <tr>
-                  <td className="border px-4 py-2 text-center">
-                    <input type="checkbox" />
-                  </td>
-                  <td className="border px-4 py-2 text-center">Tuesday</td>
-                  <td className="border px-4 py-2 text-center">
-                    <input
-                      type="time"
-                      value="13:45"
-                      className="border border-gray-400 p-1 w-40 rounded-md"
-                    />
-                  </td>
-                  <td className="border px-4 py-2 text-center">
-                    <input
-                      type="time"
-                      value="16:45"
-                      className="border border-gray-400 p-1 w-40 rounded-md"
-                    />
-                  </td>
-                  {/* <td class="border px-4 py-2 text-center"><input type="time" className="border border-gray-400 p-2 rounded-md"/></td> */}
-                  {/* <td class="border px-4 py-2 text-center"><input type="time" className="border border-gray-400 p-2 rounded-md"/></td>
-              <td class="border px-4 py-2 text-center"><input type="checkbox"/></td>
-              <td class="border px-4 py-2 text-center"><input type="checkbox"/></td>
-              <td class="border px-4 py-2 text-center"><input type="time" className="border border-gray-400 p-2 rounded-md"/></td> */}
-                </tr>
-                <tr>
-                  <td className="border px-4 py-2 text-center">
-                    <input type="checkbox" />
-                  </td>
-                  <td className="border px-4 py-2 text-center">Wednesday</td>
-                  <td className="border px-4 py-2 text-center">
-                    <input
-                      type="time"
-                      value="15:45"
-                      className="border border-gray-400 p-1 w-40 rounded-md"
-                    />
-                  </td>
-                  <td className="border px-4 py-2 text-center">
-                    <input
-                      type="time"
-                      value="16:45"
-                      className="border border-gray-400 p-1 w-40 rounded-md"
-                    />
-                  </td>
-                  {/* <td class="border px-4 py-2 text-center"><input type="time" className="border border-gray-400 p-2 rounded-md"/></td> */}
-                  {/* <td class="border px-4 py-2 text-center"><input type="time" className="border border-gray-400 p-2 rounded-md"/></td>
-              <td class="border px-4 py-2 text-center"><input type="checkbox"/></td>
-              <td class="border px-4 py-2 text-center"><input type="checkbox"/></td>
-              <td class="border px-4 py-2 text-center"><input type="time" className="border border-gray-400 p-2 rounded-md"/></td> */}
-                </tr>
-                <tr>
-                  <td className="border px-4 py-2 text-center">
-                    <input type="checkbox" />
-                  </td>
-                  <td className="border px-4 py-2 text-center">Thursday</td>
-                  <td className="border px-4 py-2 text-center">
-                    <input
-                      type="time"
-                      value="14:45"
-                      className="border border-gray-400 p-1 w-40 rounded-md"
-                    />
-                  </td>
-                  <td className="border px-4 py-2 text-center">
-                    <input
-                      type="time"
-                      value="06:45"
-                      className="border border-gray-400 p-1 w-40 rounded-md"
-                    />
-                  </td>
-                  {/* <td class="border px-4 py-2 text-center"><input type="time" className="border border-gray-400 p-2 rounded-md"/></td> */}
-                  {/* <td class="border px-4 py-2 text-center"><input type="time" className="border border-gray-400 p-2 rounded-md"/></td>
-              <td class="border px-4 py-2 text-center"><input type="checkbox" className="border border-gray-400 p-2 rounded-md"/></td>
-              <td class="border px-4 py-2 text-center"><input type="checkbox"/></td>
-              <td class="border px-4 py-2 text-center"><input type="time" className="border border-gray-400 p-2 rounded-md"/></td> */}
-                </tr>
-                <tr>
-                  <td className="border px-4 py-2 text-center">
-                    <input type="checkbox" />
-                  </td>
-                  <td className="border px-4 py-2 text-center">Friday</td>
-                  <td className="border px-4 py-2 text-center">
-                    <input
-                      type="time"
-                      value="09:45"
-                      className="border border-gray-400 p-1 w-40 rounded-md"
-                    />
-                  </td>
-                  <td className="border px-4 py-2 text-center">
-                    <input
-                      type="time"
-                      value="13:45"
-                      className="border border-gray-400 p-1 w-40 rounded-md"
-                    />
-                  </td>
-                  {/* <td class="border px-4 py-2 text-center"><input type="time" className="border border-gray-400 p-2 rounded-md"/></td> */}
-                  {/* <td class="border px-4 py-2 text-center"><input type="time" className="border border-gray-400 p-2 rounded-md"/></td>
-              <td class="border px-4 py-2 text-center"><input type="checkbox"/></td>
-              <td class="border px-4 py-2 text-center"><input type="checkbox"/></td>
-              <td class="border px-4 py-2 text-center"><input type="time" className="border border-gray-400 p-2 rounded-md"/></td> */}
-                </tr>
-                <tr>
-                  <td className="border px-4 py-2 text-center">
-                    <input type="checkbox" />
-                  </td>
-                  <td className="border px-4 py-2 text-center">Saturday</td>
-                  <td className="border px-4 py-2 text-center">
-                    <input
-                      type="time"
-                      value="08:45"
-                      className="border border-gray-400 p-1 w-40 rounded-md"
-                    />
-                  </td>
+              Add
+            </button>
+          </div>
+
+          <Table columns={statusColumns} data={statuses} isPagination />
+        </div>
+      )}
+
+      {page === "Operational Days" && (
+        <div className="w-full my-2">
+          <table className="w-full">
+            <thead style={{ background: themeColor }} className="text-white">
+              <tr>
+                <th></th>
+                <th>Operational Days</th>
+                <th>Start Time</th>
+                <th>End Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.keys(operationalDays).map((day) => (
+                <tr key={day}>
                   <td className="border px-4 py-2 text-center">
                     <input
                       type="checkbox"
@@ -380,18 +240,7 @@ const TicketSetupPage = () => {
                       }
                     />
                   </td>
-                  {/* <td class="border px-4 py-2 text-center"><input type="time" className="border border-gray-400 p-2 rounded-md"/></td> */}
-                  {/* <td class="border px-4 py-2 text-center"><input type="time" className="border border-gray-400 p-2 rounded-md"/></td>
-              <td class="border px-4 py-2 text-center"><input type="checkbox"/></td>
-              <td class="border px-4 py-2 text-center"><input type="checkbox"/></td>
-              <td class="border px-4 py-2 text-center"><input type="time" className="border border-gray-400 p-2 rounded-md"/></td>
-            */}
-                </tr>
-                <tr>
-                  <td className="border px-4 py-2 text-center">
-                    <input type="checkbox" />
-                  </td>
-                  <td className="border px-4 py-2 text-center">Sunday</td>
+                  <td className="border px-4 py-2 text-center">{day}</td>
                   <td className="border px-4 py-2 text-center">
                     <input
                       type="time"
