@@ -17,9 +17,9 @@ const CreateBroadcast = () => {
   const themeColor = useSelector((state) => state.theme.color);
   const siteId = getItemInLocalStorage("SITEID");
 
-  const [selectedUnit, setSelectedUnit] = useState(null);
+  const [selectedUnit, setSelectedUnit] = useState("");
   const [units, setUnits] = useState([]);
-   const [selectedMembers, setSelectedMembers] = useState([]);
+  const [selectedMembers, setSelectedMembers] = useState([]);
   const [selectedOwnership, setSelectedOwnership] = useState("");
   const [filteredMembers, setFilteredMembers] = useState([]);
   const [members, setMembers] = useState([]);
@@ -32,10 +32,11 @@ const CreateBroadcast = () => {
     expiry_date: "",
     user_ids: "",
     notice_image: [],
-    shared: "",
+    shared: "all",
     group_id: "",
     important: false,
-    group_ids:""
+    group_ids:"",
+    send_email: false
   });
   console.log(formData);
   const datePickerRef = useRef(null);
@@ -46,6 +47,10 @@ const CreateBroadcast = () => {
 
   const handleExpiryDateChange = (date) => {
     setFormData({ ...formData, expiry_date: date });
+  };
+
+  const handleDescriptionChange = (value) => {
+    setFormData({ ...formData, notice_discription: value });
   };
   const [groups, setGroups] = useState([])
 
@@ -58,6 +63,8 @@ const CreateBroadcast = () => {
           label: `${user.firstname} ${user.lastname}`,
         }));
         setUsers(transformedUsers);
+        setMembers(response.data);
+        setFilteredMembers(response.data);
         console.log(response);
       } catch (error) {
         console.error("Error fetching assigned users:", error);
@@ -90,9 +97,10 @@ const CreateBroadcast = () => {
       : [];
     const userIdsString = selectedIds.join(",");
     setFormData({ ...formData, user_ids: userIdsString });
+    setSelectedMembers(selectedOptions);
   };
 
-    const handleFilter = () => {
+  const handleFilter = () => {
     console.log(
       "Selected Building ID:",
       selectedUnit,
@@ -109,14 +117,14 @@ const CreateBroadcast = () => {
       // Check if any of the user's sites match the selected ownership
       const ownershipMatch =
         !selectedOwnership ||
-        member.userSites.some(
+        (member.userSites && member.userSites.some(
           (site) =>
             site.ownership?.toLowerCase() === selectedOwnership.toLowerCase()
-        );
+        ));
 
       console.log(
         "User:",
-        member.name,
+        member.firstname || member.name,
         "Building Match:",
         buildingMatch,
         "Ownership Match:",
@@ -136,32 +144,33 @@ const CreateBroadcast = () => {
       return toast.error("Please Enter Title & Expiry Date");
     }
     try {
-      toast.loading("Creating Broadcast Please Wait!");
+      toast.loading("Creating Broadcast Please Wait!", { id: "broadcast" });
       const formDataSend = new FormData();
 
-      formDataSend.append("notice[site_id", formData.site_id);
+      formDataSend.append("notice[site_id]", formData.site_id);
       formDataSend.append("notice[notice_title]", formData.notice_title);
       formDataSend.append(
         "notice[notice_discription]",
         formData.notice_discription
       );
       formDataSend.append("notice[expiry_date]", formData.expiry_date);
-      formDataSend.append("notice[important]", formData.important);
-      formDataSend.append("notice[shared]", formData.expiry_date);
+      formDataSend.append("notice[important]", formData.important ? "1" : "0");
+      formDataSend.append("notice[shared]", formData.shared);
+      formDataSend.append("notice[send_email]", formData.send_email ? "1" : "0");
       formDataSend.append("notice[user_ids]", formData.user_ids);
-      formDataSend.append("notice[group_id]", formData.group_ids);
+      formDataSend.append("notice[group_ids]", formData.group_ids);
       formData.notice_image.forEach((file) => {
         formDataSend.append("attachfiles[]", file);
       });
       const response = await postBroadCast(formDataSend);
       toast.success("Broadcast Created Successfully");
+      toast.dismiss("broadcast");
       navigate("/communication/broadcast");
       console.log("Response:", response.data);
-      toast.dismiss();
     } catch (error) {
       console.log(error);
-
-      toast.dismiss();
+      toast.dismiss("broadcast");
+      toast.error("Failed to create broadcast");
     }
   };
   const handleFileChange = (files, fieldName) => {
@@ -219,14 +228,13 @@ const CreateBroadcast = () => {
                  <ReactQuill
                   theme="snow"
                   value={formData.notice_discription}
-                  onChange={handleChange}
+                  onChange={handleDescriptionChange}
                   placeholder="Enter Description"
                   className="bg-white"
                   style={{ minHeight: "120px", minWidth: "120px" }}
                 />
               </div>
               <div className="grid grid-cols-2 items-end gap-4">
-                {/* <div className="flex justify-between  flex-col gap-2"> */}
                 <div className="flex flex-col">
                   <p className="font-medium">Expire on</p>
                   <ReactDatePicker
@@ -239,7 +247,7 @@ const CreateBroadcast = () => {
                     minDate={currentDate}
                     className="border border-gray-400 w-full p-2 rounded-md"
                   />
-                </div><br />
+                </div>
                 <div className="flex gap-2 items-center">
                   <input
                     type="checkbox"
@@ -259,7 +267,7 @@ const CreateBroadcast = () => {
                   <input
                     type="checkbox"
                     name=""
-                    id="imp"
+                    id="email"
                     checked={formData.send_email === true}
                     onChange={() =>
                       setFormData({
@@ -268,7 +276,7 @@ const CreateBroadcast = () => {
                       })
                     }
                   />
-                  <label htmlFor="imp">Send Email</label>
+                  <label htmlFor="email">Send Email</label>
                 </div>
               </div>
 
@@ -282,7 +290,10 @@ const CreateBroadcast = () => {
                       className={`p-1 ${
                         share === "all" && "bg-black text-white"
                       } rounded-full px-6 cursor-pointer border-2 border-black`}
-                      onClick={() => setShare("all")}
+                      onClick={() => {
+                        setShare("all");
+                        setFormData({ ...formData, shared: "all" });
+                      }}
                     >
                       All
                     </h2>
@@ -290,7 +301,10 @@ const CreateBroadcast = () => {
                       className={`p-1 ${
                         share === "individual" && "bg-black text-white"
                       } rounded-full px-4 cursor-pointer border-2 border-black`}
-                      onClick={() => setShare("individual")}
+                      onClick={() => {
+                        setShare("individual");
+                        setFormData({ ...formData, shared: "individual" });
+                      }}
                     >
                       Individuals
                     </h2>
@@ -298,7 +312,10 @@ const CreateBroadcast = () => {
                       className={`p-1 ${
                         share === "groups" && "bg-black text-white"
                       } rounded-full px-4 cursor-pointer border-2 border-black`}
-                      onClick={() => setShare("groups")}
+                      onClick={() => {
+                        setShare("groups");
+                        setFormData({ ...formData, shared: "groups" });
+                      }}
                     >
                       Groups
                     </h2>
@@ -313,7 +330,7 @@ const CreateBroadcast = () => {
                           className="border p-3 border-gray-300 rounded-md flex-1"
                           value={selectedUnit || ""}
                           onChange={(e) =>
-                            setSelectedUnit(Number(e.target.value))
+                            setSelectedUnit(e.target.value)
                           }
                         >
                           <option value="">Select Tower</option>
@@ -335,11 +352,11 @@ const CreateBroadcast = () => {
                           <option value="owner">Owner</option>
                         </select>
 
-                        {/* Filter Button */}
+                        {/* ✅ FILTER BUTTON - COUNT REMOVED */}
                         <button
                           style={{ background: themeColor }}
                           onClick={handleFilter}
-                          className="bg-blue-500 text-white px-4 py-2 rounded-md"
+                          className="text-white px-4 py-2 rounded-md hover:opacity-90"
                         >
                           Filter
                         </button>
@@ -348,24 +365,25 @@ const CreateBroadcast = () => {
                         <Select
                           options={filteredMembers.map((member) => ({
                             value: member.id,
-                            label: member.name,
+                            label: `${member.firstname || member.name || "User"} ${member.lastname || ""}`.trim(),
                           }))}
                           className="w-full"
                           title="Select Members"
                           onChange={handleSelectChange}
                           value={selectedMembers}
                           isMulti
+                          placeholder="Select Members"
                         />
                       </div>
                     </div>
                   )}
-                     {share === "groups" && (
+                   {share === "groups" && (
                     <Select
                     options={groups}
                     closeMenuOnSelect={false}
                     placeholder="Select Group"
                     value={groups.filter((user) =>
-                      formData.group_ids.includes(user.value)
+                      formData.group_ids.split(',').includes(user.value.toString())
                     )}
                     onChange={handleSelectGroupChange}
                     isMulti
