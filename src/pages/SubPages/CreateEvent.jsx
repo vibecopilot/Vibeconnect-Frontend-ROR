@@ -113,6 +113,7 @@ const CreateEvent = () => {
         return buildingId === Number(selectedUnit);
       }
 
+      
       // If only ownership is selected
       if (!selectedUnit && selectedOwnership) {
         return member.userSites.some(

@@ -66,10 +66,12 @@ function VisitorSetup() {
       const res = await axios.get(
         "https://admin.vibecopilot.ai/visitor_categories.json?token=140494b3f6c6431bc0964ee3458411ccaa10f7617b197b35"
       );
+      console.log("🔍 Visitor Categories API Response:", res.data);
       const list = Array.isArray(res?.data) ? res.data : [];
       setVisitorCategories(list);
       setFilteredVisitorCategories(list);
-    } catch {
+    } catch (error) {
+      console.error("Visitor Categories Error:", error);
       setVisitorCategories([]);
       setFilteredVisitorCategories([]);
     }
@@ -81,10 +83,12 @@ function VisitorSetup() {
       const res = await axios.get(
         "https://admin.vibecopilot.ai/visitor_sub_categories.json?token=140494b3f6c6431bc0964ee3458411ccaa10f7617b197b35"
       );
+      console.log("🔍 Sub Categories API Response:", res.data);
       const list = Array.isArray(res?.data) ? res.data : [];
       setSubCategories(list);
       setFilteredSubCategories(list);
-    } catch {
+    } catch (error) {
+      console.error("Sub Categories Error:", error);
       setSubCategories([]);
       setFilteredSubCategories([]);
     }
@@ -97,7 +101,7 @@ function VisitorSetup() {
     if (page === "visitorCategory") fetchVisitorCategories();
 
     if (page === "visitorSubCategory") {
-      fetchVisitorCategories();       // ✅ REQUIRED FIX
+      fetchVisitorCategories();       
       fetchVisitorSubCategories();
     }
   }, [page, reload]);
@@ -144,54 +148,104 @@ function VisitorSetup() {
       name: "Action",
       cell: (row) => (
         <div className="flex gap-3">
-          <BiEdit onClick={() => {
-            setEditType("staffCategory");
-            setCatId(row.id);
-            setEditVisitorSetupModal(true);
-          }} />
-          <RiDeleteBin5Line onClick={async () => {
-            if (!window.confirm("Are you sure?")) return;
-            await axios.delete(
-              `https://admin.vibecopilot.ai/visitor_staff_categories/${row.id}.json?token=e6fbf77f4fbb5a72c4150e495c961972f0f14059d8a6670f`
-            );
-            toast.success("Staff category deleted");
-            setReload((p) => !p);
-          }} />
+          <BiEdit 
+            className="cursor-pointer hover:text-blue-500 p-1 hover:bg-blue-50 rounded-full" 
+            size={20}
+            onClick={() => {
+              setEditType("staffCategory");
+              setCatId(row.id);
+              setEditVisitorSetupModal(true);
+            }} 
+          />
+          <RiDeleteBin5Line 
+            className="cursor-pointer hover:text-red-500 p-1 hover:bg-red-50 rounded-full" 
+            size={20}
+            onClick={async () => {
+              if (!window.confirm("Are you sure?")) return;
+              await axios.delete(
+                `https://admin.vibecopilot.ai/visitor_staff_categories/${row.id}.json?token=e6fbf77f4fbb5a72c4150e495c961972f0f14059d8a6670f`
+              );
+              toast.success("Staff category deleted");
+              setReload((p) => !p);
+            }} 
+          />
         </div>
       ),
     },
   ];
 
+  // ✅ ICONS PERFECTLY SHOW HONGI
   const visitorCategoryColumns = [
     { name: "Sr No", selector: (_, i) => i + 1 },
     { name: "Name", selector: (row) => row?.name },
     { name: "Code", selector: (row) => row?.code },
     {
       name: "Icon",
-      cell: (row) =>
-        row?.icon ? (
-          <img src={row.icon} className="w-8 h-8 object-contain" />
-        ) : (
-          "-"
-        ),
+      cell: (row) => {
+        const possibleIcons = [
+          row?.icon,
+          row?.icon_url,
+          row?.image,
+          row?.image_url,
+          row?.icon?.url,
+          row?.image?.url,
+          `https://admin.vibecopilot.ai${row?.icon}`,
+          `https://admin.vibecopilot.ai${row?.image}`
+        ].filter(Boolean);
+
+        return (
+          <div className="flex items-center justify-center w-16 h-16 bg-gray-50 rounded-lg border p-1">
+            {possibleIcons[0] ? (
+              <img 
+                src={possibleIcons[0]} 
+                alt="Icon"
+                className="w-12 h-12 object-contain rounded shadow-sm"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.parentNode.innerHTML = '<div class="w-12 h-12 bg-gray-200 rounded flex items-center justify-center text-gray-400 text-xs">No Icon</div>';
+                }}
+              />
+            ) : (
+              <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center text-gray-400 text-xs">
+                No Icon
+              </div>
+            )}
+          </div>
+        );
+      },
     },
     {
       name: "Action",
       cell: (row) => (
-        <div className="flex gap-3">
-          <BiEdit onClick={() => {
-            setEditType("visitorCategory");
-            setCatId(row.id);
-            setEditVisitorSetupModal(true);
-          }} />
-          <RiDeleteBin5Line onClick={async () => {
-            if (!window.confirm("Are you sure?")) return;
-            await axios.delete(
-              `https://admin.vibecopilot.ai/visitor_categories/${row.id}.json?token=140494b3f6c6431bc0964ee3458411ccaa10f7617b197b35`
-            );
-            toast.success("Visitor category deleted");
-            setReload((p) => !p);
-          }} />
+        <div className="flex gap-2">
+          <BiEdit 
+            className="cursor-pointer hover:text-blue-500 p-1 hover:bg-blue-50 rounded-full transition-all" 
+            size={22}
+            title="Edit Icon & Details"
+            onClick={() => {
+              console.log("🔧 Edit Visitor Category:", row);
+              setEditType("visitorCategory");
+              setCatId(row.id);
+              setEditVisitorSetupModal(true);
+            }} 
+          />
+          <RiDeleteBin5Line 
+            className="cursor-pointer hover:text-red-500 p-1 hover:bg-red-50 rounded-full transition-all" 
+            size={22}
+            title="Delete"
+            onClick={async () => {
+              if (!window.confirm("Are you sure you want to delete this category?")) return;
+              try {
+                await axios.delete(
+                  `https://admin.vibecopilot.ai/visitor_categories/${row.id}.json?token=140494b3f6c6431bc0964ee3458411ccaa10f7617b197b35`
+                );
+                toast.success("Visitor category deleted successfully!");
+                setReload((p) => !p);
+              } catch (error) {
+                toast.error("Failed to delete category");
+              }
+            }} 
+          />
         </div>
       ),
     },
@@ -206,30 +260,74 @@ function VisitorSetup() {
     },
     {
       name: "Icon",
-      cell: (row) =>
-        row?.iconv2 ? (
-          <img src={row.iconv2} className="w-8 h-8 object-contain" />
-        ) : (
-          "-"
-        ),
+      cell: (row) => {
+        const possibleIcons = [
+          row?.iconv2,
+          row?.icon,
+          row?.icon_url,
+          row?.image,
+          row?.image_url,
+          row?.iconv2?.url,
+          row?.icon?.url,
+          row?.image?.url,
+          `https://admin.vibecopilot.ai${row?.iconv2}`,
+          `https://admin.vibecopilot.ai${row?.icon}`,
+          `https://admin.vibecopilot.ai${row?.image}`
+        ].filter(Boolean);
+
+        return (
+          <div className="flex items-center justify-center w-16 h-16 bg-gray-50 rounded-lg border p-1">
+            {possibleIcons[0] ? (
+              <img 
+                src={possibleIcons[0]} 
+                alt="Icon"
+                className="w-12 h-12 object-contain rounded shadow-sm"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.parentNode.innerHTML = '<div class="w-12 h-12 bg-gray-200 rounded flex items-center justify-center text-gray-400 text-xs">No Icon</div>';
+                }}
+              />
+            ) : (
+              <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center text-gray-400 text-xs">
+                No Icon
+              </div>
+            )}
+          </div>
+        );
+      },
     },
     {
       name: "Action",
       cell: (row) => (
-        <div className="flex gap-3">
-          <BiEdit onClick={() => {
-            setEditType("visitorSubCategory");
-            setCatId(row.id);
-            setEditVisitorSetupModal(true);
-          }} />
-          <RiDeleteBin5Line onClick={async () => {
-            if (!window.confirm("Are you sure?")) return;
-            await axios.delete(
-              `https://admin.vibecopilot.ai/visitor_sub_categories/${row.id}.json?token=140494b3f6c6431bc0964ee3458411ccaa10f7617b197b35`
-            );
-            toast.success("Sub category deleted");
-            setReload((p) => !p);
-          }} />
+        <div className="flex gap-2">
+          <BiEdit 
+            className="cursor-pointer hover:text-blue-500 p-1 hover:bg-blue-50 rounded-full transition-all" 
+            size={22}
+            title="Edit Icon & Details"
+            onClick={() => {
+              console.log("🔧 Edit Sub Category:", row);
+              setEditType("visitorSubCategory");
+              setCatId(row.id);
+              setEditVisitorSetupModal(true);
+            }} 
+          />
+          <RiDeleteBin5Line 
+            className="cursor-pointer hover:text-red-500 p-1 hover:bg-red-50 rounded-full transition-all" 
+            size={22}
+            title="Delete"
+            onClick={async () => {
+              if (!window.confirm("Are you sure you want to delete this sub category?")) return;
+              try {
+                await axios.delete(
+                  `https://admin.vibecopilot.ai/visitor_sub_categories/${row.id}.json?token=140494b3f6c6431bc0964ee3458411ccaa10f7617b197b35`
+                );
+                toast.success("Sub category deleted successfully!");
+                setReload((p) => !p);
+              } catch (error) {
+                toast.error("Failed to delete sub category");
+              }
+            }} 
+          />
         </div>
       ),
     },
@@ -240,7 +338,7 @@ function VisitorSetup() {
       <SetupNavbar />
 
       <div className="w-full mx-3">
-        <div className="flex gap-2 border-b p-2">
+        <div className="flex gap-2 border-b p-2 bg-gray-50 rounded-t-lg">
           {[
             ["deviceConfig", "Device Configuration"],
             ["visitor", "Staff Categories"],
@@ -251,8 +349,10 @@ function VisitorSetup() {
             <h2
               key={key}
               onClick={() => setPage(key)}
-              className={`px-4 py-1 cursor-pointer ${
-                page === key ? "bg-white text-blue-500 font-semibold" : ""
+              className={`px-6 py-2 cursor-pointer font-medium transition-all rounded-lg ${
+                page === key 
+                  ? "bg-blue-500 text-white shadow-md" 
+                  : "hover:bg-gray-200 text-gray-700"
               }`}
             >
               {label}
@@ -261,21 +361,21 @@ function VisitorSetup() {
         </div>
 
         {(page === "visitor" || page === "visitorCategory" || page === "visitorSubCategory") && (
-          <div className="flex justify-between my-3">
+          <div className="flex justify-between items-center my-4 p-4 bg-white rounded-lg shadow-sm border">
             <input
               value={searchText}
               onChange={handleSearch}
-              className="border p-2 rounded-md w-96"
-              placeholder="Search..."
+              className="border border-gray-300 p-3 rounded-lg w-96 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="🔍 Search categories..."
             />
 
             {page === "visitor" && (
               <button
                 onClick={() => setVisitorSetupModal(true)}
                 style={{ background: themeColor }}
-                className="text-white px-4 py-2 rounded flex gap-2"
+                className="text-white px-6 py-3 rounded-lg flex items-center gap-2 font-semibold shadow-md hover:shadow-lg hover:opacity-90 transition-all"
               >
-                <IoAddCircleOutline size={20} /> Add Staff
+                <IoAddCircleOutline size={22} /> Add Staff Category
               </button>
             )}
 
@@ -283,29 +383,53 @@ function VisitorSetup() {
               <button
                 onClick={() => setAddVisitorCategoryModal(true)}
                 style={{ background: themeColor }}
-                className="text-white px-4 py-2 rounded flex gap-2"
+                className="text-white px-6 py-3 rounded-lg flex items-center gap-2 font-semibold shadow-md hover:shadow-lg hover:opacity-90 transition-all"
               >
-                <IoAddCircleOutline size={20} /> Add Visitor
+                <IoAddCircleOutline size={22} /> Add Visitor Category
+              </button>
+            )}
+
+            {page === "visitorSubCategory" && (
+              <button
+                onClick={() => setAddVisitorSubCategoryModal(true)}
+                style={{ background: themeColor }}
+                className="text-white px-6 py-3 rounded-lg flex items-center gap-2 font-semibold shadow-md hover:shadow-lg hover:opacity-90 transition-all"
+              >
+                <IoAddCircleOutline size={22} /> Add Sub Category
               </button>
             )}
           </div>
         )}
 
+        {/* TABLES */}
         {page === "visitor" && (
-          <Table columns={staffCategoryColumns} data={filteredStaffCategories} />
+          <div className="bg-white rounded-lg shadow-sm border p-6">
+            <Table columns={staffCategoryColumns} data={filteredStaffCategories} />
+          </div>
         )}
 
         {page === "visitorCategory" && (
-          <Table columns={visitorCategoryColumns} data={filteredVisitorCategories} />
+          <div className="bg-white rounded-lg shadow-sm border p-6">
+            <h3 className="text-lg font-semibold mb-4 text-gray-800">
+              Visitor Categories {`(${filteredVisitorCategories.length})`}
+            </h3>
+            <Table columns={visitorCategoryColumns} data={filteredVisitorCategories} />
+          </div>
         )}
 
         {page === "visitorSubCategory" && (
-          <Table columns={subCategoryColumns} data={filteredSubCategories} />
+          <div className="bg-white rounded-lg shadow-sm border p-6">
+            <h3 className="text-lg font-semibold mb-4 text-gray-800">
+              Visitor Sub Categories {`(${filteredSubCategories.length})`}
+            </h3>
+            <Table columns={subCategoryColumns} data={filteredSubCategories} />
+          </div>
         )}
 
         {page === "vehicleParking" && <VehicleParkingSetup />}
         {page === "deviceConfig" && <DeviceConfiguration />}
 
+        {/* MODALS */}
         {visitorSetupModal && (
           <AddVisitorSetupModal
             type="staffCategory"
@@ -319,6 +443,14 @@ function VisitorSetup() {
             type="visitorCategory"
             setAdded={() => setReload((p) => !p)}
             onclose={() => setAddVisitorCategoryModal(false)}
+          />
+        )}
+
+        {addVisitorSubCategoryModal && (
+          <AddVisitorSetupModal
+            type="visitorSubCategory"
+            setAdded={() => setReload((p) => !p)}
+            onclose={() => setAddVisitorSubCategoryModal(false)}
           />
         )}
 

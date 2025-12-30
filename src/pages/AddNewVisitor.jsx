@@ -60,12 +60,11 @@ const AddNewVisitor = () => {
     noOfGoods: "",
     goodsDescription: "",
     goodsAttachments: [], 
-    licenseAttachments: [], 
-    consignmentAttachments: [], 
+    licenseAttachments: [],
+    consignmentAttachments: [],
     supportCategory: "",
     slotNumber: "",
   })
-
 
   const getHeadingText = () => {
     return "NEW VISITOR"
@@ -197,7 +196,6 @@ const AddNewVisitor = () => {
     }
   }
 
-
   const createNewVisitor = async (e) => {
     e.preventDefault()
 
@@ -231,9 +229,8 @@ const AddNewVisitor = () => {
     postData.append("visitor[pass_number]", formData.passNumber)
     postData.append("visitor[frequency]", selectedFrequency)
     postData.append("visitor[parking_slot]", formData.slotNumber)
-    postData.append("visitor[license_doc]", formData.license) // New
-    postData.append("visitor[consignment_doc]", formData.consignment) // New
-
+    postData.append("visitor[license_doc]", formData.license) 
+    postData.append("visitor[consignment_doc]", formData.consignment) 
 
     if (capturedImage) {
       const response = await fetch(capturedImage)
@@ -241,13 +238,11 @@ const AddNewVisitor = () => {
       postData.append("visitor[profile_pic]", blob, "visitor_image.jpg")
     }
 
-    // Send license attachments with category_type
     formData.licenseAttachments.forEach((file, index) => {
       postData.append(`visitor[visitor_files][${index}][file]`, file, file.name)
       postData.append(`visitor[visitor_files][${index}][category_type]`, "license")
     })
     
-    // Send consignment attachments with category_type
     const consignmentStartIndex = formData.licenseAttachments.length
     formData.consignmentAttachments.forEach((file, index) => {
       const fileIndex = consignmentStartIndex + index
@@ -323,20 +318,19 @@ const AddNewVisitor = () => {
     }
   }
 
-
   return (
     <div className="flex justify-center w-full min-h-screen bg-gray-50"> 
       <div className="bg-white shadow-xl w-full"> 
-<div
-  className="text-center md:text-xl font-bold p-2 bg-black rounded-full text-white mb-6 mx-4 mt-4"
-  style={{
-    background:
-      "radial-gradient(897px at 9% 80.3%, rgb(55, 60, 245) 0%, rgba(234, 161, 15, 0.9) 100.2%)",
-        }}
-    >
-            <h2 className="text-center text-xl sm:text-2xl font-bold text-white tracking-widest">
-                {getHeadingText()}
-            </h2>
+        <div
+          className="text-center md:text-xl font-bold p-2 bg-black rounded-full text-white mb-6 mx-4 mt-4"
+          style={{
+            background:
+              "radial-gradient(897px at 9% 80.3%, rgb(55, 60, 245) 0%, rgba(234, 161, 15, 0.9) 100.2%)",
+          }}
+        >
+          <h2 className="text-center text-xl sm:text-2xl font-bold text-white tracking-widest">
+            {getHeadingText()}
+          </h2>
         </div>
         
         <div className="flex justify-center -mt-45 mb-4 "> 
@@ -390,7 +384,6 @@ const AddNewVisitor = () => {
                 </div>
             </div>
           )}
-
 
           <div className="flex flex-col gap-6 p-4 pt-0">
             <div className="flex flex-wrap gap-8 items-center">
@@ -704,7 +697,6 @@ const AddNewVisitor = () => {
             <div className="p-4 border border-blue-200 rounded-lg bg-blue-50 space-y-4">
               <h3 className="font-bold text-lg text-blue-800 border-b pb-2 mb-4">Goods Information</h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {/* No. of Goods */}
                 <div className="flex flex-col gap-1.5">
                   <label htmlFor="noOfGoods" className="font-semibold text-gray-700 text-sm">No. of Goods:</label>
                   <input
@@ -717,7 +709,6 @@ const AddNewVisitor = () => {
                     onChange={handleChange}
                   />
                 </div>
-                {/* Description */}
                 <div className="col-span-1 sm:col-span-2 flex flex-col gap-1.5">
                   <label htmlFor="goodsDescription" className="font-semibold text-gray-700 text-sm">Description:</label>
                   <textarea
@@ -731,7 +722,6 @@ const AddNewVisitor = () => {
                   ></textarea>
                 </div>
               </div>
-              {/* Goods Attachments */}
               <div className="pt-2">
                   <label className="font-semibold text-gray-700 mb-1 block text-sm">Goods Attachments (Optional)</label>
                   <FileInputBox
@@ -743,32 +733,29 @@ const AddNewVisitor = () => {
             </div>
           )}
 
-          {/* License & Consignment Documents Section */}
           {(formData.license || formData.consignment) && (
             <div className="p-4 border border-gray-200 rounded-lg bg-gray-50 space-y-4">
               <h3 className="font-bold text-lg text-gray-700 border-b pb-2 mb-4">Supporting Documents</h3>
 
               <div className="grid md:grid-cols-2 gap-6">
-                {/* License Attachments */}
                 {formData.license && (
                     <div>
                         <label className="font-semibold text-gray-700 mb-1 block text-sm">License Attachments (e.g., Driving License)</label>
                         <FileInputBox
-                        handleChange={(files) => handleFileChange(files, "licenseAttachments")}
-                        fieldName={"licenseAttachments"}
-                        isMulti={true}
+                          handleChange={(files) => handleFileChange(files, "licenseAttachments")}
+                          fieldName={"licenseAttachments"}
+                          isMulti={true}
                         />
                     </div>
                 )}
 
-                {/* Consignment Attachments */}
                 {formData.consignment && (
                     <div>
                         <label className="font-semibold text-gray-700 mb-1 block text-sm">Consignment Attachments (e.g., Invoices)</label>
                         <FileInputBox
-                        handleChange={(files) => handleFileChange(files, "consignmentAttachments")}
-                        fieldName={"consignmentAttachments"}
-                        isMulti={true}
+                          handleChange={(files) => handleFileChange(files, "consignmentAttachments")}
+                          fieldName={"consignmentAttachments"}
+                          isMulti={true}
                         />
                     </div>
                 )}
@@ -776,87 +763,78 @@ const AddNewVisitor = () => {
             </div>
           )}
           
-          {/* Additional Visitors */}
-            <div className="flex justify-between items-center pb-2">
-                <h3 className="font-bold text-lg text-gray-700">Additional Visitor(s)</h3>
-                <button
-                    type="button"
-                    onClick={handleAddVisitor}
-                    className="bg-black text-white font-semibold py-1.5 px-4 rounded-lg transition-colors text-sm shadow-md"
-                >
-                    + Add Visitor
-                </button>
-            </div>
-            
-            {/* Additional Visitors List */}
-            <div className="space-y-4">
-                {visitors.map((visitor, index) => (
-                    <div 
-                        key={index} 
-                        className="p-4 border border-gray-300 rounded-lg relative bg-white shadow-sm"
-                    >
-                        {/* ROW: Name + Mobile side by side */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="flex justify-between items-center pb-2">
+              <h3 className="font-bold text-lg text-gray-700">Additional Visitor(s)</h3>
+              <button
+                  type="button"
+                  onClick={handleAddVisitor}
+                  className="bg-black text-white font-semibold py-1.5 px-4 rounded-lg transition-colors text-sm shadow-md"
+              >
+                  + Add Visitor
+              </button>
+          </div>
+          
+          <div className="space-y-4">
+              {visitors.map((visitor, index) => (
+                  <div 
+                      key={index} 
+                      className="p-4 border border-gray-300 rounded-lg relative bg-white shadow-sm"
+                  >
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="flex flex-col gap-1">
+                              <label 
+                                  htmlFor={`visitor-name-${index}`} 
+                                  className="font-semibold text-gray-700 text-xs"
+                              >
+                                  Name
+                              </label>
+                              <input
+                                  type="text"
+                                  id={`visitor-name-${index}`}
+                                  name="name"
+                                  value={visitor.name}
+                                  onChange={(e) => handleInputChange(index, e)}
+                                  className="border border-gray-300 p-2 rounded-lg text-sm placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 transition duration-150"
+                                  placeholder="Enter Visitor Name"
+                              />
+                          </div>
 
-                            {/* Visitor Name */}
-                            <div className="flex flex-col gap-1">
-                                <label 
-                                    htmlFor={`visitor-name-${index}`} 
-                                    className="font-semibold text-gray-700 text-xs"
-                                >
-                                    Name
-                                </label>
-                                <input
-                                    type="text"
-                                    id={`visitor-name-${index}`}
-                                    name="name"
-                                    value={visitor.name}
-                                    onChange={(e) => handleInputChange(index, e)}
-                                    className="border border-gray-300 p-2 rounded-lg text-sm placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 transition duration-150"
-                                    placeholder="Enter Visitor Name"
-                                />
-                            </div>
+                          <div className="flex flex-col gap-1">
+                              <label 
+                                  htmlFor={`visitor-mobile-${index}`} 
+                                  className="font-semibold text-gray-700 text-xs"
+                              >
+                                  Mobile
+                              </label>
+                              <input
+                                  type="number"
+                                  id={`visitor-mobile-${index}`}
+                                  name="mobile"
+                                  value={visitor.mobile}
+                                  onChange={(e) => handleInputChange(index, e)}
+                                  className="border border-gray-300 p-2 rounded-lg text-sm placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 transition duration-150"
+                                  placeholder="Enter Mobile Number"
+                              />
+                          </div>
+                      </div>
 
-                            {/* Visitor Mobile */}
-                            <div className="flex flex-col gap-1">
-                                <label 
-                                    htmlFor={`visitor-mobile-${index}`} 
-                                    className="font-semibold text-gray-700 text-xs"
-                                >
-                                    Mobile
-                                </label>
-                                <input
-                                    type="number"
-                                    id={`visitor-mobile-${index}`}
-                                    name="mobile"
-                                    value={visitor.mobile}
-                                    onChange={(e) => handleInputChange(index, e)}
-                                    className="border border-gray-300 p-2 rounded-lg text-sm placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 transition duration-150"
-                                    placeholder="Enter Mobile Number"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Delete Button */}
-                        {visitors.length > 1 && (
-                            <button 
-                                type="button"
-                                onClick={() => handleRemoveVisitor(index)}
-                                className="absolute top-2 right-2 p-2 text-red-500 hover:text-red-700 transition-colors rounded-full bg-gray-100 hover:bg-gray-200"
-                                aria-label={`Remove visitor ${index + 1}`}
-                            >
-                                <FaTrash className="h-4 w-4" />
-                            </button>
-                        )}
-                    </div>
-                ))}
-            </div>
+                      {visitors.length > 1 && (
+                          <button 
+                              type="button"
+                              onClick={() => handleRemoveVisitor(index)}
+                              className="absolute top-2 right-2 p-2 text-red-500 hover:text-red-700 transition-colors rounded-full bg-gray-100 hover:bg-gray-200"
+                              aria-label={`Remove visitor ${index + 1}`}
+                          >
+                              <FaTrash className="h-4 w-4" />
+                          </button>
+                      )}
+                  </div>
+              ))}
+          </div>
 
           <hr className="border-t border-gray-200" />
           
-          {/* Pass Validity Section */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-end">
-            {/* Pass Valid From */}
             <div className="flex flex-col gap-1.5">
                 <label htmlFor="passStartDate" className="font-semibold text-gray-700 text-sm">
                     Pass Valid From
@@ -871,7 +849,6 @@ const AddNewVisitor = () => {
                 />
             </div>
 
-            {/* Pass Valid To */}
             <div className="flex flex-col gap-1.5">
                 <label htmlFor="passEndDate" className="font-semibold text-gray-700 text-sm">
                     Pass Valid To
@@ -886,7 +863,6 @@ const AddNewVisitor = () => {
                 />
             </div>
             
-            {/* Conditional Weekdays Selector for 'Frequently' */}
             {selectedFrequency === "Frequently" && (
                 <div className="sm:col-span-2">
                     <h4 className="font-semibold text-gray-700 text-sm mb-2">Select Working Days:</h4>
@@ -910,7 +886,6 @@ const AddNewVisitor = () => {
             )}
           </div>
           
-          {/* Submit Button */}
           <div className="flex justify-center pt-8">
             <button
               type="submit"
