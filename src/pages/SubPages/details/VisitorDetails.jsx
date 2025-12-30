@@ -27,8 +27,8 @@ const VisitorDetails = () => {
       try {
         const res = await getVisitorDetails(id);
         const data = res.data;
-        setDetails(data);
 
+        setDetails(data);
         setDeviceLogs(data.logs || []);
 
         let merged = [];
@@ -48,6 +48,7 @@ const VisitorDetails = () => {
         console.log(error);
       }
     };
+
     fetchVisitorDetails();
   }, [id]);
 
@@ -62,6 +63,14 @@ const VisitorDetails = () => {
     return isNaN(date) ? "-" : date.toLocaleString();
   };
 
+  // 🔹 DOCUMENT FILTER HELPERS
+  const getDocumentsByType = (type) => {
+    if (!details.visitor_files) return [];
+    return details.visitor_files.filter(
+      (file) => file.category_type === type
+    );
+  };
+
   const paginatedDeviceLogs = deviceLogs.slice(
     (devicePage - 1) * ITEMS_PER_PAGE,
     devicePage * ITEMS_PER_PAGE
@@ -72,20 +81,21 @@ const VisitorDetails = () => {
     visitorPage * ITEMS_PER_PAGE
   );
 
-  const deviceTotalPages =
-    Math.ceil(deviceLogs.length / ITEMS_PER_PAGE) || 1;
-  const visitorTotalPages =
-    Math.ceil(visitorLogs.length / ITEMS_PER_PAGE) || 1;
-
   const visitorDeviceLogColumn = [
-    { name: "Sr. No.", selector: (row, index) => index + 1 },
+    { name: "Sr. No.", selector: (_, index) => index + 1 },
     { name: "Name", selector: (row) => row.name },
-    { name: "Check In", selector: (row) => dateTimeFormat(row.in_time || row.start_pass) },
-    { name: "Check Out", selector: (row) => dateTimeFormat(row.out_time || row.end_pass) },
+    {
+      name: "Check In",
+      selector: (row) => dateTimeFormat(row.in_time || row.start_pass),
+    },
+    {
+      name: "Check Out",
+      selector: (row) => dateTimeFormat(row.out_time || row.end_pass),
+    },
   ];
 
   const visitorLogColumn = [
-    { name: "Sr. No.", selector: (row, index) => index + 1 },
+    { name: "Sr. No.", selector: (_, index) => index + 1 },
     { name: "Visitor Name", selector: (row) => row.name },
     { name: "Check In", selector: (row) => dateTimeFormat(row.check_in) },
     { name: "Check Out", selector: (row) => dateTimeFormat(row.check_out) },
@@ -138,12 +148,16 @@ const VisitorDetails = () => {
           )}
         </div>
 
-        <div className="grid md:grid-cols-3 px-4 gap-5 gap-x-4 mt-4">
+        {/* VISITOR BASIC INFO */}
+        <div className="grid md:grid-cols-3 px-4 gap-5 mt-4">
           {details.visit_type && (
             <Info label="Visitor Type" value={details.visit_type} />
           )}
-          {details.visitor_staff_category && details.visitor_staff_category.name && (
-            <Info label="Support Category" value={details.visitor_staff_category.name} />
+          {details.visitor_staff_category?.name && (
+            <Info
+              label="Support Category"
+              value={details.visitor_staff_category.name}
+            />
           )}
           {details.name && <Info label="Visitor Name" value={details.name} />}
           {details.contact_no && (
@@ -171,106 +185,170 @@ const VisitorDetails = () => {
           {details.pass_number && (
             <Info label="Pass Number" value={details.pass_number} />
           )}
-          {details.parking_slot && details.parking_slot.name && (
+          {details.parking_slot?.name && (
             <Info label="Parking Slot" value={details.parking_slot.name} />
           )}
-          
-          {details.vhost && details.vhost.name && (
+          {details.vhost?.name && (
             <Info label="Host Name" value={details.vhost.name} />
-          )}
-          
-          {details.frequency === "Frequently" && details.start_pass && (
-            <Info
-              label="Pass Start Date/Time"
-              value={dateTimeFormat(details.start_pass)}
-            />
-          )}
-          {details.frequency === "Frequently" && details.end_pass && (
-            <Info
-              label="Pass End Date/Time"
-              value={dateTimeFormat(details.end_pass)}
-            />
           )}
           <BooleanInfo
             label="Skip Host Approval"
             value={details.skip_host_approval}
           />
           <BooleanInfo label="Goods Inward" value={details.goods_inwards} />
-          <BooleanInfo
-            label="License Document"
-            value={details.license_doc}
-          />
+          <BooleanInfo label="License Document" value={details.license_doc} />
           <BooleanInfo
             label="Consignment Document"
             value={details.consignment_doc}
           />
-          {details.working_days && details.working_days.length > 0 && (
-            <Info
-              label="Permitted Days"
-              value={details.working_days.join(", ")}
-            />
-          )}
-          
         </div>
 
-        {details.goods_inwards && (
-            <Section title="Goods Inward Details">
-                <div className="grid md:grid-cols-3 px-4 gap-5 gap-x-4">
-                    {details.goods_inward_info?.no_of_goods && (
-                        <Info label="No. of Goods" value={details.goods_inward_info.no_of_goods} />
-                    )}
-                    {details.goods_inward_info?.description && (
-                        <Info label="Description" value={details.goods_inward_info.description} />
-                    )}
-                    {details.goods_inward_info?.goods_files && details.goods_inward_info.goods_files.length > 0 && (
-                        <Info label="Attachments" value={<a href={domainPrefix + details.goods_inward_info.goods_files[0].url} target="_blank" className="text-blue-500 underline">View Files ({details.goods_inward_info.goods_files.length})</a>} />
-                    )}
-                </div>
-            </Section>
-        )}
+        <Section title="Visitor Documents">
+          <div className="grid md:grid-cols-2 gap-6 px-4">
+            
+            <div className="p-6 rounded-2xl shadow-lg border-4 border-white bg-gradient-to-br from-white-50 to-white-100">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold text-xl text-black-900 flex items-center gap-2">
+                License Document
+                </h3>
+              </div>
 
-        {(details.visitor_files && details.visitor_files.length > 0) && (
-            <Section title="Visitor Documents">
-                <div className="grid md:grid-cols-3 px-4 gap-5 gap-x-4">
-                    {details.visitor_files.map((file, index) => (
-                        <Info 
-                            key={index}
-                            label={`${file.category_type ? file.category_type.charAt(0).toUpperCase() + file.category_type.slice(1) : 'Document'} File`} 
-                            value={
-                                <a 
-                                    href={domainPrefix + file.document} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    className="text-blue-500 underline"
-                                >
-                                    View File
-                                </a>
-                            } 
+              {getDocumentsByType("license").length > 0 ? (
+                <div className="space-y-3">
+                  {getDocumentsByType("license").slice(0, 2).map((file, index) => {
+                    const isPdf = file.document?.toLowerCase().endsWith('.pdf');
+                    return isPdf ? (
+                      <a
+                        key={file.id || index}
+                        href={domainPrefix + file.document}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block w-full h-48 bg-white rounded-xl shadow-md border border-gray-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex items-center justify-center"
+                      >
+                        <div className="text-center">
+                          <span className="text-4xl">📄</span>
+                          <p className="text-sm text-gray-600 mt-2">View PDF</p>
+                        </div>
+                      </a>
+                    ) : (
+                      <a
+                        key={file.id || index}
+                        href={domainPrefix + file.document}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block w-full h-48 bg-white rounded-xl shadow-md border border-gray-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+                      >
+                        <img
+                          src={domainPrefix + file.document}
+                          alt={`License ${index + 1}`}
+                          className="w-full h-full object-contain p-4"
                         />
-                    ))}
+                      </a>
+                    );
+                  })}
+                  {getDocumentsByType("license").length > 2 && (
+                    <div className="text-center p-4 bg-gray-100 rounded-xl cursor-pointer hover:bg-gray-200">
+                      +{getDocumentsByType("license").length - 2} more files
+                    </div>
+                  )}
                 </div>
-            </Section>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-48 bg-white rounded-xl border-2 border-dashed border-gray-300">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+                    <span className="text-2xl">📄</span>
+                  </div>
+                  <p className="text-gray-600 font-semibold text-center">Not Applicable</p>
+                  <p className="text-sm text-gray-500 mt-1">No files uploaded</p>
+                </div>
+              )}
+            </div>
+
+            <div className="p-6 rounded-2xl shadow-lg border-4 border-white bg-gradient-to-br from-white-50 to-white-100">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold text-xl text-black-900 flex items-center gap-2">
+                Consignment Document
+                </h3>
+              </div>
+
+              {getDocumentsByType("consignment").length > 0 ? (
+                <div className="space-y-3">
+                  {getDocumentsByType("consignment").slice(0, 2).map((file, index) => {
+                    const isPdf = file.document?.toLowerCase().endsWith('.pdf');
+                    return isPdf ? (
+                      <a
+                        key={file.id || index}
+                        href={domainPrefix + file.document}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block w-full h-48 bg-white rounded-xl shadow-md border border-gray-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex items-center justify-center"
+                      >
+                        <div className="text-center">
+                          <span className="text-4xl">📄</span>
+                          <p className="text-sm text-gray-600 mt-2">View PDF</p>
+                        </div>
+                      </a>
+                    ) : (
+                      <a
+                        key={file.id || index}
+                        href={domainPrefix + file.document}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block w-full h-48 bg-white rounded-xl shadow-md border border-gray-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+                      >
+                        <img
+                          src={domainPrefix + file.document}
+                          alt={`Consignment ${index + 1}`}
+                          className="w-full h-full object-contain p-4"
+                        />
+                      </a>
+                    );
+                  })}
+                  {getDocumentsByType("consignment").length > 2 && (
+                    <div className="text-center p-4 bg-gray-100 rounded-xl cursor-pointer hover:bg-gray-200">
+                      +{getDocumentsByType("consignment").length - 2} more files
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-48 bg-white rounded-xl border-2 border-dashed border-gray-300">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+                    <span className="text-2xl">📄</span>
+                  </div>
+                  <p className="text-gray-600 font-semibold text-center">Not Applicable</p>
+                  <p className="text-sm text-gray-500 mt-1">No files uploaded</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </Section>
+
+        {details.goods_inwards && (
+          <Section title="Goods Inward Details">
+            <div className="grid md:grid-cols-3 px-4 gap-5">
+              {details.goods_inward_info?.no_of_goods && (
+                <Info
+                  label="No. of Goods"
+                  value={details.goods_inward_info.no_of_goods}
+                />
+              )}
+              {details.goods_inward_info?.description && (
+                <Info
+                  label="Description"
+                  value={details.goods_inward_info.description}
+                />
+              )}
+            </div>
+          </Section>
         )}
 
         <Section title="Additional Visitors">
-          {details.extra_visitors && details.extra_visitors.length > 0 ? (
+          {details.extra_visitors?.length > 0 ? (
             <Table columns={visitorExtraColumns} data={details.extra_visitors} />
           ) : (
             <p className="px-2 text-gray-500">No Additional Visitor Added</p>
           )}
         </Section>
 
-        {/* Device Log
-        <Section title="Visitor Device Log">
-          <Table columns={visitorDeviceLogColumn} data={paginatedDeviceLogs} />
-          <Pagination
-            page={devicePage}
-            totalPages={deviceTotalPages}
-            setPage={setDevicePage}
-          />
-        </Section> */}
-
-        {/* Visitor Log */}
         <Section title="Visitor Log">
           <Table columns={visitorLogColumn} data={paginatedVisitorLogs} />
         </Section>
@@ -296,7 +374,7 @@ const Info = ({ label, value }) => (
 const BooleanInfo = ({ label, value }) => (
   <div className="grid grid-cols-2">
     <p className="font-semibold text-sm">{label} :</p>
-    <p>{value ? "Yes" : "No"}</p>
+    <p className="font-medium">{value ? "Yes" : "No"}</p>
   </div>
 );
 
