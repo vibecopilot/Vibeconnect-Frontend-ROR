@@ -10113,7 +10113,7 @@ export const postVisitorLogFromDevice = async (data) => {
 
   try {
     const response = await client.fetch(url, {
-      method: "POST",
+      method: "GET",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
