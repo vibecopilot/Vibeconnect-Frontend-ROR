@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import image from "/profile.png";
 import { FaTrash } from "react-icons/fa";
 import { useSelector } from "react-redux";
@@ -22,10 +22,9 @@ const EditVisitor = () => {
   const userId = getItemInLocalStorage("UserId");
   const [behalf, setbehalf] = useState("Visitor");
 
-  const inputRef = useRef(null);                 // Profile picture input
+  const inputRef = useRef(null);                   
   const [imageFile, setImageFile] = useState(null);
 
-  // NEW: file refs/state for license & consignment
   const licenseInputRef = useRef(null);
   const consignmentInputRef = useRef(null);
   const [licenseFile, setLicenseFile] = useState(null);
@@ -76,92 +75,181 @@ const EditVisitor = () => {
   ]);
 
   const { id } = useParams();
+  const navigate = useNavigate();
+  const themeColor = useSelector((state) => state.theme.color);
 
-  useEffect(() => {
-    const fetchVisitorDetails = async () => {
-      try {
-        const detailsResp = await getVisitorDetails(id);
-        const editDetail = detailsResp.data;
-        setDetails(detailsResp.data);
-        console.log(editDetail);
+  const fetchVisitorDetails = async () => {
+    try {
+      const detailsResp = await getVisitorDetails(id);
+      const editDetail = detailsResp.data;
+      setDetails(editDetail);
+      console.log("Visitor details:", editDetail);
 
-        setFormData((prevFormData) => ({
-          ...prevFormData,
-          visitorName: editDetail.name,
-          mobile: editDetail.contact_no,
-          purpose: editDetail.purpose,
-          host: editDetail.vhost_id || "",
-          comingFrom: editDetail.coming_from,
-          vehicleNumber: editDetail.vehicle_number,
-          expectedDate: editDetail.expected_date,
-          expectedTime: editDetail.expected_time,
-          hostApproval: editDetail.skip_host_approval || false,
-          goodsInward: editDetail.goods_inwards || false,
-          license: !!editDetail.license_doc,          // checkbox state from backend
-          consignment: !!editDetail.consignment_doc,  // checkbox state from backend
-          passNumber: editDetail.pass_number || "",
-          supportCategory: editDetail.visitor_staff_category_id || "",
-          slotNumber: editDetail.parking_slot_id || "",
-          noOfGoods: editDetail.goods_inward_info?.no_of_goods || "",
-          goodsDescription: editDetail.goods_inward_info?.description || "",
-          notes: editDetail.notes || "",
-        }));
+      // ✅ FIX: Check visitor_license array first, then fallback to visitor_files
+      let licenseFileObj = null;
+      let consignmentFileObj = null;
 
-        // Set existing file names
-        if (editDetail.license_doc) {
-          const url = new URL(editDetail.license_doc);
+      // Check visitor_license array
+      if (Array.isArray(editDetail.visitor_license) && editDetail.visitor_license.length > 0) {
+        licenseFileObj = editDetail.visitor_license[0];
+      }
+
+      // Check visitor_consignment array
+      if (Array.isArray(editDetail.visitor_consignment) && editDetail.visitor_consignment.length > 0) {
+        consignmentFileObj = editDetail.visitor_consignment[0];
+      }
+
+      // Fallback to visitor_files if not found in specific arrays
+      if (!licenseFileObj && Array.isArray(editDetail.visitor_files)) {
+        licenseFileObj = editDetail.visitor_files.find(
+          (f) => f.category_type === "license"
+        );
+      }
+      if (!consignmentFileObj && Array.isArray(editDetail.visitor_files)) {
+        consignmentFileObj = editDetail.visitor_files.find(
+          (f) => f.category_type === "consignment"
+        );
+      }
+
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+        visitorName: editDetail.name || "",
+        mobile: editDetail.contact_no || "",
+        purpose: editDetail.purpose || "",
+        host: editDetail.vhost_id || editDetail.hosts?.[0]?.id || "",
+        comingFrom: editDetail.coming_from || "",
+        vehicleNumber: editDetail.vehicle_number || "",
+        expectedDate: editDetail.expected_date || "",
+        expectedTime: editDetail.expected_time || "",
+        hostApproval: editDetail.skip_host_approval || false,
+        goodsInward: editDetail.goods_inwards || false,
+        license: !!licenseFileObj || false,
+        consignment: !!consignmentFileObj || false,
+        passNumber: editDetail.pass_number || "",
+        supportCategory: editDetail.visitor_staff_category_id || "",
+        slotNumber: editDetail.parking_slot_id || editDetail.parking_slot || "",
+        noOfGoods: editDetail.goods_inward_info?.no_of_goods || "",
+        goodsDescription: editDetail.goods_inward_info?.description || "",
+        notes: editDetail.notes || "",
+      }));
+
+      // Set license file name
+      if (licenseFileObj?.document) {
+        try {
+          const url = new URL(licenseFileObj.document.startsWith('http') 
+            ? licenseFileObj.document 
+            : domainPrefix + licenseFileObj.document);
           setExistingLicenseFileName(url.pathname.split('/').pop());
+        } catch (e) {
+          setExistingLicenseFileName("License File");
         }
-        if (editDetail.consignment_doc) {
-          const url = new URL(editDetail.consignment_doc);
-          setExistingConsignmentFileName(url.pathname.split('/').pop());
-        }
+      }
 
-        if (editDetail.extra_visitors) {
+      // Set consignment file name
+      if (consignmentFileObj?.document) {
+        try {
+          const url = new URL(consignmentFileObj.document.startsWith('http') 
+            ? consignmentFileObj.document 
+            : domainPrefix + consignmentFileObj.document);
+          setExistingConsignmentFileName(url.pathname.split('/').pop());
+        } catch (e) {
+          setExistingConsignmentFileName("Consignment File");
+        }
+      }
+
+      // ✅ FIX: Filter out extra visitors with empty name AND contact_no
+      if (Array.isArray(editDetail.extra_visitors) && editDetail.extra_visitors.length > 0) {
+        const validVisitors = editDetail.extra_visitors.filter(
+          (visitor) => visitor.name?.trim() || visitor.contact_no?.trim()
+        );
+
+        if (validVisitors.length > 0) {
           setVisitors(
-            editDetail.extra_visitors.map((visitor) => ({
-              id: visitor.id,
-              name: visitor.name,
-              mobile: visitor.contact_no,
+            validVisitors.map((visitor) => ({
+              id: visitor.id || "",
+              name: visitor.name || "",
+              mobile: visitor.contact_no || "",
               _destroy: "0",
             }))
           );
+        } else {
+          setVisitors([{ id: "", name: "", mobile: "", _destroy: "0" }]);
         }
-        setSelectedVisitorType(editDetail.visit_type);
-        setSelectedFrequency(editDetail.frequency);
-
-        const formatPassTime = (dateString) => {
-          if (!dateString) return "";
-          const date = new Date(dateString);
-          return date.toISOString().slice(0, 16);
-        };
-
-        setPassStartDate(formatPassTime(editDetail.start_pass));
-        setPassEndDate(formatPassTime(editDetail.end_pass));
-        setSelectedWeekdays(editDetail.working_days || []);
-
-        console.log(detailsResp.data);
-      } catch (error) {
-        console.log(error);
+      } else {
+        setVisitors([{ id: "", name: "", mobile: "", _destroy: "0" }]);
       }
-    };
 
-    const fetchInitialData = async () => {
-      try {
-        const [usersResp, visitorCat, parkingRes] = await Promise.all([
-          getSetupUsers(),
-          getVisitorStaffCategory(),
-          getParkingConfig(),
-        ]);
-        setHosts(usersResp.data);
-        setStaffCategories(visitorCat.data.categories);
-        setSlots(parkingRes.data);
-      } catch (error) {
-        console.error("Error fetching initial lists:", error);
-        toast.error("Failed to load hosts, categories, or parking slots.");
+      setSelectedVisitorType(editDetail.visit_type === "support_staff" ? "Support Staff" : "Guest");
+      setSelectedFrequency(editDetail.frequency === "frequently" ? "Frequently" : "Once");
+
+      const formatPassTime = (dateString) => {
+        if (!dateString) return "";
+        const date = new Date(dateString);
+        return date.toISOString().slice(0, 16);
+      };
+
+      setPassStartDate(formatPassTime(editDetail.start_pass));
+      setPassEndDate(formatPassTime(editDetail.end_pass));
+      setSelectedWeekdays(Array.isArray(editDetail.working_days) ? editDetail.working_days : []);
+
+      console.log("Details loaded successfully");
+    } catch (error) {
+      console.error("Error fetching visitor details:", error);
+      toast.error("Failed to load visitor details.");
+    }
+  };
+
+  const fetchInitialData = async () => {
+    try {
+      const [usersResp, visitorCat, parkingRes] = await Promise.all([
+        getSetupUsers(),
+        getVisitorStaffCategory(),
+        getParkingConfig(),
+      ]);
+
+      setHosts(Array.isArray(usersResp.data) ? 
+        usersResp.data : 
+        (usersResp.data?.hosts || usersResp.data?.data || [])
+      );
+      setStaffCategories(visitorCat.data?.categories || []);
+
+      let parkingSlots = [];
+      if (Array.isArray(parkingRes.data)) {
+        parkingSlots = parkingRes.data;
+      } else if (Array.isArray(parkingRes.data?.slots)) {
+        parkingSlots = parkingRes.data.slots;
+      } else if (Array.isArray(parkingRes.data?.parking_slots)) {
+        parkingSlots = parkingRes.data.parking_slots;
+      } else if (Array.isArray(parkingRes.data?.data)) {
+        parkingSlots = parkingRes.data.data;
       }
-    };
+      console.log("Parking slots loaded:", parkingSlots);
+      setSlots(parkingSlots);
 
+    } catch (error) {
+      console.error("Error fetching initial lists:", error);
+      toast.error("Failed to load hosts, categories, or parking slots.");
+      setSlots([]);
+      setHosts([]);
+      setStaffCategories([]);
+    }
+  };
+
+  useEffect(() => {
+    if (details.parking_slot && slots.length > 0 && formData.slotNumber === "") {
+      const slotMatch = slots.find(slot => 
+        slot.name === details.parking_slot || 
+        slot.slot_name === details.parking_slot ||
+        slot.id.toString() === details.parking_slot
+      );
+      if (slotMatch) {
+        setFormData(prev => ({ ...prev, slotNumber: slotMatch.id }));
+        console.log("Parking slot mapped:", slotMatch.id);
+      }
+    }
+  }, [details.parking_slot, slots, formData.slotNumber]);
+
+  useEffect(() => {
     fetchVisitorDetails();
     fetchInitialData();
   }, [id]);
@@ -205,7 +293,7 @@ const EditVisitor = () => {
 
   const handleAddVisitor = (event) => {
     event.preventDefault();
-    setVisitors([...visitors, { name: "", mobile: "", _destroy: "0" }]);
+    setVisitors([...visitors, { id: "", name: "", mobile: "", _destroy: "0" }]);
   };
 
   const handleInputChange = (index, event) => {
@@ -231,14 +319,13 @@ const EditVisitor = () => {
   };
 
   const handleImageClick = () => {
-    inputRef.current.click();
+    inputRef.current?.click();
   };
 
   const handleImageChange = (event) => {
     setImageFile(event.target.files[0]);
   };
 
-  // NEW: file input handlers
   const handleLicenseFileClick = () => {
     licenseInputRef.current?.click();
   };
@@ -259,8 +346,6 @@ const EditVisitor = () => {
     setFormData((prev) => ({ ...prev, consignment: !!file }));
   };
 
-  const themeColor = useSelector((state) => state.theme.color);
-
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData({
@@ -268,8 +353,6 @@ const EditVisitor = () => {
       [name]: type === "checkbox" ? checked : value,
     });
   };
-
-  const navigate = useNavigate();
 
   const boolToInt = (b) => (b ? "1" : "0");
 
@@ -283,6 +366,9 @@ const EditVisitor = () => {
     }
 
     const postData = new FormData();
+    const apiVisitType = selectedVisitorType === "Support Staff" ? "support_staff" : "guest";
+    const apiFrequency = selectedFrequency === "Frequently" ? "frequently" : "once";
+
     postData.append("visitor[site_id]", siteId);
     postData.append("visitor[vhost_id]", formData.host);
     postData.append("visitor[name]", formData.visitorName);
@@ -295,23 +381,8 @@ const EditVisitor = () => {
     postData.append("visitor[vehicle_number]", formData.vehicleNumber);
     postData.append("visitor[expected_date]", formData.expectedDate);
     postData.append("visitor[expected_time]", formData.expectedTime);
-
-    postData.append(
-      "visitor[skip_host_approval]",
-      boolToInt(formData.hostApproval)
-    );
+    postData.append("visitor[skip_host_approval]", boolToInt(formData.hostApproval));
     postData.append("visitor[goods_inwards]", boolToInt(formData.goodsInward));
-    postData.append("visitor[license_doc]", boolToInt(formData.license));
-    postData.append(
-      "visitor[consignment_doc]",
-      boolToInt(formData.consignment)
-    );
-
-    const apiVisitType =
-      selectedVisitorType === "Support Staff" ? "support_staff" : "guest";
-    const apiFrequency =
-      selectedFrequency === "Frequently" ? "frequently" : "once";
-
     postData.append("visitor[visit_type]", apiVisitType);
     postData.append("visitor[frequency]", apiFrequency);
     postData.append("visitor[pass_number]", formData.passNumber);
@@ -322,25 +393,29 @@ const EditVisitor = () => {
       postData.append("visitor[working_days][]", dayStr);
     });
 
+    // ✅ FIX: Only append visitors with valid data
     visitors.forEach((extraVisitor, index) => {
-      if (extraVisitor.id) {
+      // Only send if visitor has name or mobile, or if it's being destroyed
+      if (extraVisitor._destroy === "1" || extraVisitor.name?.trim() || extraVisitor.mobile?.trim()) {
+        if (extraVisitor.id) {
+          postData.append(
+            `visitor[extra_visitors_attributes][${index}][id]`,
+            extraVisitor.id
+          );
+        }
         postData.append(
-          `visitor[extra_visitors_attributes][${index}][id]`,
-          extraVisitor.id
+          `visitor[extra_visitors_attributes][${index}][name]`,
+          extraVisitor.name || ""
+        );
+        postData.append(
+          `visitor[extra_visitors_attributes][${index}][contact_no]`,
+          extraVisitor.mobile || ""
+        );
+        postData.append(
+          `visitor[extra_visitors_attributes][${index}][_destroy]`,
+          extraVisitor._destroy || "0"
         );
       }
-      postData.append(
-        `visitor[extra_visitors_attributes][${index}][name]`,
-        extraVisitor.name || ""
-      );
-      postData.append(
-        `visitor[extra_visitors_attributes][${index}][contact_no]`,
-        extraVisitor.mobile || ""
-      );
-      postData.append(
-        `visitor[extra_visitors_attributes][${index}][_destroy]`,
-        extraVisitor._destroy || "0"
-      );
     });
 
     if (formData.goodsInward) {
@@ -351,19 +426,16 @@ const EditVisitor = () => {
       );
     }
 
-    // Profile picture
     if (imageFile) {
-      postData.append("visitor[profile_pic]", imageFile, imageFile.name);
+      postData.append("visitor[profile_picture]", imageFile, imageFile.name);
     }
 
-    // NEW: actual file attachments for license & consignment
-    // Adjust keys if your Rails model uses different ones (e.g. license_document, consignment_document).
     if (licenseFile) {
-      postData.append("visitor[license_document]", licenseFile, licenseFile.name);
+      postData.append("visitor_license", licenseFile, licenseFile.name);
     }
     if (consignmentFile) {
       postData.append(
-        "visitor[consignment_document]",
+        "visitor_consignment",
         consignmentFile,
         consignmentFile.name
       );
@@ -422,13 +494,13 @@ const EditVisitor = () => {
             >
               {details.profile_picture ? (
                 <img
-                  src={domainPrefix + details.profile_picture.url}
+                  src={domainPrefix + details.profile_picture}
                   alt="Profile"
                   className="w-48 h-48 rounded-full cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
                     window.open(
-                      domainPrefix + details.profile_picture.url,
+                      domainPrefix + details.profile_picture,
                       "_blank"
                     );
                   }}
@@ -532,11 +604,15 @@ const EditVisitor = () => {
                   required={selectedVisitorType === "Support Staff"}
                 >
                   <option value="">Select Category</option>
-                  {staffCategories.map((category) => (
-                    <option value={category.id} key={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
+                  {Array.isArray(staffCategories) && staffCategories.length > 0 ? (
+                    staffCategories.map((category) => (
+                      <option value={category.id} key={category.id}>
+                        {category.name}
+                      </option>
+                    ))
+                  ) : (
+                    <option value="" disabled>No categories available</option>
+                  )}
                 </select>
               </div>
             )}
@@ -599,11 +675,15 @@ const EditVisitor = () => {
                   name="host"
                 >
                   <option value="">Select Person to meet</option>
-                  {hosts.map((host) => (
-                    <option value={host.id} key={host.id}>
-                      {host.firstname} {host.lastname}
-                    </option>
-                  ))}
+                  {Array.isArray(hosts) && hosts.length > 0 ? (
+                    hosts.map((host) => (
+                      <option value={host.id} key={host.id}>
+                        {host.firstname} {host.lastname} {host.full_name || ""}
+                      </option>
+                    ))
+                  ) : (
+                    <option value="" disabled>No hosts available</option>
+                  )}
                 </select>
               </div>
 
@@ -664,11 +744,17 @@ const EditVisitor = () => {
                   className="border border-gray-400 p-2 rounded-md"
                 >
                   <option value="">Select Slot</option>
-                  {slots.map((slot) => (
-                    <option value={slot.id} key={slot.id}>
-                      {slot.name}
+                  {Array.isArray(slots) && slots.length > 0 ? (
+                    slots.map((slot) => (
+                      <option value={slot.id} key={slot.id}>
+                        {slot.name || slot.slot_name || `Slot ${slot.id}`}
+                      </option>
+                    ))
+                  ) : (
+                    <option value="" disabled>
+                      {slots.length === 0 ? "No slots available" : "Loading..."}
                     </option>
-                  ))}
+                  )}
                 </select>
               </div>
 
@@ -741,7 +827,6 @@ const EditVisitor = () => {
                 Goods Inward
               </label>
 
-              {/* License + file */}
               <div className="flex items-center gap-3">
                 <label className="flex items-center gap-2 cursor-pointer text-base font-semibold">
                   <input
@@ -759,7 +844,12 @@ const EditVisitor = () => {
                   onClick={handleLicenseFileClick}
                   className="text-sm px-3 py-1 rounded border border-gray-400"
                 >
-                  {licenseFile ? "Change File" : formData.license ? "Change License" : "Upload License"}
+                  {licenseFile 
+                    ? "Change File" 
+                    : formData.license 
+                    ? "Change License" 
+                    : "Upload License"
+                  }
                 </button>
                 <input
                   type="file"
@@ -779,7 +869,6 @@ const EditVisitor = () => {
                 ) : null}
               </div>
 
-              {/* Consignment + file */}
               <div className="flex items-center gap-3">
                 <label className="flex items-center gap-2 cursor-pointer text-base font-semibold">
                   <input
@@ -797,7 +886,12 @@ const EditVisitor = () => {
                   onClick={handleConsignmentFileClick}
                   className="text-sm px-3 py-1 rounded border border-gray-400"
                 >
-                  {consignmentFile ? "Change File" : formData.consignment ? "Change Consignment" : "Upload Consignment"}
+                  {consignmentFile 
+                    ? "Change File" 
+                    : formData.consignment 
+                    ? "Change Consignment" 
+                    : "Upload Consignment"
+                  }
                 </button>
                 <input
                   type="file"
@@ -887,7 +981,6 @@ const EditVisitor = () => {
                             }
                           />
                         </div>
-                        &nbsp;&nbsp;
                         <div className="grid gap-2 items-center w-full">
                           <label htmlFor="" className="font-semibold">
                             Mobile:
@@ -911,7 +1004,6 @@ const EditVisitor = () => {
                           >
                             <FaTrash />
                           </button>
-                          &nbsp;
                         </div>
                       </div>
                     )
@@ -963,7 +1055,7 @@ const EditVisitor = () => {
                   {weekdaysMap.map((weekdayObj) => (
                     <button
                       key={weekdayObj.day}
-                      className={` rounded-md p-2 px-4 shadow-custom-all-sides font-medium ${
+                      className={`rounded-md p-2 px-4 shadow-custom-all-sides font-medium ${
                         selectedWeekdays?.includes(weekdayObj.day)
                           ? "bg-green-400 text-white "
                           : ""
@@ -974,7 +1066,7 @@ const EditVisitor = () => {
                       }}
                       type="button"
                     >
-                      <a>{weekdayObj.day}</a>
+                      {weekdayObj.day}
                     </button>
                   ))}
                 </div>
