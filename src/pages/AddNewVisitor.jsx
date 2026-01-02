@@ -82,12 +82,33 @@ const AddNewVisitor = () => {
           getVisitorStaffCategory(),
           getParkingConfig(),
         ])
-        setHosts(usersResp.data.hosts)
-        setStaffCategories(visitorCat.data.categories)
-        setSlots(parkingRes.data)
+        
+        setHosts(Array.isArray(usersResp.data) ? 
+          usersResp.data : 
+          (usersResp.data?.hosts || usersResp.data?.data || [])
+        )
+        
+        setStaffCategories(visitorCat.data?.categories || [])
+        
+        let parkingSlots = []
+        if (Array.isArray(parkingRes.data)) {
+          parkingSlots = parkingRes.data
+        } else if (Array.isArray(parkingRes.data?.slots)) {
+          parkingSlots = parkingRes.data.slots
+        } else if (Array.isArray(parkingRes.data?.parking_slots)) {
+          parkingSlots = parkingRes.data.parking_slots
+        } else if (Array.isArray(parkingRes.data?.data)) {
+          parkingSlots = parkingRes.data.data
+        }
+        console.log("Parking slots loaded:", parkingSlots)
+        setSlots(parkingSlots)
+        
       } catch (error) {
         console.error("Error fetching initial data:", error)
         toast.error("Failed to load hosts, categories, or parking slots.")
+        setSlots([])
+        setHosts([])
+        setStaffCategories([])
       }
     }
     fetchInitialData()
@@ -110,7 +131,7 @@ const AddNewVisitor = () => {
   const handleVisitorTypeChange = (e) => {
     setSelectedVisitorType(e.target.value)
     if (e.target.value !== "Support Staff") {
-        setFormData(prev => ({ ...prev, supportCategory: "" }))
+      setFormData(prev => ({ ...prev, supportCategory: "" }))
     }
   }
   
@@ -146,7 +167,7 @@ const AddNewVisitor = () => {
     event.preventDefault()
     const lastVisitor = visitors[visitors.length - 1];
     if (lastVisitor && (lastVisitor.name === "" && lastVisitor.mobile === "")) {
-        return toast.error("Please fill the current additional visitor's details first.")
+      return toast.error("Please fill the current additional visitor's details first.")
     }
     setVisitors([...visitors, { name: "", mobile: "" }])
   }
@@ -209,12 +230,13 @@ const AddNewVisitor = () => {
     }
 
     const postData = new FormData()
-    
     postData.append("visitor[site_id]", siteId)
     postData.append("visitor[created_by_id]", userId)
     postData.append("visitor[vhost_id]", formData.host)
     postData.append("visitor[name]", formData.visitorName)
-    postData.append("visitor[visitor_staff_category_id]", formData.supportCategory)
+    if (selectedVisitorType === "Support Staff" && formData.supportCategory) {
+      postData.append("visitor[visitor_staff_category_id]", formData.supportCategory)
+    }
     postData.append("visitor[contact_no]", formData.mobile)
     postData.append("visitor[purpose]", formData.purpose)
     postData.append("visitor[start_pass]", passStartDate)
@@ -223,41 +245,33 @@ const AddNewVisitor = () => {
     postData.append("visitor[vehicle_number]", formData.vehicleNumber)
     postData.append("visitor[expected_date]", formData.expectedDate)
     postData.append("visitor[expected_time]", formData.expectedTime)
-    postData.append("visitor[skip_host_approval]", formData.hostApproval)
-    postData.append("visitor[goods_inwards]", formData.goodsInward)
-    postData.append("visitor[visit_type]", selectedVisitorType)
+    postData.append("visitor[skip_host_approval]", formData.hostApproval ? "1" : "0")
+    postData.append("visitor[goods_inwards]", formData.goodsInward ? "1" : "0")
+    
+    postData.append("visitor[visit_type]", selectedVisitorType) 
+    postData.append("visitor[frequency]", selectedFrequency) 
+    
     postData.append("visitor[pass_number]", formData.passNumber)
-    postData.append("visitor[frequency]", selectedFrequency)
-    postData.append("visitor[parking_slot]", formData.slotNumber)
-    postData.append("visitor[license_doc]", formData.license) 
-    postData.append("visitor[consignment_doc]", formData.consignment) 
+    
+    if (formData.slotNumber) {
+      postData.append("visitor[parking_slot_id]", formData.slotNumber)
+    }
 
     if (capturedImage) {
       const response = await fetch(capturedImage)
       const blob = await response.blob()
-      postData.append("visitor[profile_pic]", blob, "visitor_image.jpg")
+      postData.append("visitor[profile_picture]", blob, "visitor_image.jpg")
+    }
+    if (selectedFrequency === "Frequently") {
+      selectedWeekdays.forEach((day) => {
+        postData.append("visitor[working_days][]", day)
+      })
     }
 
-    formData.licenseAttachments.forEach((file, index) => {
-      postData.append(`visitor[visitor_files][${index}][file]`, file, file.name)
-      postData.append(`visitor[visitor_files][${index}][category_type]`, "license")
-    })
-    
-    const consignmentStartIndex = formData.licenseAttachments.length
-    formData.consignmentAttachments.forEach((file, index) => {
-      const fileIndex = consignmentStartIndex + index
-      postData.append(`visitor[visitor_files][${fileIndex}][file]`, file, file.name)
-      postData.append(`visitor[visitor_files][${fileIndex}][category_type]`, "consignment")
-    })
-
-    selectedWeekdays.forEach((day) => {
-      postData.append("visitor[working_days][]", day)
-    })
-
     visitors.forEach((extraVisitor, index) => {
-      if (extraVisitor.name || extraVisitor.mobile) {
-          postData.append(`visitor[extra_visitors_attributes][${index}][name]`, extraVisitor.name)
-          postData.append(`visitor[extra_visitors_attributes][${index}][contact_no]`, extraVisitor.mobile)
+      if (extraVisitor.name?.trim() || extraVisitor.mobile?.trim()) {
+        postData.append(`visitor[extra_visitors_attributes][${index}][name]`, extraVisitor.name || "")
+        postData.append(`visitor[extra_visitors_attributes][${index}][contact_no]`, extraVisitor.mobile || "")
       }
     })
 
@@ -266,9 +280,46 @@ const AddNewVisitor = () => {
       toast.loading("Creating new visitor, please wait...", { id: 'createVisitor' })
       visitResp = await postNewVisitor(postData)
       
+      const visitorId = visitResp.data?.id || visitResp.data?.visitor?.id
+      
+      if (!visitorId) {
+        console.error("No visitor ID returned from API")
+        throw new Error("Failed to get visitor ID from response")
+      }
+
+      if (formData.license && formData.licenseAttachments && formData.licenseAttachments.length > 0) {
+        const licenseFormData = new FormData()
+        formData.licenseAttachments.forEach((file) => {
+          licenseFormData.append("visitor_license[]", file, file.name)
+        })
+        licenseFormData.append("visitor_id", visitorId)
+        
+        try {
+          console.log("License files need to be uploaded separately after visitor creation")
+        } catch (error) {
+          console.error("Error uploading license:", error)
+          toast.error("Visitor created but license upload failed")
+        }
+      }
+
+      if (formData.consignment && formData.consignmentAttachments && formData.consignmentAttachments.length > 0) {
+        const consignmentFormData = new FormData()
+        formData.consignmentAttachments.forEach((file) => {
+          consignmentFormData.append("visitor_consignment[]", file, file.name)
+        })
+        consignmentFormData.append("visitor_id", visitorId)
+        
+        try {
+          console.log("Consignment files need to be uploaded separately after visitor creation")
+        } catch (error) {
+          console.error("Error uploading consignment:", error)
+          toast.error("Visitor created but consignment upload failed")
+        }
+      }
+
       const dataToSave = {
         UserInfo: {
-          employeeNo: visitResp.data.id.toString(),
+          employeeNo: visitorId.toString(),
           name: formData.visitorName,
           userType: "visitor",
           Valid: {
@@ -283,28 +334,33 @@ const AddNewVisitor = () => {
       })
       const a = document.createElement("a")
       a.href = URL.createObjectURL(blob)
-      a.download = `visitor_data_${visitResp.data.id}.json`
+      a.download = `visitor_data_${visitorId}.json`
       a.click()
       URL.revokeObjectURL(a.href) 
 
-      if (formData.goodsInward && formData.noOfGoods && visitResp.data.id) {
-          const postGoods = new FormData()
+      if (formData.goodsInward && formData.noOfGoods && visitorId) {
+        const postGoods = new FormData()
+        
+        if (formData.goodsAttachments && formData.goodsAttachments.length > 0) {
           formData.goodsAttachments.forEach((file) => {
             postGoods.append("goods_files[]", file, file.name)
           })
-          postGoods.append("goods_in_out[visitor_id]", visitResp.data.id)
-          postGoods.append("goods_in_out[no_of_goods]", formData.noOfGoods)
-          postGoods.append("goods_in_out[description]", formData.goodsDescription)
-          postGoods.append("goods_in_out[ward_type]", "in")
-          postGoods.append("goods_in_out[vehicle_no]", formData.vehicleNumber)
-          postGoods.append("goods_in_out[person_name]", formData.visitorName)
-          postGoods.append("goods_in_out[created_by_id]", userId)
+        }
+        
+        postGoods.append("goods_in_out[visitor_id]", visitorId)
+        postGoods.append("goods_in_out[no_of_goods]", formData.noOfGoods)
+        postGoods.append("goods_in_out[description]", formData.goodsDescription)
+        postGoods.append("goods_in_out[ward_type]", "in")
+        postGoods.append("goods_in_out[vehicle_no]", formData.vehicleNumber)
+        postGoods.append("goods_in_out[person_name]", formData.visitorName)
+        postGoods.append("goods_in_out[created_by_id]", userId)
 
-          try {
-            await postNewGoods(postGoods)
-          } catch (error) {
-            console.error("Error posting goods:", error)
-          }
+        try {
+          await postNewGoods(postGoods)
+        } catch (error) {
+          console.error("Error posting goods:", error)
+          toast.error("Visitor created but goods inward failed")
+        }
       }
 
       toast.dismiss('createVisitor')
@@ -314,7 +370,22 @@ const AddNewVisitor = () => {
     } catch (error) {
       console.error("Error creating visitor:", error)
       toast.dismiss('createVisitor')
-      toast.error("Failed to add visitor. Please check form data.")
+      
+      if (error.response && error.response.data) {
+        console.log("Create visitor errors:", error.response.data)
+        if (error.response.data.errors) {
+          const errorMessages = Object.entries(error.response.data.errors)
+            .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
+            .join('\n')
+          toast.error(errorMessages || "Failed to add visitor")
+        } else if (error.response.data.message) {
+          toast.error(error.response.data.message)
+        } else {
+          toast.error("Failed to add visitor. Please check form data.")
+        }
+      } else {
+        toast.error("Failed to add visitor. Please check form data.")
+      }
     }
   }
 
@@ -353,7 +424,7 @@ const AddNewVisitor = () => {
         </div>
 
         <form onSubmit={createNewVisitor} className="pt-4 p-4 sm:p-8 md:p-12 space-y-8">
-          
+         
           {showWebcam && (
             <div className="fixed inset-0 z-50 bg-black bg-opacity-75 flex flex-col items-center justify-center p-4">
                 <div className="bg-white rounded-lg p-6 max-w-lg w-full">
@@ -457,11 +528,15 @@ const AddNewVisitor = () => {
                         required={selectedVisitorType === "Support Staff"}
                     >
                         <option value="">Select Category</option>
-                        {staffCategories.map((staffCat) => (
+                        {Array.isArray(staffCategories) && staffCategories.length > 0 ? (
+                          staffCategories.map((staffCat) => (
                             <option value={staffCat.id} key={staffCat.id}>
-                                {staffCat.name}
+                              {staffCat.name}
                             </option>
-                        ))}
+                          ))
+                        ) : (
+                          <option value="" disabled>No categories available</option>
+                        )}
                     </select>
                 </div>
             )}
@@ -516,11 +591,15 @@ const AddNewVisitor = () => {
                 required
               >
                 <option value="">Select Person to meet</option>
-                {hosts.map((host) => (
-                  <option value={host.id} key={host.id}>
-                    {host.name}
-                  </option>
-                ))}
+                {Array.isArray(hosts) && hosts.length > 0 ? (
+                  hosts.map((host) => (
+                    <option value={host.id} key={host.id}>
+                      {host.name || `${host.firstname || ''} ${host.lastname || ''}`.trim() || host.full_name || `Host ${host.id}`}
+                    </option>
+                  ))
+                ) : (
+                  <option value="" disabled>No hosts available</option>
+                )}
               </select>
             </div>
 
@@ -581,11 +660,15 @@ const AddNewVisitor = () => {
                 className="border border-gray-300 p-2.5 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm"
               >
                 <option value="">Select Slot</option>
-                {slots.map((slot) => (
-                  <option value={slot.id} key={slot.id}>
-                    {slot.name}
-                  </option>
-                ))}
+                {Array.isArray(slots) && slots.length > 0 ? (
+                  slots.map((slot) => (
+                    <option value={slot.id} key={slot.id}>
+                      {slot.name || slot.slot_name || `Slot ${slot.id}`}
+                    </option>
+                  ))
+                ) : (
+                  <option value="" disabled>{slots.length === 0 ? "No slots available" : "Loading..."}</option>
+                )}
               </select>
             </div>
 
