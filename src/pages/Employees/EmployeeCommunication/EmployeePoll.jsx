@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { getPolls, postPollVote } from "../../../api"; // Ensure postPollVote is imported
+import { getPolls, postPollVote } from "../../../api";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
 import EmployeeCommunication from "./EmployeeCommunication";
 import Navbar from "../../../components/Navbar";
 function EmployeePolls() {
   const [pollsData, setPollsData] = useState([]);
-  const [selectedOptions, setSelectedOptions] = useState({}); // Track selected options per poll
+  const [selectedOptions, setSelectedOptions] = useState({});
   const userId = getItemInLocalStorage("UserId");
 
   useEffect(() => {
@@ -26,27 +26,24 @@ function EmployeePolls() {
   }, []);
 
   const handleOptionSelect = async (pollId, optionId) => {
-    // Check if the user has already voted for this poll
     if (selectedOptions[pollId]) {
       alert("You have already voted for this poll.");
       return;
     }
 
-    // Update the local state with the selected option
     setSelectedOptions((prevSelectedOptions) => ({
       ...prevSelectedOptions,
-      [pollId]: optionId, // Store the selected option for each poll
+      [pollId]: optionId, 
     }));
 
-    // Submit the vote to the backend
     try {
       const voteData = {
         poll_vote: {
-          poll_option_id: optionId, // The ID of the selected option
+          poll_option_id: optionId, 
         },
       };
 
-      const vote = await postPollVote(pollId, voteData); // Submit the vote
+      const vote = await postPollVote(pollId, voteData); 
       console.log("vote resp", vote);
       console.log(`Vote submitted for poll ${pollId} with option ${optionId}`);
     } catch (err) {
@@ -78,8 +75,8 @@ function EmployeePolls() {
               const startDate = new Date(poll.start_date);
               const endDate = new Date(poll.end_date);
               const currentDate = new Date();
-              const timeDiff = endDate - currentDate; // Time difference in milliseconds
-              const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24)); // Convert to days
+              const timeDiff = endDate - currentDate; 
+              const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24)); 
 
               return (
                 <div key={poll.id} className="flex justify-start w-full p-2 ">

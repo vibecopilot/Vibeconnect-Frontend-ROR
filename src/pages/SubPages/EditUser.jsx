@@ -144,7 +144,7 @@ const UserEdit = () => {
                     profilePreview ||
                     "https://www.pngitem.com/pimgs/m/137-1370051_avatar-generic-avatar-hd-png-download.png"
                   }
-                  alt="profile"
+                  alt=""
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -224,7 +224,7 @@ const UserEdit = () => {
             </Section>
 
             {/* BUSINESS / SITE INFO */}
-            <Section title="Business / Site Information">
+            <Section title="Other Details">
               <div className="bg-gray-50 p-6 rounded-lg border">
                 <Grid2>
                   <Read label="Ownership Type" value={user_sites?.[0]?.ownership_type} />

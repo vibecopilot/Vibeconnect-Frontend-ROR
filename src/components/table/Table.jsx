@@ -72,7 +72,7 @@ const Table = ({
         title={title}
         responsive
         columns={columns}
-        data={data}
+        data={Array.isArray(data) ? data.filter(item => item && typeof item === 'object') : []}
         customStyles={customStyles || customStyle}
         pagination={pagination}
         paginationServer={paginationServer}
