@@ -79,58 +79,43 @@ function VisitorSetup() {
       DATA FETCH
   ========================= */
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [staffRes, catRes, subRes] = await Promise.all([
-          axios.get(
-            `${BASE_URL}/visitor_staff_categories.json?token=${token}`
-          ),
-          axios.get(`${BASE_URL}/visitor_categories.json?token=${token}`),
-          axios.get(`${BASE_URL}/visitor_sub_categories.json?token=${token}`),
-        ]);
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+      const [staffRes, catRes, subRes] = await Promise.all([
+        axios.get(`${BASE_URL}/visitor_staff_categories.json?token=${token}`),
+        axios.get(`${BASE_URL}/visitor_categories.json?token=${token}`),
+        axios.get(`${BASE_URL}/visitor_sub_categories.json?token=${token}`),
+      ]);
 
-        setStaffCategories(
-          Array.isArray(staffRes.data)
-            ? staffRes.data
-            : staffRes.data?.staff_categories || []
-        );
+      setStaffCategories(staffRes.data?.staff_categories || []);
+      setVisitorCategories(catRes.data?.visitor_categories || []);
+      setSubCategories(subRes.data?.visitor_sub_categories || []);
+    } catch (err) {
+      toast.error("Failed to load setup data");
+    }
+  };
 
-        setVisitorCategories(
-          Array.isArray(catRes.data)
-            ? catRes.data
-            : catRes.data?.visitor_categories || []
-        );
+  fetchData();
+}, [reload]);
 
-        setSubCategories(
-          Array.isArray(subRes.data)
-            ? subRes.data
-            : subRes.data?.visitor_sub_categories || []
-        );
-      } catch (err) {
-        toast.error("Failed to load data");
-      }
-    };
 
-    fetchData();
-  }, [reload]);
 
-  useEffect(() => {
-    const fetchParking = async () => {
-      try {
-        const res = await axios.get(
-          `${BASE_URL}/parking_configurations.json?token=${token}`
-        );
+useEffect(() => {
+  const fetchParking = async () => {
+    try {
+      const res = await axios.get(
+        `${BASE_URL}/parking_configurations.json?token=${token}`
+      );
+      setParkingConfigurations(res.data?.parking_configurations || []);
+    } catch (error) {
+      toast.error("Failed to load parking configurations");
+    }
+  };
 
-        // ✅ Ensure safe default (array)
-        setParkingConfigurations(res.data?.parking_configuration ?? []);
-      } catch (error) {
-        toast.error("Failed to load parking configurations");
-      }
-    };
+  fetchParking();
+}, []);
 
-    fetchParking();
-  }, []);
 
   /* =========================
       SEARCH

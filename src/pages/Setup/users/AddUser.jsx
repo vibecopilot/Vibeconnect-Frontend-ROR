@@ -209,12 +209,12 @@ const AddUser = () => {
                       profileImage ||
                       "https://www.pngitem.com/pimgs/m/137-1370051_avatar-generic-avatar-hd-png-download.png"
                     }
-                    alt="profile"
-                    className="w-full h-full object-cover"
+                    alt=""
+                    className="w-full h-full object-cover mx-auto block"
                   />
                 </div>
 
-                {/* Profile Upload Button (Updated) */}
+                {/* Camera Button */}
                 <button
                   type="button"
                   className="text-2xl mt-2 text-indigo-600 hover:text-indigo-800 transition"
@@ -236,6 +236,7 @@ const AddUser = () => {
                   }}
                 />
               </div>
+
 
               <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 ml-0 sm:ml-8">
 
@@ -466,8 +467,25 @@ const AddUser = () => {
                   onChange={handleChange}
                   className="w-full border border-gray-300 rounded-md px-3 py-2"
                 >
+                  <option value="">Select</option>
                   <option value="Primary">Primary</option>
                   <option value="Secondary">Secondary</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium block mb-1">User Type</label>
+                <select
+                  name="userType"
+                  value={formData.userType}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                >
+                  <option value="">Select</option>
+                  <option value="Admin">Admin</option>
+                  <option value="Technician">Technician</option>
+                  <option value="Security Guard">Security Guard</option>
+                  <option value="Employee">Employee</option>
                 </select>
               </div>
             </div>
