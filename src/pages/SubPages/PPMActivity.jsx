@@ -17,56 +17,58 @@ const PPMActivity = () => {
   const [searchPPMText, setSearchPPMCheck] = useState("");
   const [filteredPPMData, setFilteredPPMData] = useState([]);
   const themeColor = useSelector((state) => state.theme.color);
+
   const handlePPMSearch = (event) => {
     const searchValue = event.target.value;
     setSearchPPMCheck(searchValue);
     if (searchValue.trim() === "") {
       setFilteredPPMData(ppms);
     } else {
-      const filteredResults = filteredPPMData.filter((item) =>
+      // Fixed: Filter from ppms instead of filteredPPMData
+      const filteredResults = ppms.filter((item) =>
         item.name.toLowerCase().includes(searchValue.toLowerCase())
       );
       setFilteredPPMData(filteredResults);
-      console.log(filteredResults);
     }
   };
+
   useEffect(() => {
     toast.loading("Please wait");
-    try {
-      const fetchServicePPM = async () => {
+    const fetchServicePPM = async () => {
+      try {
         toast.dismiss();
-        toast.success("PPM Checklist data fetched successfully");
         const ServicePPMResponse = await getAssetPPMList();
-        const sortedPPMData = ServicePPMResponse.data.checklists.sort(
-          (a, b) => {
-            return new Date(b.created_at) - new Date(a.created_at);
-          }
+        
+        // FIXED: Filter only ctype: "ppm"
+        const ppmOnly = ServicePPMResponse.data.checklists.filter(
+          (checklist) => checklist.ctype === "ppm"
         );
+        
+        const sortedPPMData = ppmOnly.sort((a, b) => {
+          return new Date(b.created_at) - new Date(a.created_at);
+        });
 
         setFilteredPPMData(sortedPPMData);
         setPPms(sortedPPMData);
-        console.log(ServicePPMResponse.data.checklists);
-      };
-      fetchServicePPM();
-    } catch (error) {
-      console.log(error);
-    }
+        toast.success("PPM Checklist data fetched successfully");
+      } catch (error) {
+        toast.dismiss();
+        console.log(error);
+      }
+    };
+    fetchServicePPM();
   }, []);
-  console.log(filteredPPMData);
+
   const PPMColumn = [
     {
       name: "Action",
       cell: (row) => (
         <div className="flex items-center gap-4">
-          {/* :assetId/:activityId */}
-          {/* <Link to={`/asset/ppm-activity-details/${row.id}`}>
-                <BsEye size={15} />
-              </Link> */}
           <Link to={`/asset/edit-ppm/${row.id}`}>
             <BsEye size={15} />
           </Link>
           <Link to={`/admin/copy-checklist/ppm/${row.id}`}>
-          <FaCopy size={15}/>
+            <FaCopy size={15}/>
           </Link>
         </div>
       ),
@@ -76,7 +78,6 @@ const PPMActivity = () => {
       selector: (row) => row.name,
       sortable: true,
     },
-
     {
       name: "Start Date",
       selector: (row) => row.start_date,
@@ -92,11 +93,6 @@ const PPMActivity = () => {
       selector: (row) => row.frequency,
       sortable: true,
     },
-    // {
-    //   name: "Assigned To",
-    //   selector: (row) => row.user_id,
-    //   sortable: true,
-    // },
     {
       name: "No. Of Groups",
       selector: (row) => row?.groups?.length,
@@ -117,47 +113,29 @@ const PPMActivity = () => {
       sortable: true,
     },
   ];
-  const defaultImage = { index: 0, src: "" };
-  let selectedImageSrc = defaultImage.src;
-  let selectedImageIndex = defaultImage.index;
-  const [selectedImage, setSelectedImage] = useState(defaultImage);
+
+  let selectedImageSrc = "";
+  let selectedImageIndex = 0;
+  const [selectedImage, setSelectedImage] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(null);
+
   const Get_Background = async () => {
     try {
-      // const params = {
-      //   user_id: user_id,
-      // };
       const user_id = getItemInLocalStorage("VIBEUSERID");
-      console.log(user_id);
       const data = await getVibeBackground(user_id);
 
       if (data.success) {
-        console.log("success");
-
-        console.log(data.data);
         selectedImageSrc = API_URL + data.data.image;
-
         selectedImageIndex = data.data.index;
-
-        // Now, you can use selectedImageSrc and selectedImageIndex as needed
-        console.log("Received response:", data);
-
-        // For example, update state or perform any other actions
         setSelectedImage(selectedImageSrc);
         setSelectedIndex(selectedImageIndex);
-        console.log("Received selectedImageSrc:", selectedImageSrc);
-        console.log("Received selectedImageIndex:", selectedImageIndex);
-        console.log(selectedImage);
-        // dispatch(setBackground(selectedImageSrc));
-      } else {
-        console.log("Something went wrong");
       }
     } catch (error) {
       console.error("Error:", error);
     }
   };
+
   useEffect(() => {
-    // Call the function to get the background image when the component mounts
     Get_Background();
   }, []);
 
@@ -171,39 +149,6 @@ const PPMActivity = () => {
       <Navbar />
       <div className="p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
         <AssetNav />
-        {/* {filter && (
-              <div className="flex items-center justify-center gap-2">
-                <div>
-                  <label htmlFor="" className="font-medium">
-                    Service Name:{" "}
-                  </label>
-                  <input
-                    type="text"
-                    name=""
-                    id=""
-                    placeholder="Enter Service Name"
-                    className="border p-1 placeholder:text-sm px-4 border-gray-500 rounded-md"
-                  />
-                </div>
-
-                <select className="border p-1 px-4 border-gray-500 rounded-md">
-                  <option value="">Select Area</option>
-                  <option value="unit1">Area 1</option>
-                  <option value="unit2">Area 2</option>
-                  <option value="unit2">Area 3</option>
-                </select>
-
-                <select className="border p-1 px-4 border-gray-500 rounded-md">
-                  <option value="">Select Building</option>
-                  <option value="unit1">Building 1</option>
-                  <option value="unit2">Building 2</option>
-                  <option value="unit2">Building 3</option>
-                </select>
-                <button className="bg-black p-1 px-4 text-white rounded-md">
-                  Apply
-                </button>
-              </div>
-            )} */}
         <div className="flex flex-wrap justify-between items-center my-2 ">
           <input
             type="text"
@@ -221,35 +166,6 @@ const PPMActivity = () => {
               <IoAddCircleOutline size={20} />
               Add
             </Link>
-            {/* <button
-            className="text-lg font-semibold border-2 border-black px-4 p-1 flex gap-2 items-center rounded-md"
-            onClick={() => setOmitColumn(!omitColumn)}
-          >
-            <IoFilterOutline />
-            Filter Columns
-          </button> */}
-            {/* <button
-                  className="text-lg font-semibold border-2 border-black px-4 p-1 flex gap-2 items-center rounded-md"
-                  onClick={() => setFilter(!filter)}
-                >
-                  <BiFilterAlt />
-                  Filter
-                </button>
-
-               
-                <button
-                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-                  onClick={exportToExcel}
-                >
-                  Export
-                </button> */}
-            {/* <button
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-          onClick={handleDownloadQRCode}
-          disabled={selectedRows.length === 0}
-        >
-          Download QR Code
-        </button> */}
           </div>
         </div>
         <Table columns={PPMColumn} data={filteredPPMData} />
@@ -257,5 +173,6 @@ const PPMActivity = () => {
     </section>
   );
 };
+
 
 export default PPMActivity;

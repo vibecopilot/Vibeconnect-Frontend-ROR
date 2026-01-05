@@ -8,7 +8,7 @@ import DocumentPro from "./DocumentPro";
 import DocumentCommon from "./DocumentCommon";
 import SharedwithMe from "./SharedwithMe";
 
-const DocumentMain = () => {
+const   DocumentMain = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [page, setPage] = useState("Personal")
 
