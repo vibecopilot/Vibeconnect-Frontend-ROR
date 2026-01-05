@@ -14,14 +14,10 @@ import EditVisitorSetupModal from "../../containers/modals/EditVisitorSetupModal
 
 import VehicleParkingSetup from "./VehicleParkingSetupModal/VehicleParkingSetup";
 import DeviceConfiguration from "./VehicleParkingSetupModal/DeviceConfiguration";
+import AddVehicleParkingModal from "./VehicleParkingSetupModal/AddVehicleParkingModal";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 
 const BASE_URL = "https://admin.vibecopilot.ai";
-const token = getItemInLocalStorage("TOKEN");
-
-/* =========================
-   ICON HELPERS
-========================= */
 
 const resolveIconUrl = (iconPath) => {
   if (!iconPath) return null;
@@ -50,12 +46,9 @@ const IconCell = ({ icon }) => {
 function VisitorSetup() {
   const themeColor = useSelector((state) => state.theme.color);
 
-  /* =========================
-      STATE
-  ========================= */
-
   const [page, setPage] = useState("deviceConfig");
   const [reload, setReload] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const [visitorCategories, setVisitorCategories] = useState([]);
   const [subCategories, setSubCategories] = useState([]);
@@ -72,74 +65,150 @@ function VisitorSetup() {
   const [catId, setCatId] = useState(null);
   const [editType, setEditType] = useState("");
 
-  // ✅ Missing state added for parking configurations
   const [parkingConfigurations, setParkingConfigurations] = useState([]);
+  const [addParkingModal, setAddParkingModal] = useState(false);
 
-  /* =========================
-      DATA FETCH
-  ========================= */
+  const token = getItemInLocalStorage("TOKEN");
 
 useEffect(() => {
   const fetchData = async () => {
-    try {
-      const [staffRes, catRes, subRes] = await Promise.all([
-        axios.get(`${BASE_URL}/visitor_staff_categories.json?token=${token}`),
-        axios.get(`${BASE_URL}/visitor_categories.json?token=${token}`),
-        axios.get(`${BASE_URL}/visitor_sub_categories.json?token=${token}`),
-      ]);
-
-      setStaffCategories(staffRes.data?.staff_categories || []);
-      setVisitorCategories(catRes.data?.visitor_categories || []);
-      setSubCategories(subRes.data?.visitor_sub_categories || []);
-    } catch (err) {
-      toast.error("Failed to load setup data");
+    if (!token) {
+      console.error("Token not found");
+      toast.error("Authentication token not found");
+      setLoading(false);
+      return;
     }
+
+    setLoading(true);
+
+    const fetchStaffCategories = async () => {
+      try {
+        const res = await axios.get(`${BASE_URL}/visitor_staff_categories.json?token=${token}`);
+        console.log("Staff Categories Response:", res.data);
+        const staffData = res.data?.staff_categories || 
+                         res.data?.data?.staff_categories || 
+                         (Array.isArray(res.data) ? res.data : []) ||
+                         [];
+        setStaffCategories(Array.isArray(staffData) ? staffData : []);
+      } catch (err) {
+        console.error("Error fetching staff categories:", err);
+        setStaffCategories([]);
+        toast.error("Failed to load staff categories");
+      }
+    };
+
+    const fetchVisitorCategories = async () => {
+      try {
+        const res = await axios.get(`${BASE_URL}/visitor_categories.json?token=${token}`);
+        console.log("Visitor Categories Response:", res.data);
+        const visitorData = res.data?.visitor_categories || 
+                           res.data?.data?.visitor_categories || 
+                           (Array.isArray(res.data) ? res.data : []) ||
+                           [];
+        setVisitorCategories(Array.isArray(visitorData) ? visitorData : []);
+      } catch (err) {
+        console.error("Error fetching visitor categories:", err);
+        try {
+          console.log("Trying alternative endpoint: /visitor_categories/json");
+          const altRes = await axios.get(`${BASE_URL}/visitor_categories/json?token=${token}`);
+          console.log("Alternative Visitor Categories Response:", altRes.data);
+          const visitorData = altRes.data?.visitor_categories || 
+                             altRes.data?.data?.visitor_categories || 
+                             (Array.isArray(altRes.data) ? altRes.data : []) ||
+                             [];
+          setVisitorCategories(Array.isArray(visitorData) ? visitorData : []);
+        } catch (altErr) {
+          console.error("Alternative endpoint also failed:", altErr);
+          setVisitorCategories([]);
+          toast.error("Failed to load visitor categories (Server Error 500)");
+        }
+      }
+    };
+
+    const fetchSubCategories = async () => {
+      try {
+        const res = await axios.get(`${BASE_URL}/visitor_sub_categories.json?token=${token}`);
+        console.log("Sub Categories Response:", res.data);
+        const subData = res.data?.visitor_sub_categories || 
+                       res.data?.data?.visitor_sub_categories || 
+                       (Array.isArray(res.data) ? res.data : []) ||
+                       [];
+        setSubCategories(Array.isArray(subData) ? subData : []);
+      } catch (err) {
+        console.error("Error fetching sub categories:", err);
+        setSubCategories([]);
+        toast.error("Failed to load sub categories");
+      }
+    };
+
+    await Promise.allSettled([
+      fetchStaffCategories(),
+      fetchVisitorCategories(),
+      fetchSubCategories()
+    ]);
+
+    setLoading(false);
   };
 
   fetchData();
-}, [reload]);
+}, [reload, token]);
 
 
 
 useEffect(() => {
   const fetchParking = async () => {
+    if (!token) return;
+    
     try {
       const res = await axios.get(
         `${BASE_URL}/parking_configurations.json?token=${token}`
       );
-      setParkingConfigurations(res.data?.parking_configurations || []);
+      console.log("Parking Configurations Response:", res.data);
+      const parkingData = res.data?.parking_configurations || 
+                         res.data?.data?.parking_configurations || 
+                         (Array.isArray(res.data) ? res.data : []) ||
+                         [];
+      console.log("Processed Parking Configurations:", parkingData);
+      setParkingConfigurations(Array.isArray(parkingData) ? parkingData : []);
     } catch (error) {
-      toast.error("Failed to load parking configurations");
+      console.error("Error fetching parking configurations:", error);
+      toast.error(error.response?.data?.message || "Failed to load parking configurations");
+      setParkingConfigurations([]);
     }
   };
 
   fetchParking();
-}, []);
-
-
-  /* =========================
-      SEARCH
-  ========================= */
+}, [token, reload]);
 
   const handleSearch = (e) => setSearchText(e.target.value.toLowerCase());
 
   const filteredStaffCategories = Array.isArray(staffCategories)
     ? staffCategories.filter((i) =>
-        i.name?.toLowerCase().includes(searchText)
+        i?.name?.toLowerCase().includes(searchText)
       )
     : [];
 
   const filteredVisitorCategories = Array.isArray(visitorCategories)
     ? visitorCategories.filter((i) =>
-        i.name?.toLowerCase().includes(searchText)
+        i?.name?.toLowerCase().includes(searchText)
       )
     : [];
 
   const filteredSubCategories = Array.isArray(subCategories)
     ? subCategories.filter((i) =>
-        i.name?.toLowerCase().includes(searchText)
+        i?.name?.toLowerCase().includes(searchText)
       )
     : [];
+
+  useEffect(() => {
+    console.log("Current Page:", page);
+    console.log("Staff Categories:", staffCategories);
+    console.log("Visitor Categories:", visitorCategories);
+    console.log("Sub Categories:", subCategories);
+    console.log("Filtered Staff:", filteredStaffCategories);
+    console.log("Filtered Visitor:", filteredVisitorCategories);
+    console.log("Filtered Sub:", filteredSubCategories);
+  }, [page, staffCategories, visitorCategories, subCategories, searchText]);
 
   const visitorCategoryMap = useMemo(() => {
     const map = {};
@@ -148,10 +217,6 @@ useEffect(() => {
     });
     return map;
   }, [visitorCategories]);
-
-  /* =========================
-      TABLE COLUMNS
-  ========================= */
 
   const staffCategoryColumns = useMemo(
     () => [
@@ -176,11 +241,16 @@ useEffect(() => {
               className="cursor-pointer text-red-600"
               onClick={async () => {
                 if (!window.confirm("Are you sure?")) return;
-                await axios.delete(
-                  `${BASE_URL}/visitor_staff_categories/${row.id}.json?token=${token}`
-                );
-                toast.success("Deleted");
-                setReload((p) => !p);
+                try {
+                  await axios.delete(
+                    `${BASE_URL}/visitor_staff_categories/${row.id}.json?token=${token}`
+                  );
+                  toast.success("Deleted");
+                  setReload((p) => !p);
+                } catch (error) {
+                  console.error("Delete error:", error);
+                  toast.error("Failed to delete");
+                }
               }}
             />
           </div>
@@ -217,11 +287,16 @@ useEffect(() => {
               className="cursor-pointer text-red-600"
               onClick={async () => {
                 if (!window.confirm("Delete this category?")) return;
-                await axios.delete(
-                  `${BASE_URL}/visitor_categories/${row.id}.json?token=${token}`
-                );
-                toast.success("Deleted");
-                setReload((p) => !p);
+                try {
+                  await axios.delete(
+                    `${BASE_URL}/visitor_categories/${row.id}.json?token=${token}`
+                  );
+                  toast.success("Deleted");
+                  setReload((p) => !p);
+                } catch (error) {
+                  console.error("Delete error:", error);
+                  toast.error("Failed to delete");
+                }
               }}
             />
           </div>
@@ -262,11 +337,16 @@ useEffect(() => {
               className="cursor-pointer text-red-600"
               onClick={async () => {
                 if (!window.confirm("Delete this sub category?")) return;
-                await axios.delete(
-                  `${BASE_URL}/visitor_sub_categories/${row.id}.json?token=${token}`
-                );
-                toast.success("Deleted");
-                setReload((p) => !p);
+                try {
+                  await axios.delete(
+                    `${BASE_URL}/visitor_sub_categories/${row.id}.json?token=${token}`
+                  );
+                  toast.success("Deleted");
+                  setReload((p) => !p);
+                } catch (error) {
+                  console.error("Delete error:", error);
+                  toast.error("Failed to delete");
+                }
               }}
             />
           </div>
@@ -276,9 +356,17 @@ useEffect(() => {
     [visitorCategoryMap]
   );
 
-  /* =========================
-      RENDER
-  ========================= */
+  const parkingConfigColumns = useMemo(
+    () => [
+      { name: "Sr No", selector: (_, i) => i + 1, width: "70px" },
+      { name: "Parking Slot", selector: (row) => row?.name || "-" },
+      { name: "Building Name", selector: (row) => row?.building_name || "-" },
+      { name: "Floor Name", selector: (row) => row?.floor_name || "-" },
+      { name: "Vehicle Type", selector: (row) => row?.vehicle_type || "-" },
+      { name: "Site Name", selector: (row) => row?.site_name || "-" },
+    ],
+    []
+  );
 
   return (
     <section className="flex w-full">
@@ -308,14 +396,20 @@ useEffect(() => {
 
         {(page === "visitor" ||
           page === "visitorCategory" ||
-          page === "visitorSubCategory") && (
+          page === "visitorSubCategory" ||
+          page === "vehicleParking") && (
           <div className="flex justify-between my-4">
-            <input
-              value={searchText}
-              onChange={handleSearch}
-              className="border p-3 rounded w-96"
-              placeholder="Search..."
-            />
+            {(page === "visitor" ||
+              page === "visitorCategory" ||
+              page === "visitorSubCategory") && (
+              <input
+                value={searchText}
+                onChange={handleSearch}
+                className="border p-3 rounded w-96"
+                placeholder="Search..."
+              />
+            )}
+            {page === "vehicleParking" && <div></div>}
             <button
               onClick={() => {
                 if (page === "visitor") setVisitorSetupModal(true);
@@ -323,6 +417,8 @@ useEffect(() => {
                   setAddVisitorCategoryModal(true);
                 if (page === "visitorSubCategory")
                   setAddVisitorSubCategoryModal(true);
+                if (page === "vehicleParking")
+                  setAddParkingModal(true);
               }}
               style={{ background: themeColor }}
               className="text-white px-5 py-3 rounded flex gap-2"
@@ -333,31 +429,70 @@ useEffect(() => {
         )}
 
         <div className="bg-white p-6 rounded border">
-          {page === "visitor" && (
-            <Table
-              columns={staffCategoryColumns}
-              data={filteredStaffCategories}
-            />
+          {page === "vehicleParking" ? (
+            <>
+              {parkingConfigurations.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  No parking configurations found.
+                </div>
+              ) : (
+                <Table
+                  columns={parkingConfigColumns}
+                  data={parkingConfigurations}
+                />
+              )}
+            </>
+          ) : page === "deviceConfig" ? (
+            <DeviceConfiguration />
+          ) : loading ? (
+            <div className="flex justify-center items-center py-10">
+              <div className="text-gray-500">Loading data...</div>
+            </div>
+          ) : (
+            <>
+              {page === "visitor" && (
+                <>
+                  {filteredStaffCategories.length === 0 && !loading && (
+                    <div className="text-center py-8 text-gray-500">
+                      No staff categories found. Click "Add" to create one.
+                    </div>
+                  )}
+                  <Table
+                    columns={staffCategoryColumns}
+                    data={filteredStaffCategories}
+                  />
+                </>
+              )}
+              {page === "visitorCategory" && (
+                <>
+                  {filteredVisitorCategories.length === 0 && !loading && (
+                    <div className="text-center py-8 text-gray-500">
+                      {visitorCategories.length === 0 
+                        ? "No visitor categories found." 
+                        : "No visitor categories match your search."}
+                    </div>
+                  )}
+                  <Table
+                    columns={visitorCategoryColumns}
+                    data={filteredVisitorCategories}
+                  />
+                </>
+              )}
+              {page === "visitorSubCategory" && (
+                <>
+                  {filteredSubCategories.length === 0 && !loading && (
+                    <div className="text-center py-8 text-gray-500">
+                      No sub categories found. Click "Add" to create one.
+                    </div>
+                  )}
+                  <Table
+                    columns={subCategoryColumns}
+                    data={filteredSubCategories}
+                  />
+                </>
+              )}
+            </>
           )}
-          {page === "visitorCategory" && (
-            <Table
-              columns={visitorCategoryColumns}
-              data={filteredVisitorCategories}
-            />
-          )}
-          {page === "visitorSubCategory" && (
-            <Table
-              columns={subCategoryColumns}
-              data={filteredSubCategories}
-            />
-          )}
-          {page === "vehicleParking" && (
-            <VehicleParkingSetup
-              parkingConfigurations={parkingConfigurations}
-              setParkingConfigurations={setParkingConfigurations}
-            />
-          )}
-          {page === "deviceConfig" && <DeviceConfiguration />}
         </div>
 
         {visitorSetupModal && (
@@ -391,6 +526,32 @@ useEffect(() => {
             editType={editType}
             setAdded={() => setReload((p) => !p)}
             onclose={() => setEditVisitorSetupModal(false)}
+          />
+        )}
+
+        {addParkingModal && (
+          <AddVehicleParkingModal
+            setAdded={() => {
+              setReload((p) => !p);
+              // Also refresh parking configurations
+              const fetchParking = async () => {
+                if (!token) return;
+                try {
+                  const res = await axios.get(
+                    `${BASE_URL}/parking_configurations.json?token=${token}`
+                  );
+                  const parkingData = res.data?.parking_configurations || 
+                                     res.data?.data?.parking_configurations || 
+                                     (Array.isArray(res.data) ? res.data : []) ||
+                                     [];
+                  setParkingConfigurations(Array.isArray(parkingData) ? parkingData : []);
+                } catch (error) {
+                  console.error("Error fetching parking configurations:", error);
+                }
+              };
+              fetchParking();
+            }}
+            onclose={() => setAddParkingModal(false)}
           />
         )}
       </div>
