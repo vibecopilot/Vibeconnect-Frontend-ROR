@@ -1,21 +1,26 @@
 import React, { useEffect, useState } from "react";
-import TicketCategorySetup from "./TicketCategorySetup";
 import { useSelector } from "react-redux";
-import Table from "../../../components/table/Table";
 import { BiEdit } from "react-icons/bi";
-import { ColorPicker } from "antd";
-import { getHelpDeskStatusSetup, postHelpDeskStatusSetup } from "../../../api";
 import toast from "react-hot-toast";
-import { getItemInLocalStorage } from "../../../utils/localStorage";
+
+import TicketCategorySetup from "./TicketCategorySetup";
+import Table from "../../../components/table/Table";
 import EditStatusModal from "./EditStatusModal";
 
+import {
+  getHelpDeskStatusSetup,
+  postHelpDeskStatusSetup,
+} from "../../../api";
+import { getItemInLocalStorage } from "../../../utils/localStorage";
+
 const TicketSetupPage = () => {
+  const themeColor = useSelector((state) => state.theme.color);
+
+  const [page, setPage] = useState("Category Type");
+  const [statuses, setStatuses] = useState([]);
   const [statusAdded, setStatusAdded] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [page, setPage] = useState("Category Type");
-  const themeColor = useSelector((state) => state.theme.color);
-  const [statuses, setStatuses] = useState([]);
-  const [id, setId] = useState("");
+  const [editId, setEditId] = useState("");
 
   const [formData, setFormData] = useState({
     status: "",
@@ -34,45 +39,42 @@ const TicketSetupPage = () => {
     Sunday: { enabled: false, start: "", end: "" },
   });
 
+  /* ---------------- FETCH STATUS ---------------- */
   useEffect(() => {
-    const fetchTicketStatus = async () => {
+    const fetchStatuses = async () => {
       try {
-        const statusResp = await getHelpDeskStatusSetup();
-        setStatuses(Object.values(statusResp.data));
-      } catch (error) {
-        console.log(error);
+        const res = await getHelpDeskStatusSetup();
+        setStatuses(Object.values(res.data));
+      } catch (err) {
+        console.error(err);
       }
     };
-    fetchTicketStatus();
+    fetchStatuses();
   }, [statusAdded]);
 
+  /* ---------------- HANDLERS ---------------- */
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleAddStatus = async () => {
-    if (
-      !formData.status ||
-      !formData.order ||
-      !formData.fixedState ||
-      !formData.color
-    ) {
+    if (!formData.status || !formData.fixedState || !formData.order) {
       return toast.error("Please fill all fields");
     }
 
     const siteID = getItemInLocalStorage("SITEID");
-    const postStatus = new FormData();
+    const payload = new FormData();
 
-    postStatus.append("complaint_status[of_phase]", "pms");
-    postStatus.append("complaint_status[society_id]", siteID);
-    postStatus.append("complaint_status[name]", formData.status);
-    postStatus.append("complaint_status[fixed_state]", formData.fixedState);
-    postStatus.append("complaint_status[color_code]", formData.color);
-    postStatus.append("complaint_status[position]", formData.order);
+    payload.append("complaint_status[of_phase]", "pms");
+    payload.append("complaint_status[society_id]", siteID);
+    payload.append("complaint_status[name]", formData.status);
+    payload.append("complaint_status[fixed_state]", formData.fixedState);
+    payload.append("complaint_status[color_code]", formData.color);
+    payload.append("complaint_status[position]", formData.order);
 
     try {
-      await postHelpDeskStatusSetup(postStatus);
-      toast.success("Status Added Successfully");
+      await postHelpDeskStatusSetup(payload);
+      toast.success("Status added successfully");
       setStatusAdded(true);
       setFormData({
         status: "",
@@ -80,29 +82,18 @@ const TicketSetupPage = () => {
         color: "#1677ff",
         order: "",
       });
-    } catch (error) {
-      toast.error(error?.response?.data?.error || "Failed to add status");
+    } catch (err) {
+      toast.error("Failed to add status");
     } finally {
       setTimeout(() => setStatusAdded(false), 500);
     }
   };
 
-  const handleEditStatusModal = (id) => {
-    setId(id);
-    setShowEditModal(true);
-  };
-
-  const handleStatusUpdated = () => {
-    setShowEditModal(false);
-    setStatusAdded(true);
-    setTimeout(() => setStatusAdded(false), 500);
-  };
-
   const updateDay = (day, field, value) => {
-    setOperationalDays({
-      ...operationalDays,
-      [day]: { ...operationalDays[day], [field]: value },
-    });
+    setOperationalDays((prev) => ({
+      ...prev,
+      [day]: { ...prev[day], [field]: value },
+    }));
   };
 
   const handleOperationalSubmit = () => {
@@ -114,10 +105,11 @@ const TicketSetupPage = () => {
       return toast.error("Select at least one operational day");
     }
 
-    console.log("Operational Days:", payload);
-    toast.success("Operational Days Saved");
+    console.log(payload);
+    toast.success("Operational days saved");
   };
 
+  /* ---------------- TABLE ---------------- */
   const statusColumns = [
     { name: "Order", selector: (row) => row.position },
     { name: "Status", selector: (row) => row.name },
@@ -126,297 +118,128 @@ const TicketSetupPage = () => {
       name: "Color",
       cell: (row) => (
         <div
+          className="w-4 h-4 rounded"
           style={{ background: row.color_code }}
-          className="rounded-md w-4 h-4"
         />
       ),
     },
     {
       name: "Action",
       cell: (row) => (
-        <button 
-          onClick={() => handleEditStatusModal(row.id)}
-          className="p-1 hover:bg-gray-100 rounded"
+        <button
+          onClick={() => {
+            setEditId(row.id);
+            setShowEditModal(true);
+          }}
         >
-          <BiEdit size={15} />
+          <BiEdit />
         </button>
       ),
     },
   ];
 
   return (
-    <div className="w-full my-2 flex overflow-hidden flex-col">
-      {/* Tab Navigation */}
-      <div className="flex w-full">
-        <div className="flex gap-2 p-2 pb-0 border-b-2 border-gray-200 w-full">
-          {["Category Type", "Status", "Operational Days"].map((tab) => (
-            <h2
-              key={tab}
-              className={`p-1 px-4 rounded-t-md cursor-pointer transition-all font-medium ${
-                page === tab
-                  ? "bg-white text-blue-500 shadow-custom-all-sides"
-                  : "text-gray-700 hover:text-blue-500"
-              }`}
-              onClick={() => setPage(tab)}
-            >
-              {tab}
-            </h2>
-          ))}
-        </div>
+    <div className="w-full my-2">
+      {/* Tabs */}
+      <div className="flex border-b">
+        {["Category Type", "Status", "Operational Days"].map((tab) => (
+          <button
+            key={tab}
+            className={`px-4 py-2 ${
+              page === tab ? "border-b-2 text-blue-500" : ""
+            }`}
+            onClick={() => setPage(tab)}
+          >
+            {tab}
+          </button>
+        ))}
       </div>
 
-      {/* Category Type Tab */}
+      {/* Category */}
       {page === "Category Type" && <TicketCategorySetup />}
-              <input
-                type="number"
-                placeholder="Enter order"
-                className="border p-2 rounded-md border-gray-300"
-                value={formData.order}
-                onChange={handleChange}
-                name="order"
-              />
-              <button
-                className=" font-medium hover:text-white transition-all w-full p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
-                style={{ background: themeColor }}
-                onClick={handleAddStatus}
-              >
-                Add
-              </button>
-            </div>
-            <Table
-              responsive
-              //   selectableRows
-              columns={statusColumns}
-              data={statuses}
-              isPagination={true}
-            />{" "}
-            {/* <div className="flex gap-10">
-              <label className="font-semibold mt-2" htmlFor="">
-                Allow User to reopen ticket after closure
-              </label>
-              <select
-                className="border p-2 rounded-md w-64 border-black"
-                name=""
-                id=""
-              >
-                <option value="">Select time period</option>
-                <option value="">Days</option>
-                <option value="">Hrs</option>
-                <option value="">Months</option>
-              </select>
-              <input
-                type="text"
-                className="border p-2 rounded-md border-black"
-                placeholder="2"
-              />
-              <button
-                className="border-2 font-semibold hover:bg-black hover:text-white transition-all border-black p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
-                style={{ background: themeColor }}
-              >
-                Update
-              </button>
-            </div> */}
-          </div>
-        )}
-        {page === "Operational Days" && (
-          <div className=" w-full  my-2">
-            {/* <button
-              onClick={openModal}
-              className="border-2 font-semibold mt-5 ml-10 hover:bg-black hover:text-white transition-all border-black p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
-              style={{ background: themeColor }}
+
+      {/* Status */}
+      {page === "Status" && (
+        <div className="p-4">
+          <div className="grid md:grid-cols-5 gap-2 mb-4">
+            <input
+              name="status"
+              placeholder="Status"
+              value={formData.status}
+              onChange={handleChange}
+              className="border p-2 rounded"
+            />
+            <input
+              name="fixedState"
+              placeholder="Fixed State"
+              value={formData.fixedState}
+              onChange={handleChange}
+              className="border p-2 rounded"
+            />
+            <input
+              name="order"
+              type="number"
+              placeholder="Order"
+              value={formData.order}
+              onChange={handleChange}
+              className="border p-2 rounded"
+            />
+            <button
               onClick={handleAddStatus}
+              className="text-white rounded"
+              style={{ background: themeColor }}
             >
-              Import
-            </button> */}
-            <table className="w-full">
-              <thead style={{background: themeColor}} className="text-white">
-                <tr>
-                  <th className="px-4 py-2"></th>
-                  <th className="px-4 py-2">Operational Days</th>
-                  <th className="px-4 py-2">Start Time</th>
-                  <th className="px-4 py-2">End Time</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td className="border px-4 py-2 text-center">
-                    <input type="checkbox" />
-                  </td>
-                  <td className="border px-4 py-2 text-center">Monday</td>
-                  <td className="border px-4 py-2 text-center">
-                    <input
-                      type="time"
-                      value="13:45"
-                      className="border border-gray-400 p-1 w-40 rounded-md"
-                    />
-                  </td>
-                  <td className="border px-4 py-2 text-center">
-                    <input
-                      type="time"
-                      value="19:45"
-                      className="border border-gray-400 p-1 w-40 rounded-md"
-                    />
-                  </td>
-                  {/* <td class="border px-4 py-2 text-center"><input type="time" className="border border-gray-400 p-2 rounded-md"/></td>
-              <td class="border px-4 py-2 text-center"><input type="time" className="border border-gray-400 p-2 rounded-md"/></td>
-      
-              <td class="border px-4 py-2 text-center"><input type="checkbox"/></td>
-              <td class="border px-4 py-2 text-center"><input type="checkbox"/></td>
-              <td class="border px-4 py-2 text-center"><input type="time" className="border border-gray-400 p-2 rounded-md"/></td> */}
-                </tr>
-                <tr>
-                  <td className="border px-4 py-2 text-center">
-                    <input type="checkbox" />
-                  </td>
-                  <td className="border px-4 py-2 text-center">Tuesday</td>
-                  <td className="border px-4 py-2 text-center">
-                    <input
-                      type="time"
-                      value="13:45"
-                      className="border border-gray-400 p-1 w-40 rounded-md"
-                    />
-                  </td>
-                  <td className="border px-4 py-2 text-center">
-                    <input
-                      type="time"
-                      value="16:45"
-                      className="border border-gray-400 p-1 w-40 rounded-md"
-                    />
-                  </td>
-                  {/* <td class="border px-4 py-2 text-center"><input type="time" className="border border-gray-400 p-2 rounded-md"/></td> */}
-                  {/* <td class="border px-4 py-2 text-center"><input type="time" className="border border-gray-400 p-2 rounded-md"/></td>
-              <td class="border px-4 py-2 text-center"><input type="checkbox"/></td>
-              <td class="border px-4 py-2 text-center"><input type="checkbox"/></td>
-              <td class="border px-4 py-2 text-center"><input type="time" className="border border-gray-400 p-2 rounded-md"/></td> */}
-                </tr>
-                <tr>
-                  <td className="border px-4 py-2 text-center">
-                    <input type="checkbox" />
-                  </td>
-                  <td className="border px-4 py-2 text-center">Wednesday</td>
-                  <td className="border px-4 py-2 text-center">
-                    <input
-                      type="time"
-                      value="15:45"
-                      className="border border-gray-400 p-1 w-40 rounded-md"
-                    />
-                  </td>
-                  <td className="border px-4 py-2 text-center">
-                    <input
-                      type="time"
-                      value="16:45"
-                      className="border border-gray-400 p-1 w-40 rounded-md"
-                    />
-                  </td>
-                  {/* <td class="border px-4 py-2 text-center"><input type="time" className="border border-gray-400 p-2 rounded-md"/></td> */}
-                  {/* <td class="border px-4 py-2 text-center"><input type="time" className="border border-gray-400 p-2 rounded-md"/></td>
-              <td class="border px-4 py-2 text-center"><input type="checkbox"/></td>
-              <td class="border px-4 py-2 text-center"><input type="checkbox"/></td>
-              <td class="border px-4 py-2 text-center"><input type="time" className="border border-gray-400 p-2 rounded-md"/></td> */}
-                </tr>
-                <tr>
-                  <td className="border px-4 py-2 text-center">
-                    <input type="checkbox" />
-                  </td>
-                  <td className="border px-4 py-2 text-center">Thursday</td>
-                  <td className="border px-4 py-2 text-center">
-                    <input
-                      type="time"
-                      value="14:45"
-                      className="border border-gray-400 p-1 w-40 rounded-md"
-                    />
-                  </td>
-                  <td className="border px-4 py-2 text-center">
-                    <input
-                      type="time"
-                      value="06:45"
-                      className="border border-gray-400 p-1 w-40 rounded-md"
-                    />
-                  </td>
-                  {/* <td class="border px-4 py-2 text-center"><input type="time" className="border border-gray-400 p-2 rounded-md"/></td> */}
-                  {/* <td class="border px-4 py-2 text-center"><input type="time" className="border border-gray-400 p-2 rounded-md"/></td>
-              <td class="border px-4 py-2 text-center"><input type="checkbox" className="border border-gray-400 p-2 rounded-md"/></td>
-              <td class="border px-4 py-2 text-center"><input type="checkbox"/></td>
-              <td class="border px-4 py-2 text-center"><input type="time" className="border border-gray-400 p-2 rounded-md"/></td> */}
-                </tr>
-                <tr>
-                  <td className="border px-4 py-2 text-center">
-                    <input type="checkbox" />
-                  </td>
-                  <td className="border px-4 py-2 text-center">Friday</td>
-                  <td className="border px-4 py-2 text-center">
-                    <input
-                      type="time"
-                      value="09:45"
-                      className="border border-gray-400 p-1 w-40 rounded-md"
-                    />
-                  </td>
-                  <td className="border px-4 py-2 text-center">
-                    <input
-                      type="time"
-                      value="13:45"
-                      className="border border-gray-400 p-1 w-40 rounded-md"
-                    />
-                  </td>
-                  {/* <td class="border px-4 py-2 text-center"><input type="time" className="border border-gray-400 p-2 rounded-md"/></td> */}
-                  {/* <td class="border px-4 py-2 text-center"><input type="time" className="border border-gray-400 p-2 rounded-md"/></td>
-              <td class="border px-4 py-2 text-center"><input type="checkbox"/></td>
-              <td class="border px-4 py-2 text-center"><input type="checkbox"/></td>
-              <td class="border px-4 py-2 text-center"><input type="time" className="border border-gray-400 p-2 rounded-md"/></td> */}
-                </tr>
-                <tr>
-                  <td className="border px-4 py-2 text-center">
-                    <input type="checkbox" />
-                  </td>
-                  <td className="border px-4 py-2 text-center">Saturday</td>
-                  <td className="border px-4 py-2 text-center">
-                    <input
-                      type="time"
-                      value="08:45"
-                      className="border border-gray-400 p-1 w-40 rounded-md"
-                    />
-                  </td>
-                  <td className="border px-4 py-2 text-center">
+              Add
+            </button>
+          </div>
+
+          <Table columns={statusColumns} data={statuses} isPagination />
+        </div>
+      )}
+
+      {/* Operational Days */}
+      {page === "Operational Days" && (
+        <div className="p-4">
+          <table className="w-full border">
+            <thead style={{ background: themeColor }} className="text-white">
+              <tr>
+                <th />
+                <th>Day</th>
+                <th>Start</th>
+                <th>End</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.entries(operationalDays).map(([day, data]) => (
+                <tr key={day}>
+                  <td className="border text-center">
                     <input
                       type="checkbox"
-                      checked={operationalDays[day].enabled}
+                      checked={data.enabled}
                       onChange={(e) =>
                         updateDay(day, "enabled", e.target.checked)
                       }
                     />
                   </td>
-                  {/* <td class="border px-4 py-2 text-center"><input type="time" className="border border-gray-400 p-2 rounded-md"/></td> */}
-                  {/* <td class="border px-4 py-2 text-center"><input type="time" className="border border-gray-400 p-2 rounded-md"/></td>
-              <td class="border px-4 py-2 text-center"><input type="checkbox"/></td>
-              <td class="border px-4 py-2 text-center"><input type="checkbox"/></td>
-              <td class="border px-4 py-2 text-center"><input type="time" className="border border-gray-400 p-2 rounded-md"/></td>
-            */}
-                </tr>
-                <tr>
-                  <td className="border px-4 py-2 text-center">
-                    <input type="checkbox" />
-                  </td>
-                  <td className="border px-4 py-2 text-center">Sunday</td>
-                  <td className="border px-4 py-2 text-center">
+                  <td className="border text-center">{day}</td>
+                  <td className="border">
                     <input
                       type="time"
-                      value={operationalDays[day].start}
-                      disabled={!operationalDays[day].enabled}
+                      disabled={!data.enabled}
+                      value={data.start}
                       onChange={(e) =>
                         updateDay(day, "start", e.target.value)
                       }
-                      className="border p-1 w-40 rounded-md"
                     />
                   </td>
-                  <td className="border px-4 py-2 text-center">
+                  <td className="border">
                     <input
                       type="time"
-                      value={operationalDays[day].end}
-                      disabled={!operationalDays[day].enabled}
+                      disabled={!data.enabled}
+                      value={data.end}
                       onChange={(e) =>
                         updateDay(day, "end", e.target.value)
                       }
-                      className="border p-1 w-40 rounded-md"
                     />
                   </td>
                 </tr>
@@ -424,11 +247,11 @@ const TicketSetupPage = () => {
             </tbody>
           </table>
 
-          <div className="flex justify-center my-8">
+          <div className="text-center mt-6">
             <button
-              className="bg-green-500 hover:bg-green-600 text-white px-12 py-3 rounded-lg font-semibold text-lg transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-              style={{ background: themeColor }}
               onClick={handleOperationalSubmit}
+              className="px-8 py-2 text-white rounded"
+              style={{ background: themeColor }}
             >
               Save Operational Days
             </button>
@@ -439,9 +262,12 @@ const TicketSetupPage = () => {
       {/* Edit Modal */}
       {showEditModal && (
         <EditStatusModal
-          id={id}
+          id={editId}
           onClose={() => setShowEditModal(false)}
-          onUpdated={handleStatusUpdated}
+          onUpdated={() => {
+            setShowEditModal(false);
+            setStatusAdded(true);
+          }}
         />
       )}
     </div>

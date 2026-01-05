@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { IoAddCircleOutline } from "react-icons/io5";
 import { Link } from "react-router-dom";
-import { API_URL, ChecklistImport, downloadSampleChecklist, exportChecklist, getChecklist, getChecklistTemplate, getVibeBackground } from "../api";
+import { API_URL, ChecklistImport,
+  downloadSampleChecklist,
+  exportChecklist,
+  getChecklist,
+  getChecklistTemplate,
+  getVibeBackground } from "../api";
 import Table from "../components/table/Table";
 import { BiEdit } from "react-icons/bi";
 import { MdDeleteForever } from "react-icons/md";
