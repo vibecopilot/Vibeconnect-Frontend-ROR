@@ -272,57 +272,28 @@ const VisitorPage = () => {
         setLoading(false);
       }
     };
+const fetchVisitorHistory = async () => {
+  try {
+    const res = await getVisitorHistory(historyPage, historyRowsPerPage);
+    const data = res.data;
 
-    const fetchVisitorHistory = async () => {
-      try {
-        const historyResp = await getVisitorHistory(historyPage, historyRowsPerPage);
-        let historyData = [];
-        let historyPaginationInfo = {};
+    const historyData = data.approval_history || [];
 
-        if (historyResp?.data) {
-          if (Array.isArray(historyResp.data)) {
-            historyData = historyResp.data;
-            historyPaginationInfo = { totalPages: 1, totalRecords: historyResp.data.length || 0 };
-          } else if (historyResp.data.visitors && Array.isArray(historyResp.data.visitors)) {
-            historyData = historyResp.data.visitors;
-            historyPaginationInfo = {
-              totalPages: historyResp.data.total_pages || Math.ceil((historyResp.data.total_count || historyResp.data.total || 0) / historyRowsPerPage),
-              totalRecords: historyResp.data.total_count || historyResp.data.total || 0,
-            };
-          } else if (historyResp.data.data && Array.isArray(historyResp.data.data)) {
-            historyData = historyResp.data.data;
-            historyPaginationInfo = {
-              totalPages: historyResp.data.total_pages || Math.ceil((historyResp.data.total_count || historyResp.data.total || 0) / historyRowsPerPage),
-              totalRecords: historyResp.data.total_count || historyResp.data.total || 0,
-            };
-          } else if (historyResp.data.approvalhistory && Array.isArray(historyResp.data.approvalhistory)) {
-            historyData = historyResp.data.approvalhistory;
-            historyPaginationInfo = {
-              totalPages: historyResp.data.total_pages || Math.ceil((historyResp.data.total_count || historyResp.data.total || historyResp.data.approvalhistory.length || 0) / historyRowsPerPage),
-              totalRecords: historyResp.data.total_count || historyResp.data.total || historyResp.data.approvalhistory.length || 0,
-            };
-          }
-        }
+    setHistories(historyData);
+    setFilteredHistory(historyData);
 
-        if (historyPaginationInfo.totalRecords) {
-          setHistoryTotalPages(historyPaginationInfo.totalPages);
-          setHistoryTotalRecords(historyPaginationInfo.totalRecords);
-        } else {
-          setHistoryTotalPages(1);
-          setHistoryTotalRecords(historyData.length);
-        }
+    setHistoryTotalPages(data.total_pages || 1);
+    setHistoryTotalRecords(data.total_count || historyData.length || 0);
 
-        const sortedVisitor = historyData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-        setHistories(sortedVisitor);
-        setFilteredHistory(sortedVisitor);
-        console.log('History data:', sortedVisitor);
-        console.log('History pagination:', historyPaginationInfo);
-      } catch (error) {
-        console.log('Error fetching visitor history:', error);
-        setHistoryTotalRecords(0);
-        setFilteredHistory([]);
-      }
-    };
+    console.log("History Data:", historyData);
+    console.log("History Pagination:", data.total_pages, data.total_count);
+  } catch (error) {
+    console.log("History API Error:", error);
+    setFilteredHistory([]);
+    setHistoryTotalRecords(0);
+  }
+};
+
 
     const fetchApprovals = async () => {
       try {
@@ -607,11 +578,30 @@ const VisitorPage = () => {
       selector: (row) => row.purpose,
       sortable: true,
     },
-    {
-      name: 'Mobile no.',
-      selector: (row) => row.contactno,
-      sortable: true,
-    },
+      {
+        name: "Mobile no.",
+        selector: (row) => row.contact_no || "--",
+        sortable: true,
+      },
+
+      {
+        name: "Check In",
+        selector: (row) =>
+          row.visitor_logs?.check_in
+            ? new Date(row.visitor_logs.check_in).toLocaleString()
+            : "--",
+        sortable: true,
+      },
+
+      {
+        name: "Check Out",
+        selector: (row) =>
+          row.visitor_logs?.check_out
+            ? new Date(row.visitor_logs.check_out).toLocaleString()
+            : "--",
+        sortable: true,
+      },
+
     {
       name: 'Approval Date',
       selector: (row) => dateTimeFormat(row.approvaldate),

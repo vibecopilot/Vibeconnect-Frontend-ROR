@@ -166,7 +166,7 @@ const UserSetupDetails = () => {
                   onClick={openAddFlatModal}
                   className="px-3 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition"
                 >
-                  Add To Another Flat
+                  Add To Another Unit
                 </button>
               </div>
             </div>
@@ -181,7 +181,7 @@ const UserSetupDetails = () => {
                       user.profile_picture || 
                       "https://www.pngitem.com/pimgs/m/137-1370051_avatar-generic-avatar-hd-png-download.png"
                     }
-                    alt="profile"
+                    alt=""
                     className="w-full h-full object-cover"
                   />
                 </div>
@@ -262,7 +262,7 @@ const UserSetupDetails = () => {
             {/* BUSINESS INFO */}
             <section className="mb-8">
               <h2 className="text-xl font-semibold text-gray-700 border-b pb-2 mb-4">
-                Business / Site Information
+                Other Details
               </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
@@ -280,7 +280,7 @@ const UserSetupDetails = () => {
             {/* APP INFO */}
             <section className="mb-8">
               <h2 className="text-xl font-semibold text-gray-700 border-b pb-2 mb-4">
-                App / Access Info
+                App
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <InfoBox label="App Downloaded" value={user.is_downloaded ? "Yes" : "No"} />
@@ -322,7 +322,7 @@ const UserSetupDetails = () => {
           <div className="relative z-10 w-full max-w-3xl mx-4 bg-white rounded-2xl shadow-xl overflow-auto">
 
             <div className="flex items-center justify-between p-4 border-b">
-              <h3 className="text-lg font-semibold text-gray-800">Add to Another Flat</h3>
+              <h3 className="text-lg font-semibold text-gray-800">Add to Another Unit</h3>
               <button onClick={closeAddFlatModal} className="text-gray-500 hover:text-gray-800">
                 ✕
               </button>

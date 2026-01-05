@@ -1,21 +1,26 @@
 import React, { useEffect, useState } from "react";
-import TicketCategorySetup from "./TicketCategorySetup";
 import { useSelector } from "react-redux";
-import Table from "../../../components/table/Table";
 import { BiEdit } from "react-icons/bi";
-import { ColorPicker } from "antd";
-import { getHelpDeskStatusSetup, postHelpDeskStatusSetup } from "../../../api";
 import toast from "react-hot-toast";
-import { getItemInLocalStorage } from "../../../utils/localStorage";
+
+import TicketCategorySetup from "./TicketCategorySetup";
+import Table from "../../../components/table/Table";
 import EditStatusModal from "./EditStatusModal";
 
+import {
+  getHelpDeskStatusSetup,
+  postHelpDeskStatusSetup,
+} from "../../../api";
+import { getItemInLocalStorage } from "../../../utils/localStorage";
+
 const TicketSetupPage = () => {
+  const themeColor = useSelector((state) => state.theme.color);
+
+  const [page, setPage] = useState("Category Type");
+  const [statuses, setStatuses] = useState([]);
   const [statusAdded, setStatusAdded] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [page, setPage] = useState("Category Type");
-  const themeColor = useSelector((state) => state.theme.color);
-  const [statuses, setStatuses] = useState([]);
-  const [id, setId] = useState("");
+  const [editId, setEditId] = useState("");
 
   const [formData, setFormData] = useState({
     status: "",
@@ -34,45 +39,42 @@ const TicketSetupPage = () => {
     Sunday: { enabled: false, start: "", end: "" },
   });
 
+  /* ---------------- FETCH STATUS ---------------- */
   useEffect(() => {
-    const fetchTicketStatus = async () => {
+    const fetchStatuses = async () => {
       try {
-        const statusResp = await getHelpDeskStatusSetup();
-        setStatuses(Object.values(statusResp.data));
-      } catch (error) {
-        console.log(error);
+        const res = await getHelpDeskStatusSetup();
+        setStatuses(Object.values(res.data));
+      } catch (err) {
+        console.error(err);
       }
     };
-    fetchTicketStatus();
+    fetchStatuses();
   }, [statusAdded]);
 
+  /* ---------------- HANDLERS ---------------- */
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleAddStatus = async () => {
-    if (
-      !formData.status ||
-      !formData.order ||
-      !formData.fixedState ||
-      !formData.color
-    ) {
+    if (!formData.status || !formData.fixedState || !formData.order) {
       return toast.error("Please fill all fields");
     }
 
     const siteID = getItemInLocalStorage("SITEID");
-    const postStatus = new FormData();
+    const payload = new FormData();
 
-    postStatus.append("complaint_status[of_phase]", "pms");
-    postStatus.append("complaint_status[society_id]", siteID);
-    postStatus.append("complaint_status[name]", formData.status);
-    postStatus.append("complaint_status[fixed_state]", formData.fixedState);
-    postStatus.append("complaint_status[color_code]", formData.color);
-    postStatus.append("complaint_status[position]", formData.order);
+    payload.append("complaint_status[of_phase]", "pms");
+    payload.append("complaint_status[society_id]", siteID);
+    payload.append("complaint_status[name]", formData.status);
+    payload.append("complaint_status[fixed_state]", formData.fixedState);
+    payload.append("complaint_status[color_code]", formData.color);
+    payload.append("complaint_status[position]", formData.order);
 
     try {
-      await postHelpDeskStatusSetup(postStatus);
-      toast.success("Status Added Successfully");
+      await postHelpDeskStatusSetup(payload);
+      toast.success("Status added successfully");
       setStatusAdded(true);
       setFormData({
         status: "",
@@ -80,30 +82,18 @@ const TicketSetupPage = () => {
         color: "#1677ff",
         order: "",
       });
-    } catch (error) {
-      toast.error(error?.response?.data?.error || "Failed to add status");
+    } catch (err) {
+      toast.error("Failed to add status");
     } finally {
       setTimeout(() => setStatusAdded(false), 500);
     }
   };
 
-  const handleEditStatusModal = (id) => {
-    setId(id);
-    setShowEditModal(true);
-  };
-
-  // 🔹 THIS IS THE IMPORTANT ADDITION
-  const handleStatusUpdated = () => {
-    setShowEditModal(false);
-    setStatusAdded(true);
-    setTimeout(() => setStatusAdded(false), 500);
-  };
-
   const updateDay = (day, field, value) => {
-    setOperationalDays({
-      ...operationalDays,
-      [day]: { ...operationalDays[day], [field]: value },
-    });
+    setOperationalDays((prev) => ({
+      ...prev,
+      [day]: { ...prev[day], [field]: value },
+    }));
   };
 
   const handleOperationalSubmit = () => {
@@ -115,10 +105,11 @@ const TicketSetupPage = () => {
       return toast.error("Select at least one operational day");
     }
 
-    console.log("Operational Days:", payload);
-    toast.success("Operational Days Saved");
+    console.log(payload);
+    toast.success("Operational days saved");
   };
 
+  /* ---------------- TABLE ---------------- */
   const statusColumns = [
     { name: "Order", selector: (row) => row.position },
     { name: "Status", selector: (row) => row.name },
@@ -127,87 +118,76 @@ const TicketSetupPage = () => {
       name: "Color",
       cell: (row) => (
         <div
+          className="w-4 h-4 rounded"
           style={{ background: row.color_code }}
-          className="rounded-md w-4 h-4"
         />
       ),
     },
     {
       name: "Action",
       cell: (row) => (
-        <button onClick={() => handleEditStatusModal(row.id)}>
-          <BiEdit size={15} />
+        <button
+          onClick={() => {
+            setEditId(row.id);
+            setShowEditModal(true);
+          }}
+        >
+          <BiEdit />
         </button>
       ),
     },
   ];
 
   return (
-    <div className="w-full my-2 flex overflow-hidden flex-col">
-      <div className="flex w-full">
-        <div className="flex gap-2 p-2 pb-0 border-b-2 border-gray-200 w-full">
-          {["Category Type", "Status", "Operational Days"].map((tab) => (
-            <h2
-              key={tab}
-              className={`p-1 ${
-                page === tab &&
-                "bg-white font-medium text-blue-500 shadow-custom-all-sides"
-              } rounded-t-md px-4 cursor-pointer`}
-              onClick={() => setPage(tab)}
-            >
-              {tab}
-            </h2>
-          ))}
-        </div>
+    <div className="w-full my-2">
+      {/* Tabs */}
+      <div className="flex border-b">
+        {["Category Type", "Status", "Operational Days"].map((tab) => (
+          <button
+            key={tab}
+            className={`px-4 py-2 ${
+              page === tab ? "border-b-2 text-blue-500" : ""
+            }`}
+            onClick={() => setPage(tab)}
+          >
+            {tab}
+          </button>
+        ))}
       </div>
 
+      {/* Category */}
       {page === "Category Type" && <TicketCategorySetup />}
 
+      {/* Status */}
       {page === "Status" && (
-        <div className="m-2">
-          <div className="grid md:grid-cols-5 gap-2 my-2">
+        <div className="p-4">
+          <div className="grid md:grid-cols-5 gap-2 mb-4">
             <input
-              type="text"
-              placeholder="Enter status"
-              className="border p-2 rounded-md"
+              name="status"
+              placeholder="Status"
               value={formData.status}
               onChange={handleChange}
-              name="status"
+              className="border p-2 rounded"
             />
-
-            <select
-              name="fixedState"
-              onChange={handleChange}
-              value={formData.fixedState}
-              className="border p-2 rounded-md"
-            >
-              <option value="">Select Fixed State</option>
-              <option value="closed">Closed</option>
-              <option value="open">Open</option>
-              <option value="complete">Complete</option>
-            </select>
-
-            <ColorPicker
-              value={formData.color}
-              onChange={(c) =>
-                setFormData({ ...formData, color: c.toHexString() })
-              }
-            />
-
             <input
+              name="fixedState"
+              placeholder="Fixed State"
+              value={formData.fixedState}
+              onChange={handleChange}
+              className="border p-2 rounded"
+            />
+            <input
+              name="order"
               type="number"
-              placeholder="Enter order"
-              className="border p-2 rounded-md"
+              placeholder="Order"
               value={formData.order}
               onChange={handleChange}
-              name="order"
+              className="border p-2 rounded"
             />
-
             <button
-              type="button"
-              className="text-white p-2 rounded-md"
-              style={{ background: themeColor }}
               onClick={handleAddStatus}
+              className="text-white rounded"
+              style={{ background: themeColor }}
             >
               Add
             </button>
@@ -217,50 +197,49 @@ const TicketSetupPage = () => {
         </div>
       )}
 
+      {/* Operational Days */}
       {page === "Operational Days" && (
-        <div className="w-full my-2">
-          <table className="w-full">
+        <div className="p-4">
+          <table className="w-full border">
             <thead style={{ background: themeColor }} className="text-white">
               <tr>
-                <th></th>
-                <th>Operational Days</th>
-                <th>Start Time</th>
-                <th>End Time</th>
+                <th />
+                <th>Day</th>
+                <th>Start</th>
+                <th>End</th>
               </tr>
             </thead>
             <tbody>
-              {Object.keys(operationalDays).map((day) => (
+              {Object.entries(operationalDays).map(([day, data]) => (
                 <tr key={day}>
-                  <td className="border px-4 py-2 text-center">
+                  <td className="border text-center">
                     <input
                       type="checkbox"
-                      checked={operationalDays[day].enabled}
+                      checked={data.enabled}
                       onChange={(e) =>
                         updateDay(day, "enabled", e.target.checked)
                       }
                     />
                   </td>
-                  <td className="border px-4 py-2 text-center">{day}</td>
-                  <td className="border px-4 py-2 text-center">
+                  <td className="border text-center">{day}</td>
+                  <td className="border">
                     <input
                       type="time"
-                      value={operationalDays[day].start}
-                      disabled={!operationalDays[day].enabled}
+                      disabled={!data.enabled}
+                      value={data.start}
                       onChange={(e) =>
                         updateDay(day, "start", e.target.value)
                       }
-                      className="border p-1 w-40 rounded-md"
                     />
                   </td>
-                  <td className="border px-4 py-2 text-center">
+                  <td className="border">
                     <input
                       type="time"
-                      value={operationalDays[day].end}
-                      disabled={!operationalDays[day].enabled}
+                      disabled={!data.enabled}
+                      value={data.end}
                       onChange={(e) =>
                         updateDay(day, "end", e.target.value)
                       }
-                      className="border p-1 w-40 rounded-md"
                     />
                   </td>
                 </tr>
@@ -268,23 +247,27 @@ const TicketSetupPage = () => {
             </tbody>
           </table>
 
-          <div className="flex justify-center my-2 mb-5">
+          <div className="text-center mt-6">
             <button
-              className="text-white p-2 px-4 rounded-md"
-              style={{ background: themeColor }}
               onClick={handleOperationalSubmit}
+              className="px-8 py-2 text-white rounded"
+              style={{ background: themeColor }}
             >
-              Submit
+              Save Operational Days
             </button>
           </div>
         </div>
       )}
 
+      {/* Edit Modal */}
       {showEditModal && (
         <EditStatusModal
-          id={id}
+          id={editId}
           onClose={() => setShowEditModal(false)}
-          onUpdated={handleStatusUpdated}
+          onUpdated={() => {
+            setShowEditModal(false);
+            setStatusAdded(true);
+          }}
         />
       )}
     </div>
