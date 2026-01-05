@@ -3,7 +3,7 @@ name: Deploy Frontend (Vite)
 on:
   push:
     branches:
-      - main
+      - server
       # change to master if your repo uses master
 
 jobs:
@@ -39,5 +39,5 @@ jobs:
             echo "🏗️ Building frontend"
             npm run build || exit 1
 
-            echo "✅ Frontend deployed successfully"
+            echo "✅ VibeConnect deployed successfully"
           EOF
