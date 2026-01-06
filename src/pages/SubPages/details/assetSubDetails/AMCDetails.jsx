@@ -41,7 +41,7 @@ const AMCDetails = () => {
     };
     const fetchAMCDetails = async () => {
       const amcResponse = await getAMCDetails(id);
-      setAmcDetails(amcResponse.data);
+      setAmcDetails(amcResponse.data?.asset_amcs);
       console.log(amcResponse);
     };
     fetchVendors();
