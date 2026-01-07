@@ -27,6 +27,9 @@ const AssociateServiceChecklist = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editData, setEditData] = useState(null);
 
+
+  // console.log("services", services);
+
   const { id } = useParams();
 
   const deleteService = async (service) => {
@@ -43,14 +46,14 @@ const AssociateServiceChecklist = () => {
       const soft_service_id = serviceObj.value;
       const checklist_id = id;
 
-      console.log("Deleting service:", { checklist_id, soft_service_id });
+      // console.log("Deleting service:", { checklist_id, soft_service_id });
 
       toast.loading("Deleting Association...");
       const resp = await deleteServiceAssociation({
         checklist_id,
         soft_service_id,
       });
-      console.log("Deleted successfully!", resp);
+      // console.log("Deleted successfully!", resp);
       toast.dismiss();
       toast.success("Association Deleted");
       setAssociation((prev) => prev.filter((a) => a.id !== service.id));
@@ -100,29 +103,30 @@ const AssociateServiceChecklist = () => {
     const fetchServicesList = async () => {
       // getting all the services
       const servicesListResp = await getSoftServices();
-      const softServices = servicesListResp.data;
+      const softServices = servicesListResp.data.soft_services;
+      // console.log("Soft Services:", softServices);
       const serviceList = softServices.map((service) => ({
         value: service.id,
         label: service.name,
       }));
-      console.log("Service list", serviceList);
+      // console.log("Service list", serviceList);
       setServices(serviceList);
     };
     const fetchAssignedTo = async () => {
       const assignedToList = await getAssignedTo();
-      console.log(assignedToList.data);
+      // console.log(assignedToList.data);
       const user = assignedToList.data.map((u) => ({
         value: u.id,
         label: `${u.firstname} ${u.lastname}`,
       }));
-      console.log("user list", user);
+      // console.log("user list", user);
       setAssignedTo(user);
     };
     const fetchAssociationList = async () => {
       setListLoading(true);
       try {
         const assoResp = await getAssociationList(id);
-        console.log("getdata", assoResp.data.associated_with);
+        // console.log("getdata", assoResp.data.associated_with);
         const sortedData = assoResp.data.associated_with.sort(
           (a, b) => new Date(a.created_at) - new Date(b.created_at)
         );
@@ -146,7 +150,7 @@ const AssociateServiceChecklist = () => {
   }, [added, id]);
 
   var handleChangeSelect = (selectedOption) => {
-    console.log(selectedOption);
+    // console.log(selectedOption);
     setSelectedOption(selectedOption);
   };
 
@@ -159,7 +163,7 @@ const AssociateServiceChecklist = () => {
     .map((a) => {
       // Check all possible service ID fields
       const serviceId = a.service_id || a.soft_service_id || a.id;
-      console.log("Association item:", a, "Service ID:", serviceId);
+      // console.log("Association item:", a, "Service ID:", serviceId);
       return serviceId;
     })
     .filter(Boolean); // Remove any undefined/null values
@@ -183,11 +187,11 @@ const AssociateServiceChecklist = () => {
     return !shouldExclude;
   });
 
-  console.log("Association data:", association);
-  console.log("Associated Service IDs:", associatedServiceIds);
-  console.log("Associated Service Names:", associatedServiceNames);
-  console.log("All Services:", services);
-  console.log("Available Services:", availableServices);
+  // console.log("Association data:", association);
+  // console.log("Associated Service IDs:", associatedServiceIds);
+  // console.log("Associated Service Names:", associatedServiceNames);
+  // console.log("All Services:", services);
+  // console.log("Available Services:", availableServices);
 
   const handleAddAssociate = async () => {
     const payload = {
@@ -201,7 +205,7 @@ const AssociateServiceChecklist = () => {
       setLoading(true);
       toast.loading("Associating Checklist");
       const resp = await postServiceAssociation(payload);
-      console.log(resp);
+      // console.log(resp);
       toast.dismiss();
       setSelectedOption([]);
       setSelectedUserOption([]);
@@ -253,7 +257,7 @@ const AssociateServiceChecklist = () => {
           associationData.id;
         const serviceName = associationData.service_name;
 
-        console.log("EditModal - Association data:", associationData);
+        // console.log("EditModal - Association data:", associationData);
         console.log(
           "EditModal - Service ID:",
           serviceId,
@@ -275,7 +279,7 @@ const AssociateServiceChecklist = () => {
             // Find service by name in the services list
             const foundService = services.find((s) => s.label === serviceName);
             if (foundService) {
-              console.log("Found service by name:", foundService);
+              // console.log("Found service by name:", foundService);
               setSelectedServices([
                 {
                   label: foundService.label,
@@ -284,7 +288,7 @@ const AssociateServiceChecklist = () => {
               ]);
             } else {
               console.log("Service not found by name:", serviceName);
-              setSelectedServices([]);
+              // setSelectedServices([]);
             }
           }
         } else {
@@ -342,7 +346,7 @@ const AssociateServiceChecklist = () => {
 
       try {
         const update = await updateActivity(id, payload);
-        console.log("Update response:", update);
+        // console.log("Update response:", update);
         toast.success("Association updated successfully.");
         onUpdate();
         onClose();
