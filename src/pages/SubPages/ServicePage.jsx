@@ -66,7 +66,7 @@ const ServicePage = () => {
     const fetchService = async () => {
       try {
         const serviceResponse = await getSoftServices();
-        const sortedServiceData = serviceResponse.data.sort(
+        const sortedServiceData = serviceResponse.data?.soft_services.sort(
           (a, b) => new Date(b.created_at) - new Date(a.created_at)
         );
         setFilteredData(sortedServiceData);
