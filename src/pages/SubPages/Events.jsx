@@ -79,7 +79,7 @@ const Events = () => {
       name: "Action",
       cell: (row) => (
         <div className="flex items-center gap-4">
-          <Link to={`/communication/event/event-details/${row.id}`}>
+          <Link to={`/communication/events/details/${row.id}`}>
             <BsEye size={15} />
           </Link>
           <Link to={`/communication/event/edit-events/${row.id}`}>

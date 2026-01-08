@@ -38,17 +38,6 @@ function GroupJoinDetails() {
   const [groups, setGroups] = useState([]);
   const [filteredMembers, setFilteredMembers] = useState([]);
 
-  // const fetchGroupDetails = async () => {
-  //   try {
-  //     const res = await getGroupsDetails(id);
-  //     setDetails(res.data);
-  //     console.log(res.data.group_members);
-  //     setFilteredMembers(res.data.group_members);
-  //     setMembers(res.data.group_members);
-  //   } catch (error) {
-  //     console.log(res);
-  //   }
-  // };
   const fetchGroupDetails = async () => {
     try {
       const res = await getGroupsDetails(id);
@@ -57,12 +46,14 @@ function GroupJoinDetails() {
       setFilteredMembers(res.data.group_members);
       setMembers(res.data.group_members);
     } catch (error) {
-      console.log("Error fetching group details:", error); // Fix here
+      console.log("Error fetching group details:", error);
     }
   };
+
   useEffect(() => {
     fetchGroupDetails();
   }, []);
+
   const colors = [
     "bg-red-100",
     "bg-blue-100",
@@ -72,16 +63,6 @@ function GroupJoinDetails() {
   ];
 
   const columns = [
-    // {
-    //   name: "View",
-    //   selector: (row) => (
-    //     <div>
-    //       <Link to={`/admin/employee-directory-Employment/${row.record_id}`}>
-    //         <BsEye />
-    //       </Link>
-    //     </div>
-    //   ),
-    // },
     {
       name: "Id",
       selector: (row) => row.user_id,
@@ -98,22 +79,24 @@ function GroupJoinDetails() {
   const handleSearch = (e) => {
     const searchValue = e.target.value;
     setSearchText(searchValue);
-    if (searchValue.trim === "") {
+
+    // ✅ FIX: trim() must be called
+    if (searchValue.trim() === "") {
       setFilteredMembers(members);
     } else {
       const filteredResult = members.filter((member) =>
-        member.user_name
+        (member.user_name || "")
           .toLowerCase()
           .includes(searchValue.trim().toLowerCase())
       );
       setFilteredMembers(filteredResult);
     }
   };
+
   const navigate = useNavigate();
   const handleDelete = async (id) => {
     try {
       await deleteGroup(id);
-      // setGroups((prevForums) => prevForums.filter((item) => item.id !== id));
       toast.success("Forum deleted successfully");
       navigate("/communication/groups");
     } catch (error) {
@@ -123,7 +106,11 @@ function GroupJoinDetails() {
   };
 
   const [editGroup, setEditGroup] = useState(false);
-  //  console.log(domainPrefix + details.cover_image[0].document)
+
+  // ✅ FIX as per response: cover_image[0].document_url
+  const coverDocPath = details?.cover_image?.[0]?.document_url || "";
+  const coverUrl = coverDocPath ? domainPrefix + coverDocPath : "";
+
   return (
     <section className="flex">
       <Navbar />
@@ -134,14 +121,16 @@ function GroupJoinDetails() {
               <div className="flex flex-col">
                 <div className="flex md:flex-row flex-col justify-between gap-y-3 mx-5">
                   <div className="flex gap-2">
-                    {details.cover_image && details.cover_image.length > 0 && (
+                    {/* ✅ FIXED: no empty src, uses document_url */}
+                    {coverUrl && (
                       <img
-                        src={domainPrefix + details.cover_image[0].document}
+                        src={coverUrl}
                         // src={owners}
                         className="rounded-full w-28 h-28 object-cover"
                         alt="forum-profile"
                       />
                     )}
+
                     <div className="flex flex-col gap-3">
                       <h2 className="font-semibold text-lg">
                         {details.group_name}
@@ -154,19 +143,6 @@ function GroupJoinDetails() {
                       </p>
                     </div>
                   </div>
-                  {/* <div className="flex flex-col w-96 ">
-                    <MultiSelect
-                      options={members}
-                      // title={"Select members"}
-                      handleSelect={handleSelectEdit}
-                      // handleSelectAll={handleSelectAll}
-                      selectedOptions={selectedOptions}
-                      setSelectedOptions={setSelectedOptions}
-                      setOptions={setMembers}
-                      searchOptions={filteredMembers}
-                      compTitle="Select Group Members"
-                    />
-                  </div> */}
 
                   <div className="">
                     <button className="mx-2" onClick={() => setEditGroup(true)}>
@@ -177,14 +153,12 @@ function GroupJoinDetails() {
                     </button>
                   </div>
                 </div>
+
                 <div className="flex items-center m-1">
                   {details?.group_members?.slice(0, 5)?.map((member, index) => (
                     <div
                       key={index}
                       className="border rounded-md border-red-400"
-                      // className={`w-10 h-10 flex items-center justify-center border ${
-                      //   colors[index % colors.length]
-                      // } text-gray-800 font-medium text-lg`}
                     >
                       <div
                         className={`w-10 h-10 flex items-center justify-center border border-red-400 rounded-md ${
@@ -203,6 +177,7 @@ function GroupJoinDetails() {
                     </div>
                   )}
                 </div>
+
                 <div className="border-t border-gray-400 ">
                   <div className="p-2">
                     <h2 className="font-medium border-b">Members List</h2>
@@ -228,6 +203,7 @@ function GroupJoinDetails() {
             </div>
           </div>
         </div>
+
         {editGroup && (
           <EditGroupDetails
             onclose={() => setEditGroup(false)}

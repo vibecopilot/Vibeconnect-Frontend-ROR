@@ -1833,7 +1833,7 @@ function App() {
           }
         />
         <Route
-          path="/communication/event/event-details/:id"
+          path="/communication/events/details/:id"
           element={
             <ProtectedRoute>
               <EventDetails />
