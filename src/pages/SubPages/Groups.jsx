@@ -14,14 +14,16 @@ import CreateGroup from "./CreateGroup";
 import { PiPlusCircle } from "react-icons/pi";
 import { BiEdit } from "react-icons/bi";
 import { FaTrash } from "react-icons/fa";
-import { getGroups , domainPrefix } from "../../api";
+import { getGroups, domainPrefix } from "../../api";
 import groupIcon from "/groupicon.jpg";
 import { dateFormatSTD } from "../../utils/dateUtils";
+
 function Groups() {
   const themeColor = useSelector((state) => state.theme.color);
   const [createModal, setCreateModal] = useState(false);
   const [groupData, setGroupData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
+
   const fetchGroups = async () => {
     try {
       const res = await getGroups();
@@ -36,12 +38,14 @@ function Groups() {
   useEffect(() => {
     fetchGroups();
   }, []);
+
   function truncateWithEllipses(text, maxLength = 100) {
     if (!text) return "";
     return text.length > maxLength
       ? text.substring(0, maxLength) + "..."
       : text;
   }
+
   const colors = [
     "bg-red-100",
     "bg-blue-100",
@@ -49,6 +53,7 @@ function Groups() {
     "bg-yellow-100",
     "bg-purple-100",
   ];
+
   const [showGroup, setShowGroup] = useState(false);
   const [groupId, setGroup] = useState("");
   const handleGroupDetailModal = async (id) => {
@@ -65,12 +70,13 @@ function Groups() {
     } else {
       const filteredResult = groupData.filter((group) =>
         group.group_name
-          .toLowerCase()
+          ?.toLowerCase()
           .includes(searchValue.trim().toLowerCase())
       );
       setFilteredData(filteredResult);
     }
   };
+
   return (
     <section className="flex">
       <Navbar />
@@ -92,9 +98,9 @@ function Groups() {
             <PiPlusCircle size={20} /> Create
           </button>
         </div>
+
         <div>
           <div className="flex items-center justify-center gap-4 flex-wrap">
-            {/* <div className="md:grid grid-cols-4 mx-3 gap-5 my-3"> */}
             {filteredData?.map((group) => (
               <Link
                 to={`/admin/communication-group-details/${group?.id}`}
@@ -102,14 +108,25 @@ function Groups() {
               >
                 <div className="flex flex-col justify-between my-3 w-96 max-h-96 min-h-96">
                   <div className="border flex flex-col justify-between border-gray-100 rounded-xl bg-blue-50 hover:bg-blue-100 min-h-96 shadow-custom-all-sides transition-all duration-200 ease-in-out">
-                  {group.cover_image && group.cover_image.length > 0 && (
-                       
+
+                    {/* ✅ FIX: document -> document_url (as per response) */}
+                    {group.cover_image && group.cover_image.length > 0 && (
                       <img
-                        src={domainPrefix + group.cover_image[0].document}
+                        src={
+                          group.cover_image?.[0]?.document_url
+                            ? /^https?:\/\//i.test(
+                                group.cover_image[0].document_url
+                              )
+                              ? group.cover_image[0].document_url
+                              : domainPrefix +
+                                group.cover_image[0].document_url
+                            : ""
+                        }
                         className=" w-min-98 h-48 object-cover  rounded-md"
                         alt="forum-content"
                       />
-                  )}
+                    )}
+
                     <div className="m-2">
                       <div className="flex justify-between">
                         <h2 className="text-lg font-medium ">
@@ -131,6 +148,7 @@ function Groups() {
                         </div>
                       </div>
                     </div>
+
                     <div className="flex gap-5 items-center">
                       <div className="">
                         <p className=" text-gray-500 text-sm px-2">
@@ -138,6 +156,7 @@ function Groups() {
                         </p>
                       </div>
                     </div>
+
                     <div className="flex items-center justify-between m-1">
                       <div className="flex items-center m-1">
                         {group.group_members
@@ -146,9 +165,6 @@ function Groups() {
                             <div
                               key={index}
                               className="border rounded-md border-red-400"
-                              // className={`w-10 h-10 flex items-center justify-center border ${
-                              //   colors[index % colors.length]
-                              // } text-gray-800 font-medium text-lg`}
                             >
                               <div
                                 className={`w-10 h-10 flex items-center justify-center border border-red-400 rounded-md ${
@@ -161,6 +177,7 @@ function Groups() {
                               </div>
                             </div>
                           ))}
+
                         {group?.group_members?.length > 5 && (
                           <div className="w-10 h-10 flex items-center justify-center border border-white bg-gray-200 text-gray-800 font-medium text-lg rounded-md">
                             +{group?.group_members?.length - 5}
@@ -169,16 +186,7 @@ function Groups() {
                       </div>
 
                       <div className="flex items-center gap-2">
-                        {/* <Link
-                          className="text-blue-600"
-                          // onClick={() => handleGroupDetailModal(group.id)}
-                          
-                        >
-                          <BiEdit size={18} />
-                        </Link> */}
-                        {/* <button className="text-red-600">
-                          <FaTrash size={18} />
-                        </button> */}
+                        {/* unchanged */}
                       </div>
                     </div>
                   </div>
@@ -188,6 +196,7 @@ function Groups() {
           </div>
         </div>
       </div>
+
       {createModal && <CreateGroup onclose={() => setCreateModal(false)} />}
     </section>
   );
