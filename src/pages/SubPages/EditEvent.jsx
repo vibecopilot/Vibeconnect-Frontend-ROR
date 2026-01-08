@@ -1,17 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
-import FileInput from "../../Buttons/FileInput";
-import Switch from "../../Buttons/Switch";
 import FileInputBox from "../../containers/Inputs/FileInputBox";
 import { useSelector } from "react-redux";
 import Navbar from "../../components/Navbar";
 import { getItemInLocalStorage } from "../../utils/localStorage";
-import {
-  postEvents,
-  getAssignedTo,
-  getEventsDetails,
-  editEventDetails,
-  getGroups,
-} from "../../api";
+import { getEventsDetails, editEventDetails, getGroups, getSetupUsers } from "../../api";
 import Select from "react-select";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -24,398 +16,336 @@ const EditEvent = () => {
   const siteId = getItemInLocalStorage("SITEID");
   const [share, setShare] = useState("all");
   const [users, setUsers] = useState([]);
-  const [selectedOption, setSelectedOption] = useState([]);
+  const [groups, setGroups] = useState([]);
+
   const [formData, setFormData] = useState({
     site_id: siteId,
     event_name: "",
     venue: "",
     description: "",
-    start_date_time: "",
-    end_date_time: "",
+    start_date_time: null,
+    end_date_time: null,
+    // react-select selected array
     user_ids: [],
+    group_ids: "",
+    // new uploads
     event_image: [],
+    // existing urls/meta (keep separate)
+    existing_event_image: [],
     important: false,
     sendMail: false,
-    group_ids: "",
     rsvp_enabled: false,
   });
-  console.log(formData);
-  const fileInputRef = useRef(null);
+
   const themeColor = useSelector((state) => state.theme.color);
   const datePickerRef = useRef(null);
-  const currentDate = new Date();
-
-  const handleStartDateChange = (date) => {
-    setFormData({ ...formData, start_date_time: date });
-  };
-
-  const handleEndDateChange = (date) => {
-    setFormData({ ...formData, end_date_time: date });
-  };
-
-  const formatDateTime = (date) => {
-    return format(date, "yyyy-MM-dd HH:mm:ss");
-  };
-
+  const navigate = useNavigate();
   const { id } = useParams();
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const response = await getAssignedTo();
-        const transformedUsers = response.data.map((user) => ({
-          value: user.id,
-          label: `${user.firstname} ${user.lastname}`,
-        }));
-        setUsers(transformedUsers);
-        console.log(response);
-      } catch (error) {
-        console.error("Error fetching assigned users:", error);
-      }
-    };
-    const fetchEvent = async () => {
-      try {
-        const res = await getEventsDetails(id);
-        const response = res.data;
-        const selectedUsers = response.users.map((user) => ({
-          value: user.user_id,
-          label: user.name,
-        }));
-        console.log(selectedUsers);
-        setFormData({
-          ...formData,
-          event_name: response.event_name,
-          description: response.discription,
-          end_date_time: response.end_date_time
-            ? new Date(response.end_date_time)
-            : null,
-          start_date_time: response.start_date_time
-            ? new Date(response.start_date_time)
-            : null,
-          event_image: response.event_image,
-          venue: response.venue,
-          important: response.important,
-          sendMail: response.email_enabled,
-          rsvp_enabled: response.rsvp_enabled,
-          group_ids: response.group_id || "",
-          user_ids: selectedUsers,
-        });
-        setShare(
-          `${
-            response.group_id
-              ? "groups"
-              : response.users.length !== 0
-              ? "individual"
-              : "all"
-          }`
-        );
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    fetchUsers();
-    fetchEvent();
-  }, []);
+
+  const formatDateTime = (date) => (date ? format(date, "yyyy-MM-dd HH:mm:ss") : "");
+
+  const handleStartDateChange = (date) =>
+    setFormData((p) => ({ ...p, start_date_time: date }));
+  const handleEndDateChange = (date) =>
+    setFormData((p) => ({ ...p, end_date_time: date }));
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setFormData((p) => ({ ...p, [e.target.name]: e.target.value }));
   };
 
-  const navigate = useNavigate();
-
-  const handleEditEvent = async () => {
-    if (formData.event_name === "" || formData.start_date_time === "") {
-      return toast.error("All fields are Required");
-    }
+  const fetchUsers = async () => {
     try {
-      toast.loading("Creating Event Please Wait!");
-      const formDataSend = new FormData();
-      formDataSend.append("event[site_id]", formData.site_id);
-      formDataSend.append("event[event_name]", formData.event_name);
-      formDataSend.append("event[discription]", formData.description);
-      formDataSend.append(
-        "event[start_date_time]",
-        formatDateTime(formData.start_date_time)
-      );
-      formDataSend.append(
-        "event[end_date_time]",
-        formatDateTime(formData.end_date_time)
-      );
-      formDataSend.append("event[venue]", formData.venue);
-      formDataSend.append("event[user_ids]", formData.user_ids);
-      formDataSend.append("event[group_id]", formData.group_ids);
-      formDataSend.append("event[important]", formData.important);
-      formDataSend.append("event[email_enabled]", formData.sendMail);
-      formDataSend.append("event[rsvp_enabled]", formData.rsvp_enabled);
-
-      // formData.user_ids.forEach((user_id) => {
-      //   formDataSend.append("event[user_ids]", user_id);
-      // });
-
-      formData.event_image.forEach((file) => {
-        formDataSend.append("attachfiles[]", file);
-      });
-
-      const response = await editEventDetails(id, formDataSend);
-      toast.success("Event updated successfully");
-      console.log("Response:", response.data);
-      toast.dismiss();
-      navigate("/communication/events");
+      const response = await getSetupUsers();
+      const transformedUsers = (response.data || []).map((user) => ({
+        value: user.id,
+        label: `${user.firstname || ""} ${user.lastname || ""}`.trim(),
+      }));
+      setUsers(transformedUsers);
     } catch (error) {
-      console.log(error);
-      toast.dismiss();
+      console.error("Error fetching users:", error);
     }
   };
-
-  const handleSelectChange = (selectedOptions) => {
-    const selectedIds = selectedOptions
-      ? selectedOptions.map((option) => option.value)
-      : [];
-    const userIdsString = selectedIds.join(",");
-
-    setFormData({ ...formData, user_ids: userIdsString });
-  };
-
-  const handleFileAttachment = (event) => {
-    const selectedFiles = event.target.files;
-    const newAttachments = Array.from(selectedFiles);
-    setFormData({ ...formData, event_image: newAttachments });
-  };
-
-  const filterTime = (time) => {
-    const selectedDate = new Date(time);
-    const currentDate = new Date();
-
-    // Compare selected date with current date
-    if (selectedDate.getTime() > currentDate.getTime()) {
-      return true; // Future date
-    } else if (selectedDate.getTime() === currentDate.getTime()) {
-      // If selected date is today, compare times
-      const selectedTime =
-        selectedDate.getHours() * 60 + selectedDate.getMinutes();
-      const currentTime =
-        currentDate.getHours() * 60 + currentDate.getMinutes();
-      return selectedTime >= currentTime; // Future time
-    } else {
-      return false; // Past date
-    }
-  };
-
-  const handleFileChange = (files, fieldName) => {
-    setFormData({
-      ...formData,
-      [fieldName]: files,
-    });
-  };
-  const [groups, setGroups] = useState([]);
 
   const fetchGroups = async () => {
     try {
       const res = await getGroups();
-      // const transformedUsers = res.data.map((user) => ({
-      //   value: user.id,
-      //   label: user.group_name,
-      // }));
-      setGroups(res.data);
+      setGroups(res.data || []);
     } catch (error) {
       console.log(error);
     }
   };
 
-  const handleSelectGroupChange = (selectedOptions) => {
-    setFormData({ ...formData, group_ids: selectedOptions.value });
+  const fetchEvent = async () => {
+    try {
+      const res = await getEventsDetails(id);
+      const response = res.data || {};
+
+      // selected users (react-select)
+      const selectedUsers = Array.isArray(response?.users)
+        ? response.users.map((user) => ({
+            value: user.user_id ?? user.id,
+            label: user.name ?? user.user_name ?? `${user.firstname || ""} ${user.lastname || ""}`.trim(),
+          }))
+        : [];
+
+      // existing images normalize
+      const existingImages = Array.isArray(response?.event_image)
+        ? response.event_image
+        : response?.event_image
+        ? [response.event_image]
+        : [];
+
+      const sharedValue =
+        response?.shared ||
+        response?.share_with ||
+        (response?.group_id ? "groups" : selectedUsers.length ? "individual" : "all");
+
+      setFormData((prev) => ({
+        ...prev,
+        event_name: response?.event_name || "",
+        description: response?.discription || response?.description || "",
+        end_date_time: response?.end_date_time ? new Date(response.end_date_time) : null,
+        start_date_time: response?.start_date_time ? new Date(response.start_date_time) : null,
+        venue: response?.venue || "",
+        important: !!response?.important,
+        sendMail: !!response?.email_enabled,
+        rsvp_enabled: !!response?.rsvp_enabled,
+        group_ids: response?.group_id || "",
+        user_ids: selectedUsers,
+        existing_event_image: existingImages,
+        event_image: [],
+      }));
+
+      setShare(sharedValue);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   useEffect(() => {
+    fetchUsers();
     fetchGroups();
+    fetchEvent();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handleSelectChange = (selectedOptions) => {
+    setFormData((p) => ({ ...p, user_ids: selectedOptions || [] }));
+  };
+
+  const handleFileChange = (files, fieldName) => {
+    const arr = Array.isArray(files) ? files : files ? [files] : [];
+    setFormData((p) => ({ ...p, [fieldName]: arr }));
+  };
+
+  const handleEditEvent = async () => {
+    if (!formData.event_name || !formData.start_date_time) {
+      return toast.error("Title and Start Date/Time are required");
+    }
+
+    try {
+      toast.loading("Updating Event Please Wait!", { id: "editEvent" });
+
+      const formDataSend = new FormData();
+      formDataSend.append("event[site_id]", formData.site_id);
+      formDataSend.append("event[event_name]", formData.event_name);
+      // backend expects "discription" (typo) - keep consistent
+      formDataSend.append("event[discription]", formData.description || "");
+      formDataSend.append("event[start_date_time]", formatDateTime(formData.start_date_time));
+      formDataSend.append("event[end_date_time]", formatDateTime(formData.end_date_time));
+      formDataSend.append("event[venue]", formData.venue || "");
+      formDataSend.append("event[important]", formData.important ? "1" : "0");
+      formDataSend.append("event[email_enabled]", formData.sendMail ? "1" : "0");
+      formDataSend.append("event[rsvp_enabled]", formData.rsvp_enabled ? "1" : "0");
+
+      // ✅ share + ids (same pattern as Create)
+      if (share === "all") {
+        formDataSend.append("event[shared]", "all");
+        formDataSend.append("event[user_ids]", "");
+        formDataSend.append("event[group_id]", "");
+      } else if (share === "individual") {
+        const selectedIds = Array.isArray(formData.user_ids)
+          ? formData.user_ids.map((u) => u.value)
+          : [];
+        formDataSend.append("event[shared]", "individual");
+        formDataSend.append("event[user_ids]", selectedIds.join(","));
+        formDataSend.append("event[group_id]", "");
+      } else if (share === "groups") {
+        formDataSend.append("event[shared]", "groups");
+        formDataSend.append("event[user_ids]", "");
+        formDataSend.append("event[group_id]", formData.group_ids || "");
+      }
+
+      // ✅ attachments key same as Create
+      const filesArr = Array.isArray(formData.event_image) ? formData.event_image : [];
+      filesArr.forEach((file) => {
+        if (file instanceof File) {
+          formDataSend.append("event[event_images][]", file);
+        }
+      });
+
+      await editEventDetails(id, formDataSend);
+
+      toast.success("Event updated successfully", { id: "editEvent" });
+
+      // ✅ go to details after edit (end-to-end)
+      navigate(`/communication/events/details/${id}`, {
+        state: { refresh: Date.now() },
+      });
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to update event", { id: "editEvent" });
+    }
+  };
 
   return (
     <section className="flex">
       <div className="hidden md:block">
         <Navbar />
       </div>
+
       <div className="w-full flex mx-3 flex-col overflow-hidden">
         <div className="flex justify-center">
-          <div className=" my-5 mb-10 border w-full max-w-[70rem] border-gray-400 p-2 rounded-lg ">
+          <div className="my-5 mb-10 border w-full max-w-[70rem] border-gray-400 p-2 rounded-lg">
             <h2
               style={{ background: themeColor }}
-              className="text-center text-xl font-medium p-2  rounded-md text-white"
+              className="text-center text-xl font-medium p-2 rounded-md text-white"
             >
               Edit Event
             </h2>
+
             <h2 className="border-b text-xl border-black my-6 font-semibold">
               Event Info
             </h2>
+
             <div className="grid md:grid-cols-2 gap-4">
               <div className="flex flex-col">
-                <label htmlFor="" className="font-medium">
-                  Title :
-                </label>
+                <label className="font-medium">Title :</label>
                 <input
                   type="text"
                   name="event_name"
                   value={formData.event_name}
                   onChange={handleChange}
-                  id=""
                   placeholder="Enter Title"
-                  className="border-gray-400 border p-2  rounded-md"
+                  className="border-gray-400 border p-2 rounded-md"
                 />
               </div>
+
               <div className="flex flex-col">
-                <label htmlFor="" className="font-medium">
-                  Venue :
-                </label>
+                <label className="font-medium">Venue :</label>
                 <input
                   type="text"
                   name="venue"
                   value={formData.venue}
                   onChange={handleChange}
-                  id=""
                   placeholder="Enter Venue"
-                  className="border-gray-400 border p-2  rounded-md"
+                  className="border-gray-400 border p-2 rounded-md"
                 />
               </div>
+
               <div className="flex items-center gap-2 w-full">
-                {/* <div > */}
-                {/* <p className="font-medium mb-2">Start Time:</p> */}
                 <DatePicker
-                  selected={formData.start_date_time || null}
+                  selected={formData.start_date_time}
                   onChange={handleStartDateChange}
                   showTimeSelect
                   dateFormat="dd/MM/yyyy h:mm aa"
                   placeholderText="Select start date & time"
                   ref={datePickerRef}
-                  //   minDate={currentDate}
                   className="border border-gray-400 p-2 w-full rounded-md"
                 />
-                {/* </div> */}-{/* <div> */}
-                {/* <p className="font-medium mb-2">End Time:</p> */}
                 <DatePicker
-                  selected={formData.end_date_time || null}
+                  selected={formData.end_date_time}
                   onChange={handleEndDateChange}
                   showTimeSelect
                   dateFormat="dd/MM/yyyy h:mm aa"
                   placeholderText="Select end date & time"
                   ref={datePickerRef}
-                  //   minDate={currentDate}
-                  className="border border-gray-400 rounded-md p-2 w-full "
+                  className="border border-gray-400 rounded-md p-2 w-full"
                 />
-                {/* </div> */}
               </div>
             </div>
+
             <div className="flex flex-col gap-2 my-2">
-              <label htmlFor="" className="font-medium">
-                Description:
-              </label>
+              <label className="font-medium">Description:</label>
               <textarea
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
-                id=""
                 rows="3"
                 placeholder="Enter Description"
                 className="border-gray-400 border px-2 p-1 rounded-md"
               />
             </div>
 
-            <div className="flex gap-4 my-5">
+            <div className="flex gap-6 my-5">
               <div className="flex gap-2 items-center">
                 <input
                   type="checkbox"
-                  name=""
-                  id="imp"
+                  id="important"
                   checked={formData.important === true}
                   onChange={() =>
-                    setFormData({
-                      ...formData,
-                      important: !formData.important,
-                    })
+                    setFormData((p) => ({ ...p, important: !p.important }))
                   }
                 />
-                <label htmlFor="imp">Important</label>
+                <label htmlFor="important">Important</label>
               </div>
+
               <div className="flex gap-2 items-center">
                 <input
                   type="checkbox"
-                  name=""
-                  id="imp"
-                  checked={formData.important === true}
+                  id="sendMail"
+                  checked={formData.sendMail === true}
                   onChange={() =>
-                    setFormData({
-                      ...formData,
-                      important: !formData.important,
-                    })
+                    setFormData((p) => ({ ...p, sendMail: !p.sendMail }))
                   }
                 />
-                <label htmlFor="imp">Send mail</label>
+                <label htmlFor="sendMail">Send mail</label>
               </div>
             </div>
 
-            {/* <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              onChange={handleFileAttachment}
-            /> */}
-
-            <div className="">
-              <h2 className="border-b t border-black my-5 text-lg font-semibold">
+            <div>
+              <h2 className="border-b border-black my-5 text-lg font-semibold">
                 Share With
               </h2>
+
               <div className="flex flex-col items-center justify-center">
-                <div className="flex flex-row gap-2 w-full font-semibold p-2 ">
+                <div className="flex flex-row gap-2 w-full font-semibold p-2">
                   <h2
-                    className={`p-1 ${
-                      share === "all" && "bg-black text-white"
-                    } rounded-full px-6 cursor-pointer border-2 border-black`}
+                    className={`p-1 ${share === "all" && "bg-black text-white"} rounded-full px-6 cursor-pointer border-2 border-black`}
                     onClick={() => setShare("all")}
                   >
                     All
                   </h2>
                   <h2
-                    className={`p-1 ${
-                      share === "individual" && "bg-black text-white"
-                    } rounded-full px-4 cursor-pointer border-2 border-black`}
+                    className={`p-1 ${share === "individual" && "bg-black text-white"} rounded-full px-4 cursor-pointer border-2 border-black`}
                     onClick={() => setShare("individual")}
                   >
                     Individuals
                   </h2>
                   <h2
-                    className={`p-1 ${
-                      share === "groups" && "bg-black text-white"
-                    } rounded-full px-4 cursor-pointer border-2 border-black`}
+                    className={`p-1 ${share === "groups" && "bg-black text-white"} rounded-full px-4 cursor-pointer border-2 border-black`}
                     onClick={() => setShare("groups")}
                   >
                     Groups
                   </h2>
                 </div>
+
                 <div className="my-5 flex w-full">
                   {share === "individual" && (
                     <Select
                       options={users}
                       closeMenuOnSelect={false}
                       placeholder="Select User"
-                      value={users.filter((user) =>
-                        formData.user_ids.includes(user.value)
-                      )}
-                      // value={formData.user_ids}
+                      value={formData.user_ids}
                       onChange={handleSelectChange}
                       isMulti
                       className="w-full"
                     />
                   )}
+
                   {share === "groups" && (
-                    // <Select
-                    //   options={groups}
-                    //   closeMenuOnSelect={false}
-                    //   placeholder="Select Group"
-                    //   value={formData.group_ids}
-                    //   onChange={handleSelectGroupChange}
-                    //   className="w-full"
-                    // />
                     <select
                       name="group_ids"
-                      id=""
                       className="w-full border rounded-md p-2"
                       onChange={handleChange}
                       value={formData.group_ids}
@@ -431,19 +361,18 @@ const EditEvent = () => {
                 </div>
               </div>
             </div>
+
             <div className="mb-4">
-              <h2 className="border-b text-xl border-black font-semibold">
-                RSVP
-              </h2>
+              <h2 className="border-b text-xl border-black font-semibold">RSVP</h2>
               <div className="flex gap-4 mt-2">
-                <div className="flex gap-2 ">
+                <div className="flex gap-2">
                   <input
                     type="radio"
                     name="RSVP"
                     id="yes"
                     checked={formData.rsvp_enabled === true}
                     onChange={() =>
-                      setFormData({ ...formData, rsvp_enabled: true })
+                      setFormData((p) => ({ ...p, rsvp_enabled: true }))
                     }
                   />
                   <label htmlFor="yes" className="text-lg">
@@ -457,7 +386,7 @@ const EditEvent = () => {
                     id="no"
                     checked={formData.rsvp_enabled === false}
                     onChange={() =>
-                      setFormData({ ...formData, rsvp_enabled: false })
+                      setFormData((p) => ({ ...p, rsvp_enabled: false }))
                     }
                   />
                   <label htmlFor="no" className="text-lg">
@@ -466,20 +395,31 @@ const EditEvent = () => {
                 </div>
               </div>
             </div>
+
             <div>
               <h2 className="border-b text-xl border-black my-5 font-semibold">
                 Upload Attachments
               </h2>
+
+              {Array.isArray(formData.existing_event_image) &&
+                formData.existing_event_image.length > 0 && (
+                  <div className="mb-3 text-sm text-gray-600">
+                    Existing attachment(s): {formData.existing_event_image.length}
+                  </div>
+                )}
+
               <FileInputBox
                 fieldName={"event_image"}
                 handleChange={(files) => handleFileChange(files, "event_image")}
                 fileType="image/*"
+                isMulti={true}
               />
             </div>
+
             <div className="flex justify-center mt-10 my-5">
               <button
                 style={{ background: themeColor }}
-                className="bg-black text-white p-2 rounded-md hover:bg-white  flex items-center gap-2 px-4"
+                className="bg-black text-white p-2 rounded-md hover:bg-white flex items-center gap-2 px-4"
                 onClick={handleEditEvent}
               >
                 <FaCheck /> Submit
