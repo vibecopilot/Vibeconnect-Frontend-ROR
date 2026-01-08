@@ -10569,12 +10569,18 @@ export const deleteOtherProject = (id) =>
 export const postProjectLike = (data) =>
   axiosInstance.post("/likes/create_other_project_like.json", data);
 
+export const uploadVisitorLicense = (formData) => {
+  return api.post("/visitor_licenses", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+};
 
-// export const getVisitorCategory = () => api.get("/visitor_categories");
-// export const deleteVisitorCategory = (id) =>
-//   api.delete(`/visitor_categories/${id}`);
-
-// export const getVisitorSubCategory = () =>
-//   api.get("/visitor_sub_categories");
-// export const deleteVisitorSubCategory = (id) =>
-//   api.delete(`/visitor_sub_categories/${id}`);
+export const uploadVisitorConsignment = (formData) => {
+  return api.post("/visitor_consignments", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+};
