@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import SetupNavbar from "../../../components/navbars/SetupNavbar";
 import toast from "react-hot-toast";
-import { RiDeleteBinLine } from "react-icons/ri";
 import {
   getFloors,
   getUnits,
@@ -41,6 +40,8 @@ const AddUser = () => {
     email: "",
     password: "",
     mobile: "",
+    status: "",
+    userType: "",
     occupancy_type: "",
     birth_date: "",
     lives_here: "",
@@ -90,10 +91,10 @@ const AddUser = () => {
   };
 
   const handleUnitChange = (e) => {
-    const unitId = e.target.value;
+    const unitId = Number(e.target.value);
     setSelectedUnit(unitId);
 
-    const unit = units.find((u) => u.id === unitId);
+    const unit = units.find((u) => Number(u.id) === unitId);
     setSelectedUnitName(unit ? unit.name : "");
   };
 
@@ -136,11 +137,15 @@ const AddUser = () => {
       "mobile",
       "password",
       "occupancy_type",
+      "status",
     ];
 
     for (let key of required) {
       if (!formData[key]) {
-        const messageKey = key === "occupancy_type" ? "Resident Status" : key.replace("_", " ");
+        const messageKey =
+          key === "occupancy_type"
+            ? "Ownership Type"
+            : key.replace("_", " ");
         return toast.error(`Please enter ${messageKey}`);
       }
     }
@@ -152,11 +157,11 @@ const AddUser = () => {
     const payload = {
       user: {
         ...formData,
-        building_id: selectedTower,
+        building_id: Number(selectedTower),
         user_sites: [
           {
-            site_id: siteId,
-            unit_id: selectedUnit,
+            site_id: Number(siteId),
+            unit_id: Number(selectedUnit),
             ownership: formData.occupancy_type,
             ownership_type: formData.membershipType.toLowerCase(),
             is_approved: true,
@@ -166,7 +171,7 @@ const AddUser = () => {
         user_members: members,
         user_vendors: vendorList,
       },
-      site_ids: [siteId],
+      site_ids: [Number(siteId)],
     };
 
     console.log("FINAL PAYLOAD:", payload);
@@ -214,16 +219,16 @@ const AddUser = () => {
                   />
                 </div>
 
-                {/* Camera Button */}
                 <button
                   type="button"
                   className="text-2xl mt-2 text-indigo-600 hover:text-indigo-800 transition"
-                  onClick={() => document.getElementById("profileUpload").click()}
+                  onClick={() =>
+                    document.getElementById("profileUpload").click()
+                  }
                 >
                   📷
                 </button>
 
-                {/* Hidden File Input */}
                 <input
                   type="file"
                   id="profileUpload"
@@ -237,10 +242,7 @@ const AddUser = () => {
                 />
               </div>
 
-
               <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 ml-0 sm:ml-8">
-
-                {/* Title */}
                 <div>
                   <label className="text-sm font-medium block mb-1">Title</label>
                   <select
@@ -255,7 +257,6 @@ const AddUser = () => {
                   </select>
                 </div>
 
-                {/* First Name to Password */}
                 {[
                   { label: "First Name *", name: "firstname" },
                   { label: "Last Name *", name: "lastname" },
@@ -263,7 +264,9 @@ const AddUser = () => {
                   { label: "Password *", name: "password", type: "password" },
                 ].map((f) => (
                   <div key={f.name}>
-                    <label className="text-sm font-medium block mb-1">{f.label}</label>
+                    <label className="text-sm font-medium block mb-1">
+                      {f.label}
+                    </label>
                     <input
                       type={f.type || "text"}
                       name={f.name}
@@ -275,11 +278,12 @@ const AddUser = () => {
                   </div>
                 ))}
 
-                {/* Mobile */}
                 <div>
-                  <label className="text-sm font-medium block mb-1">Mobile *</label>
+                  <label className="text-sm font-medium block mb-1">
+                    Mobile *
+                  </label>
                   <div className="flex gap-2">
-                    <select 
+                    <select
                       className="border border-gray-300 rounded-md py-2 w-20"
                       defaultValue="+91"
                     >
@@ -298,11 +302,7 @@ const AddUser = () => {
               </div>
             </div>
 
-            {/* BUILDING – FLOOR – UNIT */}
-
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6 border-t pt-4">
-
-              {/* Tower */}
               <div>
                 <label className="text-sm font-medium block mb-1">Tower *</label>
                 <select
@@ -337,7 +337,6 @@ const AddUser = () => {
                 </select>
               </div>
 
-              {/* Floor */}
               <div>
                 <label className="text-sm font-medium block mb-1">Floor *</label>
                 <select
@@ -371,14 +370,13 @@ const AddUser = () => {
                 </select>
               </div>
 
-              {/* Unit */}
               <div>
                 <label className="text-sm font-medium block mb-1">Unit ID *</label>
 
                 <select
                   className="w-full border border-gray-300 rounded-md px-3 py-2"
                   value={selectedUnit || ""}
-                  onChange={(e) => setSelectedUnit(e.target.value)}
+                  onChange={handleUnitChange}
                   required
                   disabled={!selectedFloorId || units.length === 0}
                 >
@@ -396,25 +394,10 @@ const AddUser = () => {
                 </select>
               </div>
 
-              {/* Ownership Type */}
               <div>
-                <label className="text-sm font-medium block mb-1">Ownership Type *</label>
-                <select
-                  name="ownership_type"
-                  value={formData.ownership_type}
-                  onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2"
-                  required
-                >
-                  <option value="">Select Ownership Type</option>
-                  <option value="owner">Owner</option>
-                  <option value="tenant">Tenant</option>
-                </select>
-              </div>
-
-              {/* Status */}
-              <div>
-                <label className="text-sm font-medium block mb-1">Status *</label>
+                <label className="text-sm font-medium block mb-1">
+                  Ownership Type *
+                </label>
                 <select
                   name="occupancy_type"
                   value={formData.occupancy_type}
@@ -422,28 +405,32 @@ const AddUser = () => {
                   className="w-full border border-gray-300 rounded-md px-3 py-2"
                   required
                 >
-                  <option value="">Select Status</option>
-                  <option value="owner">Pending</option>
-                  <option value="tenant">Complete</option>
-                  <option value="tenant">Rejected</option>
+                  <option value="" disabled>
+                    Select Ownership Type
+                  </option>
+                  <option value="owner">Owner</option>
+                  <option value="tenant">Tenant</option>
                 </select>
               </div>
 
-              {/* Lease Expiry */}
-              {formData.occupancy_type.toLowerCase() === "tenant" && (
-                <div>
-                  <label className="text-sm font-medium block mb-1">Lease Expiry *</label>
-                  <input
-                    type="date"
-                    name="lease_expiry"
-                    value={formData.lease_expiry}
-                    onChange={handleChange}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
-                  />
-                </div>
-              )}
+              <div>
+                <label className="text-sm font-medium block mb-1">Status *</label>
+                <select
+                  name="status"
+                  value={formData.status}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  required
+                >
+                  <option value="" disabled>
+                    Select Status
+                  </option>
+                  <option value="pending">Pending</option>
+                  <option value="complete">Complete</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+              </div>
 
-              {/* Occupied */}
               <div>
                 <label className="text-sm font-medium block mb-1">Occupied</label>
                 <select
@@ -458,9 +445,10 @@ const AddUser = () => {
                 </select>
               </div>
 
-              {/* Membership */}
               <div>
-                <label className="text-sm font-medium block mb-1">Membership Type</label>
+                <label className="text-sm font-medium block mb-1">
+                  Membership Type
+                </label>
                 <select
                   name="membershipType"
                   value={formData.membershipType}
@@ -490,14 +478,15 @@ const AddUser = () => {
               </div>
             </div>
 
-            {/* PAN – GST */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
               {[
                 { label: "PAN Card", name: "panCard" },
                 { label: "GSTIN", name: "gstin" },
               ].map((f) => (
                 <div key={f.name}>
-                  <label className="text-sm font-medium block mb-1">{f.label}</label>
+                  <label className="text-sm font-medium block mb-1">
+                    {f.label}
+                  </label>
                   <input
                     name={f.name}
                     value={formData[f.name]}
@@ -508,9 +497,10 @@ const AddUser = () => {
               ))}
             </div>
 
-            {/* Alternate Address */}
             <div className="mt-4">
-              <label className="text-sm font-medium block mb-1">Alternate Address</label>
+              <label className="text-sm font-medium block mb-1">
+                Alternate Address
+              </label>
               <textarea
                 name="alternateAddress"
                 value={formData.alternateAddress}
@@ -520,7 +510,6 @@ const AddUser = () => {
             </div>
           </div>
 
-          {/* Additional Info */}
           <div className="border-t border-gray-300 p-6">
             <h3 className="text-xl font-bold text-gray-700 mb-4 pb-2 border-b border-gray-200">
               Additional Info & Utilities
@@ -533,7 +522,6 @@ const AddUser = () => {
                 { label: "Alternate Email", name: "alternateEmail", type: "email" },
                 { label: "Intercom Number", name: "intercomNumber" },
                 { label: "Landline Number", name: "landlineNumber" },
-
                 {
                   label: "EV Connection",
                   name: "evConnection",
@@ -546,7 +534,9 @@ const AddUser = () => {
                 },
               ].map((f) => (
                 <div key={f.name}>
-                  <label className="text-sm font-medium block mb-1">{f.label}</label>
+                  <label className="text-sm font-medium block mb-1">
+                    {f.label}
+                  </label>
 
                   {f.type === "select" ? (
                     <select
@@ -575,7 +565,6 @@ const AddUser = () => {
             </div>
           </div>
 
-          {/* Submit */}
           <div className="flex justify-end px-6 py-4 bg-gray-100 rounded-b-xl border-t border-gray-200">
             <button
               type="submit"

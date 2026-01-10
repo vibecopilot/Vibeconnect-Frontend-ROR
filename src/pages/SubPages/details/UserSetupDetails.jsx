@@ -10,15 +10,11 @@ const UserSetupDetails = () => {
   const [showAddFlatModal, setShowAddFlatModal] = useState(false);
   const navigate = useNavigate();
 
-  /* ADDED: PROFILE IMAGE PREVIEW STATE */
   const [profilePreview, setProfilePreview] = useState(null);
 
-  /* ADDED: HANDLE FILE UPLOAD */
   const handleProfileUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setProfilePreview(URL.createObjectURL(file));
-    }
+    const file = e.target.files?.[0];
+    if (file) setProfilePreview(URL.createObjectURL(file));
   };
 
   const fetchUserDetails = useCallback(async () => {
@@ -49,10 +45,9 @@ const UserSetupDetails = () => {
 
   const updateStatus = async (status) => {
     try {
-      setUser((prev) => ({ ...prev, user_status: status }));
-
-      await putSetupUser(id, { ...user, user_status: status });
-
+      const updatedUser = { ...(user || {}), user_status: status };
+      setUser(updatedUser);
+      await putSetupUser(id, updatedUser);
       toast.success(status ? "User Activated" : "User Deactivated");
     } catch (err) {
       toast.error("Failed to update status");
@@ -66,6 +61,10 @@ const UserSetupDetails = () => {
     unit: "",
     tower: "",
     flatNumber: "",
+    floor: "",
+    ownershiptype: "",
+    occupied: "",
+    membershiptype: "Primary",
     residentType: "Owner",
     livesHere: "Yes",
     allowFitout: "",
@@ -101,7 +100,8 @@ const UserSetupDetails = () => {
     e.preventDefault();
 
     if (!addFlatForm.tower) return toast.error("Please select a Tower");
-    if (!addFlatForm.flatNumber) return toast.error("Please enter a Floor");
+    if (!addFlatForm.floor) return toast.error("Please select a Floor");
+    if (!addFlatForm.flatNumber) return toast.error("Please select a Unit");
 
     const payload = {
       user_id: id,
@@ -134,8 +134,12 @@ const UserSetupDetails = () => {
         <aside className="hidden md:flex w-64 bg-white border-r p-4">
           <SetupNavbar />
         </aside>
-        <main className="flex-1 flex items-center justify-center bg-gray-100">
-          <p className="text-lg text-gray-500">Loading user details...</p>
+
+        <main
+          className="flex-1 flex items-center justify-center">
+          <p className="text-lg text-white font-semibold">
+            Loading user details...
+          </p>
         </main>
       </div>
     );
@@ -143,42 +147,48 @@ const UserSetupDetails = () => {
 
   return (
     <>
-      <section className="flex flex-col md:flex-row bg-[#F9FAFB] min-h-screen">
+      <section
+        className="flex flex-col md:flex-row min-h-screen"
+      >
         <SetupNavbar />
 
         <main className="flex-1 px-4 sm:px-6 lg:px-8 py-8 overflow-auto">
-          <div className="w-full bg-white shadow-md rounded-2xl border p-6 sm:p-8">
-
-            <div className="flex flex-col md:flex-row justify-between mb-8 gap-4">
-              <div>
-                <h1 className="text-1xl font-bold text-gray-500">User Details</h1>
-              </div>
-
-              <div className="flex gap-3 items-center">
-                <button
-                  onClick={() => navigate(-1)}
-                  className="px-3 py-2 text-sm border border-gray-300 text-gray-700 bg-white rounded-lg hover:bg-gray-100 transition"
-                >
-                  ← Back
-                </button>
-
-                <button
-                  onClick={openAddFlatModal}
-                  className="px-3 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition"
-                >
-                  Add To Another Unit
-                </button>
-              </div>
+          <div className="w-full bg-white/95 backdrop-blur shadow-xl rounded-2xl border border-white/40 p-6 sm:p-8">
+            <div
+              className="text-white text-xl font-bold py-4 text-center rounded-t-xl -mx-6 -mt-6 mb-6 sm:-mx-8 sm:-mt-8"
+              style={{
+                background:
+                  "radial-gradient(897px at 9% 80.3%, rgb(55, 60, 245) 0%, rgba(234, 161, 15, 0.9) 100.2%)",
+              }}
+            >
+              User Details
             </div>
 
-            {/* PROFILE SECTION ADDED HERE */}
+            <div className="flex items-center justify-between mb-8">
+              <button
+                type="button"
+                onClick={() => navigate("/setup/users-setup")}
+                className="px-3 py-2 text-sm border border-gray-300 text-black bg-white rounded-lg hover:bg-gray-100 transition"
+              >
+                Back
+              </button>
+
+              <button
+                type="button"
+                onClick={openAddFlatModal}
+                className="px-3 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition"
+              >
+                Add To Another Unit
+              </button>
+            </div>
+
             <div className="flex justify-center mb-10">
               <div className="flex flex-col items-center">
-                <div className="w-[140px] h-[140px] rounded-full bg-gray-100 border-4 border-indigo-300 shadow-lg overflow-hidden">
+                <div className="w-[140px] h-[140px] rounded-full bg-indigo-100 border-4 border-indigo-400/50 shadow-md overflow-hidden">
                   <img
                     src={
                       profilePreview ||
-                      user.profile_picture || 
+                      user.profile_picture ||
                       "https://www.pngitem.com/pimgs/m/137-1370051_avatar-generic-avatar-hd-png-download.png"
                     }
                     alt=""
@@ -188,7 +198,9 @@ const UserSetupDetails = () => {
 
                 <button
                   type="button"
-                  onClick={() => document.getElementById("profileUpload").click()}
+                  onClick={() =>
+                    document.getElementById("profileUpload")?.click()
+                  }
                   className="text-3xl mt-3 text-indigo-600 hover:text-indigo-800 transition"
                 >
                   📷
@@ -203,9 +215,7 @@ const UserSetupDetails = () => {
                 />
               </div>
             </div>
-            {/* END PROFILE SECTION */}
 
-            {/* BASIC INFO */}
             <section className="mb-8">
               <h2 className="text-xl font-semibold text-gray-700 border-b pb-2 mb-4">
                 Basic Information
@@ -217,26 +227,30 @@ const UserSetupDetails = () => {
                 <InfoBox label="Email" value={user.email} />
                 <InfoBox label="Mobile" value={user.mobile} />
 
-                {/* STATUS BUTTONS */}
                 <div className="bg-[#F9FAFB] p-4 rounded-lg shadow-sm">
                   <strong>Status:</strong>
                   <div className="mt-2 flex gap-3">
-
                     <button
+                      type="button"
+                      onClick={() => updateStatus(true)}
                       className={`px-2 py-1.5 text-sm rounded-lg border font-medium
-                        ${user.user_status
-                          ? "bg-green-600 text-white border-green-700"
-                          : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
+                        ${
+                          user.user_status
+                            ? "bg-green-600 text-white border-green-700"
+                            : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
                         }`}
                     >
                       Active
                     </button>
 
                     <button
+                      type="button"
+                      onClick={() => updateStatus(false)}
                       className={`px-2 py-1.5 text-sm rounded-lg border font-medium
-                        ${!user.user_status
-                          ? "bg-red-600 text-white border-red-700"
-                          : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
+                        ${
+                          !user.user_status
+                            ? "bg-red-600 text-white border-red-700"
+                            : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
                         }`}
                     >
                       Inactive
@@ -246,7 +260,6 @@ const UserSetupDetails = () => {
               </div>
             </section>
 
-            {/* CONTACT DETAILS */}
             <section className="mb-8">
               <h2 className="text-xl font-semibold text-gray-700 border-b pb-2 mb-4">
                 Contact Details
@@ -259,14 +272,16 @@ const UserSetupDetails = () => {
               </div>
             </section>
 
-            {/* BUSINESS INFO */}
             <section className="mb-8">
               <h2 className="text-xl font-semibold text-gray-700 border-b pb-2 mb-4">
                 Other Details
               </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <InfoBox label="Ownership Type" value={user.user_sites?.[0]?.ownership_type} />
+                <InfoBox
+                  label="Ownership Type"
+                  value={user.user_sites?.[0]?.ownership_type}
+                />
                 <InfoBox label="Phase" value={user.user_phase} />
                 <InfoBox label="GST Number" value={user.gst_number} />
                 <InfoBox label="PAN Number" value={user.pan_number} />
@@ -277,18 +292,19 @@ const UserSetupDetails = () => {
               </div>
             </section>
 
-            {/* APP INFO */}
             <section className="mb-8">
               <h2 className="text-xl font-semibold text-gray-700 border-b pb-2 mb-4">
                 App
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <InfoBox label="App Downloaded" value={user.is_downloaded ? "Yes" : "No"} />
+                <InfoBox
+                  label="App Downloaded"
+                  value={user.is_downloaded ? "Yes" : "No"}
+                />
                 <InfoBox label="User Type" value={user.user_type} />
               </div>
             </section>
 
-            {/* RECORD INFO */}
             <section>
               <h2 className="text-xl font-semibold text-gray-700 border-b pb-2 mb-4">
                 Record Information
@@ -297,11 +313,19 @@ const UserSetupDetails = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <InfoBox
                   label="Created On"
-                  value={user.created_at ? new Date(user.created_at).toLocaleString() : "N/A"}
+                  value={
+                    user.created_at
+                      ? new Date(user.created_at).toLocaleString()
+                      : "N/A"
+                  }
                 />
                 <InfoBox
                   label="Updated On"
-                  value={user.updated_at ? new Date(user.updated_at).toLocaleString() : "N/A"}
+                  value={
+                    user.updated_at
+                      ? new Date(user.updated_at).toLocaleString()
+                      : "N/A"
+                  }
                 />
               </div>
             </section>
@@ -309,29 +333,38 @@ const UserSetupDetails = () => {
         </main>
       </section>
 
-      {/* ADD FLAT MODAL */}
       {showAddFlatModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-
-          {/* Overlay */}
           <div
             className="absolute inset-0 bg-black opacity-40"
             onClick={closeAddFlatModal}
           />
 
           <div className="relative z-10 w-full max-w-3xl mx-4 bg-white rounded-2xl shadow-xl overflow-auto">
+            <div
+              className="text-white text-lg font-bold py-3 text-center rounded-t-2xl"
+              style={{
+                background:
+                  "radial-gradient(897px at 9% 80.3%, rgb(55, 60, 245) 0%, rgba(234, 161, 15, 0.9) 100.2%)",
+              }}
+            >
+              Add to Another Unit
+            </div>
 
-            <div className="flex items-center justify-between p-4 border-b">
-              <h3 className="text-lg font-semibold text-gray-800">Add to Another Unit</h3>
-              <button onClick={closeAddFlatModal} className="text-gray-500 hover:text-gray-800">
+            <div className="flex items-center justify-between px-6 py-4 border-b">
+              <p className="text-sm text-gray-600">
+                Fill the details to add this user to another unit.
+              </p>
+              <button
+                onClick={closeAddFlatModal}
+                className="text-gray-500 hover:text-gray-800"
+              >
                 ✕
               </button>
             </div>
 
             <form onSubmit={handleAddFlatSubmit} className="p-6 space-y-6">
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
                 {renderInputOrSelect(
                   "Tower",
                   "tower",
@@ -346,7 +379,7 @@ const UserSetupDetails = () => {
 
                 {renderInputOrSelect(
                   "Floor",
-                  "Floor",
+                  "floor",
                   "select",
                   addFlatForm,
                   handleFormChange,
@@ -391,7 +424,7 @@ const UserSetupDetails = () => {
 
                 {renderInputOrSelect(
                   "Occupied",
-                  "Occupied",
+                  "occupied",
                   "select",
                   addFlatForm,
                   handleFormChange,
@@ -428,16 +461,27 @@ const UserSetupDetails = () => {
                   ]
                 )}
 
-                {renderInputOrSelect("GST Number", "gstNumber", "text", addFlatForm, handleFormChange)}
-                {renderInputOrSelect("PAN Number", "panNumber", "text", addFlatForm, handleFormChange)}
-
+                {renderInputOrSelect(
+                  "GST Number",
+                  "gstNumber",
+                  "text",
+                  addFlatForm,
+                  handleFormChange
+                )}
+                {renderInputOrSelect(
+                  "PAN Number",
+                  "panNumber",
+                  "text",
+                  addFlatForm,
+                  handleFormChange
+                )}
               </div>
 
-              <div className="flex justify-end gap-3 pt-2 border-t">
+              <div className="flex justify-end gap-3 pt-4 border-t">
                 <button
                   type="button"
                   onClick={closeAddFlatModal}
-                  className="px-4 py-2 text-sm rounded-lg border bg-white hover:bg-gray-100"
+                  className="px-4 py-2 text-sm rounded-lg border border-gray-300 bg-white hover:bg-gray-100"
                 >
                   Cancel
                 </button>
@@ -449,12 +493,10 @@ const UserSetupDetails = () => {
                   Submit
                 </button>
               </div>
-
             </form>
           </div>
         </div>
       )}
-
     </>
   );
 };
@@ -466,30 +508,43 @@ const InfoBox = ({ label, value, color = "text-gray-700" }) => (
   </div>
 );
 
-const renderInputOrSelect = (label, name, type, form, onChange, options = []) => {
+const renderInputOrSelect = (
+  label,
+  name,
+  type,
+  form,
+  onChange,
+  options = [],
+  disabled = false
+) => {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        {label}
+      </label>
 
       {type === "select" ? (
         <select
           name={name}
-          value={form[name]}
+          value={form[name] ?? ""}
           onChange={onChange}
-          className="w-full border rounded-lg px-3 py-2 text-sm"
+          disabled={disabled}
+          className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm disabled:bg-gray-100"
         >
           {options.map((opt, idx) => (
-            <option key={idx} value={opt.value}>{opt.label}</option>
+            <option key={idx} value={opt.value}>
+              {opt.label}
+            </option>
           ))}
         </select>
       ) : (
         <input
           type="text"
           name={name}
-          value={form[name]}
+          value={form[name] ?? ""}
           onChange={onChange}
           placeholder={label}
-          className="w-full border rounded-lg px-3 py-2 text-sm"
+          className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
         />
       )}
     </div>
