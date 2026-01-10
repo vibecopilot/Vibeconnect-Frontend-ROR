@@ -809,23 +809,31 @@ const FacilityBooking = () => {
                   placeholder="Search User"
                   className="border p-[6px] px-4 border-gray-500 rounded-md w-60"
                 />
-                {isDropdownOpen && (
-                  <ul className="absolute bg-white border border-gray-300 rounded-md mt-1 max-h-40 overflow-y-auto w-full">
-                    {filteredOptions.length > 0 ? (
-                      filteredOptions.map((user, index) => (
-                        <li
-                          key={index}
-                          onClick={() => handleUserSelect(user.value)}
-                          className="p-2 hover:bg-gray-200 cursor-pointer"
-                        >
-                          {user.label}
-                        </li>
-                      ))
-                    ) : (
-                      <li className="p-2 text-gray-500">No results found</li>
-                    )}
-                  </ul>
-                )}
+                  {isDropdownOpen && (
+                    <ul
+                      role="listbox"
+                      className="absolute left-0 top-full z-50 bg-white border border-gray-300 rounded-md mt-1 max-h-40 overflow-y-auto w-full shadow-md"
+                    >
+                      {filteredOptions.length > 0 ? (
+                        filteredOptions.map((option) => (
+                          <li
+                            key={option.value} 
+                            role="option"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              handleUserSelect(option.value);
+                            }}
+                            className="p-2 hover:bg-gray-200 cursor-pointer"
+                          >
+                            {option.label}
+                          </li>
+                        ))
+                      ) : (
+                        <li className="p-2 text-gray-500">No results found</li>
+                      )}
+                    </ul>
+                  )}
+
               </div>
 
               {/* <div className="flex flex-col gap-1">

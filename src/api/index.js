@@ -572,7 +572,7 @@ export const getHelpDeskStatusDetailsSetup = async (id) =>
   );
 export const editHelpDeskStatusDetailsSetup = async (id, data) =>
   axiosInstance.patch(
-    `/pms/admin/helpdesk_categories/complaint_statuses/${id}.json`,
+    `/pms/admin/modify_complaint_status/${id}.json`,
     data,
     {
       params: {
@@ -10584,3 +10584,7 @@ export const uploadVisitorConsignment = (formData) => {
     },
   });
 };
+
+export const createParkingConfiguration = (data) =>
+  api.post("/parking_configurations", data);
+
