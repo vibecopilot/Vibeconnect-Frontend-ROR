@@ -552,3 +552,15 @@ const renderInputOrSelect = (
 };
 
 export default UserSetupDetails;
+
+
+
+
+// import React, { useState } from "react";
+
+// import Navbar from "../../../components/Navbar";
+// import TicketSetupPage from "./TicketSetupPage";
+// import TicketEscalationSetup from "./TicketEscalationSetup";
+// import TicketCostApprovalSetup from "./TicketCostApprovalSetup";  
+// const TicketSetup = () => {
+//     const [page, setPage] = useState("Setup");
