@@ -1,12 +1,7 @@
 import React, { useEffect, useState } from "react";
 import SetupNavbar from "../../../components/navbars/SetupNavbar";
 import toast from "react-hot-toast";
-import {
-  getFloors,
-  getUnits,
-  getBuildings,
-  postSetupUsers,
-} from "../../../api";
+import { getFloors, getUnits, getBuildings, postSetupUsers } from "../../../api";
 import { useNavigate } from "react-router-dom";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
 
@@ -60,11 +55,7 @@ const AddUser = () => {
   useEffect(() => {
     const loadDropdowns = async () => {
       try {
-        const [siteRes, buildingRes] = await Promise.all([
-          getSites(),
-          getBuildings(),
-        ]);
-
+        const [siteRes, buildingRes] = await Promise.all([getSites(), getBuildings()]);
         setSites(siteRes.data || []);
         setBuildings(buildingRes.data || []);
       } catch (error) {
@@ -143,9 +134,7 @@ const AddUser = () => {
     for (let key of required) {
       if (!formData[key]) {
         const messageKey =
-          key === "occupancy_type"
-            ? "Ownership Type"
-            : key.replace("_", " ");
+          key === "occupancy_type" ? "Ownership Type" : key.replace("_", " ");
         return toast.error(`Please enter ${messageKey}`);
       }
     }
@@ -197,7 +186,14 @@ const AddUser = () => {
           }}
           className="w-full bg-white shadow-md rounded-2xl border p-6 sm:p-8"
         >
-          <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 text-white text-xl font-bold py-4 text-center rounded-t-xl">
+          {/* ✅ ONLY "Add User Details" background changed to your radial-gradient */}
+          <div
+            className="text-white text-xl font-bold py-4 text-center rounded-t-xl"
+            style={{
+              background:
+                "radial-gradient(897px at 9% 80.3%, rgb(55, 60, 245) 0%, rgba(234, 161, 15, 0.9) 100.2%)",
+            }}
+          >
             Add User Details
           </div>
 
@@ -222,9 +218,7 @@ const AddUser = () => {
                 <button
                   type="button"
                   className="text-2xl mt-2 text-indigo-600 hover:text-indigo-800 transition"
-                  onClick={() =>
-                    document.getElementById("profileUpload").click()
-                  }
+                  onClick={() => document.getElementById("profileUpload").click()}
                 >
                   📷
                 </button>
@@ -279,9 +273,7 @@ const AddUser = () => {
                 ))}
 
                 <div>
-                  <label className="text-sm font-medium block mb-1">
-                    Mobile *
-                  </label>
+                  <label className="text-sm font-medium block mb-1">Mobile *</label>
                   <div className="flex gap-2">
                     <select
                       className="border border-gray-300 rounded-md py-2 w-20"
@@ -484,9 +476,7 @@ const AddUser = () => {
                 { label: "GSTIN", name: "gstin" },
               ].map((f) => (
                 <div key={f.name}>
-                  <label className="text-sm font-medium block mb-1">
-                    {f.label}
-                  </label>
+                  <label className="text-sm font-medium block mb-1">{f.label}</label>
                   <input
                     name={f.name}
                     value={formData[f.name]}
@@ -534,9 +524,7 @@ const AddUser = () => {
                 },
               ].map((f) => (
                 <div key={f.name}>
-                  <label className="text-sm font-medium block mb-1">
-                    {f.label}
-                  </label>
+                  <label className="text-sm font-medium block mb-1">{f.label}</label>
 
                   {f.type === "select" ? (
                     <select

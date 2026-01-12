@@ -45,7 +45,6 @@ const FacilityBooking = () => {
   );
   const [paymentMode, setPaymentMode] = useState("post");
   const siteId = getItemInLocalStorage("SITEID");
-  // const [userOptions, setUserOptions] = useState([]);
   const [formData, setFormData] = useState({
     amenity_id: "",
     amenity_slot_id: "",
@@ -55,15 +54,10 @@ const FacilityBooking = () => {
     amount: "",
     gst_no: 0,
     member_adult: 0,
-    // member_child: 0,
     guest_adult: 0,
-    // guest_child: 0,
-    // tenant_adult: 0,
-    // tenant_child: 0,
     no_of_members: 0,
     no_of_guests: 0,
     payment_mode: "post",
-    // no_of_tenants: 0,
     min_people: 0,
     max_people: 0,
   });
@@ -111,38 +105,24 @@ const FacilityBooking = () => {
     }
   }, [paymentMethods]);
 
-  const [units, setUnits] = useState([]); // To store units
+  const [units, setUnits] = useState([]);
 
   const [prices, setPrices] = useState({
     member_price_adult: 0,
-    // member_price_child: 0,
     guest_price_adult: 0,
-    // guest_price_child: 0,
-    // tenant_price_adult: 0,
-    // tenant_price_child: 0,
   });
 
   console.log("formData", formData);
 
-  //Use Effect
-
   const fetchUnits = async () => {
     try {
-      const response = await getAllUnits(); // Fetch all units
+      const response = await getAllUnits(); 
       console.log("Units:", response);
-      setUnits(response.data); // Store the units in state
+      setUnits(response.data); 
     } catch (error) {
       console.error("Error fetching units:", error);
     }
   };
-
-  // const getBookingAmount = (facility, amountt, formData) => {
-  //   if (facility?.fac_type === "request" && facility?.postpaid === true) {
-  //     return amountt !== undefined && amountt !== null ? amountt : "";
-  //   } else {
-  //     return formData?.amount !== undefined && formData?.amount !== null ? formData.amount : "";
-  //   }
-  // };
 
   const calculateBookingAmount = (facility, formData) => {
     if (facility?.fixed_amount) {
@@ -171,34 +151,19 @@ const FacilityBooking = () => {
     fetchUnits();
   }, []);
 
-  //  const handlePaymentChange = (mode) => {
-  //    const key = paymentMethodMap[mode];
-  //    if (!paymentMethods[key]) {
-  //      toast.info(
-  //        `${
-  //          mode.charAt(0).toUpperCase() + mode.slice(1)
-  //        } is not available for this facility`
-  //      );
-  //      return;
-  //    }
-  //    setPaymentMode(mode);
-  //  };
-
   useEffect(() => {
     const bookingAmount = calculateBookingAmount(facility, formData);
     console.log("Booking Amount:", bookingAmount);
     setAmountt(bookingAmount);
   }, [facility, formData]);
 
-  // Calculate GST based on total amount before tax
   const calculateGST = (amount, gstNo) => {
     return (amount * gstNo) / 100;
   };
 
   const fetchFacilities = async () => {
     try {
-      const response = await getFacitilitySetup(); // Assuming getFacilitySetup is an API call
-      // console.log("Booking Setups", response.data.amenities);
+      const response = await getFacitilitySetup();
 
       setFacilities(response.data.amenities);
     } catch (error) {
@@ -232,7 +197,7 @@ const FacilityBooking = () => {
                 (slot.start_hr === currentHr && slot.start_min > currentMin)
               );
             }
-            return true; // Include all slots for future dates
+            return true; 
           })
           .map((slot) => ({
             ...slot,
@@ -242,9 +207,8 @@ const FacilityBooking = () => {
             )} to ${formatTime(slot.end_hr, slot.end_min)}`,
           }));
 
-        setSlots(formattedSlots); // Update slots state
+        setSlots(formattedSlots); 
 
-        // Block date if no valid slots remain
         if (formattedSlots.length === 0) {
           setBlockedDates((prev) =>
             prev.includes(selectedDate) ? prev : [...prev, selectedDate]
@@ -258,12 +222,11 @@ const FacilityBooking = () => {
       }
     } catch (error) {
       console.log("Error Fetching Slots", error);
-      setSlots([]); // Reset slots if there's an error
+      setSlots([]); 
     }
   };
 
   const [testFacility, setTestFacility] = useState([]);
-  //fetch terms ,cancel, gst, member price
   const fetchTermsPolicy = async (facilityId) => {
     try {
       const response = await getFacitilitySetup();
@@ -285,28 +248,19 @@ const FacilityBooking = () => {
           gst_no: selectedFacility.gst_no,
           prices: newPrices,
         }));
-        // console.log("Selected Facility:", selectedFacility);
         const newPrices = {
           member_price_adult: selectedFacility.member_price_adult ?? 0,
-          // member_price_child: selectedFacility.member_price_child ?? 0,
           guest_price_adult: selectedFacility.guest_price_adult ?? 0,
-          // guest_price_child: selectedFacility.guest_price_child ?? 0,
-          // tenant_price_adult: selectedFacility.tenant_price_adult ?? 0,
-          // tenant_price_child: selectedFacility.tenant_price_child ?? 0,
         };
-        // console.log("Selected Facility:", selectedFacility);
 
-        //Update formData without resetting value
         setFormData((prevFormData) => ({
           ...prevFormData,
           gst_no: selectedFacility.gst_no,
           prices: newPrices,
         }));
-        // console.log("new p", newPrices);
 
         setPrices((prevPrices) => {
           if (JSON.stringify(prevPrices) !== JSON.stringify(newPrices)) {
-            // console.log("Price set for selected facility", selectedFacility);
             return newPrices;
           }
           return prevPrices;
@@ -340,24 +294,16 @@ const FacilityBooking = () => {
   const handleInputChange = (field, value) => {
     const updatedFormData = { ...formData, [field]: parseInt(value) || 0 };
 
-    // Calculate total number of people
     const totalPeople =
       updatedFormData.member_adult +
-      // updatedFormData.member_child +
       updatedFormData.guest_adult;
-    // updatedFormData.guest_child +
-    // updatedFormData.tenant_adult +
-    // updatedFormData.tenant_child;
-
-    // Validate against max_people limit
     if (facility?.max_people && totalPeople > facility.max_people) {
       toast.error(
         `Total number of people (${totalPeople}) cannot exceed the maximum limit of ${facility.max_people} for this facility.`
       );
-      return; // Don't update the state if validation fails
+      return;
     }
 
-    // Validate against min_people limit
     if (
       facility?.min_people &&
       totalPeople < facility.min_people &&
@@ -437,32 +383,8 @@ const FacilityBooking = () => {
     }
   };
 
-  // const handleButtonClick = (selectedTime) => {
-  //   setSelectedTimes((prevState) => {
-  //     const newState = {
-  //       ...prevState,
-  //       [selectedTime]: !prevState[selectedTime],
-  //     };
-
-  //     // Determine if any time slot is selected
-  //     const anyTimeSelected = Object.values(newState).some(
-  //       (isSelected) => isSelected
-  //     );
-
-  //     // Update the state for timeSelected and time
-  //     setTimeSelected(anyTimeSelected);
-  //     setTime(anyTimeSelected ? selectedTime : "");
-
-  //     return newState;
-  //   });
-  // };
-
   const postBookFacility = async () => {
     const postData = new FormData();
-    // if (!formData.user_id || !formData.amenity_slot_id) {
-    //   toast.error("All Details are mandatory!");
-    //   return;
-    // }
     const today = new Date();
     const selectedDate = new Date(formData.booking_date);
     today.setHours(0, 0, 0, 0);
@@ -478,24 +400,16 @@ const FacilityBooking = () => {
       return;
     } else if (formData.member_adult <= 0 && formData.guest_adult <= 0) {
       toast.error("At least one member or guest must be added.");
-      return; // <-- this was missing
+      return;
     }
-    // Slot validation based on availability
     if (Array.isArray(slots) && slots.length > 0 && !formData.amenity_slot_id) {
       toast.error("Please select a slot for this facility.");
       return;
     }
 
-    // Calculate total number of people for final validation
     const totalPeople =
       formData.member_adult +
-      // formData.member_child +
       formData.guest_adult;
-    // formData.guest_child +
-    // formData.tenant_adult +
-    // formData.tenant_child;
-
-    // Final validation before submission
     if (facility?.max_people && totalPeople > facility.max_people) {
       toast.error(
         `Total number of people (${totalPeople}) cannot exceed the maximum limit of ${facility.max_people} for this facility.`
@@ -511,10 +425,6 @@ const FacilityBooking = () => {
     }
 
     try {
-      // Append all necessary fields dynamically
-
-      // const bookingAmount = getBookingAmount(facility, amountt, formData);
-      // console.log("Booking Amount:", bookingAmount);
       postData.append("amenity_booking[site_id]", formData.site_id || "");
       postData.append("amenity_booking[user_id]", formData.user_id || "");
       postData.append("amenity_booking[amenity_id]", formData.amenity_id || "");
@@ -553,20 +463,16 @@ const FacilityBooking = () => {
       );
 
       postData.append("amenity_booking[amount]", formData.amount || "");
-      // Debugging: Log the entire FormData
       for (const [key, value] of postData.entries()) {
         console.log(`${key}: ${value}`);
       }
 
-      // API call
       const response = await postAmenitiesBooking(postData);
 
-      // Handle the response
       console.log("Booking response:", response);
       toast.success("Booking successful!");
       navigate("/bookings");
     } catch (error) {
-      // Handle errors
       console.error("Error in booking:", error);
       alert("Error in booking. Please try again.", error);
     }
@@ -575,11 +481,8 @@ const FacilityBooking = () => {
   const fetchUsers = async () => {
     try {
       const response = await getSetupUsers();
-      // console.log("Users:", response);
 
       const transformedUsers = response.data.map((user) => {
-        // console.log("User:", user);
-        // Ensure user.user_sites is defined
         const userSite = user?.user_sites?.[0];
 
         if (!userSite) {
@@ -606,7 +509,6 @@ const FacilityBooking = () => {
       });
 
       setUserOptions(transformedUsers);
-      // console.log("Fetched Users:", transformedUsers);
     } catch (error) {
       console.error("Error fetching assigned users:", error);
     }
@@ -624,11 +526,11 @@ const FacilityBooking = () => {
 
   const handleFacilityChange = (e) => {
     const selectedFacilityId = e.target.value;
-    setSelectedSlot(""); // Reset selected slot
+    setSelectedSlot(""); 
 
-    fetchSlotsForFacility(selectedFacilityId, date); // Fetch slots
+    fetchSlotsForFacility(selectedFacilityId, date);
 
-    fetchTermsPolicy(selectedFacilityId); // Fetch Terms
+    fetchTermsPolicy(selectedFacilityId); 
 
     const selectedFacility = facilities.find(
       (facility) => facility.id === parseInt(selectedFacilityId)
@@ -645,13 +547,13 @@ const FacilityBooking = () => {
     const selectedUserId = e.target.value;
     setFormData((prevData) => ({
       ...prevData,
-      user_id: selectedUserId, // Update user_id in the formData state
+      user_id: selectedUserId, 
     }));
   };
 
   const [searchText, setSearchText] = useState("");
   const [isDropdownOpen, setDropdownOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null); // Store the selected user
+  const [selectedUser, setSelectedUser] = useState(null); 
   const filteredOptions = userOptions.filter((user) =>
     user.label.toLowerCase().includes(searchText.toLowerCase())
   );
@@ -669,23 +571,21 @@ const FacilityBooking = () => {
     setSearchText(user.label);
   };
 
-  const [searchFATerm, setSearchFATerm] = useState(""); // State for search input
-  const [showDropdown, setShowDropdown] = useState(false); // State for dropdown visibility
+  const [searchFATerm, setSearchFATerm] = useState(""); 
+  const [showDropdown, setShowDropdown] = useState(false); 
   const [facilityError, setFacilityError] = useState("");
 
   console.log("Line 536 filters", facilities);
   const filteredFacilities = facilities.filter((facility) =>
     facility.fac_name.toLowerCase().includes(searchFATerm.toLowerCase())
-  ); // Filter facilities based on search term
-
+  ); 
   const handleFacSelect = (facility) => {
-    setSearchFATerm(facility.fac_name); // Update the search input with the selected facility name
-    setShowDropdown(false); // Close dropdown
-    handleFacilityChange({ target: { value: facility.id } }); // Pass selected facility ID to handler
+    setSearchFATerm(facility.fac_name);
+    setShowDropdown(false);
+    handleFacilityChange({ target: { value: facility.id } }); 
   };
 
   useEffect(() => {
-    // console.log("searched facility",searchFATerm)
     if (searchFATerm && filteredFacilities.length === 0) {
       setFacilityError("No facilities match your search.");
     } else {
@@ -712,7 +612,6 @@ const FacilityBooking = () => {
                   Select Facility:
                 </label>
 
-                {/* Search input */}
                 <input
                   type="text"
                   value={searchFATerm}
