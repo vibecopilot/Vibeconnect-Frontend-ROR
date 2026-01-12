@@ -24,11 +24,11 @@ const OtherProject = () => {
 
   const [projects, setProjects] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [likedProjects, setLikedProjects] = useState([]); // ids
+  const [likedProjects, setLikedProjects] = useState([]);
   const [isEditMode, setIsEditMode] = useState(false);
   const [currentProjectId, setCurrentProjectId] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [likeLoadingIds, setLikeLoadingIds] = useState([]); // prevent spam click
+  const [likeLoadingIds, setLikeLoadingIds] = useState([]);
 
   const fileImageRef = useRef(null);
   const filePdfRef = useRef(null);
@@ -37,11 +37,10 @@ const OtherProject = () => {
     title: "",
     description: "",
     address: "",
-    attachments: null, // FileList | null
-    pdf: null, // FileList | null
+    attachments: null, 
+    pdf: null, 
   });
 
-  /* ================= HELPERS ================= */
   const resetForm = useCallback(() => {
     setFormData({
       title: "",
@@ -61,8 +60,6 @@ const OtherProject = () => {
   };
 
   const extractLikeUserName = (like) => {
-    // Try multiple possible shapes from backend:
-    // like.user.username | like.user.full_name | like.username | like.full_name | like.name
     const u = like?.user || like?.liked_by || like?.created_by || null;
     return (
       u?.username ||
@@ -93,7 +90,6 @@ const OtherProject = () => {
     if (clean.length === 0) return "";
 
     if (didILike) {
-      // ensure "You" first
       const withYou = clean.includes("You") ? clean : ["You", ...clean];
       const othersCount = Math.max(0, withYou.length - 1);
       if (othersCount === 0) return "Liked by You";
@@ -106,7 +102,6 @@ const OtherProject = () => {
     return `Liked by ${first} and ${remaining} other${remaining > 1 ? "s" : ""}`;
   };
 
-  /* ================= FETCH PROJECTS ================= */
   const fetchProjects = useCallback(async () => {
     try {
       setLoading(true);
@@ -144,7 +139,6 @@ const OtherProject = () => {
 
       setProjects(transformed);
 
-      // Prefill liked projects
       if (userID) {
         const likedIds = transformed.filter((p) => p.likedByMe).map((p) => p.id);
         setLikedProjects(likedIds);
@@ -163,7 +157,6 @@ const OtherProject = () => {
     fetchProjects();
   }, [fetchProjects]);
 
-  /* ================= HANDLERS ================= */
   const handleOpenModal = () => {
     setIsEditMode(false);
     setCurrentProjectId(null);
@@ -202,10 +195,8 @@ const OtherProject = () => {
 
       await postProjectLike({ other_project_id: id, status: "liked" });
 
-      // update local liked ids
       setLikedProjects((prev) => [...prev, id]);
 
-      // optimistic update on UI
       setProjects((prev) =>
         prev.map((p) => {
           if (p.id !== id) return p;
@@ -243,7 +234,6 @@ const OtherProject = () => {
     }
   };
 
-  /* ================= SUBMIT ================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
     const toastId = toast.loading("Processing...");
@@ -365,7 +355,6 @@ const OtherProject = () => {
                     </Slider>
                   </div>
 
-                  {/* CONTENT */}
                   <div className="p-5">
                     <div className="flex justify-between items-start mb-2 gap-3">
                       <h2
@@ -420,7 +409,6 @@ const OtherProject = () => {
                       </button>
                     </div>
 
-                    {/* ✅ Liked by name text */}
                     {likedByText ? (
                       <p className="text-xs text-gray-600 mb-2">{likedByText}</p>
                     ) : null}
@@ -436,7 +424,6 @@ const OtherProject = () => {
         )}
       </div>
 
-      {/* MODAL */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/60 flex justify-center items-center z-50 p-4">
           <div className="bg-white p-8 rounded-xl w-full max-w-lg">
