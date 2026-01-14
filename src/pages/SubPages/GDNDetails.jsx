@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { IoMdAdd } from "react-icons/io";
 import { Link } from "react-router-dom";
 import Table from "../../components/table/Table";
@@ -6,121 +6,120 @@ import { BsEye } from "react-icons/bs";
 import { useSelector } from "react-redux";
 import { getGDN } from "../../api";
 
-
 const GdnDetails = () => {
-  const[gdn,setgdn]=useState([]);
+  const [gdn, setGdn] = useState([]);
+  const [search, setSearch] = useState("");
+  const themeColor = useSelector((state) => state.theme.color);
+
+  const safeDate = (val) => {
+    if (!val) return "-";
+    const d = new Date(val);
+    return Number.isNaN(d.getTime()) ? "-" : d.toLocaleDateString();
+  };
+
   useEffect(() => {
-    const fetchSiteOwners = async () => {
+    const fetchGDN = async () => {
       try {
         const resp = await getGDN();
-        
-        setgdn(resp.data);
+
+        const list = Array.isArray(resp?.data?.gdn_details)
+          ? resp.data.gdn_details
+          : Array.isArray(resp?.data)
+          ? resp.data
+          : [];
+
+        setGdn(list);
       } catch (error) {
-        console.log("Error fetching site owners:", error);
+        console.log("Error fetching GDN:", error);
+        setGdn([]);
       }
     };
-    fetchSiteOwners();
-  }, []);
-  const column = [
-    {
-      name: "view",
 
+    fetchGDN();
+  }, []);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return gdn;
+
+    return gdn.filter((row) => {
+      const idStr = String(row?.id ?? "").toLowerCase();
+      const dateStr = String(row?.gdn_date ?? "").toLowerCase();
+      const descStr = String(row?.description ?? "").toLowerCase();
+      return idStr.includes(q) || dateStr.includes(q) || descStr.includes(q);
+    });
+  }, [gdn, search]);
+
+  const columns = [
+    {
+      name: "View",
       cell: (row) => (
         <div className="flex items-center gap-4">
-          <Link to={`/admin/gnd-detail/${row.id}`}>
+          <Link to={`/admin/gdn-detail/${row.id}`}>
             <BsEye size={15} />
           </Link>
         </div>
       ),
     },
-    { name: "Id", selector: (row) => row.id, sortable: true },
-    { name: "GDN Date", selector: (row) => row.gdn_date, sortable: true },
+    { name: "Id", selector: (row) => row.id ?? "-", sortable: true },
+    { name: "GDN Date", selector: (row) => row.gdn_date ?? "-", sortable: true },
     {
       name: "Inventory Count",
-      selector: (row) => (row.gdn_inventory_details.length),
+      selector: (row) =>
+        Array.isArray(row?.gdn_inventory_details)
+          ? row.gdn_inventory_details.length
+          : 0,
       sortable: true,
     },
-    { name: "Status", selector: (row) => (row.status == true)?"Active":"InActive", sortable: true },
-    { name: "Created On", selector: (row) => new Date(row.created_at).toLocaleDateString(), sortable: true },
-    { name: "Created By", selector: (row) => row.CreatedBy, sortable: true },
+    {
+      name: "Status",
+      selector: (row) => (row.status === true ? "Active" : "Inactive"),
+      sortable: true,
+    },
+    {
+      name: "Created On",
+      selector: (row) => safeDate(row.created_at),
+      sortable: true,
+    },
+    {
+      // ✅ API has created_by_id, not CreatedBy
+      name: "Created By",
+      selector: (row) => row.created_by_id ?? "-",
+      sortable: true,
+    },
     {
       name: "Handed Over To",
-      selector: (row) => row.HandedOverTo,
+      selector: (row) => row.handed_over_to ?? "-",
       sortable: true,
     },
   ];
 
-  const data = [
-    {
-      id: 1,
-      Id: 112083,
-      GDNDate: "31/05/2024",
-      InventoryCount: "1",
-      Status: "Pending",
-      CreatedOn: "31/05/2024",
-      CreatedBy: "Aniruddha Mane",
-      HandedOverTo: "",
-      action: <BsEye />,
-    },
-    {
-      id: 2,
-      Id: 112060,
-      GDNDate: "31/05/2024",
-      InventoryCount: "1",
-      Status: "Pending",
-      CreatedOn: "31/05/2024",
-      CreatedBy: "Aniruddha Mane",
-      HandedOverTo: "",
-      action: <BsEye />,
-    },
-    {
-      id: 3,
-      Id: 109074,
-      GDNDate: "28/05/2024",
-      InventoryCount: "1",
-      Status: "Dispatched",
-      CreatedOn: "28/05/2024",
-      CreatedBy: "Awishkar Borkar",
-      HandedOverTo: "Awishkar Borkar",
-      action: <BsEye />,
-    },
-    {
-      id: 4,
-      Id: 108433,
-      GDNDate: "27/05/2024",
-      InventoryCount: "1",
-      Status: "Dispatched",
-      CreatedOn: "27/05/2024",
-      CreatedBy: "Awishkar Borkar",
-      HandedOverTo: "Awishkar Borkar",
-      action: <BsEye />,
-    },
-  ];
-
-  const themeColor = useSelector((state) => state.theme.color);
   return (
     <section>
-      <div className="w-full flex  flex-col ">
+      <div className="w-full flex flex-col">
         <div className="flex justify-between my-2">
           <div>
             <input
               type="text"
               placeholder="search"
-              className="border-2 p-2  border-gray-300 rounded-lg mx-2"
+              className="border-2 p-2 border-gray-300 rounded-lg mx-2"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
             />
           </div>
           <div>
             <Link
               to="/admin/add-gdn/"
-              className=" font-semibold text-white px-4 p-2 flex gap-2 items-center rounded-md"
+              className="font-semibold text-white px-4 p-2 flex gap-2 items-center rounded-md"
               style={{ background: themeColor }}
             >
               <IoMdAdd /> Add
             </Link>
           </div>
         </div>
-        <div className="">
-          <Table columns={column} data={gdn} isPagination={true} />
+
+        <div>
+          <Table columns={columns} data={filtered} isPagination={true} />
         </div>
       </div>
     </section>
