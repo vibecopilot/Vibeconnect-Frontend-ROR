@@ -671,7 +671,7 @@ const AddMatertialPR = () => {
                           onChange={(e) => handleInputChange(e, index)}
                         >
                           <option value="">Select Inventory</option>
-                          {stocks.map((stock) => (
+                          {Array.isArray(stocks) && stocks.map((stock) => (
                             <option value={stock.id} key={stock.id}>
                               {stock.name}
                             </option>
