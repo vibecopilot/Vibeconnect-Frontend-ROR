@@ -1228,14 +1228,14 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
-<Route
-  path="/setup/other-project"
-  element={
-    <ProtectedAdminRoutes>
-      <OtherProject />
-    </ProtectedAdminRoutes>
-  }
-/>
+        <Route
+          path="/setup/other-project"
+          element={
+            <ProtectedAdminRoutes>
+              <OtherProject />
+            </ProtectedAdminRoutes>
+          }
+        />
         <Route
           path="/setup/account/floor"
           element={
@@ -3114,7 +3114,7 @@ function App() {
         />
 
         <Route
-          path="/admin/gnd-detail/:id"
+          path="/admin/gdn-detail/:id"
           element={
             <ProtectedAdminRoutes>
               <GdnViewDetails />

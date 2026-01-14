@@ -227,21 +227,6 @@ const AddGrn = () => {
             </h2>
             <div className="flex sm:flex-row flex-col justify-around items-center">
               <div className="grid md:grid-cols-3 item-start gap-x-4 gap-y-8 w-full">
-                {/* <div className="flex flex-col">
-                        <label htmlFor="" className="font-semibold">
-                            Purchase Order :
-                        </label>
-                        <select
-                           name=""
-                           id=""
-                           className="border p-1 px-4 border-gray-500 rounded-md"
-                        >
-                          <option value="">Select Purchase Order</option>
-                          <option value="">10019 - 4500000235</option>
-                          <option value="">10020 - 4500000235</option>
-                          <option value="">10020 - 4500000235</option>
-                        </select>
-                    </div> */}
                 <div className="flex flex-col space-y-2">
                   <label htmlFor="vendor_id" className="font-semibold">
                     Supplier:
@@ -426,7 +411,6 @@ const AddGrn = () => {
                         onChange={(e) => handleInventoryChange(invIndex, e)}
                       >
                         <option value="">Select Inventory</option>
-                        {/* Map over the fetched inventory data */}
                         {invent.map((supplier) => (
                           <option value={supplier.id} key={supplier.id}>
                             {supplier.name}
@@ -434,24 +418,6 @@ const AddGrn = () => {
                         ))}
                       </select>
                     </div>
-                    {/* <div className="flex flex-col">
-          <label className="font-semibold">Item</label>
-          <select
-            type="text"
-            name="item_id"
-            value={inventory.item_id}
-            className="border p-1 px-4 border-gray-500 rounded-md"
-
-            onChange={(e) => handleInventoryChange(invIndex, e)}
-          >
-            <option value="">Select Item</option>
-            {invent.map((supplier) => (
-            <option value={supplier.id} key={supplier.id}>
-              {supplier.name}
-            </option>
-          ))}
-
-          </select></div> */}
                     <div className="flex flex-col ">
                       <label htmlFor="" className="font-semibold ">
                         Expected Quantity

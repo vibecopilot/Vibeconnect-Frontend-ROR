@@ -2113,6 +2113,17 @@ export const getGDNConsumingSetup = async () =>
       token: token,
     },
   });
+
+
+export const getGRNDetailById = async (id) =>
+  axiosInstance.get(`/grn_details/${id}.json`, {
+    params: {
+      token: token,
+    },
+  }); 
+
+
+
 export const getSiteOwnerDetails = async (id) =>
   axiosInstance.get(`/generic_infos/${id}.json`, {
     params: {
@@ -2480,6 +2491,15 @@ export const getAvailableParkingNumber = async () =>
       token: token,
     },
   });
+
+  export const createParkingConfiguration = async (data) =>
+  axiosInstance.post(`/parking_configurations.json`, data, {
+    params: {
+      token: token,
+    },
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
 export const editParkingConfiguration = async (id, data) =>
   axiosInstance.put(`/parking_configurations/${id}.json`, data, {
     params: {
@@ -10584,7 +10604,4 @@ export const uploadVisitorConsignment = (formData) => {
     },
   });
 };
-
-export const createParkingConfiguration = (data) =>
-  api.post("/parking_configurations", data);
 
