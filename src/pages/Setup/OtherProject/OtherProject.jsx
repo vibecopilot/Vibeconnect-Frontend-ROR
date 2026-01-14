@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FaTimes } from "react-icons/fa";
 import Navbar from "../../../components/Navbar";
 import {
   deleteOtherProject,
@@ -24,6 +25,15 @@ const OtherProject = () => {
 
   const [projects, setProjects] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // ✅ Likes modal
+  const [isLikesModalOpen, setIsLikesModalOpen] = useState(false);
+  const [likesModalData, setLikesModalData] = useState({
+    title: "",
+    likeCount: 0,
+    users: [],
+  });
+
   const [likedProjects, setLikedProjects] = useState([]);
   const [isEditMode, setIsEditMode] = useState(false);
   const [currentProjectId, setCurrentProjectId] = useState(null);
@@ -37,8 +47,8 @@ const OtherProject = () => {
     title: "",
     description: "",
     address: "",
-    attachments: null, 
-    pdf: null, 
+    attachments: null,
+    pdf: null,
   });
 
   const resetForm = useCallback(() => {
@@ -73,6 +83,28 @@ const OtherProject = () => {
     );
   };
 
+      const normalizeLikeUser = (like) => {
+        // If API returns just number IDs
+        if (typeof like === "number") {
+          return { id: like, name: `User #${like}`, email: "", mobile: "", avatar: "" };
+        }
+
+        // Your backend format: { user_id, full_name, mobile, email }
+        const id = Number(like?.user_id ?? like?.userId ?? like?.id) || null;
+
+        const name =
+          like?.full_name ||
+          like?.name ||
+          like?.username ||
+          (id ? `User #${id}` : "Unknown User");
+
+        const email = like?.email || "";
+        const mobile = like?.mobile || "";
+
+        return { id, name, email, mobile, avatar: "" };
+      };
+
+
   const didILikeProject = (project) => {
     if (!userID) return false;
     const likes = Array.isArray(project?.likes) ? project.likes : [];
@@ -85,21 +117,113 @@ const OtherProject = () => {
     });
   };
 
-  const buildLikedByText = (likeNames = [], didILike = false) => {
-    const clean = (Array.isArray(likeNames) ? likeNames : []).filter(Boolean);
-    if (clean.length === 0) return "";
+  // ✅ open likes modal
+  const openLikesModal = (project) => {
+    const users = Array.isArray(project?.likeUsers) ? project.likeUsers : [];
+    setLikesModalData({
+      title: project?.title || "Project",
+      likeCount: project?.likeCount ?? users.length ?? 0,
+      users,
+    });
+    setIsLikesModalOpen(true);
+  };
 
-    if (didILike) {
-      const withYou = clean.includes("You") ? clean : ["You", ...clean];
-      const othersCount = Math.max(0, withYou.length - 1);
-      if (othersCount === 0) return "Liked by You";
-      return `Liked by You and ${othersCount} other${othersCount > 1 ? "s" : ""}`;
+  const closeLikesModal = () => {
+    setIsLikesModalOpen(false);
+    setLikesModalData({ title: "", likeCount: 0, users: [] });
+  };
+
+  // ✅ JSX line so "others" becomes clickable
+  const renderLikedByLine = (project) => {
+    const count = Number(project?.likeCount || 0);
+    if (!count) return null;
+
+    const likedByMe = !!project?.likedByMe;
+    const users = Array.isArray(project?.likeUsers) ? project.likeUsers : [];
+
+    // names for displaying
+    const names = users.map((u) => u?.name).filter(Boolean);
+
+    if (likedByMe) {
+      // You + others
+      const othersCount = Math.max(0, count - 1);
+
+      if (othersCount <= 0) {
+        return (
+          <button
+            type="button"
+            onClick={() => openLikesModal(project)}
+            className="text-xs text-gray-600 hover:underline"
+            title="View likes"
+          >
+            <b>View Likes</b>
+          </button>
+        );
+      }
+
+      return (
+        <p className="text-xs text-gray-600 mb-2">
+          Liked by{" "}
+          <button
+            type="button"
+            onClick={() => openLikesModal(project)}
+            className="hover:underline font-medium"
+            title="View liked users"
+          >
+            You
+          </button>{" "}
+          and{" "}
+          <button
+            type="button"
+            onClick={() => openLikesModal(project)}
+            className="hover:underline font-medium"
+            title="View other liked users"
+          >
+            {othersCount} other{othersCount > 1 ? "s" : ""}
+          </button>
+        </p>
+      );
     }
 
-    const first = clean[0];
-    const remaining = clean.length - 1;
-    if (remaining <= 0) return `Liked by ${first}`;
-    return `Liked by ${first} and ${remaining} other${remaining > 1 ? "s" : ""}`;
+    // not liked by me
+    const first = names[0] || "Someone";
+    const remaining = Math.max(0, count - 1);
+
+    if (remaining <= 0) {
+      return (
+        <button
+          type="button"
+          onClick={() => openLikesModal(project)}
+          className="text-xs text-gray-600 hover:underline"
+          title="View likes"
+        >
+          Liked by {first}
+        </button>
+      );
+    }
+
+    return (
+      <p className="text-xs text-gray-600 mb-2">
+        Liked by{" "}
+        <button
+          type="button"
+          onClick={() => openLikesModal(project)}
+          className="hover:underline font-medium"
+          title="View liked users"
+        >
+          {first}
+        </button>{" "}
+        and{" "}
+        <button
+          type="button"
+          onClick={() => openLikesModal(project)}
+          className="hover:underline font-medium"
+          title="View other liked users"
+        >
+          {remaining} other{remaining > 1 ? "s" : ""}
+        </button>
+      </p>
+    );
   };
 
   const fetchProjects = useCallback(async () => {
@@ -116,12 +240,11 @@ const OtherProject = () => {
           .filter(Boolean);
 
         const likesArr = Array.isArray(project?.likes) ? project.likes : [];
-        const likeNamesRaw = likesArr.map(extractLikeUserName).filter(Boolean);
+
+        // ✅ keep full like users for modal
+        const likeUsers = likesArr.map(normalizeLikeUser);
 
         const likedByMe = didILikeProject(project);
-        const likeNames = likedByMe
-          ? ["You", ...likeNamesRaw.filter((n) => n !== "You")]
-          : likeNamesRaw;
 
         const likeCount =
           project?.likes_count ??
@@ -131,8 +254,8 @@ const OtherProject = () => {
         return {
           ...project,
           likeCount,
-          likeNames,
           likedByMe,
+          likeUsers,
           images: images.length > 0 ? images : [PLACEHOLDER],
         };
       });
@@ -201,14 +324,20 @@ const OtherProject = () => {
         prev.map((p) => {
           if (p.id !== id) return p;
 
-          const existingNames = Array.isArray(p.likeNames) ? p.likeNames : [];
-          const nextNames = ["You", ...existingNames.filter((n) => n !== "You")];
+          // add You in likeUsers list on UI (if not there)
+          const exists = Array.isArray(p.likeUsers)
+            ? p.likeUsers.some((u) => Number(u?.id) === Number(userID))
+            : false;
+
+          const nextUsers = exists
+            ? p.likeUsers
+            : [{ id: userID, name: "You", email: "", avatar: "" }, ...(p.likeUsers || [])];
 
           return {
             ...p,
             likedByMe: true,
             likeCount: (p.likeCount || 0) + 1,
-            likeNames: nextNames,
+            likeUsers: nextUsers,
           };
         })
       );
@@ -328,11 +457,6 @@ const OtherProject = () => {
               const isLiked = likedProjects.includes(project.id);
               const likeBusy = likeLoadingIds.includes(project.id);
 
-              const likedByText =
-                project.likeCount > 0
-                  ? buildLikedByText(project.likeNames || [], isLiked)
-                  : "";
-
               return (
                 <div
                   key={project.id}
@@ -400,7 +524,9 @@ const OtherProject = () => {
                         disabled={isLiked || likeBusy}
                         className={`flex items-center gap-1 ${
                           isLiked ? "text-red-500" : "text-gray-400"
-                        } ${likeBusy ? "opacity-60 cursor-not-allowed" : "hover:opacity-90"}`}
+                        } ${
+                          likeBusy ? "opacity-60 cursor-not-allowed" : "hover:opacity-90"
+                        }`}
                         type="button"
                         title={isLiked ? "Liked" : "Like"}
                       >
@@ -409,9 +535,8 @@ const OtherProject = () => {
                       </button>
                     </div>
 
-                    {likedByText ? (
-                      <p className="text-xs text-gray-600 mb-2">{likedByText}</p>
-                    ) : null}
+                    {/* ✅ Clickable "You and others" */}
+                    {renderLikedByLine(project)}
 
                     <p className="text-sm text-gray-600 line-clamp-3">
                       {project.description || "—"}
@@ -424,6 +549,7 @@ const OtherProject = () => {
         )}
       </div>
 
+      {/* CREATE / UPDATE MODAL */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/60 flex justify-center items-center z-50 p-4">
           <div className="bg-white p-8 rounded-xl w-full max-w-lg">
@@ -454,9 +580,7 @@ const OtherProject = () => {
               <input
                 placeholder="Address"
                 value={formData.address}
-                onChange={(e) =>
-                  setFormData((p) => ({ ...p, address: e.target.value }))
-                }
+                onChange={(e) => setFormData((p) => ({ ...p, address: e.target.value }))}
                 className="border rounded-lg p-2 w-full"
               />
 
@@ -503,6 +627,80 @@ const OtherProject = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ✅ LIKES USERS MODAL */}
+      {isLikesModalOpen && (
+        <div className="fixed inset-0 bg-black/60 flex justify-center items-center z-50 p-4">
+          <div className="bg-white rounded-xl w-full max-w-lg shadow-xl overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b">
+              <div>
+                <h3 className="text-lg font-bold">Liked Users</h3>
+                <p className="text-xs text-gray-600">
+                  {likesModalData?.title || "Project"} • {likesModalData?.likeCount || 0} like(s)
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeLikesModal}
+                className="p-2 hover:bg-gray-100 rounded"
+                title="Close"
+              >
+                <FaTimes />
+              </button>
+            </div>
+
+            <div className="max-h-[65vh] overflow-auto p-4">
+              {Array.isArray(likesModalData?.users) && likesModalData.users.length > 0 ? (
+                <div className="space-y-3">
+                  {likesModalData.users.map((u, idx) => (
+                    <div
+                      key={`${u?.id ?? "x"}-${idx}`}
+                      className="flex items-center gap-3 border rounded-lg p-3"
+                    >
+                      <div className="h-10 w-10 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center shrink-0">
+                        {u?.avatar ? (
+                          <img
+                            src={u.avatar}
+                            alt={u?.name || "user"}
+                            className="h-10 w-10 object-cover"
+                            onError={(e) => (e.currentTarget.style.display = "none")}
+                          />
+                        ) : (
+                          <span className="text-sm font-semibold text-gray-600">
+                            {(u?.name || "U").slice(0, 1).toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="min-w-0">
+                        <p className="font-semibold truncate">{u?.name || "Unknown User"}</p>
+                     <p className="text-xs text-gray-600 truncate">
+                        {u?.email ? u.email : "—"}
+                        {u?.mobile ? ` • ${u.mobile}` : ""}
+                        {(!u?.email && !u?.mobile && u?.id) ? `User ID: ${u.id}` : ""}
+                      </p>
+
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-600">No likes found.</p>
+              )}
+            </div>
+
+            <div className="px-5 py-4 border-t flex justify-end">
+              <button
+                type="button"
+                onClick={closeLikesModal}
+                className="px-4 py-2 border rounded-lg"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
