@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import ScheduledVendorAudit from './AuditSubPages/ScheduledVendorAudit';
 import ConductedVendorAudit from './AuditSubPages/ConductedVendorAudit';
 
-const VendorAudit = () => {
+const VendorAudit = ({ audits = [] }) => {
     const [page, setPage] = useState("scheduled");
   return (
     <div className=" w-full my-2 flex  overflow-hidden flex-col">
@@ -30,8 +30,8 @@ const VendorAudit = () => {
         </div>
       </div>
       <div>
-        {page === "scheduled" && <ScheduledVendorAudit/> }
-        {page === "conducted" && <ConductedVendorAudit/> }
+        {page === "scheduled" && <ScheduledVendorAudit audits={audits} />}
+        {page === "conducted" && <ConductedVendorAudit audits={audits} />}
         
       </div>
     </div>
