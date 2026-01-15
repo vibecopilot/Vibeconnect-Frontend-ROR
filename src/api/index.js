@@ -1046,10 +1046,11 @@ export const getAmenitiesBooking = async () => {
 //     params: { token }
 //   });
 // };
-export const getAmenitiesBookingById = (id) => {
-  return axiosInstance.get(`/amenity_bookings/${id}.json`, {
+export const getAmenitiesBookingById = async (id) => {
+  return axiosInstance.get(`/amenity_bookings.json`, {
     params: {
-      token: localStorage.getItem("TOKEN"),
+      token: token,
+      id: id,
     },
   });
 };

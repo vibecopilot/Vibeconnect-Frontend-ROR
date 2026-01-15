@@ -1,11 +1,13 @@
-import React from "react";
+import React, { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import Table from "../../../components/table/Table";
 import { BsEye } from "react-icons/bs";
-import { BiEdit } from "react-icons/bi";
 import { PiPlusCircle } from "react-icons/pi";
 
-const ScheduledAudit = () => {
+const ScheduledAudit = ({ audits = [] }) => {
+  const [searchText, setSearchText] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+
   const columns = [
     {
       name: "Action",
@@ -24,35 +26,70 @@ const ScheduledAudit = () => {
     },
     {
       name: "Activity",
-      selector: (row) => row.activityName,
+      selector: (row) => row.activity_name,
       sortable: true,
     },
     {
-      name: "Task",
-      selector: (row) => row.task,
+      name: "Audit For",
+      selector: (row) => row.audit_for,
       sortable: true,
     },
     {
-      name: "Assigned To",
-      selector: (row) => row.assignedTo,
+      name: "Frequency",
+      selector: (row) => row.frequency,
       sortable: true,
     },
     {
-      name: "Created On",
-      selector: (row) => row.createdOn,
+      name: "Priority",
+      selector: (row) => row.priority,
+      sortable: true,
+    },
+    {
+      name: "Start Date",
+      selector: (row) => new Date(row.start_from).toLocaleDateString(),
+      sortable: true,
+    },
+    {
+      name: "End Date",
+      selector: (row) => new Date(row.end_at).toLocaleDateString(),
       sortable: true,
     },
   ];
-  const data = [
-    {
-      id: "1",
-      activityName: "abc",
-      assosiationNumber: "2",
-      task: "xyz",
-      assignedTo: "kunal",
-      createdOn: "10/12/2023",
-    },
-  ];
+
+  const filteredData = useMemo(() => {
+    return audits.filter((audit) => {
+      const matchesSearch =
+        audit.activity_name?.toLowerCase().includes(searchText.toLowerCase()) ||
+        audit.audit_for?.toLowerCase().includes(searchText.toLowerCase()) ||
+        audit.description?.toLowerCase().includes(searchText.toLowerCase());
+
+      return matchesSearch;
+    });
+  }, [audits, searchText]);
+
+  const handleExport = () => {
+    const csv = [
+      ["ID", "Activity", "Audit For", "Frequency", "Priority", "Start Date", "End Date"],
+      ...filteredData.map((audit) => [
+        audit.id,
+        audit.activity_name,
+        audit.audit_for,
+        audit.frequency,
+        audit.priority,
+        new Date(audit.start_from).toLocaleDateString(),
+        new Date(audit.end_at).toLocaleDateString(),
+      ]),
+    ]
+      .map((row) => row.join(","))
+      .join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "scheduled_audits.csv";
+    a.click();
+  };
 
   return (
     <div className="flex flex-col gap-2">
@@ -63,8 +100,8 @@ const ScheduledAudit = () => {
               type="radio"
               id="all"
               name="status"
-              // checked={selectedStatus === "all"}
-              // onChange={() => handleStatusChange("all")}
+              checked={statusFilter === "all"}
+              onChange={() => setStatusFilter("all")}
             />
             <label htmlFor="all" className="text-sm">
               All
@@ -73,49 +110,37 @@ const ScheduledAudit = () => {
           <div className="flex items-center gap-2">
             <input
               type="radio"
-              id="open"
+              id="high"
               name="status"
-              // checked={selectedStatus === "open"}
-              // onChange={() => handleStatusChange("open")}
+              checked={statusFilter === "high"}
+              onChange={() => setStatusFilter("high")}
             />
-            <label htmlFor="open" className="text-sm">
-              Open
+            <label htmlFor="high" className="text-sm">
+              High Priority
             </label>
           </div>
           <div className="flex items-center gap-2">
             <input
               type="radio"
-              id="closed"
+              id="medium"
               name="status"
-              // checked={selectedStatus === "closed"}
-              // onChange={() => handleStatusChange("closed")}
+              checked={statusFilter === "medium"}
+              onChange={() => setStatusFilter("medium")}
             />
-            <label htmlFor="closed" className="text-sm">
-              Closed
+            <label htmlFor="medium" className="text-sm">
+              Medium
             </label>
           </div>
           <div className="flex items-center gap-2">
             <input
               type="radio"
-              id="pending"
+              id="low"
               name="status"
-              // checked={selectedStatus === "pending"}
-              // onChange={() => handleStatusChange("pending")}
+              checked={statusFilter === "low"}
+              onChange={() => setStatusFilter("low")}
             />
-            <label htmlFor="pending" className="text-sm">
-              Pending
-            </label>
-          </div>
-          <div className="flex items-center gap-2">
-            <input
-              type="radio"
-              id="completed"
-              name="status"
-              // checked={selectedStatus === "completed"}
-              // onChange={() => handleStatusChange("completed")}
-            />
-            <label htmlFor="completed" className="text-sm">
-              Completed
+            <label htmlFor="low" className="text-sm">
+              Low
             </label>
           </div>
         </div>
@@ -123,29 +148,27 @@ const ScheduledAudit = () => {
         <div className="flex gap-2">
           <Link
             to={"/admin/audit/schedule-audit"}
-            style={{}}
             className="border-2 font-semibold hover:bg-black hover:text-white duration-300 transition-all border-black p-2 rounded-md text-black cursor-pointer text-center flex items-center gap-2 justify-center"
-            // onClick={() => setShowCountry(!showCountry)}
           >
             <PiPlusCircle size={20} />
             Add
           </Link>
           <input
             type="text"
-            placeholder="Search  "
+            placeholder="Search..."
             className="border border-gray-400 w-96 placeholder:text-xs rounded-lg p-2"
-            //   value={searchText}
-            //   onChange={handleSearch}
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
           />
           <button
+            onClick={handleExport}
             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-            // onClick={exportToExcel}
           >
             Export
           </button>
         </div>
       </div>
-      <Table columns={columns} data={data} isPagination={true} />
+      <Table columns={columns} data={filteredData} isPagination={true} />
     </div>
   );
 };

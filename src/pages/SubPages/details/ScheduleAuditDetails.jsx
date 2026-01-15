@@ -1338,6 +1338,7 @@ const ScheduleAuditDetails = () => {
                   >
                     Asset
                   </p>
+                  
                   <p
                     className={`border-2 p-1 px-6 border-black font-medium rounded-full cursor-pointer ${
                       scheduleFor === "Services" && "bg-black text-white"

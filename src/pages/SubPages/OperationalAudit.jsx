@@ -3,9 +3,9 @@ import ScheduledAudit from "./AuditSubPages/ScheduledAudit";
 import ConductedAudit from "./AuditSubPages/ConductedAudit";
 import AuditChecklist from "./AuditSubPages/AuditChecklist";
 
-const OperationalAudit = () => {
+const OperationalAudit = ({ audits = [] }) => {
   const [page, setPage] = useState("scheduled");
- 
+
   return (
     <div className=" w-full my-2 flex  overflow-hidden flex-col">
       <div className="flex w-full">
@@ -40,9 +40,9 @@ const OperationalAudit = () => {
         </div>
       </div>
       <div>
-        {page === "scheduled" && <ScheduledAudit/> }
-        {page === "conducted" && <ConductedAudit/> }
-        {page === "checklists" && <AuditChecklist/> }
+        {page === "scheduled" && <ScheduledAudit audits={audits} />}
+        {page === "conducted" && <ConductedAudit audits={audits} />}
+        {page === "checklists" && <AuditChecklist audits={audits} />}
       </div>
     </div>
   );
