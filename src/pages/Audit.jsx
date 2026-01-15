@@ -1,10 +1,48 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
 import OperationalAudit from "./SubPages/OperationalAudit";
 import VendorAudit from "./SubPages/VendorAudit";
 
+
 const Audit = () => {
   const [page, setPage] = useState("operational");
+  const [audits, setAudits] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetchAudits();
+  }, []);
+
+  const fetchAudits = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(
+        "https://admin.vibecopilot.ai/audits.json?token=e6fbf77f4fbb5a72c4150e495c961972f0f14059d8a6670f"
+      );
+      const data = await response.json();
+      setAudits(data);
+      setError(null);
+    } catch (err) {
+      console.error("Error fetching audits:", err);
+      setError("Failed to fetch audits");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Filter audits by type
+  const operationalAudits = audits.filter(
+    (audit) =>
+      audit.audit_for?.toLowerCase() === "asset" ||
+      audit.audit_for?.toLowerCase() === "services" ||
+      audit.audit_for?.toLowerCase() === "safety audit"
+  );
+
+  const vendorAudits = audits.filter(
+    (audit) => audit.audit_for?.toLowerCase() === "vendor"
+  );
+
   return (
     <section className="flex">
       <Navbar />
@@ -31,15 +69,32 @@ const Audit = () => {
             </h2>
           </div>
         </div>
-        {page === "operational" && (
-          <div className="transition-all duration-300 ease-linear">
-            <OperationalAudit />
+
+        {loading && (
+          <div className="flex items-center justify-center h-96">
+            <p className="text-gray-500">Loading audits...</p>
           </div>
         )}
-        {page === "vendor" && (
-          <div className="transition-all duration-300 ease-linear">
-            <VendorAudit />
+
+        {error && (
+          <div className="flex items-center justify-center h-96">
+            <p className="text-red-500">{error}</p>
           </div>
+        )}
+
+        {!loading && !error && (
+          <>
+            {page === "operational" && (
+              <div className="transition-all duration-300 ease-linear">
+                <OperationalAudit audits={operationalAudits} />
+              </div>
+            )}
+            {page === "vendor" && (
+              <div className="transition-all duration-300 ease-linear">
+                <VendorAudit audits={vendorAudits} />
+              </div>
+            )}
+          </>
         )}
       </div>
     </section>
