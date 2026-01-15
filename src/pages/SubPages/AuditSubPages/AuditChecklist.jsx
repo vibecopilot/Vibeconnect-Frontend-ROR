@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import Table from "../../../components/table/Table";
 import { BsEye } from "react-icons/bs";
@@ -6,7 +6,10 @@ import { BiEdit } from "react-icons/bi";
 import { PiPlusCircle } from "react-icons/pi";
 import { useSelector } from "react-redux";
 
-const AuditChecklist = () => {
+const AuditChecklist = ({ audits = [] }) => {
+  const [searchText, setSearchText] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+
   const columns = [
     {
       name: "Action",
@@ -28,17 +31,58 @@ const AuditChecklist = () => {
     },
     {
       name: "Activity",
-      selector: (row) => row.activityName,
+      selector: (row) => row.activity_name,
+      sortable: true,
+    },
+    {
+      name: "Description",
+      selector: (row) => row.description,
+      sortable: true,
+    },
+    {
+      name: "Audit Type",
+      selector: (row) => row.checklist_type,
+      sortable: true,
+    },
+    {
+      name: "Task Count",
+      selector: (row) => row.audit_tasks?.length || 0,
       sortable: true,
     },
   ];
-  const data = [
-    {
-      id: "1",
-      activityName: "abc",
-      questionNumber: "5",
-    },
-  ];
+
+  const filteredData = useMemo(() => {
+    return audits.filter((audit) => {
+      const matchesSearch =
+        audit.activity_name?.toLowerCase().includes(searchText.toLowerCase()) ||
+        audit.description?.toLowerCase().includes(searchText.toLowerCase());
+
+      return matchesSearch;
+    });
+  }, [audits, searchText]);
+
+  const handleExport = () => {
+    const csv = [
+      ["ID", "Activity", "Description", "Audit Type", "Task Count"],
+      ...filteredData.map((audit) => [
+        audit.id,
+        audit.activity_name,
+        audit.description,
+        audit.checklist_type,
+        audit.audit_tasks?.length || 0,
+      ]),
+    ]
+      .map((row) => row.join(","))
+      .join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "audit_checklists.csv";
+    a.click();
+  };
+
   const themeColor = useSelector((state) => state.theme.color);
 
   return (
@@ -50,8 +94,8 @@ const AuditChecklist = () => {
               type="radio"
               id="all"
               name="status"
-              // checked={selectedStatus === "all"}
-              // onChange={() => handleStatusChange("all")}
+              checked={statusFilter === "all"}
+              onChange={() => setStatusFilter("all")}
             />
             <label htmlFor="all" className="text-sm">
               All
@@ -62,8 +106,8 @@ const AuditChecklist = () => {
               type="radio"
               id="open"
               name="status"
-              // checked={selectedStatus === "open"}
-              // onChange={() => handleStatusChange("open")}
+              checked={statusFilter === "open"}
+              onChange={() => setStatusFilter("open")}
             />
             <label htmlFor="open" className="text-sm">
               Open
@@ -74,8 +118,8 @@ const AuditChecklist = () => {
               type="radio"
               id="closed"
               name="status"
-              // checked={selectedStatus === "closed"}
-              // onChange={() => handleStatusChange("closed")}
+              checked={statusFilter === "closed"}
+              onChange={() => setStatusFilter("closed")}
             />
             <label htmlFor="closed" className="text-sm">
               Closed
@@ -86,8 +130,8 @@ const AuditChecklist = () => {
               type="radio"
               id="pending"
               name="status"
-              // checked={selectedStatus === "pending"}
-              // onChange={() => handleStatusChange("pending")}
+              checked={statusFilter === "pending"}
+              onChange={() => setStatusFilter("pending")}
             />
             <label htmlFor="pending" className="text-sm">
               Pending
@@ -98,8 +142,8 @@ const AuditChecklist = () => {
               type="radio"
               id="completed"
               name="status"
-              // checked={selectedStatus === "completed"}
-              // onChange={() => handleStatusChange("completed")}
+              checked={statusFilter === "completed"}
+              onChange={() => setStatusFilter("completed")}
             />
             <label htmlFor="completed" className="text-sm">
               Completed
@@ -111,27 +155,26 @@ const AuditChecklist = () => {
           <Link
             to={"/admin/add-audit-checklist"}
             className={`border-2 font-semibold hover:bg-black hover:text-white duration-300 transition-all border-black p-2 rounded-md text-black cursor-pointer text-center flex items-center gap-2 justify-center`}
-            // onClick={() => setShowCountry(!showCountry)}
           >
             <PiPlusCircle size={20} />
             Add
           </Link>
           <input
             type="text"
-            placeholder="Search  "
+            placeholder="Search..."
             className="border border-gray-400 w-96 placeholder:text-xs rounded-lg p-2"
-            //   value={searchText}
-            //   onChange={handleSearch}
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
           />
           <button
+            onClick={handleExport}
             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-            // onClick={exportToExcel}
           >
             Export
           </button>
         </div>
       </div>
-      <Table columns={columns} data={data} isPagination={true} />
+      <Table columns={columns} data={filteredData} isPagination={true} />
     </div>
   );
 };

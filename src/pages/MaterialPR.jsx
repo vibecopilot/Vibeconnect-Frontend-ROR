@@ -96,6 +96,7 @@ const MaterialPR = () => {
       sortable: true,
     },
     { name: "Active/Inactive", selector: (row) => <Switch />, sortable: true },
+    
   ];
 
   document.title = `Permit - Vibe Connect`;

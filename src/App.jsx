@@ -2631,9 +2631,7 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
-
-        {/*  */}
-
+        
         {/*
            <Route
             path="/employee/rvehiclesdetails/:id"

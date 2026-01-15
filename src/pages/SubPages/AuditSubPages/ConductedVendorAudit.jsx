@@ -1,11 +1,12 @@
-import React from "react";
+import React, { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import Table from "../../../components/table/Table";
 import { BsEye } from "react-icons/bs";
-import { BiEdit } from "react-icons/bi";
-import { PiPlusCircle } from "react-icons/pi";
 
-const ConductedVendorAudit = () => {
+const ConductedVendorAudit = ({ audits = [] }) => {
+  const [searchText, setSearchText] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+
   const columns = [
     {
       name: "Report",
@@ -14,7 +15,6 @@ const ConductedVendorAudit = () => {
           <Link to={`/tickets/details/${row.id}`}>
             <BsEye size={15} />
           </Link>
-         
         </div>
       ),
     },
@@ -24,56 +24,58 @@ const ConductedVendorAudit = () => {
       sortable: true,
     },
     {
-      name: "Vendor Name",
-      selector: (row) => row.auditName,
+      name: "Activity",
+      selector: (row) => row.activity_name,
       sortable: true,
     },
     {
-      name: "Audit Name",
-      selector: (row) => row.auditName,
+      name: "Audit For",
+      selector: (row) => row.audit_for,
       sortable: true,
     },
     {
-      name: "Date & Time",
-      selector: (row) => row.dateTime,
+      name: "Priority",
+      selector: (row) => row.priority,
       sortable: true,
     },
     {
-      name: "Conducted By",
-      selector: (row) => row.conductedBy,
+      name: "Created Date",
+      selector: (row) => new Date(row.created_at).toLocaleDateString(),
       sortable: true,
-    },
-    {
-      name: "Total Score",
-      selector: (row) => row.status,
-      sortable: true,
-    },
-    {
-      name: "Evaluation Score",
-      selector: (row) => row.site,
-      sortable: true,
-    },
-    
-    {
-      name: "%",
-      selector: (row) => row.percentage,
-      sortable: true,
-    },
-   
-  ];
-  const data = [
-    {
-      id: "1",
-      auditName: "abc",
-      dateTime: "20/10/2024 05:30 PM",
-      task: "xyz",
-      conductedBy: "kunal",
-      status: "200",
-      site: "300",
-     
-      percentage: "2%"
     },
   ];
+
+  const filteredData = useMemo(() => {
+    return audits.filter((audit) => {
+      const matchesSearch =
+        audit.activity_name?.toLowerCase().includes(searchText.toLowerCase()) ||
+        audit.audit_for?.toLowerCase().includes(searchText.toLowerCase());
+
+      return matchesSearch;
+    });
+  }, [audits, searchText]);
+
+  const handleExport = () => {
+    const csv = [
+      ["ID", "Activity", "Audit For", "Priority", "Created Date"],
+      ...filteredData.map((audit) => [
+        audit.id,
+        audit.activity_name,
+        audit.audit_for,
+        audit.priority,
+        new Date(audit.created_at).toLocaleDateString(),
+      ]),
+    ]
+      .map((row) => row.join(","))
+      .join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "conducted_vendor_audits.csv";
+    a.click();
+  };
 
   return (
     <div className="flex flex-col gap-2">
@@ -84,8 +86,8 @@ const ConductedVendorAudit = () => {
               type="radio"
               id="all"
               name="status"
-              // checked={selectedStatus === "all"}
-              // onChange={() => handleStatusChange("all")}
+              checked={statusFilter === "all"}
+              onChange={() => setStatusFilter("all")}
             />
             <label htmlFor="all" className="text-sm">
               All
@@ -96,8 +98,8 @@ const ConductedVendorAudit = () => {
               type="radio"
               id="open"
               name="status"
-              // checked={selectedStatus === "open"}
-              // onChange={() => handleStatusChange("open")}
+              checked={statusFilter === "open"}
+              onChange={() => setStatusFilter("open")}
             />
             <label htmlFor="open" className="text-sm">
               Open
@@ -108,8 +110,8 @@ const ConductedVendorAudit = () => {
               type="radio"
               id="closed"
               name="status"
-              // checked={selectedStatus === "closed"}
-              // onChange={() => handleStatusChange("closed")}
+              checked={statusFilter === "closed"}
+              onChange={() => setStatusFilter("closed")}
             />
             <label htmlFor="closed" className="text-sm">
               Closed
@@ -120,8 +122,8 @@ const ConductedVendorAudit = () => {
               type="radio"
               id="pending"
               name="status"
-              // checked={selectedStatus === "pending"}
-              // onChange={() => handleStatusChange("pending")}
+              checked={statusFilter === "pending"}
+              onChange={() => setStatusFilter("pending")}
             />
             <label htmlFor="pending" className="text-sm">
               Pending
@@ -132,8 +134,8 @@ const ConductedVendorAudit = () => {
               type="radio"
               id="completed"
               name="status"
-              // checked={selectedStatus === "completed"}
-              // onChange={() => handleStatusChange("completed")}
+              checked={statusFilter === "completed"}
+              onChange={() => setStatusFilter("completed")}
             />
             <label htmlFor="completed" className="text-sm">
               Completed
@@ -142,28 +144,23 @@ const ConductedVendorAudit = () => {
         </div>
 
         <div className="flex gap-2">
-         
           <input
             type="text"
-            placeholder="Search  "
+            placeholder="Search..."
             className="border border-gray-400 w-96 placeholder:text-xs rounded-lg p-2"
-            //   value={searchText}
-            //   onChange={handleSearch}
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
           />
-        <button
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-          // onClick={exportToExcel}
+          <button
+            onClick={handleExport}
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
           >
-          Export
-        </button>
-            </div>
+            Export
+          </button>
+        </div>
       </div>
-      <Table columns={columns} data={data} isPagination={true} />
+      <Table columns={columns} data={filteredData} isPagination={true} />
     </div>
   );
 };
-
-
-
-
 export default ConductedVendorAudit
