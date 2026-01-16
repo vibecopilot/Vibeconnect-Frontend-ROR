@@ -682,6 +682,28 @@ export const getFacitilitySetupId = async (id) =>
     },
   });
 
+
+export const updateAmenityBook = async (id, data) =>
+  axiosInstance.put(`/amenity_bookings/${id}.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+
+  export const postPaymentBookings = async (data) =>
+  axiosInstance.post(`/payments.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+
+  export const getPaymentBookings = async () =>
+  axiosInstance.get(`/payments.json`, {
+    params: {
+      token: token,
+    },
+  });
+
 export const updateFacitilitySetup = async (data, id) =>
   axiosInstance.put(`/amenities/${id}.json`, data, {
     params: {
@@ -1041,19 +1063,20 @@ export const getAmenitiesBooking = async () => {
 //   });
 // };
 
-// export const getAmenitiesBookingById = (id) => {
-//   return axiosInstance.get(`/amenity_bookings/${id}.json`, {
-//     params: { token }
-//   });
-// };
-export const getAmenitiesBookingById = async (id) => {
-  return axiosInstance.get(`/amenity_bookings.json`, {
-    params: {
-      token: token,
-      id: id,
-    },
+export const getAmenitiesBookingById = (id) => {
+  return axiosInstance.get(`/amenity_bookings/${id}.json`, {
+    params: { token }
   });
 };
+
+// export const getAmenitiesBookingById = async (id) => {
+//   return axiosInstance.get(`/amenity_bookings.json`, {
+//     params: {
+//       token: token,
+//       id: id,
+//     },
+//   });
+// };
 
 
 export const getFacilitySlots = async (facilityId, selectedDate) =>
