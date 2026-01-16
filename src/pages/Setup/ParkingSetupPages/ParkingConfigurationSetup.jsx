@@ -28,6 +28,7 @@ const normalizeParkingList = (respData) => {
   if (Array.isArray(respData)) return respData;
   if (Array.isArray(respData?.parking_configurations))
     return respData.parking_configurations;
+  if (Array.isArray(respData?.all_parking)) return respData.all_parking;
   if (Array.isArray(respData?.data)) return respData.data;
   return [];
 };
@@ -43,6 +44,15 @@ const ParkingConfigurationSetup = () => {
     if (Array.isArray(buildingsParsed?.data)) return buildingsParsed.data;
     return [];
   }, [buildingsParsed]);
+
+  /** ---------------- API token (query param) ---------------- */
+  // ✅ token should be present in localStorage (recommended), otherwise you can hardcode for testing
+  const apiTokenRaw =
+    getItemInLocalStorage("token") ||
+    getItemInLocalStorage("api_token") ||
+    getItemInLocalStorage("auth_token") ||
+    "";
+  const apiToken = typeof apiTokenRaw === "string" ? apiTokenRaw : String(apiTokenRaw || "");
 
   /** ---------------- listing ---------------- */
   const [data, setData] = useState([]);
@@ -61,6 +71,10 @@ const ParkingConfigurationSetup = () => {
   const [editVehicleType, setEditVehicleType] = useState("");
   const [editLoading, setEditLoading] = useState(false);
   const [editSaving, setEditSaving] = useState(false);
+
+  // ✅ reserved fields
+  const [editIsReserved, setEditIsReserved] = useState(false);
+  const [editReservedForUserId, setEditReservedForUserId] = useState("");
 
   /** ---------------- add modal ---------------- */
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -87,7 +101,6 @@ const ParkingConfigurationSetup = () => {
 
         setData(sorted);
 
-        // keep current search applied
         const v = searchText.trim().toLowerCase();
         if (!v) setFilteredData(sorted);
         else {
@@ -97,9 +110,7 @@ const ParkingConfigurationSetup = () => {
               const bn = (item?.building_name || "").toLowerCase();
               const fn = (item?.floor_name || "").toLowerCase();
               const vt = (item?.vehicle_type || "").toLowerCase();
-              return (
-                n.includes(v) || bn.includes(v) || fn.includes(v) || vt.includes(v)
-              );
+              return n.includes(v) || bn.includes(v) || fn.includes(v) || vt.includes(v);
             })
           );
         }
@@ -153,19 +164,20 @@ const ParkingConfigurationSetup = () => {
     setEditId(id);
     setIsEditModalOpen(true);
 
-    // reset UI before loading
     setLocation("");
     setFloor("");
     setFloors([]);
     setParkname("");
     setEditVehicleType("");
 
+    setEditIsReserved(false);
+    setEditReservedForUserId("");
+
     setEditLoading(true);
     try {
       const res = await getParkingConfigurationDetails(id);
       const d = res?.data || {};
 
-      // ✅ select needs string value
       const bId = d?.building_id != null ? String(d.building_id) : "";
       const fId = d?.floor_id != null ? String(d.floor_id) : "";
 
@@ -173,7 +185,11 @@ const ParkingConfigurationSetup = () => {
       setParkname(d?.name || "");
       setEditVehicleType(d?.vehicle_type || "");
 
-      // ✅ fetch floors first, then set floor (so dropdown has options)
+      setEditIsReserved(!!d?.is_reserved);
+      setEditReservedForUserId(
+        d?.reserved_for_user_id != null ? String(d.reserved_for_user_id) : ""
+      );
+
       if (bId) {
         const floorRes = await getFloors(bId);
         const floorList = Array.isArray(floorRes?.data) ? floorRes.data : [];
@@ -186,7 +202,6 @@ const ParkingConfigurationSetup = () => {
     } catch (error) {
       console.error(error);
       toast.error("Failed to fetch configuration details");
-      // close if failed
       setIsEditModalOpen(false);
       setEditId(null);
     } finally {
@@ -204,6 +219,9 @@ const ParkingConfigurationSetup = () => {
     setEditVehicleType("");
     setEditLoading(false);
     setEditSaving(false);
+
+    setEditIsReserved(false);
+    setEditReservedForUserId("");
   };
 
   /** ---------------- floors for add ---------------- */
@@ -246,30 +264,53 @@ const ParkingConfigurationSetup = () => {
     fetchFloorsData();
   }, [location, isEditModalOpen]);
 
-  /** ---------------- add submit ---------------- */
+  /** ---------------- add submit (✅ FIXED for /parking_configurations.json?token=...) ---------------- */
   const handleAddSubmit = async (e) => {
     e.preventDefault();
 
     if (!addLocation) return toast.error("Please select Location");
     if (!addFloor) return toast.error("Please select Floor");
     if (!addParkname.trim()) return toast.error("Please enter Parking Name");
+    if (!vehicleType) return toast.error("Please select Vehicle Type");
 
     setSaving(true);
 
-    const form = new FormData();
-    form.append("parking_configuration[building_id]", addLocation);
-    form.append("parking_configuration[floor_id]", addFloor);
-    form.append("parking_configuration[name]", addParkname.trim());
-    if (vehicleType) form.append("parking_configuration[vehicle_type]", vehicleType);
+    // ✅ Payload for /parking_configurations.json endpoint
+    const payload = {
+      all_parking: [
+        {
+          name: addParkname.trim(),
+          building_id: Number(addLocation),
+          floor_id: Number(addFloor),
+          vehicle_type: vehicleType,
+          is_reserved: false,
+        },
+      ],
+    };
 
     try {
-      await createParkingConfiguration(form);
-      toast.success("Parking configuration added successfully!");
+      const token = "e6fbf77f4fbb5a72c4150e495c961972f0f14059d8a6670f"; // ✅ use token from endpoint
+      const response = await fetch(
+        `https://admin.vibecopilot.ai/parking_configurations.json?token=${token}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      toast.success("Parking created successfully!");
       closeAddModal();
       setUpdate(true);
     } catch (err) {
       console.error(err);
-      toast.error(err?.response?.data?.error || "Failed to add configuration");
+      toast.error(err?.message || "Failed to add configuration");
     } finally {
       setSaving(false);
     }
@@ -281,12 +322,23 @@ const ParkingConfigurationSetup = () => {
     if (!location) return toast.error("Please select Location");
     if (!floor) return toast.error("Please select Floor");
     if (!parkname.trim()) return toast.error("Please enter Parking Name");
+    if (!editVehicleType) return toast.error("Please select Vehicle Type");
+
+    if (editIsReserved && !editReservedForUserId) {
+      return toast.error("Please enter Reserved For User ID");
+    }
 
     const form = new FormData();
     form.append("parking_configuration[building_id]", location);
     form.append("parking_configuration[floor_id]", floor);
     form.append("parking_configuration[name]", parkname.trim());
-    if (editVehicleType) form.append("parking_configuration[vehicle_type]", editVehicleType);
+    form.append("parking_configuration[vehicle_type]", editVehicleType);
+
+    form.append("parking_configuration[is_reserved]", String(!!editIsReserved));
+    form.append(
+      "parking_configuration[reserved_for_user_id]",
+      editIsReserved ? editReservedForUserId : ""
+    );
 
     try {
       setEditSaving(true);
@@ -318,6 +370,16 @@ const ParkingConfigurationSetup = () => {
       { name: "Location", selector: (row) => row?.building_name || "-" },
       { name: "Floor", selector: (row) => row?.floor_name || "-" },
       { name: "Parking Type", selector: (row) => row?.vehicle_type || "-" },
+      {
+        name: "Reserved",
+        selector: (row) => (row?.is_reserved ? "Yes" : "No"),
+        width: "110px",
+      },
+      {
+        name: "Reserved For",
+        selector: (row) => row?.reserved_for_user_id ?? "-",
+        width: "140px",
+      },
     ],
     []
   );
@@ -348,7 +410,8 @@ const ParkingConfigurationSetup = () => {
 
           {buildings.length === 0 && (
             <div className="text-sm text-red-600 mb-2">
-              Buildings list is empty. Check localStorage key <b>Building</b> (should be JSON array).
+              Buildings list is empty. Check localStorage key <b>Building</b>{" "}
+              (should be JSON array).
             </div>
           )}
 
@@ -372,14 +435,22 @@ const ParkingConfigurationSetup = () => {
           {/* ======================= EDIT MODAL ======================= */}
           {isEditModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center">
-              <div className="fixed inset-0 bg-black bg-opacity-60" onClick={closeEditModal} />
+              <div
+                className="fixed inset-0 bg-black bg-opacity-60"
+                onClick={closeEditModal}
+              />
 
               <div className="bg-white w-[420px] p-4 rounded-md relative z-50">
-                <button className="absolute top-3 right-3" onClick={closeEditModal}>
+                <button
+                  className="absolute top-3 right-3"
+                  onClick={closeEditModal}
+                >
                   <FaTimes />
                 </button>
 
-                <h2 className="text-lg font-semibold mb-4">Edit Parking Configuration</h2>
+                <h2 className="text-lg font-semibold mb-4">
+                  Edit Parking Configuration
+                </h2>
 
                 {editLoading ? (
                   <div className="text-sm">Loading details...</div>
@@ -390,7 +461,7 @@ const ParkingConfigurationSetup = () => {
                       value={location}
                       onChange={(e) => {
                         setLocation(e.target.value);
-                        setFloor(""); // ✅ reset floor on building change
+                        setFloor("");
                       }}
                     >
                       <option value="">Select Location</option>
@@ -428,9 +499,30 @@ const ParkingConfigurationSetup = () => {
                       onChange={(e) => setEditVehicleType(e.target.value)}
                     >
                       <option value="">Select Type</option>
-                      <option value="2-wheeler">2-wheeler</option>
                       <option value="4-wheeler">4-wheeler</option>
+                      <option value="2-wheeler">2-wheeler</option>
                     </select>
+
+                    {/* reserved fields */}
+                    <div className="flex items-center gap-2 mb-2">
+                      <input
+                        type="checkbox"
+                        checked={editIsReserved}
+                        onChange={(e) => {
+                          setEditIsReserved(e.target.checked);
+                          if (!e.target.checked) setEditReservedForUserId("");
+                        }}
+                      />
+                      <label className="text-sm font-medium">Is Reserved?</label>
+                    </div>
+
+                    <input
+                      className="border p-2 w-full mb-3 rounded-md"
+                      value={editReservedForUserId}
+                      onChange={(e) => setEditReservedForUserId(e.target.value)}
+                      placeholder="Reserved For User ID"
+                      disabled={!editIsReserved}
+                    />
 
                     <button
                       onClick={handleEdit}
@@ -449,24 +541,34 @@ const ParkingConfigurationSetup = () => {
           {/* ======================= ADD MODAL ======================= */}
           {isAddModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center">
-              <div className="fixed inset-0 bg-black bg-opacity-60" onClick={closeAddModal} />
+              <div
+                className="fixed inset-0 bg-black bg-opacity-60"
+                onClick={closeAddModal}
+              />
 
               <div className="bg-white w-[420px] p-4 rounded-md relative z-50">
-                <button className="absolute top-3 right-3" onClick={closeAddModal}>
+                <button
+                  className="absolute top-3 right-3"
+                  onClick={closeAddModal}
+                >
                   <FaTimes />
                 </button>
 
-                <h2 className="text-lg font-semibold mb-4">Add Parking Configuration</h2>
+                <h2 className="text-lg font-semibold mb-4">
+                  Add Parking Configuration
+                </h2>
 
                 <form onSubmit={handleAddSubmit} className="space-y-3">
                   <div>
-                    <label className="text-sm font-medium block mb-1">Location *</label>
+                    <label className="text-sm font-medium block mb-1">
+                      Location *
+                    </label>
                     <select
                       className="border p-2 w-full rounded-lg"
                       value={addLocation}
                       onChange={(e) => {
                         setAddLocation(e.target.value);
-                        setAddFloor(""); // ✅ reset floor on building change
+                        setAddFloor("");
                       }}
                     >
                       <option value="">Select Location</option>
@@ -479,7 +581,9 @@ const ParkingConfigurationSetup = () => {
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium block mb-1">Floor *</label>
+                    <label className="text-sm font-medium block mb-1">
+                      Floor *
+                    </label>
                     <select
                       className="border p-2 w-full rounded-lg"
                       value={addFloor}
@@ -496,7 +600,9 @@ const ParkingConfigurationSetup = () => {
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium block mb-1">Parking Name *</label>
+                    <label className="text-sm font-medium block mb-1">
+                      Parking Name *
+                    </label>
                     <input
                       className="border p-2 w-full rounded-lg"
                       value={addParkname}
@@ -506,15 +612,17 @@ const ParkingConfigurationSetup = () => {
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium block mb-1">Parking Type</label>
+                    <label className="text-sm font-medium block mb-1">
+                      Parking Type *
+                    </label>
                     <select
                       className="border p-2 w-full rounded-lg"
                       value={vehicleType}
                       onChange={(e) => setVehicleType(e.target.value)}
                     >
                       <option value="">Select Type</option>
-                      <option value="2-wheeler">2-wheeler</option>
                       <option value="4-wheeler">4-wheeler</option>
+                      <option value="2-wheeler">2-wheeler</option>
                     </select>
                   </div>
 

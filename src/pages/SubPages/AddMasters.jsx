@@ -47,6 +47,7 @@ const AddMasters = () => {
       // fetchParentAsset(assetGroupResponse.data.asset_group_id_eq);
       // console.log(assetGroupResponse)
     };
+    
 
     fetchAssetGroups();
   }, []);

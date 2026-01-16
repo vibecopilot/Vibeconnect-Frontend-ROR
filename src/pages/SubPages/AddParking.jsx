@@ -324,6 +324,7 @@ const AddParking = () => {
                   </option>
                 ))}
               </select>
+              
             </div>
             {/* <div className="grid  items-center">
                 <p className="font-semibold">From :</p>
