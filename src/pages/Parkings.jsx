@@ -18,6 +18,7 @@ const Parkings = () => {
     total_allotted_slots: 0,
     total_vacant_slots: 0,
   });
+  
 
   // New state to count vehicle types
   const [vehicleCounts, setVehicleCounts] = useState({

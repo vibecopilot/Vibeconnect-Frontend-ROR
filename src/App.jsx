@@ -154,6 +154,7 @@ import Wo from "./pages/Wo.jsx";
 import WoDetail from "./pages/SubPages/details/WoDetails.jsx";
 import Audit from "./pages/Audit.jsx";
 import AddScheduleAudit from "./pages/SubPages/AuditSubPages/AddScheduleAudit.jsx";
+import ReadingDashboard from "./pages/SubPages/ReadingDashboard.jsx";
 import GRN from "./pages/GRN.jsx";
 import AddGrn from "./pages/SubPages/AddGrn.jsx";
 import GrnDetails from "./pages/SubPages/details/GRNDetails.jsx";
@@ -7487,6 +7488,15 @@ function App() {
           path="/privacy-policy-adani-realty"
           element={<MycityPrivacy />}
         />
+
+      <Route
+        path="/admin/reading-dashboard"
+        element={
+          <ProtectedAdminRoutes>
+            <ReadingDashboard />
+          </ProtectedAdminRoutes>
+        }
+      />
       </Routes>
 
       <Footer />
