@@ -2516,13 +2516,12 @@ export const getAvailableParkingNumber = async () =>
     },
   });
 
-  export const createParkingConfiguration = async (data) =>
-  axiosInstance.post(`/parking_configurations.json`, data, {
-    params: {
-      token: token,
-    },
+export const createParkingConfiguration = (formData) => {
+  return axiosInstance.post("/parking_configurations.json", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
+};
+
 
 export const editParkingConfiguration = async (id, data) =>
   axiosInstance.put(`/parking_configurations/${id}.json`, data, {
