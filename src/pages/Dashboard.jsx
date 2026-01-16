@@ -157,12 +157,12 @@ const Dashboard = () => {
           </div>
         </header>
 
-        <div className="w-full flex mx-3 flex-col p-2 mb-5">
+        {/* <div className="w-full flex mx-3 flex-col p-2 mb-5">
           <h2 className="border-b-2 border-black font-medium">
             Reading Dashboard
           </h2>
           <ReadingDashboard />
-        </div>
+        </div> */}
 
         <div className="m-5">
           <TicketDashboard />
