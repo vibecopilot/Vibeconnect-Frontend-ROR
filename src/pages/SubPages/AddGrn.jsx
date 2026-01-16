@@ -232,6 +232,7 @@ const AddGrn = () => {
                     Supplier:
                   </label>
 
+
                   <select
                     className="border p-1 px-4 border-gray-500 rounded-md"
                     value={formData.vendor_id}
