@@ -6,7 +6,7 @@ function CommunicationDashboard() {
   const themeColor = useSelector((state)=> state.theme.color)
     const engagementOptions = {
         chart: {
-          type: 'column',  // Changed to 'column'
+          type: 'column',
         },
         title: {
           text: '',

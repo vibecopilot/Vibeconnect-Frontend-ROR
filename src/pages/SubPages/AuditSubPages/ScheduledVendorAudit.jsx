@@ -53,6 +53,7 @@ const ScheduledVendorAudit = ({ audits = [] }) => {
       sortable: true,
     },
   ];
+  
 
   const filteredData = useMemo(() => {
     return audits.filter((audit) => {
