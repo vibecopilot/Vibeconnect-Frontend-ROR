@@ -2730,12 +2730,14 @@ export const createRegisteredVehicleVisit = async (payload) => {
 
 
 
-export const getRegisteredVehicle = async () =>
+export const getRegisteredVehicle = async (params = {}) =>
   axiosInstance.get(`/registered_vehicles.json`, {
     params: {
-      token: token,
+      ...params,
+      token,
     },
-  })
+  });
+
 
 export const getRegisteredVehicleHistory = async (page = 1) =>
   axiosInstance.get(`/registered_vehicles_history.json`, {
@@ -10628,3 +10630,43 @@ export const uploadVisitorConsignment = (formData) => {
   });
 };
 
+
+//Vehicle Setup
+export const getVehicleSetup = async () =>
+  axiosInstance.get("/vehicle_setups.json", {
+    params: {
+      token: token,
+    },
+  });
+export const postVehicleSetup = async (data) =>
+  axiosInstance.post("/vehicle_setups.json", data, {
+    params: {
+      token: token,
+    },
+  });
+export const getVehicleSetupDetails = async (id) =>
+  axiosInstance.get(`/vehicle_setups/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const editVehicleSetup = async (id, data) =>
+  axiosInstance.put(`/vehicle_setups/${id}.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const deleteVehicleSetup = async (id) =>
+  axiosInstance.delete(`/vehicle_setups/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const putVehicleSetup = async (id, data) =>
+  axiosInstance.put(`/vehicle_setups/${id}.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+
+  

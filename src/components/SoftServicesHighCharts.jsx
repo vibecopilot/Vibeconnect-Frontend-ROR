@@ -1,54 +1,402 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
-import { getServicesTaskList, getSoftServiceDownload} from "../api";
+import { getServicesTaskList, getSoftServiceDownload } from "../api";
 import { useSelector } from "react-redux";
-import { CirclesWithBar, DNA, ThreeDots } from "react-loader-spinner";
-import { FaDownload } from "react-icons/fa";
+import { DNA } from "react-loader-spinner";
+import { FaDownload, FaChevronDown } from "react-icons/fa";
 import toast from "react-hot-toast";
-import { AiOutlineAreaChart, AiOutlineBarChart, AiOutlineLineChart } from "react-icons/ai";
+import {
+  AiOutlineAreaChart,
+  AiOutlineBarChart,
+  AiOutlineLineChart,
+} from "react-icons/ai";
 import { RiPieChartFill } from "react-icons/ri";
 import { PiChartBarHorizontal } from "react-icons/pi";
 
+/** ✅ Required blue palette */
+const PRIMARY_BLUE = "#1D4ED8";
+const LIGHT_BLUE = "#93C5FD";
 
-// import "react-loader-spinner/dist/loader/css/react-spinner-loader.css";
-const SoftServiceHighCharts = () => {
-  const [categoryData, setCategoryData] = useState({});
-  const [statusData, setStatusData] = useState({});
-  const [ticketTypes, setTicketTypes] = useState({});
-  const [floorTickets, setFloorTickets] = useState({});
-  const [unitTickets, setUnitTickets] = useState({});
-  const themeColor = useSelector((state) => state.theme.color);
+/** =========================
+ *  Screenshot UI building blocks
+ *  ========================= */
+const TrendPill = ({ percent, direction = "down" }) => {
+  if (percent === null || percent === undefined) return null;
+  const isUp = direction === "up";
+  return (
+    <span
+      className={[
+        "inline-flex items-center gap-1",
+        "px-3 py-1 rounded-full text-sm font-semibold",
+        isUp ? "bg-red-50 text-red-600" : "bg-emerald-50 text-emerald-700",
+      ].join(" ")}
+    >
+      <span className="text-base leading-none">{isUp ? "↗" : "↘"}</span>
+      {Math.abs(Number(percent) || 0).toFixed(1)}%
+    </span>
+  );
+};
+
+const LegendRow = ({ items = [] }) => {
+  if (!items.length) return null;
+  return (
+    <div className="flex flex-wrap items-center gap-6 mt-3">
+      {items.map((it) => (
+        <div key={it.label} className="flex items-center gap-2 text-sm">
+          <span
+            className="h-3 w-3 rounded-full"
+            style={{ backgroundColor: it.color }}
+          />
+          <span className="text-gray-800 font-semibold">
+            {it.label}:{" "}
+            <span className="font-semibold text-gray-900">
+              {it.value ?? 0}
+              {it.unit ? ` ${it.unit}` : ""}
+            </span>
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const IconBtn = ({ onClick, children, title }) => (
+  <button
+    type="button"
+    title={title}
+    onClick={onClick}
+    className="h-9 w-10 rounded-lg bg-gray-100 hover:bg-gray-200 transition grid place-items-center text-gray-700"
+  >
+    {children}
+  </button>
+);
+
+const chartIcon = (type) => {
+  switch (type) {
+    case "pie":
+      return <RiPieChartFill className="w-4 h-4" />;
+    case "bar":
+      return <PiChartBarHorizontal className="w-4 h-4" />;
+    case "column":
+      return <AiOutlineBarChart className="w-4 h-4" />;
+    case "line":
+      return <AiOutlineLineChart className="w-4 h-4" />;
+    case "area":
+      return <AiOutlineAreaChart className="w-4 h-4" />;
+    default:
+      return <RiPieChartFill className="w-4 h-4" />;
+  }
+};
+
+const ChartTypeMenu = ({ value, onChange, includeBar = false }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
   useEffect(() => {
-    const fetchTicketInfo = async () => {
-      try {
-        const ticketInfoResp = await getServicesTaskList();
-        setStatusData(ticketInfoResp.data.by_status);
-        setCategoryData(ticketInfoResp.data.by_building);
-
-
-        // setTicketTypes(ticketInfoResp.data.by_type);
-        setFloorTickets(ticketInfoResp.data.by_floor);
-        setUnitTickets(ticketInfoResp.data.by_unit);
-      } catch (error) {
-        console.log("Error fetching ticket info:", error);
-      }
+    const onDoc = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
     };
-
-
-    fetchTicketInfo();
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
   }, []);
 
+  const items = [
+    { key: "pie", label: "Pie" },
+    ...(includeBar ? [{ key: "bar", label: "Bar" }] : []),
+    { key: "column", label: "Column" },
+    { key: "line", label: "Line" },
+    { key: "area", label: "Area" },
+  ];
 
-  // download api
-  const handleSoftServiceDownload = async () => {
-    toast.loading("Downloading Please Wait");
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen((s) => !s)}
+        className="h-9 w-10 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 relative grid place-items-center"
+        title="Change chart type"
+      >
+        {chartIcon(value)}
+        <FaChevronDown className="absolute right-1 bottom-1 text-[10px] opacity-70" />
+      </button>
+
+      {open ? (
+        <div className="absolute right-0 mt-2 w-44 rounded-xl border border-gray-100 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.12)] overflow-hidden z-20">
+          {items.map((it) => (
+            <button
+              key={it.key}
+              type="button"
+              onClick={() => {
+                onChange(it.key);
+                setOpen(false);
+              }}
+              className={[
+                "w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-gray-50",
+                value === it.key
+                  ? "bg-gray-50 font-semibold text-gray-900"
+                  : "text-gray-700",
+              ].join(" ")}
+            >
+              <span className="text-gray-600">{chartIcon(it.key)}</span>
+              {it.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+};
+
+const ChartCard = ({
+  title,
+  subtitle,
+  trendPercent = null,
+  trendDirection = "down",
+  legendItems = [],
+  footerText = "",
+  footerDirection = "down",
+  onDownload,
+  chartType,
+  setChartType,
+  includeBar = false,
+  children,
+}) => {
+  const footerArrow = footerDirection === "up" ? "↑" : "↓";
+  const footerColor =
+    footerDirection === "up" ? "text-red-600" : "text-emerald-700";
+
+  return (
+    <div className="rounded-2xl border border-gray-100 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-5">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[18px] font-bold text-gray-900 truncate">{title}</p>
+          {subtitle ? (
+            <p className="text-sm text-gray-500 truncate mt-1">{subtitle}</p>
+          ) : null}
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          <TrendPill percent={trendPercent} direction={trendDirection} />
+          <ChartTypeMenu
+            value={chartType}
+            onChange={setChartType}
+            includeBar={includeBar}
+          />
+          <IconBtn onClick={onDownload} title="Download">
+            <FaDownload className="text-sm" />
+          </IconBtn>
+        </div>
+      </div>
+
+      <LegendRow items={legendItems} />
+
+      <div className="mt-2">{children}</div>
+
+      {footerText ? (
+        <div className="mt-2 text-center text-sm">
+          <span className={footerColor}>
+            {footerArrow} {footerText}
+          </span>
+        </div>
+      ) : null}
+    </div>
+  );
+};
+
+/** =========================
+ *  Highcharts builders
+ *  ========================= */
+const baseNoSelect = {
+  states: {
+    inactive: { opacity: 1 },
+    hover: { enabled: true },
+    select: { enabled: false },
+  },
+};
+
+const toSortedEntries = (obj = {}, order = "desc") =>
+  Object.entries(obj).sort((a, b) =>
+    order === "asc"
+      ? (Number(a[1]) || 0) - (Number(b[1]) || 0)
+      : (Number(b[1]) || 0) - (Number(a[1]) || 0)
+  );
+
+const buildPieOptions = ({ title, data, colorsMap }) => ({
+  chart: { type: "pie", backgroundColor: "transparent", height: 280 },
+  title: { text: null },
+  tooltip: {
+    backgroundColor: "#FFFFFF",
+    borderColor: "#E5E7EB",
+    borderRadius: 10,
+    shadow: false,
+    pointFormat: "{point.name}: <b>{point.y}</b>",
+  },
+  plotOptions: {
+    series: { ...baseNoSelect },
+    pie: {
+      ...baseNoSelect,
+      innerSize: "55%",
+      borderWidth: 0,
+      allowPointSelect: false,
+      cursor: "pointer",
+      dataLabels: { enabled: true, format: "<b>{point.name}</b>: {point.y}" },
+    },
+  },
+  series: [
+    {
+      name: title,
+      colorByPoint: true,
+      data: Object.keys(data || {}).map((k) => ({
+        name: k,
+        y: Number(data?.[k]) || 0,
+        color: colorsMap?.[k],
+      })),
+    },
+  ],
+  legend: { enabled: false },
+  credits: { enabled: false },
+  exporting: { enabled: false },
+});
+
+const buildXYOptions = ({
+  title,
+  type,
+  categories,
+  values,
+  themeColor,
+  colorByPoint = false,
+}) => {
+  const hcType =
+    type === "line" ? "spline" : type === "area" ? "areaspline" : type;
+
+  const areaFill =
+    type === "area"
+      ? {
+          linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+          stops: [
+            [0, Highcharts.color(themeColor).setOpacity(0.22).get("rgba")],
+            [1, Highcharts.color(themeColor).setOpacity(0).get("rgba")],
+          ],
+        }
+      : undefined;
+
+  return {
+    chart: {
+      type: hcType,
+      backgroundColor: "transparent",
+      height: 280,
+      spacing: [8, 8, 8, 8],
+    },
+    title: { text: null },
+    credits: { enabled: false },
+    exporting: { enabled: false },
+    legend: { enabled: false },
+
+    xAxis: {
+      categories,
+      lineColor: "#E5E7EB",
+      tickColor: "#E5E7EB",
+      labels: { style: { color: "#6B7280", fontSize: "12px" } },
+      title: { text: null },
+    },
+    yAxis: {
+      min: 0,
+      title: { text: null },
+      gridLineColor: "#E5E7EB",
+      gridLineDashStyle: "Dash",
+      labels: { style: { color: "#6B7280", fontSize: "12px" } },
+    },
+
+    tooltip: {
+      backgroundColor: "#FFFFFF",
+      borderColor: "#E5E7EB",
+      borderRadius: 10,
+      shadow: false,
+      pointFormat: "<b>{point.y}</b>",
+    },
+
+    plotOptions: {
+      series: {
+        ...baseNoSelect,
+        animation: true,
+        lineWidth: 3,
+        marker:
+          type === "line" || type === "area"
+            ? {
+                enabled: true,
+                radius: 4,
+                lineWidth: 2,
+                lineColor: themeColor,
+                fillColor: "#FFFFFF",
+              }
+            : { enabled: false },
+      },
+      column: {
+        borderRadius: 10,
+        pointPadding: 0.12,
+        groupPadding: 0.22,
+      },
+      bar: {
+        borderRadius: 10,
+        pointPadding: 0.12,
+        groupPadding: 0.22,
+      },
+    },
+
+    series: [
+      {
+        name: title,
+        color: themeColor,
+        colorByPoint,
+        data: values.map((v) =>
+          colorByPoint ? { y: Number(v) || 0 } : Number(v) || 0
+        ),
+        fillColor: areaFill,
+      },
+    ],
+  };
+};
+
+/** =========================
+ *  Main Component
+ *  ========================= */
+const SoftServiceHighCharts = () => {
+  const [byStatus, setByStatus] = useState({});
+  const [byBuilding, setByBuilding] = useState({});
+  const [byFloor, setByFloor] = useState({});
+  const [byUnit, setByUnit] = useState({});
+
+  // keep redux value if you want, but enforce your blue palette for charts
+  useSelector((state) => state.theme.color);
+  const chartBlue = PRIMARY_BLUE;
+
+  const [statusType, setStatusType] = useState("column");
+  const [buildingType, setBuildingType] = useState("line");
+  const [floorType, setFloorType] = useState("area");
+  const [unitType, setUnitType] = useState("column");
+
+  useEffect(() => {
+    const fetchInfo = async () => {
+      try {
+        const resp = await getServicesTaskList();
+        setByStatus(resp?.data?.by_status || {});
+        setByBuilding(resp?.data?.by_building || {});
+        setByFloor(resp?.data?.by_floor || {});
+        setByUnit(resp?.data?.by_unit || {});
+      } catch (e) {
+        console.log("Error fetching soft service info:", e);
+      }
+    };
+    fetchInfo();
+  }, []);
+
+  const handleDownload = async () => {
+    const toastId = toast.loading("Downloading Please Wait");
     try {
       const response = await getSoftServiceDownload();
       const url = window.URL.createObjectURL(
-        new Blob([response.data], {
-          type: response.headers["content-type"],
-        })
+        new Blob([response.data], { type: response.headers["content-type"] })
       );
       const link = document.createElement("a");
       link.href = url;
@@ -56,984 +404,215 @@ const SoftServiceHighCharts = () => {
       document.body.appendChild(link);
       link.click();
       link.remove();
+      toast.dismiss(toastId);
       toast.success("Soft Service downloaded successfully");
-      toast.dismiss();
     } catch (error) {
-      toast.dismiss();
+      toast.dismiss(toastId);
       console.error("Error downloading Soft Service:", error);
       toast.error("Something went wrong, please try again");
     }
   };
 
+  /** ✅ status colors now uses your blue */
+  const statusColors = useMemo(
+    () => ({
+      overdue: "#1d4ed8",
+      complete: "#8093ca",
+      pending: "#93c5fd",
+      inprogress: PRIMARY_BLUE,
+      in_progress: PRIMARY_BLUE,
+      open: PRIMARY_BLUE,
+    }),
+    []
+  );
 
-  const sortData = (data, order = "ascending") => {
-    const sortedEntries = Object.entries(data).sort(([, a], [, b]) =>
-      order === "ascending" ? b - a : a - b
+  /** ✅ legend uses your 2 blues */
+  const topTwoLegend = (obj, colorsMap) => {
+    const entries = toSortedEntries(obj, "desc").slice(0, 2);
+    return entries.map(([label, value], idx) => ({
+      label,
+      value,
+      color: colorsMap?.[label] || (idx === 0 ? PRIMARY_BLUE : LIGHT_BLUE),
+    }));
+  };
+
+  const calcTrendFromTotals = (obj) => {
+    const total = Object.values(obj || {}).reduce(
+      (s, v) => s + (Number(v) || 0),
+      0
     );
-    return Object.fromEntries(sortedEntries);
+    if (!Number.isFinite(total)) return { pct: null, dir: "down" };
+    return { pct: 0, dir: "down" };
   };
 
-
-  const getChartTypeIcon = (type) => {
-    switch (type) {
-      case "pie":
-        return <RiPieChartFill className="mr-2" />;
-      case "bar":
-        return <PiChartBarHorizontal className="mr-2" />;
-      case "column":
-        return <AiOutlineBarChart className="mr-2" />;
-      case "line":
-        return <AiOutlineLineChart className="mr-2" />;
-      case "area":
-        return <AiOutlineAreaChart className="mr-2" />;
-      default:
-        return null;
+  const statusOptions = useMemo(() => {
+    if (statusType === "pie") {
+      return buildPieOptions({
+        title: "Soft Services by Status",
+        data: byStatus,
+        colorsMap: statusColors,
+      });
     }
-  };
+    const entries = toSortedEntries(byStatus, "desc");
+    return buildXYOptions({
+      title: "Soft Services by Status",
+      type: statusType,
+      categories: entries.map(([k]) => k),
+      values: entries.map(([, v]) => v),
+      themeColor: chartBlue,
+    });
+  }, [byStatus, statusType, chartBlue, statusColors]);
 
+  const buildingOptions = useMemo(() => {
+    if (buildingType === "pie") {
+      return buildPieOptions({
+        title: "Soft Services by Building",
+        data: byBuilding,
+      });
+    }
+    const entries = toSortedEntries(byBuilding, "desc");
+    return buildXYOptions({
+      title: "Soft Services by Building",
+      type: buildingType,
+      categories: entries.map(([k]) => k),
+      values: entries.map(([, v]) => v),
+      themeColor: chartBlue,
+    });
+  }, [byBuilding, buildingType, chartBlue]);
 
-  const [isStatusDropdown, setIsStatusDropdown] = useState(false);
-  const [statusChartType, setStatusChartType] = useState("pie"); // State to store chart type
+  const floorOptions = useMemo(() => {
+    if (floorType === "pie") {
+      return buildPieOptions({
+        title: "Soft Services by Floor",
+        data: byFloor,
+      });
+    }
+    const entries = toSortedEntries(byFloor, "desc");
+    return buildXYOptions({
+      title: "Soft Services by Floor",
+      type: floorType,
+      categories: entries.map(([k]) => k),
+      values: entries.map(([, v]) => v),
+      themeColor: chartBlue,
+    });
+  }, [byFloor, floorType, chartBlue]);
 
+  const unitOptions = useMemo(() => {
+    if (unitType === "pie") {
+      return buildPieOptions({
+        title: "Soft Services by Unit",
+        data: byUnit,
+      });
+    }
+    const entries = toSortedEntries(byUnit, "desc");
+    const limited = entries.length > 25 ? entries.slice(0, 25) : entries;
 
-  const toggleStatusDropdown = () =>
-    setIsStatusDropdown(!isStatusDropdown);
+    return buildXYOptions({
+      title:
+        entries.length > 25
+          ? "Soft Services by Unit (Top 25)"
+          : "Soft Services by Unit",
+      type: unitType,
+      categories: limited.map(([k]) => k),
+      values: limited.map(([, v]) => v),
+      themeColor: chartBlue,
+    });
+  }, [byUnit, unitType, chartBlue]);
 
+  const Loading = () => (
+    <div className="h-[320px] flex items-center justify-center">
+      <DNA visible height="120" width="120" ariaLabel="dna-loading" />
+    </div>
+  );
 
-  // Change chart type based on dropdown selection
-  const handleStatusChartTypeChange = (type) => {
-    setStatusChartType(type);
-    setIsStatusDropdown(false); // Close the dropdown after selecting a chart type
-  };
-  const generatePieChartOptions = (title, data, chartType = statusChartType) => {
-    const colors = {
-      overdue: "#fbc02d", // Yellow
-      complete: "#4caf50", // Green
-      pending: "#f44336", // Red
-    };
- 
-    return {
-      chart: {
-        type: chartType, // Dynamically set the chart type
-        borderRadius: 30,
-      },
-      title: {
-        text: title,
-      },
-      xAxis: chartType === "column" ? {
-        categories: Object.keys(data), // Set the labels for column chart
-        title: {
-          text: "Status", // Optional: Label for x-axis
-        },
-      } : undefined, // No x-axis for pie chart
-      yAxis: chartType === "column" ? {
-        min: 0,
-        title: {
-          text: "Count", // Optional: Label for y-axis
-        },
-      } : undefined, // No y-axis for pie chart
-      plotOptions: {
-        column: {
-          pointPadding: 0.2,
-          borderWidth: 0,
-          dataLabels: {
-            enabled: true, // Enable data labels for column charts
-            format: "{point.y}", // Show only the value
-          },
-        },
-        line: {
-          dataLabels: {
-            enabled: true, // Enable data labels for line charts
-            format: "{point.y}", // Show only the value
-          },
-        },
-        pie: {
-          allowPointSelect: true,
-          cursor: "pointer",
-          dataLabels: {
-            enabled: true, // Enable data labels for pie charts
-            format: "{point.name}: {point.percentage:.1f}%", // Show name and percentage
-          },
-          showInLegend: true,
-        },
-        series: {
-          dataLabels: {
-            enabled: true, // Enable data labels for all chart types by default
-          },
-        },
-      },
-      series: [
-        {
-          name: title,
-          colorByPoint: chartType === "pie", // Only color by point for pie charts
-          data: chartType === "pie"
-            ? Object.keys(data).map((key) => ({
-                name: key,
-                y: data[key],
-                color: colors[key] || "#607d8b", // Default to grey if no color is defined
-              }))
-            : Object.values(data), // Use only values for column/line charts
-        },
-      ],
-    };
-  };
- 
- 
+  const statusTrend = calcTrendFromTotals(byStatus);
+  const buildingTrend = calcTrendFromTotals(byBuilding);
+  const floorTrend = calcTrendFromTotals(byFloor);
 
-
-  // const generateBarChartOptions = (title, data,order) => {
-  //   const sortedData = sortData(data, order);
-  //   return {
-  //     chart: {
-  //       type: "bar",
-  //       borderRadius: 30,
-  //     },
-  //     title: {
-  //       text: title,
-  //     },
-  //     xAxis: {
-  //       categories: Object.keys(sortedData),
-  //       // categories: Object.keys(data),
-  //       title: {
-  //         text: null,
-  //       },
-  //     },
-  //     yAxis: {
-  //       min: 0,
-  //       title: {
-  //         text: "Tickets",
-  //         // align: "high",
-  //       },
-  //       labels: {
-  //         overflow: "justify",
-  //       },
-  //     },
-  //     series: [
-  //       {
-  //         name: title,
-  //         data: Object.values(sortedData),
-  //         color: themeColor,
-  //       },
-  //     ],
-  //   };
-  // };
-
-
-
-
-  const [isBuildingDropdown, setIsBuildingDropdown] = useState(false);
-  const [buildingChartType, setBuildingChartType] = useState("bar"); // State to store chart type
-
-
-  const toggleBuildingDropdown = () =>
-    setIsBuildingDropdown(!isBuildingDropdown);
-
-
-  // Change chart type based on dropdown selection
-  const handleBuildingChartTypeChange = (type) => {
-    setBuildingChartType(type);
-    setIsBuildingDropdown(false); // Close the dropdown after selecting a chart type
-  };
-  const generateBarChartOptions = (title, data, order) => {
-    const sortedData = sortData(data, order);
-  
-    // Prepare series data with labels
-    const seriesData = Object.keys(sortedData).map((key) => ({
-      name: key, // Label for the bar
-      y: sortedData[key], // Value for the bar
-    }));
-  
-    return {
-      chart: {
-        type: buildingChartType,
-        borderRadius: 30,
-      },
-      title: {
-        text: title,
-      },
-      xAxis: {
-        categories: Object.keys(sortedData), // Use keys as categories
-        title: {
-          text: null,
-        },
-      },
-      yAxis: {
-        min: 0,
-        title: {
-          text: "Services",
-        },
-        labels: {
-          overflow: "justify",
-        },
-      },
-      plotOptions: {
-        bar: {
-          dataLabels: {
-            enabled: true,
-            formatter: function () {
-              // Display series label (name) and value (y) for each bar
-              return `${this.point.name}: ${this.y}`;
-            },
-            style: {
-              textOutline: "none", // Remove text outline
-              fontSize: "12px", // Adjust font size
-            },
-          },
-        },
-        column: {
-          pointPadding: 0.2,
-          borderWidth: 0,
-        },
-        line: {
-          dataLabels: {
-            enabled: true,
-          },
-        },
-        area: {
-          stacking: "normal",
-        },
-        pie: {
-          allowPointSelect: true,
-          cursor: "pointer",
-          dataLabels: {
-            enabled: true,
-            format: "{point.name}: {point.percentage:.1f}%",
-          },
-          showInLegend: true,
-        },
-      },
-      series: [
-        {
-          name: title, // Legend name
-          data: seriesData, // Data with labels
-          color: themeColor,
-        },
-      ],
-    };
-  };  
-  const generateColumnChartOptions = (title, data, order = "ascending") => {
-    const sortedData = sortData(data, order);
-    const TicketsType = Object.keys(sortedData);
-    const ticketValues = Object.values(sortedData);
-
-
-    return {
-      chart: {
-        type: "column",
-        borderRadius: 30,
-      },
-      title: {
-        text: title,
-      },
-      xAxis: {
-        categories: TicketsType,
-        title: {
-          text: "Building",
-        },
-        labels: {
-          rotation: 0, // Ensures the text is straight (no rotation)
-          style: {
-            fontSize: "11px", // Adjust the font size for better readability
-          },
-        },
-      },
-      yAxis: {
-        min: 0,
-        title: {
-          text: "Services",
-        },
-      },
-      plotOptions: {
-        column: {
-          dataLabels: {
-            enabled: true,
-            formatter: function () {
-              return this.y; // Display the y value (data value) on the bar
-            },
-            style: {
-              textOutline: false, // Remove text outline (optional)
-            },
-          },
-        },
-        line: {
-          dataLabels: {
-            enabled: true,
-          },
-        },
-        area: {
-          stacking: "normal",
-        },
-        pie: {
-          allowPointSelect: true,
-          cursor: "pointer",
-          dataLabels: {
-            enabled: true,
-            format: "{point.name}: {point.percentage:.1f}%",
-          },
-          showInLegend: true,
-        },
-      },
-      series: [
-        {
-          name: "Soft Services by Building",
-          data: ticketValues,
-          color: themeColor,
-        },
-      ],
-    };
-  };
-
-
-  const [isFloorDropdown, setIsFloorDropdown] = useState(false);
-  const [floorChartType, setFloorChartType] = useState("column"); // State to store chart type
-
-
-  const toggleFloorDropdown = () =>
-    setIsFloorDropdown(!isFloorDropdown);
-
-
-  // Change chart type based on dropdown selection
-  const handleFloorChartTypeChange = (type) => {
-    setFloorChartType(type);
-    setIsFloorDropdown(false); // Close the dropdown after selecting a chart type
-  };
-  const generateFloorColumnChartOptions = (
-    title,
-    data,
-    order = "ascending"
-  ) => {
-    const sortedData = sortData(data, order);
-  
-    // Prepare series data with labels
-    const seriesData = Object.keys(sortedData).map((key) => ({
-      name: key, // Label for the bar
-      y: sortedData[key], // Value for the bar
-    }));
-  
-    return {
-      chart: {
-        type: floorChartType,
-        borderRadius: 30,
-      },
-      title: {
-        text: title,
-      },
-      max: 10,
-      scrollbar: {
-        enabled: true,
-      },
-      xAxis: {
-        categories: Object.keys(sortedData),
-        title: {
-          text: "Floors",
-        },
-        labels: {
-          rotation: 0, // Ensures the text is straight (no rotation)
-          style: {
-            fontSize: "12px", // Adjust font size for better readability
-          },
-        },
-      },
-      yAxis: {
-        min: 0,
-        title: {
-          text: "Services",
-        },
-      },
-      plotOptions: {
-        pie: {
-          allowPointSelect: true,
-          cursor: "pointer",
-          dataLabels: {
-            enabled: true,
-            format: "{point.name}: {point.percentage:.1f}%",
-          },
-          showInLegend: true,
-        },
-        column: {
-          dataLabels: {
-            enabled: true,
-            formatter: function () {
-              // Display series label (name) and value (y) for each bar
-              return `${this.point.name}: ${this.y}`;
-            },
-            style: {
-              textOutline: false, // Remove text outline (optional)
-              fontSize: "12px", // Adjust font size for better readability
-            },
-          },
-        },
-      },
-      series: [
-        {
-          name: "Soft Services By Floor", // Legend name
-          data: seriesData, // Data with labels
-          color: themeColor,
-        },
-      ],
-    };
-  };  
-
-
-  const [isUnitDropdown, setIsUnitDropdown] = useState(false);
-  const [unitChartType, setUnitChartType] = useState("column"); // State to store chart type
-
-
-  const toggleUnitDropdown = () =>
-    setIsUnitDropdown(!isFloorDropdown);
-
-
-  // Change chart type based on dropdown selection
-  const handleUnitChartTypeChange = (type) => {
-    setUnitChartType(type);
-    setIsUnitDropdown(false); // Close the dropdown after selecting a chart type
-  };
-  const generateUnitColumnChartOptions = (title, data, order = "ascending") => {
-    const sortedData = sortData(data, order); // Sort the data
-    const unitTickets = Object.keys(sortedData);
-    const ticketValues = Object.values(sortedData);
-  
-    // Prepare the data for series with labels
-    const seriesData = unitTickets.map((unit, index) => ({
-      name: unit, // Label for the bar (e.g., "Unit 1", "Unit 2")
-      y: ticketValues[index], // Value for the bar
-    }));
-  
-    return {
-      chart: {
-        type: unitChartType,
-        borderRadius: 30,
-        scrollablePlotArea: {
-          minWidth: unitTickets.length * 100, // Dynamically adjust scrollable area based on number of units
-          scrollPositionX: 0, // Start the scroll from the left
-        },
-      },
-      title: {
-        text: title,
-      },
-      xAxis: {
-        categories: unitTickets,
-        title: {
-          text: "Units",
-        },
-        scrollbar: {
-          enabled: unitTickets.length > 10, // Enable scrollbar if there are more than 10 units
-        },
-        labels: {
-          rotation: 0, // Ensures the text is straight (no rotation)
-          style: {
-            fontSize: "12px", // Adjust the font size for better readability
-          },
-        },
-      },
-      yAxis: {
-        min: 0,
-        title: {
-          text: "Services",
-        },
-      },
-      plotOptions: {
-        pie: {
-          allowPointSelect: true,
-          cursor: "pointer",
-          dataLabels: {
-            enabled: true,
-            format: "{point.name}: {point.percentage:.1f}%",
-          },
-          showInLegend: true,
-        },
-        column: {
-          dataLabels: {
-            enabled: true,
-            formatter: function () {
-              // Display both the label (name) and value (y) for each bar
-              return `${this.point.name}: ${this.y}`;
-            },
-            style: {
-              textOutline: false, // Remove text outline (optional)
-              fontSize: "12px", // Adjust font size for better readability
-            },
-          },
-        },
-      },
-      series: [
-        {
-          name: "Soft Services by Units", // Series label (name)
-          data: seriesData, // Data with labels and values
-          color: themeColor,
-        },
-      ],
-    };
-  };
-  
   return (
-    <div>
-      <div className="grid md:grid-cols-2 mr-2  gap-2">
-        <div className=" shadow-custom-all-sides rounded-md">
-          <div className="flex justify-end p-3">
-            <button
-              className="rounded-md bg-gray-200 py-1 px-5"
-              onClick={handleSoftServiceDownload}
-            >
-              <FaDownload />
-            </button>
-            <div className="relative inline-block text-left mx-1">
-              <button
-                onClick={toggleStatusDropdown}
-                className="bg-blue-200 text-blue-500 px-4 rounded-md py-1"
-              >
-                <span className="flex justify-center">
-                  {getChartTypeIcon(statusChartType)}
-                </span>
-              </button>
-
-
-              {isStatusDropdown && (
-                <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-md shadow-lg z-10">
-                  <div className="py-1">
-                    <button
-                      onClick={() => handleStatusChartTypeChange("pie")}
-                      className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
-                        statusChartType === "pie"
-                          ? "bg-gray-200 text-black"
-                          : ""
-                      }`}
-                    >
-                      <div className="flex items-center">
-                        <RiPieChartFill className="mr-2" />
-                        <span className="text-xs">Pie</span>
-                      </div>
-                    </button>
-                    <button
-                      onClick={() => handleStatusChartTypeChange("column")}
-                      className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
-                        statusChartType === "column"
-                          ? "bg-gray-200 text-black"
-                          : ""
-                      }`}
-                    >
-                      <div className="flex items-center">
-                        <AiOutlineBarChart className="mr-2" />
-                        <span className="text-xs">Column</span>
-                      </div>
-                    </button>
-                    <button
-                      onClick={() => handleStatusChartTypeChange("line")}
-                      className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
-                        statusChartType === "line"
-                          ? "bg-gray-200 text-black"
-                          : ""
-                      }`}
-                    >
-                      <div className="flex items-center">
-                        <AiOutlineLineChart className="mr-2" />
-                        <span className="text-xs">Line</span>
-                      </div>
-                    </button>
-                    <button
-                      onClick={() => handleStatusChartTypeChange("area")}
-                      className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
-                        statusChartType === "area"
-                          ? "bg-gray-200 text-black"
-                          : ""
-                      }`}
-                    >
-                      <div className="flex items-center">
-                        <AiOutlineAreaChart className="mr-2" />
-                        <span className="text-xs">Area</span>
-                      </div>
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-          {statusData ? (
-            <HighchartsReact
-              highcharts={Highcharts}
-              options={generatePieChartOptions(
-                "Soft Services by Status",
-                statusData
-              )}
-            />
-          ) : (
-            <div className="flex justify-center items-center h-full">
-              <DNA
-                visible={true}
-                height="120"
-                width="120"
-                ariaLabel="dna-loading"
-                wrapperStyle={{}}
-                wrapperClass="dna-wrapper"
-              />
-            </div>
-          )}
-        </div>
-
-
-        <div className="bg-white shadow-custom-all-sides rounded-md">
-          <div className="flex justify-end p-3">
-            <button
-              className="rounded-md bg-gray-200 py-1 px-5"
-              onClick={handleSoftServiceDownload}
-            >
-              <FaDownload />
-            </button>
-            <div className="relative inline-block text-left mx-1">
-              <button
-                onClick={toggleBuildingDropdown}
-                className="bg-blue-200 text-blue-500 px-4 rounded-md py-1"
-              >
-                <span className="flex justify-center">
-                  {getChartTypeIcon(buildingChartType)}
-                </span>
-              </button>
-
-
-              {isBuildingDropdown && (
-                <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-md shadow-lg z-10">
-                  <div className="py-1">
-                    <button
-                      onClick={() => handleBuildingChartTypeChange("bar")}
-                      className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
-                        buildingChartType === "bar"
-                          ? "bg-gray-200 text-black"
-                          : ""
-                      }`}
-                    >
-                      <div className="flex items-center">
-                        <PiChartBarHorizontal className="mr-2" />
-                        <span className="text-xs">Bar</span>
-                      </div>
-                    </button>
-                    <button
-                      onClick={() => handleBuildingChartTypeChange("line")}
-                      className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
-                        buildingChartType === "line"
-                          ? "bg-gray-200 text-black"
-                          : ""
-                      }`}
-                    >
-                      <div className="flex items-center">
-                        <AiOutlineLineChart className="mr-2" />
-                        <span className="text-xs">Line</span>
-                      </div>
-                    </button>
-                    <button
-                      onClick={() => handleBuildingChartTypeChange("column")}
-                      className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
-                        buildingChartType === "column"
-                          ? "bg-gray-200 text-black"
-                          : ""
-                      }`}
-                    >
-                      <div className="flex items-center">
-                        <AiOutlineBarChart className="mr-2" />
-                        <span className="text-xs">Column</span>
-                      </div>
-                    </button>
-                    <button
-                      onClick={() => handleBuildingChartTypeChange("pie")}
-                      className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
-                        buildingChartType === "pie"
-                          ? "bg-gray-200 text-black"
-                          : ""
-                      }`}
-                    >
-                      <div className="flex items-center">
-                        <RiPieChartFill className="mr-2" />
-                        <span className="text-xs">Pie</span>
-                      </div>
-                    </button>
-                    <button
-                      onClick={() => handleBuildingChartTypeChange("area")}
-                      className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
-                        buildingChartType === "area"
-                          ? "bg-gray-200 text-black"
-                          : ""
-                      }`}
-                    >
-                      <div className="flex items-center">
-                        <AiOutlineAreaChart className="mr-2" />
-                        <span className="text-xs">Area</span>
-                      </div>
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-          {categoryData ? (
-            <HighchartsReact
-              highcharts={Highcharts}
-              options={generateBarChartOptions(
-                "Soft Services by Building",
-                categoryData
-              )}
-              order="descending"
-            />
-          ) : (
-            <div className="flex justify-center items-center h-full">
-              <DNA
-                visible={true}
-                height="120"
-                width="120"
-                ariaLabel="dna-loading"
-                wrapperStyle={{}}
-                wrapperClass="dna-wrapper"
-              />
-            </div>
-          )}
-        </div>
-
-
-        {/* <div className="bg-white shadow-custom-all-sides rounded-md">
-          {ticketTypes ? <HighchartsReact
-            highcharts={Highcharts}
-            options={generateColumnChartOptions("Tickets by Type", ticketTypes)}
-              order="ascending"
-
-
-          /> : (
-            <div className="flex justify-center items-center h-full">
-              <DNA
-                visible={true}
-                height="120"
-                width="120"
-                ariaLabel="dna-loading"
-                wrapperStyle={{}}
-                wrapperClass="dna-wrapper"
-              />
-            </div>
-          )}
-        </div> */}
-      </div>
-      {/* <div className="bg-white shadow-custom-all-sides rounded-md my-2 mr-2">
-          {categoryData ? <HighchartsReact
-            highcharts={Highcharts}
-            options={generateColumnChartOptions("Soft Services by Building", categoryData)}
-              order="ascending"
-
-
-          /> : (
-            <div className="flex justify-center items-center h-full">
-              <DNA
-                visible={true}
-                height="120"
-                width="120"
-                ariaLabel="dna-loading"
-                wrapperStyle={{}}
-                wrapperClass="dna-wrapper"
-              />
-            </div>
-          )}
-        </div> */}
-      <div className="bg-white shadow-custom-all-sides rounded-md my-2 mr-2">
-        <div className="flex justify-end p-3">
-          <button
-            className="rounded-md bg-gray-200 py-1 px-5"
-            onClick={handleSoftServiceDownload}
-          >
-            <FaDownload />
-          </button>
-          <div className="relative inline-block text-left mx-1">
-            <button
-              onClick={toggleFloorDropdown}
-              className="bg-blue-200 text-blue-500 px-4 rounded-md py-1"
-            >
-              <span className="flex justify-center">
-                {getChartTypeIcon(floorChartType)}
-              </span>
-            </button>
-
-
-            {isFloorDropdown && (
-              <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-md shadow-lg z-10">
-                <div className="py-1">
-                  <button
-                    onClick={() => handleFloorChartTypeChange("column")}
-                    className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
-                      floorChartType === "column"
-                        ? "bg-gray-200 text-black"
-                        : ""
-                    }`}
-                  >
-                    <div className="flex items-center">
-                      <AiOutlineBarChart className="mr-2" />
-                      <span className="text-xs">Column</span>
-                    </div>
-                  </button>
-                  <button
-                    onClick={() => handleFloorChartTypeChange("line")}
-                    className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
-                      floorChartType === "line"
-                        ? "bg-gray-200 text-black"
-                        : ""
-                    }`}
-                  >
-                    <div className="flex items-center">
-                      <AiOutlineLineChart className="mr-2" />
-                      <span className="text-xs">Line</span>
-                    </div>
-                  </button>
-                  <button
-                    onClick={() => handleFloorChartTypeChange("pie")}
-                    className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
-                      floorChartType === "pie"
-                        ? "bg-gray-200 text-black"
-                        : ""
-                    }`}
-                  >
-                    <div className="flex items-center">
-                      <RiPieChartFill className="mr-2" />
-                      <span className="text-xs">Pie</span>
-                    </div>
-                  </button>
-                  <button
-                    onClick={() => handleFloorChartTypeChange("area")}
-                    className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
-                      floorChartType === "area"
-                        ? "bg-gray-200 text-black"
-                        : ""
-                    }`}
-                  >
-                    <div className="flex items-center">
-                      <AiOutlineAreaChart className="mr-2" />
-                      <span className="text-xs">Area</span>
-                    </div>
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-        {floorTickets ? (
-          <HighchartsReact
-            highcharts={Highcharts}
-            options={generateFloorColumnChartOptions(
-              "Soft Services by Floor",
-              floorTickets
-            )}
-          />
-        ) : (
-          <div className="flex justify-center items-center h-full">
-            <DNA
-              visible={true}
-              height="120"
-              width="120"
-              ariaLabel="dna-loading"
-              wrapperStyle={{}}
-              wrapperClass="dna-wrapper"
-            />
-          </div>
-        )}
-      </div>
-      <div className="bg-white shadow-custom-all-sides rounded-md my-2 mr-2">
-      <div className="flex justify-end p-3">
-        <button
-          className="rounded-md bg-gray-200 py-1 px-5"
-          onClick={handleSoftServiceDownload}
+    <div className="w-full px-3 pb-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <ChartCard
+          title="Soft Services"
+          subtitle="By Status"
+          trendPercent={statusTrend.pct}
+          trendDirection={statusTrend.dir}
+          legendItems={topTwoLegend(byStatus, statusColors)}
+          onDownload={handleDownload}
+          chartType={statusType}
+          setChartType={setStatusType}
+          includeBar={false}
         >
-          <FaDownload  />
-        </button>
-        <div className="relative inline-block text-left mx-1">
-            <button
-              onClick={toggleUnitDropdown}
-              className="bg-blue-200 text-blue-500 px-4 rounded-md py-1"
-            >
-              <span className="flex justify-center">
-                {getChartTypeIcon(unitChartType)}
-              </span>
-            </button>
+          {byStatus && Object.keys(byStatus).length ? (
+            <HighchartsReact highcharts={Highcharts} options={statusOptions} />
+          ) : (
+            <Loading />
+          )}
+        </ChartCard>
 
-
-            {isUnitDropdown && (
-              <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-md shadow-lg z-10">
-                <div className="py-1">
-                  <button
-                    onClick={() => handleUnitChartTypeChange("column")}
-                    className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
-                      unitChartType === "column"
-                        ? "bg-gray-200 text-black"
-                        : ""
-                    }`}
-                  >
-                    <div className="flex items-center">
-                      <AiOutlineBarChart className="mr-2" />
-                      <span className="text-xs">Column</span>
-                    </div>
-                  </button>
-                  <button
-                    onClick={() => handleUnitChartTypeChange("line")}
-                    className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
-                      unitChartType === "line"
-                        ? "bg-gray-200 text-black"
-                        : ""
-                    }`}
-                  >
-                    <div className="flex items-center">
-                      <AiOutlineLineChart className="mr-2" />
-                      <span className="text-xs">Line</span>
-                    </div>
-                  </button>
-                  <button
-                    onClick={() => handleUnitChartTypeChange("pie")}
-                    className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
-                      unitChartType === "pie"
-                        ? "bg-gray-200 text-black"
-                        : ""
-                    }`}
-                  >
-                    <div className="flex items-center">
-                      <RiPieChartFill className="mr-2" />
-                      <span className="text-xs">Pie</span>
-                    </div>
-                  </button>
-                  <button
-                    onClick={() => handleUnitChartTypeChange("area")}
-                    className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
-                      unitChartType === "area"
-                        ? "bg-gray-200 text-black"
-                        : ""
-                    }`}
-                  >
-                    <div className="flex items-center">
-                      <AiOutlineAreaChart className="mr-2" />
-                      <span className="text-xs">Area</span>
-                    </div>
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-      </div>
-        {unitTickets ? (
-          <HighchartsReact
-            highcharts={Highcharts}
-            options={generateUnitColumnChartOptions(
-              "Soft Services by Unit",
-              unitTickets
-            )}
-          />
-        ) : (
-          <div className="flex justify-center items-center h-full">
-            <DNA
-              visible={true}
-              height="120"
-              width="120"
-              ariaLabel="dna-loading"
-              wrapperStyle={{}}
-              wrapperClass="dna-wrapper"
+        <ChartCard
+          title="Soft Services"
+          subtitle="By Building"
+          trendPercent={buildingTrend.pct}
+          trendDirection={buildingTrend.dir}
+          legendItems={topTwoLegend(byBuilding)}
+          onDownload={handleDownload}
+          chartType={buildingType}
+          setChartType={setBuildingType}
+          includeBar={true}
+        >
+          {byBuilding && Object.keys(byBuilding).length ? (
+            <HighchartsReact
+              highcharts={Highcharts}
+              options={buildingOptions}
             />
-          </div>
-        )}
+          ) : (
+            <Loading />
+          )}
+        </ChartCard>
+
+        <ChartCard
+          title="Soft Services"
+          subtitle="By Floor"
+          trendPercent={floorTrend.pct}
+          trendDirection={floorTrend.dir}
+          legendItems={topTwoLegend(byFloor)}
+          onDownload={handleDownload}
+          chartType={floorType}
+          setChartType={setFloorType}
+          includeBar={false}
+        >
+          {byFloor && Object.keys(byFloor).length ? (
+            <HighchartsReact highcharts={Highcharts} options={floorOptions} />
+          ) : (
+            <Loading />
+          )}
+        </ChartCard>
+      </div>
+
+      <div className="mt-6">
+        <ChartCard
+          title="Soft Services"
+          subtitle="By Unit"
+          legendItems={topTwoLegend(byUnit)}
+          footerText={
+            Object.keys(byUnit || {}).length > 25 ? "Showing top 25 units" : ""
+          }
+          footerDirection="down"
+          onDownload={handleDownload}
+          chartType={unitType}
+          setChartType={setUnitType}
+          includeBar={false}
+        >
+          {byUnit && Object.keys(byUnit).length ? (
+            <HighchartsReact highcharts={Highcharts} options={unitOptions} />
+          ) : (
+            <Loading />
+          )}
+        </ChartCard>
       </div>
     </div>
   );
 };
 
-
 export default SoftServiceHighCharts;
-
-
-
