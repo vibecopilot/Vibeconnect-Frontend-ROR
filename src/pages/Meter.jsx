@@ -64,6 +64,8 @@ const themeColor =useSelector((state)=> state.theme.color)
       name: "Asset Name",
       selector: (row) => row.name,
       sortable: true,
+      width: "350px",
+      
     },
 
     {

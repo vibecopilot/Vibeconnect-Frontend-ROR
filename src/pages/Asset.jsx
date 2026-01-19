@@ -106,7 +106,7 @@ const Asset = () => {
       name: "Asset Name",
       selector: (row) => row.name,
       sortable: true,
-      width: "150px",
+      width: "350px",
     },
 
     {
