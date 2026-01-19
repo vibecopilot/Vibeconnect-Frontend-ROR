@@ -1,13 +1,13 @@
 import React, { useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import toast from "react-hot-toast";
 import {
   Wind,
   Cloud,
   Leaf,
-  Thermometer,
-  Droplets,
-  Zap,
+  Atom,
   Droplet,
+  Zap,
   Settings,
   Activity,
   Users,
@@ -17,19 +17,75 @@ import {
   TrendingDown,
   ChevronDown,
 } from "lucide-react";
+import { FaDownload } from "react-icons/fa";
+import { RiPieChartFill } from "react-icons/ri";
 import {
-  LineChart,
-  Line,
+  AiOutlineBarChart,
+  AiOutlineLineChart,
+  AiOutlineAreaChart,
+} from "react-icons/ai";
+import {
+  ResponsiveContainer,
   BarChart,
   Bar,
+  LineChart,
+  Line,
   AreaChart,
   Area,
+  PieChart,
+  Pie,
+  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer,
 } from "recharts";
+
+const downloadApi = {
+  ebPowerUtilization: async () => {
+    throw new Error("Wire EB Power Utilization download API");
+  },
+  waterConsumption: async () => {
+    throw new Error("Wire Water Consumption download API");
+  },
+  dgPowerUtilization: async () => {
+    throw new Error("Wire DG Power Utilization download API");
+  },
+  airQualityIndex: async () => {
+    throw new Error("Wire Air Quality Index download API");
+  },
+  ebPowerUsage: async () => {
+    throw new Error("Wire EB Power Usage download API");
+  },
+  waterConsumptionAnalytics: async () => {
+    throw new Error("Wire Water Consumption (Analytics) download API");
+  },
+};
+
+const saveBlobAsFile = (blob, filename) => {
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.setAttribute("download", filename);
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+};
+
+const downloadExcel = async (fetcher, filename) => {
+  const toastId = toast.loading("Downloading...");
+  try {
+    const res = await fetcher();
+    const blob = res?.data instanceof Blob ? res.data : new Blob([res?.data]);
+    saveBlobAsFile(blob, filename);
+    toast.dismiss(toastId);
+    toast.success("Downloaded");
+  } catch (e) {
+    toast.dismiss(toastId);
+    toast.error(e?.message || "Download failed");
+  }
+};
 
 /** ---------- Small UI helpers ---------- */
 const Card = ({ className = "", children }) => (
@@ -40,10 +96,8 @@ const Card = ({ className = "", children }) => (
   </div>
 );
 
-/** ✅ FIXED: SectionTitle row-wise (badge aligned, no wrap, responsive safe) */
 const SectionTitle = ({ icon, title, subtitle, right }) => (
   <div className="flex items-start justify-between gap-3">
-    {/* LEFT SIDE */}
     <div className="flex items-start gap-3 flex-1 min-w-0">
       <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gray-50 border border-gray-100 flex-shrink-0">
         {icon}
@@ -57,7 +111,6 @@ const SectionTitle = ({ icon, title, subtitle, right }) => (
       </div>
     </div>
 
-    {/* RIGHT SIDE */}
     {right ? <div className="flex-shrink-0">{right}</div> : null}
   </div>
 );
@@ -103,7 +156,10 @@ const Segmented = ({ value, onChange, options }) => (
   </div>
 );
 
-/** ✅ Tiles like screenshot (no color changes — only light tinted backgrounds) */
+/** ✅ subtle hover only (no blue selected click bg) */
+const tileWrapperClass =
+  "transition-all duration-200 rounded-2xl hover:-translate-y-[1px] hover:shadow-[0_10px_20px_rgba(15,23,42,0.10)] active:scale-[0.995]";
+
 const TONES = {
   green: { bg: "bg-green-50", text: "text-green-600" },
   blue: { bg: "bg-blue-50", text: "text-blue-600" },
@@ -137,7 +193,7 @@ function MetricTile({ label, value, unit, icon, tone = "blue" }) {
   );
 }
 
-/** -------- EB / Water / DG cards (keep existing colors) -------- */
+/** -------- EB / Water / DG cards -------- */
 const EbTile = ({ name, daily, cumulative }) => (
   <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
     <div className="flex items-start justify-between">
@@ -169,20 +225,6 @@ const WaveProgress = ({ percent }) => (
       animate={{ width: `${percent}%` }}
       transition={{ duration: 0.8, ease: "easeOut" }}
     />
-    <svg
-      className="absolute left-0 top-0 h-full w-full opacity-35"
-      viewBox="0 0 120 12"
-      preserveAspectRatio="none"
-    >
-      <motion.path
-        d="M0 6 C 10 2, 20 10, 30 6 S 50 10, 60 6 S 80 2, 90 6 S 110 10, 120 6"
-        fill="none"
-        stroke="white"
-        strokeWidth="2"
-        animate={{ x: [0, 120, 0] }}
-        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-      />
-    </svg>
   </div>
 );
 
@@ -257,7 +299,82 @@ const FacilityTile = ({ label, value, unit, icon, iconBg = "bg-gray-50" }) => (
   </div>
 );
 
-/** ---------- Analytics (unchanged) ---------- */
+/** ---------- Chart controls (download + chart type icons) ---------- */
+const chartTypes = ["pie", "column", "line", "area"];
+
+const chartTypeIcon = (type) => {
+  switch (type) {
+    case "pie":
+      return <RiPieChartFill className="w-4 h-4" />;
+    case "column":
+      return <AiOutlineBarChart className="w-4 h-4" />;
+    case "line":
+      return <AiOutlineLineChart className="w-4 h-4" />;
+    case "area":
+      return <AiOutlineAreaChart className="w-4 h-4" />;
+    default:
+      return null;
+  }
+};
+
+const ChartControls = ({
+  chartType,
+  setChartType,
+  onDownload,
+  showChartType = true,
+}) => {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="flex items-center gap-2">
+      {showChartType ? (
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            className="h-9 px-3 rounded-xl bg-gray-100 hover:bg-gray-200 transition flex items-center gap-2 text-gray-800"
+            title="Change chart type"
+          >
+            <span className="grid place-items-center">{chartTypeIcon(chartType)}</span>
+            <ChevronDown className="w-4 h-4 opacity-70" />
+          </button>
+
+          {open && (
+            <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-xl shadow-lg z-20 overflow-hidden">
+              {chartTypes.map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => {
+                    setChartType(t);
+                    setOpen(false);
+                  }}
+                  className={`w-full px-3 py-2 text-left flex items-center gap-2 hover:bg-gray-50 ${
+                    chartType === t ? "bg-gray-50" : ""
+                  }`}
+                >
+                  <span className="text-gray-800">{chartTypeIcon(t)}</span>
+                  <span className="text-sm text-gray-700 capitalize">{t}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : null}
+
+      <button
+        type="button"
+        onClick={onDownload}
+        className="h-9 w-9 rounded-xl bg-gray-100 hover:bg-gray-200 transition grid place-items-center text-gray-800"
+        title="Download Excel"
+      >
+        <FaDownload className="text-sm" />
+      </button>
+    </div>
+  );
+};
+
+/** ---------- Analytics data ---------- */
 const ANALYTICS = {
   Day: {
     compareText: "Compare today vs yesterday",
@@ -476,6 +593,95 @@ const ANALYTICS = {
   },
 };
 
+/** ---------- Recharts renderer with chart type toggle ---------- */
+const TWO_SLICE_COLORS = ["#1d4ed8", "#93c5fd"]; // A and B
+
+const ChartRenderer = ({ type, data, xKey }) => {
+  // pie uses totals of a and b
+  if (type === "pie") {
+    const totalA = (data || []).reduce((s, r) => s + (Number(r.a) || 0), 0);
+    const totalB = (data || []).reduce((s, r) => s + (Number(r.b) || 0), 0);
+    const pieData = [
+      { name: "A", value: totalA },
+      { name: "B", value: totalB },
+    ];
+
+    return (
+      <ResponsiveContainer width="100%" height={260}>
+        <PieChart>
+          <Tooltip />
+          <Pie
+            data={pieData}
+            dataKey="value"
+            nameKey="name"
+            cx="50%"
+            cy="50%"
+            outerRadius={85}
+          >
+            {pieData.map((_, idx) => (
+              <Cell key={idx} fill={TWO_SLICE_COLORS[idx % TWO_SLICE_COLORS.length]} />
+            ))}
+          </Pie>
+        </PieChart>
+      </ResponsiveContainer>
+    );
+  }
+
+  if (type === "column") {
+    return (
+      <ResponsiveContainer width="100%" height={260}>
+        <BarChart data={data}>
+          <CartesianGrid strokeDasharray="3 3" vertical={false} />
+          <XAxis dataKey={xKey} tick={{ fontSize: 11 }} />
+          <YAxis tick={{ fontSize: 11 }} />
+          <Tooltip />
+          <Bar dataKey="a" fill="#1d4ed8" radius={[6, 6, 0, 0]} />
+          <Bar dataKey="b" fill="#93c5fd" radius={[6, 6, 0, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    );
+  }
+
+  if (type === "line") {
+    return (
+      <ResponsiveContainer width="100%" height={260}>
+        <LineChart data={data}>
+          <CartesianGrid strokeDasharray="3 3" vertical={false} />
+          <XAxis dataKey={xKey} tick={{ fontSize: 11 }} />
+          <YAxis tick={{ fontSize: 11 }} />
+          <Tooltip />
+          <Line type="monotone" dataKey="a" stroke="#1d4ed8" strokeWidth={3} dot={{ r: 3 }} />
+          <Line type="monotone" dataKey="b" stroke="#93c5fd" strokeWidth={2} strokeDasharray="5 5" dot={false} />
+        </LineChart>
+      </ResponsiveContainer>
+    );
+  }
+
+  // area
+  return (
+    <ResponsiveContainer width="100%" height={260}>
+      <AreaChart data={data}>
+        <defs>
+          <linearGradient id="fillA" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#1d4ed8" stopOpacity={0.25} />
+            <stop offset="100%" stopColor="#1d4ed8" stopOpacity={0} />
+          </linearGradient>
+          <linearGradient id="fillB" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#93c5fd" stopOpacity={0.25} />
+            <stop offset="100%" stopColor="#93c5fd" stopOpacity={0} />
+          </linearGradient>
+        </defs>
+        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+        <XAxis dataKey={xKey} tick={{ fontSize: 11 }} />
+        <YAxis tick={{ fontSize: 11 }} />
+        <Tooltip />
+        <Area type="monotone" dataKey="b" stroke="#93c5fd" fill="url(#fillB)" strokeWidth={2} dot={false} />
+        <Area type="monotone" dataKey="a" stroke="#1d4ed8" fill="url(#fillA)" strokeWidth={3} dot={false} />
+      </AreaChart>
+    </ResponsiveContainer>
+  );
+};
+
 const ChartCard = ({
   title,
   subtitle,
@@ -484,8 +690,12 @@ const ChartCard = ({
   legendB,
   labelA,
   labelB,
-  children,
+  data,
+  xKey,
   footer,
+  chartType,
+  setChartType,
+  onDownload,
 }) => (
   <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
     <div className="flex items-start justify-between gap-3">
@@ -493,8 +703,15 @@ const ChartCard = ({
         <h3 className="text-lg font-bold text-gray-900 truncate">{title}</h3>
         <p className="text-sm text-gray-500 mt-1 truncate">{subtitle}</p>
       </div>
-      <div className="flex-shrink-0">
+
+      <div className="flex items-center gap-2 flex-shrink-0">
         <TrendPill value={pill.value} direction={pill.direction} tone={pill.tone} />
+        <ChartControls
+          chartType={chartType}
+          setChartType={setChartType}
+          onDownload={onDownload}
+          showChartType
+        />
       </div>
     </div>
 
@@ -513,7 +730,9 @@ const ChartCard = ({
       </div>
     </div>
 
-    <div className="mt-4">{children}</div>
+    <div className="mt-4">
+      <ChartRenderer type={chartType} data={data} xKey={xKey} />
+    </div>
 
     <p className="text-xs text-gray-500 text-center mt-3">{footer}</p>
   </div>
@@ -521,30 +740,20 @@ const ChartCard = ({
 
 function ReadingDashboard() {
   const [timeFilter, setTimeFilter] = useState("Week");
-  const [site, setSite] = useState("BKC-Godrej");
 
-  // ✅ hover + click (selected) model/card
-  const [activeModel, setActiveModel] = useState(null);
+  // ✅ chart types for analytics cards
+  const [aqiChartType, setAqiChartType] = useState("column");
+  const [ebChartType, setEbChartType] = useState("line");
+  const [waterChartType, setWaterChartType] = useState("area");
 
-  // helper: class for hover + selected
-  const modelClass = (key) =>
-    `cursor-pointer transition-all duration-200 rounded-2xl
-     hover:-translate-y-[2px] hover:shadow-[0_14px_28px_rgba(15,23,42,0.12)]
-     active:scale-[0.99]
-     ${
-       activeModel === key
-         ? "ring-2 ring-blue-500 shadow-[0_14px_28px_rgba(59,130,246,0.20)]"
-         : ""
-     }`;
-
-  /** ✅ Priority: Indoor Air Quality grid like screenshot */
+  /** ✅ Air Quality metrics: show ONLY 4 in ONE LINE */
   const airQualityMetrics = [
     {
       label: "CO₂",
       value: "482",
       unit: "PPM",
       tone: "blue",
-      icon: <Leaf className="w-5 h-5 text-green-500" />,
+      icon: <Activity className="w-5 h-5 text-green-500" />,
     },
     {
       label: "PM10",
@@ -569,18 +778,18 @@ function ReadingDashboard() {
     },
     {
       label: "Temperature",
-      value: "26.25",
-      unit: "°C",
-      tone: "green",
-      icon: <Thermometer className="w-5 h-5 text-orange-500" />,
+      value: "0.034",
+      unit: "mg/m³",
+      tone: "orange",
+      icon: <Atom className="w-5 h-5 text-purple-500" />,
     },
     {
       label: "Humidity",
-      value: "50.9",
+      value: "0.78",
       unit: "%",
       tone: "sky",
-      icon: <Droplets className="w-5 h-5 text-sky-500" />,
-    },
+      icon: <Droplet className="w-5 h-5 text-cyan-500" />,
+    }
   ];
 
   const powerMeters = [
@@ -603,6 +812,7 @@ function ReadingDashboard() {
     { name: "DG5", daily: "8", cumulative: "98" },
   ];
 
+  /** ✅ Removed Ambient Temp + Relative Humidity */
   const facilityMetrics = [
     {
       label: "Total Power",
@@ -653,73 +863,14 @@ function ReadingDashboard() {
       icon: <Droplet className="w-5 h-5 text-cyan-600" />,
       iconBg: "bg-cyan-50",
     },
-    {
-      label: "Ambient Temp",
-      value: "30.3",
-      unit: "°C",
-      icon: <Thermometer className="w-5 h-5 text-orange-600" />,
-      iconBg: "bg-orange-50",
-    },
-    {
-      label: "Relative Humidity",
-      value: "40",
-      unit: "%",
-      icon: <Droplets className="w-5 h-5 text-sky-600" />,
-      iconBg: "bg-sky-50",
-    },
   ];
 
-  const a = useMemo(() => ANALYTICS[timeFilter], [timeFilter]);
+  const a = useMemo(() => ANALYTICS[timeFilter] || ANALYTICS.Week, [timeFilter]);
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-9xl mx-auto space-y-6">
-
-        {/* Top Header */}
-        <Card className="p-6">
-<SectionTitle
-  icon={<Wind className="w-6 h-6 text-green-600" />}
-  title="Indoor Air Quality"
-  subtitle="Real-time environmental monitoring"
-  right={
-    <motion.span
-      animate={{
-        boxShadow: [
-          "0 0 0 0 hsl(145 70% 45% / 0.4)",
-          "0 0 0 10px hsl(145 70% 45% / 0)",
-        ],
-      }}
-      transition={{
-        duration: 1.5,
-        repeat: Infinity,
-        ease: "easeOut",
-      }}
-      className="px-4 py-1.5 rounded-full bg-green-100 border border-green-300 text-green-700 font-medium text-sm whitespace-nowrap flex items-center justify-center"
-    >
-      Good
-    </motion.span>
-  }
-/>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 p-2">
-            {airQualityMetrics.map((m) => (
-              <div
-                key={m.label}
-                onClick={() => setActiveModel(`air-${m.label}`)}
-                className={modelClass(`air-${m.label}`)}
-              >
-                <MetricTile
-                  label={m.label}
-                  value={m.value}
-                  unit={m.unit}
-                  icon={m.icon}
-                  tone={m.tone}
-                />
-              </div>
-            ))}
-          </div>
-        </Card>
-
+        {/* ✅ Main 3 cards (with DOWNLOAD buttons) */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* EB Power */}
           <Card className="p-6">
@@ -727,15 +878,18 @@ function ReadingDashboard() {
               icon={<Zap className="w-6 h-6 text-yellow-600" />}
               title="EB Power Utilization"
               subtitle="High Tension Meters"
+              right={
+                <ChartControls
+                  showChartType={false}
+                  onDownload={() =>
+                    downloadExcel(downloadApi.ebPowerUtilization, "eb_power_utilization.xlsx")
+                  }
+                />
+              }
             />
-
             <div className="mt-6 space-y-4">
               {powerMeters.map((m) => (
-                <div
-                  key={m.name}
-                  onClick={() => setActiveModel(`eb-${m.name}`)}
-                  className={modelClass(`eb-${m.name}`)}
-                >
+                <div key={m.name} className={tileWrapperClass}>
                   <EbTile name={m.name} daily={m.daily} cumulative={m.cumulative} />
                 </div>
               ))}
@@ -748,15 +902,18 @@ function ReadingDashboard() {
               icon={<Droplet className="w-6 h-6 text-blue-600" />}
               title="Water Consumption"
               subtitle="Daily & Cumulative (KL)"
+              right={
+                <ChartControls
+                  showChartType={false}
+                  onDownload={() =>
+                    downloadExcel(downloadApi.waterConsumption, "water_consumption.xlsx")
+                  }
+                />
+              }
             />
-
             <div className="mt-6 space-y-4">
               {waterConsumption.map((w) => (
-                <div
-                  key={w.name}
-                  onClick={() => setActiveModel(`water-${w.name}`)}
-                  className={modelClass(`water-${w.name}`)}
-                >
+                <div key={w.name} className={tileWrapperClass}>
                   <WaterRow
                     name={w.name}
                     daily={w.daily}
@@ -775,15 +932,18 @@ function ReadingDashboard() {
               icon={<Settings className="w-6 h-6 text-red-600" />}
               title="DG Power Utilization"
               subtitle="Diesel Generators"
+              right={
+                <ChartControls
+                  showChartType={false}
+                  onDownload={() =>
+                    downloadExcel(downloadApi.dgPowerUtilization, "dg_power_utilization.xlsx")
+                  }
+                />
+              }
             />
-
             <div className="mt-6 space-y-3">
               {dgGenerators.map((dg) => (
-                <div
-                  key={dg.name}
-                  onClick={() => setActiveModel(`dg-${dg.name}`)}
-                  className={modelClass(`dg-${dg.name}`)}
-                >
+                <div key={dg.name} className={tileWrapperClass}>
                   <DgRow name={dg.name} daily={dg.daily} cumulative={dg.cumulative} />
                 </div>
               ))}
@@ -791,7 +951,48 @@ function ReadingDashboard() {
           </Card>
         </div>
 
-        {/* 3) Facility Metrics (full width below) */}
+        {/* ✅ Air Quality metrics (single line) */}
+        <Card className="p-6">
+          <SectionTitle
+            icon={<Wind className="w-6 h-6 text-green-600" />}
+            title="Air Quality"
+            subtitle="Key indoor air quality indicators"
+            right={
+              <motion.span
+                animate={{
+                  boxShadow: [
+                    "0 0 0 0 hsl(145 70% 45% / 0.4)",
+                    "0 0 0 10px hsl(145 70% 45% / 0)",
+                  ],
+                }}
+                transition={{
+                  duration: 1.5,
+                  repeat: Infinity,
+                  ease: "easeOut",
+                }}
+                className="px-4 py-1.5 rounded-full bg-green-100 border border-green-300 text-green-700 font-medium text-sm whitespace-nowrap flex items-center justify-center"
+              >
+                Good
+              </motion.span>
+            }
+          />
+
+          <div className="mt-6 flex items-stretch gap-4 overflow-x-auto pb-2">
+            {airQualityMetrics.map((m) => (
+              <div key={m.label} className="shrink-0 w-[225px]">
+                <MetricTile
+                  label={m.label}
+                  value={m.value}
+                  unit={m.unit}
+                  icon={m.icon}
+                  tone={m.tone}
+                />
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        {/* Facility Metrics */}
         <Card className="p-6">
           <SectionTitle
             icon={<Activity className="w-6 h-6 text-blue-600" />}
@@ -799,13 +1000,9 @@ function ReadingDashboard() {
             subtitle="Overall building performance"
           />
 
-          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="mt-6 grid grid-cols-1 sm:grid-cols-6 lg:grid-cols-7 gap-4">
             {facilityMetrics.map((m) => (
-              <div
-                key={m.label}
-                onClick={() => setActiveModel(`facility-${m.label}`)}
-                className={modelClass(`facility-${m.label}`)}
-              >
+              <div key={m.label} className={tileWrapperClass}>
                 <FacilityTile
                   label={m.label}
                   value={m.value}
@@ -818,7 +1015,7 @@ function ReadingDashboard() {
           </div>
         </Card>
 
-        {/* Consumption Analytics (unchanged) */}
+        {/* Consumption Analytics */}
         <div className="px-1">
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div className="min-w-0">
@@ -838,6 +1035,7 @@ function ReadingDashboard() {
           </div>
 
           <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* ✅ Air Quality Index (download + chart type icons) */}
             <ChartCard
               title="Air Quality Index"
               subtitle="AQI comparison over time"
@@ -847,19 +1045,16 @@ function ReadingDashboard() {
               legendA={a.air.legendA}
               legendB={a.air.legendB}
               footer={a.air.footer}
-            >
-              <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={a.air.data}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey={a.air.xKey} tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip />
-                  <Bar dataKey="a" fill="#1d4ed8" radius={[6, 6, 0, 0]} />
-                  <Bar dataKey="b" fill="#93c5fd" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </ChartCard>
+              data={a.air.data}
+              xKey={a.air.xKey}
+              chartType={aqiChartType}
+              setChartType={setAqiChartType}
+              onDownload={() =>
+                downloadExcel(downloadApi.airQualityIndex, "air_quality_index.xlsx")
+              }
+            />
 
+            {/* ✅ EB Power Usage (download + chart type icons) */}
             <ChartCard
               title="EB Power Usage"
               subtitle="kWh consumption trends"
@@ -869,19 +1064,16 @@ function ReadingDashboard() {
               legendA={a.power.legendA}
               legendB={a.power.legendB}
               footer={a.power.footer}
-            >
-              <ResponsiveContainer width="100%" height={260}>
-                <LineChart data={a.power.data}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey={a.power.xKey} tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="a" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4 }} />
-                  <Line type="monotone" dataKey="b" stroke="#fcd34d" strokeWidth={2} strokeDasharray="5 5" dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
-            </ChartCard>
+              data={a.power.data}
+              xKey={a.power.xKey}
+              chartType={ebChartType}
+              setChartType={setEbChartType}
+              onDownload={() =>
+                downloadExcel(downloadApi.ebPowerUsage, "eb_power_usage.xlsx")
+              }
+            />
 
+            {/* ✅ Water Consumption (download + chart type icons) */}
             <ChartCard
               title="Water Consumption"
               subtitle="Liters usage analysis"
@@ -891,28 +1083,17 @@ function ReadingDashboard() {
               legendA={a.water.legendA}
               legendB={a.water.legendB}
               footer={a.water.footer}
-            >
-              <ResponsiveContainer width="100%" height={260}>
-                <AreaChart data={a.water.data}>
-                  <defs>
-                    <linearGradient id="fillA" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#38bdf8" stopOpacity={0.35} />
-                      <stop offset="100%" stopColor="#38bdf8" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="fillB" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#93c5fd" stopOpacity={0.25} />
-                      <stop offset="100%" stopColor="#93c5fd" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey={a.water.xKey} tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip />
-                  <Area type="monotone" dataKey="b" stroke="#93c5fd" fill="url(#fillB)" strokeWidth={2} dot={false} />
-                  <Area type="monotone" dataKey="a" stroke="#0ea5e9" fill="url(#fillA)" strokeWidth={3} dot={false} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </ChartCard>
+              data={a.water.data}
+              xKey={a.water.xKey}
+              chartType={waterChartType}
+              setChartType={setWaterChartType}
+              onDownload={() =>
+                downloadExcel(
+                  downloadApi.waterConsumptionAnalytics,
+                  "water_consumption_analytics.xlsx"
+                )
+              }
+            />
           </div>
         </div>
       </div>
