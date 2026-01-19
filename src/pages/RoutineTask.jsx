@@ -165,6 +165,7 @@ const RoutineTask = () => {
       name: "Checklist",
       selector: (row) => row.checklist_name,
       sortable: true,
+      width: "400px"
     },
     {
       name: "Start Date",

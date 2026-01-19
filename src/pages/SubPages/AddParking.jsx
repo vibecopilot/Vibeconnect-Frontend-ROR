@@ -152,20 +152,20 @@ const AddParking = () => {
       <Navbar />
       <div className="flex flex-col md:items-center mb-10 p-4 w-full">
         <div
-          style={{ background: themeColor }}
+          style={{ background: "rgb(3 19 37)" }}
           className="flex justify-center bg-black mx-5 my-2 w-full p-2 rounded-md"
         >
           <h2
             className="text-xl font-semibold text-center mx-10 text-white w-full"
-            style={{ background: themeColor }}
+            style={{ background: "rgb(3 19 37)" }}
           >
             Book Parking
           </h2>
         </div>
-        <div className="md:border border-gray-400 rounded-md md:mx-10 w-full p-4">
+        <div className="md:border border-gray-400 rounded-md md:mx-10 w-full p-2">
           <div className="md:grid flex flex-col grid-cols-3 items-center my-2">
             <p className="font-semibold">For :</p>
-            <div className="flex gap-5">
+            <div className="grid grid-cols-2 items-center gap-2">
               <p
                 className={`border-2 p-1 px-6 border-black font-medium rounded-full cursor-pointer ${
                   behalf === "self" && "bg-black text-white"
@@ -324,7 +324,6 @@ const AddParking = () => {
                   </option>
                 ))}
               </select>
-              
             </div>
             {/* <div className="grid  items-center">
                 <p className="font-semibold">From :</p>
@@ -387,7 +386,7 @@ const AddParking = () => {
           <div className="flex justify-center my-2">
             <button
               onClick={handleSubmit}
-              style={{ background: themeColor }}
+              style={{ background: "rgb(3 19 37)" }}
               className="p-1 px-4 bg-black text-white hover:bg-white  rounded-md border-2 border-black font-medium transition-all duration-300"
             >
               Submit
