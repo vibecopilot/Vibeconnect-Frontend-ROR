@@ -1,13 +1,18 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
+import toast from "react-hot-toast";
+import { FaDownload, FaSpinner, FaChevronDown } from "react-icons/fa";
 import {
-  FaChevronDown,
-  FaChevronUp,
-  FaDownload,
-  FaRegCalendar,
-  FaSpinner,
-} from "react-icons/fa";
+  AiOutlineBarChart,
+  AiOutlineLineChart,
+  AiOutlineAreaChart,
+} from "react-icons/ai";
+import { RiPieChartFill } from "react-icons/ri";
+import { FiBriefcase, FiBarChart2 } from "react-icons/fi";
+import { TbUsers } from "react-icons/tb";
+import { FaRegCalendar } from "react-icons/fa";
+
 import {
   downloadAsset,
   getBreakdownDownload,
@@ -15,1155 +20,702 @@ import {
   getInUseAssetBreakDown,
   getTotalAssetCount,
   getPPMOverDueCount,
-  getPPMpendingCount,
   getPPMCompleteCount,
-  getPPMOverDueDownload,
-  getPPMPendingDownload,
-  getPPMcompleteDownload,
+  getPPMScheduleCount,
   getScheduledDownload,
   getRoutineScheduledDownload,
   getRoutineScheduledCount,
   getRoutineOverdueCount,
   getRoutineCompleteCount,
-  getPPMScheduleCount,
-  getRoutineOverdueDownload,
-  getRoutineCompleteDownload,
   getAssetInDownload,
-  getRoutinePendingDownload,
-  getRoutinePendingCount,
 } from "../../api";
-import toast from "react-hot-toast";
-import { IoSettingsOutline } from "react-icons/io5";
-import {
-  AiOutlineBarChart,
-  AiOutlineLineChart,
-  AiOutlineAreaChart,
-  AiOutlineUser,
-} from "react-icons/ai";
-import { RiPieChartFill } from "react-icons/ri";
-import { FiBarChart2, FiBriefcase } from "react-icons/fi";
-import { TbUsers } from "react-icons/tb";
-// import { LuAlertTriangle, FaRegCheckCircle } from "react-icons/fa";
-import { BsClock } from "react-icons/bs";
+
+/** ---------------- UI Helpers ---------------- */
+const CardShell = ({ children, className = "" }) => (
+  <div
+    className={[
+      "bg-white rounded-2xl border border-gray-100",
+      "shadow-[0_8px_24px_rgba(15,23,42,0.06)]",
+      className,
+    ].join(" ")}
+  >
+    {children}
+  </div>
+);
+
+const IconBadge = ({ tone = "blue", children }) => {
+  const toneMap = {
+    blue: "bg-blue-50 text-blue-700 border-blue-100",
+    green: "bg-emerald-50 text-emerald-700 border-emerald-100",
+    amber: "bg-amber-50 text-amber-700 border-amber-100",
+    red: "bg-rose-50 text-rose-700 border-rose-100",
+    gray: "bg-gray-50 text-gray-700 border-gray-100",
+    purple: "bg-purple-50 text-purple-700 border-purple-100",
+  };
+  return (
+    <span
+      className={[
+        "inline-flex items-center justify-center",
+        "h-10 w-10 rounded-xl border",
+        toneMap[tone] || toneMap.gray,
+      ].join(" ")}
+    >
+      {children}
+    </span>
+  );
+};
+
+const StatCard = ({
+  title,
+  value,
+  tone = "blue",
+  icon,
+  onDownload,
+  downloading,
+}) => {
+  const toneChip =
+    {
+      blue: "bg-blue-50 text-blue-700",
+      green: "bg-emerald-50 text-emerald-700",
+      amber: "bg-amber-50 text-amber-700",
+      red: "bg-rose-50 text-rose-700",
+      gray: "bg-gray-50 text-gray-700",
+      purple: "bg-purple-50 text-purple-700",
+    }[tone] || "bg-gray-50 text-gray-700";
+
+  return (
+    <CardShell className="p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start gap-3 min-w-0">
+          <IconBadge tone={tone}>{icon}</IconBadge>
+          <div className="min-w-0">
+            <h3 className="text-sm font-semibold text-gray-900 truncate">
+              {title}
+            </h3>
+            <div className="mt-2 text-3xl font-semibold text-gray-900 leading-none">
+              {value ?? 0}
+            </div>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={onDownload}
+          disabled={downloading}
+          className={[
+            "h-9 w-9 rounded-xl grid place-items-center",
+            "bg-gray-100 hover:bg-gray-200 transition",
+            "text-gray-700 shrink-0 disabled:opacity-60",
+            "focus:outline-none focus:ring-0",
+          ].join(" ")}
+          title="Download Excel"
+        >
+          {downloading ? (
+            <FaSpinner className="animate-spin text-sm" />
+          ) : (
+            <FaDownload className="text-sm" />
+          )}
+        </button>
+      </div>
+
+      <div className="mt-3">
+        <span
+          className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold ${toneChip}`}
+        >
+          Count
+        </span>
+      </div>
+    </CardShell>
+  );
+};
+
+/** -------- screenshot-style header helpers -------- */
+const TrendPill = ({ percent, direction = "down" }) => {
+  if (percent === null || percent === undefined) return null;
+  const isUp = direction === "up";
+  return (
+    <span
+      className={[
+        "inline-flex items-center gap-1",
+        "px-3 py-1 rounded-full text-sm font-semibold",
+        isUp ? "bg-red-50 text-red-600" : "bg-emerald-50 text-emerald-700",
+      ].join(" ")}
+    >
+      <span className="text-base leading-none">{isUp ? "↗" : "↘"}</span>
+      {Math.abs(Number(percent) || 0).toFixed(1)}%
+    </span>
+  );
+};
+
+const LegendRow = ({ items = [] }) => {
+  if (!items.length) return null;
+  return (
+    <div className="flex flex-wrap items-center gap-6 mt-3">
+      {items.map((it) => (
+        <div key={it.label} className="flex items-center gap-2 text-sm">
+          <span
+            className="h-3 w-3 rounded-full"
+            style={{ backgroundColor: it.color }}
+          />
+          <span className="text-gray-800 font-semibold">
+            {it.label}:{" "}
+            <span className="font-semibold text-gray-900">
+              {it.value ?? 0}
+              {it.unit ? ` ${it.unit}` : ""}
+            </span>
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const chartTypeIcon = (type) => {
+  switch (type) {
+    case "pie":
+      return <RiPieChartFill className="w-4 h-4" />;
+    case "BarChart":
+      return <AiOutlineBarChart className="w-4 h-4" />;
+    case "column":
+      return <AiOutlineBarChart className="w-4 h-4" />;
+    case "line":
+      return <AiOutlineLineChart className="w-4 h-4" />;
+    case "area":
+      return <AiOutlineAreaChart className="w-4 h-4" />;
+    default:
+      return <RiPieChartFill className="w-4 h-4" />;
+  }
+};
+
+const ChartTypeMenu = ({ value, onChange }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const onDoc = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, []);
+
+  const items = ["pie", "column", "line", "area"];
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="h-9 w-10 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 relative grid place-items-center"
+        title="Change chart type"
+      >
+        {chartTypeIcon(value)}
+        <FaChevronDown className="absolute right-1 bottom-1 text-[10px] opacity-70" />
+      </button>
+
+      {open && (
+        <div className="absolute right-0 mt-2 w-40 rounded-xl border border-gray-200 bg-white shadow-lg z-20 overflow-hidden">
+          {items.map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => {
+                onChange(t);
+                setOpen(false);
+              }}
+              className={[
+                "w-full px-3 py-2 text-left flex items-center gap-2",
+                "hover:bg-gray-50",
+                value === t ? "bg-gray-50 font-semibold" : "",
+              ].join(" ")}
+            >
+              <span className="text-gray-800">{chartTypeIcon(t)}</span>
+              <span className="text-sm text-gray-700 capitalize">{t}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const ChartCard = ({
+  title,
+  subtitle,
+  trendPercent = null,
+  trendDirection = "down",
+  legendItems = [],
+  footerText = "",
+  footerDirection = "down",
+  onDownload,
+  chartType,
+  setChartType,
+  options,
+}) => {
+  const footerArrow = footerDirection === "up" ? "↑" : "↓";
+  const footerColor =
+    footerDirection === "up" ? "text-red-600" : "text-emerald-700";
+
+  return (
+    <CardShell className="p-5">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[18px] font-bold text-gray-900 truncate">{title}</p>
+          {subtitle ? (
+            <p className="text-sm text-gray-500 truncate mt-1">{subtitle}</p>
+          ) : null}
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          <TrendPill percent={trendPercent} direction={trendDirection} />
+
+          <ChartTypeMenu value={chartType} onChange={setChartType} />
+
+          <button
+            type="button"
+            onClick={onDownload}
+            className="h-9 w-10 grid place-items-center rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200"
+            title="Download Excel"
+          >
+            <FaDownload className="text-sm" />
+          </button>
+        </div>
+      </div>
+
+      <LegendRow items={legendItems} />
+
+      <div className="mt-2">
+        <HighchartsReact highcharts={Highcharts} options={options} />
+      </div>
+
+      {footerText ? (
+        <div className="mt-2 text-center text-sm">
+          <span className={footerColor}>
+            {footerArrow} {footerText}
+          </span>
+        </div>
+      ) : null}
+    </CardShell>
+  );
+};
+
+/** ---------------- Highcharts option builders (screenshot style) ---------------- */
+const baseNoSelect = {
+  states: {
+    inactive: { opacity: 1 },
+    hover: { enabled: true },
+    select: { enabled: false },
+  },
+};
+
+const makeTwoValueOptions = ({
+  type,
+  aName,
+  aVal,
+  aColor,
+  bName,
+  bVal,
+  bColor,
+  seriesName = "Count",
+}) => {
+  const A = Number(aVal) || 0;
+  const B = Number(bVal) || 0;
+
+  // match screenshot-ish charts
+  const hcType =
+    type === "line" ? "spline" : type === "area" ? "areaspline" : type;
+
+  const areaFill =
+    type === "area"
+      ? {
+          linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+          stops: [
+            [0, Highcharts.color(aColor).setOpacity(0.25).get("rgba")],
+            [1, Highcharts.color(aColor).setOpacity(0).get("rgba")],
+          ],
+        }
+      : undefined;
+
+  const common = {
+    chart: {
+      type: hcType,
+      backgroundColor: "transparent",
+      height: 280,
+      spacing: [8, 8, 8, 8],
+    },
+    title: { text: null },
+    credits: { enabled: false },
+    exporting: { enabled: false },
+    legend: { enabled: false },
+    tooltip: {
+      backgroundColor: "#FFFFFF",
+      borderColor: "#E5E7EB",
+      borderRadius: 10,
+      shadow: false,
+      pointFormat: "<b>{point.y}</b>",
+    },
+    plotOptions: {
+      series: {
+        ...baseNoSelect,
+        animation: true,
+        lineWidth: 3,
+        marker:
+          type === "line" || type === "area"
+            ? {
+                enabled: true,
+                radius: 4,
+                lineWidth: 2,
+                lineColor: aColor,
+                fillColor: "#FFFFFF",
+              }
+            : { enabled: false },
+      },
+      pie: {
+        ...baseNoSelect,
+        allowPointSelect: false,
+        dataLabels: {
+          enabled: true,
+          format: "<b>{point.name}</b>: {point.y}",
+        },
+      },
+      column: {
+        borderRadius: 10,
+        pointPadding: 0.12,
+        groupPadding: 0.22,
+      },
+    },
+  };
+
+  // Pie
+  if (type === "pie") {
+    return {
+      ...common,
+      tooltip: {
+        backgroundColor: "#FFFFFF",
+        borderColor: "#E5E7EB",
+        borderRadius: 10,
+        shadow: false,
+        pointFormat: "{point.name}: <b>{point.y}</b>",
+      },
+      series: [
+        {
+          name: seriesName,
+          colorByPoint: true,
+          data: [
+            { name: aName, y: A, color: aColor },
+            { name: bName, y: B, color: bColor },
+          ],
+        },
+      ],
+    };
+  }
+
+  // Column / Line / Area (2 categories)
+  return {
+    ...common,
+    xAxis: {
+      categories: [aName, bName],
+      lineColor: "#E5E7EB",
+      tickColor: "#E5E7EB",
+      labels: { style: { color: "#6B7280", fontSize: "12px" } },
+      title: { text: null },
+    },
+    yAxis: {
+      min: 0,
+      title: { text: null },
+      gridLineColor: "#E5E7EB",
+      gridLineDashStyle: "Dash",
+      labels: { style: { color: "#6B7280", fontSize: "12px" } },
+    },
+    series: [
+      {
+        name: seriesName,
+        color: aColor,
+        // per-point colors matter for column
+        colorByPoint: type === "column",
+        data: [
+          { y: A, color: aColor },
+          { y: B, color: bColor },
+        ],
+        fillColor: areaFill,
+      },
+    ],
+  };
+};
+
+/** ---------------- Main Component ---------------- */
 function ComplianceDashboard() {
-  const [breakCount, setBreakCount] = useState("");
-  const [inUseCount, setInUseCount] = useState("");
-  const [totalAssetCount, setTotalAssetCount] = useState("");
-  const [ppmSchedule, setPPMSchedule] = useState("");
-  const [ppmOverDue, setPPMOverDue] = useState("");
-  const [ppmPending, setPPMPending] = useState("");
-  const [ppmComplete, setPPMComplete] = useState("");
-  const [routineScheduleCount, setRoutineScheduleCount] = useState("");
-  const [routineOverdueCount, setRoutineOverdueCount] = useState("");
-  const [routineCompleteCount, setRoutineCompleteCount] = useState("");
-  const [routinePendingCount, setRoutinePendingCount] = useState("");
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [breakCount, setBreakCount] = useState(0);
+  const [inUseCount, setInUseCount] = useState(0);
+  const [totalAssetCount, setTotalAssetCount] = useState(0);
 
+  const [ppmSchedule, setPPMSchedule] = useState(0);
+  const [ppmOverDue, setPPMOverDue] = useState(0);
+  const [ppmComplete, setPPMComplete] = useState(0);
 
-  const dropdownRef = useRef(null);
-  const handleClickOutside = (event) => {
-    if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-      setIsDropdownOpen(false);
+  const [routineScheduleCount, setRoutineScheduleCount] = useState(0);
+  const [routineOverdueCount, setRoutineOverdueCount] = useState(0);
+  const [routineCompleteCount, setRoutineCompleteCount] = useState(0);
+
+  // chart types
+  const [assetChartType, setAssetChartType] = useState("pie");
+  const [ppmChartType, setPPMChartType] = useState("pie");
+  const [routineChartType, setRoutineChartType] = useState("pie");
+
+  // optional loading flags per card
+  const [dl, setDl] = useState({
+    total: false,
+    breakdown: false,
+    scheduled: false,
+    inuse: false,
+    routine: false,
+  });
+
+  /** ---------------- Downloads ---------------- */
+  const blobDownload = async (fetcher, filename, key) => {
+    const toastId = toast.loading("Downloading Please Wait");
+    try {
+      setDl((p) => ({ ...p, [key]: true }));
+      const response = await fetcher();
+      const url = window.URL.createObjectURL(
+        new Blob([response.data], { type: response.headers?.["content-type"] })
+      );
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.dismiss(toastId);
+      toast.success("Downloaded successfully");
+    } catch (error) {
+      toast.dismiss(toastId);
+      console.error(error);
+      toast.error("Something went wrong, please try again");
+    } finally {
+      setDl((p) => ({ ...p, [key]: false }));
     }
   };
 
+  const handleTotalAssetDownload = () =>
+    blobDownload(downloadAsset, "Total_Asset_file.xlsx", "total");
 
+  const handleTotalBreakdownDownload = () =>
+    blobDownload(getBreakdownDownload, "BreakDown_file.xlsx", "breakdown");
+
+  const handleScheduledDownload = () =>
+    blobDownload(getScheduledDownload, "scheduled_file.xlsx", "scheduled");
+
+  const assetInUseDownload = () =>
+    blobDownload(getAssetInDownload, "inUse_file.xlsx", "inuse");
+
+  const handleRoutineScheduledDownload = () =>
+    blobDownload(
+      getRoutineScheduledDownload,
+      "routine_scheduled_file.xlsx",
+      "routine"
+    );
+
+  /** ---------------- Fetch counts ---------------- */
   useEffect(() => {
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+    const run = async () => {
+      try {
+        const [
+          totalAsset,
+          breakC,
+          inUse,
+          ppmSch,
+          ppmOver,
+          ppmComp,
+          rSch,
+          rOver,
+          rComp,
+        ] = await Promise.all([
+          getTotalAssetCount(),
+          getBreakCount(),
+          getInUseAssetBreakDown(),
+          getPPMScheduleCount(),
+          getPPMOverDueCount(),
+          getPPMCompleteCount(),
+          getRoutineScheduledCount(),
+          getRoutineOverdueCount(),
+          getRoutineCompleteCount(),
+        ]);
+
+        setTotalAssetCount(totalAsset?.data?.count ?? 0);
+        setBreakCount(breakC?.data?.count ?? 0);
+        setInUseCount(inUse?.data?.count ?? 0);
+
+        setPPMSchedule(ppmSch?.data?.count ?? 0);
+        setPPMOverDue(ppmOver?.data?.count ?? 0);
+        setPPMComplete(ppmComp?.data?.count ?? 0);
+
+        setRoutineScheduleCount(rSch?.data?.count ?? 0);
+        setRoutineOverdueCount(rOver?.data?.count ?? 0);
+        setRoutineCompleteCount(rComp?.data?.count ?? 0);
+      } catch (e) {
+        console.log(e);
+      }
     };
+    run();
   }, []);
 
-
-  const [isAssetDropdown, setIsAssetDropdown] = useState(false);
-  const [assetChartType, setAssetChartType] = useState("pie"); // State to store chart type
-
-
-  const toggleAssetDropdown = () => setIsAssetDropdown(!isAssetDropdown);
-
-
-  // Change chart type based on dropdown selection
-  const handleAssetChartTypeChange = (type) => {
-    setAssetChartType(type);
-    setIsAssetDropdown(false); // Close the dropdown after selecting a chart type
-  };
-  const optionsPPMOverdue = {
-    chart: {
-      type: assetChartType, // Ensure this is "pie", "column", etc.
-      backgroundColor: "transparent",
-    },
-    title: {
-      text: null,
-    },
-    tooltip: {
-      pointFormat: "{point.name}: <b>{point.y}</b>", // Updated tooltip format
-      verticalAlign: "top",
-    },
-    xAxis:
-      assetChartType === "column"
-        ? {
-            categories: ["In Use Asset", "Break Down"], // Add categories for column charts
-            title: {
-              text: null,
-            },
-          }
-        : undefined, // No xAxis for pie charts
-    plotOptions: {
-      pie: {
-        allowPointSelect: true,
-        cursor: "pointer",
-        dataLabels: {
-          enabled: true,
-          format: "<b>{point.name}</b>: {point.y}", // Updated data label format
-        },
-      },
-    },
-    series: [
-      {
-        name: "Asset",
-        colorByPoint: true,
-        data: [
-          {
-            name: "In Use Asset",
-            y: Number(inUseCount) || 0,
-            color: "#10B981",
-          },
-          {
-            name: "Break Down",
-            y: Number(breakCount) || 0,
-            color: "#EF4444",
-          },
-        ],
-      },
-    ],
-  };
-
-
-  const [isPPMDropdown, setIsPPMDropdown] = useState(false);
-  const [ppmChartType, setPPMChartType] = useState("pie"); // State to store chart type
-
-
-  const togglePPMDropdown = () => setIsPPMDropdown(!isPPMDropdown);
-
-
-  // Change chart type based on dropdown selection
-  const handlePPMChartTypeChange = (type) => {
-    setPPMChartType(type);
-    setIsPPMDropdown(false); // Close the dropdown after selecting a chart type
-  };
-
-
-  const optionsPPMSchedule = {
-    chart: {
-      type: ppmChartType, // e.g., "column" or "pie"
-      backgroundColor: "transparent",
-    },
-    title: {
-      text: null,
-    },
-    tooltip: {
-      pointFormat: "{series.name}: <b>{point.y}</b>",
-    },
-    xAxis: ppmChartType === "column"
-      ? {
-          categories: ["PPM Overdue", "PPM Complete",], // Labels for column chart
-          title: {
-            text: null, // No additional title needed for the x-axis
-          },
-        }
-      : undefined, // Omit xAxis for pie charts
-    yAxis: ppmChartType === "column"
-      ? {
-          title: {
-            text: "Count", // Label for the y-axis in column charts
-          },
-        }
-      : undefined, // Omit yAxis for pie charts
-    plotOptions: {
-      pie: {
-        allowPointSelect: true,
-        cursor: "pointer",
-        dataLabels: {
-          enabled: true,
-          format: "<b>{point.name}</b>: {point.y}", // Show name and value for pie chart slices
-        },
-      },
-    },
-    series: [
-      {
-        name: "PPM",
-        colorByPoint: true,
-        data: [
-          { name: "PPM Overdue", y: Number(ppmOverDue) || 0, color: "#EF4444" },
-          { name: "PPM Complete", y: Number(ppmComplete) || 0, color: "#10B981" },
-        ],
-      },
-    ],
-  };
- 
-  const [isRoutineDropdown, setIsRoutineDropdown] = useState(false);
-  const [routineChartType, setRoutineChartType] = useState("pie"); // State to store chart type
-
-
-  const toggleRoutineDropdown = () => setIsRoutineDropdown(!isRoutineDropdown);
-
-
-  // Change chart type based on dropdown selection
-  const handleRoutineChartTypeChange = (type) => {
-    setRoutineChartType(type);
-    setIsRoutineDropdown(false); // Close the dropdown after selecting a chart type
-  };
-
-
-  const getChartTypeIcon = (type) => {
-    switch (type) {
-      case "pie":
-        return <RiPieChartFill className="mr-2" />;
-      case "column":
-        return <AiOutlineBarChart className="mr-2" />;
-      case "line":
-        return <AiOutlineLineChart className="mr-2" />;
-      case "area":
-        return <AiOutlineAreaChart className="mr-2" />;
-      default:
-        return null;
-    }
-  };
-
-
-  const optionsRoutineSchedule = {
-    chart: {
-      type: routineChartType, // Use chartType state here (e.g., "column", "pie")
-      backgroundColor: "transparent",
-    },
-    title: {
-      text: null,
-    },
-    tooltip: {
-      pointFormat: "{series.name}: <b>{point.y}</b>",
-    },
-    xAxis:
-      routineChartType === "column"
-        ? {
-            categories: ["Task Routine Overdue", "Task Routine Complete"], // Labels for column chart
-            title: {
-              text: null,
-            },
-          }
-        : undefined, // No xAxis for pie charts
-    yAxis:
-      routineChartType === "column"
-        ? {
-            title: {
-              text: "Count", // Label for the y-axis
-            },
-          }
-        : undefined, // No yAxis for pie charts
-    plotOptions: {
-      pie: {
-        allowPointSelect: true,
-        cursor: "pointer",
-        dataLabels: {
-          enabled: true,
-          format: "<b>{point.name}</b>: {point.y}", // Labels for pie chart
-        },
-      },
-    },
-    series: [
-      {
-        name: "Task Routine",
-        colorByPoint: true,
-        data:
-          routineChartType === "column"
-            ? [
-                {
-                  name: "Task Routine Overdue",
-                  y: Number(routineOverdueCount) || 0,
-                  color: "#EF4444",
-                },
-                {
-                  name: "Task Routine Complete",
-                  y: Number(routineCompleteCount) || 0,
-                  color: "#10B981",
-                },
-              ]
-            : [
-                // Pie chart uses similar data structure, with names and values
-                {
-                  name: "Task Routine Overdue",
-                  y: Number(routineOverdueCount) || 0,
-                  color: "#EF4444",
-                },
-                {
-                  name: "Task Routine Complete",
-                  y: Number(routineCompleteCount) || 0,
-                  color: "#10B981",
-                },
-              ],
-      },
-    ],
-  };
-
-
-  const handleTotalAssetDownload = async () => {
-    toast.loading("Downloading Please Wait");
-    try {
-      const response = await downloadAsset();
-      // Check if the response headers contain the correct content type
-      console.log(response.headers["content-type"]);
-      // Create a URL for the blob data
-      const url = window.URL.createObjectURL(
-        new Blob([response.data], {
-          type: response.headers["content-type"], // Explicitly set the content type
-        })
-      );
-      // Create a link element to download the file
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "Total_Asset_file.xlsx"); // Name the file
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      toast.success("Asset downloaded successfully");
-      toast.dismiss();
-    } catch (error) {
-      toast.dismiss();
-      console.error("Error downloading Asset:", error);
-      toast.error("Something went wrong, please try again");
-    }
-  };
-
-
-  const handleTotalBreakdownDownload = async () => {
-    toast.loading("Downloading Please Wait");
-    try {
-      const response = await getBreakdownDownload();
-      const url = window.URL.createObjectURL(
-        new Blob([response.data], {
-          type: response.headers["content-type"],
-        })
-      );
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "BreakDown_file.xlsx");
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      toast.success("BreakDown Asset downloaded successfully");
-      toast.dismiss();
-    } catch (error) {
-      toast.dismiss();
-      console.error("Error downloading BreakDown Asset:", error);
-      toast.error("Something went wrong, please try again");
-    }
-  };
-
-
-  const assetInUseDownload = async () => {
-    toast.loading("Downloading Please Wait");
-    try {
-      const response = await getAssetInDownload();
-
-
-      const url = window.URL.createObjectURL(
-        new Blob([response.data], {
-          type: response.headers["content-type"],
-        })
-      );
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "inUse_file.xlsx");
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      toast.success("In Use Asset downloaded successfully");
-      toast.dismiss();
-    } catch (error) {
-      toast.dismiss();
-      console.error("Error downloading In Use Asset:", error);
-      toast.error("Something went wrong, please try again");
-    }
-  };
-
-
-  const handleScheduledDownload = async () => {
-    toast.loading("Downloading Please Wait");
-    try {
-      const response = await getScheduledDownload();
-      const url = window.URL.createObjectURL(
-        new Blob([response.data], {
-          type: response.headers["content-type"],
-        })
-      );
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "scheduled_file.xlsx");
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      toast.success("PPM Scheduled downloaded successfully");
-      toast.dismiss();
-    } catch (error) {
-      toast.dismiss();
-      console.error("Error downloading PPM Scheduled:", error);
-      toast.error("Something went wrong, please try again");
-    }
-  };
-
-
-  const handlePPMOverDueDownload = async () => {
-    toast.loading("Downloading Please Wait");
-    try {
-      const response = await getPPMOverDueDownload();
-      const url = window.URL.createObjectURL(
-        new Blob([response.data], {
-          type: response.headers["content-type"],
-        })
-      );
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "ppm_Over_Due_file.xlsx");
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-
-
-      toast.success("PPM Over Due downloaded successfully");
-      toast.dismiss();
-    } catch (error) {
-      toast.dismiss();
-      console.error("Error downloading PPM Over Due:", error);
-      toast.error("Something went wrong, please try again");
-    }
-  };
-
-
-  const handlePPMPendingDownload = async () => {
-    toast.loading("Downloading Please Wait");
-    try {
-      const response = await getPPMPendingDownload();
-      const url = window.URL.createObjectURL(
-        new Blob([response.data], {
-          type: response.headers["content-type"],
-        })
-      );
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "ppm_pending_file.xlsx");
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-
-
-      toast.success("PPM Pending downloaded successfully");
-      toast.dismiss();
-    } catch (error) {
-      toast.dismiss();
-      console.error("Error downloading PPM Pending:", error);
-      toast.error("Something went wrong, please try again");
-    }
-  };
-
-
-  const handlePPMCompleteDownload = async () => {
-    toast.loading("Downloading Please Wait");
-    try {
-      const response = await getPPMcompleteDownload();
-      const url = window.URL.createObjectURL(
-        new Blob([response.data], {
-          type: response.headers["content-type"],
-        })
-      );
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "ppm_complete_file.xlsx");
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      toast.success("PPM Completed downloaded successfully");
-      toast.dismiss();
-    } catch (error) {
-      toast.dismiss();
-      console.error("Error downloading PPM Completed:", error);
-      toast.error("Something went wrong, please try again");
-    }
-  };
-
-
-  // task routine
-
-
-  const handleRoutineScheduledDownload = async () => {
-    toast.loading("Downloading Please Wait");
-    try {
-      const response = await getRoutineScheduledDownload();
-      const url = window.URL.createObjectURL(
-        new Blob([response.data], {
-          type: response.headers["content-type"],
-        })
-      );
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "routine_scheduled_file.xlsx");
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      toast.success("Routine Scheduled downloaded successfully");
-      toast.dismiss();
-    } catch (error) {
-      toast.dismiss();
-      console.error("Error downloading Routine Scheduled:", error);
-      toast.error("Something went wrong, please try again");
-    }
-  };
-
-
-  const handleRoutineOverDueDownload = async () => {
-    toast.loading("Downloading Please Wait");
-    try {
-      const response = await getRoutineOverdueDownload();
-      const url = window.URL.createObjectURL(
-        new Blob([response.data], {
-          type: response.headers["content-type"],
-        })
-      );
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "routine_overdue_file.xlsx");
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-
-
-      toast.success("Routine Overdue downloaded successfully");
-      toast.dismiss();
-    } catch (error) {
-      toast.dismiss();
-      console.error("Error downloading Routine Overdue:", error);
-      toast.error("Something went wrong, please try again");
-    }
-  };
-
-
-  const handleRoutinePendingDownload = async () => {
-    toast.loading("Downloading Please Wait");
-    try {
-      const response = await getRoutinePendingDownload();
-      const url = window.URL.createObjectURL(
-        new Blob([response.data], {
-          type: response.headers["content-type"],
-        })
-      );
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "routine_pending_file.xlsx");
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-
-
-      toast.success("Routine Pending downloaded successfully");
-      toast.dismiss();
-    } catch (error) {
-      toast.dismiss();
-      console.error("Error downloading Routine Pending:", error);
-      toast.error("Something went wrong, please try again");
-    }
-  };
-
-
-  const handleRoutineCompleteDownload = async () => {
-    toast.loading("downloading please wait");
-    try {
-      const response = await getRoutineCompleteDownload();
-      const url = window.URL.createObjectURL(
-        new Blob([response.data], {
-          type: response.headers["content-type"],
-        })
-      );
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "routine_complete_file.xlsx");
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      toast.dismiss();
-      toast.success("Routine Complete downloaded successfully");
-    } catch (error) {
-      toast.dismiss();
-      console.error("Error downloading Routine Complete:", error);
-      toast.error("Something went wrong, please try again");
-    }
-  };
-
-
-  useEffect(() => {
-    const fetchAssetTotalCount = async () => {
-      try {
-        const totalAsset = await getTotalAssetCount();
-        setTotalAssetCount(totalAsset.data.count);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
-
-    const fetchTotalBreakdownCount = async () => {
-      try {
-        const breakCount = await getBreakCount();
-        setBreakCount(breakCount.data.count);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    const fetchInUseAssetBreakDownCount = async () => {
-      try {
-        const inUse = await getInUseAssetBreakDown(); // API call to fetch users
-        setInUseCount(inUse.data.count);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
-
-    const fetchPPMScheduleCount = async () => {
-      try {
-        const scheduleCount = await getPPMScheduleCount(); // API call to fetch users
-        setPPMSchedule(scheduleCount.data.count);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
-
-    const fetchPPMOverDueCount = async () => {
-      try {
-        const overDueCount = await getPPMOverDueCount(); // API call to fetch users
-        setPPMOverDue(overDueCount.data.count);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
-
-    const fetchPPMpendingCount = async () => {
-      try {
-        const pendingCount = await getPPMpendingCount(); // API call to fetch users
-        setPPMPending(pendingCount.data.count);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
-
-    const fetchPPMCompleteCount = async () => {
-      try {
-        const completeCount = await getPPMCompleteCount(); // API call to fetch users
-        setPPMComplete(completeCount.data.count);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    // routine
-    const fetchRoutineScheduledCount = async () => {
-      try {
-        const routineSchedule = await getRoutineScheduledCount(); // API call to fetch users
-        setRoutineScheduleCount(routineSchedule.data.count);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    const fetchRoutineOverdueCount = async () => {
-      try {
-        const routineOverdue = await getRoutineOverdueCount(); // API call to fetch users
-        console.log(routineOverdue);
-        setRoutineOverdueCount(routineOverdue.data.count);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
-
-    const fetchRoutineCompleteCount = async () => {
-      try {
-        const routineComplete = await getRoutineCompleteCount(); // API call to fetch users
-        console.log(routineComplete);
-        setRoutineCompleteCount(routineComplete.data.count);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
-
-    const fetchRoutinePendingCount = async () => {
-      try {
-        const routinePending = await getRoutinePendingCount(); // API call to fetch users
-        console.log(routinePending);
-        setRoutinePendingCount(routinePending.data.count);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
-
-    fetchTotalBreakdownCount();
-    fetchAssetTotalCount();
-    fetchPPMOverDueCount();
-    fetchPPMpendingCount();
-    fetchPPMCompleteCount();
-    fetchInUseAssetBreakDownCount();
-    fetchRoutineScheduledCount();
-    fetchRoutineOverdueCount();
-    fetchRoutineCompleteCount();
-    fetchPPMScheduleCount();
-    fetchRoutinePendingCount();
-  }, []);
-
-
-  const cardColor = (type) => {
-    switch (type) {
-      case "Total Open Compliance":
-        return { bg: "bg-blue-50", text: "text-blue-400" };
-      case "In-Progress":
-        return { bg: "bg-green-50", text: "text-green-400" };
-      case "Completed":
-        return { bg: "bg-yellow-50", text: "text-yellow-400" };
-      case "Cancelled":
-        return { bg: "bg-blue-50", text: "text-blue-400" };
-      case "PPM Overdue":
-        return { bg: "bg-red-50", text: "text-red-400" };
-      case "PPM Pending":
-        return { bg: "bg-orange-50", text: "text-orange-400" };
-      case "PPM Complete":
-        return { bg: "bg-teal-50", text: "text-teal-400" };
-      case "Routine Task Scheduled":
-        return { bg: "bg-blue-50", text: "text-blue-400" };
-      case "Routine Task Overdue":
-        return { bg: "bg-pink-50", text: "text-pink-400" };
-      case "Routine Task Pending":
-        return { bg: "bg-yellow-50", text: "text-yellow-400" };
-      case "Routine Task Complete":
-        return { bg: "bg-green-50", text: "text-green-400" };
-      default:
-        return { bg: "bg-gray-50", text: "text-gray-400" };
-    }
-  };
-
-
-  const cardData = [
+  /** ---------------- Chart options ---------------- */
+  const optionsTotalCompliance = useMemo(
+    () =>
+      makeTwoValueOptions({
+        type: assetChartType,
+        aName: "In Use",
+        aVal: inUseCount,
+        aColor: "#1D4ED8",
+        bName: "Breakdown",
+        bVal: breakCount,
+        bColor: "#93C5FD",
+        seriesName: "Compliance",
+      }),
+    [assetChartType, inUseCount, breakCount]
+  );
+
+  const optionsTotalPPM = useMemo(
+    () =>
+      makeTwoValueOptions({
+        type: ppmChartType,
+        aName: "PPM Overdue",
+        aVal: ppmOverDue,
+        aColor: "#1D4ED8",
+        bName: "PPM Complete",
+        bVal: ppmComplete,
+        bColor: "#93C5FD",
+        seriesName: "PPM",
+      }),
+    [ppmChartType, ppmOverDue, ppmComplete]
+  );
+
+  const optionsRoutine = useMemo(
+    () =>
+      makeTwoValueOptions({
+        type: routineChartType,
+        aName: "Routine Overdue",
+        aVal: routineOverdueCount,
+        aColor: "#1D4ED8",
+        bName: "Routine Complete",
+        bVal: routineCompleteCount,
+        bColor: "#93C5FD",
+        seriesName: "Routine",
+      }),
+    [routineChartType, routineOverdueCount, routineCompleteCount]
+  );
+
+  /** ---------------- Top Stat cards ---------------- */
+  const topCards = [
     {
       title: "Total Open Compliance",
-      count: totalAssetCount,
-      downloadHandler: handleTotalAssetDownload,
+      value: totalAssetCount,
+      tone: "blue",
       icon: <FiBriefcase className="w-4 h-4" />,
+      onDownload: handleTotalAssetDownload,
+      downloading: dl.total,
     },
     {
       title: "In-Progress",
-      count: breakCount,
-      downloadHandler: handleTotalBreakdownDownload,
+      value: breakCount,
+      tone: "red",
       icon: <FiBarChart2 className="w-4 h-4" />,
+      onDownload: handleTotalBreakdownDownload,
+      downloading: dl.breakdown,
     },
     {
-        title: "Completed",
-        count: ppmSchedule,
-        downloadHandler: handleScheduledDownload,
-        icon: <FaRegCalendar className="w-4 h-4" />,
+      title: "Completed",
+      value: ppmSchedule,
+      tone: "green",
+      icon: <FaRegCalendar className="w-4 h-4" />,
+      onDownload: handleScheduledDownload,
+      downloading: dl.scheduled,
     },
     {
       title: "Cancelled",
-      count: inUseCount,
-      downloadHandler: assetInUseDownload,
+      value: inUseCount,
+      tone: "purple",
       icon: <TbUsers className="w-4 h-4" />,
+      onDownload: assetInUseDownload,
+      downloading: dl.inuse,
     },
-    // {
-    //   title: "PPM Overdue",
-    //   count: ppmOverDue,
-    //   downloadHandler: handlePPMOverDueDownload,
-    //   icon: <LuAlertTriangle className="w-4 h-4" />,
-    // },
-    // {
-    //   title: "PPM Pending",
-    //   count: ppmPending,
-    //   downloadHandler: handlePPMPendingDownload,
-    //   icon : <BsClock className="w-4 h-4" />
-    // },
-   
   ];
-  const [selectedTitles, setSelectedTitles] = useState(
-    cardData.map((card) => card.title)
-  );
 
-
-  const handleCheckboxChange = (title) => {
-    setSelectedTitles((prevSelected) =>
-      prevSelected.includes(title)
-        ? prevSelected.filter((item) => item !== title)
-        : [...prevSelected, title]
-    );
-  };
   return (
-    <div className="w-full overflow-hidden flex flex-col">
-      {/* Dropdown for Card Filters */}
-      <div className="relative mb-5 flex justify-end" ref={dropdownRef}>
-        {/* <button
-          onClick={() => setIsDropdownOpen((prev) => !prev)}
-          className="bg-gray-100 text-gray-700 px-4 py-2 rounded-md flex gap-2 items-center"
-        >
-          <IoSettingsOutline /> Assets
-          {isDropdownOpen ? (
-            <FaChevronUp className="ml-2" />
-          ) : (
-            <FaChevronDown className="ml-2" />
-          )}
-        </button> */}
-        {isDropdownOpen && (
-          <div className="absolute mt-12 mr-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
-            <div className="py-2">
-              {cardData.map((card) => (
-                <label
-                  key={card.title}
-                  className="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedTitles.includes(card.title)}
-                    onChange={() => handleCheckboxChange(card.title)}
-                    className="form-checkbox h-4 w-4 text-blue-500 border-gray-300 rounded focus:ring-0"
-                  />
-                  <span className="ml-2 text-gray-700">{card.title}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-        )}
+    <div className="w-full overflow-hidden flex flex-col px-3">
+      {/* ✅ TOP SUMMARY CARDS */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {topCards.map((c) => (
+          <StatCard key={c.title} {...c} />
+        ))}
       </div>
-      <div className="grid md:grid-cols-4 gap-5 mx-3">
-        {cardData.map(
-          (card) =>
-            // selectedTitles.includes(card.title) && (
-              <div
-                key={card.title}
-                className={`${cardColor(card.title).bg} ${
-                  cardColor(card.title).text
-                } shadow-custom-all-sides border py-2 px-3 rounded-md flex flex-col text-sm font-medium h-32`}
-              >
-                <div className="flex justify-between items-center">
-                  <h2 className="font-medium text-xl text-center">
-                    {card.title}
-                  </h2>
-                  <div className="flex gap-1">
-                    <span className={`${cardColor(card.title).text}`}>
-                      {card.icon}
-                    </span>
-                    {card.loading ? (
-                      <div className="flex gap-2">
-                        <h2 className="text-sm">Downloading ...</h2>
-                        <FaSpinner
-                          className={`animate-spin ${
-                            cardColor(card.title).text
-                          }`}
-                        />
-                      </div>
-                    ) : (
-                      <button onClick={card.downloadHandler}>
-                        <FaDownload
-                          className={`${cardColor(card.title).text} h-4 w-4`}
-                        />
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <div className="my-5 flex items-center justify-start">
-                  <span className="text-3xl">{card.count}</span>
-                </div>
-              </div>
-            // )
-        )}
+
+      {/* ✅ CHARTS (same screenshot UI) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 my-6">
+        <ChartCard
+          title="Total Compliance"
+          subtitle="In Use vs Breakdown"
+          // set to null if you don't want the pill
+          trendPercent={20.7}
+          trendDirection="down"
+          legendItems={[
+            { label: "In Use", value: inUseCount, color: "#1D4ED8" },
+            { label: "Breakdown", value: breakCount, color: "#93C5FD" },
+          ]}
+          footerText="Improved compliance"
+          footerDirection="down"
+          onDownload={handleTotalAssetDownload}
+          chartType={assetChartType}
+          setChartType={setAssetChartType}
+          options={optionsTotalCompliance}
+        />
+
+        <ChartCard
+          title="Total PPM"
+          subtitle="Overdue vs Complete"
+          trendPercent={21.7}
+          trendDirection="down"
+          legendItems={[
+            { label: "PPM Overdue", value: ppmOverDue, color: "#1D4ED8" },
+            { label: "PPM Complete", value: ppmComplete, color: "#93C5FD" },
+          ]}
+          footerText="Reduced pending load"
+          footerDirection="down"
+          onDownload={handleScheduledDownload}
+          chartType={ppmChartType}
+          setChartType={setPPMChartType}
+          options={optionsTotalPPM}
+        />
+
+        <ChartCard
+          title="Total Routine Task"
+          subtitle="Overdue vs Complete"
+          trendPercent={10.2}
+          trendDirection="up"
+          legendItems={[
+            {
+              label: "Routine Overdue",
+              value: routineOverdueCount,
+              color: "#1D4ED8",
+            },
+            {
+              label: "Routine Complete",
+              value: routineCompleteCount,
+              color: "#93C5FD",
+            },
+          ]}
+          footerText="Increased routine load"
+          footerDirection="up"
+          onDownload={handleRoutineScheduledDownload}
+          chartType={routineChartType}
+          setChartType={setRoutineChartType}
+          allowBar={true}
+          options={optionsRoutine}
+        />
       </div>
-      {/* <div className="grid md:grid-cols-2 gap-5 my-5 mx-3">
-        <div className="w-full">
-          <div className="py-2 px-3 shadow-custom-all-sides rounded-lg border bg-white">
-            <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold text-gray-800">
-                Total Compliance
-              </h2>
-              <div>
-                <button
-                  className="rounded-md bg-gray-200 py-1 px-5"
-                  onClick={handleTotalAssetDownload}
-                >
-                  <FaDownload />
-                </button>
-                <div className="relative inline-block text-left mx-1">
-                  <button
-                    onClick={toggleAssetDropdown}
-                    className="bg-blue-200 text-blue-500 px-4 rounded-md py-1"
-                  >
-                    <span className="flex justify-center">
-                      {getChartTypeIcon(assetChartType)}
-                    </span>
-                  </button>
-
-
-                  {isAssetDropdown && (
-                    <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-md shadow-lg z-10">
-                      <div className="py-1">
-                        <button
-                          onClick={() => handleAssetChartTypeChange("pie")}
-                          className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
-                            assetChartType === "pie"
-                              ? "bg-gray-200 text-black"
-                              : ""
-                          }`}
-                        >
-                          <div className="flex items-center">
-                            <RiPieChartFill className="mr-2" />
-                            <span className="text-xs">Pie</span>
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => handleAssetChartTypeChange("column")}
-                          className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
-                            assetChartType === "column"
-                              ? "bg-gray-200 text-black"
-                              : ""
-                          }`}
-                        >
-                          <div className="flex items-center">
-                            <AiOutlineBarChart className="mr-2" />
-                            <span className="text-xs">Column</span>
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => handleAssetChartTypeChange("line")}
-                          className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
-                            assetChartType === "line"
-                              ? "bg-gray-200 text-black"
-                              : ""
-                          }`}
-                        >
-                          <div className="flex items-center">
-                            <AiOutlineLineChart className="mr-2" />
-                            <span className="text-xs">Line</span>
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => handleAssetChartTypeChange("area")}
-                          className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
-                            assetChartType === "area"
-                              ? "bg-gray-200 text-black"
-                              : ""
-                          }`}
-                        >
-                          <div className="flex items-center">
-                            <AiOutlineAreaChart className="mr-2" />
-                            <span className="text-xs">Area</span>
-                          </div>
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-            <HighchartsReact
-              highcharts={Highcharts}
-              options={optionsPPMOverdue}
-            />
-          </div>
-        </div>
-        <div className="w-full">
-          <div className="py-2 px-3 shadow-custom-all-sides rounded-lg border bg-white text-black">
-            <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold text-gray-800">Total PPM</h2>
-              <div>
-                <button
-                  className="rounded-md bg-gray-200 py-1 px-5"
-                  onClick={handleScheduledDownload}
-                >
-                  <FaDownload />
-                </button>
-                <div className="relative inline-block text-left mx-1">
-                  <button
-                    onClick={togglePPMDropdown}
-                    className="bg-blue-200 text-blue-500 px-4 rounded-md py-1"
-                  >
-                    <span className="flex justify-center">
-                      {getChartTypeIcon(ppmChartType)}
-                    </span>
-                  </button>
-
-
-                  {isPPMDropdown && (
-                    <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-md shadow-lg z-10">
-                      <div className="py-1">
-                        <button
-                          onClick={() => handlePPMChartTypeChange("pie")}
-                          className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
-                            ppmChartType === "pie"
-                              ? "bg-gray-200 text-black"
-                              : ""
-                          }`}
-                        >
-                          <div className="flex items-center">
-                            <RiPieChartFill className="mr-2" />
-                            <span className="text-xs">Pie</span>
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => handlePPMChartTypeChange("column")}
-                          className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
-                            ppmChartType === "column"
-                              ? "bg-gray-200 text-black"
-                              : ""
-                          }`}
-                        >
-                          <div className="flex items-center">
-                            <AiOutlineBarChart className="mr-2" />
-                            <span className="text-xs">Column</span>
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => handlePPMChartTypeChange("line")}
-                          className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
-                            ppmChartType === "line"
-                              ? "bg-gray-200 text-black"
-                              : ""
-                          }`}
-                        >
-                          <div className="flex items-center">
-                            <AiOutlineLineChart className="mr-2" />
-                            <span className="text-xs">Line</span>
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => handlePPMChartTypeChange("area")}
-                          className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
-                            ppmChartType === "area"
-                              ? "bg-gray-200 text-black"
-                              : ""
-                          }`}
-                        >
-                          <div className="flex items-center">
-                            <AiOutlineAreaChart className="mr-2" />
-                            <span className="text-xs">Area</span>
-                          </div>
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-            <HighchartsReact
-              highcharts={Highcharts}
-              options={optionsPPMSchedule}
-            />
-          </div>
-        </div>
-        <div className="w-full">
-          <div className="py-2 px-3 shadow-custom-all-sides rounded-lg border bg-white">
-            <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold text-gray-800">
-                Total Routine Task
-              </h2>
-              <div>
-                <button
-                  className="rounded-md bg-gray-200 py-1 px-5"
-                  onClick={handleRoutineScheduledDownload}
-                >
-                  <FaDownload />
-                </button>
-                <div className="relative inline-block text-left mx-1">
-                  <button
-                    onClick={toggleRoutineDropdown}
-                    className="bg-blue-200 text-blue-500 px-4 rounded-md py-1"
-                  >
-                    <span className="flex justify-center">
-                      {getChartTypeIcon(routineChartType)}
-                    </span>
-                  </button>
-
-
-                  {isRoutineDropdown && (
-                    <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-md shadow-lg z-10">
-                      <div className="py-1">
-                        <button
-                          onClick={() => handleRoutineChartTypeChange("pie")}
-                          className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
-                            routineChartType === "pie"
-                              ? "bg-gray-200 text-black"
-                              : ""
-                          }`}
-                        >
-                          <div className="flex items-center">
-                            <RiPieChartFill className="mr-2" />
-                            <span className="text-xs">Pie</span>
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => handleRoutineChartTypeChange("column")}
-                          className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
-                            routineChartType === "column"
-                              ? "bg-gray-200 text-black"
-                              : ""
-                          }`}
-                        >
-                          <div className="flex items-center">
-                            <AiOutlineBarChart className="mr-2" />
-                            <span className="text-xs">Column</span>
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => handleRoutineChartTypeChange("line")}
-                          className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
-                            routineChartType === "line"
-                              ? "bg-gray-200 text-black"
-                              : ""
-                          }`}
-                        >
-                          <div className="flex items-center">
-                            <AiOutlineLineChart className="mr-2" />
-                            <span className="text-xs">Line</span>
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => handleRoutineChartTypeChange("area")}
-                          className={`block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-black w-full ${
-                            routineChartType === "area"
-                              ? "bg-gray-200 text-black"
-                              : ""
-                          }`}
-                        >
-                          <div className="flex items-center">
-                            <AiOutlineAreaChart className="mr-2" />
-                            <span className="text-xs">Area</span>
-                          </div>
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="mt-10">
-              <HighchartsReact
-                highcharts={Highcharts}
-                options={optionsRoutineSchedule}
-              />
-            </div>
-          </div>
-        </div>
-      </div> */}
     </div>
   );
 }
 
-
-
-
-
-
-
-export default ComplianceDashboard
+export default ComplianceDashboard;

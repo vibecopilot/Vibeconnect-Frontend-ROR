@@ -44,7 +44,7 @@ const ServicePage = () => {
         </div>
       ),
     },
-    { name: "Service Name", selector: (row) => row.name, sortable: true },
+    { name: "Service Name", selector: (row) => row.name, sortable: true, width: "350px" },
     { name: "Building", selector: (row) => row.building_name, sortable: true },
     { name: "Floor", selector: (row) => row.floor_name, sortable: true },
     {
