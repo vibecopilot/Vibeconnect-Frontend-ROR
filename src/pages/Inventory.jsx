@@ -24,7 +24,11 @@ const Inventory = () => {
   const [stocks, setStocks] = useState([]);
   const [masters, setMastersState] = useState([]);
   const [searchText, setSearchText] = useState("");
-  const [filteredData, setFilteredData] = useState([]);
+
+  // ✅ keep separate filtered lists for Masters & Stocks
+  const [filteredStocks, setFilteredStocks] = useState([]);
+  const [filteredMasters, setFilteredMasters] = useState([]);
+
   const [page, setPage] = useState("Masters");
   const themeColor = useSelector((state) => state.theme.color);
 
@@ -42,13 +46,16 @@ const Inventory = () => {
   const normalizeList = (data) => {
     if (Array.isArray(data)) return data;
 
-    // common formats: { inventories: [] } / { data: [] } / { results: [] }
     if (data && typeof data === "object") {
       if (Array.isArray(data.inventories)) return data.inventories;
       if (Array.isArray(data.masters)) return data.masters;
       if (Array.isArray(data.data)) return data.data;
       if (Array.isArray(data.results)) return data.results;
       if (Array.isArray(data.items)) return data.items;
+
+      // ✅ extra common keys
+      if (Array.isArray(data.stocks)) return data.stocks;
+      if (Array.isArray(data.inventory)) return data.inventory;
     }
     return [];
   };
@@ -63,12 +70,45 @@ const Inventory = () => {
     return `${year}-${month}-${day}`;
   };
 
+  // ✅ robust pick helper for group/sub-group values
+  const pickText = (...vals) => {
+    for (const v of vals) {
+      if (v === 0) return "0";
+      if (typeof v === "string" && v.trim()) return v.trim();
+      if (typeof v === "number") return String(v);
+    }
+    return "-";
+  };
+
+  const getGroupName = (row) =>
+    pickText(
+      row?.group_name,
+      row?.groupName,
+      row?.group,
+      row?.group?.name,
+      row?.asset_group,
+      row?.asset_group_name,
+      row?.asset_group?.name,
+      row?.group_master_name
+    );
+
+  const getSubGroupName = (row) =>
+    pickText(
+      row?.sub_group_name,
+      row?.subGroupName,
+      row?.sub_group,
+      row?.sub_group?.name,
+      row?.asset_sub_group,
+      row?.asset_sub_group_name,
+      row?.asset_sub_group?.name,
+      row?.sub_group_master_name
+    );
+
   // ✅ Fetch Stocks
   useEffect(() => {
     const fetchInventory = async () => {
       try {
         const invResp = await getInventory();
-
         const list = normalizeList(invResp?.data);
 
         const sorted = [...list].sort(
@@ -76,11 +116,11 @@ const Inventory = () => {
         );
 
         setStocks(sorted);
-        setFilteredData(sorted);
+        setFilteredStocks(sorted);
       } catch (error) {
         console.log("getInventory error:", error);
         setStocks([]);
-        setFilteredData([]);
+        setFilteredStocks([]);
       }
     };
 
@@ -99,9 +139,11 @@ const Inventory = () => {
         );
 
         setMastersState(sorted);
+        setFilteredMasters(sorted);
       } catch (error) {
         console.log("getMasters error:", error);
         setMastersState([]);
+        setFilteredMasters([]);
       }
     };
 
@@ -115,9 +157,8 @@ const Inventory = () => {
       if (!user_id) return;
 
       const resp = await getVibeBackground(user_id);
-      const data = resp?.data; // ✅ axios shape
+      const data = resp?.data;
 
-      // support both {success:true,data:{image:""}} and {image:""}
       const imagePath = data?.data?.image || data?.image;
 
       if (imagePath) {
@@ -125,7 +166,6 @@ const Inventory = () => {
       }
     } catch (error) {
       console.log("getVibeBackground error:", error);
-      // don't crash
       setBgImage("");
     }
   };
@@ -134,19 +174,40 @@ const Inventory = () => {
     Get_Background();
   }, []);
 
+  // ✅ search works for current page (Masters / Stocks)
   const handleSearch = (event) => {
     const val = event.target.value;
     setSearchText(val);
 
-    if (!val.trim()) {
-      setFilteredData(stocks);
+    const q = val.trim().toLowerCase();
+    if (!q) {
+      setFilteredStocks(stocks);
+      setFilteredMasters(masters);
       return;
     }
 
-    const filtered = (Array.isArray(stocks) ? stocks : []).filter((item) =>
-      String(item?.name || "").toLowerCase().includes(val.toLowerCase())
-    );
-    setFilteredData(filtered);
+    if (page === "stocks") {
+      const filtered = (Array.isArray(stocks) ? stocks : []).filter((item) => {
+        const name = String(item?.name || "").toLowerCase();
+        const group = String(getGroupName(item) || "").toLowerCase();
+        const subGroup = String(getSubGroupName(item) || "").toLowerCase();
+        return name.includes(q) || group.includes(q) || subGroup.includes(q);
+      });
+      setFilteredStocks(filtered);
+      return;
+    }
+
+    // Masters
+    const filteredM = (Array.isArray(masters) ? masters : []).filter((item) => {
+      const name = String(item?.name || "").toLowerCase();
+      const group = String(getGroupName(item) || "").toLowerCase();
+      const subGroup = String(getSubGroupName(item) || "").toLowerCase();
+      const code = String(item?.code || "").toLowerCase();
+      return (
+        name.includes(q) || code.includes(q) || group.includes(q) || subGroup.includes(q)
+      );
+    });
+    setFilteredMasters(filteredM);
   };
 
   const handleFileChange = (files) => setSelectedFiles(files);
@@ -166,10 +227,10 @@ const Inventory = () => {
         setImportStatus("Masters successfully imported!");
         closeModalImport();
 
-        // refresh masters after import
         const resp = await getMasters();
         const list = normalizeList(resp?.data);
         setMastersState(list);
+        setFilteredMasters(list);
       } else {
         setImportStatus("Failed to import masters.");
       }
@@ -194,64 +255,119 @@ const Inventory = () => {
     link.click();
   };
 
-  const columnsmaster = [
-    {
-      name: "Action",
-      cell: (row) => (
-        <div className="flex items-center gap-4">
-          <Link to={`/admin/master-details/${row.id}`}>
-            <BsEye size={15} />
-          </Link>
-          <Link to={`/admin/edit-masters/${row.id}`}>
-            <BiEdit size={15} />
-          </Link>
-        </div>
-      ),
-    },
-    { name: "Name", selector: (row) => row.name, sortable: true },
-    { name: "Code", selector: (row) => row.code, sortable: true },
-    { name: "Serial number", selector: (row) => row.serial_number, sortable: true },
-    { name: "Type", selector: (row) => (row.inventory_type == 1 ? "Spares" : "Consumable"), sortable: true },
-    { name: "Group", selector: (row) => row.asset_group, sortable: true },
-    { name: "Sub Group", selector: (row) => row.asset_sub_group, sortable: true },
-    { name: "Category", selector: (row) => row.category, sortable: true },
-    { name: "Manufacturer", selector: (row) => row.Manufacturer, sortable: true },
-    { name: "Criticality", selector: (row) => (row.criticality == 1 ? "Critical" : "Non-Critical"), sortable: true },
-    { name: "Unit", selector: (row) => row.unit, sortable: true },
-    { name: "Cost", selector: (row) => row.cost, sortable: true },
-    { name: "SAC/HSN Code", selector: (row) => row.hsn_id, sortable: true },
-    { name: "Min Stock Level", selector: (row) => row.min_stock_level, sortable: true },
-    { name: "Min Order Level", selector: (row) => row.min_order_level, sortable: true },
-    { name: "Quantity", selector: (row) => row.quantity, sortable: true },
-    { name: "Asset", selector: (row) => row.asset_id, sortable: true },
-    { name: "Status", selector: (row) => (row.active === true ? "Active" : "Inactive"), sortable: true },
-    { name: "Expiry Date", selector: (row) => dateFormat(row.expiry_date), sortable: true },
-  ];
+  const columnsmaster = useMemo(
+    () => [
+      {
+        name: "Action",
+        cell: (row) => (
+          <div className="flex items-center gap-4">
+            <Link to={`/admin/master-details/${row.id}`}>
+              <BsEye size={15} />
+            </Link>
+            <Link to={`/admin/edit-masters/${row.id}`}>
+              <BiEdit size={15} />
+            </Link>
+          </div>
+        ),
+      },
+      { name: "Name", selector: (row) => pickText(row?.name), sortable: true },
+      { name: "Code", selector: (row) => pickText(row?.code), sortable: true },
+      {
+        name: "Serial number",
+        selector: (row) => pickText(row?.serial_number),
+        sortable: true,
+      },
+      {
+        name: "Type",
+        selector: (row) => (row?.inventory_type == 1 ? "Spares" : "Consumable"),
+        sortable: true,
+      },
 
-  const columns = [
-    {
-      name: "Action",
-      cell: (row) => (
-        <div className="flex items-center gap-4">
-          <Link to={`/admin/stock-details/${row.id}`}>
-            <BsEye size={15} />
-          </Link>
-          <Link to={`/admin/edit-stock/${row.id}`}>
-            <BiEdit size={15} />
-          </Link>
-        </div>
-      ),
-    },
-    { name: "Name", selector: (row) => row.name, sortable: true },
-    { name: "Description", selector: (row) => row.description, sortable: true },
-    { name: "Available Quantity", selector: (row) => row.available_quantity, sortable: true },
-    { name: "Rate", selector: (row) => row.rate, sortable: true },
-    { name: "Group", selector: (row) => row.group_name, sortable: true },
-    { name: "Sub Group", selector: (row) => row.sub_group_name, sortable: true },
-    { name: "Min Order Level", selector: (row) => row.min_stock, sortable: true },
-    { name: "Max Order Level", selector: (row) => row.max_stock, sortable: true },
-    { name: "Added On", selector: (row) => dateFormat(row.created_at), sortable: true },
-  ];
+      // ✅ FIXED: Group/Sub Group resolved from multiple keys
+      { name: "Group", selector: (row) => getGroupName(row), sortable: true },
+      { name: "Sub Group", selector: (row) => getSubGroupName(row), sortable: true },
+
+      { name: "Category", selector: (row) => pickText(row?.category), sortable: true },
+
+      // (optional) Manufacturer key might be different, keep safe
+      {
+        name: "Manufacturer",
+        selector: (row) => pickText(row?.Manufacturer, row?.manufacturer, row?.manufacturer_name),
+        sortable: true,
+      },
+
+      {
+        name: "Criticality",
+        selector: (row) => (row?.criticality == 1 ? "Critical" : "Non-Critical"),
+        sortable: true,
+      },
+      { name: "Unit", selector: (row) => pickText(row?.unit), sortable: true },
+      { name: "Cost", selector: (row) => pickText(row?.cost), sortable: true },
+      { name: "SAC/HSN Code", selector: (row) => pickText(row?.hsn_id), sortable: true },
+      {
+        name: "Min Stock Level",
+        selector: (row) => pickText(row?.min_stock_level),
+        sortable: true,
+      },
+      {
+        name: "Min Order Level",
+        selector: (row) => pickText(row?.min_order_level),
+        sortable: true,
+      },
+      { name: "Quantity", selector: (row) => pickText(row?.quantity), sortable: true },
+      { name: "Asset", selector: (row) => pickText(row?.asset_id), sortable: true },
+      {
+        name: "Status",
+        selector: (row) => (row?.active === true ? "Active" : "Inactive"),
+        sortable: true,
+      },
+      {
+        name: "Expiry Date",
+        selector: (row) => dateFormat(row?.expiry_date),
+        sortable: true,
+      },
+    ],
+    [masters]
+  );
+
+  const columns = useMemo(
+    () => [
+      {
+        name: "Action",
+        cell: (row) => (
+          <div className="flex items-center gap-4">
+            <Link to={`/admin/stock-details/${row.id}`}>
+              <BsEye size={15} />
+            </Link>
+            <Link to={`/admin/edit-stock/${row.id}`}>
+              <BiEdit size={15} />
+            </Link>
+          </div>
+        ),
+      },
+      { name: "Name", selector: (row) => pickText(row?.name), sortable: true },
+      {
+        name: "Description",
+        selector: (row) => pickText(row?.description),
+        sortable: true,
+      },
+      {
+        name: "Available Quantity",
+        selector: (row) => pickText(row?.available_quantity),
+        sortable: true,
+      },
+      { name: "Rate", selector: (row) => pickText(row?.rate), sortable: true },
+
+      // ✅ FIXED: Group/Sub Group resolved from multiple keys
+      { name: "Group", selector: (row) => getGroupName(row), sortable: true },
+      { name: "Sub Group", selector: (row) => getSubGroupName(row), sortable: true },
+
+      { name: "Min Order Level", selector: (row) => pickText(row?.min_stock), sortable: true },
+      { name: "Max Order Level", selector: (row) => pickText(row?.max_stock), sortable: true },
+      { name: "Added On", selector: (row) => dateFormat(row?.created_at), sortable: true },
+    ],
+    [stocks]
+  );
 
   return (
     <section
@@ -272,19 +388,29 @@ const Inventory = () => {
                   page === "Masters" &&
                   "bg-white font-medium text-blue-500 shadow-custom-all-sides"
                 } rounded-t-md px-4 cursor-pointer text-center transition-all duration-300 ease-linear`}
-                onClick={() => setPage("Masters")}
+                onClick={() => {
+                  setPage("Masters");
+                  setSearchText("");
+                  setFilteredMasters(masters);
+                }}
               >
                 Masters
               </h2>
+
               <h2
                 className={`p-1 ${
                   page === "stocks" &&
                   "bg-white font-medium text-blue-500 shadow-custom-all-sides"
                 } rounded-t-md px-4 cursor-pointer text-center transition-all duration-300 ease-linear`}
-                onClick={() => setPage("stocks")}
+                onClick={() => {
+                  setPage("stocks");
+                  setSearchText("");
+                  setFilteredStocks(stocks);
+                }}
               >
                 Stocks
               </h2>
+
               <h2
                 className={`p-1 ${
                   page === "grn" &&
@@ -294,6 +420,7 @@ const Inventory = () => {
               >
                 GRN
               </h2>
+
               <h2
                 className={`p-1 ${
                   page === "gdn" &&
@@ -312,7 +439,7 @@ const Inventory = () => {
             <div className="flex md:flex-row flex-col justify-between items-center my-2 gap-2">
               <input
                 type="text"
-                placeholder="Search"
+                placeholder="Search (name/code/group/subgroup)"
                 className="border-2 p-2 md:w-96 border-gray-300 rounded-lg placeholder:text-sm"
                 value={searchText}
                 onChange={handleSearch}
@@ -374,7 +501,7 @@ const Inventory = () => {
               </div>
             </div>
 
-            <Table columns={columnsmaster} data={masters} />
+            <Table columns={columnsmaster} data={filteredMasters} />
           </>
         )}
 
@@ -383,7 +510,7 @@ const Inventory = () => {
             <div className="flex md:flex-row flex-col justify-between items-center my-2 gap-2">
               <input
                 type="text"
-                placeholder="Search By Stock name"
+                placeholder="Search (name/group/subgroup)"
                 className="border-2 p-2 md:w-96 border-gray-300 rounded-lg placeholder:text-sm"
                 value={searchText}
                 onChange={handleSearch}
@@ -401,7 +528,7 @@ const Inventory = () => {
               </div>
             </div>
 
-            <Table columns={columns} data={filteredData} />
+            <Table columns={columns} data={filteredStocks} />
           </>
         )}
 

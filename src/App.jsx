@@ -790,6 +790,10 @@ import PreviewSurvey from "./pages/SubPages/survey/PreviewSurvey.jsx";
 import FBMainPage from "./pages/Setup/FBMainPage.jsx";
 import EventPage from "./extra/EventPage.jsx";
 import ParkingConfigurationSetup from "./pages/Setup/ParkingSetupPages/ParkingConfigurationSetup.jsx";
+import ModernParkingConfig from "./pages/Setup/ParkingSetupPages/ModernParkingConfig.jsx";
+import VehicleSetup from "./pages/Setup/ParkingSetupPages/VehicelSetup.jsx";
+import ParkingViewDetails from "./pages/SubPages/details/ParkingViewDetails.jsx";
+import EditParking from "./pages/SubPages/EditParking.jsx";
 import RmbAttendance from "./pages/RMBAttendance.jsx";
 import FBRestaurtantEdit from "./pages/SubPages/FBResturantEdit.jsx";
 
@@ -1105,9 +1109,6 @@ function App() {
           }
         />
 
-
-        
-
         <Route
           path="/setup/account"
           element={
@@ -1392,7 +1393,6 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
-
         {/* Service */}
         <Route
           path="/service/checklist/:serviceId/:activityId"
@@ -1875,6 +1875,23 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
+        <Route
+          path="/admin/parking-view-details/:id"
+          element={ 
+            <ProtectedAdminRoutes>
+              <ParkingViewDetails />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/admin/parking/edit-parking/:id"
+          element={ 
+            <ProtectedAdminRoutes>
+              <EditParking />
+            </ProtectedAdminRoutes>
+          }
+        />
+
         {/* Setup Parking */}
         <Route
           path="/admin/parking-setup"
@@ -1884,6 +1901,25 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
+
+          <Route
+            path="/admin/modern-parking-config"
+            element={
+              <ProtectedAdminRoutes>
+                <ModernParkingConfig />
+              </ProtectedAdminRoutes>
+            }
+          />
+
+          <Route
+            path="/admin/Vehicle-setup"
+            element={
+              <ProtectedAdminRoutes>
+                <VehicleSetup />
+              </ProtectedAdminRoutes>
+            }
+          />
+
         <Route
           path="/admin/add-parking-config"
           element={

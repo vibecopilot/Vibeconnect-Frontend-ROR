@@ -106,8 +106,11 @@ const Checklist = () => {
     fetchChecklist();
   }, []);
 
+
   const columns = [
-    { name: "Name", selector: (row) => row.name, sortable: true },
+    { name: "Name", selector: (row) => row.name, sortable: true ,
+      width: "400px",
+    },
     {
       name: "frequency",
       selector: (row) => row.frequency,
