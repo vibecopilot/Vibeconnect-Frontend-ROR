@@ -38,6 +38,7 @@ const ServiceChecklist = () => {
       name: "Name",
       selector: (row) => row.name,
       sortable: true,
+      width: "350px",
     },
 
     {
