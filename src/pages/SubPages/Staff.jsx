@@ -19,51 +19,159 @@ const Staff = () => {
   const [filteredStaff, setFilteredStaff] = useState([]);
   const [searchText, setSearchText] = useState("");
 
-  // 📄 Pagination
+  // 📄 Pagination (DON'T CHANGE - as you requested)
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalRecords, setTotalRecords] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
 
-  // 🚀 Fetch Staff (Server Pagination compatible)
-const fetchStaff = async (page = 1, perPage = rowsPerPage) => {
-  try {
-    const res = await getStaff(page, perPage);
-    const apiData = res.data;
-    const staffList = Array.isArray(apiData.staffs) ? apiData.staffs : [];
+  // ✅ CSV helpers
+  const csvEscape = (v) => {
+    if (v === null || v === undefined) return "";
+    const s = String(v);
+    if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+    return s;
+  };
 
-setStaffs(staffList);
+  const downloadCSV = (headers, rows, filename) => {
+    const content = headers.join(",") + "\n" + rows.join("\n");
+    const blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
 
-// search active hai toh filter maintain rakho
-if (searchText.trim()) {
-  const filtered = staffList.filter((item) => {
-    const fullName = `${item.firstname} ${item.lastname}`.toLowerCase();
-    return (
-      fullName.includes(searchText) ||
-      item.unit_name?.toLowerCase().includes(searchText) ||
-      item.mobile_no?.toLowerCase().includes(searchText)
-    );
-  });
-  setFilteredStaff(filtered);
-} else {
-  setFilteredStaff(staffList);
-}
+  // ✅ Export ALL staff data (fetch all pages from API)
+  const exportStaffToCSVAll = async () => {
+    try {
+      const EXPORT_PER_PAGE = 200; // can increase if backend allows
+      let page = 1;
+      let allRows = [];
+      let totalPagesFromApi = 1;
 
+      // fetch first page
+      const firstRes = await getStaff(page, EXPORT_PER_PAGE);
+      const firstData = firstRes?.data || {};
+      const firstList = Array.isArray(firstData.staffs) ? firstData.staffs : [];
+      allRows = allRows.concat(firstList);
 
-    setTotalRecords(apiData.total_count || staffList.length);
-    setCurrentPage(apiData.current_page || page);
-  } catch (error) {
-    console.error("Error fetching staff:", error);
-  }
-};
+      // detect total pages
+      if (firstData.total_pages) {
+        totalPagesFromApi = firstData.total_pages;
+      } else if (firstData.total_count) {
+        totalPagesFromApi = Math.ceil(firstData.total_count / EXPORT_PER_PAGE) || 1;
+      }
 
+      // fetch remaining pages
+      for (page = 2; page <= totalPagesFromApi; page++) {
+        const res = await getStaff(page, EXPORT_PER_PAGE);
+        const data = res?.data || {};
+        const list = Array.isArray(data.staffs) ? data.staffs : [];
+        allRows = allRows.concat(list);
+      }
 
-useEffect(() => {
-  fetchStaff(currentPage);
-}, [currentPage, rowsPerPage]);
+      // optional: if search is active, export filtered results
+      let exportRows = allRows;
+      if (searchText.trim()) {
+        const q = searchText.toLowerCase();
+        exportRows = allRows.filter((item) => {
+          const fullName = `${item.firstname} ${item.lastname}`.toLowerCase();
+          return (
+            fullName.includes(q) ||
+            item.unit_name?.toLowerCase().includes(q) ||
+            item.mobile_no?.toLowerCase().includes(q)
+          );
+        });
+      }
 
+      if (!exportRows.length) {
+        alert("No data to export");
+        return;
+      }
 
-  // 🔍 Search handler
+      const headers = [
+        "ID",
+        "Name",
+        "Unit",
+        "Email",
+        "Mobile",
+        "Work Type",
+        "Vendor",
+        "From",
+        "Till",
+        "Status",
+        "Profile Picture URL",
+      ];
+
+      const rows = exportRows.map((row) => {
+        const fullName = `${row.firstname || ""} ${row.lastname || ""}`.trim();
+        const profileUrl = row?.profile_picture?.url
+          ? domainPrefix + row.profile_picture.url
+          : "";
+
+        return [
+          csvEscape(row.id),
+          csvEscape(fullName),
+          csvEscape(row.unit_name || "—"),
+          csvEscape(row.email || "—"),
+          csvEscape(row.mobile_no || "—"),
+          csvEscape(row.work_type || "—"),
+          csvEscape(row.vendor_name || "—"),
+          csvEscape(row.valid_from ? dateFormat(row.valid_from) : ""),
+          csvEscape(row.valid_till ? dateFormat(row.valid_till) : ""),
+          csvEscape(row.status ? "Active" : "Inactive"),
+          csvEscape(profileUrl),
+        ].join(",");
+      });
+
+      downloadCSV(headers, rows, "staff_export.csv");
+    } catch (error) {
+      console.error("Export failed:", error);
+      alert("Export failed");
+    }
+  };
+
+  // 🚀 Fetch Staff (Server Pagination compatible) - unchanged
+  const fetchStaff = async (page = 1, perPage = rowsPerPage) => {
+    try {
+      const res = await getStaff(page, perPage);
+      const apiData = res.data;
+      const staffList = Array.isArray(apiData.staffs) ? apiData.staffs : [];
+
+      setStaffs(staffList);
+
+      // search active hai toh filter maintain rakho
+      if (searchText.trim()) {
+        const filtered = staffList.filter((item) => {
+          const fullName = `${item.firstname} ${item.lastname}`.toLowerCase();
+          return (
+            fullName.includes(searchText) ||
+            item.unit_name?.toLowerCase().includes(searchText) ||
+            item.mobile_no?.toLowerCase().includes(searchText)
+          );
+        });
+        setFilteredStaff(filtered);
+      } else {
+        setFilteredStaff(staffList);
+      }
+
+      setTotalRecords(apiData.total_count || staffList.length);
+      setCurrentPage(apiData.current_page || page);
+      setTotalPages(apiData.total_pages || 1);
+    } catch (error) {
+      console.error("Error fetching staff:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchStaff(currentPage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, rowsPerPage]);
+
+  // 🔍 Search handler - unchanged
   const handleSearch = (e) => {
     const value = e.target.value.toLowerCase();
     setSearchText(value);
@@ -83,7 +191,7 @@ useEffect(() => {
     }
   };
 
-  // 🧾 Table Columns
+  // 🧾 Table Columns - unchanged
   const columns = [
     {
       name: "Action",
@@ -126,14 +234,8 @@ useEffect(() => {
     { name: "Mobile", selector: (row) => row.mobile_no || "—" },
     { name: "Work Type", selector: (row) => row.work_type || "—" },
     { name: "Vendor", selector: (row) => row.vendor_name || "—" },
-    {
-      name: "From",
-      selector: (row) => dateFormat(row.valid_from),
-    },
-    {
-      name: "Till",
-      selector: (row) => dateFormat(row.valid_till),
-    },
+    { name: "From", selector: (row) => dateFormat(row.valid_from) },
+    { name: "Till", selector: (row) => dateFormat(row.valid_till) },
     {
       name: "Status",
       selector: (row) =>
@@ -145,7 +247,7 @@ useEffect(() => {
     },
   ];
 
-  // 📋 Table pagination data
+  // ✅ KEEP your pagination logic exactly as-is
   const paginatedData = filteredStaff.slice(
     (currentPage - 1) * rowsPerPage,
     currentPage * rowsPerPage
@@ -157,7 +259,7 @@ useEffect(() => {
       <div className="w-full flex mx-3 flex-col overflow-hidden mb-10">
         <Passes />
 
-        {/* 🔍 Search + Add */}
+        {/* 🔍 Search + Add + Export */}
         <div className="flex md:flex-row flex-col gap-5 justify-between my-2">
           <input
             type="text"
@@ -168,6 +270,14 @@ useEffect(() => {
           />
 
           <span className="flex gap-4">
+            {/* ✅ Export button */}
+            <button
+              onClick={exportStaffToCSVAll}
+              className="border-2 border-blue-600 text-blue-600 font-semibold transition-all p-2 rounded-md hover:bg-blue-50 cursor-pointer text-center flex items-center gap-2 justify-center"
+            >
+              Export
+            </button>
+
             <Link
               to={"/admin/passes/add-staff"}
               style={{ background: themeColor }}

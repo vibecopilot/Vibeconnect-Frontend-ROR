@@ -1,10 +1,10 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import Navbar from '../../components/Navbar';
-import { PiPlusCircle } from 'react-icons/pi';
-import { Link } from 'react-router-dom';
-import Passes from '../Passes';
-import { useSelector } from 'react-redux';
-import Table from '../../components/table/Table';
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import Navbar from "../../components/Navbar";
+import { PiPlusCircle } from "react-icons/pi";
+import { Link } from "react-router-dom";
+import Passes from "../Passes";
+import { useSelector } from "react-redux";
+import Table from "../../components/table/Table";
 import {
   getAllVisitorLogs,
   getExpectedVisitor,
@@ -13,20 +13,19 @@ import {
   postVisitorLogFromDevice,
   postVisitorLogToBackend,
   visitorApproval,
-} from '../../api';
-import { BsEye } from 'react-icons/bs';
-import { BiEdit, BiFilterAlt } from 'react-icons/bi';
-import Webcam from 'react-webcam';
-import { formatTime } from '../../utils/dateUtils';
-import { IoClose } from 'react-icons/io5';
-import { FaCheck } from 'react-icons/fa6';
-import toast from 'react-hot-toast';
-import SelfRegistration from './SelfRegistration';
+} from "../../api";
+import { BsEye } from "react-icons/bs";
+import { BiEdit, BiFilterAlt } from "react-icons/bi";
+import { formatTime } from "../../utils/dateUtils";
+import { IoClose } from "react-icons/io5";
+import { FaCheck } from "react-icons/fa6";
+import toast from "react-hot-toast";
+import SelfRegistration from "./SelfRegistration";
 
 const VisitorPage = () => {
-  const [page, setPage] = useState('all');
+  const [page, setPage] = useState("all");
   const themeColor = useSelector((state) => state.theme.color);
-  const [selectedVisitor, setSelectedVisitor] = useState('expected');
+  const [selectedVisitor, setSelectedVisitor] = useState("expected");
   const [visitor, setVisitor] = useState([]);
   const [all, setAll] = useState([]);
   const [visitorIn, setVisitorIn] = useState([]);
@@ -40,62 +39,170 @@ const VisitorPage = () => {
   const [filteredData, setFilteredData] = useState([]);
   const [histories, setHistories] = useState([]);
   const [filteredHistory, setFilteredHistory] = useState([]);
-  // Refetch trigger for approvals...
   const [refetchTrigger, setRefetchTrigger] = useState(0);
 
-  // General Pagination states used for All, Visitor In, Visitor Out
+  // Pagination (All / In / Out)
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  // Pagination states for Approvals
+  // Pagination (Approvals)
   const [approvalPage, setApprovalPage] = useState(1);
   const [approvalRowsPerPage, setApprovalRowsPerPage] = useState(10);
   const [approvalTotalPages, setApprovalTotalPages] = useState(1);
   const [approvalTotalRecords, setApprovalTotalRecords] = useState(0);
 
-  // Pagination states for History FIXED FOR PAGINATION
+  // Pagination (History)
   const [historyPage, setHistoryPage] = useState(1);
   const [historyRowsPerPage, setHistoryRowsPerPage] = useState(10);
   const [historyTotalPages, setHistoryTotalPages] = useState(1);
   const [historyTotalRecords, setHistoryTotalRecords] = useState(0);
 
-  // Filter states for All visitors
+  // Filters (All)
   const [showFilters, setShowFilters] = useState(false);
-  const [filterDateFrom, setFilterDateFrom] = useState('');
-  const [filterDateTo, setFilterDateTo] = useState('');
-  const [filterMobile, setFilterMobile] = useState('');
-  const [filterHost, setFilterHost] = useState('');
+  const [filterDateFrom, setFilterDateFrom] = useState("");
+  const [filterDateTo, setFilterDateTo] = useState("");
+  const [filterMobile, setFilterMobile] = useState("");
+  const [filterHost, setFilterHost] = useState("");
 
   const webcamRef = useRef(null);
 
-  // Helper function for CSV Export Fixed missing function
-  const exportHistoryToCSV = () => {
-    if (filteredHistory.length === 0) {
-      toast.error('No data to export');
+  const dateFormat = (dateString) => {
+    const date = new Date(dateString);
+    return date.toDateString();
+  };
+
+  const dateTimeFormat = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleString();
+  };
+
+  // ✅ helper: safe csv escape
+  const csvEscape = (v) => {
+    if (v === null || v === undefined) return "";
+    const s = String(v);
+    if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+    return s;
+  };
+
+  // ✅ NEW: Export current visible Visitor list (All / In / Out) to CSV
+  const exportVisitorsToCSV = () => {
+    let rows = [];
+
+    if (page === "all") {
+      rows =
+        selectedVisitor === "expected"
+          ? FilteredExpectedVisitor
+          : FilteredUnexpectedVisitor;
+    } else if (page === "Visitor In") {
+      rows = selectedVisitor === "expected" ? filteredData : FilteredUnexpectedVisitor;
+    } else if (page === "Visitor Out") {
+      // you are showing visitorOut directly
+      rows = visitorOut;
+    } else {
+      toast.error("Export is available for All / Visitor In / Visitor Out");
       return;
     }
-    const headers = ['Name','Purpose','Mobile','Approval Date','Status'];
-    const rows = filteredHistory.map((item) => [
-      item.name,
-      item.purpose,
-      item.contactno,
-      dateTimeFormat(item.approvaldate),
-      item.approved ? 'Approved' : 'Denied',
-    ]).join('\n');
-    const blob = new Blob([headers.join(','), '\n', rows], { type: 'text/csv' });
+
+    if (!rows || rows.length === 0) {
+      toast.error("No data to export");
+      return;
+    }
+
+    const headers = [
+      "Visitor Type",
+      "Name",
+      "Contact No",
+      "Purpose",
+      "Coming From",
+      "Expected Date",
+      "Expected Time",
+      "Vehicle No",
+      "Host Approval",
+      "Pass Start",
+      "Pass End",
+      "Status",
+      "Created By",
+      "Host",
+      "Created At",
+    ];
+
+    const csvRows = rows.map((r) => {
+      const createdBy = `${r?.created_by_name?.firstname || ""} ${
+        r?.created_by_name?.lastname || ""
+      }`.trim();
+
+      return [
+        csvEscape(r.visit_type || ""),
+        csvEscape(r.name || ""),
+        csvEscape(r.contact_no || ""),
+        csvEscape(r.purpose || ""),
+        csvEscape(r.coming_from || ""),
+        csvEscape(r.expected_date || ""),
+        csvEscape(r.expected_time ? formatTime(r.expected_time) : ""),
+        csvEscape(r.vehicle_number || ""),
+        csvEscape(r.skip_host_approval ? "Not Required" : "Required"),
+        csvEscape(r.start_pass ? dateFormat(r.start_pass) : ""),
+        csvEscape(r.end_pass ? dateFormat(r.end_pass) : ""),
+        csvEscape(r.visitor_in_out || ""),
+        csvEscape(createdBy),
+        csvEscape(r.hosts_display || (createdBy ? createdBy : "No Host")),
+        csvEscape(r.created_at ? dateTimeFormat(r.created_at) : ""),
+      ].join(",");
+    });
+
+    const fileName =
+      page === "all"
+        ? `visitors_all_${selectedVisitor}.csv`
+        : page === "Visitor In"
+        ? `visitors_in_${selectedVisitor}.csv`
+        : `visitors_out_${selectedVisitor}.csv`;
+
+    const blob = new Blob([headers.join(",") + "\n" + csvRows.join("\n")], {
+      type: "text/csv;charset=utf-8;",
+    });
+
     const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.setAttribute('href', url);
-    a.setAttribute('download', 'visitorhistory.csv');
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
     a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  // Existing History export (kept)
+  const exportHistoryToCSV = () => {
+    if (filteredHistory.length === 0) {
+      toast.error("No data to export");
+      return;
+    }
+    const headers = ["Name", "Purpose", "Mobile", "Approval Date", "Status"];
+    const csvRows = filteredHistory.map((item) =>
+      [
+        csvEscape(item.name),
+        csvEscape(item.purpose),
+        csvEscape(item.contactno || item.contact_no),
+        csvEscape(dateTimeFormat(item.approvaldate)),
+        csvEscape(item.approved ? "Approved" : "Denied"),
+      ].join(",")
+    );
+
+    const blob = new Blob([headers.join(",") + "\n" + csvRows.join("\n")], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.setAttribute("href", url);
+    a.setAttribute("download", "visitorhistory.csv");
+    a.click();
+    window.URL.revokeObjectURL(url);
   };
 
   const handleClick = (visitorType) => {
     setSelectedVisitor(visitorType);
-    setSearchText('');
+    setSearchText("");
     setCurrentPage(1);
   };
 
@@ -111,62 +218,56 @@ const VisitorPage = () => {
   };
 
   const handleClearFilters = () => {
-    setFilterDateFrom('');
-    setFilterDateTo('');
-    setFilterMobile('');
-    setFilterHost('');
+    setFilterDateFrom("");
+    setFilterDateTo("");
+    setFilterMobile("");
+    setFilterHost("");
     setCurrentPage(1);
   };
 
   useEffect(() => {
-    if (page === 'Visitor In') {
-      if (selectedVisitor === 'expected') {
-        const expectedIn = visitorIn.filter((visit) => visit.usertype !== 'security_guard');
+    if (page === "Visitor In") {
+      if (selectedVisitor === "expected") {
+        const expectedIn = visitorIn.filter(
+          (visit) => visit.usertype !== "security_guard"
+        );
         setFilteredData(expectedIn);
       } else {
-        const unexpectedIn = visitorIn.filter((visit) => visit.usertype === 'security_guard');
+        const unexpectedIn = visitorIn.filter(
+          (visit) => visit.usertype === "security_guard"
+        );
         setFilteredUnexpectedVisitor(unexpectedIn);
       }
-    } else if (page === 'all') {
+    } else if (page === "all") {
       setFilteredExpectedVisitor(expectedVisitor);
       setFilteredUnexpectedVisitor(unexpectedVisitor);
     }
   }, [page, selectedVisitor, visitorIn, expectedVisitor, unexpectedVisitor]);
-
-  const dateFormat = (dateString) => {
-    const date = new Date(dateString);
-    return date.toDateString();
-  };
-
-  const dateTimeFormat = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleString();
-  };
 
   useEffect(() => {
     const fetchExpectedVisitor = async () => {
       try {
         setLoading(true);
         let filters = {};
-        if (page === 'Visitor In') {
-          filters.visitorInOut = 'IN';
-          if (selectedVisitor === 'expected') {
-            filters.userTypeNotEq = 'security_guard';
+        if (page === "Visitor In") {
+          filters.visitorInOut = "IN";
+          if (selectedVisitor === "expected") {
+            filters.userTypeNotEq = "security_guard";
           } else {
-            filters.userType = 'security_guard';
+            filters.userType = "security_guard";
           }
-        } else if (page === 'Visitor Out') {
-          filters.visitorInOut = 'OUT';
-          if (selectedVisitor === 'expected') {
-            filters.userTypeNotEq = 'security_guard';
+        } else if (page === "Visitor Out") {
+          filters.visitorInOut = "OUT";
+          if (selectedVisitor === "expected") {
+            filters.userTypeNotEq = "security_guard";
           } else {
-            filters.userType = 'security_guard';
+            filters.userType = "security_guard";
           }
-        } else if (page === 'all') {
-          if (selectedVisitor === 'expected') {
-            filters.userTypeNotEq = 'security_guard';
+        } else if (page === "all") {
+          if (selectedVisitor === "expected") {
+            filters.userTypeNotEq = "security_guard";
           } else {
-            filters.userType = 'security_guard';
+            filters.userType = "security_guard";
           }
         }
 
@@ -175,9 +276,11 @@ const VisitorPage = () => {
         if (filterMobile) filters.mobile = filterMobile;
         if (filterHost) filters.host = filterHost;
 
-        const visitorResp = await getExpectedVisitor(currentPage, rowsPerPage, filters);
-        console.log('Raw API Response:', visitorResp);
-        console.log('Response data:', visitorResp.data);
+        const visitorResp = await getExpectedVisitor(
+          currentPage,
+          rowsPerPage,
+          filters
+        );
 
         let visitorData = [];
         let paginationInfo = {};
@@ -185,31 +288,49 @@ const VisitorPage = () => {
         if (visitorResp?.data) {
           if (Array.isArray(visitorResp.data)) {
             visitorData = visitorResp.data;
-          } else if (visitorResp.data.visitors && Array.isArray(visitorResp.data.visitors)) {
+          } else if (
+            visitorResp.data.visitors &&
+            Array.isArray(visitorResp.data.visitors)
+          ) {
             visitorData = visitorResp.data.visitors;
             paginationInfo = {
-              currentPage: visitorResp.data.current_page || visitorResp.data.page || currentPage,
-              totalPages: visitorResp.data.total_pages || Math.ceil((visitorResp.data.total_count || visitorResp.data.total || 0) / rowsPerPage),
+              currentPage:
+                visitorResp.data.current_page ||
+                visitorResp.data.page ||
+                currentPage,
+              totalPages:
+                visitorResp.data.total_pages ||
+                Math.ceil(
+                  (visitorResp.data.total_count || visitorResp.data.total || 0) /
+                    rowsPerPage
+                ),
               totalRecords: visitorResp.data.total_count || visitorResp.data.total || 0,
               perPage: visitorResp.data.per_page || rowsPerPage,
             };
-          } else if (visitorResp.data.data && Array.isArray(visitorResp.data.data)) {
+          } else if (
+            visitorResp.data.data &&
+            Array.isArray(visitorResp.data.data)
+          ) {
             visitorData = visitorResp.data.data;
             paginationInfo = {
-              currentPage: visitorResp.data.current_page || visitorResp.data.page || currentPage,
-              totalPages: visitorResp.data.total_pages || Math.ceil((visitorResp.data.total_count || visitorResp.data.total || 0) / rowsPerPage),
+              currentPage:
+                visitorResp.data.current_page ||
+                visitorResp.data.page ||
+                currentPage,
+              totalPages:
+                visitorResp.data.total_pages ||
+                Math.ceil(
+                  (visitorResp.data.total_count || visitorResp.data.total || 0) /
+                    rowsPerPage
+                ),
               totalRecords: visitorResp.data.total_count || visitorResp.data.total || 0,
               perPage: visitorResp.data.per_page || rowsPerPage,
             };
           } else {
-            console.error('Unexpected data structure:', visitorResp.data);
-            console.log('Available keys:', Object.keys(visitorResp.data));
             setLoading(false);
             return;
           }
         }
-
-        console.log('Extracted pagination info:', paginationInfo);
 
         if (paginationInfo.totalRecords) {
           setTotalPages(paginationInfo.totalPages);
@@ -220,7 +341,6 @@ const VisitorPage = () => {
         }
 
         if (visitorData.length === 0) {
-          console.warn('No visitor data found');
           setVisitor([]);
           setAll([]);
           setVisitorIn([]);
@@ -234,31 +354,37 @@ const VisitorPage = () => {
           return;
         }
 
-        console.log('Visitor Data Array:', visitorData);
-        const sortedVisitor = visitorData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-        console.log('Sorted Visitors:', sortedVisitor);
+        const sortedVisitor = visitorData.sort(
+          (a, b) => new Date(b.created_at) - new Date(a.created_at)
+        );
 
-        // Fix hosts data structure for all visitors - ONLY DATA FIX, NO UI CHANGE
         const processedVisitors = sortedVisitor.map((visitor) => ({
           ...visitor,
-          hosts_display: visitor.hosts && visitor.hosts.length > 0 
-            ? visitor.hosts.map(host => host.full_name || 'Unknown').filter(Boolean).join(', ')
-            : 'No Host'
+          hosts_display:
+            visitor.hosts && visitor.hosts.length > 0
+              ? visitor.hosts
+                  .map((host) => host.full_name || "Unknown")
+                  .filter(Boolean)
+                  .join(", ")
+              : "No Host",
         }));
 
-        if (page === 'Visitor In') {
+        // keep original array too (used by searchAll)
+        setVisitor(processedVisitors);
+
+        if (page === "Visitor In") {
           setVisitorIn(processedVisitors);
-          if (selectedVisitor === 'expected') {
+          if (selectedVisitor === "expected") {
             setFilteredData(processedVisitors);
             setFilteredExpectedVisitor(processedVisitors);
           } else {
             setFilteredUnexpectedVisitor(processedVisitors);
           }
-        } else if (page === 'Visitor Out') {
+        } else if (page === "Visitor Out") {
           setVisitorOut(processedVisitors);
-        } else if (page === 'all') {
+        } else if (page === "all") {
           setAll(processedVisitors);
-          if (selectedVisitor === 'expected') {
+          if (selectedVisitor === "expected") {
             setFilteredExpectedVisitor(processedVisitors);
             setExpectedVisitor(processedVisitors);
           } else {
@@ -266,55 +392,74 @@ const VisitorPage = () => {
             setUnexpectedVisitor(processedVisitors);
           }
         }
+
         setLoading(false);
       } catch (error) {
-        console.error('Error fetching visitor data:', error);
+        console.error("Error fetching visitor data:", error);
         setLoading(false);
       }
     };
-const fetchVisitorHistory = async () => {
-  try {
-    const res = await getVisitorHistory(historyPage, historyRowsPerPage);
-    const data = res.data;
 
-    const historyData = data.approval_history || [];
+    const fetchVisitorHistory = async () => {
+      try {
+        const res = await getVisitorHistory(historyPage, historyRowsPerPage);
+        const data = res.data;
+        const historyData = data.approval_history || [];
 
-    setHistories(historyData);
-    setFilteredHistory(historyData);
+        setHistories(historyData);
+        setFilteredHistory(historyData);
 
-    setHistoryTotalPages(data.total_pages || 1);
-    setHistoryTotalRecords(data.total_count || historyData.length || 0);
-
-    console.log("History Data:", historyData);
-    console.log("History Pagination:", data.total_pages, data.total_count);
-  } catch (error) {
-    console.log("History API Error:", error);
-    setFilteredHistory([]);
-    setHistoryTotalRecords(0);
-  }
-};
-
+        setHistoryTotalPages(data.total_pages || 1);
+        setHistoryTotalRecords(data.total_count || historyData.length || 0);
+      } catch (error) {
+        setFilteredHistory([]);
+        setHistoryTotalRecords(0);
+      }
+    };
 
     const fetchApprovals = async () => {
       try {
-        const approvalResp = await getVisitorApprovals(approvalPage, approvalRowsPerPage);
+        const approvalResp = await getVisitorApprovals(
+          approvalPage,
+          approvalRowsPerPage
+        );
+
         let approvalData = [];
         let approvalPaginationInfo = {};
 
         if (approvalResp?.data) {
           if (Array.isArray(approvalResp.data)) {
             approvalData = approvalResp.data;
-            approvalPaginationInfo = { totalPages: 1, totalRecords: approvalResp.data.length || 0 };
-          } else if (approvalResp.data.visitors && Array.isArray(approvalResp.data.visitors)) {
+            approvalPaginationInfo = {
+              totalPages: 1,
+              totalRecords: approvalResp.data.length || 0,
+            };
+          } else if (
+            approvalResp.data.visitors &&
+            Array.isArray(approvalResp.data.visitors)
+          ) {
             approvalData = approvalResp.data.visitors;
             approvalPaginationInfo = {
-              totalPages: approvalResp.data.total_pages || Math.ceil((approvalResp.data.total_count || approvalResp.data.total || 0) / approvalRowsPerPage),
+              totalPages:
+                approvalResp.data.total_pages ||
+                Math.ceil(
+                  (approvalResp.data.total_count || approvalResp.data.total || 0) /
+                    approvalRowsPerPage
+                ),
               totalRecords: approvalResp.data.total_count || approvalResp.data.total || 0,
             };
-          } else if (approvalResp.data.data && Array.isArray(approvalResp.data.data)) {
+          } else if (
+            approvalResp.data.data &&
+            Array.isArray(approvalResp.data.data)
+          ) {
             approvalData = approvalResp.data.data;
             approvalPaginationInfo = {
-              totalPages: approvalResp.data.total_pages || Math.ceil((approvalResp.data.total_count || approvalResp.data.total || 0) / approvalRowsPerPage),
+              totalPages:
+                approvalResp.data.total_pages ||
+                Math.ceil(
+                  (approvalResp.data.total_count || approvalResp.data.total || 0) /
+                    approvalRowsPerPage
+                ),
               totalRecords: approvalResp.data.total_count || approvalResp.data.total || 0,
             };
           }
@@ -328,13 +473,12 @@ const fetchVisitorHistory = async () => {
           setApprovalTotalRecords(approvalData.length);
         }
 
-        const sortedApproval = approvalData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        const sortedApproval = approvalData.sort(
+          (a, b) => new Date(b.created_at) - new Date(a.created_at)
+        );
         setApprovals(sortedApproval);
         setFilteredApproval(sortedApproval);
-        console.log('Approval data:', sortedApproval);
-        console.log('Approval pagination:', approvalPaginationInfo);
       } catch (error) {
-        console.log('Error fetching approvals:', error);
         setApprovalTotalRecords(0);
         setFilteredApproval([]);
       }
@@ -361,7 +505,7 @@ const fetchVisitorHistory = async () => {
 
   const VisitorColumns = [
     {
-      name: 'Action',
+      name: "Action",
       cell: (row) => (
         <div className="flex items-center gap-4">
           <Link to={`/admin/passes/visitors/visitor-details/${row.id}`}>
@@ -373,66 +517,34 @@ const fetchVisitorHistory = async () => {
         </div>
       ),
     },
+    { name: "Visitor Type", selector: (row) => row.visit_type, sortable: true },
+    { name: "Name", selector: (row) => row.name, sortable: true },
+    { name: "Contact No.", selector: (row) => row.contact_no, sortable: true },
+    { name: "Purpose", selector: (row) => row.purpose, sortable: true },
+    { name: "Coming from", selector: (row) => row.coming_from, sortable: true },
+    { name: "Expected Date", selector: (row) => row.expected_date, sortable: true },
+    { name: "Expected Time", selector: (row) => row.expected_time, sortable: true },
+    { name: "Vehicle No.", selector: (row) => row.vehicle_number, sortable: true },
     {
-      name: 'Visitor Type',
-      selector: (row) => row.visit_type,
+      name: "Host Approval",
+      selector: (row) => (row.skip_host_approval ? "Not Required" : "Required"),
       sortable: true,
     },
     {
-      name: 'Name',
-      selector: (row) => row.name,
+      name: "Pass Start",
+      selector: (row) => (row.start_pass ? dateFormat(row.start_pass) : ""),
       sortable: true,
     },
     {
-      name: 'Contact No.',
-      selector: (row) => row.contact_no,
+      name: "Pass End",
+      selector: (row) => (row.end_pass ? dateFormat(row.end_pass) : ""),
       sortable: true,
     },
     {
-      name: 'Purpose',
-      selector: (row) => row.purpose,
-      sortable: true,
-    },
-    {
-      name: 'Coming from',
-      selector: (row) => row.coming_from,
-      sortable: true,
-    },
-    {
-      name: 'Expected Date',
-      selector: (row) => row.expected_date,
-      sortable: true,
-    },
-    {
-      name: 'Expected Time',
-      selector: (row) => row.expected_time,
-      sortable: true,
-    },
-    {
-      name: 'Vehicle No.',
-      selector: (row) => row.vehicle_number,
-      sortable: true,
-    },
-    {
-      name: 'Host Approval',
-      selector: (row) => row.skip_host_approval ? 'Not Required' : 'Required',
-      sortable: true,
-    },
-    {
-      name: 'Pass Start',
-      selector: (row) => row.start_pass ? dateFormat(row.start_pass) : '',
-      sortable: true,
-    },
-    {
-      name: 'Pass End',
-      selector: (row) => row.end_pass ? dateFormat(row.end_pass) : '',
-      sortable: true,
-    },
-    {
-      name: 'Status',
+      name: "Status",
       selector: (row) => (
-        <div className="">
-          {row.visitor_in_out === 'IN' ? (
+        <div>
+          {row.visitor_in_out === "IN" ? (
             <span className="text-red-400">IN</span>
           ) : (
             <span className="text-green-400">{row.visitor_in_out}</span>
@@ -442,57 +554,80 @@ const fetchVisitorHistory = async () => {
       sortable: true,
     },
     {
-      name: 'Created By',
+      name: "Created By",
       selector: (row) =>
-        `${row?.created_by_name?.firstname || ''} ${row?.created_by_name?.lastname || ''}`.trim(),
+        `${row?.created_by_name?.firstname || ""} ${
+          row?.created_by_name?.lastname || ""
+        }`.trim(),
       sortable: true,
     },
     {
-      name: 'Host',
-      selector: (row) => row.hosts_display || row?.created_by_name?.firstname + ' ' + row?.created_by_name?.lastname || 'No Host',
+      name: "Host",
+      selector: (row) =>
+        row.hosts_display ||
+        `${row?.created_by_name?.firstname || ""} ${
+          row?.created_by_name?.lastname || ""
+        }`.trim() ||
+        "No Host",
       sortable: true,
     },
   ];
 
-  const [searchText, setSearchText] = useState('');
+  const [searchText, setSearchText] = useState("");
 
   const handleSearch = (e) => {
     const searchValue = e.target.value;
     setSearchText(searchValue);
     if (searchValue.trim()) {
-      if (page === 'Visitor In') {
-        if (selectedVisitor === 'expected') {
-          const expectedIn = visitorIn.filter((visit) => visit.usertype !== 'security_guard');
+      if (page === "Visitor In") {
+        if (selectedVisitor === "expected") {
+          const expectedIn = visitorIn.filter(
+            (visit) => visit.usertype !== "security_guard"
+          );
           const filteredResults = expectedIn.filter(
             (item) =>
               item.name.toLowerCase().includes(searchValue.toLowerCase()) ||
               (item.vehicle_number &&
-                item.vehicle_number.toLowerCase().includes(searchValue.toLowerCase())) ||
+                item.vehicle_number
+                  .toLowerCase()
+                  .includes(searchValue.toLowerCase())) ||
               (item.hosts_display &&
-                item.hosts_display.toLowerCase().includes(searchValue.toLowerCase()))
+                item.hosts_display
+                  .toLowerCase()
+                  .includes(searchValue.toLowerCase()))
           );
           setFilteredData(filteredResults);
         } else {
-          const unexpectedIn = visitorIn.filter((visit) => visit.usertype === 'security_guard');
+          const unexpectedIn = visitorIn.filter(
+            (visit) => visit.usertype === "security_guard"
+          );
           const filteredResults = unexpectedIn.filter(
             (item) =>
               item.name.toLowerCase().includes(searchValue.toLowerCase()) ||
               (item.vehicle_number &&
-                item.vehicle_number.toLowerCase().includes(searchValue.toLowerCase())) ||
+                item.vehicle_number
+                  .toLowerCase()
+                  .includes(searchValue.toLowerCase())) ||
               (item.hosts_display &&
-                item.hosts_display.toLowerCase().includes(searchValue.toLowerCase()))
+                item.hosts_display
+                  .toLowerCase()
+                  .includes(searchValue.toLowerCase()))
           );
           setFilteredUnexpectedVisitor(filteredResults);
         }
-      } else if (page === 'all') {
-        if (selectedVisitor === 'expected') {
+      } else if (page === "all") {
+        if (selectedVisitor === "expected") {
           const filteredResults = expectedVisitor.filter(
             (item) =>
               item.name.toLowerCase().includes(searchValue.toLowerCase()) ||
               (item.vehicle_number &&
-                item.vehicle_number.toLowerCase().includes(searchValue.toLowerCase())) ||
+                item.vehicle_number
+                  .toLowerCase()
+                  .includes(searchValue.toLowerCase())) ||
               (item.hosts_display &&
-                item.hosts_display.toLowerCase().includes(searchValue.toLowerCase()))
+                item.hosts_display
+                  .toLowerCase()
+                  .includes(searchValue.toLowerCase()))
           );
           setFilteredExpectedVisitor(filteredResults);
         } else {
@@ -500,9 +635,13 @@ const fetchVisitorHistory = async () => {
             (item) =>
               item.name.toLowerCase().includes(searchValue.toLowerCase()) ||
               (item.vehicle_number &&
-                item.vehicle_number.toLowerCase().includes(searchValue.toLowerCase())) ||
+                item.vehicle_number
+                  .toLowerCase()
+                  .includes(searchValue.toLowerCase())) ||
               (item.hosts_display &&
-                item.hosts_display.toLowerCase().includes(searchValue.toLowerCase()))
+                item.hosts_display
+                  .toLowerCase()
+                  .includes(searchValue.toLowerCase()))
           );
           setFilteredUnexpectedVisitor(filteredResults);
         }
@@ -510,7 +649,7 @@ const fetchVisitorHistory = async () => {
     }
   };
 
-  const [searchAll, setSearchAll] = useState('');
+  const [searchAll, setSearchAll] = useState("");
   const handleSearchAll = (e) => {
     const searchValue = e.target.value;
     setSearchAll(searchValue);
@@ -527,7 +666,7 @@ const fetchVisitorHistory = async () => {
     }
   };
 
-  const [searchHIstoryText, setSearchHistoryText] = useState('');
+  const [searchHIstoryText, setSearchHistoryText] = useState("");
   const handleSearchHistory = (e) => {
     const searchValue = e.target.value;
     setSearchHistoryText(searchValue);
@@ -537,13 +676,14 @@ const fetchVisitorHistory = async () => {
       const filteredResults = histories.filter(
         (item) =>
           item.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-          (item.contactno && item.contactno.toLowerCase().includes(searchValue.toLowerCase()))
+          (item.contactno &&
+            item.contactno.toLowerCase().includes(searchValue.toLowerCase()))
       );
       setFilteredHistory(filteredResults);
     }
   };
 
-  const [searchApprovalText, setSearchApprovalText] = useState('');
+  const [searchApprovalText, setSearchApprovalText] = useState("");
   const handleSearchApproval = (e) => {
     const searchValue = e.target.value;
     setSearchApprovalText(searchValue);
@@ -559,7 +699,7 @@ const fetchVisitorHistory = async () => {
 
   const historyColumn = [
     {
-      name: 'Action',
+      name: "Action",
       cell: (row) => (
         <div className="flex items-center gap-4">
           <Link to={`/admin/passes/visitors/visitor-details/${row.id}`}>
@@ -568,47 +708,36 @@ const fetchVisitorHistory = async () => {
         </div>
       ),
     },
+    { name: "Name", selector: (row) => row.name, sortable: true },
+    { name: "Purpose", selector: (row) => row.purpose, sortable: true },
     {
-      name: 'Name',
-      selector: (row) => row.name,
+      name: "Mobile no.",
+      selector: (row) => row.contact_no || "--",
       sortable: true,
     },
     {
-      name: 'Purpose',
-      selector: (row) => row.purpose,
+      name: "Check In",
+      selector: (row) =>
+        row.visitor_logs?.check_in
+          ? new Date(row.visitor_logs.check_in).toLocaleString()
+          : "--",
       sortable: true,
     },
-      {
-        name: "Mobile no.",
-        selector: (row) => row.contact_no || "--",
-        sortable: true,
-      },
-
-      {
-        name: "Check In",
-        selector: (row) =>
-          row.visitor_logs?.check_in
-            ? new Date(row.visitor_logs.check_in).toLocaleString()
-            : "--",
-        sortable: true,
-      },
-
-      {
-        name: "Check Out",
-        selector: (row) =>
-          row.visitor_logs?.check_out
-            ? new Date(row.visitor_logs.check_out).toLocaleString()
-            : "--",
-        sortable: true,
-      },
-
     {
-      name: 'Approval Date',
+      name: "Check Out",
+      selector: (row) =>
+        row.visitor_logs?.check_out
+          ? new Date(row.visitor_logs.check_out).toLocaleString()
+          : "--",
+      sortable: true,
+    },
+    {
+      name: "Approval Date",
       selector: (row) => dateTimeFormat(row.approvaldate),
       sortable: true,
     },
     {
-      name: 'Approval',
+      name: "Approval",
       selector: (row) =>
         row.approved ? (
           <p className="text-green-400">Approved</p>
@@ -621,16 +750,12 @@ const fetchVisitorHistory = async () => {
 
   const handleApproval = async (id, decision) => {
     const approveData = new FormData();
-    approveData.append('approve', decision);
+    approveData.append("approve", decision);
     try {
-      const res = await visitorApproval(id, approveData);
-      console.log(res);
+      await visitorApproval(id, approveData);
       setRefetchTrigger((prev) => prev + 1);
-      if (decision === true) {
-        toast.success('Visitor approved successfully');
-      } else {
-        toast.success('Approval denied');
-      }
+      if (decision === true) toast.success("Visitor approved successfully");
+      else toast.success("Approval denied");
     } catch (error) {
       console.log(error);
     }
@@ -638,7 +763,7 @@ const fetchVisitorHistory = async () => {
 
   const approvalColumn = [
     {
-      name: 'Action',
+      name: "Action",
       cell: (row) => (
         <div className="flex items-center gap-4">
           <Link to={`/admin/passes/visitors/visitor-details/${row.id}`}>
@@ -647,28 +772,20 @@ const fetchVisitorHistory = async () => {
         </div>
       ),
     },
+    { name: "Name", selector: (row) => row.name, sortable: true },
+    { name: "Purpose", selector: (row) => row.purpose, sortable: true },
     {
-      name: 'Name',
-      selector: (row) => row.name,
-      sortable: true,
-    },
-    {
-      name: 'Purpose',
-      selector: (row) => row.purpose,
-      sortable: true,
-    },
-    {
-      name: 'Expected Date',
+      name: "Expected Date",
       selector: (row) => dateFormat(row.expected_date),
       sortable: true,
     },
     {
-      name: 'Expected Time',
+      name: "Expected Time",
       selector: (row) => formatTime(row.expected_time),
       sortable: true,
     },
     {
-      name: 'Approval',
+      name: "Approval",
       selector: (row) => (
         <div className="flex gap-2">
           <button
@@ -689,7 +806,7 @@ const fetchVisitorHistory = async () => {
     },
   ];
 
-  document.title = 'Passes - Vibe Connect';
+  document.title = "Passes - Vibe Connect";
 
   const getVisitorLogData = () => {
     const now = new Date();
@@ -700,7 +817,7 @@ const fetchVisitorHistory = async () => {
     const formatLogTime = (date) => date.toISOString().slice(0, 19);
     return {
       AcsEventCond: {
-        searchID: '3166590d-cdb3-43f3-fvdvfdvdb25e-f6e98a05d359',
+        searchID: "3166590d-cdb3-43f3-fvdvfdvdb25e-f6e98a05d359",
         searchResultPosition: 0,
         maxResults: 50,
         major: 0,
@@ -713,10 +830,15 @@ const fetchVisitorHistory = async () => {
 
   useEffect(() => {
     const postLogs = async () => {
-      const visitorLogData = getVisitorLogData();
-      const data = await postVisitorLogFromDevice(visitorLogData);
-      await postVisitorLogToBackend(data);
+      try {
+        const visitorLogData = getVisitorLogData();
+        const data = await postVisitorLogFromDevice(visitorLogData);
+        await postVisitorLogToBackend(data);
+      } catch (err) {
+        console.log("Device log fetch failed:", err);
+      }
     };
+
     const intervalId = setInterval(postLogs, 15 * 60 * 1000);
     postLogs();
     return () => clearInterval(intervalId);
@@ -724,7 +846,7 @@ const fetchVisitorHistory = async () => {
 
   const visitorDeviceLogColumn = [
     {
-      name: 'Action',
+      name: "Action",
       cell: (row) => (
         <div className="flex items-center gap-4">
           <Link to={`/admin/passes/visitors/visitor-details/${row.employeeno}`}>
@@ -733,23 +855,15 @@ const fetchVisitorHistory = async () => {
         </div>
       ),
     },
+    { name: "Sr. no.", selector: (row, index) => index + 1, sortable: true },
+    { name: "Name", selector: (row) => row.name, sortable: true },
     {
-      name: 'Sr. no.',
-      selector: (row, index) => index + 1,
+      name: "Check in",
+      selector: (row) => (row.intime ? dateTimeFormat(row.intime) : ""),
       sortable: true,
     },
     {
-      name: 'Name',
-      selector: (row) => row.name,
-      sortable: true,
-    },
-    {
-      name: 'Check in',
-      selector: (row) => (row.intime ? dateTimeFormat(row.intime) : ''),
-      sortable: true,
-    },
-    {
-      name: 'Check out',
+      name: "Check out",
       selector: (row) => (row.outtime ? dateTimeFormat(row.outtime) : null),
       sortable: true,
     },
@@ -771,7 +885,7 @@ const fetchVisitorHistory = async () => {
     fetchAllVisitorLogs();
   }, []);
 
-  const [logSearchText, setLogSearchText] = useState('');
+  const [logSearchText, setLogSearchText] = useState("");
   const handleLogSearch = (e) => {
     const searchValue = e.target.value;
     setLogSearchText(searchValue);
@@ -789,83 +903,36 @@ const fetchVisitorHistory = async () => {
     <div className="visitors-page">
       <section className="flex">
         <Navbar />
-        <div className=" w-full flex mx-3  flex-col overflow-hidden">
+        <div className="w-full flex mx-3 flex-col overflow-hidden">
           <Passes />
-          <div className="flex w-full  m-2">
+
+          <div className="flex w-full m-2">
             <div className="flex w-full md:flex-row flex-col space-x-4 border-b border-gray-400">
-              <h2
-                className={`p-2 px-4 ${
-                  page === "all"
-                    ? "text-blue-500 font-medium  shadow-custom-all-sides"
-                    : "text-black"
-                } rounded-t-md  cursor-pointer text-center text-sm flex items-center justify-center transition-all duration-300`}
-                onClick={() => handlePageChange("all")}
-              >
-                All
-              </h2>
-              <h2
-                className={`p-2 ${
-                  page === "Visitor In"
-                    ? "text-blue-500 font-medium  shadow-custom-all-sides"
-                    : "text-black"
-                } rounded-t-md  cursor-pointer text-center text-sm flex items-center justify-center transition-all duration-300`}
-                onClick={() => handlePageChange("Visitor In")}
-              >
-                Visitor In
-              </h2>
-              <h2
-                className={`p-2 ${
-                  page === "Visitor Out"
-                    ? "text-blue-500 font-medium  shadow-custom-all-sides"
-                    : "text-black"
-                }  rounded-t-md  rounded-sm cursor-pointer text-center text-sm flex items-center justify-center transition-all duration-300`}
-                onClick={() => handlePageChange("Visitor Out")}
-              >
-                Visitor Out
-              </h2>
-              <h2
-                className={`p-2 ${
-                  page === "approval"
-                    ? "text-blue-500 font-medium  shadow-custom-all-sides"
-                    : "text-black"
-                }  rounded-t-md  rounded-sm cursor-pointer text-center text-sm flex items-center justify-center transition-all duration-300`}
-                onClick={() => handlePageChange("approval")}
-              >
-                Approvals
-              </h2>
-              <h2
-                className={`p-2 ${
-                  page === "History"
-                    ? "text-blue-500 font-medium  shadow-custom-all-sides"
-                    : "text-black"
-                }  rounded-t-md rounded-sm cursor-pointer text-center text-sm flex items-center justify-center transition-all duration-300`}
-                onClick={() => handlePageChange("History")}
-              >
-                History
-              </h2>
-              <h2
-                className={`p-2 ${
-                  page === "logs"
-                    ? "text-blue-500 font-medium  shadow-custom-all-sides"
-                    : "text-black"
-                }  rounded-t-md rounded-sm cursor-pointer text-center text-sm flex items-center justify-center transition-all duration-300`}
-                onClick={() => handlePageChange("logs")}
-              >
-                Logs
-              </h2>
-              <h2
-                className={`p-2 ${
-                  page === "self-registration"
-                    ? "text-blue-500 font-medium  shadow-custom-all-sides"
-                    : "text-black"
-                }  rounded-t-md rounded-sm cursor-pointer text-center text-sm flex items-center justify-center transition-all duration-300`}
-                onClick={() => handlePageChange("self-registration")}
-              >
-                Self-Registration
-              </h2>
+              {[
+                { key: "all", label: "All" },
+                { key: "Visitor In", label: "Visitor In" },
+                { key: "Visitor Out", label: "Visitor Out" },
+                { key: "approval", label: "Approvals" },
+                { key: "History", label: "History" },
+                { key: "logs", label: "Logs" },
+                { key: "self-registration", label: "Self-Registration" },
+              ].map((t) => (
+                <h2
+                  key={t.key}
+                  className={`p-2 px-4 ${
+                    page === t.key
+                      ? "text-blue-500 font-medium  shadow-custom-all-sides"
+                      : "text-black"
+                  } rounded-t-md cursor-pointer text-center text-sm flex items-center justify-center transition-all duration-300`}
+                  onClick={() => handlePageChange(t.key)}
+                >
+                  {t.label}
+                </h2>
+              ))}
             </div>
           </div>
 
+          {/* ALL */}
           {page === "all" && (
             <div className="flex flex-col gap-3">
               <div className="grid md:grid-cols-3 gap-2 items-center">
@@ -876,12 +943,11 @@ const fetchVisitorHistory = async () => {
                   onChange={handleSearchAll}
                   placeholder="Search using Visitor name, Host, vehicle number"
                 />
+
                 <div className="border md:flex-row flex-col flex p-2 rounded-md text-center border-black">
                   <span
-                    className={` md:border-r px-2 border-gray-300 cursor-pointer hover:underline ${
-                      selectedVisitor === "expected"
-                        ? "text-blue-600 underline"
-                        : ""
+                    className={`md:border-r px-2 border-gray-300 cursor-pointer hover:underline ${
+                      selectedVisitor === "expected" ? "text-blue-600 underline" : ""
                     } text-center`}
                     onClick={() => handleClick("expected")}
                   >
@@ -889,15 +955,14 @@ const fetchVisitorHistory = async () => {
                   </span>
                   <span
                     className={`cursor-pointer hover:underline ${
-                      selectedVisitor === "unexpected"
-                        ? "text-blue-600 underline"
-                        : ""
+                      selectedVisitor === "unexpected" ? "text-blue-600 underline" : ""
                     } text-center`}
                     onClick={() => handleClick("unexpected")}
                   >
                     &nbsp; <span>Unexpected visitor</span>
                   </span>
                 </div>
+
                 <div className="flex justify-end gap-2">
                   <button
                     onClick={() => setShowFilters(!showFilters)}
@@ -906,10 +971,19 @@ const fetchVisitorHistory = async () => {
                     <BiFilterAlt size={20} />
                     {showFilters ? "Hide Filters" : "Show Filters"}
                   </button>
+
+                  {/* ✅ NEW Export button for visitor data */}
+                  <button
+                    onClick={exportVisitorsToCSV}
+                    className="font-semibold border-2 border-blue-600 text-blue-600 hover:bg-blue-50 duration-150 transition-all p-2 rounded-md cursor-pointer text-center flex items-center gap-2 justify-center"
+                  >
+                    Export
+                  </button>
+
                   <Link
                     to={"/admin/add-new-visitor"}
                     style={{ background: themeColor }}
-                    className=" font-semibold  hover:text-white duration-150 transition-all p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
+                    className="font-semibold hover:text-white duration-150 transition-all p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
                   >
                     <PiPlusCircle size={20} />
                     Add New Visitor
@@ -919,10 +993,14 @@ const fetchVisitorHistory = async () => {
 
               {showFilters && (
                 <div className="border border-gray-300 rounded-md p-4 bg-gray-50">
-                  <h3 className="font-semibold mb-3 text-gray-700">Advanced Filters</h3>
+                  <h3 className="font-semibold mb-3 text-gray-700">
+                    Advanced Filters
+                  </h3>
                   <div className="grid md:grid-cols-4 gap-3">
                     <div className="flex flex-col">
-                      <label className="text-sm font-medium text-gray-600 mb-1">Date From</label>
+                      <label className="text-sm font-medium text-gray-600 mb-1">
+                        Date From
+                      </label>
                       <input
                         type="date"
                         value={filterDateFrom}
@@ -931,7 +1009,9 @@ const fetchVisitorHistory = async () => {
                       />
                     </div>
                     <div className="flex flex-col">
-                      <label className="text-sm font-medium text-gray-600 mb-1">Date To</label>
+                      <label className="text-sm font-medium text-gray-600 mb-1">
+                        Date To
+                      </label>
                       <input
                         type="date"
                         value={filterDateTo}
@@ -940,7 +1020,9 @@ const fetchVisitorHistory = async () => {
                       />
                     </div>
                     <div className="flex flex-col">
-                      <label className="text-sm font-medium text-gray-600 mb-1">Mobile Number</label>
+                      <label className="text-sm font-medium text-gray-600 mb-1">
+                        Mobile Number
+                      </label>
                       <input
                         type="text"
                         value={filterMobile}
@@ -950,7 +1032,9 @@ const fetchVisitorHistory = async () => {
                       />
                     </div>
                     <div className="flex flex-col">
-                      <label className="text-sm font-medium text-gray-600 mb-1">Host Name</label>
+                      <label className="text-sm font-medium text-gray-600 mb-1">
+                        Host Name
+                      </label>
                       <input
                         type="text"
                         value={filterHost}
@@ -979,7 +1063,8 @@ const fetchVisitorHistory = async () => {
               )}
             </div>
           )}
-          
+
+          {/* VISITOR IN */}
           {page === "Visitor In" && (
             <div className="grid md:grid-cols-3 gap-2 items-center">
               <input
@@ -989,12 +1074,11 @@ const fetchVisitorHistory = async () => {
                 onChange={handleSearch}
                 placeholder="Search using Visitor name, Host, vehicle number"
               />
+
               <div className="border md:flex-row flex-col flex p-2 rounded-md text-center border-black">
                 <span
-                  className={` md:border-r px-2 border-gray-300 cursor-pointer hover:underline ${
-                    selectedVisitor === "expected"
-                      ? "text-blue-600 underline"
-                      : ""
+                  className={`md:border-r px-2 border-gray-300 cursor-pointer hover:underline ${
+                    selectedVisitor === "expected" ? "text-blue-600 underline" : ""
                   } text-center`}
                   onClick={() => handleClick("expected")}
                 >
@@ -1002,20 +1086,27 @@ const fetchVisitorHistory = async () => {
                 </span>
                 <span
                   className={`cursor-pointer hover:underline ${
-                    selectedVisitor === "unexpected"
-                      ? "text-blue-600 underline"
-                      : ""
+                    selectedVisitor === "unexpected" ? "text-blue-600 underline" : ""
                   } text-center`}
                   onClick={() => handleClick("unexpected")}
                 >
                   &nbsp; <span>Unexpected visitor</span>
                 </span>
               </div>
-              <div className="flex justify-end">
+
+              <div className="flex justify-end gap-2">
+                {/* ✅ Export button here too */}
+                <button
+                  onClick={exportVisitorsToCSV}
+                  className="font-semibold border-2 border-blue-600 text-blue-600 hover:bg-blue-50 duration-150 transition-all p-2 rounded-md cursor-pointer text-center flex items-center gap-2 justify-center"
+                >
+                  Export
+                </button>
+
                 <Link
                   to={"/admin/add-new-visitor"}
                   style={{ background: themeColor }}
-                  className=" font-semibold  hover:text-white duration-150 transition-all p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
+                  className="font-semibold hover:text-white duration-150 transition-all p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
                 >
                   <PiPlusCircle size={20} />
                   Add New Visitor
@@ -1023,7 +1114,8 @@ const fetchVisitorHistory = async () => {
               </div>
             </div>
           )}
-          
+
+          {/* VISITOR OUT */}
           {page === "Visitor Out" && (
             <div className="flex flex-col gap-2">
               <div className="grid md:grid-cols-3 gap-2 items-center">
@@ -1034,12 +1126,11 @@ const fetchVisitorHistory = async () => {
                   onChange={handleSearch}
                   placeholder="Search using Visitor name, Host, vehicle number"
                 />
+
                 <div className="border md:flex-row flex-col flex p-2 rounded-md text-center border-black">
                   <span
-                    className={` md:border-r px-2 border-black cursor-pointer hover:underline ${
-                      selectedVisitor === "expected"
-                        ? "text-blue-600 underline"
-                        : ""
+                    className={`md:border-r px-2 border-black cursor-pointer hover:underline ${
+                      selectedVisitor === "expected" ? "text-blue-600 underline" : ""
                     } text-center`}
                     onClick={() => handleClick("expected")}
                   >
@@ -1047,30 +1138,39 @@ const fetchVisitorHistory = async () => {
                   </span>
                   <span
                     className={`cursor-pointer hover:underline ${
-                      selectedVisitor === "unexpected"
-                        ? "text-blue-600 underline"
-                        : ""
+                      selectedVisitor === "unexpected" ? "text-blue-600 underline" : ""
                     } text-center`}
                     onClick={() => handleClick("unexpected")}
                   >
                     &nbsp; <span>Unexpected visitor</span>
                   </span>
                 </div>
+
+                <div className="flex justify-end">
+                  <button
+                    onClick={exportVisitorsToCSV}
+                    className="font-semibold border-2 border-blue-600 text-blue-600 hover:bg-blue-50 duration-150 transition-all p-2 rounded-md cursor-pointer text-center flex items-center gap-2 justify-center"
+                  >
+                    Export
+                  </button>
+                </div>
               </div>
-              <Table 
-                columns={VisitorColumns} 
+
+              <Table
+                columns={VisitorColumns}
                 data={visitorOut}
                 paginationServer
                 paginationTotalRows={totalRecords}
                 onChangePage={setCurrentPage}
-                paginationPerPage={rowsPerPage} 
-                paginationRowsPerPageOptions={[rowsPerPage]} 
+                paginationPerPage={rowsPerPage}
+                paginationRowsPerPageOptions={[rowsPerPage]}
               />
             </div>
           )}
 
+          {/* HISTORY */}
           {page === "History" && (
-            <div className="">
+            <div>
               <div className="flex gap-2 mb-2">
                 <input
                   type="text"
@@ -1086,6 +1186,7 @@ const fetchVisitorHistory = async () => {
                   Export
                 </button>
               </div>
+
               <Table
                 columns={historyColumn}
                 data={filteredHistory}
@@ -1098,8 +1199,9 @@ const fetchVisitorHistory = async () => {
             </div>
           )}
 
+          {/* LOGS */}
           {page === "logs" && (
-            <div className="">
+            <div>
               <input
                 type="text"
                 placeholder="Search using Name "
@@ -1111,8 +1213,9 @@ const fetchVisitorHistory = async () => {
             </div>
           )}
 
+          {/* APPROVALS */}
           {page === "approval" && (
-            <div className="">
+            <div>
               <input
                 type="text"
                 placeholder="Search using Name or Mobile Number"
@@ -1120,36 +1223,39 @@ const fetchVisitorHistory = async () => {
                 value={searchApprovalText}
                 onChange={handleSearchApproval}
               />
-              <Table 
-                columns={approvalColumn} 
+              <Table
+                columns={approvalColumn}
                 data={FilteredApproval}
                 paginationServer
                 paginationTotalRows={approvalTotalRecords}
                 onChangePage={setApprovalPage}
-                paginationPerPage={approvalRowsPerPage} 
-                paginationRowsPerPageOptions={[approvalRowsPerPage]} 
+                paginationPerPage={approvalRowsPerPage}
+                paginationRowsPerPageOptions={[approvalRowsPerPage]}
               />
             </div>
           )}
 
+          {/* SELF REG */}
           {page === "self-registration" && (
             <div>
               <SelfRegistration />
             </div>
           )}
 
+          {/* TABLES FOR ALL / IN */}
           <div className="my-4">
             {selectedVisitor === "expected" && page === "Visitor In" && (
-              <Table 
-                columns={VisitorColumns} 
+              <Table
+                columns={VisitorColumns}
                 data={filteredData}
                 paginationServer
                 paginationTotalRows={totalRecords}
                 onChangePage={setCurrentPage}
-                paginationPerPage={rowsPerPage} 
-                paginationRowsPerPageOptions={[rowsPerPage]} 
+                paginationPerPage={rowsPerPage}
+                paginationRowsPerPageOptions={[rowsPerPage]}
               />
             )}
+
             {selectedVisitor === "unexpected" && page === "Visitor In" && (
               <Table
                 columns={VisitorColumns}
@@ -1157,35 +1263,34 @@ const fetchVisitorHistory = async () => {
                 paginationServer
                 paginationTotalRows={totalRecords}
                 onChangePage={setCurrentPage}
-                paginationPerPage={rowsPerPage} 
-                paginationRowsPerPageOptions={[rowsPerPage]} 
+                paginationPerPage={rowsPerPage}
+                paginationRowsPerPageOptions={[rowsPerPage]}
               />
             )}
-            
-            <div className="">
-              {selectedVisitor === "expected" && page === "all" && (
-                <Table
-                  columns={VisitorColumns}
-                  data={FilteredExpectedVisitor}
-                  paginationServer
-                  paginationTotalRows={totalRecords}
-                  onChangePage={setCurrentPage}
-                  paginationPerPage={rowsPerPage} 
-                  paginationRowsPerPageOptions={[rowsPerPage]} 
-                />
-              )}
-              {selectedVisitor === "unexpected" && page === "all" && (
-                <Table
-                  columns={VisitorColumns}
-                  data={FilteredUnexpectedVisitor}
-                  paginationServer
-                  paginationTotalRows={totalRecords}
-                  onChangePage={setCurrentPage}
-                  paginationPerPage={rowsPerPage} 
-                  paginationRowsPerPageOptions={[rowsPerPage]} 
-                />
-              )}
-            </div>
+
+            {selectedVisitor === "expected" && page === "all" && (
+              <Table
+                columns={VisitorColumns}
+                data={FilteredExpectedVisitor}
+                paginationServer
+                paginationTotalRows={totalRecords}
+                onChangePage={setCurrentPage}
+                paginationPerPage={rowsPerPage}
+                paginationRowsPerPageOptions={[rowsPerPage]}
+              />
+            )}
+
+            {selectedVisitor === "unexpected" && page === "all" && (
+              <Table
+                columns={VisitorColumns}
+                data={FilteredUnexpectedVisitor}
+                paginationServer
+                paginationTotalRows={totalRecords}
+                onChangePage={setCurrentPage}
+                paginationPerPage={rowsPerPage}
+                paginationRowsPerPageOptions={[rowsPerPage]}
+              />
+            )}
           </div>
         </div>
       </section>
