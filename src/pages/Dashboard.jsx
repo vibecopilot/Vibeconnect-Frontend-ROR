@@ -179,9 +179,9 @@ const Dashboard = () => {
 
         {/* ✅ CONTENT */}
         <main className="px-3 sm:px-5 mt-4 space-y-4">
-          <SectionCard title="Reading Analytics">
+          {/* <SectionCard title="Reading Analytics">
             <ReadingDashboard />
-          </SectionCard>
+          </SectionCard> */}
 
           {feat.includes("assets") && (
             <SectionCard title="Asset Analytics">
