@@ -10670,3 +10670,8 @@ export const putVehicleSetup = async (id, data) =>
   });
 
   
+
+  export const getComplianceTrackers = async () =>
+  axiosInstance.get("/compliance_trackers.json", {
+    params: { token },
+  });
