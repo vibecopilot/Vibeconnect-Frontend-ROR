@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import {
@@ -87,7 +87,6 @@ const downloadExcel = async (fetcher, filename) => {
   }
 };
 
-/** ---------- Small UI helpers ---------- */
 const Card = ({ className = "", children }) => (
   <div
     className={`bg-white rounded-2xl shadow-[0_8px_24px_rgba(15,23,42,0.06)] border border-gray-100 ${className}`}
@@ -156,7 +155,6 @@ const Segmented = ({ value, onChange, options }) => (
   </div>
 );
 
-/** ✅ subtle hover only (no blue selected click bg) */
 const tileWrapperClass =
   "transition-all duration-200 rounded-2xl hover:-translate-y-[1px] hover:shadow-[0_10px_20px_rgba(15,23,42,0.10)] active:scale-[0.995]";
 
@@ -193,7 +191,6 @@ function MetricTile({ label, value, unit, icon, tone = "blue" }) {
   );
 }
 
-/** -------- EB / Water / DG cards -------- */
 const EbTile = ({ name, daily, cumulative }) => (
   <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
     <div className="flex items-start justify-between">
@@ -299,7 +296,6 @@ const FacilityTile = ({ label, value, unit, icon, iconBg = "bg-gray-50" }) => (
   </div>
 );
 
-/** ---------- Chart controls (download + chart type icons) ---------- */
 const chartTypes = ["pie", "column", "line", "area"];
 
 const chartTypeIcon = (type) => {
@@ -374,7 +370,6 @@ const ChartControls = ({
   );
 };
 
-/** ---------- Analytics data ---------- */
 const ANALYTICS = {
   Day: {
     compareText: "Compare today vs yesterday",
@@ -593,11 +588,9 @@ const ANALYTICS = {
   },
 };
 
-/** ---------- Recharts renderer with chart type toggle ---------- */
-const TWO_SLICE_COLORS = ["#1d4ed8", "#93c5fd"]; // A and B
+const TWO_SLICE_COLORS = ["#1d4ed8", "#93c5fd"];
 
 const ChartRenderer = ({ type, data, xKey }) => {
-  // pie uses totals of a and b
   if (type === "pie") {
     const totalA = (data || []).reduce((s, r) => s + (Number(r.a) || 0), 0);
     const totalB = (data || []).reduce((s, r) => s + (Number(r.b) || 0), 0);
@@ -657,7 +650,6 @@ const ChartRenderer = ({ type, data, xKey }) => {
     );
   }
 
-  // area
   return (
     <ResponsiveContainer width="100%" height={260}>
       <AreaChart data={data}>
@@ -740,57 +732,200 @@ const ChartCard = ({
 
 function ReadingDashboard() {
   const [timeFilter, setTimeFilter] = useState("Week");
+  const [airQualityData, setAirQualityData] = useState(null);
+  const [aqLoading, setAqLoading] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(null);
+  const [dynamicAirQualityData, setDynamicAirQualityData] = useState(null);
 
-  // ✅ chart types for analytics cards
   const [aqiChartType, setAqiChartType] = useState("column");
   const [ebChartType, setEbChartType] = useState("line");
   const [waterChartType, setWaterChartType] = useState("area");
 
-  /** ✅ Air Quality metrics: show ONLY 4 in ONE LINE */
-  const airQualityMetrics = [
-    {
-      label: "CO₂",
-      value: "482",
-      unit: "PPM",
-      tone: "blue",
-      icon: <Activity className="w-5 h-5 text-green-500" />,
-    },
-    {
-      label: "PM10",
-      value: "112",
-      unit: "µg/m³",
-      tone: "green",
-      icon: <Cloud className="w-5 h-5 text-blue-500" />,
-    },
-    {
-      label: "PM2.5",
-      value: "97",
-      unit: "µg/m³",
-      tone: "yellow",
-      icon: <Wind className="w-5 h-5 text-blue-500" />,
-    },
-    {
-      label: "TVOC",
-      value: "341",
-      unit: "ppb",
-      tone: "red",
-      icon: <Leaf className="w-5 h-5 text-green-500" />,
-    },
-    {
-      label: "Temperature",
-      value: "0.034",
-      unit: "mg/m³",
-      tone: "orange",
-      icon: <Atom className="w-5 h-5 text-purple-500" />,
-    },
-    {
-      label: "Humidity",
-      value: "0.78",
-      unit: "%",
-      tone: "sky",
-      icon: <Droplet className="w-5 h-5 text-cyan-500" />,
+  const generateDynamicAirQualityData = (baseData) => {
+    // Generate dynamic data based on fetched air quality data
+    const baseValue = baseData?.overall_aqi || 55;
+    const variation = 15;
+
+    const generateDayData = () => {
+      const hours = ["6AM", "9AM", "12PM", "3PM", "6PM", "9PM"];
+      return hours.map((hour) => ({
+        x: hour,
+        a: Math.max(20, baseValue + Math.random() * variation - variation / 2),
+        b: Math.max(20, baseValue + Math.random() * variation - variation / 2),
+      }));
+    };
+
+    const generateWeekData = () => {
+      const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+      return days.map((day) => ({
+        x: day,
+        a: Math.max(20, baseValue + Math.random() * variation - variation / 2),
+        b: Math.max(20, baseValue + Math.random() * variation - variation / 2),
+      }));
+    };
+
+    const generateMonthData = () => {
+      const weeks = ["W1", "W2", "W3", "W4"];
+      return weeks.map((week) => ({
+        x: week,
+        a: Math.max(20, baseValue + Math.random() * variation - variation / 2),
+        b: Math.max(20, baseValue + Math.random() * variation - variation / 2),
+      }));
+    };
+
+    const generateYearData = () => {
+      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      return months.map((month) => ({
+        x: month,
+        a: Math.max(20, baseValue + Math.random() * variation - variation / 2),
+        b: Math.max(20, baseValue + Math.random() * variation - variation / 2),
+      }));
+    };
+
+    return {
+      Day: {
+        data: generateDayData(),
+        legendA: Math.round(baseValue),
+        legendB: Math.round(baseValue + 5),
+      },
+      Week: {
+        data: generateWeekData(),
+        legendA: Math.round(baseValue),
+        legendB: Math.round(baseValue + 8),
+      },
+      Month: {
+        data: generateMonthData(),
+        legendA: Math.round(baseValue),
+        legendB: Math.round(baseValue + 5),
+      },
+      Year: {
+        data: generateYearData(),
+        legendA: Math.round(baseValue),
+        legendB: Math.round(baseValue + 4),
+      },
+    };
+  };
+
+  const fetchAirQuality = async () => {
+    setAqLoading(true);
+    try {
+      const response = await fetch(
+        "https://api.api-ninjas.com/v1/airquality?city=India",
+        {
+          headers: {
+            "X-Api-Key": "GqVTDB8Dd5WzQMRPTte3W3lkCDTwxEgJPnUPNEAP",
+          },
+        }
+      );
+      if (!response.ok) throw new Error("Failed to fetch air quality data");
+      const data = await response.json();
+      setAirQualityData(data);
+      setDynamicAirQualityData(generateDynamicAirQualityData(data));
+      setLastUpdated(new Date().toLocaleTimeString());
+      toast.success("Air quality data updated");
+    } catch (error) {
+      console.error("Air Quality API Error:", error);
+      toast.error("Failed to load air quality data");
+    } finally {
+      setAqLoading(false);
     }
-  ];
+  };
+
+  useEffect(() => {
+    fetchAirQuality();
+    const interval = setInterval(fetchAirQuality, 1 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const airQualityMetrics = airQualityData
+    ? [
+        {
+          label: "CO",
+          value: airQualityData.CO?.concentration?.toFixed(2) || "N/A",
+          unit: "µg/m³",
+          tone: "blue",
+          icon: <Activity className="w-5 h-5 text-blue-500" />,
+        },
+        {
+          label: "PM10",
+          value: airQualityData.PM10?.concentration?.toFixed(2) || "N/A",
+          unit: "µg/m³",
+          tone: "green",
+          icon: <Cloud className="w-5 h-5 text-green-500" />,
+        },
+        {
+          label: "PM2.5",
+          value: airQualityData["PM2.5"]?.concentration?.toFixed(2) || "N/A",
+          unit: "µg/m³",
+          tone: "yellow",
+          icon: <Wind className="w-5 h-5 text-yellow-500" />,
+        },
+        {
+          label: "O₃",
+          value: airQualityData.O3?.concentration?.toFixed(2) || "N/A",
+          unit: "µg/m³",
+          tone: "red",
+          icon: <Leaf className="w-5 h-5 text-red-500" />,
+        },
+        {
+          label: "NO₂",
+          value: airQualityData.NO2?.concentration?.toFixed(2) || "N/A",
+          unit: "µg/m³",
+          tone: "orange",
+          icon: <Atom className="w-5 h-5 text-orange-500" />,
+        },
+        {
+          label: "SO₂",
+          value: airQualityData.SO2?.concentration?.toFixed(2) || "N/A",
+          unit: "µg/m³",
+          tone: "sky",
+          icon: <Droplet className="w-5 h-5 text-sky-500" />,
+        },
+      ]
+    : [
+        {
+          label: "CO",
+          value: aqLoading ? "Loading..." : "N/A",
+          unit: "µg/m³",
+          tone: "blue",
+          icon: <Activity className="w-5 h-5 text-blue-500" />,
+        },
+        {
+          label: "PM10",
+          value: aqLoading ? "Loading..." : "N/A",
+          unit: "µg/m³",
+          tone: "green",
+          icon: <Cloud className="w-5 h-5 text-green-500" />,
+        },
+        {
+          label: "PM2.5",
+          value: aqLoading ? "Loading..." : "N/A",
+          unit: "µg/m³",
+          tone: "yellow",
+          icon: <Wind className="w-5 h-5 text-yellow-500" />,
+        },
+        {
+          label: "O₃",
+          value: aqLoading ? "Loading..." : "N/A",
+          unit: "µg/m³",
+          tone: "red",
+          icon: <Leaf className="w-5 h-5 text-red-500" />,
+        },
+        {
+          label: "NO₂",
+          value: aqLoading ? "Loading..." : "N/A",
+          unit: "µg/m³",
+          tone: "orange",
+          icon: <Atom className="w-5 h-5 text-orange-500" />,
+        },
+        {
+          label: "SO₂",
+          value: aqLoading ? "Loading..." : "N/A",
+          unit: "µg/m³",
+          tone: "sky",
+          icon: <Droplet className="w-5 h-5 text-sky-500" />,
+        },
+      ]
 
   const powerMeters = [
     { name: "HT1", daily: "12,481", cumulative: "26,473" },
@@ -812,7 +947,6 @@ function ReadingDashboard() {
     { name: "DG5", daily: "8", cumulative: "98" },
   ];
 
-  /** ✅ Removed Ambient Temp + Relative Humidity */
   const facilityMetrics = [
     {
       label: "Total Power",
@@ -870,9 +1004,7 @@ function ReadingDashboard() {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-9xl mx-auto space-y-6">
-        {/* ✅ Main 3 cards (with DOWNLOAD buttons) */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* EB Power */}
           <Card className="p-6">
             <SectionTitle
               icon={<Zap className="w-6 h-6 text-yellow-600" />}
@@ -896,7 +1028,6 @@ function ReadingDashboard() {
             </div>
           </Card>
 
-          {/* Water Consumption */}
           <Card className="p-6">
             <SectionTitle
               icon={<Droplet className="w-6 h-6 text-blue-600" />}
@@ -926,7 +1057,6 @@ function ReadingDashboard() {
             </div>
           </Card>
 
-          {/* DG Power */}
           <Card className="p-6">
             <SectionTitle
               icon={<Settings className="w-6 h-6 text-red-600" />}
@@ -951,31 +1081,44 @@ function ReadingDashboard() {
           </Card>
         </div>
 
-        {/* ✅ Air Quality metrics (single line) */}
         <Card className="p-6">
           <SectionTitle
             icon={<Wind className="w-6 h-6 text-green-600" />}
             title="Air Quality"
             subtitle="Key indoor air quality indicators"
             right={
-              <motion.span
-                animate={{
-                  boxShadow: [
-                    "0 0 0 0 hsl(145 70% 45% / 0.4)",
-                    "0 0 0 10px hsl(145 70% 45% / 0)",
-                  ],
-                }}
-                transition={{
-                  duration: 1.5,
-                  repeat: Infinity,
-                  ease: "easeOut",
-                }}
-                className="px-4 py-1.5 rounded-full bg-green-100 border border-green-300 text-green-700 font-medium text-sm whitespace-nowrap flex items-center justify-center"
-              >
-                Good
-              </motion.span>
+              <div className="flex items-center gap-3">
+                <motion.span
+                  animate={{
+                    boxShadow: [
+                      "0 0 0 0 hsl(145 70% 45% / 0.4)",
+                      "0 0 0 10px hsl(145 70% 45% / 0)",
+                    ],
+                  }}
+                  transition={{
+                    duration: 1.5,
+                    repeat: Infinity,
+                    ease: "easeOut",
+                  }}
+                  className="px-4 py-1.5 rounded-full bg-green-100 border border-green-300 text-green-700 font-medium text-sm whitespace-nowrap flex items-center justify-center"
+                >
+                  {airQualityData?.overall_aqi ? `AQI: ${airQualityData.overall_aqi}` : "Good"}
+                </motion.span>
+                <button
+                  onClick={fetchAirQuality}
+                  disabled={aqLoading}
+                  className="h-9 px-4 rounded-lg bg-blue-50 hover:bg-blue-100 disabled:opacity-50 transition text-blue-600 font-medium text-sm"
+                  title="Refresh data"
+                >
+                  {aqLoading ? "⟳ Updating..." : "↻ Refresh"}
+                </button>
+              </div>
             }
           />
+
+          {lastUpdated && (
+            <p className="text-xs text-gray-400 mt-2">Last updated: {lastUpdated}</p>
+          )}
 
           <div className="mt-6 flex items-stretch gap-4 overflow-x-auto pb-2">
             {airQualityMetrics.map((m) => (
@@ -992,7 +1135,6 @@ function ReadingDashboard() {
           </div>
         </Card>
 
-        {/* Facility Metrics */}
         <Card className="p-6">
           <SectionTitle
             icon={<Activity className="w-6 h-6 text-blue-600" />}
@@ -1015,7 +1157,6 @@ function ReadingDashboard() {
           </div>
         </Card>
 
-        {/* Consumption Analytics */}
         <div className="px-1">
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div className="min-w-0">
@@ -1035,26 +1176,26 @@ function ReadingDashboard() {
           </div>
 
           <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* ✅ Air Quality Index (download + chart type icons) */}
-            <ChartCard
-              title="Air Quality Index"
-              subtitle="AQI comparison over time"
-              pill={a.air.pill}
-              labelA={a.labelA}
-              labelB={a.labelB}
-              legendA={a.air.legendA}
-              legendB={a.air.legendB}
-              footer={a.air.footer}
-              data={a.air.data}
-              xKey={a.air.xKey}
-              chartType={aqiChartType}
-              setChartType={setAqiChartType}
-              onDownload={() =>
-                downloadExcel(downloadApi.airQualityIndex, "air_quality_index.xlsx")
-              }
-            />
+            {dynamicAirQualityData && (
+              <ChartCard
+                title="Air Quality"
+                subtitle="AQI comparison over time"
+                pill={a.air.pill}
+                labelA={a.labelA}
+                labelB={a.labelB}
+                legendA={dynamicAirQualityData[timeFilter]?.legendA || a.air.legendA}
+                legendB={dynamicAirQualityData[timeFilter]?.legendB || a.air.legendB}
+                footer={a.air.footer}
+                data={dynamicAirQualityData[timeFilter]?.data || a.air.data}
+                xKey={a.air.xKey}
+                chartType={aqiChartType}
+                setChartType={setAqiChartType}
+                onDownload={() =>
+                  downloadExcel(downloadApi.airQualityIndex, "air_quality_index.xlsx")
+                }
+              />
+            )}
 
-            {/* ✅ EB Power Usage (download + chart type icons) */}
             <ChartCard
               title="EB Power Usage"
               subtitle="kWh consumption trends"
@@ -1073,7 +1214,6 @@ function ReadingDashboard() {
               }
             />
 
-            {/* ✅ Water Consumption (download + chart type icons) */}
             <ChartCard
               title="Water Consumption"
               subtitle="Liters usage analysis"
