@@ -87,89 +87,167 @@ const VisitorPage = () => {
     return s;
   };
 
-  // ✅ NEW: Export current visible Visitor list (All / In / Out) to CSV
-  const exportVisitorsToCSV = () => {
-    let rows = [];
-
-    if (page === "all") {
-      rows =
-        selectedVisitor === "expected"
-          ? FilteredExpectedVisitor
-          : FilteredUnexpectedVisitor;
-    } else if (page === "Visitor In") {
-      rows = selectedVisitor === "expected" ? filteredData : FilteredUnexpectedVisitor;
-    } else if (page === "Visitor Out") {
-      // you are showing visitorOut directly
-      rows = visitorOut;
-    } else {
+  // ✅ UPDATED: Export ALL Visitor data (All / In / Out) to CSV
+  const exportVisitorsToCSV = async () => {
+    if (page !== "all" && page !== "Visitor In" && page !== "Visitor Out") {
       toast.error("Export is available for All / Visitor In / Visitor Out");
       return;
     }
 
-    if (!rows || rows.length === 0) {
-      toast.error("No data to export");
-      return;
+    try {
+      toast.loading("Preparing export... Please wait");
+      
+      let allRows = [];
+      let pageNum = 1;
+      let hasMoreData = true;
+      const itemsPerPage = 1000; // Large page size to minimize API calls
+
+      // Build filters based on current page and selected visitor
+      let filters = {};
+      if (page === "Visitor In") {
+        filters.visitorInOut = "IN";
+        if (selectedVisitor === "expected") {
+          filters.userTypeNotEq = "security_guard";
+        } else {
+          filters.userType = "security_guard";
+        }
+      } else if (page === "Visitor Out") {
+        filters.visitorInOut = "OUT";
+        if (selectedVisitor === "expected") {
+          filters.userTypeNotEq = "security_guard";
+        } else {
+          filters.userType = "security_guard";
+        }
+      } else if (page === "all") {
+        if (selectedVisitor === "expected") {
+          filters.userTypeNotEq = "security_guard";
+        } else {
+          filters.userType = "security_guard";
+        }
+      }
+
+      if (filterDateFrom) filters.dateFrom = filterDateFrom;
+      if (filterDateTo) filters.dateTo = filterDateTo;
+      if (filterMobile) filters.mobile = filterMobile;
+      if (filterHost) filters.host = filterHost;
+
+      // Fetch all pages
+      while (hasMoreData) {
+        const visitorResp = await getExpectedVisitor(pageNum, itemsPerPage, filters);
+        
+        let visitorData = [];
+        let totalPages = 1;
+
+        if (visitorResp?.data) {
+          if (Array.isArray(visitorResp.data)) {
+            visitorData = visitorResp.data;
+          } else if (visitorResp.data.visitors && Array.isArray(visitorResp.data.visitors)) {
+            visitorData = visitorResp.data.visitors;
+            totalPages = visitorResp.data.total_pages || 1;
+          } else if (visitorResp.data.data && Array.isArray(visitorResp.data.data)) {
+            visitorData = visitorResp.data.data;
+            totalPages = visitorResp.data.total_pages || 1;
+          }
+        }
+
+        if (visitorData.length === 0) {
+          hasMoreData = false;
+        } else {
+          // Process and add to allRows
+          const processedVisitors = visitorData.map((visitor) => ({
+            ...visitor,
+            hosts_display:
+              visitor.hosts && visitor.hosts.length > 0
+                ? visitor.hosts
+                    .map((host) => host.full_name || "Unknown")
+                    .filter(Boolean)
+                    .join(", ")
+                : "No Host",
+          }));
+          
+          allRows = [...allRows, ...processedVisitors];
+          
+          // Check if there are more pages
+          if (pageNum >= totalPages) {
+            hasMoreData = false;
+          } else {
+            pageNum++;
+          }
+        }
+      }
+
+      toast.dismiss();
+
+      if (!allRows || allRows.length === 0) {
+        toast.error("No data to export");
+        return;
+      }
+
+      const headers = [
+        "Visitor Type",
+        "Name",
+        "Contact No",
+        "Purpose",
+        "Coming From",
+        "Expected Date",
+        "Expected Time",
+        "Vehicle No",
+        "Host Approval",
+        "Pass Start",
+        "Pass End",
+        "Status",
+        "Created By",
+        "Host",
+        "Created At",
+      ];
+
+      const csvRows = allRows.map((r) => {
+        const createdBy = `${r?.created_by_name?.firstname || ""} ${
+          r?.created_by_name?.lastname || ""
+        }`.trim();
+
+        return [
+          csvEscape(r.visit_type || ""),
+          csvEscape(r.name || ""),
+          csvEscape(r.contact_no || ""),
+          csvEscape(r.purpose || ""),
+          csvEscape(r.coming_from || ""),
+          csvEscape(r.expected_date || ""),
+          csvEscape(r.expected_time ? formatTime(r.expected_time) : ""),
+          csvEscape(r.vehicle_number || ""),
+          csvEscape(r.skip_host_approval ? "Not Required" : "Required"),
+          csvEscape(r.start_pass ? dateFormat(r.start_pass) : ""),
+          csvEscape(r.end_pass ? dateFormat(r.end_pass) : ""),
+          csvEscape(r.visitor_in_out || ""),
+          csvEscape(createdBy),
+          csvEscape(r.hosts_display || (createdBy ? createdBy : "No Host")),
+          csvEscape(r.created_at ? dateTimeFormat(r.created_at) : ""),
+        ].join(",");
+      });
+
+      const fileName =
+        page === "all"
+          ? `visitors_all_${selectedVisitor}_${new Date().toISOString().split('T')[0]}.csv`
+          : page === "Visitor In"
+          ? `visitors_in_${selectedVisitor}_${new Date().toISOString().split('T')[0]}.csv`
+          : `visitors_out_${selectedVisitor}_${new Date().toISOString().split('T')[0]}.csv`;
+
+      const blob = new Blob([headers.join(",") + "\n" + csvRows.join("\n")], {
+        type: "text/csv;charset=utf-8;",
+      });
+
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      window.URL.revokeObjectURL(url);
+
+      toast.success(`Export successful! Total records: ${allRows.length}`);
+    } catch (error) {
+      console.error("Export error:", error);
+      toast.error("Export failed. Please try again");
     }
-
-    const headers = [
-      "Visitor Type",
-      "Name",
-      "Contact No",
-      "Purpose",
-      "Coming From",
-      "Expected Date",
-      "Expected Time",
-      "Vehicle No",
-      "Host Approval",
-      "Pass Start",
-      "Pass End",
-      "Status",
-      "Created By",
-      "Host",
-      "Created At",
-    ];
-
-    const csvRows = rows.map((r) => {
-      const createdBy = `${r?.created_by_name?.firstname || ""} ${
-        r?.created_by_name?.lastname || ""
-      }`.trim();
-
-      return [
-        csvEscape(r.visit_type || ""),
-        csvEscape(r.name || ""),
-        csvEscape(r.contact_no || ""),
-        csvEscape(r.purpose || ""),
-        csvEscape(r.coming_from || ""),
-        csvEscape(r.expected_date || ""),
-        csvEscape(r.expected_time ? formatTime(r.expected_time) : ""),
-        csvEscape(r.vehicle_number || ""),
-        csvEscape(r.skip_host_approval ? "Not Required" : "Required"),
-        csvEscape(r.start_pass ? dateFormat(r.start_pass) : ""),
-        csvEscape(r.end_pass ? dateFormat(r.end_pass) : ""),
-        csvEscape(r.visitor_in_out || ""),
-        csvEscape(createdBy),
-        csvEscape(r.hosts_display || (createdBy ? createdBy : "No Host")),
-        csvEscape(r.created_at ? dateTimeFormat(r.created_at) : ""),
-      ].join(",");
-    });
-
-    const fileName =
-      page === "all"
-        ? `visitors_all_${selectedVisitor}.csv`
-        : page === "Visitor In"
-        ? `visitors_in_${selectedVisitor}.csv`
-        : `visitors_out_${selectedVisitor}.csv`;
-
-    const blob = new Blob([headers.join(",") + "\n" + csvRows.join("\n")], {
-      type: "text/csv;charset=utf-8;",
-    });
-
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = fileName;
-    a.click();
-    window.URL.revokeObjectURL(url);
   };
 
   // Existing History export (kept)
