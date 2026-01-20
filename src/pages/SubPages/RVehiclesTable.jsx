@@ -20,49 +20,93 @@ const RVehiclesTable = ({
     pageType === "Vehicle In" ||
     pageType === "Vehicle Out";
 
+  const getVehicleId = (row) => {
+    if (!row) return null;
+    return (
+      row.__vehicleId ||
+      row.registered_vehicle_id ||
+      row.registered_vehicle?.id ||
+      row.vehicle_id ||
+      row.id
+    );
+  };
+
+  const fmtDate = (dt) => (dt ? new Date(dt).toLocaleString() : "-");
+
+  const getStatus = (row) => {
+    const s = row?.approved ?? row?.registered_vehicle?.approved;
+    if (typeof s === "string") return s; // "Pending"/"Approved"/"Rejected"
+    if (s === true) return "Approved";
+    if (s === false) return "Rejected";
+    return "-";
+  };
+
   const columns = isApproval
     ? [
         {
           name: "Vehicle Number",
-          selector: (row) => row.vehicle_number || "-",
+          selector: (row) =>
+            row.vehicle_number ||
+            row.registered_vehicle?.vehicle_number ||
+            "-",
         },
         {
           name: "Vehicle Type",
-          selector: (row) => row.name || "-",
+          selector: (row) =>
+            row.name ||
+            row.vehicle_type ||
+            row.registered_vehicle?.vehicle_type ||
+            "-",
         },
         {
           name: "Requested By",
-          selector: (row) => row.created_by || "-",
+          selector: (row) =>
+            row.created_by ||
+            row.requested_by ||
+            row.registered_vehicle?.created_by ||
+            "-",
         },
         {
+
           name: "Requested At",
-          selector: (row) =>
-            row.created_at
-              ? new Date(row.created_at).toLocaleString()
-              : "-",
+          selector: (row) => fmtDate(row.created_at || row.__createdAt),
         },
         {
           name: "Approval",
-          center: true,
-          cell: (row) => (
-            <div className="flex justify-center gap-3">
-              <button
-                onClick={() =>
-                  onApprove(row.registered_vehicle_id || row.id)
-                }
-                className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center"
-              >
-                <FaCheck size={14} />
-              </button>
+          cell: (row) => {
+            const vehicleId = getVehicleId(row);
+            return (
+              <div className="flex justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => vehicleId && onApprove?.(row)}
+                  disabled={!vehicleId}
+                  className={`w-8 h-8 rounded-full text-white flex items-center justify-center ${
+                    vehicleId
+                      ? "bg-green-500 hover:bg-green-600"
+                      : "bg-green-300 cursor-not-allowed"
+                  }`}
+                  title={vehicleId ? "Approve" : "Vehicle ID missing"}
+                >
+                  <FaCheck size={14} />
+                </button>
 
-              <button
-                onClick={() => onReject(row.id)}
-                className="w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center"
-              >
-                <FaTimes size={14} />
-              </button>
-            </div>
-          ),
+                <button
+                  type="button"
+                  onClick={() => vehicleId && onReject?.(row)}
+                  disabled={!vehicleId}
+                  className={`w-8 h-8 rounded-full text-white flex items-center justify-center ${
+                    vehicleId
+                      ? "bg-red-500 hover:bg-red-600"
+                      : "bg-red-300 cursor-not-allowed"
+                  }`}
+                  title={vehicleId ? "Reject" : "Vehicle ID missing"}
+                >
+                  <FaTimes size={14} />
+                </button>
+              </div>
+            );
+          },
         },
       ]
     : isHistory
@@ -75,30 +119,68 @@ const RVehiclesTable = ({
         {
           name: "Vehicle Number",
           selector: (row) =>
-            row.registered_vehicle?.vehicle_number || "-",
+            row.vehicle_number || row.registered_vehicle?.vehicle_number || "-",
         },
         {
           name: "Vehicle Type",
           selector: (row) =>
-            row.registered_vehicle?.vehicle_type || "-",
+            row.name ||
+            row.vehicle_type ||
+            row.registered_vehicle?.vehicle_type ||
+            "-",
         },
         {
           name: "Category",
           selector: (row) =>
-            row.registered_vehicle?.vehicle_category || "-",
+            row.vehicle_category ||
+            row.category ||
+            row.registered_vehicle?.vehicle_category ||
+            "-",
+        },
+        {
+          name: "Status",
+          selector: (row) => (
+            <span
+              className={
+                getStatus(row) === "Approved"
+                  ? "text-green-600 font-medium"
+                  : getStatus(row) === "Rejected"
+                  ? "text-red-600 font-medium"
+                  : "text-gray-600"
+              }
+            >
+              {getStatus(row)}
+            </span>
+          ),
+        },
+        {
+          name: "Action Date",
+          selector: (row) =>
+            fmtDate(
+              row.updated_at ||
+                row.approved_at ||
+                row.created_at ||
+                row.__createdAt ||
+                row.registered_vehicle?.updated_at ||
+                row.registered_vehicle?.created_at
+            ),
         },
         {
           name: "Check-In",
           selector: (row) =>
             row.check_in
-              ? new Date(row.check_in).toLocaleString()
+              ? fmtDate(row.check_in)
+              : row.vehicle_logs?.check_in
+              ? fmtDate(row.vehicle_logs.check_in)
               : "-",
         },
         {
           name: "Check-Out",
           selector: (row) =>
             row.check_out
-              ? new Date(row.check_out).toLocaleString()
+              ? fmtDate(row.check_out)
+              : row.vehicle_logs?.check_out
+              ? fmtDate(row.vehicle_logs.check_out)
               : "-",
         },
       ]
@@ -116,18 +198,9 @@ const RVehiclesTable = ({
             </div>
           ),
         },
-        {
-          name: "Vehicle Number",
-          selector: (row) => row.vehicle_number || "-",
-        },
-        {
-          name: "Category",
-          selector: (row) => row.category || "-",
-        },
-        {
-          name: "Slot",
-          selector: (row) => row.slot_name || "-",
-        },
+        { name: "Vehicle Number", selector: (row) => row.vehicle_number || "-" },
+        { name: "Category", selector: (row) => row.category || "-" },
+        { name: "Slot", selector: (row) => row.slot_name || "-" },
       ];
 
   if (loading) return <p className="p-5 text-center">Loading...</p>;
