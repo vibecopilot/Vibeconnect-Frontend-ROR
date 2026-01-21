@@ -10662,6 +10662,7 @@ export const deleteVehicleSetup = async (id) =>
       token: token,
     },
   });
+
 export const putVehicleSetup = async (id, data) =>
   axiosInstance.put(`/vehicle_setups/${id}.json`, data, {
     params: {
@@ -10669,9 +10670,43 @@ export const putVehicleSetup = async (id, data) =>
     },
   });
 
-  
-
   export const getComplianceTrackers = async () =>
   axiosInstance.get("/compliance_trackers.json", {
     params: { token },
   });
+
+export const getVisitorDashboard = async () =>
+  axiosInstance.get("/visitors/visitors_dashboard.json", {
+    params: {
+      token: token,
+    },
+  });
+
+export const getExportVisitors = async (
+  startDate = null,
+  endDate = null,
+  filterType = null
+) => {
+  const params = {
+    token: token,
+  };
+
+  if (startDate && endDate) {
+    params.start_date = startDate;
+    params.end_date = endDate;
+  }
+
+  if (filterType) {
+    params.filter_type = filterType;
+  }
+
+  return axiosInstance.get(`/visitors/export_visitors.xlsx`, {
+    params: params,
+    headers: {
+      "Cache-Control": "no-cache",
+      Pragma: "no-cache",
+      Expires: "0",
+    },
+    responseType: "blob", 
+  });
+};

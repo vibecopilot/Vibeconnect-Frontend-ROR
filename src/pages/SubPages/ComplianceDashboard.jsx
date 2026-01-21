@@ -531,15 +531,15 @@ function ComplianceDashboard() {
           rOver,
           rComp,
         ] = await Promise.all([
-          getTotalAssetCount(),
-          getBreakCount(),
-          getInUseAssetBreakDown(),
-          getPPMScheduleCount(),
-          getPPMOverDueCount(),
-          getPPMCompleteCount(),
-          getRoutineScheduledCount(),
-          getRoutineOverdueCount(),
-          getRoutineCompleteCount(),
+          getTotalAssetCount([]),
+          getBreakCount([]),
+          getInUseAssetBreakDown([]),
+          getPPMScheduleCount([]),
+          getPPMOverDueCount([]),
+          getPPMCompleteCount([]),
+          getRoutineScheduledCount([]),
+          getRoutineOverdueCount([]),
+          getRoutineCompleteCount([]),
         ]);
 
         setTotalAssetCount(totalAsset?.data?.count ?? 0);
@@ -655,15 +655,15 @@ function ComplianceDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 my-6">
         <ChartCard
           title="Total Compliance"
-          subtitle="In Use vs Breakdown"
+          // subtitle="In Use vs Breakdown" 
           // set to null if you don't want the pill
           trendPercent={20.7}
           trendDirection="down"
-          legendItems={[
-            { label: "In Use", value: inUseCount, color: "#1D4ED8" },
-            { label: "Breakdown", value: breakCount, color: "#93C5FD" },
-          ]}
-          footerText="Improved compliance"
+          // legendItems={[
+          //   { label: "In Use", value: inUseCount, color: "#1D4ED8" },
+          //   { label: "Breakdown", value: breakCount, color: "#93C5FD" },
+          // ]}
+          // footerText="Improved compliance"
           footerDirection="down"
           onDownload={handleTotalAssetDownload}
           chartType={assetChartType}
@@ -673,14 +673,14 @@ function ComplianceDashboard() {
 
         <ChartCard
           title="Total PPM"
-          subtitle="Overdue vs Complete"
+          // subtitle="Overdue vs Complete"
           trendPercent={21.7}
           trendDirection="down"
-          legendItems={[
-            { label: "PPM Overdue", value: ppmOverDue, color: "#1D4ED8" },
-            { label: "PPM Complete", value: ppmComplete, color: "#93C5FD" },
-          ]}
-          footerText="Reduced pending load"
+          // legendItems={[
+          //   { label: "PPM Overdue", value: ppmOverDue, color: "#1D4ED8" },
+          //   { label: "PPM Complete", value: ppmComplete, color: "#93C5FD" },
+          // ]}
+          // footerText="Reduced pending load"
           footerDirection="down"
           onDownload={handleScheduledDownload}
           chartType={ppmChartType}
@@ -690,22 +690,22 @@ function ComplianceDashboard() {
 
         <ChartCard
           title="Total Routine Task"
-          subtitle="Overdue vs Complete"
+          // subtitle="Overdue vs Complete"
           trendPercent={10.2}
           trendDirection="up"
-          legendItems={[
-            {
-              label: "Routine Overdue",
-              value: routineOverdueCount,
-              color: "#1D4ED8",
-            },
-            {
-              label: "Routine Complete",
-              value: routineCompleteCount,
-              color: "#93C5FD",
-            },
-          ]}
-          footerText="Increased routine load"
+          // legendItems={[
+          //   {
+          //     label: "Routine Overdue",
+          //     value: routineOverdueCount,
+          //     color: "#1D4ED8",
+          //   },
+          //   {
+          //     label: "Routine Complete",
+          //     value: routineCompleteCount,
+          //     color: "#93C5FD",
+          //   },
+          // ]}
+          // footerText="Increased routine load"
           footerDirection="up"
           onDownload={handleRoutineScheduledDownload}
           chartType={routineChartType}
