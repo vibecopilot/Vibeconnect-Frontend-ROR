@@ -10614,19 +10614,28 @@ export const deleteOtherProject = (id) =>
 export const postProjectLike = (data) =>
   axiosInstance.post("/likes/create_other_project_like.json", data);
 
-export const uploadVisitorLicense = (formData) => {
-  return api.post("/visitor_licenses", formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
-};
+// export const uploadVisitorLicense = (formData) => {
+//   return api.post("/visitor_licenses", formData, {
+//     headers: {
+//       "Content-Type": "multipart/form-data",
+//     },
+//   });
+// };
 
 export const uploadVisitorConsignment = (formData) => {
   return api.post("/visitor_consignments", formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },
+  });
+};
+
+export const uploadVisitorLicense = (visitorId, file) => {
+  const form = new FormData();
+  form.append("license", file);
+
+  return api.post(`/visitors/${visitorId}/upload_license`, form, {
+    headers: { "Content-Type": "multipart/form-data" },
   });
 };
 
