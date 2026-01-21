@@ -14,9 +14,21 @@ import {
 import { RiPieChartFill } from "react-icons/ri";
 import { PiChartBarHorizontal } from "react-icons/pi";
 
-/** ✅ Required blue palette */
-const PRIMARY_BLUE = "#1D4ED8";
-const LIGHT_BLUE = "#93C5FD";
+/** ✅ Multi-color palette (used across all charts) */
+const CHART_PALETTE = [
+  "#1D4ED8", // blue
+  "#10B981", // emerald
+  "#F59E0B", // amber
+  "#EF4444", // red
+  "#8B5CF6", // violet
+  "#06B6D4", // cyan
+  "#EC4899", // pink
+  "#84CC16", // lime
+  "#F97316", // orange
+  "#14B8A6", // teal
+  "#0EA5E9", // sky
+  "#6366F1", // indigo
+];
 
 /** =========================
  *  Screenshot UI building blocks
@@ -222,7 +234,8 @@ const toSortedEntries = (obj = {}, order = "desc") =>
       : (Number(b[1]) || 0) - (Number(a[1]) || 0)
   );
 
-const buildPieOptions = ({ title, data, colorsMap }) => ({
+/** ✅ PIE supports palette for multi colors */
+const buildPieOptions = ({ title, data, colorsMap, palette = CHART_PALETTE }) => ({
   chart: { type: "pie", backgroundColor: "transparent", height: 280 },
   title: { text: null },
   tooltip: {
@@ -247,10 +260,10 @@ const buildPieOptions = ({ title, data, colorsMap }) => ({
     {
       name: title,
       colorByPoint: true,
-      data: Object.keys(data || {}).map((k) => ({
+      data: Object.keys(data || {}).map((k, i) => ({
         name: k,
         y: Number(data?.[k]) || 0,
-        color: colorsMap?.[k],
+        color: colorsMap?.[k] || palette[i % palette.length],
       })),
     },
   ],
@@ -259,6 +272,7 @@ const buildPieOptions = ({ title, data, colorsMap }) => ({
   exporting: { enabled: false },
 });
 
+/** ✅ XY supports colorByPoint + palette for bar/column */
 const buildXYOptions = ({
   title,
   type,
@@ -266,20 +280,30 @@ const buildXYOptions = ({
   values,
   themeColor,
   colorByPoint = false,
+  palette = CHART_PALETTE,
 }) => {
   const hcType =
     type === "line" ? "spline" : type === "area" ? "areaspline" : type;
+
+  // pick a “series” color for line/area
+  const seriesColor = themeColor || palette[0];
 
   const areaFill =
     type === "area"
       ? {
           linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
           stops: [
-            [0, Highcharts.color(themeColor).setOpacity(0.22).get("rgba")],
-            [1, Highcharts.color(themeColor).setOpacity(0).get("rgba")],
+            [0, Highcharts.color(seriesColor).setOpacity(0.22).get("rgba")],
+            [1, Highcharts.color(seriesColor).setOpacity(0).get("rgba")],
           ],
         }
       : undefined;
+
+  const dataPoints = values.map((v, i) => {
+    const y = Number(v) || 0;
+    if (!colorByPoint) return y;
+    return { y, color: palette[i % palette.length] };
+  });
 
   return {
     chart: {
@@ -327,7 +351,7 @@ const buildXYOptions = ({
                 enabled: true,
                 radius: 4,
                 lineWidth: 2,
-                lineColor: themeColor,
+                lineColor: seriesColor,
                 fillColor: "#FFFFFF",
               }
             : { enabled: false },
@@ -347,11 +371,9 @@ const buildXYOptions = ({
     series: [
       {
         name: title,
-        color: themeColor,
+        color: seriesColor,
         colorByPoint,
-        data: values.map((v) =>
-          colorByPoint ? { y: Number(v) || 0 } : Number(v) || 0
-        ),
+        data: dataPoints,
         fillColor: areaFill,
       },
     ],
@@ -367,9 +389,7 @@ const SoftServiceHighCharts = () => {
   const [byFloor, setByFloor] = useState({});
   const [byUnit, setByUnit] = useState({});
 
-  // keep redux value if you want, but enforce your blue palette for charts
-  useSelector((state) => state.theme.color);
-  const chartBlue = PRIMARY_BLUE;
+  useSelector((state) => state.theme.color); // keep if needed
 
   const [statusType, setStatusType] = useState("column");
   const [buildingType, setBuildingType] = useState("line");
@@ -413,26 +433,28 @@ const SoftServiceHighCharts = () => {
     }
   };
 
-  /** ✅ status colors now uses your blue */
+  /** optional: keep explicit status colors for pie legends if you want */
   const statusColors = useMemo(
     () => ({
-      overdue: "#1d4ed8",
-      complete: "#8093ca",
-      pending: "#93c5fd",
-      inprogress: PRIMARY_BLUE,
-      in_progress: PRIMARY_BLUE,
-      open: PRIMARY_BLUE,
+      overdue: "#EF4444",
+      complete: "#10B981",
+      pending: "#F59E0B",
+      inprogress: "#3B82F6",
+      in_progress: "#3B82F6",
+      open: "#6366F1",
     }),
     []
   );
 
-  /** ✅ legend uses your 2 blues */
   const topTwoLegend = (obj, colorsMap) => {
     const entries = toSortedEntries(obj, "desc").slice(0, 2);
     return entries.map(([label, value], idx) => ({
       label,
       value,
-      color: colorsMap?.[label] || (idx === 0 ? PRIMARY_BLUE : LIGHT_BLUE),
+      color:
+        colorsMap?.[label] ||
+        CHART_PALETTE[idx % CHART_PALETTE.length] ||
+        "#1D4ED8",
     }));
   };
 
@@ -445,12 +467,17 @@ const SoftServiceHighCharts = () => {
     return { pct: 0, dir: "down" };
   };
 
+  /** ✅ For Column/Bar: multi-color bars
+   *  For Line/Area: single color (palette[0]) */
+  const shouldColorByPoint = (type) => type === "column" || type === "bar";
+
   const statusOptions = useMemo(() => {
     if (statusType === "pie") {
       return buildPieOptions({
         title: "Soft Services by Status",
         data: byStatus,
         colorsMap: statusColors,
+        palette: CHART_PALETTE,
       });
     }
     const entries = toSortedEntries(byStatus, "desc");
@@ -459,15 +486,18 @@ const SoftServiceHighCharts = () => {
       type: statusType,
       categories: entries.map(([k]) => k),
       values: entries.map(([, v]) => v),
-      themeColor: chartBlue,
+      themeColor: CHART_PALETTE[0],
+      colorByPoint: shouldColorByPoint(statusType),
+      palette: CHART_PALETTE,
     });
-  }, [byStatus, statusType, chartBlue, statusColors]);
+  }, [byStatus, statusType, statusColors]);
 
   const buildingOptions = useMemo(() => {
     if (buildingType === "pie") {
       return buildPieOptions({
         title: "Soft Services by Building",
         data: byBuilding,
+        palette: CHART_PALETTE,
       });
     }
     const entries = toSortedEntries(byBuilding, "desc");
@@ -476,15 +506,18 @@ const SoftServiceHighCharts = () => {
       type: buildingType,
       categories: entries.map(([k]) => k),
       values: entries.map(([, v]) => v),
-      themeColor: chartBlue,
+      themeColor: CHART_PALETTE[0],
+      colorByPoint: shouldColorByPoint(buildingType),
+      palette: CHART_PALETTE,
     });
-  }, [byBuilding, buildingType, chartBlue]);
+  }, [byBuilding, buildingType]);
 
   const floorOptions = useMemo(() => {
     if (floorType === "pie") {
       return buildPieOptions({
         title: "Soft Services by Floor",
         data: byFloor,
+        palette: CHART_PALETTE,
       });
     }
     const entries = toSortedEntries(byFloor, "desc");
@@ -493,15 +526,18 @@ const SoftServiceHighCharts = () => {
       type: floorType,
       categories: entries.map(([k]) => k),
       values: entries.map(([, v]) => v),
-      themeColor: chartBlue,
+      themeColor: CHART_PALETTE[0],
+      colorByPoint: shouldColorByPoint(floorType),
+      palette: CHART_PALETTE,
     });
-  }, [byFloor, floorType, chartBlue]);
+  }, [byFloor, floorType]);
 
   const unitOptions = useMemo(() => {
     if (unitType === "pie") {
       return buildPieOptions({
         title: "Soft Services by Unit",
         data: byUnit,
+        palette: CHART_PALETTE,
       });
     }
     const entries = toSortedEntries(byUnit, "desc");
@@ -515,9 +551,11 @@ const SoftServiceHighCharts = () => {
       type: unitType,
       categories: limited.map(([k]) => k),
       values: limited.map(([, v]) => v),
-      themeColor: chartBlue,
+      themeColor: CHART_PALETTE[0],
+      colorByPoint: shouldColorByPoint(unitType),
+      palette: CHART_PALETTE,
     });
-  }, [byUnit, unitType, chartBlue]);
+  }, [byUnit, unitType]);
 
   const Loading = () => (
     <div className="h-[320px] flex items-center justify-center">
@@ -537,7 +575,6 @@ const SoftServiceHighCharts = () => {
           subtitle="By Status"
           trendPercent={statusTrend.pct}
           trendDirection={statusTrend.dir}
-          legendItems={topTwoLegend(byStatus, statusColors)}
           onDownload={handleDownload}
           chartType={statusType}
           setChartType={setStatusType}
@@ -555,7 +592,6 @@ const SoftServiceHighCharts = () => {
           subtitle="By Building"
           trendPercent={buildingTrend.pct}
           trendDirection={buildingTrend.dir}
-          legendItems={topTwoLegend(byBuilding)}
           onDownload={handleDownload}
           chartType={buildingType}
           setChartType={setBuildingType}
@@ -576,11 +612,10 @@ const SoftServiceHighCharts = () => {
           subtitle="By Floor"
           trendPercent={floorTrend.pct}
           trendDirection={floorTrend.dir}
-          legendItems={topTwoLegend(byFloor)}
           onDownload={handleDownload}
           chartType={floorType}
           setChartType={setFloorType}
-          includeBar={false}
+          includeBar={true}
         >
           {byFloor && Object.keys(byFloor).length ? (
             <HighchartsReact highcharts={Highcharts} options={floorOptions} />
@@ -594,7 +629,6 @@ const SoftServiceHighCharts = () => {
         <ChartCard
           title="Soft Services"
           subtitle="By Unit"
-          legendItems={topTwoLegend(byUnit)}
           footerText={
             Object.keys(byUnit || {}).length > 25 ? "Showing top 25 units" : ""
           }

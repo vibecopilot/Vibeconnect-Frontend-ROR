@@ -155,6 +155,9 @@ import WoDetail from "./pages/SubPages/details/WoDetails.jsx";
 import Audit from "./pages/Audit.jsx";
 import AddScheduleAudit from "./pages/SubPages/AuditSubPages/AddScheduleAudit.jsx";
 import ReadingDashboard from "./pages/SubPages/ReadingDashboard.jsx";
+// import PPMCalendarDashboard from "./pages/SubPages/PPMCalendarDashboard.jsx";
+import VisitorsDashboard from "./pages/SubPages/VisitorsDashboard.jsx";
+import VisitorsAnalyticsDashboard from "./pages/SubPages/VisitorsAnalyticsDashboard.jsx";
 import GRN from "./pages/GRN.jsx";
 import AddGrn from "./pages/SubPages/AddGrn.jsx";
 import GrnDetails from "./pages/SubPages/details/GRNDetails.jsx";
@@ -4063,7 +4066,7 @@ function App() {
           />{/*  */}
 
 
-{/* OSR */}
+          {/* OSR */}
 
          <Route path="/additional-service" element={<Osr />} />
           <Route path="/ors-dashboard" element={<OSRDashboard />} />
@@ -7530,6 +7533,32 @@ function App() {
         element={
           <ProtectedAdminRoutes>
             <ReadingDashboard />
+          </ProtectedAdminRoutes>
+        }
+      />
+
+      {/* <Route 
+        path="/admin/ppm-calendar-dashboard"
+        element={
+          <ProtectedAdminRoutes>  
+            <PPMCalendarDashboard />
+          </ProtectedAdminRoutes>
+        }
+      /> */}
+
+      <Route 
+        path="/admin/visitors-dashboard"
+        element={
+          <ProtectedAdminRoutes>  
+            <VisitorsDashboard />
+          </ProtectedAdminRoutes>
+        }
+      />
+      <Route
+        path="/admin/visitors-analytics-dashboard"
+        element={
+          <ProtectedAdminRoutes>
+            <VisitorsAnalyticsDashboard />
           </ProtectedAdminRoutes>
         }
       />

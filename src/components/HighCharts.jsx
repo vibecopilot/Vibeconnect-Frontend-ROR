@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import { getTicketDashboard, getTicketStatusDownload } from "../api";
@@ -13,10 +13,25 @@ import {
   AiOutlineLineChart,
 } from "react-icons/ai";
 import { PiChartBarHorizontal } from "react-icons/pi";
-import { FiAlertCircle, FiLayers, FiTag, FiHome } from "react-icons/fi";
 
-const PRIMARY_BLUE = "#1d4ed8";
-const LIGHT_BLUE = "#93C5FD";
+/** ✅ Multi-color palette (used across all charts) */
+const CHART_PALETTE = [
+  "#1D4ED8", // blue
+  "#10B981", // emerald
+  "#F59E0B", // amber
+  "#EF4444", // red
+  "#8B5CF6", // violet
+  "#06B6D4", // cyan
+  "#EC4899", // pink
+  "#84CC16", // lime
+  "#F97316", // orange
+  "#14B8A6", // teal
+  "#0EA5E9", // sky
+  "#6366F1", // indigo
+];
+
+/** Highlight color you wanted earlier */
+const HIGHLIGHT_LIGHT = "#93C5FD";
 
 const chartIcon = (type) => {
   switch (type) {
@@ -77,6 +92,15 @@ const LegendRow = ({ items = [] }) => {
 
 const ChartTypeMenu = ({ value, onChange, allowBar = false }) => {
   const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const onDoc = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, []);
 
   const items = [
     { key: "pie", label: "Pie" },
@@ -87,7 +111,7 @@ const ChartTypeMenu = ({ value, onChange, allowBar = false }) => {
   ];
 
   return (
-    <div className="relative">
+    <div className="relative" ref={ref}>
       <button
         type="button"
         onClick={() => setOpen((p) => !p)}
@@ -178,58 +202,81 @@ const ChartCard = ({
       <div className="mt-2">{children}</div>
 
       {footerText ? (
-        <div className="mt-2 text-center text-sm">
+        <ndiv className="mt-2 text-center text-sm">
           <span className={footerColor}>
             {footerArrow} {footerText}
           </span>
-        </div>
+        </ndiv>
       ) : null}
     </div>
   );
 };
 
-/** -------------------- chart option builder (screenshot grid) -------------------- */
+/** -------------------- chart option builder -------------------- */
 const safeObj = (v) => (v && typeof v === "object" ? v : {});
 
-const sortData = (data, order = "descending") => {
+const sortEntries = (data, order = "descending") => {
   const obj = safeObj(data);
-  const sorted = Object.entries(obj).sort(([, a], [, b]) =>
-    order === "descending"
-      ? (Number(b) || 0) - (Number(a) || 0)
-      : (Number(a) || 0) - (Number(b) || 0)
-  );
-  return Object.fromEntries(sorted);
+  return Object.entries(obj)
+    .map(([k, v]) => [k, Number(v) || 0])
+    .sort((a, b) =>
+      order === "descending" ? b[1] - a[1] : a[1] - b[1]
+    );
 };
+
+const normLabel = (v) => String(v ?? "").trim().toLowerCase();
 
 const buildOptions = ({
   title,
   data,
   type,
-  themeColor, // we will pass PRIMARY_BLUE
+  themeColor,
   order = "descending",
   showDataLabels = true,
   pieLabel = "{point.name}: {point.percentage:.1f}%",
   yTitle = null,
-  palette = [PRIMARY_BLUE, LIGHT_BLUE], // ✅ top-level colors for pie
+  palette = CHART_PALETTE,
+  pointColorFn, // optional override per label
 }) => {
-  const sorted = sortData(data, order);
-  const categories = Object.keys(sorted);
-  const values = Object.values(sorted).map((v) => Number(v) || 0);
+  const entries = sortEntries(data, order);
+  const categories = entries.map(([k]) => k);
+  const values = entries.map(([, v]) => v);
 
   const isPie = type === "pie";
   const hcType =
     type === "line" ? "spline" : type === "area" ? "areaspline" : type;
+
+  const isBarOrColumn = type === "bar" || type === "column";
+
+  const seriesColor = themeColor || palette[0];
 
   const areaFill =
     type === "area"
       ? {
           linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
           stops: [
-            [0, Highcharts.color(themeColor).setOpacity(0.22).get("rgba")],
-            [1, Highcharts.color(themeColor).setOpacity(0).get("rgba")],
+            [0, Highcharts.color(seriesColor).setOpacity(0.22).get("rgba")],
+            [1, Highcharts.color(seriesColor).setOpacity(0).get("rgba")],
           ],
         }
       : undefined;
+
+  const seriesData = isPie
+    ? categories.map((name, i) => ({
+        name,
+        y: values[i],
+        color: pointColorFn
+          ? pointColorFn(name, i, values[i])
+          : palette[i % palette.length],
+      }))
+    : isBarOrColumn
+    ? categories.map((name, i) => ({
+        y: values[i],
+        color: pointColorFn
+          ? pointColorFn(name, i, values[i])
+          : palette[i % palette.length],
+      }))
+    : values;
 
   return {
     chart: {
@@ -239,12 +286,10 @@ const buildOptions = ({
       spacing: [8, 8, 8, 8],
     },
 
-    // ✅ IMPORTANT: apply palette so pie slices start with your 2 colors
-    colors: palette,
-
     title: { text: null },
     credits: { enabled: false },
     exporting: { enabled: false },
+    legend: { enabled: false },
 
     xAxis: isPie
       ? undefined
@@ -264,8 +309,6 @@ const buildOptions = ({
           gridLineDashStyle: "Dash",
           labels: { style: { color: "#6B7280", fontSize: "12px" } },
         },
-
-    legend: { enabled: false },
 
     tooltip: isPie
       ? {
@@ -322,7 +365,7 @@ const buildOptions = ({
                 enabled: true,
                 radius: 4,
                 lineWidth: 2,
-                lineColor: themeColor, // ✅ primary blue
+                lineColor: seriesColor,
                 fillColor: "#FFFFFF",
               }
             : { enabled: false },
@@ -331,20 +374,11 @@ const buildOptions = ({
 
     series: [
       isPie
-        ? {
-            name: title,
-            colorByPoint: true,
-            data: categories.map((name, i) => ({
-              name,
-              y: values[i],
-              // ✅ ensure first 2 items strictly use your palette
-              color: i === 0 ? PRIMARY_BLUE : i === 1 ? LIGHT_BLUE : undefined,
-            })),
-          }
+        ? { name: title, colorByPoint: true, data: seriesData }
         : {
             name: title,
-            color: themeColor, // ✅ primary blue for bars/lines/area
-            data: values,
+            color: seriesColor, // for line/area (and fallback)
+            data: seriesData,
             fillColor: areaFill,
           },
     ],
@@ -354,8 +388,14 @@ const buildOptions = ({
 const TicketHighCharts = () => {
   useSelector((state) => state.theme.color);
 
-  const chartBlue = PRIMARY_BLUE;
-  const piePalette = [PRIMARY_BLUE, LIGHT_BLUE];
+  // ✅ Each chart gets a different base color (for line/area)
+  const chartTheme = {
+    status: CHART_PALETTE[0],
+    category: CHART_PALETTE[2],
+    type: CHART_PALETTE[4],
+    floor: CHART_PALETTE[6],
+    unit: CHART_PALETTE[8],
+  };
 
   const [statusData, setStatusData] = useState(null);
   const [categoryData, setCategoryData] = useState(null);
@@ -413,6 +453,38 @@ const TicketHighCharts = () => {
     }
   };
 
+  /** ✅ Special color rules (with multi-color default) */
+  const categoryPointColor = (name, i) =>
+    normLabel(name) === normLabel("Housekeeping")
+      ? HIGHLIGHT_LIGHT
+      : CHART_PALETTE[i % CHART_PALETTE.length];
+
+  const typePointColor = (name, i) =>
+    normLabel(name) === normLabel("Suggestion")
+      ? HIGHLIGHT_LIGHT
+      : CHART_PALETTE[i % CHART_PALETTE.length];
+
+  const floorPointColor = (name, i) =>
+    normLabel(name) === normLabel("2")
+      ? HIGHLIGHT_LIGHT
+      : CHART_PALETTE[i % CHART_PALETTE.length];
+
+  const unitPointColor = (name, i) =>
+    normLabel(name) === normLabel("VibeConnect")
+      ? HIGHLIGHT_LIGHT
+      : CHART_PALETTE[i % CHART_PALETTE.length];
+
+  // ✅ Status colors can be meaningful
+  const statusPointColor = (name, i) => {
+    const k = normLabel(name);
+    if (k === "overdue") return "#EF4444";
+    if (k === "complete") return "#10B981";
+    if (k === "pending") return "#F59E0B";
+    if (k === "open") return "#3B82F6";
+    if (k === "inprogress" || k === "in_progress") return "#6366F1";
+    return CHART_PALETTE[i % CHART_PALETTE.length];
+  };
+
   // options (memo)
   const statusOptions = useMemo(
     () =>
@@ -420,11 +492,12 @@ const TicketHighCharts = () => {
         title: "Tickets by Status",
         data: statusData,
         type: statusChartType,
-        themeColor: chartBlue,
-        palette: piePalette,
+        themeColor: chartTheme.status,
+        palette: CHART_PALETTE,
         order: "descending",
+        pointColorFn: statusPointColor, // ✅ multi-color
       }),
-    [statusData, statusChartType, chartBlue]
+    [statusData, statusChartType]
   );
 
   const categoryOptions = useMemo(
@@ -433,11 +506,12 @@ const TicketHighCharts = () => {
         title: "Tickets by Category",
         data: categoryData,
         type: categoryChartType,
-        themeColor: chartBlue,
-        palette: piePalette,
+        themeColor: chartTheme.category,
+        palette: CHART_PALETTE,
         order: "descending",
+        pointColorFn: categoryPointColor, // ✅ multi-color + highlight
       }),
-    [categoryData, categoryChartType, chartBlue]
+    [categoryData, categoryChartType]
   );
 
   const typeOptions = useMemo(
@@ -446,11 +520,12 @@ const TicketHighCharts = () => {
         title: "Tickets by Type",
         data: ticketTypes,
         type: ticketTypeChartType,
-        themeColor: chartBlue,
-        palette: piePalette,
+        themeColor: chartTheme.type,
+        palette: CHART_PALETTE,
         order: "descending",
+        pointColorFn: typePointColor, // ✅ multi-color + highlight
       }),
-    [ticketTypes, ticketTypeChartType, chartBlue]
+    [ticketTypes, ticketTypeChartType]
   );
 
   const floorOptions = useMemo(
@@ -459,11 +534,12 @@ const TicketHighCharts = () => {
         title: "Tickets by Floor",
         data: floorTickets,
         type: floorChartType,
-        themeColor: chartBlue,
-        palette: piePalette,
+        themeColor: chartTheme.floor,
+        palette: CHART_PALETTE,
         order: "descending",
+        pointColorFn: floorPointColor, // ✅ multi-color + highlight
       }),
-    [floorTickets, floorChartType, chartBlue]
+    [floorTickets, floorChartType]
   );
 
   const unitOptions = useMemo(
@@ -472,11 +548,12 @@ const TicketHighCharts = () => {
         title: "Tickets by Unit",
         data: unitTickets,
         type: unitChartType,
-        themeColor: chartBlue,
-        palette: piePalette,
+        themeColor: chartTheme.unit,
+        palette: CHART_PALETTE,
         order: "descending",
+        pointColorFn: unitPointColor, // ✅ multi-color + highlight
       }),
-    [unitTickets, unitChartType, chartBlue]
+    [unitTickets, unitChartType]
   );
 
   const Loader = () => (
@@ -485,18 +562,15 @@ const TicketHighCharts = () => {
     </div>
   );
 
-  const legendTopTwo = (obj, unit = "") => {
-    const entries = Object.entries(safeObj(obj))
-      .map(([k, v]) => [k, Number(v) || 0])
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 2);
-
+  /** ✅ Legend colors match chart colors (top-2 of sorted order) */
+  const legendTopTwo = (obj, colorFn) => {
+    const entries = sortEntries(obj, "descending").slice(0, 2);
     return entries.map(([label, value], idx) => ({
       label,
       value,
-      unit,
-      color: idx === 0 ? PRIMARY_BLUE : LIGHT_BLUE,
+      color: colorFn ? colorFn(label, idx, value) : CHART_PALETTE[idx],
     }));
+    // Note: idx here is rank, not original index; good enough for legend dots.
   };
 
   return (
@@ -504,10 +578,10 @@ const TicketHighCharts = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <ChartCard
           title="Tickets by Status"
-          subtitle="Overview of ticket lifecycle"
+          // subtitle="Overview of ticket lifecycle"
           trendPercent={null}
           trendDirection="down"
-          legendItems={legendTopTwo(statusData)}
+          // legendItems={legendTopTwo(statusData, statusPointColor)}
           onDownload={handleTicketStatusDownload}
           chartType={statusChartType}
           setChartType={setStatusChartType}
@@ -523,8 +597,8 @@ const TicketHighCharts = () => {
 
         <ChartCard
           title="Tickets by Category"
-          subtitle="Where tickets are coming from"
-          legendItems={legendTopTwo(categoryData)}
+          // subtitle="Where tickets are coming from"
+          // legendItems={legendTopTwo(categoryData, categoryPointColor)}
           onDownload={handleTicketStatusDownload}
           chartType={categoryChartType}
           setChartType={setCategoryChartType}
@@ -540,8 +614,8 @@ const TicketHighCharts = () => {
 
         <ChartCard
           title="Tickets by Type"
-          subtitle="Distribution by ticket type"
-          legendItems={legendTopTwo(ticketTypes)}
+          // subtitle="Distribution by ticket type"
+          // legendItems={legendTopTwo(ticketTypes, typePointColor)}
           onDownload={handleTicketStatusDownload}
           chartType={ticketTypeChartType}
           setChartType={setTicketTypeChartType}
@@ -557,8 +631,8 @@ const TicketHighCharts = () => {
 
         <ChartCard
           title="Tickets by Floor"
-          subtitle="Floor-wise ticket count"
-          legendItems={legendTopTwo(floorTickets)}
+          // subtitle="Floor-wise ticket count"
+          // legendItems={legendTopTwo(floorTickets, floorPointColor)}
           onDownload={handleTicketStatusDownload}
           chartType={floorChartType}
           setChartType={setFloorChartType}
@@ -575,8 +649,8 @@ const TicketHighCharts = () => {
         <div className="lg:col-span-2">
           <ChartCard
             title="Tickets by Unit"
-            subtitle="Unit-wise ticket count"
-            legendItems={legendTopTwo(unitTickets)}
+            // subtitle="Unit-wise ticket count"
+            // legendItems={legendTopTwo(unitTickets, unitPointColor)}
             onDownload={handleTicketStatusDownload}
             chartType={unitChartType}
             setChartType={setUnitChartType}
