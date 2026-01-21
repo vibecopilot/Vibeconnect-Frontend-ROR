@@ -1039,14 +1039,14 @@ function AssetDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 my-6 mx-3">
         <ChartCard
           title="Total Asset"
-          subtitle="Asset comparison over view"
+          // subtitle="Asset comparison over view"
           trendPercent={20.7}
           trendDirection="down"
-          legendItems={[
-            { label: "In Use Asset", value: inUseCount, color: PRIMARY_BLUE },
-            { label: "Break Down", value: breakCount, color: LIGHT_BLUE },
-          ]}
-          footerText="Improved asset status"
+          // legendItems={[
+          //   { label: "In Use Asset", value: inUseCount, color: PRIMARY_BLUE },
+          //   { label: "Break Down", value: breakCount, color: LIGHT_BLUE },
+          // ]}
+          // footerText="Improved asset status"
           footerDirection="down"
           onDownload={handleTotalAssetDownload}
           chartType={assetChartType}
@@ -1056,14 +1056,14 @@ function AssetDashboard() {
 
         <ChartCard
           title="Total PPM"
-          subtitle="PPM trends"
+          // subtitle="PPM trends"
           trendPercent={21.7}
           trendDirection="down"
-          legendItems={[
-            { label: "PPM Overdue", value: ppmOverDue, color: PRIMARY_BLUE },
-            { label: "PPM Complete", value: ppmComplete, color: LIGHT_BLUE },
-          ]}
-          footerText="Reduced pending load"
+          // legendItems={[
+          //   { label: "PPM Overdue", value: ppmOverDue, color: PRIMARY_BLUE },
+          //   { label: "PPM Complete", value: ppmComplete, color: LIGHT_BLUE },
+          // ]}
+          // footerText="Reduced pending load"
           footerDirection="down"
           onDownload={handleScheduledDownload}
           chartType={ppmChartType}
@@ -1073,22 +1073,22 @@ function AssetDashboard() {
 
         <ChartCard
           title="Total Routine Task"
-          subtitle="Routine usage analysis"
+          // subtitle="Routine usage analysis"
           trendPercent={10.2}
           trendDirection="up"
-          legendItems={[
-            {
-              label: "Routine Overdue",
-              value: routineOverdueCount,
-              color: PRIMARY_BLUE,
-            },
-            {
-              label: "Routine Complete",
-              value: routineCompleteCount,
-              color: LIGHT_BLUE,
-            },
-          ]}
-          footerText="Increased routine load"
+          // legendItems={[
+          //   {
+          //     label: "Routine Overdue",
+          //     value: routineOverdueCount,
+          //     color: PRIMARY_BLUE,
+          //   },
+          //   {
+          //     label: "Routine Complete",
+          //     value: routineCompleteCount,
+          //     color: LIGHT_BLUE,
+          //   },
+          // ]}
+          // footerText="Increased routine load"
           footerDirection="up"
           onDownload={handleRoutineScheduledDownload}
           chartType={routineChartType}

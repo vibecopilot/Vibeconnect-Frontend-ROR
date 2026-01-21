@@ -2,10 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import Navbar from "../components/Navbar";
 import { useSelector } from "react-redux";
 import { getVibeCalendar, getSiteData, siteChange } from "../api";
-import {
-  getItemInLocalStorage,
-  setItemInLocalStorage,
-} from "../utils/localStorage";
+import { getItemInLocalStorage, setItemInLocalStorage } from "../utils/localStorage";
 import "react-datepicker/dist/react-datepicker.css";
 
 import HighchartsComponent from "../components/HighCharts";
@@ -15,19 +12,20 @@ import { MdExpandLess, MdExpandMore } from "react-icons/md";
 import { FaBuilding } from "react-icons/fa";
 import AssetDashboard from "./SubPages/AssetDashboard";
 import ComplianceDashboard from "./SubPages/ComplianceDashboard";
-import ReadingDashboard from "./SubPages/ReadingDashboard";
 import PPMCalendarDashboard from "./SubPages/PPMCalendarDashboard";
+import VisitorsDashboard from "./SubPages/VisitorsDashboard";
+import VisitorsAnalyticsDashboard from "./SubPages/VisitorsAnalyticsDashboard";
 
-const SectionCard = ({ title, children }) => (
+const SectionCard = ({ title, subtitle = "Analytics & overview", children }) => (
   <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-4 sm:p-5">
     <div className="flex items-start justify-between gap-3 mb-3">
       <div className="min-w-0">
         <h2 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
           {title}
         </h2>
-        <p className="text-xs sm:text-sm text-gray-500 truncate">
-          Analytics & overview
-        </p>
+        {subtitle ? (
+          <p className="text-xs sm:text-sm text-gray-500 truncate">{subtitle}</p>
+        ) : null}
       </div>
     </div>
     {children}
@@ -45,13 +43,13 @@ const Dashboard = () => {
 
   const dropdownRef = useRef(null);
 
-  // ✅ always keep current sitename in state
+  /** ✅ always keep current sitename in state */
   useEffect(() => {
     const storedName = getItemInLocalStorage("SITENAME");
     if (storedName) setSiteName(storedName);
   }, []);
 
-  // ✅ features
+  /** ✅ features list */
   useEffect(() => {
     let storedFeatures = getItemInLocalStorage("FEATURES");
 
@@ -74,7 +72,7 @@ const Dashboard = () => {
     }
   }, []);
 
-  // ✅ calendar (safe)
+  /** ✅ calendar (safe) */
   useEffect(() => {
     const fetchCalendar = async () => {
       try {
@@ -87,14 +85,14 @@ const Dashboard = () => {
     fetchCalendar();
   }, [vibeUserId]);
 
-  // ✅ sites list
+  /** ✅ sites list */
   useEffect(() => {
     const fetchSiteData = async () => {
       try {
         const response = await getSiteData();
         setSiteData(response?.data?.sites || []);
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error fetching sites:", error);
       }
     };
     fetchSiteData();
@@ -109,13 +107,15 @@ const Dashboard = () => {
       setItemInLocalStorage("SITENAME", nameWithRegion);
       setSiteName(nameWithRegion);
       setSiteOpen(false);
+
+      // ✅ keep (if your app depends on full reload)
       window.location.reload();
     } catch (error) {
       console.error("Error changing site:", error);
     }
   };
 
-  // ✅ close dropdown on outside click
+  /** ✅ close dropdown on outside click */
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -131,7 +131,7 @@ const Dashboard = () => {
       <Navbar />
 
       <div className="w-full flex flex-col overflow-hidden pb-10">
-        {/* ✅ TOP HEADER (sticky like modern UI) */}
+        {/* ✅ TOP HEADER */}
         <header className="px-3 sm:px-5 pt-3">
           <div
             style={{ background: themeColor }}
@@ -159,6 +159,7 @@ const Dashboard = () => {
                   {siteData.length ? (
                     siteData.map((s) => (
                       <button
+                        type="button"
                         key={s.id}
                         onClick={() => handleSiteChange(s.id, s.name_with_region)}
                         className="w-full text-left px-3 py-2 rounded-xl hover:bg-gray-50 text-gray-800"
@@ -167,9 +168,7 @@ const Dashboard = () => {
                       </button>
                     ))
                   ) : (
-                    <div className="px-3 py-2 text-sm text-gray-500">
-                      No sites found
-                    </div>
+                    <div className="px-3 py-2 text-sm text-gray-500">No sites found</div>
                   )}
                 </div>
               )}
@@ -179,10 +178,6 @@ const Dashboard = () => {
 
         {/* ✅ CONTENT */}
         <main className="px-3 sm:px-5 mt-4 space-y-4">
-          {/* <SectionCard title="Reading Analytics">
-            <ReadingDashboard />
-          </SectionCard> */}
-
           {feat.includes("assets") && (
             <SectionCard title="Asset Analytics">
               <AssetDashboard />
@@ -203,6 +198,14 @@ const Dashboard = () => {
             <HighchartsComponent />
           </SectionCard>
 
+          <SectionCard title="Visitors Dashboard">
+            <VisitorsDashboard />
+          </SectionCard>
+
+          <SectionCard title="Visitors Analytics">
+            <VisitorsAnalyticsDashboard />
+          </SectionCard>
+
           {feat.includes("compliance") && (
             <SectionCard title="Compliance">
               <ComplianceDashboard />
@@ -214,8 +217,6 @@ const Dashboard = () => {
               <SoftServiceHighCharts />
             </SectionCard>
           )}
-
-          {/* Communication hidden (as in your code) */}
         </main>
       </div>
     </section>

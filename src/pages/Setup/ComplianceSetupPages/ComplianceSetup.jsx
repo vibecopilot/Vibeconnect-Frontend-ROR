@@ -5,46 +5,62 @@ import ComplianceChecklist from "./ComplianceChecklist";
 
 const ComplianceSetup = () => {
   const [page, setPage] = useState("category");
+
   return (
-    <section className="flex">
+    <section className="flex min-h-screen">
+      {/* Sidebar Navbar */}
       <div className="hidden md:block">
         <Navbar />
       </div>
-      <div className="w-full flex mx-3 flex-col overflow-hidden h-full">
+
+      <div className="w-full mx-3 flex flex-col overflow-hidden">
+        {/* Mobile Tabs */}
+        <div className="md:hidden flex gap-2 p-2">
+          <button
+            className={`px-4 py-2 rounded-md border ${
+              page === "category" ? "bg-blue-500 text-white" : "bg-white"
+            }`}
+            onClick={() => setPage("category")}
+          >
+            Categories
+          </button>
+          <button
+            className={`px-4 py-2 rounded-md border ${
+              page === "checklist" ? "bg-blue-500 text-white" : "bg-white"
+            }`}
+            onClick={() => setPage("checklist")}
+          >
+            Checklists
+          </button>
+        </div>
+
         <div className="grid grid-cols-12 h-full">
-          {/* <div className=" flex col-span-2 w-full gap-1 flex-col my-5 mx-1 h-screen border-r p-1">
-            <h2
-              className={`p-1 border-b ${
-                page === "category" &&
-                "bg-blue-500 font-medium text-white rounded-md"
-              }   px-2 cursor-pointer  transition-all duration-300 ease-linear`}
+          {/* Left menu (Desktop) */}
+          <div className="hidden md:flex col-span-2 w-full gap-2 flex-col my-5 mx-1 h-full border-r p-2">
+            <button
+              className={`p-2 text-left rounded-md border ${
+                page === "category" ? "bg-blue-500 text-white font-medium" : ""
+              }`}
               onClick={() => setPage("category")}
             >
               Categories
-            </h2>
-            <h2
-              className={`p-1 border-b ${
-                page === "checklist" &&
-                "bg-blue-500 font-medium text-white rounded-md"
-              }   px-2 cursor-pointer  transition-all duration-300 ease-linear`}
+            </button>
+
+            <button
+              className={`p-2 text-left rounded-md border ${
+                page === "checklist" ? "bg-blue-500 text-white font-medium" : ""
+              }`}
               onClick={() => setPage("checklist")}
             >
               Checklists
-            </h2>
-          </div> */}
-          <div className="  border-gray-300 col-span-10 h-full m-2 w-full">
-            {page === "checklist" && (
-              <div>
-                <ComplianceChecklist />
-              </div>
-            )}
+            </button>
+          </div>
+
+          {/* Main Content */}
+          <div className="col-span-12 md:col-span-10 h-full m-2 w-full overflow-auto">
+            {page === "category" ? <ComplianceCategories /> : <ComplianceChecklist />}
           </div>
         </div>
-        {page === "category" && (
-          <div>
-            <ComplianceCategories />
-          </div>
-        )}
       </div>
     </section>
   );
