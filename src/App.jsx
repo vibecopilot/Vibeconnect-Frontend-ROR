@@ -2764,19 +2764,20 @@ function App() {
           path="/admin/passes"
           element={<Navigate to="/admin/passes/visitors" replace />}
         />
-        <Route
-          path="/admin/passes/visitors/visitor-details/:id"
-          element={
-            <ProtectedAdminRoutes>
-              <VisitorDetails />
-            </ProtectedAdminRoutes>
-          }
-        />
+
         <Route
           path="/admin/passes/visitors"
           element={
             <ProtectedAdminRoutes>
               <VisitorPage />
+            </ProtectedAdminRoutes>
+          }
+        />
+                <Route
+          path="/admin/passes/visitors/visitor-details/:id"
+          element={
+            <ProtectedAdminRoutes>
+              <VisitorDetails />
             </ProtectedAdminRoutes>
           }
         />
