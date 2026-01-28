@@ -20,6 +20,7 @@ import {
 import toast from "react-hot-toast";
 import { getItemInLocalStorage } from "../utils/localStorage";
 import CamBillingHeader from "./SubPages/CamBillingHeader";
+
 function CAMBilling() {
   const themeColor = useSelector((state) => state.theme.color);
   const [billingPeriod, setBillingPeriod] = useState([null, null]);
@@ -27,20 +28,35 @@ function CAMBilling() {
   const [filter, setFilter] = useState(false);
   const [camBilling, setComBilling] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
-  const [searchText, setSearchText] = useState([]);
+  const [searchText, setSearchText] = useState("");
+  const [page, setPage] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
 
-  const fetchCamBilling = async () => {
+  const RECORDS_PER_PAGE = 10;
+
+  const fetchCamBilling = async (pageNo = 1) => {
     try {
-      const response = await getCamBillingData();
-      setComBilling(response.data);
-      setFilteredData(response.data);
+      const response = await getCamBillingData(pageNo, RECORDS_PER_PAGE);
+
+      const {
+        cam_bills,
+        total_count,
+        current_page,
+      } = response.data;
+
+      setComBilling(cam_bills);
+      setFilteredData(cam_bills);
+      setTotalRecords(total_count);
+      setPage(current_page);
     } catch (err) {
-      console.error("Failed to fetch Address Setup data:", err);
+      toast.error("Failed to load data");
     }
   };
+
+
   useEffect(() => {
-    fetchCamBilling(); // Call the API
-  }, []);
+    fetchCamBilling(page);
+  }, [page]);
 
   const columns = [
     {
@@ -90,14 +106,9 @@ function CAMBilling() {
     },
     {
       name: "Payment Status",
-      selector: (row) => row.payment_status, // Pass row.status
+      selector: (row) => row.payment_status,
       sortable: true,
     },
-    // {
-    //   name: "Mail sent",
-    //   selector: (row) => row.mail_sent,
-    //   sortable: true,
-    // },
     {
       name: "Recall",
       selector: (row) => row.status,
@@ -112,7 +123,7 @@ function CAMBilling() {
 
   const handleDateChange = (dates) => {
     const [start, end] = dates;
-    setBillingPeriod([start, end]); // Update the state
+    setBillingPeriod([start, end]);
   };
 
   const [selectedRows, setSelectedRows] = useState([]);
@@ -127,7 +138,6 @@ function CAMBilling() {
       return toast.error("Please select at least one data.");
     }
 
-    console.log(selectedRows);
     toast.loading("Cam Billing Invoice downloading, please wait!");
 
     try {
@@ -151,6 +161,7 @@ function CAMBilling() {
       toast.error("Something went wrong, please try again");
     }
   };
+
   const buildings = getItemInLocalStorage("Building");
   const [floors, setFloors] = useState([]);
   const [units, setUnits] = useState([]);
@@ -162,12 +173,9 @@ function CAMBilling() {
     dueDate: "",
   });
 
-  console.log(formData);
-  console.log(billingPeriod);
   const handleChange = async (e) => {
     const { name, value, type } = e.target;
 
-    // Fetch floors based on building ID
     const fetchFloor = async (buildingID) => {
       try {
         const response = await getFloors(buildingID);
@@ -178,7 +186,7 @@ function CAMBilling() {
         console.error("Error fetching floors:", error);
       }
     };
-    // Fetch units based on floor ID
+
     const fetchUnit = async (floorID) => {
       try {
         const response = await getUnits(floorID);
@@ -192,17 +200,17 @@ function CAMBilling() {
 
     if (type === "select-one" && name === "block") {
       const buildingID = Number(value);
-      await fetchFloor(buildingID); // Fetch floors for the selected block
+      await fetchFloor(buildingID);
       setFormData((prev) => ({
         ...prev,
         building_id: buildingID,
         block: value,
-        floor_id: "", // Reset floor selection
-        flat: "", // Reset unit selection
+        floor_id: "",
+        flat: "",
       }));
     } else if (type === "select-one" && name === "floor_name") {
       const floorID = Number(value);
-      await fetchUnit(floorID); // Fetch units for the selected floor
+      await fetchUnit(floorID);
       setFormData((prev) => ({
         ...prev,
         floor_id: floorID,
@@ -216,9 +224,11 @@ function CAMBilling() {
       }));
     }
   };
+
   const isFlatDisabled =
     !formData.block || !formData.floor_name || !units.length;
   const navigate = useNavigate();
+
   const handleFilterData = async () => {
     try {
       const [startDate, endDate] = billingPeriod;
@@ -231,16 +241,18 @@ function CAMBilling() {
         endDate,
         formData.dueDate
       );
-      console.log(resp);
-      navigate("/cam_bill/billing");
-      setFilteredData(resp.data);
+      setFilteredData(resp.data); // Assuming filter returns list directly or adapt based on actual response
+      setFilter(false);
     } catch (error) {
       console.error("Error filtering data:", error);
+      toast.error("Error filtering data");
     }
   };
+
   const handleSearch = (e) => {
     const searchValue = e.target.value;
     setSearchText(searchValue);
+
     if (searchValue.trim() === "") {
       setFilteredData(camBilling);
     } else {
@@ -249,13 +261,11 @@ function CAMBilling() {
           item?.invoice_number
             ?.toLowerCase()
             .includes(searchValue.toLowerCase()) ||
-          // item?.unit_id?.toLowerCase().includes(searchValue.toLowerCase()) ||
           item?.status?.toLowerCase().includes(searchValue.toLowerCase())
       );
       setFilteredData(filterResult);
     }
   };
-  console.log(searchText);
 
   const getStatusButton = (status) => {
     if (status === "pending" || status === "recall" || status === null) {
@@ -264,25 +274,25 @@ function CAMBilling() {
       return <button className="text-green-500">Paid</button>;
     }
   };
-  console.log(filteredData.status);
+
   return (
     <section className="flex">
       <Navbar />
       <div className="w-full flex mx-3 flex-col overflow-hidden">
         <CamBillingHeader />
-        <div className="flex md:flex-row flex-col justify-between md:items-center my-2 gap-2  ">
+        <div className="flex md:flex-row flex-col justify-between md:items-center my-2 gap-2">
           <input
             type="text"
             onChange={handleSearch}
             value={searchText}
             placeholder="Search By Invoice No, Payment Status"
-            className=" p-2 md:w-96 border-gray-300 rounded-md placeholder:text-sm outline-none border "
+            className="p-2 md:w-96 border-gray-300 rounded-md placeholder:text-sm outline-none border"
           />
           <div className="md:flex grid grid-cols-2 sm:flex-row my-2 flex-col gap-2">
             <Link
               to={`/cam_bill/add`}
               style={{ background: themeColor }}
-              className="px-4 py-2  font-medium text-white rounded-md flex gap-2 items-center justify-center"
+              className="px-4 py-2 font-medium text-white rounded-md flex gap-2 items-center justify-center"
             >
               <IoAddCircleOutline />
               Add
@@ -304,7 +314,7 @@ function CAMBilling() {
               Export
             </button>
             <button
-              className=" font-semibold text-white px-4 p-1 flex gap-2 items-center justify-center rounded-md"
+              className="font-semibold text-white px-4 p-1 flex gap-2 items-center justify-center rounded-md"
               style={{ background: themeColor }}
               onClick={() => setFilter(!filter)}
             >
@@ -337,7 +347,7 @@ function CAMBilling() {
                 onChange={handleChange}
                 value={formData.floor_name}
                 name="floor_name"
-                disabled={!floors.length} // Disable if no floors are available
+                disabled={!floors.length}
               >
                 <option value="">Select Floor</option>
                 {floors.map((floor) => (
@@ -384,7 +394,6 @@ function CAMBilling() {
                 name="dueDate"
                 value={formData.dueDate}
                 onChange={handleChange}
-                id="dateSupply"
                 placeholder="Enter Date of supply"
                 className="border p-1 px-4 border-gray-500 rounded-md"
               />
@@ -405,7 +414,7 @@ function CAMBilling() {
                 handleFilterData();
                 setFilter(!filter);
               }}
-              className=" p-1 px-4 text-white rounded-md"
+              className="p-1 px-4 text-white rounded-md"
               style={{ background: themeColor }}
             >
               Apply
@@ -413,7 +422,8 @@ function CAMBilling() {
             <button
               className="bg-red-400 p-1 px-4 text-white rounded-md"
               onClick={() => {
-                fetchCamBilling();
+                setPage(1); // Reset to page 1
+                fetchCamBilling(1); // Refetch initial data
                 setFilter(!filter);
               }}
             >
@@ -421,16 +431,25 @@ function CAMBilling() {
             </button>
           </div>
         )}
+
+        {/* Table Component */}
         <Table
           columns={columns}
           data={filteredData}
           selectableRow={true}
           onSelectedRows={handleSelectedRows}
+          isPagination={true}
+          currentPage={page}
+          totalRecords={totalRecords}
+          recordsPerPage={10}
+          onPageChange={(pageNo) => setPage(pageNo)}
         />
+
+
         {importModal && (
           <InvoiceImportModal
             onclose={() => setImportModal(false)}
-            fetchCamBilling={fetchCamBilling}
+            fetchCamBilling={() => fetchCamBilling(page)}
           />
         )}
       </div>
