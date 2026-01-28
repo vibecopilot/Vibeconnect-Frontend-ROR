@@ -10034,10 +10034,12 @@ export const editIncidentCatDetails = async (id, data) =>
       token: token,
     },
   });
-export const getIncidents = async () =>
+export const getIncidents = async (page=1) =>
   axiosInstance.get(`/incidents.json`, {
     params: {
       token: token,
+      page:page,
+      per_page:10,
     },
   });
 export const getIncidentDetails = async (incidentId) =>
@@ -10299,10 +10301,12 @@ export const getReviewerAssignments = async (complianceId, auditorId) =>
   );
 
 //cam billing
-export const getCamBillingData = async () =>
+export const getCamBillingData = async (page=1,perPage = 10) =>
   axiosInstance.get("/cam_bills.json", {
     params: {
       token: token,
+       page:page,
+      per_page: perPage,
     },
   });
 

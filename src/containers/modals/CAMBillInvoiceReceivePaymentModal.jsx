@@ -54,7 +54,7 @@ const CAMBillInvoiceReceivePaymentModal = ({ onclose, fetchCamBilling }) => {
     const sendData = new FormData();
     sendData.append("payment[resource_id]", id);
     sendData.append("payment[resource_type]", "CamBill");
-    sendData.append("payment[total_amount]", formData.amount);
+    sendData.append("payment[paid_amount]", formData.amount);
     sendData.append("payment[payment_method]", formData.paymentMode);
     sendData.append("payment[transaction_id]", formData.transactionNumber);
     sendData.append("payment[paymen_date]", formData.paymentDate);
