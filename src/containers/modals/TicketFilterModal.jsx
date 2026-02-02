@@ -8,6 +8,7 @@ const TicketFilterModal = ({
   fetchData,
   currentPage,
   perPage,
+  setFilterParams,
 }) => {
   const building = getItemInLocalStorage("Building");
   const [floor, setFloor] = useState([]);
@@ -72,6 +73,7 @@ const TicketFilterModal = ({
     }
   };
 
+    
   const handleFilterData = async () => {
     // Split created_by by space
     try {
@@ -94,6 +96,7 @@ const TicketFilterModal = ({
       );
       console.log(response);
       setFilteredData(response.data.complaints);
+      setFilterParams(formData);
       onclose();
     } catch (error) {
       console.error("Error filter Data:", error);

@@ -6,6 +6,7 @@ import { PiPlusCircle } from "react-icons/pi";
 import { Link } from "react-router-dom";
 import {
   getAdminComplaints,
+  getAdminExport,
   getAdminPerPageComplaints,
   getComplaints,
   getTicketDashboard,
@@ -21,16 +22,18 @@ import { MdKeyboardArrowLeft, MdKeyboardArrowRight } from "react-icons/md";
 import { DNA } from "react-loader-spinner";
 import TicketFilterModal from "../containers/modals/TicketFilterModal";
 import { IoIosArrowDown } from "react-icons/io";
+import { color } from "highcharts";
 const Ticket = () => {
   const [filteredData, setFilteredData] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [ticketTypeCounts, setTicketTypeCounts] = useState({});
   const [ticketStatusCounts, setTicketStatusCounts] = useState({});
+    const [exportAllTickets, setExportAllTickets] = useState([]);
   const allTicketTypes = ["Complaint", "Request", "Suggestion"];
-  const [filterSearch, setFilter] = useState([]);
+  // const [filterSearch, setFilter] = useState([]);
   const [complaints, setComplaints] = useState([]);
-  const perPage = 10;
+  const [perPage, setPerPage] = useState(10);
   const [totalRows, setTotalRows] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [filterModal, setFilterModal] = useState(false);
@@ -54,6 +57,12 @@ const Ticket = () => {
     const date = new Date(dateString);
     return date.toLocaleString();
   };
+
+  const handlePerRowsChange = async (newPerPage, page) => {
+  setPerPage(newPerPage);
+  setCurrentPage(page);
+  fetchData(page, newPerPage);
+};
 
   const columns = [
     {
@@ -136,6 +145,19 @@ const Ticket = () => {
     },
   ];
 
+  const [filterParams, setFilterParams] = useState({
+    category_id: "",
+    issueStatusId: "",
+    priorityLevel: "",
+    assign: "",
+    createBy: "",
+    building_id: "",
+    floor_id: "",
+    unit_id: "",
+    startDate: "",
+    endDate: "",
+  });
+
   const [columnVisibility, setColumnVisibility] = useState({
     Action: true,
     "Ticket Number": true,
@@ -208,11 +230,14 @@ const Ticket = () => {
       console.log("Resp", response);
 
       const complaints = response?.data?.complaints || [];
+      const totalCount = response?.data?.count || 0;
+
       setFilteredData(complaints);
       setComplaints(complaints);
-      setTotalRows(complaints.length);
+      setTotalRows(totalCount); // ✅ correct
 
-      setTotalRows(complaints.length);
+
+      // setTotalRows(complaints.length);
 
       const statusCounts = complaints.reduce((acc, curr) => {
         acc[curr.issue_status] = (acc[curr.issue_status] || 0) + 1;
@@ -235,17 +260,51 @@ const Ticket = () => {
   const [ticketTypes, setTicketsTypes] = useState({});
   const [statusData, setStatusData] = useState({});
 
+  const dashboardCards = [
+    { key: "Total Tickets", value: statusData.total || 0, color: " border border-blue-300 border-4" },
+    { key: "Pending", value: statusData.Pending || 0, color: "border border-4 border-red-300" },
+    { key: "On Hold", value: statusData["Oh Hold"] || 0, color: "border-cyan-300 border border-4" },
+    { key: "Open", value: statusData.Open || 0, color: "border-red-300 border border-4" },
+    { key: "Closed", value: statusData.Closed || 0, color: "border-blue-300 border border-4" },
+    { key: "Received", value: statusData.received || 0, color: "border-green-300 border border-4" },
+    { key: "Reopen", value: statusData.Reopen || 0, color: "border-yellow-300 border border-4" },
+    { key: "Completed", value: statusData["Development Done"] || 0, color: "border-pink-300 border border-4" },
+    // { key: "Complete", value: statusData.complete || 0, color: "bg-teal-300 border border-4" },
+  ];
+
+  const ticketTypeCards = [
+    { key: "Complaint", value: ticketTypes.Complaint || 0, color: "border-red-300 border border-4" },
+    { key: "Suggestion", value: ticketTypes.Suggestion || 0, color: "border-green-300 border border-4" },
+    { key: "Request", value: ticketTypes.Request || 0, color: "border-blue-300 border border-4" },
+  ];
+
+
+  const normalizeKeys = (obj = {}) => {
+    return Object.entries(obj).reduce((acc, [key, value]) => {
+      const cleanKey = key?.trim()?.toLowerCase();
+      acc[cleanKey] = (acc[cleanKey] || 0) + value;
+      return acc;
+    }, {});
+  };
+
+
+
   useEffect(() => {
     const fetchTicketInfo = async () => {
       try {
         const ticketInfoResp = await getTicketDashboard();
+
+        setStatusData({
+          ...ticketInfoResp.data.by_status,
+          total: ticketInfoResp.data.total, // ✅ ADD THIS
+        });
+
         setTicketsTypes(ticketInfoResp.data.by_type);
-        setStatusData(ticketInfoResp.data.by_status);
-        console.log(ticketInfoResp);
       } catch (error) {
         console.log(error);
       }
     };
+
 
     const filterSearchStatus = async () => {
       try {
@@ -270,173 +329,107 @@ const Ticket = () => {
     setCurrentPage((prevPage) => Math.max(prevPage - 1, 1)); // Ensure currentPage does not go below 1
   };
 
-  const handlePerRowsChange = async (newPerPage, page) => {
-    setCurrentPage(page);
-  };
 
-  const handleSearch = async (e) => {
-    const searchValue = e.target.value;
-    setSearchText(searchValue);
+const handleSearch = (e) => {
+  const value = e.target.value.toLowerCase();
+  setSearchText(value);
 
-    if (searchValue.trim() === "") {
-      // If search input is empty, reset to show all data
-      setFilteredData(complaints);
-    } else {
-      const filteredResults = filterSearch.filter(
-        (item) =>
-          ((selectedStatus === "all" ||
-            item.issue_status.toLowerCase() === selectedStatus.toLowerCase()) &&
-            (item.ticket_number
-              .toLowerCase()
-              .includes(searchValue.toLowerCase()) ||
-              item.category_type
-                .toLowerCase()
-                .includes(searchValue.toLowerCase()))) ||
-          item.issue_type.toLowerCase().includes(searchValue.toLowerCase()) ||
-          item.heading.toLowerCase().includes(searchValue.toLowerCase()) ||
-          item.priority.toLowerCase().includes(searchValue.toLowerCase()) ||
-          (item.unit &&
-            item.unit.toLowerCase().includes(searchValue.toLowerCase()))
-        // ||
-        // item.assigned_to.toLowerCase().includes(searchValue.toLowerCase())
-      );
-      setFilteredData(filteredResults);
-    }
-  };
+  if (!value) {
+    fetchData(currentPage, perPage); // restore server pagination
+    return;
+  }
 
-  const handleStatusChange = (status) => {
-    setSelectedStatus(status);
+  const filtered = filterSearch.filter((item) => {
+    return (
+      (selectedStatus === "all" ||
+        item.issue_status?.toLowerCase() === selectedStatus.toLowerCase()) &&
+      (
+        item.ticket_number?.toLowerCase().includes(value) ||
+        item.category_type?.toLowerCase().includes(value) ||
+        item.issue_type?.toLowerCase().includes(value) ||
+        item.heading?.toLowerCase().includes(value) ||
+        item.priority?.toLowerCase().includes(value) ||
+        item.unit?.toLowerCase().includes(value)
+      )
+    );
+  });
 
-    if (status === "all") {
-      setFilteredData(complaints);
-    } else {
-      const filteredResults = filterSearch.filter(
-        (item) => item.issue_status.toLowerCase() === status.toLowerCase()
-      );
+  setFilteredData(filtered);
+  setTotalRows(filtered.length); // IMPORTANT
+};
 
-      setFilteredData(filteredResults);
-    }
-  };
 
-  const [exportAllTickets, setExportAllTickets] = useState([]);
-  const getAllTickets = async () => {
-    const allTicketResp = await getAdminComplaints();
-    console.log(allTicketResp);
-    setExportAllTickets(allTicketResp.data.complaints);
-    return allTicketResp.data.complaints;
-  };
+  useEffect(() => {
+  fetchData(currentPage, perPage);
+}, [currentPage, perPage]);
 
-  // export data
-  const exportToExcel = () => {
-    // const modifiedData = filteredData.map((item) => ({
-    //   ...item,
-    //   "Ticket Number": item.ticket_number,
-    // }));
-    const fileType =
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8";
-    const fileName = "helpdesk_data.xlsx";
-    const ws = XLSX.utils.json_to_sheet(filteredData);
-    const wb = { Sheets: { data: ws }, SheetNames: ["data"] };
-    const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-    const data = new Blob([excelBuffer], { type: fileType });
-    const url = URL.createObjectURL(data);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = fileName;
-    link.click();
-  };
+
+const handleStatusChange = (status) => {
+  setSelectedStatus(status);
+
+  if (status === "all") {
+    setFilteredData(complaints);
+  } else {
+    const filtered = complaints.filter(
+      (item) => item.issue_status?.toLowerCase() === status.toLowerCase()
+    );
+    setFilteredData(filtered);
+  }
+};
+
   const exportAllToExcel = async () => {
-    // const modifiedData = filteredData.map((item) => ({
-    //   ...item,
-    //   "Ticket Number": item.ticket_number,
-    // }));
-    const Alltickets = await getAllTickets();
-    const mappedData = Alltickets.map((ticket) => {
-      // Format complaint logs as a single string
-      const complaintLogs = ticket.complaint_logs
-        .map((log) => {
-          return `Log By: ${log.log_by}, Status: ${
-            log.log_status
-          }, Date: ${dateFormat(log.created_at)}`;
-        })
-        .join(" | ");
+    try {
+      const [firstName = "", lastName = ""] = (filterParams.createBy || "").split(" ");
+      
+      const response = await getAdminExport(
+        filterParams.category_id,
+        filterParams.issueStatusId,
+        filterParams.priorityLevel,
+        filterParams.assign,
+        firstName,
+        lastName,
+        filterParams.building_id,
+        filterParams.floor_id,
+        filterParams.unit_id,
+        filterParams.startDate,
+        filterParams.endDate
+      );
 
-      return {
-        "Site Name": ticket.site_name,
-        "Ticket No.": ticket.ticket_number,
-        "Related To": ticket.issue_type_id,
-        Title: ticket.heading,
-        Description: ticket.text,
-        Building: ticket.building_name,
-        Floor: ticket.floor_name,
-        Unit: ticket.unit,
-        Category: ticket.category_type,
-        "Sub Category": ticket.sub_category,
-        Status: ticket.issue_status,
-        Type: ticket.issue_type,
-        Priority: ticket.priority,
-        "Assigned To": ticket.assigned_to,
-        "Created By": ticket.created_by,
-        "Created On": dateFormat(ticket.created_at),
-        "Updated On": dateFormat(ticket.updated_at),
-        "Updated By": ticket.updated_by,
-        "Resolution Breached": ticket.resolution_breached ? "Yes" : "No",
-        "Response Breached": ticket.response_breached ? "Yes" : "No",
-        "Complaint Logs": complaintLogs, // Include the formatted complaint logs
-      };
-    });
-
-    const fileType =
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8";
-    const fileName = "helpdesk_data.xlsx";
-    const ws = XLSX.utils.json_to_sheet(mappedData);
-    const wb = { Sheets: { data: ws }, SheetNames: ["data"] };
-    const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-    const data = new Blob([excelBuffer], { type: fileType });
-    const url = URL.createObjectURL(data);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = fileName;
-    link.click();
-  };
-
-  document.title = `Tickets - Vibe Connect`;
-  const getRandomColor = () => {
-    const letters = "0123456789ABCDEF";
-    let color = "#";
-    for (let i = 0; i < 6; i++) {
-      color += letters[Math.floor(Math.random() * 16)];
+    } catch (error) {
+      console.error('Error exporting data:', error);
     }
-    return color;
   };
 
+  
   return (
     <section className="flex">
       <Navbar />
       <div className="w-full flex mx-3 mb-10 flex-col overflow-hidden">
-        <div className="sm:flex grid grid-cols-2 m-5 justify-start w-fit gap-5 sm:flex-row flex-col flex-shrink flex-wrap ">
-          {/* <div className="flex gap-2 mt-2"> */}
-          {Object.entries(statusData).map(([key, value]) => (
-            <div
-              key={key}
-              className="shadow-xl sm:rounded-full rounded-xl border-4 sm:w-48 sm:px-6 px-4 flex flex-col items-center flex-shrink"
-              style={{ border: `4px solid ${getRandomColor()}` }}
-            >
-              {key}{" "}
-              <span className="font-medium text-base text-black">{value}</span>
-            </div>
-          ))}
-          {Object.entries(ticketTypes).map(([key, value]) => (
-            <div
-              key={key}
-              className="shadow-xl sm:rounded-full rounded-xl border-4 sm:w-48 sm:px-6 px-4 flex flex-col items-center flex-shrink"
-              style={{ border: `4px solid ${getRandomColor()}` }}
-            >
-              {key}{" "}
-              <span className="font-medium text-base text-black">{value}</span>
-            </div>
-          ))}
+        {/* DASHBOARD CARDS */}
+        <div className="flex flex-col gap-6">
+          {/* STATUS CARDS */}
+          <div className="flex flex-wrap gap-4 px-4 py-3">
+            {dashboardCards.map((item) => (
+              <div
+                key={item.key}
+                className={`rounded-full px-6 py-3 shadow-md text-center min-w-[150px] ${item.color}`}
+              >
+                <p className="text-sm font-semibold">{item.key}</p>
+                <p className="text-lg font-bold">{item.value}</p>
+              </div>
+            ))}
+            {ticketTypeCards.map((item) => (
+              <div
+                key={item.key}
+                className={`rounded-full px-6 py-3 shadow-md text-center min-w-[150px] ${item.color}`}
+              >
+                <p className="text-sm font-semibold">{item.key}</p>
+                <p className="text-lg font-bold">{item.value}</p>
+              </div>
+            ))}
+          </div>
         </div>
+
 
         <div className="flex sm:flex-row flex-col w-full  gap-2 my-5">
           <div className="md:flex justify-between grid grid-cols-2 items-center  gap-2 border border-gray-300 rounded-md px-3 p-2 w-auto">
@@ -493,9 +486,10 @@ const Ticket = () => {
                 type="radio"
                 id="completed"
                 name="status"
-                checked={selectedStatus === "completed"}
-                onChange={() => handleStatusChange("completed")}
+                checked={selectedStatus === "Development Done"}
+                onChange={() => handleStatusChange("Development Done")}
               />
+
               <label htmlFor="completed" className="text-sm">
                 Completed
               </label>
@@ -515,19 +509,19 @@ const Ticket = () => {
               to={"/tickets/create-ticket"}
               style={{ background: themeColor }}
               className=" font-semibold  text-white duration-300 transition-all  p-2 rounded-md  cursor-pointer text-center flex items-center gap-2 justify-center"
-              // onClick={() => setShowCountry(!showCountry)}
+            // onClick={() => setShowCountry(!showCountry)}
             >
               <PiPlusCircle size={20} />
               Add
             </Link>
-             <button
+            <button
               className=" font-semibold text-white px-4 p-1 flex gap-2 items-center justify-center rounded-md"
               style={{ background: themeColor }}
               onClick={() => setFilterModal(!filterModal)}
             >
               <BiFilterAlt />
               Filter
-            </button> 
+            </button>
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setHideColumn(!hideColumn)}
@@ -577,24 +571,30 @@ const Ticket = () => {
           </div>
         ) : (
           <>
-            <DataTable
-              responsive
-              // selectableRows
-              columns={columns.filter(
-                (column) => columnVisibility[column.name]
-              )}
-              data={filteredData}
-              customStyles={customStyle}
-              fixedHeader
-              fixedHeaderScrollHeight="500px"
-              selectableRowsHighlight
-              highlightOnHover
-            />
+          <DataTable
+  responsive
+  columns={columns.filter(
+    (column) => columnVisibility[column.name]
+  )}
+  data={filteredData}
+  customStyles={customStyle}
+  fixedHeader
+  fixedHeaderScrollHeight="500px"
+  pagination
+  paginationServer
+  paginationTotalRows={totalRows}
+  paginationPerPage={perPage}
+  paginationRowsPerPageOptions={[10, 20, 30, 50]}
+  onChangePage={(page) => setCurrentPage(page)}
+  onChangeRowsPerPage={handlePerRowsChange}
+/>
+
+
           </>
         )}
         {/* </div> */}
 
-        <div className="flex justify-end m-2 gap-2 items-center">
+        {/* <div className="flex justify-end m-2 gap-2 items-center">
           <button
             onClick={handlePrevious}
             className=" px-2   disabled:opacity-50 disabled:shadow-none shadow-custom-all-sides rounded-full"
@@ -610,7 +610,7 @@ const Ticket = () => {
           >
             <MdKeyboardArrowRight size={30} />
           </button>
-        </div>
+        </div> */}
       </div>
       {filterModal && (
         <TicketFilterModal
@@ -619,6 +619,7 @@ const Ticket = () => {
           fetchData={fetchData}
           currentPage={currentPage}
           perPage={perPage}
+          setFilterParams={setFilterParams}
         />
       )}
     </section>
