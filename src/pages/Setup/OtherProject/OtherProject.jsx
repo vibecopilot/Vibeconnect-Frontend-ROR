@@ -12,10 +12,10 @@ import { getItemInLocalStorage } from "../../../utils/localStorage";
 import { PiPlusCircle } from "react-icons/pi";
 import { FiEdit, FiTrash2, FiHeart } from "react-icons/fi";
 import toast from "react-hot-toast";
-import Slider from "react-slick";
+// import Slider from "react-slick";
 
-import "slick-carousel/slick/slick.css";
-import "slick-carousel/slick/slick-theme.css";
+// import "slick-carousel/slick/slick.css";
+// import "slick-carousel/slick/slick-theme.css";
 
 const API_BASE = "https://admin.vibecopilot.ai";
 const PLACEHOLDER = "https://via.placeholder.com/600x400?text=No+Image";
