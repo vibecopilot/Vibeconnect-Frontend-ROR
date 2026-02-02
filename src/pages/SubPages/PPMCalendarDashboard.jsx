@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react"; // ✅ Added useRef
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
@@ -104,6 +104,9 @@ function PPMCalendarDashboard() {
   const [statusFilter, setStatusFilter] = useState("all"); // all | pending | inprogress | complete | overdue
   const [view, setView] = useState("dayGridMonth"); // dayGridMonth | timeGridWeek | timeGridDay
 
+  // ✅ Reference to control FullCalendar API
+  const calendarRef = useRef(null);
+
   const initialDate = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
   useEffect(() => {
@@ -115,25 +118,39 @@ function PPMCalendarDashboard() {
         const taskResponse = await getPPMTask();
         const activities = taskResponse?.data?.activities || [];
 
-        const toIsoOrNull = (val) => {
+        // ✅ Improved date parsing: Return Date objects directly to FullCalendar
+        // to avoid timezone issues caused by .toISOString()
+        const parseDate = (val) => {
           if (!val) return null;
           const d = new Date(val);
-          return isNaN(d.getTime()) ? null : d.toISOString();
+          return isNaN(d.getTime()) ? null : d;
         };
 
         const formattedEvents = activities.map((task, idx) => {
-          const start = toIsoOrNull(task?.start_time) || new Date().toISOString();
-          const end = toIsoOrNull(task?.end_time) || toIsoOrNull(task?.end_date) || null;
+          const start = parseDate(task?.start_time) || new Date();
+          // If end_time is missing, try end_date. If still missing, leave null.
+          // FullCalendar handles null end gracefully (assumes duration based on defaults or 0).
+          let end = parseDate(task?.end_time);
+          if (!end) {
+            end = parseDate(task?.end_date);
+          }
+          
+          // Helper for export CSV string
+          const formatForCSV = (d) => (d ? d.toISOString() : "");
 
           return {
             id: String(task?.id ?? idx),
             title: task?.asset_name || "No Title",
             start,
             end,
+            // Pass raw string for CSV export, date object for calendar
             extendedProps: {
               assignTo: task?.assigned_to_name || "Unassigned",
               status: normalizeStatus(task?.status),
               raw: task,
+              // Store CSV strings explicitly
+              startStr: formatForCSV(start),
+              endStr: formatForCSV(end),
             },
           };
         });
@@ -152,6 +169,16 @@ function PPMCalendarDashboard() {
       mounted = false;
     };
   }, []);
+
+  // ✅ Fix: When 'view' state changes, tell FullCalendar to switch view
+  useEffect(() => {
+    if (calendarRef.current) {
+      const calendarApi = calendarRef.current.getApi();
+      if (calendarApi) {
+        calendarApi.changeView(view);
+      }
+    }
+  }, [view]);
 
   const filteredEvents = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -191,7 +218,7 @@ function PPMCalendarDashboard() {
     setModal(false);
   };
 
-  /** ✅ event color class (keep your Calendar.css classes: .green .yellow .red .blue .gray) */
+  /** ✅ event color class */
   const eventClassNames = (arg) => {
     const s = normalizeStatus(arg?.event?.extendedProps?.status);
     if (s === "complete" || s === "completed") return ["green"];
@@ -236,8 +263,9 @@ function PPMCalendarDashboard() {
   const exportRows = useMemo(() => {
     return filteredEvents.map((e) => ({
       title: e.title,
-      start: e.start,
-      end: e.end,
+      // Use stored string props for CSV to ensure clean formatting
+      start: e.extendedProps?.startStr || e.start,
+      end: e.extendedProps?.endStr || e.end,
       assignTo: e.extendedProps?.assignTo,
       status: e.extendedProps?.status,
     }));
@@ -365,6 +393,7 @@ function PPMCalendarDashboard() {
       {/* ✅ NEW UI: calendar inside clean card */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-3">
         <FullCalendar
+          ref={calendarRef} // ✅ Attached ref here
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
           initialView={view}
           initialDate={initialDate}
@@ -422,7 +451,7 @@ function PPMCalendarDashboard() {
                 <p className="text-xs text-gray-500">Start</p>
                 <p className="text-sm font-semibold text-gray-900 mt-1">
                   {selectedEvent.start
-                    ? selectedEvent.start.toLocaleString()
+                    ? new Date(selectedEvent.start).toLocaleString()
                     : "-"}
                 </p>
               </div>
@@ -431,7 +460,7 @@ function PPMCalendarDashboard() {
                 <p className="text-xs text-gray-500">End</p>
                 <p className="text-sm font-semibold text-gray-900 mt-1">
                   {selectedEvent.end
-                    ? selectedEvent.end.toLocaleString()
+                    ? new Date(selectedEvent.end).toLocaleString()
                     : "-"}
                 </p>
               </div>

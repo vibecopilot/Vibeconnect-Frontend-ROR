@@ -771,6 +771,27 @@ export const resetPassword = async (data) =>
 //   })
 // }
 
+export const getStaffCount = async () =>
+  axiosInstance.get("/staffs/get_staffs_count.json", {
+      params: {
+      token:token,
+      }
+      });
+
+export const getRegisteredVehicles = async () =>
+  axiosInstance.get("/registered_vehicles/get_dashboard_count.json", {
+    params: {
+      token:token,
+      },
+  });
+
+export const getTotalAssetCount = async () =>
+  axiosInstance.get("/site_assets/get_asset_count.json", {
+    params: {
+      token:token,
+      },
+  });
+
 export const getAssetGroups = async () =>
   axiosInstance.get("/asset_groups.json?q[group_for_eq]=asset", {
     params: {
@@ -9739,13 +9760,13 @@ export const getPPMcompleteDownload = async () =>
     responseType: "blob",
   });
 
-export const getTotalAssetCount = async (ids) =>
-  axiosInstance.get(`/site_assets/count.json`, {
-    params: {
-      token: token,
-      site_ids: ids.join(","),
-    },
-  });
+// export const getTotalAssetCount = async (ids) =>
+//   axiosInstance.get(`/site_assets/count.json`, {
+//     params: {
+//       token: token,
+//       site_ids: ids.join(","),
+//     },
+//   });
 
 export const getBreakCount = async (ids) =>
   axiosInstance.get(`/site_assets/count.json`, {
