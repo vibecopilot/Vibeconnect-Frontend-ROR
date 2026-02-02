@@ -100,12 +100,12 @@ const Dashboard = () => {
 
   const toggleSite = () => setSiteOpen((v) => !v);
 
-  const handleSiteChange = async (id, nameWithRegion) => {
+  const handleSiteChange = async (id, name) => {
     try {
       await siteChange(id);
       setItemInLocalStorage("SITEID", id);
-      setItemInLocalStorage("SITENAME", nameWithRegion);
-      setSiteName(nameWithRegion);
+      setItemInLocalStorage("SITENAME", name);
+      setSiteName(name);
       setSiteOpen(false);
 
       // ✅ keep (if your app depends on full reload)
@@ -161,10 +161,10 @@ const Dashboard = () => {
                       <button
                         type="button"
                         key={s.id}
-                        onClick={() => handleSiteChange(s.id, s.name_with_region)}
+                        onClick={() => handleSiteChange(s.id, s.name)}
                         className="w-full text-left px-3 py-2 rounded-xl hover:bg-gray-50 text-gray-800"
                       >
-                        <span className="block truncate">{s.name_with_region}</span>
+                        <span className="block truncate">{s.name}</span>
                       </button>
                     ))
                   ) : (

@@ -24,22 +24,22 @@ import {
   AiOutlineLineChart,
   AiOutlineAreaChart,
 } from "react-icons/ai";
-import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  LineChart,
-  Line,
-  AreaChart,
-  Area,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-} from "recharts";
+// import {
+//   ResponsiveContainer,
+//   BarChart,
+//   Bar,
+//   LineChart,
+//   Line,
+//   AreaChart,
+//   Area,
+//   PieChart,
+//   Pie,
+//   Cell,
+//   XAxis,
+//   YAxis,
+//   CartesianGrid,
+//   Tooltip,
+// } from "recharts";
 
 const downloadApi = {
   ebPowerUtilization: async () => {
