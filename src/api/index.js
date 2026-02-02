@@ -594,6 +594,40 @@ export const getAdminComplaints = async () =>
       token: token,
     },
   });
+
+// export const getAdminExport = async (filters = {}) =>
+  // axiosInstance.get(
+  //   "/pms/admin/complaints/export_complaints.xlsx",
+  //   {
+  //     params: {
+  //       token: token,
+  //       ...filters, // 🔥 THIS WAS MISSING
+  //     },
+  //     responseType: "blob",
+  //   }
+  // );
+
+  export const getAdminExport = async (
+  catId,
+  issueStatId,
+  prio_count,
+  assign_eq,
+  building_id,
+  floor_id,
+  unit_id,
+  startDate,
+  endDate
+) =>
+  axiosInstance.get(
+    `/pms/admin/complaints/export_complaints.xlsx?q[search_cont]=${catId}&q[search_cont]=${issueStatId}&q[search_cont]=${prio_count}&q[search_cont]=${assign_eq}&q[search_cont]=${building_id}&q[search_cont]=${floor_id}&q[search_cont]=${unit_id}&q[search_cont]=${startDate}&q[search_cont]=${endDate}`,
+    {
+      params: {
+        token: token,
+      },
+    }
+  );
+
+
 export const getCARItems = async (ticketId) =>
   axiosInstance.get(
     `/ticket_items.json?items=true&q[ticket_id_eq]=${ticketId}`,
@@ -9760,13 +9794,13 @@ export const getPPMcompleteDownload = async () =>
     responseType: "blob",
   });
 
-// export const getTotalAssetCount = async (ids) =>
-//   axiosInstance.get(`/site_assets/count.json`, {
-//     params: {
-//       token: token,
-//       site_ids: ids.join(","),
-//     },
-//   });
+export const getTotalAssetCounts = async (ids) =>
+  axiosInstance.get(`/site_assets/count.json`, {
+    params: {
+      token: token,
+      site_ids: ids.join(","),
+    },
+  });
 
 export const getBreakCount = async (ids) =>
   axiosInstance.get(`/site_assets/count.json`, {
@@ -9905,10 +9939,15 @@ export const getFilterData = async (
   catId,
   issueStatId,
   prio_count,
-  assign_eq
+  assign_eq,
+  building_id,
+  floor_id,
+  unit_id,
+  startDate,
+  endDate
 ) =>
   axiosInstance.get(
-    `/pms/admin/complaints.json?q[category_type_id_eq]=${catId}&q[issue_status_eq]=${issueStatId}&q[priority_cont]=${prio_count}&q[assigned_to_eq]=${assign_eq}`,
+    `/pms/admin/complaints.json?q[search_cont]=${catId}&q[search_cont]=${issueStatId}&q[search_cont]=${prio_count}&q[search_cont]=${assign_eq}&q[search_cont]=${building_id}&q[search_cont]=${floor_id}&q[search_cont]=${unit_id}&q[search_cont]=${startDate}&q[search_cont]=${endDate}`,
     {
       params: {
         token: token,
