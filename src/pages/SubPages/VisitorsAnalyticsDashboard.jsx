@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
-import { getVisitorDashboard } from "../../api";
+import { getVisitorDashboard, getStaffCount,getRegisteredVehicle } from "../../api";
 import {
   FaSpinner,
   FaUsers,
@@ -237,12 +237,12 @@ const buildXYOptions = ({
   const areaFill =
     type === "area"
       ? {
-          linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
-          stops: [
-            [0, Highcharts.color(seriesColor).setOpacity(0.22).get("rgba")],
-            [1, Highcharts.color(seriesColor).setOpacity(0).get("rgba")],
-          ],
-        }
+        linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+        stops: [
+          [0, Highcharts.color(seriesColor).setOpacity(0.22).get("rgba")],
+          [1, Highcharts.color(seriesColor).setOpacity(0).get("rgba")],
+        ],
+      }
       : undefined;
 
   const dataPoints = (values || []).map((v, i) => {
@@ -294,12 +294,12 @@ const buildXYOptions = ({
         marker:
           type === "line" || type === "area"
             ? {
-                enabled: true,
-                radius: 4,
-                lineWidth: 2,
-                lineColor: seriesColor,
-                fillColor: "#FFFFFF",
-              }
+              enabled: true,
+              radius: 4,
+              lineWidth: 2,
+              lineColor: seriesColor,
+              fillColor: "#FFFFFF",
+            }
             : { enabled: false },
       },
       column: {
@@ -332,6 +332,26 @@ const VisitorsAnalyticsDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [selectedChart, setSelectedChart] = useState("visitor_type");
   const [chartType, setChartType] = useState("pie");
+  const [filterOpen, setFilterOpen] = useState(false);
+const [tempFromDate, setTempFromDate] = useState("");
+const [tempToDate, setTempToDate] = useState("");
+
+  const [staffData, setStaffData] = useState({
+    total: 0,
+    in: 0,
+    out: 0,
+    today_in: 0,
+    today_out: 0,
+  });
+  const [vehicleData, setVehicleData] = useState({
+    total: 0,
+    in: 0,
+    out: 0,
+    today_in: 0,
+    today_out: 0,
+  });
+
+
   const [dashboardData, setDashboardData] = useState({
     total: 0,
     today_in: 0,
@@ -354,7 +374,11 @@ const VisitorsAnalyticsDashboard = () => {
 
   useEffect(() => {
     fetchVisitorAnalytics();
+    fetchStaffAnalytics();
+    fetchVehicleAnalytics();
   }, []);
+
+
 
   const fetchVisitorAnalytics = async (retry = 0) => {
     try {
@@ -405,6 +429,43 @@ const VisitorsAnalyticsDashboard = () => {
     }
   };
 
+  const fetchStaffAnalytics = async () => {
+    try {
+      const res = await getStaffCount();
+      const api = res?.data || {};
+
+      setStaffData({
+        total: api.total_count ?? 0,
+        in: api.total_staff_in ?? 0,
+        out: api.total_staff_out ?? 0,
+        today_in: api.todays_in ?? 0,
+        today_out: api.todays_out ?? 0,
+      });
+    } catch (err) {
+      console.error("Staff API error", err);
+      toast.error("Failed to load staff data");
+    }
+  };
+
+  const fetchVehicleAnalytics = async () => {
+    try {
+      const res = await getRegisteredVehicle();
+      const api = res?.data || {};
+
+      setVehicleData({
+        total: api.total_count ?? 0,
+        in: api.total_in ?? 0,
+        out: api.total_out ?? 0,
+        today_in: api.todays_in ?? 0,
+        today_out: api.todays_out ?? 0,
+      });
+    } catch (err) {
+      console.error("Vehicle API error", err);
+      toast.error("Failed to load vehicle data");
+    }
+  };
+
+
   const visitorTypeMap = useMemo(() => {
     const m = dashboardData.visitor_type_breakdown || {};
     const hasBreakdown = Object.keys(m).length > 0;
@@ -427,11 +488,12 @@ const VisitorsAnalyticsDashboard = () => {
 
   const staffMap = useMemo(
     () => ({
-      "Staff In": dashboardData.staff_in ?? 0,
-      "Staff Out": dashboardData.staff_out ?? 0,
+      "Staff In": staffData.in,
+      "Staff Out": staffData.out,
     }),
-    [dashboardData.staff_in, dashboardData.staff_out]
+    [staffData]
   );
+
 
   const deliveryMap = useMemo(
     () => dashboardData.delivery_breakdown || {},
@@ -571,6 +633,69 @@ const VisitorsAnalyticsDashboard = () => {
 
   return (
     <div className="w-full px-3 pb-4 space-y-6">
+    <div className="flex items-center gap-2 justify-end">
+      {/* FILTER BUTTON */}
+      <IconBtn title="Filter" onClick={() => setFilterOpen(true)}>
+        <FaCalendarAlt />
+      </IconBtn>
+
+      {/* REFRESH */}
+      <IconBtn title="Refresh" onClick={() => fetchVisitorAnalytics(0)}>
+        ↻
+      </IconBtn>
+    </div>
+  {filterOpen && (
+  <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center">
+    <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl">
+      <h3 className="text-lg font-bold text-gray-900 mb-4">
+        Filter Visitors
+      </h3>
+
+      <div className="space-y-4">
+        <div>
+          <label className="text-xs text-gray-500">From Date</label>
+          <input
+            type="date"
+            value={tempFromDate}
+            onChange={(e) => setTempFromDate(e.target.value)}
+            className="w-full border rounded-lg px-3 py-2 mt-1"
+          />
+        </div>
+
+        <div>
+          <label className="text-xs text-gray-500">To Date</label>
+          <input
+            type="date"
+            value={tempToDate}
+            onChange={(e) => setTempToDate(e.target.value)}
+            className="w-full border rounded-lg px-3 py-2 mt-1"
+          />
+        </div>
+      </div>
+
+      <div className="flex justify-end gap-3 mt-6">
+        <button
+          onClick={() => setFilterOpen(false)}
+          className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-sm font-semibold"
+        >
+          Cancel
+        </button>
+
+        <button
+          onClick={() => {
+            setFromDate(tempFromDate);
+            setToDate(tempToDate);
+            setFilterOpen(false);
+          }}
+          className="px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-semibold"
+        >
+          Apply Filter
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
         <StatCard
           title="Total Visitors"
@@ -655,8 +780,8 @@ const VisitorsAnalyticsDashboard = () => {
         <HighchartsReact highcharts={Highcharts} options={selectedChartOptions} />
       </Card>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6">
-        <StatCard
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* <StatCard
           title="Today's In"
           value={dashboardData.today_in}
           icon={<FaCalendarAlt />}
@@ -667,31 +792,34 @@ const VisitorsAnalyticsDashboard = () => {
           value={dashboardData.today_out}
           icon={<FaCalendarAlt />}
           accent={CHART_PALETTE[3]}
-        />
+        /> */}
         <StatCard
           title="Staff Total"
-          value={dashboardData.staff_total}
+          value={staffData.total}
           icon={<FaUsers />}
           accent={CHART_PALETTE[5]}
         />
+
         <StatCard
           title="Staff In"
-          value={dashboardData.staff_in}
+          value={staffData.in}
           icon={<FaUserCheck />}
           accent={CHART_PALETTE[1]}
         />
+
         <StatCard
           title="Staff Out"
-          value={dashboardData.staff_out}
+          value={staffData.out}
           icon={<FaUserClock />}
           accent={CHART_PALETTE[3]}
         />
         <StatCard
           title="Total Vehicles"
-          value={dashboardData.vehicles}
+          value={vehicleData.total}
           icon={<FaCar />}
           accent={CHART_PALETTE[8]}
         />
+
       </div>
     </div>
   );
