@@ -46,6 +46,7 @@ import {
   getRoutinePendingDownload,
   getRoutinePendingCount,
   getSiteData,
+  getTotalAssetCounts,
 } from "../../api";
 
 import toast from "react-hot-toast";
@@ -392,32 +393,33 @@ function AssetDashboard() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-const [showCalendar, setShowCalendar] = useState(false);
-const [selectedDate, setSelectedDate] = useState(null);
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(null);
 
-const fetchAssetSummaryByDate = async (date) => {
-  try {
-    const res = await getTotalAssetCount({
-      date: date.toISOString().split("T")[0], // YYYY-MM-DD
-    });
+  const fetchAssetSummaryByDate = async (date) => {
+    try {
+      const res = await getTotalAssetCount
+      ({
+        date: date.toISOString().split("T")[0], // YYYY-MM-DD
+      });
 
-    const data = res.data;
+      const data = res.data;
 
-    // 🔥 MAP API RESPONSE TO STATES
-    setTotalAssetCount(data.total_assets);
-    setInUseCount(data.assets_in_use);
-    setBreakCount(data.assets_in_breakdown);
+      // 🔥 MAP API RESPONSE TO STATES
+      setTotalAssetCount(data.total_assets);
+      setInUseCount(data.assets_in_use);
+      setBreakCount(data.assets_in_breakdown);
 
-    setPPMSchedule(data.ppm_scheduled);
-    setPPMOverDue(data.ppm_overdue);
-    setPPMComplete(data.ppm_complete);
+      setPPMSchedule(data.ppm_scheduled);
+      setPPMOverDue(data.ppm_overdue);
+      setPPMComplete(data.ppm_complete);
 
-    setRoutineScheduleCount(data.routine_task_scheduled);
-    setRoutineOverdueCount(data.routine_task_overdue);
-  } catch (error) {
-    toast.error("Failed to fetch filtered data");
-  }
-};
+      setRoutineScheduleCount(data.routine_task_scheduled);
+      setRoutineOverdueCount(data.routine_task_overdue);
+    } catch (error) {
+      toast.error("Failed to fetch filtered data");
+    }
+  };
 
 
 
@@ -698,7 +700,7 @@ const fetchAssetSummaryByDate = async (date) => {
   /** ---------------- fetchers ---------------- */
   const fetchAssetTotalCount = async () => {
     try {
-      const res = await getTotalAssetCount(selectedSites);
+      const res = await getTotalAssetCounts(selectedSites);
       setTotalAssetCount(res.data.count);
     } catch (e) { }
   };
@@ -930,10 +932,10 @@ const fetchAssetSummaryByDate = async (date) => {
   };
 
   return (
-<div className="w-full overflow-hidden flex flex-col">
+    <div className="w-full overflow-hidden flex flex-col">
       {/* Top Controls - Wrapped in flex row */}
-      <div className="flex items-center justify-between mb-4">
-        
+      <div className="w-full flex items-center justify-between mb-4">
+
         {/* Left Group: Filter + Select Site */}
         <div className="flex items-center gap-3 ">
           {/* Filter + Calendar */}
@@ -973,180 +975,180 @@ const fetchAssetSummaryByDate = async (date) => {
             </button>
 
 
-        {site && (
-          <div className="absolute right-0 top-12 bg-white border border-gray-200 rounded-xl shadow-lg max-h-80 w-60 overflow-y-auto z-10 px-3 py-2 space-y-2">
-            <div className="flex items-center space-x-2 px-2">
-              <input
-                type="checkbox"
-                id="selectAll"
-                checked={
-                  siteData.length > 0 &&
-                  selectedSites.length === siteData.length
-                }
-                onChange={handleSelectAll}
-              />
-              <label htmlFor="selectAll" className="cursor-pointer text-sm">
-                Select All
-              </label>
-            </div>
+            {site && (
+              <div className="absolute right-0 top-12 bg-white border border-gray-200 rounded-xl shadow-lg max-h-80 w-60 overflow-y-auto z-10 px-3 py-2 space-y-2">
+                <div className="flex items-center space-x-2 px-2">
+                  <input
+                    type="checkbox"
+                    id="selectAll"
+                    checked={
+                      siteData.length > 0 &&
+                      selectedSites.length === siteData.length
+                    }
+                    onChange={handleSelectAll}
+                  />
+                  <label htmlFor="selectAll" className="cursor-pointer text-sm">
+                    Select All
+                  </label>
+                </div>
 
-            {siteData.map((s) => (
-              <label
-                key={s.id}
-                className="flex items-center gap-2 px-2 py-1 text-sm"
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedSites.includes(s.id)}
-                  onChange={() => handleSiteCheckbox(s.id)}
-                />
-                <span className="truncate">{s.name_with_region}</span>
-              </label>
-            ))}
+                {siteData.map((s) => (
+                  <label
+                    key={s.id}
+                    className="flex items-center gap-2 px-2 py-1 text-sm"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedSites.includes(s.id)}
+                      onChange={() => handleSiteCheckbox(s.id)}
+                    />
+                    <span className="truncate">{s.name}</span>
+                  </label>
+                ))}
 
+                <button
+                  onClick={() => {
+                    applySelection();
+                    setSite(false);
+                  }}
+                  className="w-full bg-gray-800 text-white py-2 mt-2 rounded-xl hover:bg-gray-900 text-sm"
+                >
+                  Apply
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Assets dropdown */}
+          <div className="relative" ref={dropdownRef}>
             <button
-              onClick={() => {
-                applySelection();
-                setSite(false);
-              }}
-              className="w-full bg-gray-800 text-white py-2 mt-2 rounded-xl hover:bg-gray-900 text-sm"
+              onClick={() => setIsDropdownOpen((prev) => !prev)}
+              className="bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-xl flex gap-2 items-center shadow-sm"
             >
-              Apply
+              <IoSettingsOutline /> Assets
+              {isDropdownOpen ? <FaChevronUp /> : <FaChevronDown />}
             </button>
-          </div>
-        )}
-      </div>
 
-      {/* Assets dropdown */}
-      <div className="relative" ref={dropdownRef}>
-        <button
-          onClick={() => setIsDropdownOpen((prev) => !prev)}
-          className="bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-xl flex gap-2 items-center shadow-sm"
-        >
-          <IoSettingsOutline /> Assets
-          {isDropdownOpen ? <FaChevronUp /> : <FaChevronDown />}
-        </button>
-
-        {isDropdownOpen && (
-          <div className="absolute top-12 right-0 w-64 rounded-xl shadow-lg bg-white border border-gray-200 z-10">
-            {cardData.map((card) => (
-              <label
-                key={card.title}
-                className="flex items-center px-4 py-2 hover:bg-gray-50 cursor-pointer"
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedTitles.includes(card.title)}
-                  onChange={() => handleCheckboxChange(card.title)}
-                />
-                <span className="ml-2 text-sm">{card.title}</span>
-              </label>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-    </div>
-
-      {/* Top Stat Cards */ }
-  <div className="grid grid-cols-1 sm:grid-cols-4 lg:grid-cols-5 gap-5 mx-3">
-    {cardData.map((card) => {
-      if (!selectedTitles.includes(card.title)) return null;
-      const theme = cardTheme(card.title);
-
-      return (
-        <div
-          key={card.title}
-          className={`${theme.bg} ${theme.text} shadow-custom-all-sides border py-3 px-3 rounded-2xl flex flex-col text-sm font-medium h-32`}
-        >
-          <div className="flex justify-between items-center">
-            <h2 className="font-semibold text-base text-gray-800">
-              {card.title}
-            </h2>
-
-            <div className="flex items-center gap-2">
-              <span className={theme.text}>{card.icon}</span>
-
-              {/* ✅ color ke according download icon */}
-              <DownloadIconButton
-                onClick={card.downloadHandler}
-                loading={card.loading}
-                variant={theme.dl}
-              />
-            </div>
-          </div>
-
-          <div className="mt-5 flex items-center justify-start">
-            <span className="text-3xl font-semibold text-gray-900">
-              {card.count}
-            </span>
+            {isDropdownOpen && (
+              <div className="absolute top-12 right-0 w-64 rounded-xl shadow-lg bg-white border border-gray-200 z-10">
+                {cardData.map((card) => (
+                  <label
+                    key={card.title}
+                    className="flex items-center px-4 py-2 hover:bg-gray-50 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedTitles.includes(card.title)}
+                      onChange={() => handleCheckboxChange(card.title)}
+                    />
+                    <span className="ml-2 text-sm">{card.title}</span>
+                  </label>
+                ))}
+              </div>
+            )}
           </div>
         </div>
-      );
-    })}
-  </div>
+      </div>
 
-  {/* 3 chart cards */ }
-  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 my-6 mx-3">
-    <ChartCard
-      title="Total Asset"
-      // subtitle="Asset comparison over view"
-      trendPercent={20.7}
-      trendDirection="down"
-      // legendItems={[
-      //   { label: "In Use Asset", value: inUseCount, color: PRIMARY_BLUE },
-      //   { label: "Break Down", value: breakCount, color: LIGHT_BLUE },
-      // ]}
-      // footerText="Improved asset status"
-      footerDirection="down"
-      onDownload={handleTotalAssetDownload}
-      chartType={assetChartType}
-      setChartType={setAssetChartType}
-      options={totalAssetOptions}
-    />
+      {/* Top Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-4 lg:grid-cols-5 gap-5 mx-3">
+        {cardData.map((card) => {
+          if (!selectedTitles.includes(card.title)) return null;
+          const theme = cardTheme(card.title);
 
-    <ChartCard
-      title="Total PPM"
-      // subtitle="PPM trends"
-      trendPercent={21.7}
-      trendDirection="down"
-      // legendItems={[
-      //   { label: "PPM Overdue", value: ppmOverDue, color: PRIMARY_BLUE },
-      //   { label: "PPM Complete", value: ppmComplete, color: LIGHT_BLUE },
-      // ]}
-      // footerText="Reduced pending load"
-      footerDirection="down"
-      onDownload={handleScheduledDownload}
-      chartType={ppmChartType}
-      setChartType={setPPMChartType}
-      options={totalPPMOptions}
-    />
+          return (
+            <div
+              key={card.title}
+              className={`${theme.bg} ${theme.text} shadow-custom-all-sides border py-3 px-3 rounded-2xl flex flex-col text-sm font-medium h-32`}
+            >
+              <div className="flex justify-between items-center">
+                <h2 className="font-semibold text-base text-gray-800">
+                  {card.title}
+                </h2>
 
-    <ChartCard
-      title="Total Routine Task"
-      // subtitle="Routine usage analysis"
-      trendPercent={10.2}
-      trendDirection="up"
-      // legendItems={[
-      //   {
-      //     label: "Routine Overdue",
-      //     value: routineOverdueCount,
-      //     color: PRIMARY_BLUE,
-      //   },
-      //   {
-      //     label: "Routine Complete",
-      //     value: routineCompleteCount,
-      //     color: LIGHT_BLUE,
-      //   },
-      // ]}
-      // footerText="Increased routine load"
-      footerDirection="up"
-      onDownload={handleRoutineScheduledDownload}
-      chartType={routineChartType}
-      setChartType={setRoutineChartType}
-      options={totalRoutineOptions}
-    />
-  </div>
+                <div className="flex items-center gap-2">
+                  <span className={theme.text}>{card.icon}</span>
+
+                  {/* ✅ color ke according download icon */}
+                  <DownloadIconButton
+                    onClick={card.downloadHandler}
+                    loading={card.loading}
+                    variant={theme.dl}
+                  />
+                </div>
+              </div>
+
+              <div className="mt-5 flex items-center justify-start">
+                <span className="text-3xl font-semibold text-gray-900">
+                  {card.count}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* 3 chart cards */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 my-6 mx-3">
+        <ChartCard
+          title="Total Asset"
+          // subtitle="Asset comparison over view"
+          trendPercent={20.7}
+          trendDirection="down"
+          // legendItems={[
+          //   { label: "In Use Asset", value: inUseCount, color: PRIMARY_BLUE },
+          //   { label: "Break Down", value: breakCount, color: LIGHT_BLUE },
+          // ]}
+          // footerText="Improved asset status"
+          footerDirection="down"
+          onDownload={handleTotalAssetDownload}
+          chartType={assetChartType}
+          setChartType={setAssetChartType}
+          options={totalAssetOptions}
+        />
+
+        <ChartCard
+          title="Total PPM"
+          // subtitle="PPM trends"
+          trendPercent={21.7}
+          trendDirection="down"
+          // legendItems={[
+          //   { label: "PPM Overdue", value: ppmOverDue, color: PRIMARY_BLUE },
+          //   { label: "PPM Complete", value: ppmComplete, color: LIGHT_BLUE },
+          // ]}
+          // footerText="Reduced pending load"
+          footerDirection="down"
+          onDownload={handleScheduledDownload}
+          chartType={ppmChartType}
+          setChartType={setPPMChartType}
+          options={totalPPMOptions}
+        />
+
+        <ChartCard
+          title="Total Routine Task"
+          // subtitle="Routine usage analysis"
+          trendPercent={10.2}
+          trendDirection="up"
+          // legendItems={[
+          //   {
+          //     label: "Routine Overdue",
+          //     value: routineOverdueCount,
+          //     color: PRIMARY_BLUE,
+          //   },
+          //   {
+          //     label: "Routine Complete",
+          //     value: routineCompleteCount,
+          //     color: LIGHT_BLUE,
+          //   },
+          // ]}
+          // footerText="Increased routine load"
+          footerDirection="up"
+          onDownload={handleRoutineScheduledDownload}
+          chartType={routineChartType}
+          setChartType={setRoutineChartType}
+          options={totalRoutineOptions}
+        />
+      </div>
     </div >
   );
 }
