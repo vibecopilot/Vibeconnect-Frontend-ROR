@@ -624,6 +624,7 @@ export const getAdminComplaints = async () =>
       params: {
         token: token,
       },
+      responseType: "blob",
     }
   );
 
