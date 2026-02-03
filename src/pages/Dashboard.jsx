@@ -198,9 +198,9 @@ const Dashboard = () => {
             <HighchartsComponent />
           </SectionCard>
 
-          <SectionCard title="Visitors Dashboard">
+          {/* <SectionCard title="Visitors Dashboard">
             <VisitorsDashboard />
-          </SectionCard>
+          </SectionCard> */}
 
           <SectionCard title="Visitors Analytics">
             <VisitorsAnalyticsDashboard />
