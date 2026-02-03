@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
-import { getVisitorDashboard, getStaffCount,getRegisteredVehicle } from "../../api";
+import { getVisitorDashboard, getStaffCount, getRegisteredVehicle, getVisitorAnalytics } from "../../api";
 import {
   FaSpinner,
   FaUsers,
@@ -333,7 +333,9 @@ const VisitorsAnalyticsDashboard = () => {
   const [selectedChart, setSelectedChart] = useState("visitor_type");
   const [chartType, setChartType] = useState("pie");
   const [filterOpen, setFilterOpen] = useState(false);
-const [tempFromDate, setTempFromDate] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+const [tempFromDate, setTempFromDate] = useState(""); 
 const [tempToDate, setTempToDate] = useState("");
 
   const [staffData, setStaffData] = useState({
@@ -372,18 +374,39 @@ const [tempToDate, setTempToDate] = useState("");
     weekly_trend: {},
   });
 
-  useEffect(() => {
-    fetchVisitorAnalytics();
-    fetchStaffAnalytics();
-    fetchVehicleAnalytics();
-  }, []);
+useEffect(() => {
+  fetchVisitorAnalytics();
+  fetchStaffAnalytics();
+  fetchVehicleAnalytics();
+}, [fromDate, toDate]);
+
 
 
 
   const fetchVisitorAnalytics = async (retry = 0) => {
     try {
       setLoading(true);
-      const response = await getVisitorDashboard();
+      setDashboardData({
+      total: 0,
+      today_in: 0,
+      today_out: 0,
+      in: 0,
+      out: 0,
+      expected: 0,
+      unexpected: 0,
+      staff_total: 0,
+      staff_in: 0,
+      staff_out: 0,
+      vehicles: 0,
+      delivery_breakdown: {},
+      purpose_breakdown: {},
+      hourly_visits: {},
+      monthly_visits: {},
+      visitor_type_breakdown: {},
+      weekly_trend: {},
+    });
+      const response = await getVisitorAnalytics(fromDate, toDate);
+
 
       const apiData = response?.data || {};
 
@@ -633,68 +656,76 @@ const [tempToDate, setTempToDate] = useState("");
 
   return (
     <div className="w-full px-3 pb-4 space-y-6">
-    <div className="flex items-center gap-2 justify-end">
-      {/* FILTER BUTTON */}
-      <IconBtn title="Filter" onClick={() => setFilterOpen(true)}>
-        <FaCalendarAlt />
-      </IconBtn>
+      <div className="flex items-center gap-2 justify-end">
+        {/* FILTER BUTTON */}
+        <IconBtn
+  title="Filter"
+  onClick={() => {
+    setTempFromDate(fromDate);
+    setTempToDate(toDate);
+    setFilterOpen(true);
+  }}
+>
 
-      {/* REFRESH */}
-      <IconBtn title="Refresh" onClick={() => fetchVisitorAnalytics(0)}>
-        ↻
-      </IconBtn>
-    </div>
-  {filterOpen && (
-  <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center">
-    <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl">
-      <h3 className="text-lg font-bold text-gray-900 mb-4">
-        Filter Visitors
-      </h3>
+          <FaCalendarAlt />
+        </IconBtn>
 
-      <div className="space-y-4">
-        <div>
-          <label className="text-xs text-gray-500">From Date</label>
-          <input
-            type="date"
-            value={tempFromDate}
-            onChange={(e) => setTempFromDate(e.target.value)}
-            className="w-full border rounded-lg px-3 py-2 mt-1"
-          />
-        </div>
-
-        <div>
-          <label className="text-xs text-gray-500">To Date</label>
-          <input
-            type="date"
-            value={tempToDate}
-            onChange={(e) => setTempToDate(e.target.value)}
-            className="w-full border rounded-lg px-3 py-2 mt-1"
-          />
-        </div>
+        {/* REFRESH */}
+        <IconBtn title="Refresh" onClick={() => fetchVisitorAnalytics(0)}>
+          ↻
+        </IconBtn>
       </div>
+      {filterOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center">
+          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">
+              Filter Visitors
+            </h3>
 
-      <div className="flex justify-end gap-3 mt-6">
-        <button
-          onClick={() => setFilterOpen(false)}
-          className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-sm font-semibold"
-        >
-          Cancel
-        </button>
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs text-gray-500">From Date</label>
+                <input
+                  type="date"
+                  value={tempFromDate}
+                  onChange={(e) => setTempFromDate(e.target.value)}
+                  className="w-full border rounded-lg px-3 py-2 mt-1"
+                />
+              </div>
 
-        <button
-          onClick={() => {
-            setFromDate(tempFromDate);
-            setToDate(tempToDate);
-            setFilterOpen(false);
-          }}
-          className="px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-semibold"
-        >
-          Apply Filter
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+              <div>
+                <label className="text-xs text-gray-500">To Date</label>
+                <input
+                  type="date"
+                  value={tempToDate}
+                  onChange={(e) => setTempToDate(e.target.value)}
+                  className="w-full border rounded-lg px-3 py-2 mt-1"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setFilterOpen(false)}
+                className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-sm font-semibold"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={() => {
+                  setFromDate(tempFromDate);
+                  setToDate(tempToDate);
+                  setFilterOpen(false);
+                }}
+                className="px-4 py-2 rounded-lg bg-purple-700 text-white text-sm font-semibold"
+              >
+                Apply Filter
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
         <StatCard
@@ -716,7 +747,7 @@ const [tempToDate, setTempToDate] = useState("");
           value={dashboardData.out}
           icon={<FaUserClock />}
           accent={CHART_PALETTE[2]}
-          note="Checked out"
+          note="Currently out"
         />
         <StatCard
           title="Expected"

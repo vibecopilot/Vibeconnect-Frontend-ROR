@@ -820,12 +820,14 @@ export const getRegisteredVehicles = async () =>
       },
   });
 
-export const getTotalAssetCount = async () =>
+export const getTotalAssetCount = async (start_date) =>
   axiosInstance.get("/site_assets/get_asset_count.json", {
     params: {
-      token:token,
-      },
+      token: token,
+      start_date: start_date,
+    },
   });
+
 
 export const getAssetGroups = async () =>
   axiosInstance.get("/asset_groups.json?q[group_for_eq]=asset", {
@@ -10755,6 +10757,15 @@ export const getVisitorDashboard = async () =>
       token: token,
     },
   });
+export const getVisitorAnalytics = async (start_date, end_date) =>
+  axiosInstance.get("/visitors/visitors_dashboard.json", {
+    params: {
+      token: token,
+      ...(start_date && { start_date }),
+      ...(end_date && { end_date }),
+    },
+  });
+
 
 export const getExportVisitors = async (
   startDate = null,
