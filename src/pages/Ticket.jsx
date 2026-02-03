@@ -29,7 +29,7 @@ const Ticket = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [ticketTypeCounts, setTicketTypeCounts] = useState({});
   const [ticketStatusCounts, setTicketStatusCounts] = useState({});
-    const [exportAllTickets, setExportAllTickets] = useState([]);
+  const [exportAllTickets, setExportAllTickets] = useState([]);
   const allTicketTypes = ["Complaint", "Request", "Suggestion"];
   // const [filterSearch, setFilter] = useState([]);
   const [complaints, setComplaints] = useState([]);
@@ -59,10 +59,10 @@ const Ticket = () => {
   };
 
   const handlePerRowsChange = async (newPerPage, page) => {
-  setPerPage(newPerPage);
-  setCurrentPage(page);
-  fetchData(page, newPerPage);
-};
+    setPerPage(newPerPage);
+    setCurrentPage(page);
+    fetchData(page, newPerPage);
+  };
 
   const columns = [
     {
@@ -330,57 +330,57 @@ const Ticket = () => {
   };
 
 
-const handleSearch = (e) => {
-  const value = e.target.value.toLowerCase();
-  setSearchText(value);
+  const handleSearch = (e) => {
+    const value = e.target.value.toLowerCase();
+    setSearchText(value);
 
-  if (!value) {
-    fetchData(currentPage, perPage); // restore server pagination
-    return;
-  }
+    if (!value) {
+      fetchData(currentPage, perPage); // restore server pagination
+      return;
+    }
 
-  const filtered = filterSearch.filter((item) => {
-    return (
-      (selectedStatus === "all" ||
-        item.issue_status?.toLowerCase() === selectedStatus.toLowerCase()) &&
-      (
-        item.ticket_number?.toLowerCase().includes(value) ||
-        item.category_type?.toLowerCase().includes(value) ||
-        item.issue_type?.toLowerCase().includes(value) ||
-        item.heading?.toLowerCase().includes(value) ||
-        item.priority?.toLowerCase().includes(value) ||
-        item.unit?.toLowerCase().includes(value)
-      )
-    );
-  });
+    const filtered = filterSearch.filter((item) => {
+      return (
+        (selectedStatus === "all" ||
+          item.issue_status?.toLowerCase() === selectedStatus.toLowerCase()) &&
+        (
+          item.ticket_number?.toLowerCase().includes(value) ||
+          item.category_type?.toLowerCase().includes(value) ||
+          item.issue_type?.toLowerCase().includes(value) ||
+          item.heading?.toLowerCase().includes(value) ||
+          item.priority?.toLowerCase().includes(value) ||
+          item.unit?.toLowerCase().includes(value)
+        )
+      );
+    });
 
-  setFilteredData(filtered);
-  setTotalRows(filtered.length); // IMPORTANT
-};
+    setFilteredData(filtered);
+    setTotalRows(filtered.length); // IMPORTANT
+  };
 
 
   useEffect(() => {
-  fetchData(currentPage, perPage);
-}, [currentPage, perPage]);
+    fetchData(currentPage, perPage);
+  }, [currentPage, perPage]);
 
 
-const handleStatusChange = (status) => {
-  setSelectedStatus(status);
+  const handleStatusChange = (status) => {
+    setSelectedStatus(status);
 
-  if (status === "all") {
-    setFilteredData(complaints);
-  } else {
-    const filtered = complaints.filter(
-      (item) => item.issue_status?.toLowerCase() === status.toLowerCase()
-    );
-    setFilteredData(filtered);
-  }
-};
+    if (status === "all") {
+      setFilteredData(complaints);
+    } else {
+      const filtered = complaints.filter(
+        (item) => item.issue_status?.toLowerCase() === status.toLowerCase()
+      );
+      setFilteredData(filtered);
+    }
+  };
 
   const exportAllToExcel = async () => {
     try {
       const [firstName = "", lastName = ""] = (filterParams.createBy || "").split(" ");
-      
+
       const response = await getAdminExport(
         filterParams.category_id,
         filterParams.issueStatusId,
@@ -395,12 +395,24 @@ const handleStatusChange = (status) => {
         filterParams.endDate
       );
 
+      // Create a blob URL and trigger download
+      const blob = new Blob([response.data], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `tickets_export_${new Date().toISOString().split("T")[0]}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
     } catch (error) {
       console.error('Error exporting data:', error);
     }
   };
 
-  
   return (
     <section className="flex">
       <Navbar />
@@ -429,7 +441,6 @@ const handleStatusChange = (status) => {
             ))}
           </div>
         </div>
-
 
         <div className="flex sm:flex-row flex-col w-full  gap-2 my-5">
           <div className="md:flex justify-between grid grid-cols-2 items-center  gap-2 border border-gray-300 rounded-md px-3 p-2 w-auto">
@@ -571,25 +582,23 @@ const handleStatusChange = (status) => {
           </div>
         ) : (
           <>
-          <DataTable
-  responsive
-  columns={columns.filter(
-    (column) => columnVisibility[column.name]
-  )}
-  data={filteredData}
-  customStyles={customStyle}
-  fixedHeader
-  fixedHeaderScrollHeight="500px"
-  pagination
-  paginationServer
-  paginationTotalRows={totalRows}
-  paginationPerPage={perPage}
-  paginationRowsPerPageOptions={[10, 20, 30, 50]}
-  onChangePage={(page) => setCurrentPage(page)}
-  onChangeRowsPerPage={handlePerRowsChange}
-/>
-
-
+            <DataTable
+              responsive
+              columns={columns.filter(
+                (column) => columnVisibility[column.name]
+              )}
+              data={filteredData}
+              customStyles={customStyle}
+              fixedHeader
+              fixedHeaderScrollHeight="500px"
+              pagination
+              paginationServer
+              paginationTotalRows={totalRows}
+              paginationPerPage={perPage}
+              paginationRowsPerPageOptions={[10, 20, 30, 50]}
+              onChangePage={(page) => setCurrentPage(page)}
+              onChangeRowsPerPage={handlePerRowsChange}
+            />
           </>
         )}
         {/* </div> */}
