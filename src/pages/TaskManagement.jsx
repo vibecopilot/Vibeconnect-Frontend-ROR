@@ -1091,7 +1091,7 @@ const TaskManagement = () => {
     setCreatedFirstName(createdFirst);
     setCreatedSecondName(createdSecond);
     setCreatedDate(createdDate);
-  
+
     setDueDate(due_dte ? targetDate : "");
     setcreatedBy_id(created_by_id);
     // setChatsData([])
@@ -1152,7 +1152,7 @@ const TaskManagement = () => {
       } else {
         console.log("unable to update");
       }
-    } catch (error) {}
+    } catch (error) { }
   };
 
   const modalStyleChatName = {
@@ -1559,7 +1559,7 @@ const TaskManagement = () => {
       } else {
         console.log("unable to update");
       }
-    } catch (error) {}
+    } catch (error) { }
   };
 
   const [isModalOpenDeleteTaskCheckList, setIsModalOpenDeleteTaskCheckList] =
@@ -1598,7 +1598,7 @@ const TaskManagement = () => {
       } else {
         console.log("unable to update");
       }
-    } catch (error) {}
+    } catch (error) { }
   };
 
   const handleIconClickTextItem = () => {
@@ -1726,7 +1726,7 @@ const TaskManagement = () => {
       } else {
         console.log("unable to update");
       }
-    } catch (error) {}
+    } catch (error) { }
   };
 
   const Add_Checklist_SubtaskChild = async (childId, index) => {
@@ -1764,12 +1764,12 @@ const TaskManagement = () => {
     console.log("🚀 ~ findDueDateById ~ taskId:", tasks_Ids)
     console.log("🚀 ~ findDueDateById ~ tasks:", tasks)
 
-    
+
     for (const task of tasks) {
       if (task.id === tasks_Ids) {
         return task.due_date || false;
       }
-  
+
       // Recursively check all levels
       for (let i = 2; ; i++) {
         const levelKey = `level_${i}`;
@@ -1783,7 +1783,7 @@ const TaskManagement = () => {
         }
       }
     }
-  
+
     return false;
   };
 
@@ -1798,9 +1798,9 @@ const TaskManagement = () => {
     console.log(due_date);
 
     if (parent_id === taskid) {
-      console.log("due",dueDate)
+      console.log("due", dueDate)
       if (!dueDate) {
-       
+
         toast.error("Please add parent due date before proceeding to.");
         return;
       } else {
@@ -2995,7 +2995,7 @@ const TaskManagement = () => {
           }}
         >
           {subCheck[`level_${level + 1}`] &&
-          subCheck[`level_${level + 1}`].length > 0 ? (
+            subCheck[`level_${level + 1}`].length > 0 ? (
             openLevels[subCheck.id] ? (
               <span
                 className="flex items-center justify-center rounded-full mr-2 p-1"
@@ -3102,16 +3102,16 @@ const TaskManagement = () => {
             </div>
             <div className=" flex items-center gap-4">
               {createdBy_id === user_id ||
-              subCheck.created_by.user_id === user_id ||
-              (Array.isArray(selectedEmail) &&
-                selectedEmail.some((item) => item.value === user_id)) ? (
+                subCheck.created_by.user_id === user_id ||
+                (Array.isArray(selectedEmail) &&
+                  selectedEmail.some((item) => item.value === user_id)) ? (
                 <span
                   style={{
                     color: "",
                     fontSize: 14,
-                
+
                     width: 190,
-                   
+
                     paddingLeft: 6,
                     marginLeft: 4,
                     cursor: "pointer",
@@ -3165,12 +3165,12 @@ const TaskManagement = () => {
                 <></>
               )}
               {subCheck.created_by.user_id === user_id ||
-              createdBy_id === user_id ||
-              subCheck.assign_to.some(
-                (assignee) => assignee.user_id === user_id
-              ) ||
-              (Array.isArray(selectedEmail) &&
-                selectedEmail.some((item) => item.value === user_id)) ? (
+                createdBy_id === user_id ||
+                subCheck.assign_to.some(
+                  (assignee) => assignee.user_id === user_id
+                ) ||
+                (Array.isArray(selectedEmail) &&
+                  selectedEmail.some((item) => item.value === user_id)) ? (
                 <div
                   className={
                     subCheck.status.status_name.length > 8
@@ -3265,12 +3265,12 @@ const TaskManagement = () => {
               >
                 {subCheck.assign_to.length > 0
                   ? subCheck.assign_to.map((user, index) => (
-                      <span key={index}>
-                        {user.email}
-                        {index < subCheck.assign_to.length - 1 && ", "}{" "}
-                        {/* Add comma if not the last element */}
-                      </span>
-                    ))
+                    <span key={index}>
+                      {user.email}
+                      {index < subCheck.assign_to.length - 1 && ", "}{" "}
+                      {/* Add comma if not the last element */}
+                    </span>
+                  ))
                   : "Not Assigned"}
               </div>
             </div>
@@ -3298,11 +3298,11 @@ const TaskManagement = () => {
               >
                 {subCheck.depend_on.length > 0
                   ? subCheck.depend_on.map((user, index) => (
-                      <span key={index} style={{ color: "white" }}>
-                        {user.task_topic}
-                        {index < subCheck.depend_on.length - 1 && ", "}
-                      </span>
-                    ))
+                    <span key={index} style={{ color: "white" }}>
+                      {user.task_topic}
+                      {index < subCheck.depend_on.length - 1 && ", "}
+                    </span>
+                  ))
                   : "No Dependency Task"}
               </div>
             </div>
@@ -3323,8 +3323,8 @@ const TaskManagement = () => {
         </div>
         <div className="w-full mt-1">
           {openLevels[subCheck.id] &&
-          subCheck[`level_${level + 1}`] &&
-          subCheck[`level_${level + 1}`].length > 0 ? (
+            subCheck[`level_${level + 1}`] &&
+            subCheck[`level_${level + 1}`].length > 0 ? (
             <div className=" x-4">
               {renderSubtasks(
                 subCheck[`level_${level + 1}`],
@@ -3819,19 +3819,18 @@ const TaskManagement = () => {
             <div className="flex gap-4 items-center">
               <div
                 className=" flex gap-2 items-center"
-                //   style={{
-                //     borderRadius: 50,
-                //     color: "#fff",
-                //     display: "flex",
-                //     height: 40,
-                //   }}
+              //   style={{
+              //     borderRadius: 50,
+              //     color: "#fff",
+              //     display: "flex",
+              //     height: 40,
+              //   }}
               >
                 <div
-                  className={`${
-                    activeView !== "Kanban"
-                      ? "border-2 text-black border-black font-medium"
-                      : "text-white"
-                  } p-1 px-4 rounded-md`}
+                  className={`${activeView !== "Kanban"
+                    ? "border-2 text-black border-black font-medium"
+                    : "text-white"
+                    } p-1 px-4 rounded-md`}
                   title="Kanban View"
                   style={{
                     // color: activeView === "Kanban" ? "skyblue" : "#fff",
@@ -3847,11 +3846,10 @@ const TaskManagement = () => {
                 </div>
                 {/*  */}
                 <div
-                  className={`${
-                    activeView !== "List"
-                      ? "border-2 text-vlack border-black font-medium"
-                      : "text-white"
-                  } p-1 px-4 rounded-md`}
+                  className={`${activeView !== "List"
+                    ? "border-2 text-vlack border-black font-medium"
+                    : "text-white"
+                    } p-1 px-4 rounded-md`}
                   title="List View"
                   style={{
                     // color: activeView === "List" ? "skyblue" : "#fff",
@@ -3918,6 +3916,14 @@ const TaskManagement = () => {
               </div>
             </div>
             <div
+              className="shadow-custom-all-sides flex cursor-pointer items-center justify-center gap-1 py-[10px] mt-4 opacity-90 rounded-lg bg-white text-[#555] font-medium text-[15px]"
+              style={{ width: "150px", margin: "10px auto" }}
+              onClick={openTaskSelf}
+            >
+              <FaPlus />
+              Add Task
+            </div>
+            <div
               className=""
               style={{
                 display: "flex",
@@ -3945,6 +3951,7 @@ const TaskManagement = () => {
               />
             </div>
           </div>
+
           {activeView === "Kanban" && (
             <section
               // scrollable-content section-table-height
@@ -4199,7 +4206,7 @@ const TaskManagement = () => {
                                             <div className=" row col-md-12 mt-1">
                                               {section.title !== "Done" &&
                                                 section.title !==
-                                                  "In Review" && (
+                                                "In Review" && (
                                                   <div
                                                     className="col-md-8 p-0"
                                                     style={{
@@ -4261,7 +4268,7 @@ const TaskManagement = () => {
                                             <div className="w-full border border-dashed"></div>
                                             <div
                                               className="flex justify-between my-2 "
-                                              // style={{ marginTop: "4px" }}
+                                            // style={{ marginTop: "4px" }}
                                             >
                                               <div
                                                 // className="col-md-10 "
@@ -4275,12 +4282,8 @@ const TaskManagement = () => {
                                                   task.due_date
                                                 )}
                                               </div>
-                                              {/* <div className='col-md-4' style={{ fontSize: 10, paddingTop: '6px', color: 'darkgray' }}>
-                                            {task.progress_percentage}%
-                                          </div> */}
-
                                               {task.created_by.id ===
-                                              user_id ? (
+                                                user_id ? (
                                                 <>
                                                   <div
                                                     className="flex justify-end text-red-400"
@@ -4345,7 +4348,7 @@ const TaskManagement = () => {
                                       // Check if the least order section matches the current section in iteration
                                       const showAddTaskButton =
                                         leastOrderSection.order ===
-                                          section.order &&
+                                        section.order &&
                                         leastOrderSection.id === section.id;
 
                                       // Render the "Add Task" button only for the section with the least order or the minimum index
@@ -4410,26 +4413,26 @@ const TaskManagement = () => {
                   overflow: "auto",
                 }}
               >
-                 <div
-                className="grid grid-cols-6 bg-gray-200 py-2"
-                // className="flex justify-evenly bg-gray-300 py-2"
-                style={{ position: "sticky", top: 0, zIndex: 1 }}
-              >
                 <div
-                  className="font-medium col-span-1"
-                  style={{ fontSize: 14, paddingLeft: 20 }}
+                  className="grid grid-cols-6 bg-gray-200 py-2"
+                  // className="flex justify-evenly bg-gray-300 py-2"
+                  style={{ position: "sticky", top: 0, zIndex: 1 }}
                 >
-                  Title
+                  <div
+                    className="font-medium col-span-1"
+                    style={{ fontSize: 14, paddingLeft: 20 }}
+                  >
+                    Title
+                  </div>
+                  <div className="font-medium text-center" style={{ fontSize: 14 }}>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Status
+                  </div>
+                  <div className="" style={{ fontSize: 14 }}></div>
+                  <div className="font-medium" style={{ fontSize: 14 }}>
+                    &nbsp;&nbsp;Created by{" "}
+                  </div>
+                  <div className="font-medium text-center col-span-2" style={{ fontSize: 14 }}>Due Date</div>
                 </div>
-                <div className="font-medium text-center" style={{ fontSize: 14 }}>
-                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Status
-                </div>
-                <div className="" style={{ fontSize: 14 }}></div>
-                <div className="font-medium" style={{ fontSize: 14 }}>
-                  &nbsp;&nbsp;Created by{" "}
-                </div>
-                <div className="font-medium text-center col-span-2" style={{ fontSize: 14 }}>Due Date</div>
-              </div>
                 <hr className="m-0" />
                 <DragDropContext onDragEnd={onDragEndTask}>
                   <div
@@ -4516,7 +4519,7 @@ const TaskManagement = () => {
                                           // backgroundColor: "",
                                           display: "block",
                                         }}
-                                        // className="shadow-custom-all-sides"
+                                      // className="shadow-custom-all-sides"
                                       >
                                         <div
                                           // ref={cardRef}
@@ -4645,7 +4648,7 @@ const TaskManagement = () => {
                                             )}
                                           </div>
                                           {task.created_by.id === user_id ? (
-                                            
+
                                             <div
                                               className="flex justify-end text-red-400"
                                               onClick={(event) =>
@@ -4736,7 +4739,7 @@ const TaskManagement = () => {
                                     // Check if the least order section matches the current section in iteration
                                     const showAddTaskButton =
                                       leastOrderSection.order ===
-                                        section.order &&
+                                      section.order &&
                                       leastOrderSection.id === section.id;
 
                                     // Render the "Add Task" button only for the section with the least order or the minimum index
@@ -4767,7 +4770,7 @@ const TaskManagement = () => {
             </section>
           )}
         </div>
-        {}
+        { }
       </div>
       {modalTaskSelfIsOpen && (
         <TaskSelf onClose={closeTaskSelf} open={openEmployeeTaskOthers} />
@@ -4814,7 +4817,7 @@ const TaskManagement = () => {
                     transition: "background-color 0.3s ease",
                     padding: "2px",
                   }}
-                  // onMouseEnter={(e) => e.target.style.background = '#132A3A'} onMouseLeave={(e) => e.target.style.background = 'transparent'}
+                // onMouseEnter={(e) => e.target.style.background = '#132A3A'} onMouseLeave={(e) => e.target.style.background = 'transparent'}
                 >
                   {isEditing ? (
                     <div
@@ -4880,7 +4883,7 @@ const TaskManagement = () => {
                           e.stopPropagation(); // Prevent click event from bubbling up to the parent div
                           handleIconClickText();
                         }}
-                        // onClick={handleIconClickText}
+                      // onClick={handleIconClickText}
                       >
                         <FaPencilAlt
                           style={{ marginLeft: 10, fontSize: 14 }}
@@ -5316,7 +5319,7 @@ const TaskManagement = () => {
                         //  : openModalChat();
                       }}
                       className=" flex gap-2 items-center   hover:shadow-custom-all-sides transition-all duration-300"
-                      // onClick={handleToggleComments}
+                    // onClick={handleToggleComments}
                     >
                       <FaComment
                         style={{
@@ -5343,7 +5346,7 @@ const TaskManagement = () => {
                       padding: "3px",
                       paddingLeft: 6,
                     }}
-                    // onMouseEnter={(e) => e.target.style.background = '#132A3A'} onMouseLeave={(e) => e.target.style.background = '#133953'}
+                  // onMouseEnter={(e) => e.target.style.background = '#132A3A'} onMouseLeave={(e) => e.target.style.background = '#133953'}
                   >
                     {isEditingDesc ? (
                       <div
@@ -5580,7 +5583,7 @@ const TaskManagement = () => {
                       <div
                         key={i}
                         className=" bg-black bg-opacity-40 backdrop-blur-sm my-1 rounded-md"
-                        // style={{ borderRadius: 4, backgroundColor: "#30678edc" }}
+                      // style={{ borderRadius: 4, backgroundColor: "#30678edc" }}
                       >
                         <div
                           htmlFor={`item-${i}`}
@@ -5612,11 +5615,10 @@ const TaskManagement = () => {
                                     ? "Click to Mark as Incomplete"
                                     : "Click to Mark as Completed"
                                 }
-                                className={` cursor-pointer shadow-custom-all-sides px-4 rounded-b-md transition-all duraction-300 ${
-                                  !item.completed
-                                    ? "text-gray-200 hover:text-green-400"
-                                    : "text-green-300 "
-                                }`}
+                                className={` cursor-pointer shadow-custom-all-sides px-4 rounded-b-md transition-all duraction-300 ${!item.completed
+                                  ? "text-gray-200 hover:text-green-400"
+                                  : "text-green-300 "
+                                  }`}
                                 onClick={() =>
                                   handleToggleCompletion(
                                     item.id,
@@ -5640,7 +5642,7 @@ const TaskManagement = () => {
                                   : "Mark as Completed"}
                               </span>
                               {item.created_by.toString() ===
-                              user_id.toString() ? (
+                                user_id.toString() ? (
                                 <>
                                   <FaTrashAlt
                                     title="Delete Checklist"
@@ -6313,7 +6315,7 @@ const TaskManagement = () => {
 
                             <div
                               className=""
-                              // style={{ textAlign: "center" }}
+                            // style={{ textAlign: "center" }}
                             >
                               <DatePicker
                                 selected={subTaskDueDate}
@@ -6705,7 +6707,7 @@ const TaskManagement = () => {
                                     color: "white",
                                     cursor: "pointer",
                                   }}
-                                  // size={30}
+                                // size={30}
                                 />
                               </div>
                             </div>
