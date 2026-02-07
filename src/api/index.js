@@ -21,6 +21,40 @@ export const login = async (data) => axiosInstance.post("/login.json", data);
 
 export const getLogin = async () => axiosInstance.get("/login.json");
 export const vibeBGImages = async () => axiosInstance.get("/api/employee/get_bg_image.json")
+
+export const getTodoLists = async () => {
+  return axiosInstance.get("/todo_lists.json", {
+    params: {
+      token: token,
+    },
+  });
+};
+
+export const postTodoList = async (data) =>
+  axiosInstance.post(`/todo_lists.json`, data, {
+    params: {
+      token: token,
+    },
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+// export const postTodoList = async (data) => {
+//   const isFormData = data instanceof FormData;
+//   return axiosInstance.post("/todo_lists.json", data, {
+//     params: {
+//       token: token,
+//     },
+//     headers: isFormData
+//       ? {
+//           "Content-Type": "multipart/form-data",
+//         }
+//       : {
+//           "Content-Type": "application/json",
+//           Accept: "application/json",
+//         },
+//   });
+// };
 // dashboard
 export const getTicketDashboard = async () =>
   axiosInstance.get("/pms/admin/complaints/complaints_dashboard.json", {
