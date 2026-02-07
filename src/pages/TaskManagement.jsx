@@ -19,9 +19,7 @@ import {
   FaFileWord,
   FaFilter,
   FaInfoCircle,
-  FaLaptop,
   FaLongArrowAltRight,
-  FaPaperPlane,
   FaPaperclip,
   FaPencilAlt,
   FaPlus,
@@ -68,13 +66,14 @@ import {
   updateVibeSubTask,
   updateVibeUserSubTask,
   updateVibeUserTask,
+  getTodoLists,
 } from "../api";
 import RemainingTime from "../components/RemainingTime";
-import { BiPlus, BiSolidCalendarEdit } from "react-icons/bi";
+// import { BiPlus, BiSolidCalendarEdit } from "react-icons/bi";
 import LinearProgressBar from "../components/LinearProgessBar";
 import toast from "react-hot-toast";
 import DeleteTaskModal from "../containers/modals/DeleteTaskModal";
-import bridge from "/bridge.jpg";
+// import bridge from "/bridge.jpg";
 import TaskSelf from "../containers/modals/SelfTask";
 import Modal from "react-modal";
 import { AiOutlineClose } from "react-icons/ai";
@@ -88,9 +87,8 @@ import {
 } from "../utils/dateUtils";
 import { IoSend } from "react-icons/io5";
 import useWebSocketServiceForTasks from "../components/WebSocketManagement/WebSocketServiceForTask";
-import vibeAuth from "../api/vibeAuth";
-import { MdEditCalendar } from "react-icons/md";
 import { ThreeDots } from "react-loader-spinner";
+import { BiSolidCalendarEdit } from "react-icons/bi";
 // import TaskSelf from "./SubPages/TaskSelf";
 
 // import LinearProgress from "@material-ui/core/LinearProgress";
@@ -108,7 +106,7 @@ const TaskManagement = () => {
   const [activeTaskAssign, setActiveTaskAssign] = useState("");
   const [filterIsOpen, setFilterIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filteredItems, setFilteredItems] = useState(null);
+  const [filteredItems, setFilteredItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [taskList, settaskList] = useState([]);
   const [progressPercentage, setProgressPercentage] = useState(0);
@@ -318,6 +316,12 @@ const TaskManagement = () => {
   }, [location.search]);
 
   const filteredTasks = (taskList) => {
+    // Safety check: ensure taskList is an array
+    if (!Array.isArray(taskList)) {
+      console.warn("taskList is not an array:", taskList);
+      return [];
+    }
+    
     if (taskFilter.length === 0) {
       return taskList;
     }
@@ -327,7 +331,7 @@ const TaskManagement = () => {
     const filteredTasks = taskList.map((section) => {
       return {
         ...section,
-        tasks: section.tasks.filter((task) => {
+        tasks: Array.isArray(section.tasks) ? section.tasks.filter((task) => {
           const createdByUserId = task.created_by?.id;
 
           if (isFilterCreatedByMe && isFilterAssignedtome) {
@@ -342,14 +346,14 @@ const TaskManagement = () => {
           }
 
           return false;
-        }),
+        }) : [],
       };
     });
 
     console.log("Filtered sections:", filteredTasks.length);
     console.log(
       "Filtered tasks:",
-      filteredTasks.reduce((total, section) => total + section.tasks.length, 0)
+      filteredTasks.reduce((total, section) => total + (section.tasks?.length || 0), 0)
     );
     console.log(user_id.toString());
 
@@ -357,13 +361,20 @@ const TaskManagement = () => {
   };
   const filteredTaskData = filteredTasks(taskList);
   useEffect(() => {
+    // Safety check: ensure filteredTaskData is an array
+    if (!Array.isArray(filteredTaskData)) {
+      console.warn("filteredTaskData is not an array:", filteredTaskData);
+      setFilteredItems([]);
+      return;
+    }
+    
     // Apply filtering
     const filtered = filteredTaskData.map((section) => ({
       ...section,
-      tasks: section.tasks.filter((task) => {
+      tasks: Array.isArray(section.tasks) ? section.tasks.filter((task) => {
         // Check if any of the task titles match the search query
-        return task.title.toLowerCase().includes(searchQuery.toLowerCase());
-      }),
+        return task.title && task.title.toLowerCase().includes(searchQuery.toLowerCase());
+      }) : [],
     }));
     // Set filtered data
     setFilteredItems(filtered);
@@ -374,22 +385,77 @@ const TaskManagement = () => {
     setFilterIsOpen(!filterIsOpen);
   };
 
-  const handleViewChange = async (view) => {
-    setActiveView(view);
-    console.log(`Clicked and active view: ${view}`);
-    const formData = new FormData();
-    formData.append("user_id", user_id);
-    formData.append("board_view", view);
-    formData.append("board_name", "myboard");
+   const processTasksToSections = (rawData) => {
+    if (!rawData) return [];
 
-    try {
-      const res = await updateSalesView(formData);
+    // 1. Normalize input: Ensure we have an array of tasks
+    let tasksArray = [];
+    if (Array.isArray(rawData)) {
+      tasksArray = rawData;
+    } else if (rawData && Array.isArray(rawData.tasks)) {
+      tasksArray = rawData.tasks;
+    } else if (rawData && typeof rawData === 'object') {
+      // Handle single object or nested structures
+      tasksArray = [rawData];
+    }
 
-      if (res.success) {
-        console.log("Success");
+    if (tasksArray.length === 0) return [];
+
+    // 2. Transform Data: Map API fields to Component expected fields
+    const normalizedTasks = tasksArray.map((task) => {
+      const taskId = task.id || (task.url ? task.url.split('/').pop().replace('.json', '') : Math.random().toString());
+      const statusName = task.status || "Pending";
+
+      return {
+        id: taskId,
+        title: task.title || task.task_topic || "Untitled Task",
+        description: task.task_description || task.description || "",
+        due_date: task.due_date,
+        status: {
+          status_name: statusName,
+          color: getStatusColor(statusName)
+        },
+        created_by: {
+          id: task.created_by?.id || task.relation_id || user_id,
+          firstname: task.created_by?.firstname || "User",
+          lastname: task.created_by?.lastname || "",
+        },
+        progress_percentage: task.progress_percentage || 0,
+        division: task.division || task.relation || "General",
+        attachments: task.documents || task.attachments || [],
+        urgent_status: task.urgent_status || false,
+        reopened_count: task.reopened_count || 0
+      };
+    });
+
+    // 3. Group by Status Name to create Sections (Kanban Columns)
+    const groupedTasks = {};
+    normalizedTasks.forEach((task) => {
+      const statusName = task.status.status_name;
+      if (!groupedTasks[statusName]) {
+        groupedTasks[statusName] = [];
       }
+      groupedTasks[statusName].push(task);
+    });
+
+    // 4. Convert grouped object into Array of Sections
+    return Object.keys(groupedTasks).map((key) => ({
+      id: key, // Using status name as Section ID for Droppable
+      title: key,
+      tasks: groupedTasks[key],
+      fixed_state: key
+    }));
+  };
+ 
+ const handleViewChange = async (view) => {
+    setActiveView(view);
+    setIsLoading(true);
+    try {
+      await GetBoardData();
     } catch (error) {
+      console.error("Error changing view:", error);
     } finally {
+      setIsLoading(false);
     }
   };
 
@@ -579,38 +645,36 @@ const TaskManagement = () => {
     }
   };
 
+    const getStatusColor = (status) => {
+    // Map status strings to the colors your UI expects
+    const statusLower = status ? status.toLowerCase() : "";
+    switch (statusLower) {
+      case "pending": return "#f39c12"; // Orange
+      case "in progress": return "#3498db"; // Blue
+      case "done": return "#2ecc71"; // Green
+      case "in review": return "#9b59b6"; // Purple
+      default: return "#95a5a6"; // Gray
+    }
+  };
+
+
   const GetBoardData = async (id) => {
     setIsLoading(true);
     try {
-      //   const params = {
-      //     user_id: localStorage.getItem("VIBEUSERID"),
-      //   };
+      const res = await getTodoLists();
+      const raw = res?.data || res || [];
+      const dataSource = raw?.data || raw;
 
-      const response = await getVibeMyBoardTask(user_id);
-      console.log(response);
+      // Use helper to normalize into sections
+      const sectionsArray = processTasksToSections(dataSource);
+      settaskList(sectionsArray);
 
-      if (response.success) {
-        console.log("success");
-        settaskList(response.data);
-        console.log(response.data);
-        const updatedView = response.board_view;
-        console.log(updatedView);
-        setActiveView(updatedView ? updatedView : "Kanban");
-        console.log(taskList);
-
-        // const progress = taskList.tasks[0].progress_percentage; // Assuming API returns data in the format specified in your example
-        setProgressPercentage(response.data.tasks?.progress_percentage);
-        console.log("--------------");
-        console.log(progressPercentage);
-        setIsLoading(false);
-
-        // setProjectList(response.data.data.Boards);
-      } else {
-        console.log("Something went wrong");
-        setIsLoading(false);
-      }
+      const updatedView = raw?.board_view || "Kanban";
+      setActiveView(updatedView);
     } catch (error) {
-      console.error("Error:", error);
+      console.error("Error fetching board data:", error);
+      settaskList([]);
+    } finally {
       setIsLoading(false);
     }
   };
@@ -627,6 +691,7 @@ const TaskManagement = () => {
 
   const closeTaskSelf = () => {
     setTaskSelfModalIsOpen(false);
+    setUpdateEffect(!updateEffect); // Refresh the task list
   };
 
   const openEmployeeTaskOthers = () => {
@@ -3847,7 +3912,7 @@ const TaskManagement = () => {
                 {/*  */}
                 <div
                   className={`${activeView !== "List"
-                    ? "border-2 text-vlack border-black font-medium"
+                    ? "border-2 text-black border-black font-medium"
                     : "text-white"
                     } p-1 px-4 rounded-md`}
                   title="List View"
@@ -3959,7 +4024,7 @@ const TaskManagement = () => {
             >
               <div className="">
                 <DragDropContext onDragEnd={onDragEndTask}>
-                  <div className="flex gap-4  justify-between">
+                  <div className="flex gap-4 flex-nowrap">
                     {isLoading ? (
                       <div
                         className="flex justify-center w-full"
@@ -3977,7 +4042,7 @@ const TaskManagement = () => {
                           <span style={{ opacity: 0.6 }}>Please wait...</span>
                         </center>
                       </div>
-                    ) : filteredItems.length > 0 ? (
+                    ) : Array.isArray(filteredItems) && filteredItems.length > 0 ? (
                       filteredItems.map((section, index) => (
                         <Droppable
                           key={section.id.toString()}
@@ -4087,6 +4152,38 @@ const TaskManagement = () => {
                                             <div className="font-medium my-2">
                                               {task.title}
                                             </div>
+
+                                            {task.attachments && task.attachments.length > 0 && (
+                                              <div className="flex gap-2 my-2 flex-wrap">
+                                                {task.attachments.map((doc, idx) => {
+                                                  const src = doc?.document || doc?.url || doc?.path || doc?.file || doc;
+                                                  const href = src && src.toString().startsWith("http") ? src : `${API_URL}${src}`;
+                                                  const isImage = src && /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(src);
+                                                  return (
+                                                    <a
+                                                      key={idx}
+                                                      href={href}
+                                                      target="_blank"
+                                                      rel="noreferrer"
+                                                      className="inline-block"
+                                                      onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                      {isImage ? (
+                                                        <img
+                                                          src={href}
+                                                          alt={`attachment-${idx}`}
+                                                          className="w-20 h-14 object-cover rounded-md"
+                                                        />
+                                                      ) : (
+                                                        <div className="px-2 py-1 border rounded-md text-sm bg-gray-100">
+                                                          {doc?.name || doc?.document || "File"}
+                                                        </div>
+                                                      )}
+                                                    </a>
+                                                  );
+                                                })}
+                                              </div>
+                                            )}
 
                                             {showStatus ? (
                                               <div
@@ -4443,7 +4540,7 @@ const TaskManagement = () => {
                       flexWrap: "nowrap",
                     }}
                   >
-                    {filteredItems.map((section, index) => (
+                    {(Array.isArray(filteredItems) ? filteredItems : []).map((section, index) => (
                       <Droppable
                         key={section.id.toString()}
                         droppableId={section.id.toString()}
@@ -4553,14 +4650,38 @@ const TaskManagement = () => {
                                           }
                                         >
                                           <div className="col-span-1">
-                                            {/* <div className="" style={{display:"flex" , justifyContent:"flex-start"}}>
-                                            {task.urgent_status === true &&<span style={{ backgroundColor: '#00b272',color:'#fff', borderRadius: '6px 0px 10px 0px', fontSize: 12, margin:'6px' }} className="pr-2 pl-2">
-                                              <b>Urgent</b>
-                                            </span>}
-
-                                        </div> */}
                                             {task.title}
                                           </div>
+                                            {task.attachments && task.attachments.length > 0 && (
+                                              <div className="col-span-2 flex gap-2 items-center">
+                                                {task.attachments.map((doc, idx) => {
+                                                  const src = doc?.document || doc?.url || doc?.path || doc?.file || doc;
+                                                  const href = src && src.toString().startsWith("http") ? src : `${API_URL}${src}`;
+                                                  const isImage = src && /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(src);
+                                                  return (
+                                                    <a
+                                                      key={idx}
+                                                      href={href}
+                                                      target="_blank"
+                                                      rel="noreferrer"
+                                                      onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                      {isImage ? (
+                                                        <img
+                                                          src={href}
+                                                          alt={`att-${idx}`}
+                                                          className="w-12 h-8 object-cover rounded-md"
+                                                        />
+                                                      ) : (
+                                                        <div className="px-2 py-1 border rounded-md text-sm bg-gray-100">
+                                                          {doc?.name || doc?.document || "File"}
+                                                        </div>
+                                                      )}
+                                                    </a>
+                                                  );
+                                                })}
+                                              </div>
+                                            )}
                                           <div className="col-span-2 flex justify-center">
                                             {showStatus ? (
                                               <div
@@ -4621,24 +4742,6 @@ const TaskManagement = () => {
                                             {task.created_by.lastname}
                                           </div>
 
-                                          {/* <div className=' row col-md-12' style={{fontSize:13}}>Assign By : {task.created_by.firstname} {task.created_by.lastname}</div> */}
-
-                                          {/* <div className='row col-md-12'id="progress-bar">              
-                                        
-                                          <div id="progress" style={{ width: `${progressPercentage}%` }}>
-                                          </div>
-                                    
-                                        </div> */}
-
-                                          {/* <div className='row col-md-12 '>
-                                          <div className='col-md-6'style={{fontSize:13}}>{task.division}</div>
-                                          {section.title !== 'Done' && section.title !== 'In Review' && (
-                                            <div className='col-md-6' style={{ fontSize: 13, display: 'flex', justifyContent: 'flex-end' }}>
-                                              {calculateRemainingTime(task.due_date)}
-                                            </div>
-                                          )}
-                                        </div> */}
-
                                           <div
                                             className="col-span-2 flex justify-end"
                                             style={{ fontSize: 13 }}
@@ -4660,39 +4763,15 @@ const TaskManagement = () => {
                                             >
                                               <FaTrashAlt
                                                 style={{
-                                                  // fontSize: 14,
-                                                  // color: "whitesmoke",
+                                                  
                                                   marginBottom: 4,
                                                   cursor: "pointer",
                                                 }}
                                               ></FaTrashAlt>
                                             </div>
                                           ) : null}
-
-                                          {/* <div className='row 'style={{marginTop:'4px'}}>
-                                          <div className='col-md-10 ' style={{ fontSize: 10, paddingTop: '6px', color: 'darkgray' }}>
-                                            {formatDate(task.due_date)}
-                                          </div>
-                                          
-                                          {task.created_by.id.toString() === user_id ? (
-                                            
-                                              <div className='col-md-2' onClick={(event) => handleDeleteTask(task.id, event)}>
-                                                <FaTrashAlt style={{ fontSize: 14, color: 'whitesmoke', marginBottom: 4, cursor: 'pointer' }} ></FaTrashAlt>
-                                              </div>
-
-                                            ) : null}
-                                        </div> */}
-
-                                          {/* <div className='' >
-                                          <LinearProgress style={{borderRadius:4, height:6}} variant="determinate" value={task.progress_percentage} />
-                                        </div> */}
                                         </div>
                                         <div className="">
-                                          {/* <LinearProgress
-                                          style={{ borderRadius: 4, height: 4 }}
-                                          variant="determinate"
-                                          value={task.progress_percentage}
-                                        /> */}
                                           <LinearProgressBar
                                             progress={task.progress_percentage}
                                           />
@@ -6866,23 +6945,12 @@ const TaskManagement = () => {
                                 alt="Chat Image"
                                 className="w-96"
                               />
-
-                              {/* <div className="lightbox-content">
-                                <img src={lightboxImage} alt="Chat Image" />
-                                <div
-                                  className="close-button"
-                                  onClick={closeLightbox}
-                                >
-                                  X
-                                </div> */}
-                              {/* </div> */}
                             </div>
                           </div>
                         </div>
                       )}
                     </div>
                   </div>
-                  // </div>
                 )}
               </div>
             </div>
