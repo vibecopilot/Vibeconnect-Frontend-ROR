@@ -276,6 +276,7 @@ import TablePagination from "@mui/material/TablePagination";
 const PPMTask = () => {
   const [tasks, setTasks] = useState([]);
   const [searchText, setSearchText] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("all");
 
   const [page, setPage] = useState(0);
@@ -291,8 +292,8 @@ const PPMTask = () => {
         page + 1
       }&per_page=${rowsPerPage}`;
 
-      if (searchText) {
-        url += `&q[asset_name_or_checklist_name_cont]=${searchText}`;
+      if (debouncedSearch) {
+        url += `&q[asset_name_or_checklist_name_cont]=${debouncedSearch}`;
       }
 
       if (selectedStatus !== "all") {
@@ -316,16 +317,17 @@ const PPMTask = () => {
     }
   };
 
-  useEffect(() => {
-    fetchPPMTask();
-  }, [page, rowsPerPage, selectedStatus]);
-
+  // Debounce search text
   useEffect(() => {
     const delay = setTimeout(() => {
-      fetchPPMTask();
+      setDebouncedSearch(searchText);
     }, 500);
     return () => clearTimeout(delay);
   }, [searchText]);
+
+  useEffect(() => {
+    fetchPPMTask();
+  }, [page, rowsPerPage, selectedStatus, debouncedSearch]);
 
   const handleSearch = (e) => {
     setSearchText(e.target.value);
