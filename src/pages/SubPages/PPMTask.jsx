@@ -14,13 +14,12 @@ import { getItemInLocalStorage } from "../../utils/localStorage";
 const PPMTask = () => {
   const [tasks, setTasks] = useState([]);
   const [searchText, setSearchText] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("all");
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [total, setTotal] = useState(0);
-
-  const [background, setBackground] = useState("");
 
   const token = getItemInLocalStorage("TOKEN");
 
@@ -29,13 +28,20 @@ const PPMTask = () => {
     toast.loading("Please wait");
 
     try {
-      const response = await getPPMTask({
-        token,
-        page,
-        rowsPerPage,
-        searchText,
-        selectedStatus,
-      });
+      let url = `https://admin.vibecopilot.ai/activities.json?q[checklist_ctype_eq]=ppm&token=${token}&page=${
+        page + 1
+      }&per_page=${rowsPerPage}`;
+
+      if (debouncedSearch) {
+        url += `&q[asset_name_or_checklist_name_cont]=${debouncedSearch}`;
+      }
+
+      if (selectedStatus !== "all") {
+        url += `&q[status_eq]=${selectedStatus}`;
+      }
+
+      const res = await fetch(url);
+      const data = await res.json();
 
       toast.dismiss();
 
@@ -52,26 +58,23 @@ const PPMTask = () => {
     }
   }, [token, page, rowsPerPage, searchText, selectedStatus]);
 
-  useEffect(() => {
-    fetchPPMTasks();
-  }, [fetchPPMTasks]);
-
-  /* -------------------- SEARCH (DEBOUNCED) -------------------- */
+  // Debounce search text
   useEffect(() => {
     const delay = setTimeout(() => {
-      setPage(0);
-      fetchPPMTasks();
+      setDebouncedSearch(searchText);
     }, 500);
 
     return () => clearTimeout(delay);
   }, [searchText]);
 
-  /* -------------------- BACKGROUND IMAGE -------------------- */
   useEffect(() => {
-    const loadBackground = async () => {
-      try {
-        const userId = getItemInLocalStorage("VIBEUSERID");
-        const res = await getVibeBackground(userId);
+    fetchPPMTask();
+  }, [page, rowsPerPage, selectedStatus, debouncedSearch]);
+
+  const handleSearch = (e) => {
+    setSearchText(e.target.value);
+    setPage(0);
+  };
 
         if (res?.success && res?.data?.image) {
           setBackground(API_URL + res.data.image);

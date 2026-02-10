@@ -832,6 +832,7 @@ import ServiceBooking from "./pages/OSR/ServiceBooking.jsx";
 import UnitConfigurations from "./pages/OSR/UnitConfig.jsx";
 import AdminBookings from "./pages/OSR/OsrBookings.jsx";
 import MyBookings from "./pages/OSR/ResidentialBookings.jsx";
+import GroupedDashboardPage from "./groupedDashboard/GroupDashboard.jsx";
 
 function App() {
   const { id } = useParams();
@@ -1054,6 +1055,14 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
+        <Route
+          path="/grouped-dashboard"
+          element={
+            // <ProtectedAdminRoutes>
+              <GroupedDashboardPage />
+            // </ProtectedAdminRoutes>
+          }
+        />
 
         <Route
           path="/settings"
@@ -1120,6 +1129,7 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
+
         <Route
           path="/setup/account/organisation"
           element={
