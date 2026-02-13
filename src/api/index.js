@@ -2303,10 +2303,12 @@ export const getServicesChecklistDetails = async (checklistId) =>
     },
   });
 
-export const getAssetPPMList = async () =>
+export const getAssetPPMList = async (page = 1, perPage = 10) =>
   axiosInstance.get(`/checklists.json?q[ctype_eq]=ppm`, {
     params: {
       token: token,
+      page: page,
+      per_page: perPage,
     },
   });
 export const getServicesPPMDetails = async (id) =>

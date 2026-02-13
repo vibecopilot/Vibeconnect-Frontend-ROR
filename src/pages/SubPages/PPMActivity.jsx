@@ -16,6 +16,13 @@ const PPMActivity = () => {
   const [ppms, setPPms] = useState([]);
   const [searchPPMText, setSearchPPMCheck] = useState("");
   const [filteredPPMData, setFilteredPPMData] = useState([]);
+  const [paginationData, setPaginationData] = useState({
+    totalEntries: 0,
+    totalPages: 0,
+    currentPage: 1,
+  });
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
   const themeColor = useSelector((state) => state.theme.color);
 
   const handlePPMSearch = (event) => {
@@ -32,30 +39,48 @@ const PPMActivity = () => {
     }
   };
 
-  useEffect(() => {
-    toast.loading("Please wait");
-    const fetchServicePPM = async () => {
-      try {
-        toast.dismiss();
-        const ServicePPMResponse = await getAssetPPMList();
-        
-        // FIXED: Filter only ctype: "ppm"
-        const ppmOnly = ServicePPMResponse.data.checklists.filter(
-          (checklist) => checklist.ctype === "ppm"
-        );
-        
-        const sortedPPMData = ppmOnly.sort((a, b) => {
-          return new Date(b.created_at) - new Date(a.created_at);
-        });
+  const fetchServicePPM = async (page = 1, perPage = 10) => {
+    try {
+      toast.loading("Please wait");
+      const ServicePPMResponse = await getAssetPPMList(page, perPage);
+      
+      console.log("API Response:", ServicePPMResponse.data);
 
-        setFilteredPPMData(sortedPPMData);
-        setPPms(sortedPPMData);
-        toast.success("PPM Checklist data fetched successfully");
-      } catch (error) {
-        toast.dismiss();
-        console.log(error);
-      }
-    };
+      // API already filters by ctype=ppm, no need to filter again
+      const checklists = ServicePPMResponse.data.checklists || [];
+
+      const sortedPPMData = checklists.sort((a, b) => {
+        return new Date(b.created_at) - new Date(a.created_at);
+      });
+
+      // Calculate total entries - use total_entries/total_count if available, otherwise calculate from total_pages
+      const totalPages = ServicePPMResponse.data?.total_pages || 0;
+      const totalEntries = ServicePPMResponse.data?.total_entries || 0;
+      setFilteredPPMData(sortedPPMData);
+      setPPms(sortedPPMData);
+      setPaginationData({
+        totalEntries: totalEntries,
+        totalPages: totalPages,
+        currentPage: ServicePPMResponse.data?.current_page || page,
+      });
+      toast.dismiss();
+      toast.success("PPM Checklist data fetched successfully");
+    } catch (error) {
+      toast.dismiss();
+      console.log(error);
+    }
+  };
+
+  const handlePageChange = (page) => {
+    fetchServicePPM(page, rowsPerPage);
+  };
+
+  const handleRowsPerPageChange = (newPerPage, page) => {
+    setRowsPerPage(newPerPage);
+    fetchServicePPM(page, newPerPage);
+  };
+
+  useEffect(() => {
     fetchServicePPM();
   }, []);
 
@@ -68,7 +93,7 @@ const PPMActivity = () => {
             <BsEye size={15} />
           </Link>
           <Link to={`/admin/copy-checklist/ppm/${row.id}`}>
-            <FaCopy size={15}/>
+            <FaCopy size={15} />
           </Link>
         </div>
       ),
@@ -169,7 +194,16 @@ const PPMActivity = () => {
             </Link>
           </div>
         </div>
-        <Table columns={PPMColumn} data={filteredPPMData} />
+        <Table
+          columns={PPMColumn}
+          data={filteredPPMData}
+          paginationServer={true}
+          totalEntries={paginationData.totalEntries}
+          currentPage={paginationData.currentPage}
+          rowsPerPage={rowsPerPage}
+          onChangePage={handlePageChange}
+          onChangeRowsPerPage={handleRowsPerPageChange}
+        />
       </div>
     </section>
   );
