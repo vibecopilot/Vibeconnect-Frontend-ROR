@@ -742,6 +742,12 @@ const PetsAdd = () => {
   const [profileImage, setProfileImage] = useState(null);
   const [profilePreview, setProfilePreview] = useState(null);
 
+  const [buildings, setBuildings] = useState([]);
+  const [floors, setFloors] = useState([]);
+  const [units, setUnits] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [filteredUsers, setFilteredUsers] = useState([]);
+
   const [formData, setFormData] = useState({
     pet_name: "",
     owner_mobile_no: "",
@@ -762,13 +768,7 @@ const PetsAdd = () => {
     attachments: null,
   });
 
-  const [buildings, setBuildings] = useState([]);
-  const [floors, setFloors] = useState([]);
-  const [units, setUnits] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [filteredUsers, setFilteredUsers] = useState([]);
-
-  // Load Buildings + Users
+  // ================= LOAD DATA =================
   useEffect(() => {
     const load = async () => {
       const b = await getBuildings();
@@ -779,7 +779,7 @@ const PetsAdd = () => {
     load();
   }, []);
 
-  // Building → Floors
+  // ================= BUILDING → FLOOR =================
   useEffect(() => {
     if (formData.building_id) {
       getFloors(formData.building_id).then((res) => {
@@ -796,7 +796,7 @@ const PetsAdd = () => {
     }
   }, [formData.building_id]);
 
-  // Floor → Units
+  // ================= FLOOR → UNIT =================
   useEffect(() => {
     if (formData.floor_id) {
       getUnits(formData.floor_id).then((res) => {
@@ -811,7 +811,7 @@ const PetsAdd = () => {
     }
   }, [formData.floor_id]);
 
-  // Unit → Filter Users
+  // ================= UNIT → FILTER USERS =================
   useEffect(() => {
     if (formData.unit_id) {
       const filtered = users.filter(
@@ -823,6 +823,7 @@ const PetsAdd = () => {
     }
   }, [formData.unit_id, users]);
 
+  // ================= INPUT CHANGE =================
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
@@ -831,8 +832,10 @@ const PetsAdd = () => {
     }));
   };
 
+  // ================= USER SELECT =================
   const handleUserChange = (e) => {
     const userId = e.target.value;
+
     const selectedUser = filteredUsers.find(
       (u) => String(u.id) === String(userId)
     );
@@ -849,6 +852,7 @@ const PetsAdd = () => {
     }));
   };
 
+  // ================= PROFILE IMAGE =================
   const handleProfileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -864,12 +868,18 @@ const PetsAdd = () => {
     }));
   };
 
+  // ================= SUBMIT =================
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (submitting) return;
+
+    if (!formData.pet_name || !formData.owner_mobile_no) {
+      alert("Pet Name and Owner Mobile are required");
+      return;
+    }
 
     try {
       setSubmitting(true);
+
       const data = new FormData();
 
       Object.keys(formData).forEach((key) => {
@@ -889,11 +899,12 @@ const PetsAdd = () => {
       }
 
       await postPet(data);
+
       alert("Pet Created Successfully ✅");
       navigate("/setup/pets");
     } catch (error) {
       console.error(error.response?.data || error);
-      alert("Something went wrong ❌");
+      alert("Something went wrong ");
     } finally {
       setSubmitting(false);
     }
@@ -902,6 +913,7 @@ const PetsAdd = () => {
   return (
     <div className="flex bg-gray-100 min-h-screen">
       <SetupNavbar />
+
       <div className="w-full p-8">
         <div className="bg-white rounded-2xl shadow-md p-6">
 
@@ -918,7 +930,11 @@ const PetsAdd = () => {
             <div className="relative w-32 h-32 mb-6">
               <div className="w-32 h-32 rounded-full border-4 border-purple-400 overflow-hidden bg-gray-200">
                 {profilePreview && (
-                  <img src={profilePreview} className="w-full h-full object-cover" />
+                  <img
+                    src={profilePreview}
+                    className="w-full h-full object-cover"
+                    alt="preview"
+                  />
                 )}
               </div>
               <div
@@ -949,7 +965,6 @@ const PetsAdd = () => {
                 <option value="Male">Male</option>
                 <option value="Female">Female</option>
               </Select>
-
               <Input label="Colour" name="colour" value={formData.colour} onChange={handleChange} />
               <Input label="Age" name="age" value={formData.age} onChange={handleChange} />
             </div>
@@ -990,14 +1005,20 @@ const PetsAdd = () => {
                 ))}
               </Select>
 
-              <Select label="User" name="user_id" value={formData.user_id} onChange={handleUserChange}>
-                <option value="">Select</option>
-                {filteredUsers.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.name || u.full_name || `User ${u.id}`}
-                  </option>
-                ))}
-              </Select>
+            <Select
+  label="User"
+  name="user_id"
+  value={formData.user_id}
+  onChange={handleUserChange}
+>
+  <option value="">Select User</option>
+  {filteredUsers.map((u) => (
+    <option key={u.id} value={u.id}>
+      {`${u.firstname || ""} ${u.lastname || ""}`.trim()}
+    </option>
+  ))}
+</Select>
+
             </div>
 
             <div className="mb-6">
