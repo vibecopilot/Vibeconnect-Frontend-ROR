@@ -832,6 +832,18 @@ import ServiceBooking from "./pages/OSR/ServiceBooking.jsx";
 import UnitConfigurations from "./pages/OSR/UnitConfig.jsx";
 import AdminBookings from "./pages/OSR/OsrBookings.jsx";
 import MyBookings from "./pages/OSR/ResidentialBookings.jsx";
+import GroupedDashboardPage from "./groupedDashboard/GroupDashboard.jsx";
+import Pets from "./pages/Setup/Pets/Pets";
+
+import PetsAdd from "./pages/Setup/Pets/PetsAdd";
+import PetsView from "./pages/Setup/Pets/PetsView";
+import PetsEdit from "./pages/Setup/Pets/PetsEdit";
+
+
+
+// import PetsAdd from "./pages/Setup/Pets/PetsAdd";
+
+
 
 function App() {
   const { id } = useParams();
@@ -1054,6 +1066,14 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
+        <Route
+          path="/grouped-dashboard"
+          element={
+            // <ProtectedAdminRoutes>
+              <GroupedDashboardPage />
+            // </ProtectedAdminRoutes>
+          }
+        />
 
         <Route
           path="/settings"
@@ -1120,6 +1140,7 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
+
         <Route
           path="/setup/account/organisation"
           element={
@@ -7563,6 +7584,18 @@ function App() {
           </ProtectedAdminRoutes>
         }
       />
+      {/* <Route path="/setup/Pets" element={<Pets />} />
+      
+       <Route path="/pets/add" element={<PetsAdd />} /> */}
+
+
+     
+      <Route path="/setup/pets" element={<Pets />} />
+      <Route path="/setup/pets/add" element={<PetsAdd />} />
+      <Route path="/setup/pets/view/:id" element={<PetsView />} />
+      <Route path="/setup/pets/edit/:id" element={<PetsEdit />} />
+
+
       </Routes>
 
       <Footer />

@@ -870,7 +870,7 @@ const SetupFacility = () => {
                   {/* <div className="rounded-l-md border p-2 border-gray-400">
                     <input type="checkbox" name="" id="" />
                   </div> */}
-                  <input
+                  {/* <input
                     type="number"
                     name="member_price_adult"
                     id=""
@@ -890,7 +890,39 @@ const SetupFacility = () => {
                         : ""
                     }`}
                     placeholder="₹100"
-                  />
+                  /> */}
+                  <div className="flex items-center">
+  <div className="rounded-l-md border p-2 border-gray-400">
+    <input
+      type="checkbox"
+      checked={formData.member}
+      onChange={(e) =>
+        setFormData({ ...formData, member: e.target.checked })
+      }
+    />
+  </div>
+
+  <input
+    type="number"
+    name="member_price_adult"
+    min={0}
+    value={formData.member_price_adult}
+    onChange={(e) =>
+      setFormData({
+        ...formData,
+        member_price_adult: e.target.value,
+      })
+    }
+    disabled={!formData.member}
+    className={`border border-gray-400 rounded-r-md p-2 outline-none ${
+      !formData.member
+        ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+        : ""
+    }`}
+    placeholder="₹100"
+  />
+</div>
+
                 </div>
               </div>
               <div className="flex justify-center my-2">
@@ -1054,7 +1086,7 @@ const SetupFacility = () => {
                   {/* <div className="rounded-l-md border p-2 border-gray-400">
                     <input type="checkbox" name="" id="" />
                   </div> */}
-                  <input
+                  {/* <input
                     type="text"
                     name="guest_price_adult"
                     id=""
@@ -1074,7 +1106,38 @@ const SetupFacility = () => {
                         : ""
                     }`}
                     placeholder="₹100"
-                  />
+                  /> */}
+                  <div className="flex items-center">
+  <div className="rounded-l-md border p-2 border-gray-400">
+    <input
+      type="checkbox"
+      checked={formData.guest}
+      onChange={(e) =>
+        setFormData({ ...formData, guest: e.target.checked })
+      }
+    />
+  </div>
+
+  <input
+    type="number"
+    name="guest_price_adult"
+    value={formData.guest_price_adult}
+    onChange={(e) =>
+      setFormData({
+        ...formData,
+        guest_price_adult: e.target.value,
+      })
+    }
+    disabled={!formData.guest}
+    className={`border border-gray-400 rounded-r-md p-2 outline-none ${
+      !formData.guest
+        ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+        : ""
+    }`}
+    placeholder="₹100"
+  />
+</div>
+
                 </div>
               </div>
               <div></div>

@@ -396,30 +396,31 @@ function AssetDashboard() {
   const [showCalendar, setShowCalendar] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
 
-  const fetchAssetSummaryByDate = async (date) => {
-    try {
-      const res = await getTotalAssetCount
-      ({
-        date: date.toISOString().split("T")[0], // YYYY-MM-DD
-      });
+const fetchAssetSummaryByDate = async (date) => {
+  try {
+    const formattedDate = date.toISOString().split("T")[0]; // YYYY-MM-DD
 
-      const data = res.data;
+    const res = await getTotalAssetCount(formattedDate);
 
-      // 🔥 MAP API RESPONSE TO STATES
-      setTotalAssetCount(data.total_assets);
-      setInUseCount(data.assets_in_use);
-      setBreakCount(data.assets_in_breakdown);
+    const data = res.data;
 
-      setPPMSchedule(data.ppm_scheduled);
-      setPPMOverDue(data.ppm_overdue);
-      setPPMComplete(data.ppm_complete);
+    // 🔥 MAP API RESPONSE TO STATES
+    setTotalAssetCount(data.total_assets);
+    setInUseCount(data.assets_in_use);
+    setBreakCount(data.assets_in_breakdown);
 
-      setRoutineScheduleCount(data.routine_task_scheduled);
-      setRoutineOverdueCount(data.routine_task_overdue);
-    } catch (error) {
-      toast.error("Failed to fetch filtered data");
-    }
-  };
+    setPPMSchedule(data.ppm_scheduled);
+    setPPMOverDue(data.ppm_overdue);
+    setPPMComplete(data.ppm_complete);
+
+    setRoutineScheduleCount(data.routine_task_scheduled);
+    setRoutineOverdueCount(data.routine_task_overdue);
+  } catch (error) {
+    console.error(error);
+    toast.error("Failed to fetch filtered data");
+  }
+};
+
 
 
 
