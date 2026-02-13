@@ -1706,6 +1706,8 @@ export const putSetupUser = async (userId, data) =>
     axiosInstance.post("/users/add-flat", payload);
   };
 
+ 
+
   
 
 export const getHostList = async (siteId) =>
@@ -6546,6 +6548,8 @@ export const AddHolidaysDetails = async (data) => {
   }
 };
 
+
+
 export const GetHrmsHolidayDetailsId = async (id) => {
   try {
     const response = await HrmsAuth.get(`/organization/company-holidays/${id}`);
@@ -10693,6 +10697,7 @@ export const postReceiptNumber = async (data) =>
   });
 
 
+
   
 export const getOtherProject = () =>
   axiosInstance.get("/other_projects.json", {
@@ -10739,6 +10744,112 @@ export const uploadVisitorLicense = (visitorId, file) => {
     headers: { "Content-Type": "multipart/form-data" },
   });
 };
+
+// pets
+// =============================
+// 🔥 Buildings API
+// =============================
+
+// export const getBuildings = async () =>
+//   axiosInstance.get("/buildings.json", {
+//     params: {
+//       token: token,
+//     },
+//   });
+
+
+// // =============================
+// // 🔥 Floors API
+// // =============================
+
+// export const getFloors = async (buildingId) =>
+//   axiosInstance.get("/floors.json", {
+//     params: {
+//       token: token,
+//       "q[building_id_eq]": buildingId,
+//     },
+//   });
+
+
+// // =============================
+// // 🔥 Units API
+// // =============================
+
+// export const getUnits = async (floorId) =>
+//   axiosInstance.get("/units.json", {
+//     params: {
+//       token: token,
+//       "q[floor_id_eq]": floorId,
+//     },
+//   });
+
+
+// =============================
+// 🔥 Users API
+// =============================
+
+export const getUsers = async () =>
+  axiosInstance.get("/users.json", {
+    params: {
+      token: token,
+    },
+  });
+
+
+// =============================
+// 🔥 Pets API 
+// =============================
+
+
+
+export const getPetById = async (id) =>
+  axiosInstance.get(`/pets/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+
+export const postPet = async (formData) =>
+  axiosInstance.post(`/pets.json?token=${token}`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+export const updatePet = async (id, formData) =>
+  axiosInstance.put(`/pets/${id}.json?token=${token}`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+
+  export const getPets = async (page = 1, perPage = 10) =>
+  axiosInstance.get("/pets.json", {
+    params: {
+      token: token,
+      page: page,
+      per_page: perPage,
+    },
+  });
+
+
+  export const getPetCount = async () => {
+    const response = await axiosInstance.get("/pets/count.json", {
+      params: {
+        token: token,
+      },
+    });
+    return response.data;
+  };
+
+  export const deletePet = async (id) =>
+  axiosInstance.delete(`/pets/${id}.json`, {
+    params: { token },
+  });
+
+
+ 
 
 
 //Vehicle Setup
@@ -10799,8 +10910,6 @@ export const getVisitorAnalytics = async (start_date, end_date) =>
       ...(end_date && { end_date }),
     },
   });
-
-
 export const getExportVisitors = async (
   startDate = null,
   endDate = null,
