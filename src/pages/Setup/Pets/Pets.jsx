@@ -259,10 +259,10 @@
 
 
 import React, { useEffect, useState } from "react";
-import { FaEye, FaEdit, FaPlus, FaTrash } from "react-icons/fa";
+import { FaEye, FaEdit, FaPlus } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import SetupNavbar from "../../../components/navbars/SetupNavbar";
-import { getPets, deletePet } from "../../../api";   // ✅ delete added
+import { getPets } from "../../../api";
 
 const Pets = () => {
   const navigate = useNavigate();
@@ -289,27 +289,10 @@ const Pets = () => {
         : response.data.data || [];
 
       setPets(apiData);
-
     } catch (error) {
       console.error("Error fetching pets:", error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  // ✅ DELETE FUNCTION
-  const handleDelete = async (id) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this pet?"
-    );
-
-    if (!confirmDelete) return;
-
-    try {
-      await deletePet(id);
-      loadPets(); // refresh list
-    } catch (error) {
-      console.error("Delete failed:", error);
     }
   };
 
@@ -326,6 +309,7 @@ const Pets = () => {
           Pets Management
         </h1>
 
+        {/* SEARCH + ADD BUTTON */}
         <div className="flex justify-between items-center mb-4">
           <input
             type="text"
@@ -346,11 +330,12 @@ const Pets = () => {
                 "linear-gradient(90deg, #6a5af9 0%, #e6a117 100%)",
             }}
           >
-            <FaPlus />
+            <FaPlus size={14} />
             Add Pet
           </button>
         </div>
 
+        {/* TABLE */}
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <table className="w-full text-sm">
             <thead
@@ -385,45 +370,38 @@ const Pets = () => {
                 </tr>
               ) : (
                 filteredPets.map((pet) => (
-                  <tr key={pet.id} className="border-t">
+                  <tr key={pet.id} className="border-t hover:bg-gray-50">
                     <td className="p-3">
                       <div className="flex gap-2">
 
-                        {/* View */}
+                        {/* VIEW */}
                         <button
                           onClick={() =>
                             navigate(`/setup/pets/view/${pet.id}`)
                           }
-                          className="w-8 h-8 bg-gray-100 border rounded-md flex items-center justify-center"
+                          className="w-8 h-8 bg-gray-100 border rounded-md flex items-center justify-center hover:bg-gray-200"
                         >
-                          <FaEye size={14} />
+                          <FaEye size={13} />
                         </button>
 
-                        {/* Edit */}
+                        {/* EDIT */}
                         <button
                           onClick={() =>
                             navigate(`/setup/pets/edit/${pet.id}`)
                           }
-                          className="w-8 h-8 bg-gray-100 border rounded-md flex items-center justify-center"
+                          className="w-8 h-8 bg-gray-100 border rounded-md flex items-center justify-center hover:bg-gray-200"
                         >
-                          <FaEdit size={14} />
+                          <FaEdit size={13} />
                         </button>
 
-                        {/* Delete */}
-                       <button
-      onClick={() => handleDelete(pet.id)}
-      className="w-8 h-8 bg-gray-100 border rounded-md flex items-center justify-center text-gray-600 hover:bg-gray-200"
-    >
-      <FaTrash size={14} />
-    </button>
                       </div>
                     </td>
 
-                    <td className="p-3">{pet.pet_name}</td>
-                    <td className="p-3">{pet.pet_breed}</td>
-                    <td className="p-3">{pet.gender}</td>
-                    <td className="p-3">{pet.colour}</td>
-                    <td className="p-3">{pet.owner_mobile_no}</td>
+                    <td className="p-3">{pet.pet_name || "N/A"}</td>
+                    <td className="p-3">{pet.pet_breed || "N/A"}</td>
+                    <td className="p-3">{pet.gender || "N/A"}</td>
+                    <td className="p-3">{pet.colour || "N/A"}</td>
+                    <td className="p-3">{pet.owner_mobile_no || "N/A"}</td>
                   </tr>
                 ))
               )}
@@ -431,11 +409,12 @@ const Pets = () => {
           </table>
         </div>
 
+        {/* PAGINATION */}
         <div className="flex justify-between mt-4">
           <button
             disabled={page === 1}
             onClick={() => setPage((prev) => prev - 1)}
-            className="px-4 py-2 bg-gray-200 rounded"
+            className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
           >
             Previous
           </button>
