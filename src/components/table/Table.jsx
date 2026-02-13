@@ -17,8 +17,18 @@ const Table = ({
   onSelectedRows,
   paginationServer = false,
   paginationTotalRows = 0,
-  onChangeRowsPerPage
+  onChangeRowsPerPage,
+  // Server-side pagination metadata
+  totalEntries,
+  totalPages,
+  currentPage,
+  rowsPerPage = 10,
 }) => {
+  // Support both total_entries and total_count from API
+  const totalRows = paginationTotalRows || totalEntries || 0;
+  
+  console.log("Table Props - totalRows:", totalRows, "currentPage:", currentPage, "rowsPerPage:", rowsPerPage, "paginationServer:", paginationServer);
+  
   const themeColor = useSelector((state) => state.theme.color);
 
   
@@ -76,7 +86,10 @@ const Table = ({
         customStyles={customStyles || customStyle}
         pagination={pagination}
         paginationServer={paginationServer}
-        paginationTotalRows={paginationTotalRows}
+        paginationTotalRows={totalRows}
+        paginationDefaultPage={currentPage}
+        paginationPerPage={rowsPerPage}
+        paginationRowsPerPageOptions={[10, 25, 50, 100]}
         fixedHeader
         selectableRowsHighlight
         selectableRows={selectableRow}
