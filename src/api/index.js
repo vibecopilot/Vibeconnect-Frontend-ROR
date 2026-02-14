@@ -2761,14 +2761,20 @@ export const getExpectedVisitor = async (page = 1, perPage = 10, filters = {}) =
   
   return axiosInstance.get(`/visitors.json`, { params });
 };
+
+export const getSelfRegistration = async () => 
+  axiosInstance.get(`/visitors/self_registartions.json`, {
+    params: {
+      token: token,
+    }
+  })
+
 export const getExpectedUserVisitor = async () =>
   axiosInstance.get(`/visitors/user.json`, {
     params: {
       token: token,
     },
   });
-
-  
 
 //   export const getRegisteredVehicle = async (params = {}) => {
 //   return axiosInstance.get(`/registered_vehicles.json`, {
