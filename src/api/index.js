@@ -641,26 +641,16 @@ export const getAdminComplaints = async () =>
   //   }
   // );
 
-  export const getAdminExport = async (
-  catId,
-  issueStatId,
-  prio_count,
-  assign_eq,
-  building_id,
-  floor_id,
-  unit_id,
-  startDate,
-  endDate
-) =>
-  axiosInstance.get(
-    `/pms/admin/complaints/export_complaints.xlsx?q[search_cont]=${catId}&q[search_cont]=${issueStatId}&q[search_cont]=${prio_count}&q[search_cont]=${assign_eq}&q[search_cont]=${building_id}&q[search_cont]=${floor_id}&q[search_cont]=${unit_id}&q[search_cont]=${startDate}&q[search_cont]=${endDate}`,
-    {
-      params: {
-        token: token,
-      },
-      responseType: "blob",
-    }
-  );
+export const getAdminExport = async (searchValue) =>
+  axiosInstance.get("/pms/admin/complaints/export_complaints.xlsx", {
+    params: {
+      "q[search_cont]": searchValue,
+      token: token,
+    },
+    responseType: "blob",
+  });
+
+
 
 
 export const getCARItems = async (ticketId) =>
@@ -9978,25 +9968,13 @@ export const getRoutinePendingCount = async (ids) =>
     },
   });
 
-export const getFilterData = async (
-  catId,
-  issueStatId,
-  prio_count,
-  assign_eq,
-  building_id,
-  floor_id,
-  unit_id,
-  startDate,
-  endDate
-) =>
-  axiosInstance.get(
-    `/pms/admin/complaints.json?q[search_cont]=${catId}&q[search_cont]=${issueStatId}&q[search_cont]=${prio_count}&q[search_cont]=${assign_eq}&q[search_cont]=${building_id}&q[search_cont]=${floor_id}&q[search_cont]=${unit_id}&q[search_cont]=${startDate}&q[search_cont]=${endDate}`,
-    {
-      params: {
-        token: token,
-      },
-    }
-  );
+export const getFilterData = async (searchValue) =>
+  axiosInstance.get("/pms/admin/complaints.json", {
+    params: {
+      "q[search_cont]": searchValue,
+      token: token,
+    },
+  });
 
 export const getComplaintMode = async () =>
   axiosInstance.get(`/complaint_modes.json`, {
