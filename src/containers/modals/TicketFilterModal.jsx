@@ -74,34 +74,39 @@ const TicketFilterModal = ({
   };
 
     
-  const handleFilterData = async () => {
-    // Split created_by by space
-    try {
-      const [firstName = "", lastName = ""] = (formData.createBy || "").split(
-        " "
-      );
-      const response = await getFilterData(
-        formData.category_id,
-        formData.issueStatusId,
-        formData.priorityLevel,
-        formData.assign,
+const handleFilterData = async () => {
+  try {
+    const [firstName = "", lastName = ""] =
+      (formData.createBy || "").split(" ");
 
-        firstName,
-        lastName,
-        formData.building_id,
-        formData.floor_id,
-        formData.unit_id,
-        formData.startDate,
-        formData.endDate
-      );
-      console.log(response);
-      setFilteredData(response.data.complaints);
-      setFilterParams(formData);
-      onclose();
-    } catch (error) {
-      console.error("Error filter Data:", error);
-    }
-  };
+    // Combine all filter fields into one string
+    const searchValue = [
+      formData.category_id,
+      formData.issueStatusId,
+      formData.priorityLevel,
+      formData.assign,
+      firstName,
+      lastName,
+      formData.building_id,
+      formData.floor_id,
+      formData.unit_id,
+      formData.startDate,
+      formData.endDate,
+    ]
+      .filter(Boolean) // remove empty values
+      .join(" ");      // join with space
+
+    const response = await getFilterData(searchValue);
+
+    setFilteredData(response.data.complaints);
+    setFilterParams(formData);
+    onclose();
+
+  } catch (error) {
+    console.error("Error filter Data:", error);
+  }
+};
+
 
   const handleReset = () => {
     fetchData(currentPage, perPage);
