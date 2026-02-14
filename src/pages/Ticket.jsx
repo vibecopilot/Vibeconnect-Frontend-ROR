@@ -377,41 +377,68 @@ const Ticket = () => {
     }
   };
 
+  // const exportAllToExcel = async () => {
+  //   try {
+  //     const [firstName = "", lastName = ""] = (filterParams.createBy || "").split(" ");
+
+  //     const response = await getAdminExport(
+  //       filterParams.category_id,
+  //       filterParams.issueStatusId,
+  //       filterParams.priorityLevel,
+  //       filterParams.assign,
+  //       firstName,
+  //       lastName,
+  //       filterParams.building_id,
+  //       filterParams.floor_id,
+  //       filterParams.unit_id,
+  //       filterParams.startDate,
+  //       filterParams.endDate
+  //     );
+
+  //     // Create a blob URL and trigger download
+  //     const blob = new Blob([response.data], {
+  //       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  //     });
+  //     const url = window.URL.createObjectURL(blob);
+  //     const link = document.createElement("a");
+  //     link.href = url;
+  //     link.setAttribute("download", `tickets_export_${new Date().toISOString().split("T")[0]}.xlsx`);
+  //     document.body.appendChild(link);
+  //     link.click();
+  //     link.remove();
+  //     window.URL.revokeObjectURL(url);
+
+  //   } catch (error) {
+  //     console.error('Error exporting data:', error);
+  //   }
+  // };
+
   const exportAllToExcel = async () => {
-    try {
-      const [firstName = "", lastName = ""] = (filterParams.createBy || "").split(" ");
+  try {
+    const searchValue = filterParams.globalSearch || "";
 
-      const response = await getAdminExport(
-        filterParams.category_id,
-        filterParams.issueStatusId,
-        filterParams.priorityLevel,
-        filterParams.assign,
-        firstName,
-        lastName,
-        filterParams.building_id,
-        filterParams.floor_id,
-        filterParams.unit_id,
-        filterParams.startDate,
-        filterParams.endDate
-      );
+    const response = await getAdminExport(searchValue);
 
-      // Create a blob URL and trigger download
-      const blob = new Blob([response.data], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", `tickets_export_${new Date().toISOString().split("T")[0]}.xlsx`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
+    const blob = new Blob([response.data], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
 
-    } catch (error) {
-      console.error('Error exporting data:', error);
-    }
-  };
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute(
+      "download",
+      `tickets_export_${new Date().toISOString().split("T")[0]}.xlsx`
+    );
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+
+  } catch (error) {
+    console.error("Error exporting data:", error);
+  }
+};
 
   return (
     <section className="flex">
