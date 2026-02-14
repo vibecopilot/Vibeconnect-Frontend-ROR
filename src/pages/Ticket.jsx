@@ -25,6 +25,8 @@ import { IoIosArrowDown } from "react-icons/io";
 import { color } from "highcharts";
 const Ticket = () => {
   const [filteredData, setFilteredData] = useState([]);
+  const [filterSearch, setFilterSearch] = useState([]);
+
   const [searchText, setSearchText] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [ticketTypeCounts, setTicketTypeCounts] = useState({});
@@ -310,7 +312,8 @@ const Ticket = () => {
       try {
         const searchAllTickets = await getAdminComplaints();
         const searchResp = searchAllTickets?.data?.complaints;
-        setFilter(searchResp);
+       setFilterSearch(searchResp);
+
         console.log(searchResp);
       } catch (error) {
         console.log(error);
@@ -330,33 +333,29 @@ const Ticket = () => {
   };
 
 
-  const handleSearch = (e) => {
-    const value = e.target.value.toLowerCase();
-    setSearchText(value);
+const handleSearch = (e) => {
+  const value = e.target.value.toLowerCase();
+  setSearchText(value);
 
-    if (!value) {
-      fetchData(currentPage, perPage); // restore server pagination
-      return;
-    }
+  if (!value) {
+    setFilteredData(complaints);
+    return;
+  }
 
-    const filtered = filterSearch.filter((item) => {
-      return (
-        (selectedStatus === "all" ||
-          item.issue_status?.toLowerCase() === selectedStatus.toLowerCase()) &&
-        (
-          item.ticket_number?.toLowerCase().includes(value) ||
-          item.category_type?.toLowerCase().includes(value) ||
-          item.issue_type?.toLowerCase().includes(value) ||
-          item.heading?.toLowerCase().includes(value) ||
-          item.priority?.toLowerCase().includes(value) ||
-          item.unit?.toLowerCase().includes(value)
-        )
-      );
-    });
+  const filtered = complaints.filter((item) => {
+    return (
+      item.ticket_number?.toString().toLowerCase().includes(value) ||
+      item.category_type?.toLowerCase().includes(value) ||
+      item.issue_type?.toLowerCase().includes(value) ||
+      item.heading?.toLowerCase().includes(value) ||
+      item.priority?.toLowerCase().includes(value) ||
+      item.unit?.toLowerCase().includes(value)
+    );
+  });
 
-    setFilteredData(filtered);
-    setTotalRows(filtered.length); // IMPORTANT
-  };
+  setFilteredData(filtered);
+};
+
 
 
   useEffect(() => {
