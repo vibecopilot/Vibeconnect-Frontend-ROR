@@ -2,13 +2,13 @@ import React, { useState, useRef, useCallback, useEffect } from "react";
 import image from "/profile.png";
 import { useSelector } from "react-redux";
 import Webcam from "react-webcam";
-import { postNewVisitor } from "../../api";
+import { getHostList, postNewVisitor } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import toast from "react-hot-toast";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 const AddSelfRegistration = () => {
-  const [selectedVisitorType, setSelectedVisitorType] = useState("Guest");
+  const [selectedVisitorType, setSelectedVisitorType] = useState("Guest-SelfRegistration");
   const [showWebcam, setShowWebcam] = useState(false);
   const [hosts, setHosts] = useState([]);
   // const siteId = getItemInLocalStorage("SITEID");
@@ -64,13 +64,7 @@ const AddSelfRegistration = () => {
 
         console.log("Extracted site_id:", siteId);
         console.log("Extracted token:", token);
-        const usersResp = await axios.get(
-          `https://admin.vibecopilot.ai/visitors/fetch_potential_hosts.json`,
-          {
-            params: { site_id: siteId, token: token },
-          }
-        );
-
+        const usersResp = await getHostList(siteId)
         console.log("API Response:", usersResp.data);
 
         if (usersResp.data.hosts) {
@@ -118,16 +112,9 @@ const AddSelfRegistration = () => {
       const blob = await response.blob();
       postData.append("visitor[profile_pic]", blob, "visitor_image.jpg");
     }
-
     try {
       toast.loading("Creating new visitor Please wait!");
-      const visitResp = await axios.post(
-        `https://admin.vibecopilot.ai/visitors.json`,
-        postData,
-        {
-          params: { token: token },
-        }
-      );
+      const visitResp = await postNewVisitor(postData);
       const visitorId = visitResp.data.id;
       navigate(
         `/admin/passes/self-registration-details/${visitorId}?token=${token}`
@@ -196,7 +183,7 @@ const AddSelfRegistration = () => {
                   id="Guest"
                   name="attendance"
                   value="Guest"
-                  checked={selectedVisitorType === "Guest"}
+                  checked={selectedVisitorType === "Guest-SelfRegistration"}
                   onChange={handleVisitorTypeChange}
                 />
                 <label htmlFor="Guest" className="font-semibold ">
