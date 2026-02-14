@@ -99,7 +99,7 @@ const handleFilterData = async () => {
     const response = await getFilterData(searchValue);
 
     setFilteredData(response.data.complaints);
-    setFilterParams(formData);
+    setFilterParams({ ...formData, globalSearch: searchValue });
     onclose();
 
   } catch (error) {
