@@ -7594,6 +7594,8 @@ function App() {
       <Route path="/setup/pets/add" element={<PetsAdd />} />
       <Route path="/setup/pets/view/:id" element={<PetsView />} />
       <Route path="/setup/pets/edit/:id" element={<PetsEdit />} />
+      <Route path="/setup/pets/edit/:id" element={<PetsEdit />} />
+
 
 
       </Routes>
