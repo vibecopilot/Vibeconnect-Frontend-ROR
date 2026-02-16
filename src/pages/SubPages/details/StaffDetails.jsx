@@ -23,6 +23,8 @@ const StaffDetails = () => {
     const fetchDetails = async () => {
       try {
         const res = await getStaffDetails(id);
+       
+
         setDetails(res.data);
       } catch (error) {
         console.log(error);
@@ -51,29 +53,31 @@ const StaffDetails = () => {
   const staffLogs = details.staff_logs || [];
 
   const staffLogColumns = [
-    {
-      name: "Sr. No.",
-      selector: (row, index) => index + 1,
-    },
-    {
-      name: "Name",
-      selector: (row) => row.name || `${details.firstname} ${details.lastname}`,
-    },
-    {
-      name: "Check In",
-      selector: (row) =>
-        row.check_in
-          ? FormattedDateToShowProperly(row.check_in)
-          : "--",
-    },
-    {
-      name: "Check Out",
-      selector: (row) =>
-        row.check_out
-          ? FormattedDateToShowProperly(row.check_out)
-          : "--",
-    },
-  ];
+  {
+    name: "Sr. No.",
+    selector: (row, index) => index + 1,
+  },
+  {
+    name: "Name",
+    selector: (row) => row.name || `${details.firstname} ${details.lastname}`,
+  },
+  {
+    name: "Check In",
+    selector: (row) =>
+      row.check_in
+        ? FormattedDateToShowProperly(row.check_in)
+        : "--",
+  },
+  {
+    name: "Check Out",
+    selector: (row) =>
+      row.check_out
+        ? FormattedDateToShowProperly(row.check_out)
+        : "--",
+  },
+];
+
+
 
   /* ================= FILE HELPERS ================= */
   const isImage = (filePath) => {
