@@ -10,6 +10,8 @@ import Passes from "../Passes";
 import { domainPrefix, getStaff } from "../../api";
 import { dateFormat } from "../../utils/dateUtils";
 import image from "/profile.png";
+import { exportStaffByDate } from "../../api";
+
 
 const Staff = () => {
   const themeColor = useSelector((state) => state.theme.color);
@@ -24,6 +26,12 @@ const Staff = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalRecords, setTotalRecords] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+
+const [showExportModal, setShowExportModal] = useState(false);
+const [startDate, setStartDate] = useState("");
+const [endDate, setEndDate] = useState("");
+
+
 
   // ✅ CSV helpers
   const csvEscape = (v) => {
@@ -43,6 +51,39 @@ const Staff = () => {
     a.click();
     window.URL.revokeObjectURL(url);
   };
+
+  const handleExportByDate = async () => {
+  if (!startDate || !endDate) {
+    alert("Please select start and end date");
+    return;
+  }
+
+  if (endDate < startDate) {
+    alert("End date cannot be before start date");
+    return;
+  }
+
+  try {
+    const response = await exportStaffByDate(startDate, endDate);
+
+    const blob = new Blob([response.data], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "staff_export.xlsx";
+    a.click();
+    window.URL.revokeObjectURL(url);
+
+    setShowExportModal(false);
+  } catch (error) {
+    console.error("Export failed:", error);
+    alert("Export failed");
+  }
+};
+
 
   // ✅ Export ALL staff data (fetch all pages from API)
   const exportStaffToCSVAll = async () => {
@@ -271,12 +312,12 @@ const Staff = () => {
 
           <span className="flex gap-4">
             {/* ✅ Export button */}
-            <button
-              onClick={exportStaffToCSVAll}
-              className="border-2 border-blue-600 text-blue-600 font-semibold transition-all p-2 rounded-md hover:bg-blue-50 cursor-pointer text-center flex items-center gap-2 justify-center"
-            >
-              Export
-            </button>
+          <button
+  onClick={() => setShowExportModal(true)}
+  className="border-2 border-blue-600 text-blue-600 font-semibold transition-all p-2 rounded-md hover:bg-blue-50 cursor-pointer text-center flex items-center gap-2 justify-center"
+>
+  Export
+</button>
 
             <Link
               to={"/admin/passes/add-staff"}
@@ -301,6 +342,55 @@ const Staff = () => {
             setCurrentPage(1);
           }}
         />
+      {showExportModal && (
+  <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+    <div className="bg-white p-6 rounded-lg w-96 shadow-lg relative">
+
+      <h2 className="text-lg font-semibold mb-4 text-center">
+        Export Staff Data
+      </h2>
+
+      <label className="block mb-1 font-medium">From Date</label>
+      <input
+        type="date"
+        value={startDate}
+        onChange={(e) => setStartDate(e.target.value)}
+        className="w-full border p-2 rounded mb-3"
+      />
+
+      <label className="block mb-1 font-medium">To Date</label>
+      <input
+        type="date"
+        value={endDate}
+        onChange={(e) => setEndDate(e.target.value)}
+        className="w-full border p-2 rounded mb-4"
+      />
+
+      <button
+        onClick={handleExportByDate}
+        className="w-full bg-purple-600 text-white p-2 rounded mb-2"
+      >
+        Export by Date
+      </button>
+
+      <button
+        onClick={exportStaffToCSVAll}
+        className="w-full bg-green-500 text-white p-2 rounded"
+      >
+        Export All to CSV
+      </button>
+
+      <button
+        onClick={() => setShowExportModal(false)}
+        className="absolute top-2 right-3 text-gray-500 text-xl"
+      >
+        ×
+      </button>
+    </div>
+  </div>
+)}
+
+
       </div>
     </section>
   );
