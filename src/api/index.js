@@ -2903,109 +2903,114 @@ export const editVisitorDetails = async (id, data) =>
     },
   });
 
-export const getVisitorCategory = async () =>
-  axiosInstance.get("/visitor_staff_category.json", {
-    params: {
-      token: token,
-    },
-  });
+// export const getVisitorCategory = async () =>
+//   axiosInstance.get("/visitor_staff_category.json", {
+//     params: {
+//       token: token,
+//     },
+//   });
 
-export const postVisitorCategory = async (data) =>
-  axiosInstance.post("/visitor_staff_categories.json", data, {
-    params: {
-      token: "e6fbf77f4fbb5a72c4150e495c961972f0f14059d8a6670f",
-    }, 
-  });
 
-export const deleteVisitorCategory = async (id) =>
-  axiosInstance.delete(`/visitor_categories/${id}.json`, {
-    params: {
-      token: token,
-    },
-  });
 
-  export const getVisitorSubCategory = () =>
-  axiosInstance.get("/visitor_sub_categories.json", {
-    params: {
-      token: "140494b3f6c6431bc0964ee3458411ccaa10f7617b197b35",
-    },
-  });
 
-export const deleteVisitorSubCategory = (id) =>
-  axiosInstance.delete(`/visitor_sub_categories/${id}.json`, {
-    params: {
-      token: "140494b3f6c6431bc0964ee3458411ccaa10f7617b197b35",
-    },
-  });
 
-export const postVisitorSubCategory = async (data) =>
-  axiosInstance.post("/visitor_sub_categories.json", data, {
-    params: {
-      token: "140494b3f6c6431bc0964ee3458411ccaa10f7617b197b35",
-    },
-  });
 
-export const getVisitorSubCategoryDetails = async (id) =>
-  axiosInstance.get(`/visitor_sub_categories/${id}.json`, {
-    params: {
-      token: "140494b3f6c6431bc0964ee3458411ccaa10f7617b197b35",
-    },
-  });
+// export const postVisitorCategory = async (data) =>
+//   axiosInstance.post("/visitor_staff_categories.json", data, {
+//     params: {
+//       token: "e6fbf77f4fbb5a72c4150e495c961972f0f14059d8a6670f",
+//     }, 
+//   });
+
+// export const deleteVisitorCategory = async (id) =>
+//   axiosInstance.delete(`/visitor_categories/${id}.json`, {
+//     params: {
+//       token: token,
+//     },
+//   });
+
+  // export const getVisitorSubCategory = () =>
+  // axiosInstance.get("/visitor_sub_categories.json", {
+  //   params: {
+  //     token: "140494b3f6c6431bc0964ee3458411ccaa10f7617b197b35",
+  //   },
+  // });
+
+// export const deleteVisitorSubCategory = (id) =>
+//   axiosInstance.delete(`/visitor_sub_categories/${id}.json`, {
+//     params: {
+//       token: "140494b3f6c6431bc0964ee3458411ccaa10f7617b197b35",
+//     },
+//   });
+
+// export const postVisitorSubCategory = async (data) =>
+//   axiosInstance.post("/visitor_sub_categories.json", data, {
+//     params: {
+//       token: "140494b3f6c6431bc0964ee3458411ccaa10f7617b197b35",
+//     },
+//   });
+
+// export const getVisitorSubCategoryDetails = async (id) =>
+//   axiosInstance.get(`/visitor_sub_categories/${id}.json`, {
+//     params: {
+//       token: "140494b3f6c6431bc0964ee3458411ccaa10f7617b197b35",
+//     },
+//   });
 
 export const editVisitorSubCategory = async (id, data) =>
   axiosInstance.patch(`/visitor_sub_categories/${id}.json`, data, {
     params: {
-      token: "140494b3f6c6431bc0964ee3458411ccaa10f7617b197b35",
-    },
-  });
-
-export const getVisitorCategoryDetails = async (id) =>
-  axiosInstance.get(`/visitor_staff_categories/${id}.json`, {
-    params: {
       token: "e6fbf77f4fbb5a72c4150e495c961972f0f14059d8a6670f",
     },
   });
 
-export const editVisitorCategory = async (id, data) =>
-  axiosInstance.patch(`/visitor_staff_categories/${id}.json`, data, {
-    params: {
-      token: "e6fbf77f4fbb5a72c4150e495c961972f0f14059d8a6670f",
-    },
-  });
+// export const getVisitorCategoryDetails = async (id) =>
+//   axiosInstance.get(`/visitor_staff_categories/${id}.json`, {
+//     params: {
+//       token: "e6fbf77f4fbb5a72c4150e495c961972f0f14059d8a6670f",
+//     },
+//   });
 
-export const getVisitorCategoryTypeDetails = async (id) =>
-  axiosInstance.get(`/visitor_categories/${id}.json`, {
-    params: {
-      token: "140494b3f6c6431bc0964ee3458411ccaa10f7617b197b35",
-    },
-  });
+// export const editVisitorCategory = async (id, data) =>
+//   axiosInstance.patch(`/visitor_staff_categories/${id}.json`, data, {
+//     params: {
+//       token: "e6fbf77f4fbb5a72c4150e495c961972f0f14059d8a6670f",
+//     },
+//   });
+
+// export const getVisitorCategoryTypeDetails = async (id) =>
+//   axiosInstance.get(`/visitor_categories/${id}.json`, {
+//     params: {
+//       token: "140494b3f6c6431bc0964ee3458411ccaa10f7617b197b35",
+//     },
+//   });
 
 // ✅ LIST (EDIT MODAL USES THIS)
-export const getVisitorCategories = () => {
-  return axiosInstance.get("/visitor_categories/json", {
-    params: {
-      token: "140494b3f6c6431bc0964ee3458411ccaa10f7617b197b35"
-    }
-  });
-};
+// export const getVisitorCategories = () => {
+//   return axiosInstance.get("/visitor_categories/json", {
+//     params: {
+//       token: "140494b3f6c6431bc0964ee3458411ccaa10f7617b197b35"
+//     }
+//   });
+// };
 
 // ✅ CREATE
-export const postVisitorCategoryType = (data) => {
-  return axiosInstance.post("/visitor_categories.json", data, {
-    params: {
-      token: "140494b3f6c6431bc0964ee3458411ccaa10f7617b197b35"
-    }
-  });
-};
+// export const postVisitorCategoryType = (data) => {
+//   return axiosInstance.post("/visitor_categories.json", data, {
+//     params: {
+//       token: "140494b3f6c6431bc0964ee3458411ccaa10f7617b197b35"
+//     }
+//   });
+// };
 
 // ✅ UPDATE
-export const editVisitorCategoryType = (id, data) => {
-  return axiosInstance.put(`/visitor_categories/${id}.json`, data, {
-    params: {
-      token: "140494b3f6c6431bc0964ee3458411ccaa10f7617b197b35"
-    }
-  });
-};
+// export const editVisitorCategoryType = (id, data) => {
+//   return axiosInstance.put(`/visitor_categories/${id}.json`, data, {
+//     params: {
+//       token: "e6fbf77f4fbb5a72c4150e495c961972f0f14059d8a6670f"
+//     }
+//   });
+// };
 
 
 // Visitor Alert Config APIs
@@ -10833,6 +10838,160 @@ export const updatePet = async (id, formData) =>
   axiosInstance.delete(`/pets/${id}.json`, {
     params: { token },
   });
+
+
+  // Visitor Categories API
+
+// export const getVisitorCategories = async (page = 1, perpage = 10) =>
+//   axiosInstance.get("/visitor_categories.json", {
+//     params: {
+//       token: token,
+//       Page: page,
+//       Per_Page: perpage,
+//     },
+//   });
+
+export const getVisitorCategoryById = async (id) =>
+  axiosInstance.get(`/visitor_categories/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+
+// export const postVisitorCategory = async (formData) =>
+//   axiosInstance.post(`/visitor_categories.json?token=${token}`, formData, {
+//     headers: {
+//       "Content-Type": "multipart/form-data",
+//     },
+//   });
+
+export const updateVisitorCategory = async (id, formData) =>
+  axiosInstance.put(`/visitor_categories/${id}.json?token=${token}`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+export const deleteVisitorCategory = async (id) =>
+  axiosInstance.delete(`/visitor_categories/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+
+// Visitor Categories API
+export const getVisitorCategories = async (page = 1, perpage = 100) =>
+  axiosInstance.get("/visitor_categories.json", {
+    params: {
+      token: token,  // token imported or retrieved from localStorage
+      Page: page,
+      Per_Page: perpage,
+       t: Date.now(),
+      
+    },
+  });
+
+  export const postVisitorCategory = async (formData, token) =>
+  axiosInstance.post(
+    "/visitor_categories.json",
+    formData,
+    {
+      params: { token },
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+
+  // Edit Visitor Category
+export const editVisitorCategory = async (id, formData) =>
+  axiosInstance.put(
+    `/visitor_categories/${id}.json?token=${token}`,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+
+
+  // export const deleteVisitorCategory = async (id) =>
+  // axiosInstance.delete(`/visitor_categories/${id}.json`, {
+  //   params: { token: token },
+  // });
+
+  // Visitor Sub Categories API
+
+export const getVisitorSubCategories = async (page = 1, perpage = 10) =>
+  axiosInstance.get("/visitor_sub_categories.json", {
+    params: {
+      token: token,
+      Page: page,
+      Per_Page: perpage,
+    },
+  });
+
+export const getVisitorSubCategoryById = async (id) =>
+  axiosInstance.get(`/visitor_sub_categories/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+
+export const postVisitorSubCategory = async (formData) =>
+  axiosInstance.post(`/visitor_sub_categories.json?token=${token}`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+export const updateVisitorSubCategory = async (id, formData) =>
+  axiosInstance.put(
+    `/visitor_sub_categories/${id}.json?token=${token}`,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+
+
+  export const deleteVisitorSubCategory = async (id) =>
+  axiosInstance.delete(`/visitor_sub_categories/${id}.json?token=${token}`);
+
+// aminities
+
+// Amenities API
+export const getAmenities = async (page = 1, per_page = 10) =>
+  axiosInstance.get("/amenities.json", {
+    params: {
+      token: token,
+      "q[is_hotel_eq]": true,
+      page: page,
+      per_page: per_page,
+    },
+  });
+
+  export const postAmenity = async (formData) =>
+  axiosInstance.post(
+    `/amenities.json?token=${token}`,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+
+
+
+
+
+
+
+
 
 
   
