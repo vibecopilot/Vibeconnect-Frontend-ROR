@@ -10986,6 +10986,35 @@ export const getAmenities = async (page = 1, per_page = 10) =>
   );
 
 
+  // Staff Export API
+export const exportStaffByDate = async (startDate, endDate) =>
+  axiosInstance.get("/staffs/export_staffs.xlsx", {
+    params: {
+      token: token,
+      start_date: startDate,
+      end_date: endDate,
+    },
+    responseType: "blob",   // 👈 VERY IMPORTANT (file download ke liye)
+  });
+
+
+
+  axiosInstance.interceptors.request.use((config) => {
+  const siteId = getItemInLocalStorage("SITEID");
+
+  if (siteId) {
+    config.params = {
+      ...config.params,
+      site_id: siteId,
+    };
+  }
+
+  return config;
+});
+
+
+
+
 
 
 
