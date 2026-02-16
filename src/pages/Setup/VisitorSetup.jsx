@@ -5,6 +5,8 @@ import { RiDeleteBin5Line } from "react-icons/ri";
 import { useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import axios from "axios";
+import { getVisitorCategories } from "../../api";
+
 
 import SetupNavbar from "../../components/navbars/SetupNavbar";
 import Table from "../../components/table/Table";
@@ -42,6 +44,9 @@ const IconCell = ({ icon }) => {
     </div>
   );
 };
+
+ 
+
 
 function VisitorSetup() {
   const themeColor = useSelector((state) => state.theme.color);
@@ -81,7 +86,8 @@ useEffect(() => {
 
     setLoading(true);
 
-    const fetchStaffCategories = async () => {
+
+const fetchStaffCategories = async () => {
       try {
         const res = await axios.get(`${BASE_URL}/visitor_staff_categories.json?token=${token}`);
         console.log("Staff Categories Response:", res.data);
@@ -97,33 +103,29 @@ useEffect(() => {
       }
     };
 
-    const fetchVisitorCategories = async () => {
-      try {
-        const res = await axios.get(`${BASE_URL}/visitor_categories.json?token=${token}`);
-        console.log("Visitor Categories Response:", res.data);
-        const visitorData = res.data?.visitor_categories || 
-                           res.data?.data?.visitor_categories || 
-                           (Array.isArray(res.data) ? res.data : []) ||
-                           [];
-        setVisitorCategories(Array.isArray(visitorData) ? visitorData : []);
-      } catch (err) {
-        console.error("Error fetching visitor categories:", err);
-        try {
-          console.log("Trying alternative endpoint: /visitor_categories/json");
-          const altRes = await axios.get(`${BASE_URL}/visitor_categories/json?token=${token}`);
-          console.log("Alternative Visitor Categories Response:", altRes.data);
-          const visitorData = altRes.data?.visitor_categories || 
-                             altRes.data?.data?.visitor_categories || 
-                             (Array.isArray(altRes.data) ? altRes.data : []) ||
-                             [];
-          setVisitorCategories(Array.isArray(visitorData) ? visitorData : []);
-        } catch (altErr) {
-          console.error("Alternative endpoint also failed:", altErr);
-          setVisitorCategories([]);
-          toast.error("Failed to load visitor categories (Server Error 500)");
-        }
-      }
-    };
+  const fetchVisitorCategories = async () => {
+    try {
+       const res = await getVisitorCategories(1, 100); // page, perpage
+
+    console.log("Visitor Categories Response:", res.data);
+
+    const visitorData =
+      res.data?.visitor_categories ||
+      res.data?.data?.visitor_categories ||
+      (Array.isArray(res.data) ? res.data : []) ||
+      [];
+
+    setVisitorCategories(Array.isArray(visitorData) ? visitorData : []);
+     console.log("After setVisitorCategories:", visitorData);
+     console.log("Final Visitor Data:", visitorData);
+
+  } catch (err) {
+    console.error("Error fetching visitor categories:", err);
+    setVisitorCategories([]);
+    toast.error("Failed to load visitor categories");
+  }
+};
+
 
     const fetchSubCategories = async () => {
       try {
@@ -152,6 +154,12 @@ useEffect(() => {
 
   fetchData();
 }, [reload, token]);
+
+
+useEffect(() => {
+  console.log("Reload changed:", reload);
+}, [reload]);
+
 
 
 
@@ -509,7 +517,9 @@ useEffect(() => {
             setAdded={() => setReload((p) => !p)}
             onclose={() => setAddVisitorCategoryModal(false)}
           />
-        )}
+        )} 
+
+        
 
         {addVisitorSubCategoryModal && (
           <AddVisitorSetupModal
@@ -560,3 +570,7 @@ useEffect(() => {
 }
 
 export default VisitorSetup;
+
+
+
+
