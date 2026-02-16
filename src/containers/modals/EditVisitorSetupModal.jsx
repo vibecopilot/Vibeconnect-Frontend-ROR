@@ -6,7 +6,7 @@ import ModalWrapper from "./ModalWrapper";
 
 const EditVisitorSetupModal = ({ onclose, catId, setAdded, editType }) => {
   const themeColor = useSelector((state) => state.theme.color);
-  const token = "140494b3f6c6431bc0964ee3458411ccaa10f7617b197b35";
+  const token = "e6fbf77f4fbb5a72c4150e495c961972f0f14059d8a6670f";
   const BASE_URL = "https://admin.vibecopilot.ai";
 
   const [name, setName] = useState("");
