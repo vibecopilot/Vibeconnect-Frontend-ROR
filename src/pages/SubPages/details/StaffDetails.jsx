@@ -50,30 +50,35 @@ const StaffDetails = () => {
   ];
 
   /* ================= STAFF LOGS ================= */
-  const staffLogs = details.staff_logs || [];
+  const staffLogs = details.attendances || [];
+
 
   const staffLogColumns = [
   {
     name: "Sr. No.",
-    selector: (row, index) => index + 1,
+    cell: (row, index) => index + 1,
   },
   {
-    name: "Name",
-    selector: (row) => row.name || `${details.firstname} ${details.lastname}`,
+    name: "Staff Name",
+    selector: (row) => row.staff_name || "--",
+  },
+  {
+    name: "Mobile",
+    selector: (row) => row.staff_number || "--",
   },
   {
     name: "Check In",
     selector: (row) =>
-      row.check_in
-        ? FormattedDateToShowProperly(row.check_in)
+      row.punched_in_at
+        ? FormattedDateToShowProperly(row.punched_in_at)
         : "--",
   },
   {
     name: "Check Out",
     selector: (row) =>
-      row.check_out
-        ? FormattedDateToShowProperly(row.check_out)
-        : "--",
+      row.punched_out_at
+        ? FormattedDateToShowProperly(row.punched_out_at)
+        : "Still Working",
   },
 ];
 
