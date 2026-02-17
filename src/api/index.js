@@ -77,13 +77,15 @@ export const downloadQrCode = async (ids) =>
     },
   });
 
-export const softServiceDownloadQrCode = async (ids) =>
-  axiosInstance.get(`/soft_services/print_qr_codes?soft_service_ids=${ids}`, {
-    responseType: "blob",
-    params: {
-      token: token,
-    },
-  });
+export const softServiceDownloadQrCode = (ids) => {
+  return axios.post(
+    "/soft_services/download_qr_code",
+    { ids: ids },
+    {
+      responseType: "blob",   // 🔥 VERY IMPORTANT
+    }
+  );
+};
 
 export const getSiteAsset = async (page) =>
   axiosInstance.get(`/site_assets.json`, {
@@ -11011,6 +11013,11 @@ export const exportStaffByDate = async (startDate, endDate) =>
 
   return config;
 });
+
+
+
+
+
 
 
 
