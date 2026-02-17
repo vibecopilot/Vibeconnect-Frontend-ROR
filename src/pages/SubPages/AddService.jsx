@@ -322,14 +322,22 @@ const AddService = () => {
             fieldName={"attachments"}
             isMulti={true}
           />
-          <div className="md:flex grid md:grid-cols-2 gap-2 my-5 justify-center">
-            <button
-              className="bg-black text-white p-2 px-4 rounded-md font-medium"
-              onClick={handleAddService}
-            >
-              Save & Show Details
-            </button>
-          </div>
+         <div className="md:flex grid md:grid-cols-2 gap-2 my-5 justify-center">
+  <button
+    className="bg-black text-white p-2 px-4 rounded-md font-medium"
+    onClick={handleAddService}
+  >
+    Save & Show Details
+  </button>
+
+  <button
+    className="bg-gray-500 text-white p-2 px-4 rounded-md font-medium"
+    onClick={() => navigate("/services/soft-service")}
+  >
+    Cancel
+  </button>
+</div>
+
         </div>
       </div>
     </section>
