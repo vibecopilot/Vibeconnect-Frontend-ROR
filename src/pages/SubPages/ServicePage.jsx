@@ -107,24 +107,48 @@ const ServicePage = () => {
     setSelectedRows(rows.map((row) => row.id));
   };
 
-  const handleQrDownload = async () => {
-    if (!selectedRows.length) return toast.error("Please select at least one data");
+ const handleQrDownload = async () => {
+  if (!selectedRows.length) {
+    return toast.error("Please select at least one data");
+  }
 
-    toast.loading("Downloading QR...");
-    try {
-      const response = await softServiceDownloadQrCode(selectedRows);
-      const blob = new Blob([response.data], { type: "application/pdf" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = "qr_codes.pdf";
-      link.click();
-      toast.dismiss();
-      toast.success("Downloaded successfully");
-    } catch {
-      toast.dismiss();
-      toast.error("Something went wrong");
+  const toastId = toast.loading("Downloading QR...");
+
+  try {
+    console.log("Selected Rows:", selectedRows);
+
+    const response = await softServiceDownloadQrCode(selectedRows);
+
+    console.log("Response:", response);
+
+    const blob = new Blob([response.data], { type: "application/pdf" });
+    const url = window.URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "qr_codes.pdf";
+    document.body.appendChild(link);
+    link.click();
+
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+
+    toast.success("Downloaded successfully", { id: toastId });
+
+  } catch (error) {
+    console.log("Full Error:", error);
+    console.log("Error Response:", error.response);
+
+    // 🔥 This will show backend JSON error even if it's blob
+    if (error.response?.data instanceof Blob) {
+      const text = await error.response.data.text();
+      console.log("Backend Error Message:", text);
     }
-  };
+
+    toast.error("Download failed", { id: toastId });
+  }
+};
+
 
   /* ===== IMPORT EXCEL ===== */
   const handleImportExcel = () => {
@@ -253,9 +277,20 @@ const ServicePage = () => {
                 Import
               </button>
 
-              <button className="bg-black text-white px-4 py-2 rounded">
-                Download Sample Format
-              </button>
+             <button
+  onClick={() => {
+    const link = document.createElement("a");
+    link.href = "/sample.pdf";   // jo bhi file ka naam hai
+    link.download = "sample.pdf";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }}
+  className="bg-black text-white px-4 py-2 rounded"
+>
+  Download Sample Format
+</button>
+
             </div>
           </div>
         </div>
