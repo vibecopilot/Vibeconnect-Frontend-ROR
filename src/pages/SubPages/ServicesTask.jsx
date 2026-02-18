@@ -91,7 +91,7 @@ const ServicesTask = () => {
   useEffect(() => {
     try {
       const fetchServiceRoutine = async () => {
-        const ServiceRoutineResponse = await getServicesRoutineList(pageNo, perPage, startDate, endDate);
+        const ServiceRoutineResponse = await getServicesRoutineList(pageNo, perPage);
         const filteredServiceTask = ServiceRoutineResponse.data.activities.filter(asset => asset.soft_service_name);
         console.log("task data", filteredServiceTask)
         console.log("task data resp", ServiceRoutineResponse)
@@ -130,37 +130,50 @@ const ServicesTask = () => {
       }
     }
   };
-  const handleRoutineSearch = (event) => {
-    const searchValue = event.target.value;
-    setSearchRoutineCheck(searchValue);
-    if (searchValue.trim() === "") {
-      setFilteredRoutineData(routines);
+ const handleRoutineSearch = (event) => {
+  const searchValue = event.target.value;
+  setSearchRoutineCheck(searchValue);
+
+  if (searchValue.trim() === "") {
+    setFilteredRoutineData(routines);
+  } else {
+    const filteredResults = routines.filter((item) =>
+      item.soft_service_name &&
+      item.soft_service_name
+        .toLowerCase()
+        .includes(searchValue.toLowerCase())
+    );
+
+    setFilteredRoutineData(filteredResults);
+  }
+};
+
+
+ const handleApplyDateFilter = async () => {
+  try {
+    setPageNo(1); // reset page
+
+    let response;
+
+    if (selectedStatus === "all") {
+      response = await getServicesRoutineList(1, perPage, startDate, endDate);
     } else {
-      const filteredResults = filteredRoutineData.filter((item) => { item.soft_service_name && item.soft_service_name.toLowerCase().includes(searchValue.toLowerCase()) }
-      );
-      setFilteredRoutineData(filteredResults);
-      console.log(filteredResults)
-
+      response = await getSoftServiceStatus(selectedStatus, startDate, endDate);
     }
-  };
 
-  const handleApplyDateFilter = async () => {
-    try {
-      let response;
-      if (selectedStatus === "all") {
-        response = await getServicesRoutineList(pageNo, perPage, startDate, endDate);
-      } else {
-        response = await getSoftServiceStatus(selectedStatus, startDate, endDate);
-      }
-      const filteredServiceTask = response.data.activities.filter(asset => asset.soft_service_name);
-      setFilteredRoutineData(filteredServiceTask);
-      setTotal(response.data.total_pages);
-      setRoutineData(filteredServiceTask);
-      setRoutines(filteredServiceTask);
-    } catch (error) {
-      console.error("Error applying date filter:", error);
-    }
-  };
+    const filteredServiceTask = response.data.activities.filter(
+      asset => asset.soft_service_name
+    );
+
+    setFilteredRoutineData(filteredServiceTask);
+    setTotal(response.data.total_pages);
+    setRoutineData(filteredServiceTask);
+    setRoutines(filteredServiceTask);
+
+  } catch (error) {
+    console.error("Error applying date filter:", error);
+  }
+};
 
   const handleClearDateFilter = async () => {
     setStartDate("");

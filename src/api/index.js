@@ -77,16 +77,18 @@ export const downloadQrCode = async (ids) =>
     },
   });
 
-export const softServiceDownloadQrCode = (ids) => {
-  return axios.post(
-    "/soft_services/download_qr_code",
-    { ids: ids },
-    {
-      responseType: "blob",   // 🔥 VERY IMPORTANT
-    }
-  );
-};
+export const softServiceDownloadQrCode = async (soft_service_ids) => {
+  // Join IDs if multiple are selected
+  const ids = soft_service_ids.join(",");
 
+  return axiosInstance.get(`/soft_services/print_qr_codes`, {
+    params: {
+      soft_service_ids: ids,
+      token: token,  // assuming token is already imported/defined
+    },
+    responseType: "blob", // important to handle PDF download
+  });
+};
 export const getSiteAsset = async (page) =>
   axiosInstance.get(`/site_assets.json`, {
     params: {
@@ -1095,17 +1097,15 @@ export const deleteAssetAssociation = async ({ checklist_id, asset_id }) =>
     },
   });
 
-export const deleteServiceAssociation = async ({
-  checklist_id,
-  soft_service_id,
-}) =>
-  axiosInstance.delete("/activities/bulk_destroy.json", {
+export const deleteServiceAssociation = async (activity_id) =>
+  axiosInstance.delete(`/activities/${activity_id}.json`, {
     params: {
-      checklist_id,
-      soft_service_id: soft_service_id,
       token: token,
     },
   });
+
+
+  
 
 export const getFacitilitySetup = async () => {
   try {
@@ -2252,36 +2252,15 @@ export const postSiteOwner = async (data) =>
       token: token,
     },
   });
-export const getGenericGroupAssetChecklist = async () =>
-  axiosInstance.get(`/generic_infos.json?q[info_type_eq]=checklist`, {
-    params: {
-      token: token,
-    },
-  });
-export const getGenericSubGroupAssetChecklist = async (groupid) =>
-  axiosInstance.get(
-    `/generic_sub_infos.json?q[generic_info_id_eq]=${groupid}`,
-    {
-      params: {
-        token: token,
-      },
-    }
-  );
-export const getGenericGroup = async () =>
-  axiosInstance.get(`/generic_infos.json?q[info_type_eq]=soft_services`, {
-    params: {
-      token: token,
-    },
-  });
-export const getGenericSubGroup = async (groupid) =>
-  axiosInstance.get(
-    `/generic_sub_infos.json?q[generic_info_id_eq]=${groupid}`,
-    {
-      params: {
-        token: token,
-      },
-    }
-  );
+
+
+// export const getGenericGroup = async () =>
+//   axiosInstance.get(`/generic_infos.json?q[info_type_eq]=soft_services`, {
+//     params: {
+//       token: token,
+//     },
+//   });
+
 export const editChecklist = async (data, id) =>
   axiosInstance.put(`/checklists/${id}.json`, data, {
     params: {
@@ -10842,6 +10821,10 @@ export const updatePet = async (id, formData) =>
   });
 
 
+  // QR Code download for Soft Services
+
+
+
   // Visitor Categories API
 
 // export const getVisitorCategories = async (page = 1, perpage = 10) =>
@@ -11013,6 +10996,50 @@ export const exportStaffByDate = async (startDate, endDate) =>
 
   return config;
 });
+
+
+// export const deleteServiceAssociation = (id) =>
+//   axiosInstance.delete(`/service_associations/${id}.json`);
+
+
+//softservices
+
+// Get generic groups for soft services
+
+export const getGenericGroup = async () => {
+  return axiosInstance.get("/generic_infos.json", {
+    params: {
+      "q[info_type_eq]": "soft_services",
+      token: token, // assuming 'token' is imported or defined
+    },
+  });
+};
+
+
+
+export const getGenericSubGroup = async (groupId) =>
+  axiosInstance.get("/generic_sub_infos.json", {
+    params: {
+      "q[generic_info_id_eq]": groupId,
+      token: token,
+    },
+  });
+
+
+  // Example API function
+export const getGenericGroupAssetChecklist = async () => {
+  return axiosInstance.get(`/generic_infos.json?q[info_type_eq]=asset_checklist&token=${token}`);
+};
+
+
+// API to get subgroups for asset checklist
+export const getGenericSubGroupAssetChecklist = async (groupId) => {
+  return axiosInstance.get(`/generic_sub_infos.json?q[generic_info_id_eq]=${groupId}&token=${token}`);
+};
+
+
+
+
 
 
 

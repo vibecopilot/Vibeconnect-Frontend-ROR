@@ -841,6 +841,11 @@ import PetsEdit from "./pages/Setup/Pets/PetsEdit";
 
 
 
+// Adjust the path based on your folder structure
+
+
+
+
 // import PetsAdd from "./pages/Setup/Pets/PetsAdd";
 
 
@@ -2249,6 +2254,18 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
+
+{/* 
+      <Route path="/soft-service" element={<Layout />}>
+  <Route
+    path="schedule-task-details/:id/:taskId"
+    element={<ScheduleTaskDetails />}
+  />
+</Route> */}
+
+
+<Route path="/soft-service/schedule-task-details/:id/:taskId" element={<ServiceTaskDetails />} />
+
         <Route
           path="/admin/copy-checklist/:id"
           element={

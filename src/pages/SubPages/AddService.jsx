@@ -33,102 +33,112 @@ const AddService = () => {
   });
   console.log(formData);
   const buildings = getItemInLocalStorage("Building");
-  useEffect(() => {
-    const fetchChecklistGroup = async () => {
-      try {
-        const ChecklistGroupsResp = await getGenericGroup();
-       
-        console.log("Checklist Group",ChecklistGroupsResp);
-        setGroups(ChecklistGroupsResp.data);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    fetchChecklistGroup();
-  }, []);
-  
-  const handleChange = async (e) => {
-    const fetchSubGroup = async (groupId) => {
-      try {
-        const subCatResp = await getGenericSubGroup(groupId);
-        setSubGroups(
-          subCatResp.data.map((subCat) => ({
-            name: subCat.name,
-            id: subCat.id,
-          }))
-        );
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    async function fetchFloor(floorID) {
-      try {
-        const build = await getFloors(floorID);
-        setFloors(build.data.map((item) => ({ name: item.name, id: item.id })));
-      } catch (e) {
-        console.log(e);
-      }
-    }
-
-    async function getUnit(UnitID) {
-      try {
-        const unit = await getUnits(UnitID);
-        // setUnits(unit.data.map((item) => ({ name: item.name, id: item.id })));
-        console.log(unit);
-        const unitList = unit.data.map((uni) => ({
-          value: uni.id,
-          label: uni.name,
-        }));
-        setUnits(unitList)
-        console.log(unitList)
-      } catch (error) {
-        console.log(error);
-      }
-    }
-
-    if (e.target.type === "select-one" && e.target.name === "building_id") {
-      const BuildID = Number(e.target.value);
-      await fetchFloor(BuildID);
-
-      setFormData({
-        ...formData,
-        building_id: BuildID,
-      });
-    } else if (
-      e.target.type === "select-one" &&
-      e.target.name === "floor_name"
-    ) {
-      const UnitID = Number(e.target.value);
-      await getUnit(UnitID);
-      setFormData({
-        ...formData,
-        floor_id: UnitID,
-      });
-    }else if (
-      e.target.type === "select-one" &&
-      e.target.name === "generic_info_id"
-    ) {
-      const GroupID = Number(e.target.value);
-      await fetchSubGroup(GroupID);
-      setFormData({
-        ...formData,
-        generic_info_id: GroupID,
-      });
-    } else {
-      setFormData({
-        ...formData,
-        [e.target.name]: e.target.value,
-      });
+useEffect(() => {
+  const fetchChecklistGroup = async () => {
+    try {
+      const groupsResp = await getGenericGroup();
+      console.log("Groups Response:", groupsResp.data);
+      setGroups(groupsResp.data);
+    } catch (error) {
+      console.log(error);
     }
   };
+  fetchChecklistGroup();
+}, []);
+
+
+
+  
+ const handleChange = async (e) => {
+  const { name, value } = e.target;
+
+  // Building
+  if (name === "building_id") {
+    const BuildID = Number(value);
+
+    try {
+      const build = await getFloors(BuildID);
+      setFloors(
+        build.data.map((item) => ({
+          name: item.name,
+          id: item.id,
+        }))
+      );
+    } catch (error) {
+      console.log(error);
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      building_id: BuildID,
+    }));
+  }
+
+  // Floor
+  else if (name === "floor_name") {
+    const FloorID = Number(value);
+
+    try {
+      const unit = await getUnits(FloorID);
+      const unitList = unit.data.map((uni) => ({
+        value: uni.id,
+        label: uni.name,
+      }));
+      setUnits(unitList);
+    } catch (error) {
+      console.log(error);
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      floor_id: FloorID,
+    }));
+  }
+
+  // ✅ GROUP (FIXED)
+  else if (name === "generic_info_id") {
+    const GroupID = Number(value)
+
+    setFormData((prev) => ({
+      ...prev,
+      generic_info_id: GroupID,
+      generic_sub_info_id: "", // reset subgroup
+    }));
+
+    try {
+      const response = await getGenericSubGroup(GroupID);
+
+      console.log("Subgroup API Response:", response);
+
+      // IMPORTANT: adjust this if your API is nested
+      setSubGroups(
+        (response.data?.data || response.data || []).map((sub) => ({
+          name: sub.name,
+          id: sub.id,
+        }))
+      );
+    } catch (error) {
+      console.log("Subgroup error:", error);
+    }
+  }
+
+  // Other inputs
+  else {
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  }
+};
+
   const handleFileChange = (files, fieldName) => {
-    // Changed to receive 'files' directly
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [fieldName]: files,
-    });
+    }));
     console.log(fieldName);
   };
+
   const navigate = useNavigate();
   const handleAddService = async () => {
     if (
@@ -263,9 +273,10 @@ const AddService = () => {
                   >
                     <option value="">Select Group</option>
                     {groups.map((group) => (
-                  <option value={group.id} key={group.id}>
+                 <option value={group.id} key={group.id}>
                     {group.name}
-                  </option>
+                    </option>
+
                 ))}
                   </select>
                 </div>

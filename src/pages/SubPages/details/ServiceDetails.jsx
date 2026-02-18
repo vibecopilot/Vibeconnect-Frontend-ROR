@@ -51,26 +51,31 @@ const ServiceDetails = () => {
   };
 
   const fetchLogsDetails = async () => {
-    try {
-      const logsDetailsResp = await getSoftserviceActivityDetails(id); // Assuming this fetches all logs
-      const filteredData = logsDetailsResp.data.activities.filter(
-        (activity) => {
-          const activityDate = formatDate(activity.start_time); // Extract date from start_time
-          console.log("show date", activityDate);
-          return (
-            activityDate === selectedDate &&
-            activity.status !== "pending" &&
-            activity.status !== "overdue"
-          ); // Match with the selected date and 'complete' status
-        }
-      );
+  try {
+    const logsDetailsResp = await getSoftserviceActivityDetails(id);
 
-      console.log("logs data", filteredData);
-      setlogsDetails(filteredData); // Set filtered data
-    } catch (error) {
-      console.error("Error fetching logs details:", error);
-    }
-  };
+   const filteredData = logsDetailsResp.data.activities.filter((activity) => {
+  const activityDate = new Date(activity.start_time);
+  const activityLocalDate = activityDate.getFullYear() + "-" +
+    String(activityDate.getMonth() + 1).padStart(2, "0") + "-" +
+    String(activityDate.getDate()).padStart(2, "0");
+
+  return (
+    activityLocalDate === selectedDate &&
+    activity.status !== "pending" &&
+    activity.status !== "overdue"
+  );
+});
+
+console.log("Filtered Logs for date", selectedDate, filteredData);
+
+
+    setlogsDetails(filteredData);
+  } catch (error) {
+    console.error("Error fetching logs details:", error);
+  }
+};
+
 
   useEffect(() => {
     fetchScheduleData();
@@ -364,105 +369,89 @@ const ServiceDetails = () => {
                 </button>
               </div>
 
-              <div>
-                {logsDetails.map((task, index) => {
-                  // Check if there are any submissions
-                  const hasSubmissions =
-                    task.activity_log?.submissions?.length > 0;
+             <div>
+  {logsDetails.map((task) => {
+    // Get submissions safely
+    const submissions = task.activity_log?.submissions || [];
 
-                  // Only render the entire block if there are submissions
-                  return (
-                    hasSubmissions && (
-                      <div
-                        key={task.id}
-                        className="my-4 flex flex-col bg-gray-50 shadow-custom-all-sides p-4 rounded-md gap-2"
-                      >
-                        <div className="grid grid-cols-12">
-                          <div className="col-span-11 items-center">
-                            <p className="font-medium">Checklist Name :</p>
-                            <p className="w-full">
-                              {task.checklist?.name || "No Checklist Name"}
-                            </p>
-                          </div>
-                        </div>
+    return (
+      <div
+        key={task.id}
+        className="my-4 flex flex-col bg-gray-50 shadow-custom-all-sides p-4 rounded-md gap-2"
+      >
+        {/* Checklist Name */}
+        <div className="grid grid-cols-12">
+          <div className="col-span-11 items-center">
+            <p className="font-medium">Checklist Name :</p>
+            <p className="w-full">
+              {task.checklist?.name || "No Checklist Name"}
+            </p>
+          </div>
+        </div>
 
-                        {task.activity_log.submissions.map(
-                          (submission, subIndex) =>
-                            submission && (
-                              <div key={submission.id} className="my-2">
-                                <div className="flex gap-4 items-center bg-green-100 mb-2 p-2 rounded-md">
-                                  <p className="font-medium">
-                                    Question {subIndex + 1}:
-                                  </p>
-                                  <p>
-                                    {submission.question?.name || "No Question"}
-                                  </p>
-                                </div>
+        {/* If no submissions */}
+        {submissions.length === 0 && (
+          <p className="text-gray-500">No submissions available</p>
+        )}
 
-                                <div className="flex gap-4 items-center bg-blue-100 mb-2 p-2 rounded-md">
-                                  <p className="font-medium">Answer :</p>
-                                  <p>{submission.value || "No Answer"}</p>
-                                </div>
+        {/* Render submissions */}
+        {submissions.map((submission, subIndex) => (
+          <div key={submission.id} className="my-2">
+            <div className="flex gap-4 items-center bg-green-100 mb-2 p-2 rounded-md">
+              <p className="font-medium">Question {subIndex + 1}:</p>
+              <p>{submission.question?.name || "No Question"}</p>
+            </div>
 
-                                <span className="font-medium text-gray-500">
-                                  Attachments :
-                                </span>
-                                <div className="flex gap-4 flex-wrap my-4 items-center text-center">
-                                  {submission.question_attachments?.length >
-                                  0 ? (
-                                    submission.question_attachments.map(
-                                      (attachment, i) => (
-                                        <img
-                                          key={i}
-                                          src={
-                                            domainPrefix + attachment.document
-                                          }
-                                          alt={`Attachment ${i + 1}`}
-                                          className="w-40 h-28 object-cover rounded-md"
-                                          onClick={() =>
-                                            window.open(
-                                              domainPrefix +
-                                                attachment.document,
-                                              "_blank"
-                                            )
-                                          }
-                                        />
-                                      )
-                                    )
-                                  ) : (
-                                    <p>No Attachments</p>
-                                  )}
-                                </div>
+            <div className="flex gap-4 items-center bg-blue-100 mb-2 p-2 rounded-md">
+              <p className="font-medium">Answer :</p>
+              <p>{submission.value || "No Answer"}</p>
+            </div>
 
-                                <div className="flex justify-between">
-                                  <p>
-                                    <span className="font-medium text-gray-500">
-                                      Performed by:
-                                    </span>
-                                    <span className="font-medium text-gray-500">
-                                      {task.assigned_name || "Unknown"}
-                                    </span>
-                                  </p>
-                                  <p className="text-sm text-gray-500">
-                                    {dateTimeFormat(submission.updated_at) ||
-                                      "No timestamp available"}
-                                  </p>
-                                </div>
-                              </div>
-                            )
-                        )}
+            {/* Attachments */}
+            <span className="font-medium text-gray-500">Attachments :</span>
+            <div className="flex gap-4 flex-wrap my-4 items-center text-center">
+              {submission.question_attachments?.length > 0 ? (
+                submission.question_attachments.map((attachment, i) => (
+                  <img
+                    key={i}
+                    src={domainPrefix + attachment.document}
+                    alt={`Attachment ${i + 1}`}
+                    className="w-40 h-28 object-cover rounded-md"
+                    onClick={() =>
+                      window.open(domainPrefix + attachment.document, "_blank")
+                    }
+                  />
+                ))
+              ) : (
+                <p>No Attachments</p>
+              )}
+            </div>
 
-                        <p>
-                          <span className="font-medium">Comment : </span>
-                          <span className="text-violet-500 font-medium">
-                            {task.comment ? task.comment : "No Comment"}{" "}
-                          </span>
-                        </p>
-                      </div>
-                    )
-                  );
-                })}
-              </div>
+            {/* Performed by & timestamp */}
+            <div className="flex justify-between">
+              <p>
+                <span className="font-medium text-gray-500">Performed by: </span>
+                {task.assigned_name || "Unknown"}
+              </p>
+              <p className="text-sm text-gray-500">
+                {dateTimeFormat(submission.updated_at) || "No timestamp available"}
+              </p>
+            </div>
+          </div>
+        ))}
+
+        {/* Comment */}
+        <p>
+          <span className="font-medium">Comment: </span>
+          <span className="text-violet-500 font-medium">
+            {task.comment || "No Comment"}
+          </span>
+        </p>
+      </div>
+    );
+  })}
+</div>
+
             </div>
           )}
         </div>

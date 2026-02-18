@@ -109,18 +109,16 @@ const ServicePage = () => {
 
  const handleQrDownload = async () => {
   if (!selectedRows.length) {
-    return toast.error("Please select at least one data");
+    return toast.error("Please select at least one service");
   }
 
   const toastId = toast.loading("Downloading QR...");
 
   try {
-    console.log("Selected Rows:", selectedRows);
-
+    // Call the new API
     const response = await softServiceDownloadQrCode(selectedRows);
 
-    console.log("Response:", response);
-
+    // Convert blob to URL and trigger download
     const blob = new Blob([response.data], { type: "application/pdf" });
     const url = window.URL.createObjectURL(blob);
 
@@ -129,23 +127,13 @@ const ServicePage = () => {
     link.download = "qr_codes.pdf";
     document.body.appendChild(link);
     link.click();
-
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
 
     toast.success("Downloaded successfully", { id: toastId });
-
   } catch (error) {
-    console.log("Full Error:", error);
-    console.log("Error Response:", error.response);
-
-    // 🔥 This will show backend JSON error even if it's blob
-    if (error.response?.data instanceof Blob) {
-      const text = await error.response.data.text();
-      console.log("Backend Error Message:", text);
-    }
-
-    toast.error("Download failed", { id: toastId });
+    console.error("Download failed:", error);
+    toast.error("Failed to download QR codes", { id: toastId });
   }
 };
 
@@ -202,12 +190,13 @@ const ServicePage = () => {
             </button>
 
             <button
-              onClick={handleQrDownload}
-              className="flex items-center gap-2 text-white px-4 py-2 rounded"
-              style={{ background: themeColor }}
-            >
-              <FaDownload /> QR Code
-            </button>
+  onClick={handleQrDownload}
+  className="flex items-center gap-2 text-white px-4 py-2 rounded"
+  style={{ background: themeColor }}
+>
+  <FaDownload /> QR Code
+</button>
+
 
             <button
               onClick={exportToExcel}

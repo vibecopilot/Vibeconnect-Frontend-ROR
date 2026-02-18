@@ -276,7 +276,7 @@ const AddServicesChecklist = () => {
         formData.append(`groups[][questions][][name]`, q.name);
         formData.append(`groups[][questions][][type]`, q.type);
         formData.append(`groups[][questions][][reading]`, q.reading);
-        formData.append(`groups[][questions][][question_mandatory]`, q.mandatory);
+        formData.append(`groups[][questions][][question_mandatory]`, q.question_mandatory);
         formData.append(`groups[][questions][][help_text_enbled]`, q.showHelpText);
         formData.append(`groups[][questions][][help_text]`, q.help_text || "");
         formData.append(`groups[][questions][][weightage]`, q.weightage);
@@ -726,22 +726,28 @@ const AddServicesChecklist = () => {
                 }
               />
 
-              <select
-                value={question.reading ? "Numeric" : question.type}
-                className="p-1 px-4 border w-64 border-gray-500 rounded-md"
-                onChange={(e) =>
-                  handleQuestionChange(sectionIndex, questionIndex, 'type', e.target.value)
-                }
-                disabled={question.reading}
-              >
-                <option value="">Select Answer Type</option>
-                        <option value="multiple">
-                          Multiple Choice Question
-                        </option>
-                        <option value="inbox">Input box</option>
-                        <option value="description">Description box</option>
-                        <option value="Numeric">Numeric</option>
-              </select>
+            <select
+  value={question.type}
+  className="p-1 px-4 border w-64 border-gray-500 rounded-md"
+  onChange={(e) => {
+    const value = e.target.value;
+
+    if (value === "Numeric") {
+      handleQuestionChange(sectionIndex, questionIndex, "reading", true);
+      handleQuestionChange(sectionIndex, questionIndex, "type", "Numeric");
+    } else {
+      handleQuestionChange(sectionIndex, questionIndex, "reading", false);
+      handleQuestionChange(sectionIndex, questionIndex, "type", value);
+    }
+  }}
+>
+  <option value="">Select Answer Type</option>
+  <option value="multiple">Multiple Choice Question</option>
+  <option value="inbox">Input box</option>
+  <option value="description">Description box</option>
+  <option value="Numeric">Numeric</option>
+</select>
+
               {question.type === "multiple" && !question.reading && (
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 my-2">
                           <div className="flex flex-col sm:flex-row gap-2">
