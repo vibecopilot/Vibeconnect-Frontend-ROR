@@ -149,16 +149,19 @@ const RoutineTask = () => {
   };
 
   const RoutineColumns = [
-    {
-      name: "View",
-      cell: (row) => (
-        <div className="flex items-center gap-4">
-          <Link to={`/assets/routine-task-details/${row.asset_id}/${row.id}`}>
-            <BsEye size={15} />
-          </Link>
-        </div>
-      ),
-    },
+  {
+    name: "View",
+    cell: (row) => (
+      <div className="flex items-center gap-4">
+        <Link
+          to={`/assets/routine-task-details/${row.asset_id}/${row.id}`}
+          state={{ rowData: row }} // ✅ optional safety
+        >
+          <BsEye size={15} />
+        </Link>
+      </div>
+    ),
+  },
     { name: "ID", selector: (row) => row.id, sortable: true },
     { name: "Asset Name", selector: (row) => row.asset_name, sortable: true },
     {
