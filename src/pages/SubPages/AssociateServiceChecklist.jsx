@@ -31,38 +31,27 @@ const AssociateServiceChecklist = () => {
   // console.log("services", services);
 
   const { id } = useParams();
+const deleteService = async (row) => {
+  console.log("Deleting row:", row);
 
-  const deleteService = async (service) => {
-    const confirmDelete = window.confirm("Please Confirm To Delete Service?");
-    if (!confirmDelete) return;
+  if (!window.confirm("Please Confirm To Delete Service?")) return;
 
-    try {
-      const serviceObj = services.find((s) => s.label === service.service_name);
+  try {
+    toast.loading("Deleting Association...");
 
-      if (!serviceObj) {
-        throw new Error("Invalid service");
-      }
+   await deleteServiceAssociation(row.id);
+    toast.dismiss();
+    toast.success("Association Deleted");
 
-      const soft_service_id = serviceObj.value;
-      const checklist_id = id;
+    await fetchAssociationList();
 
-      // console.log("Deleting service:", { checklist_id, soft_service_id });
+  } catch (err) {
+    console.error("Delete failed:", err);
+    toast.dismiss();
+    toast.error("Failed to delete association");
+  }
+};
 
-      toast.loading("Deleting Association...");
-      const resp = await deleteServiceAssociation({
-        checklist_id,
-        soft_service_id,
-      });
-      // console.log("Deleted successfully!", resp);
-      toast.dismiss();
-      toast.success("Association Deleted");
-      setAssociation((prev) => prev.filter((a) => a.id !== service.id));
-    } catch (err) {
-      console.error("Delete failed:", err);
-      toast.dismiss();
-      toast.error("Failed to delete association");
-    }
-  };
 
   const column = [
     {
@@ -98,6 +87,34 @@ const AssociateServiceChecklist = () => {
       ),
     },
   ];
+const fetchAssociationList = async () => {
+  setListLoading(true);
+  try {
+    const assoResp = await getAssociationList(id);
+
+    console.log("FULL API OBJECT:", assoResp.data.associated_with);
+
+    const sortedData = (assoResp.data.associated_with || []).sort(
+      (a, b) => new Date(a.created_at) - new Date(b.created_at)
+    );
+
+ setAssociation(
+  sortedData.map((item) => ({
+    ...item,
+    id: item.activity_id,   // <-- use correct field here
+  }))
+);
+
+
+
+  } catch (error) {
+    console.log(error);
+  } finally {
+    setListLoading(false);
+  }
+};
+
+
 
   useEffect(() => {
     const fetchServicesList = async () => {
@@ -122,27 +139,27 @@ const AssociateServiceChecklist = () => {
       // console.log("user list", user);
       setAssignedTo(user);
     };
-    const fetchAssociationList = async () => {
-      setListLoading(true);
-      try {
-        const assoResp = await getAssociationList(id);
-        // console.log("getdata", assoResp.data.associated_with);
-        const sortedData = assoResp.data.associated_with.sort(
-          (a, b) => new Date(a.created_at) - new Date(b.created_at)
-        );
-        setAssociation(
-          sortedData.map((item) => ({
-            ...item,
-            id: item.id || item.service_id,
-          }))
-        );
-      } catch (error) {
-        console.log(error);
-        toast.error("Failed to fetch associated checklist data.");
-      } finally {
-        setListLoading(false);
-      }
-    };
+    // const fetchAssociationList = async () => {
+    //   setListLoading(true);
+    //   try {
+    //     const assoResp = await getAssociationList(id);
+    //     // console.log("getdata", assoResp.data.associated_with);
+    //     const sortedData = assoResp.data.associated_with.sort(
+    //       (a, b) => new Date(a.created_at) - new Date(b.created_at)
+    //     );
+    //     setAssociation(
+    //       sortedData.map((item) => ({
+    //         ...item,
+    //         id: item.id || item.service_id,
+    //       }))
+    //     );
+    //   } catch (error) {
+    //     console.log(error);
+    //     toast.error("Failed to fetch associated checklist data.");
+    //   } finally {
+    //     setListLoading(false);
+    //   }
+    // };
 
     fetchServicesList();
     fetchAssignedTo();
