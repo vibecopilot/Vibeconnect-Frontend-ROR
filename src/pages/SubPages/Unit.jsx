@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Account from "./Account";
 import { PiPlusCircle } from "react-icons/pi";
 import Switch from "../../Buttons/Switch";
@@ -35,6 +35,11 @@ const Unit = () => {
   const [unitAdded, setUnitAdded] = useState(false);
   const [editModal, setEditModal] = useState(false);
   const [id, setId] = useState("");
+// ✅ Search states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+
   useEffect(() => {
     // const fetchAllFloors = async () => {
     //   try {
@@ -64,6 +69,31 @@ const Unit = () => {
     };
     fetchAllUnits();
   }, [unitAdded]);
+
+
+   useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+    }, 500);
+
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
+
+const filteredUnits = useMemo(() => {
+  if (!debouncedSearch.trim()) return units;
+
+  return units.filter((row) => {
+    const searchString = [
+      row?.building_name || "",
+      row?.floor_name || "",
+      row?.name || "",
+    ]
+      .join(" ")
+      .toLowerCase();
+
+    return searchString.includes(debouncedSearch.toLowerCase());
+  });
+}, [debouncedSearch, units]);
 
   const handleBuildingChange = async (e) => {
     async function fetchFloor(floorID) {
@@ -166,7 +196,17 @@ const Unit = () => {
       <div className=" w-full flex lg:mx-3 flex-col overflow-hidden">
         <Account />
         <div className="flex flex-col  m-2 gap-2">
-          <div className="flex justify-end">
+           <div className="flex justify-between items-center">
+
+            {/* Search Box */}
+            <input
+              type="text"
+              placeholder="Search by Building, Floor, Unit..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="border border-gray-400 rounded-md p-2 w-[500px]"
+            />
+
             <h2
               className=" font-semibold  hover:text-white duration-150 transition-all  p-2 rounded-md text-white cursor-pointer text-center flex items-center  gap-2"
               onClick={() => setShowFields(!showFields)}
@@ -334,7 +374,7 @@ const Unit = () => {
               )}
             </table> */}
               <div>
-                <Table columns={unitColumns} data={units} />
+<Table columns={unitColumns} data={filteredUnits} />
               </div>
             </div>
           </div>
