@@ -12,6 +12,7 @@ import { getItemInLocalStorage } from "../../../utils/localStorage";
 import { PiPlusCircle } from "react-icons/pi";
 import { FiEdit, FiTrash2, FiHeart } from "react-icons/fi";
 import toast from "react-hot-toast";
+import { Slider } from "antd";
 // import Slider from "react-slick";
 
 // import "slick-carousel/slick/slick.css";

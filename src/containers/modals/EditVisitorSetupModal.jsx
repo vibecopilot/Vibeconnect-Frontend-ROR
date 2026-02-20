@@ -4,7 +4,7 @@ import { useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import ModalWrapper from "./ModalWrapper";
 
-const EditVisitorSetupModal = ({ onclose, catId, setAdded, editType }) => {
+const EditVisitorSetupModal = ({ onclose, catId, setAdded, editType,editData,type }) => {
   const themeColor = useSelector((state) => state.theme.color);
   const token = "e6fbf77f4fbb5a72c4150e495c961972f0f14059d8a6670f";
   const BASE_URL = "https://admin.vibecopilot.ai";
@@ -91,6 +91,17 @@ const EditVisitorSetupModal = ({ onclose, catId, setAdded, editType }) => {
     }
   };
 
+   useEffect(() => {
+  if (editData && type === "visitorCategory") {
+    setName(editData.name || "");
+    setCode(editData.code || "");  // 🔥 THIS IS THE MAIN FIX
+    setActive(editData.active ?? true);
+
+    if (editData.icon) {
+      setIconPreview(`https://admin.vibecopilot.ai${editData.icon}`);
+    }
+  }
+}, [editData, type]);
   return (
     <ModalWrapper onclose={onclose}>
       <div className="flex flex-col p-6 max-w-md mx-auto">
@@ -104,8 +115,16 @@ const EditVisitorSetupModal = ({ onclose, catId, setAdded, editType }) => {
         {editType === "visitorCategory" && (
           <div className="mb-4">
             <label className="block text-sm font-semibold mb-1">Code</label>
-            <input type="text" value={code} onChange={(e) => setCode(e.target.value)} className="w-full p-2 border rounded-lg" />
-          </div>
+  <select
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              className="w-full px-4 py-2 border rounded-lg outline-none"
+            >
+              <option value="">Select Code Type</option>
+              <option value="PLANNED">Planned</option>
+              <option value="UNPLANNED">Unplanned</option>
+              <option value="OTHER">Other</option>
+            </select>          </div>
         )}
 
         {(editType === "visitorCategory" || editType === "visitorSubCategory") && (

@@ -127,7 +127,7 @@ const AddVisitorSetupModal = ({ onclose, setAdded, type, visitorCategories = [] 
   if (!code.trim()) return toast.error("Please enter code");
 
   formData.append("visitor_category[name]", name.trim());
-  formData.append("visitor_category[code]", code.trim().toUpperCase());
+        formData.append("visitor_category[code]", code); // dropdown value
   formData.append("visitor_category[active]", active ? "1" : "0");
 
   // const siteId = getItemInLocalStorage("SITEID");
@@ -243,11 +243,16 @@ const AddVisitorSetupModal = ({ onclose, setAdded, type, visitorCategories = [] 
         {type === "visitorCategory" && (
           <div className="mb-4">
             <label className="block text-sm font-medium mb-1">Code</label>
-            <input 
-              value={code} 
-              onChange={(e) => setCode(e.target.value.toUpperCase())} 
-              className="w-full px-4 py-2 border rounded-lg uppercase outline-none" 
-            />
+             <select
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              className="w-full px-4 py-2 border rounded-lg outline-none"
+            >
+              <option value="">Select Code Type</option>
+              <option value="PLANNED">Planned</option>
+              <option value="UNPLANNED">Unplanned</option>
+              <option value="OTHER">Other</option>
+            </select>
           </div>
         )}
 
@@ -267,7 +272,7 @@ const AddVisitorSetupModal = ({ onclose, setAdded, type, visitorCategories = [] 
           onClick={handleSubmit}
           disabled={loading}
           style={{ backgroundColor: themeColor }}
-          className="mt-4 py-3 text-black rounded-lg font-bold hover:brightness-90 transition-all shadow-md"
+          className="mt-4 py-3 text-white rounded-lg font-bold hover:brightness-90 transition-all shadow-md bg-blue-600"
         >
           {loading ? "Adding..." : "Submit"}
         </button>
