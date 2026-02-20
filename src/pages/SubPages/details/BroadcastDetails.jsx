@@ -103,6 +103,23 @@ const BroadcastDetails = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
+
+  // 🔥 ADD THIS HERE (inside BroadcastDetails component)
+useEffect(() => {
+  const container = document.querySelector(".description-content");
+  if (!container) return;
+
+  const links = container.querySelectorAll("a");
+
+  links.forEach((link) => {
+    link.setAttribute("target", "_blank");
+    link.setAttribute("rel", "noopener noreferrer");
+    link.style.color = "#2563eb";
+    link.style.textDecoration = "underline";
+    link.style.cursor = "pointer";
+  });
+}, [broadcastDetails]);
+
   const shareWithRaw =
     broadcastDetails?.shared ||
     broadcastDetails?.share_with ||
@@ -460,45 +477,48 @@ const BroadcastDetails = () => {
           <div className="mt-6">
             <p className="font-semibold mb-2">Description:</p>
             <DashedBox>
-              <div className="min-h-[40px]">
-                {broadcastDetails?.notice_discription ? (
-                  <div
-                    className="text-gray-900"
-                    dangerouslySetInnerHTML={{
-                      __html: broadcastDetails.notice_discription,
-                    }}
-                  />
-                ) : (
-                  <div className="text-gray-900">—</div>
-                )}
-              </div>
+            <div className="min-h-[40px]">
+  {broadcastDetails?.notice_discription ? (
+<div
+  className="text-gray-900 description-content"
+  dangerouslySetInnerHTML={{
+    __html: (broadcastDetails.notice_discription || "").replace(
+      /(https?:\/\/[^\s]+)/g,
+      '<a href="$1" target="_blank" rel="noopener noreferrer" style="color:#2563eb;text-decoration:underline;">$1</a>'
+    ),
+  }}
+/>
+  ) : (
+    <div className="text-gray-900">—</div>
+  )}
+</div>
             </DashedBox>
           </div>
 
-          <div className="mt-6">
-            <p className="font-bold mb-2 flex items-center gap-2">
-              <FaUsers /> Shared With (Member)
-            </p>
-            <DashedBox>
-              {shareWithRaw === "all" ? (
-                <div className="text-gray-900">All</div>
-              ) : (
-                showDash(
-                  resolvedMembers?.length > 0,
-                  <div className="flex flex-wrap gap-2">
-                    {resolvedMembers.map((u, i) => (
-                      <span
-                        key={i}
-                        className="bg-green-500 text-white rounded-md px-3 py-1"
-                      >
-                        {ChipText(u)}
-                      </span>
-                    ))}
-                  </div>
-                )
-              )}
-            </DashedBox>
-          </div>
+            <div className="mt-6">
+              <p className="font-bold mb-2 flex items-center gap-2">
+                <FaUsers /> Shared With (Member)
+              </p>
+              <DashedBox>
+                {shareWithRaw === "all" ? (
+                  <div className="text-gray-900">All</div>
+                ) : (
+                  showDash(
+                    resolvedMembers?.length > 0,
+                    <div className="flex flex-wrap gap-2">
+                      {resolvedMembers.map((u, i) => (
+                        <span
+                          key={i}
+                          className="bg-green-500 text-white rounded-md px-3 py-1"
+                        >
+                          {ChipText(u)}
+                        </span>
+                      ))}
+                    </div>
+                  )
+                )}
+              </DashedBox>
+            </div>
 
           <div className="mt-6">
             <p className="font-bold mb-2 flex items-center gap-2">

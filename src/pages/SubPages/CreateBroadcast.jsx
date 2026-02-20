@@ -55,90 +55,110 @@ const CreateBroadcast = () => {
     setFormData((p) => ({ ...p, notice_discription: value }));
   };
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const response = await getSetupUsers();
+ useEffect(() => {
+  const fetchUsers = async () => {
+    try {
+      const response = await getSetupUsers();
+      const employeesList = (response.data || []).map((emp) => ({
+        id: emp.id,
+        firstname: emp.firstname,
+        lastname: emp.lastname,
+        name: `${emp.firstname || ""} ${emp.lastname || ""}`.trim(),
+        building_id: emp.building_id || emp.building?.id || null,
+        userSites: emp.user_sites || [],
+        building: emp.building || {},
+      }));
+      setMembers(employeesList);
+      setFilteredMembers(employeesList);
+    } catch (error) {
+      console.error("Error fetching setup users:", error);
+    }
+  };
 
-        const employeesList = (response.data || []).map((emp) => ({
-          id: emp.id,
-          firstname: emp.firstname,
-          lastname: emp.lastname,
-          name: `${emp.firstname || ""} ${emp.lastname || ""}`.trim(),
-          building_id: emp.building_id || emp.building?.id || null,
-          userSites: emp.user_sites || [],
-          building: emp.building || {},
-        }));
+  const fetchGroups = async () => {
+    try {
+      const res = await getGroups();
+      const unitsRes = await getBuildings();
 
-        setMembers(employeesList);
-        setFilteredMembers(employeesList);
-      } catch (error) {
-        console.error("Error fetching setup users:", error);
-      }
-    };
+      setUnits(unitsRes.data || []);
 
-    const fetchGroups = async () => {
-      try {
-        const res = await getGroups();
-        const unitsRes = await getBuildings();
+      const transformedGroups = (res.data || []).map((group) => ({
+        value: group.id,
+        label: group.group_name,
+      }));
+      setGroups(transformedGroups);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
-        setUnits(unitsRes.data || []);
+  // Fetch users and groups only once on component mount
+  fetchUsers();
+  fetchGroups();
+}, []); // Empty dependency array ensures the effect is only run once
 
-        const transformedGroups = (res.data || []).map((group) => ({
-          value: group.id,
-          label: group.group_name,
-        }));
-        setGroups(transformedGroups);
-      } catch (error) {
-        console.log(error);
-      }
-    };
+const handleSelectChange = (selectedOptions) => {
+  if (!selectedOptions) return;
 
-    fetchUsers();
-    fetchGroups();
-  }, []);
-
-  const handleSelectChange = (selectedOptions) => {
-    const selectedIds = selectedOptions
-      ? selectedOptions.map((option) => option.value)
-      : [];
-    const userIdsString = selectedIds.join(",");
-
+  // If "Select All" is clicked, select all users in the filtered list
+  if (selectedOptions.some(option => option.value === 'select_all')) {
+    const allFilteredOptions = filteredMembers.map((member) => ({
+      value: member.id,
+      label: member.name,
+    }));
+    setSelectedMembers(allFilteredOptions); // Select all filtered users
+    setFormData((p) => ({
+      ...p,
+      user_ids: allFilteredOptions.map((u) => u.value).join(","),
+    }));
+  } else {
+    // Otherwise, handle the manual selection/deselection of users
+    const newSelections = selectedOptions || [];
+    setSelectedMembers(newSelections);
+    const userIdsString = newSelections.map((opt) => opt.value).join(",");
     setFormData((p) => ({ ...p, user_ids: userIdsString }));
-    setSelectedMembers(selectedOptions || []);
+  }
+};
+const handleFilter = () => {
+  let filtered = members;
+
+  // Filter by selected tower (unit)
+  if (selectedUnit) {
+    filtered = filtered.filter(
+      (member) => Number(member.building_id ?? member.building?.id) === Number(selectedUnit)
+    );
+  }
+
+  if (filtered.length === 0) {
+    toast.error("No users found in this tower");
+    return;
+  }
+
+  // Update filtered members state only once
+  setFilteredMembers(filtered);
+
+  // 🔥 Add the "Select All" option at the top of the filtered list (ensure no duplicates)
+  const selectAllOption = {
+    value: 'select_all',
+    label: 'Select All',
   };
+  const allFilteredOptions = [selectAllOption, ...filtered.map((member) => ({
+    value: member.id,
+    label: member.name,
+  }))];
 
-  const handleFilter = () => {
-    const filtered = members.filter((member) => {
-      const buildingId = Number(member.building_id ?? member.building?.id);
+  // Update selected members state, this will select all filtered users by default
+  setSelectedMembers(allFilteredOptions);
 
-      if (!selectedUnit && !selectedOwnership) return true;
+  // Update formData for backend submission
+  setFormData((p) => ({
+    ...p,
+    user_ids: allFilteredOptions.map((u) => u.value).join(","),
+  }));
 
-      if (selectedUnit && !selectedOwnership) {
-        return buildingId === Number(selectedUnit);
-      }
+  toast.success(`${filtered.length} users selected from this tower`);
+};
 
-      if (!selectedUnit && selectedOwnership) {
-        return (member.userSites || []).some(
-          (site) =>
-            site.ownership?.toLowerCase() === selectedOwnership.toLowerCase()
-        );
-      }
-
-      if (buildingId !== Number(selectedUnit)) return false;
-
-      return (member.userSites || []).some(
-        (site) =>
-          site.ownership?.toLowerCase() === selectedOwnership.toLowerCase()
-      );
-    });
-
-    setFilteredMembers(filtered);
-
-    if (filtered.length === 0)
-      toast.error("No users found matching the selected filters");
-    else toast.success(`Filter applied - ${filtered.length} user(s) found`);
-  };
 
   const handleFileChange = (files, fieldName) => {
     setFormData((p) => ({
@@ -395,21 +415,66 @@ const CreateBroadcast = () => {
                           >
                             Filter
                           </button>
+
+                          <button
+  style={{ background: themeColor }}
+  onClick={() => {
+    setSelectedUnit(null); // Reset selected tower (Unit)
+    setSelectedOwnership(""); // Reset ownership selection
+    setFilteredMembers(members); // Reset filtered members to show all users
+    setSelectedMembers([]); // Clear the selected members
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      user_ids: "", // Reset the user_ids for form submission
+    }));
+  }}
+  className="text-white px-4 py-2 rounded-md hover:opacity-90"
+>
+  Cancel
+</button>
+
                         </div>
 
                         <div className="w-full mt-3 mb-3">
-                          <Select
-                            options={filteredMembers.map((member) => ({
-                              value: member.id,
-                              label: member.name,
-                            }))}
-                            className="w-full"
-                            title="Select Members"
-                            onChange={handleSelectChange}
-                            value={selectedMembers}
-                            isMulti
-                            placeholder="Select Members"
-                          />
+                     <Select
+  options={filteredMembers.map((member) => ({
+    value: member.id,
+    label: member.name,
+  }))}
+  onChange={handleSelectChange}
+  value={selectedMembers}
+  isMulti
+  closeMenuOnSelect={false}
+  placeholder="Select members"
+/>
+
+{/* Render the selected members */}
+{/* <div className="mt-2 flex flex-wrap gap-2">
+  {selectedMembers.map((member) => (
+    <div
+      key={member.value}
+      className="px-2 py-1 bg-gray-200 rounded-full flex items-center gap-1"
+    >
+      {member.label}
+      <button
+        onClick={() => {
+          const newSelection = selectedMembers.filter(
+            (u) => u.value !== member.value
+          );
+          setSelectedMembers(newSelection);
+          setFormData((p) => ({
+            ...p,
+            user_ids: newSelection.map((u) => u.value).join(","),
+          }));
+        }}
+        className="text-red-500 font-bold"
+      >
+        x
+      </button>
+    </div>
+  ))}
+</div> */}
+
                         </div>
                       </div>
                     )}
@@ -466,3 +531,6 @@ const CreateBroadcast = () => {
 };
 
 export default CreateBroadcast;
+
+
+
