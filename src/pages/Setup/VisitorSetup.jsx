@@ -413,8 +413,8 @@ useEffect(() => {
               <input
                 value={searchText}
                 onChange={handleSearch}
-                className="border p-3 rounded w-96"
-                placeholder="Search..."
+                className="border p-3 rounded-lg w-[600px] border-gray-400 border-1"
+                placeholder="Search Here..."
               />
             )}
             {page === "vehicleParking" && <div></div>}

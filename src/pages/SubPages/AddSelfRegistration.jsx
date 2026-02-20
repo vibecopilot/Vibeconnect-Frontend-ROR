@@ -117,7 +117,7 @@ const AddSelfRegistration = () => {
       const visitResp = await postNewVisitor(postData);
       const visitorId = visitResp.data.id;
       navigate(
-        `/admin/passes/self-registration-details/${visitorId}?token=${token}`
+        `/admin/passes/visitors`
       );
       toast.dismiss();
       toast.success("Self Registration Added Successfully");
@@ -275,7 +275,13 @@ const AddSelfRegistration = () => {
             </select>
           </div>
         </div>
-        <div className="flex gap-5 justify-center items-center my-4 mb-10">
+        <div className="flex gap-3 justify-end items-center my-4 mb-10">
+           <button
+            className="bg-gray-300 text-black hover:bg-gray-400 font-semibold py-2 px-4 rounded"
+            onClick={()=>navigate(`/admin/passes/visitors`) }
+          >
+            Cancel
+          </button>
           <button
             className="bg-black text-white hover:bg-gray-700 font-semibold py-2 px-4 rounded"
             onClick={handleSubmit}
