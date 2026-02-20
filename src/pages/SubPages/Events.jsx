@@ -45,19 +45,19 @@ const Events = () => {
   const eventItem = events.find((e) => e.id === id);
   if (!eventItem) return;
 
-  const previousStatus = eventItem.important;
-  const newStatus = !previousStatus;
+  const previousStatus = eventItem.enabled;  // Assuming 'completed' field for event status
+  const newStatus = !previousStatus;  // Toggle status between completed and not completed
 
   const updateLocal = (status) => {
     setEvents((prev) =>
       prev.map((ev) =>
-        ev.id === id ? { ...ev, important: status } : ev
+        ev.id === id ? { ...ev, enabled: status } : ev
       )
     );
 
     setFilteredData((prev) =>
       prev.map((ev) =>
-        ev.id === id ? { ...ev, important: status } : ev
+        ev.id === id ? { ...ev, enabled: status } : ev
       )
     );
   };
@@ -66,11 +66,11 @@ const Events = () => {
   updateLocal(newStatus);
 
   try {
-    await updateEventEnableStatus(id, newStatus);
-    toast.success(newStatus ? "Event Enabled" : "Event Disabled");
+    await updateEventEnableStatus(id, newStatus); // Assuming this API call updates the status
+    toast.success(newStatus ? "Event Completed" : "Event In Progress");
   } catch (err) {
-    toast.error("Failed to update");
-    updateLocal(previousStatus); // revert
+    toast.error("Failed to update status");
+    updateLocal(previousStatus); // revert to previous status on failure
   }
 };
 
@@ -112,11 +112,19 @@ const Events = () => {
       selector: (row) => row.scheduledOn,
       sortable: true,
     },
-    {
-      name: "Status",
-      selector: (row) => row.scheduledTime,
-      sortable: true,
-    },
+   {
+  name: "Status",
+  cell: (row) => (
+    <span
+      className={`px-2 py-1 rounded text-white text-xs ${
+        row.enabled ? "bg-green-600" : "bg-red-500"
+      }`}
+    >
+      {row.enabled ? "Completed" : "In Progress"}
+    </span>
+  ),
+  sortable: true,
+},  
     {
       name: "Expired",
       selector: (row) => row.bookingStatus,
@@ -134,7 +142,7 @@ const Events = () => {
           <input
             type="checkbox"
             className="sr-only peer"
-            checked={row.important}
+            checked={row.enabled}
             onChange={() => handleToggle(row.id)}
           />
           <div className="w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-green-600 transition-all"></div>

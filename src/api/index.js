@@ -1939,18 +1939,33 @@ export const verifyOtpToCheckIn = async (id, otp, mobile) => {
   });
 };
 
-export const updateEventEnableStatus = (id, enabled) =>
+// export const updateEventEnableStatus = (id, enabled) =>
+//   axiosInstance.put(
+//     `/events/${id}.json`,
+//     {
+//       event: {
+//         important: enabled,  // <-- correct field
+//       },
+//     },
+//     {
+//       params: { token },
+//     }
+//   );
+
+
+export const updateEventEnableStatus = (id, completed) =>
   axiosInstance.put(
     `/events/${id}.json`,
     {
       event: {
-        important: enabled,  // <-- correct field
+        completed: completed,  // Update 'completed' field to true/false
       },
     },
     {
       params: { token },
     }
   );
+
 
 export const getEvents = async () =>
   axiosInstance.get("/events.json", {
@@ -2118,12 +2133,12 @@ export const getServicesTaskDetails = async (serviceId, activityId) =>
     }
   );
 
-export const postSoftServices = async (data) =>
-  axiosInstance.post("/soft_services.json", data, {
-    params: {
-      token: token,
-    },
-  });
+// export const postSoftServices = async (data) =>
+//   axiosInstance.post("/soft_services.json", data, {
+//     params: {
+//       token: token,
+//     },
+//   });
 export const EditSoftServices = async (data, id) =>
   axiosInstance.put(`/soft_services/${id}.json`, data, {
     params: {
@@ -11006,24 +11021,24 @@ export const exportStaffByDate = async (startDate, endDate) =>
 
 // Get generic groups for soft services
 
-export const getGenericGroup = async () => {
-  return axiosInstance.get("/generic_infos.json", {
-    params: {
-      "q[info_type_eq]": "soft_services",
-      token: token, // assuming 'token' is imported or defined
-    },
-  });
-};
+// export const getGenericGroup = async () => {
+//   return axiosInstance.get("/generic_infos.json", {
+//     params: {
+//       "q[info_type_eq]": "soft_services",
+//       token: token, // assuming 'token' is imported or defined
+//     },
+//   });
+// };
 
 
 
-export const getGenericSubGroup = async (groupId) =>
-  axiosInstance.get("/generic_sub_infos.json", {
-    params: {
-      "q[generic_info_id_eq]": groupId,
-      token: token,
-    },
-  });
+// export const getGenericSubGroup = async (groupId) =>
+//   axiosInstance.get("/generic_sub_infos.json", {
+//     params: {
+//       "q[generic_info_id_eq]": groupId,
+//       token: token,
+//     },
+//   });
 
 
   // Example API function
@@ -11038,8 +11053,42 @@ export const getGenericSubGroupAssetChecklist = async (groupId) => {
 };
 
 
+// Get Groups
+export const getGenericGroup = async (siteId) =>
+  axiosInstance.get("/generic_infos.json", {
+    params: {
+      "q[info_type_eq]": "soft_services",
+      "q[site_id_eq]": siteId,  // added siteId here
+      token: token,
+    },
+  });
+
+ export const getGenericSubGroup = async (groupId, siteId) => {
+  return axiosInstance.get("/generic_sub_infos.json", {
+    params: {
+      "q[generic_info_id_eq]": groupId,
+      "q[site_id_eq]": siteId,  // add here too
+      token: token,
+    },
+  });
+};
 
 
+  // Post Soft Service
+export const postSoftServices = async (formData) =>
+  axiosInstance.post(`/soft_services.json?token=${token}`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+  // Update Soft Service
+export const updateSoftService = async (id, formData) =>
+  axiosInstance.put(`/soft_services/${id}.json?token=${token}`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
 
 
 
