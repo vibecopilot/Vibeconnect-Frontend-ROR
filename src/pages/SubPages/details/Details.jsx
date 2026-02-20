@@ -46,7 +46,7 @@ const TicketDetails = () => {
   useEffect(() => {
     const fetchDetails = async () => {
       const response = await getComplaintsDetails(id);
-      // console.log(response.data);
+      console.log(response.data);
       setTicketInfo(response.data);
     };
     const fetchCARItems = async () => {
