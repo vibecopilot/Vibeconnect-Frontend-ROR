@@ -953,7 +953,7 @@ function CreatePolls() {
   const handleSubmit = async () => {
   try {
     // const token = localStorage.getItem("TOKEN");
-    const token = JSON.parse(localStorage.getItem("TOKEN"));
+    const token = localStorage.getItem("TOKEN");
 
     if (!token) {
       toast.error("Session expired. Please login again.");
