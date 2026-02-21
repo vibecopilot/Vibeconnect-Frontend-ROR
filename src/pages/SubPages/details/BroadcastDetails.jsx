@@ -480,11 +480,16 @@ useEffect(() => {
             <div className="min-h-[40px]">
   {broadcastDetails?.notice_discription ? (
 <div
-  className="text-gray-900 description-content"
+  className="text-gray-900"
   dangerouslySetInnerHTML={{
     __html: (broadcastDetails.notice_discription || "").replace(
-      /(https?:\/\/[^\s]+)/g,
-      '<a href="$1" target="_blank" rel="noopener noreferrer" style="color:#2563eb;text-decoration:underline;">$1</a>'
+      /((https?:\/\/)?(www\.[^\s<]+))/g,
+      (match) => {
+        const url = match.startsWith("http")
+          ? match
+          : `https://${match}`;
+        return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color:#2563eb;text-decoration:underline;">${match}</a>`;
+      }
     ),
   }}
 />
