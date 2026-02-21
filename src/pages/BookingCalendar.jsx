@@ -35,7 +35,23 @@ const BookingCalendar = () => {
 useEffect(() => {
   const fetchBookings = async () => {
     try {
-      const response = await getCalendarBookings();
+      const formatDate = (date) => {
+        if (!date) return null;
+        const d = new Date(date);
+        const mm = String(d.getMonth() + 1).padStart(2, "0");
+        const dd = String(d.getDate()).padStart(2, "0");
+        const yyyy = d.getFullYear();
+        return `${mm}/${dd}/${yyyy}`;
+      };
+
+      const formattedFrom = formatDate(fromDate);
+      const formattedTo = formatDate(toDate);
+
+      const response = await getCalendarBookings(
+        "guest_room",
+        formattedFrom,
+        formattedTo
+      );
 
       const bookings = Array.isArray(response?.data?.amenity_bookings)
         ? response.data.amenity_bookings
@@ -43,7 +59,6 @@ useEffect(() => {
         ? response.data
         : [];
 
-      setAllBookings(bookings);
       formatEvents(bookings);
 
     } catch (error) {
@@ -51,30 +66,10 @@ useEffect(() => {
     }
   };
 
-
-
   fetchBookings();
-}, []);
-
-  useEffect(() => {
-     if (!fromDate && !toDate) {
-       formatEvents(allBookings);
-       return;
-    }
-
-    const filtered = allBookings.filter((b) => {
-      if (!b.booking_date) return false;
-
-    const bookingDate = new Date(b.booking_date);
-
-    if (fromDate && bookingDate < new Date(fromDate)) return false;
-    if (toDate && bookingDate > new Date(toDate)) return false;
-
-    return true;
-  });
-
-  formatEvents(filtered);
 }, [fromDate, toDate]);
+
+ 
 
 const formatEvents = (bookings) => {
   const formatted = bookings
