@@ -11092,13 +11092,27 @@ export const updateSoftService = async (id, formData) =>
 
 
   // Calendar Booking API
-export const getCalendarBookings = async () =>
+// export const getCalendarBookings = async () =>
+//   axiosInstance.get("/amenity_bookings/calender_booking.json", {
+//     params: {
+//       token: token,
+//     },
+//   });
+
+//calendar booking with date filter
+  export const getCalendarBookings = async (
+  booking_type,
+  start_date,
+  end_date
+) =>
   axiosInstance.get("/amenity_bookings/calender_booking.json", {
     params: {
       token: token,
+      booking_type,
+      ...(start_date && { start_date }),
+      ...(end_date && { end_date }),
     },
   });
-
 
 
 

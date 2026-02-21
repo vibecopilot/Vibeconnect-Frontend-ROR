@@ -838,6 +838,7 @@ import Pets from "./pages/Setup/Pets/Pets";
 import PetsAdd from "./pages/Setup/Pets/PetsAdd";
 import PetsView from "./pages/Setup/Pets/PetsView";
 import PetsEdit from "./pages/Setup/Pets/PetsEdit";
+import BookingCalendar from "./pages/BookingCalendar";
 
 
 
@@ -1555,6 +1556,7 @@ function App() {
 
         {/* booking */}
         <Route path="/bookings" element={<Booking />} />
+        <Route path="/bookings/calendar" element={<BookingCalendar />} />
         <Route
           path="/bookings/new-facility-booking"
           element={<FacilityBooking />}
