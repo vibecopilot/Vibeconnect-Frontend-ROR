@@ -11091,6 +11091,15 @@ export const updateSoftService = async (id, formData) =>
   });
 
 
+  // Calendar Booking API
+export const getCalendarBookings = async () =>
+  axiosInstance.get("/amenity_bookings/calender_booking.json", {
+    params: {
+      token: token,
+    },
+  });
+
+
 
 
 

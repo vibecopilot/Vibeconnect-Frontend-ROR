@@ -4,17 +4,20 @@ import { IoAddCircleOutline } from "react-icons/io5";
 import Navbar from "../components/Navbar";
 import { BiEdit, BiExport } from "react-icons/bi";
 import ExportBookingModal from "../containers/modals/ExportBookingsModal";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import SeatBooking from "./SubPages/SeatBooking";
 import Table from "../components/table/Table";
 import { useSelector } from "react-redux";
 import { BsEye } from "react-icons/bs";
 import { getAmenitiesBooking, getFacitilitySetup } from "../api";
+import { FaCalendarAlt } from "react-icons/fa";
+
+
 
 const Booking = () => {
   const [searchText, setSearchText] = useState("");
   const [modal, showModal] = useState(false);
-  const [page, setPage] = useState("meetingBooking");
+  // const [page, setPage] = useState("meetingBooking");
   const [bookings, setBookings] = useState([]); 
   const [loading, setLoading] = useState(false); 
   const [error, setError] = useState(null); 
@@ -194,18 +197,30 @@ const Booking = () => {
       <div className="w-full flex m-3 flex-col overflow-hidden">
         <div className="flex justify-center">
           <div className="sm:flex grid grid-cols-2 sm:flex-row gap-5 font-medium p-2 sm:rounded-full rounded-md opacity-90 bg-gray-200">
-            <h2
-              className={`p-1 ${
-                page === "meetingBooking" &&
-                "bg-white text-blue-500 shadow-custom-all-sides"
-              } rounded-full px-4 cursor-pointer text-center transition-all duration-300 ease-linear`}
-              onClick={() => setPage("meetingBooking")}
-            >
-              Workspace Bookings
-            </h2>
-          </div>
+          <Link
+  to="/bookings"
+  className={`p-1 rounded-full px-4 transition-all duration-300 ${
+    location.pathname === "/bookings"
+      ? "bg-white text-blue-500 shadow-custom-all-sides"
+      : "text-gray-600"
+  }`}
+>
+  Workspace Bookings
+</Link>
+
+           <Link
+  to="/bookings/calendar"
+  className={`p-2 rounded-md ${
+    location.pathname === "/bookings/calendar"
+      ? "bg-white shadow"
+      : ""
+  }`}
+>
+  <FaCalendarAlt size={16} />
+</Link>
+       </div>
         </div>
-        {page === "meetingBooking" && (
+        {/* {page === "meetingBooking" && ( */}
           <div>
             <div className="flex gap-2 items-center">
               <input
@@ -248,16 +263,22 @@ const Booking = () => {
             </div>
             {modal && <ExportBookingModal onclose={() => showModal(false)} />}
           </div>
-        )}
+        
 
-        {page === "seatBooking" && (
+        {/* {page === "seatBooking" && ( */}
           <div>
             <SeatBooking />
           </div>
-        )}
+        {/* )} */}
       </div>
     </section>
   );
 };
 
 export default Booking;
+
+
+
+
+
+
