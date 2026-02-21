@@ -1556,7 +1556,7 @@ function App() {
 
         {/* booking */}
         <Route path="/bookings" element={<Booking />} />
-        <Route path="/bookings/calendar" element={<BookingCalendar />} />
+        {/* <Route path="/bookings/calendar" element={<BookingCalendar />} /> */}
         <Route
           path="/bookings/new-facility-booking"
           element={<FacilityBooking />}
