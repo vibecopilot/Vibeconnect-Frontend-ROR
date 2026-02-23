@@ -11130,6 +11130,18 @@ export const getCalendarBookings = async (
   });
 
 
+  // Vehicle Setup API
+
+  // Vehicle Setups API
+export const getVehicleSetups = async (siteId = 47) =>
+  axiosInstance.get("/vehicle_setups.json", {
+    params: {
+      token: token,
+      site_id: siteId,
+    },
+  });
+
+
 
 
 
