@@ -266,9 +266,9 @@ const Booking = () => {
         
 
         {/* {page === "seatBooking" && ( */}
-          <div>
+          {/* <div>
             <SeatBooking />
-          </div>
+          </div> */}
         {/* )} */}
       </div>
     </section>

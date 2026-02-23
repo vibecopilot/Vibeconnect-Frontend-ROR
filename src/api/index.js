@@ -11100,17 +11100,32 @@ export const updateSoftService = async (id, formData) =>
 //   });
 
 //calendar booking with date filter
-  export const getCalendarBookings = async (
+//   export const getCalendarBookings = async (
+//   booking_type,
+//   start_date,
+//   end_date
+// ) =>
+//   axiosInstance.get("/amenity_bookings/calender_booking.json", {
+//     params: {
+//       token: token,
+//       booking_type,
+//       ...(start_date && { start_date }),
+//       ...(end_date && { end_date }),
+//     },
+//   });
+export const getCalendarBookings = async (
   booking_type,
   start_date,
-  end_date
+  end_date,
+  site_id
 ) =>
   axiosInstance.get("/amenity_bookings/calender_booking.json", {
     params: {
       token: token,
       booking_type,
-      ...(start_date && { start_date }),
-      ...(end_date && { end_date }),
+      site_id,
+      ...(start_date ? { start_date } : {}),
+      ...(end_date ? { end_date } : {}),
     },
   });
 
