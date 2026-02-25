@@ -684,8 +684,9 @@ import { FaCheck, FaTrash } from "react-icons/fa";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { getAssignedTo, postPolls,getBuildings,getSetupUsers,getGroups } from "../../api";
+import { getAssignedTo, postPoll, getBuildings, getSetupUsers, getGroups } from "../../api";
 import { MdClose } from "react-icons/md";
+import axios from "axios";
 
 function CreatePolls() {
   const themeColor = useSelector((state) => state.theme.color);
@@ -703,15 +704,14 @@ function CreatePolls() {
   const [units, setUnits] = useState([]);
   const [selectedGroup, setSelectedGroup] = useState("");
   const [groups, setGroups] = useState([]);
-   const [groupMembers, setGroupMembers] = useState([]);
-   const [selectedMembers, setSelectedMembers] = useState([]);
-   const [users, setUsers] = useState([]);
-   const [pollUserName, setPollUserName] = useState("");
-
+  const [groupMembers, setGroupMembers] = useState([]);
+  const [selectedMembers, setSelectedMembers] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [pollUserName, setPollUserName] = useState("");
 
   useEffect(() => {
     const today = new Date();
-    const formattedDate = today.toISOString().split("T")[0]; // Format date as YYYY-MM-DD
+    const formattedDate = today.toISOString().split("T")[0];
     setCurrentDate(formattedDate);
   }, []);
 
@@ -723,7 +723,7 @@ function CreatePolls() {
     if (pollInput.trim() !== "") {
       if (pollsOption.length < 5) {
         setPollsOption([...pollsOption, { pollOption: pollInput }]);
-        setPollInput(""); // Clear the input after adding the poll option
+        setPollInput("");
       } else {
         toast.error("You can only add up to 5 options");
       }
@@ -741,17 +741,6 @@ function CreatePolls() {
     }));
   };
 
-  // useEffect(() => {
-  //   const fetchAssignedTo = async () => {
-  //     const assignedToList = await getAssignedTo();
-  //     const user = assignedToList.data.map((u) => ({
-  //       value: u.id,
-  //       label: `${u.firstname} ${u.lastname}`,
-  //     }));
-  //     setAssignedTo(user);
-  //   };
-  //   fetchAssignedTo();
-  // }, []);
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -761,7 +750,6 @@ function CreatePolls() {
           label: `${user.firstname} ${user.lastname}`,
         }));
         setUsers(transformedUsers);
-        console.log(response);
       } catch (error) {
         console.error("Error fetching assigned users:", error);
       }
@@ -774,39 +762,40 @@ function CreatePolls() {
     fetchUsers();
 
     const fetchAssignedTo = async () => {
-      const assignedToList = await getAssignedTo();
-      const user = assignedToList.data.map((u) => ({
-        value: u.id,
-        label: `${u.firstname} ${u.lastname}`,
-      }));
-      setAssignedTo(user);
+      try {
+        const assignedToList = await getAssignedTo();
+        const user = assignedToList.data.map((u) => ({
+          value: u.id,
+          label: `${u.firstname} ${u.lastname}`,
+        }));
+        setAssignedTo(user);
+      } catch (error) {
+        console.error("Error fetching assigned to:", error);
+      }
     };
     fetchAssignedTo();
   }, [share]);
 
-    const fetchGroups = async () => {
+  const fetchGroups = async () => {
     try {
-      const response = await getGroups(); // Assuming your API to get groups
-      setGroups(response.data || []); // Adjust based on actual API response structure
-      console.log("group", response);
+      const response = await getGroups();
+      setGroups(response.data || []);
     } catch (error) {
       console.error("Error fetching groups:", error);
     }
   };
 
-
-    useEffect(() => {
+  useEffect(() => {
     const fetchData = async () => {
       try {
         const usersRes = await getSetupUsers();
         const unitsRes = await getBuildings();
-        console.log("userSites", unitsRes);
         setUnits(unitsRes.data);
 
         const employeesList = usersRes.data.map((emp) => ({
           id: emp.id,
           name: `${emp.firstname} ${emp.lastname}`,
-          building_id: emp.building_id || emp.building?.id || null, //for some users id is null
+          building_id: emp.building_id || emp.building?.id || null,
           userSites: emp.user_sites || [],
           building: emp.building || {},
         }));
@@ -834,36 +823,24 @@ function CreatePolls() {
     start_time: "",
     end_time: "",
     visibility: "",
-    target_groups: [], // Array to store selected target groups
-    poll_options_attributes: {}, // Object to store poll options
+    send_mail: false,
+    group_id: "",
+    target_groups: [],
   });
 
   const handleFormChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value, type, checked } = e.target;
+    setFormData({
+      ...formData,
+      [name]: type === "checkbox" ? checked : value,
+    });
   };
 
-
-    const handleFilter = () => {
-    console.log(
-      "Selected Building ID:",
-      selectedUnit,
-      "Selected Ownership:",
-      selectedOwnership
-    );
-    console.log("Members Before Filtering:", members);
-
+  const handleFilter = () => {
     const filtered = members.filter((member) => {
-      // Check if the user belongs to the selected building
       const buildingMatch =
         !selectedUnit || Number(member.building_id) === Number(selectedUnit);
 
-      console.log(
-        "building_id type:",
-        typeof member.building_id,
-        member.building_id
-      );
-
-      // Check if any of the user's sites match the selected ownership
       const ownershipMatch =
         !selectedOwnership ||
         member.userSites.some(
@@ -871,88 +848,35 @@ function CreatePolls() {
             site.ownership?.toLowerCase() === selectedOwnership.toLowerCase()
         );
 
-      console.log(
-        "User:",
-        member.name,
-        "Building Match:",
-        buildingMatch,
-        "Ownership Match:",
-        ownershipMatch
-      );
-
       return buildingMatch && ownershipMatch;
     });
 
-    console.log("Filtered Members:", filtered);
     setFilteredMembers(filtered);
     toast.success("Filter applied");
   };
 
-    const handleSelectEdit = (option) => {
-    if (selectedMembers.includes(option)) {
-      setSelectedMembers(selectedMembers.filter((item) => item !== option));
+  const handleSelectEdit = (option) => {
+    if (selectedMembers.find((item) => item.value === option.value)) {
+      setSelectedMembers(
+        selectedMembers.filter((item) => item.value !== option.value)
+      );
     } else {
       setSelectedMembers([...selectedMembers, option]);
     }
   };
-    const handleGroupChange = (event) => {
+
+  const handleGroupChange = (event) => {
     const groupId = parseInt(event.target.value, 10) || 0;
     const selectedGroupObj = groups.find((group) => group.id === groupId);
 
     setSelectedGroup(event.target.value);
     setFormData({ ...formData, group_id: groupId });
-
-    // Set members directly from selected group object
     setGroupMembers(selectedGroupObj?.group_members || []);
   };
 
-  // const handleSubmit = async () => {
-  //   const currentDate = new Date();
-  //   currentDate.setHours(0, 0, 0, 0); // Set time to midnight for comparison
-  
-  //   // Parse the start_date from the formData to a Date object
-  //   const startDate = new Date(formData.start_date);
-  
-  //   // Check if start_date is valid and greater than or equal to the current date
-  //   if (startDate < currentDate) {
-  //     toast.error("Start date must be equal or greater than the current date.");
-  //     return; 
-  //   }
-  //   const sendData = new FormData();
-  //   sendData.append("poll[title]", formData.title);
-  //   sendData.append("poll[description]", formData.description);
-  //   sendData.append("poll[start_date]", formData.start_date);
-  //   sendData.append("poll[end_date]", formData.end_date);
-  //   sendData.append("poll[start_time]", formData.start_time);
-  //   sendData.append("poll[end_time]", formData.end_time);
-  //   sendData.append("poll[visibility]", formData.visibility);
-
-  //   // Append target groups (assumed to be single value for simplicity)
-  //   formData.target_groups.forEach((group) => {
-  //     sendData.append("poll[target_groups]", group);
-  //   });
-
-  //   // Create poll_options_attributes with proper indexing
-  //   pollsOption.forEach((option, index) => {
-  //     sendData.append(
-  //       `poll[poll_options_attributes][${index + 1}][content]`,
-  //       option.pollOption
-  //     );
-  //   });
-
-  //   try {
-  //     const pollresp = await postPolls(sendData); // Call the API with the form data
-  //     toast.success("Poll Added Successfully");
-  //     navigate("/communication/polls");
-  //     console.log(pollresp);
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  // };
-
-  const handleSubmit = async () => {
+  // Replace the fetch call with postPoll function
+const handleSubmit = async () => {
   try {
-    // const token = localStorage.getItem("TOKEN");
     const token = localStorage.getItem("TOKEN");
 
     if (!token) {
@@ -970,42 +894,47 @@ function CreatePolls() {
       return;
     }
 
+    // 🔥 Ensure start date exists
+    if (!formData.start_date) {
+      formData.start_date = new Date().toISOString().split("T")[0];
+    }
+
+    // 🔥 Ensure end date is future
+    if (!formData.end_date) {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 7);
+      formData.end_date = tomorrow.toISOString().split("T")[0];
+    }
+
     const sendData = new FormData();
 
-    // 🔹 Basic fields
+    // 🔹 All required parameters from strong params
     sendData.append("poll[title]", formData.title);
+    sendData.append("poll[shared]", share !== "all" ? "1" : "0");
+    sendData.append("poll[group_name]", selectedGroup || "");
+    sendData.append("poll[send_mail]", formData.send_mail ? "1" : "0");
+    sendData.append("poll[group_id]", formData.group_id || "");
+    sendData.append("poll[end_time]", formData.end_time);
+    sendData.append("poll[start_time]", formData.start_time);
+    sendData.append("poll[share_with]", share);
     sendData.append("poll[description]", formData.description);
     sendData.append("poll[start_date]", formData.start_date);
     sendData.append("poll[end_date]", formData.end_date);
-    sendData.append("poll[start_time]", formData.start_time);
-    sendData.append("poll[end_time]", formData.end_time);
     sendData.append("poll[visibility]", formData.visibility);
 
+    // Add created_by_id
+    const currentUser = JSON.parse(localStorage.getItem("USER_DATA") || "{}");
+    sendData.append("poll[created_by_id]", currentUser.id || "");
 
-    // Add Poll User Name
-if (pollUserName) {
-  sendData.append(
-    "poll[poll_users_attributes][0][user_name]",
-    pollUserName
-  );
-}
-
-
-    // 🔹 Send Mail
-    sendData.append(
-      "poll[send_mail]",
-      formData.send_mail ? "1" : "0"
-    );
-
-    // 🔹 Share Logic
+    // 🔹 Target groups - add based on share type
     if (share === "individual") {
       selectedMembers.forEach((member) => {
-        sendData.append("poll[target_user_ids][]", member.value);
+        sendData.append("poll[target_groups][]", member.value);
       });
-    }
-
-    if (share === "groups") {
-      sendData.append("poll[group_id]", selectedGroup);
+    } else if (share === "groups") {
+      sendData.append("poll[target_groups][]", formData.group_id);
+    } else if (share === "all") {
+      sendData.append("poll[target_groups][]", "all");
     }
 
     // 🔹 Poll Options
@@ -1016,27 +945,26 @@ if (pollUserName) {
       );
     });
 
+    // 🔹 Poll User Name
+    // if (pollUserName) {
+    //   sendData.append("poll[poll_users_attributes][0][user_name]", pollUserName);
+    // }
+
     toast.loading("Creating poll...");
 
-    const response = await fetch(
-      `https://admin.vibecopilot.ai/polls.json?token=${token}`,
-      {
-        method: "POST",
-        body: sendData,
-      }
-    );
+    // 🔥 Replace fetch with postPoll from API
+    const response = await postPoll(sendData);
 
-    const data = await response.json();
     toast.dismiss();
 
-    if (!response.ok) {
-      console.log("Backend error:", data);
-      toast.error("Poll creation failed ❌");
-      return;
-    }
+    // if (!response.ok) {
+    //   console.log("Backend error:", response);
+    //   toast.error("Poll creation failed ❌");
+    //   return;
+    // }
 
     toast.success("Poll Added Successfully ✅");
-    navigate("/communication/polls");
+    navigate("/communication/polls", { state: { refresh: true } });
 
   } catch (error) {
     toast.dismiss();
@@ -1045,31 +973,28 @@ if (pollUserName) {
   }
 };
 
-
   return (
     <section className="flex">
       <Navbar />
       <div className="w-full flex mx-3 flex-col overflow-hidden">
         <div className="my-5 mb-10 border border-gray-200 p-2 m-5 px-2 rounded-lg">
           <h2
-            className="text-center text-xl font-bold  p-2 bg-black rounded-md text-white"
+            className="text-center text-xl font-bold p-2 bg-black rounded-md text-white"
             style={{ background: themeColor }}
           >
             Create Polls
           </h2>
 
-          {/* <div className="md:grid grid-cols-3 gap-5 my-5"> */}
-          <div className="flex flex-col">
+          <div className="flex flex-col my-5">
             <label className="font-semibold my-2">Poll User Name</label>
-             <input
-                type="text"
-                value={pollUserName}
-                onChange={(e) => setPollUserName(e.target.value)}
-                placeholder="Enter Poll User Name"
-                className="border p-2 px-4 border-gray-400 rounded-md"
+            <input
+              type="text"
+              value={pollUserName}
+              onChange={(e) => setPollUserName(e.target.value)}
+              placeholder="Enter Poll User Name"
+              className="border p-2 px-4 border-gray-400 rounded-md"
             />
           </div>
-
 
           <div className="md:grid grid-cols-3 gap-5 my-5">
             <div className="flex flex-col">
@@ -1086,7 +1011,7 @@ if (pollUserName) {
 
             <div className="flex flex-col">
               <label className="font-semibold my-2">Poll Options</label>
-              <div className="flex xl:flex-row flex-col gap-3 ">
+              <div className="flex xl:flex-row flex-col gap-3">
                 <input
                   type="text"
                   placeholder="Poll Options"
@@ -1096,7 +1021,7 @@ if (pollUserName) {
                   disabled={pollsOption.length >= 5}
                 />
                 <button
-                  className="border-2 border-black rounded-md p-2 px-4"
+                  className="border-2 border-black rounded-md p-2 px-4 hover:bg-gray-100"
                   onClick={handleAddPolls}
                   disabled={pollsOption.length >= 5}
                 >
@@ -1104,6 +1029,7 @@ if (pollUserName) {
                 </button>
               </div>
             </div>
+
             <div className="flex flex-col">
               <label className="font-semibold my-2">Visibility</label>
               <select
@@ -1128,6 +1054,7 @@ if (pollUserName) {
                 className="border p-2 px-4 border-gray-400 rounded-md"
               />
             </div>
+
             <div className="flex flex-col">
               <label className="font-semibold my-2">Start Time</label>
               <input
@@ -1149,6 +1076,7 @@ if (pollUserName) {
                 className="border p-2 px-4 border-gray-400 rounded-md"
               />
             </div>
+
             <div className="flex flex-col">
               <label className="font-semibold my-2">End Time</label>
               <input
@@ -1159,35 +1087,35 @@ if (pollUserName) {
                 className="border p-2 px-4 border-gray-400 rounded-md"
               />
             </div>
-             <div className="flex gap-2 items-center">
+
+            <div className="flex gap-2 items-center">
               <input
                 type="checkbox"
                 name="send_mail"
                 id="imp"
-                checked={formData.send_mail === true}
-                onChange={() =>
-                  setFormData({
-                    ...formData,
-                    send_mail: !formData.send_mail,
-                  })
-                }
+                checked={formData.send_mail}
+                onChange={handleFormChange}
               />
               <label htmlFor="imp">Send Email</label>
             </div>
           </div>
 
-           {/* Share Option */}
-          <div className="">
-            <h2 className="border-b t border-black my-5 text-lg font-semibold">
+          {/* Share Option */}
+          <div>
+            <h2 className="border-b border-black my-5 text-lg font-semibold">
               Share With
             </h2>
             <div className="flex flex-col items-center justify-center">
-              <div className="flex flex-row gap-2 w-full font-semibold p-2 ">
+              <div className="flex flex-row gap-2 w-full font-semibold p-2">
                 <h2
                   className={`p-1 ${
                     share === "all" && "bg-black text-white"
                   } rounded-full px-6 cursor-pointer border-2 border-black`}
-                  onClick={() => setShare("all")}
+                  onClick={() => {
+                    setShare("all");
+                    setSelectedMembers([]);
+                    setSelectedGroup("");
+                  }}
                 >
                   All
                 </h2>
@@ -1195,7 +1123,10 @@ if (pollUserName) {
                   className={`p-1 ${
                     share === "individual" && "bg-black text-white"
                   } rounded-full px-4 cursor-pointer border-2 border-black`}
-                  onClick={() => setShare("individual")}
+                  onClick={() => {
+                    setShare("individual");
+                    setSelectedGroup("");
+                  }}
                 >
                   Individuals
                 </h2>
@@ -1203,16 +1134,18 @@ if (pollUserName) {
                   className={`p-1 ${
                     share === "groups" && "bg-black text-white"
                   } rounded-full px-4 cursor-pointer border-2 border-black`}
-                  onClick={() => setShare("groups")}
+                  onClick={() => {
+                    setShare("groups");
+                    setSelectedMembers([]);
+                  }}
                 >
                   Groups
                 </h2>
               </div>
+
               {share === "individual" && (
                 <div className="flex flex-col gap-2 mt-2 w-full">
-                  {/* First Row: Unit Select, Ownership Select, and Filter Button */}
                   <div className="flex gap-2 items-end">
-                    {/* Unit Select Dropdown */}
                     <select
                       className="border p-3 border-gray-300 rounded-md flex-1"
                       value={selectedUnit || ""}
@@ -1226,7 +1159,6 @@ if (pollUserName) {
                       ))}
                     </select>
 
-                    {/* Ownership Select Dropdown */}
                     <select
                       className="border p-3 border-gray-300 rounded-md flex-1"
                       value={selectedOwnership}
@@ -1237,15 +1169,15 @@ if (pollUserName) {
                       <option value="owner">Owner</option>
                     </select>
 
-                    {/* Filter Button */}
                     <button
                       style={{ background: themeColor }}
                       onClick={handleFilter}
-                      className="bg-blue-500 text-white px-4 py-2 rounded-md"
+                      className="text-white px-4 py-2 rounded-md"
                     >
                       Filter
                     </button>
                   </div>
+
                   <div className="w-full mt-3 mb-3">
                     <Select
                       options={filteredMembers.map((member) => ({
@@ -1263,6 +1195,7 @@ if (pollUserName) {
                   </div>
                 </div>
               )}
+
               {share === "groups" && (
                 <div className="flex flex-col gap-2 mt-2 w-full">
                   <label htmlFor="groupSelect" className="font-medium mb-1">
@@ -1282,13 +1215,11 @@ if (pollUserName) {
                     ))}
                   </select>
 
-                  {/* Display group members as per group selection */}
                   {selectedGroup && (
                     <div className="mt-4 p-4 border rounded-md bg-gray-50">
                       <h2 className="text-lg font-semibold mb-2">
                         Group Members
                       </h2>
-
                       {groupMembers.length > 0 ? (
                         <div className="space-y-2">
                           {groupMembers.map((member, index) => (
@@ -1302,7 +1233,7 @@ if (pollUserName) {
                         </div>
                       ) : (
                         <p className="text-sm text-gray-600">
-                          No members exist inside this group.
+                          No members in this group.
                         </p>
                       )}
                     </div>
@@ -1312,18 +1243,7 @@ if (pollUserName) {
             </div>
           </div>
 
-          {/* <div className="flex flex-col">
-            <label className="font-semibold my-2">Target Groups/Roles</label>
-            <Select
-              isMulti
-              value={selectedUserOption}
-              onChange={handleUserChangeSelect}
-              options={assignedTo}
-              noOptionsMessage={() => "No Users Available"}
-              placeholder="Select Users"
-            />
-          </div> */}
-          <div className="flex flex-col">
+          <div className="flex flex-col my-5">
             <label className="font-semibold my-2">Poll Description</label>
             <textarea
               name="description"
@@ -1335,33 +1255,32 @@ if (pollUserName) {
               className="border p-2 px-4 border-gray-400 rounded-md"
             />
           </div>
-         {pollsOption.length !== 0 && <div className="flex items-center gap-2 flex-wrap border rounded-md p-2 my-2">
-            {pollsOption.map((option, index) => (
-              <div key={index} className="flex">
-                <div className="flex xl:flex-row flex-col gap-3 items-center bg-blue-400 p-1 rounded-md">
-                {/* <label className=" text-white">Option - {index + 1}</label> */}
-                  {/* <input
-                    type="text"
-                    value={option.pollOption}
-                    readOnly
-                    className="border p-2 w-full px-4 border-gray-400 rounded-md"
-                  /> */}
-                  <p className="bg-green-400 rounded-md text-white p-1">{option.pollOption}</p>
+
+          {pollsOption.length > 0 && (
+            <div className="flex items-center gap-2 flex-wrap border rounded-md p-2 my-2">
+              {pollsOption.map((option, index) => (
+                <div
+                  key={index}
+                  className="flex gap-2 items-center bg-blue-400 p-2 rounded-md"
+                >
+                  <p className="bg-green-400 rounded-md text-white px-3 py-1">
+                    {option.pollOption}
+                  </p>
                   <button
-                    className="rounded-full bg-red-400 text-white p-1"
+                    className="rounded-full bg-red-400 text-white p-1 hover:bg-red-500"
                     onClick={() => handleRemovePolls(index)}
                   >
                     <MdClose />
                   </button>
                 </div>
-              </div>
-            ))}
-          </div>}
+              ))}
+            </div>
+          )}
 
           <div className="flex justify-center my-5 gap-2">
             <button
               onClick={handleSubmit}
-              className="bg-black text-white p-2 px-4 rounded-md font-medium flex items-center gap-2"
+              className="text-white p-2 px-6 rounded-md font-medium flex items-center gap-2 hover:opacity-90"
               style={{ background: themeColor }}
             >
               <FaCheck /> Create Poll
@@ -1374,5 +1293,3 @@ if (pollUserName) {
 }
 
 export default CreatePolls;
-
-
