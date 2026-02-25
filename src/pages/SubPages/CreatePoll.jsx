@@ -985,7 +985,7 @@ const handleSubmit = async () => {
             Create Polls
           </h2>
 
-          <div className="flex flex-col my-5">
+          {/* <div className="flex flex-col my-5">
             <label className="font-semibold my-2">Poll User Name</label>
             <input
               type="text"
@@ -994,7 +994,7 @@ const handleSubmit = async () => {
               placeholder="Enter Poll User Name"
               className="border p-2 px-4 border-gray-400 rounded-md"
             />
-          </div>
+          </div> */}
 
           <div className="md:grid grid-cols-3 gap-5 my-5">
             <div className="flex flex-col">
