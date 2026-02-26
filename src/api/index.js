@@ -175,12 +175,20 @@ export const postPollVote = async (id, data) =>
       token: token,
     },
   });
-export const getPolls = async () =>
-  axiosInstance.get("/polls.json", {
+  export const getSearchPolls = async (title) => {
+  return axiosInstance.get("/polls.json", {
     params: {
       token: token,
+      "q[title_cont]": title,
     },
   });
+};
+// export const getPolls = async () =>
+//   axiosInstance.get("/polls.json", {
+//     params: {
+//       token: token,
+//     },
+//   });
 
 // vendor
 export const getVendors = async () =>
@@ -1126,18 +1134,18 @@ export const getFacitilitySetup = async () => {
   }
 };
 
-export const getAmenitiesBooking = async () => {
-  return axiosInstance.get(`/amenity_bookings.json`, {
-    params: {
-      token: token,
-    },
-    // headers: {
-    //   "Cache-Control": "no-cache",
-    //   Pragma: "no-cache", // Older HTTP/1.0 caches
-    //   Expires: "0", // Immediately expires the cached response
-    // },
-  });
-};
+// export const getAmenitiesBooking = async () => {
+//   return axiosInstance.get(`/amenity_bookings.json`, {
+//     params: {
+//       token: token,
+//     },
+//     // headers: {
+//     //   "Cache-Control": "no-cache",
+//     //   Pragma: "no-cache", // Older HTTP/1.0 caches
+//     //   Expires: "0", // Immediately expires the cached response
+//     // },
+//   });
+// };
 
 // export const getAmenitiesBookingById = async (id) => {
 //   return axiosInstance.get(`/amenity_bookings.json/${id}`, {
@@ -11091,7 +11099,123 @@ export const updateSoftService = async (id, formData) =>
   });
 
 
+  // Calendar Booking API
+// export const getCalendarBookings = async () =>
+//   axiosInstance.get("/amenity_bookings/calender_booking.json", {
+//     params: {
+//       token: token,
+//     },
+//   });
 
+//calendar booking with date filter
+//   export const getCalendarBookings = async (
+//   booking_type,
+//   start_date,
+//   end_date
+// ) =>
+//   axiosInstance.get("/amenity_bookings/calender_booking.json", {
+//     params: {
+//       token: token,
+//       booking_type,
+//       ...(start_date && { start_date }),
+//       ...(end_date && { end_date }),
+//     },
+//   });
+export const getCalendarBookings = async (
+  booking_type,
+  start_date,
+  end_date,
+  site_id
+) =>
+  axiosInstance.get("/amenity_bookings/calender_booking.json", {
+    params: {
+      token: token,
+      booking_type,
+      site_id,
+      ...(start_date ? { start_date } : {}),
+      ...(end_date ? { end_date } : {}),
+    },
+  });
+
+
+  // Vehicle Setup API
+
+  // Vehicle Setups API
+export const getVehicleSetups = async (siteId = 47) =>
+  axiosInstance.get("/vehicle_setups.json", {
+    params: {
+      token: token,
+      site_id: siteId,
+    },
+  });
+
+
+  // Amenity Bookings API
+// export const getAmenitiesBooking = async (page = 1, perPage = 10) =>
+//   axiosInstance.get("/amenity_bookings.json", {
+//     params: {
+//       token: token,
+//       "q[amenity_is_hotel_not_null]": true,
+//       Page: page,
+//       Per_Page: perPage,
+//     },
+//   });
+
+// Amenity Bookings API
+// Amenity Bookings API
+export const getAmenitiesBooking = async (
+  page = 1,
+  per_page = 10,
+  site_id = 47
+) =>
+  axiosInstance.get("/amenity_bookings.json", {
+    params: {
+      token: token,
+      page: page,
+      per_page: per_page,
+      site_id: site_id,
+    },
+  });
+
+
+  // Polls API
+
+// 🔹 Get all polls with pagination
+export const getPolls = async () =>
+  axiosInstance.get("/polls.json", {
+    params: {
+      token: token,
+    },
+  });
+// 🔹 Get poll by ID
+export const getPollById = async (id) => {
+  const token = localStorage.getItem("TOKEN");
+  return axiosInstance.get(`/polls/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+};
+
+// 🔹 Create a new poll
+export const postPoll = async (formData) => {
+  const token = localStorage.getItem("TOKEN");
+  return axiosInstance.post(`/polls.json?token=${token}`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+};
+
+// 🔹 Update an existing poll
+export const updatePoll = async (id, formData) => {
+  const token = localStorage.getItem("TOKEN");
+  return axiosInstance.put(`/polls/${id}.json?token=${token}`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+};
 
 
 
