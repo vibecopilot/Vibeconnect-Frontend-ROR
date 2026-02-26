@@ -755,6 +755,12 @@ export const getFacitilitySetupId = async (id) =>
     },
   });
 
+  export const postFacitilitySetup = async (data) =>
+  axiosInstance.post(`/amenities.json`, data, {
+    params: {
+      token: token,
+    },
+  });
 
 export const updateAmenityBook = async (id, data) =>
   axiosInstance.put(`/amenity_bookings/${id}.json`, data, {

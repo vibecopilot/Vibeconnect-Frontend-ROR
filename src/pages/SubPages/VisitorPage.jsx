@@ -31,9 +31,9 @@ const VisitorPage = () => {
   const [visitorIn, setVisitorIn] = useState([]);
   const [visitorOut, setVisitorOut] = useState([]);
   const [unexpectedVisitor, setUnexpectedVisitor] = useState([]);
-  // const [FilteredUnexpectedVisitor, setFilteredUnexpectedVisitor] = useState([]);
+  const [FilteredUnexpectedVisitor, setFilteredUnexpectedVisitor] = useState([]);
   const [expectedVisitor, setExpectedVisitor] = useState([]);
-  // const [FilteredExpectedVisitor, setFilteredExpectedVisitor] = useState([]);
+  const [FilteredExpectedVisitor, setFilteredExpectedVisitor] = useState([]);
   const [FilteredApproval, setFilteredApproval] = useState([]);
   const [approvals, setApprovals] = useState([]);
   // const [filteredData, setFilteredData] = useState([]);
@@ -309,7 +309,7 @@ const [searchAll, setSearchAll] = useState("");
     setCurrentPage(1);
   };
 
-<<<<<<< vibhu
+
   // useEffect(() => {
   //   if (page === "Visitor In") {
   //     if (selectedVisitor === "expected") {
@@ -349,7 +349,6 @@ useEffect(() => {
     setFilteredUnexpectedVisitor(unexpectedVisitor);
   }
 }, [page, selectedVisitor, visitorIn, expectedVisitor, unexpectedVisitor]);
-=======
   const filteredVisitorData = useMemo(() => {
   let baseData = visitor || [];
 
@@ -372,7 +371,7 @@ useEffect(() => {
   );
 
 }, [visitor, selectedVisitor, searchText, searchAll]);
->>>>>>> server
+
   useEffect(() => {
     const fetchExpectedVisitor = async () => {
       try {
