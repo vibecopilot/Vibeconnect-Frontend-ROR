@@ -11,6 +11,7 @@ import { domainPrefix, getStaff } from "../../api";
 import { dateFormat } from "../../utils/dateUtils";
 import image from "/profile.png";
 import { exportStaffByDate } from "../../api";
+import { MdQrCode } from "react-icons/md";
 
 
 const Staff = () => {
@@ -20,6 +21,8 @@ const Staff = () => {
   const [staffs, setStaffs] = useState([]);
   const [filteredStaff, setFilteredStaff] = useState([]);
   const [searchText, setSearchText] = useState("");
+  const [selectedRows, setSelectedRows] = useState([]);
+  const [selectAll, setSelectAll] = useState(false);
 
   // 📄 Pagination (DON'T CHANGE - as you requested)
   const [currentPage, setCurrentPage] = useState(1);
@@ -202,6 +205,8 @@ const [endDate, setEndDate] = useState("");
       setTotalRecords(apiData.total_count || staffList.length);
       setCurrentPage(apiData.current_page || page);
       setTotalPages(apiData.total_pages || 1);
+       setSelectedRows([]);
+       setSelectAll(false);
     } catch (error) {
       console.error("Error fetching staff:", error);
     }
@@ -234,19 +239,55 @@ const [endDate, setEndDate] = useState("");
 
   // 🧾 Table Columns - unchanged
   const columns = [
-    {
-      name: "Action",
-      cell: (row) => (
-        <div className="flex items-center gap-4">
-          <Link to={`/admin/passes/staff-details/${row.id}`}>
-            <BsEye size={15} />
-          </Link>
-          <Link to={`/admin/edit-staff/${row.id}`}>
-            <BiEdit size={15} />
-          </Link>
-        </div>
-      ),
-    },
+   {
+  name: (
+    <input
+      type="checkbox"
+      checked={selectAll}
+      onChange={(e) => {
+        const checked = e.target.checked;
+        setSelectAll(checked);
+
+        if (checked) {
+          setSelectedRows(filteredStaff.map((item) => item.id));
+        } else {
+          setSelectedRows([]);
+        }
+      }}
+    />
+  ),
+  cell: (row) => (
+    <div className="flex items-center gap-3">
+
+      {/* Row Checkbox */}
+      <input
+        type="checkbox"
+        checked={selectedRows.includes(row.id)}
+        onChange={(e) => {
+          if (e.target.checked) {
+            setSelectedRows([...selectedRows, row.id]);
+          } else {
+            setSelectedRows(
+              selectedRows.filter((id) => id !== row.id)
+            );
+            setSelectAll(false);
+          }
+        }}
+      />
+
+      {/* View */}
+      <Link to={`/admin/passes/staff-details/${row.id}`}>
+        <BsEye size={15} />
+      </Link>
+
+      {/* Edit */}
+      <Link to={`/admin/edit-staff/${row.id}`}>
+        <BiEdit size={15} />
+      </Link>
+
+    </div>
+  ),
+},
     {
       name: "Profile",
       selector: (row) =>
@@ -309,6 +350,23 @@ const [endDate, setEndDate] = useState("");
             className="border border-gray-300 rounded-md w-full px-2 placeholder:text-sm"
             placeholder="Search by name, unit, or mobile"
           />
+          <span className="flex gap-4"></span>
+
+            <button
+    onClick={() => {
+      if (!selectedRows.length) {
+        alert("Please select at least one staff");
+        return;
+      }
+
+      console.log("Selected Staff IDs:", selectedRows);
+      // 👉 Call your QR API here
+    }}
+    className="border-2 border-blue-600 text-blue-600 font-semibold transition-all p-2 rounded-md hover:bg-purple-50 cursor-pointer flex items-center gap-2 justify-center"
+  >
+    <MdQrCode size={18} />
+    QR Code
+  </button>
 
           <span className="flex gap-4">
             {/* ✅ Export button */}
@@ -372,6 +430,8 @@ const [endDate, setEndDate] = useState("");
       >
         Export by Date
       </button>
+
+
 
       <button
         onClick={exportStaffToCSVAll}
