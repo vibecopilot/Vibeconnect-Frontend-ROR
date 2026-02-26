@@ -31,16 +31,18 @@ const VisitorPage = () => {
   const [visitorIn, setVisitorIn] = useState([]);
   const [visitorOut, setVisitorOut] = useState([]);
   const [unexpectedVisitor, setUnexpectedVisitor] = useState([]);
-  const [FilteredUnexpectedVisitor, setFilteredUnexpectedVisitor] = useState([]);
+  // const [FilteredUnexpectedVisitor, setFilteredUnexpectedVisitor] = useState([]);
   const [expectedVisitor, setExpectedVisitor] = useState([]);
-  const [FilteredExpectedVisitor, setFilteredExpectedVisitor] = useState([]);
+  // const [FilteredExpectedVisitor, setFilteredExpectedVisitor] = useState([]);
   const [FilteredApproval, setFilteredApproval] = useState([]);
   const [approvals, setApprovals] = useState([]);
-  const [filteredData, setFilteredData] = useState([]);
+  // const [filteredData, setFilteredData] = useState([]);
   const [histories, setHistories] = useState([]);
   const [filteredHistory, setFilteredHistory] = useState([]);
   const [refetchTrigger, setRefetchTrigger] = useState(0);
-
+  
+const [searchText, setSearchText] = useState("");
+const [searchAll, setSearchAll] = useState("");
   // Pagination (All / In / Out)
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -307,25 +309,28 @@ const VisitorPage = () => {
     setCurrentPage(1);
   };
 
-  useEffect(() => {
-    if (page === "Visitor In") {
-      if (selectedVisitor === "expected") {
-        const expectedIn = visitorIn.filter(
-          (visit) => visit.usertype !== "security_guard"
-        );
-        setFilteredData(expectedIn);
-      } else {
-        const unexpectedIn = visitorIn.filter(
-          (visit) => visit.usertype === "security_guard"
-        );
-        setFilteredUnexpectedVisitor(unexpectedIn);
-      }
-    } else if (page === "all") {
-      setFilteredExpectedVisitor(expectedVisitor);
-      setFilteredUnexpectedVisitor(unexpectedVisitor);
-    }
-  }, [page, selectedVisitor, visitorIn, expectedVisitor, unexpectedVisitor]);
+  const filteredVisitorData = useMemo(() => {
+  let baseData = visitor || [];
 
+  // Filter by expected/unexpected
+  if (selectedVisitor === "expected") {
+    baseData = baseData.filter(v => v.usertype !== "security_guard");
+  } else {
+    baseData = baseData.filter(v => v.usertype === "security_guard");
+  }
+
+  // Search filter
+  if (!searchText.trim() && !searchAll.trim()) return baseData;
+
+  const searchValue = (searchText || searchAll).toLowerCase();
+
+  return baseData.filter(item =>
+    item.name?.toLowerCase().includes(searchValue) ||
+    item.vehicle_number?.toLowerCase().includes(searchValue) ||
+    item.hosts_display?.toLowerCase().includes(searchValue)
+  );
+
+}, [visitor, selectedVisitor, searchText, searchAll]);
   useEffect(() => {
     const fetchExpectedVisitor = async () => {
       try {
@@ -653,129 +658,152 @@ const VisitorPage = () => {
     },
   ];
 
-  const [searchText, setSearchText] = useState("");
+  // const [searchText, setSearchText] = useState("");
+// const handleSearch = (e) => {
+//   const searchValue = e.target.value.toLowerCase();
+//   setSearchText(e.target.value);
 
-const handleSearch = (e) => {
+//   const filterLogic = (item) =>
+//     item.name?.toLowerCase().includes(searchValue) ||
+//     item.vehicle_number?.toLowerCase().includes(searchValue) ||
+//     item.hosts_display?.toLowerCase().includes(searchValue);
+
+//   // If empty → reset properly
+//   if (!searchValue.trim()) {
+//     if (page === "Visitor In") {
+//       if (selectedVisitor === "expected") {
+//         setFilteredData(
+//           visitorIn.filter((v) => v.usertype !== "security_guard")
+//         );
+//       } else {
+//         setFilteredUnexpectedVisitor(
+//           visitorIn.filter((v) => v.usertype === "security_guard")
+//         );
+//       }
+//     }
+
+//     else if (page === "Visitor Out") {
+//       if (selectedVisitor === "expected") {
+//         setFilteredData(
+//           visitorOut.filter((v) => v.usertype !== "security_guard")
+//         );
+//       } else {
+//         setFilteredUnexpectedVisitor(
+//           visitorOut.filter((v) => v.usertype === "security_guard")
+//         );
+//       }
+//     }
+
+//     else if (page === "all") {
+//       if (selectedVisitor === "expected") {
+//         setFilteredExpectedVisitor(expectedVisitor);
+//       } else {
+//         setFilteredUnexpectedVisitor(unexpectedVisitor);
+//       }
+//     }
+
+//     return;
+//   }
+
+//   // Filter when text exists
+//   if (page === "Visitor In") {
+//     if (selectedVisitor === "expected") {
+//       const filtered = visitorIn
+//         .filter((v) => v.usertype !== "security_guard")
+//         .filter(filterLogic);
+//       setFilteredData(filtered);
+//     } else {
+//       const filtered = visitorIn
+//         .filter((v) => v.usertype === "security_guard")
+//         .filter(filterLogic);
+//       setFilteredUnexpectedVisitor(filtered);
+//     }
+//   }
+
+//   else if (page === "Visitor Out") {
+//     if (selectedVisitor === "expected") {
+//       const filtered = visitorOut
+//         .filter((v) => v.usertype !== "security_guard")
+//         .filter(filterLogic);
+//       setFilteredData(filtered);
+//     } else {
+//       const filtered = visitorOut
+//         .filter((v) => v.usertype === "security_guard")
+//         .filter(filterLogic);
+//       setFilteredUnexpectedVisitor(filtered);
+//     }
+//   }
+
+//   else if (page === "all") {
+//     if (selectedVisitor === "expected") {
+//       setFilteredExpectedVisitor(
+//         expectedVisitor.filter(filterLogic)
+//       );
+//     } else {
+//       setFilteredUnexpectedVisitor(
+//         unexpectedVisitor.filter(filterLogic)
+//       );
+//     }
+//   }
+// };
+
+  // const [searchAll, setSearchAll] = useState("");
+  const handleSearchAll = (e) => {
   const searchValue = e.target.value.toLowerCase();
-  setSearchText(e.target.value);
+  setSearchAll(e.target.value);
 
   if (!searchValue.trim()) {
-    // Reset when empty
-    if (page === "Visitor In") {
-      setFilteredData(visitorIn);
-      setFilteredUnexpectedVisitor(visitorIn);
-    }
-    else if (page === "Visitor Out") {
-      setFilteredData(visitorOut);
-      setFilteredUnexpectedVisitor(visitorOut);
-    }
-    else if (page === "all") {
-      setFilteredExpectedVisitor(expectedVisitor);
-      setFilteredUnexpectedVisitor(unexpectedVisitor);
-    }
+    setAll(visitor);
     return;
   }
 
-  const filterLogic = (item) =>
-    item.name?.toLowerCase().includes(searchValue) ||
-    item.vehicle_number?.toLowerCase().includes(searchValue) ||
-    item.hosts_display?.toLowerCase().includes(searchValue);
+  const filteredResults = visitor.filter(
+    (item) =>
+      item.name?.toLowerCase().includes(searchValue) ||
+      item.vehicle_number?.toLowerCase().includes(searchValue) ||
+      item.hosts_display?.toLowerCase().includes(searchValue)
+  );
 
-  if (page === "Visitor In") {
-    if (selectedVisitor === "expected") {
-      const filtered = visitorIn.filter(
-        (v) => v.usertype !== "security_guard"
-      ).filter(filterLogic);
-
-      setFilteredData(filtered);
-    } else {
-      const filtered = visitorIn.filter(
-        (v) => v.usertype === "security_guard"
-      ).filter(filterLogic);
-
-      setFilteredUnexpectedVisitor(filtered);
-    }
-  }
-
-  else if (page === "Visitor Out") {
-    if (selectedVisitor === "expected") {
-      const filtered = visitorOut.filter(
-        (v) => v.usertype !== "security_guard"
-      ).filter(filterLogic);
-
-      setFilteredData(filtered);
-    } else {
-      const filtered = visitorOut.filter(
-        (v) => v.usertype === "security_guard"
-      ).filter(filterLogic);
-
-      setFilteredUnexpectedVisitor(filtered);
-    }
-  }
-
-  else if (page === "all") {
-    if (selectedVisitor === "expected") {
-      setFilteredExpectedVisitor(
-        expectedVisitor.filter(filterLogic)
-      );
-    } else {
-      setFilteredUnexpectedVisitor(
-        unexpectedVisitor.filter(filterLogic)
-      );
-    }
-  }
+  setAll(filteredResults);
 };
-
-
-
-
-  const [searchAll, setSearchAll] = useState("");
-  const handleSearchAll = (e) => {
-    const searchValue = e.target.value;
-    setSearchAll(searchValue);
-    if (searchValue.trim()) {
-      setAll(visitor);
-    } else {
-      const filteredResults = visitor.filter(
-        (item) =>
-          item.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-          (item.vehicle_number &&
-            item.vehicle_number.toLowerCase().includes(searchValue.toLowerCase()))
-      );
-      setAll(filteredResults);
-    }
-  };
 
   const [searchHIstoryText, setSearchHistoryText] = useState("");
   const handleSearchHistory = (e) => {
-    const searchValue = e.target.value;
-    setSearchHistoryText(searchValue);
-    if (searchValue.trim()) {
-      setFilteredHistory(histories);
-    } else {
-      const filteredResults = histories.filter(
-        (item) =>
-          item.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-          (item.contactno &&
-            item.contactno.toLowerCase().includes(searchValue.toLowerCase()))
-      );
-      setFilteredHistory(filteredResults);
-    }
-  };
+  const searchValue = e.target.value.toLowerCase();
+  setSearchHistoryText(e.target.value);
+
+  if (!searchValue.trim()) {
+    setFilteredHistory(histories);
+    return;
+  }
+
+  const filteredResults = histories.filter(
+    (item) =>
+      item.name?.toLowerCase().includes(searchValue) ||
+      item.contact_no?.toLowerCase().includes(searchValue)
+  );
+
+  setFilteredHistory(filteredResults);
+};
 
   const [searchApprovalText, setSearchApprovalText] = useState("");
   const handleSearchApproval = (e) => {
-    const searchValue = e.target.value;
-    setSearchApprovalText(searchValue);
-    if (searchValue.trim()) {
-      setFilteredApproval(approvals);
-    } else {
-      const filteredResults = approvals.filter((item) =>
-        item.name.toLowerCase().includes(searchValue.toLowerCase())
-      );
-      setFilteredApproval(filteredResults);
-    }
-  };
+  const searchValue = e.target.value.toLowerCase();
+  setSearchApprovalText(e.target.value);
+
+  if (!searchValue.trim()) {
+    setFilteredApproval(approvals);
+    return;
+  }
+
+  const filteredResults = approvals.filter(
+    (item) =>
+      item.name?.toLowerCase().includes(searchValue) ||
+      item.contact_no?.toLowerCase().includes(searchValue)
+  );
+
+  setFilteredApproval(filteredResults);
+};
 
   const historyColumn = [
     {
@@ -967,18 +995,20 @@ const handleSearch = (e) => {
 
   const [logSearchText, setLogSearchText] = useState("");
   const handleLogSearch = (e) => {
-    const searchValue = e.target.value;
-    setLogSearchText(searchValue);
-    if (searchValue.trim()) {
-      setFilteredLogs(logs);
-    } else {
-      const filteredResults = logs.filter((item) =>
-        item.name.toLowerCase().includes(searchValue.toLowerCase())
-      );
-      setFilteredLogs(filteredResults);
-    }
-  };
+  const value = e.target.value.toLowerCase();
+  setLogSearchText(e.target.value);
 
+  if (!value.trim()) {
+    setFilteredLogs(logs);
+    return;
+  }
+
+  const filtered = logs.filter(item =>
+    item.name?.toLowerCase().includes(value)
+  );
+
+  setFilteredLogs(filtered);
+};
   return (
     <div className="visitors-page">
       <section className="flex">
@@ -1148,7 +1178,7 @@ const handleSearch = (e) => {
                 type="text"
                 className="border border-gray-300 p-2 rounded-md placeholder:text-sm"
                 value={searchText}
-                onChange={handleSearch}
+                onChange={(e) => setSearchText(e.target.value)}
                 placeholder="Search using Visitor name, Host, vehicle number"
               />
 
@@ -1198,7 +1228,7 @@ const handleSearch = (e) => {
                   type="text"
                   className="border border-gray-300 p-2 rounded-md placeholder:text-sm"
                   value={searchText}
-                  onChange={handleSearch}
+                  onChange={(e) => setSearchText(e.target.value)}
                   placeholder="Search using Visitor name, Host, vehicle number"
                 />
 
@@ -1231,12 +1261,7 @@ const handleSearch = (e) => {
 
               <Table
                 columns={VisitorColumns}
-data={
-  selectedVisitor === "expected"
-    ? filteredData
-    : FilteredUnexpectedVisitor
-}
-
+                data={filteredVisitorData}
                 paginationServer
                 paginationTotalRows={totalRecords}
                 onChangePage={setCurrentPage}
@@ -1325,7 +1350,7 @@ data={
             {selectedVisitor === "expected" && page === "Visitor In" && (
               <Table
                 columns={VisitorColumns}
-                data={filteredData}
+                data={filteredVisitorData}
                 paginationServer
                 paginationTotalRows={totalRecords}
                 onChangePage={setCurrentPage}
@@ -1337,7 +1362,7 @@ data={
             {selectedVisitor === "unexpected" && page === "Visitor In" && (
               <Table
                 columns={VisitorColumns}
-                data={FilteredUnexpectedVisitor}
+                data={filteredVisitorData}
                 paginationServer
                 paginationTotalRows={totalRecords}
                 onChangePage={setCurrentPage}
@@ -1349,7 +1374,7 @@ data={
             {selectedVisitor === "expected" && page === "all" && (
               <Table
                 columns={VisitorColumns}
-                data={FilteredExpectedVisitor}
+                data={filteredVisitorData}
                 paginationServer
                 paginationTotalRows={totalRecords}
                 onChangePage={setCurrentPage}
@@ -1361,7 +1386,7 @@ data={
             {selectedVisitor === "unexpected" && page === "all" && (
               <Table
                 columns={VisitorColumns}
-                data={FilteredUnexpectedVisitor}
+                data={filteredVisitorData}
                 paginationServer
                 paginationTotalRows={totalRecords}
                 onChangePage={setCurrentPage}
