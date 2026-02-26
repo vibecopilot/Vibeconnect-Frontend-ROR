@@ -1,92 +1,95 @@
-import React, { useEffect, useState } from "react";
+import  { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import Communication from "../Communication";
 import { getPolls, getSearchPolls } from "../../api";
 import { PiPlusCircleBold } from "react-icons/pi";
+import toast from "react-hot-toast";
 
 function Polls() {
   const themeColor = useSelector((state) => state.theme.color);
+  const location = useLocation();
+
   const [pollsData, setPollsData] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
 
-  // 1. Debounce Effect: Updates debouncedSearch only after user stops typing for 500ms
+  /* ------------------ Debounce Search ------------------ */
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedSearch(searchTerm);
+      setDebouncedSearch(searchTerm.trim());
     }, 500);
 
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // 2. Fetch Effect: Runs whenever debouncedSearch changes
+  /* ------------------ Fetch Polls ------------------ */
   useEffect(() => {
-    const fetchPolls = async () => {
+    const fetchPollsData = async () => {
       setLoading(true);
       try {
         let response;
-        const trimmedSearch = debouncedSearch.trim();
 
-        // Set searching state
-        setIsSearching(trimmedSearch.length >= 0);
-
-        // Logic: If there is a search term (>= 2 chars), call Search API. Otherwise, call Get All API.
-        if (trimmedSearch.length >= 0) {
-          response = await getSearchPolls(trimmedSearch);
-        } else if (trimmedSearch.length === 0) {
-          response = await getPolls();
+        if (debouncedSearch.length >= 2) {
+          setIsSearching(true);
+          response = await getSearchPolls(debouncedSearch);
         } else {
-          // Do nothing for 1 character
-          setPollsData([]);
-          setLoading(false);
-          return;
+          setIsSearching(false);
+          response = await getPolls();
         }
 
-        const data = Array.isArray(response.data) ? response.data : [];
+        const data = Array.isArray(response?.data)
+          ? response.data
+          : response?.data?.polls || [];
 
-        const poll = data.sort((a, b) => {
-          return new Date(b.created_at) - new Date(a.created_at);
-        });
+        const sortedPolls = data.sort(
+          (a, b) =>
+            new Date(b.created_at || 0) -
+            new Date(a.created_at || 0)
+        );
 
-        setPollsData(poll);
-      } catch (err) {
-        console.error("Failed to fetch polls data:", err);
+        setPollsData(sortedPolls);
+      } catch (error) {
+        console.error(error);
+        toast.error("Failed to fetch polls ❌");
         setPollsData([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchPolls();
+    fetchPollsData();
   }, [debouncedSearch]);
 
-  const handleClearSearch = () => {
-    setSearchTerm("");
-    setDebouncedSearch("");
-  };
+  /* Refresh after create */
+  useEffect(() => {
+    if (location.state?.refresh) {
+      setDebouncedSearch("");
+    }
+  }, [location.state]);
 
+  /* ------------------ UI ------------------ */
   return (
     <div className="flex">
       <Navbar />
-      <div className="p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
+      <div className="p-4 w-full flex flex-col">
         <Communication />
+
+        {/* Search + Create */}
         <div className="flex justify-between md:flex-row flex-col my-2 gap-2">
-          <div className="relative w-full">
-            <input
-              type="text"
-              placeholder="Search polls by title..."
-              className="border p-2 pr-20 w-full border-gray-300 rounded-lg"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-         
-          </div>
+          <input
+            type="text"
+            placeholder="Search polls by title..."
+            className="border p-2 w-full border-gray-300 rounded-lg"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+
           <Link
-            to={`/admin/create-polls`}
+            to="/admin/create-polls"
             style={{ background: themeColor }}
             className="font-semibold text-white px-4 py-1 flex gap-2 items-center rounded-md whitespace-nowrap"
           >
@@ -94,66 +97,65 @@ function Polls() {
           </Link>
         </div>
 
-        {/* Loading Indicator */}
-        {loading && <p className="text-center text-gray-500 my-4">Loading...</p>}
+        {/* Loading */}
+        {loading && (
+          <p className="text-center text-gray-500 my-4">
+            Loading...
+          </p>
+        )}
 
-        <div className="md:grid grid-cols-2">
+        {/* Poll List */}
+        <div className="grid md:grid-cols-2 gap-4">
           {!loading && pollsData.length > 0 ? (
             pollsData.map((poll) => {
-              // Calculate total votes for the current poll
-              const totalVotes = poll.poll_options.reduce(
-                (sum, option) => sum + option.votes,
+              const totalVotes = (poll.poll_options || []).reduce(
+                (sum, option) => sum + (option.votes || 0),
                 0
               );
 
-              // Calculate remaining days (end_date - start_date)
-              const startDate = new Date(poll.start_date);
-              const endDate = new Date(poll.end_date);
-              const currentDate = new Date();
-              const timeDiff = endDate - currentDate; // Time difference in milliseconds
-              const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24)); // Convert to days
+              const endDate = poll.end_date
+                ? new Date(poll.end_date)
+                : null;
+
+              const daysLeft = endDate
+                ? Math.ceil(
+                    (endDate - new Date()) /
+                      (1000 * 60 * 60 * 24)
+                  )
+                : 0;
 
               return (
-                <div key={poll.id} className="flex w-full p-2">
-                  {" "}
-                  {/* Correctly added key here */}
-                  <div className="max-w-2xl w-full">
-                    <div className="bg-white shadow-custom-all-sides rounded-lg p-6 h-full">
-                      <h2 className="text-xl font-semibold mb-4">
-                        {poll.title}
-                      </h2>
-                      <div className="flex justify-between my-3">
-                        <span className="text-gray-500 text-sm">
-                          1/20 responded
-                        </span>
-                        <span className="text-gray-500 text-sm">
-                          {poll.visibility}
-                        </span>
-                      </div>
+                <div
+                  key={poll.id}
+                  className="bg-white shadow rounded-lg p-4"
+                >
+                  <h2 className="text-lg font-semibold mb-2">
+                    {poll.title}
+                  </h2>
 
-                      {/* Loop through poll options */}
-                      <div className="space-y-4 border-t border-b border-gray-200 py-4">
-                        {poll.poll_options.map((option) => (
-                          <div
-                            key={option.id}
-                            className="flex justify-between items-center p-2 bg-gray-50 rounded-md"
-                          >
-                            <span>{option.content}</span>
-                            <span className="text-blue-600 font-semibold">
-                              {option.votes} votes
-                            </span>
-                          </div>
-                        ))}
-                      </div>
+                  <div className="text-sm text-gray-500 mb-3">
+                    {poll.visibility || "Public"}
+                  </div>
 
-                      {/* Display total votes and days left */}
-                      <div className="mt-6 text-gray-500 text-sm">
-                        <p>
-                          {totalVotes} votes •{" "}
-                          {daysLeft > 0 ? `${daysLeft}d left` : "Poll closed"}
-                        </p>
+                  <div className="space-y-2 border-t border-b py-3">
+                    {(poll.poll_options || []).map((option) => (
+                      <div
+                        key={option.id}
+                        className="flex justify-between bg-gray-50 p-2 rounded"
+                      >
+                        <span>{option.content}</span>
+                        <span>
+                          {option.votes || 0} votes
+                        </span>
                       </div>
-                    </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-3 text-sm text-gray-500">
+                    {totalVotes} votes •{" "}
+                    {daysLeft > 0
+                      ? `${daysLeft}d left`
+                      : "Poll closed"}
                   </div>
                 </div>
               );
@@ -161,10 +163,9 @@ function Polls() {
           ) : (
             !loading && (
               <p className="text-center text-gray-500 w-full col-span-2">
-                {isSearching 
-                  ? "No polls match your search. Try different keywords."
-                  : "No polls available"
-                }
+                {isSearching
+                  ? "No polls match your search."
+                  : "No polls available"}
               </p>
             )
           )}
