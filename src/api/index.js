@@ -175,6 +175,7 @@ export const postPollVote = async (id, data) =>
       token: token,
     },
   });
+
   export const getSearchPolls = async (title) => {
   return axiosInstance.get("/polls.json", {
     params: {
@@ -183,6 +184,7 @@ export const postPollVote = async (id, data) =>
     },
   });
 };
+
 // export const getPolls = async () =>
 //   axiosInstance.get("/polls.json", {
 //     params: {
@@ -10724,7 +10726,7 @@ export const postProjectLike = (data) =>
 // };
 
 export const uploadVisitorConsignment = (formData) => {
-  return api.post("/visitor_consignments", formData, {
+  return axiosInstance.post("/visitor_consignments", formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },
@@ -10735,7 +10737,7 @@ export const uploadVisitorLicense = (visitorId, file) => {
   const form = new FormData();
   form.append("license", file);
 
-  return api.post(`/visitors/${visitorId}/upload_license`, form, {
+  return axiosInstance.post(`/visitors/${visitorId}/upload_license`, form, {
     headers: { "Content-Type": "multipart/form-data" },
   });
 };
@@ -11107,6 +11109,63 @@ export const updateSoftService = async (id, formData) =>
 //     },
 //   });
 
+
+//calendar booking with date filter
+//   export const getCalendarBookings = async (
+//   booking_type,
+//   start_date,
+//   end_date
+// ) =>
+//   axiosInstance.get("/amenity_bookings/calender_booking.json", {
+//     params: {
+//       token: token,
+//       booking_type,
+//       ...(start_date && { start_date }),
+//       ...(end_date && { end_date }),
+//     },
+//   });
+// export const getCalendarBookings = async (
+//   booking_type,
+//   start_date,
+//   end_date,
+//   site_id
+// ) =>
+//   axiosInstance.get("/amenity_bookings/calender_booking.json", {
+//     params: {
+//       token: token,
+//       booking_type,
+//       site_id,
+//       ...(start_date ? { start_date } : {}),
+//       ...(end_date ? { end_date } : {}),
+//     },
+//   });
+
+
+  // Vehicle Setup API
+
+  // Vehicle Setups API
+// export const getVehicleSetups = async (siteId = 47) =>
+//   axiosInstance.get("/vehicle_setups.json", {
+//     params: {
+//       token: token,
+//       site_id: siteId,
+//     },
+//   });
+
+
+  // Amenity Bookings API
+// export const getAmenitiesBooking = async (page = 1, perPage = 10) =>
+//   axiosInstance.get("/amenity_bookings.json", {
+//     params: {
+//       token: token,
+//       "q[amenity_is_hotel_not_null]": true,
+//       Page: page,
+//       Per_Page: perPage,
+//     },
+//   });
+
+
+
 //calendar booking with date filter
 //   export const getCalendarBookings = async (
 //   booking_type,
@@ -11160,6 +11219,7 @@ export const getVehicleSetups = async (siteId = 47) =>
 //       Per_Page: perPage,
 //     },
 //   });
+
 
 // Amenity Bookings API
 // Amenity Bookings API
