@@ -307,25 +307,45 @@ const VisitorPage = () => {
     setCurrentPage(1);
   };
 
-  useEffect(() => {
-    if (page === "Visitor In") {
-      if (selectedVisitor === "expected") {
-        const expectedIn = visitorIn.filter(
-          (visit) => visit.usertype !== "security_guard"
-        );
-        setFilteredData(expectedIn);
-      } else {
-        const unexpectedIn = visitorIn.filter(
-          (visit) => visit.usertype === "security_guard"
-        );
-        setFilteredUnexpectedVisitor(unexpectedIn);
-      }
-    } else if (page === "all") {
-      setFilteredExpectedVisitor(expectedVisitor);
-      setFilteredUnexpectedVisitor(unexpectedVisitor);
+  // useEffect(() => {
+  //   if (page === "Visitor In") {
+  //     if (selectedVisitor === "expected") {
+  //       const expectedIn = visitorIn.filter(
+  //         (visit) => visit.usertype !== "security_guard"
+  //       );
+  //       setFilteredData(expectedIn);
+  //     } else {
+  //       const unexpectedIn = visitorIn.filter(
+  //         (visit) => visit.usertype === "security_guard"
+  //       );
+  //       setFilteredUnexpectedVisitor(unexpectedIn);
+  //     }
+  //   } else if (page === "all") {
+  //     setFilteredExpectedVisitor(expectedVisitor);
+  //     setFilteredUnexpectedVisitor(unexpectedVisitor);
+  //   }
+  // }, [page, selectedVisitor, visitorIn, expectedVisitor, unexpectedVisitor]);
+useEffect(() => {
+  if (page === "Visitor In") {
+    if (selectedVisitor === "expected") {
+      // Filter expected visitors (exclude 'security_guard')
+      const expectedIn = visitorIn.filter(
+        (visit) => visit.user_type !== "security_guard" // Corrected field name
+      );
+      setFilteredData(expectedIn);
+    } else {
+      // Filter unexpected visitors (include only 'security_guard')
+      const unexpectedIn = visitorIn.filter(
+        (visit) => visit.user_type === "security_guard" // Corrected field name
+      );
+      setFilteredUnexpectedVisitor(unexpectedIn);
     }
-  }, [page, selectedVisitor, visitorIn, expectedVisitor, unexpectedVisitor]);
-
+  } else if (page === "all") {
+    // For 'all' page, display both expected and unexpected visitors
+    setFilteredExpectedVisitor(expectedVisitor);
+    setFilteredUnexpectedVisitor(unexpectedVisitor);
+  }
+}, [page, selectedVisitor, visitorIn, expectedVisitor, unexpectedVisitor]);
   useEffect(() => {
     const fetchExpectedVisitor = async () => {
       try {
