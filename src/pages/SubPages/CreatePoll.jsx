@@ -288,12 +288,12 @@ function CreatePolls() {
       <Navbar />
       <div className="w-full flex mx-3 flex-col overflow-hidden">
         <div className="my-5 mb-10 border border-gray-200 p-2 m-5 px-2 rounded-lg">
-           <h2
-              style={{ background: themeColor }}
-              className="text-center text-xl font-medium p-2  rounded-md text-white"
-            >
-              Create Polls
-            </h2>
+          <h2
+            className="text-center text-xl font-bold  p-2 bg-black rounded-md text-white"
+                      style={{ background: themeColor }}
+          >
+            Create Polls
+          </h2>
 
           <div className="md:grid grid-cols-3 gap-5 my-5">
             <div className="flex flex-col">
