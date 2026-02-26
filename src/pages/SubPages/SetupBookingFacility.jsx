@@ -19,19 +19,34 @@ const SetupBookingFacility = () => {
   const [setupData, setSetupData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   
- useEffect(() => {
-     const fetchIncidentsCategory = async () => {
-       try {
-         const res = await getFacitilitySetup();
-         setSetupData(res.data.amenities);
-        //  console.log("Response received", res.data.amenities);
-       } catch (error) {
-         console.log(error);
-       }
-     };
- 
-     fetchIncidentsCategory();
-   }, []);
+  useEffect(() => {
+    const fetchFacilities = async () => {
+      try {
+        const res = await getFacitilitySetup();
+
+        // 🔥 Proper Backend Mapping
+        const mappedData = res.data.amenities.map((item) => ({
+          id: item.id,
+          fac_name: item.fac_name || "-",
+          fac_type: item.fac_type || "-",
+          bookBefore: item.book_before?.[0] || "-",
+          cancelBefore: item.cancel_before?.[0] || "-",
+          advBooking: item.advance_booking?.[0] || "-",
+          created_at: item.created_at
+            ? new Date(item.created_at).toLocaleString()
+            : "-",
+          status: item.status || "-",
+        }));
+
+        setSetupData(mappedData);
+        setFilteredData(mappedData);
+      } catch (error) {
+        console.log("Facility Fetch Error:", error);
+      }
+    };
+
+    fetchFacilities();
+  }, []);
 
   // const fetchFacilitySetup = async () => {
   //   try {
@@ -45,7 +60,7 @@ const SetupBookingFacility = () => {
   // };
   const [searchText, setSearchText] = useState("");
 
-  const setupColumn = [
+ const setupColumn = [
     {
       name: "Action",
       cell: (row) => (
@@ -58,7 +73,7 @@ const SetupBookingFacility = () => {
           </Link>
         </div>
       ),
-      sortable: true,
+      sortable: false,
     },
     { name: "ID", selector: (row) => row.id, sortable: true },
     {
@@ -66,11 +81,9 @@ const SetupBookingFacility = () => {
       selector: (row) => row.fac_name,
       sortable: true,
     },
-    { name: "Type", selector: (row) => row.fac_type, sortable: true },
-    { name: "Department", selector: (row) => row.department, sortable: true },
     {
-      name: "Book By",
-      selector: (row) => row.bookBy,
+      name: "Type",
+      selector: (row) => row.fac_type,
       sortable: true,
     },
     {
@@ -79,15 +92,27 @@ const SetupBookingFacility = () => {
       sortable: true,
     },
     {
+      name: "Cancel Before",
+      selector: (row) => row.cancelBefore,
+      sortable: true,
+    },
+    {
       name: "Advance Booking",
       selector: (row) => row.advBooking,
       sortable: true,
     },
+    // {
+    //   name: "Status",
+    //   selector: (row) => row.status,
+    //   sortable: true,
+    // },
     {
       name: "Created On",
       selector: (row) => row.created_at,
       sortable: true,
     },
+  ];
+
     // {
     //   name: "Created By",
     //   selector: (row) => row.createdBy,
@@ -98,7 +123,7 @@ const SetupBookingFacility = () => {
     //   selector: (row) => row.status,
     //   sortable: true,
     // },
-  ];
+  // ];
 
   // const setupData = [
   //   {
