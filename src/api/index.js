@@ -10964,26 +10964,26 @@ export const updateVisitorSubCategory = async (id, formData) =>
 // aminities
 
 // Amenities API
-export const getAmenities = async (page = 1, per_page = 10) =>
-  axiosInstance.get("/amenities.json", {
-    params: {
-      token: token,
-      "q[is_hotel_eq]": true,
-      page: page,
-      per_page: per_page,
-    },
-  });
+// export const getAmenities = async (page = 1, per_page = 10) =>
+//   axiosInstance.get("/amenities.json", {
+//     params: {
+//       token: token,
+//       "q[is_hotel_eq]": true,
+//       page: page,
+//       per_page: per_page,
+//     },
+//   });
 
-  export const postAmenity = async (formData) =>
-  axiosInstance.post(
-    `/amenities.json?token=${token}`,
-    formData,
-    {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    }
-  );
+//   export const postAmenity = async (formData) =>
+//   axiosInstance.post(
+//     `/amenities.json?token=${token}`,
+//     formData,
+//     {
+//       headers: {
+//         "Content-Type": "multipart/form-data",
+//       },
+//     }
+//   );
 
 
   // Staff Export API
@@ -11157,18 +11157,21 @@ export const getVehicleSetups = async (siteId = 47) =>
 // Amenity Bookings API
 export const getAmenitiesBooking = async (
   page = 1,
-  per_page = 10,
-  site_id = 47
-) =>
-  axiosInstance.get("/amenity_bookings.json", {
+  perPage = 10,
+  siteId = 47,
+  search = ""
+) => {
+  return axiosInstance.get("/amenity_bookings.json", {
     params: {
       token: token,
-      page: page,
-      per_page: per_page,
-      site_id: site_id,
+      page,
+      per_page: perPage,
+      site_id: siteId,
+      search, // add this
+      _t: new Date().getTime(),
     },
   });
-
+};
 
   // Polls API
 
@@ -11210,9 +11213,37 @@ export const updatePoll = async (id, formData) => {
 };
 
 
+// Amenities API
+export const getAmenities = async (page = 1, perPage = 10, siteId = 47) =>
+  axiosInstance.get("/amenities.json", {
+    params: {
+      token: token,
+      page: page,
+      per_page: perPage,
+      site_id: siteId,
+    },
+  });
 
+export const getAmenityById = async (id) =>
+  axiosInstance.get(`/amenities/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
 
+export const postAmenity = async (formData) =>
+  axiosInstance.post(`/amenities.json?token=${token}`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
 
+export const updateAmenity = async (id, formData) =>
+  axiosInstance.put(`/amenities/${id}.json?token=${token}`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
 
 
 
