@@ -105,41 +105,50 @@ const AddNewVisitor = () => {
       .filter(Boolean);
   };
 
-  useEffect(() => {
-    const fetchInitialData = async () => {
-      try {
-        const [usersResp, visitorCat, parkingRes] = await Promise.all([
-          getHostList(siteId),
-          getVisitorStaffCategory(),
-          getParkingConfig(),
-        ]);
+useEffect(() => {
+  const fetchInitialData = async () => {
+    try {
+      const [usersResp, visitorCat, parkingRes] = await Promise.all([
+        getHostList(siteId),
+        getVisitorStaffCategory(),
+        getParkingConfig(),
+      ]);
 
-        // ✅ host list normalization
-        setHosts(safeArray(usersResp?.data));
+      // ✅ host list normalization
+      setHosts(safeArray(usersResp?.data));
 
-        // ✅ categories normalization
-        setStaffCategories(safeArray(visitorCat?.data?.categories));
+      // ✅ FIXED: Correct key + filter null names
+      const categoriesData =
+        visitorCat?.data?.staff_categories || [];
 
-        // ✅ parking normalization
-        let parkingSlots = [];
-        if (Array.isArray(parkingRes?.data)) parkingSlots = parkingRes.data;
-        else if (Array.isArray(parkingRes?.data?.slots)) parkingSlots = parkingRes.data.slots;
-        else if (Array.isArray(parkingRes?.data?.parking_slots))
-          parkingSlots = parkingRes.data.parking_slots;
-        else if (Array.isArray(parkingRes?.data?.data)) parkingSlots = parkingRes.data.data;
+      const filteredCategories = categoriesData.filter(
+        (cat) => cat?.name && cat.name.trim() !== ""
+      );
 
-        setSlots(safeArray(parkingSlots));
-      } catch (error) {
-        console.error("Error fetching initial data:", error?.response?.data || error);
-        toast.error("Failed to load hosts, categories, or parking slots.");
-        setSlots([]);
-        setHosts([]);
-        setStaffCategories([]);
-      }
-    };
+      setStaffCategories(filteredCategories);
 
-    fetchInitialData();
-  }, [siteId]);
+      // ✅ parking normalization
+      let parkingSlots = [];
+      if (Array.isArray(parkingRes?.data)) parkingSlots = parkingRes.data;
+      else if (Array.isArray(parkingRes?.data?.slots)) parkingSlots = parkingRes.data.slots;
+      else if (Array.isArray(parkingRes?.data?.parking_slots))
+        parkingSlots = parkingRes.data.parking_slots;
+      else if (Array.isArray(parkingRes?.data?.data))
+        parkingSlots = parkingRes.data.data;
+
+      setSlots(safeArray(parkingSlots));
+
+    } catch (error) {
+      console.error("Error fetching initial data:", error?.response?.data || error);
+      toast.error("Failed to load hosts, categories, or parking slots.");
+      setSlots([]);
+      setHosts([]);
+      setStaffCategories([]);
+    }
+  };
+
+  fetchInitialData();
+}, [siteId]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
