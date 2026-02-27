@@ -699,7 +699,7 @@ const EditAmenitySetup = () => {
 
             {/* Shreable */}
             <div className="flex flex-col gap-1">
-              <label className="font-medium">Shreable</label>
+              <label className="font-medium">Shareable</label>
               <select
                 className="border rounded-md border-gray-400 p-2 py-3"
                 value={
@@ -1543,89 +1543,114 @@ const EditAmenitySetup = () => {
             Add
           </button>
         </div>
-        <div className="my-4">
-          <h2 className="border-b border-black text-lg mb-1 font-medium">
-            Cover Images
-          </h2>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => handleFileChange(e, "covers")}
-            multiple // Allow multiple file uploads
-          />
-        </div>
+<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
 
-        <h2 className="font-medium text-lg mb-2">Cover Images</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {formData.covers && formData.covers.length > 0 ? (
-            formData.covers.map((cover, index) => (
-              <div
-                key={index}
-                className="relative rounded-lg border overflow-hidden"
-              >
-                <img
-                  src={
-                    cover.image_url
-                      ? domainPrefix + cover.image_url
-                      : URL.createObjectURL(cover)
-                  }
-                  alt={`Cover ${index + 1}`}
-                  className="object-cover w-full h-40"
-                />
-                {/* <button
-onClick={() => removeImage(index)}
-className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full"
->
-X
-</button> */}
-              </div>
-            ))
-          ) : (
-            <p>No cover images available.</p>
-          )}
-        </div>
+  {/* ================= COVER IMAGES ================= */}
+  <div className="my-4">
+    <h2 className="border-b border-black text-lg mb-3 font-medium">
+      Cover Images
+    </h2>
 
-        <div className="my-4">
-          <h2 className="border-b border-black text-lg mb-1 font-medium">
-            Attachments
-          </h2>
-          <input
-            type="file"
-            onChange={(e) => handleFileChange(e, "attachments")}
-            multiple // Allow multiple file uploads
-          />
-        </div>
+    <input
+      type="file"
+      accept="image/*"
+      onChange={(e) => handleFileChange(e, "covers")}
+      multiple
+      className="mb-4"
+    />
 
-        <h2 className="font-medium text-lg mb-2">Attachments</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {formData.attachments && formData.attachments.length > 0 ? (
-            formData.attachments.map((doc, index) => (
-              <div
-                key={index}
-                className="relative rounded-lg border overflow-hidden"
-              >
-                <img
-                  src={
-                    doc.image_url
-                      ? domainPrefix + doc.image_url
-                      : URL.createObjectURL(doc)
-                  }
-                  alt={`Attachment ${index + 1}`}
-                  className="object-cover w-full h-40"
-                />
-                {/* <button
-onClick={() => removeAttachment(index)}
-className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full"
->
-X
-</button> */}
-              </div>
-            ))
-          ) : (
-            <p>No attachments available.</p>
-          )}
-        </div>
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      {formData.covers && formData.covers.length > 0 ? (
+        formData.covers.map((cover, index) => (
+          <div
+            key={index}
+            className="relative rounded-lg border overflow-hidden"
+          >
+            <img
+              src={
+                cover.image_url
+                  ? domainPrefix + cover.image_url
+                  : URL.createObjectURL(cover)
+              }
+              alt={`Cover ${index + 1}`}
+              className="object-cover w-full h-40"
+            />
 
+            {/* Remove Button */}
+            
+            <button
+              onClick={() => removeImage(index)}
+              className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs"
+            >
+              ✕
+            </button> 
+           
+          </div>
+        ))
+      ) : (
+        <p className="text-gray-500 text-sm">
+          No cover images available.
+        </p>
+      )}
+    </div>
+  </div>
+
+  {/* ================= ATTACHMENTS ================= */}
+  <div className="my-4">
+    <h2 className="border-b border-black text-lg mb-3 font-medium">
+      Attachments
+    </h2>
+
+    <input
+      type="file"
+      onChange={(e) => handleFileChange(e, "attachments")}
+      multiple
+      className="mb-4"
+    />
+
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      {formData.attachments && formData.attachments.length > 0 ? (
+        formData.attachments.map((doc, index) => (
+          <div
+            key={index}
+            className="relative rounded-lg border overflow-hidden p-3 flex items-center justify-center bg-gray-50"
+          >
+            {doc.image_url || doc.type?.startsWith("image/") ? (
+              <img
+                src={
+                  doc.image_url
+                    ? domainPrefix + doc.image_url
+                    : URL.createObjectURL(doc)
+                }
+                alt={`Attachment ${index + 1}`}
+                className="object-cover w-full h-32"
+              />
+            ) : (
+              <p className="text-sm text-gray-600 text-center">
+                {doc.name || "Document File"}
+              </p>
+            )}
+
+            {/* Remove Button */}
+            
+            <button
+              onClick={() => removeAttachment(index)}
+              className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs"
+            >
+              ✕
+            </button> 
+           
+          </div>
+        ))
+      ) : (
+        <p className="text-gray-500 text-sm">
+          No attachments available.
+        </p>
+      )}
+    </div>
+  </div>
+
+</div>
         <div>
           <div className="flex flex-col">
             <label htmlFor="description" className="font-medium">
@@ -1862,9 +1887,9 @@ X
         </div> */}
 
         <div></div>
-
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <div className="flex flex-col">
+          <div className="flex flex-col mt-4">
             <label htmlFor="terms" className="font-medium">
               Terms & Conditions
             </label>
@@ -1894,8 +1919,8 @@ X
             />
           </div>
         </div>
-
-        <div className="flex justify-center my-2 gap-3">
+</div>
+        <div className="flex justify-center my-2 gap-3 mt-4">
           <button
             style={{ background: themeColor }}
             className=" text-white p-2 px-4 font-semibold rounded-md flex items-center gap-2"
@@ -1911,6 +1936,7 @@ X
             <FaCheck /> Submit
           </button>
         </div>
+        
       </div>
     </section>
   );
