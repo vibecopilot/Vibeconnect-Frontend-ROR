@@ -36,13 +36,11 @@ const VisitorPage = () => {
   const [FilteredExpectedVisitor, setFilteredExpectedVisitor] = useState([]);
   const [FilteredApproval, setFilteredApproval] = useState([]);
   const [approvals, setApprovals] = useState([]);
-  // const [filteredData, setFilteredData] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
   const [histories, setHistories] = useState([]);
   const [filteredHistory, setFilteredHistory] = useState([]);
   const [refetchTrigger, setRefetchTrigger] = useState(0);
-  
-const [searchText, setSearchText] = useState("");
-const [searchAll, setSearchAll] = useState("");
+
   // Pagination (All / In / Out)
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -309,9 +307,6 @@ const [searchAll, setSearchAll] = useState("");
     setCurrentPage(1);
   };
 
-
-  
-  
 useEffect(() => {
   if (page === "Visitor In") {
     if (selectedVisitor === "expected") {
@@ -333,29 +328,6 @@ useEffect(() => {
     setFilteredUnexpectedVisitor(unexpectedVisitor);
   }
 }, [page, selectedVisitor, visitorIn, expectedVisitor, unexpectedVisitor]);
-  const filteredVisitorData = useMemo(() => {
-  let baseData = visitor || [];
-
-  // Filter by expected/unexpected
-  if (selectedVisitor === "expected") {
-    baseData = baseData.filter(v => v.usertype !== "security_guard");
-  } else {
-    baseData = baseData.filter(v => v.usertype === "security_guard");
-  }
-
-  // Search filter
-  if (!searchText.trim() && !searchAll.trim()) return baseData;
-
-  const searchValue = (searchText || searchAll).toLowerCase();
-
-  return baseData.filter(item =>
-    item.name?.toLowerCase().includes(searchValue) ||
-    item.vehicle_number?.toLowerCase().includes(searchValue) ||
-    item.hosts_display?.toLowerCase().includes(searchValue)
-  );
-
-}, [visitor, selectedVisitor, searchText, searchAll]);
-
   useEffect(() => {
     const fetchExpectedVisitor = async () => {
       try {
@@ -683,62 +655,75 @@ useEffect(() => {
     },
   ];
 
-  // const [searchText, setSearchText] = useState("");
-// const handleSearch = (e) => {
-//   const searchValue = e.target.value.toLowerCase();
-//   setSearchText(e.target.value);
+  const [searchText, setSearchText] = useState("");
 
-  if (!searchValue.trim()) {
-    // Reset when empty
-    if (page === "Visitor In") {
-      setFilteredData(visitorIn);
-      setFilteredUnexpectedVisitor(visitorIn);
-    }
-    else if (page === "Visitor Out") {
-      setFilteredData(visitorOut);
-      setFilteredUnexpectedVisitor(visitorOut);
-    }
-    else if (page === "all") {
-      setFilteredExpectedVisitor(expectedVisitor);
-      setFilteredUnexpectedVisitor(unexpectedVisitor);
-    }
-    return;
-  }
+const handleSearch = (e) => {
+  const searchValue = e.target.value.toLowerCase();
+  setSearchText(e.target.value);
 
   const filterLogic = (item) =>
     item.name?.toLowerCase().includes(searchValue) ||
     item.vehicle_number?.toLowerCase().includes(searchValue) ||
     item.hosts_display?.toLowerCase().includes(searchValue);
 
+  // 🔁 Reset when search is empty
+  if (!searchValue.trim()) {
+    if (page === "Visitor In") {
+      setFilteredData(
+        visitorIn.filter(v => v.user_type !== "security_guard")
+      );
+      setFilteredUnexpectedVisitor(
+        visitorIn.filter(v => v.user_type === "security_guard")
+      );
+    }
+
+    else if (page === "Visitor Out") {
+      setFilteredData(
+        visitorOut.filter(v => v.user_type !== "security_guard")
+      );
+      setFilteredUnexpectedVisitor(
+        visitorOut.filter(v => v.user_type === "security_guard")
+      );
+    }
+
+    else if (page === "all") {
+      setFilteredExpectedVisitor(expectedVisitor);
+      setFilteredUnexpectedVisitor(unexpectedVisitor);
+    }
+
+    return;
+  }
+
+  // 🔎 Filtering Logic
   if (page === "Visitor In") {
     if (selectedVisitor === "expected") {
-      const filtered = visitorIn.filter(
-        (v) => v.usertype !== "security_guard"
-      ).filter(filterLogic);
-
-      setFilteredData(filtered);
+      setFilteredData(
+        visitorIn
+          .filter(v => v.user_type !== "security_guard")
+          .filter(filterLogic)
+      );
     } else {
-      const filtered = visitorIn.filter(
-        (v) => v.usertype === "security_guard"
-      ).filter(filterLogic);
-
-      setFilteredUnexpectedVisitor(filtered);
+      setFilteredUnexpectedVisitor(
+        visitorIn
+          .filter(v => v.user_type === "security_guard")
+          .filter(filterLogic)
+      );
     }
   }
 
   else if (page === "Visitor Out") {
     if (selectedVisitor === "expected") {
-      const filtered = visitorOut.filter(
-        (v) => v.usertype !== "security_guard"
-      ).filter(filterLogic);
-
-      setFilteredData(filtered);
+      setFilteredData(
+        visitorOut
+          .filter(v => v.user_type !== "security_guard")
+          .filter(filterLogic)
+      );
     } else {
-      const filtered = visitorOut.filter(
-        (v) => v.usertype === "security_guard"
-      ).filter(filterLogic);
-
-      setFilteredUnexpectedVisitor(filtered);
+      setFilteredUnexpectedVisitor(
+        visitorOut
+          .filter(v => v.user_type === "security_guard")
+          .filter(filterLogic)
+      );
     }
   }
 
@@ -756,62 +741,65 @@ useEffect(() => {
 };
 
 
-
-
   const [searchAll, setSearchAll] = useState("");
-  const handleSearchAll = (e) => {
-    const searchValue = e.target.value;
-    setSearchAll(searchValue);
-    if (searchValue.trim()) {
-      setAll(visitor);
-    } else {
-      const filteredResults = visitor.filter(
-        (item) =>
-          item.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-          (item.vehicle_number &&
-            item.vehicle_number.toLowerCase().includes(searchValue.toLowerCase()))
-      );
-      setAll(filteredResults);
-    }
-  };
+ const handleSearchAll = (e) => {
+  const searchValue = e.target.value.toLowerCase();
+  setSearchAll(e.target.value);
+
+  if (!searchValue.trim()) {
+    setFilteredExpectedVisitor(expectedVisitor);
+    setFilteredUnexpectedVisitor(unexpectedVisitor);
+    return;
+  }
+
+  if (selectedVisitor === "expected") {
+    const filtered = expectedVisitor.filter((item) =>
+      item.name?.toLowerCase().includes(searchValue) ||
+      item.vehicle_number?.toLowerCase().includes(searchValue) ||
+      item.hosts_display?.toLowerCase().includes(searchValue)
+    );
+    setFilteredExpectedVisitor(filtered);
+  } else {
+    const filtered = unexpectedVisitor.filter((item) =>
+      item.name?.toLowerCase().includes(searchValue) ||
+      item.vehicle_number?.toLowerCase().includes(searchValue) ||
+      item.hosts_display?.toLowerCase().includes(searchValue)
+    );
+    setFilteredUnexpectedVisitor(filtered);
+  }
+};
 
   const [searchHIstoryText, setSearchHistoryText] = useState("");
-  const handleSearchHistory = (e) => {
+ const handleSearchHistory = (e) => {
   const searchValue = e.target.value.toLowerCase();
   setSearchHistoryText(e.target.value);
 
   if (!searchValue.trim()) {
+    // If empty → show all data
     setFilteredHistory(histories);
     return;
   }
 
-  const filteredResults = histories.filter(
-    (item) =>
-      item.name?.toLowerCase().includes(searchValue) ||
-      item.contact_no?.toLowerCase().includes(searchValue)
+  const filteredResults = histories.filter((item) =>
+    item.name?.toLowerCase().includes(searchValue) ||
+    item.contact_no?.toLowerCase().includes(searchValue)
   );
 
   setFilteredHistory(filteredResults);
 };
-
   const [searchApprovalText, setSearchApprovalText] = useState("");
   const handleSearchApproval = (e) => {
-  const searchValue = e.target.value.toLowerCase();
-  setSearchApprovalText(e.target.value);
-
-  if (!searchValue.trim()) {
-    setFilteredApproval(approvals);
-    return;
-  }
-
-  const filteredResults = approvals.filter(
-    (item) =>
-      item.name?.toLowerCase().includes(searchValue) ||
-      item.contact_no?.toLowerCase().includes(searchValue)
-  );
-
-  setFilteredApproval(filteredResults);
-};
+    const searchValue = e.target.value;
+    setSearchApprovalText(searchValue);
+    if (searchValue.trim()) {
+      setFilteredApproval(approvals);
+    } else {
+      const filteredResults = approvals.filter((item) =>
+        item.name.toLowerCase().includes(searchValue.toLowerCase())
+      );
+      setFilteredApproval(filteredResults);
+    }
+  };
 
   const historyColumn = [
     {
@@ -1003,20 +991,18 @@ useEffect(() => {
 
   const [logSearchText, setLogSearchText] = useState("");
   const handleLogSearch = (e) => {
-  const value = e.target.value.toLowerCase();
-  setLogSearchText(e.target.value);
+    const searchValue = e.target.value;
+    setLogSearchText(searchValue);
+    if (searchValue.trim()) {
+      setFilteredLogs(logs);
+    } else {
+      const filteredResults = logs.filter((item) =>
+        item.name.toLowerCase().includes(searchValue.toLowerCase())
+      );
+      setFilteredLogs(filteredResults);
+    }
+  };
 
-  if (!value.trim()) {
-    setFilteredLogs(logs);
-    return;
-  }
-
-  const filtered = logs.filter(item =>
-    item.name?.toLowerCase().includes(value)
-  );
-
-  setFilteredLogs(filtered);
-};
   return (
     <div className="visitors-page">
       <section className="flex">
@@ -1106,7 +1092,76 @@ useEffect(() => {
                 </div>
               </div>
 
-            
+              {/* {showFilters && (
+                <div className="border border-gray-300 rounded-md p-4 bg-gray-50">
+                  <h3 className="font-semibold mb-3 text-gray-700">
+                    Advanced Filters
+                  </h3>
+                  <div className="grid md:grid-cols-4 gap-3">
+                    <div className="flex flex-col">
+                      <label className="text-sm font-medium text-gray-600 mb-1">
+                        Date From
+                      </label>
+                      <input
+                        type="date"
+                        value={filterDateFrom}
+                        onChange={(e) => setFilterDateFrom(e.target.value)}
+                        className="border border-gray-300 p-2 rounded-md text-sm"
+                      />
+                    </div>
+                    <div className="flex flex-col">
+                      <label className="text-sm font-medium text-gray-600 mb-1">
+                        Date To
+                      </label>
+                      <input
+                        type="date"
+                        value={filterDateTo}
+                        onChange={(e) => setFilterDateTo(e.target.value)}
+                        className="border border-gray-300 p-2 rounded-md text-sm"
+                      />
+                    </div>
+                    <div className="flex flex-col">
+                      <label className="text-sm font-medium text-gray-600 mb-1">
+                        Mobile Number
+                      </label>
+                      <input
+                        type="text"
+                        value={filterMobile}
+                        onChange={(e) => setFilterMobile(e.target.value)}
+                        placeholder="Enter mobile number"
+                        className="border border-gray-300 p-2 rounded-md text-sm placeholder:text-sm"
+                      />
+                    </div>
+                    <div className="flex flex-col">
+                      <label className="text-sm font-medium text-gray-600 mb-1">
+                        Host Name
+                      </label>
+                      <input
+                        type="text"
+                        value={filterHost}
+                        onChange={(e) => setFilterHost(e.target.value)}
+                        placeholder="Enter host name"
+                        className="border border-gray-300 p-2 rounded-md text-sm placeholder:text-sm"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2 mt-4">
+                    <button
+                      onClick={handleApplyFilters}
+                      style={{ background: themeColor }}
+                      className="px-4 py-2 text-white rounded-md font-medium hover:opacity-90 transition-all"
+                    >
+                      Apply Filters
+                    </button>
+                    <button
+                      onClick={handleClearFilters}
+                      className="px-4 py-2 border-2 border-gray-300 rounded-md font-medium hover:bg-gray-100 transition-all"
+                    >
+                      Clear Filters
+                    </button>
+                  </div>
+                </div>
+              )} */}
             </div>
           )}
 
@@ -1117,7 +1172,7 @@ useEffect(() => {
                 type="text"
                 className="border border-gray-300 p-2 rounded-md placeholder:text-sm"
                 value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
+                onChange={handleSearch}
                 placeholder="Search using Visitor name, Host, vehicle number"
               />
 
@@ -1167,7 +1222,7 @@ useEffect(() => {
                   type="text"
                   className="border border-gray-300 p-2 rounded-md placeholder:text-sm"
                   value={searchText}
-                  onChange={(e) => setSearchText(e.target.value)}
+                  onChange={handleSearch}
                   placeholder="Search using Visitor name, Host, vehicle number"
                 />
 
@@ -1200,7 +1255,12 @@ useEffect(() => {
 
               <Table
                 columns={VisitorColumns}
-                data={filteredVisitorData}
+data={
+  selectedVisitor === "expected"
+    ? filteredData
+    : FilteredUnexpectedVisitor
+}
+
                 paginationServer
                 paginationTotalRows={totalRecords}
                 onChangePage={setCurrentPage}
@@ -1289,7 +1349,7 @@ useEffect(() => {
             {selectedVisitor === "expected" && page === "Visitor In" && (
               <Table
                 columns={VisitorColumns}
-                data={filteredVisitorData}
+                data={filteredData}
                 paginationServer
                 paginationTotalRows={totalRecords}
                 onChangePage={setCurrentPage}
@@ -1301,7 +1361,7 @@ useEffect(() => {
             {selectedVisitor === "unexpected" && page === "Visitor In" && (
               <Table
                 columns={VisitorColumns}
-                data={filteredVisitorData}
+                data={FilteredUnexpectedVisitor}
                 paginationServer
                 paginationTotalRows={totalRecords}
                 onChangePage={setCurrentPage}
@@ -1313,7 +1373,7 @@ useEffect(() => {
             {selectedVisitor === "expected" && page === "all" && (
               <Table
                 columns={VisitorColumns}
-                data={filteredVisitorData}
+                data={FilteredExpectedVisitor}
                 paginationServer
                 paginationTotalRows={totalRecords}
                 onChangePage={setCurrentPage}
@@ -1325,7 +1385,7 @@ useEffect(() => {
             {selectedVisitor === "unexpected" && page === "all" && (
               <Table
                 columns={VisitorColumns}
-                data={filteredVisitorData}
+                data={FilteredUnexpectedVisitor}
                 paginationServer
                 paginationTotalRows={totalRecords}
                 onChangePage={setCurrentPage}
@@ -1483,7 +1543,7 @@ useEffect(() => {
       </section>
     </div>
   );
-
+};
 
 export default VisitorPage;
 
