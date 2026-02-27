@@ -36,13 +36,11 @@ const VisitorPage = () => {
   const [FilteredExpectedVisitor, setFilteredExpectedVisitor] = useState([]);
   const [FilteredApproval, setFilteredApproval] = useState([]);
   const [approvals, setApprovals] = useState([]);
-  // const [filteredData, setFilteredData] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
   const [histories, setHistories] = useState([]);
   const [filteredHistory, setFilteredHistory] = useState([]);
   const [refetchTrigger, setRefetchTrigger] = useState(0);
-  
-const [searchText, setSearchText] = useState("");
-const [searchAll, setSearchAll] = useState("");
+
   // Pagination (All / In / Out)
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -309,25 +307,6 @@ const [searchAll, setSearchAll] = useState("");
     setCurrentPage(1);
   };
 
-
-  // useEffect(() => {
-  //   if (page === "Visitor In") {
-  //     if (selectedVisitor === "expected") {
-  //       const expectedIn = visitorIn.filter(
-  //         (visit) => visit.usertype !== "security_guard"
-  //       );
-  //       setFilteredData(expectedIn);
-  //     } else {
-  //       const unexpectedIn = visitorIn.filter(
-  //         (visit) => visit.usertype === "security_guard"
-  //       );
-  //       setFilteredUnexpectedVisitor(unexpectedIn);
-  //     }
-  //   } else if (page === "all") {
-  //     setFilteredExpectedVisitor(expectedVisitor);
-  //     setFilteredUnexpectedVisitor(unexpectedVisitor);
-  //   }
-  // }, [page, selectedVisitor, visitorIn, expectedVisitor, unexpectedVisitor]);
 useEffect(() => {
   if (page === "Visitor In") {
     if (selectedVisitor === "expected") {
@@ -349,29 +328,6 @@ useEffect(() => {
     setFilteredUnexpectedVisitor(unexpectedVisitor);
   }
 }, [page, selectedVisitor, visitorIn, expectedVisitor, unexpectedVisitor]);
-  const filteredVisitorData = useMemo(() => {
-  let baseData = visitor || [];
-
-  // Filter by expected/unexpected
-  if (selectedVisitor === "expected") {
-    baseData = baseData.filter(v => v.usertype !== "security_guard");
-  } else {
-    baseData = baseData.filter(v => v.usertype === "security_guard");
-  }
-
-  // Search filter
-  if (!searchText.trim() && !searchAll.trim()) return baseData;
-
-  const searchValue = (searchText || searchAll).toLowerCase();
-
-  return baseData.filter(item =>
-    item.name?.toLowerCase().includes(searchValue) ||
-    item.vehicle_number?.toLowerCase().includes(searchValue) ||
-    item.hosts_display?.toLowerCase().includes(searchValue)
-  );
-
-}, [visitor, selectedVisitor, searchText, searchAll]);
-
   useEffect(() => {
     const fetchExpectedVisitor = async () => {
       try {
@@ -699,152 +655,151 @@ useEffect(() => {
     },
   ];
 
-  // const [searchText, setSearchText] = useState("");
-// const handleSearch = (e) => {
-//   const searchValue = e.target.value.toLowerCase();
-//   setSearchText(e.target.value);
+  const [searchText, setSearchText] = useState("");
 
-//   const filterLogic = (item) =>
-//     item.name?.toLowerCase().includes(searchValue) ||
-//     item.vehicle_number?.toLowerCase().includes(searchValue) ||
-//     item.hosts_display?.toLowerCase().includes(searchValue);
+const handleSearch = (e) => {
+  const searchValue = e.target.value.toLowerCase();
+  setSearchText(e.target.value);
 
-//   // If empty → reset properly
-//   if (!searchValue.trim()) {
-//     if (page === "Visitor In") {
-//       if (selectedVisitor === "expected") {
-//         setFilteredData(
-//           visitorIn.filter((v) => v.usertype !== "security_guard")
-//         );
-//       } else {
-//         setFilteredUnexpectedVisitor(
-//           visitorIn.filter((v) => v.usertype === "security_guard")
-//         );
-//       }
-//     }
+  const filterLogic = (item) =>
+    item.name?.toLowerCase().includes(searchValue) ||
+    item.vehicle_number?.toLowerCase().includes(searchValue) ||
+    item.hosts_display?.toLowerCase().includes(searchValue);
 
-//     else if (page === "Visitor Out") {
-//       if (selectedVisitor === "expected") {
-//         setFilteredData(
-//           visitorOut.filter((v) => v.usertype !== "security_guard")
-//         );
-//       } else {
-//         setFilteredUnexpectedVisitor(
-//           visitorOut.filter((v) => v.usertype === "security_guard")
-//         );
-//       }
-//     }
+  // 🔁 Reset when search is empty
+  if (!searchValue.trim()) {
+    if (page === "Visitor In") {
+      setFilteredData(
+        visitorIn.filter(v => v.user_type !== "security_guard")
+      );
+      setFilteredUnexpectedVisitor(
+        visitorIn.filter(v => v.user_type === "security_guard")
+      );
+    }
 
-//     else if (page === "all") {
-//       if (selectedVisitor === "expected") {
-//         setFilteredExpectedVisitor(expectedVisitor);
-//       } else {
-//         setFilteredUnexpectedVisitor(unexpectedVisitor);
-//       }
-//     }
+    else if (page === "Visitor Out") {
+      setFilteredData(
+        visitorOut.filter(v => v.user_type !== "security_guard")
+      );
+      setFilteredUnexpectedVisitor(
+        visitorOut.filter(v => v.user_type === "security_guard")
+      );
+    }
 
-//     return;
-//   }
+    else if (page === "all") {
+      setFilteredExpectedVisitor(expectedVisitor);
+      setFilteredUnexpectedVisitor(unexpectedVisitor);
+    }
 
-//   // Filter when text exists
-//   if (page === "Visitor In") {
-//     if (selectedVisitor === "expected") {
-//       const filtered = visitorIn
-//         .filter((v) => v.usertype !== "security_guard")
-//         .filter(filterLogic);
-//       setFilteredData(filtered);
-//     } else {
-//       const filtered = visitorIn
-//         .filter((v) => v.usertype === "security_guard")
-//         .filter(filterLogic);
-//       setFilteredUnexpectedVisitor(filtered);
-//     }
-//   }
+    return;
+  }
 
-//   else if (page === "Visitor Out") {
-//     if (selectedVisitor === "expected") {
-//       const filtered = visitorOut
-//         .filter((v) => v.usertype !== "security_guard")
-//         .filter(filterLogic);
-//       setFilteredData(filtered);
-//     } else {
-//       const filtered = visitorOut
-//         .filter((v) => v.usertype === "security_guard")
-//         .filter(filterLogic);
-//       setFilteredUnexpectedVisitor(filtered);
-//     }
-//   }
+  // 🔎 Filtering Logic
+  if (page === "Visitor In") {
+    if (selectedVisitor === "expected") {
+      setFilteredData(
+        visitorIn
+          .filter(v => v.user_type !== "security_guard")
+          .filter(filterLogic)
+      );
+    } else {
+      setFilteredUnexpectedVisitor(
+        visitorIn
+          .filter(v => v.user_type === "security_guard")
+          .filter(filterLogic)
+      );
+    }
+  }
 
-//   else if (page === "all") {
-//     if (selectedVisitor === "expected") {
-//       setFilteredExpectedVisitor(
-//         expectedVisitor.filter(filterLogic)
-//       );
-//     } else {
-//       setFilteredUnexpectedVisitor(
-//         unexpectedVisitor.filter(filterLogic)
-//       );
-//     }
-//   }
-// };
+  else if (page === "Visitor Out") {
+    if (selectedVisitor === "expected") {
+      setFilteredData(
+        visitorOut
+          .filter(v => v.user_type !== "security_guard")
+          .filter(filterLogic)
+      );
+    } else {
+      setFilteredUnexpectedVisitor(
+        visitorOut
+          .filter(v => v.user_type === "security_guard")
+          .filter(filterLogic)
+      );
+    }
+  }
 
-  // const [searchAll, setSearchAll] = useState("");
-  const handleSearchAll = (e) => {
+  else if (page === "all") {
+    if (selectedVisitor === "expected") {
+      setFilteredExpectedVisitor(
+        expectedVisitor.filter(filterLogic)
+      );
+    } else {
+      setFilteredUnexpectedVisitor(
+        unexpectedVisitor.filter(filterLogic)
+      );
+    }
+  }
+};
+
+
+  const [searchAll, setSearchAll] = useState("");
+ const handleSearchAll = (e) => {
   const searchValue = e.target.value.toLowerCase();
   setSearchAll(e.target.value);
 
   if (!searchValue.trim()) {
-    setAll(visitor);
+    setFilteredExpectedVisitor(expectedVisitor);
+    setFilteredUnexpectedVisitor(unexpectedVisitor);
     return;
   }
 
-  const filteredResults = visitor.filter(
-    (item) =>
+  if (selectedVisitor === "expected") {
+    const filtered = expectedVisitor.filter((item) =>
       item.name?.toLowerCase().includes(searchValue) ||
       item.vehicle_number?.toLowerCase().includes(searchValue) ||
       item.hosts_display?.toLowerCase().includes(searchValue)
-  );
-
-  setAll(filteredResults);
+    );
+    setFilteredExpectedVisitor(filtered);
+  } else {
+    const filtered = unexpectedVisitor.filter((item) =>
+      item.name?.toLowerCase().includes(searchValue) ||
+      item.vehicle_number?.toLowerCase().includes(searchValue) ||
+      item.hosts_display?.toLowerCase().includes(searchValue)
+    );
+    setFilteredUnexpectedVisitor(filtered);
+  }
 };
 
   const [searchHIstoryText, setSearchHistoryText] = useState("");
-  const handleSearchHistory = (e) => {
+ const handleSearchHistory = (e) => {
   const searchValue = e.target.value.toLowerCase();
   setSearchHistoryText(e.target.value);
 
   if (!searchValue.trim()) {
+    // If empty → show all data
     setFilteredHistory(histories);
     return;
   }
 
-  const filteredResults = histories.filter(
-    (item) =>
-      item.name?.toLowerCase().includes(searchValue) ||
-      item.contact_no?.toLowerCase().includes(searchValue)
+  const filteredResults = histories.filter((item) =>
+    item.name?.toLowerCase().includes(searchValue) ||
+    item.contact_no?.toLowerCase().includes(searchValue)
   );
 
   setFilteredHistory(filteredResults);
 };
-
   const [searchApprovalText, setSearchApprovalText] = useState("");
   const handleSearchApproval = (e) => {
-  const searchValue = e.target.value.toLowerCase();
-  setSearchApprovalText(e.target.value);
-
-  if (!searchValue.trim()) {
-    setFilteredApproval(approvals);
-    return;
-  }
-
-  const filteredResults = approvals.filter(
-    (item) =>
-      item.name?.toLowerCase().includes(searchValue) ||
-      item.contact_no?.toLowerCase().includes(searchValue)
-  );
-
-  setFilteredApproval(filteredResults);
-};
+    const searchValue = e.target.value;
+    setSearchApprovalText(searchValue);
+    if (searchValue.trim()) {
+      setFilteredApproval(approvals);
+    } else {
+      const filteredResults = approvals.filter((item) =>
+        item.name.toLowerCase().includes(searchValue.toLowerCase())
+      );
+      setFilteredApproval(filteredResults);
+    }
+  };
 
   const historyColumn = [
     {
@@ -1036,20 +991,18 @@ useEffect(() => {
 
   const [logSearchText, setLogSearchText] = useState("");
   const handleLogSearch = (e) => {
-  const value = e.target.value.toLowerCase();
-  setLogSearchText(e.target.value);
+    const searchValue = e.target.value;
+    setLogSearchText(searchValue);
+    if (searchValue.trim()) {
+      setFilteredLogs(logs);
+    } else {
+      const filteredResults = logs.filter((item) =>
+        item.name.toLowerCase().includes(searchValue.toLowerCase())
+      );
+      setFilteredLogs(filteredResults);
+    }
+  };
 
-  if (!value.trim()) {
-    setFilteredLogs(logs);
-    return;
-  }
-
-  const filtered = logs.filter(item =>
-    item.name?.toLowerCase().includes(value)
-  );
-
-  setFilteredLogs(filtered);
-};
   return (
     <div className="visitors-page">
       <section className="flex">
@@ -1219,7 +1172,7 @@ useEffect(() => {
                 type="text"
                 className="border border-gray-300 p-2 rounded-md placeholder:text-sm"
                 value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
+                onChange={handleSearch}
                 placeholder="Search using Visitor name, Host, vehicle number"
               />
 
@@ -1269,7 +1222,7 @@ useEffect(() => {
                   type="text"
                   className="border border-gray-300 p-2 rounded-md placeholder:text-sm"
                   value={searchText}
-                  onChange={(e) => setSearchText(e.target.value)}
+                  onChange={handleSearch}
                   placeholder="Search using Visitor name, Host, vehicle number"
                 />
 
@@ -1302,7 +1255,12 @@ useEffect(() => {
 
               <Table
                 columns={VisitorColumns}
-                data={filteredVisitorData}
+data={
+  selectedVisitor === "expected"
+    ? filteredData
+    : FilteredUnexpectedVisitor
+}
+
                 paginationServer
                 paginationTotalRows={totalRecords}
                 onChangePage={setCurrentPage}
@@ -1391,7 +1349,7 @@ useEffect(() => {
             {selectedVisitor === "expected" && page === "Visitor In" && (
               <Table
                 columns={VisitorColumns}
-                data={filteredVisitorData}
+                data={filteredData}
                 paginationServer
                 paginationTotalRows={totalRecords}
                 onChangePage={setCurrentPage}
@@ -1403,7 +1361,7 @@ useEffect(() => {
             {selectedVisitor === "unexpected" && page === "Visitor In" && (
               <Table
                 columns={VisitorColumns}
-                data={filteredVisitorData}
+                data={FilteredUnexpectedVisitor}
                 paginationServer
                 paginationTotalRows={totalRecords}
                 onChangePage={setCurrentPage}
@@ -1415,7 +1373,7 @@ useEffect(() => {
             {selectedVisitor === "expected" && page === "all" && (
               <Table
                 columns={VisitorColumns}
-                data={filteredVisitorData}
+                data={FilteredExpectedVisitor}
                 paginationServer
                 paginationTotalRows={totalRecords}
                 onChangePage={setCurrentPage}
@@ -1427,7 +1385,7 @@ useEffect(() => {
             {selectedVisitor === "unexpected" && page === "all" && (
               <Table
                 columns={VisitorColumns}
-                data={filteredVisitorData}
+                data={FilteredUnexpectedVisitor}
                 paginationServer
                 paginationTotalRows={totalRecords}
                 onChangePage={setCurrentPage}
