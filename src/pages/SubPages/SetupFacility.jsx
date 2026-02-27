@@ -26,45 +26,87 @@ const SetupFacility = () => {
   const themeColor = useSelector((state) => state.theme.color);
   const [facilityError, setFacilityError] = useState("");
   const [activeError, setActiveError] = useState("");
+  const [slotBy, setSlotBy] = useState(""); // Loading state
   const [shareError, setShareError] = useState("");
   const [billingError, setBillingError] = useState("");
+
   const [formData, setFormData] = useState({
     type: "bookable",
     name: "",
     description: "",
     fac_name: "",
     fac_type: "bookable",
-    active: "", //active yes or no
-    shareable: "", //shareable yes or no
+    active: "",
+    shareable: "",
     billing: "",
-    // tenant: false,
     flat: false,
     flat_charges: "",
     terms: "",
     min_people: "",
     max_people: "",
     member_charges: "",
+    // Member row
     member: false,
-    guest: false,
-    covers: "",
     member_price_adult: "",
-    // member_price_child: "",
+    member_price_child: "",
+    member_postpaid: false,
+    member_prepaid: false,
+    member_pay_on_facility: false,
+    member_complimentary: false,
+    // Non-Member row
+    non_member: false,
+    non_member_price_adult: "",
+    non_member_price_child: "",
+    non_member_postpaid: false,
+    non_member_prepaid: false,
+    non_member_pay_on_facility: false,
+    non_member_complimentary: false,
+    // Guest row
+    guest: false,
     guest_price_adult: "",
-    // guest_price_child: "",
-    // tenant_price_adult: "",
-    // tenant_price_child: "",
+    guest_price_child: "",
+    guest_postpaid: false,
+    guest_prepaid: false,
+    guest_pay_on_facility: false,
+    guest_complimentary: false,
+    // Tenant row
+    tenant: false,
+    tenant_price_adult: "",
+    tenant_price_child: "",
+    tenant_postpaid: false,
+    tenant_prepaid: false,
+    tenant_pay_on_facility: false,
+    is_member_adult: false,
+  is_member_child: false,
+  is_non_member_adult: false,
+  is_non_member_child: false,
+  is_guest_adult: false,
+  is_guest_child: false,
+  is_tenant_adult: false,
+  is_tenant_child: false,
+    tenant_complimentary: false,
+    // Legacy global payment (kept for compatibility)
     prepaid: false,
     postpaid: false,
     pay_on_facility: false,
     complimentary: false,
-    gst_no:"",
+    gst_no: "",
     cancellation_policy: "",
     slots: [
       {
         start_hr: "",
-        end_hr: "",
         start_min: "",
+        end_hr: "",
         end_min: "",
+        break_start_hr: "",
+        break_start_min: "",
+        break_end_hr: "",
+        break_end_min: "",
+        concurrent_slots: "",
+        slot_duration: "",
+        wrap_up_time: "",
+        prime_time_start_hr: "",
+        prime_time_start_min: "",
       },
     ],
     attachments: [],
@@ -110,6 +152,27 @@ const SetupFacility = () => {
     }
   };
 
+  const handlePriceChange = (field, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value, // ← no more amenity nesting
+    }));
+  };
+
+  const handleCheckboxChange = (type) => {
+    setFormData((prev) => ({
+      ...prev,
+      [type]: prev[type] === null ? true : null,
+    }));
+  };
+
+  const handleChildToggle = (field) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: !prev[field],
+    }));
+  };
+
   const handleDropdownChange3 = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -129,7 +192,7 @@ const SetupFacility = () => {
       [name]: checked,
     }));
   };
-  
+
   const validateUserPaymentSelection = (formData) => {
     const paymentModes = [
       "postpaid",
@@ -148,7 +211,7 @@ const SetupFacility = () => {
     return true;
   };
 
-  console.log('Formdata',formData)
+  console.log("Formdata", formData);
 
   const handleOnSubmit = (e) => {
     e.preventDefault();
@@ -235,7 +298,7 @@ const SetupFacility = () => {
 
     if (invalidFields.length > 0) {
       toast.error(
-        `Form is not valid. Please enter ${invalidFields.join(", ")}`
+        `Form is not valid. Please enter ${invalidFields.join(", ")}`,
       );
       formIsValid = false;
     }
@@ -342,10 +405,19 @@ const SetupFacility = () => {
       slots: [
         ...prevState.slots,
         {
-          start_hr: "", // Hour for start time
-          start_min: "", // Minute for start time
-          end_hr: "", // Hour for end time
-          end_min: "", // Minute for end time
+          start_hr: "",
+          start_min: "",
+          end_hr: "",
+          end_min: "",
+          break_start_hr: "",
+          break_start_min: "",
+          break_end_hr: "",
+          break_end_min: "",
+          concurrent_slots: "",
+          slot_duration: "",
+          wrap_up_time: "",
+          prime_time_start_hr: "",
+          prime_time_start_min: "",
         },
       ],
     }));
@@ -373,7 +445,9 @@ const SetupFacility = () => {
 
   const handleInputChange = (id, field, value) => {
     setSlots(
-      slots.map((slot) => (slot.id === id ? { ...slot, [field]: value } : slot))
+      slots.map((slot) =>
+        slot.id === id ? { ...slot, [field]: value } : slot,
+      ),
     );
   };
 
@@ -404,7 +478,7 @@ const SetupFacility = () => {
 
   const handleSubChange = (index, field, value) => {
     const updatedSubFacilities = subFacilities.map((subFacility, i) =>
-      i === index ? { ...subFacility, [field]: value } : subFacility
+      i === index ? { ...subFacility, [field]: value } : subFacility,
     );
     setSubFacilities(updatedSubFacilities);
   };
@@ -412,21 +486,36 @@ const SetupFacility = () => {
 
   const [rules, setRules] = useState([{ selectedOption: "", timesPerDay: "" }]);
   const options = ["Flat", "User", "Tenant", "Owner"];
+  // const handleAddRule = () => {
+  //   if (rules.length < 5) {
+  //     setRules([...rules, { selectedOption: "", timesPerDay: "" }]);
+  //   }
+  // };
+  // const handleOptionChange = (index, field, value) => {
+  //   const updatedRules = rules.map((rule, i) =>
+  //     i === index ? { ...rule, [field]: value } : rule
+  //   );
+  //   setRules(updatedRules);
+  // };
+
   const handleAddRule = () => {
-    if (rules.length < 5) {
-      setRules([...rules, { selectedOption: "", timesPerDay: "" }]);
-    }
+    const newRule = {
+      id: Date.now(),
+      times: "",
+      type: "",
+      enabled: true,
+      primeTime: "6:00 AM - 10:00AM / 5:00 PM - 8:00PM",
+    };
+    setRules([...rules, newRule]);
   };
-  const handleOptionChange = (index, field, value) => {
-    const updatedRules = rules.map((rule, i) =>
-      i === index ? { ...rule, [field]: value } : rule
-    );
-    setRules(updatedRules);
+  const handleRemoveRule = (id) => {
+    setRules(rules.filter((rule) => rule.id !== id));
   };
 
-  const handleRemoveRule = (index) => {
-    const updatedRules = rules.filter((_, i) => i !== index);
-    setRules(updatedRules);
+  const handleChange2 = (id, field, value) => {
+    setRules((prev) =>
+      prev.map((rule) => (rule.id === id ? { ...rule, [field]: value } : rule)),
+    );
   };
 
   const [blockData, setBlockData] = useState({
@@ -435,7 +524,6 @@ const SetupFacility = () => {
 
   const handleSlotTimeChange = (index, timeType, timeValue) => {
     const [hours, minutes] = timeValue.split(":");
-
     setFormData((prevState) => {
       const updatedSlots = [...prevState.slots];
       updatedSlots[index] = {
@@ -447,182 +535,118 @@ const SetupFacility = () => {
     });
   };
 
-  const handleAddFacility = async (e) => {
-    e.preventDefault();
-
-    const bookBeforeArray = [
-      `${bookBefore.days || 0} days, ${bookBefore.hours || 0} hours, ${
-        bookBefore.minutes || 0
-      } minutes`,
-      JSON.stringify(bookBefore),
-      null,
-    ];
-
-    const sendData = new FormData();
-    // Fix: Use siteId from localStorage instead of formData.site_id
-    sendData.append("amenity[site_id]", siteId);
-    sendData.append("amenity[fac_name]", formData.fac_name || "");
-    sendData.append("amenity[fac_type]", formData.fac_type || "");
-    // sendData.append("amenity[tenant]", formData.tenant || false);
-    sendData.append("amenity[description]", formData.description || "");
-    sendData.append("amenity[terms]", formData.terms || "");
-    sendData.append(
-      "amenity[cancellation_policy]",
-      formData.cancellation_policy || ""
-    );
-    sendData.append("amenity[min_people]", formData.min_people || "");
-    sendData.append("amenity[max_people]", formData.max_people || "");
-    sendData.append("amenity[member_charges]", formData.member_charges || "");
-    sendData.append("amenity[member]", formData.member || false);
-    sendData.append("amenity[guest]", formData.guest || false);
-    sendData.append("amenity[is_fixed]", formData.flat || false);
-    sendData.append("amenity[fixed_amount]", formData.flat_charges || "");
-    sendData.append("amenity[postpaid]", formData.postpaid || false);
-    sendData.append("amenity[prepaid]", formData.prepaid || false);
-    sendData.append("amenity[pay_on_facility]", formData.pay_on_facility || false);
-    sendData.append("amenity[complimentary]", formData.complimentary || false);
-    sendData.append("amenity[gst_no]", formData.gst_no || 18 );
-    // Add pricing fields
-    sendData.append(
-      "amenity[member_price_adult]",
-      formData.member_price_adult || ""
-    );
-    // sendData.append(
-    //   "amenity[member_price_child]",
-    //   formData.member_price_child || ""
-    // );
-    sendData.append(
-      "amenity[guest_price_adult]",
-      formData.guest_price_adult || ""
-    );
-    // sendData.append(
-    //   "amenity[guest_price_child]",
-    //   formData.guest_price_child || ""
-    // );
-    // sendData.append(
-    //   "amenity[tenant_price_adult]",
-    //   formData.tenant_price_adult || ""
-    // );
-    // sendData.append(
-    //   "amenity[tenant_price_child]",
-    //   formData.tenant_price_child || ""
-    // );
-    sendData.append("book_before[0]", bookBeforeArray[0]);
-    sendData.append("book_before[1]", bookBeforeArray[1]);
-    sendData.append("book_before[2]", bookBeforeArray[2]);
-    sendData.append("amenity[fac_type]", formData.fac_type || "bookable");
-
-    // Add multiple slots data with correct parameter names
-    // formData.slots.forEach((slot, index) => {
-    //   if (slot.startTime && slot.endTime) {
-    //     // Convert time format from "HH:MM" to separate hour and minute
-    //     const [startHour, startMin] = slot.startTime.split(":");
-    //     const [endHour, endMin] = slot.endTime.split(":");
-
-    //     sendData.append(
-    //       `amenity[amenity_slots_attributes][${index}][start_hr]`,
-    //       startHour || ""
-    //     );
-    //     sendData.append(
-    //       `amenity[amenity_slots_attributes][${index}][start_min]`,
-    //       startMin || ""
-    //     );
-    //     sendData.append(
-    //       `amenity[amenity_slots_attributes][${index}][end_hr]`,
-    //       endHour || ""
-    //     );
-    //     sendData.append(
-    //       `amenity[amenity_slots_attributes][${index}][end_min]`,
-    //       endMin || ""
-    //     );
-
-    //     // Handle break times if provided
-    //     // if (slot.breakTimeStart && slot.breakTimeEnd) {
-    //     //   const [breakStartHour, breakStartMin] =
-    //     //     slot.breakTimeStart.split(":");
-    //     //   const [breakEndHour, breakEndMin] = slot.breakTimeEnd.split(":");
-    //     //   sendData.append(
-    //     //     `amenity[amenity_slots_attributes][${index}][break_start_hr]`,
-    //     //     breakStartHour || ""
-    //     //   );
-    //     //   sendData.append(
-    //     //     `amenity[amenity_slots_attributes][${index}][break_start_min]`,
-    //     //     breakStartMin || ""
-    //     //   );
-    //     //   sendData.append(
-    //     //     `amenity[amenity_slots_attributes][${index}][break_end_hr]`,
-    //     //     breakEndHour || ""
-    //     //   );
-    //     //   sendData.append(
-    //     //     `amenity[amenity_slots_attributes][${index}][break_end_min]`,
-    //     //     breakEndMin || ""
-    //     //   );
-    //     // }
-
-    //     // sendData.append(
-    //     //   `amenity[amenity_slots_attributes][${index}][concurrent_slots]`,
-    //     //   slot.concurrentSlots || "1"
-    //     // );
-    //     // sendData.append(
-    //     //   `amenity[amenity_slots_attributes][${index}][slot_duration]`,
-    //     //   slot.slotBy || "60"
-    //     // );
-    //     // sendData.append(
-    //     //   `amenity[amenity_slots_attributes][${index}][wrap_up_time]`,
-    //     //   slot.wrapTime || "0"
-    //     // );
-    //     // sendData.append(
-    //     //   `amenity[amenity_slots_attributes][${index}][is_active]`,
-    //     //   slot.isActive ? "1" : "0"
-    //     // );
-    //     // sendData.append(
-    //     //   `amenity[amenity_slots_attributes][${index}][is_bookable]`,
-    //     //   slot.isBookable ? "1" : "0"
-    //     // );
-    //   }
-    // });
-
-     formData.slots.forEach((slot, index) => {
-       Object.entries(slot).forEach(([key, value]) => {
-         sendData.append(
-           `amenity[amenity_slots_attributes][${index}][${key}]`,
-           value
-         );
-       });
-     });
-    // Remove these unpermitted parameters
-    // sendData.append("amenity[startTime]", timeValues.time1 || "00:00");
-    // sendData.append("amenity[endTime]", timeValues.time2 || "00:00");
-    // sendData.append("amenity[cancelTime]", timeValues.time3 || "00:00");
-
-    // Fix the file attachments - check if they exist and are arrays
-    if (formData.attachments && formData.attachments.length > 0) {
-      Array.from(formData.attachments).forEach((file) => {
-        sendData.append("attachments[]", file);
-      });
-    }
-
-    // Add cover images
-    if (formData.cover_images && formData.cover_images.length > 0) {
-      Array.from(formData.cover_images).forEach((file) => {
-        sendData.append("cover_images[]", file);
-      });
-    }
-
-    try {
-      toast.loading("Please wait!");
-      const response = await postFacilitySetup(sendData);
-
-      toast.dismiss();
-      toast.success("Facility added successfully");
-      navigate("/setup/facility");
-      console.log(response);
-    } catch (error) {
-      console.error(error);
-      toast.dismiss();
-      toast.error("Error adding facility");
-    }
+  const handleSlotFieldChange = (index, field, value) => {
+    setFormData((prevState) => {
+      const updatedSlots = [...prevState.slots];
+      updatedSlots[index] = { ...updatedSlots[index], [field]: value };
+      return { ...prevState, slots: updatedSlots };
+    });
   };
+
+const handleAddFacility = async (e) => {
+  e.preventDefault();
+
+  const sendData = new FormData();
+
+  // Basic info
+  sendData.append("amenity[site_id]", siteId);
+  sendData.append("amenity[fac_name]", formData.fac_name || "");
+  sendData.append("amenity[fac_type]", formData.fac_type || "bookable");
+  sendData.append("amenity[description]", formData.description || "");
+  sendData.append("amenity[terms]", formData.terms || "");
+  sendData.append("amenity[cancellation_policy]", formData.cancellation_policy || "");
+  sendData.append("amenity[min_people]", formData.min_people || "");
+  sendData.append("amenity[max_people]", formData.max_people || "");
+
+  // Fixed / Flat
+  sendData.append("amenity[is_fixed]", formData.flat ? "true" : "false");
+  sendData.append("amenity[fixed_amount]", formData.flat_charges || "");
+
+  // GST – decide based on backend (try both if unsure)
+  sendData.append("amenity[gst]", formData.gst_no || "18");
+  // sendData.append("amenity[gst_no]", formData.gst_no || "18");   ← try this if above fails
+
+
+  // Member
+  sendData.append("amenity[member]", formData.member ? "true" : "false");
+  sendData.append("amenity[is_member_adult]", formData.is_member_adult ? "true" : "false");
+  sendData.append("amenity[is_member_child]", formData.is_member_child ? "true" : "false");
+  sendData.append("amenity[is_guest_adult]", formData.is_guest_adult ? "true" : "false");
+    sendData.append("amenity[is_guest_child]", formData.is_guest_child ? "true" : "false");
+        sendData.append("amenity[is_tenant_adult]", formData.is_tenant_adult ? "true" : "false");
+    sendData.append("amenity[is_tenant_child]", formData.is_tenant_child ? "true" : "false");
+  sendData.append("amenity[member_price_adult]", formData.member_price_adult || "");
+  sendData.append("amenity[member_price_child]", formData.member_price_child || "");
+    sendData.append("amenity[guest_price_child]", formData.guest_price_child || "");
+  sendData.append("amenity[tenant_price_adult]", formData.tenant_price_adult || "");
+  sendData.append("amenity[tenant_price_child]", formData.tenant_price_child || "");
+  sendData.append("amenity[guest_price_adult]", formData.guest_price_adult || "");
+
+  sendData.append("amenity[member_postpaid]", formData.member_postpaid ? "true" : "false");
+  sendData.append("amenity[member_prepaid]", formData.member_prepaid ? "true" : "false");
+  sendData.append("amenity[member_pay_on_facility]", formData.member_pay_on_facility ? "true" : "false");
+  sendData.append("amenity[member_complimentary]", formData.member_complimentary ? "true" : "false");
+
+  // Non-Member
+  sendData.append("amenity[non_member]", formData.non_member ? "true" : "false");
+  sendData.append("amenity[is_non_member_adult]", formData.is_non_member_adult ? "true" : "false");
+  sendData.append("amenity[is_non_member_child]", formData.is_non_member_child ? "true" : "false");
+  sendData.append("amenity[non_member_price_adult]", formData.non_member_price_adult || "");
+  sendData.append("amenity[non_member_price_child]", formData.non_member_price_child || "");
+  sendData.append("amenity[non_member_postpaid]",   formData.non_member_postpaid   ? "true" : "false");
+  sendData.append("amenity[non_member_prepaid]",    formData.non_member_prepaid    ? "true" : "false");
+  sendData.append("amenity[non_member_pay_on_facility]", formData.non_member_pay_on_facility ? "true" : "false");
+  sendData.append("amenity[non_member_complimentary]",   formData.non_member_complimentary   ? "true" : "false");
+
+  // Guest + Tenant → same pattern (copy-paste & change prefix)
+
+  // Book before
+  const bookStr = `${bookBefore.days || 0} days, ${bookBefore.hours || 0} hours, ${bookBefore.minutes || 0} minutes`;
+  sendData.append("book_before[0]", bookStr);
+  sendData.append("book_before[1]", JSON.stringify(bookBefore));
+  sendData.append("book_before[2]", "null");
+
+  // Slots
+  formData.slots.forEach((slot, index) => {
+    sendData.append(`amenity[amenity_slots_attributes][${index}][start_hr]`,   slot.start_hr   || "");
+    sendData.append(`amenity[amenity_slots_attributes][${index}][start_min]`,  slot.start_min  || "");
+    sendData.append(`amenity[amenity_slots_attributes][${index}][end_hr]`,     slot.end_hr     || "");
+    sendData.append(`amenity[amenity_slots_attributes][${index}][end_min]`,    slot.end_min    || "");
+    sendData.append(`amenity[amenity_slots_attributes][${index}][break_start_hr]`,  slot.break_start_hr  || "");
+    sendData.append(`amenity[amenity_slots_attributes][${index}][break_start_min]`, slot.break_start_min || "");
+    sendData.append(`amenity[amenity_slots_attributes][${index}][break_end_hr]`,    slot.break_end_hr    || "");
+    sendData.append(`amenity[amenity_slots_attributes][${index}][break_end_min]`,   slot.break_end_min   || "");
+    sendData.append(`amenity[amenity_slots_attributes][${index}][concurrent_slots]`, slot.concurrent_slots || "1");
+    sendData.append(`amenity[amenity_slots_attributes][${index}][slot_duration]`,   slot.slot_duration   || "");
+    sendData.append(`amenity[amenity_slots_attributes][${index}][wrap_up_time]`,    slot.wrap_up_time    || "0");
+    // add prime_time if backend supports it
+  });
+
+  // Files
+  if (formData.attachments?.length) {
+    Array.from(formData.attachments).forEach(file => {
+      sendData.append("attachments[]", file);
+    });
+  }
+
+  if (formData.cover_images?.length) {
+    Array.from(formData.cover_images).forEach(file => {
+      sendData.append("cover_images[]", file);
+    });
+  }
+
+  try {
+    toast.loading("Saving facility...");
+    const response = await postFacilitySetup(sendData);
+    toast.dismiss();
+    toast.success("Facility created successfully");
+    navigate("/setup/facility");
+  } catch (err) {
+    toast.dismiss();
+    toast.error("Failed to create facility");
+    console.error(err);
+  }
+};
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -631,7 +655,6 @@ const SetupFacility = () => {
       [name]: value,
     }));
   };
-
 
   return (
     <section className="flex">
@@ -739,7 +762,7 @@ const SetupFacility = () => {
             </div>
             <div className="flex flex-col gap-1">
               <label htmlFor="" className="font-medium">
-                Link to billing
+                Link to building
               </label>
               <select
                 name="billing"
@@ -838,130 +861,201 @@ const SetupFacility = () => {
             )}
           </div>
         </div>
+
         <div className="my-4">
           <h2 className="border-b border-black font-medium text-lg">
             Fee Setup
           </h2>
-
           <div className="border rounded-lg bg-blue-50 p-1 my-2">
             <div className="grid grid-cols-4 border-b border-gray-400">
               <p className="text-center font-medium">Member Type</p>
               <p className="text-center font-medium">Adult</p>
-              <p className="text-center font-medium"> Flat amount</p>
-              <p className="text-center font-medium">Configure Payment</p>
+              <p className="text-center font-medium"> Child</p>
+              <p className="text-center font-medium"> Flat Amount</p>
             </div>
+
+            {/* Member Section */}
             <div className="grid grid-cols-4 items-center border-b">
               <div className="flex justify-center my-2">
-                <label htmlFor="">
+                <label className="flex items-center gap-2">
                   <input
                     type="checkbox"
-                    name="member"
-                    id=""
-                    checked={formData.member}
-                    onChange={(e) =>
-                      setFormData({ ...formData, member: e.target.checked })
-                    }
-                  />{" "}
+                    checked={formData.member === true}
+                    onChange={() => handleCheckboxChange("member")}
+                  />
                   Member
                 </label>
               </div>
+
+              {/* Adult */}
               <div className="flex justify-center my-2">
-                <div className="flex items-center">
-                  {/* <div className="rounded-l-md border p-2 border-gray-400">
-                    <input type="checkbox" name="" id="" />
-                  </div> */}
-                  {/* <input
-                    type="number"
-                    name="member_price_adult"
-                    id=""
-                    min={0}
-                    value={formData.member_price_adult}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        member_price_adult: e.target.value,
-                      })
-                    }
-                    required={formData.member === true}
-                    // className="border border-gray-400 rounded-r-md p-2 outline-none"
-                    className={`border border-gray-400 rounded p-2 outline-none ${
-                      !formData.member
-                        ? "bg-gray-100 text-gray-500 cursor-not-allowed"
-                        : ""
-                    }`}
-                    placeholder="₹100"
-                  /> */}
-                  <div className="flex items-center">
-  <div className="rounded-l-md border p-2 border-gray-400">
-    <input
-      type="checkbox"
-      checked={formData.member}
-      onChange={(e) =>
-        setFormData({ ...formData, member: e.target.checked })
-      }
-    />
-  </div>
-
-  <input
-    type="number"
-    name="member_price_adult"
-    min={0}
-    value={formData.member_price_adult}
-    onChange={(e) =>
-      setFormData({
-        ...formData,
-        member_price_adult: e.target.value,
-      })
-    }
-    disabled={!formData.member}
-    className={`border border-gray-400 rounded-r-md p-2 outline-none ${
-      !formData.member
-        ? "bg-gray-100 text-gray-500 cursor-not-allowed"
-        : ""
-    }`}
-    placeholder="₹100"
-  />
-</div>
-
-                </div>
+                {/* Adult Checkbox */}
+                <input
+                  type="checkbox"
+                  className="mx-2"
+                  checked={formData.is_member_adult}
+                  disabled={!formData.member}
+                  onChange={() => handleChildToggle("is_member_adult")}
+                />
+                {/* Adult Price Input */}
+                <input
+                  type="text"
+                  disabled={!formData.member || !formData.is_member_adult}
+                  value={formData.member_price_adult || ""}
+                  onChange={(e) =>
+                    handlePriceChange("member_price_adult", e.target.value)
+                  }
+                  className="border border-gray-400 rounded p-2 outline-none"
+                  placeholder="₹100"
+                />
               </div>
+
+              {/* Child */}
               <div className="flex justify-center my-2">
-                <div className="flex items-center">
-                  <div className="rounded-l-md border p-2 border-gray-400">
-                    <input
-                      type="checkbox"
-                      name="flat"
-                      id="flat"
-                      onChange={(e) => {
-                        const isChecked = e.target.checked;
-                        setFormData({ ...formData, flat: isChecked });
-                      }}
-                    />
+                {/* Child Checkbox */}
+                <input
+                  type="checkbox"
+                  className="mx-2"
+                  checked={formData.is_member_child}
+                  disabled={!formData.member}
+                  onChange={() => handleChildToggle("is_member_child")}
+                />
+                {/* Child Price Input */}
+                <input
+                  type="text"
+                  disabled={!formData.member || !formData.is_member_child}
+                  value={formData.member_price_child || ""}
+                  onChange={(e) =>
+                    handlePriceChange("member_price_child", e.target.value)
+                  }
+                  className="border border-gray-400 rounded p-2 outline-none"
+                  placeholder="₹100"
+                />
+              </div>
+
+              {/* Flat */}
+              <div className="flex flex-col items-center my-2 gap-3">
+                {/* Fixed Amount Input */}
+                <input
+                  type="text"
+                  value={formData.fixed_amount || ""}
+                  onChange={(e) =>
+                    handlePriceChange("fixed_amount", e.target.value)
+                  }
+                  className="border border-gray-400 rounded p-2 outline-none w-48"
+                  placeholder="₹100"
+                />
+
+                {/* Payment Options */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-2">
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        name="postpaid"
+                        checked={formData.postpaid}
+                        onChange={handlePaymentCheckbox}
+                      />
+                      Postpaid
+                    </label>
+
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        name="prepaid"
+                        checked={formData.prepaid}
+                        onChange={handlePaymentCheckbox}
+                      />
+                      Prepaid
+                    </label>
                   </div>
-                  <input
-                    type="number"
-                    name="flat_charges"
-                    id="flat_charges"
-                    min={0}
-                    value={formData.flat_charges}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        flat_charges: e.target.value,
-                      })
-                    }
-                    disabled={!formData.flat}
-                    // className="border border-gray-400 rounded-r-md p-2 outline-none"
-                    className={`border border-gray-400 rounded-r-md p-2 outline-none ${
-                      !formData.flat
-                        ? "bg-gray-100 text-gray-500 cursor-not-allowed"
-                        : ""
-                    }`}
-                    placeholder="₹100"
-                  />
+
+                  <div className="flex flex-col gap-2">
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        name="pay_on_facility"
+                        checked={formData.pay_on_facility}
+                        onChange={handlePaymentCheckbox}
+                      />
+                      Pay on facility
+                    </label>
+
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        name="complimentary"
+                        checked={formData.complimentary}
+                        onChange={handlePaymentCheckbox}
+                      />
+                      Complimentary
+                    </label>
+                  </div>
                 </div>
               </div>
+            </div>
+            <div className="grid grid-cols-4 items-center border-b">
               <div className="flex justify-center my-2">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.non_member === true}
+                    onChange={() => handleCheckboxChange("non_member")}
+                  />
+                  Non-Member
+                </label>
+              </div>
+
+              {/* Adult */}
+              <div className="flex justify-center my-2">
+                {/* Adult Checkbox */}
+                <input
+                  type="checkbox"
+                  className="mx-2"
+                  checked={formData.is_non_member_adult}
+                  disabled={!formData.non_member}
+                  onChange={() => handleChildToggle("is_non_member_adult")}
+                />
+                {/* Adult Price Input */}
+                <input
+                  type="text"
+                  disabled={
+                    !formData.non_member || !formData.is_non_member_adult
+                  }
+                  value={formData.non_member_price_adult || ""}
+                  onChange={(e) =>
+                    handlePriceChange("non_member_price_adult", e.target.value)
+                  }
+                  className="border border-gray-400 rounded p-2 outline-none"
+                  placeholder="₹100"
+                />
+              </div>
+
+              {/* Child */}
+              <div className="flex justify-center my-2">
+                {/* Child Checkbox */}
+                <input
+                  type="checkbox"
+                  className="mx-2"
+                  checked={formData.is_non_member_child}
+                  disabled={!formData.non_member}
+                  onChange={() => handleChildToggle("is_non_member_child")}
+                />
+                {/* Child Price Input */}
+                <input
+                  type="text"
+                  disabled={
+                    !formData.non_member || !formData.is_non_member_child
+                  }
+                  value={formData.non_member_price_child || ""}
+                  onChange={(e) =>
+                    handlePriceChange("non_member_price_child", e.target.value)
+                  }
+                  className="border border-gray-400 rounded p-2 outline-none"
+                  placeholder="₹100"
+                />
+              </div>
+               <div className="flex justify-center my-2">
                 <div className="grid grid-cols-2 gap-2">
                   <div className="flex flex-col">
                     <label htmlFor="" className="flex items-center gap-2">
@@ -969,7 +1063,7 @@ const SetupFacility = () => {
                         type="checkbox"
                         name="postpaid"
                         id="postpaid"
-                        checked={formData.postpaid}
+                        checked={formData.non_member_postpaid}
                         onChange={handlePaymentCheckbox}
                       />{" "}
                       Postpaid
@@ -979,7 +1073,7 @@ const SetupFacility = () => {
                         type="checkbox"
                         name="prepaid"
                         id="prepaid"
-                        checked={formData.prepaid}
+                        checked={formData.non_member_prepaid}
                         onChange={handlePaymentCheckbox}
                       />{" "}
                       Prepaid
@@ -991,7 +1085,7 @@ const SetupFacility = () => {
                         type="checkbox"
                         name="pay_on_facility"
                         id="pay_on_facility"
-                        checked={formData.pay_on_facility}
+                        checked={formData.non_member_pay_on_facility}
                         onChange={handlePaymentCheckbox}
                       />{" "}
                       Pay on facility
@@ -1001,7 +1095,7 @@ const SetupFacility = () => {
                         type="checkbox"
                         name="complimentary"
                         id="complimentary"
-                        checked={formData.complimentary}
+                        checked={formData.non_member_complimentary}
                         onChange={handlePaymentCheckbox}
                       />{" "}
                       Complimentary
@@ -1010,258 +1104,224 @@ const SetupFacility = () => {
                 </div>
               </div>
             </div>
-            {/* <div className="grid grid-cols-4 items-center border-b ">
-              <div className="flex justify-center my-2">
-                <label htmlFor="" className="flex items-center gap-2">
-                  <input type="checkbox" name="" id="" />
-                  Non-Member
-                </label>
-              </div>
-              <div className="flex justify-center my-2">
-                <div className="flex items-center">
-                  <div className="rounded-l-md border p-2 border-gray-400">
-                    <input type="checkbox" name="" id="" />
-                  </div>
-                  <input
-                    type="text"
-                    name=""
-                    id=""
-                    className="border border-gray-400 rounded-r-md p-2 outline-none"
-                    placeholder="₹100"
-                  />
-                </div>
-              </div>
-              <div className="flex justify-center my-2">
-                <div className="flex items-center">
-                  <div className="rounded-l-md border p-2 border-gray-400">
-                    <input type="checkbox" name="" id="" />
-                  </div>
-                  <input
-                    type="text"
-                    name=""
-                    id=""
-                    className="border border-gray-400 rounded-r-md p-2 outline-none"
-                    placeholder="₹100"
-                  />
-                </div>
-              </div>
-              <div className="flex justify-center my-2">
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="flex flex-col">
-                    <label htmlFor="" className="flex items-center gap-2">
-                      <input type="checkbox" name="" id="" /> Postpaid
-                    </label>
-                    <label htmlFor="" className="flex items-center gap-2">
-                      <input type="checkbox" name="" id="" /> Prepaid
-                    </label>
-                  </div>
-                  <div className="flex flex-col">
-                    <label htmlFor="" className="flex items-center gap-2 ">
-                      <input type="checkbox" name="" id="" /> Pay on facility
-                    </label>
-                    <label htmlFor="" className="flex items-center gap-2">
-                      <input type="checkbox" name="" id="" /> Complimentary
-                    </label>
-                  </div>
-                </div>
-              </div>
-            </div> */}
+
+            {/* Guest Section */}
             <div className="grid grid-cols-4 items-center border-b">
               <div className="flex justify-center my-2">
-                <label htmlFor="" className="flex items-center gap-2">
+                <label className="flex items-center gap-2">
                   <input
                     type="checkbox"
-                    name="guest"
-                    checked={formData.guest}
-                    onChange={(e) =>
-                      setFormData({ ...formData, guest: e.target.checked })
-                    }
-                    id=""
+                    checked={formData.guest === true}
+                    onChange={() => handleCheckboxChange("guest")}
                   />
                   Guest
                 </label>
               </div>
+
+              {/* Adult */}
               <div className="flex justify-center my-2">
-                <div className="flex items-center">
-                  {/* <div className="rounded-l-md border p-2 border-gray-400">
-                    <input type="checkbox" name="" id="" />
-                  </div> */}
-                  {/* <input
-                    type="text"
-                    name="guest_price_adult"
-                    id=""
-                    value={formData.guest_price_adult}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        guest_price_adult: e.target.value,
-                      })
-                    }
-                    disabled={!formData.guest}
-                    required={formData.guest === true}
-                    // className="border border-gray-400 rounded-r-md p-2 outline-none"
-                    className={`border border-gray-400 rounded p-2 outline-none ${
-                      !formData.guest
-                        ? "bg-gray-100 text-gray-500 cursor-not-allowed"
-                        : ""
-                    }`}
-                    placeholder="₹100"
-                  /> */}
-                  <div className="flex items-center">
-  <div className="rounded-l-md border p-2 border-gray-400">
-    <input
-      type="checkbox"
-      checked={formData.guest}
-      onChange={(e) =>
-        setFormData({ ...formData, guest: e.target.checked })
-      }
-    />
-  </div>
-
-  <input
-    type="number"
-    name="guest_price_adult"
-    value={formData.guest_price_adult}
-    onChange={(e) =>
-      setFormData({
-        ...formData,
-        guest_price_adult: e.target.value,
-      })
-    }
-    disabled={!formData.guest}
-    className={`border border-gray-400 rounded-r-md p-2 outline-none ${
-      !formData.guest
-        ? "bg-gray-100 text-gray-500 cursor-not-allowed"
-        : ""
-    }`}
-    placeholder="₹100"
-  />
-</div>
-
-                </div>
+                {/* Adult Checkbox */}
+                <input
+                  type="checkbox"
+                  className="mx-2"
+                  checked={formData.is_guest_adult}
+                  disabled={!formData.guest}
+                  onChange={() => handleChildToggle("is_guest_adult")}
+                />
+                {/* Adult Price Input */}
+                <input
+                  type="text"
+                  disabled={!formData.guest || !formData.is_guest_adult}
+                  value={formData.guest_price_adult || ""}
+                  onChange={(e) =>
+                    handlePriceChange("guest_price_adult", e.target.value)
+                  }
+                  className="border border-gray-400 rounded p-2 outline-none"
+                  placeholder="₹100"
+                />
               </div>
-              <div></div>
-              {/* <div className="flex justify-center my-2">
-                <div className="flex items-center">
-                  <div className="rounded-l-md border p-2 border-gray-400">
-                    <input type="checkbox" name="" id="" />
-                  </div>
-                  <input
-                    type="text"
-                    name="guest_price_child"
-                    id=""
-                    value={formData.guest_price_child}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        guest_price_child: e.target.value,
-                      })
-                    }
-                    className="border border-gray-400 rounded-r-md p-2 outline-none"
-                    placeholder="₹100"
-                  />
-                </div>
-              </div> */}
-              {/* <div className="flex justify-center my-2">
+
+              {/* Child */}
+              <div className="flex justify-center my-2">
+                {/* Child Checkbox */}
+                <input
+                  type="checkbox"
+                  className="mx-2"
+                  checked={formData.is_guest_child}
+                  disabled={!formData.guest}
+                  onChange={() => handleChildToggle("is_guest_child")}
+                />
+                {/* Child Price Input */}
+                <input
+                  type="text"
+                  disabled={!formData.guest || !formData.is_guest_child}
+                  value={formData.guest_price_child || ""}
+                  onChange={(e) =>
+                    handlePriceChange("guest_price_child", e.target.value)
+                  }
+                  className="border border-gray-400 rounded p-2 outline-none"
+                  placeholder="₹100"
+                />
+              </div>
+               <div className="flex justify-center my-2">
                 <div className="grid grid-cols-2 gap-2">
                   <div className="flex flex-col">
                     <label htmlFor="" className="flex items-center gap-2">
-                      <input type="checkbox" name="" id="" /> Postpaid
+                      <input
+                        type="checkbox"
+                        name="postpaid"
+                        id="postpaid"
+                        checked={formData.guest_postpaid}
+                        onChange={handlePaymentCheckbox}
+                      />{" "}
+                      Postpaid
                     </label>
                     <label htmlFor="" className="flex items-center gap-2">
-                      <input type="checkbox" name="" id="" /> Prepaid
+                      <input
+                        type="checkbox"
+                        name="prepaid"
+                        id="prepaid"
+                        checked={formData.guest_prepaid}
+                        onChange={handlePaymentCheckbox}
+                      />{" "}
+                      Prepaid
                     </label>
                   </div>
                   <div className="flex flex-col">
                     <label htmlFor="" className="flex items-center gap-2 ">
-                      <input type="checkbox" name="" id="" /> Pay on facility
+                      <input
+                        type="checkbox"
+                        name="pay_on_facility"
+                        id="pay_on_facility"
+                        checked={formData.guest_pay_on_facility}
+                        onChange={handlePaymentCheckbox}
+                      />{" "}
+                      Pay on facility
                     </label>
                     <label htmlFor="" className="flex items-center gap-2">
-                      <input type="checkbox" name="" id="" /> Complimentary
+                      <input
+                        type="checkbox"
+                        name="complimentary"
+                        id="complimentary"
+                        checked={formData.guest_complimentary}
+                        onChange={handlePaymentCheckbox}
+                      />{" "}
+                      Complimentary
                     </label>
                   </div>
                 </div>
-              </div> */}
+              </div>
             </div>
-            {/* <div className="grid grid-cols-4 items-center border-b ">
+
+            {/* Tenant Section */}
+            <div className="grid grid-cols-4 items-center border-b">
               <div className="flex justify-center my-2">
-                <label htmlFor="" className="flex items-center gap-2">
+                <label className="flex items-center gap-2">
                   <input
                     type="checkbox"
-                    name="tenant"
-                    id=""
-                    value={formData.tenant}
-                    // checked={isTenant}
-                    onChange={(e) =>
-                      setFormData({ ...formData, tenant: e.target.checked })
-                    }
+                    checked={formData.tenant === true}
+                    onChange={() => handleCheckboxChange("tenant")}
                   />
                   Tenant
                 </label>
               </div>
+
+              {/* Adult */}
               <div className="flex justify-center my-2">
-                <div className="flex items-center">
-                  <div className="rounded-l-md border p-2 border-gray-400">
-                    <input type="checkbox" name="" id="" />
-                  </div>
-                  <input
-                    type="text"
-                    name="tenant_price_adult"
-                    id=""
-                    value={formData.tenant_price_adult}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        tenant_price_adult: e.target.value,
-                      })
-                    }
-                    className="border border-gray-400 rounded-r-md p-2 outline-none"
-                    placeholder="₹100"
-                  />
-                </div>
+                {/* Adult Checkbox */}
+                <input
+                  type="checkbox"
+                  className="mx-2"
+                  checked={formData.is_tenant_adult}
+                  disabled={!formData.tenant}
+                  onChange={() => handleChildToggle("is_tenant_adult")}
+                />
+                {/* Adult Price Input */}
+                <input
+                  type="text"
+                  disabled={!formData.tenant || !formData.is_tenant_adult}
+                  value={formData.tenant_price_adult || ""}
+                  onChange={(e) =>
+                    handlePriceChange("tenant_price_adult", e.target.value)
+                  }
+                  className="border border-gray-400 rounded p-2 outline-none"
+                  placeholder="₹100"
+                />
               </div>
+
+              {/* Child */}
               <div className="flex justify-center my-2">
-                <div className="flex items-center">
-                  <div className="rounded-l-md border p-2 border-gray-400">
-                    <input type="checkbox" name="" id="" />
-                  </div>
-                  <input
-                    type="text"
-                    name="tenant_price_child"
-                    id=""
-                    value={formData.tenant_price_child}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        tenant_price_child: e.target.value,
-                      })
-                    }
-                    className="border border-gray-400 rounded-r-md p-2 outline-none"
-                    placeholder="₹100"
-                  />
-                </div>
+                {/* Child Checkbox */}
+                <input
+                  type="checkbox"
+                  className="mx-2"
+                  checked={formData.is_tenant_child}
+                  disabled={!formData.tenant}
+                  onChange={() => handleChildToggle("is_tenant_child")}
+                />
+                {/* Child Price Input */}
+                <input
+                  type="text"
+                  disabled={!formData.tenant || !formData.is_tenant_child}
+                  value={formData.tenant_price_child || ""}
+                  onChange={(e) =>
+                    handlePriceChange("tenant_price_child", e.target.value)
+                  }
+                  className="border border-gray-400 rounded p-2 outline-none"
+                  placeholder="₹100"
+                />
               </div>
-              <div className="flex justify-center my-2">
+               <div className="flex justify-center my-2">
                 <div className="grid grid-cols-2 gap-2">
                   <div className="flex flex-col">
                     <label htmlFor="" className="flex items-center gap-2">
-                      <input type="checkbox" name="" id="" /> Postpaid
+                      <input
+                        type="checkbox"
+                        name="postpaid"
+                        id="postpaid"
+                        checked={formData.tenant_postpaid}
+                        onChange={handlePaymentCheckbox}
+                      />{" "}
+                      Postpaid
                     </label>
                     <label htmlFor="" className="flex items-center gap-2">
-                      <input type="checkbox" name="" id="" /> Prepaid
+                      <input
+                        type="checkbox"
+                        name="prepaid"
+                        id="prepaid"
+                        checked={formData.tenant_prepaid}
+                        onChange={handlePaymentCheckbox}
+                      />{" "}
+                      Prepaid
                     </label>
                   </div>
                   <div className="flex flex-col">
                     <label htmlFor="" className="flex items-center gap-2 ">
-                      <input type="checkbox" name="" id="" /> Pay on facility
+                      <input
+                        type="checkbox"
+                        name="pay_on_facility"
+                        id="pay_on_facility"
+                        checked={formData.tenant_pay_on_facility}
+                        onChange={handlePaymentCheckbox}
+                      />{" "}
+                      Pay on facility
                     </label>
                     <label htmlFor="" className="flex items-center gap-2">
-                      <input type="checkbox" name="" id="" /> Complimentary
+                      <input
+                        type="checkbox"
+                        name="complimentary"
+                        id="complimentary"
+                        checked={formData.tenant_complimentary}
+                        onChange={handlePaymentCheckbox}
+                      />{" "}
+                      Complimentary
                     </label>
                   </div>
                 </div>
               </div>
-            </div> */}
+            </div>
+
+            {/* Checkbox */}
             <div className="grid grid-cols-3 gap-4">
               <div className="my-2 flex flex-col gap-2">
                 <label htmlFor="" className="font-medium">
@@ -1532,25 +1592,126 @@ const SetupFacility = () => {
             {/* </div> *
           </div>
         </div> */}
-        <div className="my-4">
-          <h2 className="border-b border-black text-lg mb-1 font-medium">
-            Cover Images
-          </h2>
-          <FileInputBox
-            handleChange={(files) => handleFileChange(files, "cover_images")}
-            fieldName={"cover_images"}
-            isMulti={true}
-          />
+        <div className="border rounded-md mt-6">
+          <div className="bg-gray-100 px-4 py-2 font-semibold text-gray-700 border-b">
+            Booking Rule
+          </div>
+
+          {rules.map((rule, index) => (
+            <div
+              key={rule.id}
+              className="flex flex-wrap items-center gap-4 px-4 py-3 border-b last:border-b-0"
+            >
+              {/* Checkbox */}
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={rule.enabled || false}
+                  onChange={(e) =>
+                    handleChange2(rule.id, "enabled", e.target.checked)
+                  }
+                  className="w-4 h-4"
+                />
+                <span className="text-sm">Facility can be Booked</span>
+              </div>
+
+              {/* Times Input */}
+              <input
+                type="number"
+                placeholder="Enter"
+                value={rule.times || ""}
+                onChange={(e) =>
+                  handleChange2(rule.id, "times", e.target.value)
+                }
+                className="border border-gray-300 rounded px-2 py-1 w-24 text-sm"
+              />
+
+              {/* Select Slots For */}
+              <select
+                value={rule.type || ""}
+                onChange={(e) => handleChange2(rule.id, "type", e.target.value)}
+                className="border border-gray-300 rounded px-2 py-1 text-sm"
+              >
+                <option value="">Select Slots For</option>
+                <option value="Day">Day</option>
+                <option value="Week">Week</option>
+                <option value="Month">Month</option>
+                <option value="Year">Year</option>
+              </select>
+
+              {/* Prime Time Label */}
+              <span className="text-sm font-medium text-gray-700">
+                Prime Time
+              </span>
+
+              {/* Prime Time Editable Input */}
+              <input
+                type="text"
+                value={rule.primeTime || ""}
+                onChange={(e) =>
+                  handleChange2(rule.id, "primeTime", e.target.value)
+                }
+                placeholder="e.g. 6:00 AM - 10:00AM / 5:00 PM - 8:00PM"
+                className="border border-gray-300 bg-gray-50 rounded px-3 py-1 text-sm w-[300px]"
+              />
+
+              {/* Sub Facility */}
+              <div className="flex items-center gap-2">
+                {/* <input
+                          type="checkbox"
+                          checked={subFacilityAvailable}
+                          onChange={(e) => setSubFacilityAvailable(e.target.checked)}
+                        /> */}
+                <span className="text-sm">Sub Facility</span>
+              </div>
+
+              {/* Delete Button (shown for all rows) */}
+              {rules.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => handleRemoveRule(rule.id)}
+                  className="text-red-500 hover:text-red-700 ml-auto"
+                  title="Remove rule"
+                >
+                  <FaTrash size={14} />
+                </button>
+              )}
+            </div>
+          ))}
+
+          {/* Add Button */}
+          <button
+            type="button"
+            onClick={handleAddRule}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md text-sm mx-4 mt-3 mb-3"
+          >
+            Add
+          </button>
         </div>
-        <div className="my-4">
-          <h2 className="border-b border-black text-lg mb-1 font-medium">
-            Attachments
-          </h2>
-          <FileInputBox
-            handleChange={(files) => handleFileChange(files, "attachments")}
-            fieldName={"attachments"}
-            isMulti={true}
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Cover Images */}
+          <div className="my-4">
+            <h2 className="border-b border-black text-lg mb-2 font-medium">
+              Cover Images
+            </h2>
+            <FileInputBox
+              handleChange={(files) => handleFileChange(files, "cover_images")}
+              fieldName="cover_images"
+              isMulti={true}
+            />
+          </div>
+
+          {/* Attachments */}
+          <div className="my-4">
+            <h2 className="border-b border-black text-lg mb-2 font-medium">
+              Attachments
+            </h2>
+            <FileInputBox
+              handleChange={(files) => handleFileChange(files, "attachments")}
+              fieldName="attachments"
+              isMulti={true}
+            />
+          </div>
         </div>
         <div className="flex flex-col">
           <label htmlFor="" className="font-medium">
@@ -1567,97 +1728,191 @@ const SetupFacility = () => {
             className="border border-gray-400 p-1 placeholder:text-sm rounded-md"
           />
         </div>
-        <div className="my-4">
-          <h2 className="border-b border-black text-lg mb-1 font-medium">
-            Configure Slot
-          </h2>
+        <div className="bg-white rounded-xl shadow-md border p-6 mt-2 mb-3 border-gray-300">
+          <h2 className="text-lg font-semibold mb-6">Configure Slot</h2>
 
-          {formData.slots.map((slot, index) => (
-            <div
-              key={index}
-              className="grid grid-cols-3 gap-2 bg-white my-2 rounded-lg"
-            >
-              <div className="flex flex-col">
-                <label htmlFor="" className="font-medium">
-                  Start time
-                </label>
+          <div className="grid grid-cols-1 md:grid-cols-7 gap-6 items-end">
+            {/* Start Time */}
+            <div>
+              <label className="text-sm font-medium text-gray-600">
+                Start time
+              </label>
+              <div className="mt-2">
                 <input
                   type="time"
-                  placeholder="Start Time"
-                  value={`${slot.start_hr}:${slot.start_min}`}
-                  onChange={(e) =>
-                    handleSlotTimeChange(index, "start", e.target.value)
-                  }
-                  className="border border-gray-300 rounded-md p-2 w-full sm:w-auto"
+                  // value={`${slotData.startHour}:${slotData.startMinute}`}
+                  onChange={(e) => {
+                    const [h, m] = e.target.value.split(":");
+                    handleChange("startHour", h);
+                    handleChange("startMinute", m);
+                  }}
+                  className="border rounded-md px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 text-gray-700"
                 />
-              </div>
-              <div className="flex flex-col mx-3">
-                <label htmlFor="" className="font-medium">
-                  End Time
-                </label>
-                <input
-                  type="time"
-                  placeholder="End Time"
-                  value={`${slot.end_hr}:${slot.end_min}`}
-                  onChange={(e) =>
-                    handleSlotTimeChange(index, "end", e.target.value)
-                  }
-                  className="border border-gray-300 rounded-md p-2 w-full sm:w-auto"
-                />
-              </div>
-              <div className="flex item-end">
-                <button
-                  type="button"
-                  onClick={() => handleRemoveSlot(index)}
-                  className="text-red-600 hover:text-red-800 p-2"
-                >
-                  <FaTrash size={20} />
-                </button>
               </div>
             </div>
-          ))}
 
-          <div className="flex ">
-            <button
-              type="button"
-              onClick={handleAddSlot}
-              className="flex items-center px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700"
-            >
-              <BiPlusCircle className="h-5 w-5 mr-2" />
-              Add Slot
-            </button>
+            {/* Break Time Start */}
+            <div>
+              <label className="text-sm font-medium text-gray-600">
+                Break time ( start)
+              </label>
+              <div className="mt-2">
+                <input
+                  type="time"
+                  // value={`${slotData.breakStartHour}:${slotData.breakStartMinute}`}
+                  onChange={(e) => {
+                    const [h, m] = e.target.value.split(":");
+                    handleChange("breakStartHour", h);
+                    handleChange("breakStartMinute", m);
+                  }}
+                  className="border rounded-md px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 text-gray-700"
+                />
+              </div>
+            </div>
+
+            {/* Break Time End */}
+            <div>
+              <label className="text-sm font-medium text-gray-600">
+                Break time ( end)
+              </label>
+              <div className="mt-2">
+                <input
+                  type="time"
+                  // value={`${slotData.breakEndHour}:${slotData.breakEndMinute}`}
+                  onChange={(e) => {
+                    const [h, m] = e.target.value.split(":");
+                    handleChange("breakEndHour", h);
+                    handleChange("breakEndMinute", m);
+                  }}
+                  className="border rounded-md px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 text-gray-700"
+                />
+              </div>
+            </div>
+
+            {/* End Time */}
+            <div>
+              <label className="text-sm font-medium text-gray-600">
+                End Time
+              </label>
+              <div className="mt-2">
+                <input
+                  type="time"
+                  // value={`${slotData.endHour}:${slotData.endMinute}`}
+                  onChange={(e) => {
+                    const [h, m] = e.target.value.split(":");
+                    handleChange("endHour", h);
+                    handleChange("endMinute", m);
+                  }}
+                  className="border rounded-md px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 text-gray-700"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-600">
+                Concurrent Slot
+              </label>
+              <div className="flex gap-2 mt-2">
+                <input
+                  type="number"
+                  name="concurrent_slot"
+                  value={formData.amenity?.concurrent_slot || ""}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      amenity: {
+                        ...prev.amenity,
+                        wrap_time: e.target.value,
+                      },
+                    }))
+                  }
+                  className="border border-gray-300 rounded-md p-2 w-full mt-2 focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+
+            {/* Slot By */}
+            <div>
+              <label className="text-sm font-medium text-gray-600">
+                Slot By
+              </label>
+              <select
+                value={slotBy}
+                onChange={(e) => setSlotBy(e.target.value)}
+                className="border border-gray-300 rounded-md p-2 w-full mt-2 focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select</option>
+                <option value="15">15 Min</option>
+                <option value="30">30 Min</option>
+                <option value="45">45 Min</option>
+                <option value="60">1 Hour</option>
+                <option value="90">1.5 Hour</option>
+                <option value="120">2 Hour</option>
+                <option value="180">3 Hour</option>
+                <option value="360">6 Hour</option>
+                <option value="720">12 Hour</option>
+                <option value="1440">24 Hour</option>
+              </select>
+            </div>
+
+            {/* Wrap Time */}
+            <div>
+              <label className="text-sm font-medium text-gray-600">
+                Wrap Time
+              </label>
+
+              <input
+                type="number"
+                name="wrap_time"
+                value={formData.amenity?.wrap_time || ""}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    amenity: {
+                      ...prev.amenity,
+                      wrap_time: e.target.value,
+                    },
+                  }))
+                }
+                className="border border-gray-300 rounded-md p-2 w-full mt-2 focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
           </div>
         </div>
         <div></div>
-        <div className="flex flex-col">
-          <label htmlFor="terms" className="font-medium">
-            Terms & Conditions
-          </label>
-          <textarea
-            name="terms"
-            id="terms"
-            value={formData.terms}
-            onChange={(e) =>
-              setFormData({ ...formData, terms: e.target.value })
-            }
-            rows="3"
-            className="border border-gray-400 rounded-md"
-          />
-        </div>
-        <div className="flex flex-col my-4">
-          <label htmlFor="" className="font-medium">
-            Cancellation Policy
-          </label>
-          <textarea
-            name="cancellation_policy"
-            id=""
-            onChange={(e) =>
-              setFormData({ ...formData, cancellation_policy: e.target.value })
-            }
-            value={formData.cancellation_policy}
-            rows="3"
-            className="border border-gray-400 rounded-md"
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="flex flex-col my-4 mt-4">
+            <label htmlFor="terms" className="font-medium">
+              Terms & Conditions
+            </label>
+            <textarea
+              name="terms"
+              id="terms"
+              value={formData.terms}
+              onChange={(e) =>
+                setFormData({ ...formData, terms: e.target.value })
+              }
+              rows="3"
+              className="border border-gray-400 rounded-md"
+            />
+          </div>
+          <div className="flex flex-col my-4">
+            <label htmlFor="" className="font-medium">
+              Cancellation Policy
+            </label>
+            <textarea
+              name="cancellation_policy"
+              id=""
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  cancellation_policy: e.target.value,
+                })
+              }
+              value={formData.cancellation_policy}
+              rows="3"
+              className="border border-gray-400 rounded-md"
+            />
+          </div>
         </div>
         <div>
           <table className="w-full border-collapse">
