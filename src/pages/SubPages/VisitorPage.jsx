@@ -307,24 +307,8 @@ const VisitorPage = () => {
     setCurrentPage(1);
   };
 
-  // useEffect(() => {
-  //   if (page === "Visitor In") {
-  //     if (selectedVisitor === "expected") {
-  //       const expectedIn = visitorIn.filter(
-  //         (visit) => visit.usertype !== "security_guard"
-  //       );
-  //       setFilteredData(expectedIn);
-  //     } else {
-  //       const unexpectedIn = visitorIn.filter(
-  //         (visit) => visit.usertype === "security_guard"
-  //       );
-  //       setFilteredUnexpectedVisitor(unexpectedIn);
-  //     }
-  //   } else if (page === "all") {
-  //     setFilteredExpectedVisitor(expectedVisitor);
-  //     setFilteredUnexpectedVisitor(unexpectedVisitor);
-  //   }
-  // }, [page, selectedVisitor, visitorIn, expectedVisitor, unexpectedVisitor]);
+  
+  
 useEffect(() => {
   if (page === "Visitor In") {
     if (selectedVisitor === "expected") {
@@ -679,57 +663,69 @@ const handleSearch = (e) => {
   const searchValue = e.target.value.toLowerCase();
   setSearchText(e.target.value);
 
-  if (!searchValue.trim()) {
-    // Reset when empty
-    if (page === "Visitor In") {
-      setFilteredData(visitorIn);
-      setFilteredUnexpectedVisitor(visitorIn);
-    }
-    else if (page === "Visitor Out") {
-      setFilteredData(visitorOut);
-      setFilteredUnexpectedVisitor(visitorOut);
-    }
-    else if (page === "all") {
-      setFilteredExpectedVisitor(expectedVisitor);
-      setFilteredUnexpectedVisitor(unexpectedVisitor);
-    }
-    return;
-  }
-
   const filterLogic = (item) =>
     item.name?.toLowerCase().includes(searchValue) ||
     item.vehicle_number?.toLowerCase().includes(searchValue) ||
     item.hosts_display?.toLowerCase().includes(searchValue);
 
+  // 🔁 Reset when search is empty
+  if (!searchValue.trim()) {
+    if (page === "Visitor In") {
+      setFilteredData(
+        visitorIn.filter(v => v.user_type !== "security_guard")
+      );
+      setFilteredUnexpectedVisitor(
+        visitorIn.filter(v => v.user_type === "security_guard")
+      );
+    }
+
+    else if (page === "Visitor Out") {
+      setFilteredData(
+        visitorOut.filter(v => v.user_type !== "security_guard")
+      );
+      setFilteredUnexpectedVisitor(
+        visitorOut.filter(v => v.user_type === "security_guard")
+      );
+    }
+
+    else if (page === "all") {
+      setFilteredExpectedVisitor(expectedVisitor);
+      setFilteredUnexpectedVisitor(unexpectedVisitor);
+    }
+
+    return;
+  }
+
+  // 🔎 Filtering Logic
   if (page === "Visitor In") {
     if (selectedVisitor === "expected") {
-      const filtered = visitorIn.filter(
-        (v) => v.usertype !== "security_guard"
-      ).filter(filterLogic);
-
-      setFilteredData(filtered);
+      setFilteredData(
+        visitorIn
+          .filter(v => v.user_type !== "security_guard")
+          .filter(filterLogic)
+      );
     } else {
-      const filtered = visitorIn.filter(
-        (v) => v.usertype === "security_guard"
-      ).filter(filterLogic);
-
-      setFilteredUnexpectedVisitor(filtered);
+      setFilteredUnexpectedVisitor(
+        visitorIn
+          .filter(v => v.user_type === "security_guard")
+          .filter(filterLogic)
+      );
     }
   }
 
   else if (page === "Visitor Out") {
     if (selectedVisitor === "expected") {
-      const filtered = visitorOut.filter(
-        (v) => v.usertype !== "security_guard"
-      ).filter(filterLogic);
-
-      setFilteredData(filtered);
+      setFilteredData(
+        visitorOut
+          .filter(v => v.user_type !== "security_guard")
+          .filter(filterLogic)
+      );
     } else {
-      const filtered = visitorOut.filter(
-        (v) => v.usertype === "security_guard"
-      ).filter(filterLogic);
-
-      setFilteredUnexpectedVisitor(filtered);
+      setFilteredUnexpectedVisitor(
+        visitorOut
+          .filter(v => v.user_type === "security_guard")
+          .filter(filterLogic)
+      );
     }
   }
 
@@ -747,24 +743,38 @@ const handleSearch = (e) => {
 };
 
 
-
-
   const [searchAll, setSearchAll] = useState("");
-  const handleSearchAll = (e) => {
-    const searchValue = e.target.value;
-    setSearchAll(searchValue);
-    if (searchValue.trim()) {
-      setAll(visitor);
+ const handleSearchAll = (e) => {
+  const searchValue = e.target.value.toLowerCase();
+  setSearchAll(e.target.value);
+
+  // If search box is empty → reset
+  if (!searchValue.trim()) {
+    if (selectedVisitor === "expected") {
+      setFilteredExpectedVisitor(expectedVisitor);
     } else {
-      const filteredResults = visitor.filter(
-        (item) =>
-          item.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-          (item.vehicle_number &&
-            item.vehicle_number.toLowerCase().includes(searchValue.toLowerCase()))
-      );
-      setAll(filteredResults);
+      setFilteredUnexpectedVisitor(unexpectedVisitor);
     }
-  };
+    return;
+  }
+
+  // Apply search filter
+  if (selectedVisitor === "expected") {
+    const filtered = expectedVisitor.filter((item) =>
+      item.name?.toLowerCase().includes(searchValue) ||
+      item.vehicle_number?.toLowerCase().includes(searchValue) ||
+      item.hosts_display?.toLowerCase().includes(searchValue)
+    );
+    setFilteredExpectedVisitor(filtered);
+  } else {
+    const filtered = unexpectedVisitor.filter((item) =>
+      item.name?.toLowerCase().includes(searchValue) ||
+      item.vehicle_number?.toLowerCase().includes(searchValue) ||
+      item.hosts_display?.toLowerCase().includes(searchValue)
+    );
+    setFilteredUnexpectedVisitor(filtered);
+  }
+};
 
   const [searchHIstoryText, setSearchHistoryText] = useState("");
   const handleSearchHistory = (e) => {
@@ -1088,76 +1098,7 @@ const handleSearch = (e) => {
                 </div>
               </div>
 
-              {/* {showFilters && (
-                <div className="border border-gray-300 rounded-md p-4 bg-gray-50">
-                  <h3 className="font-semibold mb-3 text-gray-700">
-                    Advanced Filters
-                  </h3>
-                  <div className="grid md:grid-cols-4 gap-3">
-                    <div className="flex flex-col">
-                      <label className="text-sm font-medium text-gray-600 mb-1">
-                        Date From
-                      </label>
-                      <input
-                        type="date"
-                        value={filterDateFrom}
-                        onChange={(e) => setFilterDateFrom(e.target.value)}
-                        className="border border-gray-300 p-2 rounded-md text-sm"
-                      />
-                    </div>
-                    <div className="flex flex-col">
-                      <label className="text-sm font-medium text-gray-600 mb-1">
-                        Date To
-                      </label>
-                      <input
-                        type="date"
-                        value={filterDateTo}
-                        onChange={(e) => setFilterDateTo(e.target.value)}
-                        className="border border-gray-300 p-2 rounded-md text-sm"
-                      />
-                    </div>
-                    <div className="flex flex-col">
-                      <label className="text-sm font-medium text-gray-600 mb-1">
-                        Mobile Number
-                      </label>
-                      <input
-                        type="text"
-                        value={filterMobile}
-                        onChange={(e) => setFilterMobile(e.target.value)}
-                        placeholder="Enter mobile number"
-                        className="border border-gray-300 p-2 rounded-md text-sm placeholder:text-sm"
-                      />
-                    </div>
-                    <div className="flex flex-col">
-                      <label className="text-sm font-medium text-gray-600 mb-1">
-                        Host Name
-                      </label>
-                      <input
-                        type="text"
-                        value={filterHost}
-                        onChange={(e) => setFilterHost(e.target.value)}
-                        placeholder="Enter host name"
-                        className="border border-gray-300 p-2 rounded-md text-sm placeholder:text-sm"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex gap-2 mt-4">
-                    <button
-                      onClick={handleApplyFilters}
-                      style={{ background: themeColor }}
-                      className="px-4 py-2 text-white rounded-md font-medium hover:opacity-90 transition-all"
-                    >
-                      Apply Filters
-                    </button>
-                    <button
-                      onClick={handleClearFilters}
-                      className="px-4 py-2 border-2 border-gray-300 rounded-md font-medium hover:bg-gray-100 transition-all"
-                    >
-                      Clear Filters
-                    </button>
-                  </div>
-                </div>
-              )} */}
+            
             </div>
           )}
 
