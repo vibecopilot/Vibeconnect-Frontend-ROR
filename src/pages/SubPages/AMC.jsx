@@ -18,24 +18,24 @@ const AMC = () => {
   const [filteredData, setFilteredData] = useState([]);
   const themeColor = useSelector((state) => state.theme.color);
 
-  useEffect(() => {
+ useEffect(() => {
   const fetchAmc = async () => {
     try {
-      const AMCResponse = await getAMC();
-      console.log("AMC API Response:", AMCResponse);
+      const response = await getAMC(1, 10);
+      console.log("AMC API Response:", response);
 
       const amcData =
-        AMCResponse?.data?.asset_amcs ||
-        AMCResponse?.data?.data ||
-        AMCResponse?.data ||
+        response?.data?.asset_amcs ||
+        response?.data?.data ||
+        response?.data ||
         [];
 
       const sortedAmc = amcData.sort(
         (a, b) => new Date(b.created_at) - new Date(a.created_at)
       );
 
-      setFilteredData(sortedAmc);
       setAmc(sortedAmc);
+      setFilteredData(sortedAmc);
     } catch (error) {
       console.error("AMC Fetch Error:", error);
       setAmc([]);

@@ -961,10 +961,12 @@ export const editAssetparamsDetails = async (id, data) =>
 //   });
 
 // amc
-export const getAMC = async () =>
+export const getAMC = async (page = 1, perPage = 10) =>
   axiosInstance.get("/asset_amcs.json", {
     params: {
       token: token,
+      Page: page,
+      Per_Page: perPage,
     },
   });
 export const postAMC = async (data) =>
