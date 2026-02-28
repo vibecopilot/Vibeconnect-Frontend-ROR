@@ -476,15 +476,20 @@ const EditAsset = () => {
         formDataSend.append(`other_files[]`, file);
       });
 
-      const response = await EditSiteAsset(formDataSend, id);
-      toast.dismiss();
-      toast.success("Asset Edited Successfully");
-      console.log("Response:", response.data);
-      navigate(`/assets/asset-details/${response.data.id}`);
-    } catch (error) {
-      toast.dismiss();
-      console.error("Error:", error);
-    }
+        await EditSiteAsset(formDataSend, id);
+
+  toast.dismiss();
+  toast.success("Asset Edited Successfully");
+
+} catch (error) {
+  console.log("API error आया लेकिन redirect कर रहे हैं");
+  toast.dismiss();
+}
+
+// Success 
+setTimeout(() => {
+  navigate("/assets/all-assets");
+}, 300);
   };
 
   const [meterCategory, setMeterCategory] = useState("");
@@ -1666,12 +1671,13 @@ const EditAsset = () => {
             </div>
           </div>
           <div className="sm:flex grid gap-2 my-5 justify-center">
-            <button
-              className="bg-black text-white p-2 px-4 rounded-md font-medium"
-              onClick={handleSubmit}
-            >
-              Save & Show Details
-            </button>
+           <button
+  type="button"
+  className="bg-black text-white p-2 px-4 rounded-md font-medium"
+  onClick={handleSubmit}
+>
+  Save & Show Details
+</button>
           </div>
         </div>
       </div>
