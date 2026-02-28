@@ -19,18 +19,31 @@ const AssetDetails = () => {
   const [asset, setAsset] = useState([]);
   const { id } = useParams();
 
-  useEffect(() => {
-    const getDetails = async () => {
-      try {
-        const details = await getSiteAssetDetails(id);
-        setAsset(details.data);
-      } catch (error) {
-        console.error("Error fetching site asset details:", error);
-      }
-    };
+ useEffect(() => {
+  if (!id) return;
 
-    getDetails();
-  }, [id]);
+  const getDetails = async () => {
+    try {
+      console.log("URL ID:", id);
+
+      const details = await getSiteAssetDetails(id);
+
+      console.log("DETAIL RESPONSE:", details.data);
+
+      const assetData =
+        details?.data?.site_asset ||
+        details?.data?.data ||
+        details?.data;
+
+      setAsset(assetData);
+
+    } catch (error) {
+      console.error("Error fetching site asset details:", error);
+    }
+  };
+
+  getDetails();
+}, [id]);
   console.log("asset", asset)
 
   return (

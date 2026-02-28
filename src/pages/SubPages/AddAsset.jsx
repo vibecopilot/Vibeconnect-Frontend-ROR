@@ -256,7 +256,14 @@ const AddAsset = () => {
     }
 
     try {
-      toast.loading("Creating Asset Please Wait!");
+     const toastId = toast.loading("Creating Asset Please Wait!");
+      const siteId = getItemInLocalStorage("SITEID");
+
+    if (!siteId) {
+      toast.dismiss(toastId);
+      toast.error("Site ID missing. Please login again.");
+      return;
+    }
       const formDataSend = new FormData();
 
       // formDataSend.append("site_asset[site_id]", formData.site_id);
@@ -370,6 +377,10 @@ formData.others?.forEach((file) => {
       // formDataSend.append("site_asset[installation]", formData.installation);
       // console.log(formDataSend);
       const response = await postSiteAsset(formDataSend);
+      console.log("FULL RESPONSE:", response);
+      console.log("FULL RESPONSE DATA:", response.data);
+
+
       toast.success("Asset Created Successfully");
       console.log("Response:", response.data);
       toast.dismiss();
@@ -449,7 +460,13 @@ formData.others?.forEach((file) => {
         >
           Add Asset
         </h2>
-        <div className="md:mx-16 my-5 mb-10 sm:border border-gray-400 p-5 px-10 rounded-lg sm:shadow-xl">
+       <form
+  onSubmit={(e) => {
+    e.preventDefault();
+    handleSubmit();
+  }}
+  className="md:mx-16 my-5 mb-10 sm:border border-gray-400 p-5 px-10 rounded-lg sm:shadow-xl"
+>
           <h2 className="border-b text-center text-xl border-black mb-6 font-bold">
             Location Details
           </h2>
@@ -1549,7 +1566,7 @@ formData.others?.forEach((file) => {
               Save & Create New Asset
             </button> */}
           </div>
-        </div>
+        </form>
       </div>
     </section>
   );
