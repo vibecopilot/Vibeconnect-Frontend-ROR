@@ -39,15 +39,25 @@ const AddAsset = () => {
   const [parentAsset, setParentAsset] = useState([]);
   console.log(formData);
   const themeColor = useSelector((state) => state.theme.color);
-  const fetchVendors = async () => {
-    try {
-      const vendorResp = await getVendors();
-      // setVendors(vendorResp.data);
-      setVendors(vendorResp.data.vendors || vendorResp.data);
-    } catch (error) {
-      console.log(error);
-    }
-  };
+ const fetchVendors = async () => {
+  try {
+    const vendorResp = await getVendors();
+    console.log("VENDOR FULL RESPONSE:", vendorResp);
+    console.log("VENDOR DATA:", vendorResp.data);
+
+   const vendorData =
+  vendorResp?.data?.vendors ||
+  vendorResp?.data?.site_vendors ||
+  vendorResp?.data?.data ||
+  vendorResp?.data ||
+  [];
+
+setVendors(Array.isArray(vendorData) ? vendorData : []);
+
+  } catch (error) {
+    console.log("Vendor Error:", error);
+  }
+};
   useEffect(() => {
     const fetchAssetGroups = async () => {
       const assetGroupResponse = await getAssetGroups();
