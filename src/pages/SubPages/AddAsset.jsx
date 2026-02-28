@@ -42,7 +42,8 @@ const AddAsset = () => {
   const fetchVendors = async () => {
     try {
       const vendorResp = await getVendors();
-      setVendors(vendorResp.data);
+      // setVendors(vendorResp.data);
+      setVendors(vendorResp.data.vendors || vendorResp.data);
     } catch (error) {
       console.log(error);
     }
@@ -188,6 +189,9 @@ const AddAsset = () => {
   };
 
   const navigate = useNavigate();
+  const handleCancel = () => {
+  navigate("/assets/all-assets"); // या जहाँ वापस जाना है
+};
 
   const handleSubmit = async () => {
     // if (formData.warranty_start >= formData.warranty_expiry) {
@@ -1025,19 +1029,25 @@ formData.others?.forEach((file) => {
                   <label htmlFor="" className="block text-gray-700 mb-1">
                     Select Supplier:
                   </label>
-                  <select
-                    className="border p-1 px-4 border-gray-500 rounded-md w-full"
-                    value={formData.vendor_id}
-                    onChange={handleChange}
-                    name="vendor_id"
-                  >
-                    <option value="">Select Supplier</option>
-                    {vendors.map((vendor) => (
-                      <option value={vendor.id} key={vendor.id}>
-                        {vendor.vendor_name} - {vendor.company_name}
-                      </option>
-                    ))}
-                  </select>
+                <select
+  className="border p-1 px-4 border-gray-500 rounded-md w-full"
+  value={formData.vendor_id || ""}
+  onChange={handleChange}
+  name="vendor_id"
+>
+  <option value="">Select Supplier</option>
+
+  {vendors && vendors.length > 0 ? (
+    vendors.map((vendor) => (
+      <option key={vendor.id} value={vendor.id}>
+        {(vendor.vendor_name || vendor.name) + 
+          (vendor.company_name ? ` - ${vendor.company_name}` : "")}
+      </option>
+    ))
+  ) : (
+    <option disabled>No Suppliers Available</option>
+  )}
+</select>
                 </div>
                 <button
                   className="p-1 border-2 border-black px-4 rounded-md hover:bg-black hover:text-white transition-all duration-300 flex items-center gap-1"
@@ -1546,26 +1556,22 @@ formData.others?.forEach((file) => {
               />
             </div>
           </div>
-          <div className="sm:flex justify-center grid gap-2 my-5 ">
-            <button
-              className="bg-black text-white p-2 px-4 rounded-md font-medium"
-              onClick={handleSubmit}
-            >
-              Save & Show Details
-            </button>
-            {/* <button className=" border-black border-2  p-2 px-4 rounded-md font-medium">
-              Save & Add PPM
-            </button>
-            <button className="border-black border-2 p-2 px-4 rounded-md font-medium">
-              Save & Add AMC
-            </button>
-            <button
-              className=" border-black border-2  p-2 px-4 rounded-md font-medium"
-              onClick={handleSaveAndCreate}
-            >
-              Save & Create New Asset
-            </button> */}
-          </div>
+         <div className="sm:flex justify-center gap-4 grid my-5">
+  <button
+    type="submit"
+    className="bg-black text-white p-2 px-4 rounded-md font-medium"
+  >
+    Save & Show Details
+  </button>
+
+  <button
+    type="button"
+    onClick={handleCancel}
+    className="border border-black p-2 px-4 rounded-md font-medium hover:bg-gray-100"
+  >
+    Cancel
+  </button>
+</div>
         </form>
       </div>
     </section>
