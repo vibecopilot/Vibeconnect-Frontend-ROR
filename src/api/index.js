@@ -679,12 +679,15 @@ export const getCARItems = async (ticketId) =>
 
 // perPage
 
-export const getAdminPerPageComplaints = async (page, perPage) =>
+export const getAdminPerPageComplaints = async (page, perPage,search) =>
   axiosInstance.get(`/pms/admin/complaints.json`, {
     params: {
       token: token,
       per_page: perPage,
       page: page,
+      search: search,
+      
+      
     },
   });
 
@@ -1969,19 +1972,18 @@ export const verifyOtpToCheckIn = async (id, otp, mobile) => {
 //   );
 
 
-export const updateEventEnableStatus = (id, completed) =>
+export const updateEventEnableStatus = (id, enabled) =>
   axiosInstance.put(
     `/events/${id}.json`,
     {
       event: {
-        completed: completed,  // Update 'completed' field to true/false
+        enabled: enabled,   // ✅ CHANGE HERE
       },
     },
     {
       params: { token },
     }
   );
-
 
 export const getEvents = async () =>
   axiosInstance.get("/events.json", {
@@ -10723,14 +10725,12 @@ export const deleteOtherProject = (id) =>
 export const postProjectLike = (data) =>
   axiosInstance.post("/likes/create_other_project_like.json", data);
 
-// export const uploadVisitorLicense = (formData) => {
-//   return api.post("/visitor_licenses", formData, {
-//     headers: {
-//       "Content-Type": "multipart/form-data",
-//     },
-//   });
-// };
-
+export const uploadVisitorLicense = (formData) =>
+  axiosInstance.post("/visitor_licenses", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
 export const uploadVisitorConsignment = (formData) => {
   return axiosInstance.post("/visitor_consignments", formData, {
     headers: {
@@ -10739,14 +10739,14 @@ export const uploadVisitorConsignment = (formData) => {
   });
 };
 
-export const uploadVisitorLicense = (visitorId, file) => {
-  const form = new FormData();
-  form.append("license", file);
+// export const uploadVisitorLicense = (visitorId, file) => {
+//   const form = new FormData();
+//   form.append("license", file);
 
-  return axiosInstance.post(`/visitors/${visitorId}/upload_license`, form, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
-};
+//   return axiosInstance.post(`/visitors/${visitorId}/upload_license`, form, {
+//     headers: { "Content-Type": "multipart/form-data" },
+//   });
+// };
 
 // pets
 // =============================
