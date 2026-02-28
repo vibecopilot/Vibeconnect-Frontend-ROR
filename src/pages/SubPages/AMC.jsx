@@ -19,18 +19,32 @@ const AMC = () => {
   const themeColor = useSelector((state) => state.theme.color);
 
   useEffect(() => {
-    const fetchAmc = async () => {
+  const fetchAmc = async () => {
+    try {
       const AMCResponse = await getAMC();
-      const sortedAmc = AMCResponse.data?.asset_amcs?.sort(
+      console.log("AMC API Response:", AMCResponse);
+
+      const amcData =
+        AMCResponse?.data?.asset_amcs ||
+        AMCResponse?.data?.data ||
+        AMCResponse?.data ||
+        [];
+
+      const sortedAmc = amcData.sort(
         (a, b) => new Date(b.created_at) - new Date(a.created_at)
       );
+
       setFilteredData(sortedAmc);
       setAmc(sortedAmc);
-      console.log(AMCResponse);
-    };
-    fetchAmc();
-  }, []);
+    } catch (error) {
+      console.error("AMC Fetch Error:", error);
+      setAmc([]);
+      setFilteredData([]);
+    }
+  };
 
+  fetchAmc();
+}, []);
   const handleSearch = (e) => {
     const searchValue = e.target.value;
     setSearchText(searchValue);
