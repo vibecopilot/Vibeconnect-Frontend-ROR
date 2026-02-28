@@ -39,20 +39,27 @@ const AddAsset = () => {
   const [parentAsset, setParentAsset] = useState([]);
   console.log(formData);
   const themeColor = useSelector((state) => state.theme.color);
- const fetchVendors = async () => {
+const fetchVendors = async () => {
   try {
-    const vendorResp = await getVendors();
-    console.log("VENDOR FULL RESPONSE:", vendorResp);
-    console.log("VENDOR DATA:", vendorResp.data);
+    const siteId = getItemInLocalStorage("SITEID");
 
-   const vendorData =
-  vendorResp?.data?.vendors ||
-  vendorResp?.data?.site_vendors ||
-  vendorResp?.data?.data ||
-  vendorResp?.data ||
-  [];
+    if (!siteId) {
+      console.log("No Site ID Found");
+      return;
+    }
 
-setVendors(Array.isArray(vendorData) ? vendorData : []);
+    const vendorResp = await getVendors(siteId);
+
+    console.log("VENDOR RESPONSE:", vendorResp.data);
+
+    const vendorData =
+      vendorResp?.data?.vendors ||
+      vendorResp?.data?.site_vendors ||
+      vendorResp?.data?.data ||
+      vendorResp?.data ||
+      [];
+
+    setVendors(Array.isArray(vendorData) ? vendorData : []);
 
   } catch (error) {
     console.log("Vendor Error:", error);
@@ -70,6 +77,8 @@ setVendors(Array.isArray(vendorData) ? vendorData : []);
     fetchVendors();
     fetchAssetGroups();
   }, []);
+
+
 
  useEffect(() => {
   const fetchAssets = async () => {
