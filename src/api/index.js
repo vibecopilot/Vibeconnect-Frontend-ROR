@@ -118,8 +118,17 @@ export const getSiteAssetDetails = async (id) =>
       token: token,
     },
   });
-export const postSiteAsset = async (data) =>
-  axiosInstance.post(`/site_assets.json`, data, {
+// export const postSiteAsset = async (data) =>
+//   axiosInstance.post(`/site_assets.json`, data, {
+//     params: {
+//       token: token,
+//     },
+//     headers: {
+//       "Content-Type": "multipart/form-data",
+//     },
+//   });
+export const EditSiteAsset = async (data, id) =>
+  axiosInstance.put(`/site_assets/${id}.json`, data, {
     params: {
       token: token,
     },
@@ -127,11 +136,42 @@ export const postSiteAsset = async (data) =>
       "Content-Type": "multipart/form-data",
     },
   });
-export const EditSiteAsset = async (data, id) =>
-  axiosInstance.put(`/site_assets/${id}.json`, data, {
+  // Site Assets API
+export const getSiteAssets = async (siteId, page = 1, perPage = 10) =>
+  axiosInstance.get("/site_assets.json", {
+    params: {
+      token: token,
+      site_id: siteId,
+      Page: page,
+      Per_Page: perPage,
+    },
+  });
+export const getSiteAssetById = async (id) =>
+  axiosInstance.get(`/site_assets/${id}.json`, {
     params: {
       token: token,
     },
+  });
+
+// export const postSiteAsset = async (formData) =>
+//   axiosInstance.post(`/site_assets.json?token=${token}`, formData, {
+//     headers: {
+//       "Content-Type": "multipart/form-data",
+//     },
+//   });
+
+export const postSiteAsset = async (formData) =>
+  axiosInstance.post(
+    `/site_assets.json?token=${token}`,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+export const updateSiteAsset = async (id, formData) =>
+  axiosInstance.put(`/site_assets/${id}.json?token=${token}`, formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },

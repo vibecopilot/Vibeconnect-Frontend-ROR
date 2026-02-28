@@ -10,6 +10,7 @@ import {
   getVendors,
   postSiteAsset,
 } from "../../api";
+import { getSiteAssets } from "../../api";
 import { BiCross, BiPlus } from "react-icons/bi";
 import { IoAddCircle, IoAddCircleOutline, IoClose } from "react-icons/io5";
 import AddSuppliers from "../../containers/modals/AddSuppliersModal";
@@ -58,6 +59,27 @@ const AddAsset = () => {
     fetchVendors();
     fetchAssetGroups();
   }, []);
+
+ useEffect(() => {
+  const fetchAssets = async () => {
+    try {
+      const siteId = getItemInLocalStorage("SITEID"); // 👈 yaha se lo
+
+      if (!siteId) {
+        console.error("Site ID not found in localStorage");
+        return;
+      }
+
+      const response = await getSiteAssets(siteId);
+      console.log("Site Assets:", response.data);
+
+    } catch (error) {
+      console.error("Error fetching site assets:", error);
+    }
+  };
+
+  fetchAssets();
+}, []);
 
   const handleChange = async (e) => {
     async function fetchFloor(floorID) {
@@ -156,13 +178,6 @@ const AddAsset = () => {
     setAddNonConsumptionFields(newFields);
   };
 
-  // const handleFileChange = (event, fieldName) => {
-  //   const files = Array.from(event.target.files);
-  //   setFormData({
-  //     ...formData,
-  //     [fieldName]: files,
-  //   });
-  // };
 
   const handleFileChange = (files, fieldName) => {
     setFormData({
@@ -244,7 +259,7 @@ const AddAsset = () => {
       toast.loading("Creating Asset Please Wait!");
       const formDataSend = new FormData();
 
-      formDataSend.append("site_asset[site_id]", formData.site_id);
+      // formDataSend.append("site_asset[site_id]", formData.site_id);
       formDataSend.append("site_asset[building_id]", formData.building_id);
       formDataSend.append("site_asset[floor_id]", formData.floor_id);
       formDataSend.append("site_asset[unit_id]", formData.unit_id);
@@ -253,12 +268,17 @@ const AddAsset = () => {
       formDataSend.append("site_asset[latitude]", formData.latitude);
       formDataSend.append("site_asset[longitude]", formData.longitude);
       formDataSend.append("site_asset[asset_number]", formData.asset_number);
-      formDataSend.append("site_asset[equipemnt_id]", formData.equipment_id);
+      // formDataSend.append("site_asset[equipemnt_id]", formData.equipment_id);
+      formDataSend.append("site_asset[equipment_id]", formData.equipment_id);
       formDataSend.append("site_asset[serial_number]", formData.serial_number);
       formDataSend.append("site_asset[model_number]", formData.model_number);
       formDataSend.append("site_asset[purchased_on]", formData.purchased_on);
       formDataSend.append("site_asset[purchase_cost]", formData.purchase_cost);
       formDataSend.append("site_asset[comprehensive]", formData.comprehensive);
+//       formDataSend.append(
+//   "site_asset[comprehensive]",
+//   formData.comprehensive === "true"
+// );
 
       formDataSend.append(
         "site_asset[asset_group_id]",
@@ -278,51 +298,69 @@ const AddAsset = () => {
         formData.warranty_expiry
       );
       // formDataSend.append("site_asset[user_id]", 2);
-      formDataSend.append("site_asset[critical]", formData.critical);
+    formDataSend.append("site_asset[critical]",formData.critical ? "true" : "false");
       formDataSend.append("site_asset[capacity]", formData.capacity);
-      formDataSend.append("site_asset[breakdown]", formData.breakdown);
-      formDataSend.append("site_asset[is_meter]", formData.is_meter);
+     formDataSend.append(
+  "site_asset[breakdown]",
+  formData.breakdown ? "true" : "false"
+);
+
+      formDataSend.append(
+  "site_asset[is_meter]",
+  formData.is_meter ? "true" : "false"
+);
+
       formDataSend.append("site_asset[asset_type]", formData.asset_type);
       formDataSend.append("site_asset[vendor_id]", formData.vendor_id);
       consumptionData.forEach((item) => {
-        formDataSend.append("asset_params[][name]", item.name);
-        formDataSend.append("asset_params[][order]", item.order);
-        formDataSend.append("asset_params[][unit_type]", item.unit_type);
-        formDataSend.append("asset_params[][digit]", item.digit);
-        formDataSend.append("asset_params[][alert_below]", item.alert_below);
-        formDataSend.append("asset_params[][alert_above]", item.alert_above);
-        formDataSend.append("asset_params[][min_val]", item.min_val);
-        formDataSend.append("asset_params[][max_val]", item.max_val);
-        formDataSend.append(
-          "asset_params[][multiplier_factor]",
-          item.multiplier_factor
-        );
-        formDataSend.append(
-          "asset_params[][dashboard_view]",
-          item.dashboard_view
-        );
-        formDataSend.append(
-          "asset_params[][consumption_view]",
-          item.consumption_view
-        );
-        formDataSend.append("asset_params[][check_prev]", item.check_prev);
-      });
+    formDataSend.append("asset_params[][name]", item.name || "");
+    formDataSend.append("asset_params[][order]", item.order || "");
+    formDataSend.append("asset_params[][unit_type]", item.unit_type || "");
+    formDataSend.append("asset_params[][digit]", item.digit || "");
+    formDataSend.append("asset_params[][alert_below]", item.alert_below || "");
+    formDataSend.append("asset_params[][alert_above]", item.alert_above || "");
+    formDataSend.append("asset_params[][min_val]", item.min_val || "");
+    formDataSend.append("asset_params[][max_val]", item.max_val || "");
+    formDataSend.append(
+      "asset_params[][multiplier_factor]",
+      item.multiplier_factor || ""
+    );
 
-      formData.invoice.forEach((file, index) => {
-        formDataSend.append(`purchase_invoices[]`, file);
-      });
-      formData.insurance.forEach((file, index) => {
-        console.log("-----------------");
-        console.log(index);
-        console.log(file);
-        formDataSend.append(`insurances[]`, file);
-      });
-      formData.manuals.forEach((file, index) => {
-        formDataSend.append(`manuals[]`, file);
-      });
-      formData.others.forEach((file, index) => {
-        formDataSend.append(`other_files[]`, file);
-      });
+    // ✅ Convert booleans to string (VERY IMPORTANT)
+    formDataSend.append(
+      "asset_params[][dashboard_view]",
+      item.dashboard_view ? "true" : "false"
+    );
+
+    formDataSend.append(
+      "asset_params[][consumption_view]",
+      item.consumption_view ? "true" : "false"
+    );
+
+    formDataSend.append(
+      "asset_params[][check_prev]",
+      item.check_prev ? "true" : "false"
+    );
+  });
+    // Purchase Invoices
+formData.invoice?.forEach((file) => {
+  formDataSend.append("purchase_invoices[]", file);
+});
+
+// Insurance Files
+formData.insurance?.forEach((file) => {
+  formDataSend.append("insurances[]", file);
+});
+
+// Manuals
+formData.manuals?.forEach((file) => {
+  formDataSend.append("manuals[]", file);
+});
+
+// Other Files
+formData.others?.forEach((file) => {
+  formDataSend.append("other_files[]", file);
+});
 
       formDataSend.append("site_asset[uom]", formData.unit);
       formDataSend.append(
@@ -444,7 +482,7 @@ const AddAsset = () => {
                 <select
                   className="border p-1 px-4 border-gray-500 rounded-md"
                   onChange={handleChange}
-                  value={formData.fl}
+                  value={formData.floor_id}
                   name="floor_name"
                 >
                   <option value="">Select Floor</option>
@@ -998,128 +1036,7 @@ const AddAsset = () => {
                 )}
               </div>
             </div>
-            {/* <div className="my-5">
-              <p className="border-b border-black font-semibold">
-                Meter Category Type
-              </p>
-              <div className="grid md:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-5">
-                <div className="flex flex-col mt-4 w-full">
-                  <label className="block text-gray-700 mb-1">
-                    Select Meter Category Type
-                  </label>
-                  <select
-                    className="border p-1 px-4 border-gray-500 rounded-md w-full"
-                    name="meter_category"
-                    onChange={handleMeterCategoryChange}
-                    value={meterCategory}
-                  >
-                    <option value="">Select Meter Category</option>
-                    <option value="Board">Board</option>
-                    <option value="DG">DG</option>
-                    <option value="Renewable">Renewable</option>
-                    <option value="FreshWater">Fresh Water</option>
-                    <option value="Recycled">Recycled</option>
-                  </select>
-                </div>
-                <div className="flex flex-col">
-                  {meterCategory === "Board" && (
-                    <div className="mt-4 w-full">
-                      <label className="block text-gray-700 mb-1">Board</label>
-                      <select
-                        className="border p-1 px-4 border-gray-500 rounded-md w-full"
-                        name="meter_category"
-                      >
-                        <option value="">Select Sub Board</option>
-                        <option value="">HT</option>
-                        <option value="">VCB</option>
-                        <option value="">Transformer</option>
-                        <option value="">LT</option>
-                      </select>
-                    </div>
-                  )}
-                  {meterCategory === "DG" && (
-                    <div className="mt-4 w-full">
-                      <label className="block text-gray-700 mb-1">
-                        Select Sub DG
-                      </label>
-                      <select
-                        className="border p-1 px-4 border-gray-500 rounded-md w-full"
-                        name="meter_category"
-                      >
-                        <option value="">Select DG</option>
-                      </select>
-                    </div>
-                  )}
-                  {meterCategory === "Renewable" && (
-                    <div className="mt-4 w-full">
-                      <label className="block text-gray-700 mb-1">
-                        Renewable
-                      </label>
-                      <select
-                        className="border p-1 px-4 border-gray-500 rounded-md w-full"
-                        name="meter_category"
-                      >
-                        <option value="">Select Sub Renewable</option>
-                        <option value="">Solar</option>
-                        <option value="">Bio Methanol</option>
-                        <option value="">Wind</option>
-                      </select>
-                    </div>
-                  )}
-                  {meterCategory === "FreshWater" && (
-                    <div className="mt-4 w-full">
-                      <label className="block text-gray-700 mb-1 ">
-                        Fresh Water
-                      </label>
-                      <select
-                        className="border p-1 px-4 border-gray-500 rounded-md w-full"
-                        name="meter_category"
-                        onChange={handleSubMeterCategoryChange}
-                        value={subMeterCategory}
-                      >
-                        <option value="">SelectFresh Water</option>
-                        <option value="sourceInput">Source (Input)</option>
-                        <option value="">Destination (Output)</option>
-                      </select>
-                    </div>
-                  )}
-                  {meterCategory === "Recycled" && (
-                    <div className="mt-4 w-full">
-                      <label className="block text-gray-700 mb-1">
-                        Recycled
-                      </label>
-                      <select
-                        className="border p-1 px-4 border-gray-500 rounded-md w-full"
-                        name="meter_category"
-                      >
-                        <option value="">Select Recycled</option>
-                      </select>
-                    </div>
-                  )}
-                </div>
-                <div className="flex flex-col">
-                  {subMeterCategory === "sourceInput" && (
-                    <div className="mt-4 w-full">
-                      <label className="block text-gray-700 mb-1 ">
-                        Sub Fresh Water
-                      </label>
-                      <select
-                        className="border p-1 px-4 border-gray-500 rounded-md w-full"
-                        name=""
-                      >
-                        <option value="">Select Fresh Water</option>
-                        <option value="">Municipal Corporation</option>
-                        <option value="">Tanker</option>
-                        <option value="">Borewell</option>
-                        <option value="">Rainwater</option>
-                        <option value="">Jackwell</option>
-                        <option value="">Pump</option>
-                      </select>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div> */}
+           
           </div>
           <div className="my-5">
             <p className="border-b border-black font-semibold">
