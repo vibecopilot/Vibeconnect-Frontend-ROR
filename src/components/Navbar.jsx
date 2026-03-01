@@ -211,7 +211,7 @@ const Navbar = () => {
                   {firstName} {lastName}
                 </h2>
               </NavLink>
-              {(siteId == "74" || siteId == "78") && (
+              {(siteId == "74" || siteId == "78" ) && (
                 <NavLink
                   to={"/grouped-dashboard"}
                   className={({ isActive }) =>

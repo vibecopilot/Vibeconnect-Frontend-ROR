@@ -140,6 +140,22 @@ const Login = () => {
       setItemInLocalStorage("categories", response.data.categories);
       const token = response.data.user.api_key;
       setItemInLocalStorage("TOKEN", token);
+      // Keys expected by grouped-dashboard redirect format:
+      setItemInLocalStorage("token", token);
+      setItemInLocalStorage("active_site", selectedSiteId);
+      setItemInLocalStorage("user_details", {
+        id: response.data?.user?.id,
+        firstname: response.data?.user?.firstname,
+        lastname: response.data?.user?.lastname,
+        email: response.data?.user?.email,
+        mobile: response.data?.user?.mobile,
+        user_type: response.data?.user?.user_type,
+        company_id: response.data?.user?.company_id,
+        organization_id: response.data?.user?.organization_id,
+        unit_id: response.data?.user?.unit_id,
+        selected_site_id: selectedSiteId,
+        site_name: response.data?.site?.name,
+      });
       setItemInLocalStorage("LASTNAME", response.data.user.lastname);
       const userType = response.data.user.user_type;
       setItemInLocalStorage("USERTYPE", userType);
