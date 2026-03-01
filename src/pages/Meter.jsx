@@ -322,31 +322,39 @@ const themeColor =useSelector((state)=> state.theme.color)
   //   }
   // };
 
-  const handleFilterApply = () => {
-    let filteredResults = [...filteredData];
+ const handleFilterApply = () => {
+  let filteredResults = [...assets];   // ✅ Always start from original data
 
-    if (selectedBuilding) {
-      filteredResults = filteredResults.filter(
-        (item) => item.building_name === selectedBuilding
-      );
-    }
+  if (selectedBuilding) {
+    filteredResults = filteredResults.filter(
+      (item) => item.building_id == selectedBuilding
+    );
+  }
 
-    if (selectedFloor) {
-      filteredResults = filteredResults.filter(
-        (item) => item.floor_name === selectedFloor
-      );
-    }
+  if (selectedFloor) {
+    filteredResults = filteredResults.filter(
+      (item) => item.floor_id == selectedFloor
+    );
+  }
 
-    if (selectedUnit) {
-      filteredResults = filteredResults.filter(
-        (item) => item.unit_name === selectedUnit
-      );
-    }
+  if (selectedUnit) {
+    filteredResults = filteredResults.filter(
+      (item) => item.unit_id == selectedUnit
+    );
+  }
 
-    setFilteredData(filteredResults);
-    console.log(filteredResults);
-  };
+  setFilteredData(filteredResults);
+};
 
+
+const handleResetFilter = () => {
+  setSelectedBuilding("");
+  setSelectedFloor("");
+  setSelectedUnit("");
+  setFloors([]);
+  setUnitName([]);
+  setFilteredData(assets);   // original data restore
+};
   const handleBuildingChange = async (e) => {
     const buildingId = e.target.value;
     setSelectedBuilding(buildingId);
@@ -427,12 +435,12 @@ useEffect(() => {
        
         {filter && (
           <div className="flex flex-col md:flex-row mt-1 items-center justify-center gap-2">
-            <select
-              name="building_name"
-              id="building_name"
-              onChange={handleBuildingChange}
-              className="border p-1 px-4 max-w-44 w-44 border-gray-500 rounded-md"
-            >
+           <select
+  name="building_name"
+  value={selectedBuilding}   // ✅ ADD THIS
+  onChange={handleBuildingChange}
+  className="border p-1 px-4 max-w-44 w-44 border-gray-500 rounded-md"
+>
               <option value="">Select Building</option>
               {buildings?.map((building) => (
                 <option key={building.id} value={building.id}>
@@ -471,6 +479,13 @@ useEffect(() => {
             >
               Apply
             </button>
+
+             <button
+      className="bg-gray-500 p-1 px-4 text-white rounded-md"
+      onClick={handleResetFilter}
+    >
+      Reset
+    </button>
           </div>
         )}
         {page === "assets" && (
