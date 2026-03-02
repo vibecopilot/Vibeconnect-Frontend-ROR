@@ -1,14 +1,24 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
-import { getVisitorDashboard, getStaffCount, getRegisteredVehicle, getVisitorAnalytics } from "../../api";
+import {
+  getVisitorDashboard,
+  getStaffCount,
+  getRegisteredVehicleDashboard,
+  getVisitorAnalytics,
+  getVisitorsDrill,
+  getStaffDrill,
+  getStaffPunchedInToday,
+  getStaffPunchedOutToday,
+} from "../../api";
+import { getItemInLocalStorage } from "../../utils/localStorage";
+import DetailPopup from "../../components/DetailPopup";
 import {
   FaSpinner,
   FaUsers,
   FaUserCheck,
   FaUserClock,
   FaCar,
-  FaTruck,
   FaCalendarAlt,
   FaChevronDown,
 } from "react-icons/fa";
@@ -22,18 +32,18 @@ import {
 import { PiChartBarHorizontal } from "react-icons/pi";
 
 const CHART_PALETTE = [
-  "#1D4ED8", // blue
-  "#10B981", // emerald
-  "#F59E0B", // amber
-  "#EF4444", // red 
-  "#8B5CF6", // violet
-  "#06B6D4", // cyan
-  "#EC4899", // pink
-  "#84CC16", // lime
-  "#F97316", // orange
-  "#14B8A6", // teal
-  "#0EA5E9", // sky
-  "#6366F1", // indigo
+  "#1D4ED8",
+  "#10B981",
+  "#F59E0B",
+  "#EF4444",
+  "#8B5CF6",
+  "#06B6D4",
+  "#EC4899",
+  "#84CC16",
+  "#F97316",
+  "#14B8A6",
+  "#0EA5E9",
+  "#6366F1",
 ];
 
 const baseNoSelect = {
@@ -48,7 +58,7 @@ const toSortedEntries = (obj = {}, order = "desc") =>
   Object.entries(obj).sort((a, b) =>
     order === "asc"
       ? (Number(a[1]) || 0) - (Number(b[1]) || 0)
-      : (Number(b[1]) || 0) - (Number(a[1]) || 0)
+      : (Number(b[1]) || 0) - (Number(a[1]) || 0),
   );
 
 const IconBtn = ({ onClick, children, title }) => (
@@ -153,8 +163,17 @@ const Card = ({ title, subtitle, right, children }) => (
   </div>
 );
 
-const StatCard = ({ title, value, icon, accent = CHART_PALETTE[0], note }) => (
-  <div className="rounded-2xl border border-gray-100 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-5">
+const StatCard = ({ title, value, icon, accent = CHART_PALETTE[0], note, onClick }) => (
+  <div
+    role={onClick ? "button" : undefined}
+    tabIndex={onClick ? 0 : undefined}
+    onClick={onClick}
+    onKeyDown={onClick ? (e) => e.key === "Enter" && onClick() : undefined}
+    className={[
+      "rounded-2xl border border-gray-100 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-5",
+      onClick ? "cursor-pointer hover:shadow-lg hover:border-gray-200 transition" : "",
+    ].join(" ")}
+  >
     <div className="flex items-start justify-between gap-3">
       <div>
         <p className="text-sm font-semibold text-gray-600">{title}</p>
@@ -165,7 +184,7 @@ const StatCard = ({ title, value, icon, accent = CHART_PALETTE[0], note }) => (
       </div>
       <div
         className="h-11 w-11 rounded-xl grid place-items-center"
-        style={{ backgroundColor: `${accent}1A` }} // ~10% tint
+        style={{ backgroundColor: `${accent}1A` }}
       >
         <span style={{ color: accent }} className="text-xl">
           {icon}
@@ -231,18 +250,16 @@ const buildXYOptions = ({
 }) => {
   const hcType =
     type === "line" ? "spline" : type === "area" ? "areaspline" : type;
-
   const seriesColor = palette[0];
-
   const areaFill =
     type === "area"
       ? {
-        linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
-        stops: [
-          [0, Highcharts.color(seriesColor).setOpacity(0.22).get("rgba")],
-          [1, Highcharts.color(seriesColor).setOpacity(0).get("rgba")],
-        ],
-      }
+          linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+          stops: [
+            [0, Highcharts.color(seriesColor).setOpacity(0.22).get("rgba")],
+            [1, Highcharts.color(seriesColor).setOpacity(0).get("rgba")],
+          ],
+        }
       : undefined;
 
   const dataPoints = (values || []).map((v, i) => {
@@ -262,7 +279,6 @@ const buildXYOptions = ({
     credits: { enabled: false },
     exporting: { enabled: false },
     legend: { enabled: false },
-
     xAxis: {
       categories,
       lineColor: "#E5E7EB",
@@ -277,7 +293,6 @@ const buildXYOptions = ({
       gridLineDashStyle: "Dash",
       labels: { style: { color: "#6B7280", fontSize: "12px" } },
     },
-
     tooltip: {
       backgroundColor: "#FFFFFF",
       borderColor: "#E5E7EB",
@@ -285,7 +300,6 @@ const buildXYOptions = ({
       shadow: false,
       pointFormat: "<b>{point.y}</b>",
     },
-
     plotOptions: {
       series: {
         ...baseNoSelect,
@@ -294,26 +308,17 @@ const buildXYOptions = ({
         marker:
           type === "line" || type === "area"
             ? {
-              enabled: true,
-              radius: 4,
-              lineWidth: 2,
-              lineColor: seriesColor,
-              fillColor: "#FFFFFF",
-            }
+                enabled: true,
+                radius: 4,
+                lineWidth: 2,
+                lineColor: seriesColor,
+                fillColor: "#FFFFFF",
+              }
             : { enabled: false },
       },
-      column: {
-        borderRadius: 10,
-        pointPadding: 0.12,
-        groupPadding: 0.22,
-      },
-      bar: {
-        borderRadius: 10,
-        pointPadding: 0.12,
-        groupPadding: 0.22,
-      },
+      column: { borderRadius: 10, pointPadding: 0.12, groupPadding: 0.22 },
+      bar: { borderRadius: 10, pointPadding: 0.12, groupPadding: 0.22 },
     },
-
     series: [
       {
         name: title,
@@ -335,8 +340,15 @@ const VisitorsAnalyticsDashboard = () => {
   const [filterOpen, setFilterOpen] = useState(false);
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
-const [tempFromDate, setTempFromDate] = useState(""); 
-const [tempToDate, setTempToDate] = useState("");
+  const [tempFromDate, setTempFromDate] = useState("");
+  const [tempToDate, setTempToDate] = useState("");
+  const [detailPopup, setDetailPopup] = useState({
+    open: false,
+    title: "",
+    records: [],
+    loading: false,
+    columns: null,
+  });
 
   const [staffData, setStaffData] = useState({
     total: 0,
@@ -345,6 +357,7 @@ const [tempToDate, setTempToDate] = useState("");
     today_in: 0,
     today_out: 0,
   });
+
   const [vehicleData, setVehicleData] = useState({
     total: 0,
     in: 0,
@@ -352,7 +365,6 @@ const [tempToDate, setTempToDate] = useState("");
     today_in: 0,
     today_out: 0,
   });
-
 
   const [dashboardData, setDashboardData] = useState({
     total: 0,
@@ -374,43 +386,43 @@ const [tempToDate, setTempToDate] = useState("");
     weekly_trend: {},
   });
 
-useEffect(() => {
-  fetchVisitorAnalytics();
-  fetchStaffAnalytics();
-  fetchVehicleAnalytics();
-}, [fromDate, toDate]);
+  const siteId = getItemInLocalStorage("SITEID");
 
-
-
+  useEffect(() => {
+    fetchVisitorAnalytics();
+    fetchStaffAnalytics();
+    fetchVehicleAnalytics();
+  }, [fromDate, toDate, siteId]);
 
   const fetchVisitorAnalytics = async (retry = 0) => {
     try {
       setLoading(true);
       setDashboardData({
-      total: 0,
-      today_in: 0,
-      today_out: 0,
-      in: 0,
-      out: 0,
-      expected: 0,
-      unexpected: 0,
-      staff_total: 0,
-      staff_in: 0,
-      staff_out: 0,
-      vehicles: 0,
-      delivery_breakdown: {},
-      purpose_breakdown: {},
-      hourly_visits: {},
-      monthly_visits: {},
-      visitor_type_breakdown: {},
-      weekly_trend: {},
-    });
-      const response = await getVisitorAnalytics(fromDate, toDate);
+        total: 0,
+        today_in: 0,
+        today_out: 0,
+        in: 0,
+        out: 0,
+        expected: 0,
+        unexpected: 0,
+        staff_total: 0,
+        staff_in: 0,
+        staff_out: 0,
+        vehicles: 0,
+        delivery_breakdown: {},
+        purpose_breakdown: {},
+        hourly_visits: {},
+        monthly_visits: {},
+        visitor_type_breakdown: {},
+        weekly_trend: {},
+      });
 
-
+      const rangeFrom = fromDate || null;
+      const rangeTo = toDate || null;
+      const response = await getVisitorAnalytics(rangeFrom, rangeTo, siteId);
       const apiData = response?.data || {};
 
-      const data = {
+      setDashboardData({
         total: apiData.total ?? 0,
         today_in: apiData.today_in ?? 0,
         today_out: apiData.today_out ?? 0,
@@ -423,23 +435,19 @@ useEffect(() => {
         staff_out: apiData.staff_out ?? 0,
         vehicles: apiData.vehicles ?? 0,
         delivery_breakdown: apiData.delivery_breakdown ?? apiData.delivery_by_platform ?? {},
-        purpose_breakdown:
-          apiData.purpose_breakdown ??
-          {
-            Meeting: apiData.meeting_count ?? 0,
-            Delivery: apiData.delivery_count ?? 0,
-            Interview: apiData.interview_count ?? 0,
-            "Site Visit": apiData.site_visit_count ?? 0,
-            Maintenance: apiData.maintenance_count ?? 0,
-            Other: apiData.other_count ?? 0,
-          },
+        purpose_breakdown: apiData.purpose_breakdown ?? {
+          Meeting: apiData.meeting_count ?? 0,
+          Delivery: apiData.delivery_count ?? 0,
+          Interview: apiData.interview_count ?? 0,
+          "Site Visit": apiData.site_visit_count ?? 0,
+          Maintenance: apiData.maintenance_count ?? 0,
+          Other: apiData.other_count ?? 0,
+        },
         hourly_visits: apiData.hourly_visits ?? apiData.hourly_trend ?? {},
         monthly_visits: apiData.monthly_visits ?? apiData.monthly_trend ?? {},
         visitor_type_breakdown: apiData.visitor_type_breakdown ?? apiData.by_visitor_type ?? {},
         weekly_trend: apiData.weekly_trend ?? {},
-      };
-
-      setDashboardData(data);
+      });
     } catch (error) {
       if (retry < 1) {
         setTimeout(() => fetchVisitorAnalytics(retry + 1), 150);
@@ -454,9 +462,8 @@ useEffect(() => {
 
   const fetchStaffAnalytics = async () => {
     try {
-      const res = await getStaffCount();
+      const res = await getStaffCount(siteId);
       const api = res?.data || {};
-
       setStaffData({
         total: api.total_count ?? 0,
         in: api.total_staff_in ?? 0,
@@ -472,9 +479,8 @@ useEffect(() => {
 
   const fetchVehicleAnalytics = async () => {
     try {
-      const res = await getRegisteredVehicle();
+      const res = await getRegisteredVehicleDashboard(siteId);
       const api = res?.data || {};
-
       setVehicleData({
         total: api.total_count ?? 0,
         in: api.total_in ?? 0,
@@ -488,13 +494,154 @@ useEffect(() => {
     }
   };
 
+  // ─── Column definitions ───────────────────────────────────────────────────
+
+  const visitorColumns = [
+    { key: "name", label: "Name", accessor: (r) => r.name },
+    { key: "contact_no", label: "Contact", accessor: (r) => r.contact_no },
+    { key: "purpose", label: "Purpose", accessor: (r) => r.purpose },
+    { key: "visit_type", label: "Type", accessor: (r) => r.visit_type },
+    { key: "created_at", label: "Created", accessor: (r) => r.created_at },
+  ];
+
+  const staffColumns = [
+    {
+      key: "name",
+      label: "Name",
+      accessor: (r) =>
+        `${r.firstname ?? ""} ${r.lastname ?? ""}`.trim() || "—",
+    },
+    {
+      key: "mobile_no",
+      label: "Contact",
+      accessor: (r) => r.mobile_no ?? r.contact_number ?? r.contact_no ?? "—",
+    },
+    {
+      key: "vendor_name",
+      label: "Vendor",
+      accessor: (r) => r.vendor_name ?? r.vendor?.name ?? "—",
+    },
+    {
+      key: "work_type",
+      label: "Work Type",
+      accessor: (r) => r.work_type ?? "—",
+    },
+    {
+      key: "status_type",
+      label: "Status",
+      accessor: (r) => r.status_type ?? "—",
+    },
+    {
+      key: "created_at",
+      label: "Created",
+      accessor: (r) => r.created_at,
+    },
+  ];
+
+  // For punched in / punched out — attendance record shape
+  const punchedStaffColumns = [
+    {
+      key: "name",
+      label: "Name",
+      accessor: (r) =>
+        r.attendance_of_name ??
+        r.staff_name ??
+        `${r.firstname ?? ""} ${r.lastname ?? ""}`.trim() ||
+        "—",
+    },
+    {
+      key: "contact",
+      label: "Contact",
+      accessor: (r) => r.staff_number ?? r.mobile_no ?? "—",
+    },
+    {
+      key: "work_type",
+      label: "Work Type",
+      accessor: (r) => r.staff_work_type ?? r.work_type ?? "—",
+    },
+    {
+      key: "punched_in_at",
+      label: "Punched In",
+      accessor: (r) =>
+        r.punched_in_at
+          ? new Date(r.punched_in_at).toLocaleString()
+          : "—",
+    },
+    {
+      key: "punched_out_at",
+      label: "Punched Out",
+      accessor: (r) =>
+        r.punched_out_at
+          ? new Date(r.punched_out_at).toLocaleString()
+          : "—",
+    },
+  ];
+
+  // ─── Click handlers ───────────────────────────────────────────────────────
+
+  const handleStatClick = async (filter, title) => {
+    setDetailPopup({ open: true, title, records: [], loading: true, columns: visitorColumns });
+    try {
+      const res = await getVisitorsDrill(filter, siteId, 100);
+      setDetailPopup({
+        open: true,
+        title,
+        records: res?.data?.records || [],
+        loading: false,
+        columns: visitorColumns,
+      });
+    } catch (err) {
+      console.error("Drill fetch error:", err);
+      toast.error("Failed to load details");
+      setDetailPopup((p) => ({ ...p, loading: false }));
+    }
+  };
+
+  const handleStaffClick = async (type, title) => {
+    setDetailPopup({ open: true, title, records: [], loading: true, columns: staffColumns });
+    try {
+      let res;
+      let records = [];
+      let columns = staffColumns;
+
+      if (type === "total") {
+        res = await getStaffDrill(siteId, 100);
+        const list = res?.data?.staffs ?? res?.data ?? [];
+        records = Array.isArray(list) ? list : [];
+        columns = staffColumns;
+      } else if (type === "in") {
+        res = await getStaffPunchedInToday(siteId);
+        const list =
+          res?.data?.staffs ??
+          res?.data?.attendances ??
+          res?.data ??
+          [];
+        records = Array.isArray(list) ? list : [];
+        columns = punchedStaffColumns;
+      } else {
+        res = await getStaffPunchedOutToday(siteId);
+        const list =
+          res?.data?.staffs ??
+          res?.data?.attendances ??
+          res?.data ??
+          [];
+        records = Array.isArray(list) ? list : [];
+        columns = punchedStaffColumns;
+      }
+
+      setDetailPopup({ open: true, title, records, loading: false, columns });
+    } catch (err) {
+      console.error("Staff drill error:", err);
+      toast.error("Failed to load staff details");
+      setDetailPopup((p) => ({ ...p, loading: false }));
+    }
+  };
+
+  // ─── Chart data maps ──────────────────────────────────────────────────────
 
   const visitorTypeMap = useMemo(() => {
     const m = dashboardData.visitor_type_breakdown || {};
-    const hasBreakdown = Object.keys(m).length > 0;
-
-    if (hasBreakdown) return m;
-
+    if (Object.keys(m).length > 0) return m;
     return {
       Expected: dashboardData.expected ?? 0,
       Unexpected: dashboardData.unexpected ?? 0,
@@ -506,37 +653,35 @@ useEffect(() => {
       "Currently In": dashboardData.in ?? 0,
       "Currently Out": dashboardData.out ?? 0,
     }),
-    [dashboardData.in, dashboardData.out]
+    [dashboardData.in, dashboardData.out],
   );
 
   const staffMap = useMemo(
-    () => ({
-      "Staff In": staffData.in,
-      "Staff Out": staffData.out,
-    }),
-    [staffData]
+    () => ({ "Staff In": staffData.in, "Staff Out": staffData.out }),
+    [staffData],
   );
-
 
   const deliveryMap = useMemo(
     () => dashboardData.delivery_breakdown || {},
-    [dashboardData.delivery_breakdown]
+    [dashboardData.delivery_breakdown],
   );
 
   const purposeMap = useMemo(
     () => dashboardData.purpose_breakdown || {},
-    [dashboardData.purpose_breakdown]
+    [dashboardData.purpose_breakdown],
   );
 
   const hourlyMap = useMemo(
     () => dashboardData.hourly_visits || {},
-    [dashboardData.hourly_visits]
+    [dashboardData.hourly_visits],
   );
 
   const monthlyMap = useMemo(
     () => dashboardData.monthly_visits || {},
-    [dashboardData.monthly_visits]
+    [dashboardData.monthly_visits],
   );
+
+  // ─── Chart options ────────────────────────────────────────────────────────
 
   const selectedChartOptions = useMemo(() => {
     if (selectedChart === "visitor_type") {
@@ -544,10 +689,7 @@ useEffect(() => {
         return buildPieOptions({
           title: "Visitor Type Distribution",
           dataMap: visitorTypeMap,
-          colorsMap: {
-            Expected: "#F59E0B",
-            Unexpected: "#EAB308",
-          },
+          colorsMap: { Expected: "#F59E0B", Unexpected: "#EAB308" },
         });
       }
       const entries = toSortedEntries(visitorTypeMap, "desc");
@@ -620,20 +762,10 @@ useEffect(() => {
       });
     }
 
-    return buildPieOptions({
-      title: "Visitor Type Distribution",
-      dataMap: visitorTypeMap,
-    });
+    return buildPieOptions({ title: "Visitor Type Distribution", dataMap: visitorTypeMap });
   }, [
-    selectedChart,
-    chartType,
-    visitorTypeMap,
-    inOutMap,
-    staffMap,
-    deliveryMap,
-    purposeMap,
-    hourlyMap,
-    monthlyMap,
+    selectedChart, chartType, visitorTypeMap, inOutMap,
+    staffMap, deliveryMap, purposeMap, hourlyMap, monthlyMap,
   ]);
 
   const chartButtons = [
@@ -656,32 +788,28 @@ useEffect(() => {
 
   return (
     <div className="w-full px-3 pb-4 space-y-6">
+      {/* ── Top bar ── */}
       <div className="flex items-center gap-2 justify-end">
-        {/* FILTER BUTTON */}
         <IconBtn
-  title="Filter"
-  onClick={() => {
-    setTempFromDate(fromDate);
-    setTempToDate(toDate);
-    setFilterOpen(true);
-  }}
->
-
+          title="Filter"
+          onClick={() => {
+            setTempFromDate(fromDate);
+            setTempToDate(toDate);
+            setFilterOpen(true);
+          }}
+        >
           <FaCalendarAlt />
         </IconBtn>
-
-        {/* REFRESH */}
         <IconBtn title="Refresh" onClick={() => fetchVisitorAnalytics(0)}>
           ↻
         </IconBtn>
       </div>
+
+      {/* ── Date filter modal ── */}
       {filterOpen && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center">
           <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">
-              Filter Visitors
-            </h3>
-
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Filter Visitors</h3>
             <div className="space-y-4">
               <div>
                 <label className="text-xs text-gray-500">From Date</label>
@@ -692,7 +820,6 @@ useEffect(() => {
                   className="w-full border rounded-lg px-3 py-2 mt-1"
                 />
               </div>
-
               <div>
                 <label className="text-xs text-gray-500">To Date</label>
                 <input
@@ -703,7 +830,6 @@ useEffect(() => {
                 />
               </div>
             </div>
-
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => setFilterOpen(false)}
@@ -711,7 +837,6 @@ useEffect(() => {
               >
                 Cancel
               </button>
-
               <button
                 onClick={() => {
                   setFromDate(tempFromDate);
@@ -727,6 +852,7 @@ useEffect(() => {
         </div>
       )}
 
+      {/* ── Visitor stat cards ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
         <StatCard
           title="Total Visitors"
@@ -734,6 +860,7 @@ useEffect(() => {
           icon={<FaUsers />}
           accent={CHART_PALETTE[0]}
           note="All time visitors"
+          onClick={() => handleStatClick("total", "Total Visitors")}
         />
         <StatCard
           title="Total In"
@@ -741,6 +868,7 @@ useEffect(() => {
           icon={<FaUserCheck />}
           accent={CHART_PALETTE[1]}
           note="Currently inside"
+          onClick={() => handleStatClick("in", "Visitors Currently In")}
         />
         <StatCard
           title="Total Out"
@@ -748,6 +876,7 @@ useEffect(() => {
           icon={<FaUserClock />}
           accent={CHART_PALETTE[2]}
           note="Currently out"
+          onClick={() => handleStatClick("out", "Visitors Currently Out")}
         />
         <StatCard
           title="Expected"
@@ -755,6 +884,7 @@ useEffect(() => {
           icon={<FaUserClock />}
           accent={CHART_PALETTE[9]}
           note="Pre-registered visitors"
+          onClick={() => handleStatClick("expected", "Expected Visitors")}
         />
         <StatCard
           title="Unexpected"
@@ -762,21 +892,18 @@ useEffect(() => {
           icon={<FaUsers />}
           accent={CHART_PALETTE[4]}
           note="Walk-in visitors"
+          onClick={() => handleStatClick("unexpected", "Unexpected Visitors")}
         />
       </div>
 
+      {/* ── Chart selector ── */}
       <Card
         title="Analytics"
         subtitle="Choose a chart and chart type"
         right={
           <div className="flex items-center gap-2">
             <ChartTypeMenu value={chartType} onChange={setChartType} />
-            <IconBtn
-              title="Refresh"
-              onClick={() => fetchVisitorAnalytics(0)}
-            >
-              ↻
-            </IconBtn>
+            <IconBtn title="Refresh" onClick={() => fetchVisitorAnalytics(0)}>↻</IconBtn>
           </div>
         }
       >
@@ -800,49 +927,38 @@ useEffect(() => {
         </div>
       </Card>
 
+      {/* ── Chart ── */}
       <Card
         title="Chart"
-        subtitle={
-          selectedChart === "visitor_type"
-            ? `Chart Type: ${chartType}`
-            : "Overview"
-        }
+        subtitle={selectedChart === "visitor_type" ? `Chart Type: ${chartType}` : "Overview"}
       >
         <HighchartsReact highcharts={Highcharts} options={selectedChartOptions} />
       </Card>
 
+      {/* ── Staff & vehicle stat cards ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* <StatCard
-          title="Today's In"
-          value={dashboardData.today_in}
-          icon={<FaCalendarAlt />}
-          accent={CHART_PALETTE[1]}
-        />
-        <StatCard
-          title="Today's Out"
-          value={dashboardData.today_out}
-          icon={<FaCalendarAlt />}
-          accent={CHART_PALETTE[3]}
-        /> */}
         <StatCard
           title="Staff Total"
           value={staffData.total}
           icon={<FaUsers />}
           accent={CHART_PALETTE[5]}
+          onClick={() => handleStaffClick("total", "Staff Total")}
         />
-
         <StatCard
-          title="Staff In"
-          value={staffData.in}
+          title="Punched In Today"
+          value={staffData.today_in}
           icon={<FaUserCheck />}
           accent={CHART_PALETTE[1]}
+          note="Checked in today"
+          onClick={() => handleStaffClick("in", "Punched In Today")}
         />
-
         <StatCard
-          title="Staff Out"
-          value={staffData.out}
+          title="Punched Out Today"
+          value={staffData.today_out}
           icon={<FaUserClock />}
           accent={CHART_PALETTE[3]}
+          note="Checked out today"
+          onClick={() => handleStaffClick("out", "Punched Out Today")}
         />
         <StatCard
           title="Total Vehicles"
@@ -850,8 +966,18 @@ useEffect(() => {
           icon={<FaCar />}
           accent={CHART_PALETTE[8]}
         />
-
       </div>
+
+      {/* ── Detail popup ── */}
+      <DetailPopup
+        isOpen={detailPopup.open}
+        onClose={() => setDetailPopup((p) => ({ ...p, open: false }))}
+        title={detailPopup.title}
+        subtitle={`${detailPopup.records.length} record(s)`}
+        records={detailPopup.records}
+        loading={detailPopup.loading}
+        columns={detailPopup.columns || visitorColumns}
+      />
     </div>
   );
 };

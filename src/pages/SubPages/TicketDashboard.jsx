@@ -3,15 +3,18 @@ import {
   getTicketDashboard,
   getStatusDownload,
   getTicketStatusDownload,
+  getComplaintsDrill,
 } from "../../api";
+import { getItemInLocalStorage } from "../../utils/localStorage";
 import { FaDownload } from "react-icons/fa";
 import toast from "react-hot-toast";
+import DetailPopup from "../../components/DetailPopup";
 
 const PRIMARY_BLUE = "#1D4ED8";
 const LIGHT_BLUE = "#93C5FD";
 
 
-const StatCard = ({ title, value, onDownload, tone = "blue" }) => {
+const StatCard = ({ title, value, onDownload, onClick, tone = "blue" }) => {
   const toneMap = {
     blue: {
       card: "bg-[#93C5FD]/25",
@@ -44,10 +47,15 @@ const StatCard = ({ title, value, onDownload, tone = "blue" }) => {
 
   return (
     <div
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onClick={onClick ? (e) => { if (!e.target.closest("button")) onClick(); } : undefined}
+      onKeyDown={onClick ? (e) => e.key === "Enter" && onClick() : undefined}
       className={[
         "h-[132px] rounded-2xl p-4 flex flex-col",
         "shadow-[0_8px_24px_rgba(15,23,42,0.06)]",
         t.card,
+        onClick ? "cursor-pointer hover:shadow-md transition" : "",
       ].join(" ")}
     >
       <div className="flex items-start justify-between gap-3">
@@ -57,7 +65,7 @@ const StatCard = ({ title, value, onDownload, tone = "blue" }) => {
 
         <button
           type="button"
-          onClick={onDownload}
+          onClick={(e) => { e.stopPropagation(); onDownload(); }}
           title="Download"
           className={[
             "h-9 w-9 rounded-xl grid place-items-center transition",
@@ -93,11 +101,19 @@ const statusTone = (key = "") => {
 const TicketDashboard = () => {
   const [totalTickets, setTotalTickets] = useState(0);
   const [statusData, setStatusData] = useState({});
+  const [detailPopup, setDetailPopup] = useState({
+    open: false,
+    title: "",
+    records: [],
+    loading: false,
+  });
+
+  const siteId = getItemInLocalStorage("SITEID");
 
   useEffect(() => {
     const fetchTicketInfo = async () => {
       try {
-        const res = await getTicketDashboard();
+        const res = await getTicketDashboard(siteId);
         setTotalTickets(res?.data?.total ?? 0);
         setStatusData(res?.data?.by_status ?? {});
       } catch (error) {
@@ -105,7 +121,24 @@ const TicketDashboard = () => {
       }
     };
     fetchTicketInfo();
-  }, []);
+  }, [siteId]);
+
+  const handleTicketCardClick = async (filterType, filterValue, title) => {
+    setDetailPopup({ open: true, title, records: [], loading: true });
+    try {
+      const res = await getComplaintsDrill(filterType, filterValue, siteId, 100);
+      setDetailPopup({
+        open: true,
+        title,
+        records: res?.data?.records ?? [],
+        loading: false,
+      });
+    } catch (err) {
+      console.error("Ticket drill error:", err);
+      toast.error("Failed to load ticket details");
+      setDetailPopup((p) => ({ ...p, loading: false }));
+    }
+  };
 
   const handleStatusDownload = async (key) => {
     const toastId = toast.loading("Downloading, please wait...");
@@ -159,6 +192,7 @@ const TicketDashboard = () => {
         value,
         tone: statusTone(key),
         onDownload: () => handleStatusDownload(key),
+        onClick: () => handleTicketCardClick("status", key, key),
       })),
     [statusData]
   );
@@ -171,6 +205,7 @@ const TicketDashboard = () => {
           value={totalTickets}
           tone="blue"
           onDownload={handleTicketStatusDownload}
+          onClick={() => handleTicketCardClick("all", "", "Tickets Created")}
         />
 
         {cards.map((card) => (
@@ -180,9 +215,28 @@ const TicketDashboard = () => {
             value={card.value}
             tone={card.tone}
             onDownload={card.onDownload}
+            onClick={card.onClick}
           />
         ))}
       </div>
+
+      <DetailPopup
+        isOpen={detailPopup.open}
+        onClose={() => setDetailPopup((p) => ({ ...p, open: false }))}
+        title={detailPopup.title}
+        subtitle={`${detailPopup.records.length} record(s)`}
+        records={detailPopup.records}
+        loading={detailPopup.loading}
+        columns={[
+          { key: "ticket_number", label: "Ticket #", accessor: (r) => r.ticket_number },
+          { key: "heading", label: "Heading", accessor: (r) => r.heading },
+          { key: "priority", label: "Priority", accessor: (r) => r.priority },
+          { key: "status", label: "Status", accessor: (r) => r.status },
+          { key: "category", label: "Category", accessor: (r) => r.category },
+          { key: "unit_name", label: "Unit", accessor: (r) => r.unit_name },
+          { key: "created_at", label: "Created", accessor: (r) => r.created_at },
+        ]}
+      />
     </div>
   );
 };
