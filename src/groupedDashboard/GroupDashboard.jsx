@@ -18,8 +18,8 @@ const GroupedDashboardPage = () => {
     const activeSite = readLS("active_site") ?? readLS("SITEID");
 
     // 2. Prepare the URL
-    const baseUrl = "http://localhost:8080";
-      // "https://horizondashboard.vibecopilot.ai";
+    // const baseUrl = "http://localhost:8080";
+      "https://horizondashboard.vibecopilot.ai";
     
       const url = new URL(baseUrl);
 
