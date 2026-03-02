@@ -47,7 +47,9 @@ import {
   getRoutinePendingCount,
   getSiteData,
   getTotalAssetCounts,
+  getAssetsDrill,
 } from "../../api";
+import DetailPopup from "../../components/DetailPopup";
 
 import toast from "react-hot-toast";
 
@@ -926,6 +928,39 @@ const fetchAssetSummaryByDate = async (date) => {
     cardData.map((c) => c.title)
   );
 
+  const [assetDetailPopup, setAssetDetailPopup] = useState({
+    open: false,
+    title: "",
+    records: [],
+    loading: false,
+  });
+
+  const assetCardToFilter = {
+    "Total Asset": "all",
+    "Asset Breakdown": "breakdown",
+    "In Use Asset": "in_use",
+  };
+
+  const handleAssetCardClick = async (cardTitle) => {
+    const filter = assetCardToFilter[cardTitle];
+    if (filter === undefined) return;
+    setAssetDetailPopup({ open: true, title: cardTitle, records: [], loading: true });
+    try {
+      const res = await getAssetsDrill(filter, 1, 100);
+      const list = res?.data?.site_assets ?? res?.data ?? [];
+      setAssetDetailPopup({
+        open: true,
+        title: cardTitle,
+        records: Array.isArray(list) ? list : [],
+        loading: false,
+      });
+    } catch (err) {
+      console.error("Asset drill error:", err);
+      toast.error("Failed to load asset list");
+      setAssetDetailPopup((p) => ({ ...p, loading: false }));
+    }
+  };
+
   const handleCheckboxChange = (title) => {
     setSelectedTitles((prev) =>
       prev.includes(title) ? prev.filter((t) => t !== title) : [...prev, title]
@@ -1056,11 +1091,16 @@ const fetchAssetSummaryByDate = async (date) => {
         {cardData.map((card) => {
           if (!selectedTitles.includes(card.title)) return null;
           const theme = cardTheme(card.title);
+          const isClickable = assetCardToFilter[card.title] !== undefined;
 
           return (
             <div
               key={card.title}
-              className={`${theme.bg} ${theme.text} shadow-custom-all-sides border py-3 px-3 rounded-2xl flex flex-col text-sm font-medium h-32`}
+              role={isClickable ? "button" : undefined}
+              tabIndex={isClickable ? 0 : undefined}
+              onClick={isClickable ? (e) => { if (!e.target.closest("button")) handleAssetCardClick(card.title); } : undefined}
+              onKeyDown={isClickable ? (e) => e.key === "Enter" && handleAssetCardClick(card.title) : undefined}
+              className={`${theme.bg} ${theme.text} shadow-custom-all-sides border py-3 px-3 rounded-2xl flex flex-col text-sm font-medium h-32 ${isClickable ? "cursor-pointer hover:shadow-md transition" : ""}`}
             >
               <div className="flex justify-between items-center">
                 <h2 className="font-semibold text-base text-gray-800">
@@ -1150,6 +1190,22 @@ const fetchAssetSummaryByDate = async (date) => {
           options={totalRoutineOptions}
         />
       </div>
+
+      <DetailPopup
+        isOpen={assetDetailPopup.open}
+        onClose={() => setAssetDetailPopup((p) => ({ ...p, open: false }))}
+        title={assetDetailPopup.title}
+        subtitle={`${assetDetailPopup.records.length} record(s)`}
+        records={assetDetailPopup.records}
+        loading={assetDetailPopup.loading}
+        columns={[
+          { key: "name", label: "Name", accessor: (r) => r.name },
+          { key: "oem_name", label: "OEM", accessor: (r) => r.oem_name },
+          { key: "building", label: "Building", accessor: (r) => r.building?.name ?? r.building_name ?? "—" },
+          { key: "unit", label: "Unit", accessor: (r) => r.unit?.name ?? r.unit_name ?? "—" },
+          { key: "breakdown", label: "Breakdown", accessor: (r) => (r.breakdown ? "Yes" : "No") },
+        ]}
+      />
     </div >
   );
 }
