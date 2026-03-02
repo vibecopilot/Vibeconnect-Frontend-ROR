@@ -11046,18 +11046,7 @@ export const exportStaffByDate = async (startDate, endDate) =>
     responseType: "blob", // 👈 VERY IMPORTANT (file download ke liye)
   });
 
-axiosInstance.interceptors.request.use((config) => {
-  const siteId = getItemInLocalStorage("SITEID");
-
-  if (siteId) {
-    config.params = {
-      ...config.params,
-      site_id: siteId,
-    };
-  }
-
-  return config;
-});
+// site_id is NO longer applied by default - only add it explicitly when needed in API calls
 
 // export const deleteServiceAssociation = (id) =>
 //   axiosInstance.delete(`/service_associations/${id}.json`);
