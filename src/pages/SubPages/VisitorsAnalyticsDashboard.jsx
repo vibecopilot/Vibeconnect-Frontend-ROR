@@ -546,8 +546,7 @@ const VisitorsAnalyticsDashboard = () => {
       accessor: (r) =>
         r.attendance_of_name ??
         r.staff_name ??
-        `${r.firstname ?? ""} ${r.lastname ?? ""}`.trim() ||
-        "—",
+        (`${r.firstname ?? ""} ${r.lastname ?? ""}`.trim() || "—"),
     },
     {
       key: "contact",
