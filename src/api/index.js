@@ -3852,8 +3852,7 @@ export const postVibeBackground = async (data) => {
 export const getVibeBackground = async (userId) => {
   try {
     const response = await vibeAuth.get(
-      `/api/employee/get_bg_image/?user_id=${userId}`,
-
+      `/api/employee/get_bg_image`,
       {
         headers: {
           "Content-Type": "multipart/form-data",
