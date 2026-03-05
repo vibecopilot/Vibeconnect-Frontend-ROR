@@ -240,6 +240,22 @@ export const getSearchPolls = async (title) => {
 //     },
 //   });
 
+// surveys
+export {
+  getSurveys,
+  getSurvey,
+  createSurvey,
+  updateSurvey,
+  deleteSurvey,
+  createSurveyQuestion,
+  updateSurveyQuestion,
+  deleteSurveyQuestion,
+  getSurveyResponses,
+  createSurveyResponse,
+  getPublicSurvey,
+  createPublicSurveyResponse,
+} from "./surveyApi";
+
 // vendor
 export const getVendors = async () =>
   axiosInstance.get("/vendors.json", {
