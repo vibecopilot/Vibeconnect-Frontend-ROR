@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import Navbar from "../../../components/Navbar";
+import axiosInstance from "../../../api/axiosInstance";
 import { Link } from "react-router-dom";
 import { AiFillQuestionCircle } from "react-icons/ai";
 import Chart from "react-apexcharts";
@@ -16,6 +17,9 @@ function SurveyDetails() {
   const [loading, setLoading] = useState(true);
   const [sendModalOpen, setSendModalOpen] = useState(false);
   const [activating, setActivating] = useState(false);
+  const [emailList, setEmailList] = useState("");
+  const [mailMessage, setMailMessage] = useState("Please take this survey!");
+  const [sendingEmails, setSendingEmails] = useState(false);
 
   const fetchSurvey = () => {
     if (!id) return;
@@ -23,6 +27,31 @@ function SurveyDetails() {
       .then((res) => setSurvey(res.data))
       .catch(() => setSurvey(null));
   };
+  const handleSendEmails = async () => {
+  if (!emailList.trim()) return toast.error("Please enter at least one email");
+
+  const emails = emailList.split(/[\s,;]+/).filter((email) => email);
+
+  if (emails.length === 0) return toast.error("No valid emails found");
+
+  setSendingEmails(true);
+  try {
+    await axiosInstance.post("/send-survey", {
+      emails,
+      message: mailMessage,
+      survey_link: shareableLink,
+    });
+    toast.success("Survey sent successfully!");
+    setEmailList("");
+    setMailMessage("Please take this survey!");
+    setSendModalOpen(false); // close modal after sending
+  } catch (err) {
+    console.error(err);
+    toast.error("Failed to send survey");
+  } finally {
+    setSendingEmails(false);
+  }
+};
 
   useEffect(() => {
     if (!id) return;
@@ -359,6 +388,34 @@ function SurveyDetails() {
                   Copy
                 </button>
               </div>
+              <p className="text-gray-600 text-sm mb-3">
+  Enter multiple emails separated by commas, semicolons, or spaces. Add a message if you like.
+</p>
+<textarea
+  value={emailList}
+  onChange={(e) => setEmailList(e.target.value)}
+  placeholder="Enter emails separated by commas, semicolons, or spaces"
+  className="w-full px-3 py-2 border rounded mb-3 resize-none"
+/>
+
+<input
+  type="text"
+  value={mailMessage}
+  onChange={(e) => setMailMessage(e.target.value)}
+  placeholder="Optional message"
+  className="w-full px-3 py-2 border rounded mb-4"
+/>
+<button
+  type="button"
+  onClick={handleSendEmails}
+  disabled={sendingEmails}
+  className={`w-full px-3 py-2 rounded text-white ${
+    sendingEmails ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
+  } mb-4`}
+>
+  {sendingEmails ? "Sending..." : "Send Survey"}
+</button>
+
               {survey?.status !== "active" && (
                 <p className="text-sm text-gray-500 mb-3">
                   Activate the survey so respondents can submit responses.
