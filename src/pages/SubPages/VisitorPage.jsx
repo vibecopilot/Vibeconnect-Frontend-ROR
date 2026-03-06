@@ -17,6 +17,7 @@ import {
 import { BsEye } from "react-icons/bs";
 import { BiEdit, BiFilterAlt } from "react-icons/bi";
 import { formatTime } from "../../utils/dateUtils";
+import { getItemInLocalStorage } from "../../utils/localStorage";
 import { IoClose } from "react-icons/io5";
 import { FaCheck } from "react-icons/fa6";
 import toast from "react-hot-toast";
@@ -73,6 +74,15 @@ const VisitorPage = () => {
 
 
   const webcamRef = useRef(null);
+
+  // Company-specific labels: show "Planned" / "Unplanned Visitors" only for company_id 55
+  const companyId = getItemInLocalStorage("COMPANYID");
+  const isCompany55 = companyId == 55;
+  const expectedVisitorLabel = isCompany55 ? "Planned Visitors" : "Expected visitor";
+  const unexpectedVisitorLabel = isCompany55 ? "Unplanned Visitors" : "Unexpected visitor";
+  const expectedDateLabel = isCompany55 ? "Planned Date" : "Expected Date";
+  const expectedTimeLabel = isCompany55 ? "Planned Time" : "Expected Time";
+  const expectedDateRangeLabel = isCompany55 ? "Planned Date Range" : "Expected Date Range";
 
   const dateFormat = (dateString) => {
     const date = new Date(dateString);
@@ -194,8 +204,8 @@ const VisitorPage = () => {
         "Contact No",
         "Purpose",
         "Coming From",
-        "Expected Date",
-        "Expected Time",
+        expectedDateLabel,
+        expectedTimeLabel,
         "Vehicle No",
         "Host Approval",
         "Pass Start",
@@ -606,8 +616,8 @@ useEffect(() => {
     { name: "Contact No.", selector: (row) => row.contact_no, sortable: true },
     { name: "Purpose", selector: (row) => row.purpose, sortable: true },
     { name: "Coming from", selector: (row) => row.coming_from, sortable: true },
-    { name: "Expected Date", selector: (row) => row.expected_date, sortable: true },
-    { name: "Expected Time", selector: (row) => row.expected_time, sortable: true },
+    { name: expectedDateLabel, selector: (row) => row.expected_date, sortable: true },
+    { name: expectedTimeLabel, selector: (row) => row.expected_time, sortable: true },
     { name: "Vehicle No.", selector: (row) => row.vehicle_number, sortable: true },
     {
       name: "Host Approval",
@@ -879,12 +889,12 @@ const handleSearch = (e) => {
     { name: "Name", selector: (row) => row.name, sortable: true },
     { name: "Purpose", selector: (row) => row.purpose, sortable: true },
     {
-      name: "Expected Date",
+      name: expectedDateLabel,
       selector: (row) => dateFormat(row.expected_date),
       sortable: true,
     },
     {
-      name: "Expected Time",
+      name: expectedTimeLabel,
       selector: (row) => formatTime(row.expected_time),
       sortable: true,
     },
@@ -1053,14 +1063,14 @@ const handleSearch = (e) => {
                       } text-center`}
                     onClick={() => handleClick("expected")}
                   >
-                    <span>Expected visitor</span>
+                    <span>{expectedVisitorLabel}</span>
                   </span>
                   <span
                     className={`cursor-pointer hover:underline ${selectedVisitor === "unexpected" ? "text-blue-600 underline" : ""
                       } text-center`}
                     onClick={() => handleClick("unexpected")}
                   >
-                    &nbsp; <span>Unexpected visitor</span>
+                    &nbsp; <span>{unexpectedVisitorLabel}</span>
                   </span>
                 </div>
 
@@ -1182,14 +1192,14 @@ const handleSearch = (e) => {
                     } text-center`}
                   onClick={() => handleClick("expected")}
                 >
-                  <span>Expected visitor</span>
+                  <span>{expectedVisitorLabel}</span>
                 </span>
                 <span
                   className={`cursor-pointer hover:underline ${selectedVisitor === "unexpected" ? "text-blue-600 underline" : ""
                     } text-center`}
                   onClick={() => handleClick("unexpected")}
                 >
-                  &nbsp; <span>Unexpected visitor</span>
+                  &nbsp; <span>{unexpectedVisitorLabel}</span>
                 </span>
               </div>
 
@@ -1232,14 +1242,14 @@ const handleSearch = (e) => {
                       } text-center`}
                     onClick={() => handleClick("expected")}
                   >
-                    <span>Expected visitor</span>
+                    <span>{expectedVisitorLabel}</span>
                   </span>
                   <span
                     className={`cursor-pointer hover:underline ${selectedVisitor === "unexpected" ? "text-blue-600 underline" : ""
                       } text-center`}
                     onClick={() => handleClick("unexpected")}
                   >
-                    &nbsp; <span>Unexpected visitor</span>
+                    &nbsp; <span>{unexpectedVisitorLabel}</span>
                   </span>
                 </div>
 
@@ -1418,7 +1428,7 @@ data={
               {/* Expected Date Range */}
               <div className="mb-4">
                 <label className="text-sm font-medium block mb-2">
-                  Expected Date Range
+                  {expectedDateRangeLabel}
                 </label>
                 <div className="flex gap-2">
                   <input
