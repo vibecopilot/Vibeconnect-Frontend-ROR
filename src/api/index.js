@@ -20,7 +20,7 @@ export const domainPrefix = "https://admin.vibecopilot.ai";
 export const login = async (data) => axiosInstance.post("/login.json", data);
 
 export const getLogin = async () => axiosInstance.get("/login.json");
-export const vibeBGImages = async () => axiosInstance.get("/api/employee/get_bg_image.json")
+export const vibeBGImages = async () => axiosInstance.get("/api/employee/get_bg_image.json");
 
 export const getTodoLists = async () => {
   return axiosInstance.get("/todo_lists.json", {
@@ -56,10 +56,11 @@ export const postTodoList = async (data) =>
 //   });
 // };
 // dashboard
-export const getTicketDashboard = async () =>
+export const getTicketDashboard = async (siteId) =>
   axiosInstance.get("/pms/admin/complaints/complaints_dashboard.json", {
     params: {
-      token: token,
+      token: getItemInLocalStorage("TOKEN"),
+      ...(siteId && { site_id: siteId }),
     },
   });
 //Assets
@@ -84,7 +85,7 @@ export const softServiceDownloadQrCode = async (soft_service_ids) => {
   return axiosInstance.get(`/soft_services/print_qr_codes`, {
     params: {
       soft_service_ids: ids,
-      token: token,  // assuming token is already imported/defined
+      token: token, // assuming token is already imported/defined
     },
     responseType: "blob", // important to handle PDF download
   });
@@ -110,7 +111,7 @@ export const getSiteSearchedAsset = async (searchValue) =>
       params: {
         token: token,
       },
-    }
+    },
   );
 export const getSiteAssetDetails = async (id) =>
   axiosInstance.get(`/site_assets/${id}.json`, {
@@ -136,7 +137,7 @@ export const EditSiteAsset = async (data, id) =>
       "Content-Type": "multipart/form-data",
     },
   });
-  // Site Assets API
+// Site Assets API
 export const getSiteAssets = async (siteId, page = 1, perPage = 10) =>
   axiosInstance.get("/site_assets.json", {
     params: {
@@ -144,6 +145,17 @@ export const getSiteAssets = async (siteId, page = 1, perPage = 10) =>
       site_id: siteId,
       page: page,
       per_page: perPage,
+    },
+  });
+
+/** Fetch asset list for dashboard drill-down (card_filter: in_use | breakdown | all) */
+export const getAssetsDrill = async (cardFilter = "all", page = 1, perPage = 100) =>
+  axiosInstance.get("/site_assets.json", {
+    params: {
+      token: token,
+      page,
+      per_page: perPage,
+      ...(cardFilter && cardFilter !== "all" ? { card_filter: cardFilter } : {}),
     },
   });
 export const getSiteAssetById = async (id) =>
@@ -161,15 +173,11 @@ export const getSiteAssetById = async (id) =>
 //   });
 
 export const postSiteAsset = async (formData) =>
-  axiosInstance.post(
-    `/site_assets.json?token=${token}`,
-    formData,
-    {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    }
-  );
+  axiosInstance.post(`/site_assets.json?token=${token}`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
 export const updateSiteAsset = async (id, formData) =>
   axiosInstance.put(`/site_assets/${id}.json?token=${token}`, formData, {
     headers: {
@@ -216,7 +224,7 @@ export const postPollVote = async (id, data) =>
     },
   });
 
-  export const getSearchPolls = async (title) => {
+export const getSearchPolls = async (title) => {
   return axiosInstance.get("/polls.json", {
     params: {
       token: token,
@@ -232,6 +240,22 @@ export const postPollVote = async (id, data) =>
 //     },
 //   });
 
+// surveys
+export {
+  getSurveys,
+  getSurvey,
+  createSurvey,
+  updateSurvey,
+  deleteSurvey,
+  createSurveyQuestion,
+  updateSurveyQuestion,
+  deleteSurveyQuestion,
+  getSurveyResponses,
+  createSurveyResponse,
+  getPublicSurvey,
+  createPublicSurveyResponse,
+} from "./surveyApi";
+
 // vendor
 export const getVendors = async () =>
   axiosInstance.get("/vendors.json", {
@@ -240,11 +264,11 @@ export const getVendors = async () =>
     },
   });
 
-export const getVendorById= async (id) =>
+export const getVendorById = async (id) =>
   axiosInstance.get("/vendors.json", {
     params: {
       token: token,
-      "q[id_eq]":id,
+      "q[id_eq]": id,
     },
   });
 export const getVendorCategory = async () =>
@@ -357,7 +381,6 @@ export const getHelpDeskCategoriesSetup = async () =>
     },
   });
 
-
 //FitOut Checklist
 export const postFitoutChecklist = async (data) =>
   axiosInstance.post(`/snag_checklists.json`, data, {
@@ -422,7 +445,7 @@ export const getFitoutDocs = async () =>
     params: {
       token: token,
     },
-  });  
+  });
 export const getFitoutCategoriesSetupDetails = async (id) =>
   axiosInstance.get(`/fit_out_setup_categories/${id}.json`, {
     params: {
@@ -430,7 +453,7 @@ export const getFitoutCategoriesSetupDetails = async (id) =>
     },
   });
 
- export const postFitoutCategoriesSetup = async (data) =>
+export const postFitoutCategoriesSetup = async (data) =>
   axiosInstance.post(`/fit_out_setup_categories.json`, data, {
     params: {
       token: token,
@@ -450,28 +473,28 @@ export const destroyFitoutCategory = async (catId) =>
       token: token,
     },
   });
-  
- export const postFitOutSubCategoriesSetup = async (data) =>
+
+export const postFitOutSubCategoriesSetup = async (data) =>
   axiosInstance.post(`/fitout_subcategories.json`, data, {
     params: {
       token: token,
     },
   });
-  
-  export const getFitoutSubCategoriesSetupDetails = async (id) =>
+
+export const getFitoutSubCategoriesSetupDetails = async (id) =>
   axiosInstance.get(`/fitout_subcategories/${id}.json`, {
     params: {
       token: token,
     },
   });
 
-  export const getFitoutStatusSetup = async () =>
+export const getFitoutStatusSetup = async () =>
   axiosInstance.get(`/fitout_statuses.json`, {
     params: {
       token: getToken(),
     },
   });
-  export const getFitOutStatus = async (id) =>
+export const getFitOutStatus = async (id) =>
   axiosInstance.get(`/fitout_statuses/${id}.json`, {
     params: {
       token: token,
@@ -484,26 +507,26 @@ export const editFitOutStatus = async (id, data) =>
       token: token,
     },
   });
-  export const postFitOutStatus = async (data) =>
+export const postFitOutStatus = async (data) =>
   axiosInstance.post(`/fitout_statuses.json`, data, {
     params: {
       token: token,
     },
   });
-  export const getFitoutSubCategoriesSetup = async () =>
+export const getFitoutSubCategoriesSetup = async () =>
   axiosInstance.get(`/fitout_subcategories.json`, {
     params: {
       token: token,
     },
   });
-  export const getAllVendors = async () =>
+export const getAllVendors = async () =>
   axiosInstance.get("/vendors/all_vendors.json", {
     params: {
       token: token,
     },
   });
 
-  export const postSnagAnswer = async (data) =>
+export const postSnagAnswer = async (data) =>
   axiosInstance.post(`/snag_answers.json`, data, {
     params: {
       token: getToken(),
@@ -516,7 +539,7 @@ export const getSnagAnswer = async (data) =>
       token: token,
     },
   });
-  export const getSnagChecklistByCategory = async (categoryId) => {
+export const getSnagChecklistByCategory = async (categoryId) => {
   return axiosInstance.get("/snag_checklists.json", {
     params: {
       token: getToken(),
@@ -656,20 +679,15 @@ export const getHelpDeskStatusDetailsSetup = async (id) =>
       params: {
         token: token,
       },
-    }
+    },
   );
 export const editHelpDeskStatusDetailsSetup = async (id, data) =>
-  axiosInstance.patch(
-    `/pms/admin/modify_complaint_status/${id}.json`,
-    data,
-    {
-      params: {
-        token: token,
-      },
-    }
-  );
+  axiosInstance.patch(`/pms/admin/modify_complaint_status/${id}.json`, data, {
+    params: {
+      token: token,
+    },
+  });
 
-  
 export const postHelpDeskStatusSetup = async (data) =>
   axiosInstance.post(`/pms/admin/create_complaint_statuses.json`, data, {
     params: {
@@ -691,16 +709,16 @@ export const getAdminComplaints = async (
   });
 
 // export const getAdminExport = async (filters = {}) =>
-  // axiosInstance.get(
-  //   "/pms/admin/complaints/export_complaints.xlsx",
-  //   {
-  //     params: {
-  //       token: token,
-  //       ...filters, // 🔥 THIS WAS MISSING
-  //     },
-  //     responseType: "blob",
-  //   }
-  // );
+// axiosInstance.get(
+//   "/pms/admin/complaints/export_complaints.xlsx",
+//   {
+//     params: {
+//       token: token,
+//       ...filters, // 🔥 THIS WAS MISSING
+//     },
+//     responseType: "blob",
+//   }
+// );
 
 export const getAdminExport = async (searchValue) =>
   axiosInstance.get("/pms/admin/complaints/export_complaints.xlsx", {
@@ -711,9 +729,6 @@ export const getAdminExport = async (searchValue) =>
     responseType: "blob",
   });
 
-
-
-
 export const getCARItems = async (ticketId) =>
   axiosInstance.get(
     `/ticket_items.json?items=true&q[ticket_id_eq]=${ticketId}`,
@@ -721,20 +736,18 @@ export const getCARItems = async (ticketId) =>
       params: {
         token: token,
       },
-    }
+    },
   );
 
 // perPage
 
-export const getAdminPerPageComplaints = async (page, perPage,search) =>
+export const getAdminPerPageComplaints = async (page, perPage, search) =>
   axiosInstance.get(`/pms/admin/complaints.json`, {
     params: {
       token: token,
       per_page: perPage,
       page: page,
       search: search,
-      
-      
     },
   });
 
@@ -805,7 +818,7 @@ export const getFacitilitySetupId = async (id) =>
     },
   });
 
-  export const postFacitilitySetup = async (data) =>
+export const postFacitilitySetup = async (data) =>
   axiosInstance.post(`/amenities.json`, data, {
     params: {
       token: token,
@@ -819,14 +832,14 @@ export const updateAmenityBook = async (id, data) =>
     },
   });
 
-  export const postPaymentBookings = async (data) =>
+export const postPaymentBookings = async (data) =>
   axiosInstance.post(`/payments.json`, data, {
     params: {
       token: token,
     },
   });
 
-  export const getPaymentBookings = async () =>
+export const getPaymentBookings = async () =>
   axiosInstance.get(`/payments.json`, {
     params: {
       token: token,
@@ -864,7 +877,7 @@ export const postComplaintsDetails = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -876,7 +889,7 @@ export const editComplaintsDetails = async (data) => {
   try {
     const response = await axiosInstance.post(
       `/complaint_logs.json?token=${token}`,
-      data
+      data,
     );
     return response.data;
   } catch (error) {
@@ -900,18 +913,20 @@ export const resetPassword = async (data) =>
 //   })
 // }
 
-export const getStaffCount = async () =>
+export const getStaffCount = async (siteId) =>
   axiosInstance.get("/staffs/get_staffs_count.json", {
-      params: {
-      token:token,
-      }
-      });
+    params: {
+      token: getItemInLocalStorage("TOKEN"),
+      ...(siteId && { site_id: siteId }),
+    },
+  });
 
-export const getRegisteredVehicles = async () =>
+export const getRegisteredVehicleDashboard = async (siteId) =>
   axiosInstance.get("/registered_vehicles/get_dashboard_count.json", {
     params: {
-      token:token,
-      },
+      token: getItemInLocalStorage("TOKEN"),
+      ...(siteId && { site_id: siteId }),
+    },
   });
 
 export const getTotalAssetCount = async (start_date) =>
@@ -921,7 +936,6 @@ export const getTotalAssetCount = async (start_date) =>
       start_date: start_date,
     },
   });
-
 
 export const getAssetGroups = async () =>
   axiosInstance.get("/asset_groups.json?q[group_for_eq]=asset", {
@@ -949,7 +963,7 @@ export const getParentAsset = async (id) =>
       params: {
         token: token,
       },
-    }
+    },
   );
 
 export const getAssetSubGroups = async (groupId) => {
@@ -1134,7 +1148,7 @@ export const getAssociationList = async (checklistId) =>
       params: {
         token: token,
       },
-    }
+    },
   );
 
 export const getChecklistDetails = async (id) =>
@@ -1171,9 +1185,6 @@ export const deleteServiceAssociation = async (activity_id) =>
       token: token,
     },
   });
-
-
-  
 
 export const getFacitilitySetup = async () => {
   try {
@@ -1217,7 +1228,7 @@ export const getFacitilitySetup = async () => {
 
 export const getAmenitiesBookingById = (id) => {
   return axiosInstance.get(`/amenity_bookings/${id}.json`, {
-    params: { token }
+    params: { token },
   });
 };
 
@@ -1229,7 +1240,6 @@ export const getAmenitiesBookingById = (id) => {
 //     },
 //   });
 // };
-
 
 export const getFacilitySlots = async (facilityId, selectedDate) =>
   axiosInstance.get(`/slots/available.json`, {
@@ -1272,7 +1282,7 @@ export const updateActivity = async (id, data) =>
 export const getRoutineTask = async (
   startDate = null,
   endDate = null,
-  status = null
+  status = null,
 ) => {
   const params = {
     token: token,
@@ -1297,7 +1307,7 @@ export const getRoutineTask = async (
 export const getRoutineTaskStatus = async (
   status = null,
   startDate = null,
-  endDate = null
+  endDate = null,
 ) => {
   const token = localStorage.getItem("token");
 
@@ -1319,7 +1329,7 @@ export const getRoutineTaskStatus = async (
 
   const response = await axiosInstance.get(
     "/activities/routine_task_counts.json",
-    { params }
+    { params },
   );
 
   return response.data;
@@ -1339,7 +1349,7 @@ export const getRoutineTaskDetails = async (assetId, activityId) =>
       params: {
         token: token,
       },
-    }
+    },
   );
 export const getScheduleDetails = async (sId, activityId) =>
   axiosInstance.get(
@@ -1348,7 +1358,7 @@ export const getScheduleDetails = async (sId, activityId) =>
       params: {
         token: token,
       },
-    }
+    },
   );
 
 // export const getAssetPPMActivityDetails = async (assetId) =>
@@ -1367,19 +1377,23 @@ export const getAssetPPMs = async (assetId) =>
       params: {
         token: token,
       },
-    }
+    },
   );
 
-export const getSoftServiceStatus = async (data, startDate = null, endDate = null) => {
+export const getSoftServiceStatus = async (
+  data,
+  startDate = null,
+  endDate = null,
+) => {
   let url = `/activities.json?q[soft_service_id_null]=0&q[status_eq]=${data}`;
-  
+
   if (startDate) {
     url += `&q[start_time_gteq]=${startDate}`;
   }
   if (endDate) {
     url += `&q[start_time_lteq]=${endDate}`;
   }
-  
+
   return axiosInstance.get(url, {
     params: {
       token: token,
@@ -1387,14 +1401,25 @@ export const getSoftServiceStatus = async (data, startDate = null, endDate = nul
   });
 };
 export const getPPMCalendar = async (startdate, enddate) =>
-  axiosInstance.get(
-    `/activities/calendar_data.json&q[checklist_ctype_eq]=ppm?startdate=${startdate}&enddate=${enddate}`,
-    {
-      params: {
-        token: token,
-      },
-    }
-  );
+  axiosInstance.get("/activities/calendar_data.json", {
+    params: {
+      token: token,
+      startdate,
+      enddate,
+      "q[checklist_ctype_eq]": "ppm",
+    },
+  });
+
+/** Fetch all calendar activities (PPM, routine, soft services) for a date range */
+export const getCalendarActivities = async (startdate, enddate, siteIds = null) =>
+  axiosInstance.get("/activities/calendar_data.json", {
+    params: {
+      token: token,
+      startdate,
+      enddate,
+      ...(siteIds && siteIds.length ? { site_ids: Array.isArray(siteIds) ? siteIds.join(",") : siteIds } : {}),
+    },
+  });
 
 export const postGRN = async (data) =>
   axiosInstance.post(`/grn_details.json`, data, {
@@ -1448,7 +1473,7 @@ export const getPPMDetails = async (assetId, activityId) =>
       params: {
         token: token,
       },
-    }
+    },
   );
 
 //Field sense
@@ -1581,7 +1606,7 @@ export const getFilterCabRequest = async (approve) =>
       params: {
         token: token,
       },
-    }
+    },
   );
 export const cabApproval = async (approve, data) =>
   axiosInstance.patch(`/cab_and_bus_requests/${approve}.json?`, data, {
@@ -1620,7 +1645,7 @@ export const getFilterTransportRequest = async (approve) =>
       params: {
         token: token,
       },
-    }
+    },
   );
 export const transportationApproval = async (approve, data) =>
   axiosInstance.patch(`/transport_requests/${approve}.json?`, data, {
@@ -1665,7 +1690,7 @@ export const getFilterTravellingAllowanceRequest = async (approve) =>
       params: {
         token: token,
       },
-    }
+    },
   );
 export const travellingAllowanceApproval = async (approve, data) =>
   axiosInstance.patch(
@@ -1675,7 +1700,7 @@ export const travellingAllowanceApproval = async (approve, data) =>
       params: {
         token: token,
       },
-    }
+    },
   );
 // ppm details
 export const getAssetReadingDetails = async (assetId) =>
@@ -1686,7 +1711,7 @@ export const getAssetReadingDetails = async (assetId) =>
       params: {
         token: token,
       },
-    }
+    },
   );
 export const postBusinesscard = async (data) =>
   axiosInstance.post("/business_cards.json", data, {
@@ -1732,7 +1757,7 @@ export const getDailyPickUpTransportationDetails = async (id) =>
       params: {
         token: token,
       },
-    }
+    },
   );
 export const editDailyPickUpTransportationDetails = async (id, data) =>
   axiosInstance.put(`/transportations/${id}.json`, data, {
@@ -1747,7 +1772,7 @@ export const getTransportation = async (transportationType) =>
       params: {
         token: token,
       },
-    }
+    },
   );
 export const getSetupUsers = async () =>
   axiosInstance.get("/users.json", {
@@ -1762,13 +1787,9 @@ export const putSetupUser = async (userId, data) =>
     },
   });
 
-  export const addUserToAnotherFlat = async (payload) => {
-    axiosInstance.post("/users/add-flat", payload);
-  };
-
- 
-
-  
+export const addUserToAnotherFlat = async (payload) => {
+  axiosInstance.post("/users/add-flat", payload);
+};
 
 export const getHostList = async (siteId) =>
   axiosInstance.get(`/visitors/fetch_potential_hosts.json?site_id=${siteId}`, {
@@ -1816,7 +1837,7 @@ export const deleteQuestionChecklist = async (id, qid) =>
       params: {
         token: token,
       },
-    }
+    },
   );
 
 export const getVehicleParkingDetails = async (id) =>
@@ -1904,6 +1925,35 @@ export const getStaff = async () =>
       token: token,
     },
   });
+
+/** Fetch staff list for dashboard drill-down */
+export const getStaffDrill = async (siteId, limit = 100) =>
+  axiosInstance.get("/staffs.json", {
+    params: {
+      token: token,
+      per_page: limit,
+      page: 1,
+      ...(siteId && { site_id: siteId }),
+    },
+  });
+
+/** Staff currently in (punched in today, not punched out) */
+export const getStaffPunchedInToday = async (siteId) =>
+  axiosInstance.get("/staffs/punched_in_today.json", {
+    params: {
+      token: token,
+      ...(siteId && { site_id: siteId }),
+    },
+  });
+
+/** Staff punched out today */
+export const getStaffPunchedOutToday = async (siteId) =>
+  axiosInstance.get("/staffs/punched_out_today.json", {
+    params: {
+      token: token,
+      ...(siteId && { site_id: siteId }),
+    },
+  });
 export const getStaffDetails = async (id) =>
   axiosInstance.get(`/staffs/${id}.json`, {
     params: {
@@ -1936,7 +1986,7 @@ export const postVisitorCheckInCheckOut = async (visitorId, data) =>
       params: {
         token: token,
       },
-    }
+    },
   );
 
 export const sendMailToUsers = async (userId) =>
@@ -1948,7 +1998,7 @@ export const sendMailToUsers = async (userId) =>
 export const getAttendance = async (orgId, page) => {
   try {
     const response = await HrmsAuth.get(
-      `/employees/attendance-bulk?organization_id=${orgId}`
+      `/employees/attendance-bulk?organization_id=${orgId}`,
       // `/employees/attendance-bulk?organization_id=${orgId}`
       // {
       //   headers: {
@@ -2020,18 +2070,17 @@ export const verifyOtpToCheckIn = async (id, otp, mobile) => {
 //     }
 //   );
 
-
 export const updateEventEnableStatus = (id, enabled) =>
   axiosInstance.put(
     `/events/${id}.json`,
     {
       event: {
-        enabled: enabled,   // ✅ CHANGE HERE
+        enabled: enabled, // ✅ CHANGE HERE
       },
     },
     {
       params: { token },
-    }
+    },
   );
 
 export const getEvents = async () =>
@@ -2125,20 +2174,18 @@ export const postBroadCast = async (data) =>
     },
   });
 
-
 export const updateBroadcastEnableStatus = (id, status) =>
   axiosInstance.put(
     `/notices/${id}.json`,
     {
       notice: {
-        enabled: status
-      }
+        enabled: status,
+      },
     },
     {
-      params: { token }
-    }
+      params: { token },
+    },
   );
-    
 
 export const getBroadcastDetails = async (id) =>
   axiosInstance.get(`/notices/${id}.json`, {
@@ -2197,7 +2244,7 @@ export const getServicesTaskDetails = async (serviceId, activityId) =>
       params: {
         token: token,
       },
-    }
+    },
   );
 
 // export const postSoftServices = async (data) =>
@@ -2233,7 +2280,7 @@ export const getSoftserviceActivityDetails = async (id) =>
 export const deleteAssociationList = async (
   checklistId,
   assignedto,
-  serviceId
+  serviceId,
 ) =>
   axiosInstance.get(
     `/delete_user_activity.json?checklist_id=${checklistId}&assigned_to=${assignedto}&asset_id=&soft_service_id=${serviceId}`,
@@ -2241,7 +2288,7 @@ export const deleteAssociationList = async (
       params: {
         token: token,
       },
-    }
+    },
   );
 
 export const postServiceAssociation = async (data) =>
@@ -2306,15 +2353,12 @@ export const getGDNConsumingSetup = async () =>
     },
   });
 
-
 export const getGRNDetailById = async (id) =>
   axiosInstance.get(`/grn_details/${id}.json`, {
     params: {
       token: token,
     },
-  }); 
-
-
+  });
 
 export const getSiteOwnerDetails = async (id) =>
   axiosInstance.get(`/generic_infos/${id}.json`, {
@@ -2334,7 +2378,6 @@ export const postSiteOwner = async (data) =>
       token: token,
     },
   });
-
 
 // export const getGenericGroup = async () =>
 //   axiosInstance.get(`/generic_infos.json?q[info_type_eq]=soft_services`, {
@@ -2372,16 +2415,21 @@ export const getServicesPPMDetails = async (id) =>
   });
 
 //
-export const getServicesRoutineList = async (page, perpage, startDate = null, endDate = null) => {
+export const getServicesRoutineList = async (
+  page,
+  perpage,
+  startDate = null,
+  endDate = null,
+) => {
   let url = `/activities.json?q[soft_service_id_null]=0&per_page=${perpage}&page=${page}`;
-  
+
   if (startDate) {
     url += `&q[start_time_gteq]=${startDate}`;
   }
   if (endDate) {
     url += `&q[start_time_lteq]=${endDate}`;
   }
-  
+
   return axiosInstance.get(url, {
     params: {
       token: token,
@@ -2671,7 +2719,6 @@ export const createParkingConfiguration = (formData) => {
   });
 };
 
-
 export const editParkingConfiguration = async (id, data) =>
   axiosInstance.put(`/parking_configurations/${id}.json`, data, {
     params: {
@@ -2786,51 +2833,55 @@ export const getExpectedMobile = async (mobile) =>
       token: token,
     },
   });
-export const getExpectedVisitor = async (page = 1, perPage = 10, filters = {}) => {
+export const getExpectedVisitor = async (
+  page = 1,
+  perPage = 10,
+  filters = {},
+) => {
   const params = {
     token: token,
     page: page,
     per_page: perPage,
   };
-  
+
   // Add dynamic filters
   if (filters.visitorInOut) {
-    params['q[visitor_in_out_eq]'] = filters.visitorInOut;
+    params["q[visitor_in_out_eq]"] = filters.visitorInOut;
   }
   if (filters.userType) {
-    params['q[user_type_eq]'] = filters.userType;
+    params["q[user_type_eq]"] = filters.userType;
   }
   if (filters.userTypeNotEq) {
-    params['q[user_type_not_eq]'] = filters.userTypeNotEq;
+    params["q[user_type_not_eq]"] = filters.userTypeNotEq;
   }
-  
+
   // Add date range filters
   if (filters.dateFrom) {
-    params['q[expected_date_gteq]'] = filters.dateFrom; // greater than or equal
+    params["q[expected_date_gteq]"] = filters.dateFrom; // greater than or equal
   }
   if (filters.dateTo) {
-    params['q[expected_date_lteq]'] = filters.dateTo; // less than or equal
+    params["q[expected_date_lteq]"] = filters.dateTo; // less than or equal
   }
-  
+
   // Add mobile number filter
   if (filters.mobile) {
-    params['q[contact_no_cont]'] = filters.mobile; // contains
+    params["q[contact_no_cont]"] = filters.mobile; // contains
   }
-  
+
   // Add host filter (searching through host.user relationship)
   if (filters.host) {
-    params['q[host_user_firstname_or_host_user_lastname_cont]'] = filters.host;
+    params["q[host_user_firstname_or_host_user_lastname_cont]"] = filters.host;
   }
-  
+
   return axiosInstance.get(`/visitors.json`, { params });
 };
 
-export const getSelfRegistration = async () => 
+export const getSelfRegistration = async () =>
   axiosInstance.get(`/visitors/self_registartions.json`, {
     params: {
       token: token,
-    }
-  })
+    },
+  });
 
 export const getExpectedUserVisitor = async () =>
   axiosInstance.get(`/visitors/user.json`, {
@@ -2856,34 +2907,25 @@ export const createRegisteredVehicleVisit = async (payload) => {
   return axiosInstance.post(
     `/registered_vehicle.json`,
     {
-      registered_vehicle_visit: payload
+      registered_vehicle_visit: payload,
     },
     {
       params: { token },
       headers: {
-        "Content-Type": "application/json"
-      }
-    }
+        "Content-Type": "application/json",
+      },
+    },
   );
 };
 
-
-
- export const getVehicleHistory = async (params) => {
+export const getVehicleHistory = async (params) => {
   return axiosInstance.get(`/registered_vehicle_visits.json`, {
     params: {
       ...params,
-      token, 
+      token,
     },
   });
 };
-
-
-
-
-
-
-
 
 export const getRegisteredVehicle = async (params = {}) =>
   axiosInstance.get(`/registered_vehicles.json`, {
@@ -2892,7 +2934,6 @@ export const getRegisteredVehicle = async (params = {}) =>
       token,
     },
   });
-
 
 export const getRegisteredVehicleHistory = async (page = 1) =>
   axiosInstance.get(`/registered_vehicles_history.json`, {
@@ -2905,7 +2946,7 @@ export const getRegisteredVehicleDetails = async (id) =>
       token: token,
     },
   });
-  
+
 export const getPatrollingHistory = async () =>
   axiosInstance.get(`/patrolling_histories.json`, {
     params: {
@@ -2973,16 +3014,11 @@ export const editVisitorDetails = async (id, data) =>
 //     },
 //   });
 
-
-
-
-
-
 // export const postVisitorCategory = async (data) =>
 //   axiosInstance.post("/visitor_staff_categories.json", data, {
 //     params: {
 //       token: "e6fbf77f4fbb5a72c4150e495c961972f0f14059d8a6670f",
-//     }, 
+//     },
 //   });
 
 // export const deleteVisitorCategory = async (id) =>
@@ -2992,12 +3028,12 @@ export const editVisitorDetails = async (id, data) =>
 //     },
 //   });
 
-  // export const getVisitorSubCategory = () =>
-  // axiosInstance.get("/visitor_sub_categories.json", {
-  //   params: {
-  //     token: "140494b3f6c6431bc0964ee3458411ccaa10f7617b197b35",
-  //   },
-  // });
+// export const getVisitorSubCategory = () =>
+// axiosInstance.get("/visitor_sub_categories.json", {
+//   params: {
+//     token: "140494b3f6c6431bc0964ee3458411ccaa10f7617b197b35",
+//   },
+// });
 
 // export const deleteVisitorSubCategory = (id) =>
 //   axiosInstance.delete(`/visitor_sub_categories/${id}.json`, {
@@ -3074,7 +3110,6 @@ export const editVisitorSubCategory = async (id, data) =>
 //     }
 //   });
 // };
-
 
 // Visitor Alert Config APIs
 export const getVisitorAlertConfig = async () =>
@@ -3402,7 +3437,7 @@ export const getVibeCalendar = async (vibeUserId) => {
         headers: {
           "Content-Type": "application/json",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -3420,7 +3455,7 @@ export const getVibeUsers = async (vibeUserId) => {
         headers: {
           "Content-Type": "application/json",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -3436,7 +3471,7 @@ export const getVibeProjectUsers = async (vibeUserId, orgId, boardId) => {
         headers: {
           "Content-Type": "application/json",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -3452,7 +3487,7 @@ export const getProjectUsers = async (vibeUserId, vibeOrgId) => {
         headers: {
           "Content-Type": "application/json",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -3468,7 +3503,7 @@ export const getOutsideUsers = async (vibeUserId) => {
         headers: {
           "Content-Type": "application/json",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -3487,7 +3522,7 @@ export const postNewCalendarEvent = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -3505,7 +3540,7 @@ export const postCalendarTask = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -3525,7 +3560,7 @@ export const CreateVibeZoomMeeting = async (data) => {
         headers: {
           "Content-Type": "application/json",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -3542,7 +3577,7 @@ export const CreateVibeTeamMeeting = async (data) => {
         headers: {
           "Content-Type": "application/json",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -3559,7 +3594,7 @@ export const CreateVibeMeeting = async (data) => {
         headers: {
           "Content-Type": "application/json",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -3576,7 +3611,7 @@ export const UpdateVibeTask = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -3594,7 +3629,7 @@ export const getVibeMyBoardTask = async (userId) => {
         headers: {
           "Content-Type": "application/json",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -3611,7 +3646,7 @@ export const updateTaskStatus = async (data) => {
         headers: {
           "Content-Type": "application/json",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -3628,7 +3663,7 @@ export const getVibeTaskUserAssign = async (userId, taskId) => {
         headers: {
           "Content-Type": "application/json",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -3645,7 +3680,7 @@ export const deleteVibeTask = async (userId, taskId) => {
         headers: {
           "Content-Type": "application/json",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -3662,7 +3697,7 @@ export const getVibeTaskChecklist = async (userId, taskId) => {
         headers: {
           "Content-Type": "application/json",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -3679,7 +3714,7 @@ export const getVibeSubTaskChecklist = async (userId, taskId) => {
         headers: {
           "Content-Type": "application/json",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -3696,7 +3731,7 @@ export const getVibeActionAndChat = async (userId, taskId) => {
         headers: {
           "Content-Type": "application/json",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -3713,7 +3748,7 @@ export const getVibeTaskAttachment = async (userId, taskId) => {
         headers: {
           "Content-Type": "application/json",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -3730,7 +3765,7 @@ export const getVibeComments = async (userId, taskId) => {
         headers: {
           "Content-Type": "application/json",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -3747,7 +3782,7 @@ export const updateVibeAssignedUser = async (data) => {
         headers: {
           "Content-Type": "application/json",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -3764,7 +3799,7 @@ export const updateVibeUserTask = async (data) => {
         headers: {
           "Content-Type": "application/json",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -3781,7 +3816,7 @@ export const getVibeStatus = async (userId) => {
         headers: {
           "Content-Type": "application/json",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -3799,7 +3834,7 @@ export const getVibeMedia = async () => {
         headers: {
           "Content-Type": "application/json",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -3816,7 +3851,7 @@ export const postVibeTaskChat = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -3840,13 +3875,12 @@ export const postVibeBackground = async (data) => {
 export const getVibeBackground = async (userId) => {
   try {
     const response = await vibeAuth.get(
-      `/api/employee/get_bg_image/?user_id=${userId}`,
-
+      `/api/employee/get_bg_image.json`,
       {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -3863,7 +3897,7 @@ export const getVibeMeeting = async (userId) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -3881,7 +3915,7 @@ export const getVibeMeetingDetails = async (userId, meetingId) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -3898,7 +3932,7 @@ export const generateVibeMeetingSummary = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -3915,7 +3949,7 @@ export const requestVibeDueDate = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -3932,7 +3966,7 @@ export const updateVibeChecklistItems = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -3949,7 +3983,7 @@ export const postExistingInsPolicy = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -3966,7 +4000,7 @@ export const getPolicies = async (userId) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -3984,7 +4018,7 @@ export const updateSalesView = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4002,7 +4036,7 @@ export const postVibeChecklist = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4012,7 +4046,7 @@ export const postVibeChecklist = async (data) => {
 };
 export const deleteVibeTaskChecklist = async (
   taskDeleteIDCheckList,
-  user_id
+  user_id,
 ) => {
   try {
     const response = await vibeAuth.delete(
@@ -4022,7 +4056,7 @@ export const deleteVibeTaskChecklist = async (
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4039,7 +4073,7 @@ export const updateVibeSubTask = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4056,7 +4090,7 @@ export const updateVibeUserSubTask = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4073,7 +4107,7 @@ export const createVibeChecklistSubTask = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4090,7 +4124,7 @@ export const deleteVibeSubTask = async (taskId, userId) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4107,7 +4141,7 @@ export const createVibeChildSubTask = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4124,7 +4158,7 @@ export const updateSubTaskChild = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4141,7 +4175,7 @@ export const deleteTaskChecklistSubTaskChild = async (taskChildId, userId) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4158,7 +4192,7 @@ export const addVibeTaskAttachment = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4175,7 +4209,7 @@ export const deleteVibeTaskAttachment = async (attachmentId, taskId) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4205,7 +4239,7 @@ export const getVibeSocialData = async (userId) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4222,7 +4256,7 @@ export const getGmailAuthenticate = async (platform) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4239,7 +4273,7 @@ export const updateLoginGmailStatus = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4256,7 +4290,7 @@ export const addGmailAuthenticate = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4272,7 +4306,7 @@ export const getVibeUserBoard = async (userId) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4288,7 +4322,7 @@ export const deleteVibeUserBoard = async (boardId) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4305,7 +4339,7 @@ export const updateVibeBoardDate = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4322,7 +4356,7 @@ export const getVibeBoardTemplate = async (userID) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4340,7 +4374,7 @@ export const updateVibeBoardTemplate = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4356,7 +4390,7 @@ export const getVibeBoardData = async (boardId, userId) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4372,7 +4406,7 @@ export const getVibeBoardUser = async (userId, orgId, boardId) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4388,7 +4422,7 @@ export const getVibeCalenderEventsNew = async (userId) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4404,7 +4438,7 @@ export const deleteVibeCalenderTask = async (userId, category, id) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4421,7 +4455,7 @@ export const createVibeSchedule = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4438,7 +4472,7 @@ export const getVibeSchedule = async (userID, startDate, endDate) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4454,7 +4488,7 @@ export const getVibeTodaySlots = async (userId, fromDate, endDate) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4471,7 +4505,7 @@ export const postVisitorOTPApi = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4488,7 +4522,7 @@ export const postOutlookAuth = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4505,7 +4539,7 @@ export const getProjectTaskDependencies = async (userId, boardId) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4522,7 +4556,7 @@ export const getDependencies = async (userId) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4539,7 +4573,7 @@ export const getVibeUserBirthday = async (userId) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4556,7 +4590,7 @@ export const createVibeUserBirthday = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4573,7 +4607,7 @@ export const deleteVibeUserBirthday = async (userId, BdId) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4590,7 +4624,7 @@ export const postVibeTaskComment = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4607,7 +4641,7 @@ export const getVibeMainTaskDependencies = async (userId, taskId) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4624,7 +4658,7 @@ export const GetTaskBulk = async (userId, taskId) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4641,7 +4675,7 @@ export const GetVibeBoardTaskPermission = async (userId, boardId) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4658,7 +4692,7 @@ export const updateChecklistSequence = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4675,7 +4709,7 @@ export const Updatetaskchecklist = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4692,7 +4726,7 @@ export const UpdateTaskAction = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4709,7 +4743,7 @@ export const UpdateProjectSectionTitle = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4727,7 +4761,7 @@ export const deleteSection = async (taskDeleteIDSection, userId) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4744,7 +4778,7 @@ export const addBoardChecklist = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4762,7 +4796,7 @@ export const deleteProjectTask = async (taskId, userId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4779,7 +4813,7 @@ export const getProjectAssignedUser = async (userId, taskId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4796,7 +4830,7 @@ export const updateProjectAssigned = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4813,7 +4847,7 @@ export const postOutSiderInvite = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4829,7 +4863,7 @@ export const getTaskUsersAssign = async (userId, taskId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4845,7 +4879,7 @@ export const getBoardSection = async (userId, boardId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4861,7 +4895,7 @@ export const getDocAppointmentList = async (userId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4877,7 +4911,7 @@ export const getDocCancelCheck = async (userId, consultId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4894,7 +4928,7 @@ export const postDocCancellation = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4910,7 +4944,7 @@ export const getConsultationDetails = async (userId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4926,7 +4960,7 @@ export const getOrganizations = async (userId, orgId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4939,7 +4973,7 @@ export const getDoctors = async (
   date,
   orgId,
   meetingMode,
-  branchId
+  branchId,
 ) => {
   try {
     const response = await vibeAuth.get(
@@ -4948,7 +4982,7 @@ export const getDoctors = async (
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4961,7 +4995,7 @@ export const getTimeSlot = async (
   date,
   orgId,
   meetingMode,
-  doctorId
+  doctorId,
 ) => {
   try {
     const response = await vibeAuth.get(
@@ -4970,7 +5004,7 @@ export const getTimeSlot = async (
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -4987,7 +5021,7 @@ export const postDocAppointment = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -5004,7 +5038,7 @@ export const sendBusinessCard = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -5018,7 +5052,7 @@ export const getStatusChanges = async (data) => {
   try {
     const response = await HrmsAuth.post(
       `/employee-bulk/manage-employee-status/`,
-      data
+      data,
     );
     return response.data;
   } catch (error) {
@@ -5100,7 +5134,7 @@ export const getMyOrganizationAddress = async (orgId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -5130,7 +5164,7 @@ export const editOrganizationAddress = async (addressId, data) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -5159,7 +5193,7 @@ export const getAllOrganizationGeoSettings = async (orgId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -5175,7 +5209,7 @@ export const getOrganizationGeoMasterData = async (geoId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -5192,7 +5226,7 @@ export const editOrganizationGeoSettings = async (geoId, data) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -5209,7 +5243,7 @@ export const postOrganizationGeoSettings = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -5226,7 +5260,7 @@ export const getMyOrganizationLocations = async (orgId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -5256,7 +5290,7 @@ export const getOrganizationLocation = async (locationId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -5273,7 +5307,7 @@ export const editOrganizationLocation = async (locationId, data) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -5289,7 +5323,7 @@ export const getMyOrgDepartments = async (orgId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -5319,7 +5353,7 @@ export const getMyHRMSAdmins = async (orgId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -5335,7 +5369,7 @@ export const getMyHRMSEmployeesAllData = async (orgId, page = 1) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -5346,7 +5380,7 @@ export const getMyHRMSEmployeesAllData = async (orgId, page = 1) => {
 export const getHrmsAllEmployeeData = async (orgId, page = 1) => {
   try {
     const response = await HrmsAuth.get(
-      `/updated-user-details/?organization_id=${orgId}&page=${page}`
+      `/updated-user-details/?organization_id=${orgId}&page=${page}`,
     );
     return response.data;
   } catch (error) {
@@ -5361,7 +5395,7 @@ export const getHrmsFilteredEmployeeData = async (
   status = "active",
   siteId = "",
   nameSearch = "",
-  idSearch = ""
+  idSearch = "",
 ) => {
   try {
     const params = new URLSearchParams();
@@ -5375,7 +5409,7 @@ export const getHrmsFilteredEmployeeData = async (
     if (idSearch) params.append("id", idSearch);
 
     const response = await HrmsAuth.get(
-      `/admin-site/employee-detailed-list/?${params.toString()}`
+      `/admin-site/employee-detailed-list/?${params.toString()}`,
     );
 
     return response.data;
@@ -5421,7 +5455,7 @@ export const getHrmsDepartmentDetails = async (deptId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -5438,7 +5472,7 @@ export const deleteHrmsDepartment = async (deptId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -5455,7 +5489,7 @@ export const editHrmsOrganizationDepartment = async (deptId, data) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -5472,7 +5506,7 @@ export const postCompanyHoliday = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -5489,7 +5523,7 @@ export const getMyBankAccounts = async (orgId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -5519,7 +5553,7 @@ export const getMyBankDetails = async (bankId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -5535,7 +5569,7 @@ export const deleteMyBankDetails = async (bankId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -5552,7 +5586,7 @@ export const editMyBankAccount = async (bankId, data) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -5570,7 +5604,7 @@ export const getManageAdmin = async (orgId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -5587,7 +5621,7 @@ export const getAdminAccess = async (orgId, empId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -5605,7 +5639,7 @@ export const getManageAdminDetails = async (adminId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -5622,7 +5656,7 @@ export const getUserSettingsIdDetails = async (adminId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -5639,7 +5673,7 @@ export const getUserSettingsList = async (pageNumber, search) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -5651,7 +5685,7 @@ export const editManageAdminDetails = async (adminId, data) => {
   try {
     const response = await HrmsAuth.put(
       `/organization/user-setting/administrator-setting/${adminId}/`,
-      data
+      data,
     );
     console.log(response.data);
     return response.data;
@@ -5669,7 +5703,7 @@ export const postManageAdmin = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -5685,7 +5719,7 @@ export const deleteManageAdmin = async (adminId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -5701,7 +5735,7 @@ export const getEmployeePermission = async (orgId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -5718,7 +5752,7 @@ export const editEmployeePermission = async (permissionId, data) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -5734,7 +5768,7 @@ export const getNewsEmployeePermission = async (orgId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -5751,7 +5785,7 @@ export const editNewsEmployeePermission = async (newsId, data) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -5767,7 +5801,7 @@ export const getOnBoardingGeneralSetting = async (orgId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -5784,7 +5818,7 @@ export const editOnBoardingGeneralSetting = async (settingId, data) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -5800,7 +5834,7 @@ export const getCommunicationTemplate = async (orgId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -5817,7 +5851,7 @@ export const postCommunicationTemplate = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -5848,7 +5882,7 @@ export const postEmployeeFamily = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -5865,7 +5899,7 @@ export const postEmployeeAddress = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -5896,7 +5930,7 @@ export const postEmployeePaymentInfo = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -5913,7 +5947,7 @@ export const getPaymentInfoDetails = async (paymentInfoId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -5931,7 +5965,7 @@ export const editPaymentInfoDetails = async (paymentInfoId, data) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -5947,7 +5981,7 @@ export const getEmployeePaymentInfo = async (empId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -5977,7 +6011,7 @@ export const editEmployeeStatutoryInfo = async (statId, data) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -5993,7 +6027,7 @@ export const getEmployeeStatutoryInfoDetails = async (empId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -6037,7 +6071,7 @@ export const getEmployeeFamilyDetails = async (empId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -6054,7 +6088,7 @@ export const editEmployeeFamilyDetails = async (familyId, data) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -6070,7 +6104,7 @@ export const getEmployeeAddressDetails = async (empId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -6087,7 +6121,7 @@ export const editEmployeeAddressDetails = async (addressId, data) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -6105,7 +6139,7 @@ export const postEmployeeEmploymentInfo = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -6121,7 +6155,7 @@ export const getCountriesList = async (orgId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -6138,7 +6172,7 @@ export const getCountryData = async (countryId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -6154,7 +6188,7 @@ export const getEmployeeRegularizationReq = async (orgId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -6166,7 +6200,7 @@ export const postRegularizationApproval = async (approvalId, data) => {
   try {
     const response = await HrmsAuth.patch(
       `/attendance/regularization/requests/${approvalId}/`,
-      data
+      data,
       // {
       //   headers: {
       //     "Content-Type": "multipart/form-data/",
@@ -6182,7 +6216,7 @@ export const postRegularizationApproval = async (approvalId, data) => {
 export const getRegularizationDetails = async (reqId) => {
   try {
     const response = await HrmsAuth.get(
-      `/attendance/regularization/requests/${reqId}/`
+      `/attendance/regularization/requests/${reqId}/`,
       // {
       //   headers: {
       //     "Content-Type": "multipart/form-data/",
@@ -6198,7 +6232,7 @@ export const getRegularizationDetails = async (reqId) => {
 export const getAttendanceRecord = async (orgId, page) => {
   try {
     const response = await HrmsAuth.get(
-      `/employees/attendance-bulk?organization_id=${orgId}&page=${page}`
+      `/employees/attendance-bulk?organization_id=${orgId}&page=${page}`,
       // `/employees/attendance-bulk?organization_id=${orgId}`
       // {
       //   headers: {
@@ -6229,7 +6263,7 @@ export const getAttendanceRecordFilter = async (orgId, siteId, page) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return res.data;
   } catch (error) {
@@ -6240,7 +6274,7 @@ export const getAttendanceRecordFilter = async (orgId, siteId, page) => {
 export const fetchByNumeric = async (orgId, associatedOrgId, numericValue) => {
   try {
     const response = await HrmsAuth.get(
-      `/employees/attendance-bulk?organization_id=${orgId}&associated_organization_id=${associatedOrgId}&id=${numericValue}`
+      `/employees/attendance-bulk?organization_id=${orgId}&associated_organization_id=${associatedOrgId}&id=${numericValue}`,
     );
     // if (!response.ok) throw new Error("Network response was not ok");
     return response.data;
@@ -6253,7 +6287,7 @@ export const fetchByNumeric = async (orgId, associatedOrgId, numericValue) => {
 export const fetchSiteDashboard = async (siteId) => {
   try {
     const res = await HrmsAuth.get(
-      `/associated/?associated_organization_id=${siteId}`
+      `/associated/?associated_organization_id=${siteId}`,
     );
     return res.data;
   } catch (error) {
@@ -6264,11 +6298,11 @@ export const fetchSiteDashboard = async (siteId) => {
 
 export const fetchByAssociatedOrganization = async (
   orgId,
-  associatedOrgValue
+  associatedOrgValue,
 ) => {
   try {
     const response = await HrmsAuth.get(
-      `/employees/attendance-bulk?organization_id=${orgId}&associated_organization_id=${associatedOrgValue}`
+      `/employees/attendance-bulk?organization_id=${orgId}&associated_organization_id=${associatedOrgValue}`,
     );
     // if (!response.ok) throw new Error("Network response was not ok");
     return response.data;
@@ -6282,8 +6316,8 @@ export const fetchByName = async (orgId, name) => {
   try {
     const response = await HrmsAuth.get(
       `/employees/attendance-bulk?organization_id=${orgId}&name=${encodeURIComponent(
-        name
-      )}`
+        name,
+      )}`,
     );
     // if (!response.ok) throw new Error("Network response was not ok");
     return response.data;
@@ -6296,7 +6330,7 @@ export const fetchByName = async (orgId, name) => {
 export const fetchById = async (orgId, id) => {
   try {
     const response = await HrmsAuth.get(
-      `/employees/attendance-bulk?organization_id=${orgId}&id=${id}`
+      `/employees/attendance-bulk?organization_id=${orgId}&id=${id}`,
     );
     // if (!response.ok) throw new Error("Network response was not ok");
     return response.data;
@@ -6327,7 +6361,7 @@ export const getLeaveCategory = async (orgId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -6343,7 +6377,7 @@ export const getEmployeeLeave = async (empId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -6359,7 +6393,7 @@ export const getLeaveSetting = async (orgId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -6415,7 +6449,7 @@ export const editLeaveCategoryDetails = async (categoryId, data) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -6445,7 +6479,7 @@ export const getLeaveApplications = async (orgId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -6479,7 +6513,7 @@ export const approveRejectMultipleRequest = async (data) => {
   try {
     const response = await HrmsAuth.post(
       `/leave-requests/approve-pending/`,
-      data
+      data,
     );
     return response.data;
   } catch (error) {
@@ -6495,7 +6529,7 @@ export const getLeaveApplicationDetails = async (applicationId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -6512,7 +6546,7 @@ export const editLeaveApplicationDetails = async (applicationId, data) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -6529,7 +6563,7 @@ export const getHRMSEmployeeID = async (vibeID) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -6545,7 +6579,7 @@ export const deleteLeaveApplication = async (applicationId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -6557,7 +6591,7 @@ export const postLeaveApplicationApproval = async (applicationId, data) => {
   try {
     const response = await HrmsAuth.post(
       `/leave/requests/status/${applicationId}/`,
-      data
+      data,
     );
     return response.data;
   } catch (error) {
@@ -6568,7 +6602,7 @@ export const postLeaveApplicationApproval = async (applicationId, data) => {
 export const getEmployeeEmploymentDetails = async (empId) => {
   try {
     const response = await HrmsAuth.get(
-      `/employment-information/?employee_id=${empId}`
+      `/employment-information/?employee_id=${empId}`,
     );
     return response.data;
   } catch (error) {
@@ -6580,7 +6614,7 @@ export const editEmployeeEmploymentDetails = async (employmentId, data) => {
   try {
     const response = await HrmsAuth.put(
       `/employment-information/${employmentId}/`,
-      data
+      data,
     );
     return response.data;
   } catch (error) {
@@ -6592,7 +6626,7 @@ export const editEmployeeEmploymentDetails = async (employmentId, data) => {
 export const GetHrmsHolidayDetails = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
-      `/organization/company-holidays?organization_id=${orgId}`
+      `/organization/company-holidays?organization_id=${orgId}`,
     );
     return response.data;
   } catch (error) {
@@ -6605,7 +6639,7 @@ export const AddHolidaysDetails = async (data) => {
   try {
     const response = await HrmsAuth.post(
       "/organization/company-holidays/",
-      data
+      data,
     );
     return response.data;
   } catch (error) {
@@ -6613,8 +6647,6 @@ export const AddHolidaysDetails = async (data) => {
     throw error;
   }
 };
-
-
 
 export const GetHrmsHolidayDetailsId = async (id) => {
   try {
@@ -6630,7 +6662,7 @@ export const UpdateHolidaysDetails = async (id, data) => {
   try {
     const response = await HrmsAuth.put(
       `/organization/company-holidays/${id}/`,
-      data
+      data,
     );
     return response.data;
   } catch (error) {
@@ -6642,7 +6674,7 @@ export const UpdateHolidaysDetails = async (id, data) => {
 export const handleDeletHoliday = async (Faid) => {
   try {
     const response = await HrmsAuth.delete(
-      `/organization/company-holidays/${Faid}/`
+      `/organization/company-holidays/${Faid}/`,
     );
     return response.data;
   } catch (error) {
@@ -6655,7 +6687,7 @@ export const handleDeletHoliday = async (Faid) => {
 export const getHrmsPayrollSlipDetails = async (templateId) => {
   try {
     const response = await HrmsAuth.get(
-      `/ctc-template-organization/${templateId}`
+      `/ctc-template-organization/${templateId}`,
     );
     return response.data;
   } catch (error) {
@@ -6667,7 +6699,7 @@ export const getHrmsPayrollSlipDetails = async (templateId) => {
 export const getPayrollGeneralSetting = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
-      `/payroll/general-settings/?organization_id=${orgId}`
+      `/payroll/general-settings/?organization_id=${orgId}`,
     );
     return response.data;
   } catch (error) {
@@ -6679,7 +6711,7 @@ export const editPayrollGeneralSetting = async (payrollId, data) => {
   try {
     const response = await HrmsAuth.put(
       `/payroll/general-settings/${payrollId}/`,
-      data
+      data,
     );
     return response.data;
   } catch (error) {
@@ -6690,7 +6722,7 @@ export const editPayrollGeneralSetting = async (payrollId, data) => {
 export const getPayrollGratuity = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
-      `/payroll/gratuity-settings/?organization_id=${orgId}`
+      `/payroll/gratuity-settings/?organization_id=${orgId}`,
     );
     return response.data;
   } catch (error) {
@@ -6702,7 +6734,7 @@ export const editPayrollGratuity = async (gratuityId, data) => {
   try {
     const response = await HrmsAuth.put(
       `/payroll/gratuity-settings/${gratuityId}/`,
-      data
+      data,
     );
     return response.data;
   } catch (error) {
@@ -6713,7 +6745,7 @@ export const editPayrollGratuity = async (gratuityId, data) => {
 export const getFixedAllowance = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
-      `/payroll/allowance/?organization_id=${orgId}`
+      `/payroll/allowance/?organization_id=${orgId}`,
     );
     return response.data;
   } catch (error) {
@@ -6762,11 +6794,11 @@ export const getHrmsFilteredAllowance = async (
   org_id,
   type,
   pageNumber,
-  search
+  search,
 ) => {
   try {
     const response = await HrmsAuth.get(
-      `/ctc-components/?organization_id=${org_id}&component_type=${type}&page=${pageNumber}&search=${search}`
+      `/ctc-components/?organization_id=${org_id}&component_type=${type}&page=${pageNumber}&search=${search}`,
     );
     return response.data;
   } catch (error) {
@@ -6777,7 +6809,7 @@ export const getHrmsFilteredAllowance = async (
 export const getHrmsFixedAllowance = async (org_id) => {
   try {
     const response = await HrmsAuth.get(
-      `/ctc-components/?organization_id=${org_id}`
+      `/ctc-components/?organization_id=${org_id}`,
     );
     return response.data;
   } catch (error) {
@@ -6827,7 +6859,7 @@ export const deleteHrmsFixedAllowance = async (FAid) => {
 export const getHrmsPayrolldetails = async (empid) => {
   try {
     const response = await HrmsAuth.get(
-      `/payrolls/?employee_id=${empid}&status=pending`
+      `/payrolls/?employee_id=${empid}&status=pending`,
     );
     return response.data;
   } catch (error) {
@@ -6869,7 +6901,7 @@ export const deleteCtcProfile = async (FDid) => {
 export const getHrmsFilteredDeduction = async (org_id, type, page, search) => {
   try {
     const response = await HrmsAuth.get(
-      `/ctc-deductions/?organization_id=${org_id}&deduction_type=${type}&page=${page}&search=${search}`
+      `/ctc-deductions/?organization_id=${org_id}&deduction_type=${type}&page=${page}&search=${search}`,
     );
     return response.data;
   } catch (error) {
@@ -6880,7 +6912,7 @@ export const getHrmsFilteredDeduction = async (org_id, type, page, search) => {
 export const getHrmsFixedDeduction = async (org_id) => {
   try {
     const response = await HrmsAuth.get(
-      `/ctc-deductions/?organization_id=${org_id}`
+      `/ctc-deductions/?organization_id=${org_id}`,
     );
     return response.data;
   } catch (error) {
@@ -6940,7 +6972,7 @@ export const createEmployeeProfile = async (data) => {
 export const getHrmsCtcFiltereTemplate = async (orgId, page, search, site) => {
   try {
     const response = await HrmsAuth.get(
-      `/ctc-template-organization/?organization_id=${orgId}&page=${page}&search=${search}&associated=${site}`
+      `/ctc-template-organization/?organization_id=${orgId}&page=${page}&search=${search}&associated=${site}`,
     );
     return response.data;
   } catch (error) {
@@ -6951,7 +6983,7 @@ export const getHrmsCtcFiltereTemplate = async (orgId, page, search, site) => {
 export const getHrmsCtcTemplate = async (orgId, siteId) => {
   try {
     const response = await HrmsAuth.get(
-      `/ctc-template-organization/?organization_id=${orgId}&associated=${siteId}`
+      `/ctc-template-organization/?organization_id=${orgId}&associated=${siteId}`,
     );
     return response.data;
   } catch (error) {
@@ -6981,7 +7013,7 @@ export const createHrmsCtcTemplate = async (data) => {
 export const deleteHrmsCtcTemplate = async (ctc_id) => {
   try {
     const response = await HrmsAuth.delete(
-      `/ctc-template-organization/${ctc_id}/`
+      `/ctc-template-organization/${ctc_id}/`,
     );
     return response.data;
   } catch (error) {
@@ -6993,7 +7025,7 @@ export const deleteHrmsCtcTemplate = async (ctc_id) => {
 export const getHrmsCtcTemplateonId = async (ctc_id) => {
   try {
     const response = await HrmsAuth.get(
-      `/ctc-template-organization/${ctc_id}/`
+      `/ctc-template-organization/${ctc_id}/`,
     );
     return response.data;
   } catch (error) {
@@ -7006,7 +7038,7 @@ export const updateHrmsCtcTemplate = async (ctc_id, data) => {
   try {
     const response = await HrmsAuth.patch(
       `/ctc-template-organization/${ctc_id}/`,
-      data
+      data,
     );
     return response.data;
   } catch (error) {
@@ -7018,7 +7050,7 @@ export const assignHrmsCtcTemplate = async (data) => {
   try {
     const response = await HrmsAuth.post(
       `/api/assign-ctc-template/site/`,
-      data
+      data,
     );
     return response.data;
   } catch (error) {
@@ -7030,7 +7062,7 @@ export const assignHrmsCtcTemplate = async (data) => {
 export const getFixedDeductions = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
-      `/payroll/deduction/?organization_id=${orgId}`
+      `/payroll/deduction/?organization_id=${orgId}`,
     );
     return response.data;
   } catch (error) {
@@ -7050,7 +7082,7 @@ export const postFixedDeductions = async (data) => {
 export const deleteFixedDeductions = async (deductionId) => {
   try {
     const response = await HrmsAuth.delete(
-      `/payroll/deduction/${deductionId}/`
+      `/payroll/deduction/${deductionId}/`,
     );
     return response.data;
   } catch (error) {
@@ -7071,7 +7103,7 @@ export const editFixedDeductionDetails = async (deductionId, data) => {
   try {
     const response = await HrmsAuth.put(
       `/payroll/deduction/${deductionId}/`,
-      data
+      data,
     );
     return response.data;
   } catch (error) {
@@ -7091,7 +7123,7 @@ export const postVariableAllowance = async (data) => {
 export const getVariableAllowance = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
-      `/payroll/variable-allowance/?organization_id=${orgId}`
+      `/payroll/variable-allowance/?organization_id=${orgId}`,
     );
     return response.data;
   } catch (error) {
@@ -7102,7 +7134,7 @@ export const getVariableAllowance = async (orgId) => {
 export const deleteVariableAllowance = async (variableId) => {
   try {
     const response = await HrmsAuth.delete(
-      `/payroll/variable-allowance/${variableId}/`
+      `/payroll/variable-allowance/${variableId}/`,
     );
     return response.data;
   } catch (error) {
@@ -7122,7 +7154,7 @@ export const postVariableDeduction = async (data) => {
 export const getVariableDeduction = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
-      `/payroll/variable-deduction/?organization_id=${orgId}`
+      `/payroll/variable-deduction/?organization_id=${orgId}`,
     );
     return response.data;
   } catch (error) {
@@ -7133,7 +7165,7 @@ export const getVariableDeduction = async (orgId) => {
 export const getOtherBenefits = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
-      `/payroll/benefit/?organization_id=${orgId}`
+      `/payroll/benefit/?organization_id=${orgId}`,
     );
     return response.data;
   } catch (error) {
@@ -7180,7 +7212,7 @@ export const editOtherBenefitDetails = async (benefitId, data) => {
 export const getPayrollLoanCategory = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
-      `/payroll/loan-category/?organization_id=${orgId}`
+      `/payroll/loan-category/?organization_id=${orgId}`,
     );
     return response.data;
   } catch (error) {
@@ -7209,7 +7241,7 @@ export const postPayrollLoanCategory = async (data) => {
 export const getPayrollPaySetting = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
-      `/payroll/payslip-settings/?organization_id=${orgId}`
+      `/payroll/payslip-settings/?organization_id=${orgId}`,
     );
     return response.data;
   } catch (error) {
@@ -7221,7 +7253,7 @@ export const editPayrollPaySetting = async (paySlipId, data) => {
   try {
     const response = await HrmsAuth.put(
       `/payroll/payslip-settings/${paySlipId}/`,
-      data
+      data,
     );
     return response.data;
   } catch (error) {
@@ -7232,7 +7264,7 @@ export const editPayrollPaySetting = async (paySlipId, data) => {
 export const getLeaveEncashment = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
-      `/payroll/leave-encashment-recovery/?organization_id=${orgId}`
+      `/payroll/leave-encashment-recovery/?organization_id=${orgId}`,
     );
     return response.data;
   } catch (error) {
@@ -7244,7 +7276,7 @@ export const editLeaveEncashment = async (enCashId, data) => {
   try {
     const response = await HrmsAuth.put(
       `/payroll/leave-encashment-recovery/${enCashId}/`,
-      data
+      data,
     );
     return response.data;
   } catch (error) {
@@ -7255,7 +7287,7 @@ export const editLeaveEncashment = async (enCashId, data) => {
 export const getNoticePeriodRecovery = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
-      `/payroll/notice-period-recovery/?organization_id=${orgId}`
+      `/payroll/notice-period-recovery/?organization_id=${orgId}`,
     );
     return response.data;
   } catch (error) {
@@ -7267,7 +7299,7 @@ export const editNoticePeriodRecovery = async (noticeId, data) => {
   try {
     const response = await HrmsAuth.put(
       `/payroll/notice-period-recovery/${noticeId}/`,
-      data
+      data,
     );
     return response.data;
   } catch (error) {
@@ -7278,7 +7310,7 @@ export const editNoticePeriodRecovery = async (noticeId, data) => {
 export const getInvestmentSetting = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
-      `/organization/investment-settings/?organization_id=${orgId}`
+      `/organization/investment-settings/?organization_id=${orgId}`,
     );
     return response.data;
   } catch (error) {
@@ -7290,7 +7322,7 @@ export const editInvestmentSetting = async (invId, data) => {
   try {
     const response = await HrmsAuth.put(
       `/organization/investment-settings/${invId}/`,
-      data
+      data,
     );
     return response.data;
   } catch (error) {
@@ -7303,7 +7335,7 @@ export const editInvestmentSetting = async (invId, data) => {
 export const fetchAllRoster = async (orgId) => {
   try {
     const res = await HrmsAuth.get(
-      `/roster/roster-shift/?organization_id=${orgId}`
+      `/roster/roster-shift/?organization_id=${orgId}`,
     );
     return res.data;
   } catch (error) {
@@ -7314,7 +7346,7 @@ export const fetchAllRoster = async (orgId) => {
 export const fetchByRoasterName = async (orgId, name) => {
   try {
     const response = await HrmsAuth.get(
-      `roster/roster-shift/?organization_id=${orgId}&name=${name}`
+      `roster/roster-shift/?organization_id=${orgId}&name=${name}`,
     );
     // if (!response.ok) throw new Error("Network response was not ok");
     return response.data;
@@ -7327,7 +7359,7 @@ export const fetchByRoasterName = async (orgId, name) => {
 export const fetchRoasterBySite = async (orgId, siteId, date) => {
   try {
     const res = await HrmsAuth.get(
-      `/roster/roster-shift/?organization_id=${orgId}&associated_organization_id=${siteId}&date=${date}`
+      `/roster/roster-shift/?organization_id=${orgId}&associated_organization_id=${siteId}&date=${date}`,
     );
     return response.data;
   } catch (error) {
@@ -7339,7 +7371,7 @@ export const fetchRoasterBySite = async (orgId, siteId, date) => {
 export const getRosterShift = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
-      `/roster/shift-master-data/?organization_id=${orgId}`
+      `/roster/shift-master-data/?organization_id=${orgId}`,
     );
     return response.data;
   } catch (error) {
@@ -7350,7 +7382,7 @@ export const getRosterShift = async (orgId) => {
 export const deleteRosterShift = async (shiftId) => {
   try {
     const response = await HrmsAuth.delete(
-      `/roster/shift-master-data/${shiftId}/`
+      `/roster/shift-master-data/${shiftId}/`,
     );
     return response.data;
   } catch (error) {
@@ -7389,7 +7421,7 @@ export const postRosterAssignBulk = async (data) => {
 export const getRosterShiftDetails = async (shiftId) => {
   try {
     const response = await HrmsAuth.get(
-      `/roster/shift-master-data/${shiftId}/`
+      `/roster/shift-master-data/${shiftId}/`,
     );
     return response.data;
   } catch (error) {
@@ -7401,7 +7433,7 @@ export const editRosterShiftDetails = async (shiftId, data) => {
   try {
     const response = await HrmsAuth.put(
       `/roster/shift-master-data/${shiftId}/`,
-      data
+      data,
     );
     return response.data;
   } catch (error) {
@@ -7412,7 +7444,7 @@ export const editRosterShiftDetails = async (shiftId, data) => {
 export const getRosterRecords = async (orgId, page) => {
   try {
     const response = await HrmsAuth.get(
-      `/roster/roster-shift-dashboard/?organization_id=${orgId}&page=${page}`
+      `/roster/roster-shift-dashboard/?organization_id=${orgId}&page=${page}`,
       // `/roster-shift-list/?organization_id=${orgId}`
     );
     return response.data;
@@ -7424,7 +7456,7 @@ export const getRosterRecords = async (orgId, page) => {
 export const getRosterRecordsFilter = async (orgId, siteId, page) => {
   try {
     const response = await HrmsAuth.get(
-      `/roster/roster-shift-dashboard/?organization_id=${orgId}&associated_organization_id=${siteId}&page=${page}`
+      `/roster/roster-shift-dashboard/?organization_id=${orgId}&associated_organization_id=${siteId}&page=${page}`,
       // `/roster-shift-list/?organization_id=${orgId}`
     );
     return response.data;
@@ -7455,7 +7487,7 @@ export const editRosterAssign = async (shiftId, data) => {
   try {
     const response = await HrmsAuth.patch(
       `/roster/roster-shift/${shiftId}/`,
-      data
+      data,
     );
     return response.data;
   } catch (error) {
@@ -7487,7 +7519,7 @@ export const postRosterRecord = async (data) => {
 export const getAttendanceGeneralSetting = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
-      `/attendance/attendance-general-settings/?organization_id=${orgId}`
+      `/attendance/attendance-general-settings/?organization_id=${orgId}`,
     );
     return response.data;
   } catch (error) {
@@ -7499,7 +7531,7 @@ export const editAttendanceGeneralSetting = async (settingId, data) => {
   try {
     const response = await HrmsAuth.put(
       `/attendance/attendance-general-settings/${settingId}/`,
-      data
+      data,
     );
     return response.data;
   } catch (error) {
@@ -7510,7 +7542,7 @@ export const editAttendanceGeneralSetting = async (settingId, data) => {
 export const getAttendanceRegularization = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
-      `/attendance/attendance-regularization-settings/?organization_id=${orgId}`
+      `/attendance/attendance-regularization-settings/?organization_id=${orgId}`,
     );
     return response.data;
   } catch (error) {
@@ -7522,7 +7554,7 @@ export const postAttendanceRegularization = async (data) => {
   try {
     const response = await HrmsAuth.post(
       `/attendance/attendance-regularization-settings/`,
-      data
+      data,
     );
     return response.data;
   } catch (error) {
@@ -7534,7 +7566,7 @@ export const approveRejectMultipleRegRequest = async (data) => {
   try {
     const response = await HrmsAuth.post(
       `/attendance/regularization-bulk/requests/`,
-      data
+      data,
     );
     return response.data;
   } catch (error) {
@@ -7545,7 +7577,7 @@ export const approveRejectMultipleRegRequest = async (data) => {
 export const getAttendanceRegularizationDetails = async (regReasonId) => {
   try {
     const response = await HrmsAuth.get(
-      `/attendance/attendance-regularization-settings/${regReasonId}/`
+      `/attendance/attendance-regularization-settings/${regReasonId}/`,
     );
     return response.data;
   } catch (error) {
@@ -7556,7 +7588,7 @@ export const getAttendanceRegularizationDetails = async (regReasonId) => {
 export const deleteAttendanceRegularizationDetails = async (regReasonId) => {
   try {
     const response = await HrmsAuth.delete(
-      `/attendance/attendance-regularization-settings/${regReasonId}/`
+      `/attendance/attendance-regularization-settings/${regReasonId}/`,
     );
     return response.data;
   } catch (error) {
@@ -7566,12 +7598,12 @@ export const deleteAttendanceRegularizationDetails = async (regReasonId) => {
 };
 export const editAttendanceRegularizationDetails = async (
   regReasonId,
-  data
+  data,
 ) => {
   try {
     const response = await HrmsAuth.put(
       `/attendance/attendance-regularization-settings/${regReasonId}/`,
-      data
+      data,
     );
     return response.data;
   } catch (error) {
@@ -7582,7 +7614,7 @@ export const editAttendanceRegularizationDetails = async (
 export const getCTCTemplate = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
-      `/payroll/ctc-template/?organization_id=${orgId}`
+      `/payroll/ctc-template/?organization_id=${orgId}`,
     );
     return response.data;
   } catch (error) {
@@ -7611,7 +7643,7 @@ export const createCTCTemplate = async (data) => {
 export const showCTCTemplates = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
-      `/template/create/?organization_id=${orgId}`
+      `/template/create/?organization_id=${orgId}`,
     );
     return response.data;
   } catch (error) {
@@ -7640,7 +7672,7 @@ export const editCTCTemplateDetails = async (tempId, data) => {
 export const getTaxAndStatSettingByTemplateId = async (templateId) => {
   try {
     const response = await HrmsAuth.get(
-      `/TaxAndStatutorySettings/?template_id=${templateId}`
+      `/TaxAndStatutorySettings/?template_id=${templateId}`,
     );
     return response.data;
   } catch (error) {
@@ -7653,7 +7685,7 @@ export const editCTCTemplate = async (tempId, data) => {
   try {
     const response = await HrmsAuth.put(
       `/payroll/ctc-template/${tempId}/`,
-      data
+      data,
     );
     return response.data;
   } catch (error) {
@@ -7682,7 +7714,7 @@ export const deleteNewCTCTemplate = async (tempId) => {
 export const getFlexiGeneralSettings = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
-      `/flexi-benefit/setting/?organization_id=${orgId}`
+      `/flexi-benefit/setting/?organization_id=${orgId}`,
     );
     return response.data;
   } catch (error) {
@@ -7694,7 +7726,7 @@ export const editFlexiGeneralSettings = async (genId, data) => {
   try {
     const response = await HrmsAuth.put(
       `/flexi-benefit/setting/${genId}`,
-      data
+      data,
     );
     return response.data;
   } catch (error) {
@@ -7705,7 +7737,7 @@ export const editFlexiGeneralSettings = async (genId, data) => {
 export const getFlexiBenefitCategory = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
-      `/flexi-benefit/categories/?organization_id=${orgId}`
+      `/flexi-benefit/categories/?organization_id=${orgId}`,
     );
     return response.data;
   } catch (error) {
@@ -7735,7 +7767,7 @@ export const editFlexiBenefitCategoryDetails = async (flexiId, data) => {
   try {
     const response = await HrmsAuth.put(
       `/flexi-benefit/categories/${flexiId}`,
-      data
+      data,
     );
     return response.data;
   } catch (error) {
@@ -7746,7 +7778,7 @@ export const editFlexiBenefitCategoryDetails = async (flexiId, data) => {
 export const deleteFlexiBenefitCategory = async (flexiId) => {
   try {
     const response = await HrmsAuth.delete(
-      `/flexi-benefit/categories/${flexiId}`
+      `/flexi-benefit/categories/${flexiId}`,
     );
     return response.data;
   } catch (error) {
@@ -7757,7 +7789,7 @@ export const deleteFlexiBenefitCategory = async (flexiId) => {
 export const getPerformanceGoal = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
-      `/performance/setting-goal/?organization_id=${orgId}`
+      `/performance/setting-goal/?organization_id=${orgId}`,
     );
     return response.data;
   } catch (error) {
@@ -7777,7 +7809,7 @@ export const postPerformanceGoal = async (data) => {
 export const deletePerformanceGoal = async (goalId) => {
   try {
     const response = await HrmsAuth.delete(
-      `/performance/setting-goal/${goalId}/`
+      `/performance/setting-goal/${goalId}/`,
     );
     return response.data;
   } catch (error) {
@@ -7798,7 +7830,7 @@ export const editPerformanceGoalDetails = async (goalId, data) => {
   try {
     const response = await HrmsAuth.put(
       `/performance/setting-goal/${goalId}/`,
-      data
+      data,
     );
     return response.data;
   } catch (error) {
@@ -7810,7 +7842,7 @@ export const editPerformanceGoalDetails = async (goalId, data) => {
 export const getPerformanceCompetency = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
-      `/performance/setting-competency/?organization_id=${orgId}`
+      `/performance/setting-competency/?organization_id=${orgId}`,
     );
     return response.data;
   } catch (error) {
@@ -7822,7 +7854,7 @@ export const postPerformanceCompetency = async (data) => {
   try {
     const response = await HrmsAuth.post(
       `/performance/setting-competency/`,
-      data
+      data,
     );
     return response.data;
   } catch (error) {
@@ -7833,7 +7865,7 @@ export const postPerformanceCompetency = async (data) => {
 export const deletePerformanceCompetency = async (compId) => {
   try {
     const response = await HrmsAuth.delete(
-      `/performance/setting-competency/${compId}/`
+      `/performance/setting-competency/${compId}/`,
     );
     return response.data;
   } catch (error) {
@@ -7844,7 +7876,7 @@ export const deletePerformanceCompetency = async (compId) => {
 export const getPerformanceCompetencyDetails = async (compId) => {
   try {
     const response = await HrmsAuth.get(
-      `/performance/setting-competency/${compId}/`
+      `/performance/setting-competency/${compId}/`,
     );
     return response.data;
   } catch (error) {
@@ -7856,7 +7888,7 @@ export const editPerformanceCompetencyDetails = async (compId, data) => {
   try {
     const response = await HrmsAuth.put(
       `/performance/setting-competency/${compId}/`,
-      data
+      data,
     );
     return response.data;
   } catch (error) {
@@ -7867,7 +7899,7 @@ export const editPerformanceCompetencyDetails = async (compId, data) => {
 export const getMilestoneType = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
-      `/organization/milestone-types/?organization_id=${orgId}`
+      `/organization/milestone-types/?organization_id=${orgId}`,
     );
     return response.data;
   } catch (error) {
@@ -7879,7 +7911,7 @@ export const postMilestoneType = async (data) => {
   try {
     const response = await HrmsAuth.post(
       `/organization/milestone-types/`,
-      data
+      data,
     );
     return response.data;
   } catch (error) {
@@ -7890,7 +7922,7 @@ export const postMilestoneType = async (data) => {
 export const deleteMilestoneType = async (typeId) => {
   try {
     const response = await HrmsAuth.delete(
-      `/organization/milestone-types/${typeId}/`
+      `/organization/milestone-types/${typeId}/`,
     );
     return response.data;
   } catch (error) {
@@ -7901,7 +7933,7 @@ export const deleteMilestoneType = async (typeId) => {
 export const getMilestoneTypeDetails = async (typeId) => {
   try {
     const response = await HrmsAuth.get(
-      `/organization/milestone-types/${typeId}/`
+      `/organization/milestone-types/${typeId}/`,
     );
     return response.data;
   } catch (error) {
@@ -7913,7 +7945,7 @@ export const editMilestoneTypeDetails = async (typeId, data) => {
   try {
     const response = await HrmsAuth.put(
       `/organization/milestone-types/${typeId}/`,
-      data
+      data,
     );
     return response.data;
   } catch (error) {
@@ -7926,7 +7958,7 @@ export const postCalendarMilestone = async (data) => {
   try {
     const response = await HrmsAuth.post(
       `/organization/calendar-milestones/`,
-      data
+      data,
     );
     return response.data;
   } catch (error) {
@@ -7937,7 +7969,7 @@ export const postCalendarMilestone = async (data) => {
 export const getCalendarMilestone = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
-      `/organization/calendar-milestones/?organization_id=${orgId}`
+      `/organization/calendar-milestones/?organization_id=${orgId}`,
     );
     return response.data;
   } catch (error) {
@@ -7948,7 +7980,7 @@ export const getCalendarMilestone = async (orgId) => {
 export const getCalendarMilestoneDetails = async (eventId) => {
   try {
     const response = await HrmsAuth.get(
-      `/organization/calendar-milestones/${eventId}/`
+      `/organization/calendar-milestones/${eventId}/`,
     );
     return response.data;
   } catch (error) {
@@ -7960,7 +7992,7 @@ export const editCalendarMilestoneDetails = async (eventId, data) => {
   try {
     const response = await HrmsAuth.put(
       `/organization/calendar-milestones/${eventId}/`,
-      data
+      data,
     );
     return response.data;
   } catch (error) {
@@ -7971,7 +8003,7 @@ export const editCalendarMilestoneDetails = async (eventId, data) => {
 export const deleteCalendarMilestone = async (eventId) => {
   try {
     const response = await HrmsAuth.delete(
-      `/organization/calendar-milestones/${eventId}/`
+      `/organization/calendar-milestones/${eventId}/`,
     );
     return response.data;
   } catch (error) {
@@ -7983,7 +8015,7 @@ export const postHeadOfCompany = async (data) => {
   try {
     const response = await HrmsAuth.post(
       `/organization/head-of-company/`,
-      data
+      data,
     );
     return response.data;
   } catch (error) {
@@ -7995,7 +8027,7 @@ export const postSalaryGeneralInfo = async (data) => {
   try {
     const response = await HrmsAuth.post(
       `/employee/salary/general-info/`,
-      data
+      data,
     );
     return response.data;
   } catch (error) {
@@ -8008,7 +8040,7 @@ export const postTaxStatutory = async (data) => {
   try {
     const response = await HrmsAuth.post(
       `/employee/salary/tax-statutory/`,
-      data
+      data,
     );
     return response.data;
   } catch (error) {
@@ -8021,7 +8053,7 @@ export const getEmployeeSalaryDetails = async (empId) => {
   try {
     const response = await HrmsAuth.get(
       `/employee/salary/general-info/?employee_id=${empId}`,
-      data
+      data,
     );
     return response.data;
   } catch (error) {
@@ -8042,7 +8074,7 @@ export const ChangeUserType = async () => {
 export const getDataChangeRequest = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
-      `/employee/submit-change-request/?organization_id=${orgId}`
+      `/employee/submit-change-request/?organization_id=${orgId}`,
     );
     return response.data;
   } catch (error) {
@@ -8053,7 +8085,7 @@ export const getDataChangeRequest = async (orgId) => {
 export const deleteDataChangeRequest = async (requestId) => {
   try {
     const response = await HrmsAuth.delete(
-      `/employee/submit-change-request/${requestId}/`
+      `/employee/submit-change-request/${requestId}/`,
     );
     return response.data;
   } catch (error) {
@@ -8064,7 +8096,7 @@ export const deleteDataChangeRequest = async (requestId) => {
 export const getDataChangeRequestDetails = async (requestId) => {
   try {
     const response = await HrmsAuth.get(
-      `/employee/submit-change-request/${requestId}/`
+      `/employee/submit-change-request/${requestId}/`,
     );
     return response.data;
   } catch (error) {
@@ -8084,7 +8116,7 @@ export const getUserDetails = async (empId) => {
 export const getEmployeeAsset = async (empId) => {
   try {
     const response = await HrmsAuth.get(
-      `/employee/assets/?employee_id=${empId}`
+      `/employee/assets/?employee_id=${empId}`,
     );
     return response.data;
   } catch (error) {
@@ -8114,7 +8146,7 @@ export const editEmployeeAssetDetails = async (empAssetId, data) => {
   try {
     const response = await HrmsAuth.put(
       `/employee/assets/${empAssetId}/`,
-      data
+      data,
     );
     return response.data;
   } catch (error) {
@@ -8134,7 +8166,7 @@ export const postEmployeeAsset = async (data) => {
 export const getCompanyAsset = async (empId) => {
   try {
     const response = await HrmsAuth.get(
-      `/employee/company-asset/?employee_id=${empId}`
+      `/employee/company-asset/?employee_id=${empId}`,
     );
     return response.data;
   } catch (error) {
@@ -8145,7 +8177,7 @@ export const getCompanyAsset = async (empId) => {
 export const getCompanyAssetDetails = async (comAssetId) => {
   try {
     const response = await HrmsAuth.get(
-      `/employee/company-asset/${comAssetId}/`
+      `/employee/company-asset/${comAssetId}/`,
     );
     return response.data;
   } catch (error) {
@@ -8157,7 +8189,7 @@ export const editCompanyAssetDetails = async (comAssetId, data) => {
   try {
     const response = await HrmsAuth.put(
       `/employee/company-asset/${comAssetId}/`,
-      data
+      data,
     );
     return response.data;
   } catch (error) {
@@ -8168,7 +8200,7 @@ export const editCompanyAssetDetails = async (comAssetId, data) => {
 export const deleteCompanyAsset = async (comAssetId) => {
   try {
     const response = await HrmsAuth.delete(
-      `/employee/company-asset/${comAssetId}/`
+      `/employee/company-asset/${comAssetId}/`,
     );
     return response.data;
   } catch (error) {
@@ -8188,7 +8220,7 @@ export const postCompanyAsset = async (data) => {
 export const getEmployeeDocs = async (empId) => {
   try {
     const response = await HrmsAuth.get(
-      `/employee/document/?employee_id=${empId}`
+      `/employee/document/?employee_id=${empId}`,
     );
     return response.data;
   } catch (error) {
@@ -8244,7 +8276,7 @@ export const getEmployeeLetters = async (orgId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -8288,7 +8320,7 @@ export const getTaxAndStatSetting = async (orgId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -8317,7 +8349,7 @@ export const getReportingSupervisors = async (deptId, orgId) => {
         // headers: {
         //   "Content-Type": "multipart/form-data/",
         // },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -8361,7 +8393,7 @@ export const getClientDashboard = async (id) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data; // Ensure it returns data
   } catch (error) {
@@ -8372,7 +8404,7 @@ export const getClientDashboard = async (id) => {
 export const getClientDashboardSummary = async (
   empId,
   pageNumber,
-  start_date
+  start_date,
 ) => {
   try {
     const response = await HrmsAuth.get(
@@ -8381,7 +8413,7 @@ export const getClientDashboardSummary = async (
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data; // Ensure it returns data
   } catch (error) {
@@ -8395,7 +8427,7 @@ export const downloadSummaryData = async (siteId, orgId, start_date) => {
       `/employee/attendance-report/download-excel/?start_date=${start_date}&end_date=${start_date}&organization_id=${orgId}&site_id=${siteId}`,
       {
         responseType: "blob", // Important for file download
-      }
+      },
     );
     return response;
   } catch (error) {
@@ -8409,7 +8441,7 @@ export const downloadAllEmployeeData = async (orgId) => {
       `/user-details/download?organization_id=${orgId}`,
       {
         responseType: "blob",
-      }
+      },
     );
     return response;
   } catch (error) {
@@ -8423,7 +8455,7 @@ export const downloadAllSiteData = async (empId, start_date) => {
       `/site-admin/attendance-all/employee-excel/?employee_id=${empId}&date=${start_date}`,
       {
         responseType: "blob", // Important for file download
-      }
+      },
     );
     return response;
   } catch (error) {
@@ -8440,7 +8472,7 @@ export const getAllSitesAttendance = async (empId, date, page, status) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response;
   } catch (error) {
@@ -8456,7 +8488,7 @@ export const getSiteWiseAttendanceData = async (siteId, date, page, status) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response;
   } catch (error) {
@@ -8473,13 +8505,13 @@ export const getAssociatedOrgDash = async (empId, date) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return res.data;
   } catch (error) {
     console.log(
       "Error fetching the associated organization dashboard :",
-      error
+      error,
     );
   }
 };
@@ -8492,13 +8524,13 @@ export const getClientRosterShift = async (orgId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return res.data;
   } catch (error) {
     console.log(
       "Error fetching the associated organization dashboard :",
-      error
+      error,
     );
   }
 };
@@ -8513,7 +8545,7 @@ export const updateNotificationStatus = async (notificationId) => {
   } catch (error) {
     console.error(
       "Error updating notification:",
-      error.response ? error.response.data : error
+      error.response ? error.response.data : error,
     );
   }
 };
@@ -8526,7 +8558,7 @@ export const getTotalHRMSEmployeeCount = async (orgId) => {
         // headers: {
         //   "Content-Type": "multipart/form-data/",
         // },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -8537,7 +8569,7 @@ export const getTotalHRMSEmployeeCount = async (orgId) => {
 export const getAllDepartmentCount = async (orgId) => {
   try {
     const res = await HrmsAuth.get(
-      `/associated/?associated_organization_id=${orgId}&department_id=all`
+      `/associated/?associated_organization_id=${orgId}&department_id=all`,
     );
     return res.data;
   } catch (error) {
@@ -8552,7 +8584,7 @@ export const getDepartmentCount = async (orgId) => {
         // headers: {
         //   "Content-Type": "multipart/form-data/",
         // },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -8568,7 +8600,7 @@ export const getLocationCount = async (orgId) => {
         // headers: {
         //   "Content-Type": "multipart/form-data/",
         // },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -8584,7 +8616,7 @@ export const getGenderCount = async (orgId) => {
         // headers: {
         //   "Content-Type": "multipart/form-data/",
         // },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -8600,7 +8632,7 @@ export const getDeviceRegistrationRequests = async (orgId) => {
         // headers: {
         //   "Content-Type": "multipart/form-data/",
         // },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -8617,7 +8649,7 @@ export const postRegistrationRequestApproval = async (data) => {
         // headers: {
         //   "Content-Type": "multipart/form-data/",
         // },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -8646,7 +8678,7 @@ export const getResignations = async (orgId) => {
         // headers: {
         //   "Content-Type": "multipart/form-data/",
         // },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -8689,7 +8721,7 @@ export const ResignationApproval = async (regId, data) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -8701,7 +8733,7 @@ export const putAdditionalResignationDetails = async (resignationId, data) => {
   try {
     const response = await HrmsAuth.put(
       `/api/admin/resignation/${resignationId}/`,
-      data
+      data,
       // {
       //   headers: {
       //     "Content-Type": "multipart/form-data/",
@@ -8717,7 +8749,7 @@ export const putAdditionalResignationDetails = async (resignationId, data) => {
 export const getAssociatedSites = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
-      `/associated/?organization_id=${orgId}`
+      `/associated/?organization_id=${orgId}`,
     );
     return response.data;
   } catch (error) {
@@ -8729,7 +8761,7 @@ export const getAssociatedSites = async (orgId) => {
 export const getAvailableSites = async (orgId) => {
   try {
     const response = await HrmsAuth.get(
-      `/associated/?organization_id=${orgId}`
+      `/associated/?organization_id=${orgId}`,
     );
     return response.data;
   } catch (error) {
@@ -8741,7 +8773,7 @@ export const getAvailableSites = async (orgId) => {
 export const getEmployeeAssociations = async (empId) => {
   try {
     const response = await HrmsAuth.get(
-      `/associated-organization/?employee_id=${empId}`
+      `/associated-organization/?employee_id=${empId}`,
     );
     return response.data;
   } catch (error) {
@@ -8774,11 +8806,11 @@ export const getSiteWiseSalarySlip = async (
   year,
   status,
   search,
-  page
+  page,
 ) => {
   try {
     const response = await HrmsAuth.get(
-      `/api/payroll/site-wise/${siteId}/?month=${month}&year=${year}&status=${status}&search=${search}&page=${page}`
+      `/api/payroll/site-wise/${siteId}/?month=${month}&year=${year}&status=${status}&search=${search}&page=${page}`,
     );
     return response.data;
   } catch (error) {
@@ -8799,7 +8831,7 @@ export const updateBulkPaymentStatus = async (data) => {
   try {
     const response = await HrmsAuth.patch(
       `/api/payroll/site-wise/update-payment/`,
-      data
+      data,
     );
     return response.data;
   } catch (error) {
@@ -8811,7 +8843,7 @@ export const updateBulkPaymentStatus = async (data) => {
 export const EmployeeHrmsLogs = async (orgId, empId) => {
   try {
     const response = await HrmsAuth.get(
-      `/password-reset-history/?organization_id=${orgId}&employee_id=${empId}`
+      `/password-reset-history/?organization_id=${orgId}&employee_id=${empId}`,
     );
     return response.data;
   } catch (error) {
@@ -8823,7 +8855,7 @@ export const updateEmployeeAssociations = async (associationId, data) => {
   try {
     const response = await HrmsAuth.patch(
       `/associated-organization/${associationId}/`,
-      data
+      data,
     );
     return response.data;
   } catch (error) {
@@ -8835,13 +8867,13 @@ export const updateEmployeeAssociations = async (associationId, data) => {
 export const getTotalAttendance = async (empId, date) => {
   try {
     const response = await HrmsAuth.get(
-      `associated-organization-dashboard/mutiple-site/?employee_id=${empId}&start_date=${date}`
+      `associated-organization-dashboard/mutiple-site/?employee_id=${empId}&start_date=${date}`,
     );
     return response.data;
   } catch (error) {
     console.log(
       "error fetching total attendance site wise using empId and date:",
-      error
+      error,
     );
     throw error;
   }
@@ -8884,7 +8916,7 @@ export const postAssociatedSites = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -8902,7 +8934,7 @@ export const getEmployeeAssociatedSites = async (empId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -8919,7 +8951,7 @@ export const getAssociatedSiteDetails = async (siteId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -8937,7 +8969,7 @@ export const putAssociatedSiteDetails = async (siteId, data) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -8954,7 +8986,7 @@ export const getEmployeeJobInfo = async (empId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -8971,7 +9003,7 @@ export const getEmployeeJobInfoDetails = async (infoId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -8989,7 +9021,7 @@ export const putEmployeeJobInfoDetails = async (infoId, data) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -9007,7 +9039,7 @@ export const postEmployeeJobInfo = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -9024,7 +9056,7 @@ export const getHrmsUserRole = async (orgId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -9041,7 +9073,7 @@ export const getHrmsUserRoleDetails = async (roleId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -9059,7 +9091,7 @@ export const putHrmsUserRoleDetails = async (roleId, data) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -9077,7 +9109,7 @@ export const postHrmsUserRole = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -9094,7 +9126,7 @@ export const getOrganizationTreeChart = async (orgId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -9111,7 +9143,7 @@ export const getApprovalAuthorities = async (orgId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -9132,7 +9164,7 @@ export const editApprovalAuthoritiesStatus = async (approverID, data) => {
   try {
     const response = await HrmsAuth.patch(
       `/approver-settings/${approverID}/`,
-      data
+      data,
 
       // {
       //   headers: {
@@ -9149,7 +9181,7 @@ export const editApprovalAuthoritiesStatus = async (approverID, data) => {
 export const getApprovalAuthoritiesDetail = async (approverId) => {
   try {
     const response = await HrmsAuth.get(
-      `/approver-settings/?approver_id=${approverId}`
+      `/approver-settings/?approver_id=${approverId}`,
       // {
       //   headers: {
       //     "Content-Type": "multipart/form-data/",
@@ -9172,7 +9204,7 @@ export const postCTCComponent = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -9192,7 +9224,7 @@ export const postRegularizationRequest = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -9203,7 +9235,7 @@ export const postRegularizationRequest = async (data) => {
 export const getSiteWiseEmployee = async (orgId, siteId) => {
   try {
     const response = await HrmsAuth.get(
-      `/associated-organization/?organization_id=${orgId}&site_id=${siteId}`
+      `/associated-organization/?organization_id=${orgId}&site_id=${siteId}`,
     );
     return response.data;
   } catch (error) {
@@ -9220,7 +9252,7 @@ export const getFullUser = async (orgId) => {
         params: {
           token: token,
         },
-      }
+      },
     );
     return res.data;
   } catch (error) {
@@ -9237,7 +9269,7 @@ export const getSiteWiseUserDetails = async (siteId) => {
         params: {
           token: token,
         },
-      }
+      },
     );
     return res.data;
   } catch (error) {
@@ -9262,7 +9294,7 @@ export const markEmployeeAttendance = async (data) => {
 export const getEmployeeAttendanceOfMonth = async (
   empId,
   startDate,
-  endDate
+  endDate,
 ) => {
   try {
     const response = await HrmsAuth.get(
@@ -9273,7 +9305,7 @@ export const getEmployeeAttendanceOfMonth = async (
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -9284,7 +9316,7 @@ export const getEmployeeAttendanceOfMonth = async (
 export const getEmployeeAttendanceOfToday = async (
   empId,
   startDate,
-  endDate
+  endDate,
 ) => {
   try {
     const response = await HrmsAuth.get(
@@ -9293,7 +9325,7 @@ export const getEmployeeAttendanceOfToday = async (
         headers: {
           "Content-Type": "application/json", // Fixed incorrect content type
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -9309,7 +9341,7 @@ export const getSiteWiseAttendance = async (siteId, date) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     // console.log(response.data)//
     return response.data;
@@ -9326,7 +9358,7 @@ export const getCountOfClientDashboard = async (empId, startDate) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -9345,7 +9377,7 @@ export const getCountOfClientDashboard = async (empId, startDate) => {
 export const getAssocaitedSitesAttendance = async (
   siteId,
   startDate,
-  endDate
+  endDate,
 ) => {
   try {
     const response = await HrmsAuth.get(
@@ -9354,7 +9386,7 @@ export const getAssocaitedSitesAttendance = async (
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -9372,7 +9404,7 @@ export const getEmployeeRoster = async (empId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -9389,7 +9421,7 @@ export const getApprovalNotifications = async (approverId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -9401,7 +9433,7 @@ export const postApproveOrRejectEmployee = async (notificationId, data) => {
   try {
     const response = await HrmsAuth.patch(
       `/approve-reject/${notificationId}/`,
-      data
+      data,
     );
     return response.data;
   } catch (error) {
@@ -9413,7 +9445,7 @@ export const getApprovedEmployees = async (approverId) => {
   try {
     const response = await HrmsAuth.get(
       `approval/approve-list/${approverId}/`,
-      data
+      data,
     );
     return response.data;
   } catch (error) {
@@ -9431,7 +9463,7 @@ export const hrmsEmployeeLogin = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -9449,7 +9481,7 @@ export const postUniformRequest = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -9465,7 +9497,7 @@ export const getUniformRequest = async (orgId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -9495,7 +9527,7 @@ export const postUniformApproval = async (approvalId, data) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -9512,7 +9544,7 @@ export const getEmployeeEsic = async (empId) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -9530,7 +9562,7 @@ export const getFamilyMember = async (id) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -9548,7 +9580,7 @@ export const postEsicCard = async (empId, data) => {
         headers: {
           "Content-Type": "multipart/form-data/",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -9568,13 +9600,13 @@ export const postFamilyEsic = async (data) => {
         headers: {
           "Content-Type": "multipart/form-data", // Correct Content-Type
         },
-      }
+      },
     );
     return response.data; // Return the server response
   } catch (error) {
     console.error(
       "Error posting request:",
-      error.response?.data || error.message
+      error.response?.data || error.message,
     );
     throw error; // Re-throw the error for further handling
   }
@@ -9702,7 +9734,7 @@ export const deleteOutbound = async (forumId) =>
 export const getSavedForum = async (forumId) => {
   try {
     const response = await axiosInstance.get(
-      `/forums/saved_forums.json?token=${token}`
+      `/forums/saved_forums.json?token=${token}`,
     );
     console.log("API Response:", response.data); // Log API data to verify structure
 
@@ -9751,7 +9783,7 @@ export const reportForum = async (forumId, requestBody) => {
   const token = localStorage.getItem("token"); // Assuming you are saving the token in localStorage
   return axiosInstance.post(
     `/forums/${forumId}/report.json?token=${token}`,
-    requestBody
+    requestBody,
   );
 };
 
@@ -9761,7 +9793,7 @@ export const getHiddenForums = async () =>
 
 export const hideForum = async (forumId) =>
   axiosInstance.post(
-    `/forums/${forumId}/hide.json?token=${token}`
+    `/forums/${forumId}/hide.json?token=${token}`,
     // {}
   );
 
@@ -9772,7 +9804,7 @@ export const unhideForum = async (forumId) =>
 export const likeForum = async (forumId) => {
   try {
     const res = await axiosInstance.post(
-      `forums/${forumId}/toggle_like.json?token=${token}`
+      `forums/${forumId}/toggle_like.json?token=${token}`,
     );
     return res.data;
   } catch (error) {
@@ -9790,7 +9822,7 @@ export const getComments = async (forumId) => {
         params: {
           token: token,
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -9814,7 +9846,7 @@ export const addComment = async (forumId, commentText, userId) => {
         params: {
           token: token,
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -9825,7 +9857,7 @@ export const addComment = async (forumId, commentText, userId) => {
 
 export const deleteComment = async (forumId, id) =>
   axiosInstance.delete(
-    `/forums/${forumId}/forum_comments/${id}.json?token=${token}`
+    `/forums/${forumId}/forum_comments/${id}.json?token=${token}`,
   );
 
 export const updateComment = async (forumId) =>
@@ -10103,7 +10135,7 @@ export const EditRestaurtantMenuDetails = async (id, resid, data) =>
       params: {
         token: token,
       },
-    }
+    },
   );
 export const postFB = async (data) =>
   axiosInstance.post("/food_and_beverages.json", data, {
@@ -10202,7 +10234,7 @@ export const getIncidentSubTags = async (tagType, parentId) =>
       params: {
         token: token,
       },
-    }
+    },
   );
 export const getIncidentSubTag = async (parentId) =>
   axiosInstance.get(`/incidence_tags.json?q[parent_id_eq]=${parentId}`, {
@@ -10234,12 +10266,12 @@ export const editIncidentCatDetails = async (id, data) =>
       token: token,
     },
   });
-export const getIncidents = async (page=1) =>
+export const getIncidents = async (page = 1) =>
   axiosInstance.get(`/incidents.json`, {
     params: {
       token: token,
-      page:page,
-      per_page:10,
+      page: page,
+      per_page: 10,
     },
   });
 export const getIncidentDetails = async (incidentId) =>
@@ -10289,7 +10321,7 @@ export const postVisitorInDevice = async (data) => {
 
     if (!response.ok) {
       throw new Error(
-        `POST request failed: ${response.status} ${response.statusText}`
+        `POST request failed: ${response.status} ${response.statusText}`,
       );
     }
 
@@ -10322,7 +10354,7 @@ export const postVisitorLogFromDevice = async (data) => {
 
     if (!response.ok) {
       throw new Error(
-        `POST request failed: ${response.status} ${response.statusText}`
+        `POST request failed: ${response.status} ${response.statusText}`,
       );
     }
 
@@ -10417,7 +10449,7 @@ export const getComplianceTree = async () =>
       headers: {
         "Content-Type": "multipart/form-data",
       },
-    }
+    },
   );
 export const postComplianceTasks = async (data) =>
   axiosInstance.post(`/compliance_tag_tasks.json`, data, {
@@ -10475,7 +10507,7 @@ export const getVendorComplianceList = async (assignedId) =>
       params: {
         token: token,
       },
-    }
+    },
   );
 export const getComplianceListDetails = async (taskId) =>
   axiosInstance.get(`/compliance_trackers/${taskId}.json`, {
@@ -10497,15 +10529,15 @@ export const getReviewerAssignments = async (complianceId, auditorId) =>
       params: {
         token: token,
       },
-    }
+    },
   );
 
 //cam billing
-export const getCamBillingData = async (page=1,perPage = 10) =>
+export const getCamBillingData = async (page = 1, perPage = 10) =>
   axiosInstance.get("/cam_bills.json", {
     params: {
       token: token,
-       page:page,
+      page: page,
       per_page: perPage,
     },
   });
@@ -10526,7 +10558,7 @@ export const gatCamBillFilter = async (
   status,
   startDate,
   endDate,
-  dueDate
+  dueDate,
 ) =>
   axiosInstance.get(
     `/cam_bills.json?q[building_id_eq]=${block}&q[floor_id_eq]=${floor_name}&q[unit_id_eq]=${flat}&q[payment_status_eq]=${status}&q[bill_period_start_date_eq]=${startDate}&q[bill_period_end_date_eq]=${endDate}&q[due_date_eq]=${dueDate}`,
@@ -10534,7 +10566,7 @@ export const gatCamBillFilter = async (
       params: {
         token: token,
       },
-    }
+    },
   );
 export const downloadCamBillImport = async () =>
   axiosInstance.get(`/cam_bills/download_sample.xlsx`, {
@@ -10657,7 +10689,7 @@ export const gatReceiptInvoiceFilter = async (
   flat,
   invoiceNumber,
   receiptNumber,
-  receiptDate
+  receiptDate,
 ) =>
   axiosInstance.get(
     `/invoice_receipts.json?q[building_id_eq]=${block}&q[floor_id_eq]=${floor_name}&q[unit_id_eq]=${flat}&q[invoice_number_eq]=${invoiceNumber}&q[receipt_number_eq]=${receiptNumber}&q[receipt_date_eq]=${receiptDate}`,
@@ -10665,7 +10697,7 @@ export const gatReceiptInvoiceFilter = async (
       params: {
         token: token,
       },
-    }
+    },
   );
 
 export const getInvoiceReceipt = async () =>
@@ -10750,9 +10782,6 @@ export const postReceiptNumber = async (data) =>
     },
   });
 
-
-
-  
 export const getOtherProject = () =>
   axiosInstance.get("/other_projects.json", {
     headers: {
@@ -10812,7 +10841,6 @@ export const uploadVisitorConsignment = (formData) => {
 //     },
 //   });
 
-
 // // =============================
 // // 🔥 Floors API
 // // =============================
@@ -10824,7 +10852,6 @@ export const uploadVisitorConsignment = (formData) => {
 //       "q[building_id_eq]": buildingId,
 //     },
 //   });
-
 
 // // =============================
 // // 🔥 Units API
@@ -10838,7 +10865,6 @@ export const uploadVisitorConsignment = (formData) => {
 //     },
 //   });
 
-
 // =============================
 // 🔥 Users API
 // =============================
@@ -10850,12 +10876,9 @@ export const getUsers = async () =>
     },
   });
 
-
 // =============================
-// 🔥 Pets API 
+// 🔥 Pets API
 // =============================
-
-
 
 export const getPetById = async (id) =>
   axiosInstance.get(`/pets/${id}.json`, {
@@ -10878,8 +10901,7 @@ export const updatePet = async (id, formData) =>
     },
   });
 
-
-  export const getPets = async (page = 1, perPage = 10) =>
+export const getPets = async (page = 1, perPage = 10) =>
   axiosInstance.get("/pets.json", {
     params: {
       token: token,
@@ -10888,27 +10910,23 @@ export const updatePet = async (id, formData) =>
     },
   });
 
+export const getPetCount = async () => {
+  const response = await axiosInstance.get("/pets/count.json", {
+    params: {
+      token: token,
+    },
+  });
+  return response.data;
+};
 
-  export const getPetCount = async () => {
-    const response = await axiosInstance.get("/pets/count.json", {
-      params: {
-        token: token,
-      },
-    });
-    return response.data;
-  };
-
-  export const deletePet = async (id) =>
+export const deletePet = async (id) =>
   axiosInstance.delete(`/pets/${id}.json`, {
     params: { token },
   });
 
+// QR Code download for Soft Services
 
-  // QR Code download for Soft Services
-
-
-
-  // Visitor Categories API
+// Visitor Categories API
 
 // export const getVisitorCategories = async (page = 1, perpage = 10) =>
 //   axiosInstance.get("/visitor_categories.json", {
@@ -10951,45 +10969,35 @@ export const deleteVisitorCategory = async (id) =>
 export const getVisitorCategories = async (page = 1, perpage = 100) =>
   axiosInstance.get("/visitor_categories.json", {
     params: {
-      token: token,  // token imported or retrieved from localStorage
+      token: token, // token imported or retrieved from localStorage
       Page: page,
       Per_Page: perpage,
-       t: Date.now(),
-      
+      t: Date.now(),
     },
   });
 
-  export const postVisitorCategory = async (formData, token) =>
-  axiosInstance.post(
-    "/visitor_categories.json",
-    formData,
-    {
-      params: { token },
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    }
-  );
+export const postVisitorCategory = async (formData, token) =>
+  axiosInstance.post("/visitor_categories.json", formData, {
+    params: { token },
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
 
-  // Edit Visitor Category
+// Edit Visitor Category
 export const editVisitorCategory = async (id, formData) =>
-  axiosInstance.put(
-    `/visitor_categories/${id}.json?token=${token}`,
-    formData,
-    {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    }
-  );
+  axiosInstance.put(`/visitor_categories/${id}.json?token=${token}`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
 
+// export const deleteVisitorCategory = async (id) =>
+// axiosInstance.delete(`/visitor_categories/${id}.json`, {
+//   params: { token: token },
+// });
 
-  // export const deleteVisitorCategory = async (id) =>
-  // axiosInstance.delete(`/visitor_categories/${id}.json`, {
-  //   params: { token: token },
-  // });
-
-  // Visitor Sub Categories API
+// Visitor Sub Categories API
 
 export const getVisitorSubCategories = async (page = 1, perpage = 10) =>
   axiosInstance.get("/visitor_sub_categories.json", {
@@ -11022,11 +11030,10 @@ export const updateVisitorSubCategory = async (id, formData) =>
       headers: {
         "Content-Type": "multipart/form-data",
       },
-    }
+    },
   );
 
-
-  export const deleteVisitorSubCategory = async (id) =>
+export const deleteVisitorSubCategory = async (id) =>
   axiosInstance.delete(`/visitor_sub_categories/${id}.json?token=${token}`);
 
 // aminities
@@ -11053,8 +11060,7 @@ export const updateVisitorSubCategory = async (id, formData) =>
 //     }
 //   );
 
-
-  // Staff Export API
+// Staff Export API
 export const exportStaffByDate = async (startDate, endDate) =>
   axiosInstance.get("/staffs/export_staffs.xlsx", {
     params: {
@@ -11062,28 +11068,13 @@ export const exportStaffByDate = async (startDate, endDate) =>
       start_date: startDate,
       end_date: endDate,
     },
-    responseType: "blob",   // 👈 VERY IMPORTANT (file download ke liye)
+    responseType: "blob", // 👈 VERY IMPORTANT (file download ke liye)
   });
 
-
-
-  axiosInstance.interceptors.request.use((config) => {
-  const siteId = getItemInLocalStorage("SITEID");
-
-  if (siteId) {
-    config.params = {
-      ...config.params,
-      site_id: siteId,
-    };
-  }
-
-  return config;
-});
-
+// site_id is NO longer applied by default - only add it explicitly when needed in API calls
 
 // export const deleteServiceAssociation = (id) =>
 //   axiosInstance.delete(`/service_associations/${id}.json`);
-
 
 //softservices
 
@@ -11098,8 +11089,6 @@ export const exportStaffByDate = async (startDate, endDate) =>
 //   });
 // };
 
-
-
 // export const getGenericSubGroup = async (groupId) =>
 //   axiosInstance.get("/generic_sub_infos.json", {
 //     params: {
@@ -11108,41 +11097,41 @@ export const exportStaffByDate = async (startDate, endDate) =>
 //     },
 //   });
 
-
-  // Example API function
+// Example API function
 export const getGenericGroupAssetChecklist = async () => {
-  return axiosInstance.get(`/generic_infos.json?q[info_type_eq]=asset_checklist&token=${token}`);
+  return axiosInstance.get(
+    `/generic_infos.json?q[info_type_eq]=asset_checklist&token=${token}`,
+  );
 };
-
 
 // API to get subgroups for asset checklist
 export const getGenericSubGroupAssetChecklist = async (groupId) => {
-  return axiosInstance.get(`/generic_sub_infos.json?q[generic_info_id_eq]=${groupId}&token=${token}`);
+  return axiosInstance.get(
+    `/generic_sub_infos.json?q[generic_info_id_eq]=${groupId}&token=${token}`,
+  );
 };
-
 
 // Get Groups
 export const getGenericGroup = async (siteId) =>
   axiosInstance.get("/generic_infos.json", {
     params: {
       "q[info_type_eq]": "soft_services",
-      "q[site_id_eq]": siteId,  // added siteId here
+      "q[site_id_eq]": siteId, // added siteId here
       token: token,
     },
   });
 
- export const getGenericSubGroup = async (groupId, siteId) => {
+export const getGenericSubGroup = async (groupId, siteId) => {
   return axiosInstance.get("/generic_sub_infos.json", {
     params: {
       "q[generic_info_id_eq]": groupId,
-      "q[site_id_eq]": siteId,  // add here too
+      "q[site_id_eq]": siteId, // add here too
       token: token,
     },
   });
 };
 
-
-  // Post Soft Service
+// Post Soft Service
 export const postSoftServices = async (formData) =>
   axiosInstance.post(`/soft_services.json?token=${token}`, formData, {
     headers: {
@@ -11150,7 +11139,7 @@ export const postSoftServices = async (formData) =>
     },
   });
 
-  // Update Soft Service
+// Update Soft Service
 export const updateSoftService = async (id, formData) =>
   axiosInstance.put(`/soft_services/${id}.json?token=${token}`, formData, {
     headers: {
@@ -11158,15 +11147,13 @@ export const updateSoftService = async (id, formData) =>
     },
   });
 
-
-  // Calendar Booking API
+// Calendar Booking API
 // export const getCalendarBookings = async () =>
 //   axiosInstance.get("/amenity_bookings/calender_booking.json", {
 //     params: {
 //       token: token,
 //     },
 //   });
-
 
 //calendar booking with date filter
 //   export const getCalendarBookings = async (
@@ -11198,10 +11185,9 @@ export const updateSoftService = async (id, formData) =>
 //     },
 //   });
 
+// Vehicle Setup API
 
-  // Vehicle Setup API
-
-  // Vehicle Setups API
+// Vehicle Setups API
 // export const getVehicleSetups = async (siteId = 47) =>
 //   axiosInstance.get("/vehicle_setups.json", {
 //     params: {
@@ -11210,8 +11196,7 @@ export const updateSoftService = async (id, formData) =>
 //     },
 //   });
 
-
-  // Amenity Bookings API
+// Amenity Bookings API
 // export const getAmenitiesBooking = async (page = 1, perPage = 10) =>
 //   axiosInstance.get("/amenity_bookings.json", {
 //     params: {
@@ -11221,8 +11206,6 @@ export const updateSoftService = async (id, formData) =>
 //       Per_Page: perPage,
 //     },
 //   });
-
-
 
 //calendar booking with date filter
 //   export const getCalendarBookings = async (
@@ -11242,7 +11225,7 @@ export const getCalendarBookings = async (
   booking_type,
   start_date,
   end_date,
-  site_id
+  site_id,
 ) =>
   axiosInstance.get("/amenity_bookings/calender_booking.json", {
     params: {
@@ -11254,10 +11237,9 @@ export const getCalendarBookings = async (
     },
   });
 
+// Vehicle Setup API
 
-  // Vehicle Setup API
-
-  // Vehicle Setups API
+// Vehicle Setups API
 export const getVehicleSetups = async (siteId = 47) =>
   axiosInstance.get("/vehicle_setups.json", {
     params: {
@@ -11266,8 +11248,7 @@ export const getVehicleSetups = async (siteId = 47) =>
     },
   });
 
-
-  // Amenity Bookings API
+// Amenity Bookings API
 // export const getAmenitiesBooking = async (page = 1, perPage = 10) =>
 //   axiosInstance.get("/amenity_bookings.json", {
 //     params: {
@@ -11278,14 +11259,13 @@ export const getVehicleSetups = async (siteId = 47) =>
 //     },
 //   });
 
-
 // Amenity Bookings API
 // Amenity Bookings API
 export const getAmenitiesBooking = async (
   page = 1,
   perPage = 10,
   siteId = 47,
-  search = ""
+  search = "",
 ) => {
   return axiosInstance.get("/amenity_bookings.json", {
     params: {
@@ -11299,7 +11279,7 @@ export const getAmenitiesBooking = async (
   });
 };
 
-  // Polls API
+// Polls API
 
 // 🔹 Get all polls with pagination
 export const getPolls = async () =>
@@ -11338,7 +11318,6 @@ export const updatePoll = async (id, formData) => {
   });
 };
 
-
 // Amenities API
 export const getAmenities = async (page = 1, perPage = 10, siteId = 47) =>
   axiosInstance.get("/amenities.json", {
@@ -11370,47 +11349,6 @@ export const updateAmenity = async (id, formData) =>
       "Content-Type": "multipart/form-data",
     },
   });
-
-
-  
-
-// Visitors API
-
-export const getVisitorById = async (id) =>
-  axiosInstance.get(`/visitors/${id}.json`, {
-    params: {
-      token: token,
-    },
-  });
-
-export const updateVisitor = async (id, formData) =>
-  axiosInstance.put(`/visitors/${id}.json?token=${token}`, formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
-
-export const postVisitor = async (formData) =>
-  axiosInstance.post(`/visitors.json?token=${token}`, formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
-
-
-
-
-
-
-
-
-
-  
-
-
-
- 
-
 
 //Vehicle Setup
 export const getVehicleSetup = async () =>
@@ -11451,7 +11389,7 @@ export const putVehicleSetup = async (id, data) =>
     },
   });
 
-  export const getComplianceTrackers = async () =>
+export const getComplianceTrackers = async () =>
   axiosInstance.get("/compliance_trackers.json", {
     params: { token },
   });
@@ -11462,18 +11400,38 @@ export const getVisitorDashboard = async () =>
       token: token,
     },
   });
-export const getVisitorAnalytics = async (start_date, end_date) =>
+export const getVisitorAnalytics = async (start_date, end_date, siteId) =>
   axiosInstance.get("/visitors/visitors_dashboard.json", {
     params: {
-      token: token,
+      token: getItemInLocalStorage("TOKEN"),
       ...(start_date && { start_date }),
       ...(end_date && { end_date }),
+      ...(siteId && { site_id: siteId }),
+    },
+  });
+export const getVisitorsDrill = async (filter, siteId, limit = 50) =>
+  axiosInstance.get("/visitors/visitors_drill.json", {
+    params: {
+      token: getItemInLocalStorage("TOKEN"),
+      filter,
+      limit,
+      ...(siteId && { site_id: siteId }),
+    },
+  });
+export const getComplaintsDrill = async (filterType, filterValue, siteId, limit = 50) =>
+  axiosInstance.get("/pms/admin/complaints/complaints_drill.json", {
+    params: {
+      token: getItemInLocalStorage("TOKEN"),
+      filter_type: filterType,
+      filter_value: filterValue,
+      limit,
+      ...(siteId && { site_id: siteId }),
     },
   });
 export const getExportVisitors = async (
   startDate = null,
   endDate = null,
-  filterType = null
+  filterType = null,
 ) => {
   const params = {
     token: token,
@@ -11495,6 +11453,6 @@ export const getExportVisitors = async (
       Pragma: "no-cache",
       Expires: "0",
     },
-    responseType: "blob", 
+    responseType: "blob",
   });
 };

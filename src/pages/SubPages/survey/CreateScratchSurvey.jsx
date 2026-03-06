@@ -1,9 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
+import { useNavigate, useParams } from "react-router-dom";
 import { FaTrash } from "react-icons/fa";
 import { BsPlusCircle } from "react-icons/bs";
 import { FiMinus, FiPlus } from "react-icons/fi";
+import toast from "react-hot-toast";
 import Navbar from "../../../components/Navbar";
+import { createSurvey, getSurvey, updateSurvey } from "../../../api";
 import AddStarField from "./AddStarField";
 import BestWorstScale from "./BestWorstScale";
 import FileUploadSurvey from "./FileUploadSurvey";
@@ -16,13 +19,87 @@ import AddMultipleTextBoxesField from "./AddMultipleTextBoxesField"
 // import AddMultipleTextBoxesField from "./AddMultipleTextboxesField";
 import AddDateTimeField from "./AddDateTimeField";
 
+// Map frontend question types to backend (rating, multiple_choice, single_choice, true_false, text, scale)
+const mapQuestionTypeToBackend = (frontendType) => {
+  const map = {
+    "multiple-choice": "single_choice",
+    checkBoxes: "multiple_choice",
+    star: "rating",
+    bestWorstScale: "scale",
+    singleTextBox: "text",
+    commentBox: "text",
+    dropdown: "single_choice",
+    slider: "scale",
+    fileUpload: "text",
+    matrixDropdown: "text",
+    matrixRatingScale: "scale",
+    ranking: "text",
+    multipleTextboxes: "text",
+    dateTime: "text",
+  };
+  return map[frontendType] || "text";
+};
+
+// Map backend question_type to frontend questionType
+const mapBackendToFrontendType = (backendType) => {
+  const map = {
+    single_choice: "multiple-choice",
+    multiple_choice: "checkBoxes",
+    rating: "star",
+    scale: "slider",
+    text: "commentBox",
+    true_false: "multiple-choice",
+  };
+  return map[backendType] || "commentBox";
+};
+
 function CreateScratchSurvey() {
+  const { id: surveyId } = useParams();
+  const navigate = useNavigate();
   const themeColor = useSelector((state) => state.theme.color);
+  const isEditMode = !!surveyId;
   const [surveyTitle, setSurveyTitle] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [description, setDescription] = useState("");
   const [questions, setQuestions] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(isEditMode);
+  const [isChecked, setIsChecked] = useState(false);
+  const [deletedQuestionIds, setDeletedQuestionIds] = useState([]);
+
+  useEffect(() => {
+    if (!surveyId) return;
+    setLoading(true);
+    setDeletedQuestionIds([]);
+    getSurvey(surveyId)
+      .then((res) => {
+        const s = res.data;
+        setSurveyTitle(s.survey_title || "");
+        setDescription(s.description || "");
+        setStartDate(s.start_date ? new Date(s.start_date).toISOString().split("T")[0] : "");
+        setEndDate(s.end_date ? new Date(s.end_date).toISOString().split("T")[0] : "");
+        const qs = (s.survey_questions || []).map((q) => {
+          const opts = q.options || [];
+          const labels = opts.map((o) => o.label || "");
+          const frontendType = mapBackendToFrontendType(q.question_type);
+          const useChoices = frontendType === "multiple-choice";
+          return {
+            _qId: q.id,
+            question: q.q_title || "",
+            questionType: frontendType,
+            choices: useChoices ? (labels.length ? labels : ["", ""]) : ["", "", "", ""],
+            checkBox: !useChoices && frontendType === "checkBoxes" ? (labels.length ? labels : ["", ""]) : ["", "", "", ""],
+            star: ["", ""],
+            _optionIds: opts.map((o) => o.id),
+            _deletedOptionIds: [],
+          };
+        });
+        setQuestions(qs);
+      })
+      .catch(() => toast.error("Failed to load survey"))
+      .finally(() => setLoading(false));
+  }, [surveyId]);
 
   const addQuestion = () => {
     const newQuestion = {
@@ -35,9 +112,21 @@ function CreateScratchSurvey() {
     setQuestions([...questions, newQuestion]);
   };
 
+  if (loading) {
+    return (
+      <div className="flex">
+        <Navbar />
+        <div className="w-full flex items-center justify-center min-h-[200px]">Loading survey…</div>
+      </div>
+    );
+  }
+
   const removeQuestion = (index) => {
-    const updatedQuestions = questions.filter((_, i) => i !== index);
-    setQuestions(updatedQuestions);
+    const q = questions[index];
+    if (q?._qId) {
+      setDeletedQuestionIds((prev) => [...prev, q._qId]);
+    }
+    setQuestions((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleQuestionChange = (e, index) => {
@@ -69,15 +158,19 @@ function CreateScratchSurvey() {
 
   const removeChoice = (questionIndex, choiceIndex) => {
     const updatedQuestions = [...questions];
-    if (updatedQuestions[questionIndex].choices.length > 1) {
-      updatedQuestions[questionIndex].choices = updatedQuestions[
-        questionIndex
-      ].choices.filter((_, i) => i !== choiceIndex);
+    const q = updatedQuestions[questionIndex];
+    if (q.choices.length > 1) {
+      const removedOptId = q._optionIds?.[choiceIndex];
+      if (removedOptId) {
+        q._deletedOptionIds = [...(q._deletedOptionIds || []), removedOptId];
+      }
+      q.choices = q.choices.filter((_, i) => i !== choiceIndex);
+      if (q._optionIds && q._optionIds.length > choiceIndex) {
+        q._optionIds = q._optionIds.filter((_, i) => i !== choiceIndex);
+      }
       setQuestions(updatedQuestions);
     }
   };
-
-  const [isChecked, setIsChecked] = useState(false);
 
   // Handle checkbox change
   const handleCheckboxChange = () => {
@@ -98,11 +191,93 @@ function CreateScratchSurvey() {
 
   const removeCheckBox = (questionIndex, checkBoxIndex) => {
     const updatedQuestions = [...questions];
-    if (updatedQuestions[questionIndex].checkBox.length > 1) {
-      updatedQuestions[questionIndex].checkBox = updatedQuestions[
-        questionIndex
-      ].checkBox.filter((_, i) => i !== checkBoxIndex);
+    const q = updatedQuestions[questionIndex];
+    if (q.checkBox.length > 1) {
+      const removedOptId = q._optionIds?.[checkBoxIndex];
+      if (removedOptId) {
+        q._deletedOptionIds = [...(q._deletedOptionIds || []), removedOptId];
+      }
+      q.checkBox = q.checkBox.filter((_, i) => i !== checkBoxIndex);
+      if (q._optionIds && q._optionIds.length > checkBoxIndex) {
+        q._optionIds = q._optionIds.filter((_, i) => i !== checkBoxIndex);
+      }
       setQuestions(updatedQuestions);
+    }
+  };
+
+  const buildOptions = (q) => {
+    const backendType = mapQuestionTypeToBackend(q.questionType);
+    let labels = [];
+    if (backendType === "single_choice" || backendType === "multiple_choice") {
+      if (q.questionType === "checkBoxes") labels = (q.checkBox || []).filter(Boolean);
+      else labels = (q.choices || []).filter(Boolean);
+    }
+    const optionIds = q._optionIds || [];
+    const kept = labels.map((label, i) => {
+      const opt = { label, position: i + 1 };
+      if (optionIds[i]) opt.id = optionIds[i];
+      return opt;
+    });
+    const destroyed = (q._deletedOptionIds || []).map((id) => ({ id, _destroy: true }));
+    return [...kept, ...destroyed];
+  };
+
+  const handleSubmit = async (e) => {
+    e?.preventDefault?.();
+    if (!surveyTitle.trim()) {
+      toast.error("Please enter a survey title.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const keptQuestions = questions
+        .map((q, index) => {
+          if (!q.question?.trim()) return null;
+          const question_type = mapQuestionTypeToBackend(q.questionType);
+          const options = buildOptions(q);
+          const item = {
+            q_title: q.question.trim(),
+            question_type,
+            position: index + 1,
+            required: false,
+            min_value: question_type === "scale" ? 0 : null,
+            max_value: question_type === "scale" ? 10 : null,
+            ...(options.length ? { options } : {}),
+          };
+          if (q._qId) item.id = q._qId;
+          return item;
+        })
+        .filter(Boolean);
+      const destroyedQuestions = (isEditMode ? deletedQuestionIds : []).map((id) => ({ id, _destroy: true }));
+      const survey_questions = [...keptQuestions, ...destroyedQuestions];
+
+      const payload = {
+        survey: {
+          survey_title: surveyTitle.trim(),
+          description: description.trim() || null,
+          start_date: startDate || null,
+          end_date: endDate || null,
+          ...(isEditMode ? {} : { status: "draft" }),
+          survey_questions,
+        },
+      };
+
+      if (isEditMode) {
+        await updateSurvey(surveyId, payload);
+        toast.success("Survey updated.");
+        navigate(`/admin/survey-details/${surveyId}`);
+      } else {
+        const res = await createSurvey(payload);
+        const id = res.data?.id;
+        toast.success("Survey created successfully.");
+        if (id) navigate(`/admin/survey-details/${id}`);
+        else navigate("/admin/survey");
+      }
+    } catch (err) {
+      const msg = err.response?.data?.message || err.response?.data?.errors || err.message;
+      toast.error(Array.isArray(msg) ? msg.join(", ") : msg || (isEditMode ? "Failed to update survey." : "Failed to create survey."));
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -116,7 +291,7 @@ function CreateScratchSurvey() {
           className="text-center text-lg font-bold my-5 p-2 rounded-md text-white mx-10"
           style={{ background: themeColor }}
         >
-          Add Survey
+          {isEditMode ? "Edit Survey" : "Add Survey"}
         </h2>
         <div className="flex justify-center">
           <div className="sm:border border-gray-400 p-1 md:px-10 rounded-lg w-4/5 mb-14">
@@ -437,13 +612,22 @@ function CreateScratchSurvey() {
                   </div>
                 </div>
               ))}
-              <div className="flex justify-start my-3">
+              <div className="flex justify-start my-3 gap-3">
                 <button
                   type="button"
                   onClick={addQuestion}
                   className="border border-gray-500 rounded-md px-4 py-1"
                 >
                   Add Question
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={submitting}
+                  className="px-4 py-2 text-white rounded-md disabled:opacity-50"
+                  style={{ background: themeColor }}
+                >
+                  {submitting ? "Saving…" : isEditMode ? "Save changes" : "Create Survey"}
                 </button>
               </div>
             </div>

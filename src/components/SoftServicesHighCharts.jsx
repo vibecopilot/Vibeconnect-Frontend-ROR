@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
-import { getServicesTaskList, getSoftServiceDownload } from "../api";
+import { getServicesTaskList, getSoftServiceDownload, getSoftServiceStatus } from "../api";
+import DetailPopup from "./DetailPopup";
 import { useSelector } from "react-redux";
 import { DNA } from "react-loader-spinner";
 import { FaDownload, FaChevronDown } from "react-icons/fa";
@@ -388,6 +389,13 @@ const SoftServiceHighCharts = () => {
   const [byBuilding, setByBuilding] = useState({});
   const [byFloor, setByFloor] = useState({});
   const [byUnit, setByUnit] = useState({});
+  const [detailPopup, setDetailPopup] = useState({
+    open: false,
+    title: "",
+    records: [],
+    loading: false,
+  });
+  const onStatusPointClickRef = useRef(null);
 
   useSelector((state) => state.theme.color); // keep if needed
 
@@ -410,6 +418,29 @@ const SoftServiceHighCharts = () => {
     };
     fetchInfo();
   }, []);
+
+  const handleStatusPointClick = async (statusName) => {
+    if (!statusName) return;
+    setDetailPopup({ open: true, title: `Soft Services: ${statusName}`, records: [], loading: true });
+    try {
+      const res = await getSoftServiceStatus(statusName, null, null);
+      const list = res?.data?.activities ?? res?.data ?? [];
+      setDetailPopup({
+        open: true,
+        title: `Soft Services: ${statusName}`,
+        records: Array.isArray(list) ? list : [],
+        loading: false,
+      });
+    } catch (err) {
+      console.error("Soft service drill error:", err);
+      toast.error("Failed to load task details");
+      setDetailPopup((p) => ({ ...p, loading: false }));
+    }
+  };
+
+  useEffect(() => {
+    onStatusPointClickRef.current = handleStatusPointClick;
+  });
 
   const handleDownload = async () => {
     const toastId = toast.loading("Downloading Please Wait");
@@ -472,24 +503,31 @@ const SoftServiceHighCharts = () => {
   const shouldColorByPoint = (type) => type === "column" || type === "bar";
 
   const statusOptions = useMemo(() => {
+    let options;
     if (statusType === "pie") {
-      return buildPieOptions({
+      options = buildPieOptions({
         title: "Soft Services by Status",
         data: byStatus,
         colorsMap: statusColors,
         palette: CHART_PALETTE,
       });
+      options.plotOptions = options.plotOptions || {};
+      options.plotOptions.pie = { ...(options.plotOptions.pie || {}), point: { events: { click: function () { onStatusPointClickRef.current?.(this.name); } } } };
+    } else {
+      const entries = toSortedEntries(byStatus, "desc");
+      options = buildXYOptions({
+        title: "Soft Services by Status",
+        type: statusType,
+        categories: entries.map(([k]) => k),
+        values: entries.map(([, v]) => v),
+        themeColor: CHART_PALETTE[0],
+        colorByPoint: shouldColorByPoint(statusType),
+        palette: CHART_PALETTE,
+      });
+      options.plotOptions = options.plotOptions || {};
+      options.plotOptions.series = { ...(options.plotOptions.series || {}), point: { events: { click: function () { onStatusPointClickRef.current?.(this.name); } } } };
     }
-    const entries = toSortedEntries(byStatus, "desc");
-    return buildXYOptions({
-      title: "Soft Services by Status",
-      type: statusType,
-      categories: entries.map(([k]) => k),
-      values: entries.map(([, v]) => v),
-      themeColor: CHART_PALETTE[0],
-      colorByPoint: shouldColorByPoint(statusType),
-      palette: CHART_PALETTE,
-    });
+    return options;
   }, [byStatus, statusType, statusColors]);
 
   const buildingOptions = useMemo(() => {
@@ -645,6 +683,22 @@ const SoftServiceHighCharts = () => {
           )}
         </ChartCard>
       </div>
+
+      <DetailPopup
+        isOpen={detailPopup.open}
+        onClose={() => setDetailPopup((p) => ({ ...p, open: false }))}
+        title={detailPopup.title}
+        subtitle={`${detailPopup.records.length} record(s)`}
+        records={detailPopup.records}
+        loading={detailPopup.loading}
+        columns={[
+          { key: "checklist_name", label: "Checklist", accessor: (r) => r.checklist?.name ?? r.checklist_name ?? "—" },
+          { key: "status", label: "Status", accessor: (r) => r.status ?? "—" },
+          { key: "start_time", label: "Start", accessor: (r) => r.start_time },
+          { key: "assigned_to", label: "Assigned To", accessor: (r) => r.assigned_to_name ?? r.assigned_to ?? "—" },
+          { key: "soft_service", label: "Service", accessor: (r) => (r.soft_service?.name ?? r.soft_service_name ?? "—") },
+        ]}
+      />
     </div>
   );
 };

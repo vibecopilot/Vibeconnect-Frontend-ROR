@@ -17,6 +17,7 @@ import {
 import { BsEye } from "react-icons/bs";
 import { BiEdit, BiFilterAlt } from "react-icons/bi";
 import { formatTime } from "../../utils/dateUtils";
+import { getItemInLocalStorage } from "../../utils/localStorage";
 import { IoClose } from "react-icons/io5";
 import { FaCheck } from "react-icons/fa6";
 import toast from "react-hot-toast";
@@ -79,6 +80,15 @@ const VisitorPage = () => {
 
 
   const webcamRef = useRef(null);
+
+  // Company-specific labels: show "Planned" / "Unplanned Visitors" only for company_id 55
+  const companyId = getItemInLocalStorage("COMPANYID");
+  const isCompany55 = companyId == 55;
+  const expectedVisitorLabel = isCompany55 ? "Planned Visitors" : "Expected visitor";
+  const unexpectedVisitorLabel = isCompany55 ? "Unplanned Visitors" : "Unexpected visitor";
+  const expectedDateLabel = isCompany55 ? "Planned Date" : "Expected Date";
+  const expectedTimeLabel = isCompany55 ? "Planned Time" : "Expected Time";
+  const expectedDateRangeLabel = isCompany55 ? "Planned Date Range" : "Expected Date Range";
 
   const dateFormat = (dateString) => {
     const date = new Date(dateString);
@@ -200,8 +210,8 @@ const VisitorPage = () => {
         "Contact No",
         "Purpose",
         "Coming From",
-        "Expected Date",
-        "Expected Time",
+        expectedDateLabel,
+        expectedTimeLabel,
         "Vehicle No",
         "Host Approval",
         "Pass Start",
@@ -615,8 +625,8 @@ const res = await getVisitorHistory(
     { name: "Contact No.", selector: (row) => row.contact_no, sortable: true },
     { name: "Purpose", selector: (row) => row.purpose, sortable: true },
     { name: "Coming from", selector: (row) => row.coming_from, sortable: true },
-    { name: "Expected Date", selector: (row) => row.expected_date, sortable: true },
-    { name: "Expected Time", selector: (row) => row.expected_time, sortable: true },
+    { name: expectedDateLabel, selector: (row) => row.expected_date, sortable: true },
+    { name: expectedTimeLabel, selector: (row) => row.expected_time, sortable: true },
     { name: "Vehicle No.", selector: (row) => row.vehicle_number, sortable: true },
     {
       name: "Host Approval",
@@ -909,12 +919,12 @@ const handleSearchAll = (e) => {
     { name: "Name", selector: (row) => row.name, sortable: true },
     { name: "Purpose", selector: (row) => row.purpose, sortable: true },
     {
-      name: "Expected Date",
+      name: expectedDateLabel,
       selector: (row) => dateFormat(row.expected_date),
       sortable: true,
     },
     {
-      name: "Expected Time",
+      name: expectedTimeLabel,
       selector: (row) => formatTime(row.expected_time),
       sortable: true,
     },
@@ -1088,14 +1098,14 @@ const handleSearchAll = (e) => {
                       } text-center`}
                     onClick={() => handleClick("expected")}
                   >
-                    <span>Expected visitor</span>
+                    <span>{expectedVisitorLabel}</span>
                   </span>
                   <span
                     className={`cursor-pointer hover:underline ${selectedVisitor === "unexpected" ? "text-blue-600 underline" : ""
                       } text-center`}
                     onClick={() => handleClick("unexpected")}
                   >
-                    &nbsp; <span>Unexpected visitor</span>
+                    &nbsp; <span>{unexpectedVisitorLabel}</span>
                   </span>
                 </div>
 
@@ -1148,14 +1158,14 @@ const handleSearchAll = (e) => {
                     } text-center`}
                   onClick={() => handleClick("expected")}
                 >
-                  <span>Expected visitor</span>
+                  <span>{expectedVisitorLabel}</span>
                 </span>
                 <span
                   className={`cursor-pointer hover:underline ${selectedVisitor === "unexpected" ? "text-blue-600 underline" : ""
                     } text-center`}
                   onClick={() => handleClick("unexpected")}
                 >
-                  &nbsp; <span>Unexpected visitor</span>
+                  &nbsp; <span>{unexpectedVisitorLabel}</span>
                 </span>
               </div>
 
@@ -1198,14 +1208,14 @@ const handleSearchAll = (e) => {
                       } text-center`}
                     onClick={() => handleClick("expected")}
                   >
-                    <span>Expected visitor</span>
+                    <span>{expectedVisitorLabel}</span>
                   </span>
                   <span
                     className={`cursor-pointer hover:underline ${selectedVisitor === "unexpected" ? "text-blue-600 underline" : ""
                       } text-center`}
                     onClick={() => handleClick("unexpected")}
                   >
-                    &nbsp; <span>Unexpected visitor</span>
+                    &nbsp; <span>{unexpectedVisitorLabel}</span>
                   </span>
                 </div>
 
@@ -1394,144 +1404,65 @@ data={
                 </button>
               </div>
 
-            {page !== "History" && (
-<>
-  {/* Expected Date Range */}
-  <div className="mb-4">
-    <label className="text-sm font-medium block mb-2">
-      Expected Date Range
-    </label>
-    <div className="flex gap-2">
-      <input
-        type="date"
-        value={filterDateFrom}
-        onChange={(e) => setFilterDateFrom(e.target.value)}
-        className="border p-2 rounded-md w-full"
-      />
-      <input
-        type="date"
-        value={filterDateTo}
-        onChange={(e) => setFilterDateTo(e.target.value)}
-        className="border p-2 rounded-md w-full"
-      />
-    </div>
-  </div>
+              {/* Expected Date Range */}
+              <div className="mb-4">
+                <label className="text-sm font-medium block mb-2">
+                  {expectedDateRangeLabel}
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="date"
+                    value={filterDateFrom}
+                    onChange={(e) => setFilterDateFrom(e.target.value)}
+                    className="border p-2 rounded-md w-full"
+                  />
+                  <input
+                    type="date"
+                    value={filterDateTo}
+                    onChange={(e) => setFilterDateTo(e.target.value)}
+                    className="border p-2 rounded-md w-full"
+                  />
+                </div>
+              </div>
 
-  {/* Mobile */}
-  <div className="mb-4">
-    <label className="text-sm font-medium block mb-2">
-      Mobile Number
-    </label>
-    <input
-      type="text"
-      value={filterMobile}
-      onChange={(e) => setFilterMobile(e.target.value)}
-      className="border p-2 rounded-md w-full"
-    />
-  </div>
+              {/* Mobile */}
+              <div className="mb-4">
+                <label className="text-sm font-medium block mb-2">
+                  Mobile Number
+                </label>
+                <input
+                  type="text"
+                  value={filterMobile}
+                  onChange={(e) => setFilterMobile(e.target.value)}
+                  className="border p-2 rounded-md w-full"
+                />
+              </div>
 
-  {/* Building */}
-  <div className="mb-4">
-    <label className="text-sm font-medium block mb-2">
-      Building
-    </label>
-    <select
-      value={filterBuilding}
-      onChange={(e) => setFilterBuilding(e.target.value)}
-      className="border p-2 rounded-md w-full"
-    >
-      <option value="">Select Building</option>
-      <option value="Oakbrook">Oakbrook</option>
-    </select>
-  </div>
+              {/* Building */}
+              <div className="mb-4">
+                <label className="text-sm font-medium block mb-2">Building</label>
+                <select
+                  value={filterBuilding}
+                  onChange={(e) => setFilterBuilding(e.target.value)}
+                  className="border p-2 rounded-md w-full"
+                >
+                  <option value="">Select Building</option>
+                  <option value="Oakbrook">Oakbrook</option>
+                </select>
+              </div>
 
-  {/* Floor */}
-  <div className="mb-4">
-    <label className="text-sm font-medium block mb-2">
-      Floor
-    </label>
-    <select
-      value={filterFloor}
-      onChange={(e) => setFilterFloor(e.target.value)}
-      className="border p-2 rounded-md w-full"
-    >
-      <option value="">Select Floor</option>
-      <option value="1">1</option>
-    </select>
-  </div>
-
-  {/* Unit */}
-  <div className="mb-4">
-    <label className="text-sm font-medium block mb-2">
-      Unit
-    </label>
-    <select
-      value={filterUnit}
-      onChange={(e) => setFilterUnit(e.target.value)}
-      className="border p-2 rounded-md w-full"
-    >
-      <option value="">Select Unit</option>
-      <option value="101">101</option>
-    </select>
-  </div>
-
-  {/* Host */}
-  <div className="mb-4">
-    <label className="text-sm font-medium block mb-2">
-      Host
-    </label>
-    <select
-      value={filterHost}
-      onChange={(e) => setFilterHost(e.target.value)}
-      className="border p-2 rounded-md w-full"
-    >
-      <option value="">Select Host</option>
-      <option value="host1">undefined undefined</option>
-    </select>
-  </div>
-
-  {/* Host Approval */}
-  <div className="mb-6">
-    <label className="text-sm font-medium block mb-2">
-      Host Approval
-    </label>
-    <select
-      value={filterApproval}
-      onChange={(e) => setFilterApproval(e.target.value)}
-      className="border p-2 rounded-md w-full"
-    >
-      <option value="">Select</option>
-      <option value="required">Required</option>
-      <option value="not_required">Not Required</option>
-    </select>
-  </div>
-</>
-)}
-             {/* ================= HISTORY FILTER ================= */}
-{page === "History" && (
-  <>
-    {/* Expected Date Range */}
-    <div className="mb-4">
-      <label className="text-sm font-medium block mb-2">
-        Expected Date Range
-      </label>
-
-      <div className="flex gap-2">
-        <input
-          type="date"
-          value={historyDateFrom}
-          onChange={(e) => setHistoryDateFrom(e.target.value)}
-          className="border p-2 rounded-md w-full"
-        />
-
-        <input
-          type="date"
-          value={historyDateTo}
-          onChange={(e) => setHistoryDateTo(e.target.value)}
-          className="border p-2 rounded-md w-full"
-        />
-      </div>
-    </div>
+              {/* Floor */}
+              <div className="mb-4">
+                <label className="text-sm font-medium block mb-2">Floor</label>
+                <select
+                  value={filterFloor}
+                  onChange={(e) => setFilterFloor(e.target.value)}
+                  className="border p-2 rounded-md w-full"
+                >
+                  <option value="">Select Floor</option>
+                  <option value="1">1</option>
+                </select>
+              </div>
 
     {/* Mobile Number */}
     <div className="mb-4">

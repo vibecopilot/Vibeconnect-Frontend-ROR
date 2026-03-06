@@ -1,25 +1,50 @@
 import { useEffect } from "react";
 
 const GroupedDashboardPage = () => {
+  const readLS = (key) => {
+    const raw = localStorage.getItem(key);
+    if (raw == null) return null;
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return raw;
+    }
+  };
+
+  const syncAndOpenHorizon = () => {
+    const token = readLS("TOKEN") ?? readLS("token");
+    const userDetails = readLS("user_details") ?? readLS("user");
+    const activeSite = readLS("active_site") ?? readLS("SITEID");
+
+    const baseUrl = "https://horizondashboard.vibecopilot.ai"; 
+    const url = new URL(baseUrl);
+
+    if (token) url.searchParams.set("t", String(token));
+    if (userDetails) {
+      url.searchParams.set(
+        "u",
+        typeof userDetails === "string" ? userDetails : JSON.stringify(userDetails)
+      );
+    }
+    if (activeSite) url.searchParams.set("s", String(activeSite));
+
+    window.location.replace(url.toString());
+  };
+
   useEffect(() => {
-    // Automatically open the dashboard in a new tab
-    window.open("https://horizondashboard.vibecopilot.ai/", "_blank");
+    syncAndOpenHorizon();
   }, []);
 
   return (
-    <div className="w-full h-screen flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-900">
-      <div className="text-center p-8 bg-white dark:bg-gray-800 rounded-lg shadow-lg">
-        <h2 className="text-2xl font-semibold text-gray-800 dark:text-white mb-4">
-          Grouped Dashboard
-        </h2>
-        <p className="text-gray-600 dark:text-gray-300 mb-6">
-          The dashboard has been opened in a new tab.
-        </p>
+    <div className="w-full h-screen flex flex-col items-center justify-center bg-gray-900">
+      <div className="text-center p-8 bg-gray-800 rounded-lg shadow-xl">
+        <h2 className="text-2xl font-bold text-white mb-4">Redirecting to Horizon</h2>
+        <p className="text-gray-400 mb-6">Syncing your session data...</p>
         <button
-          onClick={() => window.open("https://horizondashboard.vibecopilot.ai/", "_blank")}
-          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          onClick={syncAndOpenHorizon}
+          className="px-6 py-3 bg-blue-600 text-white rounded hover:bg-blue-700"
         >
-          Open Dashboard Again
+          Click here if not redirected
         </button>
       </div>
     </div>
