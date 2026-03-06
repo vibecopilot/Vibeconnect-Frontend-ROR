@@ -143,8 +143,8 @@ export const getSiteAssets = async (siteId, page = 1, perPage = 10) =>
     params: {
       token: token,
       site_id: siteId,
-      Page: page,
-      Per_Page: perPage,
+      page: page,
+      per_page: perPage,
     },
   });
 
@@ -694,10 +694,17 @@ export const postHelpDeskStatusSetup = async (data) =>
       token: token,
     },
   });
-export const getAdminComplaints = async () =>
-  axiosInstance.get(`/pms/admin/complaints.json`, {
+export const getAdminComplaints = async (
+  page = 1,
+  perPage = 10,
+  search = ""
+) =>
+  axiosInstance.get("/pms/admin/complaints.json", {
     params: {
       token: token,
+      page: page,
+      per_page: perPage,
+      "q[search_cont]": search,   // 🔥 important
     },
   });
 
@@ -10796,12 +10803,15 @@ export const deleteOtherProject = (id) =>
 export const postProjectLike = (data) =>
   axiosInstance.post("/likes/create_other_project_like.json", data);
 
+// export const uploadVisitorLicense = (formData) =>
+//   axiosInstance.post("/visitor_licenses", formData, {
+//     headers: {
+//       "Content-Type": "multipart/form-data",
+//     },
+//   });
 export const uploadVisitorLicense = (formData) =>
-  axiosInstance.post("/visitor_licenses", formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
+  axiosInstance.post("/visitor_licenses.json", formData);
+
 export const uploadVisitorConsignment = (formData) => {
   return axiosInstance.post("/visitor_consignments", formData, {
     headers: {
