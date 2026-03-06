@@ -134,6 +134,7 @@ const Navbar = () => {
     navigate("/login");
   };
   const siteId = getItemInLocalStorage("SITEID");
+  const userID = getItemInLocalStorage("UserId")
 
   const getAllowedFeatures = () => {
     const storedFeatures = getItemInLocalStorage("FEATURES");
@@ -211,7 +212,7 @@ const Navbar = () => {
                   {firstName} {lastName}
                 </h2>
               </NavLink>
-              {(siteId == "74" || siteId == "78") && (
+              {(siteId == "74" || siteId == "78" || userID == "1960") && (
                 <NavLink
                   to={"/grouped-dashboard"}
                   className={({ isActive }) =>

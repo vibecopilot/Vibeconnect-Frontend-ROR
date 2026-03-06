@@ -5,7 +5,7 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import toast from "react-hot-toast";
 import ModalWrapper from "../../containers/modals/ModalWrapper";
-import { getPPMTask } from "../../api";
+import { getCalendarActivities } from "../../api";
 import "../../pages/style/Calendar.css";
 import {
   FaCalendarAlt,
@@ -109,67 +109,57 @@ function PPMCalendarDashboard() {
 
   const initialDate = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
-  useEffect(() => {
-    let mounted = true;
-
-    const fetchPPMTask = async () => {
-      const toastId = toast.loading("Loading tasks...");
-      try {
-       const taskResponse = await getPPMTask();
-
-console.log("PPM activities API:", taskResponse?.data?.activities);
-
-const activities = taskResponse?.data?.activities || [];
-
-const parseDate = (val) => {
-  if (!val) return null;
-  const d = new Date(val);
-  return isNaN(d.getTime()) ? null : d;
-};
-
-const formattedEvents = activities.map((task, idx) => {
-  const start = parseDate(
-    task?.start_time || task?.start_date || task?.date
-  );
-
-  const end = parseDate(
-    task?.end_time || task?.end_date
-  );
-
-  const formatForCSV = (d) => (d ? d.toISOString() : "");
-
-  return {
-    id: String(task?.id ?? idx),
-
-    title: `${task?.checklist_name || "Maintenance"} (${task?.asset_name || ""})`,
-
-    start,
-    end,
-
-    extendedProps: {
-      assignTo: task?.assigned_to_name || "Unassigned",
-      status: normalizeStatus(task?.status),
-      raw: task,
-
-      startStr: formatForCSV(start),
-      endStr: formatForCSV(end),
-    },
-  };
-});
-        if (mounted) setEvents(formattedEvents);
-        toast.dismiss(toastId);
-      } catch (error) {
-        toast.dismiss(toastId);
-        console.log(error);
-        toast.error("Failed to load tasks");
-      }
-    };
-
-    fetchPPMTask();
-    return () => {
-      mounted = false;
-    };
+  const fetchCalendarEvents = React.useCallback(async (startStr, endStr) => {
+    if (!startStr || !endStr) return;
+    const toastId = toast.loading("Loading calendar...");
+    try {
+      const data = await getCalendarActivities(startStr, endStr);
+      const list = Array.isArray(data?.data) ? data.data : (data?.data?.events ?? []);
+      const parseDate = (val) => {
+        if (!val) return null;
+        const d = new Date(val);
+        return isNaN(d.getTime()) ? null : d;
+      };
+      const formattedEvents = list.map((ev, idx) => {
+        const startDate = ev.start || "";
+        const startTime = ev.start_time || "00:00:00";
+        const start = parseDate(startDate.includes("T") ? startDate : `${startDate}T${startTime}`) || new Date();
+        let end = parseDate(ev.end);
+        if (!end && ev.end_time) end = parseDate(`${ev.start || startDate}T${ev.end_time}`);
+        const formatForCSV = (d) => (d ? d.toISOString() : "");
+        return {
+          id: String(ev?.id ?? idx),
+          title: ev?.title || ev?.checklist_name || "Activity",
+          start,
+          end,
+          extendedProps: {
+            assignTo: ev?.assigned_to_name ?? ev?.assign_to ?? "—",
+            status: normalizeStatus(ev?.status ?? ""),
+            raw: ev,
+            startStr: formatForCSV(start),
+            endStr: formatForCSV(end),
+          },
+        };
+      });
+      setEvents(formattedEvents);
+      toast.dismiss(toastId);
+    } catch (error) {
+      toast.dismiss(toastId);
+      console.error(error);
+      toast.error("Failed to load calendar");
+    }
   }, []);
+
+  const handleDatesSet = React.useCallback(
+    (arg) => {
+      if (arg?.view?.currentStart && arg?.view?.currentEnd) {
+        const startStr = arg.view.currentStart.toISOString().slice(0, 10);
+        const endStr = arg.view.currentEnd.toISOString().slice(0, 10);
+        fetchCalendarEvents(startStr, endStr);
+      }
+    },
+    [fetchCalendarEvents]
+  );
 
   // ✅ Fix: When 'view' state changes, tell FullCalendar to switch view
   useEffect(() => {
@@ -394,7 +384,7 @@ const formattedEvents = activities.map((task, idx) => {
       {/* ✅ NEW UI: calendar inside clean card */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-3">
         <FullCalendar
-          ref={calendarRef} // ✅ Attached ref here
+          ref={calendarRef}
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
           initialView={view}
           initialDate={initialDate}
@@ -402,9 +392,10 @@ const formattedEvents = activities.map((task, idx) => {
           headerToolbar={{
             left: "prev,next today",
             center: "title",
-            right: "", // ✅ we use our own view buttons above
+            right: "",
           }}
           events={filteredEvents}
+          datesSet={handleDatesSet}
           eventClick={handleEventClick}
           eventClassNames={eventClassNames}
           eventContent={renderEventContent}

@@ -790,6 +790,8 @@ import EditTemplateSurvey from "./pages/SubPages/survey/EditTemplateSurvey.jsx";
 import SurveyDetails from "./pages/SubPages/survey/SurveyDetails.jsx";
 import AnalyzeResult from "./pages/SubPages/survey/AnalyzeResult.jsx";
 import PreviewSurvey from "./pages/SubPages/survey/PreviewSurvey.jsx";
+import TakeSurvey from "./pages/SubPages/survey/TakeSurvey.jsx";
+import SurveyThankYou from "./pages/SubPages/survey/SurveyThankYou.jsx";
 import FBMainPage from "./pages/Setup/FBMainPage.jsx";
 import EventPage from "./extra/EventPage.jsx";
 import ParkingConfigurationSetup from "./pages/Setup/ParkingSetupPages/ParkingConfigurationSetup.jsx";
@@ -1066,6 +1068,10 @@ function App() {
         {/* <Navbar/> */}
         <Route path="/login" element={<Login />} />
         <Route path="/" element={<Navigate to="/login" />} />
+
+        {/* Public survey (no login): shareable link for anyone to take survey */}
+        <Route path="/survey/:id" element={<TakeSurvey />} />
+        <Route path="/survey/:id/thank-you" element={<SurveyThankYou />} />
 
         <Route
           path="/dashboard"
@@ -7419,7 +7425,7 @@ function App() {
           }
         />
         <Route
-          path="/admin/create-scratch-survey"
+          path="/admin/create-scratch-survey/:id?"
           element={
             <ProtectedAdminRoutes>
               <CreateScratchSurvey />
@@ -7435,7 +7441,7 @@ function App() {
           }
         />
         <Route
-          path="/admin/copy-survey-view-page"
+          path="/admin/copy-survey-view-page/:id?"
           element={
             <ProtectedAdminRoutes>
               <CopySurveyViewPage />
@@ -7499,7 +7505,7 @@ function App() {
           }
         />
         <Route
-          path="/admin/preview-survey"
+          path="/admin/preview-survey/:id?"
           element={
             <ProtectedAdminRoutes>
               <PreviewSurvey />
