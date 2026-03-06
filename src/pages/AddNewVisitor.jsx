@@ -19,6 +19,10 @@ import FileInputBox from "../containers/Inputs/FileInputBox";
 const AddNewVisitor = () => {
   const siteId = getItemInLocalStorage("SITEID");
   const userId = getItemInLocalStorage("UserId");
+  const companyId = getItemInLocalStorage("COMPANYID");
+  const isCompany55 = companyId == 55;
+  const expectedDateLabel = isCompany55 ? "Planned Date" : "Expected Date";
+  const expectedTimeLabel = isCompany55 ? "Planned Time" : "Expected Time";
   const navigate = useNavigate();
 
   const themeColor = "#222";
@@ -741,7 +745,7 @@ useEffect(() => {
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="font-semibold text-gray-700 text-sm">Expected Date</label>
+              <label className="font-semibold text-gray-700 text-sm">{expectedDateLabel}</label>
               <input
                 type="date"
                 className="border border-gray-300 p-2.5 rounded-lg text-sm"
@@ -753,7 +757,7 @@ useEffect(() => {
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="font-semibold text-gray-700 text-sm">Expected Time</label>
+              <label className="font-semibold text-gray-700 text-sm">{expectedTimeLabel}</label>
               <input
                 type="time"
                 value={formData.expectedTime}
