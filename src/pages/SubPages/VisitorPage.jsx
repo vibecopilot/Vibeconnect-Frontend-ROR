@@ -40,7 +40,7 @@ const VisitorPage = () => {
   const [histories, setHistories] = useState([]);
   const [filteredHistory, setFilteredHistory] = useState([]);
   const [refetchTrigger, setRefetchTrigger] = useState(0);
-
+ 
   // Pagination (All / In / Out)
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -70,6 +70,12 @@ const VisitorPage = () => {
   const [filterFloor, setFilterFloor] = useState("");
   const [filterUnit, setFilterUnit] = useState("");
   const [filterApproval, setFilterApproval] = useState("");
+
+  //Filter(Histories)
+  const [historyDateFrom, setHistoryDateFrom] = useState("");
+  const [historyDateTo, setHistoryDateTo] = useState("");
+  const [historyMobile, setHistoryMobile] = useState("");
+  const [historyStatus, setHistoryStatus] = useState("");
 
 
   const webcamRef = useRef(null);
@@ -299,35 +305,20 @@ const VisitorPage = () => {
     setCurrentPage(1);
   };
 
-  const handleClearFilters = () => {
-    setFilterDateFrom("");
-    setFilterDateTo("");
-    setFilterMobile("");
-    setFilterHost("");
-    setCurrentPage(1);
-  };
+ const handleClearFilters = () => {
+  setFilterDateFrom("");
+  setFilterDateTo("");
+  setFilterMobile("");
+  setFilterHost("");
 
-useEffect(() => {
-  if (page === "Visitor In") {
-    if (selectedVisitor === "expected") {
-      // Filter expected visitors (exclude 'security_guard')
-      const expectedIn = visitorIn.filter(
-        (visit) => visit.user_type !== "security_guard" // Corrected field name
-      );
-      setFilteredData(expectedIn);
-    } else {
-      // Filter unexpected visitors (include only 'security_guard')
-      const unexpectedIn = visitorIn.filter(
-        (visit) => visit.user_type === "security_guard" // Corrected field name
-      );
-      setFilteredUnexpectedVisitor(unexpectedIn);
-    }
-  } else if (page === "all") {
-    // For 'all' page, display both expected and unexpected visitors
-    setFilteredExpectedVisitor(expectedVisitor);
-    setFilteredUnexpectedVisitor(unexpectedVisitor);
-  }
-}, [page, selectedVisitor, visitorIn, expectedVisitor, unexpectedVisitor]);
+  setHistoryDateFrom("");
+  setHistoryDateTo("");
+  setHistoryMobile("");
+  setHistoryStatus("");
+
+  setCurrentPage(1);
+};
+
   useEffect(() => {
     const fetchExpectedVisitor = async () => {
       try {
@@ -462,11 +453,12 @@ useEffect(() => {
             setFilteredData(processedVisitors);
             setFilteredExpectedVisitor(processedVisitors);
           } else {
+             setUnexpectedVisitor(processedVisitors);
             setFilteredUnexpectedVisitor(processedVisitors);
           }
         } else if (page === "Visitor Out") {
           setVisitorOut(processedVisitors);
-        } else if (page === "all") {
+        } else if (page === "all") {  
           setAll(processedVisitors);
           if (selectedVisitor === "expected") {
             setFilteredExpectedVisitor(processedVisitors);
@@ -486,7 +478,18 @@ useEffect(() => {
 
     const fetchVisitorHistory = async () => {
       try {
-        const res = await getVisitorHistory(historyPage, historyRowsPerPage);
+        const filters = {};
+
+if (historyDateFrom) filters.dateFrom = historyDateFrom;
+if (historyDateTo) filters.dateTo = historyDateTo;
+if (historyMobile) filters.mobile = historyMobile;
+if (historyStatus) filters.status = historyStatus;
+
+const res = await getVisitorHistory(
+  historyPage,
+  historyRowsPerPage,
+  filters
+);
         const data = res.data;
         const historyData = data.approval_history || [];
 
@@ -572,20 +575,26 @@ useEffect(() => {
     fetchExpectedVisitor();
     fetchVisitorHistory();
   }, [
-    currentPage,
-    rowsPerPage,
-    approvalPage,
-    approvalRowsPerPage,
-    historyPage,
-    historyRowsPerPage,
-    page,
-    selectedVisitor,
-    refetchTrigger,
-    filterDateFrom,
-    filterDateTo,
-    filterMobile,
-    filterHost,
-  ]);
+  currentPage,
+  rowsPerPage,
+  approvalPage,
+  approvalRowsPerPage,
+  historyPage,
+  historyRowsPerPage,
+  page,
+  selectedVisitor,
+  refetchTrigger,
+  filterDateFrom,
+  filterDateTo,
+  filterMobile,
+  filterHost,
+
+  // ✅ ADD THESE
+  historyDateFrom,
+  historyDateTo,
+  historyMobile,
+  historyStatus
+]);
 
   const VisitorColumns = [
     {
@@ -657,6 +666,7 @@ useEffect(() => {
 
   const [searchText, setSearchText] = useState("");
 
+
 const handleSearch = (e) => {
   const searchValue = e.target.value.toLowerCase();
   setSearchText(e.target.value);
@@ -669,106 +679,124 @@ const handleSearch = (e) => {
   // 🔁 Reset when search is empty
   if (!searchValue.trim()) {
     if (page === "Visitor In") {
-      setFilteredData(
-        visitorIn.filter(v => v.user_type !== "security_guard")
-      );
-      setFilteredUnexpectedVisitor(
-        visitorIn.filter(v => v.user_type === "security_guard")
-      );
-    }
-
+      setFilteredData(visitorIn);
+    } 
     else if (page === "Visitor Out") {
-      setFilteredData(
-        visitorOut.filter(v => v.user_type !== "security_guard")
-      );
-      setFilteredUnexpectedVisitor(
-        visitorOut.filter(v => v.user_type === "security_guard")
-      );
-    }
-
+      setFilteredData(visitorOut);
+    } 
     else if (page === "all") {
-      setFilteredExpectedVisitor(expectedVisitor);
-      setFilteredUnexpectedVisitor(unexpectedVisitor);
+      if (selectedVisitor === "expected") {
+        setFilteredExpectedVisitor(expectedVisitor);
+      } else {
+        setFilteredUnexpectedVisitor(unexpectedVisitor);
+      }
     }
-
     return;
   }
 
-  // 🔎 Filtering Logic
+  // 🔎 Filtering Logic (NO user_type filtering anymore)
   if (page === "Visitor In") {
-    if (selectedVisitor === "expected") {
-      setFilteredData(
-        visitorIn
-          .filter(v => v.user_type !== "security_guard")
-          .filter(filterLogic)
-      );
-    } else {
-      setFilteredUnexpectedVisitor(
-        visitorIn
-          .filter(v => v.user_type === "security_guard")
-          .filter(filterLogic)
-      );
-    }
-  }
-
+    setFilteredData(visitorIn.filter(filterLogic));
+  } 
   else if (page === "Visitor Out") {
-    if (selectedVisitor === "expected") {
-      setFilteredData(
-        visitorOut
-          .filter(v => v.user_type !== "security_guard")
-          .filter(filterLogic)
-      );
-    } else {
-      setFilteredUnexpectedVisitor(
-        visitorOut
-          .filter(v => v.user_type === "security_guard")
-          .filter(filterLogic)
-      );
-    }
-  }
-
+    setFilteredData(visitorOut.filter(filterLogic));
+  } 
   else if (page === "all") {
     if (selectedVisitor === "expected") {
-      setFilteredExpectedVisitor(
-        expectedVisitor.filter(filterLogic)
-      );
+      setFilteredExpectedVisitor(expectedVisitor.filter(filterLogic));
     } else {
-      setFilteredUnexpectedVisitor(
-        unexpectedVisitor.filter(filterLogic)
-      );
+      setFilteredUnexpectedVisitor(unexpectedVisitor.filter(filterLogic));
     }
   }
 };
 
-
   const [searchAll, setSearchAll] = useState("");
- const handleSearchAll = (e) => {
-  const searchValue = e.target.value.toLowerCase();
+// const handleSearchAll = (e) => {
+//   const searchValue = e.target.value.toLowerCase();
+//   setSearchAll(e.target.value);
+
+//   if (!searchValue.trim()) {
+//     setFilteredExpectedVisitor(expectedVisitor);
+//     setFilteredUnexpectedVisitor(unexpectedVisitor);
+//     return;
+//   }
+
+//   const filterLogic = (item) => {
+//     const name = item.name?.toLowerCase() || "";
+//     const host = item.hosts_display?.toLowerCase() || "";
+//     const vehicle = item.vehicle_number?.toLowerCase() || "";
+//     const mobile = String(item.contact_no || "");
+//     const purpose = item.purpose?.toLowerCase() || "";
+//     const coming = item.coming_from?.toLowerCase() || "";
+
+//     return (
+//       name.includes(searchValue) ||
+//       host.includes(searchValue) ||
+//       vehicle.includes(searchValue) ||
+//       mobile.includes(searchValue) ||
+//       purpose.includes(searchValue) ||
+//       coming.includes(searchValue)
+//     );
+//   };
+
+
+//   if (selectedVisitor === "expected") {
+//     const filtered = expectedVisitor.filter((item) =>
+//       item.name?.toLowerCase().includes(searchValue) ||
+//       item.vehicle_number?.toLowerCase().includes(searchValue) ||
+//       item.hosts_display?.toLowerCase().includes(searchValue)
+//     );
+//     setFilteredExpectedVisitor(filtered);
+//   } else {
+//     const filtered = unexpectedVisitor.filter((item) =>
+//       item.name?.toLowerCase().includes(searchValue) ||
+//       item.vehicle_number?.toLowerCase().includes(searchValue) ||
+//       item.hosts_display?.toLowerCase().includes(searchValue)
+//     );
+//     setFilteredUnexpectedVisitor(filtered);
+//   }
+// };
+
+
+const handleSearchAll = (e) => {
+  const value = e.target.value.toLowerCase();
   setSearchAll(e.target.value);
 
-  if (!searchValue.trim()) {
+  // Reset if search empty
+  if (!value.trim()) {
     setFilteredExpectedVisitor(expectedVisitor);
     setFilteredUnexpectedVisitor(unexpectedVisitor);
     return;
   }
 
-  if (selectedVisitor === "expected") {
-    const filtered = expectedVisitor.filter((item) =>
-      item.name?.toLowerCase().includes(searchValue) ||
-      item.vehicle_number?.toLowerCase().includes(searchValue) ||
-      item.hosts_display?.toLowerCase().includes(searchValue)
+  const filterLogic = (item) => {
+    const name = item.name?.toLowerCase() || "";
+    const host = item.hosts_display?.toLowerCase() || "";
+    const vehicle = item.vehicle_number?.toLowerCase() || "";
+    const mobile = String(item.contact_no || "");
+    const purpose = item.purpose?.toLowerCase() || "";
+    const coming = item.coming_from?.toLowerCase() || "";
+
+    return (
+      name.includes(value) ||
+      host.includes(value) ||
+      vehicle.includes(value) ||
+      mobile.includes(value) ||
+      purpose.includes(value) ||
+      coming.includes(value)
     );
+  };
+
+  if (selectedVisitor === "expected") {
+    const filtered = expectedVisitor.filter(filterLogic);
     setFilteredExpectedVisitor(filtered);
   } else {
-    const filtered = unexpectedVisitor.filter((item) =>
-      item.name?.toLowerCase().includes(searchValue) ||
-      item.vehicle_number?.toLowerCase().includes(searchValue) ||
-      item.hosts_display?.toLowerCase().includes(searchValue)
-    );
+    const filtered = unexpectedVisitor.filter(filterLogic);
     setFilteredUnexpectedVisitor(filtered);
+    console.log("searchAll:", value);
+    console.log("FilteredUnexpectedVisitor:", filtered.length);
   }
 };
-
   const [searchHIstoryText, setSearchHistoryText] = useState("");
  const handleSearchHistory = (e) => {
   const searchValue = e.target.value.toLowerCase();
@@ -788,19 +816,21 @@ const handleSearch = (e) => {
   setFilteredHistory(filteredResults);
 };
   const [searchApprovalText, setSearchApprovalText] = useState("");
-  const handleSearchApproval = (e) => {
-    const searchValue = e.target.value;
-    setSearchApprovalText(searchValue);
-    if (searchValue.trim()) {
-      setFilteredApproval(approvals);
-    } else {
-      const filteredResults = approvals.filter((item) =>
-        item.name.toLowerCase().includes(searchValue.toLowerCase())
-      );
-      setFilteredApproval(filteredResults);
-    }
-  };
+ const handleSearchApproval = (e) => {
+  const value = e.target.value;
+  setSearchApprovalText(value);
 
+  const search = value.toLowerCase();
+
+  const filtered = approvals.filter((item) => {
+    const name = item.name ? item.name.toLowerCase() : "";
+    const mobile = item.contact_no ? item.contact_no.toLowerCase() : "";
+
+    return name.includes(search) || mobile.includes(search);
+  });
+
+  setFilteredApproval(filtered);
+};
   const historyColumn = [
     {
       name: "Action",
@@ -932,6 +962,8 @@ const handleSearch = (e) => {
     };
   };
 
+  
+
   useEffect(() => {
     const postLogs = async () => {
       try {
@@ -990,18 +1022,21 @@ const handleSearch = (e) => {
   }, []);
 
   const [logSearchText, setLogSearchText] = useState("");
-  const handleLogSearch = (e) => {
-    const searchValue = e.target.value;
-    setLogSearchText(searchValue);
-    if (searchValue.trim()) {
-      setFilteredLogs(logs);
-    } else {
-      const filteredResults = logs.filter((item) =>
-        item.name.toLowerCase().includes(searchValue.toLowerCase())
-      );
-      setFilteredLogs(filteredResults);
-    }
-  };
+ const handleLogSearch = (e) => {
+  const value = e.target.value.toLowerCase();
+  setLogSearchText(e.target.value);
+
+  if (!value.trim()) {
+    setFilteredLogs(logs);
+    return;
+  }
+
+  const filtered = logs.filter((item) =>
+    item.name?.toLowerCase().includes(value)
+  );
+
+  setFilteredLogs(filtered);
+};
 
   return (
     <div className="visitors-page">
@@ -1092,76 +1127,7 @@ const handleSearch = (e) => {
                 </div>
               </div>
 
-              {/* {showFilters && (
-                <div className="border border-gray-300 rounded-md p-4 bg-gray-50">
-                  <h3 className="font-semibold mb-3 text-gray-700">
-                    Advanced Filters
-                  </h3>
-                  <div className="grid md:grid-cols-4 gap-3">
-                    <div className="flex flex-col">
-                      <label className="text-sm font-medium text-gray-600 mb-1">
-                        Date From
-                      </label>
-                      <input
-                        type="date"
-                        value={filterDateFrom}
-                        onChange={(e) => setFilterDateFrom(e.target.value)}
-                        className="border border-gray-300 p-2 rounded-md text-sm"
-                      />
-                    </div>
-                    <div className="flex flex-col">
-                      <label className="text-sm font-medium text-gray-600 mb-1">
-                        Date To
-                      </label>
-                      <input
-                        type="date"
-                        value={filterDateTo}
-                        onChange={(e) => setFilterDateTo(e.target.value)}
-                        className="border border-gray-300 p-2 rounded-md text-sm"
-                      />
-                    </div>
-                    <div className="flex flex-col">
-                      <label className="text-sm font-medium text-gray-600 mb-1">
-                        Mobile Number
-                      </label>
-                      <input
-                        type="text"
-                        value={filterMobile}
-                        onChange={(e) => setFilterMobile(e.target.value)}
-                        placeholder="Enter mobile number"
-                        className="border border-gray-300 p-2 rounded-md text-sm placeholder:text-sm"
-                      />
-                    </div>
-                    <div className="flex flex-col">
-                      <label className="text-sm font-medium text-gray-600 mb-1">
-                        Host Name
-                      </label>
-                      <input
-                        type="text"
-                        value={filterHost}
-                        onChange={(e) => setFilterHost(e.target.value)}
-                        placeholder="Enter host name"
-                        className="border border-gray-300 p-2 rounded-md text-sm placeholder:text-sm"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex gap-2 mt-4">
-                    <button
-                      onClick={handleApplyFilters}
-                      style={{ background: themeColor }}
-                      className="px-4 py-2 text-white rounded-md font-medium hover:opacity-90 transition-all"
-                    >
-                      Apply Filters
-                    </button>
-                    <button
-                      onClick={handleClearFilters}
-                      className="px-4 py-2 border-2 border-gray-300 rounded-md font-medium hover:bg-gray-100 transition-all"
-                    >
-                      Clear Filters
-                    </button>
-                  </div>
-                </div>
-              )} */}
+            
             </div>
           )}
 
@@ -1258,7 +1224,8 @@ const handleSearch = (e) => {
 data={
   selectedVisitor === "expected"
     ? filteredData
-    : FilteredUnexpectedVisitor
+    // : FilteredUnexpectedVisitor
+     : (searchText ? FilteredUnexpectedVisitor : unexpectedVisitor)
 }
 
                 paginationServer
@@ -1273,7 +1240,7 @@ data={
           {/* HISTORY */}
           {page === "History" && (
             <div>
-              <div className="flex gap-2 mb-2">
+              <div className="flex gap-2 mb-2 items-center">
                 <input
                   type="text"
                   placeholder="Search using Name or Mobile Number"
@@ -1281,6 +1248,14 @@ data={
                   value={searchHIstoryText}
                   onChange={handleSearchHistory}
                 />
+                 <button
+                   onClick={() => setShowFilters(true)}
+                     className="border px-3 py-2 rounded-md flex items-center gap-1"
+                     >
+                     <BiFilterAlt />
+                      Filter
+                  </button>
+
                 <button
                   onClick={exportHistoryToCSV}
                   className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition"
@@ -1361,7 +1336,8 @@ data={
             {selectedVisitor === "unexpected" && page === "Visitor In" && (
               <Table
                 columns={VisitorColumns}
-                data={FilteredUnexpectedVisitor}
+                // data={FilteredUnexpectedVisitor}
+                data={searchText ? FilteredUnexpectedVisitor : unexpectedVisitor}
                 paginationServer
                 paginationTotalRows={totalRecords}
                 onChangePage={setCurrentPage}
@@ -1373,7 +1349,9 @@ data={
             {selectedVisitor === "expected" && page === "all" && (
               <Table
                 columns={VisitorColumns}
-                data={FilteredExpectedVisitor}
+                // data={FilteredExpectedVisitor}
+                // data={searchText ? FilteredExpectedVisitor : expectedVisitor}
+                data={searchAll ? FilteredExpectedVisitor : expectedVisitor}
                 paginationServer
                 paginationTotalRows={totalRecords}
                 onChangePage={setCurrentPage}
@@ -1385,7 +1363,8 @@ data={
             {selectedVisitor === "unexpected" && page === "all" && (
               <Table
                 columns={VisitorColumns}
-                data={FilteredUnexpectedVisitor}
+                // data={FilteredUnexpectedVisitor}
+                data={searchAll ? FilteredUnexpectedVisitor : unexpectedVisitor}
                 paginationServer
                 paginationTotalRows={totalRecords}
                 onChangePage={setCurrentPage}
@@ -1415,107 +1394,194 @@ data={
                 </button>
               </div>
 
-              {/* Expected Date Range */}
-              <div className="mb-4">
-                <label className="text-sm font-medium block mb-2">
-                  Expected Date Range
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="date"
-                    value={filterDateFrom}
-                    onChange={(e) => setFilterDateFrom(e.target.value)}
-                    className="border p-2 rounded-md w-full"
-                  />
-                  <input
-                    type="date"
-                    value={filterDateTo}
-                    onChange={(e) => setFilterDateTo(e.target.value)}
-                    className="border p-2 rounded-md w-full"
-                  />
-                </div>
-              </div>
+            {page !== "History" && (
+<>
+  {/* Expected Date Range */}
+  <div className="mb-4">
+    <label className="text-sm font-medium block mb-2">
+      Expected Date Range
+    </label>
+    <div className="flex gap-2">
+      <input
+        type="date"
+        value={filterDateFrom}
+        onChange={(e) => setFilterDateFrom(e.target.value)}
+        className="border p-2 rounded-md w-full"
+      />
+      <input
+        type="date"
+        value={filterDateTo}
+        onChange={(e) => setFilterDateTo(e.target.value)}
+        className="border p-2 rounded-md w-full"
+      />
+    </div>
+  </div>
 
-              {/* Mobile */}
-              <div className="mb-4">
-                <label className="text-sm font-medium block mb-2">
-                  Mobile Number
-                </label>
-                <input
-                  type="text"
-                  value={filterMobile}
-                  onChange={(e) => setFilterMobile(e.target.value)}
-                  className="border p-2 rounded-md w-full"
-                />
-              </div>
+  {/* Mobile */}
+  <div className="mb-4">
+    <label className="text-sm font-medium block mb-2">
+      Mobile Number
+    </label>
+    <input
+      type="text"
+      value={filterMobile}
+      onChange={(e) => setFilterMobile(e.target.value)}
+      className="border p-2 rounded-md w-full"
+    />
+  </div>
 
-              {/* Building */}
-              <div className="mb-4">
-                <label className="text-sm font-medium block mb-2">Building</label>
-                <select
-                  value={filterBuilding}
-                  onChange={(e) => setFilterBuilding(e.target.value)}
-                  className="border p-2 rounded-md w-full"
-                >
-                  <option value="">Select Building</option>
-                  <option value="Oakbrook">Oakbrook</option>
-                </select>
-              </div>
+  {/* Building */}
+  <div className="mb-4">
+    <label className="text-sm font-medium block mb-2">
+      Building
+    </label>
+    <select
+      value={filterBuilding}
+      onChange={(e) => setFilterBuilding(e.target.value)}
+      className="border p-2 rounded-md w-full"
+    >
+      <option value="">Select Building</option>
+      <option value="Oakbrook">Oakbrook</option>
+    </select>
+  </div>
 
-              {/* Floor */}
-              <div className="mb-4">
-                <label className="text-sm font-medium block mb-2">Floor</label>
-                <select
-                  value={filterFloor}
-                  onChange={(e) => setFilterFloor(e.target.value)}
-                  className="border p-2 rounded-md w-full"
-                >
-                  <option value="">Select Floor</option>
-                  <option value="1">1</option>
-                </select>
-              </div>
+  {/* Floor */}
+  <div className="mb-4">
+    <label className="text-sm font-medium block mb-2">
+      Floor
+    </label>
+    <select
+      value={filterFloor}
+      onChange={(e) => setFilterFloor(e.target.value)}
+      className="border p-2 rounded-md w-full"
+    >
+      <option value="">Select Floor</option>
+      <option value="1">1</option>
+    </select>
+  </div>
 
-              {/* Unit */}
-              <div className="mb-4">
-                <label className="text-sm font-medium block mb-2">Unit</label>
-                <select
-                  value={filterUnit}
-                  onChange={(e) => setFilterUnit(e.target.value)}
-                  className="border p-2 rounded-md w-full"
-                >
-                  <option value="">Select Unit</option>
-                  <option value="101">101</option>
-                </select>
-              </div>
+  {/* Unit */}
+  <div className="mb-4">
+    <label className="text-sm font-medium block mb-2">
+      Unit
+    </label>
+    <select
+      value={filterUnit}
+      onChange={(e) => setFilterUnit(e.target.value)}
+      className="border p-2 rounded-md w-full"
+    >
+      <option value="">Select Unit</option>
+      <option value="101">101</option>
+    </select>
+  </div>
 
-              {/* Host */}
-              <div className="mb-4">
-                <label className="text-sm font-medium block mb-2">Host</label>
-                <select
-                  value={filterHost}
-                  onChange={(e) => setFilterHost(e.target.value)}
-                  className="border p-2 rounded-md w-full"
-                >
-                  <option value="">Select Host</option>
-                  <option value="host1">undefined undefined</option>
-                </select>
-              </div>
+  {/* Host */}
+  <div className="mb-4">
+    <label className="text-sm font-medium block mb-2">
+      Host
+    </label>
+    <select
+      value={filterHost}
+      onChange={(e) => setFilterHost(e.target.value)}
+      className="border p-2 rounded-md w-full"
+    >
+      <option value="">Select Host</option>
+      <option value="host1">undefined undefined</option>
+    </select>
+  </div>
 
-              {/* Host Approval */}
-              <div className="mb-6">
-                <label className="text-sm font-medium block mb-2">
-                  Host Approval
-                </label>
-                <select
-                  value={filterApproval}
-                  onChange={(e) => setFilterApproval(e.target.value)}
-                  className="border p-2 rounded-md w-full"
-                >
-                  <option value="">Select</option>
-                  <option value="required">Required</option>
-                  <option value="not_required">Not Required</option>
-                </select>
-              </div>
+  {/* Host Approval */}
+  <div className="mb-6">
+    <label className="text-sm font-medium block mb-2">
+      Host Approval
+    </label>
+    <select
+      value={filterApproval}
+      onChange={(e) => setFilterApproval(e.target.value)}
+      className="border p-2 rounded-md w-full"
+    >
+      <option value="">Select</option>
+      <option value="required">Required</option>
+      <option value="not_required">Not Required</option>
+    </select>
+  </div>
+</>
+)}
+             {/* ================= HISTORY FILTER ================= */}
+{page === "History" && (
+  <>
+    {/* Expected Date Range */}
+    <div className="mb-4">
+      <label className="text-sm font-medium block mb-2">
+        Expected Date Range
+      </label>
+
+      <div className="flex gap-2">
+        <input
+          type="date"
+          value={historyDateFrom}
+          onChange={(e) => setHistoryDateFrom(e.target.value)}
+          className="border p-2 rounded-md w-full"
+        />
+
+        <input
+          type="date"
+          value={historyDateTo}
+          onChange={(e) => setHistoryDateTo(e.target.value)}
+          className="border p-2 rounded-md w-full"
+        />
+      </div>
+    </div>
+
+    {/* Mobile Number */}
+    <div className="mb-4">
+      <label className="text-sm font-medium block mb-2">
+        Mobile Number
+      </label>
+
+      <input
+        type="text"
+        placeholder="Enter mobile number"
+        value={historyMobile}
+        onChange={(e) => setHistoryMobile(e.target.value)}
+        className="border p-2 rounded-md w-full"
+      />
+    </div>
+
+    {/* Building */}
+    <div className="mb-4">
+      <label className="text-sm font-medium block mb-2">
+        Building
+      </label>
+
+      <select
+        value={filterBuilding}
+        onChange={(e) => setFilterBuilding(e.target.value)}
+        className="border p-2 rounded-md w-full"
+      >
+        <option value="">Select Building</option>
+        <option value="Oakbrook">Oakbrook</option>
+      </select>
+    </div>
+
+    {/* Host Approval */}
+    <div className="mb-6">
+      <label className="text-sm font-medium block mb-2">
+        Host Approval
+      </label>
+
+      <select
+        value={historyStatus}
+        onChange={(e) => setHistoryStatus(e.target.value)}
+        className="border p-2 rounded-md w-full"
+      >
+        <option value="">All</option>
+        <option value="approved">Approved</option>
+        <option value="denied">Denied</option>
+      </select>
+    </div>
+  </>
+)}
 
               {/* Buttons */}
               <div className="flex gap-3">

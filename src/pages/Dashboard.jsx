@@ -73,17 +73,35 @@ const Dashboard = () => {
   }, []);
 
   /** ✅ calendar (safe) */
-  useEffect(() => {
-    const fetchCalendar = async () => {
-      try {
-        if (!vibeUserId) return;
-        await getVibeCalendar(vibeUserId);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    fetchCalendar();
-  }, [vibeUserId]);
+ useEffect(() => {
+  const fetchCalendar = async () => {
+    try {
+      const res = await getVibeCalendar(vibeUserId);
+
+      const allActivities = res?.data?.activities || [];
+
+      // ✅ ONLY KEEP PPM ACTIVITIES
+      const ppmActivities = allActivities.filter(
+        (item) =>
+          item?.activity_type === "ppm" ||
+          item?.checklist_type === "ppm" ||
+          item?.category === "ppm"
+      );
+
+      const formattedEvents = ppmActivities.map((item) => ({
+        title: item?.name || item?.activity_name,
+        start: item?.date || item?.start_date,
+        end: item?.end_date || item?.date,
+      }));
+
+      setEvents(formattedEvents);
+    } catch (error) {
+      console.error("Calendar fetch error:", error);
+    }
+  };
+
+  fetchCalendar();
+}, [vibeUserId]);
 
   /** ✅ sites list */
   useEffect(() => {
