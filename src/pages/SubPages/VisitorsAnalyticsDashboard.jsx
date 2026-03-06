@@ -387,6 +387,10 @@ const VisitorsAnalyticsDashboard = () => {
   });
 
   const siteId = getItemInLocalStorage("SITEID");
+  const companyId = getItemInLocalStorage("COMPANYID");
+  const isCompany55 = companyId == 55;
+  const expectedLabel = isCompany55 ? "Planned" : "Expected";
+  const unexpectedLabel = isCompany55 ? "Unplanned" : "Unexpected";
 
   useEffect(() => {
     fetchVisitorAnalytics();
@@ -640,12 +644,20 @@ const VisitorsAnalyticsDashboard = () => {
 
   const visitorTypeMap = useMemo(() => {
     const m = dashboardData.visitor_type_breakdown || {};
-    if (Object.keys(m).length > 0) return m;
+    if (Object.keys(m).length > 0) {
+      const remap = {};
+      Object.entries(m).forEach(([k, v]) => {
+        if (k === "Expected") remap[expectedLabel] = v;
+        else if (k === "Unexpected") remap[unexpectedLabel] = v;
+        else remap[k] = v;
+      });
+      return remap;
+    }
     return {
-      Expected: dashboardData.expected ?? 0,
-      Unexpected: dashboardData.unexpected ?? 0,
+      [expectedLabel]: dashboardData.expected ?? 0,
+      [unexpectedLabel]: dashboardData.unexpected ?? 0,
     };
-  }, [dashboardData.visitor_type_breakdown, dashboardData.expected, dashboardData.unexpected]);
+  }, [dashboardData.visitor_type_breakdown, dashboardData.expected, dashboardData.unexpected, expectedLabel, unexpectedLabel]);
 
   const inOutMap = useMemo(
     () => ({
@@ -688,7 +700,7 @@ const VisitorsAnalyticsDashboard = () => {
         return buildPieOptions({
           title: "Visitor Type Distribution",
           dataMap: visitorTypeMap,
-          colorsMap: { Expected: "#F59E0B", Unexpected: "#EAB308" },
+          colorsMap: { [expectedLabel]: "#F59E0B", [unexpectedLabel]: "#EAB308" },
         });
       }
       const entries = toSortedEntries(visitorTypeMap, "desc");
@@ -878,20 +890,20 @@ const VisitorsAnalyticsDashboard = () => {
           onClick={() => handleStatClick("out", "Visitors Currently Out")}
         />
         <StatCard
-          title="Expected"
+          title={expectedLabel}
           value={dashboardData.expected}
           icon={<FaUserClock />}
           accent={CHART_PALETTE[9]}
           note="Pre-registered visitors"
-          onClick={() => handleStatClick("expected", "Expected Visitors")}
+          onClick={() => handleStatClick("expected", `${expectedLabel} Visitors`)}
         />
         <StatCard
-          title="Unexpected"
+          title={unexpectedLabel}
           value={dashboardData.unexpected}
           icon={<FaUsers />}
           accent={CHART_PALETTE[4]}
           note="Walk-in visitors"
-          onClick={() => handleStatClick("unexpected", "Unexpected Visitors")}
+          onClick={() => handleStatClick("unexpected", `${unexpectedLabel} Visitors`)}
         />
       </div>
 
