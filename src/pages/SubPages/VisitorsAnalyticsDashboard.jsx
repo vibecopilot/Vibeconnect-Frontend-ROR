@@ -502,6 +502,12 @@ const VisitorsAnalyticsDashboard = () => {
 
   const visitorColumns = [
     { key: "name", label: "Name", accessor: (r) => r.name },
+    {
+      key: "company_name",
+      label: "Company",
+      accessor: (r) =>
+        r.company_name ?? r.company?.name ?? (typeof r.company === "string" ? r.company : null) ?? "—",
+    },
     { key: "contact_no", label: "Contact", accessor: (r) => r.contact_no },
     { key: "purpose", label: "Purpose", accessor: (r) => r.purpose },
     { key: "visit_type", label: "Type", accessor: (r) => r.visit_type },
