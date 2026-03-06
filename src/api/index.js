@@ -10924,6 +10924,30 @@ export const deletePet = async (id) =>
     params: { token },
   });
 
+
+  // Visitors API
+
+export const getVisitorById = async (id) =>
+  axiosInstance.get(`/visitors/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+
+export const postVisitor = async (formData) =>
+  axiosInstance.post(`/visitors.json?token=${token}`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+export const updateVisitor = async (id, formData) =>
+  axiosInstance.put(`/visitors/${id}.json?token=${token}`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
 // QR Code download for Soft Services
 
 // Visitor Categories API
