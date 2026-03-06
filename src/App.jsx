@@ -842,6 +842,9 @@ import BookingCalendar from "./pages/BookingCalendar";
 
 
 
+
+
+
 // Adjust the path based on your folder structure
 
 
@@ -7059,6 +7062,16 @@ function App() {
           path="/admin/passes/self-registration-details/:id"
           element={<SelfRegistrationDetails />}
         />
+
+        <Route
+        path="/visitor_details/:id"
+        element={<SelfRegistrationDetails />}
+       />
+
+  <Route
+    path="/edit_visitor/:id"
+    element={<EditSelfRegistration />}
+  />
         <Route
           path="/setup/visitor-setup"
           element={

@@ -293,8 +293,11 @@ useEffect(() => {
     // license
     if (safeLicenseFiles.length > 0) {
       const fd = new FormData();
-      fd.append("visitor_id", String(visitorId));
-      safeLicenseFiles.forEach((file) => fd.append("visitor_license[]", file, file.name));
+     fd.append("visitor[visitor_id]", String(visitorId));
+
+safeLicenseFiles.forEach((file) =>
+  fd.append("visitor[visitor_license][]", file, file.name)
+);
 
       try {
         // ⚠️ If your axios instance forces JSON headers, fix it in ../api (multipart/form-data).
@@ -308,9 +311,11 @@ useEffect(() => {
     // consignment
     if (safeConsignmentFiles.length > 0) {
       const fd = new FormData();
-      fd.append("visitor_id", String(visitorId));
-      safeConsignmentFiles.forEach((file) => fd.append("visitor_consignment[]", file, file.name));
+    fd.append("visitor[visitor_id]", String(visitorId));
 
+safeConsignmentFiles.forEach((file) =>
+  fd.append("visitor[visitor_consignment][]", file, file.name)
+);
       try {
         // ⚠️ If your axios instance forces JSON headers, fix it in ../api (multipart/form-data).
         await uploadVisitorConsignment(fd);
@@ -405,12 +410,57 @@ useEffect(() => {
       }
 
       // ✅ upload license/consignment AFTER create
-      await uploadVisitorDocs({
-        visitorId,
-        licenseFiles: formData.licenseAttachments || [],
-        consignmentFiles: formData.consignmentAttachments || [],
-      });
+      // await uploadVisitorDocs({
+      //   visitorId,
+      //   licenseFiles: formData.licenseAttachments || [],
+      //   consignmentFiles: formData.consignmentAttachments || [],
+      // });
 
+    // LICENSE UPLOAD
+    console.log("licenseAttachments:", formData.licenseAttachments);
+if (formData.license && formData.licenseAttachments?.length > 0) {
+
+  const fd = new FormData();
+
+  fd.append("visitor_id", visitorId);
+
+  formData.licenseAttachments.forEach((file) => {
+    fd.append("file", file);
+  });
+
+  try {
+    const res = await uploadVisitorLicense(fd);
+    console.log("License uploaded:", res.data);
+  } catch (err) {
+    console.log("License upload error:", err?.response?.data || err);
+  }
+
+}
+
+// CONSIGNMENT UPLOAD
+if (formData.consignment && formData.consignmentAttachments.length > 0) {
+
+  const fd = new FormData();
+
+  // fd.append("visitor_consignment[visitor_id]", visitorId);
+     fd.append("visitor_consignment[visitor_id]", String(visitorId));
+ formData.consignmentAttachments.forEach((file) => {
+  fd.append("visitor_consignment[file]", file);
+});
+  try {
+    await uploadVisitorConsignment(fd);
+  } catch (err) {
+    console.log("Consignment upload error:", err?.response?.data || err);
+    toast.error("Visitor created but consignment upload failed");
+  }
+}
+
+// if (formData.consignment && formData.consignmentAttachments?.length > 0) {
+//   await uploadVisitorDocs({
+//     visitorId,
+//     consignmentFiles: formData.consignmentAttachments,
+//   });
+// }
       // goods inward after create
       const hasGoodsPayload =
         formData.goodsInward &&
@@ -884,11 +934,20 @@ useEffect(() => {
                     <label className="font-semibold text-gray-700 mb-1 block text-sm">
                       License Attachments
                     </label>
-                    <FileInputBox
-                      handleChange={(input) => handleFileChange(input, "licenseAttachments")}
-                      fieldName={"licenseAttachments"}
-                      isMulti={true}
-                    />
+                   <FileInputBox
+      handleChange={(input) => handleFileChange(input, "licenseAttachments")}
+      fieldName={"licenseAttachments"}
+      isMulti={true}
+    />
+                    {/* <FileInputBox
+  handleChange={(files) =>
+    setFormData((prev) => ({
+      ...prev,
+      licenseAttachments: normalizeFileArray(files),
+    }))
+  }
+  isMulti={true}
+/> */}
                   </div>
                 )}
 

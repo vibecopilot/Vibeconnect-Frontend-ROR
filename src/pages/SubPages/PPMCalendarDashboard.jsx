@@ -115,46 +115,47 @@ function PPMCalendarDashboard() {
     const fetchPPMTask = async () => {
       const toastId = toast.loading("Loading tasks...");
       try {
-        const taskResponse = await getPPMTask();
-        const activities = taskResponse?.data?.activities || [];
+       const taskResponse = await getPPMTask();
 
-        // ✅ Improved date parsing: Return Date objects directly to FullCalendar
-        // to avoid timezone issues caused by .toISOString()
-        const parseDate = (val) => {
-          if (!val) return null;
-          const d = new Date(val);
-          return isNaN(d.getTime()) ? null : d;
-        };
+console.log("PPM activities API:", taskResponse?.data?.activities);
 
-        const formattedEvents = activities.map((task, idx) => {
-          const start = parseDate(task?.start_time) || new Date();
-          // If end_time is missing, try end_date. If still missing, leave null.
-          // FullCalendar handles null end gracefully (assumes duration based on defaults or 0).
-          let end = parseDate(task?.end_time);
-          if (!end) {
-            end = parseDate(task?.end_date);
-          }
-          
-          // Helper for export CSV string
-          const formatForCSV = (d) => (d ? d.toISOString() : "");
+const activities = taskResponse?.data?.activities || [];
 
-          return {
-            id: String(task?.id ?? idx),
-            title: task?.asset_name || "No Title",
-            start,
-            end,
-            // Pass raw string for CSV export, date object for calendar
-            extendedProps: {
-              assignTo: task?.assigned_to_name || "Unassigned",
-              status: normalizeStatus(task?.status),
-              raw: task,
-              // Store CSV strings explicitly
-              startStr: formatForCSV(start),
-              endStr: formatForCSV(end),
-            },
-          };
-        });
+const parseDate = (val) => {
+  if (!val) return null;
+  const d = new Date(val);
+  return isNaN(d.getTime()) ? null : d;
+};
 
+const formattedEvents = activities.map((task, idx) => {
+  const start = parseDate(
+    task?.start_time || task?.start_date || task?.date
+  );
+
+  const end = parseDate(
+    task?.end_time || task?.end_date
+  );
+
+  const formatForCSV = (d) => (d ? d.toISOString() : "");
+
+  return {
+    id: String(task?.id ?? idx),
+
+    title: `${task?.checklist_name || "Maintenance"} (${task?.asset_name || ""})`,
+
+    start,
+    end,
+
+    extendedProps: {
+      assignTo: task?.assigned_to_name || "Unassigned",
+      status: normalizeStatus(task?.status),
+      raw: task,
+
+      startStr: formatForCSV(start),
+      endStr: formatForCSV(end),
+    },
+  };
+});
         if (mounted) setEvents(formattedEvents);
         toast.dismiss(toastId);
       } catch (error) {
