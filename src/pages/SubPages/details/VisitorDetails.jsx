@@ -27,6 +27,7 @@ const VisitorDetails = () => {
       try {
         const res = await getVisitorDetails(id);
         const data = res.data;
+        console.log("Visitor API Response:", JSON.stringify(data, null, 2));
 
         setDetails(data);
         setDeviceLogs(data.logs || []);
@@ -69,11 +70,10 @@ const VisitorDetails = () => {
     return details.visitor_license || [];
   };
 
-  const getConsignmentDocuments = () => {
-    // API returns visitor_consignment as an array of objects with document field
-    return details.visitor_consignment || [];
-  };
-
+ const getConsignmentDocuments = () => {
+  if (!details.consignment_form) return [];
+  return [{ document: details.consignment_form }];
+};
   // ✅ FIXED: Check if license/consignment exists based on actual data
   const hasLicenseDocuments = () => {
     return getLicenseDocuments().length > 0;
