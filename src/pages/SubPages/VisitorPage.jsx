@@ -905,51 +905,72 @@ const handleSearchAll = (e) => {
     }
   };
 
-  const approvalColumn = [
-    {
-      name: "Action",
-      cell: (row) => (
-        <div className="flex items-center gap-4">
-          <Link to={`/admin/passes/visitors/visitor-details/${row.id}`}>
-            <BsEye size={15} />
-          </Link>
-        </div>
-      ),
-    },
-    { name: "Name", selector: (row) => row.name, sortable: true },
-    { name: "Purpose", selector: (row) => row.purpose, sortable: true },
-    {
-      name: expectedDateLabel,
-      selector: (row) => dateFormat(row.expected_date),
-      sortable: true,
-    },
-    {
-      name: expectedTimeLabel,
-      selector: (row) => formatTime(row.expected_time),
-      sortable: true,
-    },
-    {
-      name: "Approval",
-      selector: (row) => (
-        <div className="flex gap-2">
-          <button
-            className="text-white bg-green-400 rounded-full p-1"
-            onClick={() => handleApproval(row.id, true)}
-          >
-            <FaCheck size={20} />
-          </button>
-          <button
-            className="text-white bg-red-400 rounded-full p-1"
-            onClick={() => handleApproval(row.id, false)}
-          >
-            <IoClose size={20} />
-          </button>
-        </div>
-      ),
-      sortable: true,
-    },
-  ];
+ const approvalColumn = [
+  {
+    name: "Action",
+    cell: (row) => (
+      <div className="flex items-center gap-4">
+        <Link to={`/admin/passes/visitors/visitor-details/${row.id}`}>
+          <BsEye size={15} />
+        </Link>
+      </div>
+    ),
+  },
 
+  { name: "Name", selector: (row) => row.name, sortable: true },
+
+  { name: "Purpose", selector: (row) => row.purpose, sortable: true },
+
+  {
+    name: expectedDateLabel,
+    selector: (row) =>
+      row.expected_date ? dateFormat(row.expected_date) : "--",
+    sortable: true,
+  },
+
+  {
+    name: expectedTimeLabel,
+    selector: (row) =>
+      row.expected_time ? formatTime(row.expected_time) : "--",
+    sortable: true,
+  },
+
+  // ✅ STATUS COLUMN
+  {
+    name: "Status",
+    cell: (row) => (
+      <span
+        className={`font-medium ${
+          row.approved ? "text-green-500" : "text-red-500"
+        }`}
+      >
+        {row.approved ? "Approved" : "Denied"}
+      </span>
+    ),
+    sortable: true,
+  },
+
+  {
+    name: "Approval",
+    cell: (row) => (
+      <div className="flex gap-2">
+        <button
+          className="text-white bg-green-400 rounded-full p-1"
+          onClick={() => handleApproval(row.id, true)}
+        >
+          <FaCheck size={20} />
+        </button>
+
+        <button
+          className="text-white bg-red-400 rounded-full p-1"
+          onClick={() => handleApproval(row.id, false)}
+        >
+          <IoClose size={20} />
+        </button>
+      </div>
+    ),
+  },
+];
   document.title = "Passes - Vibe Connect";
 
   const getVisitorLogData = () => {
@@ -1496,23 +1517,21 @@ data={
     </div>
 
     {/* Host Approval */}
-    <div className="mb-6">
-      <label className="text-sm font-medium block mb-2">
-        Host Approval
-      </label>
+  <div className="mb-6">
+  <label className="text-sm font-medium block mb-2">
+    Host Approval
+  </label>
 
-      <select
-        value={historyStatus}
-        onChange={(e) => setHistoryStatus(e.target.value)}
-        className="border p-2 rounded-md w-full"
-      >
-        <option value="">All</option>
-        <option value="approved">Approved</option>
-        <option value="denied">Denied</option>
-      </select>
-    </div>
-  </>
-)}
+  <select
+    value={historyStatus}
+    onChange={(e) => setHistoryStatus(e.target.value)}
+    className="border p-2 rounded-md w-full"
+  >
+    <option value="">All</option>
+    <option value="approved">Approved</option>
+    <option value="denied">Denied</option>
+  </select>
+</div>
 
               {/* Buttons */}
               <div className="flex gap-3">
