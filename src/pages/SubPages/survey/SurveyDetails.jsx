@@ -13,18 +13,22 @@ import { getSurvey, updateSurvey } from "../../../api";
 
 function SurveyDetails() {
   const { id } = useParams();
+  const shareableLink =
+  typeof window !== "undefined"
+    ? `${window.location.origin}/survey/${id}`
+    : "";
   const [survey, setSurvey] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sendModalOpen, setSendModalOpen] = useState(false);
   const [activating, setActivating] = useState(false);
   const [emailList, setEmailList] = useState("");
-  const [mailMessage, setMailMessage] = useState(`Dear Participant,
+const [mailMessage, setMailMessage] = useState(`Dear Participant,
 
 We would like to invite you to take part in our survey. Your feedback is extremely valuable and will help us improve our services and better understand user experiences.
 
 Please click the link below to begin the survey:
 
-${typeof window !== "undefined" ? window.location.origin : ""}/survey/${id}
+${shareableLink}
 
 The survey will only take a few minutes to complete, and your responses will be kept confidential.
 
@@ -32,55 +36,12 @@ Thank you for your time and participation.
 
 Best regards,
 Survey Team`);
-  const [sendingEmails, setSendingEmails] = useState(false);
+const [responseCount, setResponseCount] = useState(0);
+const [completionRate, setCompletionRate] = useState(0);
+const [estimatedMinutes, setEstimatedMinutes] = useState(2);
+const [sendingEmails, setSendingEmails] = useState(false);
 
-  const fetchSurvey = () => {
-    if (!id) return;
-    getSurvey(id)
-      .then((res) => setSurvey(res.data))
-      .catch(() => setSurvey(null));
-  };
-  const handleSendEmails = async () => {
-  if (!emailList.trim()) return toast.error("Please enter at least one email");
-
-  const emails = emailList.split(/[\s,;]+/).filter((email) => email);
-
-  if (emails.length === 0) return toast.error("No valid emails found");
-
-  setSendingEmails(true);
-  try {
-    await axiosInstance.post("/send-survey", {
-      emails,
-      message: mailMessage,
-      survey_link: shareableLink,
-    });
-    toast.success("Survey sent successfully!");
-    setEmailList("");
-    setMailMessage("Please take this survey!");
-    setSendModalOpen(false); // close modal after sending
-  } catch (err) {
-    console.error(err);
-    toast.error("Failed to send survey");
-  } finally {
-    setSendingEmails(false);
-  }
-};
-
-  useEffect(() => {
-    if (!id) return;
-    setLoading(true);
-    getSurvey(id)
-      .then((res) => setSurvey(res.data))
-      .catch(() => setSurvey(null))
-      .finally(() => setLoading(false));
-  }, [id]);
-
-  const responseCount = survey?.survey_responses?.length ?? 0;
-  const questionCount = survey?.survey_questions?.length ?? 0;
-  const completedCount = responseCount;
-  const completionRate = responseCount > 0 ? Math.round((completedCount / responseCount) * 100) : 0;
-  const estimatedMinutes = questionCount <= 0 ? 0 : Math.max(1, Math.ceil(questionCount / 2));
-
+  
   const options = {
     chart: { type: "donut" },
     labels: ["Responses", "No responses yet"],
@@ -89,13 +50,31 @@ Survey Team`);
     dataLabels: { enabled: false },
   };
   const series = responseCount > 0 ? [responseCount, 0] : [0, 100];
-  const shareableLink = typeof window !== "undefined" ? `${window.location.origin}/survey/${id}` : "";
+ 
 
   const steps = [
     { id: 1, label: "Add questions", icon: <FaPencilAlt className="w-4 h-4" />, to: `/admin/create-scratch-survey/${id}` },
     { id: 2, label: "Go to Collect", icon: <FaPaperPlane className="w-4 h-4" />, action: () => setSendModalOpen(true) },
     { id: 3, label: "Analyze your results", icon: <FaChartBar className="w-4 h-4" />, to: `/admin/result-analyze-result?survey_id=${id}` },
   ];
+  const fetchSurvey = async () => {
+  try {
+    const res = await getSurvey(id);
+    setSurvey(res.data);
+
+    if (res.data?.responses) {
+      setResponseCount(res.data.responses.length);
+    }
+  } catch (err) {
+    toast.error("Failed to load survey.");
+  } finally {
+    setLoading(false);
+  }
+};
+useEffect(() => {
+  fetchSurvey();
+}, [id]);
+
 
   const handleActivateSurvey = async () => {
     setActivating(true);
@@ -110,6 +89,36 @@ Survey Team`);
       setActivating(false);
     }
   };
+  const handleSendEmails = async () => {
+  if (!emailList.trim()) {
+    toast.error("Please enter at least one email.");
+    return;
+  }
+
+  setSendingEmails(true);
+
+  try {
+    const emails = emailList
+      .split(/[,; ]+/)
+      .map((e) => e.trim())
+      .filter(Boolean);
+
+    await axiosInstance.post("/send_survey_emails", {
+      survey_id: id,
+      emails: emails,
+      message: mailMessage,
+      link: shareableLink,
+    });
+
+    toast.success("Survey emails sent successfully!");
+    setEmailList("");
+    setSendModalOpen(false);
+  } catch (err) {
+    toast.error("Failed to send emails.");
+  } finally {
+    setSendingEmails(false);
+  }
+};
 
   const formatDate = (d) => (d ? new Date(d).toLocaleDateString() : "");
 
@@ -411,12 +420,12 @@ Survey Team`);
   className="w-full px-3 py-2 border rounded mb-3 resize-none"
 />
 
-<input
-  type="text"
+<textarea
   value={mailMessage}
   onChange={(e) => setMailMessage(e.target.value)}
   placeholder="Optional message"
-  className="w-full px-3 py-2 border rounded mb-4"
+  rows={6}
+  className="w-full px-3 py-2 border rounded mb-4 resize-none"
 />
 <button
   type="button"
