@@ -15,6 +15,15 @@ const AddAMC = () => {
     end_date: formattedDate,
     first_service: formattedDate,
   });
+
+  const handleChange = (e) => {
+  const { name, value } = e.target;
+
+  setFormData((prev) => ({
+    ...prev,
+    [name]: value,
+  }));
+};
   return (
     <section>
       <div className="m-2">
@@ -121,14 +130,14 @@ const AddAMC = () => {
               <label htmlFor="" className="font-semibold ">
                 Start Date :
               </label>
-              <input
-                type="date"
-                name="start_date"
-                id="start_date"
-                value={formData.start_date}
-                // onChange={handleChange}
-                className="border p-1 px-4 border-gray-500 rounded-md"
-              />
+           <input
+            type="date"
+            name="start_date"
+            id="start_date"
+            value={formData.start_date}
+            onChange={handleChange}
+            className="border p-1 px-4 border-gray-500 rounded-md"
+/>
             </div>
             <div className="flex flex-col">
               <label htmlFor="" className="font-semibold ">
@@ -139,7 +148,7 @@ const AddAMC = () => {
                 name="end_date"
                 id="end_date"
                 value={formData.end_date}
-                // onChange={handleChange}
+                onChange={handleChange}
                 className="border p-1 px-4 border-gray-500 rounded-md"
               />
             </div>
@@ -152,7 +161,7 @@ const AddAMC = () => {
                 name="first_service"
                 id="first_service"
                 value={formData.first_service}
-                // onChange={handleChange}
+                onChange={handleChange}
                 className="border p-1 px-4 border-gray-500 rounded-md"
               />
             </div>
