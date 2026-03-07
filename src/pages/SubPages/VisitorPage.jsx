@@ -22,6 +22,7 @@ import { IoClose } from "react-icons/io5";
 import { FaCheck } from "react-icons/fa6";
 import toast from "react-hot-toast";
 import SelfRegistration from "./SelfRegistration";
+import { getBuildings } from "../../api";
 
 const VisitorPage = () => {
   const [page, setPage] = useState("all");
@@ -77,6 +78,7 @@ const VisitorPage = () => {
   const [historyDateTo, setHistoryDateTo] = useState("");
   const [historyMobile, setHistoryMobile] = useState("");
   const [historyStatus, setHistoryStatus] = useState("");
+  const [buildings, setBuildings] = useState([]);
 
 
   const webcamRef = useRef(null);
@@ -329,6 +331,35 @@ const VisitorPage = () => {
   setCurrentPage(1);
 };
 
+useEffect(() => {
+  const fetchBuildings = async () => {
+    try {
+      const res = await getBuildings(1, 10);
+
+      console.log("Buildings API response:", res.data);
+
+      let buildingData = [];
+
+      if (Array.isArray(res.data)) {
+        buildingData = res.data;
+      } 
+      else if (res.data.buildings) {
+        buildingData = res.data.buildings;
+      } 
+      else if (res.data.data) {
+        buildingData = res.data.data;
+      }
+
+      setBuildings(buildingData);
+
+    } catch (error) {
+      console.log("Building fetch error:", error);
+    }
+  };
+
+  fetchBuildings();
+}, []);
+
   useEffect(() => {
     const fetchExpectedVisitor = async () => {
       try {
@@ -502,6 +533,7 @@ const res = await getVisitorHistory(
 );
         const data = res.data;
         const historyData = data.approval_history || [];
+        console.log("History data:", historyData);
 
         setHistories(historyData);
         setFilteredHistory(historyData);
@@ -859,22 +891,20 @@ const handleSearchAll = (e) => {
       selector: (row) => row.contact_no || "--",
       sortable: true,
     },
-    {
-      name: "Check In",
-      selector: (row) =>
-        row.visitor_logs?.check_in
-          ? new Date(row.visitor_logs.check_in).toLocaleString()
-          : "--",
-      sortable: true,
-    },
-    {
-      name: "Check Out",
-      selector: (row) =>
-        row.visitor_logs?.check_out
-          ? new Date(row.visitor_logs.check_out).toLocaleString()
-          : "--",
-      sortable: true,
-    },
+  {
+  name: "Check In",
+  selector: (row) =>
+    row.visitor_logs?.[0]?.check_in
+      ? new Date(row.visitor_logs[0].check_in).toLocaleString()
+      : "--",
+},
+   {
+  name: "Check Out",
+  selector: (row) =>
+    row.visitor_logs?.[0]?.check_out
+      ? new Date(row.visitor_logs[0].check_out).toLocaleString()
+      : "--",
+},
     {
       name: "Approval Date",
       selector: (row) => dateTimeFormat(row.approvaldate),
@@ -1406,156 +1436,125 @@ data={
           </div>
         </div>
         {/* ================= FILTER DRAWER POPUP ================= */}
-        {showFilters && (
-          <>
-            {/* Overlay */}
-            <div
-              className="fixed inset-0 bg-black bg-opacity-40 z-40"
-              onClick={() => setShowFilters(false)}
-            />
+       {/* ================= FILTER DRAWER POPUP ================= */}
+{showFilters && (
+  <>
+    {/* Overlay */}
+    <div
+      className="fixed inset-0 bg-black bg-opacity-40 z-40"
+      onClick={() => setShowFilters(false)}
+    />
 
-            {/* Drawer */}
-            <div className="fixed top-0 right-0 h-full w-[420px] bg-white shadow-2xl z-50 p-6 overflow-y-auto transition-transform duration-300">
+    {/* Drawer */}
+    <div className="absolute right-6 top-28 w-[360px] bg-white shadow-xl border rounded-lg z-50 p-5">
 
-              {/* Header */}
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-lg font-semibold">Filter Visitors</h2>
-                <button onClick={() => setShowFilters(false)}>
-                  <IoClose size={22} />
-                </button>
-              </div>
+      {/* Header */}
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-lg font-semibold">Filter Visitors</h2>
+        <button onClick={() => setShowFilters(false)}>
+          <IoClose size={22} />
+        </button>
+      </div>
 
-              {/* Expected Date Range */}
-              <div className="mb-4">
-                <label className="text-sm font-medium block mb-2">
-                  {expectedDateRangeLabel}
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="date"
-                    value={filterDateFrom}
-                    onChange={(e) => setFilterDateFrom(e.target.value)}
-                    className="border p-2 rounded-md w-full"
-                  />
-                  <input
-                    type="date"
-                    value={filterDateTo}
-                    onChange={(e) => setFilterDateTo(e.target.value)}
-                    className="border p-2 rounded-md w-full"
-                  />
-                </div>
-              </div>
+      {/* Expected Date Range */}
+      <div className="mb-4">
+        <label className="text-sm font-medium block mb-2">
+          {expectedDateRangeLabel}
+        </label>
 
-              {/* Mobile */}
-              <div className="mb-4">
-                <label className="text-sm font-medium block mb-2">
-                  Mobile Number
-                </label>
-                <input
-                  type="text"
-                  value={filterMobile}
-                  onChange={(e) => setFilterMobile(e.target.value)}
-                  className="border p-2 rounded-md w-full"
-                />
-              </div>
+        <div className="flex gap-2">
+          <input
+            type="date"
+            value={historyDateFrom}
+            onChange={(e) => setHistoryDateFrom(e.target.value)}
+            className="border p-2 rounded-md w-full"
+          />
 
-              {/* Building */}
-              <div className="mb-4">
-                <label className="text-sm font-medium block mb-2">Building</label>
-                <select
-                  value={filterBuilding}
-                  onChange={(e) => setFilterBuilding(e.target.value)}
-                  className="border p-2 rounded-md w-full"
-                >
-                  <option value="">Select Building</option>
-                  <option value="Oakbrook">Oakbrook</option>
-                </select>
-              </div>
+          <input
+            type="date"
+            value={historyDateTo}
+            onChange={(e) => setHistoryDateTo(e.target.value)}
+            className="border p-2 rounded-md w-full"
+          />
+        </div>
+      </div>
 
-              {/* Floor */}
-              <div className="mb-4">
-                <label className="text-sm font-medium block mb-2">Floor</label>
-                <select
-                  value={filterFloor}
-                  onChange={(e) => setFilterFloor(e.target.value)}
-                  className="border p-2 rounded-md w-full"
-                >
-                  <option value="">Select Floor</option>
-                  <option value="1">1</option>
-                </select>
-              </div>
+      {/* Mobile Number */}
+      <div className="mb-4">
+        <label className="text-sm font-medium block mb-2">
+          Mobile Number
+        </label>
 
-    {/* Mobile Number */}
-    <div className="mb-4">
-      <label className="text-sm font-medium block mb-2">
-        Mobile Number
-      </label>
+        <input
+          type="text"
+          placeholder="Enter mobile number"
+          value={historyMobile}
+          onChange={(e) => setHistoryMobile(e.target.value)}
+          className="border p-2 rounded-md w-full"
+        />
+      </div>
 
-      <input
-        type="text"
-        placeholder="Enter mobile number"
-        value={historyMobile}
-        onChange={(e) => setHistoryMobile(e.target.value)}
-        className="border p-2 rounded-md w-full"
-      />
-    </div>
-
-    {/* Building */}
-    <div className="mb-4">
-      <label className="text-sm font-medium block mb-2">
-        Building
-      </label>
+      {/* Building */}
+      <div className="mb-4">
+        <label className="text-sm font-medium block mb-2">
+          Building
+        </label>
 
       <select
-        value={filterBuilding}
-        onChange={(e) => setFilterBuilding(e.target.value)}
-        className="border p-2 rounded-md w-full"
-      >
-        <option value="">Select Building</option>
-        <option value="Oakbrook">Oakbrook</option>
-      </select>
+  value={filterBuilding}
+  onChange={(e) => setFilterBuilding(e.target.value)}
+  className="border p-2 rounded-md w-full"
+>
+  <option value="">Select Building</option>
+
+  {buildings.map((building) => (
+    <option key={building.id} value={building.id}>
+      {building.name}
+    </option>
+  ))}
+</select>
+      </div>
+
+      {/* Host Approval */}
+      <div className="mb-6">
+        <label className="text-sm font-medium block mb-2">
+          Host Approval
+        </label>
+
+        <select
+          value={historyStatus}
+          onChange={(e) => setHistoryStatus(e.target.value)}
+          className="border p-2 rounded-md w-full"
+        >
+          <option value="">All</option>
+          <option value="approved">Approved</option>
+          <option value="denied">Denied</option>
+        </select>
+      </div>
+
+      {/* Buttons */}
+      <div className="flex gap-3">
+        <button
+          onClick={handleClearFilters}
+          className="w-full border py-2 rounded-md font-medium"
+        >
+          Reset
+        </button>
+
+        <button
+          onClick={() => {
+            handleApplyFilters();
+            setShowFilters(false);
+          }}
+          style={{ background: themeColor }}
+          className="w-full text-white py-2 rounded-md font-medium"
+        >
+          Apply Filters
+        </button>
+      </div>
     </div>
-
-    {/* Host Approval */}
-  <div className="mb-6">
-  <label className="text-sm font-medium block mb-2">
-    Host Approval
-  </label>
-
-  <select
-    value={historyStatus}
-    onChange={(e) => setHistoryStatus(e.target.value)}
-    className="border p-2 rounded-md w-full"
-  >
-    <option value="">All</option>
-    <option value="approved">Approved</option>
-    <option value="denied">Denied</option>
-  </select>
-</div>
-
-              {/* Buttons */}
-              <div className="flex gap-3">
-                <button
-                  onClick={handleClearFilters}
-                  className="w-full border py-2 rounded-md font-medium"
-                >
-                  Reset
-                </button>
-
-                <button
-                  onClick={() => {
-                    handleApplyFilters();
-                    setShowFilters(false);
-                  }}
-                  style={{ background: themeColor }}
-                  className="w-full text-white py-2 rounded-md font-medium"
-                >
-                  Apply Filters
-                </button>
-              </div>
-            </div>
-          </>
-        )}
+  </>
+)}
       </section>
     </div>
   );
