@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import image from "/profile.png";
 import { useSelector } from "react-redux";
-import { useParams, useLocation } from "react-router-dom";
+import { useParams, useLocation,useNavigate  } from "react-router-dom";
 import Webcam from "react-webcam";
 import axios from "axios";
 import { FaTrash } from "react-icons/fa";
@@ -13,8 +13,10 @@ const EditSelfRegistration = () => {
 
   const { id } = useParams();
   const location = useLocation();
+  const navigate = useNavigate();
  const searchParams = new URLSearchParams(location.search);
 const token = searchParams.get("token") || "";
+
 
   const webcamRef = useRef(null);
 
@@ -157,6 +159,13 @@ useEffect(() => {
     await updateVisitor(id, form, token);
 
     alert("Visitor updated successfully");
+
+    // redirect to main page
+    
+     window.history.back();
+     navigate("/visitor", { state: { tab: "self-registration", token } });
+    
+
 
   } catch (error) {
     console.log(error);
