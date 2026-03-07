@@ -14,19 +14,55 @@ import { getItemInLocalStorage } from "../../utils/localStorage";
 const Compliance = () => {
   const [filter, setFilter] = useState(false);
   const [compliances, setCompliances] = useState([]);
+  const [originalCompliances, setOriginalCompliances] = useState([]);
+  const [filters, setFilters] = useState({
+  complianceName: "",
+  vendor: ""
+});
 
   const fetchCompliances = async () => {
-    try {
-      const res = await getComplianceConfiguration();
-      const sortedData = res?.data?.sort((a, b) => {
-        return b.created_at - a.created_at;
-      });
-      console.log("sortedData:",sortedData)
-      setCompliances(sortedData);
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  try {
+    const res = await getComplianceConfiguration();
+
+    const sortedData = res?.data?.sort((a, b) => {
+      return new Date(b.created_at) - new Date(a.created_at);
+    });
+
+    setCompliances(sortedData);
+    setOriginalCompliances(sortedData);
+
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+
+
+const handleFilter = () => {
+
+  const filteredData = originalCompliances.filter((item) => {
+
+    const nameMatch =
+      !filters.complianceName ||
+      item.name?.toLowerCase().includes(filters.complianceName.toLowerCase());
+
+    const vendorMatch =
+      !filters.vendor ||
+      item.assign_to_name === filters.vendor;
+
+    return nameMatch && vendorMatch;
+  });
+
+  setCompliances(filteredData);
+};
+
+const handleReset = () => {
+  setCompliances(originalCompliances);
+  setFilters({
+    complianceName: "",
+    vendor: ""
+  });
+};
 
   useEffect(() => {
     fetchCompliances();
@@ -273,18 +309,15 @@ const userType = getItemInLocalStorage("USERTYPE")
                   <option value="">Vendor 3</option>
                 </select>
               </div>
-              <div className="flex flex-col gap-1">
-                <label htmlFor="" className="font-medium">
-                  Compliance Name
-                </label>
-                <input
+             <input
                   type="text"
-                  name=""
-                  id=""
                   placeholder="Compliance Name"
                   className="border rounded-md border-gray-400 p-2"
+                  value={filters.complianceName}
+                  onChange={(e) =>
+                  setFilters({ ...filters, complianceName: e.target.value })
+                }
                 />
-              </div>
               <div className="flex flex-col gap-1">
                 <label htmlFor="" className="font-medium">
                   Display Score Option
@@ -332,14 +365,17 @@ const userType = getItemInLocalStorage("USERTYPE")
               </div>
             </div>
             <div className="flex justify-center gap-2 border-t p-1 mt-1">
-              <button
+             <button
+                onClick={handleReset}
                 className="bg-red-500 rounded-md p-2 text-white flex items-center gap-2"
-                onClick={() => setFilter(false)}
+                  >
+                 <MdClose /> Cancel
+               </button>
+             <button
+                 onClick={handleFilter}
+                className="bg-green-500 rounded-md p-2 text-white flex items-center gap-2"
               >
-                <MdClose /> Cancel
-              </button>
-              <button className="bg-green-500 rounded-md p-2 text-white flex items-center gap-2">
-                <IoFilter /> Filter
+               <IoFilter /> Filter
               </button>
             </div>
           </div>

@@ -109,47 +109,123 @@ function PPMCalendarDashboard() {
 
   const initialDate = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
-  const fetchCalendarEvents = React.useCallback(async (startStr, endStr) => {
-    if (!startStr || !endStr) return;
-    const toastId = toast.loading("Loading calendar...");
-    try {
-      const data = await getCalendarActivities(startStr, endStr);
-      const list = Array.isArray(data?.data) ? data.data : (data?.data?.events ?? []);
-      const parseDate = (val) => {
-        if (!val) return null;
-        const d = new Date(val);
-        return isNaN(d.getTime()) ? null : d;
-      };
-      const formattedEvents = list.map((ev, idx) => {
-        const startDate = ev.start || "";
-        const startTime = ev.start_time || "00:00:00";
-        const start = parseDate(startDate.includes("T") ? startDate : `${startDate}T${startTime}`) || new Date();
-        let end = parseDate(ev.end);
-        if (!end && ev.end_time) end = parseDate(`${ev.start || startDate}T${ev.end_time}`);
-        const formatForCSV = (d) => (d ? d.toISOString() : "");
-        return {
-          id: String(ev?.id ?? idx),
-          title: ev?.title || ev?.checklist_name || "Activity",
-          start,
-          end,
-          extendedProps: {
-            assignTo: ev?.assigned_to_name ?? ev?.assign_to ?? "—",
-            status: normalizeStatus(ev?.status ?? ""),
-            raw: ev,
-            startStr: formatForCSV(start),
-            endStr: formatForCSV(end),
-          },
-        };
-      });
-      setEvents(formattedEvents);
-      toast.dismiss(toastId);
-    } catch (error) {
-      toast.dismiss(toastId);
-      console.error(error);
-      toast.error("Failed to load calendar");
-    }
-  }, []);
+//   const fetchCalendarEvents = React.useCallback(async (startStr, endStr) => {
+//     if (!startStr || !endStr) return;
+//     const toastId = toast.loading("Loading calendar...");
+//     try {
+//       const data = await getCalendarActivities(startStr, endStr);
+//       const rawList = Array.isArray(data?.data)
+//   ? data.data
+//   : (data?.data?.events ?? []);
 
+// // ✅ Only allow PPM and AMC
+//        const list = rawList.filter((item) => {
+//        const type = (item?.activity_type || item?.checklist_type || "")
+//        .toString()
+//        .toLowerCase();
+
+//       return type === "ppm" || type === "amc";
+//      });
+//       const parseDate = (val) => {
+//         if (!val) return null;
+//         const d = new Date(val);
+//         return isNaN(d.getTime()) ? null : d;
+//       };
+//       const formattedEvents = list.map((ev, idx) => {
+//         const startDate = ev.start || "";
+//         const startTime = ev.start_time || "00:00:00";
+//         const start = parseDate(startDate.includes("T") ? startDate : `${startDate}T${startTime}`) || new Date();
+//         let end = parseDate(ev.end);
+//         if (!end && ev.end_time) end = parseDate(`${ev.start || startDate}T${ev.end_time}`);
+//         const formatForCSV = (d) => (d ? d.toISOString() : "");
+//         return {
+//           id: String(ev?.id ?? idx),
+//           title: ev?.title || ev?.checklist_name || "Activity",
+//           start,
+//           end,
+//           extendedProps: {
+//             assignTo: ev?.assigned_to_name ?? ev?.assign_to ?? "—",
+//             status: normalizeStatus(ev?.status ?? ""),
+//             raw: ev,
+//             startStr: formatForCSV(start),
+//             endStr: formatForCSV(end),
+//           },
+//         };
+//       });
+//       setEvents(formattedEvents);
+//       toast.dismiss(toastId);
+//     } catch (error) {
+//       toast.dismiss(toastId);
+//       console.error(error);
+//       toast.error("Failed to load calendar");
+//     }
+//   }, []);
+
+const fetchCalendarEvents = React.useCallback(async (startStr, endStr) => {
+  if (!startStr || !endStr) return;
+
+  const toastId = toast.loading("Loading calendar...");
+
+  try {
+    const data = await getCalendarActivities(startStr, endStr);
+
+    const rawList = Array.isArray(data?.data)
+      ? data.data
+      : (data?.data?.events ?? []);
+
+    // ✅ filter only ppm & amc
+    const list = rawList.filter((item) => {
+      const name = (
+        item?.title ||
+        item?.checklist_name ||
+        item?.name ||
+        ""
+      ).toLowerCase();
+
+      return name.includes("ppm") || name.includes("amc");
+    });
+
+    const parseDate = (val) => {
+      if (!val) return null;
+      const d = new Date(val);
+      return isNaN(d.getTime()) ? null : d;
+    };
+
+    const formattedEvents = list.map((ev, idx) => {
+      const startDate = ev.start || "";
+      const startTime = ev.start_time || "00:00:00";
+
+      const start =
+        parseDate(startDate.includes("T") ? startDate : `${startDate}T${startTime}`) ||
+        new Date();
+
+      let end = parseDate(ev.end);
+
+      if (!end && ev.end_time) {
+        end = parseDate(`${ev.start || startDate}T${ev.end_time}`);
+      }
+
+      return {
+        id: String(ev?.id ?? idx),
+        title: ev?.title || ev?.checklist_name || "Activity",
+        start,
+        end,
+        extendedProps: {
+          assignTo: ev?.assigned_to_name ?? ev?.assign_to ?? "—",
+          status: normalizeStatus(ev?.status ?? ""),
+          raw: ev,
+        },
+      };
+    });
+
+    setEvents(formattedEvents);
+    toast.dismiss(toastId);
+  } catch (error) {
+    toast.dismiss(toastId);
+    console.error(error);
+    toast.error("Failed to load calendar");
+  }
+}, []);
   const handleDatesSet = React.useCallback(
     (arg) => {
       if (arg?.view?.currentStart && arg?.view?.currentEnd) {
