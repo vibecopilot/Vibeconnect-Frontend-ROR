@@ -170,6 +170,8 @@ export const getSiteAssetById = async (id) =>
 //     headers: {
 //       "Content-Type": "multipart/form-data",
 //     },
+
+
 //   });
 
 export const postSiteAsset = async (formData) =>
