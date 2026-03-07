@@ -407,6 +407,8 @@ const EventDetails = () => {
 
            <div>
   <h1 className="text-xl font-semibold">Feedback</h1>
+
+  
   <div className="border-dotted border-2 rounded-md border-gray-400 p-2 text-black">
     {showValue(
       eventDetails?.feedback ||
@@ -425,6 +427,34 @@ const EventDetails = () => {
         : null)
     )}
   </div>
+  <div>
+  <h1 className="text-xl font-semibold">Attachment</h1>
+
+  <div className="border-dotted border-2 rounded-md border-gray-400 p-3">
+    {firstDocUrl ? (
+      isImage(firstDocUrl) ? (
+        <img
+          src={firstDocUrl}
+          alt="Event Attachment"
+          className="w-60 h-40 object-cover rounded-md cursor-pointer"
+          onClick={() => window.open(firstDocUrl, "_blank")}
+        />
+      ) : (
+        <a
+          href={firstDocUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 text-blue-600 underline"
+        >
+          <FaRegFileAlt />
+          {getFileName(firstDocUrl)}
+        </a>
+      )
+    ) : (
+      <p className="text-black">—</p>
+    )}
+  </div>
+</div>
 </div>
           </div>
         </div>
