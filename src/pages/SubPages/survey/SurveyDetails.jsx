@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 import { AiFillQuestionCircle } from "react-icons/ai";
 import Chart from "react-apexcharts";
 import { FaChartBar, FaCheck, FaPaperPlane, FaPencilAlt } from "react-icons/fa";
-import { GrShare } from "react-icons/gr";
+import { GrShare } from "react-icons/gr"; 
 import { MdClose } from "react-icons/md";
 import toast from "react-hot-toast";
 import { getSurvey, updateSurvey } from "../../../api";
@@ -18,7 +18,20 @@ function SurveyDetails() {
   const [sendModalOpen, setSendModalOpen] = useState(false);
   const [activating, setActivating] = useState(false);
   const [emailList, setEmailList] = useState("");
-  const [mailMessage, setMailMessage] = useState("Please take this survey!");
+  const [mailMessage, setMailMessage] = useState(`Dear Participant,
+
+We would like to invite you to take part in our survey. Your feedback is extremely valuable and will help us improve our services and better understand user experiences.
+
+Please click the link below to begin the survey:
+
+${typeof window !== "undefined" ? window.location.origin : ""}/survey/${id}
+
+The survey will only take a few minutes to complete, and your responses will be kept confidential.
+
+Thank you for your time and participation.
+
+Best regards,
+Survey Team`);
   const [sendingEmails, setSendingEmails] = useState(false);
 
   const fetchSurvey = () => {
