@@ -506,11 +506,16 @@ const VisitorsAnalyticsDashboard = () => {
       key: "company_name",
       label: "Company",
       accessor: (r) =>
-        r.company_name ?? r.company?.name ?? (typeof r.company === "string" ? r.company : null) ?? "—",
+        r.name ?? r.company?.name ?? (typeof r.company === "string" ? r.company : null) ?? "—",
     },
     { key: "contact_no", label: "Contact", accessor: (r) => r.contact_no },
     { key: "purpose", label: "Purpose", accessor: (r) => r.purpose },
     { key: "visit_type", label: "Type", accessor: (r) => r.visit_type },
+       {
+      key: "Visitor_in_out",
+      label: "Visitor In/Out",
+      accessor: (r) => r.visitor_in_out,
+    },
     { key: "created_at", label: "Created", accessor: (r) => r.created_at },
   ];
 
@@ -569,21 +574,22 @@ const VisitorsAnalyticsDashboard = () => {
       accessor: (r) => r.staff_work_type ?? r.work_type ?? "—",
     },
     {
-      key: "punched_in_at",
-      label: "Punched In",
-      accessor: (r) =>
-        r.punched_in_at
-          ? new Date(r.punched_in_at).toLocaleString()
-          : "—",
-    },
-    {
-      key: "punched_out_at",
-      label: "Punched Out",
-      accessor: (r) =>
-        r.punched_out_at
-          ? new Date(r.punched_out_at).toLocaleString()
-          : "—",
-    },
+    key: "punched_in_at",
+    label: "Punched In",
+    accessor: (r) =>
+      r.today_attendance?.punched_in_at
+        ? new Date(r.today_attendance.punched_in_at).toLocaleString()
+        : "—",
+  },
+  {
+    key: "punched_out_at",
+    label: "Punched Out",
+    accessor: (r) =>
+      r.today_attendance?.punched_out_at
+        ? new Date(r.today_attendance.punched_out_at).toLocaleString()
+        : "—",
+  },
+
   ];
 
   // ─── Click handlers ───────────────────────────────────────────────────────
