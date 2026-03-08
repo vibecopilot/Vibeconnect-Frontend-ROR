@@ -19,7 +19,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
 import { useNavigate, useParams } from "react-router-dom";
-import { FaCheck } from "react-icons/fa";
+import { FaCheck, FaTimesCircle } from "react-icons/fa";
 import MultiSelect from "../AdminHrms/Components/MultiSelect";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
@@ -245,12 +245,14 @@ const CreateEvent = () => {
       }
 
       if (formData.event_images && formData.event_images.length > 0) {
-        formData.event_images.forEach((file) => {
-          if (file instanceof File) {
-            formDataSend.append("event[event_images][]", file);
-          }
-        });
-      }
+  formData.event_images.forEach((file) => {
+    const actualFile = file?.file || file?.originFileObj || file;
+
+    if (actualFile instanceof File) {
+      formDataSend.append("event[event_images][]", actualFile);
+    }
+  });
+}
 
       const response = await postEvents(formDataSend);
       toast.success("Event Created Successfully", { id: "createEvent" });
@@ -579,7 +581,14 @@ const CreateEvent = () => {
               />
             </div>
 
-            <div className="flex justify-center mt-10 my-5">
+            <div className="flex justify-end mt-10 my-5 gap-3">
+                <button
+                className="bg-gray-400 text-white p-2 px-4 rounded-md flex items-center gap-2 transition-colors duration-200"
+                onClick={() => navigate("/communication/events")}
+              >
+                <FaTimesCircle className="text-white-600 text-xl" />
+                Cancel
+              </button>
               <button
                 style={{ background: themeColor }}
                 className="bg-black text-white p-2 rounded-md hover:bg-white  flex items-center gap-2 px-4"

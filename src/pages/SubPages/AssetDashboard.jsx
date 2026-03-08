@@ -57,6 +57,7 @@ import toast from "react-hot-toast";
 const PRIMARY_BLUE = "#1D4ED8";
 const LIGHT_BLUE = "#93C5FD";
 
+
 /** ---------------- helpers ---------------- */
 const chartIcon = (type) => {
   switch (type) {
@@ -384,6 +385,11 @@ function AssetDashboard() {
   const [breakCount, setBreakCount] = useState("");
   const [inUseCount, setInUseCount] = useState("");
   const [totalAssetCount, setTotalAssetCount] = useState("");
+  const [filterOpen, setFilterOpen] = useState(false);
+const [filterType, setFilterType] = useState("");
+
+const [customStartDate, setCustomStartDate] = useState(null);
+const [customEndDate, setCustomEndDate] = useState(null);
   const [ppmSchedule, setPPMSchedule] = useState("");
   const [ppmOverDue, setPPMOverDue] = useState("");
   const [ppmPending, setPPMPending] = useState("");
@@ -399,12 +405,15 @@ function AssetDashboard() {
   const [selectedDate, setSelectedDate] = useState(null);
 
 const fetchAssetSummaryByDate = async (date) => {
+  
   try {
     const formattedDate = date.toISOString().split("T")[0]; // YYYY-MM-DD
 
     const res = await getTotalAssetCount(formattedDate);
 
     const data = res.data;
+
+    
 
     // 🔥 MAP API RESPONSE TO STATES
     setTotalAssetCount(data.total_assets);
@@ -424,7 +433,45 @@ const fetchAssetSummaryByDate = async (date) => {
 };
 
 
+const applyDateFilter = (type) => {
+  const today = new Date();
+  let start = new Date();
+  let end = new Date();
 
+  switch (type) {
+    case "today":
+      start = today;
+      end = today;
+      break;
+
+    case "week":
+      const firstDay = today.getDate() - today.getDay();
+      start = new Date(today.setDate(firstDay));
+      end = new Date();
+      break;
+
+    case "month":
+      start = new Date(today.getFullYear(), today.getMonth(), 1);
+      end = new Date();
+      break;
+
+    case "quarter":
+      const quarter = Math.floor(today.getMonth() / 3);
+      start = new Date(today.getFullYear(), quarter * 3, 1);
+      end = new Date();
+      break;
+
+    case "year":
+      start = new Date(today.getFullYear(), 0, 1);
+      end = new Date();
+      break;
+
+    default:
+      return;
+  }
+
+  fetchAssetSummaryByDate(start);
+};
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -975,29 +1022,110 @@ const fetchAssetSummaryByDate = async (date) => {
         {/* Left Group: Filter + Select Site */}
         <div className="flex items-center gap-3 ">
           {/* Filter + Calendar */}
-          <div className="relative">
-            <button
-              onClick={() => setShowCalendar((p) => !p)}
-              className="bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-xl flex items-center gap-2 shadow-sm"
-            >
-              <FaRegCalendar /> Filter
-            </button>
+         {/* Filter Dropdown */}
+<div className="relative">
+  <button
+    onClick={() => setFilterOpen((p) => !p)}
+    className="bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-xl flex items-center gap-2 shadow-sm"
+  >
+    <FaRegCalendar /> Filter
+    {filterOpen ? <FaChevronUp size={12} /> : <FaChevronDown size={12} />}
+  </button>
 
-            {showCalendar && (
-              <div className="absolute left-0 top-12 bg-white border border-gray-200 rounded-xl shadow-lg z-30 p-3">
-                <DatePicker
-                  selected={selectedDate}
-                  onChange={(date) => {
-                    setSelectedDate(date);
-                    fetchAssetSummaryByDate(date); // 🔥 API CALL
-                    setShowCalendar(false);
-                  }}
-                  inline
-                />
-              </div>
-            )}
-          </div>
+  {filterOpen && (
+    <div className="absolute left-0 top-12 bg-white border border-gray-200 rounded-xl shadow-lg w-52 z-30">
 
+      <button
+        onClick={() => {
+          applyDateFilter("today");
+          setFilterOpen(false);
+        }}
+        className="block w-full text-left px-4 py-2 hover:bg-gray-50"
+      >
+        Today
+      </button>
+
+      <button
+        onClick={() => {
+          applyDateFilter("week");
+          setFilterOpen(false);
+        }}
+        className="block w-full text-left px-4 py-2 hover:bg-gray-50"
+      >
+        This Week
+      </button>
+
+      <button
+        onClick={() => {
+          applyDateFilter("month");
+          setFilterOpen(false);
+        }}
+        className="block w-full text-left px-4 py-2 hover:bg-gray-50"
+      >
+        This Month
+      </button>
+
+      <button
+        onClick={() => {
+          applyDateFilter("quarter");
+          setFilterOpen(false);
+        }}
+        className="block w-full text-left px-4 py-2 hover:bg-gray-50"
+      >
+        This Quarter
+      </button>
+
+      <button
+        onClick={() => {
+          applyDateFilter("year");
+          setFilterOpen(false);
+        }}
+        className="block w-full text-left px-4 py-2 hover:bg-gray-50"
+      >
+        This Year
+      </button>
+
+      <button
+        onClick={() => {
+          setFilterType("custom");
+        }}
+        className="block w-full text-left px-4 py-2 hover:bg-gray-50"
+      >
+        Custom Range
+      </button>
+
+      {filterType === "custom" && (
+        <div className="p-3 border-t">
+          <DatePicker
+            selected={customStartDate}
+            onChange={(date) => setCustomStartDate(date)}
+            placeholderText="Start Date"
+            className="border p-2 w-full rounded mb-2"
+          />
+
+          <DatePicker
+            selected={customEndDate}
+            onChange={(date) => setCustomEndDate(date)}
+            placeholderText="End Date"
+            className="border p-2 w-full rounded mb-2"
+          />
+
+          <button
+            onClick={() => {
+              if (customStartDate) {
+                fetchAssetSummaryByDate(customStartDate);
+              }
+              setFilterOpen(false);
+            }}
+            className="w-full bg-black text-white py-2 rounded"
+          >
+            Apply
+          </button>
+        </div>
+      )}
+    </div>
+  )}
+</div>
           {/* Site dropdown */}
           <div className="relative">
             <button
