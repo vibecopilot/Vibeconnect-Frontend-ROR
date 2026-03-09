@@ -142,22 +142,55 @@ function SurveyDetails() {
 
   return (
     <section className="flex bg-gray-50 min-h-screen">
-      <Navbar />
+  <Navbar />
 
-      <div className="w-full px-10 py-8 space-y-8">
+  <div className="flex-1 px-10 py-8 space-y-8 overflow-x-hidden">
+    <div className="w-full flex items-center justify-between mb-6">
 
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold">{survey?.survey_title}</h1>
+  {/* Title */}
+  <h1 className="text-3xl font-bold">
+    {survey?.survey_title}
+  </h1>
 
-          <Link
-            to={`/admin/preview-survey/${id}`}
-            className="bg-green-500 text-white px-4 py-2 rounded-lg flex items-center gap-2"
-          >
-            Preview
-            <GrShare />
-          </Link>
-        </div>
+  {/* Action Buttons */}
+  <div className="flex items-center gap-3 shrink-0">
+
+    {/* Edit */}
+    <div className="relative group">
+      <Link
+        to={`/admin/create-scratch-survey/${id}`}
+        className="bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-lg flex items-center justify-center"
+      >
+        <FaPencilAlt size={16} />
+      </Link>
+
+      <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2
+      bg-black text-white text-xs px-2 py-1 rounded opacity-0
+      group-hover:opacity-100 transition whitespace-nowrap">
+        Edit Survey
+      </span>
+    </div>
+
+    {/* Preview */}
+    <div className="relative group">
+      <Link
+        to={`/admin/preview-survey/${id}`}
+        className="bg-green-500 hover:bg-green-600 text-white p-3 rounded-lg flex items-center justify-center"
+      >
+        <GrShare size={16} />
+      </Link>
+
+      <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2
+      bg-black text-white text-xs px-2 py-1 rounded opacity-0
+      group-hover:opacity-100 transition whitespace-nowrap">
+        Preview Survey
+      </span>
+    </div>
+
+  </div>
+
+</div>
+      
 
         {/* Progress Stepper */}
         <div className="bg-white rounded-xl border shadow-sm p-6 flex justify-between">
