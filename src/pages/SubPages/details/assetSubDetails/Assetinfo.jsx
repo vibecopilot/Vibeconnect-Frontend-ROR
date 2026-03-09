@@ -302,7 +302,7 @@ const Assetinfo = ({ assetData }) => {
                 <p className="text-sm font-normal">{capacity}</p>
               </div>
               <div className="grid grid-cols-2">
-                <p>UOM : </p>
+                <p>OEM : </p>
                 <p className="text-sm font-normal">{uom}</p>
               </div>
               <div className="grid grid-cols-2">
