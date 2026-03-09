@@ -64,12 +64,23 @@ export const getTicketDashboard = async (siteId) =>
     },
   });
 //Assets
-export const getPerPageSiteAsset = async (page, perPage) =>
-  axiosInstance.get(`/site_assets.json?per_page=${perPage}&page=${page}`, {
+export const getPerPageSiteAsset = (
+  page,
+  perPage,
+  building,
+  floor,
+  unit
+) => {
+  return axiosInstance.get(`/site_assets.json`, {
     params: {
-      token: token,
+      page,
+      per_page: perPage,
+      building_id: building,
+      floor_id: floor,
+      unit_id: unit,
     },
   });
+};
 export const downloadQrCode = async (ids) =>
   axiosInstance.get(`/site_assets/print_qr_codes?asset_ids=${ids}`, {
     responseType: "blob",
@@ -1053,11 +1064,13 @@ export const getEditAMCDetails = async (id) =>
     },
   });
 
-export const EditAMCDetails = async (data, id) =>
+export const EditAMCDetails = async (id, data) =>
   axiosInstance.put(`/asset_amcs/${id}.json`, data, {
     params: {
       token: token,
-      // asset_id: assetId,
+    },
+    headers: {
+      "Content-Type": "multipart/form-data",
     },
   });
 export const getSubGroupsList = async () =>
@@ -2085,10 +2098,12 @@ export const updateEventEnableStatus = (id, enabled) =>
     },
   );
 
-export const getEvents = async () =>
+export const getEvents = async (page,per_page) =>
   axiosInstance.get("/events.json", {
     params: {
       token: token,
+      page:page,
+      per_page:per_page,
     },
   });
 export const getEventsDetails = async (id) =>

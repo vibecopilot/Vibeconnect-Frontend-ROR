@@ -22,13 +22,13 @@ const StatCard = ({ title, value, onDownload, onClick, tone = "blue" }) => {
       value: "text-[#1D4ED8]",
     },
     green: {
-      card: "bg-emerald-50/50",
-      btn: "bg-emerald-100 text-emerald-700 hover:bg-emerald-200",
+      card: "bg-emerald-200/50",
+      btn: "bg-emerald-400 text-emerald-700 hover:bg-emerald-200",
       value: "text-emerald-900",
     },
     yellow: {
-      card: "bg-amber-50/50",
-      btn: "bg-amber-100 text-amber-800 hover:bg-amber-200",
+      card: "bg-amber-200/50",
+      btn: "bg-amber-400 text-amber-800 hover:bg-amber-200",
       value: "text-amber-900",
     },
     red: {
@@ -228,7 +228,7 @@ const TicketDashboard = () => {
         records={detailPopup.records}
         loading={detailPopup.loading}
         columns={[
-          { key: "ticket_number", label: "Ticket #", accessor: (r) => r.ticket_number },
+          { key: "ticket_number", label: "Ticket ", accessor: (r) => r.ticket_number },
           { key: "heading", label: "Heading", accessor: (r) => r.heading },
           { key: "priority", label: "Priority", accessor: (r) => r.priority },
           { key: "status", label: "Status", accessor: (r) => r.status },
