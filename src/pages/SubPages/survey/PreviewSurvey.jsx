@@ -161,27 +161,46 @@ function PreviewSurvey() {
           </div>
         );
       case "rating":
-      case "scale": {
-        const min = q.min_value ?? 0;
-        const max = q.max_value ?? 10;
-        const range = Array.from({ length: max - min + 1 }, (_, i) => min + i);
-        return (
-          <div className="grid grid-cols-12 gap-1 w-full">
-            {range.map((n) => (
-              <button
-                key={n}
-                type="button"
-                onClick={() => setAnswer(q.id, n)}
-                className={`border p-2 rounded w-full ${
-                  value === n ? "bg-gray-500 text-white border-green-800" : "bg-gray-100 text-black border-green-500"
-                }`}
-              >
-                {n}
-              </button>
-            ))}
-          </div>
-        );
-      }
+case "scale": {
+  const scale = q.scale || 5;
+  const color = q.color || "#FACC15"; // yellow
+
+  return (
+    <div className="flex flex-col gap-2">
+
+      {/* Stars */}
+      <div className="flex gap-2 text-4xl">
+        {Array.from({ length: scale }, (_, i) => {
+          const n = i + 1;
+          const isSelected = value >= n;
+
+          return (
+            <span
+              key={n}
+              onClick={() => setAnswer(q.id, n)}
+              className="cursor-pointer transition-transform hover:scale-110"
+              style={{
+                color: isSelected ? color : "#D1D5DB" // gray if not selected
+              }}
+            >
+              ★
+            </span>
+          );
+        })}
+      </div>
+
+      {/* Labels */}
+      <div className="flex justify-between text-xs text-gray-500 w-[220px]">
+        <span>Poor</span>
+        <span>Fair</span>
+        <span>Average</span>
+        <span>Good</span>
+        <span>Excellent</span>
+      </div>
+
+    </div>
+  );
+}
       case "text":
       default: {
         return (
@@ -261,7 +280,20 @@ function PreviewSurvey() {
               </div>
             </div>
           </div>
-          <div className="col-span-8 space-y-8">
+          <div className="col-span-8 space-y-8 relative">
+            {/* Progress Indicator */}
+<div className="absolute top-4 right-6 bg-white border rounded-lg shadow px-4 py-2 flex items-center gap-3">
+  <span className="text-sm font-semibold text-gray-700">
+    {answeredCount}/{total} Answered
+  </span>
+
+  <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+    <div
+      className="h-full bg-green-500 transition-all"
+      style={{ width: `${percentage}%` }}
+    />
+  </div>
+</div>
             <h2 className="text-2xl text-green-600">{survey.survey_title}</h2>
             {survey.description && (
               <p className="text-gray-600">{survey.description}</p>
@@ -286,20 +318,7 @@ function PreviewSurvey() {
             </div>
           </div>
         </div>
-        <div className="w-[98%] p-5 flex items-center justify-center bg-green-500 fixed bottom-8">
-          <div className="w-full flex flex-col items-center gap-3">
-            <span className="text-white font-semibold">
-              {answeredCount} of {total} answered
-            </span>
-            <div className="relative w-[80%] h-4 bg-white rounded-full overflow-hidden border border-white">
-              <div
-                className="h-full bg-green-600 transition-all"
-                style={{ width: `${percentage}%` }}
-              />
-            </div>
-          </div>
         </div>
-      </div>
     </section>
   );
 }
