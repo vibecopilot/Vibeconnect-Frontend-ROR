@@ -2098,10 +2098,12 @@ export const updateEventEnableStatus = (id, enabled) =>
     },
   );
 
-export const getEvents = async () =>
+export const getEvents = async (page,per_page) =>
   axiosInstance.get("/events.json", {
     params: {
       token: token,
+      page:page,
+      per_page:per_page,
     },
   });
 export const getEventsDetails = async (id) =>
