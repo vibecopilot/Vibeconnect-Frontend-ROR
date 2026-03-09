@@ -91,11 +91,11 @@ const Events = () => {
     },
     { name: "Title", selector: (row) => row.event_name, sortable: true },
     { name: "Venue", selector: (row) => row.venue, sortable: true },
-    {
-      name: "Description",
-      selector: (row) => row.discription,
-      sortable: true,
-    },
+    // {
+    //   name: "Description",
+    //   selector: (row) => row.discription,
+    //   sortable: true,
+    // },
     { name: "Created By", selector: (row) => row.created_by, sortable: true },
     {
       name: "Start Date",
@@ -107,13 +107,13 @@ const Events = () => {
       selector: (row) => dateFormat(row.end_date_time),
       sortable: true,
     },
-    {
-      name: "Event Type",
-      selector: (row) => row.scheduledOn,
-      sortable: true,
-    },
+    // {
+    //   name: "Event Type",
+    //   selector: (row) => row.scheduledOn,
+    //   sortable: true,
+    // },
    {
-  name: "Status",
+  name: "Work Status",
   cell: (row) => (
     <span
       className={`px-2 py-1 rounded text-white text-xs ${
@@ -126,8 +126,8 @@ const Events = () => {
   sortable: true,
 },  
     {
-      name: "Expired",
-      selector: (row) => row.bookingStatus,
+      name: "Expired Status",
+      selector: (row) => row.status,
       sortable: true,
     },
     {
