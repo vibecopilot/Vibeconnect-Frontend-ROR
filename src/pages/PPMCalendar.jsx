@@ -4,9 +4,12 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import "./style/Calendar.css";
-import { getPPMTask } from "../api";
+import { API_URL, getPPMTask, getVibeBackground } from "../api";
 import toast from "react-hot-toast";
 import ModalWrapper from "../containers/modals/ModalWrapper";
+import Navbar from "../components/Navbar";
+import AssetNav from "../components/navbars/AssetNav";
+import { getItemInLocalStorage } from "../utils/localStorage";
 
 const PPMCalendar = () => {
 
@@ -15,11 +18,27 @@ const PPMCalendar = () => {
 
   const [modal, setModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
+    const [selectedImage, setSelectedImage] = useState("");
+  
 
   const [selectedDate] = useState(new Date());
 
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+
+
+   const Get_Background = async () => {
+      try {
+        const user_id = getItemInLocalStorage("VIBEUSERID");
+        const data = await getVibeBackground(user_id);
+  
+        if (data.success) {
+          setSelectedImage(API_URL + data.data.image);
+        }
+      } catch (err) {
+        console.log(err);
+      }
+    };
 
   /* -------- FETCH PPM TASK -------- */
 
@@ -110,8 +129,27 @@ const PPMCalendar = () => {
   };
 
   return (
-    <>
-      <div className="rounded-xl shadow-custom-all-sides p-4">
+    
+    // <>
+     <section
+    className="flex"
+    style={{
+      background: `url(${selectedImage}) no-repeat center/cover`,
+    }}
+  >
+    {/* ---------- SIDEBAR NAVBAR ---------- */}
+
+    <Navbar />
+
+    {/* ---------- MAIN CONTENT ---------- */}
+
+    <div className="p-4 w-full flex flex-col">
+
+      {/* ---------- TOP NAV ---------- */}
+
+      <AssetNav />
+    
+      <div className="rounded-xl shadow-custom-all-sides p-4 mt-7">
 
         {/* -------- FILTER UI -------- */}
 
@@ -235,7 +273,9 @@ const PPMCalendar = () => {
 
         </ModalWrapper>
       )}
-    </>
+      </div>
+      </section>
+    // {/* </> */}
   );
 };
 
