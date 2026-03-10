@@ -90,6 +90,30 @@ export const softServiceDownloadQrCode = async (soft_service_ids) => {
     responseType: "blob", // important to handle PDF download
   });
 };
+
+// export const getSoftServiceGroups = async () =>
+//   axiosInstance.get("/generic_infos.json", {
+//     params: {
+//       token: token,
+//       "q[info_type_eq]": "soft_service",
+//     },
+//   });
+
+
+export const getGenericInfos = async () =>
+  axiosInstance.get("/generic_infos.json", {
+    params: {
+      token: token,
+    },
+  });
+
+export const getGenericSubInfos = async () =>
+  axiosInstance.get("/generic_sub_infos.json", {
+    params: {
+      token: token,
+    },
+  });
+
 export const getSiteAsset = async (page) =>
   axiosInstance.get(`/site_assets.json`, {
     params: {
@@ -940,11 +964,22 @@ export const getTotalAssetCount = async (start_date) =>
   });
 
 export const getAssetGroups = async () =>
-  axiosInstance.get("/asset_groups.json?q[group_for_eq]=asset", {
+  axiosInstance.get("/asset_groups.json", {
+    params: {
+      token: token,
+      "q[group_for_eq]": "asset",
+    },
+  });
+
+  // Sub Groups API
+export const getSubGroups = async () =>
+  axiosInstance.get("/sub_groups.json", {
     params: {
       token: token,
     },
   });
+
+
 export const getAssetGroupsDetails = async (id) =>
   axiosInstance.get(`/asset_groups/${id}.json?q[group_for_eq]=asset`, {
     params: {
@@ -2273,12 +2308,12 @@ export const getSoftServiceSchedule = async (sid) =>
       token: token,
     },
   });
-export const getSoftserviceActivityDetails = async (id) =>
-  axiosInstance.get(`/soft_services/${id}/softservices_log_show.json?`, {
-    params: {
-      token: token,
-    },
-  });
+// export const getSoftserviceActivityDetails = async (id) =>
+//   axiosInstance.get(`/soft_services/${id}/softservices_log_show.json?`, {
+//     params: {
+//       token: token,
+//     },
+//   });
 export const deleteAssociationList = async (
   checklistId,
   assignedto,
@@ -2302,6 +2337,14 @@ export const postServiceAssociation = async (data) =>
 
 export const getSoftServices = async () =>
   axiosInstance.get("/soft_services.json", {
+    params: {
+      token: token,
+    },
+  });
+
+  // Soft Service Logs API
+export const getSoftServiceLogs = async (id) =>
+  axiosInstance.get(`/soft_services/${id}/softservices_log_show.json`, {
     params: {
       token: token,
     },
