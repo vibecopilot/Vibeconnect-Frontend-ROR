@@ -112,11 +112,11 @@ function SurveyDetails() {
         .map((e) => e.trim())
         .filter((e) => e.includes("@"));
 
-      await axiosInstance.post("/send_survey_emails", {
+      await axiosInstance.post("/send-survey", {
         survey_id: id,
         emails,
         message: mailMessage,
-        link: shareableLink
+        survey_link: shareableLink
       });
 
       toast.success("Survey emails sent");
