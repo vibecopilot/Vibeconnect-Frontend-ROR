@@ -193,33 +193,45 @@ function SurveyDetails() {
       
 
         {/* Progress Stepper */}
-        <div className="bg-white rounded-xl border shadow-sm p-6 flex justify-between">
+<div className="bg-white rounded-xl border shadow-sm p-6">
 
-          {steps.map((step, index) => (
-            <div key={step.id} className="flex flex-col items-center w-full">
+  <div className="flex items-center justify-between relative">
 
-              <div className="flex items-center w-full justify-center">
-                <div className="w-10 h-10 rounded-full bg-green-500 text-white flex items-center justify-center">
-                  {step.icon}
-                </div>
+    {/* Background Line */}
+    <div className="absolute top-5 left-0 right-0 h-1 bg-gray-200"></div>
 
-                {index !== steps.length - 1 && (
-                  <div className="flex-1 h-1 bg-gray-200"></div>
-                )}
-              </div>
+    {/* Progress Line */}
+    <div
+      className="absolute top-5 left-0 h-1 bg-green-500 transition-all duration-500"
+      style={{ width: "50%" }}
+    ></div>
 
-              <span className="text-sm mt-2 text-gray-700">
-                {step.to ? (
-                  <Link to={step.to}>{step.label}</Link>
-                ) : (
-                  <button onClick={step.action}>{step.label}</button>
-                )}
-              </span>
+    {steps.map((step, index) => (
+      <div
+        key={step.id}
+        className="flex flex-col items-center relative z-10 w-full"
+      >
 
-            </div>
-          ))}
-
+        {/* Step Circle */}
+        <div className="w-10 h-10 rounded-full bg-green-500 text-white flex items-center justify-center">
+          {step.icon}
         </div>
+
+        {/* Step Label */}
+        <span className="text-sm mt-2 text-gray-700">
+          {step.to ? (
+            <Link to={step.to}>{step.label}</Link>
+          ) : (
+            <button onClick={step.action}>{step.label}</button>
+          )}
+        </span>
+
+      </div>
+    ))}
+
+  </div>
+
+</div>
 
         {/* Dashboard Cards */}
         <div className="grid grid-cols-3 gap-6">
