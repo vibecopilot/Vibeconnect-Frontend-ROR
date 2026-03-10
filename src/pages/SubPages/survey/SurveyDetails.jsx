@@ -27,8 +27,28 @@ function SurveyDetails() {
   const [responseCount, setResponseCount] = useState(0);
 
   useEffect(() => {
-    setMailMessage(`Dear Participant, We would like to invite you to take part in our survey. Your feedback is extremely valuable and will help us improve our services and better understand user experiences. Please click the link below to begin the survey: ${shareableLink} The survey will only take a few minutes to complete, and your responses will be kept confidential. Thank you for your time and participation. Best regards, Survey Team`);
-  }, [shareableLink]);
+  setMailMessage(
+`Dear Participant,
+
+We would like to invite you to take part in our survey. Your feedback is extremely valuable and will help us improve our services and better understand user experiences.
+
+Please click the link below to begin the survey:
+
+Take the Survey
+
+${shareableLink}
+
+Alternatively, you may copy and paste the following link into your browser:
+${shareableLink}
+
+The survey will only take a few minutes to complete, and your responses will be kept confidential.
+
+Thank you for your time and participation.
+
+Best regards,
+Survey Team`
+  );
+}, [shareableLink]);
 
   const chartOptions = {
     chart: { type: "donut" },
