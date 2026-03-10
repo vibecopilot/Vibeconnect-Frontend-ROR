@@ -1142,10 +1142,12 @@ export const getMasterChecklist = async () =>
       token: token,
     },
   });
-export const exportChecklist = async () =>
+export const exportChecklist = async (start_date, end_date) =>
   axiosInstance.get("/export_checklist.xlsx", {
     params: {
       token: token,
+      start_date: start_date,
+      end_date: end_date
     },
     responseType: "blob",
   });
@@ -1323,11 +1325,16 @@ export const getRoutineTaskStatus = async (
   status = null,
   startDate = null,
   endDate = null,
+  page = 1,
+  perPage = 10
 ) => {
+
   const token = localStorage.getItem("token");
 
   const params = {
     token,
+    page,
+    per_page: perPage,
   };
 
   if (status) {
@@ -1344,7 +1351,7 @@ export const getRoutineTaskStatus = async (
 
   const response = await axiosInstance.get(
     "/activities/routine_task_counts.json",
-    { params },
+    { params }
   );
 
   return response.data;

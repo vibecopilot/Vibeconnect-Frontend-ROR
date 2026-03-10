@@ -206,236 +206,194 @@ const AddAsset = () => {
   const handleCancel = () => {
     navigate("/assets/all-assets"); // या जहाँ वापस जाना है
   };
+const handleSubmit = async () => {
 
-  const handleSubmit = async () => {
-    // if (formData.warranty_start >= formData.warranty_expiry) {
-    //   toast.error("Warranty Start Date must be before Expiry Date.");
-    //   return;
-    // }
+  if (formData.building_id === "") {
+    return toast.error("Please Select Building Name");
+  }
 
-    // if (formData.warranty_start < formData.purchased_on || formData.installation < formData.purchased_on) {
-    //   toast.error(
-    //     "Warranty Start Date and Commissioning Date must be after or equal to Purchase Date."
-    //   );
-    //   return;
-    // }
+  if (formData.name === "") {
+    return toast.error("Please Enter Asset Name");
+  }
 
-    if (formData.building_id === "") {
-      return toast.error("Please Select Building Name");
-    }
-    if (formData.name === "") {
-      return toast.error("Please Enter Asset Name");
-    }
-    if (formData.oem_name === "") {
-      return toast.error("Please Enter ORM Name");
-    }
-    if (formData.asset_number === "") {
-      return toast.error("Please Enter Asset Number");
-    }
-    if (formData.equipment_id === "") {
-      return toast.error("Please Enter Equipment Id");
-    }
-    if (formData.purchase_cost === "") {
-      return toast.error("Please Enter Purchase Cost");
-    }
-    if (formData.asset_group_id === "") {
-      return toast.error("Please Select Group");
-    }
-    if (formData.asset_sub_group_id === "") {
-      return toast.error("Please Select Sub Group");
-    }
-    if (
-      formData.warranty_start &&
-      formData.warranty_expiry &&
-      formData.warranty_start >= formData.warranty_expiry
-    ) {
-      toast.error("Warranty Start Date must be before Expiry Date.");
-      return;
-    }
+  if (formData.oem_name === "") {
+    return toast.error("Please Enter OEM Name");
+  }
 
-    if (
-      formData.warranty_start &&
-      formData.purchased_on &&
-      formData.warranty_start < formData.purchased_on
-    ) {
-      toast.error(
-        "Warranty Start Date and Commissioning Date must be after or equal to Purchase Date.",
-      );
-      return;
-    }
+  if (formData.asset_number === "") {
+    return toast.error("Please Enter Asset Number");
+  }
 
-    if (
-      formData.installation &&
-      formData.purchased_on &&
-      formData.installation < formData.purchased_on
-    ) {
-      toast.error("Installation Date must be after or equal to Purchase Date.");
-      return;
-    }
+  if (formData.equipment_id === "") {
+    return toast.error("Please Enter Equipment Id");
+  }
 
-    try {
-      const toastId = toast.loading("Creating Asset Please Wait!");
-      const siteId = getItemInLocalStorage("SITEID");
+  if (formData.purchase_cost === "") {
+    return toast.error("Please Enter Purchase Cost");
+  }
 
-      if (!siteId) {
-        toast.dismiss(toastId);
-        toast.error("Site ID missing. Please login again.");
-        return;
-      }
-      const formDataSend = new FormData();
-formDataSend.append("site_asset[site_id]", siteId); 
-      formDataSend.append("site_asset[building_id]", formData.building_id);
-      formDataSend.append("site_asset[floor_id]", formData.floor_id);
-      formDataSend.append("site_asset[unit_id]", formData.unit_id);
-      formDataSend.append("site_asset[name]", formData.name);
-      formDataSend.append("site_asset[oem_name]", formData.oem_name);
-      formDataSend.append("site_asset[latitude]", formData.latitude);
-      formDataSend.append("site_asset[longitude]", formData.longitude);
-      formDataSend.append("site_asset[asset_number]", formData.asset_number);
-      formDataSend.append("site_asset[equipment_id]", formData.equipment_id);
-      formDataSend.append("site_asset[serial_number]", formData.serial_number);
-      formDataSend.append("site_asset[model_number]", formData.model_number);
-      formDataSend.append("site_asset[purchased_on]", formData.purchased_on);
-      formDataSend.append("site_asset[purchase_cost]", formData.purchase_cost);
-      formDataSend.append("site_asset[comprehensive]", formData.comprehensive);
-      //       formDataSend.append(
-      //   "site_asset[comprehensive]",
-      //   formData.comprehensive === "true"
-      // );
+  if (formData.asset_group_id === "") {
+    return toast.error("Please Select Group");
+  }
 
-      formDataSend.append(
-        "site_asset[asset_group_id]",
-        formData.asset_group_id,
-      );
-      formDataSend.append(
-        "site_asset[asset_sub_group_id]",
-        formData.asset_sub_group_id,
-      );
-      formDataSend.append(
-        "site_asset[parent_asset_id]",
-        formData.parent_asset_id,
-      );
-      formDataSend.append("site_asset[installation]", formData.installation);
-      formDataSend.append(
-        "site_asset[warranty_expiry]",
-        formData.warranty_expiry,
-      );
-      // formDataSend.append("site_asset[user_id]", 2);
-      formDataSend.append(
-        "site_asset[critical]",
-        formData.critical ? "true" : "false",
-      );
-      formDataSend.append("site_asset[capacity]", formData.capacity);
-      formDataSend.append(
-        "site_asset[breakdown]",
-        formData.breakdown ? "true" : "false",
-      );
+  if (formData.asset_sub_group_id === "") {
+    return toast.error("Please Select Sub Group");
+  }
+
+  try {
+
+    const toastId = toast.loading("Creating Asset Please Wait!");
+
+    const siteId = getItemInLocalStorage("SITEID");
+
+    const formDataSend = new FormData();
+
+    // ---------------- MAIN ASSET DATA ----------------
+
+    formDataSend.append("site_asset[site_id]", siteId);
+    formDataSend.append("site_asset[building_id]", formData.building_id);
+    formDataSend.append("site_asset[floor_id]", formData.floor_id || "");
+    formDataSend.append("site_asset[unit_id]", formData.unit_id || "");
+
+    formDataSend.append("site_asset[name]", formData.name);
+    formDataSend.append("site_asset[oem_name]", formData.oem_name);
+
+    formDataSend.append("site_asset[latitude]", formData.latitude || "");
+    formDataSend.append("site_asset[longitude]", formData.longitude || "");
+
+    formDataSend.append("site_asset[asset_number]", formData.asset_number);
+
+    // ⚠️ Backend typo field
+    formDataSend.append("site_asset[equipemnt_id]", formData.equipment_id);
+
+    formDataSend.append("site_asset[serial_number]", formData.serial_number || "");
+    formDataSend.append("site_asset[model_number]", formData.model_number || "");
+
+    formDataSend.append("site_asset[purchased_on]", formData.purchased_on || "");
+    formDataSend.append("site_asset[purchase_cost]", formData.purchase_cost || "");
+
+    formDataSend.append(
+      "site_asset[comprehensive]",
+      formData.comprehensive ? "true" : "false"
+    );
+
+    formDataSend.append("site_asset[asset_group_id]", formData.asset_group_id);
+    formDataSend.append("site_asset[asset_sub_group_id]", formData.asset_sub_group_id);
+
+    formDataSend.append(
+      "site_asset[parent_asset_id]",
+      formData.parent_asset_id || 0
+    );
+
+    formDataSend.append("site_asset[installation]", formData.installation || "");
+    formDataSend.append("site_asset[warranty_start]", formData.warranty_start || "");
+    formDataSend.append("site_asset[warranty_expiry]", formData.warranty_expiry || "");
+
+    formDataSend.append(
+      "site_asset[critical]",
+      formData.critical ? "true" : "false"
+    );
+
+    formDataSend.append(
+      "site_asset[breakdown]",
+      formData.breakdown ? "true" : "false"
+    );
+
+    formDataSend.append(
+      "site_asset[is_meter]",
+      formData.is_meter ? "true" : "false"
+    );
+
+    formDataSend.append("site_asset[capacity]", formData.capacity || "");
+    formDataSend.append("site_asset[vendor_id]", formData.vendor_id || "");
+    formDataSend.append("site_asset[asset_type]", formData.asset_type || "");
+
+    formDataSend.append("site_asset[uom]", formData.unit || "");
+
+    // ---------------- ASSET PARAMETERS ----------------
+
+    consumptionData.forEach((item, index) => {
+
+      formDataSend.append(`asset_params[${index}][name]`, item.name || "");
+      formDataSend.append(`asset_params[${index}][order]`, item.order || "");
+      formDataSend.append(`asset_params[${index}][unit_type]`, item.unit_type || "");
+      formDataSend.append(`asset_params[${index}][digit]`, item.digit || "");
+
+      formDataSend.append(`asset_params[${index}][alert_below]`, item.alert_below || "");
+      formDataSend.append(`asset_params[${index}][alert_above]`, item.alert_above || "");
+
+      formDataSend.append(`asset_params[${index}][min_val]`, item.min_val || "");
+      formDataSend.append(`asset_params[${index}][max_val]`, item.max_val || "");
 
       formDataSend.append(
-        "site_asset[is_meter]",
-        formData.is_meter ? "true" : "false",
+        `asset_params[${index}][multiplier_factor]`,
+        item.multiplier_factor || ""
       );
 
-      formDataSend.append("site_asset[asset_type]", formData.asset_type);
-      formDataSend.append("site_asset[vendor_id]", formData.vendor_id);
-      consumptionData.forEach((item) => {
-        formDataSend.append("asset_params[][name]", item.name || "");
-        formDataSend.append("asset_params[][order]", item.order || "");
-        formDataSend.append("asset_params[][unit_type]", item.unit_type || "");
-        formDataSend.append("asset_params[][digit]", item.digit || "");
-        formDataSend.append(
-          "asset_params[][alert_below]",
-          item.alert_below || "",
-        );
-        formDataSend.append(
-          "asset_params[][alert_above]",
-          item.alert_above || "",
-        );
-        formDataSend.append("asset_params[][min_val]", item.min_val || "");
-        formDataSend.append("asset_params[][max_val]", item.max_val || "");
-        formDataSend.append(
-          "asset_params[][multiplier_factor]",
-          item.multiplier_factor || "",
-        );
+      formDataSend.append(
+        `asset_params[${index}][dashboard_view]`,
+        item.dashboard_view ? "true" : "false"
+      );
 
-        // ✅ Convert booleans to string (VERY IMPORTANT)
-        formDataSend.append(
-          "asset_params[][dashboard_view]",
-          item.dashboard_view ? "true" : "false",
-        );
+      formDataSend.append(
+        `asset_params[${index}][consumption_view]`,
+        item.consumption_view ? "true" : "false"
+      );
 
-        formDataSend.append(
-          "asset_params[][consumption_view]",
-          item.consumption_view ? "true" : "false",
-        );
+      formDataSend.append(
+        `asset_params[${index}][check_prev]`,
+        item.check_prev ? "true" : "false"
+      );
 
-        formDataSend.append(
-          "asset_params[][check_prev]",
-          item.check_prev ? "true" : "false",
-        );
-      });
-      // Purchase Invoices
+    });
+
+    // ---------------- FILE UPLOADS ----------------
+
     formData.invoice?.forEach((file) => {
-  const actualFile = file?.file || file;
-  formDataSend.append("purchase_invoices[]", actualFile);
-});
-      // Insurance Files
-     formData.insurance?.forEach((file) => {
-  const actualFile = file?.file || file;
-  formDataSend.append("insurances[]", actualFile);
-});
+      formDataSend.append("purchase_invoices[]", file.file || file);
+    });
 
-      // Manuals
+    formData.insurance?.forEach((file) => {
+      formDataSend.append("insurances[]", file.file || file);
+    });
+
     formData.manuals?.forEach((file) => {
-  const actualFile = file?.file || file;
-  formDataSend.append("manuals[]", actualFile);
-});
-      // Other Files
+      formDataSend.append("manuals[]", file.file || file);
+    });
+
     formData.others?.forEach((file) => {
-  const actualFile = file?.file || file;
-  formDataSend.append("other_files[]", actualFile);
-});
+      formDataSend.append("other_files[]", file.file || file);
+    });
 
-      formDataSend.append("site_asset[uom]", formData.unit);
-      formDataSend.append(
-        "site_asset[warranty_start]",
-        formData.warranty_start,
-      );
-      // formDataSend.append("site_asset[installation]", formData.installation);
-      // console.log(formDataSend);
-   const response = await postSiteAsset(formDataSend);
+    // ---------------- API CALL ----------------
 
-console.log("FULL RESPONSE:", response);
-console.log("FULL RESPONSE DATA:", response.data);
+    const response = await postSiteAsset(formDataSend);
 
-// ❌ Backend validation error
-// if (response?.data?.site) {
-//   toast.dismiss(toastId);
-//   toast.error(response.data.site.join(", "));
-//   return;
-// }
+    const assetId =
+      response?.data?.site_asset?.id ||
+      response?.data?.id;
 
-const assetId =
-  response?.data?.site_asset?.id ||
-  response?.data?.id ||
-  response?.site_asset?.id;
-
-if (!assetId) {
-  toast.dismiss(toastId);
-  toast.error("Asset created but ID not returned");
-  return;
-}
-
-toast.dismiss(toastId);
-toast.success("Asset Created Successfully");
-
-navigate(`/assets/asset-details/${assetId}`);
-window.scrollTo(0, 0);
-    } catch (error) {
-      toast.dismiss();
-      console.error("Error:", error);
+    if (!assetId) {
+      toast.dismiss(toastId);
+      toast.error("Asset created but ID not returned");
+      return;
     }
-  };
+
+    toast.dismiss(toastId);
+    toast.success("Asset Created Successfully");
+
+    navigate(`/assets/asset-details/${assetId}`);
+    window.scrollTo(0, 0);
+
+  } catch (error) {
+
+    toast.dismiss();
+    console.error("Error:", error);
+    toast.error("Failed to create asset");
+
+  }
+
+};
 
   const [meterCategory, setMeterCategory] = useState("");
 
