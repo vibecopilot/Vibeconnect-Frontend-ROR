@@ -226,39 +226,38 @@ const Ticket = () => {
     },
   };
 
-  const fetchData = async (page, perPage) => {
-    try {
-      const response = await getAdminPerPageComplaints(page, perPage);
-      console.log("Resp", response);
+ const fetchData = async (page, perPage, search = "") => {
+  try {
+    const response = await getAdminComplaints(page, perPage, search);
 
-      const complaints = response?.data?.complaints || [];
-      const totalCount = response?.data?.count || 0;
+    const complaints = response?.data?.complaints || [];
+    const totalCount = response?.data?.count || 0;
 
-      setFilteredData(complaints);
-      setComplaints(complaints);
-      setTotalRows(totalCount); // ✅ correct
+    setFilteredData(complaints);
+    setComplaints(complaints);
+    setTotalRows(totalCount);
 
+    const statusCounts = complaints.reduce((acc, curr) => {
+      acc[curr.issue_status] = (acc[curr.issue_status] || 0) + 1;
+      return acc;
+    }, {});
+    setTicketStatusCounts(statusCounts);
 
-      // setTotalRows(complaints.length);
+    const typeCounts = complaints.reduce((acc, curr) => {
+      acc[curr.issue_type] = (acc[curr.issue_type] || 0) + 1;
+      return acc;
+    }, {});
+    setTicketTypeCounts(typeCounts);
+  } catch (error) {
+    console.error("Error fetching data:", error);
+  }
+};
 
-      const statusCounts = complaints.reduce((acc, curr) => {
-        acc[curr.issue_status] = (acc[curr.issue_status] || 0) + 1;
-        return acc;
-      }, {});
-      setTicketStatusCounts(statusCounts);
-
-      const typeCounts = complaints.reduce((acc, curr) => {
-        acc[curr.issue_type] = (acc[curr.issue_type] || 0) + 1;
-        return acc;
-      }, {});
-      setTicketTypeCounts(typeCounts);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    }
-  };
   useEffect(() => {
-    fetchData(currentPage, perPage);
-  }, [currentPage]);
+  fetchData(currentPage, perPage, searchText);
+}, [currentPage, perPage, searchText]);
+
+
   const [ticketTypes, setTicketsTypes] = useState({});
   const [statusData, setStatusData] = useState({});
 
@@ -354,6 +353,7 @@ const handleSearch = (e) => {
   });
 
   setFilteredData(filtered);
+setCurrentPage(1); 
 };
 
 

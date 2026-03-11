@@ -717,7 +717,7 @@ export const getAdminComplaints = async (
       token: token,
       page: page,
       per_page: perPage,
-      "q[search_cont]": search,   // 🔥 important
+      "q[search_cont]": search,   
     },
   });
 
@@ -11326,7 +11326,6 @@ export const getVehicleSetups = async (siteId = 47) =>
 //   });
 
 // Amenity Bookings API
-// Amenity Bookings API
 export const getAmenitiesBooking = async (
   page = 1,
   perPage = 10,
@@ -11339,10 +11338,19 @@ export const getAmenitiesBooking = async (
       page,
       per_page: perPage,
       site_id: siteId,
-      search, // add this
+      "q[search_cont]":search, 
       _t: new Date().getTime(),
     },
   });
+};
+
+export const getAmenityExport = (startDate, endDate, siteId) => {
+  return axios.get(
+    `/amenity/export?start_date=${startDate}&end_date=${endDate}&site_id=${siteId}`,
+    {
+      responseType: "blob",
+    }
+  );
 };
 
 // Polls API
