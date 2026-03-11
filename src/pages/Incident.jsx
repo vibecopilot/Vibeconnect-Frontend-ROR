@@ -15,6 +15,8 @@ const Incidents = () => {
   const [incidents, setIncidents] = useState([]);
   const [page, setPage] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
+  const [search, setSearch] = useState("");
+
   const perPage = 10;
 
   const columns = [
@@ -69,32 +71,46 @@ const Incidents = () => {
     },
   ];
 
-  const fetchIncidents = async (pageNo = 1) => {
+  const fetchIncidents = async (pageNo = 1, searchText = "") => {
     try {
-      const res = await getIncidents(pageNo);
-      setIncidents(res.data?.incidents || []);
-      setTotalRecords(res.data?.total_count || 0);
+      const res = await getIncidents(pageNo, searchText);
+
+      setIncidents(res?.data?.incidents || []);
+      setTotalRecords(res?.data?.total_count || 0);
     } catch (error) {
       console.error("Failed to fetch incidents:", error);
     }
   };
 
   useEffect(() => {
-    fetchIncidents(page);
-  }, [page]);
+    const debounce = setTimeout(() => {
+      fetchIncidents(page, search);
+    }, 400);
+
+    return () => clearTimeout(debounce);
+  }, [page, search]);
+
+  const handleSearch = (e) => {
+    const value = e.target.value;
+    setSearch(value);
+    setPage(1); // reset page when searching
+  };
 
   document.title = "VC - Incidents";
 
   return (
     <section className="flex">
       <Navbar />
+
       <div className="w-full flex m-2 flex-col overflow-hidden">
         <div className="flex flex-col sm:flex-row md:justify-between my-2 gap-2">
+          
           <input
             type="text"
-            placeholder="Search"
+            placeholder="Search Category, Building, Status..."
+            value={search}
+            onChange={handleSearch}
             className="border p-2 w-full border-gray-300 rounded-lg"
-            disabled
           />
 
           <Link
@@ -113,10 +129,10 @@ const Incidents = () => {
           paginationServer
           paginationTotalRows={totalRecords}
           paginationPerPage={perPage}
-          onChangePage={(page) => setPage(page)}
+          onChangePage={(p) => setPage(p)}
           highlightOnHover
           responsive
-           persistTableHead
+          persistTableHead
         />
       </div>
     </section>

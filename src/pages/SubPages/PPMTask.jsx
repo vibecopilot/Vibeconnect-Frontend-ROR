@@ -80,8 +80,7 @@ const PPMTask = () => {
     const res = await fetch(url);
     const data = await res.json();
 
-    const activities = (data.activities || []).filter((a) => a.asset_name);
-
+const activities = data.activities?.filter((a) => a.asset_name) || [];
     setTasks(activities);
 
     setTotal(data.total_count || 0);
@@ -99,21 +98,25 @@ const fetchStatusCounts = async () => {
     const res = await fetch(url);
     const data = await res.json();
 
-    const activities = (data.activities || []).filter((a) => a.asset_name);
+    const activities = data.activities || [];
 
     const counts = {
-      all: activities.length,
+      all: 0,
       pending: 0,
       overdue: 0,
       complete: 0,
     };
 
     activities.forEach((task) => {
+      if (!task.asset_name) return;
+
+      counts.all++;
+
       const status = task.status?.toLowerCase();
 
       if (status === "pending") counts.pending++;
-      if (status === "overdue") counts.overdue++;
-      if (status === "complete") counts.complete++;
+      else if (status === "overdue") counts.overdue++;
+      else if (status === "complete") counts.complete++;
     });
 
     setStatusCounts(counts);
@@ -129,6 +132,7 @@ const fetchStatusCounts = async () => {
 useEffect(() => {
   fetchStatusCounts();
 }, []);
+
   useEffect(() => {
     Get_Background();
   }, []);
