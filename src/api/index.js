@@ -707,13 +707,61 @@ export const getHelpDeskStatusDetailsSetup = async (id) =>
       },
     },
   );
-export const editHelpDeskStatusDetailsSetup = async (id, data) =>
-  axiosInstance.patch(`/pms/admin/modify_complaint_status/${id}.json`, data, {
+// export const editHelpDeskStatusDetailsSetup = async (id, data) =>
+//   axiosInstance.patch(`/pms/admin/modify_complaint_status/${id}.json`, data, {
+//     params: {
+//       token: token,
+//     },
+//   });
+
+export const editHelpDeskStatusDetailsSetup = (id, payload) => {
+  const token = localStorage.getItem("token");   // or where your token is stored
+  return axios.put(`/pms/admin/complaint_statuses/${id}.json?token=${token}`, payload);
+};
+// HelpDesk Status API
+
+export const getHelpDeskStatuses = async () =>
+  axiosInstance.get("/pms/admin/helpdesk_categories/complaint_statuses.json", {
     params: {
       token: token,
     },
   });
 
+export const getHelpDeskStatusById = async (id) =>
+  axiosInstance.get(`/pms/admin/helpdesk_categories/complaint_statuses/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+
+export const postHelpDeskStatus = async (formData) =>
+  axiosInstance.post(`/pms/admin/helpdesk_categories/complaint_statuses.json?token=${token}`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+export const updateHelpDeskStatus = async (id, formData) =>
+  axiosInstance.put(
+    `/pms/admin/modify_complaint_status/${id}.json`,
+    formData,
+    {
+      params: {
+        token: token,
+      },
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+// HelpDesk Status API
+
+// export const updateHelpDeskStatus = async (id, formData) =>
+//   axiosInstance.put(`/pms/admin/modify_complaint_status/${id}.json?token=${token}`, formData, {
+//     headers: {
+//       "Content-Type": "multipart/form-data",
+//     },
+//   });
 export const postHelpDeskStatusSetup = async (data) =>
   axiosInstance.post(`/pms/admin/create_complaint_statuses.json`, data, {
     params: {
@@ -895,7 +943,7 @@ export const getfloorsType = async (buildId) =>
   });
 
 export const postComplaintsDetails = async (data) => {
-  try {
+  
     const response = await axiosInstance.post(
       `/pms/complaints.json?token=${token}`,
       data,
@@ -906,22 +954,22 @@ export const postComplaintsDetails = async (data) => {
       },
     );
     return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
+  } 
+    
+  
+
 
 export const editComplaintsDetails = async (data) => {
-  try {
+
     const response = await axiosInstance.post(
       `/complaint_logs.json?token=${token}`,
       data,
     );
     return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
+  } 
+  
+  
+
 
 export const resetPassword = async (data) =>
   axiosInstance.post("/users/change_password.json", data, {
