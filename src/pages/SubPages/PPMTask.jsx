@@ -55,7 +55,7 @@ const PPMTask = () => {
     let url = `https://admin.vibecopilot.ai/activities.json?q[checklist_ctype_eq]=ppm&token=${token}&page=${page + 1}&per_page=${rowsPerPage}`;
 
     if (searchText) {
-      url += `&q[asset_name_or_checklist_name_cont]=${searchText}`;
+      url += `&q[search_cont]=${searchText}`;
     }
 
     /* STATUS FILTER FROM API */
@@ -200,6 +200,12 @@ useEffect(() => {
       selector: (row) => row.assigned_to_name,
       sortable: true,
     },
+
+    {
+      name: "Created On",
+      selector: (row) => row.created_at,
+      sortable: true,
+    },
   ];
 
   /* ---------------- PAGINATION ---------------- */
@@ -340,7 +346,7 @@ useEffect(() => {
 
           <input
             type="text"
-            placeholder="Search Asset or Checklist"
+            placeholder="Search Asset Name or Checklist"
             className="border p-2 w-[400px] rounded-lg border border-gray-300 border-1"
             value={searchText}
             onChange={handleSearch}

@@ -1048,6 +1048,9 @@ export const postAMC = async (data) =>
     params: {
       token: token,
     },
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
   });
 export const getAMCDetails = async (assetId) =>
   axiosInstance.get(`/asset_amcs.json?q[asset_id_eq]=${assetId}`, {
@@ -2124,13 +2127,20 @@ export const editEventDetails = async (id, data) =>
     params: {
       token: token,
     },
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
   });
-export const postEvents = async (data) =>
-  axiosInstance.post("/events.json", data, {
+export const postEvents = async (data) => {
+  return axiosInstance.post("/events.json", data, {
     params: {
       token: token,
     },
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
   });
+};
 export const postGroups = async (data) =>
   axiosInstance.post("/groups.json", data, {
     params: {
