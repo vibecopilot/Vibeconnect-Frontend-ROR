@@ -714,11 +714,11 @@ export const getHelpDeskStatusDetailsSetup = async (id) =>
 //     },
 //   });
 
-export const editHelpDeskStatusDetailsSetup = (id, payload) => {
-  const token = localStorage.getItem("token");   // or where your token is stored
-  return axios.put(`/pms/admin/complaint_statuses/${id}.json?token=${token}`, payload);
-};
-// HelpDesk Status API
+// export const editHelpDeskStatusDetailsSetup = (id, payload) => {
+//   const token = localStorage.getItem("token");   // or where your token is stored
+//   return axios.put(`/pms/admin/complaint_statuses/${id}.json?token=${token}`, payload);
+// };
+// // HelpDesk Status API
 
 export const getHelpDeskStatuses = async () =>
   axiosInstance.get("/pms/admin/helpdesk_categories/complaint_statuses.json", {
@@ -728,6 +728,7 @@ export const getHelpDeskStatuses = async () =>
   });
 
 export const getHelpDeskStatusById = async (id) =>
+   
   axiosInstance.get(`/pms/admin/helpdesk_categories/complaint_statuses/${id}.json`, {
     params: {
       token: token,
@@ -735,25 +736,27 @@ export const getHelpDeskStatusById = async (id) =>
   });
 
 export const postHelpDeskStatus = async (formData) =>
+  
   axiosInstance.post(`/pms/admin/helpdesk_categories/complaint_statuses.json?token=${token}`, formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },
   });
 
-export const updateHelpDeskStatus = async (id, formData) =>
-  axiosInstance.put(
-    `/pms/admin/modify_complaint_status/${id}.json`,
+export const updateHelpDeskStatus = async (id, formData) => {
+ 
+
+  return axiosInstance.put(
+    `/pms/admin/helpdesk_categories/complaint_statuses/${id}.json`,
     formData,
     {
-      params: {
-        token: token,
-      },
+      params: { token },
       headers: {
         "Content-Type": "multipart/form-data",
       },
     }
   );
+};
 // HelpDesk Status API
 
 // export const updateHelpDeskStatus = async (id, formData) =>

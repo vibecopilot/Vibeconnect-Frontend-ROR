@@ -50,6 +50,9 @@ const AddUser = () => {
     landlineNumber: "",
     evConnection: "",
     is_occupied: "",
+    tenant_start_date: "",
+    tenant_end_date: "",
+    tenant_attachment: null
   });
 
   useEffect(() => {
@@ -66,20 +69,25 @@ const AddUser = () => {
     loadDropdowns();
   }, []);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
+ const handleChange = (e) => {
+  const { name, value, files } = e.target;
 
-    if (name === "mobile") {
-      const digits = value.replace(/\D/g, "");
-      return setFormData({ ...formData, mobile: digits.slice(0, 10) });
-    }
+  if (files) {
+    setFormData({ ...formData, [name]: files[0] });
+    return;
+  }
 
-    if (name === "email") {
-      return setFormData({ ...formData, email: value.trim() });
-    }
+  if (name === "mobile") {
+    const digits = value.replace(/\D/g, "");
+    return setFormData({ ...formData, mobile: digits.slice(0, 10) });
+  }
 
-    setFormData({ ...formData, [name]: value });
-  };
+  if (name === "email") {
+    return setFormData({ ...formData, email: value.trim() });
+  }
+
+  setFormData({ ...formData, [name]: value });
+};
 
   const handleUnitChange = (e) => {
     const unitId = Number(e.target.value);
@@ -363,7 +371,7 @@ const AddUser = () => {
               </div>
 
               <div>
-                <label className="text-sm font-medium block mb-1">Unit ID *</label>
+                <label className="text-sm font-medium block mb-1">Unit No *</label>
 
                 <select
                   className="w-full border border-gray-300 rounded-md px-3 py-2"
@@ -397,6 +405,8 @@ const AddUser = () => {
                   className="w-full border border-gray-300 rounded-md px-3 py-2"
                   required
                 >
+
+                  
                   <option value="" disabled>
                     Select Ownership Type
                   </option>
@@ -404,6 +414,53 @@ const AddUser = () => {
                   <option value="tenant">Tenant</option>
                 </select>
               </div>
+
+              {formData.occupancy_type === "tenant" && (
+
+<div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4 lg:col-start-4 col-span-3">
+
+  <div>
+    <label className="text-sm font-medium block mb-1">
+      Tenant Start Date *
+    </label>
+    <input
+      type="date"
+      name="tenant_start_date"
+      value={formData.tenant_start_date}
+      onChange={handleChange}
+      className="w-full border border-gray-300 rounded-md px-3 py-2"
+    />
+  </div>
+
+  <div>
+    <label className="text-sm font-medium block mb-1">
+      Tenant End Date *
+    </label>
+    <input
+      type="date"
+      name="tenant_end_date"
+      value={formData.tenant_end_date}
+      onChange={handleChange}
+      className="w-full border border-gray-300 rounded-md px-3 py-2"
+    />
+  </div>
+
+  <div>
+    <label className="text-sm font-medium block mb-1">
+      Tenant Agreement Attachment
+    </label>
+    <input
+      type="file"
+      name="tenant_attachment"
+      onChange={handleChange}
+      className="w-full border border-gray-300 rounded-md px-3 py-2"
+      accept=".pdf,.jpg,.png"
+    />
+  </div>
+
+</div>
+
+)}
 
               <div>
                 <label className="text-sm font-medium block mb-1">Status *</label>
@@ -418,7 +475,7 @@ const AddUser = () => {
                     Select Status
                   </option>
                   <option value="pending">Pending</option>
-                  <option value="complete">Complete</option>
+                  <option value="complete">Approved</option>
                   <option value="rejected">Rejected</option>
                 </select>
               </div>
@@ -472,8 +529,8 @@ const AddUser = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
               {[
-                { label: "PAN Card", name: "panCard" },
-                { label: "GSTIN", name: "gstin" },
+                { label: "PAN Card (Optional)", name: "panCard" },
+                { label: "GSTIN (Optional)", name: "gstin" },
               ].map((f) => (
                 <div key={f.name}>
                   <label className="text-sm font-medium block mb-1">{f.label}</label>
@@ -488,9 +545,9 @@ const AddUser = () => {
             </div>
 
             <div className="mt-4">
-              <label className="text-sm font-medium block mb-1">
-                Alternate Address
-              </label>
+             <label className="text-sm font-medium block mb-1">
+                 Alternate Address <span className="text-gray-500">(Optional)</span>
+             </label>
               <textarea
                 name="alternateAddress"
                 value={formData.alternateAddress}
@@ -501,9 +558,10 @@ const AddUser = () => {
           </div>
 
           <div className="border-t border-gray-300 p-6">
-            <h3 className="text-xl font-bold text-gray-700 mb-4 pb-2 border-b border-gray-200">
-              Additional Info & Utilities
-            </h3>
+           <h3 className="text-xl font-bold text-gray-700 mb-4 pb-2 border-b border-gray-200">
+               Additional Info & Utilities 
+              <span className="text-gray-400 text-sm ml-2">(Optional)</span>
+           </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {[

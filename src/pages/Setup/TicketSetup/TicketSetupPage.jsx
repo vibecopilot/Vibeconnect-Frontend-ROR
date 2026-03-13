@@ -18,7 +18,6 @@ const TicketSetupPage = () => {
 
   const [page, setPage] = useState("Category Type");
   const [statuses, setStatuses] = useState([]);
-  const [statusAdded, setStatusAdded] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editId, setEditId] = useState("");
 
@@ -40,17 +39,18 @@ const TicketSetupPage = () => {
   });
 
   /* ---------------- FETCH STATUS ---------------- */
+  const fetchStatuses = async () => {
+    try {
+      const res = await getHelpDeskStatusSetup();
+      setStatuses(Object.values(res.data));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
-    const fetchStatuses = async () => {
-      try {
-        const res = await getHelpDeskStatusSetup();
-        setStatuses(Object.values(res.data));
-      } catch (err) {
-        console.error(err);
-      }
-    };
     fetchStatuses();
-  }, [statusAdded]);
+  }, []);
 
   /* ---------------- HANDLERS ---------------- */
   const handleChange = (e) => {
@@ -63,8 +63,8 @@ const TicketSetupPage = () => {
     }
 
     const siteID = getItemInLocalStorage("SITEID");
-    const payload = new FormData();
 
+    const payload = new FormData();
     payload.append("complaint_status[of_phase]", "pms");
     payload.append("complaint_status[society_id]", siteID);
     payload.append("complaint_status[name]", formData.status);
@@ -74,18 +74,19 @@ const TicketSetupPage = () => {
 
     try {
       await postHelpDeskStatusSetup(payload);
+
       toast.success("Status added successfully");
-      setStatusAdded(true);
+
       setFormData({
         status: "",
         fixedState: "",
         color: "#1677ff",
         order: "",
       });
+
+      fetchStatuses(); // refresh table
     } catch (err) {
       toast.error("Failed to add status");
-    } finally {
-      setTimeout(() => setStatusAdded(false), 500);
     }
   };
 
@@ -169,6 +170,7 @@ const TicketSetupPage = () => {
               onChange={handleChange}
               className="border p-2 rounded"
             />
+
             <input
               name="fixedState"
               placeholder="Fixed State"
@@ -176,6 +178,7 @@ const TicketSetupPage = () => {
               onChange={handleChange}
               className="border p-2 rounded"
             />
+
             <input
               name="order"
               type="number"
@@ -184,6 +187,7 @@ const TicketSetupPage = () => {
               onChange={handleChange}
               className="border p-2 rounded"
             />
+
             <button
               onClick={handleAddStatus}
               className="text-white rounded"
@@ -209,6 +213,7 @@ const TicketSetupPage = () => {
                 <th>End</th>
               </tr>
             </thead>
+
             <tbody>
               {Object.entries(operationalDays).map(([day, data]) => (
                 <tr key={day}>
@@ -221,7 +226,9 @@ const TicketSetupPage = () => {
                       }
                     />
                   </td>
+
                   <td className="border text-center">{day}</td>
+
                   <td className="border">
                     <input
                       type="time"
@@ -232,6 +239,7 @@ const TicketSetupPage = () => {
                       }
                     />
                   </td>
+
                   <td className="border">
                     <input
                       type="time"
@@ -266,7 +274,7 @@ const TicketSetupPage = () => {
           onClose={() => setShowEditModal(false)}
           onUpdated={() => {
             setShowEditModal(false);
-            setStatusAdded(true);
+            fetchStatuses(); // refresh after edit
           }}
         />
       )}
