@@ -77,12 +77,14 @@ const CreateEvent = () => {
         console.log("userSites", unitsRes);
         setUnits(unitsRes.data);
         console.log("usersRes", usersRes);
-        const employeesList = usersRes.data.map((emp) => ({
-          id: emp.id,
-          name: `${emp.firstname} ${emp.lastname}`,
-          building_id: emp.building_id || emp.building?.id || null, //for some users id is null
-          userSites: emp.user_sites || [],
-          building: emp.building || {},
+       const employeesList = usersRes.data
+  .filter((emp) => emp.user_status === true) // ✅ only active users
+  .map((emp) => ({
+    id: emp.id,
+    name: `${emp.firstname} ${emp.lastname}`,
+    building_id: emp.building_id || emp.building?.id || null,
+    userSites: emp.user_sites || [],
+    building: emp.building || {},
         }));
 
         setMembers(employeesList);
@@ -95,24 +97,26 @@ const CreateEvent = () => {
   }, []);
 
   const handleFilter = () => {
-    const filtered = members.filter((member) => {
-      const buildingMatch =
-        selectedUnits.length === 0 ||
-        selectedUnits.some(
-          (unit) =>
-            Number(member.building_id ?? member.building?.id) ===
-            Number(unit.value),
-        );
+  const filtered = members.filter((member) => {
+  if (!member.user_status) return false; // ❌ skip inactive users
 
-      const ownershipMatch =
-        !selectedOwnership ||
-        member.userSites.some(
-          (site) =>
-            site.ownership?.toLowerCase() === selectedOwnership.toLowerCase(),
-        );
+  const buildingMatch =
+    selectedUnits.length === 0 ||
+    selectedUnits.some(
+      (unit) =>
+        Number(member.building_id ?? member.building?.id) ===
+        Number(unit.value)
+    );
 
-      return buildingMatch && ownershipMatch;
-    });
+  const ownershipMatch =
+    !selectedOwnership ||
+    member.userSites.some(
+      (site) =>
+        site.ownership?.toLowerCase() === selectedOwnership.toLowerCase()
+    );
+
+  return buildingMatch && ownershipMatch;
+});
 
     setFilteredMembers(filtered);
     toast.success("Filter applied");

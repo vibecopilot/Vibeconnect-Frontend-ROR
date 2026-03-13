@@ -1,10 +1,13 @@
 import React, { useState } from "react";
 import { getAmenityExport } from "../../api";
+import { getItemInLocalStorage } from "../../utils/localStorage";
 
 const ExportBookingModal = ({ onclose }) => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const siteId = getItemInLocalStorage("SITEID");
 
   const handleExport = async () => {
     if (!startDate || !endDate) {
@@ -12,7 +15,7 @@ const ExportBookingModal = ({ onclose }) => {
       return;
     }
 
-    if (startDate > endDate) {
+    if (new Date(startDate) > new Date(endDate)) {
       alert("Start date cannot be greater than end date");
       return;
     }
@@ -20,7 +23,7 @@ const ExportBookingModal = ({ onclose }) => {
     try {
       setLoading(true);
 
-      const response = await getAmenityExport(startDate, endDate, 47);
+      const response = await getAmenityExport(startDate, endDate, siteId);
 
       const blob = new Blob([response.data], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -30,12 +33,15 @@ const ExportBookingModal = ({ onclose }) => {
 
       const link = document.createElement("a");
       link.href = url;
-      link.download = `amenity_bookings_${startDate}_to_${endDate}.xlsx`;
+      link.setAttribute(
+        "download",
+        `amenity_bookings_${startDate}_to_${endDate}.xlsx`
+      );
 
       document.body.appendChild(link);
       link.click();
 
-      document.body.removeChild(link);
+      link.remove();
       window.URL.revokeObjectURL(url);
 
       onclose();
@@ -50,13 +56,9 @@ const ExportBookingModal = ({ onclose }) => {
   return (
     <div className="fixed inset-0 bg-black/30 flex justify-center items-center z-50">
       <div className="bg-white p-6 rounded-lg w-96 shadow-lg">
-
-        <h2 className="text-lg font-semibold mb-4">
-          Export Booking Data
-        </h2>
+        <h2 className="text-lg font-semibold mb-4">Export Booking Data</h2>
 
         <div className="flex flex-col gap-3">
-
           <div>
             <label className="text-sm font-medium">Start Date</label>
             <input
@@ -78,7 +80,6 @@ const ExportBookingModal = ({ onclose }) => {
           </div>
 
           <div className="flex justify-end gap-2 mt-4">
-
             <button
               onClick={onclose}
               className="px-4 py-2 border rounded hover:bg-gray-100"
@@ -93,10 +94,8 @@ const ExportBookingModal = ({ onclose }) => {
             >
               {loading ? "Exporting..." : "Export"}
             </button>
-
           </div>
         </div>
-
       </div>
     </div>
   );

@@ -2175,7 +2175,13 @@ const SetupFacility = () => {
             </div>
           )}
         </div>
-        <div className="flex justify-center my-2">
+        <div className="flex justify-end my-2 gap-3">
+          <button
+            className="bg-gray-800 text-white p-2 px-4 font-semibold rounded-md flex items-center gap-2"
+            onClick={() => navigate("/setup/facility")}
+          >
+            Cancel
+          </button>
           <button
             onClick={handleOnSubmit}
             style={{ background: themeColor }}

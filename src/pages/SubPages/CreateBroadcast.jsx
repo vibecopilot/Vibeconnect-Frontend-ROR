@@ -94,19 +94,23 @@ const [selectedUnits, setSelectedUnits] = useState([]);
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const usersRes = await getSetupUsers();
-        const unitsRes = await getBuildings();
-        console.log("userSites", unitsRes);
-        setUnits(unitsRes.data);
-        const employeesList = usersRes.data.map((emp) => ({
-          id: emp.id,
-          name: `${emp.firstname} ${emp.lastname}`,
-          building_id: emp.building_id || emp.building?.id || null, //for some users id is null
-          userSites: emp.user_sites || [],
-          building: emp.building || {},
-        }));
+       const usersRes = await getSetupUsers();
+const unitsRes = await getBuildings();
 
-        setMembers(employeesList);
+setUnits(unitsRes.data);
+
+// ✅ filter only active users
+const activeUsers = usersRes.data.filter((emp) => emp.user_status === true);
+
+const employeesList = activeUsers.map((emp) => ({
+  id: emp.id,
+  name: `${emp.firstname} ${emp.lastname}`,
+  building_id: emp.building_id || emp.building?.id || null,
+  userSites: emp.user_sites || [],
+  building: emp.building || {},
+}));
+
+setMembers(employeesList);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -115,22 +119,21 @@ const [selectedUnits, setSelectedUnits] = useState([]);
   }, []);
 
 const handleFilter = () => {
-  const filtered = members.filter((member) => {
-    const buildingMatch =
-      selectedUnits.length === 0 ||
-      selectedUnits.some(
-        (unit) => Number(member.building_id) === Number(unit.value)
-      );
+const filtered = members.filter((member) => {
+  const buildingMatch =
+    selectedUnits.length === 0 ||
+    selectedUnits.some(
+      (unit) => Number(member.building_id) === Number(unit.value)
+    );
 
-    const ownershipMatch =
-      !selectedOwnership ||
-      member.userSites.some(
-        (site) =>
-          site.ownership?.toLowerCase() ===
-          selectedOwnership.toLowerCase()
-      );
+  const ownershipMatch =
+    !selectedOwnership ||
+    member.userSites.some(
+      (site) =>
+        site.ownership?.toLowerCase() === selectedOwnership.toLowerCase()
+    );
 
-    return buildingMatch && ownershipMatch;
+  return buildingMatch && ownershipMatch;
   });
 
   setFilteredMembers(filtered);
