@@ -1803,6 +1803,7 @@ export const getSetupUsers = async () =>
   axiosInstance.get("/users.json", {
     params: {
       token: token,
+       user_status: true,
     },
   });
 export const putSetupUser = async (userId, data) =>
@@ -11355,12 +11356,15 @@ export const getAmenitiesBooking = async (
 };
 
 export const getAmenityExport = (startDate, endDate, siteId) => {
-  return axios.get(
-    `/amenity/export?start_date=${startDate}&end_date=${endDate}&site_id=${siteId}`,
-    {
-      responseType: "blob",
-    }
-  );
+  return axiosInstance.get("/amenities/export.xlsx", {
+    params: {
+      start_date: startDate,
+      end_date: endDate,
+      site_id: siteId,
+      token: token,
+    },
+    responseType: "blob",
+  });
 };
 
 // Polls API
