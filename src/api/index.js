@@ -1225,6 +1225,8 @@ export const getFacitilitySetup = async () => {
   }
 };
 
+
+
 // export const getAmenitiesBooking = async () => {
 //   return axiosInstance.get(`/amenity_bookings.json`, {
 //     params: {
@@ -1810,6 +1812,18 @@ export const putSetupUser = async (userId, data) =>
   axiosInstance.put(`/users/${userId}.json`, data, {
     params: {
       token: token,
+    },
+  });
+
+  export const getUserCount = async () =>
+  axiosInstance.get("/users/index_count.json", {
+    params: {
+      token: token,
+    },
+    headers: {
+      "Cache-Control": "no-cache",
+      Pragma: "no-cache",
+      Expires: "0",
     },
   });
 
@@ -11115,6 +11129,8 @@ export const deleteVisitorSubCategory = async (id) =>
 
 // aminities
 
+
+
 // Amenities API
 // export const getAmenities = async (page = 1, per_page = 10) =>
 //   axiosInstance.get("/amenities.json", {
@@ -11356,7 +11372,7 @@ export const getAmenitiesBooking = async (
 };
 
 export const getAmenityExport = (startDate, endDate, siteId) => {
-  return axiosInstance.get("/amenities/export.xlsx", {
+  return axiosInstance.get("/amenity/export.xlsx", {
     params: {
       start_date: startDate,
       end_date: endDate,
