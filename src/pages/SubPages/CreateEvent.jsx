@@ -240,9 +240,13 @@ const CreateEvent = () => {
     const selectedGroupObj = groups.find((group) => group.id === groupId);
 
     setSelectedGroup(event.target.value);
-    setFormData({ ...formData, group_id: groupId });
 
-    // Set members directly from selected group object
+    setFormData((prev) => ({
+      ...prev,
+      group_id: groupId,
+      group_name: selectedGroupObj?.group_name || "",
+    }));
+
     setGroupMembers(selectedGroupObj?.group_members || []);
   };
 
@@ -278,31 +282,42 @@ const CreateEvent = () => {
       );
       formDataSend.append("event[venue]", formData.venue);
       formDataSend.append("event[user_ids]", formData.user_ids);
-      formDataSend.append("event[shared]", share);
+      // formDataSend.append("event[shared]", share);
       formDataSend.append("event[email_enabled]", formData.email_enabled);
       formDataSend.append("event[rsvp_enabled]", formData.rsvp_enabled);
       formDataSend.append("event[important]", formData.important);
-      if (share === "all") {
-        formDataSend.append("event[shared]", "all");
-      } else if (share === "individual") {
-        formDataSend.append("event[shared]", "individual");
-        formDataSend.append("event[user_ids]", formData.user_ids);
-      } else if (share === "groups") {
-        formDataSend.append("event[shared]", "groups");
-        formDataSend.append("event[group_id]", formData.group_id);
-        formDataSend.append("event[group_name]", formData.group_name);
-      }
+      // if (share === "all") {
+      //   formDataSend.append("event[shared]", "all");
+      // } else if (share === "individual") {
+      //   formDataSend.append("event[shared]", "individual");
+      //   formDataSend.append("event[user_ids]", formData.user_ids);
+      // } else if (share === "groups") {
+      //   formDataSend.append("event[shared]", "groups");
+      //   formDataSend.append("event[group_id]", formData.group_id);
+      //   formDataSend.append("event[group_name]", formData.group_name);
+      // }
       // formDataSend.append("event[important]", formData.important);
 
       // formData.user_ids.forEach((user_id) => {
       //   formDataSend.append("event[user_ids]", user_id);
       // });
+      formDataSend.append("event[shared]", share);
 
+      if (share === "individual") {
+        formDataSend.append("event[user_ids]", formData.user_ids);
+      }
+
+      if (share === "groups") {
+        formDataSend.append("event[group_id]", formData.group_id);
+        formDataSend.append("event[group_name]", formData.group_name);
+      }
+      // Upload attachments
       if (formData.event_images && formData.event_images.length > 0) {
         formData.event_images.forEach((file) => {
-          formDataSend.append("attachfiles[]", file); // ✅ Backend mapped parameter
+          formDataSend.append("event[event_images][]", file);
         });
       }
+      console.log("Images before upload:", formData.event_images);
 
       const response = await postEvents(formDataSend);
       toast.success("Event Created Successfully");
@@ -325,17 +340,23 @@ const CreateEvent = () => {
     setFormData({ ...formData, user_ids: userIdsString });
   };
 
-  const handleFileAttachment = (input) => {
-    let files = [];
-    // If called from an event, extract files from event.target
-    if (input && input.target && input.target.files) {
-      files = Array.from(input.target.files);
-    } else if (Array.isArray(input)) {
-      files = input;
-    } else if (input) {
-      files = [input];
+  const handleFileAttachment = (files) => {
+    let fileArray = [];
+
+    if (files instanceof FileList) {
+      fileArray = Array.from(files);
+    } else if (Array.isArray(files)) {
+      fileArray = files;
+    } else {
+      fileArray = [files];
     }
-    setFormData({ ...formData, event_images: files });
+
+    setFormData((prev) => ({
+      ...prev,
+      event_images: [...prev.event_images, ...fileArray],
+    }));
+
+    console.log("Selected Files:", fileArray);
   };
 
   const filterTime = (time) => {
@@ -383,7 +404,7 @@ const CreateEvent = () => {
         <div className="flex justify-center">
           <div className=" my-5 mb-10 border w-full max-w border-gray-400 p-2 rounded-lg ">
             <h2
-              style={{ background: themeColor}}
+              style={{ background: themeColor }}
               className="text-center text-xl font-medium p-2  rounded-md text-white"
             >
               Create Event
@@ -676,8 +697,9 @@ const CreateEvent = () => {
               </h2>
               <FileInputBox
                 fieldName={"event_images"}
-                handleChange={handleFileAttachment} // Ensuring it calls the correct handler
+                handleChange={handleFileAttachment} 
                 fileType="image/*"
+                onChange={(e) => handleChange(e.target.files)}
               />
             </div>
             <div className="flex justify-end mt-10 my-5 gap-3">

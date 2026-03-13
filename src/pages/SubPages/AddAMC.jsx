@@ -17,8 +17,11 @@ const AddAMC = () => {
   const [vendors, setVendors] = useState([]);
   const [assets, setAssets] = useState([]);
   const [services, setServices] = useState([]);
+   const [contactFiles, setContactFiles] = useState([]);
+  const [invoiceFiles, setInvoiceFiles] = useState([]);
     const themeColor = useSelector((state)=> state.theme.color)
 
+  
   const [formData, setFormData] = useState({
     asset: "",
     service: "",
@@ -31,6 +34,7 @@ const AddAMC = () => {
     visits: "",
     remarks: "",
   });
+
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -40,18 +44,22 @@ const AddAMC = () => {
     }));
   };
 
-  const fetchVendors = async () => {
+  const handleFileChange = (event, type) => {
+    const files = Array.from(event.target.files);
+
+    if (type === "contacts") {
+      setContactFiles(files);
+    } else if (type === "invoice") {
+      setInvoiceFiles(files);
+    }
+  };
+
+   const fetchVendors = async () => {
     try {
       const siteId = getItemInLocalStorage("SITEID");
-
-      if (!siteId) {
-        console.log("No Site ID Found");
-        return;
-      }
+      if (!siteId) return;
 
       const vendorResp = await getVendors(siteId);
-
-      console.log("VENDOR RESPONSE:", vendorResp.data);
 
       const vendorData =
         vendorResp?.data?.vendors ||
@@ -69,7 +77,6 @@ const AddAMC = () => {
   const fetchAssets = async () => {
     try {
       const siteId = getItemInLocalStorage("SITEID");
-
       if (!siteId) return;
 
       const assetResp = await getSiteAsset(siteId);
@@ -107,12 +114,12 @@ const AddAMC = () => {
 
   const handleSubmit = async () => {
     if (amcFor === "asset" && !formData.asset) {
-toast.error("Please select asset");
+      toast.error("Please select asset");
       return;
     }
 
     if (amcFor === "service" && !formData.service) {
-toast.error("Please select Service");
+      toast.error("Please select service");
       return;
     }
 
@@ -120,42 +127,55 @@ toast.error("Please select Service");
       toast.error("Please select supplier");
       return;
     }
+
     try {
       const siteId = getItemInLocalStorage("SITEID");
 
-      const payload = {
-        asset_amc: {
-          site_id: siteId, 
-          asset_id: amcFor === "asset" ? formData.asset : null,
-          service_id: amcFor === "service" ? formData.service : null,
-          vendor_id: formData.vendor_id,
-          start_date: formData.start_date,
-          end_date: formData.end_date,
-          first_service: formData.first_service,
-          frequency: formData.frequency,
-          visits: formData.visits,
-          amc_cost: formData.amc_cost,
-          remarks: formData.remarks,
-        },
-      };
+      const formPayload = new FormData();
 
-      console.log("Submitting AMC:", payload);
+      formPayload.append("asset_amc[site_id]", siteId);
+      formPayload.append(
+        "asset_amc[asset_id]",
+        amcFor === "asset" ? formData.asset : ""
+      );
+      formPayload.append(
+        "asset_amc[service_id]",
+        amcFor === "service" ? formData.service : ""
+      );
 
-      const response = await postAMC(payload);
+      formPayload.append("asset_amc[vendor_id]", formData.vendor_id);
+      formPayload.append("asset_amc[start_date]", formData.start_date);
+      formPayload.append("asset_amc[end_date]", formData.end_date);
+      formPayload.append("asset_amc[first_service]", formData.first_service);
+      formPayload.append("asset_amc[frequency]", formData.frequency);
+      formPayload.append("asset_amc[visits]", formData.visits);
+      formPayload.append("asset_amc[amc_cost]", formData.amc_cost);
+      formPayload.append("asset_amc[remarks]", formData.remarks);
+
+      contactFiles.forEach((file) => {
+        formPayload.append("amc_contacts[]", file);
+      });
+
+      invoiceFiles.forEach((file) => {
+        formPayload.append("terms[]", file);
+      });
+
+      console.log("Submitting AMC");
+
+      const response = await postAMC(formPayload);
 
       console.log("AMC Saved:", response.data);
 
       toast.success("AMC Saved Successfully");
-setTimeout(() => {
-  navigate("/assets/amc");
-}, 1500);
-      // navigate("/assets/amc");
+
+      setTimeout(() => {
+        navigate("/assets/amc");
+      }, 1500);
     } catch (error) {
       console.log("AMC Save Error:", error);
-     toast.error("Failed to Save AMC");
+      toast.error("Failed to Save AMC");
     }
   };
-
   return (
     <section>
        <ToastContainer position="top-right" autoClose={3000} />
@@ -368,21 +388,21 @@ setTimeout(() => {
               <p className="border-b border-black my-1 font-semibold">
                 AMC Contacts
               </p>
-              <input
-                type="file"
-                // onChange={(event) => handleFileChange(event, "file1")}
-                multiple
-              />
+               <input
+        type="file"
+        multiple
+        onChange={(e) => handleFileChange(e, "contacts")}
+      />
             </div>
             <div>
               <p className="border-b border-black my-1 font-semibold">
                 AMC Invoice
               </p>
-              <input
-                type="file"
-                // onChange={(event) => handleFileChange(event, "file2")}
-                multiple
-              />
+                  <input
+        type="file"
+        multiple
+        onChange={(e) => handleFileChange(e, "invoice")}
+      />
             </div>
           </div>
           <div className="flex my-5 justify-end gap-3">
