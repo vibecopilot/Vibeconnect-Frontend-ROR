@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getPublicSurvey, createPublicSurveyResponse } from "../../../api";
+import StarRating from "./AddStarField";
 
 function TakeSurvey() {
   const { id } = useParams();
@@ -147,27 +148,38 @@ function TakeSurvey() {
           </div>
         );
       case "rating":
-      case "scale": {
-        const min = q.min_value ?? 0;
-        const max = q.max_value ?? 10;
-        const range = Array.from({ length: max - min + 1 }, (_, i) => min + i);
-        return (
-          <div className="flex flex-wrap gap-2">
-            {range.map((n) => (
-              <button
-                key={n}
-                type="button"
-                onClick={() => setAnswer(q.id, n)}
-                className={`min-w-[2.5rem] px-3 py-2 rounded-lg border font-medium transition-colors ${
-                  value === n ? "bg-violet-600 text-white border-violet-600" : "bg-white text-gray-700 border-gray-300 hover:border-violet-400"
-                }`}
-              >
-                {n}
-              </button>
-            ))}
-          </div>
-        );
-      }
+  return (
+    <StarRating
+      rating={value || 0}
+      onRatingChange={(val) => setAnswer(q.id, val)}
+      scale={5}
+    />
+  );
+
+case "scale": {
+  const min = q.min_value ?? 0;
+  const max = q.max_value ?? 10;
+  const range = Array.from({ length: max - min + 1 }, (_, i) => min + i);
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      {range.map((n) => (
+        <button
+          key={n}
+          type="button"
+          onClick={() => setAnswer(q.id, n)}
+          className={`min-w-[2.5rem] px-3 py-2 rounded-lg border font-medium transition-colors ${
+            value === n
+              ? "bg-violet-600 text-white border-violet-600"
+              : "bg-white text-gray-700 border-gray-300 hover:border-violet-400"
+          }`}
+        >
+          {n}
+        </button>
+      ))}
+    </div>
+  );
+}
       case "text":
       default:
         return (
