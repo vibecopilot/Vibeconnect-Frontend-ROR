@@ -56,13 +56,34 @@ export const postTodoList = async (data) =>
 //   });
 // };
 // dashboard
-export const getTicketDashboard = async (siteId) =>
-  axiosInstance.get("/pms/admin/complaints/complaints_dashboard.json", {
+export const getTicketDashboard = async (options = {}) => {
+  // Supports both getTicketDashboard(siteId) and getTicketDashboard({siteId, start_date_eq, end_date_eq, count_type, count_value, record_page})
+  const paramsObj =
+    options && typeof options === "object" && !Array.isArray(options)
+      ? options
+      : { siteId: options };
+
+  const {
+    siteId,
+    start_date_eq,
+    end_date_eq,
+    count_type,
+    count_value,
+    record_page,
+  } = paramsObj;
+
+  return axiosInstance.get("/pms/admin/complaints/complaints_dashboard.json", {
     params: {
       token: getItemInLocalStorage("TOKEN"),
       ...(siteId && { site_id: siteId }),
+      ...(start_date_eq && { start_date_eq }),
+      ...(end_date_eq && { end_date_eq }),
+      ...(count_type && { count_type }),
+      ...(count_value && { count_value }),
+      ...(record_page && { record_page }),
     },
   });
+};
 //Assets
 export const getPerPageSiteAsset = (
   page,
@@ -741,6 +762,15 @@ export const getAdminExport = async (searchValue) =>
     },
     responseType: "blob",
   });
+
+  export const getSetupAmenityExport = async (siteId) =>
+    axiosInstance.get("amenities/export.xlsx", {
+      params: {
+        "q[site_id_eq]": siteId,
+        token: token,
+      },
+      responseType: "blob",
+    });
 
 export const getCARItems = async (ticketId) =>
   axiosInstance.get(
@@ -1827,6 +1857,11 @@ export const putSetupUser = async (userId, data) =>
     },
   });
 
+  export const updateUserAdminApproval = async (id, payload, token) =>
+  axiosInstance.patch(`users/${id}/update_status.json`, payload, {
+    params: { token },
+  });
+  
 export const addUserToAnotherFlat = async (payload) => {
   axiosInstance.post("/users/add-flat", payload);
 };
@@ -1966,6 +2001,30 @@ export const getStaff = async () =>
     },
   });
 
+  export const exportStaffWithDate = async (start_date, end_date) =>
+  axiosInstance.get(`/staffs/export_staffs.xlsx`, {
+    params: {
+      token: token,
+      start_date: start_date,
+      end_date: end_date,
+    },
+    responseType: "blob",
+  });
+
+  export const getPendingStaff = async () =>
+  axiosInstance.get("/staffs.json", {
+    params: {
+      token: token,
+      "q[status_type_eq]": "Pending",
+    },
+  });
+
+  export const putStaffApproval = async (id, data) =>
+  axiosInstance.put(`/staffs/${id}.json`, data, {
+    params: {
+      token: token,
+    },
+  });
 /** Fetch staff list for dashboard drill-down */
 export const getStaffDrill = async (siteId, limit = 100) =>
   axiosInstance.get("/staffs.json", {

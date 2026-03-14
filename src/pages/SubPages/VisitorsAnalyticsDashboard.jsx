@@ -392,6 +392,13 @@ const VisitorsAnalyticsDashboard = () => {
   const expectedLabel = isCompany55 ? "Planned" : "Expected";
   const unexpectedLabel = isCompany55 ? "Unplanned" : "Unexpected";
 
+  const formatDateForApi = (isoDate) => {
+    if (!isoDate) return null;
+    const [year, month, day] = isoDate.split("-");
+    if (!year || !month || !day) return null;
+    return `${day}/${month}/${year}`;
+  };
+
   useEffect(() => {
     fetchVisitorAnalytics();
     fetchStaffAnalytics();
@@ -421,8 +428,8 @@ const VisitorsAnalyticsDashboard = () => {
         weekly_trend: {},
       });
 
-      const rangeFrom = fromDate || null;
-      const rangeTo = toDate || null;
+      const rangeFrom = formatDateForApi(fromDate);
+      const rangeTo = formatDateForApi(toDate);
       const response = await getVisitorAnalytics(rangeFrom, rangeTo, siteId);
       const apiData = response?.data || {};
 
@@ -495,6 +502,75 @@ const VisitorsAnalyticsDashboard = () => {
     } catch (err) {
       console.error("Vehicle API error", err);
       toast.error("Failed to load vehicle data");
+    }
+  };
+
+  const mapChartToDrillFilter = (chartKey, itemName) => {
+    const normalized = String(itemName || "").trim().toLowerCase();
+
+    if (chartKey === "visitor_type") {
+      if (normalized === "planned" || normalized === "expected") return "expected";
+      if (normalized === "unplanned" || normalized === "unexpected") return "unexpected";
+      return normalized;
+    }
+
+    if (chartKey === "in_out") {
+      if (normalized.includes("in")) return "in";
+      if (normalized.includes("out")) return "out";
+      return normalized;
+    }
+
+    if (chartKey === "staff") {
+      if (normalized.includes("in")) return "staff_in";
+      if (normalized.includes("out")) return "staff_out";
+      return normalized;
+    }
+
+    if (chartKey === "delivery" || chartKey === "purpose") {
+      return normalized;
+    }
+
+    return normalized;
+  };
+
+  const getDrillColumns = (chartKey) => {
+    if (chartKey === "staff") return staffColumns;
+    return visitorColumns;
+  };
+
+  const handleChartPointClick = async (chartKey, itemName, value) => {
+    const filter = mapChartToDrillFilter(chartKey, itemName); // string name expected by API
+
+    if (!filter) {
+      toast.error("Cannot drill into this chart item.");
+      return;
+    }
+
+    const title = `${chartKey.replace(/_/g, " ")} : ${itemName}`;
+
+    setDetailPopup({
+      open: true,
+      title,
+      records: [],
+      loading: true,
+      columns: getDrillColumns(chartKey),
+    });
+
+    try {
+      const res = await getVisitorsDrill(filter, siteId, 100);
+      const data = res?.data?.records ?? res?.data ?? [];
+
+      setDetailPopup({
+        open: true,
+        title,
+        records: Array.isArray(data) ? data : [],
+        loading: false,
+        columns: getDrillColumns(chartKey),
+      });
+    } catch (err) {
+      console.error("Chart drill error", err);
+      toast.error("Failed to load details.");
+      setDetailPopup((p) => ({ ...p, loading: false }));
     }
   };
 
@@ -707,88 +783,128 @@ const VisitorsAnalyticsDashboard = () => {
   // ─── Chart options ────────────────────────────────────────────────────────
 
   const selectedChartOptions = useMemo(() => {
+    const addClickEvents = (options) => {
+      if (!options || !options.plotOptions) return options;
+
+      const clickHandler = function () {
+        const itemName = this.name ?? this.category ?? this.x;
+        const value = this.y ?? this.options?.y ?? 0;
+        handleChartPointClick(selectedChart, itemName, value);
+      };
+
+      const seriesPoint = {
+        ...(options.plotOptions.series || {}),
+        point: {
+          ...(options.plotOptions.series?.point || {}),
+          events: {
+            ...((options.plotOptions.series?.point || {}).events || {}),
+            click: clickHandler,
+          },
+        },
+      };
+
+      const piePoint = {
+        ...(options.plotOptions.pie || {}),
+        point: {
+          ...(options.plotOptions.pie?.point || {}),
+          events: {
+            ...((options.plotOptions.pie?.point || {}).events || {}),
+            click: clickHandler,
+          },
+        },
+      };
+
+      return {
+        ...options,
+        plotOptions: {
+          ...options.plotOptions,
+          series: seriesPoint,
+          pie: piePoint,
+        },
+      };
+    };
+
+    let options;
     if (selectedChart === "visitor_type") {
       if (chartType === "pie") {
-        return buildPieOptions({
+        options = buildPieOptions({
           title: "Visitor Type Distribution",
           dataMap: visitorTypeMap,
           colorsMap: { [expectedLabel]: "#F59E0B", [unexpectedLabel]: "#EAB308" },
         });
+      } else {
+        const entries = toSortedEntries(visitorTypeMap, "desc");
+        options = buildXYOptions({
+          title: "Visitor Type Distribution",
+          type: chartType,
+          categories: entries.map(([k]) => k),
+          values: entries.map(([, v]) => v),
+          colorByPoint: shouldColorByPoint(chartType),
+        });
       }
-      const entries = toSortedEntries(visitorTypeMap, "desc");
-      return buildXYOptions({
-        title: "Visitor Type Distribution",
-        type: chartType,
-        categories: entries.map(([k]) => k),
-        values: entries.map(([, v]) => v),
-        colorByPoint: shouldColorByPoint(chartType),
-      });
-    }
-
-    if (selectedChart === "in_out") {
-      return buildPieOptions({
+    } else if (selectedChart === "in_out") {
+      options = buildPieOptions({
         title: "Visitor In/Out Status",
         dataMap: inOutMap,
         colorsMap: { "Currently In": "#3B82F6", "Currently Out": "#8B5CF6" },
       });
-    }
-
-    if (selectedChart === "staff") {
-      return buildPieOptions({
+    } else if (selectedChart === "staff") {
+      options = buildPieOptions({
         title: "Staff In/Out Distribution",
         dataMap: staffMap,
         colorsMap: { "Staff In": "#10B981", "Staff Out": "#EF4444" },
       });
-    }
-
-    if (selectedChart === "delivery") {
+    } else if (selectedChart === "delivery") {
       const entries = toSortedEntries(deliveryMap, "desc");
-      return buildXYOptions({
+      options = buildXYOptions({
         title: "Delivery Visitors by Platform",
         type: "column",
         categories: entries.map(([k]) => k),
         values: entries.map(([, v]) => v),
         colorByPoint: true,
       });
-    }
-
-    if (selectedChart === "purpose") {
+    } else if (selectedChart === "purpose") {
       const entries = toSortedEntries(purposeMap, "desc");
-      return buildXYOptions({
+      options = buildXYOptions({
         title: "Visitor Purpose Distribution",
         type: "bar",
         categories: entries.map(([k]) => k),
         values: entries.map(([, v]) => v),
         colorByPoint: true,
       });
-    }
-
-    if (selectedChart === "hourly") {
+    } else if (selectedChart === "hourly") {
       const entries = toSortedEntries(hourlyMap, "asc");
-      return buildXYOptions({
+      options = buildXYOptions({
         title: "Hourly Visitor Trend (Today)",
         type: "area",
         categories: entries.map(([k]) => k),
         values: entries.map(([, v]) => v),
         colorByPoint: false,
       });
-    }
-
-    if (selectedChart === "monthly") {
+    } else if (selectedChart === "monthly") {
       const entries = toSortedEntries(monthlyMap, "asc");
-      return buildXYOptions({
+      options = buildXYOptions({
         title: "Monthly Visitor Trend (Current Year)",
         type: "column",
         categories: entries.map(([k]) => k),
         values: entries.map(([, v]) => v),
         colorByPoint: true,
       });
+    } else {
+      options = buildPieOptions({ title: "Visitor Type Distribution", dataMap: visitorTypeMap });
     }
 
-    return buildPieOptions({ title: "Visitor Type Distribution", dataMap: visitorTypeMap });
+    return addClickEvents(options);
   }, [
-    selectedChart, chartType, visitorTypeMap, inOutMap,
-    staffMap, deliveryMap, purposeMap, hourlyMap, monthlyMap,
+    selectedChart,
+    chartType,
+    visitorTypeMap,
+    inOutMap,
+    staffMap,
+    deliveryMap,
+    purposeMap,
+    hourlyMap,
+    monthlyMap,
   ]);
 
   const chartButtons = [

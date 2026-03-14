@@ -65,17 +65,23 @@ const PPMTask = () => {
     }
 
     /* MONTH FILTER */
+if (selectedMonth) {
+  const start = new Date(selectedMonth + "-01");
+  const end = new Date(start.getFullYear(), start.getMonth() + 1, 0);
 
-    if (selectedMonth) {
-      const [year, month] = selectedMonth.split("-");
+  const startDate = start.toISOString();
+  const endDate = new Date(
+    end.getFullYear(),
+    end.getMonth(),
+    end.getDate(),
+    23,
+    59,
+    59
+  ).toISOString();
 
-      const startDate = `${year}-${month}-01`;
-      const lastDay = new Date(year, month, 0).getDate();
-      const endDate = `${year}-${month}-${lastDay}`;
-
-      url += `&q[start_time_gteq]=${startDate}`;
-      url += `&q[start_time_lteq]=${endDate}`;
-    }
+  url += `&q[start_time_gteq]=${startDate}`;
+  url += `&q[start_time_lteq]=${endDate}`;
+}
 
     const res = await fetch(url);
     const data = await res.json();
@@ -90,6 +96,13 @@ const activities = data.activities?.filter((a) => a.asset_name) || [];
     toast.error("Failed to fetch tasks");
   }
 };
+useEffect(() => {
+  const delay = setTimeout(() => {
+    fetchPPMTask();
+  }, 400);
+
+  return () => clearTimeout(delay);
+}, [page, rowsPerPage, selectedStatus, selectedMonth, searchText]);
 
 const fetchStatusCounts = async () => {
   try {
@@ -125,9 +138,9 @@ const fetchStatusCounts = async () => {
   }
 };
 
- useEffect(() => {
-  fetchPPMTask();
-}, [page, rowsPerPage, selectedStatus, selectedMonth]);
+//  useEffect(() => {
+//   fetchPPMTask();
+// }, [page, rowsPerPage, selectedStatus, selectedMonth]);
 
 useEffect(() => {
   fetchStatusCounts();
@@ -198,6 +211,12 @@ useEffect(() => {
     {
       name: "Assigned To",
       selector: (row) => row.assigned_to_name,
+      sortable: true,
+    },
+
+    {
+      name: "Start Time",
+      selector: (row) => row.start_time,
       sortable: true,
     },
 

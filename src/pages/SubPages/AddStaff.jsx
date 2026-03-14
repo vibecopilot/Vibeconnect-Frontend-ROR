@@ -8,11 +8,13 @@ import { getAllUnits, getVendors, postStaff } from "../../api";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { initialSchedule } from "../../utils/initialFormData";
+import Select from "react-select";
 const EmployeeAddStaff = () => {
   const themeColor = useSelector((state) => state.theme.color);
   const [showWebcam, setShowWebcam] = useState(false);
   const [capturedImage, setCapturedImage] = useState(null);
   const [units, setUnits] = useState([]);
+
   const [vendors, setVendors] = useState([]);
 
   const handleOpenCamera = () => {
@@ -22,14 +24,13 @@ const EmployeeAddStaff = () => {
   const handleCloseCamera = () => {
     setShowWebcam(false);
   };
-  
 
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     email: "",
     mobile: "",
-    unit: "",
+    unit: [],
     workType: "",
     staffId: "",
     vendorId: "",
@@ -37,7 +38,7 @@ const EmployeeAddStaff = () => {
     validTill: "",
     status: true,
     documents: [],
-    workingSchedule: initialSchedule
+    workingSchedule: initialSchedule,
   });
 
   const handleCheckboxChange = (day) => {
@@ -52,7 +53,7 @@ const EmployeeAddStaff = () => {
       },
     }));
   };
-  
+
   const handleTimeChange = (day, type, value) => {
     setFormData((prevState) => ({
       ...prevState,
@@ -65,9 +66,7 @@ const EmployeeAddStaff = () => {
       },
     }));
   };
-  console.log(formData)
-
- 
+  console.log(formData);
 
   const webcamRef = useRef(null);
   const capture = useCallback(() => {
@@ -127,7 +126,7 @@ const EmployeeAddStaff = () => {
       !formData.firstName ||
       !formData.lastName ||
       !formData.mobile ||
-      !formData.unit ||
+      formData.unit.length === 0 ||
       !formData.workType
     ) {
       return toast.error("All fields are required!");
@@ -137,26 +136,28 @@ const EmployeeAddStaff = () => {
     sendData.append("staff[lastname]", formData.lastName);
     sendData.append("staff[mobile_no]", formData.mobile);
     sendData.append("staff[email]", formData.email);
-    sendData.append("staff[units]", formData.unit);
+    formData.unit.forEach((unit) => {
+      sendData.append("units[]", unit.value);
+    });
     sendData.append("staff[work_type]", formData.workType);
     // sendData.append("staff[staff_id]", formData.staffId);
     sendData.append("staff[status]", formData.status);
-    sendData.append("staff[unit_id]", formData.unit);
+    // sendData.append("staff[unit_id]", formData.unit);
     sendData.append("staff[vendor_id]", formData.vendorId);
     sendData.append("staff[valid_from]", formData.validFrom);
     sendData.append("staff[valid_till]", formData.validTill);
     Object.keys(formData.workingSchedule).forEach((day) => {
       sendData.append(
         `staff[working_schedule][${day}][selected]`,
-        formData.workingSchedule[day].selected ? "1" : "0"
+        formData.workingSchedule[day].selected ? "1" : "0",
       );
       sendData.append(
         `staff[working_schedule][${day}][start_time]`,
-        formData.workingSchedule[day].start_time
+        formData.workingSchedule[day].start_time,
       );
       sendData.append(
         `staff[working_schedule][${day}][end_time]`,
-        formData.workingSchedule[day].end_time
+        formData.workingSchedule[day].end_time,
       );
     });
     if (capturedImage) {
@@ -182,10 +183,7 @@ const EmployeeAddStaff = () => {
       <Navbar />
       <div className=" w-full flex mx-3 flex-col overflow-hidden">
         <div className="flex justify-center items-center my-2 w-full p-2">
-          <div
-            
-            className="border border-gray-300 rounded-lg p-4 w-full mx-4"
-          >
+          <div className="border border-gray-300 rounded-lg p-4 w-full mx-4">
             <h2
               className="text-center md:text-xl font-bold p-2 bg-black rounded-lg mb-4 text-white"
               style={{ background: themeColor }}
@@ -320,20 +318,21 @@ const EmployeeAddStaff = () => {
                 <label htmlFor="unit" className="font-semibold">
                   Unit
                 </label>
-                <select
-                  id="unit"
+                <Select
+                  options={units.map((unit) => ({
+                    value: unit.id,
+                    label: unit.name,
+                  }))}
+                  isMulti
+                  placeholder="Select Units"
                   value={formData.unit}
-                  name="unit"
-                  onChange={handleChange}
-                  className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-                >
-                  <option value="">Select Unit</option>
-                  {units.map((unit) => (
-                    <option value={unit.id} key={unit.id}>
-                      {unit.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(selectedOptions) =>
+                    setFormData({
+                      ...formData,
+                      unit: selectedOptions || [],
+                    })
+                  }
+                />
               </div>
 
               <div className="grid gap-2 items-center w-full">
@@ -387,7 +386,7 @@ const EmployeeAddStaff = () => {
                   <option value="">Select Vendor</option>
                   {vendors.map((vendor) => (
                     <option value={vendor.id} key={vendor.id}>
-                      {vendor.company_name}
+                      {vendor.company_name || vendor.vendor_name}
                     </option>
                   ))}
                 </select>
@@ -458,41 +457,41 @@ const EmployeeAddStaff = () => {
                   </tr>
                 </thead>
                 <tbody>
-    {Object.keys(formData.workingSchedule).map((day) => (
-      <tr key={day}>
-        <td className="border px-4 py-2 text-center">
-          <input
-            type="checkbox"
-            checked={formData.workingSchedule[day].selected}
-            onChange={() => handleCheckboxChange(day)}
-          />
-        </td>
-        <td className="border px-4 py-2 text-center">{day}</td>
-        <td className="border px-4 py-2 text-center">
-          <input
-            type="time"
-            className="border border-gray-400 p-2 rounded-md"
-            value={formData.workingSchedule[day].start_time}
-            onChange={(e) =>
-              handleTimeChange(day, "start_time", e.target.value)
-            }
-            disabled={!formData.workingSchedule[day].selected}
-          />
-        </td>
-        <td className="border px-4 py-2 text-center">
-          <input
-            type="time"
-            className="border border-gray-400 p-2 rounded-md"
-            value={formData.workingSchedule[day].end_time}
-            onChange={(e) =>
-              handleTimeChange(day, "end_time", e.target.value)
-            }
-            disabled={!formData.workingSchedule[day].selected}
-          />
-        </td>
-      </tr>
-    ))}
-  </tbody>
+                  {Object.keys(formData.workingSchedule).map((day) => (
+                    <tr key={day}>
+                      <td className="border px-4 py-2 text-center">
+                        <input
+                          type="checkbox"
+                          checked={formData.workingSchedule[day].selected}
+                          onChange={() => handleCheckboxChange(day)}
+                        />
+                      </td>
+                      <td className="border px-4 py-2 text-center">{day}</td>
+                      <td className="border px-4 py-2 text-center">
+                        <input
+                          type="time"
+                          className="border border-gray-400 p-2 rounded-md"
+                          value={formData.workingSchedule[day].start_time}
+                          onChange={(e) =>
+                            handleTimeChange(day, "start_time", e.target.value)
+                          }
+                          disabled={!formData.workingSchedule[day].selected}
+                        />
+                      </td>
+                      <td className="border px-4 py-2 text-center">
+                        <input
+                          type="time"
+                          className="border border-gray-400 p-2 rounded-md"
+                          value={formData.workingSchedule[day].end_time}
+                          onChange={(e) =>
+                            handleTimeChange(day, "end_time", e.target.value)
+                          }
+                          disabled={!formData.workingSchedule[day].selected}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
               </table>
             </div>
 
