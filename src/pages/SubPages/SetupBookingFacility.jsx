@@ -12,15 +12,15 @@ import { BsEye } from "react-icons/bs";
 import SeatBooking from "./SeatBooking";
 import SetupSeatBooking from "./SetupSeatBooking";
 import SetupNavbar from "../../components/navbars/SetupNavbar";
-import {  getFacitilitySetup } from "../../api";
+import { getFacitilitySetup, getSetupAmenityExport } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 
 const SetupBookingFacility = () => {
   // const id = useParams()
   const [setupData, setSetupData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
-const siteId = getItemInLocalStorage("SITEID");
-const token = getItemInLocalStorage("TOKEN");
+  const siteId = getItemInLocalStorage("SITEID");
+  const token = getItemInLocalStorage("TOKEN");
 
   useEffect(() => {
     const fetchFacilities = async () => {
@@ -50,7 +50,6 @@ const token = getItemInLocalStorage("TOKEN");
 
     fetchFacilities();
   }, []);
-
 
   // const fetchFacilitySetup = async () => {
   //   try {
@@ -158,6 +157,7 @@ const token = getItemInLocalStorage("TOKEN");
   //   },
   // ];
   //const [filteredData, setFilteredData] = useState(setupData);
+
   const handleSearch = (event) => {
     const searchValue = event.target.value;
     setSearchText(searchValue);
@@ -169,6 +169,28 @@ const token = getItemInLocalStorage("TOKEN");
 
   const themeColor = useSelector((state) => state.theme.color);
   const [page, setPage] = useState("facility");
+  const handleExport = async () => {
+    try {
+      const response = await getSetupAmenityExport(siteId, token);
+
+      const blob = new Blob([response.data], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+
+      const url = window.URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "facility_setup.xlsx");
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error("Export Error:", error);
+    }
+  };
+
   return (
     <div className="flex">
       <SetupNavbar />
@@ -216,7 +238,7 @@ const token = getItemInLocalStorage("TOKEN");
                   Add
                 </Link>
                 <button
-                  // onClick={handleExport}
+                  onClick={handleExport}
                   style={{ background: themeColor }}
                   className="bg-black rounded-lg flex font-semibold items-center gap-2 text-white p-2 my-2"
                 >

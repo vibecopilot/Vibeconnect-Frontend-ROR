@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import Navbar from "../../../components/Navbar";
 import { domainPrefix, getStaffDetails } from "../../../api";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import image from "/profile.png";
 import {
   dateFormat,
@@ -10,7 +10,7 @@ import {
 } from "../../../utils/dateUtils";
 import { FaRegFileAlt } from "react-icons/fa";
 import Table from "../../../components/table/Table";
-import { BiQr } from "react-icons/bi";
+import { BiEdit, BiQr } from "react-icons/bi";
 import VisitorQRCode from "../../../containers/modals/VisitorQRCode";
 
 const StaffDetails = () => {
@@ -18,12 +18,12 @@ const StaffDetails = () => {
   const [details, setDetails] = useState({});
   const [qrModal, setQrmodal] = useState(false);
   const { id } = useParams();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchDetails = async () => {
       try {
         const res = await getStaffDetails(id);
-       
 
         setDetails(res.data);
       } catch (error) {
@@ -52,37 +52,34 @@ const StaffDetails = () => {
   /* ================= STAFF LOGS ================= */
   const staffLogs = details.attendances || [];
 
-
   const staffLogColumns = [
-  {
-    name: "Sr. No.",
-    cell: (row, index) => index + 1,
-  },
-  {
-    name: "Staff Name",
-    selector: (row) => row.staff_name || "--",
-  },
-  {
-    name: "Mobile",
-    selector: (row) => row.staff_number || "--",
-  },
-  {
-    name: "Check In",
-    selector: (row) =>
-      row.punched_in_at
-        ? FormattedDateToShowProperly(row.punched_in_at)
-        : "--",
-  },
-  {
-    name: "Check Out",
-    selector: (row) =>
-      row.punched_out_at
-        ? FormattedDateToShowProperly(row.punched_out_at)
-        : "Still Working",
-  },
-];
-
-
+    {
+      name: "Sr. No.",
+      cell: (row, index) => index + 1,
+    },
+    {
+      name: "Staff Name",
+      selector: (row) => row.staff_name || "--",
+    },
+    {
+      name: "Mobile",
+      selector: (row) => row.staff_number || "--",
+    },
+    {
+      name: "Check In",
+      selector: (row) =>
+        row.punched_in_at
+          ? FormattedDateToShowProperly(row.punched_in_at)
+          : "--",
+    },
+    {
+      name: "Check Out",
+      selector: (row) =>
+        row.punched_out_at
+          ? FormattedDateToShowProperly(row.punched_out_at)
+          : "Still Working",
+    },
+  ];
 
   /* ================= FILE HELPERS ================= */
   const isImage = (filePath) => {
@@ -91,8 +88,7 @@ const StaffDetails = () => {
     return imageExtensions.includes(extension);
   };
 
-  const getFileName = (filePath) =>
-    filePath.split("/").pop().split("?")[0];
+  const getFileName = (filePath) => filePath.split("/").pop().split("?")[0];
 
   return (
     <section className="flex">
@@ -109,12 +105,18 @@ const StaffDetails = () => {
             Staff Details
           </h2>
 
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-3">
             <button
               onClick={() => setQrmodal(true)}
               className="border-2 border-black rounded-full px-3 py-1 flex items-center gap-2"
             >
               <BiQr /> QR Code
+            </button>
+            <button
+              onClick={() => navigate(`/admin/edit-staff/${id}`)}
+              className="border-2 border-black rounded-full px-3 py-1 flex items-center gap-2"
+            >
+              <BiEdit /> Edit Details
             </button>
           </div>
 
@@ -127,7 +129,7 @@ const StaffDetails = () => {
                 onClick={() =>
                   window.open(
                     domainPrefix + details.profile_picture.url,
-                    "_blank"
+                    "_blank",
                   )
                 }
               />
@@ -138,7 +140,10 @@ const StaffDetails = () => {
 
           {/* STAFF INFO */}
           <div className="md:grid grid-cols-3 gap-5 border rounded-xl p-4 bg-gray-50">
-            <Info label="Name" value={`${details.firstname} ${details.lastname}`} />
+            <Info
+              label="Name"
+              value={`${details.firstname} ${details.lastname}`}
+            />
             <Info label="Unit" value={details.unit_name} />
             <Info label="Mobile" value={details.mobile_no} />
             <Info label="Email" value={details.email} />
@@ -169,25 +174,19 @@ const StaffDetails = () => {
 
           {/* WORKING SCHEDULE */}
           <div>
-            <h2 className="font-medium border-b mb-2">
-              Working Schedule
-            </h2>
+            <h2 className="font-medium border-b mb-2">Working Schedule</h2>
             <Table columns={scheduleColumns} data={scheduleArray} />
           </div>
 
           {/* STAFF LOGS */}
           <div>
-            <h2 className="font-medium border-b mb-2">
-              Staff Logs
-            </h2>
+            <h2 className="font-medium border-b mb-2">Staff Logs</h2>
             <Table columns={staffLogColumns} data={staffLogs} />
           </div>
 
           {/* ATTACHMENTS */}
           <div>
-            <h2 className="font-medium border-b">
-              Attachments
-            </h2>
+            <h2 className="font-medium border-b">Attachments</h2>
             <div className="p-2 flex flex-wrap gap-4 justify-center">
               {details.staff_documents?.length ? (
                 details.staff_documents.map((staff) => (
@@ -197,10 +196,7 @@ const StaffDetails = () => {
                         src={domainPrefix + staff.document}
                         className="w-40 h-28 object-cover rounded-md"
                         onClick={() =>
-                          window.open(
-                            domainPrefix + staff.document,
-                            "_blank"
-                          )
+                          window.open(domainPrefix + staff.document, "_blank")
                         }
                       />
                     ) : (

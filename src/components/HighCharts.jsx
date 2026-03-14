@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
-import { getTicketDashboard, getTicketStatusDownload } from "../api";
+import { getTicketDashboard, getTicketStatusDownload, getUsers, getComplaintsDrill } from "../api";
+import DetailPopup from "./DetailPopup";
 import { useSelector } from "react-redux";
 import { DNA } from "react-loader-spinner";
 import { FaDownload, FaChevronDown } from "react-icons/fa";
@@ -13,6 +14,7 @@ import {
   AiOutlineLineChart,
 } from "react-icons/ai";
 import { PiChartBarHorizontal } from "react-icons/pi";
+import { getItemInLocalStorage } from "../utils/localStorage";
 
 /** ✅ Multi-color palette (used across all charts) */
 const CHART_PALETTE = [
@@ -32,6 +34,7 @@ const CHART_PALETTE = [
 
 /** Highlight color you wanted earlier */
 const HIGHLIGHT_LIGHT = "#93C5FD";
+const siteId = getItemInLocalStorage("SITEID");
 
 const chartIcon = (type) => {
   switch (type) {
@@ -410,24 +413,118 @@ const TicketHighCharts = () => {
   const [unitChartType, setUnitChartType] = useState("column");
 
   const [downloading, setDownloading] = useState(false);
+  const [dashboardParams, setDashboardParams] = useState({ siteId: Number(siteId) || undefined });
+  const [filterModalOpen, setFilterModalOpen] = useState(false);
+  const [filterStartDate, setFilterStartDate] = useState("");
+  const [filterEndDate, setFilterEndDate] = useState("");
+
+  const [detailPopup, setDetailPopup] = useState({
+    open: false,
+    title: "",
+    records: [],
+    loading: false,
+  });
+
+  const statusClickRef = useRef(null);
+
+  const formatDateForApi = (isoDate) => {
+    if (!isoDate) return "";
+    const [year, month, day] = isoDate.split("-");
+    if (!year || !month || !day) return "";
+    return `${day}/${Number(month)}/${Number(year)}`;
+  };
+
+  const applyDateFilter = () => {
+    if (!filterStartDate || !filterEndDate) {
+      toast.error("Please select both start and end dates.");
+      return;
+    }
+
+    setDashboardParams((prev) => ({
+      ...prev,
+      start_date_eq: formatDateForApi(filterStartDate),
+      end_date_eq: formatDateForApi(filterEndDate),
+    }));
+    setFilterModalOpen(false);
+  };
+
+  const handleClearFilter = () => {
+    setFilterStartDate("");
+    setFilterEndDate("");
+    setDashboardParams({ siteId: Number(siteId) || undefined });
+  };
+
+  const openDetailForStatus = async (statusName) => {
+    if (!statusName) return;
+    setDetailPopup({ open: true, title: `Tickets - ${statusName}`, records: [], loading: true });
+
+    try {
+      // requirement: query complaints_dashboard with count_type/status and count value
+      await getTicketDashboard({
+        siteId: Number(siteId) || undefined,
+        start_date_eq: dashboardParams.start_date_eq,
+        end_date_eq: dashboardParams.end_date_eq,
+        count_type: "status",
+        count_value: statusName,
+        record_page: 1,
+      });
+
+      const drillResp = await getComplaintsDrill("status", statusName, Number(siteId) || undefined, 100);
+      const records = drillResp?.data?.records || [];
+
+      setDetailPopup({ open: true, title: `Tickets - ${statusName}`, records, loading: false });
+    } catch (err) {
+      console.error("Error loading status detail:", err);
+      toast.error("Failed to load ticket details");
+      setDetailPopup((p) => ({ ...p, loading: false }));
+    }
+  };
 
   useEffect(() => {
+    statusClickRef.current = openDetailForStatus;
+  });
+
+useEffect(() => {
     const fetchTicketInfo = async () => {
       try {
-        const resp = await getTicketDashboard();
+        const resp = await getTicketDashboard(dashboardParams);
+
         setStatusData(resp?.data?.by_status || {});
         setCategoryData(resp?.data?.by_category || {});
         setTicketTypes(resp?.data?.by_type || {});
         setFloorTickets(resp?.data?.by_floor || {});
-        setUnitTickets(resp?.data?.by_unit || {});
+
+        const currentSiteId = getItemInLocalStorage("SITEID");
+
+        // ✅ If siteId = 74 → Tenant
+        if (Number(currentSiteId) === 74) {
+          const usersResp = await getUsers();
+          const users = usersResp?.data || [];
+
+          const unitMap = {};
+
+          users.forEach((user) => {
+            const tenantName = user.full_unit_name || "Unknown Tenant";
+
+            if (!unitMap[tenantName]) {
+              unitMap[tenantName] = 0;
+            }
+
+            unitMap[tenantName] += 1;
+          });
+
+          setUnitTickets(unitMap);
+        } else {
+          // ✅ Otherwise → Unit data from dashboard API
+          setUnitTickets(resp?.data?.by_unit || {});
+        }
       } catch (error) {
         console.log("Error fetching ticket info:", error);
       }
     };
 
     fetchTicketInfo();
-  }, []);
-
+  }, [dashboardParams]);
   const handleTicketStatusDownload = async () => {
     const toastId = toast.loading("Downloading Please Wait...");
     setDownloading(true);
@@ -486,19 +583,47 @@ const TicketHighCharts = () => {
   };
 
   // options (memo)
-  const statusOptions = useMemo(
-    () =>
-      buildOptions({
-        title: "Tickets by Status",
-        data: statusData,
-        type: statusChartType,
-        themeColor: chartTheme.status,
-        palette: CHART_PALETTE,
-        order: "descending",
-        pointColorFn: statusPointColor, // ✅ multi-color
-      }),
-    [statusData, statusChartType]
-  );
+  const statusOptions = useMemo(() => {
+    const opts = buildOptions({
+      title: "Tickets by Status",
+      data: statusData,
+      type: statusChartType,
+      themeColor: chartTheme.status,
+      palette: CHART_PALETTE,
+      order: "descending",
+      pointColorFn: statusPointColor, // ✅ multi-color
+    });
+
+    opts.plotOptions = {
+      ...opts.plotOptions,
+      pie: {
+        ...opts.plotOptions?.pie,
+        point: {
+          ...opts.plotOptions?.pie?.point,
+          events: {
+            ...(opts.plotOptions?.pie?.point?.events || {}),
+            click: function () {
+              statusClickRef.current?.(this.name);
+            },
+          },
+        },
+      },
+      series: {
+        ...opts.plotOptions?.series,
+        point: {
+          ...opts.plotOptions?.series?.point,
+          events: {
+            ...(opts.plotOptions?.series?.point?.events || {}),
+            click: function () {
+              statusClickRef.current?.(this.name);
+            },
+          },
+        },
+      },
+    };
+
+    return opts;
+  }, [statusData, statusChartType, chartTheme.status]);
 
   const categoryOptions = useMemo(
     () =>
@@ -511,7 +636,7 @@ const TicketHighCharts = () => {
         order: "descending",
         pointColorFn: categoryPointColor, // ✅ multi-color + highlight
       }),
-    [categoryData, categoryChartType]
+    [categoryData, categoryChartType, chartTheme.category]
   );
 
   const typeOptions = useMemo(
@@ -525,7 +650,7 @@ const TicketHighCharts = () => {
         order: "descending",
         pointColorFn: typePointColor, // ✅ multi-color + highlight
       }),
-    [ticketTypes, ticketTypeChartType]
+    [ticketTypes, ticketTypeChartType, chartTheme.type]
   );
 
   const floorOptions = useMemo(
@@ -539,7 +664,7 @@ const TicketHighCharts = () => {
         order: "descending",
         pointColorFn: floorPointColor, // ✅ multi-color + highlight
       }),
-    [floorTickets, floorChartType]
+    [floorTickets, floorChartType, chartTheme.floor]
   );
 
   const unitOptions = useMemo(
@@ -553,7 +678,7 @@ const TicketHighCharts = () => {
         order: "descending",
         pointColorFn: unitPointColor, // ✅ multi-color + highlight
       }),
-    [unitTickets, unitChartType]
+    [unitTickets, unitChartType, chartTheme.unit]
   );
 
   const Loader = () => (
@@ -575,6 +700,74 @@ const TicketHighCharts = () => {
 
   return (
     <div className="w-full px-3">
+      <div className="flex flex-wrap items-center justify-end gap-2 mb-4">
+        <button
+          type="button"
+          onClick={() => setFilterModalOpen(true)}
+          className="h-10 px-4 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition"
+        >
+          Filter by Date
+        </button>
+        <button
+          type="button"
+          onClick={handleClearFilter}
+          className="h-10 px-4 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
+        >
+          Clear Filter
+        </button>
+      </div>
+
+      {filterModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-5">
+            <h3 className="text-lg font-semibold text-gray-900">Filter Tickets by Date</h3>
+            <p className="text-sm text-gray-500 mt-1">
+              Choose start and end date to refresh dashboard.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">
+                  Start Date
+                </label>
+                <input
+                  type="date"
+                  value={filterStartDate}
+                  onChange={(e) => setFilterStartDate(e.target.value)}
+                  className="w-full h-10 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">
+                  End Date
+                </label>
+                <input
+                  type="date"
+                  value={filterEndDate}
+                  onChange={(e) => setFilterEndDate(e.target.value)}
+                  className="w-full h-10 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+            </div>
+            <div className="mt-4 flex gap-2 justify-end">
+              <button
+                type="button"
+                onClick={() => setFilterModalOpen(false)}
+                className="h-10 px-4 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={applyDateFilter}
+                className="h-10 px-4 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition"
+              >
+                Apply Filter
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <ChartCard
           title="Tickets by Status"
@@ -630,8 +823,7 @@ const TicketHighCharts = () => {
         </ChartCard>
 
         <ChartCard
-          title="Tickets by Floor"
-          // subtitle="Floor-wise ticket count"
+title={Number(siteId) === 74 ? "Tickets by Blook" : "Tickets by Floor"}          // subtitle="Floor-wise ticket count"
           // legendItems={legendTopTwo(floorTickets, floorPointColor)}
           onDownload={handleTicketStatusDownload}
           chartType={floorChartType}
@@ -648,7 +840,7 @@ const TicketHighCharts = () => {
 
         <div className="lg:col-span-2">
           <ChartCard
-            title="Tickets by Unit"
+            title={Number(siteId) === 74 ? "Tickets by Tenant" : "Tickets by Unit"}
             // subtitle="Unit-wise ticket count"
             // legendItems={legendTopTwo(unitTickets, unitPointColor)}
             onDownload={handleTicketStatusDownload}
@@ -665,6 +857,22 @@ const TicketHighCharts = () => {
           </ChartCard>
         </div>
       </div>
+
+      <DetailPopup
+        isOpen={detailPopup.open}
+        onClose={() => setDetailPopup((p) => ({ ...p, open: false }))}
+        title={detailPopup.title}
+        subtitle={`${detailPopup.records.length} record(s)`}
+        records={detailPopup.records}
+        loading={detailPopup.loading}
+        columns={[
+          { key: "id", label: "ID" },
+          { key: "title", label: "Title", accessor: (r) => r.title || r.subject || "—" },
+          { key: "status", label: "Status", accessor: (r) => r.status || "—" },
+          { key: "created_at", label: "Created At", accessor: (r) => r.created_at || r.created_date || "—" },
+          { key: "assigned_to", label: "Assigned To", accessor: (r) => r.assigned_to_name || r.assigned_to || "—" },
+        ]}
+      />
     </div>
   );
 };
