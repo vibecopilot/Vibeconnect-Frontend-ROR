@@ -1,8 +1,8 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+/* eslint-disable react/prop-types */
+import { useEffect, useMemo, useRef, useState } from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import {
-  getVisitorDashboard,
   getStaffCount,
   getRegisteredVehicleDashboard,
   getVisitorAnalytics,
@@ -403,6 +403,7 @@ const VisitorsAnalyticsDashboard = () => {
     fetchVisitorAnalytics();
     fetchStaffAnalytics();
     fetchVehicleAnalytics();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fromDate, toDate, siteId]);
 
   const fetchVisitorAnalytics = async (retry = 0) => {
