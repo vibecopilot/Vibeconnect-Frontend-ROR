@@ -2,11 +2,27 @@ import React, { useState } from "react";
 
 const AddAMC = () => {
   const [amcFor, setAmcFor] = useState("asset");
+<<<<<<< HEAD
   const today = new Date();
   const year = today.getFullYear();
   const month = String(today.getMonth() + 1).padStart(2, "0");
   const day = String(today.getDate()).padStart(2, "0");
   const formattedDate = `${year}-${month}-${day}`;
+=======
+  // const today = new Date();
+  // const year = today.getFullYear();
+  // const month = String(today.getMonth() + 1).padStart(2, "0");
+  // const day = String(today.getDate()).padStart(2, "0");
+  // const formattedDate = `${year}-${month}-${day}`;
+  const [vendors, setVendors] = useState([]);
+  const [assets, setAssets] = useState([]);
+  const [services, setServices] = useState([]);
+   const [contactFiles, setContactFiles] = useState([]);
+  const [invoiceFiles, setInvoiceFiles] = useState([]);
+    const themeColor = useSelector((state)=> state.theme.color)
+
+  
+>>>>>>> 6e2895ca2862289879c854c200b55d4d5d9a92f1
   const [formData, setFormData] = useState({
     asset: "",
     service: "",
@@ -17,6 +33,7 @@ const AddAMC = () => {
   });
 
   const handleChange = (e) => {
+<<<<<<< HEAD
   const { name, value } = e.target;
 
   setFormData((prev) => ({
@@ -24,6 +41,148 @@ const AddAMC = () => {
     [name]: value,
   }));
 };
+=======
+    const { name, value } = e.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleFileChange = (event, type) => {
+    const files = Array.from(event.target.files);
+
+    if (type === "contacts") {
+      setContactFiles(files);
+    } else if (type === "invoice") {
+      setInvoiceFiles(files);
+    }
+  };
+
+   const fetchVendors = async () => {
+    try {
+      const siteId = getItemInLocalStorage("SITEID");
+      if (!siteId) return;
+
+      const vendorResp = await getVendors(siteId);
+
+      const vendorData =
+        vendorResp?.data?.vendors ||
+        vendorResp?.data?.site_vendors ||
+        vendorResp?.data?.data ||
+        vendorResp?.data ||
+        [];
+
+      setVendors(Array.isArray(vendorData) ? vendorData : []);
+    } catch (error) {
+      console.log("Vendor Error:", error);
+    }
+  };
+
+  const fetchAssets = async () => {
+    try {
+      const siteId = getItemInLocalStorage("SITEID");
+      if (!siteId) return;
+
+      const assetResp = await getSiteAsset(siteId);
+
+      const assetData =
+        assetResp?.data?.site_assets || assetResp?.data?.assets || [];
+
+      setAssets(Array.isArray(assetData) ? assetData : []);
+    } catch (error) {
+      console.log("Asset Error:", error);
+    }
+  };
+
+  const fetchServices = async () => {
+    try {
+      const siteId = getItemInLocalStorage("SITEID");
+      if (!siteId) return;
+
+      const serviceResp = await getSoftServices(siteId);
+
+      const serviceData =
+        serviceResp?.data?.soft_services || serviceResp?.data?.services || [];
+
+      setServices(Array.isArray(serviceData) ? serviceData : []);
+    } catch (error) {
+      console.log("Service Error:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchVendors();
+    fetchAssets();
+    fetchServices();
+  }, []);
+
+  const handleSubmit = async () => {
+    if (amcFor === "asset" && !formData.asset) {
+      toast.error("Please select asset");
+      return;
+    }
+
+    if (amcFor === "service" && !formData.service) {
+      toast.error("Please select service");
+      return;
+    }
+
+    if (!formData.vendor_id) {
+      toast.error("Please select supplier");
+      return;
+    }
+
+    try {
+      const siteId = getItemInLocalStorage("SITEID");
+
+      const formPayload = new FormData();
+
+      formPayload.append("asset_amc[site_id]", siteId);
+      formPayload.append(
+        "asset_amc[asset_id]",
+        amcFor === "asset" ? formData.asset : ""
+      );
+      formPayload.append(
+        "asset_amc[service_id]",
+        amcFor === "service" ? formData.service : ""
+      );
+
+      formPayload.append("asset_amc[vendor_id]", formData.vendor_id);
+      formPayload.append("asset_amc[start_date]", formData.start_date);
+      formPayload.append("asset_amc[end_date]", formData.end_date);
+      formPayload.append("asset_amc[first_service]", formData.first_service);
+      formPayload.append("asset_amc[frequency]", formData.frequency);
+      formPayload.append("asset_amc[visits]", formData.visits);
+      formPayload.append("asset_amc[amc_cost]", formData.amc_cost);
+      formPayload.append("asset_amc[remarks]", formData.remarks);
+
+      contactFiles.forEach((file) => {
+        formPayload.append("amc_contacts[]", file);
+      });
+
+      invoiceFiles.forEach((file) => {
+        formPayload.append("terms[]", file);
+      });
+
+      console.log("Submitting AMC");
+
+      const response = await postAMC(formPayload);
+
+      console.log("AMC Saved:", response.data);
+
+      toast.success("AMC Saved Successfully");
+
+      setTimeout(() => {
+        navigate("/assets/amc");
+      }, 1500);
+    } catch (error) {
+      console.log("AMC Save Error:", error);
+      toast.error("Failed to Save AMC");
+    }
+  };
+>>>>>>> 6e2895ca2862289879c854c200b55d4d5d9a92f1
   return (
     <section>
       <div className="m-2">
@@ -218,21 +377,21 @@ const AddAMC = () => {
               <p className="border-b border-black my-1 font-semibold">
                 AMC Contacts
               </p>
-              <input
-                type="file"
-                // onChange={(event) => handleFileChange(event, "file1")}
-                multiple
-              />
+               <input
+        type="file"
+        multiple
+        onChange={(e) => handleFileChange(e, "contacts")}
+      />
             </div>
             <div>
               <p className="border-b border-black my-1 font-semibold">
                 AMC Invoice
               </p>
-              <input
-                type="file"
-                // onChange={(event) => handleFileChange(event, "file2")}
-                multiple
-              />
+                  <input
+        type="file"
+        multiple
+        onChange={(e) => handleFileChange(e, "invoice")}
+      />
             </div>
           </div>
           <div className="flex my-5 justify-center">

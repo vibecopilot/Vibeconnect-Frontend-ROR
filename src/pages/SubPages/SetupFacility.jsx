@@ -76,14 +76,15 @@ const SetupFacility = () => {
     tenant_postpaid: false,
     tenant_prepaid: false,
     tenant_pay_on_facility: false,
+
     is_member_adult: false,
-  is_member_child: false,
-  is_non_member_adult: false,
-  is_non_member_child: false,
-  is_guest_adult: false,
-  is_guest_child: false,
-  is_tenant_adult: false,
-  is_tenant_child: false,
+    is_member_child: false,
+    is_non_member_adult: false,
+    is_non_member_child: false,
+    is_guest_adult: false,
+    is_guest_child: false,
+    is_tenant_adult: false,
+    is_tenant_child: false,
     tenant_complimentary: false,
     // Legacy global payment (kept for compatibility)
     prepaid: false,
@@ -543,110 +544,220 @@ const SetupFacility = () => {
     });
   };
 
-const handleAddFacility = async (e) => {
-  e.preventDefault();
+  const handleAddFacility = async (e) => {
+    e.preventDefault();
 
-  const sendData = new FormData();
+    const sendData = new FormData();
 
-  // Basic info
-  sendData.append("amenity[site_id]", siteId);
-  sendData.append("amenity[fac_name]", formData.fac_name || "");
-  sendData.append("amenity[fac_type]", formData.fac_type || "bookable");
-  sendData.append("amenity[description]", formData.description || "");
-  sendData.append("amenity[terms]", formData.terms || "");
-  sendData.append("amenity[cancellation_policy]", formData.cancellation_policy || "");
-  sendData.append("amenity[min_people]", formData.min_people || "");
-  sendData.append("amenity[max_people]", formData.max_people || "");
+    // Basic info
+    sendData.append("amenity[site_id]", siteId);
+    sendData.append("amenity[fac_name]", formData.fac_name || "");
+    sendData.append("amenity[fac_type]", formData.fac_type || "bookable");
+    sendData.append("amenity[description]", formData.description || "");
+    sendData.append("amenity[terms]", formData.terms || "");
+    sendData.append(
+      "amenity[cancellation_policy]",
+      formData.cancellation_policy || "",
+    );
+    sendData.append("amenity[min_people]", formData.min_people || "");
+    sendData.append("amenity[max_people]", formData.max_people || "");
 
-  // Fixed / Flat
-  sendData.append("amenity[is_fixed]", formData.flat ? "true" : "false");
-  sendData.append("amenity[fixed_amount]", formData.flat_charges || "");
+    // Fixed / Flat
+    sendData.append("amenity[is_fixed]", formData.flat ? "true" : "false");
+    sendData.append("amenity[fixed_amount]", formData.flat_charges || "");
 
-  // GST – decide based on backend (try both if unsure)
-  sendData.append("amenity[gst]", formData.gst_no || "18");
-  // sendData.append("amenity[gst_no]", formData.gst_no || "18");   ← try this if above fails
+    // GST – decide based on backend (try both if unsure)
+    sendData.append("amenity[gst]", formData.gst_no || "18");
+    // sendData.append("amenity[gst_no]", formData.gst_no || "18");   ← try this if above fails
 
+    // Member
+    sendData.append("amenity[member]", formData.member ? "true" : "false");
+    sendData.append(
+      "amenity[is_member_adult]",
+      formData.is_member_adult ? "true" : "false",
+    );
+    sendData.append(
+      "amenity[is_member_child]",
+      formData.is_member_child ? "true" : "false",
+    );
+    sendData.append(
+      "amenity[is_guest_adult]",
+      formData.is_guest_adult ? "true" : "false",
+    );
+    sendData.append(
+      "amenity[is_guest_child]",
+      formData.is_guest_child ? "true" : "false",
+    );
+    sendData.append(
+      "amenity[is_tenant_adult]",
+      formData.is_tenant_adult ? "true" : "false",
+    );
+    sendData.append(
+      "amenity[is_tenant_child]",
+      formData.is_tenant_child ? "true" : "false",
+    );
+    sendData.append(
+      "amenity[member_price_adult]",
+      formData.member_price_adult || "",
+    );
+    sendData.append(
+      "amenity[member_price_child]",
+      formData.member_price_child || "",
+    );
+    sendData.append(
+      "amenity[guest_price_child]",
+      formData.guest_price_child || "",
+    );
+    sendData.append(
+      "amenity[tenant_price_adult]",
+      formData.tenant_price_adult || "",
+    );
+    sendData.append(
+      "amenity[tenant_price_child]",
+      formData.tenant_price_child || "",
+    );
+    sendData.append(
+      "amenity[guest_price_adult]",
+      formData.guest_price_adult || "",
+    );
 
-  // Member
-  sendData.append("amenity[member]", formData.member ? "true" : "false");
-  sendData.append("amenity[is_member_adult]", formData.is_member_adult ? "true" : "false");
-  sendData.append("amenity[is_member_child]", formData.is_member_child ? "true" : "false");
-  sendData.append("amenity[is_guest_adult]", formData.is_guest_adult ? "true" : "false");
-    sendData.append("amenity[is_guest_child]", formData.is_guest_child ? "true" : "false");
-        sendData.append("amenity[is_tenant_adult]", formData.is_tenant_adult ? "true" : "false");
-    sendData.append("amenity[is_tenant_child]", formData.is_tenant_child ? "true" : "false");
-  sendData.append("amenity[member_price_adult]", formData.member_price_adult || "");
-  sendData.append("amenity[member_price_child]", formData.member_price_child || "");
-    sendData.append("amenity[guest_price_child]", formData.guest_price_child || "");
-  sendData.append("amenity[tenant_price_adult]", formData.tenant_price_adult || "");
-  sendData.append("amenity[tenant_price_child]", formData.tenant_price_child || "");
-  sendData.append("amenity[guest_price_adult]", formData.guest_price_adult || "");
+    sendData.append(
+      "amenity[member_postpaid]",
+      formData.member_postpaid ? "true" : "false",
+    );
+    sendData.append(
+      "amenity[member_prepaid]",
+      formData.member_prepaid ? "true" : "false",
+    );
+    sendData.append(
+      "amenity[member_pay_on_facility]",
+      formData.member_pay_on_facility ? "true" : "false",
+    );
+    sendData.append(
+      "amenity[member_complimentary]",
+      formData.member_complimentary ? "true" : "false",
+    );
 
-  sendData.append("amenity[member_postpaid]", formData.member_postpaid ? "true" : "false");
-  sendData.append("amenity[member_prepaid]", formData.member_prepaid ? "true" : "false");
-  sendData.append("amenity[member_pay_on_facility]", formData.member_pay_on_facility ? "true" : "false");
-  sendData.append("amenity[member_complimentary]", formData.member_complimentary ? "true" : "false");
+    // Non-Member
+    sendData.append(
+      "amenity[non_member]",
+      formData.non_member ? "true" : "false",
+    );
+    sendData.append(
+      "amenity[is_non_member_adult]",
+      formData.is_non_member_adult ? "true" : "false",
+    );
+    sendData.append(
+      "amenity[is_non_member_child]",
+      formData.is_non_member_child ? "true" : "false",
+    );
+    sendData.append(
+      "amenity[non_member_price_adult]",
+      formData.non_member_price_adult || "",
+    );
+    sendData.append(
+      "amenity[non_member_price_child]",
+      formData.non_member_price_child || "",
+    );
+    sendData.append(
+      "amenity[non_member_postpaid]",
+      formData.non_member_postpaid ? "true" : "false",
+    );
+    sendData.append(
+      "amenity[non_member_prepaid]",
+      formData.non_member_prepaid ? "true" : "false",
+    );
+    sendData.append(
+      "amenity[non_member_pay_on_facility]",
+      formData.non_member_pay_on_facility ? "true" : "false",
+    );
+    sendData.append(
+      "amenity[non_member_complimentary]",
+      formData.non_member_complimentary ? "true" : "false",
+    );
 
-  // Non-Member
-  sendData.append("amenity[non_member]", formData.non_member ? "true" : "false");
-  sendData.append("amenity[is_non_member_adult]", formData.is_non_member_adult ? "true" : "false");
-  sendData.append("amenity[is_non_member_child]", formData.is_non_member_child ? "true" : "false");
-  sendData.append("amenity[non_member_price_adult]", formData.non_member_price_adult || "");
-  sendData.append("amenity[non_member_price_child]", formData.non_member_price_child || "");
-  sendData.append("amenity[non_member_postpaid]",   formData.non_member_postpaid   ? "true" : "false");
-  sendData.append("amenity[non_member_prepaid]",    formData.non_member_prepaid    ? "true" : "false");
-  sendData.append("amenity[non_member_pay_on_facility]", formData.non_member_pay_on_facility ? "true" : "false");
-  sendData.append("amenity[non_member_complimentary]",   formData.non_member_complimentary   ? "true" : "false");
+    // Guest + Tenant → same pattern (copy-paste & change prefix)
 
-  // Guest + Tenant → same pattern (copy-paste & change prefix)
+    // Book before
+    const bookStr = `${bookBefore.days || 0} days, ${bookBefore.hours || 0} hours, ${bookBefore.minutes || 0} minutes`;
+    sendData.append("book_before[0]", bookStr);
+    sendData.append("book_before[1]", JSON.stringify(bookBefore));
+    sendData.append("book_before[2]", "null");
 
-  // Book before
-  const bookStr = `${bookBefore.days || 0} days, ${bookBefore.hours || 0} hours, ${bookBefore.minutes || 0} minutes`;
-  sendData.append("book_before[0]", bookStr);
-  sendData.append("book_before[1]", JSON.stringify(bookBefore));
-  sendData.append("book_before[2]", "null");
-
-  // Slots
-  formData.slots.forEach((slot, index) => {
-    sendData.append(`amenity[amenity_slots_attributes][${index}][start_hr]`,   slot.start_hr   || "");
-    sendData.append(`amenity[amenity_slots_attributes][${index}][start_min]`,  slot.start_min  || "");
-    sendData.append(`amenity[amenity_slots_attributes][${index}][end_hr]`,     slot.end_hr     || "");
-    sendData.append(`amenity[amenity_slots_attributes][${index}][end_min]`,    slot.end_min    || "");
-    sendData.append(`amenity[amenity_slots_attributes][${index}][break_start_hr]`,  slot.break_start_hr  || "");
-    sendData.append(`amenity[amenity_slots_attributes][${index}][break_start_min]`, slot.break_start_min || "");
-    sendData.append(`amenity[amenity_slots_attributes][${index}][break_end_hr]`,    slot.break_end_hr    || "");
-    sendData.append(`amenity[amenity_slots_attributes][${index}][break_end_min]`,   slot.break_end_min   || "");
-    sendData.append(`amenity[amenity_slots_attributes][${index}][concurrent_slots]`, slot.concurrent_slots || "1");
-    sendData.append(`amenity[amenity_slots_attributes][${index}][slot_duration]`,   slot.slot_duration   || "");
-    sendData.append(`amenity[amenity_slots_attributes][${index}][wrap_up_time]`,    slot.wrap_up_time    || "0");
-    // add prime_time if backend supports it
-  });
-
-  // Files
-  if (formData.attachments?.length) {
-    Array.from(formData.attachments).forEach(file => {
-      sendData.append("attachments[]", file);
+    // Slots
+    formData.slots.forEach((slot, index) => {
+      sendData.append(
+        `amenity[amenity_slots_attributes][${index}][start_hr]`,
+        slot.start_hr || "",
+      );
+      sendData.append(
+        `amenity[amenity_slots_attributes][${index}][start_min]`,
+        slot.start_min || "",
+      );
+      sendData.append(
+        `amenity[amenity_slots_attributes][${index}][end_hr]`,
+        slot.end_hr || "",
+      );
+      sendData.append(
+        `amenity[amenity_slots_attributes][${index}][end_min]`,
+        slot.end_min || "",
+      );
+      sendData.append(
+        `amenity[amenity_slots_attributes][${index}][break_start_hr]`,
+        slot.break_start_hr || "",
+      );
+      sendData.append(
+        `amenity[amenity_slots_attributes][${index}][break_start_min]`,
+        slot.break_start_min || "",
+      );
+      sendData.append(
+        `amenity[amenity_slots_attributes][${index}][break_end_hr]`,
+        slot.break_end_hr || "",
+      );
+      sendData.append(
+        `amenity[amenity_slots_attributes][${index}][break_end_min]`,
+        slot.break_end_min || "",
+      );
+      sendData.append(
+        `amenity[amenity_slots_attributes][${index}][concurrent_slots]`,
+        slot.concurrent_slots || "1",
+      );
+      sendData.append(
+        `amenity[amenity_slots_attributes][${index}][slot_duration]`,
+        slot.slot_duration || "",
+      );
+      sendData.append(
+        `amenity[amenity_slots_attributes][${index}][wrap_up_time]`,
+        slot.wrap_up_time || "0",
+      );
+      // add prime_time if backend supports it
     });
-  }
 
-  if (formData.cover_images?.length) {
-    Array.from(formData.cover_images).forEach(file => {
-      sendData.append("cover_images[]", file);
-    });
-  }
+    // Files
+    if (formData.attachments?.length) {
+      Array.from(formData.attachments).forEach((file) => {
+        sendData.append("attachments[]", file);
+      });
+    }
 
-  try {
-    toast.loading("Saving facility...");
-    const response = await postFacilitySetup(sendData);
-    toast.dismiss();
-    toast.success("Facility created successfully");
-    navigate("/setup/facility");
-  } catch (err) {
-    toast.dismiss();
-    toast.error("Failed to create facility");
-    console.error(err);
-  }
-};
+    if (formData.cover_images?.length) {
+      Array.from(formData.cover_images).forEach((file) => {
+        sendData.append("cover_images[]", file);
+      });
+    }
+
+    try {
+      toast.loading("Saving facility...");
+      const response = await postFacilitySetup(sendData);
+      toast.dismiss();
+      toast.success("Facility created successfully");
+      navigate("/setup/facility");
+    } catch (err) {
+      toast.dismiss();
+      toast.error("Failed to create facility");
+      console.error(err);
+    }
+  };
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -1055,7 +1166,7 @@ const handleAddFacility = async (e) => {
                   placeholder="₹100"
                 />
               </div>
-               <div className="flex justify-center my-2">
+              <div className="flex justify-center my-2">
                 <div className="grid grid-cols-2 gap-2">
                   <div className="flex flex-col">
                     <label htmlFor="" className="flex items-center gap-2">
@@ -1163,7 +1274,7 @@ const handleAddFacility = async (e) => {
                   placeholder="₹100"
                 />
               </div>
-               <div className="flex justify-center my-2">
+              <div className="flex justify-center my-2">
                 <div className="grid grid-cols-2 gap-2">
                   <div className="flex flex-col">
                     <label htmlFor="" className="flex items-center gap-2">
@@ -1271,7 +1382,7 @@ const handleAddFacility = async (e) => {
                   placeholder="₹100"
                 />
               </div>
-               <div className="flex justify-center my-2">
+              <div className="flex justify-center my-2">
                 <div className="grid grid-cols-2 gap-2">
                   <div className="flex flex-col">
                     <label htmlFor="" className="flex items-center gap-2">
@@ -1625,6 +1736,19 @@ const handleAddFacility = async (e) => {
                 }
                 className="border border-gray-300 rounded px-2 py-1 w-24 text-sm"
               />
+              {/* Select Time per day */}
+              <span className="text-sm">times per day by </span>
+              <select
+                value={rule.time_per || ""}
+                onChange={(e) => handleChange2(rule.id, "type", e.target.value)}
+                className="border border-gray-300 rounded px-2 py-1 text-sm w-[150px]"
+              >
+                <option value="">Select</option>
+                <option value="User">User</option>
+                <option value="Flat">Flat</option>
+                <option value="Owner">Owner</option>
+                <option value="Tenant">Tenant</option>
+              </select>
 
               {/* Select Slots For */}
               <select
@@ -2051,7 +2175,13 @@ const handleAddFacility = async (e) => {
             </div>
           )}
         </div>
-        <div className="flex justify-center my-2">
+        <div className="flex justify-end my-2 gap-3">
+          <button
+            className="bg-gray-800 text-white p-2 px-4 font-semibold rounded-md flex items-center gap-2"
+            onClick={() => navigate("/setup/facility")}
+          >
+            Cancel
+          </button>
           <button
             onClick={handleOnSubmit}
             style={{ background: themeColor }}
