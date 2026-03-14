@@ -1123,6 +1123,9 @@ export const postAMC = async (data) =>
     params: {
       token: token,
     },
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
   });
 export const getAMCDetails = async (assetId) =>
   axiosInstance.get(`/asset_amcs.json?q[asset_id_eq]=${assetId}`, {
@@ -1292,6 +1295,8 @@ export const getFacitilitySetup = async () => {
     throw error;
   }
 };
+
+
 
 // export const getAmenitiesBooking = async () => {
 //   return axiosInstance.get(`/amenity_bookings.json`, {
@@ -1866,12 +1871,25 @@ export const getSetupUsers = async () =>
   axiosInstance.get("/users.json", {
     params: {
       token: token,
+       user_status: true,
     },
   });
 export const putSetupUser = async (userId, data) =>
   axiosInstance.put(`/users/${userId}.json`, data, {
     params: {
       token: token,
+    },
+  });
+
+  export const getUserCount = async () =>
+  axiosInstance.get("/users/index_count.json", {
+    params: {
+      token: token,
+    },
+    headers: {
+      "Cache-Control": "no-cache",
+      Pragma: "no-cache",
+      Expires: "0",
     },
   });
 
@@ -2188,13 +2206,20 @@ export const editEventDetails = async (id, data) =>
     params: {
       token: token,
     },
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
   });
-export const postEvents = async (data) =>
-  axiosInstance.post("/events.json", data, {
+export const postEvents = async (data) => {
+  return axiosInstance.post("/events.json", data, {
     params: {
       token: token,
     },
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
   });
+};
 export const postGroups = async (data) =>
   axiosInstance.post("/groups.json", data, {
     params: {
@@ -11179,6 +11204,8 @@ export const deleteVisitorSubCategory = async (id) =>
 
 // aminities
 
+
+
 // Amenities API
 // export const getAmenities = async (page = 1, per_page = 10) =>
 //   axiosInstance.get("/amenities.json", {
@@ -11420,6 +11447,21 @@ export const getAmenitiesBooking = async (
   });
 };
 
+<<<<<<< HEAD
+=======
+export const getAmenityExport = (startDate, endDate, siteId) => {
+  return axiosInstance.get("/amenity/export.xlsx", {
+    params: {
+      start_date: startDate,
+      end_date: endDate,
+      site_id: siteId,
+      token: token,
+    },
+    responseType: "blob",
+  });
+};
+
+>>>>>>> 6e2895ca2862289879c854c200b55d4d5d9a92f1
 // Polls API
 
 // 🔹 Get all polls with pagination

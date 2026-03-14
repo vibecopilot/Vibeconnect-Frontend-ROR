@@ -72,6 +72,7 @@ const CreateEvent = () => {
       try {
         const usersRes = await getSetupUsers();
         const unitsRes = await getBuildings();
+<<<<<<< HEAD
 
         setUnits(unitsRes?.data || []);
 
@@ -81,6 +82,19 @@ const CreateEvent = () => {
           building_id: emp.building_id || emp.building?.id || null,
           userSites: emp.user_sites || [],
           building: emp.building || {},
+=======
+        console.log("userSites", unitsRes);
+        setUnits(unitsRes.data);
+        console.log("usersRes", usersRes);
+       const employeesList = usersRes.data
+  .filter((emp) => emp.user_status === true) // ✅ only active users
+  .map((emp) => ({
+    id: emp.id,
+    name: `${emp.firstname} ${emp.lastname}`,
+    building_id: emp.building_id || emp.building?.id || null,
+    userSites: emp.user_sites || [],
+    building: emp.building || {},
+>>>>>>> 6e2895ca2862289879c854c200b55d4d5d9a92f1
         }));
 
         setMembers(employeesList);
@@ -94,6 +108,7 @@ const CreateEvent = () => {
   }, []);
 
   const handleFilter = () => {
+<<<<<<< HEAD
     const filtered = members.filter((member) => {
       const buildingId = Number(member.building_id ?? member.building?.id);
 
@@ -117,6 +132,28 @@ const CreateEvent = () => {
           site.ownership?.toLowerCase() === selectedOwnership.toLowerCase()
       );
     });
+=======
+  const filtered = members.filter((member) => {
+  if (!member.user_status) return false; // ❌ skip inactive users
+
+  const buildingMatch =
+    selectedUnits.length === 0 ||
+    selectedUnits.some(
+      (unit) =>
+        Number(member.building_id ?? member.building?.id) ===
+        Number(unit.value)
+    );
+
+  const ownershipMatch =
+    !selectedOwnership ||
+    member.userSites.some(
+      (site) =>
+        site.ownership?.toLowerCase() === selectedOwnership.toLowerCase()
+    );
+
+  return buildingMatch && ownershipMatch;
+});
+>>>>>>> 6e2895ca2862289879c854c200b55d4d5d9a92f1
 
     setFilteredMembers(filtered);
 
@@ -187,12 +224,22 @@ const CreateEvent = () => {
     const selectedGroupObj = groups.find((group) => group.id === groupId);
 
     setSelectedGroup(event.target.value);
+<<<<<<< HEAD
     setFormData((p) => ({
       ...p,
       group_id: groupId || null,
       group_name: selectedGroupObj?.group_name || "",
     }));
 
+=======
+
+    setFormData((prev) => ({
+      ...prev,
+      group_id: groupId,
+      group_name: selectedGroupObj?.group_name || "",
+    }));
+
+>>>>>>> 6e2895ca2862289879c854c200b55d4d5d9a92f1
     setGroupMembers(selectedGroupObj?.group_members || []);
   };
 
@@ -221,6 +268,7 @@ const CreateEvent = () => {
         "event[end_date_time]",
         formatDateTime(formData.end_date_time)
       );
+<<<<<<< HEAD
       formDataSend.append("event[venue]", formData.venue || "");
       formDataSend.append("event[email_enabled]", formData.email_enabled ? "1" : "0");
       formDataSend.append("event[rsvp_enabled]", formData.rsvp_enabled ? "1" : "0");
@@ -243,14 +291,52 @@ const CreateEvent = () => {
         formDataSend.append("event[group_id]", formData.group_id || "");
         formDataSend.append("event[group_name]", formData.group_name || "");
       }
+=======
+      formDataSend.append("event[venue]", formData.venue);
+      formDataSend.append("event[user_ids]", formData.user_ids);
+      // formDataSend.append("event[shared]", share);
+      formDataSend.append("event[email_enabled]", formData.email_enabled);
+      formDataSend.append("event[rsvp_enabled]", formData.rsvp_enabled);
+      formDataSend.append("event[important]", formData.important);
+      // if (share === "all") {
+      //   formDataSend.append("event[shared]", "all");
+      // } else if (share === "individual") {
+      //   formDataSend.append("event[shared]", "individual");
+      //   formDataSend.append("event[user_ids]", formData.user_ids);
+      // } else if (share === "groups") {
+      //   formDataSend.append("event[shared]", "groups");
+      //   formDataSend.append("event[group_id]", formData.group_id);
+      //   formDataSend.append("event[group_name]", formData.group_name);
+      // }
+      // formDataSend.append("event[important]", formData.important);
 
+      // formData.user_ids.forEach((user_id) => {
+      //   formDataSend.append("event[user_ids]", user_id);
+      // });
+      formDataSend.append("event[shared]", share);
+>>>>>>> 6e2895ca2862289879c854c200b55d4d5d9a92f1
+
+      if (share === "individual") {
+        formDataSend.append("event[user_ids]", formData.user_ids);
+      }
+
+      if (share === "groups") {
+        formDataSend.append("event[group_id]", formData.group_id);
+        formDataSend.append("event[group_name]", formData.group_name);
+      }
+      // Upload attachments
       if (formData.event_images && formData.event_images.length > 0) {
         formData.event_images.forEach((file) => {
+<<<<<<< HEAD
           if (file instanceof File) {
             formDataSend.append("event[event_images][]", file);
           }
+=======
+          formDataSend.append("event[event_images][]", file);
+>>>>>>> 6e2895ca2862289879c854c200b55d4d5d9a92f1
         });
       }
+      console.log("Images before upload:", formData.event_images);
 
       const response = await postEvents(formDataSend);
       toast.success("Event Created Successfully", { id: "createEvent" });
@@ -274,6 +360,7 @@ const CreateEvent = () => {
     }));
   };
 
+<<<<<<< HEAD
   const handleFileAttachment = (input) => {
     let files = [];
     if (input && input.target && input.target.files) {
@@ -284,6 +371,61 @@ const CreateEvent = () => {
       files = [input];
     }
     setFormData((p) => ({ ...p, event_images: files }));
+=======
+  const handleFileAttachment = (files) => {
+    let fileArray = [];
+
+    if (files instanceof FileList) {
+      fileArray = Array.from(files);
+    } else if (Array.isArray(files)) {
+      fileArray = files;
+    } else {
+      fileArray = [files];
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      event_images: [...prev.event_images, ...fileArray],
+    }));
+
+    console.log("Selected Files:", fileArray);
+  };
+
+  const filterTime = (time) => {
+    const selectedDate = new Date(time);
+    const currentDate = new Date();
+
+    if (selectedDate.getTime() > currentDate.getTime()) {
+      return true;
+    } else if (selectedDate.getTime() === currentDate.getTime()) {
+      const selectedTime =
+        selectedDate.getHours() * 60 + selectedDate.getMinutes();
+      const currentTime =
+        currentDate.getHours() * 60 + currentDate.getMinutes();
+      return selectedTime >= currentTime;
+    } else {
+      return false;
+    }
+  };
+
+  const handleFileChange = (files, fieldName) => {
+    setFormData({
+      ...formData,
+      [fieldName]: Array.isArray(files) ? files : [files],
+    });
+  };
+
+  const handleSelectEdit = (selectedOption) => {
+    setSelectedMembers(selectedOption); // Update state for selected members
+
+    const selectedUserIds = selectedOption.map((option) => option.value); // Extract user IDs
+    console.log("akshay", selectedUserIds);
+
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      user_ids: selectedUserIds.join(","), // Store user IDs as a comma-separated string
+    }));
+>>>>>>> 6e2895ca2862289879c854c200b55d4d5d9a92f1
   };
 
   return (
@@ -574,8 +716,13 @@ const CreateEvent = () => {
               </h2>
               <FileInputBox
                 fieldName={"event_images"}
+<<<<<<< HEAD
                 handleChange={handleFileAttachment}
+=======
+                handleChange={handleFileAttachment} 
+>>>>>>> 6e2895ca2862289879c854c200b55d4d5d9a92f1
                 fileType="image/*"
+                onChange={(e) => handleChange(e.target.files)}
               />
             </div>
 

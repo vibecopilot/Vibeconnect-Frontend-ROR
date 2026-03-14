@@ -74,6 +74,79 @@ const CreateBroadcast = () => {
       console.error("Error fetching setup users:", error);
     }
   };
+<<<<<<< HEAD
+=======
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await getAssignedTo();
+        const transformedUsers = response.data.map((user) => ({
+          value: user.id,
+          label: `${user.firstname} ${user.lastname}`,
+        }));
+        setUsers(transformedUsers);
+      } catch (error) {
+        console.error("Error fetching assigned users:", error);
+      }
+    };
+
+    // Fetch groups when 'share' is set to 'groups'
+    if (share === "groups") {
+      fetchGroups();
+    }
+
+    fetchUsers();
+  }, [share]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+       const usersRes = await getSetupUsers();
+const unitsRes = await getBuildings();
+
+setUnits(unitsRes.data);
+
+// ✅ filter only active users
+const activeUsers = usersRes.data.filter((emp) => emp.user_status === true);
+
+const employeesList = activeUsers.map((emp) => ({
+  id: emp.id,
+  name: `${emp.firstname} ${emp.lastname}`,
+  building_id: emp.building_id || emp.building?.id || null,
+  userSites: emp.user_sites || [],
+  building: emp.building || {},
+}));
+
+setMembers(employeesList);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+    fetchData();
+  }, []);
+
+const handleFilter = () => {
+const filtered = members.filter((member) => {
+  const buildingMatch =
+    selectedUnits.length === 0 ||
+    selectedUnits.some(
+      (unit) => Number(member.building_id) === Number(unit.value)
+    );
+
+  const ownershipMatch =
+    !selectedOwnership ||
+    member.userSites.some(
+      (site) =>
+        site.ownership?.toLowerCase() === selectedOwnership.toLowerCase()
+    );
+
+  return buildingMatch && ownershipMatch;
+  });
+
+  setFilteredMembers(filtered);
+  toast.success("Filter applied");
+};
+>>>>>>> 6e2895ca2862289879c854c200b55d4d5d9a92f1
 
   const fetchGroups = async () => {
     try {
