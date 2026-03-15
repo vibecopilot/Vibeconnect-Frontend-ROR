@@ -9993,67 +9993,81 @@ export const updateComment = async (forumId) =>
   });
 //////////////////////////////////////////////////////////////////
 
-export const downloadAsset = async () =>
+export const downloadAsset = async (startDate, endDate) =>
   axiosInstance.get(`/site_assets/export.xlsx/`, {
     params: {
       token: token,
+      ...(startDate && { start_time: startDate }),
+      ...(endDate   && { end_time:   endDate   }),
     },
     responseType: "blob",
   });
 
-export const getBreakdownDownload = async () =>
+export const getBreakdownDownload = async (startDate, endDate) =>
   axiosInstance.get(`/site_assets/export.xlsx`, {
     params: {
       token: token,
       "q[breakdown_eq]": 1,
+      ...(startDate && { start_time: startDate }),
+      ...(endDate   && { end_time:   endDate   }),
     },
     responseType: "blob",
   });
-export const getAssetInDownload = async () =>
+export const getAssetInDownload = async (startDate, endDate) =>
   axiosInstance.get(`/site_assets/export.xlsx`, {
     params: {
       token: token,
       "q[breakdown_eq]": false,
+      ...(startDate && { start_time: startDate }),
+      ...(endDate   && { end_time:   endDate   }),
     },
     responseType: "blob",
   });
 
-export const getScheduledDownload = async () =>
+export const getScheduledDownload = async (startDate, endDate) =>
   axiosInstance.get(`/activities/export.xlsx`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "ppm",
       scheduled: true,
+      ...(startDate && { start_time: startDate }),
+      ...(endDate   && { end_time:   endDate   }),
     },
     responseType: "blob",
   });
 
-export const getPPMOverDueDownload = async () =>
+export const getPPMOverDueDownload = async (startDate, endDate) =>
   axiosInstance.get(`/activities/export.xlsx`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "ppm",
       overdue: true,
+      ...(startDate && { start_time: startDate }),
+      ...(endDate   && { end_time:   endDate   }),
     },
     responseType: "blob",
   });
 
-export const getPPMPendingDownload = async () =>
+export const getPPMPendingDownload = async (startDate, endDate) =>
   axiosInstance.get(`/activities/export.xlsx`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "ppm",
       pending: true,
+      ...(startDate && { start_date: startDate }),
+      ...(endDate   && { end_date:   endDate   }),
     },
     responseType: "blob",
   });
 
-export const getPPMcompleteDownload = async () =>
+export const getPPMcompleteDownload = async (startDate, endDate) =>
   axiosInstance.get(`/activities/export.xlsx`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "ppm",
       complete: true,
+      ...(startDate && { start_time: startDate }),
+      ...(endDate   && { end_time:   endDate   }),
     },
     responseType: "blob",
   });
@@ -10123,41 +10137,49 @@ export const getPPMCompleteCount = async (ids) =>
     },
   });
 
-export const getRoutineScheduledDownload = async () =>
+export const getRoutineScheduledDownload = async (startDate, endDate) =>
   axiosInstance.get(`/activities/export.xlsx`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "routine",
       scheduled: true,
+      ...(startDate && { start_date: startDate }),
+      ...(endDate   && { end_date:   endDate   }),
     },
     responseType: "blob",
   });
 
-export const getRoutineOverdueDownload = async () =>
+export const getRoutineOverdueDownload = async (startDate, endDate) =>
   axiosInstance.get(`/activities/export.xlsx`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "routine",
       overdue: true,
+      ...(startDate && { start_date: startDate }),
+      ...(endDate   && { end_date:   endDate   }),
     },
     responseType: "blob",
   });
-export const getRoutineCompleteDownload = async () =>
+export const getRoutineCompleteDownload = async (startDate, endDate) =>
   axiosInstance.get(`/activities/export.xlsx`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "routine",
       complete: true,
+      ...(startDate && { start_date: startDate }),
+      ...(endDate   && { end_date:   endDate   }),
     },
     responseType: "blob",
   });
 
-export const getRoutinePendingDownload = async () =>
+export const getRoutinePendingDownload = async (startDate, endDate) =>
   axiosInstance.get(`/activities/export.xlsx`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "routine",
       pending: true,
+      ...(startDate && { start_date: startDate }),
+      ...(endDate   && { end_date:   endDate   }),
     },
     responseType: "blob",
   });
@@ -11581,6 +11603,26 @@ export const getVisitorsDrill = async (filter, siteId, limit = 50) =>
       ...(siteId && { site_id: siteId }),
     },
   });
+
+export const getVisitorsDashboardDrill = async (
+  countType,
+  countValue,
+  siteId,
+  page = 1,
+  startDate,
+  endDate
+) =>
+  axiosInstance.get("/visitors/visitors_dashboard.json", {
+    params: {
+      token: getItemInLocalStorage("TOKEN"),
+      count_type: countType,
+      count_value: countValue,
+      record_page: page,
+      ...(siteId && { site_id: siteId }),
+      ...(startDate && { start_date: startDate }),
+      ...(endDate && { end_date: endDate }),
+    },
+  });
 export const getComplaintsDrill = async (
   countType,
   countValue,
@@ -11628,3 +11670,24 @@ export const getExportVisitors = async (
     responseType: "blob",
   });
 };
+
+/** Staff dashboard – summary counts + by_* breakdowns + optional drill-down */
+export const getStaffDashboard = async (
+  siteId,
+  countType,
+  countValue,
+  page = 1,
+  startDate,
+  endDate
+) =>
+  axiosInstance.get("/staffs/staff_dashboard.json", {
+    params: {
+      token: getItemInLocalStorage("TOKEN"),
+      ...(siteId     && { site_id:     siteId     }),
+      ...(countType  && { count_type:  countType  }),
+      ...(countValue && { count_value: countValue }),
+      record_page: page,
+      ...(startDate  && { start_date:  startDate  }),
+      ...(endDate    && { end_date:    endDate    }),
+    },
+  });
