@@ -1,16 +1,28 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { FaDownload, FaCalendarAlt } from "react-icons/fa";
 import toast from "react-hot-toast";
-import { getVisitorDashboard, getExportVisitors } from "../../api";
+import { getVisitorAnalytics, getExportVisitors } from "../../api";
+import { getItemInLocalStorage } from "../../utils/localStorage";
 
-const CHART_PALETTE = [
-  "#1D4ED8", 
-  "#10B981", 
-  "#F59E0B", 
-  "#EF4444", 
-  "#8B5CF6", 
-  "#06B6D4",
+/* ── ordered list of stat cards we want to display ─────────────────────────
+   Only cards whose key exists in the API response will be rendered.        */
+const STAT_CONFIG = [
+  { key: "total",        title: "Total Visitors",   subtitle: "All time visitors",   accent: "#1D4ED8", drillFilter: "total"       },
+  { key: "in",           title: "Total In",          subtitle: "Currently inside",    accent: "#10B981", drillFilter: "in"          },
+  { key: "out",          title: "Total Out",         subtitle: "Currently out",       accent: "#F59E0B", drillFilter: "out"         },
+  { key: "today",        title: "Today's Visitors",  subtitle: "Today",               accent: "#06B6D4", drillFilter: "today"       },
+  { key: "today_in",     title: "Today's In",        subtitle: "Today check-in",      accent: "#8B5CF6", drillFilter: "today_in"    },
+  { key: "today_out",    title: "Today's Out",       subtitle: "Today check-out",     accent: "#EC4899", drillFilter: "today_out"   },
+  { key: "expected_v",   title: "Expected",          subtitle: "Pre-registered",      accent: "#14B8A6", drillFilter: "expected"    },
+  { key: "unexpected_v", title: "Unexpected",        subtitle: "Walk-in visitors",    accent: "#EF4444", drillFilter: "unexpected"  },
 ];
+
+const formatDateForApi = (isoDate) => {
+  if (!isoDate) return null;
+  const [year, month, day] = isoDate.split("-");
+  if (!year || !month || !day) return null;
+  return `${day}/${month}/${year}`;
+};
 
 const IconBtn = ({ onClick, children, title, disabled = false }) => (
   <button
@@ -29,142 +41,110 @@ const IconBtn = ({ onClick, children, title, disabled = false }) => (
   </button>
 );
 
-const StatCard = ({
-  title,
-  value,
-  accent = CHART_PALETTE[0],
-  action,
-  subtitle,
-}) => {
-  return (
-    <div className="rounded-2xl border border-gray-100 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-5">
-      <div
-        className="h-1 w-full rounded-full"
-        style={{ backgroundColor: accent, opacity: 0.9 }}
-      />
-      <div className="mt-4 flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-[16px] font-bold text-gray-900 truncate">{title}</p>
-          {subtitle ? (
-            <p className="text-sm text-gray-500 truncate mt-1">{subtitle}</p>
-          ) : null}
-        </div>
-        <div className="shrink-0">{action}</div>
-      </div>
-
-      <div className="mt-6 flex items-center justify-center">
-        <span className="text-3xl font-extrabold text-gray-900">
-          {Number.isFinite(Number(value)) ? Number(value) : 0}
-        </span>
-      </div>
+const StatCard = ({ title, value, accent, subtitle }) => (
+  <div className="rounded-2xl border border-gray-100 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-5">
+    <div
+      className="h-1 w-full rounded-full mb-4"
+      style={{ backgroundColor: accent, opacity: 0.9 }}
+    />
+    <p className="text-[15px] font-bold text-gray-900 truncate">{title}</p>
+    {subtitle ? (
+      <p className="text-sm text-gray-500 mt-0.5 truncate">{subtitle}</p>
+    ) : null}
+    <div className="mt-4 text-3xl font-extrabold text-gray-900">
+      {Number.isFinite(Number(value)) ? Number(value) : 0}
     </div>
-  );
-};
+  </div>
+);
+
+const SkeletonCard = () => (
+  <div className="rounded-2xl border border-gray-100 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-5 animate-pulse">
+    <div className="h-1 w-full rounded-full bg-gray-200 mb-4" />
+    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
+    <div className="h-3 bg-gray-100 rounded w-1/2 mb-4" />
+    <div className="h-8 bg-gray-200 rounded w-1/3" />
+  </div>
+);
 
 const VisitorsDashboard = () => {
-  const [stats, setStats] = useState({
-    total: 0,
-    today_in: 0,
-    today_out: 0,
-    in: 0,
-    out: 0,
-  });
+  const siteId    = getItemInLocalStorage("SITEID");
+  const companyId = getItemInLocalStorage("COMPANYID");
+  const isCompany55 = String(companyId) === "55";
 
-  const [loading, setLoading] = useState(true);
-
-  const [showDownloadModal, setShowDownloadModal] = useState(false);
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-
-  const getTodayDate = () => {
-    const d = new Date();
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const dd = String(d.getDate()).padStart(2, "0");
-    return `${yyyy}-${mm}-${dd}`;
-  };
+  const [rawStats,     setRawStats]     = useState({});
+  const [loading,      setLoading]      = useState(true);
+  const [filterOpen,   setFilterOpen]   = useState(false);
+  const [fromDate,     setFromDate]     = useState("");
+  const [toDate,       setToDate]       = useState("");
+  const [tempFromDate, setTempFromDate] = useState("");
+  const [tempToDate,   setTempToDate]   = useState("");
+  const [showDlModal,  setShowDlModal]  = useState(false);
+  const [dlStart,      setDlStart]      = useState("");
+  const [dlEnd,        setDlEnd]        = useState("");
 
   useEffect(() => {
-    let alive = true;
+    fetchStats();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fromDate, toDate, siteId]);
 
-    const fetchDashboard = async () => {
-      setLoading(true);
-      try {
-        const resp = await getVisitorDashboard();
-        if (!alive) return;
+  const fetchStats = async () => {
+    setLoading(true);
+    try {
+      const rangeFrom = formatDateForApi(fromDate);
+      const rangeTo   = formatDateForApi(toDate);
+      const resp      = await getVisitorAnalytics(rangeFrom, rangeTo, siteId);
+      setRawStats(resp?.data || {});
+    } catch (err) {
+      console.error("Error fetching visitors dashboard:", err);
+      toast.error("Failed to load visitors dashboard");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        setStats({
-          total: resp?.data?.total ?? 0,
-          today_in: resp?.data?.today_in ?? 0,
-          today_out: resp?.data?.today_out ?? 0,
-          in: resp?.data?.in ?? 0,
-          out: resp?.data?.out ?? 0,
-        });
-      } catch (err) {
-        console.error("Error fetching visitors dashboard:", err);
-        toast.error("Failed to load visitors dashboard");
-      } finally {
-        if (alive) setLoading(false);
-      }
-    };
+  /* Build visible cards from API response; rename expected/unexpected by company */
+  const visibleCards = useMemo(() => {
+    return STAT_CONFIG
+      .filter((cfg) => rawStats[cfg.key] !== undefined)
+      .map((cfg) => {
+        let title = cfg.title;
+        if (cfg.key === "expected_v")   title = isCompany55 ? "Planned"   : "Expected";
+        if (cfg.key === "unexpected_v") title = isCompany55 ? "Unplanned" : "Unexpected";
+        return { ...cfg, title, value: rawStats[cfg.key] };
+      });
+  }, [rawStats, isCompany55]);
 
-    fetchDashboard();
-    return () => {
-      alive = false;
-    };
-  }, []);
-
+  /* ── Download helpers ────────────────────────────────────────────────────── */
   const downloadBlob = (response, filename) => {
     const contentType =
       response?.headers?.["content-type"] ||
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-
-    const url = window.URL.createObjectURL(
-      new Blob([response.data], { type: contentType })
-    );
-
+    const url  = window.URL.createObjectURL(new Blob([response.data], { type: contentType }));
     const link = document.createElement("a");
     link.style.display = "none";
-    link.href = url;
+    link.href     = url;
     link.download = filename;
-
     document.body.appendChild(link);
     link.click();
-
     window.URL.revokeObjectURL(url);
     document.body.removeChild(link);
   };
 
-  const handleVisitorsDownload = async ({
-    mode = "overall", 
-    range = null, 
-    filterType = null, 
-    label = "Visitors",
-  } = {}) => {
+  const handleVisitorsDownload = async ({ mode = "overall", range = null } = {}) => {
     const toastId = toast.loading("Downloading… Please wait");
     try {
       let response;
-
       if (mode === "date" && range?.start && range?.end) {
         response = await getExportVisitors(range.start, range.end, null);
-        downloadBlob(
-          response,
-          `visitors_${range.start}_to_${range.end}.xlsx`
-        );
-      } else if (mode === "filter" && filterType) {
-        response = await getExportVisitors(null, null, filterType);
-        downloadBlob(response, `${label.toLowerCase().replace(/\s+/g, "_")}.xlsx`);
+        downloadBlob(response, `visitors_${range.start}_to_${range.end}.xlsx`);
       } else {
         response = await getExportVisitors();
-        const stamp = new Date();
-        const y = stamp.getFullYear();
-        const m = String(stamp.getMonth() + 1).padStart(2, "0");
-        const d = String(stamp.getDate()).padStart(2, "0");
-        downloadBlob(response, `visitors_export_${y}${m}${d}.xlsx`);
+        const s   = new Date();
+        const ym  = `${s.getFullYear()}${String(s.getMonth() + 1).padStart(2, "0")}${String(s.getDate()).padStart(2, "0")}`;
+        downloadBlob(response, `visitors_export_${ym}.xlsx`);
       }
-
       toast.success("Downloaded successfully");
-      setShowDownloadModal(false);
+      setShowDlModal(false);
     } catch (error) {
       console.error("Error downloading visitors report:", error);
       toast.error("Failed to download. Please try again.");
@@ -173,211 +153,179 @@ const VisitorsDashboard = () => {
     }
   };
 
-  const openDownloadModal = () => {
-    const today = getTodayDate();
-    setStartDate(today);
-    setEndDate(today);
-    setShowDownloadModal(true);
-  };
-
-  const handleDateRangeDownload = () => {
-    if (!startDate || !endDate) {
-      toast.error("Please select both start and end dates");
-      return;
-    }
-    if (new Date(startDate) > new Date(endDate)) {
-      toast.error("Start date must be before end date");
-      return;
-    }
-
-    handleVisitorsDownload({
-      mode: "date",
-      range: { start: startDate, end: endDate },
-    });
-  };
-
-  const filterTypeMap = useMemo(
-    () => ({
-      "Total In": "total_in",
-      "Total Out": "total_out",
-      "Today's In": "today_in",
-      "Today's Out": "today_out",
-    }),
-    []
-  );
-
-  const handleGenericDownload = (label) => {
-    const filterType = filterTypeMap[label];
-    if (!filterType) return;
-
-    handleVisitorsDownload({
-      mode: "filter",
-      filterType,
-      label,
-    });
+  const openDlModal = () => {
+    const today = new Date().toISOString().split("T")[0];
+    setDlStart(today);
+    setDlEnd(today);
+    setShowDlModal(true);
   };
 
   return (
     <div className="w-full px-3 pb-4">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
-        <StatCard
-          title="Total Visitors"
-          subtitle="Overall count"
-          value={loading ? 0 : stats.total}
-          accent={CHART_PALETTE[0]}
-          action={
-            <IconBtn
-              onClick={openDownloadModal}
-              title="Download (overall / date range)"
-              disabled={loading}
-            >
-              <FaDownload className="text-sm" />
-            </IconBtn>
-          }
-        />
-
-        <StatCard
-          title="Total In"
-          subtitle="Overall"
-          value={loading ? 0 : stats.in}
-          accent={CHART_PALETTE[1]}
-          action={
-            <IconBtn
-              onClick={() => handleGenericDownload("Total In")}
-              title="Download Total In report"
-              disabled={loading}
-            >
-              <FaDownload className="text-sm" />
-            </IconBtn>
-          }
-        />
-
-        <StatCard
-          title="Total Out"
-          subtitle="Overall"
-          value={loading ? 0 : stats.out}
-          accent={CHART_PALETTE[2]}
-          action={
-            <IconBtn
-              onClick={() => handleGenericDownload("Total Out")}
-              title="Download Total Out report"
-              disabled={loading}
-            >
-              <FaDownload className="text-sm" />
-            </IconBtn>
-          }
-        />
-
-        <StatCard
-          title="Today's In"
-          subtitle="Today"
-          value={loading ? 0 : stats.today_in}
-          accent={CHART_PALETTE[3]}
-          action={
-            <IconBtn
-              onClick={() => handleGenericDownload("Today's In")}
-              title="Download Today's In report"
-              disabled={loading}
-            >
-              <FaDownload className="text-sm" />
-            </IconBtn>
-          }
-        />
-
-        <StatCard
-          title="Today's Out"
-          subtitle="Today"
-          value={loading ? 0 : stats.today_out}
-          accent={CHART_PALETTE[4]}
-          action={
-            <IconBtn
-              onClick={() => handleGenericDownload("Today's Out")}
-              title="Download Today's Out report"
-              disabled={loading}
-            >
-              <FaDownload className="text-sm" />
-            </IconBtn>
-          }
-        />
+      {/* ── Top bar ─────────────────────────────────────────────────────────── */}
+      <div className="flex flex-wrap items-center justify-end gap-2 mb-4">
+        <button
+          type="button"
+          onClick={() => {
+            setTempFromDate(fromDate);
+            setTempToDate(toDate);
+            setFilterOpen(true);
+          }}
+          className="h-10 px-4 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition"
+        >
+          Filter by Date
+        </button>
+        <button
+          type="button"
+          onClick={() => { setFromDate(""); setToDate(""); }}
+          className="h-10 px-4 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
+        >
+          Clear Filter
+        </button>
+        <IconBtn title="Download visitors report" onClick={openDlModal}>
+          <FaDownload className="text-sm" />
+        </IconBtn>
       </div>
 
-      {showDownloadModal && (
+      {/* ── Date filter modal ────────────────────────────────────────────────── */}
+      {filterOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-5">
+            <h3 className="text-lg font-semibold text-gray-900">Filter Visitors by Date</h3>
+            <p className="text-sm text-gray-500 mt-1">
+              Choose start and end date to refresh dashboard.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">
+                  Start Date
+                </label>
+                <input
+                  type="date"
+                  value={tempFromDate}
+                  onChange={(e) => setTempFromDate(e.target.value)}
+                  className="w-full h-10 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">
+                  End Date
+                </label>
+                <input
+                  type="date"
+                  value={tempToDate}
+                  onChange={(e) => setTempToDate(e.target.value)}
+                  className="w-full h-10 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+            </div>
+            <div className="mt-4 flex gap-2 justify-end">
+              <button
+                type="button"
+                onClick={() => setFilterOpen(false)}
+                className="h-10 px-4 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!tempFromDate || !tempToDate) {
+                    toast.error("Please select both start and end dates.");
+                    return;
+                  }
+                  setFromDate(tempFromDate);
+                  setToDate(tempToDate);
+                  setFilterOpen(false);
+                }}
+                className="h-10 px-4 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition"
+              >
+                Apply Filter
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Stat cards ──────────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        {loading
+          ? Array.from({ length: 5 }).map((_, i) => <SkeletonCard key={i} />)
+          : visibleCards.map((cfg) => (
+              <StatCard
+                key={cfg.key}
+                title={cfg.title}
+                subtitle={cfg.subtitle}
+                value={cfg.value}
+                accent={cfg.accent}
+              />
+            ))
+        }
+      </div>
+
+      {/* ── Download modal ───────────────────────────────────────────────────── */}
+      {showDlModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3">
           <div className="w-full max-w-md rounded-2xl border border-gray-100 bg-white shadow-[0_16px_50px_rgba(15,23,42,0.18)] p-5 relative">
             <button
-              onClick={() => setShowDownloadModal(false)}
+              onClick={() => setShowDlModal(false)}
               className="absolute top-4 right-4 h-9 w-9 rounded-lg bg-gray-100 hover:bg-gray-200 grid place-items-center text-gray-700"
               title="Close"
             >
               ✕
             </button>
 
-            <p className="text-[18px] font-bold text-gray-900">
-              Download Visitors Report
-            </p>
-            <p className="text-sm text-gray-500 mt-1">
-              Download all records or choose a date range.
-            </p>
+            <p className="text-[18px] font-bold text-gray-900">Download Visitors Report</p>
+            <p className="text-sm text-gray-500 mt-1">Download all records or choose a date range.</p>
 
             <div className="mt-5 rounded-xl border border-gray-100 p-4">
               <p className="font-semibold text-gray-900">Download All Records</p>
-              <p className="text-sm text-gray-500 mt-1">
-                Exports complete visitors report.
-              </p>
               <button
                 onClick={() => handleVisitorsDownload({ mode: "overall" })}
                 className="mt-3 w-full h-11 rounded-xl bg-gray-900 text-white hover:bg-black transition flex items-center justify-center gap-2"
               >
-                <FaDownload />
-                Download
+                <FaDownload /> Download All
               </button>
             </div>
 
             <div className="mt-4 rounded-xl border border-gray-100 p-4">
               <p className="font-semibold text-gray-900">Download by Date Range</p>
-              <p className="text-sm text-gray-500 mt-1">
-                Select start and end dates.
-              </p>
-
               <div className="grid grid-cols-2 gap-3 mt-4">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">
-                    Start Date
-                  </label>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Start Date</label>
                   <input
                     type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
+                    value={dlStart}
+                    onChange={(e) => setDlStart(e.target.value)}
                     className="w-full h-10 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />
                 </div>
-
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">
-                    End Date
-                  </label>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">End Date</label>
                   <input
                     type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
+                    value={dlEnd}
+                    onChange={(e) => setDlEnd(e.target.value)}
                     className="w-full h-10 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />
                 </div>
               </div>
-
               <button
-                onClick={handleDateRangeDownload}
-                disabled={!startDate || !endDate}
+                onClick={() => {
+                  if (!dlStart || !dlEnd) { toast.error("Please select both dates"); return; }
+                  if (new Date(dlStart) > new Date(dlEnd)) { toast.error("Start must be before end"); return; }
+                  handleVisitorsDownload({ mode: "date", range: { start: dlStart, end: dlEnd } });
+                }}
+                disabled={!dlStart || !dlEnd}
                 className="mt-4 w-full h-11 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 disabled:bg-gray-300 disabled:text-gray-600 transition flex items-center justify-center gap-2"
               >
-                <FaCalendarAlt />
-                Download Date Range
+                <FaCalendarAlt /> Download Date Range
               </button>
             </div>
 
             <div className="mt-5 flex justify-end">
               <button
-                onClick={() => setShowDownloadModal(false)}
+                onClick={() => setShowDlModal(false)}
                 className="h-10 px-5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 transition"
               >
                 Cancel
@@ -386,6 +334,7 @@ const VisitorsDashboard = () => {
           </div>
         </div>
       )}
+
     </div>
   );
 };

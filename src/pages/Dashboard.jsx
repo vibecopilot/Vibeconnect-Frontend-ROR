@@ -76,7 +76,7 @@ const Dashboard = () => {
  useEffect(() => {
   const fetchCalendar = async () => {
     try {
-      const res = await getVibeCalendar(vibeUserId);
+      // const res = await getVibeCalendar(vibeUserId);
 
       const allActivities = res?.data?.activities || [];
 
