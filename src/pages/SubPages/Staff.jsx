@@ -151,25 +151,35 @@ const Staff = () => {
   };
 
   const handleStatusToggle = async (row) => {
-    try {
-      const newStatus = !row.status;
+  const newStatus = !row.status;
 
-      await editStaffDetails(row.id, {
-        staff: { status: newStatus },
-      });
+  try {
+    await editStaffDetails(row.id, {
+      staff: { status: newStatus },
+    });
 
-      // update UI instantly
-      const updatedStaff = staffs.map((staff) =>
-        staff.id === row.id ? { ...staff, status: newStatus } : staff,
-      );
+    setStaffs((prev) =>
+      prev.map((staff) =>
+        staff.id === row.id ? { ...staff, status: newStatus } : staff
+      )
+    );
 
-      setStaffs(updatedStaff);
-      setFilteredStaff(updatedStaff);
-    } catch (error) {
-      console.error("Status update failed", error);
-      alert("Failed to update status");
+    setFilteredStaff((prev) =>
+      prev.map((staff) =>
+        staff.id === row.id ? { ...staff, status: newStatus } : staff
+      )
+    );
+
+    if (newStatus) {
+      toast.success("Staff Activated Successfully");
+    } else {
+      toast.success("Staff Deactivated Successfully");
     }
-  };
+  } catch (error) {
+    console.error("Status update failed", error);
+    toast.error("Failed to update status");
+  }
+};
 
   // ✅ Export ALL staff data (fetch all pages from API)
   const exportStaffToCSVAll = async () => {
@@ -585,10 +595,13 @@ const Staff = () => {
         {row.status ? "Active" : "Inactive"}
       </span> */}
 
-          <Switch
-            checked={row.status}
-            onChange={() => handleStatusToggle(row)}
-          />
+       <Switch
+  checked={row.status}
+  onChange={(e) => {
+    e.stopPropagation();
+    handleStatusToggle(row);
+  }}
+/>
         </div>
       ),
     },
