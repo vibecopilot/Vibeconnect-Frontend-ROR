@@ -207,7 +207,6 @@ const TicketDashboard = () => {
           onDownload={handleTicketStatusDownload}
           onClick={() => handleTicketCardClick("all", "", "Tickets Created")}
         />
-
         {cards.map((card) => (
           <StatCard
             key={card.key}

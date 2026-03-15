@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
-import { getTicketDashboard, getTicketStatusDownload, getUsers, getComplaintsDrill } from "../api";
+import { getTicketDashboard, getTicketStatusDownload, getComplaintsDrill } from "../api";
 import DetailPopup from "./DetailPopup";
 import { useSelector } from "react-redux";
 import { DNA } from "react-loader-spinner";
@@ -468,7 +468,7 @@ const TicketHighCharts = () => {
       type: "by_type",
       floor: "by_floor",
       unit: "by_unit",
-      tenant: "by_unit",
+      tenant: "by_tenant",
     };
     return map[countType] || null;
   };
@@ -563,26 +563,9 @@ useEffect(() => {
 
         const currentSiteId = getItemInLocalStorage("SITEID");
 
-        // ✅ If siteId = 74 → Tenant
         if (Number(currentSiteId) === 74) {
-          const usersResp = await getUsers();
-          const users = usersResp?.data || [];
-
-          const unitMap = {};
-
-          users.forEach((user) => {
-            const tenantName = user.full_unit_name || "Unknown Tenant";
-
-            if (!unitMap[tenantName]) {
-              unitMap[tenantName] = 0;
-            }
-
-            unitMap[tenantName] += 1;
-          });
-
-          setUnitTickets(unitMap);
+          setUnitTickets(resp?.data?.by_tenant || {});
         } else {
-          // ✅ Otherwise → Unit data from dashboard API
           setUnitTickets(resp?.data?.by_unit || {});
         }
       } catch (error) {
@@ -840,7 +823,8 @@ useEffect(() => {
     const handlePointClick = function () {
       const value = this.name || this.category || this.x || this.y;
       if (!value) return;
-      openDetailForFilter("unit", String(value));
+      const countType = Number(siteId) === 74 ? "tenant" : "unit";
+      openDetailForFilter(countType, String(value));
     };
 
     opts.plotOptions = {
@@ -1012,7 +996,7 @@ useEffect(() => {
         </ChartCard>
 
         <ChartCard
-title={Number(siteId) === 74 ? "Tickets by Block" : "Tickets by Floor"}          // subtitle="Floor-wise ticket count"
+          title={Number(siteId) === 74 ? "Tickets by Block" : "Tickets by Floor"}          // subtitle="Floor-wise ticket count"
           // legendItems={legendTopTwo(floorTickets, floorPointColor)}
           onDownload={handleTicketStatusDownload}
           chartType={floorChartType}
