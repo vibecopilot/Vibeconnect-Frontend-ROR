@@ -9,6 +9,9 @@ const DetailPopup = ({
   records = [],
   loading = false,
   columns = [],
+  page,
+  totalPages,
+  onPageChange,
 }) => {
   if (!isOpen) return null;
 
@@ -78,7 +81,33 @@ const DetailPopup = ({
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-4 border-t border-gray-100 flex justify-end">
+        <div className="px-5 py-4 border-t border-gray-100 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            {typeof page === "number" && typeof totalPages === "number" ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => onPageChange && onPageChange(page - 1)}
+                  disabled={page <= 1 || loading}
+                  className="px-3 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Previous
+                </button>
+                <span>
+                  Page {page} of {totalPages}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onPageChange && onPageChange(page + 1)}
+                  disabled={page >= totalPages || loading}
+                  className="px-3 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </>
+            ) : null}
+          </div>
+
           <button
             type="button"
             onClick={onClose}

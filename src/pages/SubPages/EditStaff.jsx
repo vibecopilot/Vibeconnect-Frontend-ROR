@@ -198,10 +198,14 @@ unit: editData.units?.map((u) => ({
     sendData.append("staff[lastname]", formData.lastName);
     sendData.append("staff[mobile_no]", formData.mobile);
     sendData.append("staff[email]", formData.email);
- formData.unit.forEach((unit) => {
-  sendData.append("staff[units][]", unit.value);
-});
-
+//  formData.unit.forEach((unit) => {
+//    sendData.append("staff[units][]", unit.value);});
+  if (formData.unit.length > 0) {
+      formData.unit.forEach((unit) => {
+        sendData.append("staff[unit_ids][]", unit.value);
+      });
+      sendData.append("staff[unit_id]", formData.unit[0].value); // fallback for single-unit API keys
+    }
     // sendData.append("staff[units]", formData.unit);
     sendData.append("staff[work_type]", formData.workType);
     // sendData.append("staff[staff_id]", formData.staffId);

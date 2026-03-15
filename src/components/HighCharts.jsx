@@ -25,7 +25,7 @@ const CHART_PALETTE = [
   "#EF4444", // red
   "#8B5CF6", // violet
   "#06B6D4", // cyan
-  "#EC4899", // pink
+  "#EC4899", // pink  
   "#84CC16", // lime
   "#F97316", // orange
   "#14B8A6", // teal
@@ -426,7 +426,12 @@ const TicketHighCharts = () => {
     loading: false,
   });
 
-  const statusClickRef = useRef(null);
+  const [detailPage, setDetailPage] = useState(1);
+  const [detailTotalPages, setDetailTotalPages] = useState(1);
+  const [detailFilter, setDetailFilter] = useState({
+    countType: "",
+    countValue: "",
+  });
 
   const formatDateForApi = (isoDate) => {
     if (!isoDate) return "";
@@ -455,35 +460,96 @@ const TicketHighCharts = () => {
     setDashboardParams({ siteId: Number(siteId) || undefined });
   };
 
-  const openDetailForStatus = async (statusName) => {
-    if (!statusName) return;
-    setDetailPopup({ open: true, title: `Tickets - ${statusName}`, records: [], loading: true });
+  const getGroupKeyForType = (countType) => {
+    if (!countType) return null;
+    const map = {
+      status: "by_status",
+      category: "by_category",
+      type: "by_type",
+      floor: "by_floor",
+      unit: "by_unit",
+      tenant: "by_unit",
+    };
+    return map[countType] || null;
+  };
+
+  const resolveRecordsFromResponse = (data, countType, countValue) => {
+    if (!data) return { records: [], total: 0, perPage: 20 };
+
+    if (Array.isArray(data.records) && data.records.length) {
+      return {
+        records: data.records,
+        total: data.total || data.total_count || data.records.length,
+        perPage: data.per_page || data.perPage || 20,
+      };
+    }
+
+    const groupKey = getGroupKeyForType(countType);
+    if (groupKey && data[groupKey]) {
+      const bucket = data[groupKey][countValue] || data[groupKey][countValue?.toLowerCase()];
+
+      if (bucket) {
+        const records = Array.isArray(bucket.records) ? bucket.records : [];
+        return {
+          records,
+          total: bucket.count || bucket.total || data.total || data.total_count || records.length,
+          perPage: bucket.per_page || bucket.perPage || data.per_page || data.perPage || 20,
+        };
+      }
+    }
+
+    return {
+      records: [],
+      total: data.total || data.total_count || 0,
+      perPage: data.per_page || data.perPage || 20,
+    };
+  };
+
+  const fetchDetailRecords = async (countType, countValue, page = 1) => {
+    const title = countType
+      ? `Tickets - ${countType.charAt(0).toUpperCase() + countType.slice(1)}: ${countValue}`
+      : "Tickets";
+
+    setDetailPopup({ open: true, title, records: [], loading: true });
+    setDetailFilter({ countType, countValue });
+    setDetailPage(page);
 
     try {
-      // requirement: query complaints_dashboard with count_type/status and count value
-      await getTicketDashboard({
-        siteId: Number(siteId) || undefined,
-        start_date_eq: dashboardParams.start_date_eq,
-        end_date_eq: dashboardParams.end_date_eq,
-        count_type: "status",
-        count_value: statusName,
-        record_page: 1,
-      });
+      const drillResp = await getComplaintsDrill(
+        countType,
+        countValue,
+        Number(siteId) || undefined,
+        page,
+        dashboardParams.start_date_eq,
+        dashboardParams.end_date_eq
+      );
 
-      const drillResp = await getComplaintsDrill("status", statusName, Number(siteId) || undefined, 100);
-      const records = drillResp?.data?.records || [];
+      const {
+        records,
+        total,
+        perPage,
+      } = resolveRecordsFromResponse(drillResp?.data, countType, countValue);
 
-      setDetailPopup({ open: true, title: `Tickets - ${statusName}`, records, loading: false });
+      const totalPages = perPage > 0 ? Math.max(1, Math.ceil(total / perPage)) : 1;
+      setDetailTotalPages(totalPages);
+      setDetailPopup({ open: true, title, records, loading: false });
     } catch (err) {
-      console.error("Error loading status detail:", err);
+      console.error("Error loading detail records:", err);
       toast.error("Failed to load ticket details");
       setDetailPopup((p) => ({ ...p, loading: false }));
     }
   };
 
-  useEffect(() => {
-    statusClickRef.current = openDetailForStatus;
-  });
+  const openDetailForFilter = async (countType, countValue, page = 1) => {
+    if (!countType || !countValue) return;
+    await fetchDetailRecords(countType, countValue, page);
+  };
+
+  const onDetailPageChange = async (nextPage) => {
+    if (!detailFilter.countType || !detailFilter.countValue) return;
+    if (nextPage < 1 || nextPage > detailTotalPages) return;
+    await fetchDetailRecords(detailFilter.countType, detailFilter.countValue, nextPage);
+  };
 
 useEffect(() => {
     const fetchTicketInfo = async () => {
@@ -595,6 +661,12 @@ useEffect(() => {
       pointColorFn: statusPointColor, // ✅ multi-color
     });
 
+    const handlePointClick = function () {
+      const value = this.name || this.category || this.x || this.y;
+      if (!value) return;
+      openDetailForFilter("status", String(value));
+    };
+
     opts.plotOptions = {
       ...opts.plotOptions,
       pie: {
@@ -603,9 +675,7 @@ useEffect(() => {
           ...opts.plotOptions?.pie?.point,
           events: {
             ...(opts.plotOptions?.pie?.point?.events || {}),
-            click: function () {
-              statusClickRef.current?.(this.name);
-            },
+            click: handlePointClick,
           },
         },
       },
@@ -615,72 +685,190 @@ useEffect(() => {
           ...opts.plotOptions?.series?.point,
           events: {
             ...(opts.plotOptions?.series?.point?.events || {}),
-            click: function () {
-              statusClickRef.current?.(this.name);
-            },
+            click: handlePointClick,
           },
         },
       },
     };
 
     return opts;
-  }, [statusData, statusChartType, chartTheme.status]);
+  }, [statusData, statusChartType, chartTheme.status, openDetailForFilter]);
 
-  const categoryOptions = useMemo(
-    () =>
-      buildOptions({
-        title: "Tickets by Category",
-        data: categoryData,
-        type: categoryChartType,
-        themeColor: chartTheme.category,
-        palette: CHART_PALETTE,
-        order: "descending",
-        pointColorFn: categoryPointColor, // ✅ multi-color + highlight
-      }),
-    [categoryData, categoryChartType, chartTheme.category]
-  );
+  const categoryOptions = useMemo(() => {
+    const opts = buildOptions({
+      title: "Tickets by Category",
+      data: categoryData,
+      type: categoryChartType,
+      themeColor: chartTheme.category,
+      palette: CHART_PALETTE,
+      order: "descending",
+      pointColorFn: categoryPointColor, // ✅ multi-color + highlight
+    });
 
-  const typeOptions = useMemo(
-    () =>
-      buildOptions({
-        title: "Tickets by Type",
-        data: ticketTypes,
-        type: ticketTypeChartType,
-        themeColor: chartTheme.type,
-        palette: CHART_PALETTE,
-        order: "descending",
-        pointColorFn: typePointColor, // ✅ multi-color + highlight
-      }),
-    [ticketTypes, ticketTypeChartType, chartTheme.type]
-  );
+    const handlePointClick = function () {
+      const value = this.name || this.category || this.x || this.y;
+      if (!value) return;
+      openDetailForFilter("category", String(value));
+    };
 
-  const floorOptions = useMemo(
-    () =>
-      buildOptions({
-        title: "Tickets by Floor",
-        data: floorTickets,
-        type: floorChartType,
-        themeColor: chartTheme.floor,
-        palette: CHART_PALETTE,
-        order: "descending",
-        pointColorFn: floorPointColor, // ✅ multi-color + highlight
-      }),
-    [floorTickets, floorChartType, chartTheme.floor]
-  );
+    opts.plotOptions = {
+      ...opts.plotOptions,
+      pie: {
+        ...opts.plotOptions?.pie,
+        point: {
+          ...opts.plotOptions?.pie?.point,
+          events: {
+            ...(opts.plotOptions?.pie?.point?.events || {}),
+            click: handlePointClick,
+          },
+        },
+      },
+      series: {
+        ...opts.plotOptions?.series,
+        point: {
+          ...opts.plotOptions?.series?.point,
+          events: {
+            ...(opts.plotOptions?.series?.point?.events || {}),
+            click: handlePointClick,
+          },
+        },
+      },
+    };
 
-  const unitOptions = useMemo(
-    () =>
-      buildOptions({
-        title: "Tickets by Unit",
-        data: unitTickets,
-        type: unitChartType,
-        themeColor: chartTheme.unit,
-        palette: CHART_PALETTE,
-        order: "descending",
-        pointColorFn: unitPointColor, // ✅ multi-color + highlight
-      }),
-    [unitTickets, unitChartType, chartTheme.unit]
-  );
+    return opts;
+  }, [categoryData, categoryChartType, chartTheme.category, openDetailForFilter]);
+
+  const typeOptions = useMemo(() => {
+    const opts = buildOptions({
+      title: "Tickets by Type",
+      data: ticketTypes,
+      type: ticketTypeChartType,
+      themeColor: chartTheme.type,
+      palette: CHART_PALETTE,
+      order: "descending",
+      pointColorFn: typePointColor, // ✅ multi-color + highlight
+    });
+
+    const handlePointClick = function () {
+      const value = this.name || this.category || this.x || this.y;
+      if (!value) return;
+      openDetailForFilter("type", String(value));
+    };
+
+    opts.plotOptions = {
+      ...opts.plotOptions,
+      pie: {
+        ...opts.plotOptions?.pie,
+        point: {
+          ...opts.plotOptions?.pie?.point,
+          events: {
+            ...(opts.plotOptions?.pie?.point?.events || {}),
+            click: handlePointClick,
+          },
+        },
+      },
+      series: {
+        ...opts.plotOptions?.series,
+        point: {
+          ...opts.plotOptions?.series?.point,
+          events: {
+            ...(opts.plotOptions?.series?.point?.events || {}),
+            click: handlePointClick,
+          },
+        },
+      },
+    };
+
+    return opts;
+  }, [ticketTypes, ticketTypeChartType, chartTheme.type, openDetailForFilter]);
+
+  const floorOptions = useMemo(() => {
+    const opts = buildOptions({
+      title: Number(siteId) === 74 ? "Tickets by Blook" : "Tickets by Floor",
+      data: floorTickets,
+      type: floorChartType,
+      themeColor: chartTheme.floor,
+      palette: CHART_PALETTE,
+      order: "descending",
+      pointColorFn: floorPointColor, // ✅ multi-color + highlight
+    });
+
+    const handlePointClick = function () {
+      const value = this.name || this.category || this.x || this.y;
+      if (!value) return;
+      openDetailForFilter("floor", String(value));
+    };
+
+    opts.plotOptions = {
+      ...opts.plotOptions,
+      pie: {
+        ...opts.plotOptions?.pie,
+        point: {
+          ...opts.plotOptions?.pie?.point,
+          events: {
+            ...(opts.plotOptions?.pie?.point?.events || {}),
+            click: handlePointClick,
+          },
+        },
+      },
+      series: {
+        ...opts.plotOptions?.series,
+        point: {
+          ...opts.plotOptions?.series?.point,
+          events: {
+            ...(opts.plotOptions?.series?.point?.events || {}),
+            click: handlePointClick,
+          },
+        },
+      },
+    };
+
+    return opts;
+  }, [floorTickets, floorChartType, chartTheme.floor, openDetailForFilter]);
+
+  const unitOptions = useMemo(() => {
+    const opts = buildOptions({
+      title: Number(siteId) === 74 ? "Tickets by Tenant" : "Tickets by Unit",
+      data: unitTickets,
+      type: unitChartType,
+      themeColor: chartTheme.unit,
+      palette: CHART_PALETTE,
+      order: "descending",
+      pointColorFn: unitPointColor, // ✅ multi-color + highlight
+    });
+
+    const handlePointClick = function () {
+      const value = this.name || this.category || this.x || this.y;
+      if (!value) return;
+      openDetailForFilter("unit", String(value));
+    };
+
+    opts.plotOptions = {
+      ...opts.plotOptions,
+      pie: {
+        ...opts.plotOptions?.pie,
+        point: {
+          ...opts.plotOptions?.pie?.point,
+          events: {
+            ...(opts.plotOptions?.pie?.point?.events || {}),
+            click: handlePointClick,
+          },
+        },
+      },
+      series: {
+        ...opts.plotOptions?.series,
+        point: {
+          ...opts.plotOptions?.series?.point,
+          events: {
+            ...(opts.plotOptions?.series?.point?.events || {}),
+            click: handlePointClick,
+          },
+        },
+      },
+    };
+
+    return opts;
+  }, [unitTickets, unitChartType, chartTheme.unit, openDetailForFilter]);
 
   const Loader = () => (
     <div className="flex justify-center items-center py-12">
@@ -824,7 +1012,7 @@ useEffect(() => {
         </ChartCard>
 
         <ChartCard
-title={Number(siteId) === 74 ? "Tickets by Blook" : "Tickets by Floor"}          // subtitle="Floor-wise ticket count"
+title={Number(siteId) === 74 ? "Tickets by Block" : "Tickets by Floor"}          // subtitle="Floor-wise ticket count"
           // legendItems={legendTopTwo(floorTickets, floorPointColor)}
           onDownload={handleTicketStatusDownload}
           chartType={floorChartType}
@@ -866,12 +1054,21 @@ title={Number(siteId) === 74 ? "Tickets by Blook" : "Tickets by Floor"}         
         subtitle={`${detailPopup.records.length} record(s)`}
         records={detailPopup.records}
         loading={detailPopup.loading}
+        page={detailPage}
+        totalPages={detailTotalPages}
+        onPageChange={onDetailPageChange}
         columns={[
           { key: "id", label: "ID" },
-          { key: "title", label: "Title", accessor: (r) => r.title || r.subject || "—" },
-          { key: "status", label: "Status", accessor: (r) => r.status || "—" },
+          { key: "title", label: "Title", accessor: (r) => r.heading || r.subject || "—" },
+{
+    key: "building",
+    label: siteId === 74 ? "Block Name" : "Building Name",
+    accessor: (r) => r.building_name || "—",
+  },           { key: "priority", label: "Priority", accessor:(r)=>r.priority },
+                     { key: "status", label: "Status", accessor: (r) => r.status || "—" },
+          { key: "createdBy", label: "Created By", accessor: (r) => r.created_by || "—" },
+                    { key: "assigned_to", label: "Assigned To", accessor: (r) => r.assigned_to_name || r.assigned_to || "—" },
           { key: "created_at", label: "Created At", accessor: (r) => r.created_at || r.created_date || "—" },
-          { key: "assigned_to", label: "Assigned To", accessor: (r) => r.assigned_to_name || r.assigned_to || "—" },
         ]}
       />
     </div>

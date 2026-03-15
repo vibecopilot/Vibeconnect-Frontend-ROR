@@ -220,7 +220,7 @@ const Dashboard = () => {
             <VisitorsDashboard />
           </SectionCard> */}
 
-          <SectionCard title="Visitors Analytics">
+          <SectionCard title="Visitors Dashboard">
             <VisitorsAnalyticsDashboard />
           </SectionCard>
 

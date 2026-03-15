@@ -11581,14 +11581,23 @@ export const getVisitorsDrill = async (filter, siteId, limit = 50) =>
       ...(siteId && { site_id: siteId }),
     },
   });
-export const getComplaintsDrill = async (filterType, filterValue, siteId, limit = 50) =>
-  axiosInstance.get("/pms/admin/complaints/complaints_drill.json", {
+export const getComplaintsDrill = async (
+  countType,
+  countValue,
+  siteId,
+  perPage,
+  startDate,
+  endDate
+) =>
+  axiosInstance.get("/pms/admin/complaints/complaints_dashboard.json", {
     params: {
       token: getItemInLocalStorage("TOKEN"),
-      filter_type: filterType,
-      filter_value: filterValue,
-      limit,
+      ...(countType !== undefined && { count_type: countType }),
+      ...(countValue !== undefined && { count_value: countValue }),
+      ...(perPage !== undefined && { record_page: perPage }),
       ...(siteId && { site_id: siteId }),
+      ...(startDate && { start_date_eq: startDate }),
+      ...(endDate && { end_date_eq: endDate }),
     },
   });
 export const getExportVisitors = async (
