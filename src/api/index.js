@@ -11670,3 +11670,24 @@ export const getExportVisitors = async (
     responseType: "blob",
   });
 };
+
+/** Staff dashboard – summary counts + by_* breakdowns + optional drill-down */
+export const getStaffDashboard = async (
+  siteId,
+  countType,
+  countValue,
+  page = 1,
+  startDate,
+  endDate
+) =>
+  axiosInstance.get("/staffs/staff_dashboard.json", {
+    params: {
+      token: getItemInLocalStorage("TOKEN"),
+      ...(siteId     && { site_id:     siteId     }),
+      ...(countType  && { count_type:  countType  }),
+      ...(countValue && { count_value: countValue }),
+      record_page: page,
+      ...(startDate  && { start_date:  startDate  }),
+      ...(endDate    && { end_date:    endDate    }),
+    },
+  });
