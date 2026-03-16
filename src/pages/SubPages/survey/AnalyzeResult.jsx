@@ -17,11 +17,24 @@ function AnalyzeResult() {
       return;
     }
     Promise.all([
-      getSurvey(surveyId).then((r) => r.data).catch(() => null),
-      getSurveyResponses(surveyId).then((r) => r.data || []).catch(() => []),
+      getSurvey(surveyId)
+        .then((r) => {
+          const d = r?.data;
+          return d?.survey ?? d ?? null;
+        })
+        .catch(() => null),
+      getSurveyResponses(surveyId)
+        .then((r) => {
+          const d = r?.data;
+          if (Array.isArray(d)) return d;
+          if (Array.isArray(d?.survey_responses)) return d.survey_responses;
+          if (Array.isArray(d?.responses)) return d.responses;
+          return [];
+        })
+        .catch(() => []),
     ]).then(([s, res]) => {
       setSurvey(s || null);
-      setResponses(Array.isArray(res) ? res : []);
+      setResponses(res);
       setLoading(false);
     });
   }, [surveyId]);
