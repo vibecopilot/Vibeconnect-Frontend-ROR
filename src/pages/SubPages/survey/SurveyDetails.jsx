@@ -7,7 +7,7 @@ import { FaChartBar, FaPaperPlane, FaPencilAlt } from "react-icons/fa";
 import { GrShare } from "react-icons/gr";
 import { MdClose } from "react-icons/md";
 import toast from "react-hot-toast";
-import { getSurvey, updateSurvey } from "../../../api";
+import { getSurvey, updateSurvey, getSurveyResponses } from "../../../api";
 
 function SurveyDetails() {
   const { id } = useParams();
@@ -18,13 +18,13 @@ function SurveyDetails() {
       : "";
 
   const [survey, setSurvey] = useState(null);
+  const [responses, setResponses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sendModalOpen, setSendModalOpen] = useState(false);
   const [activating, setActivating] = useState(false);
   const [emailList, setEmailList] = useState("");
   const [sendingEmails, setSendingEmails] = useState(false);
   const [mailMessage, setMailMessage] = useState("");
-  const [responseCount, setResponseCount] = useState(0);
 
   useEffect(() => {
   setMailMessage(
@@ -50,15 +50,55 @@ Survey Team`
   );
 }, [shareableLink]);
 
-  const chartOptions = {
-    chart: { type: "donut" },
-    labels: ["Responses", "Remaining"],
-    colors: ["#22c55e", "#e5e7eb"],
-    legend: { show: false },
-    dataLabels: { enabled: false }
+  const responseCount = responses.length;
+
+  /* Build per-question answer aggregations for the overview chart */
+  const questionStats = (() => {
+    const questions = survey?.survey_questions || [];
+    if (!questions.length || !responses.length) return [];
+    return questions.map((q) => {
+      const counts = {};
+      const textAnswers = [];
+      responses.forEach((r) => {
+        const ans = r.survey_answers?.find(
+          (a) => Number(a.survey_question_id) === Number(q.id)
+        );
+        if (!ans) return;
+        if (q.question_type === "single_choice" || q.question_type === "multiple_choice") {
+          const opts = q.options || [];
+          (ans.selected_option_ids || []).forEach((oid) => {
+            const label = opts.find((o) => Number(o.id) === Number(oid))?.label || `Option ${oid}`;
+            counts[label] = (counts[label] || 0) + 1;
+          });
+        } else if (q.question_type === "rating" || q.question_type === "scale") {
+          const key = ans.numeric_value != null ? String(ans.numeric_value) : "—";
+          counts[key] = (counts[key] || 0) + 1;
+        } else {
+          const t = ans.text_value?.trim();
+          if (t) textAnswers.push(t);
+        }
+      });
+      return { question: q, counts, textAnswers };
+    });
+  })();
+
+  const PALETTE = ["#22c55e","#3b82f6","#f59e0b","#ef4444","#8b5cf6","#06b6d4","#ec4899"];
+
+  const overviewChartOptions = {
+    chart: { type: "donut", toolbar: { show: false } },
+    labels: questionStats.length
+      ? questionStats.map((s) => s.question.q_title?.substring(0, 30) || `Q${s.question.id}`)
+      : ["No Questions"],
+    colors: PALETTE,
+    legend: { position: "bottom", fontSize: "12px" },
+    dataLabels: { enabled: true, formatter: (v) => `${Math.round(v)}%` },
+    tooltip: { y: { formatter: (v) => `${v} response${v !== 1 ? "s" : ""}` } },
+    plotOptions: { pie: { donut: { size: "55%" } } },
   };
 
-  const chartSeries = responseCount > 0 ? [responseCount, 100 - responseCount] : [0, 100];
+  const overviewChartSeries = questionStats.length
+    ? questionStats.map((s) => Object.values(s.counts).reduce((a, b) => a + b, 0) || 0)
+    : [responseCount || 1];
 
   const steps = [
     {
@@ -83,11 +123,25 @@ Survey Team`
 
   const fetchSurvey = async () => {
     try {
-      const res = await getSurvey(id);
-      setSurvey(res.data);
-      if (res.data?.responses) {
-        setResponseCount(res.data.responses.length);
-      }
+      const [surveyRes, responsesRes] = await Promise.all([
+        getSurvey(id),
+        getSurveyResponses(id),
+      ]);
+
+      /* Handle nested or flat survey shape */
+      const surveyData = surveyRes?.data?.survey ?? surveyRes?.data ?? null;
+      setSurvey(surveyData);
+
+      /* Handle nested or flat responses shape */
+      const rd = responsesRes?.data;
+      const list = Array.isArray(rd)
+        ? rd
+        : Array.isArray(rd?.survey_responses)
+        ? rd.survey_responses
+        : Array.isArray(rd?.responses)
+        ? rd.responses
+        : [];
+      setResponses(list);
     } catch {
       toast.error("Failed to load survey");
     } finally {
@@ -258,7 +312,7 @@ Survey Team`
 
           <div className="bg-white rounded-xl border shadow-sm p-6 text-center">
             <p className="text-gray-500 text-sm">Total Responses</p>
-            <p className="text-4xl font-bold mt-2">{responseCount}</p>
+            <p className="text-4xl font-bold mt-2">{responses.length}</p>
           </div>
 
           <div className="bg-white rounded-xl border shadow-sm p-6 text-center">
@@ -277,20 +331,79 @@ Survey Team`
 
         {/* Response Chart */}
         <div className="bg-white rounded-xl border shadow-sm p-8">
-
-          <h2 className="text-lg font-semibold mb-6">
-            Response Overview
-          </h2>
-
-          <div className="w-[280px] mx-auto">
-            <Chart
-              options={chartOptions}
-              series={chartSeries}
-              type="donut"
-              height={250}
-            />
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-semibold">Response Overview</h2>
+            {responseCount > 0 && (
+              <span className="text-sm text-gray-500">
+                {responseCount} response{responseCount !== 1 ? "s" : ""}
+              </span>
+            )}
           </div>
 
+          {responseCount === 0 ? (
+            <div className="flex flex-col items-center py-10 text-gray-400 gap-2">
+              <span className="text-4xl">📊</span>
+              <p className="text-sm">No responses yet. Share the survey to collect data.</p>
+            </div>
+          ) : (
+            <>
+              {/* Donut: answered counts per question */}
+              <div className="w-full max-w-sm mx-auto">
+                <Chart
+                  options={overviewChartOptions}
+                  series={overviewChartSeries}
+                  type="donut"
+                  height={280}
+                />
+              </div>
+
+              {/* Per-question breakdown */}
+              {questionStats.length > 0 && (
+                <div className="mt-8 space-y-6">
+                  {questionStats.map((stat, idx) => (
+                    <div key={stat.question.id || idx} className="border rounded-lg p-4">
+                      <p className="text-sm font-semibold text-gray-800 mb-3">
+                        {idx + 1}. {stat.question.q_title}
+                      </p>
+
+                      {stat.question.question_type === "text" ? (
+                        stat.textAnswers.length > 0 ? (
+                          <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
+                            {stat.textAnswers.map((t, i) => <li key={i}>{t}</li>)}
+                          </ul>
+                        ) : (
+                          <p className="text-xs text-gray-400">No text answers yet.</p>
+                        )
+                      ) : Object.keys(stat.counts).length > 0 ? (
+                        <div className="space-y-2">
+                          {Object.entries(stat.counts).map(([label, count], i) => {
+                            const total = Object.values(stat.counts).reduce((a, b) => a + b, 0);
+                            const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+                            return (
+                              <div key={i}>
+                                <div className="flex justify-between text-xs text-gray-600 mb-1">
+                                  <span>{label}</span>
+                                  <span>{count} ({pct}%)</span>
+                                </div>
+                                <div className="w-full bg-gray-100 rounded-full h-2">
+                                  <div
+                                    className="h-2 rounded-full"
+                                    style={{ width: `${pct}%`, backgroundColor: PALETTE[i % PALETTE.length] }}
+                                  />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-gray-400">No answers yet.</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
         </div>
 
         {/* Collector */}
