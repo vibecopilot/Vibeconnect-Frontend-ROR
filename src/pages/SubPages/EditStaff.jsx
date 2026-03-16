@@ -390,6 +390,8 @@ unit: editData.units?.map((u) => ({
                   name="mobile"
                   value={formData.mobile}
                   onChange={handleChange}
+                  minLength={10}
+                  maxLength={10}
                   placeholder="Enter Mobile Number"
                   className="border p-2 rounded-md border-gray-300"
                 />

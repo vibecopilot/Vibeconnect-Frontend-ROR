@@ -13,15 +13,20 @@ import { toast } from "react-toastify";
 import {
   domainPrefix,
   getStaff,
+  getStaffIn,
+  getStaffOut,
   getPendingStaff,
   putStaffApproval,
   exportStaffWithDate,
   editStaffDetails,
+  downloadStaffQrCodes,
 } from "../../api";
 import { dateFormat } from "../../utils/dateUtils";
 import image from "/profile.png";
 import { color } from "highcharts";
 import { MdQrCode } from "react-icons/md";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const Staff = () => {
   const [staffs, setStaffs] = useState([]);
@@ -147,6 +152,40 @@ const Staff = () => {
     } catch (error) {
       console.error(error);
       toast.error("Export failed");
+    }
+  };
+
+  const handleQrCodeDownload = async () => {
+    if (!selectedRows || selectedRows.length === 0) {
+    alert("Please select at least one staff");
+    return;
+  }
+
+    try {
+      const response = await downloadStaffQrCodes(selectedRows);
+
+      const contentType =
+        response?.headers?.["content-type"] || "application/pdf";
+      const ext = contentType.includes("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        ? "xlsx"
+        : contentType.includes("application/pdf")
+        ? "pdf"
+        : "bin";
+
+      const blob = new Blob([response.data], { type: contentType });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `staff_qr_codes.${ext}`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      toast.success("QR code download started");
+    } catch (error) {
+      console.error("QR code download failed", error);
+      toast.error("Failed to download QR codes");
     }
   };
 
@@ -286,12 +325,70 @@ const Staff = () => {
 
       const historyData = staffArray.filter(
         (item) =>
-          item.status_type === "Approved" || item.status_type === "Rejected",
+          item.status_type === "Approved" || item.status_type === "Rejected"
       );
 
       setHistoryStaff(historyData);
     } catch (error) {
       console.error("History fetch failed", error);
+    }
+  };
+
+  const fetchStaffIn = async (page = 1, perPage = rowsPerPage) => {
+    try {
+      const res = await getStaffIn(page, perPage);
+      const apiData = res.data;
+      const staffList = Array.isArray(apiData.staffs) ? apiData.staffs : [];
+      setStaffs(staffList);
+      if (searchText.trim()) {
+        const filtered = staffList.filter((item) => {
+          const fullName = `${item.firstname} ${item.lastname}`.toLowerCase();
+          return (
+            fullName.includes(searchText) ||
+            item.unit_name?.toLowerCase().includes(searchText) ||
+            item.mobile_no?.toLowerCase().includes(searchText)
+          );
+        });
+        setFilteredStaff(filtered);
+      } else {
+        setFilteredStaff(staffList);
+      }
+      setTotalRecords(apiData.total_count || staffList.length);
+      setCurrentPage(apiData.current_page || page);
+      setTotalPages(apiData.total_pages || 1);
+      setSelectedRows([]);
+      setSelectAll(false);
+    } catch (error) {
+      console.error("Error fetching staff in:", error);
+    }
+  };
+
+  const fetchStaffOut = async (page = 1, perPage = rowsPerPage) => {
+    try {
+      const res = await getStaffOut(page, perPage);
+      const apiData = res.data;
+      const staffList = Array.isArray(apiData.staffs) ? apiData.staffs : [];
+      setStaffs(staffList);
+      if (searchText.trim()) {
+        const filtered = staffList.filter((item) => {
+          const fullName = `${item.firstname} ${item.lastname}`.toLowerCase();
+          return (
+            fullName.includes(searchText) ||
+            item.unit_name?.toLowerCase().includes(searchText) ||
+            item.mobile_no?.toLowerCase().includes(searchText)
+          );
+        });
+        setFilteredStaff(filtered);
+      } else {
+        setFilteredStaff(staffList);
+      }
+      setTotalRecords(apiData.total_count || staffList.length);
+      setCurrentPage(apiData.current_page || page);
+      setTotalPages(apiData.total_pages || 1);
+      setSelectedRows([]);
+      setSelectAll(false);
+    } catch (error) {
+      console.error("Error fetching staff out:", error);
     }
   };
 
@@ -377,6 +474,16 @@ const Staff = () => {
       return () => clearTimeout(timer);
     }
   }, [page, approvalStatusChanged]);
+
+  useEffect(() => {
+    if (page === "all") {
+      fetchStaff(currentPage, rowsPerPage);
+    } else if (page === "staffin") {
+      fetchStaffIn(currentPage, rowsPerPage);
+    } else if (page === "staffout") {
+      fetchStaffOut(currentPage, rowsPerPage);
+    }
+  }, [page, currentPage, rowsPerPage, searchText]);
 
   // Reset pagination when switching tabs
   useEffect(() => {
@@ -482,6 +589,7 @@ const Staff = () => {
   const columns = [
     {
       name: (
+          <div className="flex items-center gap-2">
         <input
           type="checkbox"
           checked={selectAll}
@@ -496,6 +604,8 @@ const Staff = () => {
             }
           }}
         />
+         <span>Action</span>
+         </div>
       ),
       cell: (row) => (
         <div className="flex items-center gap-3">
@@ -503,14 +613,16 @@ const Staff = () => {
           <input
             type="checkbox"
             checked={selectedRows.includes(row.id)}
-            onChange={(e) => {
-              if (e.target.checked) {
-                setSelectedRows([...selectedRows, row.id]);
-              } else {
-                setSelectedRows(selectedRows.filter((id) => id !== row.id));
-                setSelectAll(false);
-              }
-            }}
+          onChange={(e) => {
+  const checked = e.target.checked;
+  setSelectAll(checked);
+
+  if (checked) {
+    setSelectedRows(filteredStaff.map((item) => item.id));
+  } else {
+    setSelectedRows([]);
+  }
+}}
           />
 
           {/* View */}
@@ -678,6 +790,7 @@ const Staff = () => {
     <>
       <section className="flex">
         <Navbar />
+        <ToastContainer position="top-right" autoClose={3000} />
         <div className="w-full flex mx-3 flex-col overflow-hidden">
           <Passes />
 
@@ -693,7 +806,7 @@ const Staff = () => {
               >
                 All
               </h2>
-              {/* <h2
+              <h2
                 className={`p-2 ${page === "staffin"
                   ? "text-blue-500 font-medium shadow-custom-all-sides"
                   : "text-black"
@@ -710,7 +823,7 @@ const Staff = () => {
                 onClick={() => setPage("staffout")}
               >
                 Staff Out
-              </h2> */}
+              </h2>
               <h2
                 className={`p-2 ${
                   page === "approval"
@@ -745,15 +858,7 @@ const Staff = () => {
               />
               <span className="flex gap-4">
                 <button
-                  onClick={() => {
-                    if (!selectedRows.length) {
-                      alert("Please select at least one staff");
-                      return;
-                    }
-
-                    console.log("Selected Staff IDs:", selectedRows);
-                    // 👉 Call your QR API here
-                  }}
+                  onClick={handleQrCodeDownload}
                   className="border-2 border-blue-600 text-blue-600 font-semibold transition-all p-2 rounded-md hover:bg-purple-50 cursor-pointer flex items-center gap-2 justify-center"
                 >
                   <MdQrCode size={18} />
@@ -784,7 +889,7 @@ const Staff = () => {
             </div>
           )}
 
-          {page === "all" && (
+          {(page === "all" || page === "staffin" || page === "staffout") && (
           <Table
           columns={columns}
           data={paginatedData}

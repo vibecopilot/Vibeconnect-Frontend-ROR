@@ -316,6 +316,8 @@ const EmployeeAddStaff = () => {
                   name="mobile"
                   value={formData.mobile}
                   onChange={handleChange}
+                  minLength={10}
+                  maxLength={10}
                   placeholder="Enter Mobile Number"
                   className="border p-2 rounded-md border-gray-300"
                 />
@@ -501,11 +503,18 @@ const EmployeeAddStaff = () => {
               </table>
             </div>
 
-            <div className="flex gap-5 justify-center items-center my-4">
+            <div className="flex gap-5 justify-end items-center my-4">
+              <button
+                              className="text-white bg-black hover:bg-white hover:text-black border-2 border-black font-semibold py-2 px-4 rounded transition-all duration-300"
+onClick={()=>navigate("/admin/passes/staff")}
+              >
+                 Cancel
+              </button>
               <button
                 type="submit"
                 onClick={handleAddStaff}
-                className="text-white bg-black hover:bg-white hover:text-black border-2 border-black font-semibold py-2 px-4 rounded transition-all duration-300"
+                className="text-white  border-black font-semibold py-2 px-4 rounded transition-all duration-300"
+              style={{background:themeColor}}
               >
                 Submit
               </button>
