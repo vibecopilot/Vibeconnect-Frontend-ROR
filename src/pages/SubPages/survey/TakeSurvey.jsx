@@ -11,6 +11,13 @@ function TakeSurvey() {
   const [answers, setAnswers] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [companyName, setCompanyName] = useState("");
+  const [floorUnit, setFloorUnit] = useState("");
+  const [feedbackDate, setFeedbackDate] = useState(
+    () => new Date().toISOString().split("T")[0]
+  );
+  const [feedbackGivenBy, setFeedbackGivenBy] = useState("");
+  const [contactDetails, setContactDetails] = useState("");
 
   useEffect(() => {
     if (!id) {
@@ -224,6 +231,69 @@ case "scale": {
             {survey.description && <p className="mt-2 text-gray-600">{survey.description}</p>}
           </div>
           <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-8">
+            {/* Default client details section */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-gray-700 mb-1">
+                  Company name
+                </label>
+                <input
+                  type="text"
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+                  placeholder="Enter company name"
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                />
+              </div>
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-gray-700 mb-1">
+                  Floor / Unit
+                </label>
+                <input
+                  type="text"
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+                  placeholder="Enter floor or unit"
+                  value={floorUnit}
+                  onChange={(e) => setFloorUnit(e.target.value)}
+                />
+              </div>
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-gray-700 mb-1">
+                  Feedback date
+                </label>
+                <input
+                  type="date"
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+                  value={feedbackDate}
+                  onChange={(e) => setFeedbackDate(e.target.value)}
+                />
+              </div>
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-gray-700 mb-1">
+                  Feedback given by (name)
+                </label>
+                <input
+                  type="text"
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+                  placeholder="Enter name"
+                  value={feedbackGivenBy}
+                  onChange={(e) => setFeedbackGivenBy(e.target.value)}
+                />
+              </div>
+              <div className="flex flex-col sm:col-span-2">
+                <label className="text-sm font-medium text-gray-700 mb-1">
+                  Contact details
+                </label>
+                <input
+                  type="text"
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+                  placeholder="Phone / email"
+                  value={contactDetails}
+                  onChange={(e) => setContactDetails(e.target.value)}
+                />
+              </div>
+            </div>
+
             {questions.map((q, idx) => (
               <div key={q.id}>
                 <h2 className="text-lg font-medium text-gray-900 mb-3">
