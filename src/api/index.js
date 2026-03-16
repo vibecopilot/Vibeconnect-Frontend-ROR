@@ -731,14 +731,16 @@ export const postHelpDeskStatusSetup = async (data) =>
 export const getAdminComplaints = async (
   page = 1,
   perPage = 10,
-  search = ""
+  search = "",
+  status = ""
 ) =>
   axiosInstance.get("/pms/admin/complaints.json", {
     params: {
       token: token,
       page: page,
       per_page: perPage,
-      "q[search_cont]": search,   
+      "q[search_cont]": search,
+      ...(status && status !== "all" ? { "q[issue_status_eq]": status } : {}),
     },
   });
 
@@ -1994,12 +1996,54 @@ export const postNewGoods = async (data) =>
       token: token,
     },
   });
-export const getStaff = async () =>
-  axiosInstance.get("/staffs.json", {
-    params: {
-      token: token,
-    },
+export const getStaff = async (
+  page = 1,
+  perPage = 10,
+  staffInOut = null
+) => {
+  const params = {
+    token: token,
+    page,
+    per_page: perPage,
+  };
+
+  if (staffInOut === "IN") {
+    params["q[staff_in_out_eq]"] = "IN";
+  } else if (staffInOut === "OUT") {
+    params["q[staff_in_out_eq]"] = "OUT";
+  } else if (staffInOut === true) {
+    // backward compatibility: if boolean was used, treat true as OUT
+    params["q[staff_in_out_eq]"] = "OUT";
+  } else if (staffInOut === false) {
+    // backward compatibility: false as IN
+    params["q[staff_in_out_eq]"] = "IN";
+  }
+
+  return axiosInstance.get("/staffs.json", {
+    params,
   });
+};
+
+export const getStaffIn = async (page = 1, perPage = 10) =>
+  getStaff(page, perPage, "IN");
+
+export const getStaffOut = async (page = 1, perPage = 10) =>
+  getStaff(page, perPage, "OUT");
+
+export const downloadStaffQrCodes = async (staffIds = []) =>
+  axiosInstance.post(
+    "/staffs/qr_codes_download.json",
+    { staff_ids: staffIds },
+    {
+      params: {
+        token: token,
+      },
+      responseType: "blob",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
 
   export const exportStaffWithDate = async (start_date, end_date) =>
   axiosInstance.get(`/staffs/export_staffs.xlsx`, {
