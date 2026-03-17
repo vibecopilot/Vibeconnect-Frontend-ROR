@@ -16,12 +16,11 @@ const FacilityDetails = () => {
       const response = await getFacitilitySetupId(id); // API call
       console.log("Amenitis", response.data); // Check the raw response
 
-      // Filter the specific facility by ID (assuming 'id' is unique in the response)
-      const facility = response.data.id === parseInt(id)
-      console.log("facility ", facility);
-
-      if (facility) {
-        setFacilityData(response.data); // Set only the matching facility
+      if (response.data && response.data.id && Number(response.data.id) === Number(id)) {
+        setFacilityData(response.data);
+      } else if (response.data && !response.data.id) {
+        // Some endpoints may return a single object without id in payload
+        setFacilityData(response.data);
       } else {
         setError("Facility not found.");
       }
@@ -54,13 +53,6 @@ const FacilityDetails = () => {
     return <p>No data found for this facility.</p>;
   }
 
-  const handlePaymentCheckbox = (e) => {
-    const { name, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: checked,
-    }));
-  };
   return (
     <section className="flex">
       <Navbar />
@@ -201,6 +193,95 @@ const FacilityDetails = () => {
             ))
           ) : (
             <p>No slots configured.</p>
+          )}
+        </div>
+
+        {/* Booking Rules */}
+        <div className="my-4">
+          <h2 className="border-b border-black text-lg font-medium mb-2">
+            Booking Rules
+          </h2>
+          {facilityData.amenity_rules?.length > 0 ? (
+            facilityData.amenity_rules.map((rule, index) => (
+              <div key={index} className="border rounded-lg bg-white p-4 mb-2">
+                <p className="font-medium">Rule {index + 1}:</p>
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div>
+                    <p>Enumerator:</p>
+                    <p>{rule.enumerator ?? "N/A"}</p>
+                  </div>
+                  <div>
+                    <p>Duration:</p>
+                    <p>{rule.duration ?? "N/A"}</p>
+                  </div>
+                  <div>
+                    <p>Level:</p>
+                    <p>{rule.level ?? "N/A"}</p>
+                  </div>
+                </div>
+                <div className="grid md:grid-cols-3 gap-4 mt-2">
+                  <div>
+                    <p>Times per day:</p>
+                    <p>{rule.times_per_day ?? "N/A"}</p>
+                  </div>
+                  <div>
+                    <p>Period type:</p>
+                    <p>{rule.period_type ?? "N/A"}</p>
+                  </div>
+                  <div>
+                    <p>Active:</p>
+                    <p>{rule.active ? "Yes" : "No"}</p>
+                  </div>
+                </div>
+                <div className="mt-2">
+                  <p className="font-medium">Prime Times:</p>
+                  {rule.prime_time?.length > 0 ? (
+                    rule.prime_time.map((pt, idx) => (
+                      <p key={idx}>
+                        {pt.start_time || "N/A"} - {pt.end_time || "N/A"}
+                      </p>
+                    ))
+                  ) : (
+                    <p>No prime times configured.</p>
+                  )}
+                </div>
+              </div>
+            ))
+          ) : (
+            <p>No booking rules configured.</p>
+          )}
+        </div>
+
+        {/* Operational Days */}
+        <div className="my-4">
+          <h2 className="border-b border-black text-lg font-medium mb-2">
+            Operational Days
+          </h2>
+          {facilityData.operational_days?.length > 0 ? (
+            facilityData.operational_days.map((day, index) => (
+              <div key={index} className="border rounded-lg bg-white p-4 mb-2">
+                <div className="grid md:grid-cols-4 gap-4">
+                  <div>
+                    <p>Day of week:</p>
+                    <p>{day.day_of_week ?? "N/A"}</p>
+                  </div>
+                  <div>
+                    <p>Start time:</p>
+                    <p>{day.start_time || "N/A"}</p>
+                  </div>
+                  <div>
+                    <p>End time:</p>
+                    <p>{day.end_time || "N/A"}</p>
+                  </div>
+                  <div>
+                    <p>Is active:</p>
+                    <p>{day.is_active ? "Yes" : "No"}</p>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p>No operational days configured.</p>
           )}
         </div>
 

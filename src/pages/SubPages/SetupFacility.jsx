@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Navbar from "../../components/Navbar";
 import { useSelector } from "react-redux";
 import FileInputBox from "../../containers/Inputs/FileInputBox";
@@ -17,6 +17,15 @@ const SetupFacility = () => {
 
   const [allowMultipleSlots, setAllowMultipleSlots] = useState("no");
 
+  const daysList = [
+  { label: "Sunday", value: 0 },
+  { label: "Monday", value: 1 },
+  { label: "Tuesday", value: 2 },
+  { label: "Wednesday", value: 3 },
+  { label: "Thursday", value: 4 },
+  { label: "Friday", value: 5 },
+  { label: "Saturday", value: 6 },
+];
   const handleSelectChange = (e) => {
     setAllowMultipleSlots(e.target.value);
   };
@@ -29,6 +38,38 @@ const SetupFacility = () => {
   const [slotBy, setSlotBy] = useState(""); // Loading state
   const [shareError, setShareError] = useState("");
   const [billingError, setBillingError] = useState("");
+    const [days, setDays] = useState(
+    daysList.map((day) => ({
+      ...day,
+      is_active: false,
+      start_time: "",
+      end_time: "",
+    })),
+  );
+
+  // ✅ Handle checkbox
+  const handleCheck = (index) => {
+    const updated = [...days];
+    updated[index].is_active = !updated[index].is_active;
+    setDays(updated);
+  };
+
+  // ✅ Handle time change
+  const handleTimeChange1 = (index, field, value) => {
+    const updated = [...days];
+    updated[index][field] = value;
+    setDays(updated);
+  };
+
+  // ✅ Convert UI → API payload
+  const getPayload = () => {
+    return days.map((d) => ({
+      day_of_week: d.value,
+      start_time: d.start_time || "",
+      end_time: d.end_time || "",
+      is_active: d.is_active,
+    }));
+  };
 
   const [formData, setFormData] = useState({
     type: "bookable",
@@ -40,7 +81,7 @@ const SetupFacility = () => {
     shareable: "",
     billing: "",
     flat: false,
-    flat_charges: "",
+    fixed_amount: "",
     terms: "",
     min_people: "",
     max_people: "",
@@ -93,6 +134,11 @@ const SetupFacility = () => {
     complimentary: false,
     gst_no: "",
     cancellation_policy: "",
+    book_before: "",
+    cancel_before: "",
+    advance_booking: "",
+    max_slots: "",
+    consecutive_slot_allowed: false,
     slots: [
       {
         start_hr: "",
@@ -163,7 +209,7 @@ const SetupFacility = () => {
   const handleCheckboxChange = (type) => {
     setFormData((prev) => ({
       ...prev,
-      [type]: prev[type] === null ? true : null,
+      [type]: !prev[type],
     }));
   };
 
@@ -229,7 +275,7 @@ const SetupFacility = () => {
     const numericFields = [
       { key: "min_people", label: "Minimum people" },
       { key: "max_people", label: "Maximum people" },
-      { key: "flat_charges", label: "Flat amount" },
+      { key: "fixed_amount", label: "Flat amount" },
       { key: "member_price_adult", label: "Member adult price" },
       { key: "guest_price_adult", label: "Guest adult price" },
     ];
@@ -237,7 +283,7 @@ const SetupFacility = () => {
     const isMemberSelected = formData.member;
     const isGuestSelected = formData.guest;
     const isFlatSelected = formData.flat === true; // assuming flat is a checkbox
-    const hasFlatAmount = formData.flat_charges?.toString().trim() !== "";
+    const hasFlatAmount = formData.fixed_amount?.toString().trim() !== "";
     const hasMemberAmount =
       formData.member_price_adult?.toString().trim() !== "";
     const hasGuestAmount = formData.guest_price_adult?.toString().trim() !== "";
@@ -285,7 +331,7 @@ const SetupFacility = () => {
 
       // Skip validation for member/guest/flat prices if not selected
       if (
-        (key === "flat_charges" && !formData.flat) ||
+        (key === "fixed_amount" && !formData.flat) ||
         (key === "member_price_adult" && !formData.member) ||
         (key === "guest_price_adult" && !formData.guest)
       ) {
@@ -485,27 +531,30 @@ const SetupFacility = () => {
   };
   const [subFacilityAvailable, setSubFacilityAvailable] = useState(false);
 
-  const [rules, setRules] = useState([{ selectedOption: "", timesPerDay: "" }]);
+  const [rules, setRules] = useState([
+    {
+      id: Date.now(),
+      enumerator: "daily_limit",
+      duration: "60",
+      level: "user",
+      times: "1",
+      period_type: "day",
+      enabled: true,
+      primeTime: "18:00-21:00",
+    },
+  ]);
   const options = ["Flat", "User", "Tenant", "Owner"];
-  // const handleAddRule = () => {
-  //   if (rules.length < 5) {
-  //     setRules([...rules, { selectedOption: "", timesPerDay: "" }]);
-  //   }
-  // };
-  // const handleOptionChange = (index, field, value) => {
-  //   const updatedRules = rules.map((rule, i) =>
-  //     i === index ? { ...rule, [field]: value } : rule
-  //   );
-  //   setRules(updatedRules);
-  // };
 
   const handleAddRule = () => {
     const newRule = {
       id: Date.now(),
-      times: "",
-      type: "",
+      enumerator: "daily_limit",
+      duration: "60",
+      level: "user",
+      times: "1",
+      period_type: "day",
       enabled: true,
-      primeTime: "6:00 AM - 10:00AM / 5:00 PM - 8:00PM",
+      primeTime: "18:00-21:00",
     };
     setRules([...rules, newRule]);
   };
@@ -529,8 +578,8 @@ const SetupFacility = () => {
       const updatedSlots = [...prevState.slots];
       updatedSlots[index] = {
         ...updatedSlots[index],
-        [`${timeType}_hr`]: hours,
-        [`${timeType}_min`]: minutes,
+        [`${timeType}_hr`]: hours ?? "",
+        [`${timeType}_min`]: minutes ?? "",
       };
       return { ...prevState, slots: updatedSlots };
     });
@@ -544,6 +593,13 @@ const SetupFacility = () => {
     });
   };
 
+  const formatTime = (hours, minutes) => {
+    if (!hours && !minutes) return "";
+    const hh = `${hours || ""}`.padStart(2, "0");
+    const mm = `${minutes || ""}`.padStart(2, "0");
+    return `${hh}:${mm}`;
+  };
+
   const handleAddFacility = async (e) => {
     e.preventDefault();
 
@@ -551,8 +607,12 @@ const SetupFacility = () => {
 
     // Basic info
     sendData.append("amenity[site_id]", siteId);
+    sendData.append("amenity[name]", formData.name || "");
     sendData.append("amenity[fac_name]", formData.fac_name || "");
     sendData.append("amenity[fac_type]", formData.fac_type || "bookable");
+    sendData.append("amenity[active]", formData.active || "");
+    sendData.append("amenity[shareable]", formData.shareable || "");
+    sendData.append("amenity[billing]", formData.billing || "");
     sendData.append("amenity[description]", formData.description || "");
     sendData.append("amenity[terms]", formData.terms || "");
     sendData.append(
@@ -564,11 +624,21 @@ const SetupFacility = () => {
 
     // Fixed / Flat
     sendData.append("amenity[is_fixed]", formData.flat ? "true" : "false");
-    sendData.append("amenity[fixed_amount]", formData.flat_charges || "");
+    sendData.append("amenity[fixed_amount]", formData.fixed_amount || "");
 
     // GST – decide based on backend (try both if unsure)
     sendData.append("amenity[gst]", formData.gst_no || "18");
     // sendData.append("amenity[gst_no]", formData.gst_no || "18");   ← try this if above fails
+
+    // Booking rule + schedule config
+    sendData.append("amenity[book_before]", formData.book_before || "");
+    sendData.append("amenity[cancel_before]", formData.cancel_before || "");
+    sendData.append("amenity[advance_booking]", formData.advance_booking || "");
+    sendData.append("amenity[max_slots]", formData.max_slots || "");
+    sendData.append(
+      "amenity[consecutive_slot_allowed]",
+      formData.consecutive_slot_allowed ? "true" : "false",
+    );
 
     // Member
     sendData.append("amenity[member]", formData.member ? "true" : "false");
@@ -684,6 +754,9 @@ const SetupFacility = () => {
     sendData.append("book_before[1]", JSON.stringify(bookBefore));
     sendData.append("book_before[2]", "null");
 
+    // Slot-by / schedule settings
+    sendData.append("amenity[slot_by]", slotBy || "");
+
     // Slots
     formData.slots.forEach((slot, index) => {
       sendData.append(
@@ -733,7 +806,47 @@ const SetupFacility = () => {
       // add prime_time if backend supports it
     });
 
-    // Files
+    // Operational days
+    days.forEach((day, idx) => {
+      const base = `amenity[amenity_operational_days_attributes][${idx}]`;
+      sendData.append(`${base}[day_of_week]`, day.value);
+      sendData.append(`${base}[is_active]`, day.is_active ? "true" : "false");
+      sendData.append(`${base}[start_time]`, day.start_time || "");
+      sendData.append(`${base}[end_time]`, day.end_time || "");
+    });
+
+    // Booking rules
+    rules.forEach((rule, idx) => {
+      const ruleIndex = `amenity[amenity_booking_rules_attributes][${idx}]`;
+      sendData.append(`${ruleIndex}[enumerator]`, rule.enumerator || "daily_limit");
+      sendData.append(`${ruleIndex}[duration]`, rule.duration || "60");
+      sendData.append(`${ruleIndex}[level]`, rule.level || "user");
+      sendData.append(`${ruleIndex}[active]`, rule.enabled ? "true" : "false");
+      sendData.append(`${ruleIndex}[facility_can_be_booked]`, rule.enabled ? "true" : "false");
+      sendData.append(`${ruleIndex}[times_per_day]`, rule.times || "");
+      sendData.append(`${ruleIndex}[period_type]`, rule.period_type || "day");
+
+      const primeTimes = [];
+      if (rule.primeTime) {
+        primeTimes.push(
+          ...rule.primeTime
+            .split("/")
+            .map((entry) => entry.trim())
+            .map((entry) => {
+              const [start, end] = entry.split("-").map((v) => v.trim());
+              return { start_time: start || "", end_time: end || "" };
+            })
+            .filter((pt) => pt.start_time && pt.end_time),
+        );
+      }
+      primeTimes.forEach((pt, pIdx) => {
+        const primeBase = `${ruleIndex}[prime_times_attributes][${pIdx}]`;
+        sendData.append(`${primeBase}[start_time]`, pt.start_time || "");
+        sendData.append(`${primeBase}[end_time]`, pt.end_time || "");
+      });
+    });
+
+    // Files (include both top-level and nested versions for backend compatibility)
     if (formData.attachments?.length) {
       Array.from(formData.attachments).forEach((file) => {
         sendData.append("attachments[]", file);
@@ -892,6 +1005,69 @@ const SetupFacility = () => {
               )}
             </div>
           </div>
+          {/* <div className="grid md:grid-cols-5 gap-2 mt-3">
+            <div className="flex flex-col gap-1">
+              <label className="font-medium">Book Before Days</label>
+              <input
+                type="number"
+                min={0}
+                className="border border-gray-400 rounded-md p-2"
+                value={formData.book_before}
+                onChange={(e) =>
+                  setFormData({ ...formData, book_before: e.target.value })
+                }
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="font-medium">Cancel Before (mins)</label>
+              <input
+                type="number"
+                min={0}
+                className="border border-gray-400 rounded-md p-2"
+                value={formData.cancel_before}
+                onChange={(e) =>
+                  setFormData({ ...formData, cancel_before: e.target.value })
+                }
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="font-medium">Advance Booking (days)</label>
+              <input
+                type="number"
+                min={0}
+                className="border border-gray-400 rounded-md p-2"
+                value={formData.advance_booking}
+                onChange={(e) =>
+                  setFormData({ ...formData, advance_booking: e.target.value })
+                }
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="font-medium">Max Slots</label>
+              <input
+                type="number"
+                min={1}
+                className="border border-gray-400 rounded-md p-2"
+                value={formData.max_slots}
+                onChange={(e) =>
+                  setFormData({ ...formData, max_slots: e.target.value })
+                }
+              />
+            </div>
+            <div className="flex items-end gap-2">
+              <label className="font-medium">Consecutive Slot Allowed</label>
+              <input
+                type="checkbox"
+                checked={formData.consecutive_slot_allowed}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    consecutive_slot_allowed: e.target.checked,
+                  })
+                }
+              />
+            </div>
+          </div> */}
           <div>
             <div className="my-2">
               <label htmlFor="subFacility" className="flex items-center gap-2">
@@ -1739,21 +1915,21 @@ const SetupFacility = () => {
               {/* Select Time per day */}
               <span className="text-sm">times per day by </span>
               <select
-                value={rule.time_per || ""}
-                onChange={(e) => handleChange2(rule.id, "type", e.target.value)}
+                value={rule.level || ""}
+                onChange={(e) => handleChange2(rule.id, "level", e.target.value)}
                 className="border border-gray-300 rounded px-2 py-1 text-sm w-[150px]"
               >
                 <option value="">Select</option>
-                <option value="User">User</option>
-                <option value="Flat">Flat</option>
-                <option value="Owner">Owner</option>
-                <option value="Tenant">Tenant</option>
+                <option value="user">User</option>
+                <option value="flat">Flat</option>
+                <option value="owner">Owner</option>
+                <option value="tenant">Tenant</option>
               </select>
 
-              {/* Select Slots For */}
+              {/* Select Period */}
               <select
-                value={rule.type || ""}
-                onChange={(e) => handleChange2(rule.id, "type", e.target.value)}
+                value={rule.period_type || ""}
+                onChange={(e) => handleChange2(rule.id, "period_type", e.target.value)}
                 className="border border-gray-300 rounded px-2 py-1 text-sm"
               >
                 <option value="">Select Slots For</option>
@@ -1856,153 +2032,220 @@ const SetupFacility = () => {
           <h2 className="text-lg font-semibold mb-6">Configure Slot</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-7 gap-6 items-end">
-            {/* Start Time */}
-            <div>
-              <label className="text-sm font-medium text-gray-600">
-                Start time
-              </label>
-              <div className="mt-2">
-                <input
-                  type="time"
-                  // value={`${slotData.startHour}:${slotData.startMinute}`}
-                  onChange={(e) => {
-                    const [h, m] = e.target.value.split(":");
-                    handleChange("startHour", h);
-                    handleChange("startMinute", m);
-                  }}
-                  className="border rounded-md px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 text-gray-700"
-                />
-              </div>
-            </div>
+            {formData.slots.map((slot, slotIndex) => (
+              <React.Fragment key={slotIndex}>
+                {/* Start Time */}
+                <div>
+                  <label className="text-sm font-medium text-gray-600">
+                    Start time
+                  </label>
+                  <div className="mt-2">
+                    <input
+                      type="time"
+                      value={formatTime(slot.start_hr, slot.start_min)}
+                      onChange={(e) =>
+                        handleSlotTimeChange(slotIndex, "start", e.target.value)
+                      }
+                      className="border rounded-md px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 text-gray-700"
+                    />
+                  </div>
+                </div>
 
-            {/* Break Time Start */}
-            <div>
-              <label className="text-sm font-medium text-gray-600">
-                Break time ( start)
-              </label>
-              <div className="mt-2">
-                <input
-                  type="time"
-                  // value={`${slotData.breakStartHour}:${slotData.breakStartMinute}`}
-                  onChange={(e) => {
-                    const [h, m] = e.target.value.split(":");
-                    handleChange("breakStartHour", h);
-                    handleChange("breakStartMinute", m);
-                  }}
-                  className="border rounded-md px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 text-gray-700"
-                />
-              </div>
-            </div>
+                {/* Break Time Start */}
+                <div>
+                  <label className="text-sm font-medium text-gray-600">
+                    Break time ( start)
+                  </label>
+                  <div className="mt-2">
+                    <input
+                      type="time"
+                      value={formatTime(slot.break_start_hr, slot.break_start_min)}
+                      onChange={(e) =>
+                        handleSlotTimeChange(
+                          slotIndex,
+                          "break_start",
+                          e.target.value,
+                        )
+                      }
+                      className="border rounded-md px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 text-gray-700"
+                    />
+                  </div>
+                </div>
 
-            {/* Break Time End */}
-            <div>
-              <label className="text-sm font-medium text-gray-600">
-                Break time ( end)
-              </label>
-              <div className="mt-2">
-                <input
-                  type="time"
-                  // value={`${slotData.breakEndHour}:${slotData.breakEndMinute}`}
-                  onChange={(e) => {
-                    const [h, m] = e.target.value.split(":");
-                    handleChange("breakEndHour", h);
-                    handleChange("breakEndMinute", m);
-                  }}
-                  className="border rounded-md px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 text-gray-700"
-                />
-              </div>
-            </div>
+                {/* Break Time End */}
+                <div>
+                  <label className="text-sm font-medium text-gray-600">
+                    Break time ( end)
+                  </label>
+                  <div className="mt-2">
+                    <input
+                      type="time"
+                      value={formatTime(slot.break_end_hr, slot.break_end_min)}
+                      onChange={(e) =>
+                        handleSlotTimeChange(
+                          slotIndex,
+                          "break_end",
+                          e.target.value,
+                        )
+                      }
+                      className="border rounded-md px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 text-gray-700"
+                    />
+                  </div>
+                </div>
 
-            {/* End Time */}
-            <div>
-              <label className="text-sm font-medium text-gray-600">
-                End Time
-              </label>
-              <div className="mt-2">
-                <input
-                  type="time"
-                  // value={`${slotData.endHour}:${slotData.endMinute}`}
-                  onChange={(e) => {
-                    const [h, m] = e.target.value.split(":");
-                    handleChange("endHour", h);
-                    handleChange("endMinute", m);
-                  }}
-                  className="border rounded-md px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 text-gray-700"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-600">
-                Concurrent Slot
-              </label>
-              <div className="flex gap-2 mt-2">
-                <input
-                  type="number"
-                  name="concurrent_slot"
-                  value={formData.amenity?.concurrent_slot || ""}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      amenity: {
-                        ...prev.amenity,
-                        wrap_time: e.target.value,
-                      },
-                    }))
-                  }
-                  className="border border-gray-300 rounded-md p-2 w-full mt-2 focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-
-            {/* Slot By */}
-            <div>
-              <label className="text-sm font-medium text-gray-600">
-                Slot By
-              </label>
-              <select
-                value={slotBy}
-                onChange={(e) => setSlotBy(e.target.value)}
-                className="border border-gray-300 rounded-md p-2 w-full mt-2 focus:ring-2 focus:ring-blue-500"
+                {/* End Time */}
+                <div>
+                  <label className="text-sm font-medium text-gray-600">
+                    End Time
+                  </label>
+                  <div className="mt-2">
+                    <input
+                      type="time"
+                      value={formatTime(slot.end_hr, slot.end_min)}
+                      onChange={(e) =>
+                        handleSlotTimeChange(slotIndex, "end", e.target.value)
+                      }
+                      className="border rounded-md px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 text-gray-700"
+                    />
+                  </div>
+                </div>
+              </React.Fragment>
+            ))}
+          </div>
+          <div className="flex gap-2 mb-4">
+            <button
+              type="button"
+              onClick={handleAddSlot}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md"
+            >
+              Add Slot
+            </button>
+            {formData.slots.length > 1 && (
+              <button
+                type="button"
+                onClick={() => handleRemoveSlot(formData.slots.length - 1)}
+                className="px-4 py-2 bg-red-600 text-white rounded-md"
               >
-                <option value="">Select</option>
-                <option value="15">15 Min</option>
-                <option value="30">30 Min</option>
-                <option value="45">45 Min</option>
-                <option value="60">1 Hour</option>
-                <option value="90">1.5 Hour</option>
-                <option value="120">2 Hour</option>
-                <option value="180">3 Hour</option>
-                <option value="360">6 Hour</option>
-                <option value="720">12 Hour</option>
-                <option value="1440">24 Hour</option>
-              </select>
+                Remove Slot
+              </button>
+            )}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+            <div>
+              <label className="text-sm font-medium text-gray-600">
+                Concurrent Slots
+              </label>
+              <input
+                type="number"
+                min="1"
+                value={formData.slots[0]?.concurrent_slots || "1"}
+                onChange={(e) =>
+                  handleSlotFieldChange(0, "concurrent_slots", e.target.value)
+                }
+                className="border rounded-md px-3 py-2 w-full"
+              />
             </div>
-
-            {/* Wrap Time */}
+            <div>
+              <label className="text-sm font-medium text-gray-600">
+                Slot Duration
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={formData.slots[0]?.slot_duration || ""}
+                onChange={(e) =>
+                  handleSlotFieldChange(0, "slot_duration", e.target.value)
+                }
+                className="border rounded-md px-3 py-2 w-full"
+              />
+            </div>
             <div>
               <label className="text-sm font-medium text-gray-600">
                 Wrap Time
               </label>
-
               <input
                 type="number"
-                name="wrap_time"
-                value={formData.amenity?.wrap_time || ""}
+                min="0"
+                value={formData.slots[0]?.wrap_up_time || ""}
                 onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    amenity: {
-                      ...prev.amenity,
-                      wrap_time: e.target.value,
-                    },
-                  }))
+                  handleSlotFieldChange(0, "wrap_up_time", e.target.value)
                 }
-                className="border border-gray-300 rounded-md p-2 w-full mt-2 focus:ring-2 focus:ring-blue-500"
+                className="border rounded-md px-3 py-2 w-full"
               />
             </div>
           </div>
+          <div className="my-2">
+            <label className="text-sm font-medium text-gray-600">Slot By</label>
+            <select
+              value={slotBy}
+              onChange={(e) => setSlotBy(e.target.value)}
+              className="border rounded-md p-2 w-full"
+            >
+              <option value="">Select</option>
+              <option value="15">15 Min</option>
+              <option value="30">30 Min</option>
+              <option value="45">45 Min</option>
+              <option value="60">1 Hour</option>
+              <option value="90">1.5 Hour</option>
+              <option value="120">2 Hour</option>
+              <option value="180">3 Hour</option>
+              <option value="360">6 Hour</option>
+              <option value="720">12 Hour</option>
+              <option value="1440">24 Hour</option>
+            </select>
+          </div>
         </div>
         <div></div>
+         <h1 className="text-[18px]"><b>Operatinal Days : </b></h1>
+        <div className="border rounded mt-3">
+        
+      {/* Header */}
+      <div className="grid grid-cols-4 bg-gradient-to-r from-purple-600 to-orange-400 text-white p-2 font-semibold">
+        <div></div>
+        <div>Day</div>
+        <div>Start</div>
+        <div>End</div>
+      </div>
+
+      {/* Rows */}
+      {days.map((day, index) => (
+        <div
+          key={day.day_of_week}
+          className="grid grid-cols-4 items-center border-b p-2"
+        >
+          {/* Checkbox */}
+          <input
+            type="checkbox"
+            checked={day.is_active}
+            onChange={() => handleCheck(index)}
+          />
+
+          {/* Day */}
+          <div>{day.label}</div>
+
+          {/* Start Time */}
+          <input
+            type="time"
+            value={day.start_time}
+            disabled={!day.is_active}
+            onChange={(e) =>
+              handleTimeChange1(index, "start_time", e.target.value)
+            }
+          />
+
+          {/* End Time */}
+          <input
+            type="time"
+            value={day.end_time}
+            disabled={!day.is_active}
+            onChange={(e) =>
+              handleTimeChange1(index, "end_time", e.target.value)
+            }
+          />
+        </div>
+      ))}
+    </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="flex flex-col my-4 mt-4">
             <label htmlFor="terms" className="font-medium">

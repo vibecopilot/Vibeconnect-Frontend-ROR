@@ -2326,6 +2326,9 @@ export const postEvents = async (data) => {
     params: {
       token: token,
     },
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
   });
 };
 export const postGroups = async (data) =>
