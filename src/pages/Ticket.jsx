@@ -353,10 +353,6 @@ const handleSearch = (e) => {
   setCurrentPage(1);
 };
 
-
-
-  /* Removed redundant fetch effect: already handled above with fully keyed status/search */
-
   const getApiStatus = (status) => {
     switch (status) {
       case "open":
@@ -371,6 +367,7 @@ const handleSearch = (e) => {
         return "all";
     }
   };
+  
 
   const handleStatusChange = (status) => {
     setSelectedStatus(status);

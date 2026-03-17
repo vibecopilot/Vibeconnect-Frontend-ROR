@@ -209,13 +209,19 @@ const filtered = members.filter((member) => {
       formDataSend.append("notice[created_by_id]", currentUser);
       formDataSend.append("notice[site_id]", formData.site_id);
       formDataSend.append("notice[notice_title]", formData.notice_title);
-      formDataSend.append("notice[important]", formData.important);
-      formDataSend.append("notice[send_email]", formData.send_email);
       formDataSend.append(
         "notice[notice_discription]",
         formData.notice_discription,
       );
-      formDataSend.append("notice[expiry_date]", formData.expiry_date);
+      formDataSend.append(
+        "notice[expiry_date]",
+        formData.expiry_date instanceof Date
+          ? formData.expiry_date.toISOString()
+          : formData.expiry_date,
+      );
+
+      formDataSend.append("notice[important]", formData.important ? "1" : "0");
+      formDataSend.append("notice[send_email]", formData.send_email ? "1" : "0");
 
       if (share === "all") {
         const allUserIds = users.map((user) => user.value).join(",");
@@ -231,10 +237,12 @@ const filtered = members.filter((member) => {
       }
 
       if (formData.notice_image && formData.notice_image.length > 0) {
-      formData.notice_image.forEach((file) => {
-        formDataSend.append("attachfiles[]", file);
-      });
-    }
+        formData.notice_image.forEach((file) => {
+          if (file instanceof File) {
+            formDataSend.append("attachfiles[]", file);
+          }
+        });
+      }
 
       await postBroadCast(formDataSend);
 

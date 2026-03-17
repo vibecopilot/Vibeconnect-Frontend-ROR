@@ -285,40 +285,27 @@ const CreateEvent = () => {
         formatDateTime(formData.end_date_time),
       );
       formDataSend.append("event[venue]", formData.venue);
-      formDataSend.append("event[user_ids]", formData.user_ids);
-      // formDataSend.append("event[shared]", share);
-      formDataSend.append("event[email_enabled]", formData.email_enabled);
-      formDataSend.append("event[rsvp_enabled]", formData.rsvp_enabled);
-      formDataSend.append("event[important]", formData.important);
-      // if (share === "all") {
-      //   formDataSend.append("event[shared]", "all");
-      // } else if (share === "individual") {
-      //   formDataSend.append("event[shared]", "individual");
-      //   formDataSend.append("event[user_ids]", formData.user_ids);
-      // } else if (share === "groups") {
-      //   formDataSend.append("event[shared]", "groups");
-      //   formDataSend.append("event[group_id]", formData.group_id);
-      //   formDataSend.append("event[group_name]", formData.group_name);
-      // }
-      // formDataSend.append("event[important]", formData.important);
-
-      // formData.user_ids.forEach((user_id) => {
-      //   formDataSend.append("event[user_ids]", user_id);
-      // });
+      formDataSend.append("event[email_enabled]", formData.email_enabled ? "true" : "false");
+      formDataSend.append("event[rsvp_enabled]", formData.rsvp_enabled ? "true" : "false");
+      formDataSend.append("event[important]", formData.important ? "1" : "0");
       formDataSend.append("event[shared]", share);
 
       if (share === "individual") {
         formDataSend.append("event[user_ids]", formData.user_ids);
+        formDataSend.append("event[group_id]", "");
+      } else if (share === "groups") {
+        formDataSend.append("event[group_id]", formData.group_id);
+        formDataSend.append("event[user_ids]", "");
+      } else {
+        formDataSend.append("event[user_ids]", "");
+        formDataSend.append("event[group_id]", "");
       }
 
-      if (share === "groups") {
-        formDataSend.append("event[group_id]", formData.group_id);
-        formDataSend.append("event[group_name]", formData.group_name);
-      }
-      // Upload attachments
       if (formData.event_images && formData.event_images.length > 0) {
         formData.event_images.forEach((file) => {
-          formDataSend.append("event[event_images][]", file);
+          if (file instanceof File) {
+            formDataSend.append("event[event_images][]", file);
+          }
         });
       }
       console.log("Images before upload:", formData.event_images);
