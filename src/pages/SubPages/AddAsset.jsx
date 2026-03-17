@@ -39,31 +39,32 @@ const AddAsset = () => {
   const [parentAsset, setParentAsset] = useState([]);
   console.log(formData);
   const themeColor = useSelector((state) => state.theme.color);
-  const fetchVendors = async () => {
-    try {
-      const siteId = getItemInLocalStorage("SITEID");
+const fetchVendors = async () => {
+  try {
+    const siteId = getItemInLocalStorage("SITEID");
 
-      if (!siteId) {
-        console.log("No Site ID Found");
-        return;
-      }
-
-      const vendorResp = await getVendors(siteId);
-
-      console.log("VENDOR RESPONSE:", vendorResp.data);
-
-      const vendorData =
-        vendorResp?.data?.vendors ||
-        vendorResp?.data?.site_vendors ||
-        vendorResp?.data?.data ||
-        vendorResp?.data ||
-        [];
-
-      setVendors(Array.isArray(vendorData) ? vendorData : []);
-    } catch (error) {
-      console.log("Vendor Error:", error);
+    if (!siteId) {
+      console.log("No Site ID Found");
+      return;
     }
-  };
+
+    const vendorResp = await getVendors(siteId);
+
+    console.log("VENDOR RESPONSE:", vendorResp.data);
+
+    const vendorData =
+      vendorResp?.data?.vendors ||
+      vendorResp?.data?.site_vendors ||
+      vendorResp?.data?.data ||
+      vendorResp?.data ||
+      [];
+
+    setVendors(Array.isArray(vendorData) ? vendorData : []);
+
+  } catch (error) {
+    console.log("Vendor Error:", error);
+  }
+};
   useEffect(() => {
     const fetchAssetGroups = async () => {
       const assetGroupResponse = await getAssetGroups();
@@ -77,25 +78,28 @@ const AddAsset = () => {
     fetchAssetGroups();
   }, []);
 
-  useEffect(() => {
-    const fetchAssets = async () => {
-      try {
-        const siteId = getItemInLocalStorage("SITEID"); // 👈 yaha se lo
 
-        if (!siteId) {
-          console.error("Site ID not found in localStorage");
-          return;
-        }
 
-        const response = await getSiteAssets(siteId);
-        console.log("Site Assets:", response.data);
-      } catch (error) {
-        console.error("Error fetching site assets:", error);
+ useEffect(() => {
+  const fetchAssets = async () => {
+    try {
+      const siteId = getItemInLocalStorage("SITEID"); // 👈 yaha se lo
+
+      if (!siteId) {
+        console.error("Site ID not found in localStorage");
+        return;
       }
-    };
 
-    fetchAssets();
-  }, []);
+      const response = await getSiteAssets(siteId);
+      console.log("Site Assets:", response.data);
+
+    } catch (error) {
+      console.error("Error fetching site assets:", error);
+    }
+  };
+
+  fetchAssets();
+}, []);
 
   const handleChange = async (e) => {
     async function fetchFloor(floorID) {
@@ -126,7 +130,7 @@ const AddAsset = () => {
           subGroupResponse.map((item) => ({
             name: item.name,
             id: item.id,
-          })),
+          }))
         );
         console.log(subGroupResponse);
       } catch (error) {
@@ -194,6 +198,7 @@ const AddAsset = () => {
     setAddNonConsumptionFields(newFields);
   };
 
+
   const handleFileChange = (files, fieldName) => {
     setFormData({
       ...formData,
@@ -204,8 +209,8 @@ const AddAsset = () => {
 
   const navigate = useNavigate();
   const handleCancel = () => {
-    navigate("/assets/all-assets"); // या जहाँ वापस जाना है
-  };
+  navigate("/assets/all-assets"); // या जहाँ वापस जाना है
+};
 
   const handleSubmit = async () => {
     // if (formData.warranty_start >= formData.warranty_expiry) {
@@ -259,7 +264,7 @@ const AddAsset = () => {
       formData.warranty_start < formData.purchased_on
     ) {
       toast.error(
-        "Warranty Start Date and Commissioning Date must be after or equal to Purchase Date.",
+        "Warranty Start Date and Commissioning Date must be after or equal to Purchase Date."
       );
       return;
     }
@@ -274,16 +279,17 @@ const AddAsset = () => {
     }
 
     try {
-      const toastId = toast.loading("Creating Asset Please Wait!");
+     const toastId = toast.loading("Creating Asset Please Wait!");
       const siteId = getItemInLocalStorage("SITEID");
 
-      if (!siteId) {
-        toast.dismiss(toastId);
-        toast.error("Site ID missing. Please login again.");
-        return;
-      }
+    if (!siteId) {
+      toast.dismiss(toastId);
+      toast.error("Site ID missing. Please login again.");
+      return;
+    }
       const formDataSend = new FormData();
-formDataSend.append("site_asset[site_id]", siteId); 
+
+      // formDataSend.append("site_asset[site_id]", formData.site_id);
       formDataSend.append("site_asset[building_id]", formData.building_id);
       formDataSend.append("site_asset[floor_id]", formData.floor_id);
       formDataSend.append("site_asset[unit_id]", formData.unit_id);
@@ -292,145 +298,117 @@ formDataSend.append("site_asset[site_id]", siteId);
       formDataSend.append("site_asset[latitude]", formData.latitude);
       formDataSend.append("site_asset[longitude]", formData.longitude);
       formDataSend.append("site_asset[asset_number]", formData.asset_number);
+      // formDataSend.append("site_asset[equipemnt_id]", formData.equipment_id);
       formDataSend.append("site_asset[equipment_id]", formData.equipment_id);
       formDataSend.append("site_asset[serial_number]", formData.serial_number);
       formDataSend.append("site_asset[model_number]", formData.model_number);
       formDataSend.append("site_asset[purchased_on]", formData.purchased_on);
       formDataSend.append("site_asset[purchase_cost]", formData.purchase_cost);
       formDataSend.append("site_asset[comprehensive]", formData.comprehensive);
-      //       formDataSend.append(
-      //   "site_asset[comprehensive]",
-      //   formData.comprehensive === "true"
-      // );
+//       formDataSend.append(
+//   "site_asset[comprehensive]",
+//   formData.comprehensive === "true"
+// );
 
       formDataSend.append(
         "site_asset[asset_group_id]",
-        formData.asset_group_id,
+        formData.asset_group_id
       );
       formDataSend.append(
         "site_asset[asset_sub_group_id]",
-        formData.asset_sub_group_id,
+        formData.asset_sub_group_id
       );
       formDataSend.append(
         "site_asset[parent_asset_id]",
-        formData.parent_asset_id,
+        formData.parent_asset_id
       );
       formDataSend.append("site_asset[installation]", formData.installation);
       formDataSend.append(
         "site_asset[warranty_expiry]",
-        formData.warranty_expiry,
+        formData.warranty_expiry
       );
       // formDataSend.append("site_asset[user_id]", 2);
-      formDataSend.append(
-        "site_asset[critical]",
-        formData.critical ? "true" : "false",
-      );
+    formDataSend.append("site_asset[critical]",formData.critical ? "true" : "false");
       formDataSend.append("site_asset[capacity]", formData.capacity);
-      formDataSend.append(
-        "site_asset[breakdown]",
-        formData.breakdown ? "true" : "false",
-      );
+     formDataSend.append(
+  "site_asset[breakdown]",
+  formData.breakdown ? "true" : "false"
+);
 
       formDataSend.append(
-        "site_asset[is_meter]",
-        formData.is_meter ? "true" : "false",
-      );
+  "site_asset[is_meter]",
+  formData.is_meter ? "true" : "false"
+);
 
       formDataSend.append("site_asset[asset_type]", formData.asset_type);
       formDataSend.append("site_asset[vendor_id]", formData.vendor_id);
       consumptionData.forEach((item) => {
-        formDataSend.append("asset_params[][name]", item.name || "");
-        formDataSend.append("asset_params[][order]", item.order || "");
-        formDataSend.append("asset_params[][unit_type]", item.unit_type || "");
-        formDataSend.append("asset_params[][digit]", item.digit || "");
-        formDataSend.append(
-          "asset_params[][alert_below]",
-          item.alert_below || "",
-        );
-        formDataSend.append(
-          "asset_params[][alert_above]",
-          item.alert_above || "",
-        );
-        formDataSend.append("asset_params[][min_val]", item.min_val || "");
-        formDataSend.append("asset_params[][max_val]", item.max_val || "");
-        formDataSend.append(
-          "asset_params[][multiplier_factor]",
-          item.multiplier_factor || "",
-        );
+    formDataSend.append("asset_params[][name]", item.name || "");
+    formDataSend.append("asset_params[][order]", item.order || "");
+    formDataSend.append("asset_params[][unit_type]", item.unit_type || "");
+    formDataSend.append("asset_params[][digit]", item.digit || "");
+    formDataSend.append("asset_params[][alert_below]", item.alert_below || "");
+    formDataSend.append("asset_params[][alert_above]", item.alert_above || "");
+    formDataSend.append("asset_params[][min_val]", item.min_val || "");
+    formDataSend.append("asset_params[][max_val]", item.max_val || "");
+    formDataSend.append(
+      "asset_params[][multiplier_factor]",
+      item.multiplier_factor || ""
+    );
 
-        // ✅ Convert booleans to string (VERY IMPORTANT)
-        formDataSend.append(
-          "asset_params[][dashboard_view]",
-          item.dashboard_view ? "true" : "false",
-        );
+    // ✅ Convert booleans to string (VERY IMPORTANT)
+    formDataSend.append(
+      "asset_params[][dashboard_view]",
+      item.dashboard_view ? "true" : "false"
+    );
 
-        formDataSend.append(
-          "asset_params[][consumption_view]",
-          item.consumption_view ? "true" : "false",
-        );
+    formDataSend.append(
+      "asset_params[][consumption_view]",
+      item.consumption_view ? "true" : "false"
+    );
 
-        formDataSend.append(
-          "asset_params[][check_prev]",
-          item.check_prev ? "true" : "false",
-        );
-      });
-      // Purchase Invoices
-    formData.invoice?.forEach((file) => {
-  const actualFile = file?.file || file;
-  formDataSend.append("purchase_invoices[]", actualFile);
-});
-      // Insurance Files
-     formData.insurance?.forEach((file) => {
-  const actualFile = file?.file || file;
-  formDataSend.append("insurances[]", actualFile);
+    formDataSend.append(
+      "asset_params[][check_prev]",
+      item.check_prev ? "true" : "false"
+    );
+  });
+    // Purchase Invoices
+formData.invoice?.forEach((file) => {
+  formDataSend.append("purchase_invoices[]", file);
 });
 
-      // Manuals
-    formData.manuals?.forEach((file) => {
-  const actualFile = file?.file || file;
-  formDataSend.append("manuals[]", actualFile);
+// Insurance Files
+formData.insurance?.forEach((file) => {
+  formDataSend.append("insurances[]", file);
 });
-      // Other Files
-    formData.others?.forEach((file) => {
-  const actualFile = file?.file || file;
-  formDataSend.append("other_files[]", actualFile);
+
+// Manuals
+formData.manuals?.forEach((file) => {
+  formDataSend.append("manuals[]", file);
+});
+
+// Other Files
+formData.others?.forEach((file) => {
+  formDataSend.append("other_files[]", file);
 });
 
       formDataSend.append("site_asset[uom]", formData.unit);
       formDataSend.append(
         "site_asset[warranty_start]",
-        formData.warranty_start,
+        formData.warranty_start
       );
       // formDataSend.append("site_asset[installation]", formData.installation);
       // console.log(formDataSend);
-   const response = await postSiteAsset(formDataSend);
+      const response = await postSiteAsset(formDataSend);
+      console.log("FULL RESPONSE:", response);
+      console.log("FULL RESPONSE DATA:", response.data);
 
-console.log("FULL RESPONSE:", response);
-console.log("FULL RESPONSE DATA:", response.data);
 
-// ❌ Backend validation error
-// if (response?.data?.site) {
-//   toast.dismiss(toastId);
-//   toast.error(response.data.site.join(", "));
-//   return;
-// }
-
-const assetId =
-  response?.data?.site_asset?.id ||
-  response?.data?.id ||
-  response?.site_asset?.id;
-
-if (!assetId) {
-  toast.dismiss(toastId);
-  toast.error("Asset created but ID not returned");
-  return;
-}
-
-toast.dismiss(toastId);
-toast.success("Asset Created Successfully");
-
-navigate(`/assets/asset-details/${assetId}`);
-window.scrollTo(0, 0);
+      toast.success("Asset Created Successfully");
+      console.log("Response:", response.data);
+      toast.dismiss();
+      navigate(`/assets/asset-details/${response.data.id}`);
+      window.scrollTo(0, 0);
     } catch (error) {
       toast.dismiss();
       console.error("Error:", error);
@@ -486,8 +464,8 @@ window.scrollTo(0, 0);
       prev.map((item, i) =>
         i === index
           ? { ...item, [name]: type === "checkbox" ? checked : value }
-          : item,
-      ),
+          : item
+      )
     );
   };
 
@@ -505,13 +483,13 @@ window.scrollTo(0, 0);
         >
           Add Asset
         </h2>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSubmit();
-          }}
-          className="md:mx-16 my-5 mb-10 sm:border border-gray-400 p-5 px-10 rounded-lg sm:shadow-xl"
-        >
+       <form
+  onSubmit={(e) => {
+    e.preventDefault();
+    handleSubmit();
+  }}
+  className="md:mx-16 my-5 mb-10 sm:border border-gray-400 p-5 px-10 rounded-lg sm:shadow-xl"
+>
           <h2 className="border-b text-center text-xl border-black mb-6 font-bold">
             Location Details
           </h2>
@@ -1070,27 +1048,25 @@ window.scrollTo(0, 0);
                   <label htmlFor="" className="block text-gray-700 mb-1">
                     Select Supplier:
                   </label>
-                  <select
-                    className="border p-1 px-4 border-gray-500 rounded-md w-full"
-                    value={formData.vendor_id || ""}
-                    onChange={handleChange}
-                    name="vendor_id"
-                  >
-                    <option value="">Select Supplier</option>
+                <select
+  className="border p-1 px-4 border-gray-500 rounded-md w-full"
+  value={formData.vendor_id || ""}
+  onChange={handleChange}
+  name="vendor_id"
+>
+  <option value="">Select Supplier</option>
 
-                    {vendors && vendors.length > 0 ? (
-                      vendors.map((vendor) => (
-                        <option key={vendor.id} value={vendor.id}>
-                          {(vendor.vendor_name || vendor.name) +
-                            (vendor.company_name
-                              ? ` - ${vendor.company_name}`
-                              : "")}
-                        </option>
-                      ))
-                    ) : (
-                      <option disabled>No Suppliers Available</option>
-                    )}
-                  </select>
+  {vendors && vendors.length > 0 ? (
+    vendors.map((vendor) => (
+      <option key={vendor.id} value={vendor.id}>
+        {(vendor.vendor_name || vendor.name) + 
+          (vendor.company_name ? ` - ${vendor.company_name}` : "")}
+      </option>
+    ))
+  ) : (
+    <option disabled>No Suppliers Available</option>
+  )}
+</select>
                 </div>
                 <button
                   className="p-1 border-2 border-black px-4 rounded-md hover:bg-black hover:text-white transition-all duration-300 flex items-center gap-1"
@@ -1106,6 +1082,7 @@ window.scrollTo(0, 0);
                 )}
               </div>
             </div>
+           
           </div>
           <div className="my-5">
             <p className="border-b border-black font-semibold">
@@ -1598,22 +1575,22 @@ window.scrollTo(0, 0);
               />
             </div>
           </div>
-          <div className="sm:flex justify-center gap-4 grid my-5">
-            <button
-              type="submit"
-              className="bg-black text-white p-2 px-4 rounded-md font-medium"
-            >
-              Save & Show Details
-            </button>
+         <div className="sm:flex justify-center gap-4 grid my-5">
+  <button
+    type="submit"
+    className="bg-black text-white p-2 px-4 rounded-md font-medium"
+  >
+    Save & Show Details
+  </button>
 
-            <button
-              type="button"
-              onClick={handleCancel}
-              className="border border-black p-2 px-4 rounded-md font-medium hover:bg-gray-100"
-            >
-              Cancel
-            </button>
-          </div>
+  <button
+    type="button"
+    onClick={handleCancel}
+    className="border border-black p-2 px-4 rounded-md font-medium hover:bg-gray-100"
+  >
+    Cancel
+  </button>
+</div>
         </form>
       </div>
     </section>

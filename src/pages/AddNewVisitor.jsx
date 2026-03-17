@@ -370,7 +370,7 @@ safeConsignmentFiles.forEach((file) =>
     postData.append("visitor[expected_date]", formData.expectedDate);
     postData.append("visitor[expected_time]", normalizeTimeWithSeconds(formData.expectedTime));
 
-    postData.append("visitor[skip_host_approval]", formData.hostApproval ? "1" : "0");
+    postData.append("visitor[skip_host_approval]", formData.hostApproval ? "true" : "false");
     postData.append("visitor[goods_inwards]", formData.goodsInward ? "1" : "0");
     postData.append("visitor[visit_type]", apiVisitType);
     postData.append("visitor[frequency]", apiFrequency);
