@@ -14,17 +14,21 @@ export const getSurveys = async (params = {}) => {
 export const getSurvey = async (id) =>
   axiosInstance.get(`/surveys/${id}.json`, { params: { token } });
 
-export const createSurvey = async (data) =>
-  axiosInstance.post("/surveys.json", data, {
+export const createSurvey = async (data) => {
+  const isFormData = data instanceof FormData;
+  return axiosInstance.post("/surveys.json", data, {
     params: { token },
-    headers: { "Content-Type": "application/json" },
+    headers: isFormData ? {} : { "Content-Type": "application/json" },
   });
+};
 
-export const updateSurvey = async (id, data) =>
-  axiosInstance.put(`/surveys/${id}.json`, data, {
+export const updateSurvey = async (id, data) => {
+  const isFormData = data instanceof FormData;
+  return axiosInstance.put(`/surveys/${id}.json`, data, {
     params: { token },
-    headers: { "Content-Type": "application/json" },
+    headers: isFormData ? {} : { "Content-Type": "application/json" },
   });
+};
 
 export const deleteSurvey = async (id) =>
   axiosInstance.delete(`/surveys/${id}.json`, { params: { token } });

@@ -1,8 +1,25 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import Navbar from "../../../components/Navbar";
 import Chart from "react-apexcharts";
+import { FaDownload, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { getSurvey, getSurveyResponses } from "../../../api";
+
+const PER_PAGE = 50;
+
+function formatAnswer(q, answer) {
+  if (!answer) return "—";
+  if (q.question_type === "single_choice" || q.question_type === "multiple_choice") {
+    const ids = answer.selected_option_ids || [];
+    const opts = q.options || [];
+    const labels = ids.map((id) => opts.find((o) => Number(o.id) === Number(id))?.label || id);
+    return labels.join(", ") || "—";
+  }
+  if (q.question_type === "rating" || q.question_type === "scale") {
+    return answer.numeric_value != null ? String(answer.numeric_value) : "—";
+  }
+  return (answer.text_value || "").trim() || "—";
+}
 
 function AnalyzeResult() {
   const [searchParams] = useSearchParams();
@@ -10,8 +27,10 @@ function AnalyzeResult() {
   const [survey, setSurvey] = useState(null);
   const [responses, setResponses] = useState([]);
   const [loading, setLoading] = useState(!!surveyId);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
+    setPage(1);
     if (!surveyId) {
       setLoading(false);
       return;
@@ -85,6 +104,35 @@ function AnalyzeResult() {
 
   const questionStats = getQuestionStats();
 
+  const totalPages = Math.ceil(responses.length / PER_PAGE) || 1;
+  const paginatedResponses = useMemo(() => {
+    const start = (page - 1) * PER_PAGE;
+    return responses.slice(start, start + PER_PAGE);
+  }, [responses, page]);
+
+  const handleDownloadCSV = () => {
+    if (!survey?.survey_questions?.length || !responses.length) return;
+    const questions = survey.survey_questions;
+    const headers = ["#", "Respondent", "Submitted At", ...questions.map((q) => q.q_title || "Q")];
+    const rows = responses.map((r, i) => {
+      const respondent = r.response_by || r.user?.name || "Anonymous";
+      const date = r.created_at ? new Date(r.created_at).toLocaleString() : "";
+      const answerCols = questions.map((q) => {
+        const ans = r.survey_answers?.find((a) => Number(a.survey_question_id) === Number(q.id));
+        const val = formatAnswer(q, ans);
+        return `"${String(val).replace(/"/g, '""')}"`;
+      });
+      return [i + 1, `"${respondent.replace(/"/g, '""')}"`, `"${date}"`, ...answerCols].join(",");
+    });
+    const csv = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `survey-${surveyId}-responses-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  };
+
   if (loading) {
     return (
       <div className="flex">
@@ -134,12 +182,23 @@ function AnalyzeResult() {
       <div className="w-full flex flex-col overflow-hidden">
         <header className="flex justify-between items-center bg-white px-6 py-3 border-b shadow-sm">
           <h1 className="text-xl font-semibold">{survey.survey_title || "Analyze results"}</h1>
-          <Link
-            to={`/admin/survey-details/${surveyId}`}
-            className="text-sky-500 hover:underline text-sm"
-          >
-            ← Survey details
-          </Link>
+          <div className="flex items-center gap-4">
+            {responseCount > 0 && (
+              <button
+                onClick={handleDownloadCSV}
+                className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 rounded-lg"
+              >
+                <FaDownload />
+                Download CSV
+              </button>
+            )}
+            <Link
+              to={`/admin/survey-details/${surveyId}`}
+              className="text-sky-500 hover:underline text-sm"
+            >
+              ← Survey details
+            </Link>
+          </div>
         </header>
 
         <div className="flex-1 p-6 space-y-6">
@@ -205,24 +264,74 @@ function AnalyzeResult() {
                 </div>
               ))}
 
-              {/* Response list */}
+              {/* Response records - 50 per page */}
               <div className="border rounded-lg p-5 bg-white shadow-sm">
-                <h3 className="text-base font-semibold text-gray-800 mb-3">Individual responses</h3>
-                <div className="space-y-2">
-                  {responses.map((r, i) => (
-                    <div
-                      key={r.id || i}
-                      className="flex items-center justify-between py-2 px-3 rounded bg-gray-50 text-sm text-gray-700"
-                    >
-                      <span>
-                        Response #{i + 1} — {r.response_by || "Anonymous"}
-                      </span>
-                      <span className="text-gray-500">
-                        {r.created_at ? new Date(r.created_at).toLocaleString() : ""}
-                      </span>
-                    </div>
-                  ))}
+                <h3 className="text-base font-semibold text-gray-800 mb-4">Response records</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b bg-gray-50">
+                        <th className="text-left py-2 px-3 font-semibold text-gray-700">#</th>
+                        <th className="text-left py-2 px-3 font-semibold text-gray-700">Respondent</th>
+                        <th className="text-left py-2 px-3 font-semibold text-gray-700">Submitted</th>
+                        {survey.survey_questions.map((q, i) => (
+                          <th key={q.id} className="text-left py-2 px-3 font-semibold text-gray-700 max-w-[200px]">
+                            Q{i + 1}: {q.q_title}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {paginatedResponses.map((r, idx) => {
+                        const globalIndex = (page - 1) * PER_PAGE + idx;
+                        const respondent = r.response_by || r.user?.name || "Anonymous";
+                        const submitted = r.created_at ? new Date(r.created_at).toLocaleString() : "—";
+                        return (
+                          <tr key={r.id || globalIndex} className="border-b hover:bg-gray-50">
+                            <td className="py-2 px-3 text-gray-600">{globalIndex + 1}</td>
+                            <td className="py-2 px-3 font-medium">{respondent}</td>
+                            <td className="py-2 px-3 text-gray-500">{submitted}</td>
+                            {survey.survey_questions.map((q) => {
+                              const ans = r.survey_answers?.find((a) => Number(a.survey_question_id) === Number(q.id));
+                              return (
+                                <td key={q.id} className="py-2 px-3 text-gray-700 max-w-[200px] truncate" title={formatAnswer(q, ans)}>
+                                  {formatAnswer(q, ans)}
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                    <p className="text-sm text-gray-600">
+                      Showing {(page - 1) * PER_PAGE + 1}–{Math.min(page * PER_PAGE, responses.length)} of {responses.length}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setPage((p) => Math.max(1, p - 1))}
+                        disabled={page === 1}
+                        className="p-2 rounded border disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+                      >
+                        <FaChevronLeft />
+                      </button>
+                      <span className="text-sm font-medium">
+                        Page {page} of {totalPages}
+                      </span>
+                      <button
+                        onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={page === totalPages}
+                        className="p-2 rounded border disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+                      >
+                        <FaChevronRight />
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </>
           )}
