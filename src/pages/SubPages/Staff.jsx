@@ -157,7 +157,7 @@ const Staff = () => {
 
   const handleQrCodeDownload = async () => {
     if (!selectedRows || selectedRows.length === 0) {
-    alert("Please select at least one staff");
+    toast.error("Please select at least one staff");
     return;
   }
 
@@ -587,56 +587,56 @@ const Staff = () => {
   ];
 
   const columns = [
-    {
-      name: (
-          <div className="flex items-center gap-2">
-        <input
-          type="checkbox"
-          checked={selectAll}
-          onChange={(e) => {
-            const checked = e.target.checked;
-            setSelectAll(checked);
+{
+  name: (
+    <div className="flex items-center gap-2">
+      <input
+        type="checkbox"
+        checked={selectAll}
+        onChange={(e) => {
+          const checked = e.target.checked;
+          setSelectAll(checked);
 
-            if (checked) {
-              setSelectedRows(filteredStaff.map((item) => item.id));
-            } else {
-              setSelectedRows([]);
-            }
-          }}
-        />
-         <span>Action</span>
-         </div>
-      ),
-      cell: (row) => (
-        <div className="flex items-center gap-3">
-          {/* Row Checkbox */}
-          <input
-            type="checkbox"
-            checked={selectedRows.includes(row.id)}
-          onChange={(e) => {
-  const checked = e.target.checked;
-  setSelectAll(checked);
+          if (checked) {
+            setSelectedRows(filteredStaff.map((item) => item.id));
+          } else {
+            setSelectedRows([]);
+          }
+        }}
+      />
+      <span>Action</span>
+    </div>
+  ),
 
-  if (checked) {
-    setSelectedRows(filteredStaff.map((item) => item.id));
-  } else {
-    setSelectedRows([]);
-  }
-}}
-          />
+  cell: (row) => (
+    <div className="flex items-center gap-3">
+      {/* Row Checkbox */}
+      <input
+        type="checkbox"
+        checked={selectedRows.includes(row.id)}
+        onChange={(e) => {
+          const checked = e.target.checked;
 
-          {/* View */}
-          <Link to={`/admin/passes/staff-details/${row.id}`}>
-            <BsEye size={15} />
-          </Link>
+          if (checked) {
+            setSelectedRows((prev) => [...prev, row.id]);
+          } else {
+            setSelectedRows((prev) => prev.filter((id) => id !== row.id));
+          }
+        }}
+      />
 
-          {/* Edit */}
-          <Link to={`/admin/edit-staff/${row.id}`}>
-            <BiEdit size={15} />
-          </Link>
-        </div>
-      ),
-    },
+      {/* View */}
+      <Link to={`/admin/passes/staff-details/${row.id}`}>
+        <BsEye size={15} />
+      </Link>
+
+      {/* Edit */}
+      <Link to={`/admin/edit-staff/${row.id}`}>
+        <BiEdit size={15} />
+      </Link>
+    </div>
+  ),
+},
     {
       name: "Profile",
       selector: (row) =>
@@ -847,48 +847,58 @@ const Staff = () => {
             </div>
           </div>
 
-          {page === "all" && (
-            <div className="flex md:flex-row flex-col gap-5 justify-between my-2">
-              <input
-                type="text"
-                value={searchText}
-                onChange={handleSearch}
-                className="border border-gray-300 rounded-md  px-2 placeholder:text-sm w-[500px]"
-                placeholder="Search by name, unit, mobile"
-              />
-              <span className="flex gap-4">
-                <button
-                  onClick={handleQrCodeDownload}
-                  className="border-2 border-blue-600 text-blue-600 font-semibold transition-all p-2 rounded-md hover:bg-purple-50 cursor-pointer flex items-center gap-2 justify-center"
-                >
-                  <MdQrCode size={18} />
-                  QR Code
-                </button>
-                <button
-                  onClick={() => setShowFilter(true)}
-                  className="border-2 border-gray-700 text-gray-700 font-semibold px-4 rounded-md hover:bg-gray-800 hover:text-white transition-all"
-                >
-                  Filter
-                </button>
-                <button
-                  onClick={() => setShowExportModal(true)}
-                  className="border-2 border-blue-600 text-blue-600 font-semibold px-4 rounded-md hover:bg-blue-700 hover:text-white transition-all"
-                >
-                  Export
-                </button>
+        {(page === "all" || page === "staffin" || page === "staffout") && (
+  <div className="flex md:flex-row flex-col gap-5 justify-between my-2">
+    <input
+      type="text"
+      value={searchText}
+      onChange={handleSearch}
+      className="border border-gray-300 rounded-md px-2 placeholder:text-sm w-[500px]"
+      placeholder="Search by name, unit, mobile"
+    />
 
-                <Link
-                  to={"/admin/passes/add-staff"}
-                  style={{ background: "rgb(3 19 37)" }}
-                  className="border-2 font-semibold py-2.5 px-3 rounded-md text-white flex items-center gap-2"
-                >
-                  <PiPlusCircle size={20} />
-                  Add
-                </Link>
-              </span>
-            </div>
-          )}
+    <span className="flex gap-4">
+      {/* QR Button */}
+      <button
+        onClick={handleQrCodeDownload}
+        className="border-2 border-blue-600 text-blue-600 font-semibold transition-all p-2 rounded-md hover:bg-purple-50 cursor-pointer flex items-center gap-2 justify-center"
+      >
+        <MdQrCode size={18} />
+        QR Code
+      </button>
 
+
+      {/* Only show in ALL tab */}
+      {page === "all" && (
+        <>
+
+      {/* Export Button */}
+      <button
+        onClick={() => setShowExportModal(true)}
+        className="border-2 border-blue-600 text-blue-600 font-semibold px-4 rounded-md hover:bg-blue-700 hover:text-white transition-all"
+      >
+        Export
+      </button>
+          <button
+            onClick={() => setShowFilter(true)}
+            className="border-2 border-gray-700 text-gray-700 font-semibold px-4 rounded-md hover:bg-gray-800 hover:text-white transition-all"
+          >
+            Filter
+          </button>
+
+          <Link
+            to={"/admin/passes/add-staff"}
+            style={{ background: "rgb(3 19 37)" }}
+            className="border-2 font-semibold py-2.5 px-3 rounded-md text-white flex items-center gap-2"
+          >
+            <PiPlusCircle size={20} />
+            Add
+          </Link>
+        </>
+      )}
+    </span>
+  </div>
+)}
           {(page === "all" || page === "staffin" || page === "staffout") && (
           <Table
           columns={columns}

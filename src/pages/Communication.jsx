@@ -4,7 +4,7 @@ import Events from "./SubPages/Events";
 import Broadcast from "./SubPages/Broadcast";
 import Polls from "./SubPages/Polls";
 import Notification from "./SubPages/Notification";
-import {  Navigate, NavLink, useLocation } from "react-router-dom";
+import { Navigate, NavLink, useLocation } from "react-router-dom";
 
 // import Forum from "./SubPages/Forum";
 
@@ -18,13 +18,13 @@ import CommunicationDashboard from "./SubPages/CommunicationDashboard";
 
 const Communication = () => {
   const themeColor = useSelector((state) => state.theme.color);
+  const location = useLocation();
 
-  // const location = useLocation();
+  // default route for /communication
+  if (location.pathname === "/communication") {
+    return <Navigate to="/communication/broadcast" replace />;
+  }
 
-  // // default route
-  // if (location.pathname === "/communication") {
-  //   return <Navigate to="/communication/broadcast" replace />;
-  // } 
   // const [page, setPage] = useState("event");
   return (
     <section className="flex">

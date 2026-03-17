@@ -2245,17 +2245,11 @@ export const editEventDetails = async (id, data) =>
     params: {
       token: token,
     },
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
   });
 export const postEvents = async (data) => {
   return axiosInstance.post("/events.json", data, {
     params: {
       token: token,
-    },
-    headers: {
-      "Content-Type": "multipart/form-data",
     },
   });
 };
