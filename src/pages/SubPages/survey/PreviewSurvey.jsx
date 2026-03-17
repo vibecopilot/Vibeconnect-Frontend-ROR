@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import Navbar from "../../../components/Navbar";
+import { FaChartBar } from "react-icons/fa";
 import { MdMenuOpen } from "react-icons/md";
 import { IoIosArrowDown, IoIosArrowForward } from "react-icons/io";
 import { getSurvey, createSurveyResponse } from "../../../api";
@@ -281,18 +282,28 @@ case "scale": {
             </div>
           </div>
           <div className="col-span-8 space-y-8 relative">
-            {/* Progress Indicator */}
-<div className="absolute top-4 right-6 bg-white border rounded-lg shadow px-4 py-2 flex items-center gap-3">
-  <span className="text-sm font-semibold text-gray-700">
-    {answeredCount}/{total} Answered
-  </span>
-
-  <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
-    <div
-      className="h-full bg-green-500 transition-all"
-      style={{ width: `${percentage}%` }}
-    />
+            {/* Progress Indicator & Analyze Survey */}
+<div className="absolute top-4 right-6 flex items-center gap-3">
+  <div className="bg-white border rounded-lg shadow px-4 py-2 flex items-center gap-3">
+    <span className="text-sm font-semibold text-gray-700">
+      {answeredCount}/{total} Answered
+    </span>
+    <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+      <div
+        className="h-full bg-green-500 transition-all"
+        style={{ width: `${percentage}%` }}
+      />
+    </div>
   </div>
+  <Link
+    to={`/admin/result-analyze-result?survey_id=${id}`}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium px-4 py-2 rounded-lg shadow"
+  >
+    <FaChartBar />
+    Analyze Survey
+  </Link>
 </div>
             <h2 className="text-2xl text-green-600">{survey.survey_title}</h2>
             {survey.description && (

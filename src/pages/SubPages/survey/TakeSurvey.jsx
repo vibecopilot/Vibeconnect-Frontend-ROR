@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { FiShield, FiFileText, FiHome } from "react-icons/fi";
 import { getPublicSurvey, createPublicSurveyResponse } from "../../../api";
+import StarRating from "./AddStarField";
 
 function TakeSurvey() {
   const { id } = useParams();
@@ -155,23 +157,24 @@ function TakeSurvey() {
         );
       case "rating":
       case "scale": {
-        const min = q.min_value ?? 0;
-        const max = q.max_value ?? 10;
-        const range = Array.from({ length: max - min + 1 }, (_, i) => min + i);
+        const scale = q.question_type === "rating" ? 5 : Math.max(1, Math.min(5, ((q.max_value ?? 10) - (q.min_value ?? 0) + 1)));
         return (
-          <div className="flex flex-wrap gap-2">
-            {range.map((n) => (
-              <button
-                key={n}
-                type="button"
-                onClick={() => setAnswer(q.id, n)}
-                className={`min-w-[2.5rem] px-3 py-2 rounded-lg border font-medium transition-colors ${
-                  value === n ? "bg-violet-600 text-white border-violet-600" : "bg-white text-gray-700 border-gray-300 hover:border-violet-400"
-                }`}
-              >
-                {n}
-              </button>
-            ))}
+          <div className="flex flex-col gap-1.5">
+            <StarRating
+              rating={value || 0}
+              onRatingChange={(val) => setAnswer(q.id, val)}
+              scale={scale}
+              color="#7C3AED"
+            />
+            {scale === 5 && (
+              <div className="flex justify-between text-xs text-gray-500 w-[140px]">
+                <span>Poor</span>
+                <span>Fair</span>
+                <span>Average</span>
+                <span>Good</span>
+                <span>Excellent</span>
+              </div>
+            )}
           </div>
         );
       }
@@ -179,11 +182,11 @@ function TakeSurvey() {
       default:
         return (
           <textarea
-            className="w-full max-w-xl px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
-            placeholder="Type your answer..."
+            className="w-full min-w-[180px] max-w-md px-4 py-2.5 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 placeholder:text-gray-400"
+            placeholder="Share your thoughts..."
             value={value ?? ""}
             onChange={(e) => setAnswer(q.id, e.target.value)}
-            rows={3}
+            rows={2}
           />
         );
     }
@@ -210,107 +213,172 @@ function TakeSurvey() {
     return null;
   }
 
+  const accentColor = survey?.background_color || "#7C3AED";
+  const defaultFieldsCount = 5;
+  const totalWithDefaults = total + defaultFieldsCount;
+  const defaultFieldsFilled = [
+    !!companyName.trim(),
+    !!floorUnit.trim(),
+    !!feedbackDate,
+    !!feedbackGivenBy.trim(),
+    !!contactDetails.trim(),
+  ].filter(Boolean).length;
+  const progressCompleted = defaultFieldsFilled + answeredCount;
+  const progressTotal = totalWithDefaults;
+  const progressPct = progressTotal ? (progressCompleted / progressTotal) * 100 : 0;
+
+  const getQuestionIcon = (q) => {
+    if (q.question_type === "text") return FiFileText;
+    if (q.question_type === "rating" || q.question_type === "scale") return FiShield;
+    return FiHome;
+  };
+
+  const getQuestionCategory = (q) => {
+    if (q.question_type === "rating" || q.question_type === "scale") return "RATING";
+    if (q.question_type === "text") return "FEEDBACK";
+    return "DETAILS";
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="p-6 sm:p-8 border-b border-gray-100">
-            <h1 className="text-2xl font-bold text-gray-900">{survey.survey_title}</h1>
-            {survey.description && <p className="mt-2 text-gray-600">{survey.description}</p>}
+    <div className="min-h-screen bg-gray-100 py-8 px-4">
+      <div className="max-w-2xl mx-auto space-y-6">
+        {/* Purple header banner */}
+        <div
+          className="rounded-2xl px-8 py-10 text-center text-white shadow-sm overflow-hidden relative"
+          style={{
+            background: `linear-gradient(135deg, ${accentColor}, #a855f7)`,
+          }}
+        >
+          <h1 className="text-2xl sm:text-3xl font-bold">
+            {survey.survey_title}
+          </h1>
+          {survey.description && (
+            <p className="mt-1.5 text-sm sm:text-base text-violet-100">
+              {survey.description}
+            </p>
+          )}
+        </div>
+
+        {/* Progress bar card */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <span className="text-base font-medium text-gray-800">Your Progress</span>
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium" style={{ color: accentColor }}>
+              {progressCompleted} of {progressTotal} completed
+            </span>
+            <div className="w-24 sm:w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div
+                className="h-full transition-all duration-300 rounded-full"
+                style={{ width: `${progressPct}%`, backgroundColor: accentColor }}
+              />
+            </div>
           </div>
-          <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-8">
-            {/* Default client details section */}
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Default client details card */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
+                <FiFileText className="w-5 h-5 text-gray-500" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Client details</span>
+                <p className="text-base font-medium text-gray-800 mt-0.5">Contact & Feedback Information</p>
+              </div>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-gray-700 mb-1">
-                  Company name
-                </label>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Company name</label>
                 <input
                   type="text"
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-violet-500"
                   placeholder="Enter company name"
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
                 />
               </div>
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-gray-700 mb-1">
-                  Floor / Unit
-                </label>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Floor / Unit</label>
                 <input
                   type="text"
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-violet-500"
                   placeholder="Enter floor or unit"
                   value={floorUnit}
                   onChange={(e) => setFloorUnit(e.target.value)}
                 />
               </div>
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-gray-700 mb-1">
-                  Feedback date
-                </label>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Feedback date</label>
                 <input
                   type="date"
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-violet-500"
                   value={feedbackDate}
                   onChange={(e) => setFeedbackDate(e.target.value)}
                 />
               </div>
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-gray-700 mb-1">
-                  Feedback given by (name)
-                </label>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Feedback given by (name)</label>
                 <input
                   type="text"
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-violet-500"
                   placeholder="Enter name"
                   value={feedbackGivenBy}
                   onChange={(e) => setFeedbackGivenBy(e.target.value)}
                 />
               </div>
-              <div className="flex flex-col sm:col-span-2">
-                <label className="text-sm font-medium text-gray-700 mb-1">
-                  Contact details
-                </label>
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-medium text-gray-500 mb-1">Contact details</label>
                 <input
                   type="text"
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-violet-500"
                   placeholder="Phone / email"
                   value={contactDetails}
                   onChange={(e) => setContactDetails(e.target.value)}
                 />
               </div>
             </div>
+          </div>
 
-            {questions.map((q, idx) => (
-              <div key={q.id}>
-                <h2 className="text-lg font-medium text-gray-900 mb-3">
-                  {idx + 1}. {q.q_title}
-                  {q.required && <span className="text-red-500 ml-1">*</span>}
-                </h2>
-                <div className="mt-2">{renderQuestionInput(q)}</div>
-              </div>
-            ))}
-            {error && <p className="text-red-600 text-sm">{error}</p>}
-            <div className="pt-4 flex flex-col items-center gap-4">
-              <button
-                type="submit"
-                disabled={submitting}
-                className="w-full sm:w-auto min-w-[200px] bg-violet-600 text-white font-medium py-3 px-6 rounded-lg hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          {/* Question cards */}
+          {questions.map((q, idx) => {
+            const Icon = getQuestionIcon(q);
+            const category = getQuestionCategory(q);
+            return (
+              <div
+                key={q.id}
+                className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col sm:flex-row sm:items-center gap-4"
               >
-                {submitting ? "Submitting…" : "Submit"}
-              </button>
-              <div className="w-full max-w-xs">
-                <div className="flex justify-between text-sm text-gray-500 mb-1">
-                  <span>{answeredCount} of {total} answered</span>
+                <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
+                  <Icon className="w-5 h-5 text-gray-500" />
                 </div>
-                <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div className="h-full bg-violet-500 transition-all duration-300" style={{ width: `${percentage}%` }} />
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">{category}</span>
+                  <h3 className="text-base font-medium text-gray-800 mt-0.5">
+                    {q.q_title}
+                    {q.required && <span className="text-red-500 ml-1">*</span>}
+                  </h3>
+                </div>
+                <div className="w-full sm:min-w-[200px] sm:max-w-sm flex-shrink-0">
+                  {renderQuestionInput(q)}
                 </div>
               </div>
-            </div>
-          </form>
-        </div>
+            );
+          })}
+
+          {error && <p className="text-red-600 text-sm">{error}</p>}
+
+          <div className="pt-4 flex justify-center">
+            <button
+              type="submit"
+              disabled={submitting}
+              className="px-8 py-3 rounded-xl text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+              style={{ backgroundColor: accentColor }}
+            >
+              {submitting ? "Submitting…" : "Submit"}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
