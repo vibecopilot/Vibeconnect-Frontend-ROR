@@ -11,49 +11,40 @@ import AssetNav from "../../components/navbars/AssetNav";
 import { DNA } from "react-loader-spinner";
 import * as XLSX from "xlsx";
 import { useSelector } from "react-redux";
-import { MdClose, MdFileDownload } from "react-icons/md";
 
 const AMC = () => {
   const [searchText, setSearchText] = useState("");
   const [amc, setAmc] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showExportModal, setShowExportModal] = useState(false);
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-
   const themeColor = useSelector((state) => state.theme.color);
 
-  useEffect(() => {
-    const fetchAmc = async () => {
-      try {
-        setLoading(true);
+ useEffect(() => {
+  const fetchAmc = async () => {
+    try {
+      const response = await getAMC(1, 10);
+      console.log("AMC API Response:", response);
 
-        const response = await getAMC(1, 10);
+      const amcData =
+        response?.data?.asset_amcs ||
+        response?.data?.data ||
+        response?.data ||
+        [];
 
-        const amcData =
-          response?.data?.asset_amcs ||
-          response?.data?.data ||
-          response?.data ||
-          [];
+      const sortedAmc = amcData.sort(
+        (a, b) => new Date(b.created_at) - new Date(a.created_at)
+      );
 
-        const sortedAmc = amcData.sort(
-          (a, b) => new Date(b.created_at) - new Date(a.created_at),
-        );
+      setAmc(sortedAmc);
+      setFilteredData(sortedAmc);
+    } catch (error) {
+      console.error("AMC Fetch Error:", error);
+      setAmc([]);
+      setFilteredData([]);
+    }
+  };
 
-        setAmc(sortedAmc);
-        setFilteredData(sortedAmc);
-      } catch (error) {
-        console.error("AMC Fetch Error:", error);
-        setAmc([]);
-        setFilteredData([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAmc();
-  }, []);
+  fetchAmc();
+}, []);
   const handleSearch = (e) => {
     const searchValue = e.target.value;
     setSearchText(searchValue);
@@ -63,8 +54,8 @@ const AMC = () => {
     } else {
       const filteredResults = amc.filter(
         (item) =>
-          item.asset_name?.toLowerCase().includes(searchValue.toLowerCase()) ||
-          item.vendor_name?.toLowerCase().includes(searchValue.toLowerCase()),
+          item.asset_name.toLowerCase().includes(searchValue.toLowerCase()) ||
+          item.vendor_name.toLowerCase().includes(searchValue.toLowerCase())
       );
       setFilteredData(filteredResults);
     }
@@ -94,44 +85,64 @@ const AMC = () => {
     { name: "Start Date", selector: (row) => row.start_date },
     { name: "End Date", selector: (row) => row.end_date },
     { name: "Frequency", selector: (row) => row.frequency },
+    { name: "First Service", selector: (row) => row.first_service },
+    { name: "Status", selector: (row) => row.status },
     { name: "Created On", selector: (row) => dateFormat(row.created_at) },
   ];
 
-  const exportToExcel = () => {
-    let dataToExport = filteredData;
+  const defaultImage = { index: 0, src: "" };
+  let selectedImageSrc = defaultImage.src;
+  let selectedImageIndex = defaultImage.index;
+  const [selectedImage, setSelectedImage] = useState(defaultImage);
+  const [selectedIndex, setSelectedIndex] = useState(null);
 
-    if (startDate && endDate) {
-      dataToExport = filteredData.filter((item) => {
-        const createdDate = new Date(item.created_at);
-        return (
-          createdDate >= new Date(startDate) && createdDate <= new Date(endDate)
-        );
-      });
+  const Get_Background = async () => {
+    try {
+      const user_id = getItemInLocalStorage("VIBEUSERID");
+      console.log(user_id);
+      const data = await getVibeBackground(user_id);
+
+      if (data.success) {
+        selectedImageSrc = API_URL + data.data.image;
+        selectedImageIndex = data.data.index;
+
+        setSelectedImage(selectedImageSrc);
+        setSelectedIndex(selectedImageIndex);
+      } else {
+        console.log("Something went wrong");
+      }
+    } catch (error) {
+      console.error("Error:", error);
     }
+  };
 
-    const ws = XLSX.utils.json_to_sheet(dataToExport);
+  useEffect(() => {
+    Get_Background();
+  }, []);
+
+  const exportToExcel = () => {
+    const fileType =
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8";
+    const fileName = "AMC data.xlsx";
+    const ws = XLSX.utils.json_to_sheet(filteredData);
     const wb = { Sheets: { data: ws }, SheetNames: ["data"] };
     const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-
-    const data = new Blob([excelBuffer], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    });
-
+    const data = new Blob([excelBuffer], { type: fileType });
     const url = URL.createObjectURL(data);
     const link = document.createElement("a");
     link.href = url;
-    link.download = "AMC_data.xlsx";
+    link.download = fileName;
     link.click();
-
-    setShowExportModal(false);
-    setStartDate("");
-    setEndDate("");
   };
 
   return (
-    <section className="flex">
+    <section
+      className="flex"
+      style={{
+        background: `url(${selectedImage})no-repeat center center / cover`,
+      }}
+    >
       <Navbar />
-
       <div className="p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
         <AssetNav />
 
@@ -139,24 +150,23 @@ const AMC = () => {
           <input
             type="text"
             placeholder="Search By Asset Name, Vendor Name"
-            className="border-2 p-2 md:w-96 border-gray-300 rounded-lg"
+            className="border-2 p-2 md:w-96 border-gray-300 rounded-lg placeholder:text-sm"
             value={searchText}
             onChange={handleSearch}
           />
 
-          <div className="md:flex grid grid-cols-2 gap-2">
+          <div className="md:flex grid grid-cols-2 sm:flex-row my-2 flex-col gap-2">
             <button
-              className="text-white font-medium py-2 px-4 rounded flex items-center gap-2"
+              className="bg-blue-500 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded"
+              onClick={exportToExcel}
               style={{ background: themeColor }}
-              onClick={() => setShowExportModal(true)}
             >
-              <MdFileDownload size={20} />
               Export
             </button>
 
             <Link
               to="/assets/add-amc"
-              className="text-white font-medium py-2 px-4 rounded flex items-center gap-2"
+              className="text-white font-medium py-2 px-4 rounded flex items-center justify-center gap-2"
               style={{ background: themeColor }}
             >
               <IoAddCircleOutline size={20} />
@@ -165,71 +175,21 @@ const AMC = () => {
           </div>
         </div>
 
-        {loading ? (
-          <div className="flex justify-center items-center h-96">
-            <DNA height="120" width="120" visible />
-          </div>
-        ) : filteredData.length === 0 ? (
-          <div className="flex justify-center items-center h-96 text-gray-500 text-lg">
-            No AMC Data Found
-          </div>
+        {amc.length !== 0 ? (
+          <Table columns={AMCColumn} data={filteredData} isPagination={true} />
         ) : (
-          <Table columns={AMCColumn} data={filteredData} isPagination />
+          <div className="flex justify-center items-center h-full">
+            <DNA
+              visible={true}
+              height="120"
+              width="120"
+              ariaLabel="dna-loading"
+              wrapperStyle={{}}
+              wrapperClass="dna-wrapper"
+            />
+          </div>
         )}
       </div>
-
-      {/* EXPORT MODAL */}
-
-      {showExportModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg w-96 shadow-lg">
-            <h2 className="text-lg font-semibold mb-4 text-center">
-              Export AMC Data
-            </h2>
-
-            <div className="flex flex-col gap-3">
-              <div>
-                <label className="text-sm font-medium">Start Date</label>
-                <input
-                  type="date"
-                  className="border p-2 w-full rounded"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium">End Date</label>
-                <input
-                  type="date"
-                  className="border p-2 w-full rounded"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-3 mt-5">
-              <button
-                className="text-black bg-gray-200 font-medium py-2 px-4 rounded-md flex items-center gap-2"
-                onClick={() => setShowExportModal(false)}
-              >
-                <MdClose/>
-                Cancel
-              </button>
-
-              <button
-                className="text-white font-medium py-2 px-4 rounded-md flex items-center gap-2"
-                style={{ background: themeColor }}
-                onClick={exportToExcel}
-              >
-                <MdFileDownload/>
-                Export
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </section>
   );
 };

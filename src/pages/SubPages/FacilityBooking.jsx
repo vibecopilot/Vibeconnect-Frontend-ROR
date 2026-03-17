@@ -20,7 +20,6 @@ import { getItemInLocalStorage } from "../../utils/localStorage";
 import { error } from "highcharts";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-import { MdClose } from "react-icons/md";
 const FacilityBooking = () => {
   const navigate = useNavigate();
   const today = new Date();
@@ -42,7 +41,7 @@ const FacilityBooking = () => {
   const [gstNo, setGstNo] = useState(null);
   const [amountt, setAmountt] = useState("");
   const [cancellationPolicy, setCancellationPolicy] = useState(
-    "No cancellation policy available.",
+    "No cancellation policy available."
   );
   const [paymentMode, setPaymentMode] = useState("post");
   const siteId = getItemInLocalStorage("SITEID");
@@ -84,7 +83,7 @@ const FacilityBooking = () => {
         alert(
           `${
             mode.charAt(0).toUpperCase() + mode.slice(1)
-          } is not available for this facility`,
+          } is not available for this facility`
         );
       }
       return;
@@ -117,9 +116,9 @@ const FacilityBooking = () => {
 
   const fetchUnits = async () => {
     try {
-      const response = await getAllUnits();
+      const response = await getAllUnits(); 
       console.log("Units:", response);
-      setUnits(response.data);
+      setUnits(response.data); 
     } catch (error) {
       console.error("Error fetching units:", error);
     }
@@ -127,7 +126,7 @@ const FacilityBooking = () => {
 
   const calculateBookingAmount = (facility, formData) => {
     if (facility?.fixed_amount) {
-      console.log("Fixed amount of facility", facility.fixed_amount);
+      console.log("Fixed amount of facility", facility.fixed_amount)
       const fixedAmount = Number(facility?.fixed_amount) || 0;
       const taxPercentage = Number(facility?.gst_no) || 0;
       console.log("taxPercentage Amount:", taxPercentage);
@@ -198,32 +197,32 @@ const FacilityBooking = () => {
                 (slot.start_hr === currentHr && slot.start_min > currentMin)
               );
             }
-            return true;
+            return true; 
           })
           .map((slot) => ({
             ...slot,
             slot_str: `${formatTime(
               slot.start_hr,
-              slot.start_min,
+              slot.start_min
             )} to ${formatTime(slot.end_hr, slot.end_min)}`,
           }));
 
-        setSlots(formattedSlots);
+        setSlots(formattedSlots); 
 
         if (formattedSlots.length === 0) {
           setBlockedDates((prev) =>
-            prev.includes(selectedDate) ? prev : [...prev, selectedDate],
+            prev.includes(selectedDate) ? prev : [...prev, selectedDate]
           );
         }
-        return formattedSlots;
+          return formattedSlots;
       } else {
         console.log("No Slots Found");
         setSlots([]);
-        return [];
+        return []; 
       }
     } catch (error) {
       console.log("Error Fetching Slots", error);
-      setSlots([]);
+      setSlots([]); 
     }
   };
 
@@ -233,7 +232,7 @@ const FacilityBooking = () => {
       const response = await getFacitilitySetup();
       if (response?.data) {
         const selectedFacility = response.data.amenities.find(
-          (facility) => facility.id === parseInt(facilityId, 10),
+          (facility) => facility.id === parseInt(facilityId, 10)
         );
         setTestFacility(selectedFacility);
 
@@ -270,7 +269,7 @@ const FacilityBooking = () => {
           setTerms(selectedFacility.terms || "No terms available.");
           setCancellationPolicy(
             selectedFacility.cancellation_policy ||
-              "No cancellation policy available.",
+              "No cancellation policy available."
           );
         } else {
           console.log("Facility not found.");
@@ -296,10 +295,11 @@ const FacilityBooking = () => {
     const updatedFormData = { ...formData, [field]: parseInt(value) || 0 };
 
     const totalPeople =
-      updatedFormData.member_adult + updatedFormData.guest_adult;
+      updatedFormData.member_adult +
+      updatedFormData.guest_adult;
     if (facility?.max_people && totalPeople > facility.max_people) {
       toast.error(
-        `Total number of people (${totalPeople}) cannot exceed the maximum limit of ${facility.max_people} for this facility.`,
+        `Total number of people (${totalPeople}) cannot exceed the maximum limit of ${facility.max_people} for this facility.`
       );
       return;
     }
@@ -310,7 +310,7 @@ const FacilityBooking = () => {
       totalPeople > 0
     ) {
       toast.error(
-        `Total number of people (${totalPeople}) must be at least ${facility.min_people} for this facility.`,
+        `Total number of people (${totalPeople}) must be at least ${facility.min_people} for this facility.`
       );
     }
 
@@ -407,17 +407,19 @@ const FacilityBooking = () => {
       return;
     }
 
-    const totalPeople = formData.member_adult + formData.guest_adult;
+    const totalPeople =
+      formData.member_adult +
+      formData.guest_adult;
     if (facility?.max_people && totalPeople > facility.max_people) {
       toast.error(
-        `Total number of people (${totalPeople}) cannot exceed the maximum limit of ${facility.max_people} for this facility.`,
+        `Total number of people (${totalPeople}) cannot exceed the maximum limit of ${facility.max_people} for this facility.`
       );
       return;
     }
 
     if (facility?.min_people && totalPeople < facility.min_people) {
       toast.error(
-        `Total number of people (${totalPeople}) must be at least ${facility.min_people} for this facility.`,
+        `Total number of people (${totalPeople}) must be at least ${facility.min_people} for this facility.`
       );
       return;
     }
@@ -428,36 +430,36 @@ const FacilityBooking = () => {
       postData.append("amenity_booking[amenity_id]", formData.amenity_id || "");
       postData.append(
         "amenity_booking[amenity_slot_id]",
-        formData.amenity_slot_id || "",
+        formData.amenity_slot_id || ""
       );
       postData.append(
         "amenity_booking[booking_date]",
-        formData.booking_date || "",
+        formData.booking_date || ""
       );
       postData.append(
         "amenity_booking[payment_mode]",
-        formData.payment_mode || "",
+        formData.payment_mode || ""
       );
       postData.append("amenity_booking[amount]", amountt || "");
       postData.append(
         "amenity_booking[guest_adult]",
-        formData.guest_adult || "",
+        formData.guest_adult || ""
       );
       postData.append(
         "amenity_booking[guest_child]",
-        formData.guest_child || "",
+        formData.guest_child || ""
       );
       postData.append(
         "amenity_booking[member_adult]",
-        formData.member_adult || "",
+        formData.member_adult || ""
       );
       postData.append(
         "amenity_booking[member_child]",
-        formData.member_child || "",
+        formData.member_child || ""
       );
       postData.append(
         "amenity_booking[amenity_slot_id]",
-        formData.amenity_slot_id || "",
+        formData.amenity_slot_id || ""
       );
 
       postData.append("amenity_booking[amount]", formData.amount || "");
@@ -524,14 +526,14 @@ const FacilityBooking = () => {
 
   const handleFacilityChange = (e) => {
     const selectedFacilityId = e.target.value;
-    setSelectedSlot("");
+    setSelectedSlot(""); 
 
     fetchSlotsForFacility(selectedFacilityId, date);
 
-    fetchTermsPolicy(selectedFacilityId);
+    fetchTermsPolicy(selectedFacilityId); 
 
     const selectedFacility = facilities.find(
-      (facility) => facility.id === parseInt(selectedFacilityId),
+      (facility) => facility.id === parseInt(selectedFacilityId)
     );
     setFacility(selectedFacility);
 
@@ -545,15 +547,15 @@ const FacilityBooking = () => {
     const selectedUserId = e.target.value;
     setFormData((prevData) => ({
       ...prevData,
-      user_id: selectedUserId,
+      user_id: selectedUserId, 
     }));
   };
 
   const [searchText, setSearchText] = useState("");
   const [isDropdownOpen, setDropdownOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null);
+  const [selectedUser, setSelectedUser] = useState(null); 
   const filteredOptions = userOptions.filter((user) =>
-    user.label.toLowerCase().includes(searchText.toLowerCase()),
+    user.label.toLowerCase().includes(searchText.toLowerCase())
   );
 
   const handleUserSelect = (value) => {
@@ -569,18 +571,18 @@ const FacilityBooking = () => {
     setSearchText(user.label);
   };
 
-  const [searchFATerm, setSearchFATerm] = useState("");
-  const [showDropdown, setShowDropdown] = useState(false);
+  const [searchFATerm, setSearchFATerm] = useState(""); 
+  const [showDropdown, setShowDropdown] = useState(false); 
   const [facilityError, setFacilityError] = useState("");
 
   console.log("Line 536 filters", facilities);
   const filteredFacilities = facilities.filter((facility) =>
-    facility.fac_name.toLowerCase().includes(searchFATerm.toLowerCase()),
-  );
+    facility.fac_name.toLowerCase().includes(searchFATerm.toLowerCase())
+  ); 
   const handleFacSelect = (facility) => {
     setSearchFATerm(facility.fac_name);
     setShowDropdown(false);
-    handleFacilityChange({ target: { value: facility.id } });
+    handleFacilityChange({ target: { value: facility.id } }); 
   };
 
   useEffect(() => {
@@ -624,7 +626,7 @@ const FacilityBooking = () => {
                       const matchedFacility = filteredFacilities.find((fac) =>
                         fac.fac_name
                           .toLowerCase()
-                          .includes(searchFATerm.toLowerCase()),
+                          .includes(searchFATerm.toLowerCase())
                       );
                       if (matchedFacility) {
                         handleFacSelect(matchedFacility); // Select first partial match
@@ -695,7 +697,7 @@ const FacilityBooking = () => {
                       const matchedUser = filteredOptions.find((user) =>
                         user.label
                           .toLowerCase()
-                          .includes(searchText.toLowerCase()),
+                          .includes(searchText.toLowerCase())
                       );
                       if (matchedUser) {
                         // Passing full user object
@@ -706,30 +708,31 @@ const FacilityBooking = () => {
                   placeholder="Search User"
                   className="border p-[6px] px-4 border-gray-500 rounded-md w-60"
                 />
-                {isDropdownOpen && (
-                  <ul
-                    role="listbox"
-                    className="absolute left-0 top-full z-50 bg-white border border-gray-300 rounded-md mt-1 max-h-40 overflow-y-auto w-full shadow-md"
-                  >
-                    {filteredOptions.length > 0 ? (
-                      filteredOptions.map((option) => (
-                        <li
-                          key={option.value}
-                          role="option"
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            handleUserSelect(option.value);
-                          }}
-                          className="p-2 hover:bg-gray-200 cursor-pointer"
-                        >
-                          {option.label}
-                        </li>
-                      ))
-                    ) : (
-                      <li className="p-2 text-gray-500">No results found</li>
-                    )}
-                  </ul>
-                )}
+                  {isDropdownOpen && (
+                    <ul
+                      role="listbox"
+                      className="absolute left-0 top-full z-50 bg-white border border-gray-300 rounded-md mt-1 max-h-40 overflow-y-auto w-full shadow-md"
+                    >
+                      {filteredOptions.length > 0 ? (
+                        filteredOptions.map((option) => (
+                          <li
+                            key={option.value} 
+                            role="option"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              handleUserSelect(option.value);
+                            }}
+                            className="p-2 hover:bg-gray-200 cursor-pointer"
+                          >
+                            {option.label}
+                          </li>
+                        ))
+                      ) : (
+                        <li className="p-2 text-gray-500">No results found</li>
+                      )}
+                    </ul>
+                  )}
+
               </div>
 
               {/* <div className="flex flex-col gap-1">
@@ -1059,7 +1062,7 @@ const FacilityBooking = () => {
                   className="flex p-2 border border-grey-300 rounded"
                 />
               </div>
-              <div className="flex items-center space-x-2 justify-end mt-2">
+              <div className="flex items-center space-x-2 justify-end">
                 <label htmlFor="amount" className="font-bold">
                   Total Amount:{" "}
                 </label>
@@ -1073,13 +1076,7 @@ const FacilityBooking = () => {
                 />
               </div>
             </div>
-            <div className="flex justify-end gap-3 mt-4">
-              <button
-                className="p-2 px-4 flex items-center gap-2 bg-gray-400 text-white rounded-md font-medium transition-all duration-300"
-                onClick={() => navigate("/bookings")}
-              >
-                <MdClose /> Cancel
-              </button>
+            <div className="flex justify-center">
               <button
                 onClick={postBookFacility} // Trigger the handleSubmit function on click
                 className="p-2 px-4 flex items-center gap-2 bg-green-400 text-white rounded-md font-medium transition-all duration-300"

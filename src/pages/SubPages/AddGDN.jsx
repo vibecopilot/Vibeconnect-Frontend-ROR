@@ -13,10 +13,8 @@ import {
   postGDN,
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
-import { useNavigate } from "react-router-dom";
 
 const AddGdn = () => {
-  const navigate = useNavigate();
   const themeColor = useSelector((state) => state.theme.color);
 
   const [gdnDate, setGdnDate] = useState("");
@@ -118,8 +116,8 @@ const AddGdn = () => {
         const list = Array.isArray(response?.data?.site_assets)
           ? response.data.site_assets
           : Array.isArray(response?.site_assets)
-            ? response.site_assets
-            : [];
+          ? response.site_assets
+          : [];
 
         const formatted = list.map((a) => ({ id: a.id, name: a.name }));
         setasset(formatted);
@@ -134,30 +132,20 @@ const AddGdn = () => {
     const fetchInventory = async () => {
       try {
         const invResp = await getMasters();
-
-        console.log("Inventory API Response:", invResp);
-
-        let list = [];
-
-        if (Array.isArray(invResp?.inventories)) {
-          list = invResp.inventories;
-        } else if (Array.isArray(invResp?.data?.inventories)) {
-          list = invResp.data.inventories;
-        }
-
-        const formatted = list.map((item) => ({
-          id: item.id,
-          name: item.name,
+        const list = Array.isArray(invResp?.data) ? invResp.data : [];
+        const formatted = list.map((m) => ({
+          id: m.id,
+          name: m.name,
+          type: m.inventory_type,
         }));
-
         setInvent(formatted);
       } catch (error) {
         console.error("Error fetching inventory:", error);
       }
     };
-
     fetchInventory();
   }, []);
+
   const handleAddInventory = () => {
     setInventoryDetails((prev) => [
       ...prev,
@@ -238,28 +226,13 @@ const AddGdn = () => {
 
     // ✅ Inventory optional: send whatever user filled (even blank rows)
     inventoryDetails.forEach((item) => {
-      formData.append(
-        `gdn_inventory_details[][inventory]`,
-        item.inventoryId || "",
-      );
+      formData.append(`gdn_inventory_details[][inventory]`, item.inventoryId || "");
       formData.append(`gdn_inventory_details[][quantity]`, item.quantity || "");
-      formData.append(
-        `gdn_inventory_details[][purpose_id]`,
-        item.purpose || "",
-      );
-      formData.append(
-        `gdn_inventory_details[][consuming_in_id]`,
-        item.consumingIn || "",
-      );
+      formData.append(`gdn_inventory_details[][purpose_id]`, item.purpose || "");
+      formData.append(`gdn_inventory_details[][consuming_in_id]`, item.consumingIn || "");
       formData.append(`gdn_inventory_details[][asset_id]`, item.asset || "");
-      formData.append(
-        `gdn_inventory_details[][service_id]`,
-        item.service || "",
-      );
-      formData.append(
-        `gdn_inventory_details[][handover_to_id]`,
-        item.handedOverTo || "",
-      );
+      formData.append(`gdn_inventory_details[][service_id]`, item.service || "");
+      formData.append(`gdn_inventory_details[][handover_to_id]`, item.handedOverTo || "");
       formData.append(`gdn_inventory_details[][comments]`, item.comments || "");
     });
 
@@ -274,7 +247,6 @@ const AddGdn = () => {
       } else {
         setErrorMsg("Failed to submit GDN.");
       }
-      navigate("/assets/stock-items");
     } catch (error) {
       console.error("Error submitting GDN:", error);
       setErrorMsg("Error submitting GDN.");
@@ -307,10 +279,7 @@ const AddGdn = () => {
             </div>
           )}
 
-          <form
-            onSubmit={handleSubmit}
-            className="w-full flex flex-col overflow-hidden"
-          >
+          <form onSubmit={handleSubmit} className="w-full flex flex-col overflow-hidden">
             {/* Basic Details */}
             <div className="border-2 flex flex-col my-5 mx-5 p-4 gap-4 rounded-md border-gray-400">
               <h2 className="border-b-2 border-gray-400 font-semibold">
@@ -350,31 +319,21 @@ const AddGdn = () => {
               </h2>
 
               {inventoryDetails.map((item, index) => (
-                <div
-                  key={index}
-                  className="flex flex-col justify-around gap-4 mb-4"
-                >
+                <div key={index} className="flex flex-col justify-around gap-4 mb-4">
                   <div className="grid grid-cols-3 gap-4 w-full">
                     <div className="flex flex-col w-full">
                       <label className="font-semibold my-1">Inventory</label>
                       <select
                         value={item.inventoryId}
-                        onChange={(e) =>
-                          handleChange(index, "inventoryId", e.target.value)
-                        }
+                        onChange={(e) => handleChange(index, "inventoryId", e.target.value)}
                         className="border p-1 px-4 border-gray-500 rounded-md"
                       >
                         <option value="">Select Inventory</option>
-
-                        {invent.length > 0 ? (
-                          invent.map((inv) => (
-                            <option key={inv.id} value={inv.id}>
-                              {inv.name}
-                            </option>
-                          ))
-                        ) : (
-                          <option disabled>No Inventory Found</option>
-                        )}
+                        {invent.map((inv) => (
+                          <option value={inv.id} key={inv.id}>
+                            {inv.name}
+                          </option>
+                        ))}
                       </select>
                     </div>
 
@@ -383,9 +342,7 @@ const AddGdn = () => {
                       <input
                         type="text"
                         value={item.quantity}
-                        onChange={(e) =>
-                          handleChange(index, "quantity", e.target.value)
-                        }
+                        onChange={(e) => handleChange(index, "quantity", e.target.value)}
                         placeholder="Quantity"
                         className="border p-1 px-4 border-gray-500 rounded-md"
                       />
@@ -395,9 +352,7 @@ const AddGdn = () => {
                       <label className="font-semibold my-1">Purpose</label>
                       <select
                         value={item.purpose}
-                        onChange={(e) =>
-                          handleChange(index, "purpose", e.target.value)
-                        }
+                        onChange={(e) => handleChange(index, "purpose", e.target.value)}
                         className="border p-1 px-4 border-gray-500 rounded-md"
                       >
                         <option value="">Select Purpose</option>
@@ -411,14 +366,10 @@ const AddGdn = () => {
 
                     {item.purpose === "42" && (
                       <div className="flex flex-col">
-                        <label className="font-semibold my-1">
-                          Select Consuming in
-                        </label>
+                        <label className="font-semibold my-1">Select Consuming in</label>
                         <select
                           value={item.consumingIn}
-                          onChange={(e) =>
-                            handleChange(index, "consumingIn", e.target.value)
-                          }
+                          onChange={(e) => handleChange(index, "consumingIn", e.target.value)}
                           className="border p-1 px-4 border-gray-500 rounded-md"
                         >
                           <option value="">Select Consuming in</option>
@@ -433,14 +384,10 @@ const AddGdn = () => {
 
                     {item.purpose === "42" && item.consumingIn === "47" && (
                       <div className="flex flex-col">
-                        <label className="font-semibold my-1">
-                          Select Asset
-                        </label>
+                        <label className="font-semibold my-1">Select Asset</label>
                         <select
                           value={item.asset}
-                          onChange={(e) =>
-                            handleChange(index, "asset", e.target.value)
-                          }
+                          onChange={(e) => handleChange(index, "asset", e.target.value)}
                           className="border p-1 px-4 border-gray-500 rounded-md"
                         >
                           <option value="">Select Asset</option>
@@ -455,14 +402,10 @@ const AddGdn = () => {
 
                     {item.purpose === "42" && item.consumingIn === "48" && (
                       <div className="flex flex-col">
-                        <label className="font-semibold my-1">
-                          Select Service
-                        </label>
+                        <label className="font-semibold my-1">Select Service</label>
                         <select
                           value={item.service}
-                          onChange={(e) =>
-                            handleChange(index, "service", e.target.value)
-                          }
+                          onChange={(e) => handleChange(index, "service", e.target.value)}
                           className="border p-1 px-4 border-gray-500 rounded-md"
                         >
                           <option value="">Select Service</option>
@@ -477,14 +420,10 @@ const AddGdn = () => {
 
                     {(item.purpose === "42" || item.purpose === "43") && (
                       <div className="flex flex-col w-full">
-                        <label className="font-semibold my-1">
-                          Handed Over to
-                        </label>
+                        <label className="font-semibold my-1">Handed Over to</label>
                         <select
                           value={item.handedOverTo}
-                          onChange={(e) =>
-                            handleChange(index, "handedOverTo", e.target.value)
-                          }
+                          onChange={(e) => handleChange(index, "handedOverTo", e.target.value)}
                           className="border p-1 px-4 border-gray-500 rounded-md"
                         >
                           <option value="">Handed Over to</option>
@@ -501,9 +440,7 @@ const AddGdn = () => {
                       <label className="font-semibold my-1">Comments</label>
                       <textarea
                         value={item.comments}
-                        onChange={(e) =>
-                          handleChange(index, "comments", e.target.value)
-                        }
+                        onChange={(e) => handleChange(index, "comments", e.target.value)}
                         cols="5"
                         rows="1"
                         placeholder="Comments"
@@ -534,14 +471,7 @@ const AddGdn = () => {
               </button>
             </div>
 
-            <div className="my-10 mx-5 flex justify-end gap-3">
-              <button
-                className="text-white px-8 py-2 rounded-md disabled:opacity-60 bg-black"
-                onClick={() => navigate("/assets/stock-items")}
-              >
-                Cancel
-              </button>
-
+            <div className="my-10 mx-5 text-center">
               <button
                 type="submit"
                 disabled={submitting}

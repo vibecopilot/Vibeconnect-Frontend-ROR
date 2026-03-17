@@ -607,8 +607,7 @@ const AddIncident = () => {
               />
           </div>
           <div className="flex justify-center gap-2 mb-20 my-3">
-            <button className="font-semibold bg-red-500 text-white  p-2 flex rounded-md items-center gap-2"
-            onClick={()=>navigate("/admin/incidents")}>
+            <button className="font-semibold bg-red-500 text-white  p-2 flex rounded-md items-center gap-2">
               <MdClose /> Cancel
             </button>
             <button

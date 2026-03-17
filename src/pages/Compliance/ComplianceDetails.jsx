@@ -255,56 +255,57 @@
 // };
 
 // export default ComplianceDetails;
+
+
+
 import React, { useEffect, useState } from "react";
 import { FaCheck } from "react-icons/fa";
 import { IoDocumentAttach } from "react-icons/io5";
 import { LuStamp } from "react-icons/lu";
+import { MdOutlinePendingActions } from "react-icons/md";
 import { useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import ComplianceAudit from "./ComplianceAudit";
 import { GrCertificate } from "react-icons/gr";
-
-import { domainPrefix, getComplianceConfigurationDetails } from "../../api";
-import { dateFormatSTD } from "../../utils/dateUtils";
+import {
+  domainPrefix,
+  getComplianceConfigurationDetails,
+} from "../../api";
+import {
+  dateFormatSTD,
+  dateTimeFormat,
+} from "../../utils/dateUtils";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 
 const ComplianceDetails = () => {
-
   const themeColor = useSelector((state) => state.theme.color);
   const { id } = useParams();
 
-  const [details, setDetails] = useState({});
   const [modal, setModal] = useState(false);
+  const [details, setDetails] = useState({});
+  const [assignments, setAssignments] = useState([]);
 
-  const [trackerId, setTrackerId] = useState("");
-  const [tagId, setTagId] = useState("");
-  const [taskId, setTaskId] = useState("");
+  const [complianceTrackerId, setComplianceTrackerId] = useState("");
+  const [complianceTagId, setComplianceTagId] = useState("");
+  const [complianceTagTaskId, setComplianceTagTaskId] = useState("");
 
   useEffect(() => {
-
     const fetchComplianceDetails = async () => {
-
       try {
-
         const res = await getComplianceConfigurationDetails(id);
-        setDetails(res?.data || {});
-
+        setDetails(res?.data);
+        setAssignments(res?.data?.compliance_trackers);
       } catch (error) {
-
         console.log(error);
-
       }
-
     };
 
     fetchComplianceDetails();
-
   }, [id]);
 
+  // ✅ UPDATED CERTIFICATE GENERATE FUNCTION
   const handleGenerateCertificate = async () => {
-
     try {
-
       const token = getItemInLocalStorage("TOKEN");
 
       if (!token) {
@@ -314,208 +315,179 @@ const ComplianceDetails = () => {
 
       const url = `https://admin.vibecopilot.ai/compliance_configs/${id}/generate_certificate.pdf?token=${token}`;
 
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        method: "GET",
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.log("Backend Error:", errorText);
+        alert("Certificate generation failed");
+        return;
+      }
 
       const blob = await response.blob();
 
       const link = document.createElement("a");
       link.href = window.URL.createObjectURL(blob);
-      link.download = `Compliance_Certificate_${details?.name}.pdf`;
-
+      link.download = `Compliance_Certificate_${details?.name || id}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
 
     } catch (error) {
-
-      console.log(error);
-
+      console.log("Error:", error);
+      alert("Certificate generation failed");
     }
-
   };
 
   const isImage = (filePath) => {
-
-    const ext = filePath?.split(".").pop()?.toLowerCase();
-    return ["jpg","jpeg","png","gif","svg","webp"].includes(ext);
-
+    const imageExtensions = ["jpg", "jpeg", "png", "gif", "bmp", "svg"];
+    const extension = filePath?.split(".").pop()?.split("?")[0]?.toLowerCase();
+    return imageExtensions.includes(extension);
   };
 
-  const getFileName = (path) => path?.split("/").pop();
+  const getFileName = (filePath) => {
+    return filePath?.split("/").pop()?.split("?")[0];
+  };
+
+  const handleComplianceAuditModal = (trackerId, tagId, taskId) => {
+    setModal(true);
+    setComplianceTrackerId(trackerId);
+    setComplianceTagId(tagId);
+    setComplianceTagTaskId(taskId);
+  };
 
   return (
+    <section className="mb-10">
+      <div
+        style={{ background: themeColor }}
+        className="fixed w-full top-0 p-2 text-white font-medium text-lg grid grid-cols-3 items-center"
+      >
+        <p>{details?.name}</p>
+        <p className="text-center">{details?.site_name}</p>
 
-<section className="mb-10">
+        <div className="flex justify-end gap-3">
+          <div className="bg-white text-green-600 px-3 py-2 rounded-md font-semibold">
+            100% Completed
+          </div>
 
-{/* HEADER */}
+          <button
+            onClick={handleGenerateCertificate}
+            className="flex items-center gap-2 bg-violet-500 hover:bg-violet-600 text-white px-4 py-2 rounded-md"
+          >
+            <GrCertificate />
+            Generate Certificate
+          </button>
+        </div>
+      </div>
 
-<div
-style={{ background: themeColor }}
-className="fixed w-full top-0 p-2 text-white font-medium text-lg grid grid-cols-3 items-center"
->
+      <div className="border rounded-xl p-4 m-2 bg-gray-50 mt-20">
+        <h2 className="font-medium text-lg border-b mb-2">Basic Details</h2>
 
-<p>{details?.name}</p>
-<p className="text-center">{details?.site_name}</p>
+        <div className="grid grid-cols-3 gap-4">
+          <div>Auditor: {details?.reviewer_name}</div>
+          <div>Vendor: {details?.assign_to_name}</div>
+          <div>Frequency: {details?.frequency}</div>
+          <div>Start Date: {dateFormatSTD(details?.start_date)}</div>
+          <div>End Date: {dateFormatSTD(details?.end_date)}</div>
+          <div>Priority: {details?.priority}</div>
+        </div>
+      </div>
 
-<div className="flex justify-end gap-3">
+      <div className="border p-4 rounded-xl m-2 flex flex-col gap-4">
+        {assignments?.map((assignment) =>
+          assignment?.compliance_tracker_tags_by_category?.map((category) =>
+            category?.compliance_tracker_tags?.map((tags) => (
+              <div key={tags?.id} className="bg-gray-50 p-4 rounded-xl">
+                <div className="flex justify-between border-b pb-2">
+                  <h2 className="font-medium text-green-600">
+                    {category?.name}
+                  </h2>
 
-<div className="bg-white text-green-600 px-3 py-2 rounded-md font-semibold">
-Active
-</div>
+                  <div className="flex items-center gap-3">
+                    <p
+                      className={`flex items-center gap-2 font-medium ${
+                        assignment?.status === "pending"
+                          ? "text-red-500"
+                          : "text-green-500"
+                      }`}
+                    >
+                      {assignment?.status === "pending" ? (
+                        <MdOutlinePendingActions />
+                      ) : (
+                        <FaCheck />
+                      )}
+                      {assignment?.status}
+                    </p>
 
-<button
-onClick={handleGenerateCertificate}
-className="flex items-center gap-2 bg-violet-500 text-white px-4 py-2 rounded-md"
->
+                    <button
+                      className="bg-white shadow px-4 py-2 rounded-full text-green-500 flex items-center gap-2"
+                      onClick={() =>
+                        handleComplianceAuditModal(
+                          tags.compliance_tracker_id,
+                          tags.compliance_tag_id,
+                          tags.compliance_tag_task_id
+                        )
+                      }
+                    >
+                      <LuStamp /> Verify
+                    </button>
+                  </div>
+                </div>
 
-<GrCertificate />
-Generate Certificate
+                <div className="mt-3">
+                  <p className="bg-violet-100 p-2 rounded-md">
+                    Remark: {tags?.comment}
+                  </p>
 
-</button>
+                  <div className="flex gap-4 flex-wrap mt-3">
+                    {tags?.attachments?.map((file) =>
+                      isImage(domainPrefix + file.image_url) ? (
+                        <img
+                          key={file.id}
+                          src={domainPrefix + file.image_url}
+                          alt=""
+                          className="w-32 h-24 object-cover rounded-md"
+                        />
+                      ) : (
+                        <a
+                          key={file.id}
+                          href={domainPrefix + file.image_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex flex-col items-center"
+                        >
+                          <IoDocumentAttach size={30} />
+                          {getFileName(file.image_url)}
+                        </a>
+                      )
+                    )}
+                  </div>
 
-</div>
+                  <div className="flex justify-between mt-3 text-sm">
+                    <div>Submitted by: {tags?.submitted_by_name}</div>
+                    <div>
+                      Submitted on: {dateTimeFormat(tags?.submitted_on)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))
+          )
+        )}
+      </div>
 
-</div>
-
-{/* BASIC DETAILS */}
-
-<div className="border rounded-xl p-4 m-2 bg-gray-50 mt-20">
-
-<h2 className="font-medium text-lg border-b mb-2">
-Basic Details
-</h2>
-
-<div className="grid grid-cols-3 gap-4">
-
-<div>Auditor: {details?.reviewer_name || "-"}</div>
-<div>Vendor: {details?.assign_to_name || "-"}</div>
-<div>Frequency: {details?.frequency}</div>
-<div>Start Date: {dateFormatSTD(details?.start_date)}</div>
-<div>End Date: {dateFormatSTD(details?.end_date)}</div>
-<div>Priority: {details?.priority}</div>
-
-</div>
-
-</div>
-
-{/* ATTACHMENTS */}
-
-{details?.attachments?.length > 0 && (
-
-<div className="border rounded-xl p-4 m-2 bg-gray-50">
-
-<h2 className="font-medium text-lg border-b mb-3">
-Attachments
-</h2>
-
-<div className="flex gap-4 flex-wrap">
-
-{details?.attachments?.map((file) => {
-
-const url = domainPrefix + file.image_url;
-
-return isImage(url) ? (
-
-<img
-key={file.id}
-src={url}
-alt=""
-className="w-32 h-24 object-cover rounded"
-/>
-
-) : (
-
-<a
-key={file.id}
-href={url}
-target="_blank"
-rel="noreferrer"
-className="flex flex-col items-center"
->
-
-<IoDocumentAttach size={30} />
-{getFileName(file.image_url)}
-
-</a>
-
-);
-
-})}
-
-</div>
-
-</div>
-
-)}
-
-{/* COMPLIANCE TAGS */}
-
-<div className="border p-4 rounded-xl m-2 flex flex-col gap-4">
-
-{details?.compliance_config_tags?.map((tag) => (
-
-<div key={tag.id} className="bg-gray-50 p-4 rounded-xl">
-
-<h2 className="font-medium text-green-600 border-b pb-2">
-{tag?.compliance_tag_name}
-</h2>
-
-{tag?.compliance_tag?.compliance_tag_tasks?.map((task) => (
-
-<div
-key={task.id}
-className="flex justify-between items-center mt-3 border p-3 rounded-lg"
->
-
-<div>
-
-<p className="font-medium">{task.name}</p>
-
-<p className="text-sm text-gray-500">
-Weightage: {task.weightage}
-</p>
-
-</div>
-
-<button
-className="bg-white shadow px-4 py-2 rounded-full text-green-500 flex items-center gap-2"
-onClick={()=>{
-setModal(true);
-setTagId(tag.compliance_tag_id);
-setTaskId(task.id);
-}}
->
-
-<LuStamp />
-Verify
-
-</button>
-
-</div>
-
-))}
-
-</div>
-
-))}
-
-</div>
-
-{modal && (
-
-<ComplianceAudit
-onClose={()=>setModal(false)}
-tagId={tagId}
-taskId={taskId}
-trackerId={trackerId}
-/>
-
-)}
-
-</section>
-
+      {modal && (
+        <ComplianceAudit
+          onClose={() => setModal(false)}
+          tagId={complianceTagId}
+          taskId={complianceTagTaskId}
+          trackerId={complianceTrackerId}
+        />
+      )}
+    </section>
   );
-
 };
 
 export default ComplianceDetails;

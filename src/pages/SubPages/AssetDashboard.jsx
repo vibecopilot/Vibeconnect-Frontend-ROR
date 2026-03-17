@@ -57,7 +57,6 @@ import toast from "react-hot-toast";
 const PRIMARY_BLUE = "#1D4ED8";
 const LIGHT_BLUE = "#93C5FD";
 
-
 /** ---------------- helpers ---------------- */
 const chartIcon = (type) => {
   switch (type) {
@@ -417,15 +416,12 @@ const fmtDate = (d) => {
   const [selectedDate, setSelectedDate] = useState(null);
 
 const fetchAssetSummaryByDate = async (date) => {
-  
   try {
     const formattedDate = date.toISOString().split("T")[0]; // YYYY-MM-DD
 
     const res = await getTotalAssetCount(formattedDate);
 
     const data = res.data;
-
-    
 
     // 🔥 MAP API RESPONSE TO STATES
     setTotalAssetCount(data.total_assets);

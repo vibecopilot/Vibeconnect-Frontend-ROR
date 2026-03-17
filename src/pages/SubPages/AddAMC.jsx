@@ -1,14 +1,14 @@
-import React, { useEffect, useState } from "react";
-import { getSiteAsset, getSoftServices, getVendors, postAMC } from "../../api";
-import { getItemInLocalStorage } from "../../utils/localStorage";
-import { useNavigate } from "react-router-dom";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import { useSelector } from "react-redux";
+import React, { useState } from "react";
 
 const AddAMC = () => {
-  const navigate = useNavigate();
   const [amcFor, setAmcFor] = useState("asset");
+<<<<<<< HEAD
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  const formattedDate = `${year}-${month}-${day}`;
+=======
   // const today = new Date();
   // const year = today.getFullYear();
   // const month = String(today.getMonth() + 1).padStart(2, "0");
@@ -22,20 +22,26 @@ const AddAMC = () => {
     const themeColor = useSelector((state)=> state.theme.color)
 
   
+>>>>>>> 6e2895ca2862289879c854c200b55d4d5d9a92f1
   const [formData, setFormData] = useState({
     asset: "",
     service: "",
-    vendor_id: "",
     amc_cost: "",
-    start_date: "",
-    end_date: "",
-    first_service: "",
-    frequency: "",
-    visits: "",
-    remarks: "",
+    start_date: formattedDate,
+    end_date: formattedDate,
+    first_service: formattedDate,
   });
 
   const handleChange = (e) => {
+<<<<<<< HEAD
+  const { name, value } = e.target;
+
+  setFormData((prev) => ({
+    ...prev,
+    [name]: value,
+  }));
+};
+=======
     const { name, value } = e.target;
 
     setFormData((prev) => ({
@@ -176,14 +182,12 @@ const AddAMC = () => {
       toast.error("Failed to Save AMC");
     }
   };
+>>>>>>> 6e2895ca2862289879c854c200b55d4d5d9a92f1
   return (
     <section>
-       <ToastContainer position="top-right" autoClose={3000} />
       <div className="m-2">
-        <h2
-          style={{ background: themeColor }}
-           className="text-center text-xl font-bold p-2 bg-black rounded-full text-white">
-          Add AMC
+        <h2 className="text-center text-xl font-bold p-2 bg-black rounded-full text-white">
+          Configurations
         </h2>
         <div className="md:mx-20 my-5 mb-10 sm:border border-gray-400 p-5 rounded-lg sm:shadow-xl">
           <h2 className="border-b text-center text-xl border-black mb-6 font-bold">
@@ -210,51 +214,38 @@ const AddAMC = () => {
           </div>
           <div className="flex gap-5 justify-around my-5 ">
             {amcFor === "asset" && (
-              <div className="grid md:grid-cols-2 items-center">
-                <label className="font-semibold">Select Asset :</label>
-
+              <div className="grid  md:grid-cols-2 items-center">
+                <label htmlFor="" className="font-semibold">
+                  Select Asset :
+                </label>
                 <select
                   className="border p-1 px-4 border-gray-500 rounded-md"
                   name="asset"
-                  value={formData.asset}
-                  onChange={handleChange}
+                  //  value={formData.applicable_meter_category}
+                  //  onChange={handleChange}
                 >
-                  <option value="">Select Asset</option>
-
-                  {assets.length > 0 ? (
-                    assets.map((asset) => (
-                      <option key={asset.id} value={asset.id}>
-                        {asset.name}
-                      </option>
-                    ))
-                  ) : (
-                    <option disabled>No Assets Available</option>
-                  )}
+                  <option value="">Select Asset </option>
+                  <option value="asset 1">Asset 1</option>
+                  <option value="asset 2">Asset 2</option>
+                  <option value="asset 2">Asset 3</option>
                 </select>
               </div>
             )}
-
             {amcFor === "service" && (
-              <div className="grid md:grid-cols-2 items-center">
-                <label className="font-semibold">Select Service :</label>
-
+              <div className="grid  md:grid-cols-2 items-center">
+                <label htmlFor="" className="font-semibold">
+                  Select Service :
+                </label>
                 <select
                   className="border p-1 px-4 border-gray-500 rounded-md"
                   name="service"
-                  value={formData.service}
-                  onChange={handleChange}
+                  //  value={formData.applicable_meter_category}
+                  //  onChange={handleChange}
                 >
-                  <option value="">Select Service</option>
-
-                  {services.length > 0 ? (
-                    services.map((service) => (
-                      <option key={service.id} value={service.id}>
-                        {service.name}
-                      </option>
-                    ))
-                  ) : (
-                    <option disabled>No Services Available</option>
-                  )}
+                  <option value="">Select Service </option>
+                  <option value="service 1">Service 1</option>
+                  <option value="service 2">Service 2</option>
+                  <option value="service 2">Service 3</option>
                 </select>
               </div>
             )}
@@ -264,25 +255,15 @@ const AddAMC = () => {
                 Select Supplier :
               </label>
               <select
-                className="border p-1 px-4 border-gray-500 rounded-md w-full"
-                value={formData.vendor_id || ""}
-                onChange={handleChange}
-                name="vendor_id"
+                className="border p-1 px-4 border-gray-500 rounded-md"
+                name="supplier"
+                // value={formData.sub_group}
+                // onChange={handleChange}
               >
                 <option value="">Select Supplier</option>
-
-                {vendors && vendors.length > 0 ? (
-                  vendors.map((vendor) => (
-                    <option key={vendor.id} value={vendor.id}>
-                      {(vendor.vendor_name || vendor.name) +
-                        (vendor.company_name
-                          ? ` - ${vendor.company_name}`
-                          : "")}
-                    </option>
-                  ))
-                ) : (
-                  <option disabled>No Suppliers Available</option>
-                )}
+                <option value="supplier 1">Supplier 1</option>
+                <option value="Supplier 2">Supplier 2</option>
+                <option value="Supplier 3">Supplier 3</option>
               </select>
             </div>
           </div>
@@ -296,10 +277,11 @@ const AddAMC = () => {
               </label>
               <input
                 type="text"
-                name="amc_cost"
-                value={formData.amc_cost}
-                onChange={handleChange}
-                placeholder="Cost"
+                name="cost"
+                id="cost"
+                // value={formData.purchase_cost}
+                // onChange={handleChange}
+                placeholder="Cost "
                 className="border p-1 px-4 border-gray-500 rounded-md"
               />
             </div>
@@ -307,13 +289,14 @@ const AddAMC = () => {
               <label htmlFor="" className="font-semibold ">
                 Start Date :
               </label>
-              <input
-                type="date"
-                name="start_date"
-                value={formData.start_date || ""}
-                onChange={handleChange}
-                className="border p-1 px-4 border-gray-500 rounded-md"
-              />
+           <input
+            type="date"
+            name="start_date"
+            id="start_date"
+            value={formData.start_date}
+            onChange={handleChange}
+            className="border p-1 px-4 border-gray-500 rounded-md"
+/>
             </div>
             <div className="flex flex-col">
               <label htmlFor="" className="font-semibold ">
@@ -322,7 +305,8 @@ const AddAMC = () => {
               <input
                 type="date"
                 name="end_date"
-                value={formData.end_date || ""}
+                id="end_date"
+                value={formData.end_date}
                 onChange={handleChange}
                 className="border p-1 px-4 border-gray-500 rounded-md"
               />
@@ -334,26 +318,27 @@ const AddAMC = () => {
               <input
                 type="date"
                 name="first_service"
-                value={formData.first_service || ""}
+                id="first_service"
+                value={formData.first_service}
                 onChange={handleChange}
                 className="border p-1 px-4 border-gray-500 rounded-md"
               />
             </div>
             <div className="flex flex-col">
               <label htmlFor="" className="font-semibold ">
-                Frequency :
+                Payment Term :
               </label>
               <select
                 className="border p-1 px-4 border-gray-500 rounded-md"
-                name="frequency"
-                value={formData.frequency}
-                onChange={handleChange}
+                name="payment_term"
+                // value={formData.sub_group}
+                // onChange={handleChange}
               >
-                <option value="">Select frequency</option>
+                <option value="">Select Payment Term</option>
                 <option value="yearly">Yearly</option>
                 <option value="half_yearly">Half Yearly</option>
-                <option value="quarterly">Quarterly</option>
-                <option value="monthly">Monthly</option>
+                <option value="quarterly">Quarterly </option>
+                <option value="monthly">Monthly </option>
                 <option value="full_payment">Full Payment</option>
                 <option value="visit_payment">Visit Based Payment</option>
               </select>
@@ -365,8 +350,9 @@ const AddAMC = () => {
               <input
                 type="text"
                 name="visits"
-                value={formData.visits}
-                onChange={handleChange}
+                id="first_service"
+                // value={formData.first_service}
+                // onChange={handleChange}
                 className="border p-1 px-4 border-gray-500 rounded-md"
               />
             </div>
@@ -376,11 +362,14 @@ const AddAMC = () => {
               Remarks
             </label>
             <textarea
-              name="remarks"
-              value={formData.remarks}
-              onChange={handleChange}
+              name="text"
               placeholder="Enter Remarks!"
+              id=""
+              cols="25"
+              rows="3"
               className="border border-black rounded-md px-2"
+              // value={formData.text}
+              // onChange={handleChange}
             />
           </div>
           <div className="flex flex-col gap-2">
@@ -405,17 +394,8 @@ const AddAMC = () => {
       />
             </div>
           </div>
-          <div className="flex my-5 justify-end gap-3">
-            <button
-              className="bg-gray-300 text-black p-2 px-4 rounded-md font-medium"
-              onClick={() => navigate("/assets/amc")}
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSubmit}
-              className="bg-black text-white p-2 px-4 rounded-md font-medium"
-            >
+          <div className="flex my-5 justify-center">
+            <button className="bg-black text-white p-2 px-4 rounded-md font-medium">
               Save & Show Details
             </button>
           </div>
